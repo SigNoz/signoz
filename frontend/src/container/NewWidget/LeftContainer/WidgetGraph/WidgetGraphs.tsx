@@ -2,6 +2,7 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
@@ -84,8 +85,24 @@ function WidgetGraph({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const isDarkMode = useIsDarkMode();
+
 	return (
-		<div ref={graphRef} style={{ height: '100%' }}>
+		<div
+			ref={graphRef}
+			style={{
+				height: '100%',
+				width: '100%',
+				marginTop: '16px',
+				borderRadius: '3px',
+				border: isDarkMode
+					? '1px solid var(--bg-slate-500)'
+					: '1px solid var(--bg-vanilla-300)',
+				background: isDarkMode
+					? 'linear-gradient(0deg, rgba(171, 189, 255, 0.00) 0%, rgba(171, 189, 255, 0.00) 100%), #0B0C0E'
+					: 'var(--bg-vanilla-100)',
+			}}
+		>
 			<PanelWrapper
 				widget={selectedWidget}
 				queryResponse={queryResponse}

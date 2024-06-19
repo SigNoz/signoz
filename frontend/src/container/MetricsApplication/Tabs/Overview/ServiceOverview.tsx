@@ -21,7 +21,11 @@ import { v4 as uuid } from 'uuid';
 
 import { Button } from '../styles';
 import { IServiceName } from '../types';
-import { handleNonInQueryRange, onViewTracePopupClick } from '../util';
+import {
+	handleNonInQueryRange,
+	onViewTracePopupClick,
+	useGetAPMToTracesQueries,
+} from '../util';
 
 function ServiceOverview({
 	onDragSelect,
@@ -69,6 +73,8 @@ function ServiceOverview({
 	const isQueryEnabled =
 		!topLevelOperationsIsLoading && topLevelOperationsRoute.length > 0;
 
+	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
+
 	return (
 		<>
 			<Button
@@ -79,6 +85,7 @@ function ServiceOverview({
 					servicename,
 					selectedTraceTags,
 					timestamp: selectedTimeStamp,
+					apmToTraceQuery,
 				})}
 			>
 				View Traces

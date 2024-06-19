@@ -1,3 +1,5 @@
+import './LeftContainer.styles.scss';
+
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -97,7 +99,7 @@ function LeftContainer({
 				setRequestData={setRequestData}
 				selectedWidget={selectedWidget}
 			/>
-			<QueryContainer>
+			<QueryContainer className="query-section-left-container">
 				<QuerySection selectedGraph={selectedGraph} queryResponse={queryResponse} />
 				{selectedGraph === PANEL_TYPES.LIST && (
 					<ExplorerColumnsRenderer

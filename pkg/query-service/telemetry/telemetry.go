@@ -37,6 +37,9 @@ const (
 	TELEMETRY_EVENT_LANGUAGE                         = "Language"
 	TELEMETRY_EVENT_SERVICE                          = "ServiceName"
 	TELEMETRY_EVENT_LOGS_FILTERS                     = "Logs Filters"
+	TELEMETRY_EVENT_LARGE_TRACE_OPENED               = "Large Trace Opened"
+	TELEMETRY_EVENT_TRACE_DETAIL_API                 = "Trace Detail API"
+	TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED  = "Max spans in a trace limit reached"
 	TELEMETRY_EVENT_DISTRIBUTED                      = "Distributed"
 	TELEMETRY_EVENT_QUERY_RANGE_API                  = "Query Range API"
 	TELEMETRY_EVENT_DASHBOARDS_ALERTS                = "Dashboards/Alerts Info"
@@ -61,6 +64,9 @@ var SAAS_EVENTS_LIST = map[string]struct{}{
 	TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY: {},
 	TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY:           {},
 	TELEMETRY_EVENT_QUERY_RANGE_API:                  {},
+	TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED:  {},
+	TELEMETRY_EVENT_LARGE_TRACE_OPENED:               {},
+	TELEMETRY_EVENT_TRACE_DETAIL_API:                 {},
 }
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -191,8 +197,6 @@ func createTelemetry() {
 	telemetry.minRandInt = 0
 	telemetry.maxRandInt = int(1 / DEFAULT_SAMPLING)
 
-	rand.Seed(time.Now().UnixNano())
-
 	telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
 
 	ticker := time.NewTicker(HEART_BEAT_DURATION)
@@ -201,6 +205,7 @@ func createTelemetry() {
 	rateLimitTicker := time.NewTicker(RATE_LIMIT_CHECK_DURATION)
 
 	go func() {
+		//lint:ignore S1000 false positive
 		for {
 			select {
 			case <-rateLimitTicker.C:
@@ -455,6 +460,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	if userEmail != "" {
 		a.SetUserEmail(userEmail)
+		a.SetCompanyDomain(userEmail)
 	}
 
 	if !a.isTelemetryEnabled() {

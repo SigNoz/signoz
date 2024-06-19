@@ -97,4 +97,5 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	OLD_LOGS_EXPLORER: [],
 	SHORTCUTS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	INTEGRATIONS: ['ADMIN', 'EDITOR', 'VIEWER'],
+	SERVICE_TOP_LEVEL_OPERATIONS: ['ADMIN', 'EDITOR', 'VIEWER'],
 };

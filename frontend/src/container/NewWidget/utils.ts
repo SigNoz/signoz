@@ -32,6 +32,7 @@ export type PartialPanelTypes = {
 	[PANEL_TYPES.TIME_SERIES]: 'graph';
 	[PANEL_TYPES.VALUE]: 'value';
 	[PANEL_TYPES.PIE]: 'pie';
+	[PANEL_TYPES.HISTOGRAM]: 'histogram';
 };
 
 export const panelTypeDataSourceFormValuesMap: Record<
@@ -39,6 +40,112 @@ export const panelTypeDataSourceFormValuesMap: Record<
 	Record<DataSource, any>
 > = {
 	[PANEL_TYPES.BAR]: {
+		[DataSource.LOGS]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+					'queryName',
+					'expression',
+					'disabled',
+				],
+			},
+		},
+		[DataSource.METRICS]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+					'spaceAggregation',
+					'queryName',
+					'expression',
+					'disabled',
+				],
+			},
+		},
+		[DataSource.TRACES]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'queryName',
+					'expression',
+					'disabled',
+				],
+			},
+		},
+	},
+	[PANEL_TYPES.TIME_SERIES]: {
+		[DataSource.LOGS]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+					'queryName',
+					'expression',
+					'disabled',
+				],
+			},
+		},
+		[DataSource.METRICS]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+					'spaceAggregation',
+					'queryName',
+					'expression',
+					'disabled',
+				],
+			},
+		},
+		[DataSource.TRACES]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'queryName',
+					'expression',
+					'disabled',
+				],
+			},
+		},
+	},
+	[PANEL_TYPES.HISTOGRAM]: {
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
@@ -82,7 +189,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 			},
 		},
 	},
-	[PANEL_TYPES.TIME_SERIES]: {
+	[PANEL_TYPES.HISTOGRAM]: {
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
@@ -138,6 +245,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'having',
 					'orderBy',
 					'functions',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -153,6 +263,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'orderBy',
 					'functions',
 					'spaceAggregation',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -166,6 +279,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'limit',
 					'having',
 					'orderBy',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -182,6 +298,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'having',
 					'orderBy',
 					'functions',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -197,6 +316,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'orderBy',
 					'functions',
 					'spaceAggregation',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -210,6 +332,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'limit',
 					'having',
 					'orderBy',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -241,6 +366,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'reduceTo',
 					'having',
 					'functions',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -254,6 +382,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'reduceTo',
 					'functions',
 					'spaceAggregation',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -267,6 +398,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'limit',
 					'having',
 					'orderBy',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},

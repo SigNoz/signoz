@@ -3,6 +3,7 @@ import { ColumnsType } from 'antd/es/table';
 import ROUTES from 'constants/routes';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { formUrlParams } from 'container/TraceDetail/utils';
+import dayjs from 'dayjs';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ILog } from 'types/api/logs/log';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -30,6 +31,13 @@ export const getListColumns = (
 			key: 'date',
 			title: 'Timestamp',
 			width: 145,
+			render: (item): JSX.Element => {
+				const date =
+					typeof item === 'string'
+						? dayjs(item).format('YYYY-MM-DD HH:mm:ss.SSS')
+						: dayjs(item / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
+				return <Typography.Text>{date}</Typography.Text>;
+			},
 		},
 	];
 

@@ -123,6 +123,8 @@ describe('VariableItem', () => {
 		const customVariableData = {
 			...mockCustomVariableData,
 			allSelected: true,
+			showALLOption: true,
+			multiSelect: true,
 		};
 
 		render(

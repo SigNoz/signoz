@@ -1,7 +1,6 @@
 import '../DashboardSettings.styles.scss';
 
-import { blue, red } from '@ant-design/colors';
-import { MenuOutlined, PlusOutlined } from '@ant-design/icons';
+import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
 	DndContext,
@@ -18,7 +17,7 @@ import { RowProps } from 'antd/lib';
 import { convertVariablesToDbFormat } from 'container/NewDashboard/DashboardVariablesSelection/util';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
-import { PencilIcon, TrashIcon } from 'lucide-react';
+import { PenLine, Trash2 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -53,25 +52,33 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		<tr {...props} ref={setNodeRef} style={style} {...attributes}>
 			{React.Children.map(children, (child) => {
-				if ((child as React.ReactElement).key === 'sort') {
+				if ((child as React.ReactElement).key === 'name') {
 					return React.cloneElement(child as React.ReactElement, {
 						children: (
-							<MenuOutlined
-								ref={setActivatorNodeRef}
-								style={{ touchAction: 'none', cursor: 'move' }}
-								// eslint-disable-next-line react/jsx-props-no-spreading
-								{...listeners}
-							/>
+							<div className="variable-name-drag">
+								<HolderOutlined
+									ref={setActivatorNodeRef}
+									style={{ touchAction: 'none', cursor: 'move' }}
+									// eslint-disable-next-line react/jsx-props-no-spreading
+									{...listeners}
+								/>
+								{child}
+							</div>
 						),
 					});
 				}
+
 				return child;
 			})}
 		</tr>
 	);
 }
 
-function VariablesSetting(): JSX.Element {
+function VariablesSetting({
+	variableViewModeRef,
+}: {
+	variableViewModeRef: React.MutableRefObject<(() => void) | undefined>;
+}): JSX.Element {
 	const variableToDelete = useRef<IDashboardVariable | null>(null);
 	const [deleteVariableModal, setDeleteVariableModal] = useState(false);
 
@@ -110,6 +117,13 @@ function VariablesSetting(): JSX.Element {
 		setVariableEditData(varData);
 		setVariableViewMode(viewType);
 	};
+
+	useEffect(() => {
+		if (variableViewModeRef) {
+			// eslint-disable-next-line no-param-reassign
+			variableViewModeRef.current = onDoneVariableViewMode;
+		}
+	}, [variableViewModeRef]);
 
 	const updateMutation = useUpdateDashboard();
 
@@ -246,46 +260,41 @@ function VariablesSetting(): JSX.Element {
 
 	const columns = [
 		{
-			key: 'sort',
-			width: '10%',
-		},
-		{
 			title: 'Variable',
 			dataIndex: 'name',
-			width: '40%',
+			width: '50%',
 			key: 'name',
 		},
 		{
 			title: 'Description',
-			dataIndex: 'description',
-			width: '35%',
+			width: '50%',
 			key: 'description',
-		},
-		{
-			title: 'Actions',
-			width: '15%',
-			key: 'action',
 			render: (variable: IDashboardVariable): JSX.Element => (
-				<Space>
-					<Button
-						type="text"
-						style={{ padding: 8, cursor: 'pointer', color: blue[5] }}
-						onClick={(): void => onVariableViewModeEnter('EDIT', variable)}
-					>
-						<PencilIcon size={14} />
-					</Button>
-					<Button
-						type="text"
-						style={{ padding: 8, color: red[6], cursor: 'pointer' }}
-						onClick={(): void => {
-							if (variable) {
-								onVariableDeleteHandler(variable);
-							}
-						}}
-					>
-						<TrashIcon size={14} />
-					</Button>
-				</Space>
+				<div className="variable-description-actions">
+					<Typography.Text className="variable-description">
+						{variable.description}
+					</Typography.Text>
+					<Space className="actions-btns">
+						<Button
+							type="text"
+							onClick={(): void => onVariableViewModeEnter('EDIT', variable)}
+							className="edit-variable-button"
+						>
+							<PenLine size={14} />
+						</Button>
+						<Button
+							type="text"
+							onClick={(): void => {
+								if (variable) {
+									onVariableDeleteHandler(variable);
+								}
+							}}
+							className="delete-variable-button"
+						>
+							<Trash2 size={14} />
+						</Button>
+					</Space>
+				</div>
 			),
 		},
 	];
@@ -353,6 +362,10 @@ function VariablesSetting(): JSX.Element {
 							flexDirection: 'row',
 							justifyContent: 'flex-end',
 							padding: '0.5rem 0',
+							position: 'absolute',
+							top: '-56px',
+							right: '0px',
+							zIndex: '1',
 						}}
 					>
 						<Button
@@ -385,6 +398,7 @@ function VariablesSetting(): JSX.Element {
 								columns={columns}
 								pagination={false}
 								dataSource={variablesTableData}
+								className="dashboard-variable-settings-table"
 							/>
 						</SortableContext>
 					</DndContext>

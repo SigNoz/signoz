@@ -42,17 +42,6 @@ const (
 	defaultEncoding                Encoding      = EncodingJSON
 )
 
-const (
-	suffixEnabled         = ".enabled"
-	suffixDatasource      = ".datasource"
-	suffixOperationsTable = ".operations-table"
-	suffixIndexTable      = ".index-table"
-	suffixSpansTable      = ".spans-table"
-	suffixWriteBatchDelay = ".write-batch-delay"
-	suffixWriteBatchSize  = ".write-batch-size"
-	suffixEncoding        = ".encoding"
-)
-
 // NamespaceConfig is Clickhouse's internal configuration data
 type namespaceConfig struct {
 	namespace               string

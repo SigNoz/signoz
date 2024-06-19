@@ -3,11 +3,11 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getTimeString from 'lib/getTimeString';
+import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useRef, useState } from 'react';
@@ -89,7 +89,7 @@ function GridCardGraph({
 		}
 	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
 
-	const updatedQuery = useStepInterval(widget?.query);
+	const updatedQuery = widget?.query;
 
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
@@ -124,6 +124,16 @@ function GridCardGraph({
 			},
 		};
 	});
+
+	useEffect(() => {
+		if (!isEqual(updatedQuery, requestData.query)) {
+			setRequestData((prev) => ({
+				...prev,
+				query: updatedQuery,
+			}));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [updatedQuery]);
 
 	const queryResponse = useGetQueryRange(
 		{

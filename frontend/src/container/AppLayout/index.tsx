@@ -3,6 +3,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import './AppLayout.styles.scss';
 
+import * as Sentry from '@sentry/react';
 import { Flex } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import getDynamicConfigs from 'api/dynamicConfigs/getDynamicConfigs';
@@ -27,7 +28,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
@@ -267,6 +267,21 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isTracesView = (): boolean =>
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
+	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
+	const isDashboardView = (): boolean => {
+		/**
+		 * need to match using regex here as the getRoute function will not work for
+		 * routes with id
+		 */
+		const regex = /^\/dashboard\/[a-zA-Z0-9_-]+$/;
+		return regex.test(pathname);
+	};
+
+	const isDashboardWidgetView = (): boolean => {
+		const regex = /^\/dashboard\/[a-zA-Z0-9_-]+\/new$/;
+		return regex.test(pathname);
+	};
+
 	useEffect(() => {
 		if (isDarkMode) {
 			document.body.classList.remove('lightMode');
@@ -327,18 +342,25 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					/>
 				)}
 				<div className={cx('app-content', collapsed ? 'collapsed' : '')}>
-					<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent>
 							<ChildrenContainer
 								style={{
-									margin: isLogsView() || isTracesView() ? 0 : ' 0 1rem',
+									margin:
+										isLogsView() ||
+										isTracesView() ||
+										isDashboardView() ||
+										isDashboardWidgetView() ||
+										isDashboardListView()
+											? 0
+											: '0 1rem',
 								}}
 							>
 								{isToDisplayLayout && !renderFullScreen && <TopNav />}
 								{children}
 							</ChildrenContainer>
 						</LayoutContent>
-					</ErrorBoundary>
+					</Sentry.ErrorBoundary>
 				</div>
 			</Flex>
 		</Layout>

@@ -400,6 +400,7 @@ type CompositeQuery struct {
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
 	Unit              string                      `json:"unit,omitempty"`
+	FillGaps          bool                        `json:"fillGaps,omitempty"`
 }
 
 func (c *CompositeQuery) EnabledQueries() int {
@@ -427,30 +428,46 @@ func (c *CompositeQuery) EnabledQueries() int {
 	return count
 }
 
+func (c *CompositeQuery) Sanitize() {
+	// remove groupBy for queries with list panel type
+	for _, query := range c.BuilderQueries {
+		if len(query.GroupBy) > 0 && c.PanelType == PanelTypeList {
+			query.GroupBy = []AttributeKey{}
+		}
+	}
+
+}
+
 func (c *CompositeQuery) Validate() error {
 	if c == nil {
 		return fmt.Errorf("composite query is required")
 	}
 
 	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil {
-		return fmt.Errorf("composite query must contain at least one query")
+		return fmt.Errorf("composite query must contain at least one query type")
 	}
 
-	for name, query := range c.BuilderQueries {
-		if err := query.Validate(); err != nil {
-			return fmt.Errorf("builder query %s is invalid: %w", name, err)
+	if c.QueryType == QueryTypeBuilder {
+		for name, query := range c.BuilderQueries {
+			if err := query.Validate(c.PanelType); err != nil {
+				return fmt.Errorf("builder query %s is invalid: %w", name, err)
+			}
 		}
 	}
 
-	for name, query := range c.ClickHouseQueries {
-		if err := query.Validate(); err != nil {
-			return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
+	if c.QueryType == QueryTypeClickHouseSQL {
+		for name, query := range c.ClickHouseQueries {
+			if err := query.Validate(); err != nil {
+				return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
+			}
 		}
 	}
 
-	for name, query := range c.PromQueries {
-		if err := query.Validate(); err != nil {
-			return fmt.Errorf("prom query %s is invalid: %w", name, err)
+	if c.QueryType == QueryTypePromQL {
+		for name, query := range c.PromQueries {
+			if err := query.Validate(); err != nil {
+				return fmt.Errorf("prom query %s is invalid: %w", name, err)
+			}
 		}
 	}
 
@@ -663,10 +680,39 @@ type BuilderQuery struct {
 	ShiftBy            int64
 }
 
-func (b *BuilderQuery) Validate() error {
+// CanDefaultZero returns true if the missing value can be substituted by zero
+// For example, for an aggregation window [Tx - Tx+1], with an aggregation operator `count`
+// The lack of data can always be interpreted as zero. No data for requests count = zero requests
+// This is true for all aggregations that have `count`ing involved.
+//
+// The same can't be true for others, `sum` of no values doesn't necessarily mean zero.
+// We can't decide whether or not should it be zero.
+func (b *BuilderQuery) CanDefaultZero() bool {
+	switch b.DataSource {
+	case DataSourceMetrics:
+		if b.AggregateOperator.IsRateOperator() ||
+			b.TimeAggregation.IsRateOperator() ||
+			b.AggregateOperator == AggregateOperatorCount ||
+			b.AggregateOperator == AggregateOperatorCountDistinct ||
+			b.TimeAggregation == TimeAggregationCount ||
+			b.TimeAggregation == TimeAggregationCountDistinct {
+			return true
+		}
+	case DataSourceTraces, DataSourceLogs:
+		if b.AggregateOperator.IsRateOperator() ||
+			b.AggregateOperator == AggregateOperatorCount ||
+			b.AggregateOperator == AggregateOperatorCountDistinct {
+			return true
+		}
+	}
+	return false
+}
+
+func (b *BuilderQuery) Validate(panelType PanelType) error {
 	if b == nil {
 		return nil
 	}
+
 	if b.QueryName == "" {
 		return fmt.Errorf("query name is required")
 	}
@@ -711,6 +757,10 @@ func (b *BuilderQuery) Validate() error {
 		}
 	}
 	if b.GroupBy != nil {
+		// if len(b.GroupBy) > 0 && panelType == PanelTypeList {
+		// 	return fmt.Errorf("group by is not supported for list panel type")
+		// }
+
 		for _, groupBy := range b.GroupBy {
 			if err := groupBy.Validate(); err != nil {
 				return fmt.Errorf("group by is invalid %w", err)
@@ -950,10 +1000,9 @@ type LogsLiveTailClient struct {
 }
 
 type Series struct {
-	Labels            map[string]string   `json:"labels"`
-	LabelsArray       []map[string]string `json:"labelsArray"`
-	Points            []Point             `json:"values"`
-	GroupingSetsPoint *Point              `json:"-"`
+	Labels      map[string]string   `json:"labels"`
+	LabelsArray []map[string]string `json:"labelsArray"`
+	Points      []Point             `json:"values"`
 }
 
 func (s *Series) SortPoints() {

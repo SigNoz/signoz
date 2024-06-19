@@ -53,7 +53,7 @@ func New(dbType string, modelDao dao.ModelDao, licenseRepo *license.Repo, clickh
 	tenantID := ""
 	if len(hostNameRegexMatches) == 2 {
 		tenantID = hostNameRegexMatches[1]
-		tenantID = strings.TrimRight(tenantID, "-clickhouse")
+		tenantID = strings.TrimSuffix(tenantID, "-clickhouse")
 	}
 
 	m := &Manager{

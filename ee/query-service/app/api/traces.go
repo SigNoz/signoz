@@ -2,10 +2,8 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"go.signoz.io/signoz/ee/query-service/app/db"
-	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
@@ -19,17 +17,13 @@ func (ah *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 		ah.APIHandler.SearchTraces(w, r)
 		return
 	}
-	traceId, spanId, levelUpInt, levelDownInt, err := baseapp.ParseSearchTracesParams(r)
+	searchTracesParams, err := baseapp.ParseSearchTracesParams(r)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading params")
 		return
 	}
-	spanLimit, err := strconv.Atoi(constants.SpanLimitStr)
-	if err != nil {
-		zap.L().Error("Error during strconv.Atoi() on SPAN_LIMIT env variable", zap.Error(err))
-		return
-	}
-	result, err := ah.opts.DataConnector.SearchTraces(r.Context(), traceId, spanId, levelUpInt, levelDownInt, spanLimit, db.SmartTraceAlgorithm)
+
+	result, err := ah.opts.DataConnector.SearchTraces(r.Context(), searchTracesParams, db.SmartTraceAlgorithm)
 	if ah.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}

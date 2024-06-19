@@ -2,7 +2,6 @@ package logparsingpipeline
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"time"
 
@@ -74,9 +73,9 @@ func SimulatePipelinesProcessing(
 		timeout,
 	)
 	if apiErr != nil {
-		return nil, collectorErrs, model.WrapApiError(apiErr, fmt.Sprintf(
+		return nil, collectorErrs, model.WrapApiError(apiErr,
 			"could not simulate log pipelines processing.\nCollector errors",
-		))
+		)
 	}
 
 	outputSignozLogs := PLogsToSignozLogs(outputPLogs)

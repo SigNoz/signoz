@@ -2,7 +2,7 @@ import './ToolbarActions.styles.scss';
 
 import { Button, Switch, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
-import { Atom, MousePointerSquare, Terminal } from 'lucide-react';
+import { Atom, SquareMousePointer, Terminal } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 
 interface LeftToolbarActionsProps {
@@ -39,7 +39,7 @@ export default function LeftToolbarActions({
 						)}
 						onClick={(): void => onChangeSelectedView(SELECTED_VIEWS.SEARCH)}
 					>
-						<MousePointerSquare size={14} data-testid="search-view" />
+						<SquareMousePointer size={14} data-testid="search-view" />
 					</Button>
 				</Tooltip>
 				<Tooltip title="Query Builder">

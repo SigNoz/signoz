@@ -33,6 +33,7 @@ import {
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
+	ServiceTopLevelOperationsPage,
 	SettingsPage,
 	ShortcutsPage,
 	SignupPage,
@@ -83,6 +84,13 @@ const routes: AppRoutes[] = [
 		component: ServiceMetricsPage,
 		isPrivate: true,
 		key: 'SERVICE_METRICS',
+	},
+	{
+		path: ROUTES.SERVICE_TOP_LEVEL_OPERATIONS,
+		exact: true,
+		component: ServiceTopLevelOperationsPage,
+		isPrivate: true,
+		key: 'SERVICE_TOP_LEVEL_OPERATIONS',
 	},
 	{
 		path: ROUTES.SERVICE_MAP,

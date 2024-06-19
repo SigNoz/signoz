@@ -5,11 +5,14 @@ import {
 	ThresholdProps,
 } from 'container/NewWidget/RightContainer/Threshold/types';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { ColumnUnit } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export type GridTableComponentProps = {
 	query: Query;
 	thresholds?: ThresholdProps[];
+	columnUnits?: ColumnUnit;
+	tableProcessedDataRef?: React.MutableRefObject<RowData[]>;
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 

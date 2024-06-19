@@ -86,12 +86,9 @@ function ClickHouseQueryBuilder({
 			colors: {
 				'editor.background': Color.BG_INK_300,
 			},
-			// fontFamily: 'SF Mono',
-			fontFamily: 'Space Mono',
-			fontSize: 20,
-			fontWeight: 'normal',
-			lineHeight: 18,
-			letterSpacing: -0.06,
+		});
+		document.fonts.ready.then(() => {
+			monaco.editor.remeasureFonts();
 		});
 	}
 

@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import { IServiceName } from './Tabs/types';
 
@@ -19,6 +19,7 @@ export interface NavigateToTraceProps {
 	minTime: number;
 	maxTime: number;
 	selectedTraceTags: string;
+	apmToTraceQuery: Query;
 }
 
 export interface DatabaseCallsRPSProps extends DatabaseCallProps {

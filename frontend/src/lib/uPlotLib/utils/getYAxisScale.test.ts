@@ -35,6 +35,7 @@ describe('getYAxisScale', () => {
 			series: [
 				{
 					labels: {},
+					labelsArray: [],
 					values: [
 						{ timestamp: 1, value: '15' },
 						{ timestamp: 2, value: '25' },

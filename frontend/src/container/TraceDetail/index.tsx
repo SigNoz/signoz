@@ -33,6 +33,7 @@ import MissingSpansMessage from './Missingtrace';
 import SelectedSpanDetails from './SelectedSpanDetails';
 import * as styles from './styles';
 import { FlameGraphMissingSpansContainer, GanttChartWrapper } from './styles';
+import SubTreeMessage from './SubTree';
 import {
 	formUrlParams,
 	getSortedData,
@@ -142,9 +143,10 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 							Trace Details
 						</StyledTypography.Title>
 						<StyledTypography.Text styledclass={[styles.removeMargin]}>
-							{traceMetaData.totalSpans} Span
+							{traceMetaData.totalSpans} Spans
 						</StyledTypography.Text>
 						{hasMissingSpans && <MissingSpansMessage />}
+						{response[0]?.isSubTree && <SubTreeMessage />}
 					</StyledCol>
 					<Col flex="auto">
 						{map(tree.spanTree, (tree) => (

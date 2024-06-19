@@ -39,7 +39,7 @@ function PiePanelWrapper({
 	});
 
 	const panelData =
-		queryResponse.data?.payload?.data.newResult.data.result || [];
+		queryResponse.data?.payload?.data?.newResult?.data?.result || [];
 
 	const isDarkMode = useIsDarkMode();
 
@@ -60,7 +60,7 @@ function PiePanelWrapper({
 						d.series?.length === 1
 							? getLabel(Object.values(s.labels)[0], widget.query, d.queryName)
 							: getLabel(Object.values(s.labels)[0], {} as Query, d.queryName, true),
-						themeColors.chartcolors,
+						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
 					),
 				})),
 			)

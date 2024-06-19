@@ -64,11 +64,11 @@ func AttachJwtToContext(ctx context.Context, r *http.Request) context.Context {
 		return ctx
 	}
 
-	return context.WithValue(ctx, "accessJwt", token)
+	return context.WithValue(ctx, AccessJwtKey, token)
 }
 
 func ExtractJwtFromContext(ctx context.Context) (string, bool) {
-	jwtToken, ok := ctx.Value("accessJwt").(string)
+	jwtToken, ok := ctx.Value(AccessJwtKey).(string)
 	return jwtToken, ok
 }
 
