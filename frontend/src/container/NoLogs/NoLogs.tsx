@@ -25,6 +25,11 @@ export default function NoLogs({
 					? ROUTES.GET_STARTED_APPLICATION_MONITORING
 					: ROUTES.GET_STARTED_LOGS_MANAGEMENT,
 			);
+		} else if (dataSource === 'traces') {
+			window.open(
+				'https://signoz.io/docs/instrumentation/overview/?utm_source=product&utm_medium=traces-explorer-empty-state',
+				'_blank',
+			);
 		} else {
 			window.open(`https://signoz.io/docs/userguide/${dataSource}/`, '_blank');
 		}
