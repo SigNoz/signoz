@@ -55,6 +55,9 @@ func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
 	if columnType == v3.AttributeKeyTypeTag {
 		return "attributes"
 	}
+	if columnType == v3.AttributeKeyTypeInstrumentationScope {
+		return "instrumentation_scope_attributes"
+	}
 	return "resources"
 }
 

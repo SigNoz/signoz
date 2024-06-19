@@ -63,7 +63,7 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 
 func isEnriched(field v3.AttributeKey) bool {
 	// if it is timestamp/id dont check
-	if field.Key == "timestamp" || field.Key == "id" || field.Key == constants.SigNozOrderByValue {
+	if field.Key == "timestamp" || field.Key == "id" || field.Key == constants.SigNozOrderByValue || field.Type == v3.AttributeKeyTypeInstrumentationScope {
 		return true
 	}
 

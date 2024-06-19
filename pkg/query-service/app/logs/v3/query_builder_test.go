@@ -53,6 +53,11 @@ var testGetClickhouseColumnNameData = []struct {
 		AttributeKey:       v3.AttributeKey{Key: "test-attr", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
 		ExpectedColumnName: "`attribute_string_test-attr`",
 	},
+	{
+		Name:               "instrumentation scope attribute",
+		AttributeKey:       v3.AttributeKey{Key: "version", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeInstrumentationScope, IsColumn: false},
+		ExpectedColumnName: "instrumentation_scope_attributes_string_value[indexOf(instrumentation_scope_attributes_string_key, 'version')]",
+	},
 }
 
 func TestGetClickhouseColumnName(t *testing.T) {
@@ -129,6 +134,13 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "my_service", Operator: "!="},
 		}},
 		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'user_name')] = 'john' AND resources_string_value[indexOf(resources_string_key, 'k8s_namespace')] != 'my_service'",
+	},
+	{
+		Name: "Test instrumentation scope attribute",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "version", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeInstrumentationScope}, Value: "v1", Operator: "="},
+		}},
+		ExpectedFilter: "instrumentation_scope_attributes_string_value[indexOf(instrumentation_scope_attributes_string_key, 'version')] = 'v1'",
 	},
 	{
 		Name: "Test materialized column",
