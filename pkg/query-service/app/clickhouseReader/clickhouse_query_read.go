@@ -169,7 +169,12 @@ func readRowsForResult(rows driver.Rows, vars []interface{}, columnNames []strin
 // GetClickHouseResult runs the query and returns list of time series
 func (r *ClickHouseReader) GetClickHouseResult(ctx context.Context, query string) ([]*v3.Series, error) {
 
-	defer utils.Elapsed("GetClickHouseResult", query, fmt.Sprintf("logComment: %s", logComment(ctx)))()
+	ctxArgs := map[string]interface{}{"query": query}
+	for k, v := range logCommentKVs(ctx) {
+		ctxArgs[k] = v
+	}
+
+	defer utils.Elapsed("GetClickHouseResult", ctxArgs)()
 
 	rows, err := r.db.Query(ctx, query)
 
