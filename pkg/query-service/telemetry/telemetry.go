@@ -460,6 +460,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	if userEmail != "" {
 		a.SetUserEmail(userEmail)
+		a.SetCompanyDomain(userEmail)
 	}
 
 	if !a.isTelemetryEnabled() {

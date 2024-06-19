@@ -699,7 +699,16 @@ function DashboardsList(): JSX.Element {
 										New Dashboard
 									</Button>
 								</Dropdown>
-								<Button type="text" className="learn-more">
+								<Button
+									type="text"
+									className="learn-more"
+									onClick={(): void => {
+										window.open(
+											'https://signoz.io/docs/userguide/manage-dashboards?utm_source=product&utm_medium=dashboard-list-empty-state',
+											'_blank',
+										);
+									}}
+								>
 									Learn more
 								</Button>
 								<ArrowUpRight size={16} className="learn-more-arrow" />

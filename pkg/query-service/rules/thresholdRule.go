@@ -484,6 +484,10 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 		}
 	}
 
+	if r.ruleCondition.CompositeQuery.PanelType != v3.PanelTypeGraph {
+		r.ruleCondition.CompositeQuery.PanelType = v3.PanelTypeGraph
+	}
+
 	// default mode
 	return &v3.QueryRangeParamsV3{
 		Start:          start,
