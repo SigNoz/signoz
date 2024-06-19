@@ -143,20 +143,28 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		return nil, err
 	}
 
+	var readMultiSeriesForClickHouseSQL bool
+
+	if constants.GetOrDefaultEnv("READ_MULTI_SERIES_FOR_CLICKHOUSE_SQL", "false") == "true" {
+		readMultiSeriesForClickHouseSQL = true
+	}
+
 	querierOpts := querier.QuerierOptions{
-		Reader:        opts.Reader,
-		Cache:         opts.Cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  opts.FluxInterval,
-		FeatureLookup: opts.FeatureFlags,
+		Reader:                          opts.Reader,
+		Cache:                           opts.Cache,
+		KeyGenerator:                    queryBuilder.NewKeyGenerator(),
+		FluxInterval:                    opts.FluxInterval,
+		FeatureLookup:                   opts.FeatureFlags,
+		ReadMultiSeriesForClickHouseSQL: readMultiSeriesForClickHouseSQL,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:        opts.Reader,
-		Cache:         opts.Cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  opts.FluxInterval,
-		FeatureLookup: opts.FeatureFlags,
+		Reader:                          opts.Reader,
+		Cache:                           opts.Cache,
+		KeyGenerator:                    queryBuilder.NewKeyGenerator(),
+		FluxInterval:                    opts.FluxInterval,
+		FeatureLookup:                   opts.FeatureFlags,
+		ReadMultiSeriesForClickHouseSQL: readMultiSeriesForClickHouseSQL,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
