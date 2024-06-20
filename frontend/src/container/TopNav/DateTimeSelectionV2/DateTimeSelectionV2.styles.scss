@@ -190,7 +190,7 @@
 		}
 
 		&.relative-times {
-			width: 320px;
+			width: 420px;
 		}
 
 		.relative-date-time-section {
@@ -198,6 +198,13 @@
 			gap: 6px;
 			flex-flow: wrap;
 		}
+
+		.relative-options-time {
+			display: flex;
+			flex-direction: column;
+			gap: 24px;
+		}
+
 		.time-heading {
 			text-align: left;
 			color: var(--bg-slate-200);

@@ -65,6 +65,11 @@ export interface Option {
 	label: string;
 }
 
+export interface SemiRelativeOption {
+	value: string;
+	label: string;
+}
+
 export const OLD_RELATIVE_TIME_VALUES = [
 	'1min',
 	'10min',
@@ -107,6 +112,15 @@ export const RelativeDurationSuggestionOptions: Option[] = [
 	{ value: '2months', label: 'Last 2 months' },
 	{ value: '1d', label: 'today' },
 ];
+
+export const SemiRelativeDurationSuggestionOptions: SemiRelativeOption[] = [
+	{ value: 'smd', label: 'Since midnight' },
+	{ value: 'sw', label: 'From start of the week' },
+	{ value: 's6', label: 'Since 6 AM today' },
+	{ value: 'smn', label: 'Since start of the month' },
+	{ value: 'pmn', label: 'Previous month' },
+];
+
 export const FixedDurationSuggestionOptions: Option[] = [
 	{ value: '45m', label: 'Last 45 mins' },
 	{ value: '12h', label: 'Last 12 hours' },
