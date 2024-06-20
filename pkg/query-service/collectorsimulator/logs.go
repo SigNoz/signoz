@@ -3,6 +3,7 @@ package collectorsimulator
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -68,7 +69,15 @@ func SimulateLogsProcessing(
 		)
 	}
 
-	return result, simulationErrs, nil
+	for _, log := range simulationErrs {
+		// if log is empty or log comes from featuregate.go, then remove it
+		if log == "" || strings.Contains(log, "featuregate.go") {
+			continue
+		}
+		collectorErrs = append(collectorErrs, log)
+	}
+
+	return result, collectorErrs, nil
 }
 
 func SendLogsToSimulator(
