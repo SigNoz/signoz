@@ -14,6 +14,7 @@ export interface QueryData {
 	queryName: string;
 	legend?: string;
 	values: [number, string][];
+	title: string;
 	quantity?: number[];
 	unit?: string;
 }
@@ -24,6 +25,7 @@ export interface SeriesItem {
 	};
 	labelsArray: { [key: string]: string }[];
 	values: { timestamp: number; value: string }[];
+	title?: string;
 }
 
 export interface QueryDataV3 {

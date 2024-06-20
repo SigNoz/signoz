@@ -9,7 +9,7 @@ import {
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { get, isEqual, isNaN, isObject } from 'lodash-es';
+import { cloneDeep, get, isEqual, isNaN, isObject } from 'lodash-es';
 import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
@@ -196,8 +196,8 @@ const addOperatorFormulaColumns = (
 
 		const operatorColumn: DynamicColumn = {
 			query,
-			field: currentQueryData.name,
-			dataIndex: currentQueryData.name,
+			field: customLabel || currentQueryData.name,
+			dataIndex: customLabel || currentQueryData.name,
 			title: customLabel || operatorLabel,
 			data: [],
 			type: 'operator',
@@ -286,7 +286,9 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 					currentStagedQuery,
 					dynamicColumns,
 					query.queryType,
-					isEveryValuesExist ? undefined : get(currentStagedQuery, 'queryName', ''),
+					isEveryValuesExist
+						? get(series[0], 'title', undefined)
+						: get(series[0], 'title', get(currentStagedQuery, 'queryName', '')),
 				);
 			}
 
@@ -562,6 +564,37 @@ const generateTableColumns = (
 	return columns;
 };
 
+const splitSeriesOnTitle = (tableData: QueryDataV3[]): QueryDataV3[] => {
+	const splitSeriesData: QueryDataV3[] = [];
+	tableData.forEach((query) => {
+		const titleMap: Record<string, SeriesItem[]> = { '': [] };
+		query.series?.forEach((s) => {
+			if (s.title) {
+				if (titleMap[s.title]) {
+					titleMap[s.title].push(s);
+				} else {
+					titleMap[s.title] = [s];
+				}
+			} else {
+				titleMap[''].push(s);
+			}
+		});
+		if (Object.keys(titleMap).length === 1) {
+			splitSeriesData.push(query);
+		} else {
+			Object.keys(titleMap).forEach((title) => {
+				if (title !== '') {
+					const updatedSeries = cloneDeep(query);
+					updatedSeries.series = titleMap[title];
+					updatedSeries.queryName = title;
+					splitSeriesData.push(updatedSeries);
+				}
+			});
+		}
+	});
+	return splitSeriesData;
+};
+
 export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 	query,
 	queryTableData,
@@ -595,10 +628,12 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 		});
 	});
 
-	const dynamicColumns = getDynamicColumns(sortedQueryTableData, query);
+	const splitSeriesIfTitlePresent = splitSeriesOnTitle(sortedQueryTableData);
+
+	const dynamicColumns = getDynamicColumns(splitSeriesIfTitlePresent, query);
 
 	const { filledDynamicColumns, rowsLength } = fillColumnsData(
-		sortedQueryTableData,
+		splitSeriesIfTitlePresent,
 		dynamicColumns,
 	);
 

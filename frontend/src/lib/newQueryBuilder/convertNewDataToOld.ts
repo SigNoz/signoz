@@ -26,6 +26,7 @@ export const convertNewDataToOld = (
 				const result: QueryData = {
 					metric: serie.labels,
 					values,
+					title: serie.title || '',
 					queryName: item.queryName,
 				};
 

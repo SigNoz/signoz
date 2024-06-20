@@ -4,6 +4,7 @@ const getLabelName = (
 	metric: SeriesItem['labels'],
 	query: string,
 	legends: string,
+	title: string,
 ): string => {
 	if (metric === undefined) {
 		return '';
@@ -46,7 +47,7 @@ const getLabelName = (
 	if (post.length === 0 && pre.length === 0) {
 		return result;
 	}
-	return `${result}{${pre}${post}}`;
+	return `${title}-${result}{${pre}${post}}`;
 };
 
 export default getLabelName;

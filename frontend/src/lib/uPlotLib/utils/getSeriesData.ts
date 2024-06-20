@@ -44,12 +44,14 @@ const getSeries = ({
 	const newGraphVisibilityStates = graphsVisibilityStates?.slice(1);
 
 	for (let i = 0; i < seriesList?.length; i += 1) {
-		const { metric = {}, queryName = '', legend = '' } = widgetMetaData[i] || {};
+		const { metric = {}, queryName = '', legend = '', title = '' } =
+			widgetMetaData[i] || {};
 
 		const label = getLabelName(
 			metric,
 			queryName || '', // query
 			legend || '',
+			title,
 		);
 
 		const color = generateColor(
