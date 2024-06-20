@@ -649,8 +649,6 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 
 	const splitSeriesIfTitlePresent = splitSeriesOnTitle(sortedQueryTableData);
 
-	console.log(splitSeriesIfTitlePresent);
-
 	const dynamicColumns = getDynamicColumns(splitSeriesIfTitlePresent, query);
 
 	const { filledDynamicColumns, rowsLength } = fillColumnsData(
