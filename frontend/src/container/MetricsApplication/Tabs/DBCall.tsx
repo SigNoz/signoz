@@ -27,6 +27,7 @@ import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
+	useGetAPMToTracesQueries,
 } from './util';
 
 function DBCall(): JSX.Element {
@@ -96,6 +97,11 @@ function DBCall(): JSX.Element {
 		[servicename, tagFilterItems],
 	);
 
+	const apmToTraceQuery = useGetAPMToTracesQueries({
+		servicename,
+		isDBCall: true,
+	});
+
 	return (
 		<Row gutter={24}>
 			<Col span={12}>
@@ -107,6 +113,7 @@ function DBCall(): JSX.Element {
 						servicename,
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
+						apmToTraceQuery,
 					})}
 				>
 					View Traces
@@ -139,6 +146,7 @@ function DBCall(): JSX.Element {
 						servicename,
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
+						apmToTraceQuery,
 					})}
 				>
 					View Traces

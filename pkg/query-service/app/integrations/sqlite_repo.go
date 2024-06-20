@@ -11,7 +11,7 @@ import (
 
 func InitSqliteDBIfNeeded(db *sqlx.DB) error {
 	if db == nil {
-		return fmt.Errorf("db is required.")
+		return fmt.Errorf("db is required")
 	}
 
 	createTablesStatements := `

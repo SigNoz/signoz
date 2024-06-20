@@ -2,6 +2,7 @@ import './FormAlertRules.styles.scss';
 
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import {
+	Button,
 	Col,
 	FormInstance,
 	Modal,
@@ -22,13 +23,13 @@ import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
+import { isEqual } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
@@ -69,14 +70,15 @@ function FormAlertRules({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
 
 	const urlQuery = useUrlQuery();
 
-	const panelType = urlQuery.get(QueryParams.panelTypes) as PANEL_TYPES | null;
+	// In case of alert the panel types should always be "Graph" only
+	const panelType = PANEL_TYPES.TIME_SERIES;
 
 	const {
 		currentQuery,
@@ -101,6 +103,13 @@ function FormAlertRules({
 	// alertDef holds the form values to be posted
 	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
 	const [yAxisUnit, setYAxisUnit] = useState<string>(currentQuery.unit || '');
+
+	useEffect(() => {
+		if (!isEqual(currentQuery.unit, yAxisUnit)) {
+			setYAxisUnit(currentQuery.unit || '');
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [currentQuery.unit]);
 
 	// initQuery contains initial query when component was mounted
 	const initQuery = useMemo(() => initialValue.condition.compositeQuery, [
@@ -183,7 +192,9 @@ function FormAlertRules({
 		}
 		const query: Query = { ...currentQuery, queryType: val };
 
-		redirectWithQueryBuilderData(updateStepInterval(query, maxTime, minTime));
+		// update step interval is removed from here as if the user enters
+		// any value we will use that rather than auto update
+		redirectWithQueryBuilderData(query);
 	};
 	const { notifications } = useNotifications();
 
@@ -245,7 +256,7 @@ function FormAlertRules({
 
 		if (
 			!currentQuery.builder.queryData ||
-			currentQuery.builder.queryData.length === 0
+			currentQuery.builder.queryData?.length === 0
 		) {
 			notifications.error({
 				message: 'Error',
@@ -502,6 +513,31 @@ function FormAlertRules({
 
 	const isRuleCreated = !ruleId || ruleId === 0;
 
+	function handleRedirection(option: AlertTypes): void {
+		let url = '';
+		switch (option) {
+			case AlertTypes.METRICS_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
+				break;
+			case AlertTypes.LOGS_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
+				break;
+			case AlertTypes.TRACES_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
+				break;
+			case AlertTypes.EXCEPTIONS_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
+				break;
+			default:
+				break;
+		}
+		window.open(url, '_blank');
+	}
+
 	return (
 		<>
 			{Element}
@@ -532,7 +568,7 @@ function FormAlertRules({
 							queryCategory={currentQuery.queryType}
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
-							runQuery={handleRunQuery}
+							runQuery={(): void => handleRunQuery(true)}
 							alertDef={alertDef}
 							panelType={panelType || PANEL_TYPES.TIME_SERIES}
 							key={currentQuery.queryType}
@@ -585,22 +621,33 @@ function FormAlertRules({
 				</StyledLeftContainer>
 				<Col flex="1 1 300px">
 					<UserGuide queryType={currentQuery.queryType} />
-					<FacingIssueBtn
-						attributes={{
-							alert: alertDef?.alert,
-							alertType: alertDef?.alertType,
-							id: ruleId,
-							ruleType: alertDef?.ruleType,
-							state: (alertDef as any)?.state,
-							panelType,
-							screen: isRuleCreated ? 'Edit Alert' : 'New Alert',
-						}}
-						className="facing-issue-btn"
-						eventName="Alert: Facing Issues in alert"
-						buttonText="Need help with this alert?"
-						message={alertHelpMessage(alertDef, ruleId)}
-						onHoverText="Click here to get help with this alert"
-					/>
+					<div className="info-help-btns">
+						<Button
+							style={{ height: 32 }}
+							onClick={(): void =>
+								handleRedirection(alertDef?.alertType as AlertTypes)
+							}
+							className="doc-redirection-btn"
+						>
+							Check an example alert
+						</Button>
+						<FacingIssueBtn
+							attributes={{
+								alert: alertDef?.alert,
+								alertType: alertDef?.alertType,
+								id: ruleId,
+								ruleType: alertDef?.ruleType,
+								state: (alertDef as any)?.state,
+								panelType,
+								screen: isRuleCreated ? 'Edit Alert' : 'New Alert',
+							}}
+							className="facing-issue-btn"
+							eventName="Alert: Facing Issues in alert"
+							buttonText="Need help with this alert?"
+							message={alertHelpMessage(alertDef, ruleId)}
+							onHoverText="Click here to get help with this alert"
+						/>
+					</div>
 				</Col>
 			</PanelContainer>
 		</>

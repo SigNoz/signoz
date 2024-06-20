@@ -35,6 +35,7 @@ type GetHistogramSeriesProps = {
 	widgetMetaData?: QueryData[];
 	graphsVisibilityStates?: boolean[];
 	isMergedSeries?: boolean;
+	isDarkMode: boolean;
 };
 
 const { bars } = uPlot.paths;
@@ -56,6 +57,7 @@ const getHistogramSeries = ({
 	widgetMetaData,
 	graphsVisibilityStates,
 	isMergedSeries,
+	isDarkMode,
 }: GetHistogramSeriesProps): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
@@ -75,10 +77,13 @@ const getHistogramSeries = ({
 		const legend = newLegend || lgd || '';
 
 		const label = isMergedSeries
-			? 'merged_series'
+			? ''
 			: getLabelName(metric, queryName || '', legend);
 
-		const color = generateColor(label, themeColors.chartcolors);
+		const color = generateColor(
+			label,
+			isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+		);
 
 		const pointSize = seriesList[i].values.length > 1 ? 5 : 10;
 		const showPoints = !(seriesList[i].values.length > 1);
@@ -133,6 +138,7 @@ export const getUplotHistogramChartOptions = ({
 				apiResponse,
 				isHistogramGraphs: true,
 				isMergedSeries: mergeAllQueries,
+				isDarkMode,
 			}),
 		],
 		scales: {
@@ -157,6 +163,7 @@ export const getUplotHistogramChartOptions = ({
 			currentQuery,
 			graphsVisibilityStates,
 			isMergedSeries: mergeAllQueries,
+			isDarkMode,
 		}),
 		hooks: {
 			ready: [

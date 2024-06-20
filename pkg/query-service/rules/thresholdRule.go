@@ -427,7 +427,6 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	// 60 seconds (SDK) + 10 seconds (batch) + rest for n/w + serialization + write to disk etc..
 	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 2*60*1000
 	end := ts.UnixMilli() - 2*60*1000
-
 	// round to minute otherwise we could potentially miss data
 	start = start - (start % (60 * 1000))
 	end = end - (end % (60 * 1000))
@@ -478,8 +477,15 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 
 	if r.ruleCondition.CompositeQuery != nil && r.ruleCondition.CompositeQuery.BuilderQueries != nil {
 		for _, q := range r.ruleCondition.CompositeQuery.BuilderQueries {
-			q.StepInterval = int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60))
+			// If the step interval is less than the minimum allowed step interval, set it to the minimum allowed step interval
+			if minStep := common.MinAllowedStepInterval(start, end); q.StepInterval < minStep {
+				q.StepInterval = minStep
+			}
 		}
+	}
+
+	if r.ruleCondition.CompositeQuery.PanelType != v3.PanelTypeGraph {
+		r.ruleCondition.CompositeQuery.PanelType = v3.PanelTypeGraph
 	}
 
 	// default mode
@@ -767,9 +773,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	var errQuriesByName map[string]error
 
 	if r.version == "v4" {
-		results, err, errQuriesByName = r.querierV2.QueryRange(ctx, params, map[string]v3.AttributeKey{})
+		results, errQuriesByName, err = r.querierV2.QueryRange(ctx, params, map[string]v3.AttributeKey{})
 	} else {
-		results, err, errQuriesByName = r.querier.QueryRange(ctx, params, map[string]v3.AttributeKey{})
+		results, errQuriesByName, err = r.querier.QueryRange(ctx, params, map[string]v3.AttributeKey{})
 	}
 
 	if err != nil {

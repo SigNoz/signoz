@@ -20,6 +20,7 @@ export const prepareQueryRangePayload = ({
 	tableParams,
 	variables = {},
 	params = {},
+	fillGaps = false,
 }: GetQueryResultsProps): PrepareQueryRangePayload => {
 	let legendMap: Record<string, string> = {};
 	const { allowSelectedIntervalForStepGen, ...restParams } = params;
@@ -27,6 +28,7 @@ export const prepareQueryRangePayload = ({
 	const compositeQuery: QueryRangePayload['compositeQuery'] = {
 		queryType: query.queryType,
 		panelType: graphType,
+		fillGaps,
 	};
 
 	switch (query.queryType) {
