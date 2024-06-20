@@ -35,7 +35,7 @@ func createLogsReceiver(
 // NewFactory creates a new OTLP receiver factory.
 func NewFactory() receiver.Factory {
 	return receiver.NewFactory(
-		"memory",
+		component.MustNewType("memory"),
 		createDefaultConfig,
 		receiver.WithLogs(createLogsReceiver, component.StabilityLevelBeta))
 }
