@@ -12,7 +12,7 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
 import { isValidTimeFormat } from 'lib/getMinMax';
-import { defaultTo, isFunction, noop } from 'lodash-es';
+import { defaultTo, isFunction, isNull, noop } from 'lodash-es';
 import debounce from 'lodash-es/debounce';
 import { CheckCircle, ChevronDown, Clock } from 'lucide-react';
 import {
@@ -134,18 +134,49 @@ function CustomTimePicker({
 			setCustomDTPickerVisible?.(false);
 		}
 	};
+	function extractTimeUnit(
+		inputString: string,
+	): { value: number | null; unit: string | null } {
+		const pattern = /(\d+)\s*(week|day|minute|hour)s?/i;
 
+		const match = pattern.exec(inputString);
+
+		if (match) {
+			const value = parseInt(match[1], 10); // Extract the number and parse it as integer
+			const unitStr = match[2].toLowerCase(); // Extract the unit and convert to lowercase
+
+			let unit = ''; // Initialize unit variable
+
+			// Map the extracted unit to the desired single character
+			if (unitStr.startsWith('w')) {
+				unit = 'w'; // week/weeks
+			} else if (unitStr.startsWith('d')) {
+				unit = 'd'; // day/days
+			} else if (unitStr.startsWith('m')) {
+				unit = 'm'; // minute/minutes
+			} else if (unitStr.startsWith('h')) {
+				unit = 'h'; // hour/hours
+			}
+
+			return { value, unit };
+		}
+		return { value: null, unit: null }; // Return null if no match is found
+	}
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const debouncedHandleInputChange = debounce((inputValue): void => {
+		const { value: val, unit: uni } = extractTimeUnit(inputValue);
+
 		const isValidFormat = /^(\d+)([mhdw])$/.test(inputValue);
-		if (isValidFormat) {
+		if (isValidFormat || (!isNull(val) && !isNull(uni))) {
 			setInputStatus('success');
 			onError(false);
 			setInputErrorMessage(null);
 
 			const match = inputValue.match(/^(\d+)([mhdw])$/);
 
-			const value = parseInt(match[1], 10);
-			const unit = match[2];
+			const value = isValidFormat ? parseInt(match[1], 10) : val || 0;
+			const unit = isValidFormat ? match[2] : uni;
 
 			const currentTime = dayjs();
 			const maxAllowedMinTime = currentTime.subtract(
@@ -182,7 +213,7 @@ function CustomTimePicker({
 			} else {
 				onValidCustomDateChange({
 					time: [minTime, currentTime],
-					timeStr: inputValue,
+					timeStr: isValidFormat ? inputValue : `${value}${unit}`,
 				});
 			}
 		} else {
