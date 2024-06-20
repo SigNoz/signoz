@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import { SeriesItem } from 'types/api/widgets/getQuery';
 
 const getLabelName = (
@@ -25,6 +26,10 @@ const getLabelName = (
 			endResult = endResult.replace(`{{${e}}}`, results[index]);
 		});
 
+		if (!isEmpty(title)) {
+			return `${title}-${endResult}`;
+		}
+
 		return endResult;
 	}
 
@@ -34,6 +39,9 @@ const getLabelName = (
 	const postArray = keysArray.slice(index + 1, keysArray.length);
 
 	if (index === undefined && preArray.length === 0 && postArray.length) {
+		if (!isEmpty(title)) {
+			return `${title}-${query}`;
+		}
 		return query;
 	}
 
@@ -45,11 +53,18 @@ const getLabelName = (
 	const result = `${value === undefined ? '' : value}`;
 
 	if (post.length === 0 && pre.length === 0) {
+		if (!isEmpty(title)) {
+			return `${title}-${result}`;
+		}
 		return result;
 	}
 
+	if (!isEmpty(title)) {
+		return `${title}-${result}{${pre}${post}}`;
+	}
+
 	// TODO (@vikrantgupta25) make the change to add this only when there are multiple titles
-	return `${title}-${result}{${pre}${post}}`;
+	return `${result}{${pre}${post}}`;
 };
 
 export default getLabelName;
