@@ -33,6 +33,7 @@ export interface QueryDataV3 {
 	queryName: string;
 	legend?: string;
 	series: SeriesItem[] | null;
+	title?: string;
 	quantity?: number;
 	unitPrice?: number;
 	unit?: string;

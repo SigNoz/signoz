@@ -47,6 +47,8 @@ const getLabelName = (
 	if (post.length === 0 && pre.length === 0) {
 		return result;
 	}
+
+	// TODO (@vikrantgupta25) make the change to add this only when there are multiple titles
 	return `${title}-${result}{${pre}${post}}`;
 };
 
