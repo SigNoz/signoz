@@ -52,6 +52,7 @@ interface VariableItemProps {
 		allSelected: boolean,
 	) => void;
 	variablesToGetUpdated: string[];
+	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const getSelectValue = (
@@ -73,6 +74,7 @@ function VariableItem({
 	existingVariables,
 	onValueUpdate,
 	variablesToGetUpdated,
+	setVariablesToGetUpdated,
 }: VariableItemProps): JSX.Element {
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
 		[],
@@ -171,6 +173,10 @@ function VariableItem({
 						}
 
 						setOptionsData(newOptionsData);
+					} else {
+						setVariablesToGetUpdated((prev) =>
+							prev.filter((name) => name !== variableData.name),
+						);
 					}
 				}
 			} catch (e) {
