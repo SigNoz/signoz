@@ -1,29 +1,28 @@
-Follow these steps if you want to monitor System metrics like CPU Percentage, Memory Percentage etc. of your Azure App Service.
+Follow these steps if you want to monitor System metrics like CPU Percentage, Memory Percentage etc. of your Azure Functions.
 
 &nbsp;
 
 ## Prerequisites
 
-- Setup EventHub and Central Collector mentioned in previous steps
+- Azure subscription and an Azure Container App instance running
+- Central Collector Setup
+
+&nbsp;
+
+## Dashboard Example
+
+Once you have completed the prerequisites, you can start monitoring your Azure Function's system metrics with SigNoz. Here's how you can do it:
+
+1. Log in to your SigNoz account.
+2. Navigate to the Dashboards, and add an dashboard
+3. Add a Timeseries Panel
+4. In *Metrics*, select `azure_requests_total`  and *Avg By* select tag `location`
+5. In Filter say `name = <function-name>`
+6. Hit “Save Changes” You now have Total Requests of your Azure Function in a Dashboard for reporting and alerting 
 
 
-## Setup Dashboard
+That's it! You have successfully set up monitoring for your Azure Function's system metrics with SigNoz.
 
-Once you have set up the prerequisites, you can [create a Dashboard](https://signoz.io/docs/userguide/manage-panels/) in SigNoz to monitor your metrics.
+&nbsp;
 
-As an example, here's how you can track Memory Usage of your App Service
-
-1. Navigate to the Dashboards section of SigNoz, and add an dashboard.
-
-2. Add a Timeseries Panel
-
-3. In Metrics, select **azure_memorypercentage_total** and Avg By select tag location.
-
-4. In Filter say name = <app-svc-plan-name>
-
-5. Hit “Save Changes” You now have Memory Usage of your App Service in a Dashboard for reporting and alerting.
-
-
-
-
-In this way, you can monitor system metrics of your Azure App Service in SigNoz!
+If you encounter any difficulties, please refer to this [troubleshooting section](https://signoz.io/docs/azure-monitoring/az-fns/metrics/#troubleshooting) 

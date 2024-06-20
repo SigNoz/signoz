@@ -13,4 +13,4 @@ To see how you can instrument your applications like FastAPI, NextJS, Node.js, S
 export OTEL_EXPORTER_OTLP_ENDPOINT="http://otel-collector.kubelet-otel.svc.cluster.local:4318/"
 ```
 
-For application-level traces and metrics, configure your application to use the kube-dns name of the **Central Collector** you set up earlier.
+For application-level traces and metrics, configure your application to use the `kube-dns` name of the **Central Collector** you set up earlier.

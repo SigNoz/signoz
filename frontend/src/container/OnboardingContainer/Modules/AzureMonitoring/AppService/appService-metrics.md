@@ -4,26 +4,22 @@ Follow these steps if you want to monitor System metrics like CPU Percentage, Me
 
 ## Prerequisites
 
-- Setup EventHub and Central Collector mentioned in previous steps
+- EventHub Setup
+- Central Collector Setup
 
+## Dashboard Example
 
-## Setup Dashboard
+Once you have completed the prerequisites, you can start monitoring your Azure App Service's system metrics with SigNoz Cloud. Here's how you can do it:
 
-Once you have set up the prerequisites, you can [create a Dashboard](https://signoz.io/docs/userguide/manage-panels/) in SigNoz to monitor your metrics.
+1. Log in to your SigNoz account
+2. Navigate to the Dashboards section, and [add a dashboard](https://signoz.io/docs/userguide/manage-dashboards/)
+3. Add a Timeseries Panel
+4. In **Metrics**, select `azure_memorypercentage_total`  and **Avg By** select tag `location`
+5. In Filter say `name = <app-svc-plan-name>`
+6. Hit “Save Changes” and you now have Memory Usage of your App Service in a Dashboard for reporting and alerting 
 
-As an example, here's how you can track Memory Usage of your App Service
+In this way, you can monitor system metrics of your Azure App Service in SigNoz Cloud.
 
-1. Navigate to the Dashboards section of SigNoz, and add an dashboard.
+&nbsp;
 
-2. Add a Timeseries Panel
-
-3. In Metrics, select **azure_memorypercentage_total** and Avg By select tag location.
-
-4. In Filter say name = <app-svc-plan-name>
-
-5. Hit “Save Changes” You now have Memory Usage of your App Service in a Dashboard for reporting and alerting.
-
-
-
-
-In this way, you can monitor system metrics of your Azure App Service in SigNoz!
+If you encounter any difficulties, please refer to this [troubleshooting section](https://signoz.io/docs/azure-monitoring/app-service/metrics/#troubleshooting) 

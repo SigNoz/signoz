@@ -36,19 +36,5 @@ Integrate SigNoz with Azure Event Hubs for a robust log management solution, lev
 5. Click "Save".
 6. Copy the *Connection string–primary key*.
 
-### 4. Configure OpenTelemetry Integration
-
-1. Add a new receiver to [Central Collector Setup](../collector-setup).
-2. Configure the receiver with the Event Hubs namespace connection string and the event hub name.
-
-### 5. Stream Logs to Event Hubs
-
-1. Configure Azure services' diagnostic settings to forward logs to the Event Hub.
-2. Ensure logs are in [Azure Common Log Format](https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/resource-logs-schema).
-3. Verify logs are streaming to Event Hubs and received by SigNoz.
-
-For detailed instructions, refer to the Azure documentation: [Azure Event Hub](https://learn.microsoft.com/en-us/azure/event-hubs/event-hubs-create).
-
-<!-- For more configuration options, see the [OpenTelemetry Documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/azureeventhubreceiver). -->
 
 

@@ -1,29 +1,27 @@
-Follow these steps if you want to monitor System metrics like CPU Percentage, Memory Percentage etc. of your Azure App Service.
+Follow these steps if you want to monitor System metrics like CPU Percentage, Memory Percentage etc. of your Azure Container App.
 
 &nbsp;
 
 ## Prerequisites
 
-- Setup EventHub and Central Collector mentioned in previous steps
+- Azure subscription and an Azure Container App instance running
+- Central Collector Setup
 
+&nbsp;
 
-## Setup Dashboard
+# Dashboard Example
 
-Once you have set up the prerequisites, you can [create a Dashboard](https://signoz.io/docs/userguide/manage-panels/) in SigNoz to monitor your metrics.
+Once you have completed the prerequisites, you can start monitoring your Azure Container App's system metrics with SigNoz. Here's how you can do it:
 
-As an example, here's how you can track Memory Usage of your App Service
+1. Log in to your SigNoz account.
+2. Navigate to the Dashboards, and [add an dashboard](https://signoz.io/docs/userguide/manage-dashboards/)
+3. Add a Timeseries Panel
+4. In **Metrics**, select `azure_replicas_count`  and **Avg By** select tag `name`
+5. In Filter say `type = Microsoft.App/containerApps`
+6. Hit “Save Changes”. You now have Memory Usage of your Container App in a Dashboard for reporting and alerting 
 
-1. Navigate to the Dashboards section of SigNoz, and add an dashboard.
+In this way, you can monitor system metrics of your Azure Container App in SigNoz!
 
-2. Add a Timeseries Panel
+&nbsp;
 
-3. In Metrics, select **azure_memorypercentage_total** and Avg By select tag location.
-
-4. In Filter say name = <app-svc-plan-name>
-
-5. Hit “Save Changes” You now have Memory Usage of your App Service in a Dashboard for reporting and alerting.
-
-
-
-
-In this way, you can monitor system metrics of your Azure App Service in SigNoz!
+If you encounter any difficulties, please refer to this [troubleshooting section](https://signoz.io/docs/azure-monitoring/az-container-apps/metrics/#troubleshooting) 
