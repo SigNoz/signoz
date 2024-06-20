@@ -108,6 +108,7 @@ function GridCardGraph({
 				query: updatedQuery,
 				globalSelectedInterval,
 				variables: getDashboardVariables(variables),
+				fillGaps: widget.fillSpans,
 			};
 		}
 		updatedQuery.builder.queryData[0].pageSize = 10;
@@ -122,6 +123,7 @@ function GridCardGraph({
 					limit: updatedQuery.builder.queryData[0].limit || 0,
 				},
 			},
+			fillGaps: widget.fillSpans,
 		};
 	});
 
@@ -152,6 +154,7 @@ function GridCardGraph({
 				widget?.query,
 				widget?.panelTypes,
 				widget.timePreferance,
+				widget.fillSpans,
 				requestData,
 			],
 			retry(failureCount, error): boolean {
