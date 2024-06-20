@@ -27,10 +27,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/prometheus/config"
-	"github.com/prometheus/prometheus/discovery"
 	"github.com/prometheus/prometheus/promql"
 
-	"github.com/prometheus/prometheus/scrape"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/storage/remote"
 	"github.com/prometheus/prometheus/util/stats"
@@ -262,13 +260,7 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 		configFile: r.promConfigFile,
 	}
 
-	// fanoutStorage := remoteStorage
 	fanoutStorage := storage.NewFanout(logger, remoteStorage)
-
-	ctxScrape, cancelScrape := context.WithCancel(context.Background())
-	discoveryManagerScrape := discovery.NewManager(ctxScrape, log.With(logger, "component", "discovery manager scrape"), discovery.Name("scrape"))
-
-	scrapeManager := scrape.NewManager(nil, log.With(logger, "component", "scrape manager"), fanoutStorage)
 
 	opts := promql.EngineOpts{
 		Logger:     log.With(logger, "component", "query engine"),
@@ -286,16 +278,6 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 
 	reloaders := []func(cfg *config.Config) error{
 		remoteStorage.ApplyConfig,
-		// The Scrape managers need to reload before the Discovery manager as
-		// they need to read the most updated config when receiving the new targets list.
-		scrapeManager.ApplyConfig,
-		func(cfg *config.Config) error {
-			c := make(map[string]discovery.Configs)
-			for _, v := range cfg.ScrapeConfigs {
-				c[v.JobName] = v.ServiceDiscoveryConfigs
-			}
-			return discoveryManagerScrape.ApplyConfig(c)
-		},
 	}
 
 	// sync.Once is used to make sure we can close the channel at different execution stages(SIGTERM or when the config is loaded).
@@ -316,54 +298,10 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 
 	var g group.Group
 	{
-		// Scrape discovery manager.
-		g.Add(
-			func() error {
-				err := discoveryManagerScrape.Run()
-				level.Info(logger).Log("msg", "Scrape discovery manager stopped")
-				return err
-			},
-			func(err error) {
-				level.Info(logger).Log("msg", "Stopping scrape discovery manager...")
-				cancelScrape()
-			},
-		)
-	}
-	{
-		// Scrape manager.
-		g.Add(
-			func() error {
-				// When the scrape manager receives a new targets list
-				// it needs to read a valid config for each job.
-				// It depends on the config being in sync with the discovery manager so
-				// we wait until the config is fully loaded.
-				<-reloadReady.C
-
-				err := scrapeManager.Run(discoveryManagerScrape.SyncCh())
-				level.Info(logger).Log("msg", "Scrape manager stopped")
-				return err
-			},
-			func(err error) {
-				// Scrape manager needs to be stopped before closing the local TSDB
-				// so that it doesn't try to write samples to a closed storage.
-				level.Info(logger).Log("msg", "Stopping scrape manager...")
-				scrapeManager.Stop()
-			},
-		)
-	}
-	{
 		// Initial configuration loading.
 		cancel := make(chan struct{})
 		g.Add(
 			func() error {
-				// select {
-				// case <-dbOpen:
-				// 	break
-				// // In case a shutdown is initiated before the dbOpen is released
-				// case <-cancel:
-				// 	reloadReady.Close()
-				// 	return nil
-				// }
 				var err error
 				r.promConfig, err = reloadConfig(cfg.configFile, logger, reloaders...)
 				if err != nil {
