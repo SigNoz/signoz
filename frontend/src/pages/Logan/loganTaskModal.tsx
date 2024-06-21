@@ -204,11 +204,6 @@ function LoganTaskModal({
 		}
 	}, [isEdit, record]);
 
-	// useEffect(() => {
-	// 	console.log('hhh', isEdit);
-	// 	setTaskData(cloneDeep(initTaskData));
-	// }, [isEdit]);
-
 	return (
 		<>
 			{contextHolder}

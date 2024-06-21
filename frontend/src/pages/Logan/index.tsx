@@ -37,16 +37,21 @@ export interface LoganTableType {
 	desc: string;
 }
 
+interface SearchParamType {
+	name?: string;
+	userId?: string;
+	deviceId?: string;
+	isReported?: number;
+}
+
 type Pagination = {
 	current: number;
 	pageSize: number;
 };
-type TableParamType = {
-	pagination: Pagination;
-	// sortOrder: string;
-	// sortParam: string;
-};
 
+interface FinalSearchParamType extends SearchParamType {
+	page: Pagination;
+}
 type OnChange = NonNullable<TableProps<LoganTableType>['onChange']>;
 
 const { RangePicker } = DatePicker;
@@ -56,10 +61,9 @@ function Logan(): JSX.Element {
 	const [messageApi] = message.useMessage();
 	const isDarkMode = useIsDarkMode();
 	const [timeSelect, setTimeSelect] = useState<Dayjs[]>([
-		dayjs().subtract(7, 'day'),
-		dayjs(),
+		// dayjs().subtract(7, 'day'),
+		// dayjs(),
 	]);
-	const [isReported, setIsReported] = useState<number>();
 	const [modalVisible, setModalVisible] = useState<boolean>(false);
 	const [modalIsEdit, setModalIsEdit] = useState<boolean>(false);
 	const [searchLoading, setSearchLoading] = useState<boolean>(false);
@@ -70,6 +74,7 @@ function Logan(): JSX.Element {
 		current: 1,
 		pageSize: 20,
 	});
+	const [searchParam, setSearchParam] = useState<SearchParamType>();
 
 	const handleShowModal = (isEdit: boolean) => {
 		setModalVisible(true);
@@ -236,7 +241,7 @@ function Logan(): JSX.Element {
 		return finalParam;
 	};
 
-	const searchLogan = async (searchParam: any, page: Pagination) => {
+	const searchLogan = async (searchParam: any) => {
 		try {
 			console.log('searchParam', searchParam);
 			setSearchLoading(true);
@@ -276,7 +281,31 @@ function Logan(): JSX.Element {
 	};
 
 	const handleSearch = () => {
-		searchLogan({}, pagination);
+		const param: FinalSearchParamType = {
+			...searchParam,
+			page: pagination,
+		};
+
+		for (const key in param) {
+			if (!String((param as any)[key])) {
+				delete (param as any)[key];
+			}
+		}
+		if (timeSelect.length) {
+			Object.assign(param, {
+				timeSelect: timeSelect.map((item) => dayjs(item).format('YYYY-MM-DD')),
+			});
+		}
+		searchLogan(param);
+	};
+
+	const handleInput = (type: string, value: string | number) => {
+		setSearchParam((prev) => {
+			return {
+				...prev,
+				[type]: value,
+			};
+		});
 	};
 
 	useEffect(() => {
@@ -290,65 +319,70 @@ function Logan(): JSX.Element {
 			<div>
 				<Form name="search-form" layout="inline">
 					<Form.Item label="任务名" style={{ marginBottom: 10 }}>
-						<Form.Item name="name">
-							<Input
-								style={{ width: 160 }}
-								placeholder="Please input"
-								allowClear
-								// defaultValue={getUpdatedMessage}
-								// onChange={(e) => handleChangeType('message', e.target.value)}
-							/>
-						</Form.Item>
+						<Input
+							style={{ width: 160 }}
+							placeholder="Please input"
+							allowClear
+							value={searchParam?.name}
+							onChange={(e) => handleInput('name', e.target.value)}
+						/>
 					</Form.Item>
 					<Form.Item label="UserId" style={{ marginBottom: 10 }}>
-						<Form.Item name="userId">
-							<Input style={{ width: 160 }} placeholder="Please input" allowClear />
-						</Form.Item>
+						<Input
+							style={{ width: 160 }}
+							placeholder="Please input"
+							value={searchParam?.userId}
+							onChange={(e) => handleInput('userId', e.target.value)}
+							allowClear
+						/>
 					</Form.Item>
 					<Form.Item label="DeviceId" style={{ marginBottom: 10 }}>
-						<Form.Item name="deviceId">
-							<Input style={{ width: 160 }} placeholder="Please input" allowClear />
-						</Form.Item>
+						<Input
+							style={{ width: 160 }}
+							placeholder="Please input"
+							value={searchParam?.deviceId}
+							onChange={(e) => handleInput('deviceId', e.target.value)}
+							allowClear
+						/>
 					</Form.Item>
 					<Form.Item label="选择时间" style={{ marginBottom: 10 }}>
-						<Form.Item name="timeSelect">
-							<RangePicker
-								format="YYYY-MM-DD"
-								popupStyle={
-									isDarkMode
-										? { backgroundColor: 'black' }
-										: { backgroundColor: 'white' }
+						<RangePicker
+							format="YYYY-MM-DD"
+							popupStyle={
+								isDarkMode ? { backgroundColor: 'black' } : { backgroundColor: 'white' }
+							}
+							defaultValue={[timeSelect[0], timeSelect[1]]}
+							onChange={(value, dateString: [string, string]) => {
+								// console.log('value', value);
+								if (Array.isArray(value)) {
+									setTimeSelect(value as [Dayjs, Dayjs]);
+								} else {
+									setTimeSelect([]);
 								}
-								defaultValue={[timeSelect[0], timeSelect[1]]}
-								onChange={(value, dateString: [string, string]) => {
-									if (Array.isArray(value)) {
-										setTimeSelect(value as [Dayjs, Dayjs]);
-									}
-								}}
-							/>
-						</Form.Item>
+							}}
+						/>
 					</Form.Item>
 					<Form.Item label="是否已上报" style={{ marginBottom: 10 }}>
-						<Form.Item name="isReported">
-							<Select
-								value={isReported}
-								showSearch
-								allowClear
-								placeholder="Select a project"
-								style={{ width: 180 }}
-								onChange={setIsReported}
-								options={[
-									{
-										value: 1,
-										label: '是',
-									},
-									{
-										value: 0,
-										label: '否',
-									},
-								]}
-							/>
-						</Form.Item>
+						<Select
+							// value={'0'}
+							allowClear
+							placeholder="Select a project"
+							style={{ width: 180 }}
+							onChange={(value: string) => {
+								// console.log('value', value);
+								handleInput('isReported', value);
+							}}
+							options={[
+								{
+									value: 1,
+									label: '是',
+								},
+								{
+									value: 0,
+									label: '否',
+								},
+							]}
+						/>
 					</Form.Item>
 					<Form.Item label=" " colon={false} style={{ marginBottom: 10 }}>
 						<Button type="primary" onClick={handleSearch}>
