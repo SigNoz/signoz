@@ -88,6 +88,9 @@ function LoganTaskModal({
 				{
 					id: record.id,
 					...taskData,
+					timeSelect: taskData.timeSelect.map((item) =>
+						dayjs(item).format('YYYY-MM-DD'),
+					),
 				},
 			);
 			if (data.result) {
@@ -118,6 +121,9 @@ function LoganTaskModal({
 				`${process.env.SERVER_API_HOST}/capi/logan/createLoganTask`,
 				{
 					...taskData,
+					timeSelect: taskData.timeSelect.map((item) =>
+						dayjs(item).format('YYYY-MM-DD'),
+					),
 				},
 			);
 			if (data.result) {
