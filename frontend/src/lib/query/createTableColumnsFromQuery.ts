@@ -9,7 +9,7 @@ import {
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { get, isEqual, isNaN, isObject } from 'lodash-es';
+import { cloneDeep, get, isEqual, isNaN, isObject } from 'lodash-es';
 import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
@@ -575,7 +575,9 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 	// the reason we need this is because the filling of values in rows doesn't account for mismatch enteries
 	// in the response. Example : Series A -> [label1, label2] and Series B -> [label2,label1] this isn't accounted for
 	sortedQueryTableData.forEach((q) => {
-		q.series?.forEach((s) => {
+		const updatedSeries = cloneDeep(q);
+
+		updatedSeries.series?.forEach((s) => {
 			s.labelsArray?.sort((a, b) =>
 				Object.keys(a)[0] < Object.keys(b)[0] ? -1 : 1,
 			);
@@ -583,11 +585,13 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 		q.series?.sort((a, b) => {
 			let labelA = '';
 			let labelB = '';
-			a.labelsArray.forEach((lab) => {
+			const updatedSeriesA = updatedSeries.series?.find((s) => isEqual(s, a));
+			const updatedSeriesB = updatedSeries.series?.find((s) => isEqual(s, b));
+			updatedSeriesA?.labelsArray.forEach((lab) => {
 				labelA += Object.values(lab)[0];
 			});
 
-			b.labelsArray.forEach((lab) => {
+			updatedSeriesB?.labelsArray.forEach((lab) => {
 				labelB += Object.values(lab)[0];
 			});
 
