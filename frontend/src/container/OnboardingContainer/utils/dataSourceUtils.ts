@@ -274,7 +274,7 @@ const supportedAwsServices = [
 
 export const defaultAzureServices = {
 	name: 'VM',
-	id: 'azureVM',
+	id: 'azureVm',
 	imgURL: `/Logos/azure-vm.svg`,
 };
 

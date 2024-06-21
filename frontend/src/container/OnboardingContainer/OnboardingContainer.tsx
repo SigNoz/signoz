@@ -257,17 +257,23 @@ export default function Onboarding(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (location.pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING) {
+		const { pathname } = location;
+
+		if (pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING) {
 			handleModuleSelect(useCases.APM);
 			updateSelectedDataSource(defaultApplicationDataSource);
 			handleNextStep();
-		} else if (
-			location.pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING
-		) {
+		} else if (pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING) {
 			handleModuleSelect(useCases.InfrastructureMonitoring);
 			handleNextStep();
-		} else if (location.pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT) {
+		} else if (pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT) {
 			handleModuleSelect(useCases.LogsManagement);
+			handleNextStep();
+		} else if (pathname === ROUTES.GET_STARTED_AWS_MONITORING) {
+			handleModuleSelect(useCases.AwsMonitoring);
+			handleNextStep();
+		} else if (pathname === ROUTES.GET_STARTED_AZURE_MONITORING) {
+			handleModuleSelect(useCases.AzureMonitoring);
 			handleNextStep();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
