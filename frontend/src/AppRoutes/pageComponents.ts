@@ -199,3 +199,7 @@ export const ProjectManager = Loadable(
 export const JiraReports = Loadable(
 	() => import(/* webpackChunkName: "JiraReportsPage" */ 'pages/JiraReports'),
 );
+
+export const Logan = Loadable(
+	() => import(/* webpackChunkName: "LoganPage" */ 'pages/Logan'),
+);

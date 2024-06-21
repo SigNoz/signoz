@@ -20,6 +20,7 @@ import {
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
+	Logan,
 	Login,
 	Logs,
 	LogsExplorer,
@@ -350,6 +351,13 @@ const routes: AppRoutes[] = [
 		component: JiraReports,
 		isPrivate: true,
 		key: 'JIRA_REPORTS',
+	},
+	{
+		path: ROUTES.LOGAN,
+		exact: true,
+		component: Logan,
+		isPrivate: true,
+		key: 'LOGAN',
 	},
 ];
 

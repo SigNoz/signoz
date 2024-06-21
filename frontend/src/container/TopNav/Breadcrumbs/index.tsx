@@ -29,6 +29,7 @@ const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.WORKSPACE_LOCKED]: 'Workspace Locked',
 	[ROUTES.PROJECT_MANAGER]: 'Project Manager',
 	[ROUTES.JIRA_REPORTS]: 'Jira Reports',
+	[ROUTES.LOGAN]: 'Logan',
 };
 
 function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {

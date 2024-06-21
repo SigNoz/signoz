@@ -9,6 +9,7 @@ import {
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
+	FileSearch,
 	Layers2,
 	LayoutGrid,
 	MessageSquare,
@@ -105,6 +106,11 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.JIRA_REPORTS,
 		label: 'Jira Reports',
 		icon: <BarChartBig size={16} />,
+	},
+	{
+		key: ROUTES.LOGAN,
+		label: 'Logan',
+		icon: <FileSearch size={16} />,
 	},
 	// {
 	// 	key: ROUTES.SERVICE_MAP,

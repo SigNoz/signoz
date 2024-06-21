@@ -1,0 +1,377 @@
+import { ExclamationCircleOutlined, SearchOutlined } from '@ant-design/icons';
+import type { TableProps } from 'antd';
+import {
+	Button,
+	Col,
+	DatePicker,
+	Form,
+	Input,
+	message,
+	Modal,
+	Row,
+	Select,
+	Space,
+	Table,
+	Tag,
+} from 'antd';
+import axios from 'axios';
+import { ResizeTable } from 'components/ResizeTable';
+import dayjs, { Dayjs } from 'dayjs';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { camelCase } from 'lodash-es';
+import { useEffect, useState } from 'react';
+
+import LoganTaskModal from './loganTaskModal';
+/* eslint-disable */
+export interface LoganTableType {
+	id: number;
+	name: string;
+	userId: string;
+	deviceId: string;
+	timeSelect: string[];
+	createAt: string;
+	needReport: number;
+	isReported: number;
+	logFileName: string;
+	bugLink: string;
+	desc: string;
+}
+
+type Pagination = {
+	current: number;
+	pageSize: number;
+};
+type TableParamType = {
+	pagination: Pagination;
+	// sortOrder: string;
+	// sortParam: string;
+};
+
+type OnChange = NonNullable<TableProps<LoganTableType>['onChange']>;
+
+const { RangePicker } = DatePicker;
+
+function Logan(): JSX.Element {
+	const [modal, contextHolder] = Modal.useModal();
+	const [messageApi] = message.useMessage();
+	const isDarkMode = useIsDarkMode();
+	const [timeSelect, setTimeSelect] = useState<Dayjs[]>([
+		dayjs().subtract(7, 'day'),
+		dayjs(),
+	]);
+	const [isReported, setIsReported] = useState<number>();
+	const [modalVisible, setModalVisible] = useState<boolean>(false);
+	const [modalIsEdit, setModalIsEdit] = useState<boolean>(false);
+	const [searchLoading, setSearchLoading] = useState<boolean>(false);
+	const [tableData, setTableData] = useState<LoganTableType[]>([]);
+	const [tableTotal, setTableTotal] = useState<number>(0);
+	const [curRecord, setCurRecord] = useState<LoganTableType | null>(null);
+	const [pagination, setPagination] = useState<Pagination>({
+		current: 1,
+		pageSize: 20,
+	});
+
+	const handleShowModal = (isEdit: boolean) => {
+		setModalVisible(true);
+		setModalIsEdit(isEdit);
+	};
+
+	const handleEdit = (record: LoganTableType) => {
+		setCurRecord(record);
+		handleShowModal(true);
+	};
+
+	const handleCreate = () => {
+		setCurRecord(null);
+		handleShowModal(false);
+		setModalIsEdit(false);
+	};
+
+	const deleteTask = async (id: number) => {
+		try {
+			const { data } = await axios.post(
+				`${process.env.SERVER_API_HOST}/capi/logan/deleteLoganTask`,
+				{
+					id,
+				},
+			);
+			if (data.result) {
+				messageApi.open({
+					type: 'success',
+					content: 'delete success',
+				});
+				return true;
+			}
+			messageApi.open({
+				type: 'warning',
+				content: data.message,
+			});
+			return false;
+		} catch (error) {
+			console.log('deleteTaskError', error);
+			messageApi.open({
+				type: 'error',
+				content: 'Update Error',
+			});
+			return false;
+		}
+	};
+
+	const handleDelete = (record: LoganTableType) => {
+		modal.confirm({
+			title: 'Confirm',
+			icon: <ExclamationCircleOutlined />,
+			content: 'You sure to delete current record?',
+			async onOk() {
+				console.log('OK');
+				const res = await deleteTask(record.id);
+				if (res) handleSearch();
+			},
+			onCancel() {
+				console.log('Cancel');
+			},
+		});
+	};
+
+	const columns: TableProps<LoganTableType>['columns'] = [
+		{
+			title: 'Task Name',
+			dataIndex: 'name',
+			key: 'name',
+			// render: (text) => <a>{text}</a>,
+		},
+		{
+			title: 'UserId',
+			dataIndex: 'userId',
+			key: 'userId',
+		},
+		{
+			title: 'DeviceId',
+			dataIndex: 'deviceId',
+			key: 'deviceId',
+		},
+		{
+			title: '是否开启上报',
+			dataIndex: 'needReport',
+			key: 'needReport',
+			render: (value, record) => <span>{value === 1 ? '是' : '否'}</span>,
+		},
+		{
+			title: '是否已上报',
+			dataIndex: 'isReported',
+			key: 'isReported',
+			render: (value, record) => <span>{value === 1 ? '是' : '否'}</span>,
+		},
+		{
+			title: '时间筛选',
+			dataIndex: 'timeSelect',
+			key: 'timeSelect',
+			render: (value, record) => {
+				return record.timeSelect.map((item: string) => (
+					<span style={{ marginRight: 14 }}>{dayjs(item).format('MM/DD/YYYY')}</span>
+				));
+			},
+		},
+		{
+			title: '创建时间',
+			dataIndex: 'createdAt',
+			key: 'createdAt',
+			render: (value, record) => (
+				<span>{dayjs(value).format('MM/DD/YYYY HH:mm:ss')}</span>
+			),
+		},
+		{
+			title: 'Bug Link',
+			dataIndex: 'bugLink',
+			key: 'bugLink',
+		},
+		{
+			title: '文件地址',
+			dataIndex: 'logFileName',
+			key: 'logFileName',
+		},
+		{
+			title: '操作',
+			key: 'action',
+			render: (_, record) => (
+				<Space size="middle">
+					<a onClick={() => handleEdit(record)}>Edit</a>
+					<a onClick={() => handleDelete(record)}>Delete</a>
+				</Space>
+			),
+		},
+	];
+
+	const formatDataToPage = (param: { [x: string]: any }) => {
+		const finalParam = {} as any;
+		for (const key in param as any) {
+			if (String(param[key])) {
+				if (key === 'time_select') {
+					finalParam[camelCase(key)] = param[key].split(',');
+					continue;
+				}
+				finalParam[camelCase(key)] = param[key];
+			}
+		}
+		return finalParam;
+	};
+
+	const searchLogan = async (searchParam: any, page: Pagination) => {
+		try {
+			console.log('searchParam', searchParam);
+			setSearchLoading(true);
+			const { data } = await axios.post(
+				`${process.env.SERVER_API_HOST}/capi/logan/searchLoganTable`,
+				searchParam,
+			);
+			if (data.result) {
+				const list =
+					data.data?.list?.map((item: any) => {
+						return formatDataToPage(item);
+					}) || [];
+				console.log('list', list);
+				setTableData(list);
+				setTableTotal(data.total);
+			}
+		} catch (error) {
+			console.error('searchAllRulesError', error);
+		} finally {
+			setSearchLoading(false);
+		}
+	};
+
+	const handleTableChange: OnChange = (page, filters, sorter) => {
+		setPagination((prev) => ({
+			...prev,
+			current: page.current || 1,
+		}));
+		let tmpPag: Pagination | null = {
+			current: page.current || 0,
+			pageSize: page.pageSize || 0,
+		};
+		if ((sorter as any)?.field === 'count' && (sorter as any)?.order) {
+			tmpPag = null;
+		}
+		// getTableList(tmpPag, (sorter as any)?.field, (sorter as any)?.order);
+	};
+
+	const handleSearch = () => {
+		searchLogan({}, pagination);
+	};
+
+	useEffect(() => {
+		handleSearch();
+	}, []);
+
+	return (
+		<>
+			{contextHolder}
+			<h1 style={isDarkMode ? { color: 'white' } : { color: 'black' }}>Logan</h1>
+			<div>
+				<Form name="search-form" layout="inline">
+					<Form.Item label="任务名" style={{ marginBottom: 10 }}>
+						<Form.Item name="name">
+							<Input
+								style={{ width: 160 }}
+								placeholder="Please input"
+								allowClear
+								// defaultValue={getUpdatedMessage}
+								// onChange={(e) => handleChangeType('message', e.target.value)}
+							/>
+						</Form.Item>
+					</Form.Item>
+					<Form.Item label="UserId" style={{ marginBottom: 10 }}>
+						<Form.Item name="userId">
+							<Input style={{ width: 160 }} placeholder="Please input" allowClear />
+						</Form.Item>
+					</Form.Item>
+					<Form.Item label="DeviceId" style={{ marginBottom: 10 }}>
+						<Form.Item name="deviceId">
+							<Input style={{ width: 160 }} placeholder="Please input" allowClear />
+						</Form.Item>
+					</Form.Item>
+					<Form.Item label="选择时间" style={{ marginBottom: 10 }}>
+						<Form.Item name="timeSelect">
+							<RangePicker
+								format="YYYY-MM-DD"
+								popupStyle={
+									isDarkMode
+										? { backgroundColor: 'black' }
+										: { backgroundColor: 'white' }
+								}
+								defaultValue={[timeSelect[0], timeSelect[1]]}
+								onChange={(value, dateString: [string, string]) => {
+									if (Array.isArray(value)) {
+										setTimeSelect(value as [Dayjs, Dayjs]);
+									}
+								}}
+							/>
+						</Form.Item>
+					</Form.Item>
+					<Form.Item label="是否已上报" style={{ marginBottom: 10 }}>
+						<Form.Item name="isReported">
+							<Select
+								value={isReported}
+								showSearch
+								allowClear
+								placeholder="Select a project"
+								style={{ width: 180 }}
+								onChange={setIsReported}
+								options={[
+									{
+										value: 1,
+										label: '是',
+									},
+									{
+										value: 0,
+										label: '否',
+									},
+								]}
+							/>
+						</Form.Item>
+					</Form.Item>
+					<Form.Item label=" " colon={false} style={{ marginBottom: 10 }}>
+						<Button type="primary" onClick={handleSearch}>
+							Search
+						</Button>
+					</Form.Item>
+				</Form>
+			</div>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'flex-end',
+					alignItems: 'center',
+				}}
+			>
+				<Button type="primary" onClick={handleCreate}>
+					Create Task
+				</Button>
+			</div>
+			<ResizeTable
+				columns={columns}
+				rowKey={(record) => record.id}
+				dataSource={tableData}
+				loading={searchLoading}
+				pagination={{
+					...pagination,
+					total: tableTotal,
+				}}
+				onChange={handleTableChange}
+			/>
+
+			{/* modal弹窗 */}
+			<LoganTaskModal
+				visible={modalVisible}
+				isEdit={modalIsEdit}
+				record={curRecord}
+				handleClose={(needFresh: boolean) => {
+					setModalVisible(false);
+					if (needFresh) handleSearch();
+				}}
+			/>
+		</>
+	);
+}
+
+export default Logan;
