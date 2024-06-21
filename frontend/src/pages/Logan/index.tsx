@@ -189,6 +189,26 @@ function Logan(): JSX.Element {
 			title: '文件地址',
 			dataIndex: 'logFileName',
 			key: 'logFileName',
+			render: (value, record) => {
+				return (
+					<div style={{}}>
+						{record.logFileName ? (
+							record.logFileName.split(',').map((item: string, i: number) => (
+								<a
+									key={i}
+									href={`${process.env.LOGAN_FILE_PATH}${item}.zip`}
+									target="_blank"
+									style={{ display: 'block' }}
+								>
+									{item}
+								</a>
+							))
+						) : (
+							<></>
+						)}
+					</div>
+				);
+			},
 		},
 		{
 			title: '操作',
