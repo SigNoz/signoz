@@ -986,10 +986,25 @@ type QueryRangeResponse struct {
 	Result                []*Result `json:"result"`
 }
 
+type TableColumn struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+type TableRow struct {
+	Data []interface{} `json:"data"`
+}
+
+type Table struct {
+	Columns []*TableColumn `json:"columns"`
+	Rows    []*TableRow    `json:"rows"`
+}
+
 type Result struct {
-	QueryName string    `json:"queryName"`
-	Series    []*Series `json:"series"`
-	List      []*Row    `json:"list"`
+	QueryName string    `json:"queryName,omitempty"`
+	Series    []*Series `json:"series,omitempty"`
+	List      []*Row    `json:"list,omitempty"`
+	Table     *Table    `json:"table,omitempty"`
 }
 
 type LogsLiveTailClient struct {
