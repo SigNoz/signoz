@@ -116,7 +116,6 @@ export const RelativeDurationSuggestionOptions: Option[] = [
 export const SemiRelativeDurationSuggestionOptions: SemiRelativeOption[] = [
 	{ value: 'smd', label: 'Since midnight' },
 	{ value: 'sw', label: 'From start of the week' },
-	{ value: 's6', label: 'Since 6 AM today' },
 	{ value: 'smn', label: 'Since start of the month' },
 	{ value: 'pmn', label: 'Previous month' },
 ];

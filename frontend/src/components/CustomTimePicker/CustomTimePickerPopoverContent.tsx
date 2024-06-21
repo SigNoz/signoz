@@ -78,9 +78,6 @@ function CustomTimePickerPopoverContent({
 			case 'sw':
 				startTime = dayjs().startOf('isoWeek');
 				break;
-			case 's6':
-				startTime = dayjs().startOf('day').hour(6);
-				break;
 			case 'smn':
 				startTime = dayjs().startOf('month');
 				break;
