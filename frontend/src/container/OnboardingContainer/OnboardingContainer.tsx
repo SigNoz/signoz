@@ -25,6 +25,7 @@ import { DataSourceType } from './Steps/DataSource/DataSource';
 import {
 	defaultApplicationDataSource,
 	defaultAwsServices,
+	defaultAzureServices,
 	defaultInfraMetricsType,
 	defaultLogsType,
 	moduleRouteMap,
@@ -32,6 +33,7 @@ import {
 import {
 	APM_STEPS,
 	AWS_MONITORING_STEPS,
+	AZURE_MONITORING_STEPS,
 	getSteps,
 	INFRASTRUCTURE_MONITORING_STEPS,
 	LOGS_MANAGEMENT_STEPS,
@@ -42,6 +44,7 @@ export enum ModulesMap {
 	LogsManagement = 'LogsManagement',
 	InfrastructureMonitoring = 'InfrastructureMonitoring',
 	AwsMonitoring = 'AwsMonitoring',
+	AzureMonitoring = 'AzureMonitoring',
 }
 
 export interface ModuleProps {
@@ -80,6 +83,12 @@ export const useCases = {
 		title: 'AWS Monitoring',
 		desc:
 			'Monitor your traces, logs and metrics for AWS services like EC2, ECS, EKS etc.',
+	},
+	AzureMonitoring: {
+		id: ModulesMap.AzureMonitoring,
+		title: 'Azure Monitoring',
+		desc:
+			'Monitor your traces, logs and metrics for Azure services like AKS, Container Apps, App Service etc.',
 	},
 };
 
@@ -172,6 +181,7 @@ export default function Onboarding(): JSX.Element {
 		setSelectedModuleSteps(APM_STEPS);
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		if (selectedModule?.id === ModulesMap.InfrastructureMonitoring) {
 			if (selectedDataSource) {
@@ -193,6 +203,13 @@ export default function Onboarding(): JSX.Element {
 			} else {
 				setSelectedModuleSteps(AWS_MONITORING_STEPS);
 				updateSelectedDataSource(defaultAwsServices);
+			}
+		} else if (selectedModule?.id === ModulesMap.AzureMonitoring) {
+			if (selectedDataSource) {
+				setModuleStepsBasedOnSelectedDataSource(selectedDataSource);
+			} else {
+				setSelectedModuleSteps(AZURE_MONITORING_STEPS);
+				updateSelectedDataSource(defaultAzureServices);
 			}
 		} else if (selectedModule?.id === ModulesMap.APM) {
 			handleAPMSteps();
@@ -240,17 +257,23 @@ export default function Onboarding(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (location.pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING) {
+		const { pathname } = location;
+
+		if (pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING) {
 			handleModuleSelect(useCases.APM);
 			updateSelectedDataSource(defaultApplicationDataSource);
 			handleNextStep();
-		} else if (
-			location.pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING
-		) {
+		} else if (pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING) {
 			handleModuleSelect(useCases.InfrastructureMonitoring);
 			handleNextStep();
-		} else if (location.pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT) {
+		} else if (pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT) {
 			handleModuleSelect(useCases.LogsManagement);
+			handleNextStep();
+		} else if (pathname === ROUTES.GET_STARTED_AWS_MONITORING) {
+			handleModuleSelect(useCases.AwsMonitoring);
+			handleNextStep();
+		} else if (pathname === ROUTES.GET_STARTED_AZURE_MONITORING) {
+			handleModuleSelect(useCases.AzureMonitoring);
 			handleNextStep();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
