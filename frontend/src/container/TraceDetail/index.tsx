@@ -246,13 +246,14 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 			<Sider
 				className={cx('span-details-sider', isDarkMode ? 'dark' : 'light')}
-				style={{ background: isDarkMode ? '#000' : '#fff' }}
+				style={{ background: isDarkMode ? '#0b0c0e' : '#fff' }}
 				theme={isDarkMode ? 'dark' : 'light'}
 				collapsible
 				collapsed={collapsed}
 				reverseArrow
 				width={300}
 				collapsedWidth={40}
+				defaultCollapsed
 				onCollapse={(value): void => setCollapsed(value)}
 			>
 				{!collapsed && (

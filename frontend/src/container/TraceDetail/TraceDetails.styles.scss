@@ -1,7 +1,17 @@
 .span-details-sider {
+	padding-top: 16px;
+
+	::-webkit-scrollbar {
+		width: 0.2em;
+	}
+
+	::-webkit-scrollbar-track {
+		box-shadow: inset 0 0 6px rgba(18, 18, 18, 0.3);
+	}
+
 	&.dark {
 		.ant-layout-sider-trigger {
-			background-color: black !important;
+			background-color: #0b0c0e !important;
 		}
 	}
 

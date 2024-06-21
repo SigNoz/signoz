@@ -4,6 +4,7 @@ import { Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Dispatch, SetStateAction } from 'react';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 
 import YAxisUnitSelector from '../YAxisUnitSelector';
 
@@ -18,7 +19,13 @@ export function ColumnUnitSelector(
 	const { currentQuery } = useQueryBuilder();
 
 	function getAggregateColumnsNamesAndLabels(): string[] {
-		return currentQuery.builder.queryData.map((q) => q.queryName);
+		if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
+			return currentQuery.builder.queryData.map((q) => q.queryName);
+		}
+		if (currentQuery.queryType === EQueryType.CLICKHOUSE) {
+			return currentQuery.clickhouse_sql.map((q) => q.name);
+		}
+		return currentQuery.promql.map((q) => q.name);
 	}
 
 	const { columnUnits, setColumnUnits } = props;

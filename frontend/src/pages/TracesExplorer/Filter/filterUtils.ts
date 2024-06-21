@@ -328,17 +328,17 @@ export function unionTagFilterItems(
 ): TagFilterItem[] {
 	const unionMap = new Map<string, TagFilterItem>();
 
-	items1.forEach((item) => {
-		const keyOp = `${item?.key?.key}_${item.op}`;
+	items1?.forEach((item) => {
+		const keyOp = `${item?.key?.key}_${item?.op}`;
 		unionMap.set(keyOp, item);
 	});
 
-	items2.forEach((item) => {
-		const keyOp = `${item?.key?.key}_${item.op}`;
+	items2?.forEach((item) => {
+		const keyOp = `${item?.key?.key}_${item?.op}`;
 		unionMap.set(keyOp, item);
 	});
 
-	return Array.from(unionMap.values());
+	return Array.from(unionMap?.values());
 }
 
 export interface HandleRunProps {

@@ -14,7 +14,7 @@ import (
 
 	old_ctx "golang.org/x/net/context"
 
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 
 	"go.uber.org/zap"
