@@ -2,12 +2,15 @@
 import './NewWidget.styles.scss';
 
 import { WarningOutlined } from '@ant-design/icons';
-import { Button, Modal, Space, Tooltip, Typography } from 'antd';
+import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { chartHelpMessage } from 'components/facingIssueBtn/util';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
+import { DEFAULT_BUCKET_COUNT } from 'container/PanelWrapper/constants';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -30,7 +33,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { ColumnUnit, Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -123,6 +126,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [stacked, setStacked] = useState<boolean>(
 		selectedWidget?.isStacked || false,
 	);
+
+	const [stackedBarChart, setStackedBarChart] = useState<boolean>(
+		selectedWidget?.stackedBarChart || false,
+	);
 	const [opacity, setOpacity] = useState<string>(selectedWidget?.opacity || '1');
 	const [thresholds, setThresholds] = useState<ThresholdProps[]>(
 		selectedWidget?.thresholds || [],
@@ -135,6 +142,18 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	);
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
+
+	const [bucketWidth, setBucketWidth] = useState<number>(
+		selectedWidget?.bucketWidth || 0,
+	);
+
+	const [bucketCount, setBucketCount] = useState<number>(
+		selectedWidget?.bucketCount || DEFAULT_BUCKET_COUNT,
+	);
+
+	const [combineHistogram, setCombineHistogram] = useState<boolean>(
+		selectedWidget?.mergeAllActiveQueries || false,
+	);
 
 	const [softMin, setSoftMin] = useState<number | null>(
 		selectedWidget?.softMin === null || selectedWidget?.softMin === undefined
@@ -156,6 +175,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			: selectedWidget?.softMax || 0,
 	);
 
+	const [columnUnits, setColumnUnits] = useState<ColumnUnit>(
+		selectedWidget?.columnUnits || {},
+	);
+
 	useEffect(() => {
 		setSelectedWidget((prev) => {
 			if (!prev) {
@@ -174,11 +197,17 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				softMin,
 				softMax,
 				fillSpans: isFillSpans,
+				columnUnits,
+				bucketCount,
+				stackedBarChart,
+				bucketWidth,
+				mergeAllActiveQueries: combineHistogram,
 				selectedLogFields,
 				selectedTracesFields,
 			};
 		});
 	}, [
+		columnUnits,
 		currentQuery,
 		description,
 		isFillSpans,
@@ -192,6 +221,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		thresholds,
 		title,
 		yAxisUnit,
+		bucketWidth,
+		bucketCount,
+		combineHistogram,
+		stackedBarChart,
 	]);
 
 	const closeModal = (): void => {
@@ -280,13 +313,18 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								opacity: selectedWidget?.opacity || '1',
 								nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
 								title: selectedWidget?.title,
+								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								panelTypes: graphType,
 								query: currentQuery,
 								thresholds: selectedWidget?.thresholds,
+								columnUnits: selectedWidget?.columnUnits,
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
+								bucketWidth: selectedWidget?.bucketWidth || 0,
+								bucketCount: selectedWidget?.bucketCount || 0,
+								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
 								selectedLogFields: selectedWidget?.selectedLogFields || [],
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 							},
@@ -301,13 +339,18 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								opacity: selectedWidget?.opacity || '1',
 								nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
 								title: selectedWidget?.title,
+								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								panelTypes: graphType,
 								query: currentQuery,
 								thresholds: selectedWidget?.thresholds,
+								columnUnits: selectedWidget?.columnUnits,
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
+								bucketWidth: selectedWidget?.bucketWidth || 0,
+								bucketCount: selectedWidget?.bucketCount || 0,
+								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
 								selectedLogFields: selectedWidget?.selectedLogFields || [],
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 							},
@@ -424,9 +467,25 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			<div className="edit-header">
 				<div className="left-header">
 					<X size={14} onClick={onClickDiscardHandler} className="discard-icon" />
-					<Typography.Text className="configure-panel">
-						Configure panel
-					</Typography.Text>
+					<Flex align="center" gap={24}>
+						<Typography.Text className="configure-panel">
+							Configure panel
+						</Typography.Text>
+						<FacingIssueBtn
+							attributes={{
+								uuid: selectedDashboard?.uuid,
+								title: selectedDashboard?.data.title,
+								screen: 'Dashboard widget',
+								panelType: graphType,
+								widgetId: query.get('widgetId'),
+								queryType: currentQuery.queryType,
+							}}
+							eventName="Dashboard: Facing Issues in dashboard"
+							message={chartHelpMessage(selectedDashboard, graphType)}
+							buttonText="Facing issues with dashboards?"
+							onHoverText="Click here to get help with dashboard widget"
+						/>
+					</Flex>
 				</div>
 				{isSaveDisabled && (
 					<Tooltip title={MESSAGE.PANEL}>
@@ -481,8 +540,18 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						setDescription={setDescription}
 						stacked={stacked}
 						setStacked={setStacked}
+						stackedBarChart={stackedBarChart}
+						setStackedBarChart={setStackedBarChart}
 						opacity={opacity}
 						yAxisUnit={yAxisUnit}
+						columnUnits={columnUnits}
+						setColumnUnits={setColumnUnits}
+						bucketCount={bucketCount}
+						bucketWidth={bucketWidth}
+						combineHistogram={combineHistogram}
+						setCombineHistogram={setCombineHistogram}
+						setBucketWidth={setBucketWidth}
+						setBucketCount={setBucketCount}
 						setOpacity={setOpacity}
 						selectedNullZeroValue={selectedNullZeroValue}
 						setSelectedNullZeroValue={setSelectedNullZeroValue}

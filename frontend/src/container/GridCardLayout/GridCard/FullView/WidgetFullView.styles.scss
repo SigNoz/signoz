@@ -17,6 +17,10 @@
 		border-radius: 3px;
 	}
 
+	.height-widget {
+		height: calc(100% - 40px);
+	}
+
 	.list-graph-container {
 		height: calc(100% - 40px);
 		overflow-y: auto;

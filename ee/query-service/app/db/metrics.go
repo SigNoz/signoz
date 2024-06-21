@@ -21,15 +21,15 @@ import (
 // GetMetricResultEE runs the query and returns list of time series
 func (r *ClickhouseReader) GetMetricResultEE(ctx context.Context, query string) ([]*basemodel.Series, string, error) {
 
-	defer utils.Elapsed("GetMetricResult")()
+	defer utils.Elapsed("GetMetricResult", nil)()
 	zap.L().Info("Executing metric result query: ", zap.String("query", query))
 
 	var hash string
 	// If getSubTreeSpans function is used in the clickhouse query
-	if strings.Index(query, "getSubTreeSpans(") != -1 {
+	if strings.Contains(query, "getSubTreeSpans(") {
 		var err error
 		query, hash, err = r.getSubTreeSpansCustomFunction(ctx, query, hash)
-		if err == fmt.Errorf("No spans found for the given query") {
+		if err == fmt.Errorf("no spans found for the given query") {
 			return nil, "", nil
 		}
 		if err != nil {
@@ -183,7 +183,7 @@ func (r *ClickhouseReader) getSubTreeSpansCustomFunction(ctx context.Context, qu
 
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return query, hash, fmt.Errorf("Error in processing sql query")
+		return query, hash, fmt.Errorf("error in processing sql query")
 	}
 
 	var searchScanResponses []basemodel.SearchSpanDBResponseItem
@@ -193,14 +193,14 @@ func (r *ClickhouseReader) getSubTreeSpansCustomFunction(ctx context.Context, qu
 	modelQuery := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
 
 	if len(getSpansSubQueryDBResponses) == 0 {
-		return query, hash, fmt.Errorf("No spans found for the given query")
+		return query, hash, fmt.Errorf("no spans found for the given query")
 	}
 	zap.L().Debug("Executing query to fetch all the spans from the same TraceID: ", zap.String("modelQuery", modelQuery))
 	err = r.conn.Select(ctx, &searchScanResponses, modelQuery, getSpansSubQueryDBResponses[0].TraceID)
 
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return query, hash, fmt.Errorf("Error in processing sql query")
+		return query, hash, fmt.Errorf("error in processing sql query")
 	}
 
 	// Process model to fetch the spans
@@ -263,6 +263,7 @@ func (r *ClickhouseReader) getSubTreeSpansCustomFunction(ctx context.Context, qu
 	return query, hash, nil
 }
 
+//lint:ignore SA4009 return hash is feeded to the query
 func processQuery(query string, hash string) (string, string, string) {
 	re3 := regexp.MustCompile(`getSubTreeSpans`)
 

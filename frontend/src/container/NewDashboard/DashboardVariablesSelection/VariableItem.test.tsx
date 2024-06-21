@@ -54,6 +54,7 @@ describe('VariableItem', () => {
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -69,6 +70,7 @@ describe('VariableItem', () => {
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -83,6 +85,7 @@ describe('VariableItem', () => {
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -111,6 +114,7 @@ describe('VariableItem', () => {
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -123,6 +127,8 @@ describe('VariableItem', () => {
 		const customVariableData = {
 			...mockCustomVariableData,
 			allSelected: true,
+			showALLOption: true,
+			multiSelect: true,
 		};
 
 		render(
@@ -132,6 +138,7 @@ describe('VariableItem', () => {
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -147,6 +154,7 @@ describe('VariableItem', () => {
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);

@@ -2,6 +2,7 @@ const ROUTES = {
 	SIGN_UP: '/signup',
 	LOGIN: '/login',
 	SERVICE_METRICS: '/services/:servicename',
+	SERVICE_TOP_LEVEL_OPERATIONS: '/services/:servicename/top-level-operations',
 	SERVICE_MAP: '/service-map',
 	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',

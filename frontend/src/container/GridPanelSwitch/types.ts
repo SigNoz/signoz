@@ -43,5 +43,6 @@ export type PropsTypePropsMap = {
 	[PANEL_TYPES.BAR]: UplotProps & {
 		ref: ForwardedRef<ToggleGraphProps | undefined>;
 	};
+	[PANEL_TYPES.HISTOGRAM]: null;
 	[PANEL_TYPES.EMPTY_WIDGET]: null;
 };

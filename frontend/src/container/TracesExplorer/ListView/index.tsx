@@ -86,7 +86,7 @@ function ListView(): JSX.Element {
 		data?.payload?.data?.newResult?.data?.result[0]?.list?.length;
 	const totalCount = useMemo(() => dataLength || 0, [dataLength]);
 
-	const queryTableDataResult = data?.payload.data.newResult.data.result;
+	const queryTableDataResult = data?.payload?.data?.newResult?.data?.result;
 	const queryTableData = useMemo(() => queryTableDataResult || [], [
 		queryTableDataResult,
 	]);

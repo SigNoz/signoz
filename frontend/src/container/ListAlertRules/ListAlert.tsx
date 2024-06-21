@@ -55,6 +55,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		role,
 	);
 
+	const [editLoader, setEditLoader] = useState<boolean>(false);
+	const [cloneLoader, setCloneLoader] = useState<boolean>(false);
+
 	const params = useUrlQuery();
 	const orderColumnParam = params.get('columnKey');
 	const orderQueryParam = params.get('order');
@@ -113,6 +116,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	}, [featureResponse, handleError]);
 
 	const onEditHandler = (record: GettableAlert) => (): void => {
+		setEditLoader(true);
 		featureResponse
 			.refetch()
 			.then(() => {
@@ -129,9 +133,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 				params.set(QueryParams.ruleId, record.id.toString());
 
+				setEditLoader(false);
 				history.push(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
 			})
-			.catch(handleError);
+			.catch(handleError)
+			.finally(() => setEditLoader(false));
 	};
 
 	const onCloneHandler = (
@@ -143,33 +149,41 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		};
 		const apiReq = { data: copyAlert };
 
-		const response = await saveAlertApi(apiReq);
+		try {
+			setCloneLoader(true);
+			const response = await saveAlertApi(apiReq);
 
-		if (response.statusCode === 200) {
-			notificationsApi.success({
-				message: 'Success',
-				description: 'Alert cloned successfully',
-			});
+			if (response.statusCode === 200) {
+				notificationsApi.success({
+					message: 'Success',
+					description: 'Alert cloned successfully',
+				});
 
-			const { data: refetchData, status } = await refetch();
-			if (status === 'success' && refetchData.payload) {
-				setData(refetchData.payload || []);
-				setTimeout(() => {
-					const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
-					params.set(QueryParams.ruleId, String(clonedAlert.id));
-					history.push(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
-				}, 2000);
-			}
-			if (status === 'error') {
+				const { data: refetchData, status } = await refetch();
+				if (status === 'success' && refetchData.payload) {
+					setData(refetchData.payload || []);
+					setTimeout(() => {
+						const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
+						params.set(QueryParams.ruleId, String(clonedAlert.id));
+						history.push(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
+					}, 2000);
+				}
+				if (status === 'error') {
+					notificationsApi.error({
+						message: t('something_went_wrong'),
+					});
+				}
+			} else {
 				notificationsApi.error({
-					message: t('something_went_wrong'),
+					message: 'Error',
+					description: response.error || t('something_went_wrong'),
 				});
 			}
-		} else {
-			notificationsApi.error({
-				message: 'Error',
-				description: response.error || t('something_went_wrong'),
-			});
+		} catch (error) {
+			handleError();
+			console.error(error);
+		} finally {
+			setCloneLoader(false);
 		}
 	};
 
@@ -314,10 +328,20 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 							setData={setData}
 							id={id}
 						/>,
-						<ColumnButton key="2" onClick={onEditHandler(record)} type="link">
+						<ColumnButton
+							key="2"
+							onClick={onEditHandler(record)}
+							type="link"
+							loading={editLoader}
+						>
 							Edit
 						</ColumnButton>,
-						<ColumnButton key="3" onClick={onCloneHandler(record)} type="link">
+						<ColumnButton
+							key="3"
+							onClick={onCloneHandler(record)}
+							type="link"
+							loading={cloneLoader}
+						>
 							Clone
 						</ColumnButton>,
 						<DeleteAlert

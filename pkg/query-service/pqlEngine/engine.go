@@ -8,7 +8,6 @@ import (
 	"github.com/go-kit/log"
 	pmodel "github.com/prometheus/common/model"
 	"github.com/prometheus/common/promlog"
-	plog "github.com/prometheus/common/promlog"
 	pconfig "github.com/prometheus/prometheus/config"
 	pql "github.com/prometheus/prometheus/promql"
 	pstorage "github.com/prometheus/prometheus/storage"
@@ -40,7 +39,7 @@ func FromReader(ch interfaces.Reader) (*PqlEngine, error) {
 
 func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 
-	logLevel := plog.AllowedLevel{}
+	logLevel := promlog.AllowedLevel{}
 	logLevel.Set("debug")
 
 	allowedFormat := promlog.AllowedFormat{}
@@ -51,7 +50,7 @@ func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 		Format: &allowedFormat,
 	}
 
-	logger := plog.New(&promlogConfig)
+	logger := promlog.New(&promlogConfig)
 
 	opts := pql.EngineOpts{
 		Logger:     log.With(logger, "component", "promql evaluator"),

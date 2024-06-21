@@ -27,6 +27,7 @@ import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
+	useGetAPMToTracesQueries,
 } from './util';
 
 function External(): JSX.Element {
@@ -138,6 +139,11 @@ function External(): JSX.Element {
 		[servicename, tagFilterItems],
 	);
 
+	const apmToTraceQuery = useGetAPMToTracesQueries({
+		servicename,
+		isExternalCall: true,
+	});
+
 	return (
 		<>
 			<Row gutter={24}>
@@ -150,7 +156,7 @@ function External(): JSX.Element {
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
-							isExternalCall: true,
+							apmToTraceQuery,
 						})}
 					>
 						View Traces
@@ -184,7 +190,7 @@ function External(): JSX.Element {
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
-							isExternalCall: true,
+							apmToTraceQuery,
 						})}
 					>
 						View Traces
@@ -221,7 +227,7 @@ function External(): JSX.Element {
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
-							isExternalCall: true,
+							apmToTraceQuery,
 						})}
 					>
 						View Traces
@@ -255,7 +261,7 @@ function External(): JSX.Element {
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
-							isExternalCall: true,
+							apmToTraceQuery,
 						})}
 					>
 						View Traces

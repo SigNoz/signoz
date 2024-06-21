@@ -49,8 +49,7 @@ type Manager struct {
 	activeFeatures basemodel.FeatureSet
 }
 
-func StartManager(dbType string, db *sqlx.DB) (*Manager, error) {
-
+func StartManager(dbType string, db *sqlx.DB, features ...basemodel.Feature) (*Manager, error) {
 	if LM != nil {
 		return LM, nil
 	}
@@ -66,7 +65,7 @@ func StartManager(dbType string, db *sqlx.DB) (*Manager, error) {
 		repo: &repo,
 	}
 
-	if err := m.start(); err != nil {
+	if err := m.start(features...); err != nil {
 		return m, err
 	}
 	LM = m
@@ -74,8 +73,8 @@ func StartManager(dbType string, db *sqlx.DB) (*Manager, error) {
 }
 
 // start loads active license in memory and initiates validator
-func (lm *Manager) start() error {
-	err := lm.LoadActiveLicense()
+func (lm *Manager) start(features ...basemodel.Feature) error {
+	err := lm.LoadActiveLicense(features...)
 
 	return err
 }
@@ -85,7 +84,7 @@ func (lm *Manager) Stop() {
 	<-lm.terminated
 }
 
-func (lm *Manager) SetActive(l *model.License) {
+func (lm *Manager) SetActive(l *model.License, features ...basemodel.Feature) {
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
 
@@ -94,7 +93,7 @@ func (lm *Manager) SetActive(l *model.License) {
 	}
 
 	lm.activeLicense = l
-	lm.activeFeatures = l.FeatureSet
+	lm.activeFeatures = append(l.FeatureSet, features...)
 	// set default features
 	setDefaultFeatures(lm)
 
@@ -116,14 +115,13 @@ func setDefaultFeatures(lm *Manager) {
 }
 
 // LoadActiveLicense loads the most recent active license
-func (lm *Manager) LoadActiveLicense() error {
-	var err error
+func (lm *Manager) LoadActiveLicense(features ...basemodel.Feature) error {
 	active, err := lm.repo.GetActiveLicense(context.Background())
 	if err != nil {
 		return err
 	}
 	if active != nil {
-		lm.SetActive(active)
+		lm.SetActive(active, features...)
 	} else {
 		zap.L().Info("No active license found, defaulting to basic plan")
 		// if no active license is found, we default to basic(free) plan with all default features

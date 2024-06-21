@@ -14,7 +14,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.signoz.io/signoz/ee/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
@@ -52,7 +51,8 @@ func initZapLog(enableQueryServiceLogOTLPExport bool) *zap.Logger {
 	)
 
 	if enableQueryServiceLogOTLPExport {
-		ctx, _ := context.WithTimeout(ctx, time.Second*30)
+		ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+		defer cancel()
 		conn, err := grpc.DialContext(ctx, baseconst.OTLPTarget, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Fatalf("failed to establish connection: %v", err)
@@ -95,6 +95,7 @@ func main() {
 	var maxIdleConns int
 	var maxOpenConns int
 	var dialTimeout time.Duration
+	var gatewayUrl string
 
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
@@ -109,6 +110,7 @@ func main() {
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
 	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
+	flag.StringVar(&gatewayUrl, "gateway-url", "", "(url to the gateway)")
 
 	flag.Parse()
 
@@ -134,6 +136,7 @@ func main() {
 		CacheConfigPath:   cacheConfigPath,
 		FluxInterval:      fluxInterval,
 		Cluster:           cluster,
+		GatewayUrl:        gatewayUrl,
 	}
 
 	// Read the jwt secret key
@@ -145,7 +148,7 @@ func main() {
 		zap.L().Info("JWT secret key set successfully.")
 	}
 
-	if err := migrate.Migrate(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+	if err := migrate.Migrate(baseconst.RELATIONAL_DATASOURCE_PATH); err != nil {
 		zap.L().Error("Failed to migrate", zap.Error(err))
 	} else {
 		zap.L().Info("Migration successful")

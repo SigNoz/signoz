@@ -8,6 +8,7 @@ import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
 	Dropdown,
+	Flex,
 	Input,
 	MenuProps,
 	Modal,
@@ -23,6 +24,8 @@ import { TableProps } from 'antd/lib';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { dashboardListMessage } from 'components/facingIssueBtn/util';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
@@ -50,6 +53,7 @@ import {
 	Search,
 } from 'lucide-react';
 import { handleContactSupport } from 'pages/Integrations/utils';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	ChangeEvent,
 	Key,
@@ -88,6 +92,11 @@ function DashboardsList(): JSX.Element {
 
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
+	const {
+		listSortOrder: sortOrder,
+		setListSortOrder: setSortOrder,
+	} = useDashboard();
+
 	const [action, createNewDashboard] = useComponentPermission(
 		['action', 'create_new_dashboards'],
 		role,
@@ -113,17 +122,8 @@ function DashboardsList(): JSX.Element {
 	);
 
 	const params = useUrlQuery();
-	const orderColumnParam = params.get('columnKey');
-	const orderQueryParam = params.get('order');
-	const paginationParam = params.get('page');
 	const searchParams = params.get('search');
 	const [searchString, setSearchString] = useState<string>(searchParams || '');
-
-	const [sortOrder, setSortOrder] = useState({
-		columnKey: orderColumnParam,
-		order: orderQueryParam,
-		pagination: paginationParam,
-	});
 
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
 		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');
@@ -195,7 +195,6 @@ function DashboardsList(): JSX.Element {
 	}, [sortOrder]);
 
 	const sortHandle = (key: string): void => {
-		console.log(dashboards);
 		if (!dashboards) return;
 		if (key === 'createdAt') {
 			sortDashboardsByCreatedAt(dashboards);
@@ -222,13 +221,29 @@ function DashboardsList(): JSX.Element {
 	}
 
 	useEffect(() => {
-		sortDashboardsByCreatedAt(dashboardListResponse);
 		const filteredDashboards = filterDashboard(
 			searchString,
 			dashboardListResponse,
 		);
-		setDashboards(filteredDashboards || []);
-	}, [dashboardListResponse, searchString]);
+		if (sortOrder.columnKey === 'updatedAt') {
+			sortDashboardsByUpdatedAt(filteredDashboards || []);
+		} else if (sortOrder.columnKey === 'createdAt') {
+			sortDashboardsByCreatedAt(filteredDashboards || []);
+		} else if (sortOrder.columnKey === 'null') {
+			setSortOrder({
+				columnKey: 'updatedAt',
+				order: 'descend',
+				pagination: sortOrder.pagination || '1',
+			});
+			sortDashboardsByUpdatedAt(filteredDashboards || []);
+		}
+	}, [
+		dashboardListResponse,
+		searchString,
+		setSortOrder,
+		sortOrder.columnKey,
+		sortOrder.pagination,
+	]);
 
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
@@ -599,9 +614,20 @@ function DashboardsList(): JSX.Element {
 			<div className="dashboards-list-view-content">
 				<div className="dashboards-list-title-container">
 					<Typography.Title className="title">Dashboards</Typography.Title>
-					<Typography.Text className="subtitle">
-						Create and manage dashboards for your workspace.
-					</Typography.Text>
+					<Flex align="center" justify="space-between">
+						<Typography.Text className="subtitle">
+							Create and manage dashboards for your workspace.
+						</Typography.Text>
+						<FacingIssueBtn
+							attributes={{
+								screen: 'Dashboard list page',
+							}}
+							eventName="Dashboard: Facing Issues in dashboard"
+							message={dashboardListMessage}
+							buttonText="Facing issues with dashboards?"
+							onHoverText="Click here to get help with dashboards"
+						/>
+					</Flex>
 				</div>
 
 				{isDashboardListLoading || isFilteringDashboards ? (
@@ -673,7 +699,16 @@ function DashboardsList(): JSX.Element {
 										New Dashboard
 									</Button>
 								</Dropdown>
-								<Button type="text" className="learn-more">
+								<Button
+									type="text"
+									className="learn-more"
+									onClick={(): void => {
+										window.open(
+											'https://signoz.io/docs/userguide/manage-dashboards?utm_source=product&utm_medium=dashboard-list-empty-state',
+											'_blank',
+										);
+									}}
+								>
 									Learn more
 								</Button>
 								<ArrowUpRight size={16} className="learn-more-arrow" />
@@ -793,6 +828,7 @@ function DashboardsList(): JSX.Element {
 											showTotal: showPaginationItem,
 											showSizeChanger: false,
 											onChange: (page): void => handlePageSizeUpdate(page),
+											current: Number(sortOrder.pagination),
 											defaultCurrent: Number(sortOrder.pagination) || 1,
 										}
 									}

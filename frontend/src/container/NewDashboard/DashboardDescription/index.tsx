@@ -2,7 +2,10 @@ import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
@@ -10,6 +13,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import {
@@ -59,6 +63,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		layouts,
 		setLayouts,
 		isDashboardLocked,
+		listSortOrder,
 		setSelectedDashboard,
 		handleToggleDashboardSlider,
 		handleDashboardLockToggle,
@@ -79,6 +84,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const [sectionName, setSectionName] = useState<string>(DEFAULT_ROW_NAME);
 
 	const updateDashboardMutation = useUpdateDashboard();
+
+	const urlQuery = useUrlQuery();
 
 	const { featureResponse, user, role } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -248,32 +255,55 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		});
 	}
 
+	function goToListPage(): void {
+		urlQuery.set('columnKey', listSortOrder.columnKey as string);
+		urlQuery.set('order', listSortOrder.order as string);
+		urlQuery.set('page', listSortOrder.pagination as string);
+		urlQuery.delete(QueryParams.relativeTime);
+
+		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlQuery.toString()}`;
+		history.replace(generatedUrl);
+	}
+
 	return (
 		<Card className="dashboard-description-container">
-			<section className="dashboard-breadcrumbs">
-				<Button
-					type="text"
-					icon={<LayoutGrid size={14} />}
-					className="dashboard-btn"
-					onClick={(): void => history.push(ROUTES.ALL_DASHBOARD)}
-				>
-					Dashboard /
-				</Button>
-				<Button
-					type="text"
-					className="id-btn"
-					icon={
-						// eslint-disable-next-line jsx-a11y/img-redundant-alt
-						<img
-							src={image}
-							alt="dashboard-image"
-							style={{ height: '14px', width: '14px' }}
-						/>
-					}
-				>
-					{title}
-				</Button>
-			</section>
+			<div className="dashboard-header">
+				<section className="dashboard-breadcrumbs">
+					<Button
+						type="text"
+						icon={<LayoutGrid size={14} />}
+						className="dashboard-btn"
+						onClick={(): void => goToListPage()}
+					>
+						Dashboard /
+					</Button>
+					<Button
+						type="text"
+						className="id-btn"
+						icon={
+							// eslint-disable-next-line jsx-a11y/img-redundant-alt
+							<img
+								src={image}
+								alt="dashboard-image"
+								style={{ height: '14px', width: '14px' }}
+							/>
+						}
+					>
+						{title}
+					</Button>
+				</section>
+				<FacingIssueBtn
+					attributes={{
+						uuid: selectedDashboard?.uuid,
+						title: updatedTitle,
+						screen: 'Dashboard Details',
+					}}
+					eventName="Dashboard: Facing Issues in dashboard"
+					message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
+					buttonText="Facing issues with dashboards?"
+					onHoverText="Click here to get help with dashboard details"
+				/>
+			</div>
 			<section className="dashbord-details">
 				<div className="left-section">
 					<img
@@ -404,9 +434,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 			{!isEmpty(description) && (
 				<section className="dashboard-description-section">{description}</section>
 			)}
-			<section className="dashboard-variables">
-				<DashboardVariableSelection />
-			</section>
+
+			{!isEmpty(selectedData.variables) && (
+				<section className="dashboard-variables">
+					<DashboardVariableSelection />
+				</section>
+			)}
 			<DashboardGraphSlider />
 
 			<Modal

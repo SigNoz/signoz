@@ -797,7 +797,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 					"service.name": "frontend",
 				},
 				LabelsArray: []map[string]string{
-					map[string]string{
+					{
 						"service.name": "frontend",
 					},
 				},
@@ -876,5 +876,9 @@ func TestThresholdRuleClickHouseTmpl(t *testing.T) {
 		params := rule.prepareQueryRange(ts)
 
 		assert.Equal(t, c.expectedQuery, params.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
+
+		secondTimeParams := rule.prepareQueryRange(ts)
+
+		assert.Equal(t, c.expectedQuery, secondTimeParams.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
 	}
 }
