@@ -40,6 +40,7 @@ export const stepsMap = {
 	sendTraces: `sendTraces`,
 	sendLogs: `sendLogs`,
 	sendMetrics: `sendMetrics`,
+	sendHostmetricsLogs: `sendHostmetricsLogs`,
 };
 
 export const DataSourceStep: SelectedModuleStepProps = {
@@ -229,5 +230,10 @@ export const SendLogs: SelectedModuleStepProps = {
 export const SendMetrics: SelectedModuleStepProps = {
 	id: stepsMap.sendMetrics,
 	title: 'Send Metrics',
+	component: <MarkdownStep />,
+};
+export const SendHostmetricsLogs: SelectedModuleStepProps = {
+	id: stepsMap.sendHostmetricsLogs,
+	title: 'HostMetrics and Logging',
 	component: <MarkdownStep />,
 };

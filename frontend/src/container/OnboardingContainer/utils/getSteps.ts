@@ -22,6 +22,7 @@ import {
 	RestartOtelCollector,
 	RunApplicationStep,
 	SelectMethodStep,
+	SendHostmetricsLogs,
 	SendLogs,
 	SendLogsCloudwatch,
 	SendMetrics,
@@ -158,8 +159,7 @@ export const getSteps = ({
 				DataSourceStep,
 				SetupAzureEventsHub,
 				SetupCentralCollectorStep,
-				SendLogs,
-				SendMetrics,
+				SendHostmetricsLogs,
 			];
 		// eslint-disable-next-line sonarjs/no-duplicated-branches
 		case 'azureAks':

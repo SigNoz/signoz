@@ -30,10 +30,9 @@ import AzureMonitoring_azureFunctions_sendTraces from '../Modules/AzureMonitorin
 import AzureMonitoring_azureSQLDatabaseMetrics_setupCentralCollector from '../Modules/AzureMonitoring/SqlDatabaseMetrics/sqlDatabaseMetrics-installCentralCollector.md';
 import AzureMonitoring_azureSQLDatabaseMetrics_sendMetrics from '../Modules/AzureMonitoring/SqlDatabaseMetrics/sqlDatabaseMetrics-metrics.md';
 import AzureMonitoring_azureSQLDatabaseMetrics_setupAzureEventsHub from '../Modules/AzureMonitoring/SqlDatabaseMetrics/sqlDatabaseMetrics-setupEventsHub.md';
+import AzureMonitoring_azureVm_sendHostmetricsLogs from '../Modules/AzureMonitoring/Vm/vm-hostmetrics-and-logs.md';
 // Azure VM
 import AzureMonitoring_azureVm_setupCentralCollector from '../Modules/AzureMonitoring/Vm/vm-installCentralCollector.md';
-import AzureMonitoring_azureVm_sendLogs from '../Modules/AzureMonitoring/Vm/vm-logs.md';
-import AzureMonitoring_azureVm_sendMetrics from '../Modules/AzureMonitoring/Vm/vm-metrics.md';
 import AzureMonitoring_azureVm_setupAzureEventsHub from '../Modules/AzureMonitoring/Vm/vm-setupEventsHub.md';
 
 export const AzureMonitoringDocFilePaths = {
@@ -68,8 +67,7 @@ export const AzureMonitoringDocFilePaths = {
 	// Azure VM
 	AzureMonitoring_azureVm_setupCentralCollector,
 	AzureMonitoring_azureVm_setupAzureEventsHub,
-	AzureMonitoring_azureVm_sendLogs,
-	AzureMonitoring_azureVm_sendMetrics,
+	AzureMonitoring_azureVm_sendHostmetricsLogs,
 
 	// Azure SQL Database Metrics
 	AzureMonitoring_azureSQLDatabaseMetrics_setupCentralCollector,
