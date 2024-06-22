@@ -914,12 +914,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
-			if smpl.IsMissing {
-				if a.Name == labels.AlertDescriptionLabel || a.Name == labels.AlertSummaryLabel {
-					a.Value = labels.AlertMissingData
-				}
-			}
 			annotations = append(annotations, labels.Label{Name: normalizeLabelName(a.Name), Value: expand(a.Value)})
+		}
+		if smpl.IsMissing {
+			annotations = append(annotations, labels.Label{Name: labels.AlertMissingDataLabel, Value: "true"})
 		}
 
 		// Links with timestamps should go in annotations since labels
