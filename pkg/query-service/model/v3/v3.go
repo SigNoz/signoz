@@ -354,6 +354,8 @@ type QueryRangeParamsV3 struct {
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
 	NoCache        bool                   `json:"noCache"`
+	Version        string                 `json:"-"`
+	FormatForWeb   bool                   `json:"formatForWeb,omitempty"`
 }
 
 type PromQuery struct {
@@ -988,7 +990,6 @@ type QueryRangeResponse struct {
 
 type TableColumn struct {
 	Name string `json:"name"`
-	Type string `json:"type"`
 }
 
 type TableRow struct {

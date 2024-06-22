@@ -3016,6 +3016,7 @@ func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request)
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
+	queryRangeParams.Version = "v3"
 
 	aH.Respond(w, queryRangeParams)
 }
@@ -3343,6 +3344,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
+	queryRangeParams.Version = "v4"
 
 	// add temporality for each metric
 	temporalityErr := aH.populateTemporality(r.Context(), queryRangeParams)

@@ -87,7 +87,9 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 		FillGaps(result, queryRangeParams)
 	}
 
-	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable {
+	if queryRangeParams.FormatForWeb &&
+		queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder &&
+		queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable {
 		result = transformToTable(result, queryRangeParams)
 	}
 

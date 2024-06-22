@@ -9,6 +9,22 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
+func getAutoColNameForQuery(queryName string, params *v3.QueryRangeParamsV3) string {
+	q := params.CompositeQuery.BuilderQueries[queryName]
+	if q.DataSource == v3.DataSourceTraces || q.DataSource == v3.DataSourceLogs {
+		if q.AggregateAttribute.Key != "" {
+			return fmt.Sprintf("%s(%s)", q.AggregateOperator, q.AggregateAttribute.Key)
+		}
+		return string(q.AggregateOperator)
+	} else if q.DataSource == v3.DataSourceMetrics {
+		if q.SpaceAggregation != "" && params.Version == "v4" {
+			return fmt.Sprintf("%s(%s)", q.SpaceAggregation, q.AggregateAttribute.Key)
+		}
+		return fmt.Sprintf("%s(%s)", q.AggregateOperator, q.AggregateAttribute.Key)
+	}
+	return queryName
+}
+
 func transformToTable(results []*v3.Result, params *v3.QueryRangeParamsV3) []*v3.Result {
 	if len(results) == 0 {
 		return nil
@@ -89,6 +105,11 @@ func transformToTable(results []*v3.Result, params *v3.QueryRangeParamsV3) []*v3
 	// Convert rowMap to a slice of TableRows
 	rows := make([]*v3.TableRow, 0, len(rowMap))
 	for _, row := range rowMap {
+		for i, value := range row.Data {
+			if value == nil {
+				row.Data[i] = "n/a"
+			}
+		}
 		rows = append(rows, row)
 	}
 
@@ -101,6 +122,12 @@ func transformToTable(results []*v3.Result, params *v3.QueryRangeParamsV3) []*v3
 
 	// Sort rows based on OrderBy from BuilderQueries
 	sortRows(rows, columns, params.CompositeQuery.BuilderQueries, queryNames)
+
+	for _, column := range columns {
+		if _, exists := params.CompositeQuery.BuilderQueries[column.Name]; exists {
+			column.Name = getAutoColNameForQuery(column.Name, params)
+		}
+	}
 
 	// Create the final result
 	tableResult := v3.Result{
@@ -141,6 +168,17 @@ func sortRows(rows []*v3.TableRow, columns []*v3.TableColumn, builderQueries map
 				valI := rows[i].Data[colIndex]
 				valJ := rows[j].Data[colIndex]
 
+				// Handle "n/a" values
+				if valI == "n/a" && valJ == "n/a" {
+					continue
+				}
+				if valI == "n/a" {
+					return orderBy.Order == "asc"
+				}
+				if valJ == "n/a" {
+					return orderBy.Order != "asc"
+				}
+
 				// Compare based on the data type
 				switch v := valI.(type) {
 				case string:
@@ -148,18 +186,31 @@ func sortRows(rows []*v3.TableRow, columns []*v3.TableColumn, builderQueries map
 						if v != w {
 							return (v < w) == (orderBy.Order == "asc")
 						}
+					} else {
+						// If types are different, sort strings before other types
+						return orderBy.Order == "asc"
 					}
 				case float64:
-					if w, ok := valJ.(float64); ok {
+					switch w := valJ.(type) {
+					case float64:
 						if v != w {
 							return (v < w) == (orderBy.Order == "asc")
 						}
+					case string:
+						// If types are different, sort numbers after strings
+						return orderBy.Order != "asc"
+					default:
+						// For any other type, sort float64 first
+						return orderBy.Order == "asc"
 					}
 				case bool:
 					if w, ok := valJ.(bool); ok {
 						if v != w {
 							return (!v && w) == (orderBy.Order == "asc")
 						}
+					} else {
+						// If types are different, sort bools after other types
+						return orderBy.Order != "asc"
 					}
 				}
 			}
