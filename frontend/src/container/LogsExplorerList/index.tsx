@@ -16,6 +16,7 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import PeriscopeTable from 'periscope/components/Table/Table';
 import { memo, useCallback, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 // interfaces
@@ -157,6 +158,7 @@ function LogsExplorerList({
 
 	return (
 		<div className="logs-list-view-container">
+			<PeriscopeTable />
 			{(isLoading || (isFetching && logs.length === 0)) && <LogsLoading />}
 
 			{!isLoading &&
