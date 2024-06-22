@@ -122,18 +122,7 @@ function TableBody({ table }: { table: Table<Person> }): JSX.Element {
 							items={columnOrder}
 							strategy={horizontalListSortingStrategy}
 						>
-							{/* <div
-                  {...{
-                    key: cell.id,
-                    className: "td",
-                    style: {
-                      width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
-                    },
-                  }}
-                > */}
 							<DragAlongCell key={cell.id} cell={cell} />
-							{/* {cell.renderValue<any>()} */}
-							{/* </div> */}
 						</SortableContext>
 					))}
 				</div>
@@ -256,7 +245,6 @@ function PeriscopeTable(): JSX.Element {
 	);
 
 	return (
-		// NOTE: This provider creates div elements, so don't nest inside of <table> elements
 		<DndContext
 			collisionDetection={closestCenter}
 			modifiers={[restrictToHorizontalAxis]}
@@ -266,14 +254,11 @@ function PeriscopeTable(): JSX.Element {
 		>
 			<div className="p-2">
 				<div className="overflow-x-auto">
-					{/* Here in the <table> equivalent element (surrounds all table head and data cells), we will define our CSS variables for column sizes */}
 					<div
-						{...{
-							className: 'divTable',
-							style: {
-								...columnSizeVars, // Define column sizes on the <table> element
-								width: table.getTotalSize(),
-							},
+						className="divTable"
+						style={{
+							...columnSizeVars, // Define column sizes on the <table> element
+							width: table.getTotalSize(),
 						}}
 					>
 						<div className="thead">
