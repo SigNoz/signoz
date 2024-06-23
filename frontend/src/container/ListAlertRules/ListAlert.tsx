@@ -356,6 +356,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		});
 	}
 
+	const paginationConfig = {
+		defaultCurrent: Number(paginationParam) || 1,
+		hideOnSinglePage: true,
+	};
 	return (
 		<>
 			<SearchContainer>
@@ -387,10 +391,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				dataSource={data}
 				dynamicColumns={dynamicColumns}
 				onChange={handleChange}
-				pagination={{
-					defaultCurrent: Number(paginationParam) || 1,
-					hideOnSinglePage: true,
-				}}
+				pagination={paginationConfig}
 				facingIssueBtn={{
 					attributes: {
 						screen: 'Alert list page',
