@@ -64,7 +64,6 @@ function ResizeTable({
 			...restProps,
 			components: { header: { cell: ResizableHeader } },
 			columns: mergedColumns,
-			hideOnSinglePage: true,
 			pagination: { ...pagination, hideOnSinglePage: true },
 		}),
 		[mergedColumns, pagination, restProps],
