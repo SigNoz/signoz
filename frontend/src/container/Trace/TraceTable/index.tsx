@@ -215,7 +215,6 @@ function TraceTable(): JSX.Element {
 				responsive: true,
 				position: ['bottomLeft'],
 				total: totalCount,
-				hideOnSinglePage: true,
 			}}
 		/>
 	);

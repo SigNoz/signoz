@@ -358,7 +358,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 	const paginationConfig = {
 		defaultCurrent: Number(paginationParam) || 1,
-		hideOnSinglePage: true,
 	};
 	return (
 		<>

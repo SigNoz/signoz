@@ -40,7 +40,6 @@ function ServiceTraceTable({
 		defaultPageSize: 10,
 		showTotal: (total: number, range: number[]): string =>
 			`${range[0]}-${range[1]} of ${total} items`,
-		hideOnSinglePage: true,
 	};
 	return (
 		<>
