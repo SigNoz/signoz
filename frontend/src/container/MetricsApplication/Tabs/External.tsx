@@ -15,6 +15,7 @@ import {
 } from 'hooks/useResourceAttribute/utils';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
@@ -142,6 +143,21 @@ function External(): JSX.Element {
 	const apmToTraceQuery = useGetAPMToTracesQueries({
 		servicename,
 		isExternalCall: true,
+		filters: [
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'hasError',
+					dataType: DataTypes.bool,
+					type: 'tag',
+					isColumn: true,
+					isJSON: false,
+					id: 'hasError--bool--tag--true',
+				},
+				op: 'in',
+				value: ['true'],
+			},
+		],
 	});
 
 	return (
