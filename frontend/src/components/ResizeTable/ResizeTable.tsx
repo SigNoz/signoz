@@ -20,6 +20,7 @@ import { ResizeTableProps } from './types';
 function ResizeTable({
 	columns,
 	onDragColumn,
+	pagination,
 	...restProps
 }: ResizeTableProps): JSX.Element {
 	const [columnsData, setColumns] = useState<ColumnsType>([]);
@@ -63,8 +64,10 @@ function ResizeTable({
 			...restProps,
 			components: { header: { cell: ResizableHeader } },
 			columns: mergedColumns,
+			hideOnSinglePage: true,
+			pagination: { ...pagination, hideOnSinglePage: true },
 		}),
-		[mergedColumns, restProps],
+		[mergedColumns, pagination, restProps],
 	);
 
 	useEffect(() => {

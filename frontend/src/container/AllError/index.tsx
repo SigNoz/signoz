@@ -423,6 +423,7 @@ function AllErrors(): JSX.Element {
 				current: getUpdatedOffset / 10 + 1,
 				position: ['bottomLeft'],
 				total: errorCountResponse.data?.payload || 0,
+				hideOnSinglePage: true,
 			}}
 			onChange={onChangeHandler}
 		/>

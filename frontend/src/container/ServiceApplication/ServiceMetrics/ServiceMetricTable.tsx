@@ -79,6 +79,12 @@ function ServiceMetricTable({
 		}
 	}, [services, licenseData, isFetching, isCloudUserVal]);
 
+	const paginationConfig = {
+		defaultPageSize: 10,
+		showTotal: (total: number, range: number[]): string =>
+			`${range[0]}-${range[1]} of ${total} items`,
+		hideOnSinglePage: true,
+	};
 	return (
 		<>
 			{RPS > MAX_RPS_LIMIT && (
@@ -92,11 +98,7 @@ function ServiceMetricTable({
 			<ResourceAttributesFilter />
 
 			<ResizeTable
-				pagination={{
-					defaultPageSize: 10,
-					showTotal: (total: number, range: number[]): string =>
-						`${range[0]}-${range[1]} of ${total} items`,
-				}}
+				pagination={paginationConfig}
 				columns={tableColumns}
 				loading={isLoading}
 				dataSource={services}

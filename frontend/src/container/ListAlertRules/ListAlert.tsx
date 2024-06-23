@@ -389,6 +389,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				onChange={handleChange}
 				pagination={{
 					defaultCurrent: Number(paginationParam) || 1,
+					hideOnSinglePage: true,
 				}}
 				facingIssueBtn={{
 					attributes: {
