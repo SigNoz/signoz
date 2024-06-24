@@ -241,6 +241,14 @@ body {
 			}
 		}
 	}
+
+	::-webkit-scrollbar-thumb {
+		background-color: #aaa;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background-color: #999;
+	}
 }
 
 .ant-notification-notice-message {
