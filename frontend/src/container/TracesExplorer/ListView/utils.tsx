@@ -102,10 +102,7 @@ export const getListColumns = (
 				);
 			},
 			responsive: ['md'],
-			sorter:
-				key === 'durationNano'
-					? (a, b): number => Number(a.durationNano) - Number(b.durationNano)
-					: undefined,
+			sorter: key === 'durationNano' ? true : undefined,
 		})) || [];
 
 	return [...initialColumns, ...columns];
