@@ -48,6 +48,12 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		[response],
 	);
 
+	const traceStartTime = useMemo(() => response[0].startTimestampMillis, [
+		response,
+	]);
+
+	const traceEndTime = useMemo(() => response[0].endTimestampMillis, [response]);
+
 	const urlQuery = useUrlQuery();
 	const [spanId] = useState<string | null>(urlQuery.get('spanId'));
 
@@ -260,6 +266,8 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 					<StyledCol styledclass={[styles.selectedSpanDetailContainer]}>
 						<SelectedSpanDetails
 							firstSpanStartTime={firstSpanStartTime}
+							traceStartTime={traceStartTime}
+							traceEndTime={traceEndTime}
 							tree={[
 								...(getSelectedNode.spanTree ? getSelectedNode.spanTree : []),
 								...(getSelectedNode.missingSpanTree
