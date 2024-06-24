@@ -199,7 +199,7 @@ function Logan(): JSX.Element {
 							record.logFileName.split(',').map((item: string, i: number) => (
 								<a
 									key={i}
-									href={`${process.env.LOGAN_FILE_PATH}${item}.zip`}
+									href={`${process.env.LOGAN_FILE_PATH}${item}`}
 									target="_blank"
 									style={{ display: 'block' }}
 								>
@@ -387,6 +387,7 @@ function Logan(): JSX.Element {
 					display: 'flex',
 					justifyContent: 'flex-end',
 					alignItems: 'center',
+					marginBottom: 10,
 				}}
 			>
 				<Button type="primary" onClick={handleCreate}>
