@@ -33,6 +33,7 @@ interface TaskDataType {
 	bugLink: string;
 	desc: string;
 	needReport: number;
+	isReported: number;
 }
 
 const layout = {
@@ -48,6 +49,7 @@ const initTaskData = {
 	bugLink: '',
 	desc: '',
 	needReport: 0,
+	isReported: 0,
 };
 
 const { RangePicker } = DatePicker;
@@ -66,19 +68,19 @@ function LoganTaskModal({
 		cloneDeep(initTaskData),
 	);
 
-	const formatDataToInterface = (param: { [x: string]: any }) => {
-		const finalParam = {} as any;
-		for (const key in param as any) {
-			if (String(param[key])) {
-				if (key === 'timeSelect') {
-					finalParam[snakeCase(key)] = param[key].join(',');
-					continue;
-				}
-				finalParam[snakeCase(key)] = param[key];
-			}
-		}
-		return finalParam;
-	};
+	// const formatDataToInterface = (param: { [x: string]: any }) => {
+	// 	const finalParam = {} as any;
+	// 	for (const key in param as any) {
+	// 		if (String(param[key])) {
+	// 			if (key === 'timeSelect') {
+	// 				finalParam[snakeCase(key)] = param[key].join(',');
+	// 				continue;
+	// 			}
+	// 			finalParam[snakeCase(key)] = param[key];
+	// 		}
+	// 	}
+	// 	return finalParam;
+	// };
 
 	const editTask = async () => {
 		try {
@@ -150,10 +152,8 @@ function LoganTaskModal({
 
 	const handleOk = async () => {
 		try {
-			const values = await form.validateFields();
-			console.log('Success:', values);
+			await form.validateFields();
 			let result = false;
-			console.log('record', record);
 			if (record && record.id) {
 				result = await editTask();
 			} else {
@@ -166,7 +166,6 @@ function LoganTaskModal({
 	};
 
 	const changeSwitch = (checked: boolean) => {
-		console.log(`switch to ${checked}`);
 		setTaskData((prev) => {
 			return {
 				...prev,
@@ -185,6 +184,7 @@ function LoganTaskModal({
 	};
 
 	useEffect(() => {
+		if (!visible) return;
 		if (isEdit && record) {
 			setTaskData({
 				...record,
@@ -195,14 +195,13 @@ function LoganTaskModal({
 				timeSelect: record.timeSelect.map((item) => dayjs(item)),
 			});
 		} else {
-			console.log('进来了这里', initTaskData);
 			setTaskData(cloneDeep(initTaskData));
 			form.setFieldsValue({
 				...initTaskData,
 				timeSelect: initTaskData.timeSelect.map((item) => dayjs(item)),
 			});
 		}
-	}, [isEdit, record]);
+	}, [isEdit, record, visible]);
 
 	return (
 		<>
@@ -222,7 +221,6 @@ function LoganTaskModal({
 						<Input
 							value={taskData.name}
 							onChange={(e) => {
-								// console.log('taskData.name', taskData.name);
 								handleInput('name', e.target.value);
 							}}
 						/>

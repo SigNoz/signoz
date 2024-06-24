@@ -77,8 +77,8 @@ function Logan(): JSX.Element {
 	const [searchParam, setSearchParam] = useState<SearchParamType>();
 
 	const handleShowModal = (isEdit: boolean) => {
-		setModalVisible(true);
 		setModalIsEdit(isEdit);
+		setModalVisible(true);
 	};
 
 	const handleEdit = (record: LoganTableType) => {
@@ -89,7 +89,6 @@ function Logan(): JSX.Element {
 	const handleCreate = () => {
 		setCurRecord(null);
 		handleShowModal(false);
-		setModalIsEdit(false);
 	};
 
 	const deleteTask = async (id: number) => {
@@ -143,7 +142,6 @@ function Logan(): JSX.Element {
 			title: 'Task Name',
 			dataIndex: 'name',
 			key: 'name',
-			// render: (text) => <a>{text}</a>,
 		},
 		{
 			title: 'UserId',
@@ -156,19 +154,19 @@ function Logan(): JSX.Element {
 			key: 'deviceId',
 		},
 		{
-			title: '是否开启上报',
+			title: 'Enable Report',
 			dataIndex: 'needReport',
 			key: 'needReport',
-			render: (value, record) => <span>{value === 1 ? '是' : '否'}</span>,
+			render: (value, record) => <span>{value === 1 ? 'Yes' : 'No'}</span>,
 		},
 		{
-			title: '是否已上报',
+			title: 'Is Reported',
 			dataIndex: 'isReported',
 			key: 'isReported',
-			render: (value, record) => <span>{value === 1 ? '是' : '否'}</span>,
+			render: (value, record) => <span>{value === 1 ? 'Yes' : 'No'}</span>,
 		},
 		{
-			title: '时间筛选',
+			title: 'Time Select',
 			dataIndex: 'timeSelect',
 			key: 'timeSelect',
 			render: (value, record) => {
@@ -178,7 +176,7 @@ function Logan(): JSX.Element {
 			},
 		},
 		{
-			title: '创建时间',
+			title: 'Create Time',
 			dataIndex: 'createdAt',
 			key: 'createdAt',
 			render: (value, record) => (
@@ -191,7 +189,7 @@ function Logan(): JSX.Element {
 			key: 'bugLink',
 		},
 		{
-			title: '文件地址',
+			title: 'File Address',
 			dataIndex: 'logFileName',
 			key: 'logFileName',
 			render: (value, record) => {
@@ -216,7 +214,7 @@ function Logan(): JSX.Element {
 			},
 		},
 		{
-			title: '操作',
+			title: 'Operation',
 			key: 'action',
 			render: (_, record) => (
 				<Space size="middle">
@@ -243,7 +241,6 @@ function Logan(): JSX.Element {
 
 	const searchLogan = async (searchParam: any) => {
 		try {
-			console.log('searchParam', searchParam);
 			setSearchLoading(true);
 			const { data } = await axios.post(
 				`${process.env.SERVER_API_HOST}/capi/logan/searchLoganTable`,
@@ -254,9 +251,8 @@ function Logan(): JSX.Element {
 					data.data?.list?.map((item: any) => {
 						return formatDataToPage(item);
 					}) || [];
-				console.log('list', list);
 				setTableData(list);
-				setTableTotal(data.total);
+				setTableTotal(data?.data?.total || 0);
 			}
 		} catch (error) {
 			console.error('searchAllRulesError', error);
@@ -270,20 +266,18 @@ function Logan(): JSX.Element {
 			...prev,
 			current: page.current || 1,
 		}));
-		let tmpPag: Pagination | null = {
+		let tmpPag: Pagination = {
 			current: page.current || 0,
 			pageSize: page.pageSize || 0,
 		};
-		if ((sorter as any)?.field === 'count' && (sorter as any)?.order) {
-			tmpPag = null;
-		}
-		// getTableList(tmpPag, (sorter as any)?.field, (sorter as any)?.order);
+		// console.log('hhh', tmpPag);
+		handleSearch(tmpPag);
 	};
 
-	const handleSearch = () => {
+	const handleSearch = (paramPage?: Pagination) => {
 		const param: FinalSearchParamType = {
 			...searchParam,
-			page: pagination,
+			page: paramPage || pagination,
 		};
 
 		for (const key in param) {
@@ -318,7 +312,7 @@ function Logan(): JSX.Element {
 			<h1 style={isDarkMode ? { color: 'white' } : { color: 'black' }}>Logan</h1>
 			<div>
 				<Form name="search-form" layout="inline">
-					<Form.Item label="任务名" style={{ marginBottom: 10 }}>
+					<Form.Item label="Task Name" style={{ marginBottom: 10 }}>
 						<Input
 							style={{ width: 160 }}
 							placeholder="Please input"
@@ -345,7 +339,7 @@ function Logan(): JSX.Element {
 							allowClear
 						/>
 					</Form.Item>
-					<Form.Item label="选择时间" style={{ marginBottom: 10 }}>
+					<Form.Item label="Create Time" style={{ marginBottom: 10 }}>
 						<RangePicker
 							format="YYYY-MM-DD"
 							popupStyle={
@@ -353,7 +347,6 @@ function Logan(): JSX.Element {
 							}
 							defaultValue={[timeSelect[0], timeSelect[1]]}
 							onChange={(value, dateString: [string, string]) => {
-								// console.log('value', value);
 								if (Array.isArray(value)) {
 									setTimeSelect(value as [Dayjs, Dayjs]);
 								} else {
@@ -362,30 +355,28 @@ function Logan(): JSX.Element {
 							}}
 						/>
 					</Form.Item>
-					<Form.Item label="是否已上报" style={{ marginBottom: 10 }}>
+					<Form.Item label="Is Reported" style={{ marginBottom: 10 }}>
 						<Select
-							// value={'0'}
 							allowClear
 							placeholder="Select a project"
 							style={{ width: 180 }}
 							onChange={(value: string) => {
-								// console.log('value', value);
 								handleInput('isReported', value);
 							}}
 							options={[
 								{
 									value: 1,
-									label: '是',
+									label: 'Yes',
 								},
 								{
 									value: 0,
-									label: '否',
+									label: 'No',
 								},
 							]}
 						/>
 					</Form.Item>
 					<Form.Item label=" " colon={false} style={{ marginBottom: 10 }}>
-						<Button type="primary" onClick={handleSearch}>
+						<Button type="primary" onClick={() => handleSearch()}>
 							Search
 						</Button>
 					</Form.Item>
