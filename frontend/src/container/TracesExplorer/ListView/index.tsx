@@ -107,6 +107,8 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		QueryParams.pagination,
 	);
 
+	const orderByFromQuery = currentQuery.builder.queryData[0].orderBy;
+
 	const { data, isFetching, isLoading, isError } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.traces,
@@ -150,8 +152,12 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	]);
 
 	const columns = useMemo(() => {
-		const updatedColumns = getListColumns(options?.selectColumns || []);
+		const updatedColumns = getListColumns(
+			options?.selectColumns || [],
+			orderByFromQuery,
+		);
 		return getDraggedColumns(updatedColumns, draggedColumns);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [options?.selectColumns, draggedColumns]);
 
 	const transformedQueryTableData = useMemo(
