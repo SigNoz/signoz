@@ -137,8 +137,6 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 
-	console.log('response', response);
-
 	return (
 		<StyledRow styledclass={[Flex({ flex: 1 })]}>
 			<StyledCol flex="auto" styledclass={styles.leftContainer}>
