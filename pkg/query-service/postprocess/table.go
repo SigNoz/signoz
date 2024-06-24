@@ -25,7 +25,7 @@ func getAutoColNameForQuery(queryName string, params *v3.QueryRangeParamsV3) str
 	return queryName
 }
 
-func transformToTable(results []*v3.Result, params *v3.QueryRangeParamsV3) []*v3.Result {
+func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRangeParamsV3) []*v3.Result {
 	if len(results) == 0 {
 		return nil
 	}
@@ -217,4 +217,102 @@ func sortRows(rows []*v3.TableRow, columns []*v3.TableColumn, builderQueries map
 		}
 		return false
 	})
+}
+
+func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
+	if len(results) == 0 {
+		return nil
+	}
+
+	// Sort results by QueryName
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].QueryName < results[j].QueryName
+	})
+
+	// Create a map to store all unique labels
+	seen := make(map[string]bool)
+	labelKeys := []string{}
+	for _, result := range results {
+		for _, series := range result.Series {
+			for _, labels := range series.LabelsArray {
+				for key := range labels {
+					if _, ok := seen[key]; !ok {
+						seen[key] = true
+						labelKeys = append(labelKeys, key)
+					}
+				}
+			}
+		}
+	}
+
+	// Create columns
+	columns := make([]*v3.TableColumn, 0)
+	for _, key := range labelKeys {
+		columns = append(columns, &v3.TableColumn{Name: key})
+	}
+	for _, result := range results {
+		if len(result.Series) > 0 && len(result.Series[0].Points) > 0 {
+			columns = append(columns, &v3.TableColumn{Name: result.QueryName})
+		}
+	}
+
+	// Create a map to store unique rows
+	rowMap := make(map[string]*v3.TableRow)
+
+	for _, result := range results {
+		for _, series := range result.Series {
+
+			// Create a key for the row based on labels
+			var keyParts []string
+			rowData := make([]interface{}, len(columns))
+			for i, key := range labelKeys {
+				value := "n/a"
+				for _, labels := range series.LabelsArray {
+					if v, ok := labels[key]; ok {
+						value = v
+						break
+					}
+				}
+				keyParts = append(keyParts, fmt.Sprintf("%s=%s", key, value))
+				rowData[i] = value
+			}
+			rowKey := strings.Join(keyParts, ",")
+
+			// Get or create the row
+			row, ok := rowMap[rowKey]
+			if !ok {
+				row = &v3.TableRow{Data: rowData}
+				rowMap[rowKey] = row
+			}
+
+			// Add the value for this query
+			for i, col := range columns {
+				if col.Name == result.QueryName && len(series.Points) > 0 {
+					row.Data[i] = series.Points[0].Value
+					break
+				}
+			}
+		}
+	}
+
+	// Convert rowMap to a slice of TableRows
+	rows := make([]*v3.TableRow, 0, len(rowMap))
+	for _, row := range rowMap {
+		for i, value := range row.Data {
+			if value == nil {
+				row.Data[i] = "n/a"
+			}
+		}
+		rows = append(rows, row)
+	}
+
+	// Create the final result
+	tableResult := v3.Result{
+		Table: &v3.Table{
+			Columns: columns,
+			Rows:    rows,
+		},
+	}
+
+	return []*v3.Result{&tableResult}
 }

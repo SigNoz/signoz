@@ -90,7 +90,7 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	if queryRangeParams.FormatForWeb &&
 		queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder &&
 		queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable {
-		result = transformToTable(result, queryRangeParams)
+		result = TransformToTableForBuilderQueries(result, queryRangeParams)
 	}
 
 	return result, nil
