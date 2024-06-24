@@ -1924,6 +1924,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
 	}
 
+	var startTime, endTime, durationNano uint64
 	var searchScanResponses []model.SearchSpanDBResponseItem
 
 	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
@@ -1954,6 +1955,15 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		easyjson.Unmarshal([]byte(item.Model), &jsonItem)
 		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
 		searchSpanResponses = append(searchSpanResponses, jsonItem)
+		if startTime == 0 || jsonItem.TimeUnixNano < startTime {
+			startTime = jsonItem.TimeUnixNano
+		}
+		if endTime == 0 || jsonItem.TimeUnixNano > endTime {
+			endTime = jsonItem.TimeUnixNano
+		}
+		if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
+			durationNano = uint64(jsonItem.DurationNano)
+		}
 	}
 	end = time.Now()
 	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
@@ -1982,6 +1992,9 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 			searchSpansResult[0].Events[i] = spanEvents
 		}
 	}
+
+	searchSpansResult[0].StartTimestampMillis = startTime - durationNano
+	searchSpansResult[0].EndTimestampMillis = endTime + durationNano
 
 	return &searchSpansResult, nil
 }
