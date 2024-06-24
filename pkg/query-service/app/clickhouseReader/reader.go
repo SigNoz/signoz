@@ -1993,8 +1993,8 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		}
 	}
 
-	searchSpansResult[0].StartTimestampMillis = startTime - durationNano
-	searchSpansResult[0].EndTimestampMillis = endTime + durationNano
+	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano/1000000)
+	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano/1000000)
 
 	return &searchSpansResult, nil
 }
