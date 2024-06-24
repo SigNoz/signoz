@@ -94,6 +94,26 @@ function External(): JSX.Element {
 		[servicename, tagFilterItems],
 	);
 
+	const errorApmToTraceQuery = useGetAPMToTracesQueries({
+		servicename,
+		isExternalCall: true,
+		filters: [
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'hasError',
+					dataType: DataTypes.bool,
+					type: 'tag',
+					isColumn: true,
+					isJSON: false,
+					id: 'hasError--bool--tag--true',
+				},
+				op: 'in',
+				value: ['true'],
+			},
+		],
+	});
+
 	const externalCallRPSWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
@@ -143,21 +163,6 @@ function External(): JSX.Element {
 	const apmToTraceQuery = useGetAPMToTracesQueries({
 		servicename,
 		isExternalCall: true,
-		filters: [
-			{
-				id: uuid().slice(0, 8),
-				key: {
-					key: 'hasError',
-					dataType: DataTypes.bool,
-					type: 'tag',
-					isColumn: true,
-					isJSON: false,
-					id: 'hasError--bool--tag--true',
-				},
-				op: 'in',
-				value: ['true'],
-			},
-		],
 	});
 
 	return (
@@ -172,7 +177,7 @@ function External(): JSX.Element {
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
-							apmToTraceQuery,
+							apmToTraceQuery: errorApmToTraceQuery,
 						})}
 					>
 						View Traces
