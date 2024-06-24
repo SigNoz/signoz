@@ -157,7 +157,7 @@ function SideNav({
 		'';
 
 	const isLicenseActive =
-		licenseStatus.toLocaleLowerCase() ===
+		licenseStatus?.toLocaleLowerCase() ===
 		LICENSE_PLAN_STATUS.VALID.toLocaleLowerCase();
 
 	const isEnterprise = licenseData?.payload?.licenses?.some(

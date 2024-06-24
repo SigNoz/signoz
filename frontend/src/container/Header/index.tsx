@@ -115,7 +115,7 @@ function HeaderContainer(): JSX.Element {
 		'';
 
 	const isLicenseActive =
-		licensesStatus.toLocaleLowerCase() ===
+		licensesStatus?.toLocaleLowerCase() ===
 		LICENSE_PLAN_STATUS.VALID.toLocaleLowerCase();
 
 	useEffect(() => {
