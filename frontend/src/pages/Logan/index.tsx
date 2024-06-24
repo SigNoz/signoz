@@ -13,6 +13,7 @@ import {
 	Space,
 	Table,
 	Tag,
+	Tooltip,
 } from 'antd';
 import axios from 'axios';
 import { ResizeTable } from 'components/ResizeTable';
@@ -142,6 +143,17 @@ function Logan(): JSX.Element {
 			title: 'Task Name',
 			dataIndex: 'name',
 			key: 'name',
+			width: 120,
+			render: (value, record) => {
+				if (value.length > 8) {
+					return (
+						<Tooltip title={value}>
+							<span>{`${value.slice(0, 8)}...`}</span>
+						</Tooltip>
+					);
+				}
+				return <span>{value}</span>;
+			},
 		},
 		{
 			title: 'UserId',
@@ -157,12 +169,14 @@ function Logan(): JSX.Element {
 			title: 'Enable Report',
 			dataIndex: 'needReport',
 			key: 'needReport',
+			width: 130,
 			render: (value, record) => <span>{value === 1 ? 'Yes' : 'No'}</span>,
 		},
 		{
 			title: 'Is Reported',
 			dataIndex: 'isReported',
 			key: 'isReported',
+			width: 120,
 			render: (value, record) => <span>{value === 1 ? 'Yes' : 'No'}</span>,
 		},
 		{
@@ -192,20 +206,37 @@ function Logan(): JSX.Element {
 			title: 'File Address',
 			dataIndex: 'logFileName',
 			key: 'logFileName',
+			width: 160,
 			render: (value, record) => {
 				return (
-					<div style={{}}>
+					<div>
 						{record.logFileName ? (
-							record.logFileName.split(',').map((item: string, i: number) => (
-								<a
-									key={i}
-									href={`${process.env.LOGAN_FILE_PATH}${item}`}
-									target="_blank"
-									style={{ display: 'block' }}
-								>
-									{item}
-								</a>
-							))
+							record.logFileName.split(',').map((item: string, i: number) => {
+								if (item.length > 14) {
+									return (
+										<Tooltip title={item}>
+											<a
+												key={i}
+												href={`${process.env.LOGAN_FILE_PATH}${item}`}
+												target="_blank"
+												style={{ display: 'block' }}
+											>
+												{`${item.slice(0, 14)}...`}
+											</a>
+										</Tooltip>
+									);
+								}
+								return (
+									<a
+										key={i}
+										href={`${process.env.LOGAN_FILE_PATH}${item}`}
+										target="_blank"
+										style={{ display: 'block' }}
+									>
+										{item}
+									</a>
+								);
+							})
 						) : (
 							<></>
 						)}
