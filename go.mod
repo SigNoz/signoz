@@ -37,7 +37,6 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/posthog/posthog-go v0.0.0-20220817142604-0b0bbf0f9c0f
 	github.com/prometheus/common v0.54.0
 	github.com/prometheus/prometheus v2.5.0+incompatible
 	github.com/rs/cors v1.11.0
