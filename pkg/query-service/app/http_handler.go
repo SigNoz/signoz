@@ -3327,9 +3327,9 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-
 		result, err = postprocess.PostProcessResult(result, queryRangeParams)
-	} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL && queryRangeParams.FormatForWeb {
+	} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL &&
+		queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable && queryRangeParams.FormatForWeb {
 		result = postprocess.TransformToTableForClickHouseQueries(result)
 	}
 
