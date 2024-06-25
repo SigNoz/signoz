@@ -55,7 +55,6 @@ type ServerOptions struct {
 	// alert specific params
 	DisableRules      bool
 	RuleRepoURL       string
-	PreferDelta       bool
 	PreferSpanMetrics bool
 	MaxIdleConns      int
 	MaxOpenConns      int
@@ -172,7 +171,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
 		SkipConfig:                    skipConfig,
-		PerferDelta:                   serverOptions.PreferDelta,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
 		MaxIdleConns:                  serverOptions.MaxIdleConns,
 		MaxOpenConns:                  serverOptions.MaxOpenConns,

@@ -6,8 +6,8 @@ import AppRoutes from 'AppRoutes';
 import { AxiosError } from 'axios';
 import { ThemeProvider } from 'hooks/useDarkMode';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import posthog from 'posthog-js';
 import { createRoot } from 'react-dom/client';
-import { ErrorBoundary } from 'react-error-boundary';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
@@ -34,6 +34,13 @@ const queryClient = new QueryClient({
 
 const container = document.getElementById('root');
 
+if (process.env.POSTHOG_KEY) {
+	posthog.init(process.env.POSTHOG_KEY, {
+		api_host: 'https://us.i.posthog.com',
+		person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+	});
+}
+
 Sentry.init({
 	dsn: process.env.SENTRY_DSN,
 	tunnel: process.env.TUNNEL_URL,
@@ -58,7 +65,7 @@ if (container) {
 	const root = createRoot(container);
 
 	root.render(
-		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<HelmetProvider>
 				<ThemeProvider>
 					<QueryClientProvider client={queryClient}>
@@ -68,6 +75,6 @@ if (container) {
 					</QueryClientProvider>
 				</ThemeProvider>
 			</HelmetProvider>
-		</ErrorBoundary>,
+		</Sentry.ErrorBoundary>,
 	);
 }

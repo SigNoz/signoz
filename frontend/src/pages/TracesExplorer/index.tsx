@@ -1,15 +1,19 @@
 import './TracesExplorer.styles.scss';
 
 import { FilterOutlined } from '@ant-design/icons';
+import * as Sentry from '@sentry/react';
 import { Button, Card, Tabs, Tooltip } from 'antd';
 import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import ExportPanel from 'container/ExportPanel';
+import { useOptionsMenu } from 'container/OptionsMenu';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
+import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
@@ -19,10 +23,11 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { cloneDeep, set } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
@@ -41,6 +46,15 @@ function TracesExplorer(): JSX.Element {
 		handleRunQuery,
 		stagedQuery,
 	} = useQueryBuilder();
+
+	const { options } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
+		dataSource: DataSource.TRACES,
+		aggregateOperator: 'noop',
+		initialOptions: {
+			selectColumns: defaultSelectedColumns,
+		},
+	});
 
 	const currentPanelType = useGetPanelTypesQueryParam();
 
@@ -101,6 +115,18 @@ function TracesExplorer(): JSX.Element {
 
 	const { mutate: updateDashboard, isLoading } = useUpdateDashboard();
 
+	const getUpdatedQueryForExport = (): Query => {
+		const updatedQuery = cloneDeep(currentQuery);
+
+		set(
+			updatedQuery,
+			'builder.queryData[0].selectColumns',
+			options.selectColumns,
+		);
+
+		return updatedQuery;
+	};
+
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null): void => {
 			if (!dashboard || !panelType) return;
@@ -111,11 +137,17 @@ function TracesExplorer(): JSX.Element {
 
 			const widgetId = v4();
 
+			const query =
+				panelType === PANEL_TYPES.LIST
+					? getUpdatedQueryForExport()
+					: exportDefaultQuery;
+
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
-				exportDefaultQuery,
+				query,
 				widgetId,
 				panelTypeParam,
+				options.selectColumns,
 			);
 
 			updateDashboard(updatedDashboard, {
@@ -144,7 +176,7 @@ function TracesExplorer(): JSX.Element {
 						return;
 					}
 					const dashboardEditView = generateExportToDashboardLink({
-						query: exportDefaultQuery,
+						query,
 						panelType: panelTypeParam,
 						dashboardId: data.payload?.uuid || '',
 						widgetId,
@@ -161,6 +193,7 @@ function TracesExplorer(): JSX.Element {
 				},
 			});
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[exportDefaultQuery, notifications, panelType, updateDashboard],
 	);
 
@@ -185,7 +218,7 @@ function TracesExplorer(): JSX.Element {
 	const [isOpen, setOpen] = useState<boolean>(true);
 
 	return (
-		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="trace-explorer-page">
 				<Card className="filter" hidden={!isOpen}>
 					<Filter setOpen={setOpen} />
@@ -236,7 +269,7 @@ function TracesExplorer(): JSX.Element {
 					/>
 				</Card>
 			</div>
-		</ErrorBoundary>
+		</Sentry.ErrorBoundary>
 	);
 }
 

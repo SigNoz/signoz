@@ -72,10 +72,16 @@ function LeftContainer({
 				globalSelectedInterval,
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery,
+				fillGaps: selectedWidget.fillSpans || false,
 			}));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [stagedQuery, selectedTime, globalSelectedInterval]);
+	}, [
+		stagedQuery,
+		selectedTime,
+		selectedWidget.fillSpans,
+		globalSelectedInterval,
+	]);
 
 	const queryResponse = useGetQueryRange(
 		requestData,

@@ -3,6 +3,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import './AppLayout.styles.scss';
 
+import * as Sentry from '@sentry/react';
 import { Flex } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import getDynamicConfigs from 'api/dynamicConfigs/getDynamicConfigs';
@@ -27,7 +28,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
@@ -236,7 +236,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING ||
 		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
 		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
-		pathname === ROUTES.GET_STARTED_AWS_MONITORING;
+		pathname === ROUTES.GET_STARTED_AWS_MONITORING ||
+		pathname === ROUTES.GET_STARTED_AZURE_MONITORING;
 
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 
@@ -342,7 +343,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					/>
 				)}
 				<div className={cx('app-content', collapsed ? 'collapsed' : '')}>
-					<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent>
 							<ChildrenContainer
 								style={{
@@ -360,7 +361,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 								{children}
 							</ChildrenContainer>
 						</LayoutContent>
-					</ErrorBoundary>
+					</Sentry.ErrorBoundary>
 				</div>
 			</Flex>
 		</Layout>

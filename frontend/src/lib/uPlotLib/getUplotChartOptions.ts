@@ -64,11 +64,16 @@ export interface GetUPlotChartOptions {
 function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
 	const series = cloneDeep(apiResponse);
 
+	if (!series) {
+		return series;
+	}
+
 	for (let i = series.length - 2; i >= 0; i--) {
 		const { values } = series[i];
 		for (let j = 0; j < values.length; j++) {
 			values[j][1] = String(
-				parseFloat(values[j]?.[1]) + parseFloat(series[i + 1].values[j]?.[1]),
+				parseFloat(values[j]?.[1] || '0') +
+					parseFloat(series[i + 1].values[j]?.[1] || '0'),
 			);
 		}
 
@@ -83,12 +88,16 @@ function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
  */
 function getStackedSeriesQueryFormat(apiResponse: QueryData[]): QueryData[] {
 	const series = cloneDeep(apiResponse);
+	if (!series) {
+		return apiResponse;
+	}
 
 	for (let i = series.length - 2; i >= 0; i--) {
 		const { values } = series[i];
 		for (let j = 0; j < values.length; j++) {
 			values[j].value = String(
-				parseFloat(values[j].value) + parseFloat(series[i + 1].values[j].value),
+				parseFloat(values[j]?.value || '0') +
+					parseFloat(series[i + 1].values[j]?.value || '0'),
 			);
 		}
 
@@ -100,9 +109,12 @@ function getStackedSeriesQueryFormat(apiResponse: QueryData[]): QueryData[] {
 
 function getStackedSeriesYAxis(apiResponse: QueryDataV3[]): QueryDataV3[] {
 	const series = cloneDeep(apiResponse);
+	if (!series) {
+		return apiResponse;
+	}
 
 	for (let i = 0; i < series.length; i++) {
-		series[i].series = getStackedSeriesQueryFormat(series[i].series);
+		series[i].series = getStackedSeriesQueryFormat(series[i].series || []);
 	}
 
 	return series;
