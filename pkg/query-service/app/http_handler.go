@@ -76,7 +76,6 @@ type APIHandler struct {
 	querier           interfaces.Querier
 	querierV2         interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
-	preferDelta       bool
 	preferSpanMetrics bool
 
 	// temporalityMap is a map of metric name to temporality
@@ -106,7 +105,6 @@ type APIHandlerOpts struct {
 
 	SkipConfig *model.SkipConfig
 
-	PerferDelta       bool
 	PreferSpanMetrics bool
 
 	MaxIdleConns int
@@ -166,7 +164,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		reader:                        opts.Reader,
 		appDao:                        opts.AppDao,
 		skipConfig:                    opts.SkipConfig,
-		preferDelta:                   opts.PerferDelta,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		maxIdleConns:                  opts.MaxIdleConns,
