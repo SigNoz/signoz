@@ -1116,3 +1116,27 @@ type MetricMetadataResponse struct {
 	IsMonotonic bool      `json:"isMonotonic"`
 	Temporality string    `json:"temporality"`
 }
+
+type RuleStateHistory struct {
+	RuleID      string  `json:"ruleID" ch:"rule_id"`
+	RuleName    string  `json:"ruleName" ch:"rule_name"`
+	State       string  `json:"state" ch:"state"`
+	UnixMilli   int64   `json:"unixMilli" ch:"unix_milli"`
+	Labels      string  `json:"labels" ch:"labels"`
+	Fingerprint uint64  `json:"fingerprint" ch:"fingerprint"`
+	Value       float64 `json:"value" ch:"value"`
+}
+
+type QueryRuleStateHistory struct {
+	Start   int64      `json:"start"`
+	End     int64      `json:"end"`
+	Filters *FilterSet `json:"filters"`
+	Offset  int64      `json:"offset"`
+	Limit   int64      `json:"limit"`
+}
+
+type RuleStateHistoryContributor struct {
+	Fingerprint uint64 `json:"fingerprint" ch:"fingerprint"`
+	Labels      string `json:"labels" ch:"labels"`
+	Count       uint64 `json:"count" ch:"count"`
+}

@@ -28,6 +28,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/migrate"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
@@ -191,6 +192,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
+	if err != nil {
+		zap.L().Error("error creating history table", zap.Error(err))
 	}
 
 	// initiate opamp

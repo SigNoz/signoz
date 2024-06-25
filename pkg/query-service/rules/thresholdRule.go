@@ -75,6 +75,8 @@ type ThresholdRule struct {
 
 	querier   interfaces.Querier
 	querierV2 interfaces.Querier
+
+	reader interfaces.Reader
 }
 
 type ThresholdRuleOpts struct {
@@ -139,6 +141,7 @@ func NewThresholdRule(
 
 	t.querier = querier.NewQuerier(querierOption)
 	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
+	t.reader = reader
 
 	zap.L().Info("creating new ThresholdRule", zap.String("name", t.name), zap.String("id", t.id))
 
@@ -959,6 +962,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			Value:        smpl.V,
 			GeneratorURL: r.GeneratorURL(),
 			Receivers:    r.preferredChannels,
+			Missing:      smpl.IsMissing,
 		}
 	}
 
@@ -982,6 +986,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.active {
+		labelsJSON, err := json.Marshal(a.Labels)
+		if err != nil {
+			zap.L().Error("error marshaling labels", zap.Error(err), zap.Any("labels", a.Labels))
+		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
@@ -991,6 +999,16 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			if a.State != StateInactive {
 				a.State = StateInactive
 				a.ResolvedAt = ts
+				r.reader.AddRuleStateHistory(ctx, []v3.RuleStateHistory{
+					{
+						RuleID:      r.ID(),
+						RuleName:    r.Name(),
+						State:       "resolved",
+						UnixMilli:   ts.UnixMilli(),
+						Labels:      string(labelsJSON),
+						Fingerprint: a.Labels.Hash(),
+					},
+				})
 			}
 			continue
 		}
@@ -998,6 +1016,21 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		if a.State == StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
 			a.State = StateFiring
 			a.FiredAt = ts
+			state := "firing"
+			if a.Missing {
+				state = "no_data"
+			}
+			r.reader.AddRuleStateHistory(ctx, []v3.RuleStateHistory{
+				{
+					RuleID:      r.ID(),
+					RuleName:    r.Name(),
+					State:       state,
+					UnixMilli:   ts.UnixMilli(),
+					Labels:      string(labelsJSON),
+					Fingerprint: a.Labels.Hash(),
+					Value:       a.Value,
+				},
+			})
 		}
 
 	}
