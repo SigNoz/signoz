@@ -19,11 +19,16 @@ import { CardContainer, CustomSubText, styles } from './styles';
 import Tags from './Tags';
 
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
-	const { tree, firstSpanStartTime } = props;
-
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+
+	const {
+		tree,
+		firstSpanStartTime,
+		traceStartTime = minTime,
+		traceEndTime = maxTime,
+	} = props;
 
 	const { id: traceId } = useParams<Params>();
 
@@ -74,7 +79,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	];
 
 	const onLogsHandler = (): void => {
-		const query = getTraceToLogsQuery(traceId, minTime, maxTime);
+		const query = getTraceToLogsQuery(traceId, traceStartTime, traceEndTime);
 
 		history.push(
 			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
@@ -140,10 +145,14 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 interface SelectedSpanDetailsProps {
 	tree?: ITraceTree;
 	firstSpanStartTime: number;
+	traceStartTime?: number;
+	traceEndTime?: number;
 }
 
 SelectedSpanDetails.defaultProps = {
 	tree: undefined,
+	traceStartTime: undefined,
+	traceEndTime: undefined,
 };
 
 export interface ModalText {

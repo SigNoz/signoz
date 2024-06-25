@@ -212,9 +212,11 @@ type ServiceOverviewItem struct {
 }
 
 type SearchSpansResult struct {
-	Columns   []string        `json:"columns"`
-	Events    [][]interface{} `json:"events"`
-	IsSubTree bool            `json:"isSubTree"`
+	StartTimestampMillis uint64          `json:"startTimestampMillis"`
+	EndTimestampMillis   uint64          `json:"endTimestampMillis"`
+	Columns              []string        `json:"columns"`
+	Events               [][]interface{} `json:"events"`
+	IsSubTree            bool            `json:"isSubTree"`
 }
 
 type GetFilterSpansResponseItem struct {

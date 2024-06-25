@@ -2,6 +2,7 @@
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { ApmDocFilePaths } from 'container/OnboardingContainer/constants/apmDocFilePaths';
 import { AwsMonitoringDocFilePaths } from 'container/OnboardingContainer/constants/awsMonitoringDocFilePaths';
+import { AzureMonitoringDocFilePaths } from 'container/OnboardingContainer/constants/azureMonitoringDocFilePaths';
 import { InfraMonitoringDocFilePaths } from 'container/OnboardingContainer/constants/infraMonitoringDocFilePaths';
 import { LogsManagementDocFilePaths } from 'container/OnboardingContainer/constants/logsManagementDocFilePaths';
 import {
@@ -69,6 +70,8 @@ export default function MarkdownStep(): JSX.Element {
 			docFilePaths = InfraMonitoringDocFilePaths;
 		} else if (selectedModule?.id === ModulesMap.AwsMonitoring) {
 			docFilePaths = AwsMonitoringDocFilePaths;
+		} else if (selectedModule?.id === ModulesMap.AzureMonitoring) {
+			docFilePaths = AzureMonitoringDocFilePaths;
 		}
 		// @ts-ignore
 		if (docFilePaths && docFilePaths[path]) {
