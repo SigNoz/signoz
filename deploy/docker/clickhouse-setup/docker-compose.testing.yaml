@@ -188,6 +188,7 @@ services:
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-standalone-amd
+      - READ_MULTI_SERIES_FOR_CLICKHOUSE_SQL=true
     restart: on-failure
     healthcheck:
       test:

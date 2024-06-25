@@ -48,10 +48,11 @@ type querier struct {
 
 	// used for testing
 	// TODO(srikanthccv): remove this once we have a proper mock
-	testingMode     bool
-	queriesExecuted []string
-	returnedSeries  []*v3.Series
-	returnedErr     error
+	testingMode                     bool
+	queriesExecuted                 []string
+	returnedSeries                  []*v3.Series
+	returnedErr                     error
+	ReadMultiSeriesForClickHouseSQL bool
 }
 
 type QuerierOptions struct {
@@ -62,9 +63,10 @@ type QuerierOptions struct {
 	FeatureLookup interfaces.FeatureLookup
 
 	// used for testing
-	TestingMode    bool
-	ReturnedSeries []*v3.Series
-	ReturnedErr    error
+	TestingMode                     bool
+	ReturnedSeries                  []*v3.Series
+	ReturnedErr                     error
+	ReadMultiSeriesForClickHouseSQL bool
 }
 
 func NewQuerier(opts QuerierOptions) interfaces.Querier {
@@ -81,9 +83,10 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 		}, opts.FeatureLookup),
 		featureLookUp: opts.FeatureLookup,
 
-		testingMode:    opts.TestingMode,
-		returnedSeries: opts.ReturnedSeries,
-		returnedErr:    opts.ReturnedErr,
+		testingMode:                     opts.TestingMode,
+		returnedSeries:                  opts.ReturnedSeries,
+		returnedErr:                     opts.ReturnedErr,
+		ReadMultiSeriesForClickHouseSQL: opts.ReadMultiSeriesForClickHouseSQL,
 	}
 }
 
@@ -111,6 +114,15 @@ func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.
 	if pointsWithNegativeTimestamps > 0 {
 		zap.L().Error("found points with negative timestamps for query", zap.String("query", query))
 	}
+	return result, err
+}
+
+func (q *querier) execClickHouseQueryForMultiSeries(ctx context.Context, query string) ([]*v3.Series, error) {
+	q.queriesExecuted = append(q.queriesExecuted, query)
+	if q.testingMode && q.reader == nil {
+		return q.returnedSeries, q.returnedErr
+	}
+	result, err := q.reader.GetClickHouseResult(ctx, query)
 	return result, err
 }
 
@@ -424,8 +436,13 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 		wg.Add(1)
 		go func(queryName string, clickHouseQuery *v3.ClickHouseQuery) {
 			defer wg.Done()
-			series, err := q.execClickHouseQuery(ctx, clickHouseQuery.Query)
-			channelResults <- channelResult{Err: err, Name: queryName, Query: clickHouseQuery.Query, Series: series}
+			if q.ReadMultiSeriesForClickHouseSQL {
+				series, err := q.execClickHouseQueryForMultiSeries(ctx, clickHouseQuery.Query)
+				channelResults <- channelResult{Err: err, Name: queryName, Query: clickHouseQuery.Query, Series: series}
+			} else {
+				series, err := q.execClickHouseQuery(ctx, clickHouseQuery.Query)
+				channelResults <- channelResult{Err: err, Name: queryName, Query: clickHouseQuery.Query, Series: series}
+			}
 		}(queryName, clickHouseQuery)
 	}
 	wg.Wait()
