@@ -14,16 +14,10 @@ export default function LogsModulePage(): JSX.Element {
 	}
 
 	const routes: TabRoutes[] = [logsExplorer, logsPipelines, logSaveView];
-	console.log('进来了这里', pathname, routes);
 
 	return (
 		<div className="logs-module-container">
 			<RouteTab routes={routes} activeKey={pathname} history={history} />
-			{/* <RouteTab
-				routes={routes}
-				activeKey={'/logs/logs-explorer'}
-				history={history}
-			/> */}
 		</div>
 	);
 }
