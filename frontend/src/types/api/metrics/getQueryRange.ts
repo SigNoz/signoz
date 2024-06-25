@@ -24,6 +24,7 @@ export type QueryRangePayload = {
 	start: number;
 	step: number;
 	variables?: Record<string, unknown>;
+	formatForWeb?: boolean;
 	[param: string]: unknown;
 };
 export interface MetricRangePayloadProps {
