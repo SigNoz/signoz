@@ -3013,6 +3013,7 @@ func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request)
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
+	queryRangeParams.Version = "v3"
 
 	aH.Respond(w, queryRangeParams)
 }
@@ -3065,6 +3066,14 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 	if queryRangeParams.CompositeQuery.FillGaps {
 		postprocess.FillGaps(result, queryRangeParams)
+	}
+
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable && queryRangeParams.FormatForWeb {
+		if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+			result = postprocess.TransformToTableForClickHouseQueries(result)
+		} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+			result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+		}
 	}
 
 	resp := v3.QueryRangeResponse{
@@ -3315,8 +3324,10 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-
 		result, err = postprocess.PostProcessResult(result, queryRangeParams)
+	} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL &&
+		queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable && queryRangeParams.FormatForWeb {
+		result = postprocess.TransformToTableForClickHouseQueries(result)
 	}
 
 	if err != nil {
@@ -3340,6 +3351,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
+	queryRangeParams.Version = "v4"
 
 	// add temporality for each metric
 	temporalityErr := aH.populateTemporality(r.Context(), queryRangeParams)
