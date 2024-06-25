@@ -2,6 +2,7 @@
 	"name": "frontend",
 	"version": "1.0.0",
 	"description": "",
+	"homepage": "/web",
 	"main": "webpack.config.js",
 	"scripts": {
 		"i18n:generate-hash": "node ./i18-generate-hash.js",

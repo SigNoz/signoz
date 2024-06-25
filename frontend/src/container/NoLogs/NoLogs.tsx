@@ -7,7 +7,11 @@ export default function NoLogs(): JSX.Element {
 	return (
 		<div className="no-logs-container">
 			<div className="no-logs-container-content">
-				<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
+				<img
+					className="eyes-emoji"
+					src="/website/Images/eyesEmoji.svg"
+					alt="eyes emoji"
+				/>
 				<Typography className="no-logs-text">
 					No logs yet.
 					<span className="sub-text">

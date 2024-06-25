@@ -8,7 +8,7 @@ export function LogsLoading(): JSX.Element {
 			<div className="loading-logs-content">
 				<img
 					className="loading-gif"
-					src="/Icons/loading-plane.gif"
+					src="/website/Icons/loading-plane.gif"
 					alt="wait-icon"
 				/>
 
