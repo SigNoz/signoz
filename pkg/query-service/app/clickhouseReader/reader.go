@@ -1924,6 +1924,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
 	}
 
+	var startTime, endTime, durationNano uint64
 	var searchScanResponses []model.SearchSpanDBResponseItem
 
 	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
@@ -1954,6 +1955,15 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		easyjson.Unmarshal([]byte(item.Model), &jsonItem)
 		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
 		searchSpanResponses = append(searchSpanResponses, jsonItem)
+		if startTime == 0 || jsonItem.TimeUnixNano < startTime {
+			startTime = jsonItem.TimeUnixNano
+		}
+		if endTime == 0 || jsonItem.TimeUnixNano > endTime {
+			endTime = jsonItem.TimeUnixNano
+		}
+		if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
+			durationNano = uint64(jsonItem.DurationNano)
+		}
 	}
 	end = time.Now()
 	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
@@ -1982,6 +1992,9 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 			searchSpansResult[0].Events[i] = spanEvents
 		}
 	}
+
+	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano/1000000)
+	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano/1000000)
 
 	return &searchSpansResult, nil
 }
@@ -3219,7 +3232,7 @@ func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Con
 
 	var totalSamples uint64
 
-	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%' and timestamp_ms > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, int(interval.Minutes()))
+	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%' and unix_milli > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, int(interval.Minutes()))
 
 	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
 
@@ -4431,6 +4444,21 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())
 			}
+		case **float64, **float32:
+			val := reflect.ValueOf(v)
+			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
+				isValidPoint = true
+				value := reflect.ValueOf(v).Elem().Elem().Float()
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					point.Value = value
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", value))
+					if _, ok := groupAttributes[colName]; !ok {
+						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", value)})
+					}
+					groupAttributes[colName] = fmt.Sprintf("%v", value)
+				}
+			}
 		case *uint, *uint8, *uint64, *uint16, *uint32:
 			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
@@ -4442,6 +4470,21 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint())
 			}
+		case **uint, **uint8, **uint64, **uint16, **uint32:
+			val := reflect.ValueOf(v)
+			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
+				isValidPoint = true
+				value := reflect.ValueOf(v).Elem().Elem().Uint()
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					point.Value = float64(value)
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", value))
+					if _, ok := groupAttributes[colName]; !ok {
+						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", value)})
+					}
+					groupAttributes[colName] = fmt.Sprintf("%v", value)
+				}
+			}
 		case *int, *int8, *int16, *int32, *int64:
 			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
@@ -4452,6 +4495,21 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())})
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
+			}
+		case **int, **int8, **int16, **int32, **int64:
+			val := reflect.ValueOf(v)
+			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
+				isValidPoint = true
+				value := reflect.ValueOf(v).Elem().Elem().Int()
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					point.Value = float64(value)
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", value))
+					if _, ok := groupAttributes[colName]; !ok {
+						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", value)})
+					}
+					groupAttributes[colName] = fmt.Sprintf("%v", value)
+				}
 			}
 		case *bool:
 			groupBy = append(groupBy, fmt.Sprintf("%v", *v))

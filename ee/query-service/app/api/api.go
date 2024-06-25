@@ -24,7 +24,6 @@ import (
 type APIHandlerOptions struct {
 	DataConnector                 interfaces.DataConnector
 	SkipConfig                    *basemodel.SkipConfig
-	PreferDelta                   bool
 	PreferSpanMetrics             bool
 	MaxIdleConns                  int
 	MaxOpenConns                  int
@@ -53,7 +52,6 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
 		SkipConfig:                    opts.SkipConfig,
-		PerferDelta:                   opts.PreferDelta,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
 		MaxIdleConns:                  opts.MaxIdleConns,
 		MaxOpenConns:                  opts.MaxOpenConns,
