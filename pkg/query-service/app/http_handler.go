@@ -3071,10 +3071,12 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		postprocess.FillGaps(result, queryRangeParams)
 	}
 
-	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL && queryRangeParams.FormatForWeb {
-		result = postprocess.TransformToTableForClickHouseQueries(result)
-	} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder && queryRangeParams.FormatForWeb {
-		result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable && queryRangeParams.FormatForWeb {
+		if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+			result = postprocess.TransformToTableForClickHouseQueries(result)
+		} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+			result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+		}
 	}
 
 	resp := v3.QueryRangeResponse{
