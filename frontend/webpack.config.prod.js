@@ -44,7 +44,6 @@ const plugins = [
 		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 		SEGMENT_ID: process.env.SEGMENT_ID,
 		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
-		publicPath: '/website/',
 	}),
 	new CompressionPlugin({
 		exclude: /.map$/,
@@ -85,10 +84,8 @@ const config = {
 	mode: 'production',
 	entry: resolve(__dirname, './src/index.tsx'),
 	output: {
-		// path: resolve(__dirname, './build'),
-		path: resolve(__dirname, './build/website'),
-		publicPath: '/website/',
-		// publicPath: '/',
+		path: resolve(__dirname, './build'),
+		publicPath: '/',
 		filename: '[name].[contenthash].js',
 	},
 	resolve: {

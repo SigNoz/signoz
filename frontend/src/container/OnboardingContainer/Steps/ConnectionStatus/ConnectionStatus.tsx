@@ -68,7 +68,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="java"
 						heading="Java OpenTelemetry Instrumentation"
-						imgURL="/website/Logos/java.png"
+						imgURL="/Logos/java.png"
 						docsURL="https://signoz.io/docs/instrumentation/java/"
 						imgClassName="supported-language-img"
 					/>
@@ -79,7 +79,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="python"
 						heading="Python OpenTelemetry Instrumentation"
-						imgURL="/website/Logos/python.png"
+						imgURL="/Logos/python.png"
 						docsURL="https://signoz.io/docs/instrumentation/python/"
 						imgClassName="supported-language-img"
 					/>
@@ -90,7 +90,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="javascript"
 						heading="Javascript OpenTelemetry Instrumentation"
-						imgURL="/website/Logos/javascript.png"
+						imgURL="/Logos/javascript.png"
 						docsURL="https://signoz.io/docs/instrumentation/javascript/"
 						imgClassName="supported-language-img"
 					/>
@@ -100,7 +100,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="go"
 						heading="Go OpenTelemetry Instrumentation"
-						imgURL="/website/Logos/go.png"
+						imgURL="/Logos/go.png"
 						docsURL="https://signoz.io/docs/instrumentation/golang/"
 						imgClassName="supported-language-img"
 					/>
@@ -110,7 +110,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="rails"
 						heading="Ruby on Rails OpenTelemetry Instrumentation"
-						imgURL="/website/Logos/rails.png"
+						imgURL="/Logos/rails.png"
 						docsURL="https://signoz.io/docs/instrumentation/ruby-on-rails/"
 						imgClassName="supported-language-img"
 					/>
@@ -120,7 +120,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="rust"
 						heading="Rust OpenTelemetry Instrumentation"
-						imgURL="/website/Logos/rust.png"
+						imgURL="/Logos/rust.png"
 						docsURL="https://signoz.io/docs/instrumentation/rust/"
 						imgClassName="supported-language-img"
 					/>
@@ -130,7 +130,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="rust"
 						heading="Elixir OpenTelemetry Instrumentation"
-						imgURL="/website/Logos/elixir.png"
+						imgURL="/Logos/elixir.png"
 						docsURL="https://signoz.io/docs/instrumentation/elixir/"
 						imgClassName="supported-language-img"
 					/>
@@ -140,7 +140,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="swift"
 						heading="Swift OpenTelemetry Instrumentation"
-						imgURL="/website/Logos/swift.png"
+						imgURL="/Logos/swift.png"
 						docsURL="https://signoz.io/docs/instrumentation/swift/"
 						imgClassName="supported-language-img"
 					/>

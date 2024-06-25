@@ -8,10 +8,7 @@ import { useLocation } from 'react-use';
 import { logSaveView, logsExplorer, logsPipelines } from './constants';
 
 export default function LogsModulePage(): JSX.Element {
-	let { pathname } = useLocation();
-	if (pathname && pathname?.indexOf('/website') > -1) {
-		pathname = pathname.replace(/\/website/, '');
-	}
+	const { pathname } = useLocation();
 
 	const routes: TabRoutes[] = [logsExplorer, logsPipelines, logSaveView];
 

@@ -24,7 +24,7 @@ i18n
 				const ns = namespace[0];
 				const pathkey = `/${language}/${ns}`;
 				const hash = cacheBursting[pathkey as keyof typeof cacheBursting] || '';
-				return `/website/locales/${language}/${namespace}.json?h=${hash}`;
+				return `/locales/${language}/${namespace}.json?h=${hash}`;
 			},
 		},
 		react: {

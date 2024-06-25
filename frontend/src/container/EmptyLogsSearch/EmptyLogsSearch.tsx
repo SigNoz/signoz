@@ -7,7 +7,7 @@ export default function EmptyLogsSearch(): JSX.Element {
 		<div className="empty-logs-search-container">
 			<div className="empty-logs-search-container-content">
 				<img
-					src="/website/Icons/emptyState.svg"
+					src="/Icons/emptyState.svg"
 					alt="thinking-emoji"
 					className="empty-state-svg"
 				/>

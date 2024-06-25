@@ -15,7 +15,7 @@ export default function FullScreenHeader({
 	return (
 		<div className="full-screen-header-container">
 			<div className="brand-logo" onClick={handleLogoClick}>
-				<img src="/website/Logos/signoz-brand-logo.svg" alt="Raptor" />
+				<img src="/Logos/signoz-brand-logo.svg" alt="Raptor" />
 
 				<div className="brand-logo-name">Raptor</div>
 			</div>

@@ -19,7 +19,7 @@ export default function LogsError(): JSX.Element {
 		<div className="logs-error-container">
 			<div className="logs-error-content">
 				<img
-					src="/website/Icons/awwSnap.svg"
+					src="/Icons/awwSnap.svg"
 					alt="error-emoji"
 					className="error-state-svg"
 				/>
