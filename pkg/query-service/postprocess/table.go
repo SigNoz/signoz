@@ -27,7 +27,7 @@ func getAutoColNameForQuery(queryName string, params *v3.QueryRangeParamsV3) str
 
 func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRangeParamsV3) []*v3.Result {
 	if len(results) == 0 {
-		return nil
+		return []*v3.Result{}
 	}
 
 	// Sort results by QueryName
@@ -36,14 +36,14 @@ func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRan
 	})
 
 	// Create a map to store all unique labels
-	seen := make(map[string]bool)
+	seen := make(map[string]struct{})
 	labelKeys := []string{}
 	for _, result := range results {
 		for _, series := range result.Series {
 			for _, labels := range series.LabelsArray {
 				for key := range labels {
 					if _, ok := seen[key]; !ok {
-						seen[key] = true
+						seen[key] = struct{}{}
 						labelKeys = append(labelKeys, key)
 					}
 				}
@@ -52,6 +52,7 @@ func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRan
 	}
 
 	// Create columns
+	// There will be one column for each label key and one column for each query name
 	columns := make([]*v3.TableColumn, 0, len(labelKeys)+len(results))
 	for _, key := range labelKeys {
 		columns = append(columns, &v3.TableColumn{Name: key})
@@ -172,45 +173,41 @@ func sortRows(rows []*v3.TableRow, columns []*v3.TableColumn, builderQueries map
 				if valI == "n/a" && valJ == "n/a" {
 					continue
 				}
-				if valI == "n/a" {
-					return orderBy.Order == "asc"
-				}
-				if valJ == "n/a" {
-					return orderBy.Order != "asc"
-				}
 
 				// Compare based on the data type
 				switch v := valI.(type) {
-				case string:
-					if w, ok := valJ.(string); ok {
-						if v != w {
-							return (v < w) == (orderBy.Order == "asc")
-						}
-					} else {
-						// If types are different, sort strings before other types
-						return orderBy.Order == "asc"
-					}
 				case float64:
 					switch w := valJ.(type) {
 					case float64:
 						if v != w {
 							return (v < w) == (orderBy.Order == "asc")
 						}
-					case string:
-						// If types are different, sort numbers after strings
-						return orderBy.Order != "asc"
 					default:
 						// For any other type, sort float64 first
 						return orderBy.Order == "asc"
 					}
+				case string:
+					switch w := valJ.(type) {
+					case float64:
+						// If types are different, sort numbers before strings
+						return orderBy.Order != "asc"
+					case string:
+						if v != w {
+							return (v < w) == (orderBy.Order == "asc")
+						}
+					default:
+						// For any other type, sort strings before bools
+						return orderBy.Order == "asc"
+					}
 				case bool:
-					if w, ok := valJ.(bool); ok {
+					switch w := valJ.(type) {
+					case float64, string:
+						// If types are different, sort bools after numbers and strings
+						return orderBy.Order != "asc"
+					case bool:
 						if v != w {
 							return (!v && w) == (orderBy.Order == "asc")
 						}
-					} else {
-						// If types are different, sort bools after other types
-						return orderBy.Order != "asc"
 					}
 				}
 			}
@@ -221,7 +218,7 @@ func sortRows(rows []*v3.TableRow, columns []*v3.TableColumn, builderQueries map
 
 func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
 	if len(results) == 0 {
-		return nil
+		return []*v3.Result{}
 	}
 
 	// Sort results by QueryName
@@ -230,14 +227,14 @@ func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
 	})
 
 	// Create a map to store all unique labels
-	seen := make(map[string]bool)
+	seen := make(map[string]struct{})
 	labelKeys := []string{}
 	for _, result := range results {
 		for _, series := range result.Series {
 			for _, labels := range series.LabelsArray {
 				for key := range labels {
 					if _, ok := seen[key]; !ok {
-						seen[key] = true
+						seen[key] = struct{}{}
 						labelKeys = append(labelKeys, key)
 					}
 				}
@@ -246,6 +243,9 @@ func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
 	}
 
 	// Create columns
+	// Why don't we have a column for each query name?
+	// Because we don't know if the query is an aggregation query or a non-aggregation query
+	// So we create a column for each query name that has at least one point
 	columns := make([]*v3.TableColumn, 0)
 	for _, key := range labelKeys {
 		columns = append(columns, &v3.TableColumn{Name: key})
@@ -256,14 +256,11 @@ func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
 		}
 	}
 
-	// Create a map to store unique rows
-	rowMap := make(map[string]*v3.TableRow)
-
+	rows := make([]*v3.TableRow, 0)
 	for _, result := range results {
 		for _, series := range result.Series {
 
 			// Create a key for the row based on labels
-			var keyParts []string
 			rowData := make([]interface{}, len(columns))
 			for i, key := range labelKeys {
 				value := "n/a"
@@ -273,17 +270,11 @@ func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
 						break
 					}
 				}
-				keyParts = append(keyParts, fmt.Sprintf("%s=%s", key, value))
 				rowData[i] = value
 			}
-			rowKey := strings.Join(keyParts, ",")
 
 			// Get or create the row
-			row, ok := rowMap[rowKey]
-			if !ok {
-				row = &v3.TableRow{Data: rowData}
-				rowMap[rowKey] = row
-			}
+			row := &v3.TableRow{Data: rowData}
 
 			// Add the value for this query
 			for i, col := range columns {
@@ -292,18 +283,8 @@ func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
 					break
 				}
 			}
+			rows = append(rows, row)
 		}
-	}
-
-	// Convert rowMap to a slice of TableRows
-	rows := make([]*v3.TableRow, 0, len(rowMap))
-	for _, row := range rowMap {
-		for i, value := range row.Data {
-			if value == nil {
-				row.Data[i] = "n/a"
-			}
-		}
-		rows = append(rows, row)
 	}
 
 	// Create the final result
