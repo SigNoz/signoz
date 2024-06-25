@@ -3071,9 +3071,9 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		postprocess.FillGaps(result, queryRangeParams)
 	}
 
-	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL && queryRangeParams.FormatForWeb {
 		result = postprocess.TransformToTableForClickHouseQueries(result)
-	} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+	} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder && queryRangeParams.FormatForWeb {
 		result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
 	}
 
