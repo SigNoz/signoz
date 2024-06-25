@@ -975,6 +975,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			formattedVars[name] = utils.ClickHouseFormattedValue(value)
 		}
 	}
+	queryRangeParams.FormatForWeb = true
 
 	// replace the variables in metrics builder filter item with actual value
 	// example: {"key": "host", "value": "{{ .host }}", "operator": "equals"} with
