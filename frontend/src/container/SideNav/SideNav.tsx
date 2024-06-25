@@ -152,9 +152,13 @@ function SideNav({
 
 	const { t } = useTranslation('');
 
+	const licenseStatus: string =
+		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ||
+		'';
+
 	const isLicenseActive =
-		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ===
-		LICENSE_PLAN_STATUS.VALID;
+		licenseStatus?.toLocaleLowerCase() ===
+		LICENSE_PLAN_STATUS.VALID.toLocaleLowerCase();
 
 	const isEnterprise = licenseData?.payload?.licenses?.some(
 		(license: License) =>

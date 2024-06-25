@@ -4444,6 +4444,21 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())
 			}
+		case **float64, **float32:
+			val := reflect.ValueOf(v)
+			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
+				isValidPoint = true
+				value := reflect.ValueOf(v).Elem().Elem().Float()
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					point.Value = value
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", value))
+					if _, ok := groupAttributes[colName]; !ok {
+						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", value)})
+					}
+					groupAttributes[colName] = fmt.Sprintf("%v", value)
+				}
+			}
 		case *uint, *uint8, *uint64, *uint16, *uint32:
 			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
@@ -4455,6 +4470,21 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint())
 			}
+		case **uint, **uint8, **uint64, **uint16, **uint32:
+			val := reflect.ValueOf(v)
+			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
+				isValidPoint = true
+				value := reflect.ValueOf(v).Elem().Elem().Uint()
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					point.Value = float64(value)
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", value))
+					if _, ok := groupAttributes[colName]; !ok {
+						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", value)})
+					}
+					groupAttributes[colName] = fmt.Sprintf("%v", value)
+				}
+			}
 		case *int, *int8, *int16, *int32, *int64:
 			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
@@ -4465,6 +4495,21 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())})
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
+			}
+		case **int, **int8, **int16, **int32, **int64:
+			val := reflect.ValueOf(v)
+			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
+				isValidPoint = true
+				value := reflect.ValueOf(v).Elem().Elem().Int()
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					point.Value = float64(value)
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", value))
+					if _, ok := groupAttributes[colName]; !ok {
+						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", value)})
+					}
+					groupAttributes[colName] = fmt.Sprintf("%v", value)
+				}
 			}
 		case *bool:
 			groupBy = append(groupBy, fmt.Sprintf("%v", *v))
