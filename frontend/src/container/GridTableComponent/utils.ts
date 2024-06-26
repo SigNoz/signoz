@@ -69,7 +69,7 @@ export interface TableData {
 	rows: { data: any }[];
 }
 
-function getQueryLegend(
+export function getQueryLegend(
 	currentQuery: Query,
 	queryName: string,
 ): string | undefined {
