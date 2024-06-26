@@ -357,7 +357,8 @@ func TestTransformToTableForClickHouseQueries(t *testing.T) {
 					Series: []*v3.Series{
 						{
 							LabelsArray: []map[string]string{
-								{"service": "frontend", "env": "prod"},
+								{"service": "frontend"},
+								{"env": "prod"},
 							},
 							Points: []v3.Point{
 								{Value: 10.0},
