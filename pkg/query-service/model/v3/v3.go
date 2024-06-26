@@ -990,10 +990,16 @@ type QueryRangeResponse struct {
 
 type TableColumn struct {
 	Name string `json:"name"`
+	// QueryName is the name of the query that this column belongs to
+	QueryName string `json:"queryName"`
+	// IsValueColumn is true if this column is a value column
+	// i.e it is the column that contains the actual value that is being plotted
+	IsValueColumn bool `json:"isValueColumn"`
 }
 
 type TableRow struct {
-	Data []interface{} `json:"data"`
+	Data      map[string]interface{} `json:"data"`
+	QueryName string                 `json:"-"`
 }
 
 type Table struct {

@@ -334,6 +334,11 @@ export function PlannedDowntimeList({
 		}
 	}, [downtimeSchedules.error, downtimeSchedules.isError, notifications]);
 
+	const paginationConfig = {
+		pageSize: 5,
+		showSizeChanger: false,
+		hideOnSinglePage: true,
+	};
 	return (
 		<Table<DowntimeSchedulesTableData>
 			columns={columns}
@@ -342,7 +347,7 @@ export function PlannedDowntimeList({
 			dataSource={tableData || []}
 			loading={downtimeSchedules.isLoading || downtimeSchedules.isFetching}
 			showHeader={false}
-			pagination={{ pageSize: 5, showSizeChanger: false }}
+			pagination={paginationConfig}
 		/>
 	);
 }
