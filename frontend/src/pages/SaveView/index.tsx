@@ -277,6 +277,8 @@ function SaveView(): JSX.Element {
 		},
 	];
 
+	const paginationConfig = { pageSize: 5, hideOnSinglePage: true };
+
 	return (
 		<div className="save-view-container">
 			<div className="save-view-content">
@@ -303,7 +305,7 @@ function SaveView(): JSX.Element {
 					dataSource={dataSource}
 					loading={isLoading || isRefetching}
 					showHeader={false}
-					pagination={{ pageSize: 5 }}
+					pagination={paginationConfig}
 				/>
 			</div>
 
