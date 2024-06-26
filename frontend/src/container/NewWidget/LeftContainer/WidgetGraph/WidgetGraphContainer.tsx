@@ -2,8 +2,6 @@ import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphContainerProps } from 'container/NewWidget/types';
-// import useUrlQuery from 'hooks/useUrlQuery';
-// import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
 import { NotFoundContainer } from './styles';
@@ -52,6 +50,14 @@ function WidgetGraphContainer({
 		selectedGraph === PANEL_TYPES.LIST &&
 		queryResponse.data?.payload?.data?.newResult?.data?.result?.length === 0
 	) {
+		return (
+			<NotFoundContainer>
+				<Typography>No Data</Typography>
+			</NotFoundContainer>
+		);
+	}
+
+	if (queryResponse.isIdle) {
 		return (
 			<NotFoundContainer>
 				<Typography>No Data</Typography>

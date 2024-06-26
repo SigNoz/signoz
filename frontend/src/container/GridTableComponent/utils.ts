@@ -110,40 +110,38 @@ export function createColumnsAndDataSource(
 	currentQuery: Query,
 	renderColumnCell?: QueryTableProps['renderColumnCell'],
 ): { columns: ColumnsType<RowData>; dataSource: RowData[] } {
-	const columns: ColumnsType<RowData> = data.columns.reduce<
-		ColumnsType<RowData>
-	>((acc, item) => {
-		// is the column is the value column then we need to check for the available legend
-		const legend = item.isValueColumn
-			? getQueryLegend(currentQuery, item.queryName)
-			: undefined;
+	const columns: ColumnsType<RowData> =
+		data.columns?.reduce<ColumnsType<RowData>>((acc, item) => {
+			// is the column is the value column then we need to check for the available legend
+			const legend = item.isValueColumn
+				? getQueryLegend(currentQuery, item.queryName)
+				: undefined;
 
-		console.log(legend);
-		const column: ColumnType<RowData> = {
-			dataIndex: item.name,
-			// if no legend present then rely on the column name value
-			title: !isEmpty(legend) ? legend : item.name,
-			width: QUERY_TABLE_CONFIG.width,
-			render: renderColumnCell && renderColumnCell[item.name],
-			sorter: (a: RowData, b: RowData): number => {
-				const valueA = Number(a[`${item.name}_without_unit`] ?? a[item.name]);
-				const valueB = Number(b[`${item.name}_without_unit`] ?? b[item.name]);
+			const column: ColumnType<RowData> = {
+				dataIndex: item.name,
+				// if no legend present then rely on the column name value
+				title: !isEmpty(legend) ? legend : item.name,
+				width: QUERY_TABLE_CONFIG.width,
+				render: renderColumnCell && renderColumnCell[item.name],
+				sorter: (a: RowData, b: RowData): number => {
+					const valueA = Number(a[`${item.name}_without_unit`] ?? a[item.name]);
+					const valueB = Number(b[`${item.name}_without_unit`] ?? b[item.name]);
 
-				if (!isNaN(valueA) && !isNaN(valueB)) {
-					return valueA - valueB;
-				}
+					if (!isNaN(valueA) && !isNaN(valueB)) {
+						return valueA - valueB;
+					}
 
-				return ((a[item.name] as string) || '').localeCompare(
-					(b[item.name] as string) || '',
-				);
-			},
-		};
+					return ((a[item.name] as string) || '').localeCompare(
+						(b[item.name] as string) || '',
+					);
+				},
+			};
 
-		return [...acc, column];
-	}, []);
+			return [...acc, column];
+		}, []) || [];
 
 	// the rows returned have data encapsulation hence removing the same here
-	const dataSource = data.rows.map((d) => d.data);
+	const dataSource = data.rows?.map((d) => d.data) || [];
 
 	return { columns, dataSource };
 }
