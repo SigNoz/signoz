@@ -85,8 +85,7 @@ const config = {
 	mode: 'production',
 	entry: resolve(__dirname, './src/index.tsx'),
 	output: {
-		// path: resolve(__dirname, './build'),
-		path: resolve(__dirname, './build/website'),
+		path: resolve(__dirname, './build'),
 		publicPath: '/website/',
 		// publicPath: '/',
 		filename: '[name].[contenthash].js',
