@@ -2,12 +2,30 @@ package postprocess
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
+
+func roundToTwoDecimal(number float64) float64 {
+	// Handle very small numbers
+	if math.Abs(number) < 0.000001 {
+		return 0
+	}
+
+	// Determine the number of decimal places to round to
+	decimalPlaces := 2
+	if math.Abs(number) < 0.01 {
+		decimalPlaces = int(math.Ceil(-math.Log10(math.Abs(number)))) + 1
+	}
+
+	// Round to the determined number of decimal places
+	scale := math.Pow(10, float64(decimalPlaces))
+	return math.Round(number*scale) / scale
+}
 
 func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRangeParamsV3) []*v3.Result {
 	if len(results) == 0 {
@@ -80,7 +98,7 @@ func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRan
 			// Add the value for this query
 			for _, col := range columns {
 				if col.Name == result.QueryName {
-					row.Data[col.Name] = series.Points[0].Value
+					row.Data[col.Name] = roundToTwoDecimal(series.Points[0].Value)
 					break
 				}
 			}
@@ -125,8 +143,10 @@ func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRan
 }
 
 func sortRows(rows []*v3.TableRow, builderQueries map[string]*v3.BuilderQuery, queryNames []string) {
-	sort.SliceStable(rows, func(i, j int) bool {
-		for _, queryName := range queryNames {
+	// use reverse order of queryNames
+	for i := len(queryNames) - 1; i >= 0; i-- {
+		queryName := queryNames[i]
+		sort.SliceStable(rows, func(i, j int) bool {
 			query := builderQueries[queryName]
 			orderByList := query.OrderBy
 			if len(orderByList) == 0 {
@@ -183,9 +203,9 @@ func sortRows(rows []*v3.TableRow, builderQueries map[string]*v3.BuilderQuery, q
 					}
 				}
 			}
-		}
-		return false
-	})
+			return false
+		})
+	}
 }
 
 func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
@@ -251,7 +271,7 @@ func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
 			// Add the value for this query
 			for _, col := range columns {
 				if col.Name == result.QueryName && len(series.Points) > 0 {
-					row.Data[col.Name] = series.Points[0].Value
+					row.Data[col.Name] = roundToTwoDecimal(series.Points[0].Value)
 					break
 				}
 			}
