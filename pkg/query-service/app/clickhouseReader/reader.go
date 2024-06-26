@@ -1993,8 +1993,8 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		}
 	}
 
-	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano/1000000)
-	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano/1000000)
+	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
+	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
 
 	return &searchSpansResult, nil
 }
@@ -4434,8 +4434,8 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 		case *time.Time:
 			point.Timestamp = v.UnixMilli()
 		case *float64, *float32:
-			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Float())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float()))
@@ -4447,9 +4447,9 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 		case **float64, **float32:
 			val := reflect.ValueOf(v)
 			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
-				isValidPoint = true
 				value := reflect.ValueOf(v).Elem().Elem().Float()
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					isValidPoint = true
 					point.Value = value
 				} else {
 					groupBy = append(groupBy, fmt.Sprintf("%v", value))
@@ -4460,8 +4460,8 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				}
 			}
 		case *uint, *uint8, *uint64, *uint16, *uint32:
-			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Uint())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
@@ -4473,9 +4473,9 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 		case **uint, **uint8, **uint64, **uint16, **uint32:
 			val := reflect.ValueOf(v)
 			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
-				isValidPoint = true
 				value := reflect.ValueOf(v).Elem().Elem().Uint()
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					isValidPoint = true
 					point.Value = float64(value)
 				} else {
 					groupBy = append(groupBy, fmt.Sprintf("%v", value))
@@ -4486,8 +4486,8 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				}
 			}
 		case *int, *int8, *int16, *int32, *int64:
-			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Int())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
@@ -4499,9 +4499,9 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 		case **int, **int8, **int16, **int32, **int64:
 			val := reflect.ValueOf(v)
 			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
-				isValidPoint = true
 				value := reflect.ValueOf(v).Elem().Elem().Int()
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					isValidPoint = true
 					point.Value = float64(value)
 				} else {
 					groupBy = append(groupBy, fmt.Sprintf("%v", value))

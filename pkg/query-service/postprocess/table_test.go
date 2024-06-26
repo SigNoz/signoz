@@ -1,6 +1,7 @@
 package postprocess
 
 import (
+	"bytes"
 	"encoding/json"
 	"reflect"
 	"testing"
@@ -21,9 +22,9 @@ func TestSortRows(t *testing.T) {
 		{
 			name: "Sort by single numeric query, ascending order",
 			rows: []*v3.TableRow{
-				{Data: []interface{}{"service2", 20.0}},
-				{Data: []interface{}{"service1", 10.0}},
-				{Data: []interface{}{"service3", 30.0}},
+				{Data: map[string]interface{}{"service": "service2", "A": 20.0}},
+				{Data: map[string]interface{}{"service": "service1", "A": 10.0}},
+				{Data: map[string]interface{}{"service": "service3", "A": 30.0}},
 			},
 			columns: []*v3.TableColumn{
 				{Name: "service_name"},
@@ -34,17 +35,17 @@ func TestSortRows(t *testing.T) {
 			},
 			queryNames: []string{"A"},
 			expected: []*v3.TableRow{
-				{Data: []interface{}{"service1", 10.0}},
-				{Data: []interface{}{"service2", 20.0}},
-				{Data: []interface{}{"service3", 30.0}},
+				{Data: map[string]interface{}{"service": "service1", "A": 10.0}},
+				{Data: map[string]interface{}{"service": "service2", "A": 20.0}},
+				{Data: map[string]interface{}{"service": "service3", "A": 30.0}},
 			},
 		},
 		{
 			name: "Sort by single numeric query, descending order",
 			rows: []*v3.TableRow{
-				{Data: []interface{}{"service2", 20.0}},
-				{Data: []interface{}{"service1", 10.0}},
-				{Data: []interface{}{"service3", 30.0}},
+				{Data: map[string]interface{}{"service": "service2", "A": 20.0}},
+				{Data: map[string]interface{}{"service": "service1", "A": 10.0}},
+				{Data: map[string]interface{}{"service": "service3", "A": 30.0}},
 			},
 			columns: []*v3.TableColumn{
 				{Name: "service_name"},
@@ -55,17 +56,17 @@ func TestSortRows(t *testing.T) {
 			},
 			queryNames: []string{"A"},
 			expected: []*v3.TableRow{
-				{Data: []interface{}{"service3", 30.0}},
-				{Data: []interface{}{"service2", 20.0}},
-				{Data: []interface{}{"service1", 10.0}},
+				{Data: map[string]interface{}{"service": "service3", "A": 30.0}},
+				{Data: map[string]interface{}{"service": "service2", "A": 20.0}},
+				{Data: map[string]interface{}{"service": "service1", "A": 10.0}},
 			},
 		},
 		{
 			name: "Sort by single string query, ascending order",
 			rows: []*v3.TableRow{
-				{Data: []interface{}{"service2", "b"}},
-				{Data: []interface{}{"service1", "c"}},
-				{Data: []interface{}{"service3", "a"}},
+				{Data: map[string]interface{}{"service": "service2", "A": "b"}},
+				{Data: map[string]interface{}{"service": "service1", "A": "c"}},
+				{Data: map[string]interface{}{"service": "service3", "A": "a"}},
 			},
 			columns: []*v3.TableColumn{
 				{Name: "service_name"},
@@ -76,18 +77,18 @@ func TestSortRows(t *testing.T) {
 			},
 			queryNames: []string{"A"},
 			expected: []*v3.TableRow{
-				{Data: []interface{}{"service3", "a"}},
-				{Data: []interface{}{"service2", "b"}},
-				{Data: []interface{}{"service1", "c"}},
+				{Data: map[string]interface{}{"service": "service3", "A": "a"}},
+				{Data: map[string]interface{}{"service": "service2", "A": "b"}},
+				{Data: map[string]interface{}{"service": "service1", "A": "c"}},
 			},
 		},
 		{
 			name: "Sort with n/a values",
 			rows: []*v3.TableRow{
-				{Data: []interface{}{"service1", 10.0, "n/a"}},
-				{Data: []interface{}{"service2", "n/a", 15.0}},
-				{Data: []interface{}{"service3", 30.0, 25.0}},
-				{Data: []interface{}{"service4", "n/a", "n/a"}},
+				{Data: map[string]interface{}{"service": "service1", "A": 10.0}},
+				{Data: map[string]interface{}{"service": "service2", "B": 15.0}},
+				{Data: map[string]interface{}{"service": "service3", "A": 30.0, "B": 25.0}},
+				{Data: map[string]interface{}{"service": "service4"}},
 			},
 			columns: []*v3.TableColumn{
 				{Name: "service_name"},
@@ -100,43 +101,18 @@ func TestSortRows(t *testing.T) {
 			},
 			queryNames: []string{"A", "B"},
 			expected: []*v3.TableRow{
-				{Data: []interface{}{"service1", 10.0, "n/a"}},
-				{Data: []interface{}{"service3", 30.0, 25.0}},
-				{Data: []interface{}{"service4", "n/a", "n/a"}},
-				{Data: []interface{}{"service2", "n/a", 15.0}},
-			},
-		},
-		{
-			name: "Sort with different data types",
-			rows: []*v3.TableRow{
-				{Data: []interface{}{"service1", "string", 10.0, true}},
-				{Data: []interface{}{"service2", 20.0, "string", false}},
-				{Data: []interface{}{"service3", true, 30.0, "string"}},
-			},
-			columns: []*v3.TableColumn{
-				{Name: "service_name"},
-				{Name: "A"},
-				{Name: "B"},
-				{Name: "C"},
-			},
-			builderQueries: map[string]*v3.BuilderQuery{
-				"A": {OrderBy: []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "asc"}}},
-				"B": {OrderBy: []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "desc"}}},
-				"C": {OrderBy: []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "asc"}}},
-			},
-			queryNames: []string{"A", "B", "C"},
-			expected: []*v3.TableRow{
-				{Data: []interface{}{"service2", 20.0, "string", false}},
-				{Data: []interface{}{"service1", "string", 10.0, true}},
-				{Data: []interface{}{"service3", true, 30.0, "string"}},
+				{Data: map[string]interface{}{"service": "service1", "A": 10.0}},
+				{Data: map[string]interface{}{"service": "service3", "A": 30.0, "B": 25.0}},
+				{Data: map[string]interface{}{"service": "service2", "B": 15.0}},
+				{Data: map[string]interface{}{"service": "service4"}},
 			},
 		},
 		{
 			name: "Sort with SigNozOrderByValue",
 			rows: []*v3.TableRow{
-				{Data: []interface{}{"service1", 20.0}},
-				{Data: []interface{}{"service2", 10.0}},
-				{Data: []interface{}{"service3", 30.0}},
+				{Data: map[string]interface{}{"service": "service1", "A": 20.0}},
+				{Data: map[string]interface{}{"service": "service2", "A": 10.0}},
+				{Data: map[string]interface{}{"service": "service3", "A": 30.0}},
 			},
 			columns: []*v3.TableColumn{
 				{Name: "service_name"},
@@ -147,44 +123,17 @@ func TestSortRows(t *testing.T) {
 			},
 			queryNames: []string{"A"},
 			expected: []*v3.TableRow{
-				{Data: []interface{}{"service3", 30.0}},
-				{Data: []interface{}{"service1", 20.0}},
-				{Data: []interface{}{"service2", 10.0}},
-			},
-		},
-		{
-			name: "Sort by multiple queries with mixed types",
-			rows: []*v3.TableRow{
-				{Data: []interface{}{"service1", 10.0, "b", true}},
-				{Data: []interface{}{"service2", 20.0, "a", false}},
-				{Data: []interface{}{"service3", 10.0, "c", true}},
-				{Data: []interface{}{"service4", 20.0, "b", false}},
-			},
-			columns: []*v3.TableColumn{
-				{Name: "service_name"},
-				{Name: "A"},
-				{Name: "B"},
-				{Name: "C"},
-			},
-			builderQueries: map[string]*v3.BuilderQuery{
-				"A": {OrderBy: []v3.OrderBy{{ColumnName: "A", Order: "asc"}}},
-				"B": {OrderBy: []v3.OrderBy{{ColumnName: "B", Order: "desc"}}},
-				"C": {OrderBy: []v3.OrderBy{{ColumnName: "C", Order: "asc"}}},
-			},
-			queryNames: []string{"A", "B", "C"},
-			expected: []*v3.TableRow{
-				{Data: []interface{}{"service3", 10.0, "c", true}},
-				{Data: []interface{}{"service1", 10.0, "b", true}},
-				{Data: []interface{}{"service4", 20.0, "b", false}},
-				{Data: []interface{}{"service2", 20.0, "a", false}},
+				{Data: map[string]interface{}{"service": "service3", "A": 30.0}},
+				{Data: map[string]interface{}{"service": "service1", "A": 20.0}},
+				{Data: map[string]interface{}{"service": "service2", "A": 10.0}},
 			},
 		},
 		{
 			name: "Sort with all n/a values",
 			rows: []*v3.TableRow{
-				{Data: []interface{}{"service1", "n/a", "n/a"}},
-				{Data: []interface{}{"service2", "n/a", "n/a"}},
-				{Data: []interface{}{"service3", "n/a", "n/a"}},
+				{Data: map[string]interface{}{"service": "service1", "A": "n/a", "B": "n/a"}},
+				{Data: map[string]interface{}{"service": "service2", "A": "n/a", "B": "n/a"}},
+				{Data: map[string]interface{}{"service": "service3", "A": "n/a", "B": "n/a"}},
 			},
 			columns: []*v3.TableColumn{
 				{Name: "service_name"},
@@ -197,18 +146,18 @@ func TestSortRows(t *testing.T) {
 			},
 			queryNames: []string{"A", "B"},
 			expected: []*v3.TableRow{
-				{Data: []interface{}{"service1", "n/a", "n/a"}},
-				{Data: []interface{}{"service2", "n/a", "n/a"}},
-				{Data: []interface{}{"service3", "n/a", "n/a"}},
+				{Data: map[string]interface{}{"service": "service1", "A": "n/a", "B": "n/a"}},
+				{Data: map[string]interface{}{"service": "service2", "A": "n/a", "B": "n/a"}},
+				{Data: map[string]interface{}{"service": "service3", "A": "n/a", "B": "n/a"}},
 			},
 		},
 		{
 			name: "Sort with negative numbers",
 			rows: []*v3.TableRow{
-				{Data: []interface{}{"service1", -10.0}},
-				{Data: []interface{}{"service2", 20.0}},
-				{Data: []interface{}{"service3", -30.0}},
-				{Data: []interface{}{"service4", 0.0}},
+				{Data: map[string]interface{}{"service": "service1", "A": -10.0}},
+				{Data: map[string]interface{}{"service": "service2", "A": 20.0}},
+				{Data: map[string]interface{}{"service": "service3", "A": -30.0}},
+				{Data: map[string]interface{}{"service": "service4", "A": 0.0}},
 			},
 			columns: []*v3.TableColumn{
 				{Name: "service_name"},
@@ -219,19 +168,19 @@ func TestSortRows(t *testing.T) {
 			},
 			queryNames: []string{"A"},
 			expected: []*v3.TableRow{
-				{Data: []interface{}{"service3", -30.0}},
-				{Data: []interface{}{"service1", -10.0}},
-				{Data: []interface{}{"service4", 0.0}},
-				{Data: []interface{}{"service2", 20.0}},
+				{Data: map[string]interface{}{"service": "service3", "A": -30.0}},
+				{Data: map[string]interface{}{"service": "service1", "A": -10.0}},
+				{Data: map[string]interface{}{"service": "service4", "A": 0.0}},
+				{Data: map[string]interface{}{"service": "service2", "A": 20.0}},
 			},
 		},
 		{
 			name: "Sort with mixed case strings",
 			rows: []*v3.TableRow{
-				{Data: []interface{}{"service1", "Apple"}},
-				{Data: []interface{}{"service2", "banana"}},
-				{Data: []interface{}{"service3", "Cherry"}},
-				{Data: []interface{}{"service4", "date"}},
+				{Data: map[string]interface{}{"service": "service1", "A": "Apple"}},
+				{Data: map[string]interface{}{"service": "service2", "A": "banana"}},
+				{Data: map[string]interface{}{"service": "service3", "A": "Cherry"}},
+				{Data: map[string]interface{}{"service": "service4", "A": "date"}},
 			},
 			columns: []*v3.TableColumn{
 				{Name: "service_name"},
@@ -242,19 +191,19 @@ func TestSortRows(t *testing.T) {
 			},
 			queryNames: []string{"A"},
 			expected: []*v3.TableRow{
-				{Data: []interface{}{"service1", "Apple"}},
-				{Data: []interface{}{"service3", "Cherry"}},
-				{Data: []interface{}{"service2", "banana"}},
-				{Data: []interface{}{"service4", "date"}},
+				{Data: map[string]interface{}{"service": "service1", "A": "Apple"}},
+				{Data: map[string]interface{}{"service": "service3", "A": "Cherry"}},
+				{Data: map[string]interface{}{"service": "service2", "A": "banana"}},
+				{Data: map[string]interface{}{"service": "service4", "A": "date"}},
 			},
 		},
 		{
 			name: "Sort with empty strings",
 			rows: []*v3.TableRow{
-				{Data: []interface{}{"service1", ""}},
-				{Data: []interface{}{"service2", "b"}},
-				{Data: []interface{}{"service3", ""}},
-				{Data: []interface{}{"service4", "a"}},
+				{Data: map[string]interface{}{"service": "service1", "A": ""}},
+				{Data: map[string]interface{}{"service": "service2", "A": "b"}},
+				{Data: map[string]interface{}{"service": "service3", "A": ""}},
+				{Data: map[string]interface{}{"service": "service4", "A": "a"}},
 			},
 			columns: []*v3.TableColumn{
 				{Name: "service_name"},
@@ -265,17 +214,17 @@ func TestSortRows(t *testing.T) {
 			},
 			queryNames: []string{"A"},
 			expected: []*v3.TableRow{
-				{Data: []interface{}{"service1", ""}},
-				{Data: []interface{}{"service3", ""}},
-				{Data: []interface{}{"service4", "a"}},
-				{Data: []interface{}{"service2", "b"}},
+				{Data: map[string]interface{}{"service": "service1", "A": ""}},
+				{Data: map[string]interface{}{"service": "service3", "A": ""}},
+				{Data: map[string]interface{}{"service": "service4", "A": "a"}},
+				{Data: map[string]interface{}{"service": "service2", "A": "b"}},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sortRows(tt.rows, tt.columns, tt.builderQueries, tt.queryNames)
+			sortRows(tt.rows, tt.builderQueries, tt.queryNames)
 			if !reflect.DeepEqual(tt.rows, tt.expected) {
 				exp, _ := json.Marshal(tt.expected)
 				got, _ := json.Marshal(tt.rows)
@@ -287,24 +236,20 @@ func TestSortRows(t *testing.T) {
 
 func TestSortRowsWithEmptyQueries(t *testing.T) {
 	rows := []*v3.TableRow{
-		{Data: []interface{}{"service1", 20.0}},
-		{Data: []interface{}{"service2", 10.0}},
-		{Data: []interface{}{"service3", 30.0}},
-	}
-	columns := []*v3.TableColumn{
-		{Name: "service_name"},
-		{Name: "A"},
+		{Data: map[string]interface{}{"service": "service1", "A": 20.0}},
+		{Data: map[string]interface{}{"service": "service2", "A": 10.0}},
+		{Data: map[string]interface{}{"service": "service3", "A": 30.0}},
 	}
 	builderQueries := map[string]*v3.BuilderQuery{}
 	queryNames := []string{}
 
-	sortRows(rows, columns, builderQueries, queryNames)
+	sortRows(rows, builderQueries, queryNames)
 
 	// Expect the original order to be maintained
 	expected := []*v3.TableRow{
-		{Data: []interface{}{"service1", 20.0}},
-		{Data: []interface{}{"service2", 10.0}},
-		{Data: []interface{}{"service3", 30.0}},
+		{Data: map[string]interface{}{"service": "service1", "A": 20.0}},
+		{Data: map[string]interface{}{"service": "service2", "A": 10.0}},
+		{Data: map[string]interface{}{"service": "service3", "A": 30.0}},
 	}
 
 	if !reflect.DeepEqual(rows, expected) {
@@ -314,26 +259,22 @@ func TestSortRowsWithEmptyQueries(t *testing.T) {
 
 func TestSortRowsWithInvalidColumnName(t *testing.T) {
 	rows := []*v3.TableRow{
-		{Data: []interface{}{"service1", 20.0}},
-		{Data: []interface{}{"service2", 10.0}},
-		{Data: []interface{}{"service3", 30.0}},
-	}
-	columns := []*v3.TableColumn{
-		{Name: "service_name"},
-		{Name: "A"},
+		{Data: map[string]interface{}{"service": "service1", "A": 20.0}},
+		{Data: map[string]interface{}{"service": "service2", "A": 10.0}},
+		{Data: map[string]interface{}{"service": "service3", "A": 30.0}},
 	}
 	builderQueries := map[string]*v3.BuilderQuery{
 		"A": {OrderBy: []v3.OrderBy{{ColumnName: "InvalidColumn", Order: "asc"}}},
 	}
 	queryNames := []string{"A"}
 
-	sortRows(rows, columns, builderQueries, queryNames)
+	sortRows(rows, builderQueries, queryNames)
 
 	// Expect the original order to be maintained
 	expected := []*v3.TableRow{
-		{Data: []interface{}{"service1", 20.0}},
-		{Data: []interface{}{"service2", 10.0}},
-		{Data: []interface{}{"service3", 30.0}},
+		{Data: map[string]interface{}{"service": "service1", "A": 20.0}},
+		{Data: map[string]interface{}{"service": "service2", "A": 10.0}},
+		{Data: map[string]interface{}{"service": "service3", "A": 30.0}},
 	}
 
 	if !reflect.DeepEqual(rows, expected) {
@@ -343,27 +284,22 @@ func TestSortRowsWithInvalidColumnName(t *testing.T) {
 
 func TestSortRowsStability(t *testing.T) {
 	rows := []*v3.TableRow{
-		{Data: []interface{}{"service1", 10.0, "a"}},
-		{Data: []interface{}{"service2", 10.0, "b"}},
-		{Data: []interface{}{"service3", 10.0, "c"}},
-	}
-	columns := []*v3.TableColumn{
-		{Name: "service_name"},
-		{Name: "A"},
-		{Name: "B"},
+		{Data: map[string]interface{}{"service": "service1", "A": 10.0, "B": "a"}},
+		{Data: map[string]interface{}{"service": "service2", "A": 10.0, "B": "b"}},
+		{Data: map[string]interface{}{"service": "service3", "A": 10.0, "B": "c"}},
 	}
 	builderQueries := map[string]*v3.BuilderQuery{
 		"A": {OrderBy: []v3.OrderBy{{ColumnName: "A", Order: "asc"}}},
 	}
 	queryNames := []string{"A"}
 
-	sortRows(rows, columns, builderQueries, queryNames)
+	sortRows(rows, builderQueries, queryNames)
 
 	// Expect the original order to be maintained for equal values
 	expected := []*v3.TableRow{
-		{Data: []interface{}{"service1", 10.0, "a"}},
-		{Data: []interface{}{"service2", 10.0, "b"}},
-		{Data: []interface{}{"service3", 10.0, "c"}},
+		{Data: map[string]interface{}{"service": "service1", "A": 10.0, "B": "a"}},
+		{Data: map[string]interface{}{"service": "service2", "A": 10.0, "B": "b"}},
+		{Data: map[string]interface{}{"service": "service3", "A": 10.0, "B": "c"}},
 	}
 
 	if !reflect.DeepEqual(rows, expected) {
@@ -404,10 +340,10 @@ func TestTransformToTableForClickHouseQueries(t *testing.T) {
 					Table: &v3.Table{
 						Columns: []*v3.TableColumn{
 							{Name: "service"},
-							{Name: "A"},
+							{Name: "A", QueryName: "A", IsValueColumn: true},
 						},
 						Rows: []*v3.TableRow{
-							{Data: []interface{}{"frontend", 10.0}},
+							{Data: map[string]interface{}{"service": "frontend", "A": 10.0}},
 						},
 					},
 				},
@@ -465,14 +401,14 @@ func TestTransformToTableForClickHouseQueries(t *testing.T) {
 						Columns: []*v3.TableColumn{
 							{Name: "service"},
 							{Name: "env"},
-							{Name: "A"},
-							{Name: "B"},
+							{Name: "A", QueryName: "A", IsValueColumn: true},
+							{Name: "B", QueryName: "B", IsValueColumn: true},
 						},
 						Rows: []*v3.TableRow{
-							{Data: []interface{}{"frontend", "prod", 10.0, nil}},
-							{Data: []interface{}{"backend", "prod", 20.0, nil}},
-							{Data: []interface{}{"frontend", "prod", nil, 15.0}},
-							{Data: []interface{}{"backend", "prod", nil, 25.0}},
+							{Data: map[string]interface{}{"service": "frontend", "env": "prod", "A": 10.0, "B": "n/a"}},
+							{Data: map[string]interface{}{"service": "backend", "env": "prod", "A": 20.0, "B": "n/a"}},
+							{Data: map[string]interface{}{"service": "frontend", "env": "prod", "A": "n/a", "B": 15.0}},
+							{Data: map[string]interface{}{"service": "backend", "env": "prod", "A": "n/a", "B": 25.0}},
 						},
 					},
 				},
@@ -514,12 +450,12 @@ func TestTransformToTableForClickHouseQueries(t *testing.T) {
 						Columns: []*v3.TableColumn{
 							{Name: "service"},
 							{Name: "env"},
-							{Name: "A"},
-							{Name: "B"},
+							{Name: "A", QueryName: "A", IsValueColumn: true},
+							{Name: "B", QueryName: "B", IsValueColumn: true},
 						},
 						Rows: []*v3.TableRow{
-							{Data: []interface{}{"frontend", "n/a", 10.0, nil}},
-							{Data: []interface{}{"n/a", "prod", nil, 20.0}},
+							{Data: map[string]interface{}{"service": "frontend", "env": "n/a", "A": 10.0, "B": "n/a"}},
+							{Data: map[string]interface{}{"service": "n/a", "env": "prod", "A": "n/a", "B": 20.0}},
 						},
 					},
 				},
@@ -551,10 +487,10 @@ func TestTransformToTableForClickHouseQueries(t *testing.T) {
 					Table: &v3.Table{
 						Columns: []*v3.TableColumn{
 							{Name: "service"},
-							{Name: "A"},
+							{Name: "A", QueryName: "A", IsValueColumn: true},
 						},
 						Rows: []*v3.TableRow{
-							{Data: []interface{}{"frontend", 10.0}},
+							{Data: map[string]interface{}{"service": "frontend", "A": 10.0}},
 						},
 					},
 				},
@@ -593,11 +529,11 @@ func TestTransformToTableForClickHouseQueries(t *testing.T) {
 					Table: &v3.Table{
 						Columns: []*v3.TableColumn{
 							{Name: "service"},
-							{Name: "B"},
+							{Name: "B", QueryName: "B", IsValueColumn: true},
 						},
 						Rows: []*v3.TableRow{
-							{Data: []interface{}{"frontend", nil}},
-							{Data: []interface{}{"backend", 20.0}},
+							{Data: map[string]interface{}{"service": "frontend", "B": "n/a"}},
+							{Data: map[string]interface{}{"service": "backend", "B": 20.0}},
 						},
 					},
 				},
@@ -608,8 +544,10 @@ func TestTransformToTableForClickHouseQueries(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := TransformToTableForClickHouseQueries(tt.input)
-			if !reflect.DeepEqual(result, tt.expected) {
-				t.Errorf("TransformToTableForClickHouseQueries() = %v, want %v", result, tt.expected)
+			exp, _ := json.Marshal(tt.expected)
+			got, _ := json.Marshal(result)
+			if !bytes.Equal(got, exp) {
+				t.Errorf("TransformToTableForClickHouseQueries() = %v, want %v", string(got), string(exp))
 			}
 		})
 	}
@@ -650,19 +588,21 @@ func TestTransformToTableForClickHouseQueriesSorting(t *testing.T) {
 			Table: &v3.Table{
 				Columns: []*v3.TableColumn{
 					{Name: "service"},
-					{Name: "A"},
-					{Name: "B"},
+					{Name: "A", QueryName: "A", IsValueColumn: true},
+					{Name: "B", QueryName: "B", IsValueColumn: true},
 				},
 				Rows: []*v3.TableRow{
-					{Data: []interface{}{"backend", 20.0, nil}},
-					{Data: []interface{}{"frontend", nil, 10.0}},
+					{Data: map[string]interface{}{"service": "backend", "A": 20.0, "B": "n/a"}},
+					{Data: map[string]interface{}{"service": "frontend", "A": "n/a", "B": 10.0}},
 				},
 			},
 		},
 	}
 
 	result := TransformToTableForClickHouseQueries(input)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("TransformToTableForClickHouseQueries() sorting test failed. Got %v, want %v", result, expected)
+	exp, _ := json.Marshal(expected)
+	got, _ := json.Marshal(result)
+	if !bytes.Equal(got, exp) {
+		t.Errorf("TransformToTableForClickHouseQueries() sorting test failed. Got %v, want %v", string(got), string(exp))
 	}
 }
