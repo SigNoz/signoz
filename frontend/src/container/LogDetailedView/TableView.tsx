@@ -289,7 +289,14 @@ function TableView({
 				return (
 					<div className="value-field">
 						<CopyClipboardHOC textToCopy={textToCopy}>
-							<span style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap' }}>
+							<span
+								style={{
+									color: Color.BG_SIENNA_400,
+									whiteSpace: 'pre-wrap',
+									tabSize: 4,
+									fontFamily: `'Space Mono', monospace`,
+								}}
+							>
 								{removeEscapeCharacters(fieldData.value)}
 							</span>
 						</CopyClipboardHOC>
