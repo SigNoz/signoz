@@ -12,6 +12,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import store from 'store';
+import React from "react"
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -70,7 +71,9 @@ if (container) {
 				<ThemeProvider>
 					<QueryClientProvider client={queryClient}>
 						<Provider store={store}>
-							<AppRoutes />
+							<React.StrictMode>
+								<AppRoutes />
+							</React.StrictMode>
 						</Provider>
 					</QueryClientProvider>
 				</ThemeProvider>
