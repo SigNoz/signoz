@@ -3,7 +3,6 @@ import { Space, Tooltip } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep, get, isEmpty, set } from 'lodash-es';
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
@@ -28,13 +27,11 @@ function GridTableComponent({
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
 
-	const { currentQuery } = useQueryBuilder();
-
 	// create columns and dataSource in the ui friendly structure
+	// use the query from the widget here to extract the legend information
 	const { columns, dataSource: originalDataSource } = useMemo(
-		() =>
-			createColumnsAndDataSource((data as unknown) as TableData, currentQuery),
-		[currentQuery, data],
+		() => createColumnsAndDataSource((data as unknown) as TableData, query),
+		[query, data],
 	);
 
 	const createDataInCorrectFormat = useCallback(
