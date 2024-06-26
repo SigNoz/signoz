@@ -27,10 +27,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/prometheus/config"
-	"github.com/prometheus/prometheus/discovery"
 	"github.com/prometheus/prometheus/promql"
 
-	"github.com/prometheus/prometheus/scrape"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/storage/remote"
 	"github.com/prometheus/prometheus/util/stats"
@@ -262,13 +260,7 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 		configFile: r.promConfigFile,
 	}
 
-	// fanoutStorage := remoteStorage
 	fanoutStorage := storage.NewFanout(logger, remoteStorage)
-
-	ctxScrape, cancelScrape := context.WithCancel(context.Background())
-	discoveryManagerScrape := discovery.NewManager(ctxScrape, log.With(logger, "component", "discovery manager scrape"), discovery.Name("scrape"))
-
-	scrapeManager := scrape.NewManager(nil, log.With(logger, "component", "scrape manager"), fanoutStorage)
 
 	opts := promql.EngineOpts{
 		Logger:     log.With(logger, "component", "query engine"),
@@ -286,16 +278,6 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 
 	reloaders := []func(cfg *config.Config) error{
 		remoteStorage.ApplyConfig,
-		// The Scrape managers need to reload before the Discovery manager as
-		// they need to read the most updated config when receiving the new targets list.
-		scrapeManager.ApplyConfig,
-		func(cfg *config.Config) error {
-			c := make(map[string]discovery.Configs)
-			for _, v := range cfg.ScrapeConfigs {
-				c[v.JobName] = v.ServiceDiscoveryConfigs
-			}
-			return discoveryManagerScrape.ApplyConfig(c)
-		},
 	}
 
 	// sync.Once is used to make sure we can close the channel at different execution stages(SIGTERM or when the config is loaded).
@@ -316,54 +298,10 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 
 	var g group.Group
 	{
-		// Scrape discovery manager.
-		g.Add(
-			func() error {
-				err := discoveryManagerScrape.Run()
-				level.Info(logger).Log("msg", "Scrape discovery manager stopped")
-				return err
-			},
-			func(err error) {
-				level.Info(logger).Log("msg", "Stopping scrape discovery manager...")
-				cancelScrape()
-			},
-		)
-	}
-	{
-		// Scrape manager.
-		g.Add(
-			func() error {
-				// When the scrape manager receives a new targets list
-				// it needs to read a valid config for each job.
-				// It depends on the config being in sync with the discovery manager so
-				// we wait until the config is fully loaded.
-				<-reloadReady.C
-
-				err := scrapeManager.Run(discoveryManagerScrape.SyncCh())
-				level.Info(logger).Log("msg", "Scrape manager stopped")
-				return err
-			},
-			func(err error) {
-				// Scrape manager needs to be stopped before closing the local TSDB
-				// so that it doesn't try to write samples to a closed storage.
-				level.Info(logger).Log("msg", "Stopping scrape manager...")
-				scrapeManager.Stop()
-			},
-		)
-	}
-	{
 		// Initial configuration loading.
 		cancel := make(chan struct{})
 		g.Add(
 			func() error {
-				// select {
-				// case <-dbOpen:
-				// 	break
-				// // In case a shutdown is initiated before the dbOpen is released
-				// case <-cancel:
-				// 	reloadReady.Close()
-				// 	return nil
-				// }
 				var err error
 				r.promConfig, err = reloadConfig(cfg.configFile, logger, reloaders...)
 				if err != nil {
@@ -1986,6 +1924,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
 	}
 
+	var startTime, endTime, durationNano uint64
 	var searchScanResponses []model.SearchSpanDBResponseItem
 
 	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
@@ -2016,6 +1955,15 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		easyjson.Unmarshal([]byte(item.Model), &jsonItem)
 		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
 		searchSpanResponses = append(searchSpanResponses, jsonItem)
+		if startTime == 0 || jsonItem.TimeUnixNano < startTime {
+			startTime = jsonItem.TimeUnixNano
+		}
+		if endTime == 0 || jsonItem.TimeUnixNano > endTime {
+			endTime = jsonItem.TimeUnixNano
+		}
+		if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
+			durationNano = uint64(jsonItem.DurationNano)
+		}
 	}
 	end = time.Now()
 	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
@@ -2044,6 +1992,9 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 			searchSpansResult[0].Events[i] = spanEvents
 		}
 	}
+
+	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
+	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
 
 	return &searchSpansResult, nil
 }
@@ -3281,7 +3232,7 @@ func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Con
 
 	var totalSamples uint64
 
-	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%' and timestamp_ms > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, int(interval.Minutes()))
+	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%' and unix_milli > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, int(interval.Minutes()))
 
 	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
 
@@ -4483,8 +4434,8 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 		case *time.Time:
 			point.Timestamp = v.UnixMilli()
 		case *float64, *float32:
-			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Float())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float()))
@@ -4493,9 +4444,24 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())
 			}
+		case **float64, **float32:
+			val := reflect.ValueOf(v)
+			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
+				value := reflect.ValueOf(v).Elem().Elem().Float()
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					isValidPoint = true
+					point.Value = value
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", value))
+					if _, ok := groupAttributes[colName]; !ok {
+						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", value)})
+					}
+					groupAttributes[colName] = fmt.Sprintf("%v", value)
+				}
+			}
 		case *uint, *uint8, *uint64, *uint16, *uint32:
-			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Uint())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
@@ -4504,9 +4470,24 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint())
 			}
+		case **uint, **uint8, **uint64, **uint16, **uint32:
+			val := reflect.ValueOf(v)
+			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
+				value := reflect.ValueOf(v).Elem().Elem().Uint()
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					isValidPoint = true
+					point.Value = float64(value)
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", value))
+					if _, ok := groupAttributes[colName]; !ok {
+						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", value)})
+					}
+					groupAttributes[colName] = fmt.Sprintf("%v", value)
+				}
+			}
 		case *int, *int8, *int16, *int32, *int64:
-			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Int())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
@@ -4514,6 +4495,21 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())})
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
+			}
+		case **int, **int8, **int16, **int32, **int64:
+			val := reflect.ValueOf(v)
+			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
+				value := reflect.ValueOf(v).Elem().Elem().Int()
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					isValidPoint = true
+					point.Value = float64(value)
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", value))
+					if _, ok := groupAttributes[colName]; !ok {
+						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", value)})
+					}
+					groupAttributes[colName] = fmt.Sprintf("%v", value)
+				}
 			}
 		case *bool:
 			groupBy = append(groupBy, fmt.Sprintf("%v", *v))
