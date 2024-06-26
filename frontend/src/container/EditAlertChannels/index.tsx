@@ -11,6 +11,7 @@ import testOpsgenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
@@ -337,7 +338,14 @@ function EditAlertChannels({
 			} else if (value === ChannelType.Email) {
 				onEmailEditHandler();
 			}
+			logEvent('Alert Channel: Save channel', {
+				type: value,
+				sendResolvedAlert: selectedConfig.send_resolved,
+				name: selectedConfig.name,
+				new: 'false',
+			});
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			onSlackEditHandler,
 			onWebhookEditHandler,
@@ -350,6 +358,7 @@ function EditAlertChannels({
 
 	const performChannelTest = useCallback(
 		async (channelType: ChannelType) => {
+			let testSuccess = false;
 			setTestingState(true);
 			try {
 				let request;
@@ -380,6 +389,7 @@ function EditAlertChannels({
 						if (request) response = await testEmail(request);
 						break;
 					default:
+						testSuccess = false;
 						notifications.error({
 							message: 'Error',
 							description: t('test_unsupported'),
@@ -389,24 +399,35 @@ function EditAlertChannels({
 				}
 
 				if (response && response.statusCode === 200) {
+					testSuccess = true;
 					notifications.success({
 						message: 'Success',
 						description: t('channel_test_done'),
 					});
 				} else {
+					testSuccess = false;
 					notifications.error({
 						message: 'Error',
 						description: t('channel_test_failed'),
 					});
 				}
 			} catch (error) {
+				testSuccess = false;
 				notifications.error({
 					message: 'Error',
 					description: t('channel_test_failed'),
 				});
 			}
+			logEvent('Alert Channel: Test notification', {
+				type: channelType,
+				sendResolvedAlert: selectedConfig.send_resolved,
+				name: selectedConfig.name,
+				new: 'false',
+				status: testSuccess ? 'Test success' : 'Test failed',
+			});
 			setTestingState(false);
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			t,
 			prepareWebhookRequest,

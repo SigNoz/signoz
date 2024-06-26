@@ -1,5 +1,6 @@
 import { Space } from 'antd';
 import getAll from 'api/alerts/getAll';
+import logEvent from 'api/common/logEvent';
 import ReleaseNote from 'components/ReleaseNote';
 import Spinner from 'components/Spinner';
 import { useNotifications } from 'hooks/useNotifications';
@@ -20,6 +21,16 @@ function ListAlertRules(): JSX.Element {
 	});
 
 	const { notifications } = useNotifications();
+
+	useEffect(() => {
+		if (!isLoading) {
+			logEvent('Alert: List page visited', {
+				number: data?.payload?.length,
+				description: 'Alert List page visited',
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload]);
 
 	useEffect(() => {
 		if (status === 'error' || (status === 'success' && data.statusCode >= 400)) {

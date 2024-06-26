@@ -3,6 +3,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
+import logEvent from 'api/common/logEvent';
 import DropDown from 'components/DropDown/DropDown';
 import { listAlertMessage } from 'components/facingIssueBtn/util';
 import {
@@ -107,12 +108,16 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	}, [notificationsApi, t]);
 
 	const onClickNewAlertHandler = useCallback(() => {
+		logEvent('Alert: New alert button clicked', {
+			number: allAlertRules?.length,
+		});
 		featureResponse
 			.refetch()
 			.then(() => {
 				history.push(ROUTES.ALERTS_NEW);
 			})
 			.catch(handleError);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [featureResponse, handleError]);
 
 	const onEditHandler = (record: GettableAlert) => (): void => {
@@ -321,6 +326,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 10,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
 				<DropDown
+					record={record}
 					element={[
 						<ToggleAlertState
 							key="1"
@@ -337,7 +343,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 							Edit
 						</ColumnButton>,
 						<ColumnButton
-							key="3"
+							key="Clone"
 							onClick={onCloneHandler(record)}
 							type="link"
 							loading={cloneLoader}
@@ -388,6 +394,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				columns={columns}
 				rowKey="id"
 				dataSource={data}
+				isAlertLogEvent
 				dynamicColumns={dynamicColumns}
 				onChange={handleChange}
 				pagination={paginationConfig}

@@ -11,11 +11,12 @@ import testOpsGenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -42,6 +43,10 @@ function CreateAlertChannels({
 	const { t } = useTranslation('channels');
 
 	const [formInstance] = Form.useForm();
+
+	useEffect(() => {
+		logEvent('Alert Channel: Create channel page visited', {});
+	}, []);
 
 	const [selectedConfig, setSelectedConfig] = useState<
 		Partial<
@@ -408,7 +413,14 @@ function CreateAlertChannels({
 					});
 				}
 			}
+			logEvent('Alert Channel: Save channel', {
+				type: value,
+				sendResolvedAlert: selectedConfig.send_resolved,
+				name: selectedConfig.name,
+				new: 'true',
+			});
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			onSlackHandler,
 			onWebhookHandler,
@@ -423,6 +435,7 @@ function CreateAlertChannels({
 
 	const performChannelTest = useCallback(
 		async (channelType: ChannelType) => {
+			let testSuccess = false;
 			setTestingState(true);
 			try {
 				let request;
@@ -457,29 +470,41 @@ function CreateAlertChannels({
 							message: 'Error',
 							description: t('test_unsupported'),
 						});
+						testSuccess = false;
 						setTestingState(false);
 						return;
 				}
 
 				if (response && response.statusCode === 200) {
+					testSuccess = true;
 					notifications.success({
 						message: 'Success',
 						description: t('channel_test_done'),
 					});
 				} else {
+					testSuccess = false;
 					notifications.error({
 						message: 'Error',
 						description: t('channel_test_failed'),
 					});
 				}
 			} catch (error) {
+				testSuccess = false;
 				notifications.error({
 					message: 'Error',
 					description: t('channel_test_unexpected'),
 				});
 			}
+			logEvent('Alert Channel: Test notification', {
+				type: channelType,
+				sendResolvedAlert: selectedConfig.send_resolved,
+				name: selectedConfig.name,
+				new: 'true',
+				status: testSuccess ? 'Test success' : 'Test failed',
+			});
 			setTestingState(false);
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			prepareWebhookRequest,
 			t,
