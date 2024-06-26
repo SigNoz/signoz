@@ -357,7 +357,8 @@ func TestTransformToTableForClickHouseQueries(t *testing.T) {
 					Series: []*v3.Series{
 						{
 							LabelsArray: []map[string]string{
-								{"service": "frontend", "env": "prod"},
+								{"service": "frontend"},
+								{"env": "prod"},
 							},
 							Points: []v3.Point{
 								{Value: 10.0},
@@ -365,7 +366,8 @@ func TestTransformToTableForClickHouseQueries(t *testing.T) {
 						},
 						{
 							LabelsArray: []map[string]string{
-								{"service": "backend", "env": "prod"},
+								{"service": "backend"},
+								{"env": "prod"},
 							},
 							Points: []v3.Point{
 								{Value: 20.0},
@@ -378,7 +380,8 @@ func TestTransformToTableForClickHouseQueries(t *testing.T) {
 					Series: []*v3.Series{
 						{
 							LabelsArray: []map[string]string{
-								{"service": "frontend", "env": "prod"},
+								{"service": "frontend"},
+								{"env": "prod"},
 							},
 							Points: []v3.Point{
 								{Value: 15.0},
@@ -386,7 +389,8 @@ func TestTransformToTableForClickHouseQueries(t *testing.T) {
 						},
 						{
 							LabelsArray: []map[string]string{
-								{"service": "backend", "env": "prod"},
+								{"service": "backend"},
+								{"env": "prod"},
 							},
 							Points: []v3.Point{
 								{Value: 25.0},
