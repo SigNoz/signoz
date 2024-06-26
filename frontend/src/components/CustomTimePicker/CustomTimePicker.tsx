@@ -9,6 +9,7 @@ import {
 	FixedDurationSuggestionOptions,
 	Options,
 	RelativeDurationSuggestionOptions,
+	SemiRelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
 import { isValidTimeFormat } from 'lib/getMinMax';
@@ -81,6 +82,8 @@ function CustomTimePicker({
 	const location = useLocation();
 	const [isInputFocused, setIsInputFocused] = useState(false);
 
+	console.log(selectedTimePlaceholderValue);
+
 	const getSelectedTimeRangeLabel = (
 		selectedTime: string,
 		selectedTimeValue: string,
@@ -108,6 +111,15 @@ function CustomTimePicker({
 		for (let index = 0; index < FixedDurationSuggestionOptions.length; index++) {
 			if (FixedDurationSuggestionOptions[index].value === selectedTime) {
 				return FixedDurationSuggestionOptions[index].label;
+			}
+		}
+		for (
+			let index = 0;
+			index < SemiRelativeDurationSuggestionOptions.length;
+			index++
+		) {
+			if (SemiRelativeDurationSuggestionOptions[index].value === selectedTime) {
+				return SemiRelativeDurationSuggestionOptions[index].label;
 			}
 		}
 

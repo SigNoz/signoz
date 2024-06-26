@@ -1,5 +1,6 @@
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { Time as TimeV2 } from 'container/TopNav/DateTimeSelectionV2/config';
+import dayjs from 'dayjs';
 import { isString } from 'lodash-es';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -114,6 +115,15 @@ const GetMinMax = (
 		const { time, unit } = extractTimeAndUnit(interval);
 
 		minTime = getMinTimeForRelativeTimes(time, unit);
+	} else if (interval === 'smd') {
+		minTime = dayjs().startOf('day').unix() * 1000;
+	} else if (interval === 'sw') {
+		minTime = dayjs().startOf('isoWeek').unix() * 1000;
+	} else if (interval === 'smn') {
+		minTime = dayjs().startOf('month').unix() * 1000;
+	} else if (interval === 'pmn') {
+		minTime = dayjs().subtract(1, 'month').startOf('month').unix() * 1000;
+		maxTime = dayjs().subtract(1, 'month').endOf('month').unix() * 1000;
 	} else {
 		throw new Error('invalid time type');
 	}

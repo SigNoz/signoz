@@ -69,31 +69,7 @@ function CustomTimePickerPopoverContent({
 	}
 
 	function handleSemiRelativeTimes(option: SemiRelativeOption): void {
-		let startTime;
-		let endTime = dayjs();
-		switch (option.value) {
-			case 'smd':
-				startTime = dayjs().startOf('day');
-				break;
-			case 'sw':
-				startTime = dayjs().startOf('isoWeek');
-				break;
-			case 'smn':
-				startTime = dayjs().startOf('month');
-				break;
-			case 'pmn':
-				startTime = dayjs().subtract(1, 'month').startOf('month');
-				endTime = dayjs().subtract(1, 'month').endOf('month');
-				break;
-			default:
-		}
-		if (startTime) {
-			onCustomDateHandler(
-				[startTime, endTime],
-				LexicalContext.CUSTOM_DATE_TIME_INPUT,
-			);
-			setIsOpen(false);
-		}
+		onSelectHandler(option.label, option.value);
 	}
 
 	function getSemiRelativeTimeChips(options: SemiRelativeOption[]): JSX.Element {
