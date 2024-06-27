@@ -3,6 +3,8 @@ import './FormAlertRules.styles.scss';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Select, Switch, Tooltip } from 'antd';
 import getChannels from 'api/channels/getAll';
+import logEvent from 'api/common/logEvent';
+import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useFetch from 'hooks/useFetch';
@@ -10,6 +12,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef, Labels } from 'types/api/alerts/def';
 import AppReducer from 'types/reducer/app';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
@@ -73,8 +76,23 @@ function BasicInfo({
 
 	const noChannels = channels.payload?.length === 0;
 	const handleCreateNewChannels = useCallback(() => {
+		logEvent('Alert: Create notification channel button clicked', {
+			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
+			ruleId: isNewRule ? 0 : alertDef?.id,
+		});
 		window.open(ROUTES.CHANNELS_NEW, '_blank');
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	useEffect(() => {
+		if (!channels.loading && isNewRule) {
+			logEvent('Alert: New alert creation page visited', {
+				dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
+				numberOfChannels: channels.payload?.length,
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [channels.payload, channels.loading]);
 
 	return (
 		<>
