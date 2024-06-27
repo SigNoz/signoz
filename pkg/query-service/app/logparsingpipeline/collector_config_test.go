@@ -288,7 +288,7 @@ func TestPipelineAliasCollisionsDontResultInDuplicateCollectorProcessors(t *test
 	)
 	require.Nil(apiErr, fmt.Sprintf("couldn't generate config recommendation again: %v", apiErr))
 	require.Equal(
-		recommendedConfYaml, recommendedConfYaml2,
+		string(recommendedConfYaml), string(recommendedConfYaml2),
 		"collector config should not change across recommendations for same set of pipelines",
 	)
 
