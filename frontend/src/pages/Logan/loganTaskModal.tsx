@@ -68,20 +68,6 @@ function LoganTaskModal({
 		cloneDeep(initTaskData),
 	);
 
-	// const formatDataToInterface = (param: { [x: string]: any }) => {
-	// 	const finalParam = {} as any;
-	// 	for (const key in param as any) {
-	// 		if (String(param[key])) {
-	// 			if (key === 'timeSelect') {
-	// 				finalParam[snakeCase(key)] = param[key].join(',');
-	// 				continue;
-	// 			}
-	// 			finalParam[snakeCase(key)] = param[key];
-	// 		}
-	// 	}
-	// 	return finalParam;
-	// };
-
 	const editTask = async () => {
 		try {
 			if (!record || !record.id) return false;
