@@ -61,10 +61,7 @@ function Logan(): JSX.Element {
 	const [modal, contextHolder] = Modal.useModal();
 	const [messageApi] = message.useMessage();
 	const isDarkMode = useIsDarkMode();
-	const [timeSelect, setTimeSelect] = useState<Dayjs[]>([
-		// dayjs().subtract(7, 'day'),
-		// dayjs(),
-	]);
+	const [timeSelect, setTimeSelect] = useState<Dayjs[]>([]);
 	const [modalVisible, setModalVisible] = useState<boolean>(false);
 	const [modalIsEdit, setModalIsEdit] = useState<boolean>(false);
 	const [searchLoading, setSearchLoading] = useState<boolean>(false);
@@ -128,13 +125,10 @@ function Logan(): JSX.Element {
 			icon: <ExclamationCircleOutlined />,
 			content: 'You sure to delete current record?',
 			async onOk() {
-				console.log('OK');
 				const res = await deleteTask(record.id);
 				if (res) handleSearch();
 			},
-			onCancel() {
-				console.log('Cancel');
-			},
+			onCancel() {},
 		});
 	};
 
@@ -297,11 +291,10 @@ function Logan(): JSX.Element {
 			...prev,
 			current: page.current || 1,
 		}));
-		let tmpPag: Pagination = {
+		const tmpPag: Pagination = {
 			current: page.current || 0,
 			pageSize: page.pageSize || 0,
 		};
-		// console.log('hhh', tmpPag);
 		handleSearch(tmpPag);
 	};
 
