@@ -144,19 +144,22 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('channel_creation_failed'),
-				});
+				return { status: 'success' };
 			}
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_creation_failed'),
+			});
+			return { status: 'failed' };
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
+			return { status: 'failed' };
+		} finally {
+			setSavingState(false);
 		}
-		setSavingState(false);
 	}, [prepareSlackRequest, t, notifications]);
 
 	const prepareWebhookRequest = useCallback(() => {
@@ -205,19 +208,22 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('channel_creation_failed'),
-				});
+				return { status: 'success' };
 			}
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_creation_failed'),
+			});
+			return { status: 'failed' };
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
+			return { status: 'failed' };
+		} finally {
+			setSavingState(false);
 		}
-		setSavingState(false);
 	}, [prepareWebhookRequest, t, notifications]);
 
 	const preparePagerRequest = useCallback(() => {
@@ -250,8 +256,8 @@ function CreateAlertChannels({
 		setSavingState(true);
 		const request = preparePagerRequest();
 
-		if (request) {
-			try {
+		try {
+			if (request) {
 				const response = await createPagerApi(request);
 
 				if (response.statusCode === 200) {
@@ -260,20 +266,28 @@ function CreateAlertChannels({
 						description: t('channel_creation_done'),
 					});
 					history.replace(ROUTES.ALL_CHANNELS);
-				} else {
-					notifications.error({
-						message: 'Error',
-						description: response.error || t('channel_creation_failed'),
-					});
+					return { status: 'success' };
 				}
-			} catch (e) {
 				notifications.error({
 					message: 'Error',
-					description: t('channel_creation_failed'),
+					description: response.error || t('channel_creation_failed'),
 				});
+				return { status: 'failed' };
 			}
+			notifications.error({
+				message: 'Error',
+				description: t('channel_creation_failed'),
+			});
+			return { status: 'failed' };
+		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description: t('channel_creation_failed'),
+			});
+			return { status: 'failed' };
+		} finally {
+			setSavingState(false);
 		}
-		setSavingState(false);
 	}, [t, notifications, preparePagerRequest]);
 
 	const prepareOpsgenieRequest = useCallback(
@@ -300,19 +314,22 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('channel_creation_failed'),
-				});
+				return { status: 'success' };
 			}
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_creation_failed'),
+			});
+			return { status: 'failed' };
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
+			return { status: 'failed' };
+		} finally {
+			setSavingState(false);
 		}
-		setSavingState(false);
 	}, [prepareOpsgenieRequest, t, notifications]);
 
 	const prepareEmailRequest = useCallback(
@@ -337,19 +354,22 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('channel_creation_failed'),
-				});
+				return { status: 'success' };
 			}
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_creation_failed'),
+			});
+			return { status: 'failed' };
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
+			return { status: 'failed' };
+		} finally {
+			setSavingState(false);
 		}
-		setSavingState(false);
 	}, [prepareEmailRequest, t, notifications]);
 
 	const prepareMsTeamsRequest = useCallback(
@@ -375,19 +395,22 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('channel_creation_failed'),
-				});
+				return { status: 'success' };
 			}
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_creation_failed'),
+			});
+			return { status: 'failed' };
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
+			return { status: 'failed' };
+		} finally {
+			setSavingState(false);
 		}
-		setSavingState(false);
 	}, [prepareMsTeamsRequest, t, notifications]);
 
 	const onSaveHandler = useCallback(
@@ -405,7 +428,14 @@ function CreateAlertChannels({
 				const functionToCall = functionMapper[value as keyof typeof functionMapper];
 
 				if (functionToCall) {
-					functionToCall();
+					const result = await functionToCall();
+					logEvent('Alert Channel: Save channel', {
+						type: value,
+						sendResolvedAlert: selectedConfig.send_resolved,
+						name: selectedConfig.name,
+						new: 'true',
+						status: result?.status,
+					});
 				} else {
 					notifications.error({
 						message: 'Error',
@@ -413,12 +443,6 @@ function CreateAlertChannels({
 					});
 				}
 			}
-			logEvent('Alert Channel: Save channel', {
-				type: value,
-				sendResolvedAlert: selectedConfig.send_resolved,
-				name: selectedConfig.name,
-				new: 'true',
-			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
