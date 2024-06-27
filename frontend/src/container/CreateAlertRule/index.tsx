@@ -70,9 +70,7 @@ function CreateRules(): JSX.Element {
 		if (alertType) {
 			onSelectType(alertType);
 		} else {
-			logEvent('Alert: New alert data source selection page visited', {
-				description: 'Visited new alert data source selection page',
-			});
+			logEvent('Alert: New alert data source selection page visited', {});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [alertType]);

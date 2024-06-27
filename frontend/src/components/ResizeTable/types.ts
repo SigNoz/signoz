@@ -14,7 +14,7 @@ export interface DynamicColumnTableProps extends TableProps<any> {
 	dynamicColumns: TableProps<any>['columns'];
 	onDragColumn?: (fromIndex: number, toIndex: number) => void;
 	facingIssueBtn?: FacingIssueBtnProps;
-	isAlertLogEvent?: boolean;
+	shouldSendAlertsLogEvent?: boolean;
 }
 
 export type GetVisibleColumnsFunction = (

@@ -24,7 +24,7 @@ function DynamicColumnTable({
 	dynamicColumns,
 	onDragColumn,
 	facingIssueBtn,
-	isAlertLogEvent,
+	shouldSendAlertsLogEvent,
 	...restProps
 }: DynamicColumnTableProps): JSX.Element {
 	const [columnsData, setColumnsData] = useState<ColumnsType | undefined>(
@@ -56,7 +56,7 @@ function DynamicColumnTable({
 	) => (checked: boolean, event: React.MouseEvent<HTMLButtonElement>): void => {
 		event.stopPropagation();
 
-		if (isAlertLogEvent) {
+		if (shouldSendAlertsLogEvent) {
 			logEvent('Alert: Column toggled', {
 				column: column?.title,
 				action: checked ? 'Enable' : 'Disable',

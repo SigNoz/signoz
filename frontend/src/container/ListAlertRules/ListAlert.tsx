@@ -42,7 +42,7 @@ import {
 } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
-import { filterAlerts } from './utils';
+import { alertActionLogEvent, filterAlerts } from './utils';
 
 const { Search } = Input;
 
@@ -326,7 +326,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 10,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
 				<DropDown
-					record={record}
+					onDropDownItemClick={(item): void => alertActionLogEvent(item.key, record)}
 					element={[
 						<ToggleAlertState
 							key="1"
@@ -394,7 +394,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				columns={columns}
 				rowKey="id"
 				dataSource={data}
-				isAlertLogEvent
+				shouldSendAlertsLogEvent
 				dynamicColumns={dynamicColumns}
 				onChange={handleChange}
 				pagination={paginationConfig}
