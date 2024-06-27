@@ -212,21 +212,21 @@ func TestPipelineAliasCollisionsDontResultInDuplicateCollectorProcessors(t *test
 	require := require.New(t)
 
 	baseConf := []byte(`
-    receivers:
-      memory:
-        id: in-memory-receiver
-    exporters:
-      memory:
-        id: in-memory-exporter
-    service:
-      pipelines:
-        logs:
-          receivers:
-            - memory
-          processors: []
-          exporters:
-            - memory
-  `)
+        receivers:
+          memory:
+            id: in-memory-receiver
+        exporters:
+          memory:
+            id: in-memory-exporter
+        service:
+          pipelines:
+            logs:
+              receivers:
+                - memory
+              processors: []
+              exporters:
+                - memory
+      `)
 
 	makeTestPipeline := func(name string, alias string) Pipeline {
 		return Pipeline{
