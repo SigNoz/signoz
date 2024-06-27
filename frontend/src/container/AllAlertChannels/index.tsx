@@ -8,6 +8,7 @@ import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useFetch from 'hooks/useFetch';
 import history from 'lib/history';
+import { isUndefined } from 'lodash-es';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -33,12 +34,12 @@ function AlertChannels(): JSX.Element {
 	const { loading, payload, error, errorMessage } = useFetch(getAll);
 
 	useEffect(() => {
-		if (!loading) {
+		if (!isUndefined(payload)) {
 			logEvent('Alert Channel: Channel list page visited', {
 				number: payload?.length,
 			});
 		}
-	}, [loading, payload]);
+	}, [payload]);
 
 	if (error) {
 		return <Typography>{errorMessage}</Typography>;

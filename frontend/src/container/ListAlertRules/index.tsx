@@ -4,7 +4,7 @@ import logEvent from 'api/common/logEvent';
 import ReleaseNote from 'components/ReleaseNote';
 import Spinner from 'components/Spinner';
 import { useNotifications } from 'hooks/useNotifications';
-import { isEqual } from 'lodash-es';
+import { isUndefined } from 'lodash-es';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -21,20 +21,18 @@ function ListAlertRules(): JSX.Element {
 		cacheTime: 0,
 	});
 
-	const responseRef = useRef(data?.payload || {});
+	const logEventCalledRef = useRef(false);
 
 	const { notifications } = useNotifications();
 
 	useEffect(() => {
-		if (!isEqual(responseRef.current, data?.payload)) {
-			if (!isLoading) {
-				logEvent('Alert: List page visited', {
-					number: data?.payload?.length,
-				});
-			}
-			responseRef.current = data?.payload || {};
+		if (!logEventCalledRef.current && !isUndefined(data?.payload)) {
+			logEvent('Alert: List page visited', {
+				number: data?.payload?.length,
+			});
+			logEventCalledRef.current = true;
 		}
-	}, [data?.payload, isLoading]);
+	}, [data?.payload]);
 
 	useEffect(() => {
 		if (status === 'error' || (status === 'success' && data.statusCode >= 400)) {

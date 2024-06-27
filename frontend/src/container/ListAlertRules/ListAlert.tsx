@@ -343,7 +343,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 							Edit
 						</ColumnButton>,
 						<ColumnButton
-							key="Clone"
+							key="3"
 							onClick={onCloneHandler(record)}
 							type="link"
 							loading={cloneLoader}

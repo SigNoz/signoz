@@ -3,7 +3,7 @@ import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAxiosError from 'hooks/useAxiosError';
-import { isEqual } from 'lodash-es';
+import { isUndefined } from 'lodash-es';
 import { useEffect, useRef } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -16,7 +16,7 @@ function TriggeredAlerts(): JSX.Element {
 		(state) => state.app.user?.userId,
 	);
 
-	const responseRef = useRef({});
+	const hasLoggedEvent = useRef(false); // Track if logEvent has been called
 
 	const handleError = useAxiosError();
 
@@ -35,16 +35,13 @@ function TriggeredAlerts(): JSX.Element {
 	);
 
 	useEffect(() => {
-		if (!isEqual(responseRef.current, alertsResponse)) {
-			if (!alertsResponse.isLoading) {
-				logEvent('Alert: Triggered alert list page visited', {
-					number: alertsResponse?.data?.payload?.length,
-				});
-			}
-			responseRef.current = alertsResponse || {};
+		if (!hasLoggedEvent.current && !isUndefined(alertsResponse.data?.payload)) {
+			logEvent('Alert: Triggered alert list page visited', {
+				number: alertsResponse.data?.payload?.length,
+			});
+			hasLoggedEvent.current = true;
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [alertsResponse.isLoading, alertsResponse.data]);
+	}, [alertsResponse.data?.payload]);
 
 	if (alertsResponse.error) {
 		return <TriggerComponent allAlerts={[]} />;
