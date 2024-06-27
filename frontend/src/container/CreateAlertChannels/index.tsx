@@ -435,7 +435,6 @@ function CreateAlertChannels({
 
 	const performChannelTest = useCallback(
 		async (channelType: ChannelType) => {
-			let testSuccess = false;
 			setTestingState(true);
 			try {
 				let request;
@@ -470,38 +469,37 @@ function CreateAlertChannels({
 							message: 'Error',
 							description: t('test_unsupported'),
 						});
-						testSuccess = false;
 						setTestingState(false);
 						return;
 				}
 
 				if (response && response.statusCode === 200) {
-					testSuccess = true;
 					notifications.success({
 						message: 'Success',
 						description: t('channel_test_done'),
 					});
 				} else {
-					testSuccess = false;
 					notifications.error({
 						message: 'Error',
 						description: t('channel_test_failed'),
 					});
 				}
+
+				logEvent('Alert Channel: Test notification', {
+					type: channelType,
+					sendResolvedAlert: selectedConfig.send_resolved,
+					name: selectedConfig.name,
+					new: 'true',
+					status:
+						response && response.statusCode === 200 ? 'Test success' : 'Test failed',
+				});
 			} catch (error) {
-				testSuccess = false;
 				notifications.error({
 					message: 'Error',
 					description: t('channel_test_unexpected'),
 				});
 			}
-			logEvent('Alert Channel: Test notification', {
-				type: channelType,
-				sendResolvedAlert: selectedConfig.send_resolved,
-				name: selectedConfig.name,
-				new: 'true',
-				status: testSuccess ? 'Test success' : 'Test failed',
-			});
+
 			setTestingState(false);
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
