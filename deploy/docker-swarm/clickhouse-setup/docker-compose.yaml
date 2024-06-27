@@ -146,7 +146,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.48.0
+    image: signoz/query-service:0.48.1
     command:
       [
         "-config=/root/config/prometheus.yml",

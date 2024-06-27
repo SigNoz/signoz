@@ -31,7 +31,7 @@
 
 .onboardingHeader {
 	text-align: center;
-	margin-top: 48px;
+	margin-top: 24px;
 }
 
 .onboardingHeader h1 {
@@ -51,13 +51,14 @@
 	justify-content: center;
 	gap: 36px;
 	margin: 36px;
+	flex-wrap: wrap;
 }
 
 .moduleStyles {
 	padding: 0;
 	box-sizing: border-box;
 	cursor: pointer;
-	width: 400px;
+	width: 300px;
 	transition: 0.3s;
 
 	.ant-card-body {
