@@ -453,7 +453,7 @@ function CreateAlertChannels({
 						name: selectedConfig.name,
 						new: 'true',
 						status: result?.status,
-						StatusMessage: result?.statusMessage,
+						statusMessage: result?.statusMessage,
 					});
 				} else {
 					notifications.error({

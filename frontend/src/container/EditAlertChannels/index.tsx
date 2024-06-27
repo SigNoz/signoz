@@ -90,7 +90,7 @@ function EditAlertChannels({
 				description: t('webhook_url_required'),
 			});
 			setSavingState(false);
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: t('webhook_url_required') };
 		}
 
 		const response = await editSlackApi(prepareSlackRequest());
@@ -102,14 +102,17 @@ function EditAlertChannels({
 			});
 
 			history.replace(ROUTES.ALL_CHANNELS);
-			return { status: 'success' };
+			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
 		notifications.error({
 			message: 'Error',
 			description: response.error || t('channel_edit_failed'),
 		});
 		setSavingState(false);
-		return { status: 'failed' };
+		return {
+			status: 'failed',
+			statusMessage: response.error || t('channel_edit_failed'),
+		};
 	}, [prepareSlackRequest, t, notifications, selectedConfig]);
 
 	const prepareWebhookRequest = useCallback(() => {
@@ -138,13 +141,13 @@ function EditAlertChannels({
 		if (selectedConfig?.api_url === '') {
 			showError(t('webhook_url_required'));
 			setSavingState(false);
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: t('webhook_url_required') };
 		}
 
 		if (username && (!password || password === '')) {
 			showError(t('username_no_password'));
 			setSavingState(false);
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: t('username_no_password') };
 		}
 
 		const response = await editWebhookApi(prepareWebhookRequest());
@@ -156,12 +159,15 @@ function EditAlertChannels({
 			});
 
 			history.replace(ROUTES.ALL_CHANNELS);
-			return { status: 'success' };
+			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
 		showError(response.error || t('channel_edit_failed'));
 
 		setSavingState(false);
-		return { status: 'failed' };
+		return {
+			status: 'failed',
+			statusMessage: response.error || t('channel_edit_failed'),
+		};
 	}, [prepareWebhookRequest, t, notifications, selectedConfig]);
 
 	const prepareEmailRequest = useCallback(
@@ -185,7 +191,7 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 			history.replace(ROUTES.ALL_CHANNELS);
-			return { status: 'success' };
+			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
 		notifications.error({
 			message: 'Error',
@@ -193,7 +199,10 @@ function EditAlertChannels({
 		});
 
 		setSavingState(false);
-		return { status: 'failed' };
+		return {
+			status: 'failed',
+			statusMessage: response.error || t('channel_edit_failed'),
+		};
 	}, [prepareEmailRequest, t, notifications]);
 
 	const preparePagerRequest = useCallback(
@@ -224,7 +233,7 @@ function EditAlertChannels({
 				description: validationError,
 			});
 			setSavingState(false);
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: validationError };
 		}
 		const response = await editPagerApi(preparePagerRequest());
 
@@ -235,7 +244,7 @@ function EditAlertChannels({
 			});
 
 			history.replace(ROUTES.ALL_CHANNELS);
-			return { status: 'success' };
+			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
 		notifications.error({
 			message: 'Error',
@@ -243,7 +252,10 @@ function EditAlertChannels({
 		});
 
 		setSavingState(false);
-		return { status: 'failed' };
+		return {
+			status: 'failed',
+			statusMessage: response.error || t('channel_edit_failed'),
+		};
 	}, [preparePagerRequest, notifications, selectedConfig, t]);
 
 	const prepareOpsgenieRequest = useCallback(
@@ -267,7 +279,7 @@ function EditAlertChannels({
 				description: t('api_key_required'),
 			});
 			setSavingState(false);
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: t('api_key_required') };
 		}
 
 		const response = await editOpsgenie(prepareOpsgenieRequest());
@@ -279,7 +291,7 @@ function EditAlertChannels({
 			});
 
 			history.replace(ROUTES.ALL_CHANNELS);
-			return { status: 'success' };
+			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
 		notifications.error({
 			message: 'Error',
@@ -287,7 +299,10 @@ function EditAlertChannels({
 		});
 
 		setSavingState(false);
-		return { status: 'failed' };
+		return {
+			status: 'failed',
+			statusMessage: response.error || t('channel_edit_failed'),
+		};
 	}, [prepareOpsgenieRequest, t, notifications, selectedConfig]);
 
 	const prepareMsTeamsRequest = useCallback(
@@ -311,7 +326,7 @@ function EditAlertChannels({
 				description: t('webhook_url_required'),
 			});
 			setSavingState(false);
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: t('webhook_url_required') };
 		}
 
 		const response = await editMsTeamsApi(prepareMsTeamsRequest());
@@ -323,7 +338,7 @@ function EditAlertChannels({
 			});
 
 			history.replace(ROUTES.ALL_CHANNELS);
-			return { status: 'success' };
+			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
 		notifications.error({
 			message: 'Error',
@@ -331,7 +346,10 @@ function EditAlertChannels({
 		});
 
 		setSavingState(false);
-		return { status: 'failed' };
+		return {
+			status: 'failed',
+			statusMessage: response.error || t('channel_edit_failed'),
+		};
 	}, [prepareMsTeamsRequest, t, notifications, selectedConfig]);
 
 	const onSaveHandler = useCallback(
@@ -356,6 +374,7 @@ function EditAlertChannels({
 				name: selectedConfig.name,
 				new: 'false',
 				status: result?.status,
+				statusMessage: result?.statusMessage,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
