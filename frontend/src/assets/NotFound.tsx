@@ -5,7 +5,7 @@ function NotFound(): JSX.Element {
 				maxHeight: 480,
 				maxWidth: 480,
 			}}
-			src="/Images/notFound404.png"
+			src="/website/Images/notFound404.png"
 			alt="not-found"
 		/>
 	);

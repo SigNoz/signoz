@@ -161,7 +161,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 					<Header
 						entity="kubernetes"
 						heading="Collecting Kubernetes Pod logs"
-						imgURL="/Logos/kubernetes.svg"
+						imgURL="/website/Logos/kubernetes.svg"
 						docsURL="https://signoz.io/docs/userguide/collect_kubernetes_pod_logs/#collect-kubernetes-pod-logs-in-signoz-cloud"
 						imgClassName="supported-logs-type-img"
 					/>
@@ -172,7 +172,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 					<Header
 						entity="docker"
 						heading="Collecting Docker container logs"
-						imgURL="/Logos/docker.svg"
+						imgURL="/website/Logos/docker.svg"
 						docsURL="https://signoz.io/docs/userguide/collect_docker_logs/"
 						imgClassName="supported-logs-type-img"
 					/>
@@ -183,7 +183,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 					<Header
 						entity="syslog"
 						heading="Collecting Syslogs"
-						imgURL="/Logos/syslogs.svg"
+						imgURL="/website/Logos/syslogs.svg"
 						docsURL="https://signoz.io/docs/userguide/collecting_syslogs/"
 						imgClassName="supported-logs-type-img"
 					/>
@@ -193,7 +193,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 					<Header
 						entity="nodejs"
 						heading="Collecting NodeJS winston logs"
-						imgURL="/Logos/node-js.svg"
+						imgURL="/website/Logos/node-js.svg"
 						docsURL="https://signoz.io/docs/userguide/collecting_nodejs_winston_logs/"
 						imgClassName="supported-logs-type-img"
 					/>
@@ -208,7 +208,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 								? 'Collecting Application Logs from Log file'
 								: 'Collecting Application Logs Using OTEL SDK'
 						}
-						imgURL={`/Logos/${
+						imgURL={`/website/Logos/${
 							logType === ApplicationLogsType.FROM_LOG_FILE
 								? 'software-window'
 								: 'cmd-terminal'

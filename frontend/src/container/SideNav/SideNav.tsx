@@ -339,7 +339,7 @@ function SideNav({
 						onClickHandler(ROUTES.APPLICATION, event);
 					}}
 				>
-					<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
+					<img src="/website/Logos/signoz-brand-logo.svg" alt="SigNoz" />
 
 					{!collapsed && <span className="brand-logo-name"> Weee Raptor </span>}
 				</div>

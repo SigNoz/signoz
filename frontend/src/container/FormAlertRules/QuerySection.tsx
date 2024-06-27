@@ -101,7 +101,11 @@ function QuerySection({
 				label: (
 					<Tooltip title="PromQL">
 						<Button className="nav-btns">
-							<img src="/Icons/promQL.svg" alt="Prom Ql" className="prom-ql-icon" />
+							<img
+								src="/website/Icons/promQL.svg"
+								alt="Prom Ql"
+								className="prom-ql-icon"
+							/>
 						</Button>
 					</Tooltip>
 				),

@@ -101,7 +101,7 @@ exports[`Not Found page test should render Not Found page without errors 1`] = `
   >
     <img
       alt="not-found"
-      src="/Images/notFound404.png"
+      src="/website/Images/notFound404.png"
       style="max-height: 480px; max-width: 480px;"
     />
     <div

@@ -42,6 +42,7 @@ const plugins = [
 		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 		SEGMENT_ID: process.env.SEGMENT_ID,
 		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+		// publicPath: '/website/',
 	}),
 	new webpack.ProvidePlugin({
 		process: 'process/browser',
@@ -72,14 +73,20 @@ const config = {
 	devtool: 'eval-source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	devServer: {
-		historyApiFallback: true,
+		// historyApiFallback: true,
+		historyApiFallback: {
+			rewrites: [
+				{ from: /^\/website\/.*$/, to: '/website/index.html' }, // 确保所有 /website 路径都重定向到 /website/index.html
+			],
+		},
 		open: true,
 		hot: true,
 		liveReload: true,
 		port: portFinderSync.getPort(3301),
 		static: {
 			directory: resolve(__dirname, 'public'),
-			publicPath: '/',
+			publicPath: '/website',
+			// publicPath: '/',
 			watch: true,
 		},
 		allowedHosts: 'all',
@@ -87,7 +94,8 @@ const config = {
 	target: 'web',
 	output: {
 		path: resolve(__dirname, './build'),
-		publicPath: '/',
+		// publicPath: '/',
+		publicPath: '/website',
 	},
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
