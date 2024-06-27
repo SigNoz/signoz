@@ -139,6 +139,8 @@ func expressionToQuery(
 		prevVar = variable
 	}
 	formulaQuery = fmt.Sprintf("SELECT %s, %s as value FROM ", joinUsing, formula.ExpressionString()) + formulaSubQuery
+
+	// this cannot be moved to postprocess right now.
 	if len(qp.CompositeQuery.BuilderQueries[queryName].Having) > 0 {
 		conditions := []string{}
 		for _, having := range qp.CompositeQuery.BuilderQueries[queryName].Having {
