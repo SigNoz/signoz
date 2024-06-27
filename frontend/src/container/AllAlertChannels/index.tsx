@@ -1,13 +1,14 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import getAll from 'api/channels/getAll';
+import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useFetch from 'hooks/useFetch';
 import history from 'lib/history';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -30,6 +31,14 @@ function AlertChannels(): JSX.Element {
 	}, []);
 
 	const { loading, payload, error, errorMessage } = useFetch(getAll);
+
+	useEffect(() => {
+		if (!loading) {
+			logEvent('Alert Channel: Channel list page visited', {
+				number: payload?.length,
+			});
+		}
+	}, [loading, payload]);
 
 	if (error) {
 		return <Typography>{errorMessage}</Typography>;
