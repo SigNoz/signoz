@@ -144,19 +144,22 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-				return { status: 'success' };
+				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
 			notifications.error({
 				message: 'Error',
 				description: response.error || t('channel_creation_failed'),
 			});
-			return { status: 'failed' };
+			return {
+				status: 'failed',
+				statusMessage: response.error || t('channel_creation_failed'),
+			};
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
 		}
@@ -208,19 +211,22 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-				return { status: 'success' };
+				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
 			notifications.error({
 				message: 'Error',
 				description: response.error || t('channel_creation_failed'),
 			});
-			return { status: 'failed' };
+			return {
+				status: 'failed',
+				statusMessage: response.error || t('channel_creation_failed'),
+			};
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
 		}
@@ -266,25 +272,28 @@ function CreateAlertChannels({
 						description: t('channel_creation_done'),
 					});
 					history.replace(ROUTES.ALL_CHANNELS);
-					return { status: 'success' };
+					return { status: 'success', statusMessage: t('channel_creation_done') };
 				}
 				notifications.error({
 					message: 'Error',
 					description: response.error || t('channel_creation_failed'),
 				});
-				return { status: 'failed' };
+				return {
+					status: 'failed',
+					statusMessage: response.error || t('channel_creation_failed'),
+				};
 			}
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
 		}
@@ -314,19 +323,22 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-				return { status: 'success' };
+				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
 			notifications.error({
 				message: 'Error',
 				description: response.error || t('channel_creation_failed'),
 			});
-			return { status: 'failed' };
+			return {
+				status: 'failed',
+				statusMessage: response.error || t('channel_creation_failed'),
+			};
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
 		}
@@ -354,19 +366,22 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-				return { status: 'success' };
+				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
 			notifications.error({
 				message: 'Error',
 				description: response.error || t('channel_creation_failed'),
 			});
-			return { status: 'failed' };
+			return {
+				status: 'failed',
+				statusMessage: response.error || t('channel_creation_failed'),
+			};
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
 		}
@@ -395,19 +410,22 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-				return { status: 'success' };
+				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
 			notifications.error({
 				message: 'Error',
 				description: response.error || t('channel_creation_failed'),
 			});
-			return { status: 'failed' };
+			return {
+				status: 'failed',
+				statusMessage: response.error || t('channel_creation_failed'),
+			};
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
-			return { status: 'failed' };
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
 		}
@@ -435,6 +453,7 @@ function CreateAlertChannels({
 						name: selectedConfig.name,
 						new: 'true',
 						status: result?.status,
+						StatusMessage: result?.statusMessage,
 					});
 				} else {
 					notifications.error({

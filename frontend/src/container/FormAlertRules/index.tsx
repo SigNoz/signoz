@@ -340,19 +340,13 @@ function FormAlertRules({
 			return;
 		}
 		const postableAlert = memoizedPreparePostData();
-
-		logEvent('Alert: Save alert', {
-			dataSource: ALERTS_DATA_SOURCE_MAP[postableAlert?.alertType as AlertTypes],
-			channelNames: postableAlert?.preferredChannels,
-			broadcastToAll: postableAlert?.broadcastToAll,
-			isNewRule: !ruleId || ruleId === 0,
-			ruleId,
-			queryType: currentQuery.queryType,
-			alertId: postableAlert?.id,
-			alertName: postableAlert?.alert,
-		});
-
 		setLoading(true);
+
+		let logData = {
+			status: 'error',
+			statusMessage: t('unexpected_error'),
+		};
+
 		try {
 			const apiReq =
 				ruleId && ruleId > 0
@@ -362,10 +356,15 @@ function FormAlertRules({
 			const response = await saveAlertApi(apiReq);
 
 			if (response.statusCode === 200) {
+				logData = {
+					status: 'success',
+					statusMessage:
+						!ruleId || ruleId === 0 ? t('rule_created') : t('rule_edited'),
+				};
+
 				notifications.success({
 					message: 'Success',
-					description:
-						!ruleId || ruleId === 0 ? t('rule_created') : t('rule_edited'),
+					description: logData.statusMessage,
 				});
 
 				// invalidate rule in cache
@@ -380,18 +379,41 @@ function FormAlertRules({
 					history.replace(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`);
 				}, 2000);
 			} else {
+				logData = {
+					status: 'error',
+					statusMessage: response.error || t('unexpected_error'),
+				};
+
 				notifications.error({
 					message: 'Error',
-					description: response.error || t('unexpected_error'),
+					description: logData.statusMessage,
 				});
 			}
 		} catch (e) {
+			logData = {
+				status: 'error',
+				statusMessage: t('unexpected_error'),
+			};
+
 			notifications.error({
 				message: 'Error',
-				description: t('unexpected_error'),
+				description: logData.statusMessage,
 			});
 		}
+
 		setLoading(false);
+
+		logEvent('Alert: Save alert', {
+			...logData,
+			dataSource: ALERTS_DATA_SOURCE_MAP[postableAlert?.alertType as AlertTypes],
+			channelNames: postableAlert?.preferredChannels,
+			broadcastToAll: postableAlert?.broadcastToAll,
+			isNewRule: !ruleId || ruleId === 0,
+			ruleId,
+			queryType: currentQuery.queryType,
+			alertId: postableAlert?.id,
+			alertName: postableAlert?.alert,
+		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isFormValid,
@@ -428,7 +450,7 @@ function FormAlertRules({
 		}
 		const postableAlert = memoizedPreparePostData();
 
-		let isSuccessful = false;
+		let statusResponse = { status: 'failed', message: '' };
 		setLoading(true);
 		try {
 			const response = await testAlertApi({ data: postableAlert });
@@ -440,27 +462,30 @@ function FormAlertRules({
 						message: 'Error',
 						description: t('no_alerts_found'),
 					});
-					isSuccessful = false;
+					statusResponse = { status: 'failed', message: t('no_alerts_found') };
 				} else {
 					notifications.success({
 						message: 'Success',
 						description: t('rule_test_fired'),
 					});
-					isSuccessful = true;
+					statusResponse = { status: 'success', message: t('rule_test_fired') };
 				}
 			} else {
 				notifications.error({
 					message: 'Error',
 					description: response.error || t('unexpected_error'),
 				});
-				isSuccessful = false;
+				statusResponse = {
+					status: 'failed',
+					message: response.error || t('unexpected_error'),
+				};
 			}
 		} catch (e) {
 			notifications.error({
 				message: 'Error',
 				description: t('unexpected_error'),
 			});
-			isSuccessful = false;
+			statusResponse = { status: 'failed', message: t('unexpected_error') };
 		}
 		setLoading(false);
 		logEvent('Alert: Test notification', {
@@ -470,7 +495,8 @@ function FormAlertRules({
 			isNewRule: !ruleId || ruleId === 0,
 			ruleId,
 			queryType: currentQuery.queryType,
-			status: isSuccessful ? 'successful' : 'failed',
+			status: statusResponse.status,
+			statusMessage: statusResponse.message,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [t, isFormValid, memoizedPreparePostData, notifications]);
