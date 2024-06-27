@@ -343,7 +343,7 @@ function FormAlertRules({
 
 		logEvent('Alert: Save alert', {
 			dataSource: ALERTS_DATA_SOURCE_MAP[postableAlert?.alertType as AlertTypes],
-			channelNames: postableAlert?.preferredChannels?.join(', '),
+			channelNames: postableAlert?.preferredChannels,
 			broadcastToAll: postableAlert?.broadcastToAll,
 			isNewRule: !ruleId || ruleId === 0,
 			ruleId,
@@ -465,7 +465,7 @@ function FormAlertRules({
 		setLoading(false);
 		logEvent('Alert: Test notification', {
 			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
-			channelNames: postableAlert?.preferredChannels?.join(','),
+			channelNames: postableAlert?.preferredChannels,
 			broadcastToAll: postableAlert?.broadcastToAll,
 			isNewRule: !ruleId || ruleId === 0,
 			ruleId,
