@@ -286,8 +286,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const handleError = useAxiosError();
 
+	// this loading state is to take care of mismatch in the responses for table and other panels
+	// hence while changing the query contains the older value and the processing logic fails
 	const [isLoadingPanelData, setIsLoadingPanelData] = useState<boolean>(false);
 
+	// request data should be handled by the parent and the child components should consume the same
+	// this has been moved here from the left container
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		if (selectedWidget && selectedGraph !== PANEL_TYPES.LIST) {
 			return {
