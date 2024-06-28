@@ -12,7 +12,7 @@ import { memo, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { getGraphType } from 'utils/getGraphType';
+import { getGraphType, getGraphTypeForFormat } from 'utils/getGraphType';
 
 import { WidgetGraphProps } from '../types';
 import ExplorerColumnsRenderer from './ExplorerColumnsRenderer';
@@ -44,7 +44,9 @@ function LeftContainer({
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery || initialQueriesMap.metrics,
 				globalSelectedInterval,
-				formatForWeb: selectedWidget.panelTypes === PANEL_TYPES.TABLE,
+				formatForWeb:
+					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
+					PANEL_TYPES.TABLE,
 				variables: getDashboardVariables(selectedDashboard?.data.variables),
 			};
 		}
@@ -74,7 +76,9 @@ function LeftContainer({
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery,
 				fillGaps: selectedWidget.fillSpans || false,
-				formatForWeb: selectedWidget.panelTypes === PANEL_TYPES.TABLE,
+				formatForWeb:
+					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
+					PANEL_TYPES.TABLE,
 			}));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
