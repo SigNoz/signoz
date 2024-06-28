@@ -298,6 +298,8 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/query_range/format", am.ViewAccess(aH.QueryRangeV3Format)).Methods(http.MethodPost)
 
+	router.HandleFunc("/dashboards/variables/query", am.ViewAccess(aH.queryDashboardVarsV3)).Methods(http.MethodPost)
+
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
 }
@@ -685,7 +687,6 @@ func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) queryDashboardVars(w http.ResponseWriter, r *http.Request) {
-
 	query := r.URL.Query().Get("query")
 	if query == "" {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query is required")}, nil)
@@ -3016,6 +3017,30 @@ func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request)
 	queryRangeParams.Version = "v3"
 
 	aH.Respond(w, queryRangeParams)
+}
+
+func (aH *APIHandler) queryDashboardVarsV3(w http.ResponseWriter, r *http.Request) {
+	req, err := parseTemplateVariableValueRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	switch req.QueryType {
+	case v3.QueryTypeBuilder:
+		query, err := prepareQueryForTemplateVariableValue(req)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+			return
+		}
+		vars, err := aH.reader.QueryDashboardVars(r.Context(), query)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+			return
+		}
+		aH.Respond(w, vars)
+	case v3.QueryTypePromQL:
+	}
 }
 
 func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {

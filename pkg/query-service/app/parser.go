@@ -837,6 +837,140 @@ func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequ
 	return &req, nil
 }
 
+func parseTemplateVariableValueRequest(r *http.Request) (*v3.TmplVariableValueRequest, error) {
+	var req v3.TmplVariableValueRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	if err := req.QueryType.Validate(); err != nil {
+		return nil, err
+	}
+
+	if req.QueryType == v3.QueryTypeBuilder {
+		if req.Builder == nil {
+			return nil, fmt.Errorf("builder is required")
+		}
+		if err := req.Builder.AggregateAttribute.Validate(); err != nil {
+			return nil, err
+		}
+		if req.Builder.Filters != nil {
+			if err := req.Builder.Filters.Validate(); err != nil {
+				return nil, err
+			}
+		}
+	} else if req.QueryType == v3.QueryTypePromQL {
+		if req.PromQL == nil {
+			return nil, fmt.Errorf("promql is required")
+		}
+		if len(req.PromQL.Query) == 0 {
+			return nil, fmt.Errorf("query is required")
+		}
+	} else {
+		return nil, fmt.Errorf("invalid query type")
+	}
+
+	formatterVars := make(map[string]interface{})
+	for k, v := range req.Variables {
+		if req.QueryType == v3.QueryTypeBuilder {
+			formatterVars[k] = utils.ClickHouseFormattedValue(v)
+		} else if req.QueryType == v3.QueryTypePromQL {
+			formatterVars[k] = metrics.PromFormattedValue(v)
+		}
+	}
+	req.Variables = formatterVars
+
+	return &req, nil
+}
+
+func prepareQueryForMetrics(req *v3.TmplVariableValueRequest) (string, error) {
+	var metricName string
+
+	for _, item := range req.Builder.Filters.Items {
+		if item.Key.Key == "__name__" {
+			metricName = item.Value.(string)
+		}
+	}
+
+	var conditions []string
+
+	conditions = append(conditions, fmt.Sprintf("metric_name = %s", metricName))
+
+	if req.Builder.Filters != nil && len(req.Builder.Filters.Items) != 0 {
+		for _, item := range req.Builder.Filters.Items {
+			toFormat := item.Value
+			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
+			if op == v3.FilterOperatorContains || op == v3.FilterOperatorNotContains {
+				toFormat = fmt.Sprintf("%%%s%%", toFormat)
+			}
+			fmtVal := utils.ClickHouseFormattedValue(toFormat)
+			switch op {
+			case v3.FilterOperatorEqual:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorNotEqual:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorIn:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorNotIn:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorLike:
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorNotLike:
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorRegex:
+				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorNotRegex:
+				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorGreaterThan:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') > %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorGreaterThanOrEq:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') >= %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorLessThan:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') < %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorLessThanOrEq:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') <= %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorContains:
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorNotContains:
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorExists:
+				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", item.Key.Key))
+			case v3.FilterOperatorNotExists:
+				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", item.Key.Key))
+			default:
+				return "", fmt.Errorf("unsupported filter operator")
+			}
+		}
+	}
+	whereClause := strings.Join(conditions, " AND ")
+
+	for k, v := range req.Variables {
+		whereClause = strings.Replace(whereClause, fmt.Sprintf("{{.%s}}", k), fmt.Sprint(v), -1)
+		whereClause = strings.Replace(whereClause, fmt.Sprintf("{{%s}}", k), fmt.Sprint(v), -1)
+		whereClause = strings.Replace(whereClause, fmt.Sprintf("[[%s]]", k), fmt.Sprint(v), -1)
+		whereClause = strings.Replace(whereClause, fmt.Sprintf("$%s", k), fmt.Sprint(v), -1)
+	}
+
+	label := req.Builder.AggregateAttribute.Key
+
+	query := fmt.Sprintf("SELECT JSONExtractString(labels, '%s') as %s FROM %s.%s WHERE %s GROUP BY %s",
+		label, label, baseconstants.SIGNOZ_METRIC_DBNAME, baseconstants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, whereClause, label)
+
+	return query, nil
+}
+
+func prepareQueryForTemplateVariableValue(req *v3.TmplVariableValueRequest) (string, error) {
+	var query string
+	var err error
+	switch req.Builder.DataSource {
+	case v3.DataSourceMetrics:
+		query, err = prepareQueryForMetrics(req)
+	case v3.DataSourceLogs:
+	case v3.DataSourceTraces:
+	}
+	return query, err
+}
+
 func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequest, error) {
 	var req v3.FilterAttributeKeyRequest
 
