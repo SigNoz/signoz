@@ -9,6 +9,7 @@ import {
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
+	TelegramChannel,
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
 import useFeatureFlags from 'hooks/useFeatureFlag';
@@ -22,6 +23,7 @@ import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
+import TelegramSettings from './Settings/Telegram';
 import WebhookSettings from './Settings/Webhook';
 import { Button } from './styles';
 
@@ -71,6 +73,8 @@ function FormAlertChannels({
 				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.Telegram:
+				return <TelegramSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Email:
 				return <EmailSettings setSelectedConfig={setSelectedConfig} />;
 			default:
@@ -108,6 +112,9 @@ function FormAlertChannels({
 						</Select.Option>
 						<Select.Option value="opsgenie" key="opsgenie">
 							Opsgenie
+						</Select.Option>
+						<Select.Option value="telegram" key="telegram">
+							Telegram
 						</Select.Option>
 						<Select.Option value="email" key="email">
 							Email
@@ -163,6 +170,7 @@ interface FormAlertChannelsProps {
 					WebhookChannel &
 					PagerChannel &
 					OpsgenieChannel &
+					TelegramChannel &
 					EmailChannel
 			>
 		>

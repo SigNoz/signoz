@@ -21,6 +21,7 @@ const AlertChannelWebhook = "ALERT_CHANNEL_WEBHOOK"
 const AlertChannelPagerduty = "ALERT_CHANNEL_PAGERDUTY"
 const AlertChannelMsTeams = "ALERT_CHANNEL_MSTEAMS"
 const AlertChannelOpsgenie = "ALERT_CHANNEL_OPSGENIE"
+const AlertChannelTelegram = "ALERT_CHANNEL_TELEGRAM"
 const AlertChannelEmail = "ALERT_CHANNEL_EMAIL"
 
 var BasicPlan = FeatureSet{
@@ -96,6 +97,13 @@ var BasicPlan = FeatureSet{
 	},
 	Feature{
 		Name:       AlertChannelOpsgenie,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	Feature{
+		Name:       AlertChannelTelegram,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
