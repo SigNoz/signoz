@@ -109,7 +109,7 @@ function GridCardGraph({
 				globalSelectedInterval,
 				variables: getDashboardVariables(variables),
 				fillGaps: widget.fillSpans,
-				formatForWeb: getGraphType(widget.panelTypes) === PANEL_TYPES.TABLE,
+				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
 			};
 		}
 		updatedQuery.builder.queryData[0].pageSize = 10;

@@ -12,7 +12,7 @@ import { memo, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { getGraphType } from 'utils/getGraphType';
+import { getGraphType, getGraphTypeForFormat } from 'utils/getGraphType';
 
 import { WidgetGraphProps } from '../types';
 import ExplorerColumnsRenderer from './ExplorerColumnsRenderer';
@@ -45,7 +45,7 @@ function LeftContainer({
 				query: stagedQuery || initialQueriesMap.metrics,
 				globalSelectedInterval,
 				formatForWeb:
-					getGraphType(selectedGraph || selectedWidget.panelTypes) ===
+					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
 					PANEL_TYPES.TABLE,
 				variables: getDashboardVariables(selectedDashboard?.data.variables),
 			};
@@ -77,7 +77,7 @@ function LeftContainer({
 				query: stagedQuery,
 				fillGaps: selectedWidget.fillSpans || false,
 				formatForWeb:
-					getGraphType(selectedGraph || selectedWidget.panelTypes) ===
+					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
 					PANEL_TYPES.TABLE,
 			}));
 		}
