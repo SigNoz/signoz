@@ -14,7 +14,7 @@ import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
-import { Route, Router, Switch } from 'react-router-dom';
+import { MemoryRouter, Route, Router, Switch } from 'react-router-dom';
 import store from 'store';
 
 const queryClient = new QueryClient({
@@ -43,9 +43,10 @@ export function TestWrapper(props: any): JSX.Element {
 	const themeConfig = useThemeConfig();
 
 	const search = createQueryParams(queryParams);
+	const routePath = `${path}?${search}`;
 
 	const history = React.useMemo(
-		() => createMemoryHistory({ initialEntries: [`${path}?${search}`] }),
+		() => createMemoryHistory({ initialEntries: [routePath] }),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[],
 	);
@@ -53,33 +54,35 @@ export function TestWrapper(props: any): JSX.Element {
 	return (
 		<HelmetProvider>
 			<ThemeProvider>
-				<QueryClientProvider client={queryClient}>
-					<Provider store={store}>
-						<ConfigProvider theme={themeConfig}>
-							<Router history={history}>
-								<NotificationProvider>
-									<PrivateRoute>
-										<ResourceProvider>
-											<QueryBuilderProvider>
-												<DashboardProvider>
-													<KeyboardHotkeysProvider>
-														<AppLayout>
-															<Switch>
-																<Route exact path={path}>
-																	{children}
-																</Route>
-															</Switch>
-														</AppLayout>
-													</KeyboardHotkeysProvider>
-												</DashboardProvider>
-											</QueryBuilderProvider>
-										</ResourceProvider>
-									</PrivateRoute>
-								</NotificationProvider>
-							</Router>
-						</ConfigProvider>
-					</Provider>
-				</QueryClientProvider>
+				<MemoryRouter initialEntries={[routePath]}>
+					<QueryClientProvider client={queryClient}>
+						<Provider store={store}>
+							<ConfigProvider theme={themeConfig}>
+								<Router history={history}>
+									<NotificationProvider>
+										<PrivateRoute>
+											<ResourceProvider>
+												<QueryBuilderProvider>
+													<DashboardProvider>
+														<KeyboardHotkeysProvider>
+															<AppLayout>
+																<Switch>
+																	<Route exact path={path}>
+																		{children}
+																	</Route>
+																</Switch>
+															</AppLayout>
+														</KeyboardHotkeysProvider>
+													</DashboardProvider>
+												</QueryBuilderProvider>
+											</ResourceProvider>
+										</PrivateRoute>
+									</NotificationProvider>
+								</Router>
+							</ConfigProvider>
+						</Provider>
+					</QueryClientProvider>
+				</MemoryRouter>
 			</ThemeProvider>
 		</HelmetProvider>
 	);

@@ -1,34 +1,15 @@
 import { render } from '@testing-library/react';
-import { I18nextProvider } from 'react-i18next';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import i18n from 'ReactI18';
-import store from 'store';
+import { TestWrapper } from 'testUtils';
 
 import ChangeHistory from '../index';
 import { pipelineData, pipelineDataHistory } from './testUtils';
 
-const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			refetchOnWindowFocus: false,
-		},
-	},
-});
-
 describe('ChangeHistory test', () => {
 	it('should render changeHistory correctly', () => {
 		const { getAllByText, getByText } = render(
-			<MemoryRouter>
-				<QueryClientProvider client={queryClient}>
-					<Provider store={store}>
-						<I18nextProvider i18n={i18n}>
-							<ChangeHistory pipelineData={pipelineData} />
-						</I18nextProvider>
-					</Provider>
-				</QueryClientProvider>
-			</MemoryRouter>,
+			<TestWrapper>
+				<ChangeHistory pipelineData={pipelineData} />,
+			</TestWrapper>,
 		);
 
 		// change History table headers
@@ -47,20 +28,14 @@ describe('ChangeHistory test', () => {
 
 	it('test deployment stage and icon based on history data', () => {
 		const { getByText, container } = render(
-			<MemoryRouter>
-				<QueryClientProvider client={queryClient}>
-					<Provider store={store}>
-						<I18nextProvider i18n={i18n}>
-							<ChangeHistory
-								pipelineData={{
-									...pipelineData,
-									history: pipelineDataHistory,
-								}}
-							/>
-						</I18nextProvider>
-					</Provider>
-				</QueryClientProvider>
-			</MemoryRouter>,
+			<TestWrapper>
+				<ChangeHistory
+					pipelineData={{
+						...pipelineData,
+						history: pipelineDataHistory,
+					}}
+				/>
+			</TestWrapper>,
 		);
 
 		// assertion for different deployment stages
