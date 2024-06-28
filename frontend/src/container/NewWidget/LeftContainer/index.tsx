@@ -44,9 +44,7 @@ function LeftContainer({
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery || initialQueriesMap.metrics,
 				globalSelectedInterval,
-				formatForWeb:
-					getGraphType(selectedGraph || selectedWidget.panelTypes) ===
-					PANEL_TYPES.TABLE,
+				formatForWeb: selectedWidget.panelTypes === PANEL_TYPES.TABLE,
 				variables: getDashboardVariables(selectedDashboard?.data.variables),
 			};
 		}
@@ -76,9 +74,7 @@ function LeftContainer({
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery,
 				fillGaps: selectedWidget.fillSpans || false,
-				formatForWeb:
-					getGraphType(selectedGraph || selectedWidget.panelTypes) ===
-					PANEL_TYPES.TABLE,
+				formatForWeb: selectedWidget.panelTypes === PANEL_TYPES.TABLE,
 			}));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
