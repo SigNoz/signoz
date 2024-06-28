@@ -12,6 +12,7 @@ function WidgetGraphContainer({
 	queryResponse,
 	setRequestData,
 	selectedWidget,
+	isLoadingPanelData,
 }: WidgetGraphContainerProps): JSX.Element {
 	if (queryResponse.data && selectedGraph === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
@@ -33,6 +34,10 @@ function WidgetGraphContainer({
 		);
 	}
 	if (queryResponse.isLoading && selectedGraph !== PANEL_TYPES.LIST) {
+		return <Spinner size="large" tip="Loading..." />;
+	}
+
+	if (isLoadingPanelData) {
 		return <Spinner size="large" tip="Loading..." />;
 	}
 
