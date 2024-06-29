@@ -112,6 +112,13 @@ func UnavailableError(err error) *ApiError {
 	}
 }
 
+func ForbiddenError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorForbidden,
+		Err: err,
+	}
+}
+
 func WrapApiError(err *ApiError, msg string) *ApiError {
 	return &ApiError{
 		Typ: err.Type(),
@@ -171,16 +178,21 @@ type AlertingRuleResponse struct {
 	// Value       float64       `json:"value"`
 }
 
+type DataWarning struct {
+	TopLevelOps []string `json:"topLevelOps"`
+}
+
 type ServiceItem struct {
-	ServiceName  string  `json:"serviceName" ch:"serviceName"`
-	Percentile99 float64 `json:"p99" ch:"p99"`
-	AvgDuration  float64 `json:"avgDuration" ch:"avgDuration"`
-	NumCalls     uint64  `json:"numCalls" ch:"numCalls"`
-	CallRate     float64 `json:"callRate" ch:"callRate"`
-	NumErrors    uint64  `json:"numErrors" ch:"numErrors"`
-	ErrorRate    float64 `json:"errorRate" ch:"errorRate"`
-	Num4XX       uint64  `json:"num4XX" ch:"num4xx"`
-	FourXXRate   float64 `json:"fourXXRate" ch:"fourXXRate"`
+	ServiceName  string      `json:"serviceName" ch:"serviceName"`
+	Percentile99 float64     `json:"p99" ch:"p99"`
+	AvgDuration  float64     `json:"avgDuration" ch:"avgDuration"`
+	NumCalls     uint64      `json:"numCalls" ch:"numCalls"`
+	CallRate     float64     `json:"callRate" ch:"callRate"`
+	NumErrors    uint64      `json:"numErrors" ch:"numErrors"`
+	ErrorRate    float64     `json:"errorRate" ch:"errorRate"`
+	Num4XX       uint64      `json:"num4XX" ch:"num4xx"`
+	FourXXRate   float64     `json:"fourXXRate" ch:"fourXXRate"`
+	DataWarning  DataWarning `json:"dataWarning"`
 }
 type ServiceErrorItem struct {
 	Time      time.Time `json:"time" ch:"time"`
@@ -200,8 +212,11 @@ type ServiceOverviewItem struct {
 }
 
 type SearchSpansResult struct {
-	Columns []string        `json:"columns"`
-	Events  [][]interface{} `json:"events"`
+	StartTimestampMillis uint64          `json:"startTimestampMillis"`
+	EndTimestampMillis   uint64          `json:"endTimestampMillis"`
+	Columns              []string        `json:"columns"`
+	Events               [][]interface{} `json:"events"`
+	IsSubTree            bool            `json:"isSubTree"`
 }
 
 type GetFilterSpansResponseItem struct {
@@ -237,19 +252,22 @@ type Event struct {
 
 //easyjson:json
 type SearchSpanResponseItem struct {
-	TimeUnixNano uint64            `json:"timestamp"`
-	DurationNano int64             `json:"durationNano"`
-	SpanID       string            `json:"spanId"`
-	RootSpanID   string            `json:"rootSpanId"`
-	TraceID      string            `json:"traceId"`
-	HasError     bool              `json:"hasError"`
-	Kind         int32             `json:"kind"`
-	ServiceName  string            `json:"serviceName"`
-	Name         string            `json:"name"`
-	References   []OtelSpanRef     `json:"references,omitempty"`
-	TagMap       map[string]string `json:"tagMap"`
-	Events       []string          `json:"event"`
-	RootName     string            `json:"rootName"`
+	TimeUnixNano     uint64            `json:"timestamp"`
+	DurationNano     int64             `json:"durationNano"`
+	SpanID           string            `json:"spanId"`
+	RootSpanID       string            `json:"rootSpanId"`
+	TraceID          string            `json:"traceId"`
+	HasError         bool              `json:"hasError"`
+	Kind             int32             `json:"kind"`
+	ServiceName      string            `json:"serviceName"`
+	Name             string            `json:"name"`
+	References       []OtelSpanRef     `json:"references,omitempty"`
+	TagMap           map[string]string `json:"tagMap"`
+	Events           []string          `json:"event"`
+	RootName         string            `json:"rootName"`
+	StatusMessage    string            `json:"statusMessage"`
+	StatusCodeString string            `json:"statusCodeString"`
+	SpanKind         string            `json:"spanKind"`
 }
 
 type OtelSpanRef struct {
@@ -286,7 +304,7 @@ func (item *SearchSpanResponseItem) GetValues() []interface{} {
 		keys = append(keys, k)
 		values = append(values, v)
 	}
-	returnArray := []interface{}{item.TimeUnixNano, item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), keys, values, referencesStringArray, item.Events, item.HasError}
+	returnArray := []interface{}{item.TimeUnixNano, item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), keys, values, referencesStringArray, item.Events, item.HasError, item.StatusMessage, item.StatusCodeString, item.SpanKind}
 
 	return returnArray
 }
@@ -382,11 +400,6 @@ type DBResponseServiceName struct {
 	Count       uint64 `ch:"count"`
 }
 
-type DBResponseHttpCode struct {
-	HttpCode string `ch:"httpCode"`
-	Count    uint64 `ch:"count"`
-}
-
 type DBResponseHttpRoute struct {
 	HttpRoute string `ch:"httpRoute"`
 	Count     uint64 `ch:"count"`
@@ -441,14 +454,12 @@ type SpanFiltersResponse struct {
 	Status             map[string]uint64 `json:"status"`
 	Duration           map[string]uint64 `json:"duration"`
 	Operation          map[string]uint64 `json:"operation"`
-	HttpCode           map[string]uint64 `json:"httpCode"`
 	ResponseStatusCode map[string]uint64 `json:"responseStatusCode"`
 	RPCMethod          map[string]uint64 `json:"rpcMethod"`
 	HttpUrl            map[string]uint64 `json:"httpUrl"`
 	HttpMethod         map[string]uint64 `json:"httpMethod"`
 	HttpRoute          map[string]uint64 `json:"httpRoute"`
 	HttpHost           map[string]uint64 `json:"httpHost"`
-	Component          map[string]uint64 `json:"component"`
 }
 type Error struct {
 	ExceptionType  string    `json:"exceptionType" ch:"exceptionType"`
@@ -504,6 +515,12 @@ func (s *Series) SortPoints() {
 type MetricPoint struct {
 	Timestamp int64
 	Value     float64
+}
+
+type MetricStatus struct {
+	MetricName           string
+	LastReceivedTsMillis int64
+	LastReceivedLabels   map[string]string
 }
 
 // MarshalJSON implements json.Marshaler.
@@ -623,11 +640,18 @@ type AlertsInfo struct {
 	TracesBasedAlerts int `json:"tracesBasedAlerts"`
 }
 
+type SavedViewsInfo struct {
+	TotalSavedViews  int `json:"totalSavedViews"`
+	TracesSavedViews int `json:"tracesSavedViews"`
+	LogsSavedViews   int `json:"logsSavedViews"`
+}
+
 type DashboardsInfo struct {
-	TotalDashboards   int `json:"totalDashboards"`
-	LogsBasedPanels   int `json:"logsBasedPanels"`
-	MetricBasedPanels int `json:"metricBasedPanels"`
-	TracesBasedPanels int `json:"tracesBasedPanels"`
+	TotalDashboards                 int `json:"totalDashboards"`
+	TotalDashboardsWithPanelAndName int `json:"totalDashboardsWithPanelAndName"` // dashboards with panel and name without sample title
+	LogsBasedPanels                 int `json:"logsBasedPanels"`
+	MetricBasedPanels               int `json:"metricBasedPanels"`
+	TracesBasedPanels               int `json:"tracesBasedPanels"`
 }
 
 type TagTelemetryData struct {

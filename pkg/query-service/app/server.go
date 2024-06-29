@@ -9,7 +9,9 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -21,9 +23,11 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
@@ -51,7 +55,6 @@ type ServerOptions struct {
 	// alert specific params
 	DisableRules      bool
 	RuleRepoURL       string
-	PreferDelta       bool
 	PreferSpanMetrics bool
 	MaxIdleConns      int
 	MaxOpenConns      int
@@ -63,12 +66,8 @@ type ServerOptions struct {
 
 // Server runs HTTP, Mux and a grpc server
 type Server struct {
-	// logger       *zap.Logger
-	// tracer opentracing.Tracer // TODO make part of flags.Service
 	serverOptions *ServerOptions
-	conn          net.Listener
 	ruleManager   *rules.Manager
-	separatePorts bool
 
 	// public http router
 	httpConn   net.Listener
@@ -112,7 +111,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	var reader interfaces.Reader
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
-		zap.S().Info("Using ClickHouse as datastore ...")
+		zap.L().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(
 			localDB,
 			serverOptions.PromConfigPath,
@@ -125,7 +124,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
 	} else {
-		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
+		return nil, fmt.Errorf("storage type: %s is not supported in query service", storage)
 	}
 	skipConfig := &model.SkipConfig{}
 	if serverOptions.SkipTopLvlOpsPath != "" {
@@ -155,8 +154,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	// ingestion pipelines manager
-	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+
+	integrationsController, err := integrations.NewController(localDB)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create integrations controller: %w", err)
+	}
+
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
+		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +171,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
 		SkipConfig:                    skipConfig,
-		PerferDelta:                   serverOptions.PreferDelta,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
 		MaxIdleConns:                  serverOptions.MaxIdleConns,
 		MaxOpenConns:                  serverOptions.MaxOpenConns,
@@ -173,6 +178,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		AppDao:                        dao.DB(),
 		RuleManager:                   rm,
 		FeatureFlags:                  fm,
+		IntegrationsController:        integrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
@@ -204,7 +210,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
-	_, err = opAmpModel.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	_, err = opAmpModel.InitDB(localDB)
 	if err != nil {
 		return nil, err
 	}
@@ -257,6 +263,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 
 	r := NewRouter()
 
+	r.Use(LogCommentEnricher)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
@@ -264,8 +271,8 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	am := NewAuthMiddleware(auth.GetUserFromRequest)
 
 	api.RegisterRoutes(r, am)
-	api.RegisterMetricsRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
+	api.RegisterIntegrationRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
 	api.RegisterQueryRangeV4Routes(r, am)
 
@@ -291,7 +298,66 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.S().Info(path+"\ttimeTaken:"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path))
+		zap.L().Info(path, zap.Duration("timeTaken", time.Since(startTime)), zap.String("path", path))
+	})
+}
+
+func LogCommentEnricher(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		referrer := r.Header.Get("Referer")
+
+		var path, dashboardID, alertID, page, client, viewName, tab string
+
+		if referrer != "" {
+			referrerURL, _ := url.Parse(referrer)
+			client = "browser"
+			path = referrerURL.Path
+
+			if strings.Contains(path, "/dashboard") {
+				// Split the path into segments
+				pathSegments := strings.Split(referrerURL.Path, "/")
+				// The dashboard ID should be the segment after "/dashboard/"
+				// Loop through pathSegments to find "dashboard" and then take the next segment as the ID
+				for i, segment := range pathSegments {
+					if segment == "dashboard" && i < len(pathSegments)-1 {
+						// Return the next segment, which should be the dashboard ID
+						dashboardID = pathSegments[i+1]
+					}
+				}
+				page = "dashboards"
+			} else if strings.Contains(path, "/alerts") {
+				urlParams := referrerURL.Query()
+				alertID = urlParams.Get("ruleId")
+				page = "alerts"
+			} else if strings.Contains(path, "logs") && strings.Contains(path, "explorer") {
+				page = "logs-explorer"
+				viewName = referrerURL.Query().Get("viewName")
+			} else if strings.Contains(path, "/trace") || strings.Contains(path, "traces-explorer") {
+				page = "traces-explorer"
+				viewName = referrerURL.Query().Get("viewName")
+			} else if strings.Contains(path, "/services") {
+				page = "services"
+				tab = referrerURL.Query().Get("tab")
+				if tab == "" {
+					tab = "OVER_METRICS"
+				}
+			}
+		} else {
+			client = "api"
+		}
+
+		kvs := map[string]string{
+			"path":        path,
+			"dashboardID": dashboardID,
+			"alertID":     alertID,
+			"source":      page,
+			"client":      client,
+			"viewName":    viewName,
+			"servicesTab": tab,
+		}
+
+		r = r.WithContext(context.WithValue(r.Context(), common.LogCommentKey, kvs))
+		next.ServeHTTP(w, r)
 	})
 }
 
@@ -303,7 +369,7 @@ func loggingMiddlewarePrivate(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.S().Info(path+"\tprivatePort: true \ttimeTaken"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
+		zap.L().Info(path, zap.Duration("timeTaken", time.Since(startTime)), zap.String("path", path), zap.Bool("privatePort", true))
 	})
 }
 
@@ -354,30 +420,33 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 
 	signozMetricsUsed := false
 	signozLogsUsed := false
-	dataSources := []string{}
+	signozTracesUsed := false
 	if postData != nil {
 
 		if postData.CompositeQuery != nil {
 			data["queryType"] = postData.CompositeQuery.QueryType
 			data["panelType"] = postData.CompositeQuery.PanelType
 
-			signozLogsUsed, signozMetricsUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
+			signozLogsUsed, signozMetricsUsed, signozTracesUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
 		}
 	}
 
-	if signozMetricsUsed || signozLogsUsed {
+	if signozMetricsUsed || signozLogsUsed || signozTracesUsed {
 		if signozMetricsUsed {
-			dataSources = append(dataSources, "metrics")
 			telemetry.GetInstance().AddActiveMetricsUser()
 		}
 		if signozLogsUsed {
-			dataSources = append(dataSources, "logs")
 			telemetry.GetInstance().AddActiveLogsUser()
 		}
-		data["dataSources"] = dataSources
+		if signozTracesUsed {
+			telemetry.GetInstance().AddActiveTracesUser()
+		}
+		data["metricsUsed"] = signozMetricsUsed
+		data["logsUsed"] = signozLogsUsed
+		data["tracesUsed"] = signozTracesUsed
 		userEmail, err := auth.GetEmailFromJwt(r.Context())
 		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_V3, data, userEmail, true)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail, true, false)
 		}
 	}
 	return data, true
@@ -421,7 +490,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		if _, ok := telemetry.EnabledPaths()[path]; ok {
 			userEmail, err := auth.GetEmailFromJwt(r.Context())
 			if err == nil {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail)
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail, true, false)
 			}
 		}
 		// }
@@ -475,7 +544,7 @@ func (s *Server) initListeners() error {
 		return err
 	}
 
-	zap.S().Info(fmt.Sprintf("Query server started listening on %s...", s.serverOptions.HTTPHostPort))
+	zap.L().Info(fmt.Sprintf("Query server started listening on %s...", s.serverOptions.HTTPHostPort))
 
 	// listen on private port to support internal services
 	privateHostPort := s.serverOptions.PrivateHostPort
@@ -488,7 +557,7 @@ func (s *Server) initListeners() error {
 	if err != nil {
 		return err
 	}
-	zap.S().Info(fmt.Sprintf("Query server started listening on private port %s...", s.serverOptions.PrivateHostPort))
+	zap.L().Info(fmt.Sprintf("Query server started listening on private port %s...", s.serverOptions.PrivateHostPort))
 
 	return nil
 }
@@ -500,7 +569,7 @@ func (s *Server) Start() error {
 	if !s.serverOptions.DisableRules {
 		s.ruleManager.Start()
 	} else {
-		zap.S().Info("msg: Rules disabled as rules.disable is set to TRUE")
+		zap.L().Info("msg: Rules disabled as rules.disable is set to TRUE")
 	}
 
 	err := s.initListeners()
@@ -514,23 +583,23 @@ func (s *Server) Start() error {
 	}
 
 	go func() {
-		zap.S().Info("Starting HTTP server", zap.Int("port", httpPort), zap.String("addr", s.serverOptions.HTTPHostPort))
+		zap.L().Info("Starting HTTP server", zap.Int("port", httpPort), zap.String("addr", s.serverOptions.HTTPHostPort))
 
 		switch err := s.httpServer.Serve(s.httpConn); err {
 		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
 			// normal exit, nothing to do
 		default:
-			zap.S().Error("Could not start HTTP server", zap.Error(err))
+			zap.L().Error("Could not start HTTP server", zap.Error(err))
 		}
 		s.unavailableChannel <- healthcheck.Unavailable
 	}()
 
 	go func() {
-		zap.S().Info("Starting pprof server", zap.String("addr", constants.DebugHttpPort))
+		zap.L().Info("Starting pprof server", zap.String("addr", constants.DebugHttpPort))
 
 		err = http.ListenAndServe(constants.DebugHttpPort, nil)
 		if err != nil {
-			zap.S().Error("Could not start pprof server", zap.Error(err))
+			zap.L().Error("Could not start pprof server", zap.Error(err))
 		}
 	}()
 
@@ -540,14 +609,14 @@ func (s *Server) Start() error {
 	}
 	fmt.Println("starting private http")
 	go func() {
-		zap.S().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.serverOptions.PrivateHostPort))
+		zap.L().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.serverOptions.PrivateHostPort))
 
 		switch err := s.privateHTTP.Serve(s.privateConn); err {
 		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
 			// normal exit, nothing to do
-			zap.S().Info("private http server closed")
+			zap.L().Info("private http server closed")
 		default:
-			zap.S().Error("Could not start private HTTP server", zap.Error(err))
+			zap.L().Error("Could not start private HTTP server", zap.Error(err))
 		}
 
 		s.unavailableChannel <- healthcheck.Unavailable
@@ -555,10 +624,10 @@ func (s *Server) Start() error {
 	}()
 
 	go func() {
-		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
+		zap.L().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
 		err := s.opampServer.Start(constants.OpAmpWsEndpoint)
 		if err != nil {
-			zap.S().Info("opamp ws server failed to start", err)
+			zap.L().Info("opamp ws server failed to start", zap.Error(err))
 			s.unavailableChannel <- healthcheck.Unavailable
 		}
 	}()
@@ -623,6 +692,7 @@ func makeRulesManager(
 		Logger:       nil,
 		DisableRules: disableRules,
 		FeatureFlags: fm,
+		Reader:       ch,
 	}
 
 	// create Manager
@@ -631,7 +701,7 @@ func makeRulesManager(
 		return nil, fmt.Errorf("rule manager error: %v", err)
 	}
 
-	zap.S().Info("rules manager is ready")
+	zap.L().Info("rules manager is ready")
 
 	return manager, nil
 }

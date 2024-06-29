@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './Uplot.styles.scss';
 
+import * as Sentry from '@sentry/react';
 import { Typography } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { LineChart } from 'lucide-react';
@@ -13,7 +14,6 @@ import {
 	useImperativeHandle,
 	useRef,
 } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 import UPlot from 'uplot';
 
 import { dataMatch, optionsUpdateState } from './utils';
@@ -139,7 +139,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		}
 
 		return (
-			<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+			<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 				<div className="uplot-graph-container" ref={targetRef}>
 					{data && data[0] && data[0]?.length === 0 ? (
 						<div className="not-found">
@@ -147,7 +147,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 						</div>
 					) : null}
 				</div>
-			</ErrorBoundary>
+			</Sentry.ErrorBoundary>
 		);
 	},
 );

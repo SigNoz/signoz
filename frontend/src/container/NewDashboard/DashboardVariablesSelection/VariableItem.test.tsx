@@ -53,7 +53,8 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -68,7 +69,8 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -82,7 +84,8 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -110,7 +113,8 @@ describe('VariableItem', () => {
 					variableData={mockCustomVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -123,6 +127,8 @@ describe('VariableItem', () => {
 		const customVariableData = {
 			...mockCustomVariableData,
 			allSelected: true,
+			showALLOption: true,
+			multiSelect: true,
 		};
 
 		render(
@@ -131,7 +137,8 @@ describe('VariableItem', () => {
 					variableData={customVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -146,7 +153,8 @@ describe('VariableItem', () => {
 					variableData={mockCustomVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);

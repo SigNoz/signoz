@@ -31,7 +31,7 @@ func invite(t *testing.T, email string) *model.InviteResponse {
 }
 
 func register(email, password, token string) (string, error) {
-	q := endpoint + fmt.Sprintf("/api/v1/register")
+	q := endpoint + "/api/v1/register"
 
 	req := auth.RegisterRequest{
 		Email:       email,
@@ -58,7 +58,7 @@ func register(email, password, token string) (string, error) {
 }
 
 func login(email, password, refreshToken string) (*model.LoginResponse, error) {
-	q := endpoint + fmt.Sprintf("/api/v1/login")
+	q := endpoint + "/api/v1/login"
 
 	req := model.LoginRequest{
 		Email:        email,

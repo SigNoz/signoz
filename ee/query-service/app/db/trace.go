@@ -13,6 +13,11 @@ import (
 func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]basemodel.SearchSpansResult, error) {
 	var spans []*model.SpanForTraceDetails
 
+	// if targetSpanId is null or not present then randomly select a span as targetSpanId
+	if (targetSpanId == "" || targetSpanId == "null") && len(payload) > 0 {
+		targetSpanId = payload[0].SpanID
+	}
+
 	// Build a slice of spans from the payload
 	for _, spanItem := range payload {
 		var parentID string
@@ -49,14 +54,14 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 			break
 		}
 		if err != nil {
-			zap.S().Error("Error during BreadthFirstSearch(): ", err)
+			zap.L().Error("Error during BreadthFirstSearch()", zap.Error(err))
 			return nil, err
 		}
 	}
 
 	// If the target span is not found, return span not found error
 	if targetSpan == nil {
-		return nil, errors.New("Span not found")
+		return nil, errors.New("span not found")
 	}
 
 	// Build the final result
@@ -113,8 +118,9 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 	}
 
 	searchSpansResult := []basemodel.SearchSpansResult{{
-		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
-		Events:  make([][]interface{}, len(resultSpansSet)),
+		Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
+		Events:    make([][]interface{}, len(resultSpansSet)),
+		IsSubTree: true,
 	},
 	}
 
@@ -186,7 +192,7 @@ func buildSpanTrees(spansPtr *[]*model.SpanForTraceDetails) ([]*model.SpanForTra
 
 		// If the parent span is not found, add current span to list of roots
 		if parent == nil {
-			// zap.S().Debug("Parent Span not found parent_id: ", span.ParentID)
+			// zap.L().Debug("Parent Span not found parent_id: ", span.ParentID)
 			roots = append(roots, span)
 			span.ParentID = ""
 			continue
@@ -213,7 +219,7 @@ func breadthFirstSearch(spansPtr *model.SpanForTraceDetails, targetId string) (*
 		}
 
 		for _, child := range current.Children {
-			if ok, _ := visited[child.SpanID]; !ok {
+			if ok := visited[child.SpanID]; !ok {
 				queue = append(queue, child)
 			}
 		}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	opentracing "github.com/opentracing/opentracing-go"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
 )
@@ -25,24 +26,24 @@ type RuleTask struct {
 	evaluationTime     time.Duration
 	lastEvaluation     time.Time
 
-	markStale   bool
-	done        chan struct{}
-	terminated  chan struct{}
-	managerDone chan struct{}
+	done       chan struct{}
+	terminated chan struct{}
 
 	pause  bool
 	notify NotifyFunc
+
+	ruleDB RuleDB
 }
 
 const DefaultFrequency = 1 * time.Minute
 
 // newRuleTask makes a new RuleTask with the given name, options, and rules.
-func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *RuleTask {
+func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *RuleTask {
 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
 	}
-	zap.S().Info("msg:", "initiating a new rule task", "\t name:", name, "\t frequency:", frequency)
+	zap.L().Info("initiating a new rule task", zap.String("name", name), zap.Duration("frequency", frequency))
 
 	return &RuleTask{
 		name:       name,
@@ -54,6 +55,7 @@ func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 		done:       make(chan struct{}),
 		terminated: make(chan struct{}),
 		notify:     notify,
+		ruleDB:     ruleDB,
 	}
 }
 
@@ -91,7 +93,7 @@ func (g *RuleTask) Run(ctx context.Context) {
 
 	// Wait an initial amount to have consistently slotted intervals.
 	evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
-	zap.S().Debugf("group:", g.name, "\t group run to begin at: ", evalTimestamp)
+	zap.L().Debug("group run to begin at", zap.Time("evalTimestamp", evalTimestamp))
 	select {
 	case <-time.After(time.Until(evalTimestamp)):
 	case <-g.done:
@@ -294,12 +296,33 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
-	zap.S().Debugf("msg:", "rule task eval started", "\t name:", g.name, "\t start time:", ts)
+	zap.L().Debug("rule task eval started", zap.String("name", g.name), zap.Time("start time", ts))
+
+	maintenance, err := g.ruleDB.GetAllPlannedMaintenance(ctx)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+	}
 
 	for i, rule := range g.rules {
 		if rule == nil {
 			continue
 		}
+
+		shouldSkip := false
+		for _, m := range maintenance {
+			zap.L().Info("checking if rule should be skipped", zap.String("rule", rule.ID()), zap.Any("maintenance", m))
+			if m.shouldSkip(rule.ID(), ts) {
+				shouldSkip = true
+				break
+			}
+		}
+
+		if shouldSkip {
+			zap.L().Info("rule should be skipped", zap.String("rule", rule.ID()))
+			continue
+		}
+
 		select {
 		case <-g.done:
 			return
@@ -318,12 +341,19 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetEvaluationTimestamp(t)
 			}(time.Now())
 
+			kvs := map[string]string{
+				"alertID": rule.ID(),
+				"source":  "alerts",
+				"client":  "query-service",
+			}
+			ctx = context.WithValue(ctx, common.LogCommentKey, kvs)
+
 			_, err := rule.Eval(ctx, ts, g.opts.Queriers)
 			if err != nil {
 				rule.SetHealth(HealthBad)
 				rule.SetLastError(err)
 
-				zap.S().Warn("msg:", "Evaluating rule failed", "\t rule:", rule, "\t err: ", err)
+				zap.L().Warn("Evaluating rule failed", zap.String("ruleid", rule.ID()), zap.Error(err))
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.

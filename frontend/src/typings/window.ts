@@ -6,6 +6,7 @@ declare global {
 	interface Window {
 		store: Store;
 		clarity: ClarityType<string>;
+		Intercom: any;
 		analytics: Record<string, any>;
 		__REDUX_DEVTOOLS_EXTENSION_COMPOSE__: typeof compose;
 	}

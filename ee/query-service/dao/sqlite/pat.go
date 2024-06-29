@@ -26,12 +26,12 @@ func (m *modelDao) CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basem
 		p.Revoked,
 	)
 	if err != nil {
-		zap.S().Errorf("Failed to insert PAT in db, err: %v", zap.Error(err))
+		zap.L().Error("Failed to insert PAT in db, err: %v", zap.Error(err))
 		return model.PAT{}, model.InternalError(fmt.Errorf("PAT insertion failed"))
 	}
 	id, err := result.LastInsertId()
 	if err != nil {
-		zap.S().Errorf("Failed to get last inserted id, err: %v", zap.Error(err))
+		zap.L().Error("Failed to get last inserted id, err: %v", zap.Error(err))
 		return model.PAT{}, model.InternalError(fmt.Errorf("PAT insertion failed"))
 	}
 	p.Id = strconv.Itoa(int(id))
@@ -62,7 +62,7 @@ func (m *modelDao) UpdatePAT(ctx context.Context, p model.PAT, id string) basemo
 		p.UpdatedByUserID,
 		id)
 	if err != nil {
-		zap.S().Errorf("Failed to update PAT in db, err: %v", zap.Error(err))
+		zap.L().Error("Failed to update PAT in db, err: %v", zap.Error(err))
 		return model.InternalError(fmt.Errorf("PAT update failed"))
 	}
 	return nil
@@ -74,7 +74,7 @@ func (m *modelDao) UpdatePATLastUsed(ctx context.Context, token string, lastUsed
 		lastUsed,
 		token)
 	if err != nil {
-		zap.S().Errorf("Failed to update PAT last used in db, err: %v", zap.Error(err))
+		zap.L().Error("Failed to update PAT last used in db, err: %v", zap.Error(err))
 		return model.InternalError(fmt.Errorf("PAT last used update failed"))
 	}
 	return nil
@@ -84,7 +84,7 @@ func (m *modelDao) ListPATs(ctx context.Context) ([]model.PAT, basemodel.BaseApi
 	pats := []model.PAT{}
 
 	if err := m.DB().Select(&pats, "SELECT * FROM personal_access_tokens WHERE revoked=false ORDER by updated_at DESC;"); err != nil {
-		zap.S().Errorf("Failed to fetch PATs err: %v", zap.Error(err))
+		zap.L().Error("Failed to fetch PATs err: %v", zap.Error(err))
 		return nil, model.InternalError(fmt.Errorf("failed to fetch PATs"))
 	}
 	for i := range pats {
@@ -129,7 +129,7 @@ func (m *modelDao) RevokePAT(ctx context.Context, id string, userID string) base
 		"UPDATE personal_access_tokens SET revoked=true, updated_by_user_id = $1, updated_at=$2 WHERE id=$3",
 		userID, updatedAt, id)
 	if err != nil {
-		zap.S().Errorf("Failed to revoke PAT in db, err: %v", zap.Error(err))
+		zap.L().Error("Failed to revoke PAT in db, err: %v", zap.Error(err))
 		return model.InternalError(fmt.Errorf("PAT revoke failed"))
 	}
 	return nil

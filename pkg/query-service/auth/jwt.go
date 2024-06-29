@@ -60,15 +60,15 @@ func validateUser(tok string) (*model.UserPayload, error) {
 func AttachJwtToContext(ctx context.Context, r *http.Request) context.Context {
 	token, err := ExtractJwtFromRequest(r)
 	if err != nil {
-		zap.S().Debugf("Error while getting token from header, %v", err)
+		zap.L().Error("Error while getting token from header", zap.Error(err))
 		return ctx
 	}
 
-	return context.WithValue(ctx, "accessJwt", token)
+	return context.WithValue(ctx, AccessJwtKey, token)
 }
 
 func ExtractJwtFromContext(ctx context.Context) (string, bool) {
-	jwtToken, ok := ctx.Value("accessJwt").(string)
+	jwtToken, ok := ctx.Value(AccessJwtKey).(string)
 	return jwtToken, ok
 }
 

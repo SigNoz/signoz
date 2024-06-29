@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { ReactNode } from 'react';
@@ -54,16 +54,38 @@ export interface Dashboard {
 	isLocked?: boolean;
 }
 
+export interface DashboardTemplate {
+	name: string;
+	icon: React.ReactElement;
+	id: string;
+	description: string;
+	previewImage: string;
+}
+
 export interface DashboardData {
+	uuid?: string;
 	description?: string;
 	tags?: string[];
 	name?: string;
-	widgets?: Widgets[];
+	widgets?: Array<WidgetRow | Widgets>;
 	title: string;
 	layout?: Layout[];
+	panelMap?: Record<string, { widgets: Layout[]; collapsed: boolean }>;
 	variables: Record<string, IDashboardVariable>;
+	version?: string;
+	image?: string;
 }
 
+export interface WidgetRow {
+	id: string;
+	panelTypes: PANEL_GROUP_TYPES;
+	title: ReactNode;
+	description: string;
+}
+
+export interface ColumnUnit {
+	[key: string]: string;
+}
 export interface IBaseWidget {
 	isStacked: boolean;
 	id: string;
@@ -75,10 +97,15 @@ export interface IBaseWidget {
 	timePreferance: timePreferenceType;
 	stepSize?: number;
 	yAxisUnit?: string;
+	stackedBarChart?: boolean;
+	bucketCount?: number;
+	bucketWidth?: number;
+	mergeAllActiveQueries?: boolean;
 	thresholds?: ThresholdProps[];
 	softMin: number | null;
 	softMax: number | null;
 	fillSpans?: boolean;
+	columnUnits?: ColumnUnit;
 	selectedLogFields: IField[] | null;
 	selectedTracesFields: BaseAutocompleteData[] | null;
 }

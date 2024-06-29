@@ -11,7 +11,7 @@ import (
 
 func InitSqliteDBIfNeeded(db *sqlx.DB) error {
 	if db == nil {
-		return fmt.Errorf("db is required.")
+		return fmt.Errorf("db is required")
 	}
 
 	createTablesStatements := `
@@ -62,6 +62,7 @@ func (r *InstalledIntegrationsSqliteRepo) list(
 				config_json,
 				installed_at
 			from integrations_installed
+			order by installed_at
 		`,
 	)
 	if err != nil {

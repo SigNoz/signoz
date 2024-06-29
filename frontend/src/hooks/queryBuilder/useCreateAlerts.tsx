@@ -1,5 +1,6 @@
 import { getQueryRangeFormat } from 'api/dashboard/queryRangeFormat';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
@@ -45,7 +46,9 @@ const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 				history.push(
 					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
 						JSON.stringify(updatedQuery),
-					)}&${QueryParams.panelTypes}=${widget.panelTypes}`,
+					)}&${QueryParams.panelTypes}=${widget.panelTypes}&version=${
+						selectedDashboard?.data.version || DEFAULT_ENTITY_VERSION
+					}`,
 				);
 			},
 			onError: () => {
@@ -59,6 +62,7 @@ const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 		notifications,
 		queryRangeMutation,
 		selectedDashboard?.data.variables,
+		selectedDashboard?.data.version,
 		widget,
 	]);
 };

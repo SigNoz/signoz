@@ -7,7 +7,14 @@ export const ServicesTablePage = Loadable(
 export const ServiceMetricsPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/MetricsApplication'
+			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/MetricsApplication/MetricsApplication'
+		),
+);
+
+export const ServiceTopLevelOperationsPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/ServiceTopLevelOperations'
 		),
 );
 
@@ -189,4 +196,11 @@ export const WorkspaceBlocked = Loadable(
 
 export const ShortcutsPage = Loadable(
 	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
+);
+
+export const InstalledIntegrations = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
+		),
 );

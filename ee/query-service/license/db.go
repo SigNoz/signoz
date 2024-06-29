@@ -48,8 +48,9 @@ func (r *Repo) GetLicenses(ctx context.Context) ([]model.License, error) {
 	return licenses, nil
 }
 
-// GetActiveLicense fetches the latest active license from DB
-func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, error) {
+// GetActiveLicense fetches the latest active license from DB.
+// If the license is not present, expect a nil license and a nil error in the output.
+func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel.ApiError) {
 	var err error
 	licenses := []model.License{}
 
@@ -57,7 +58,7 @@ func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, error) {
 
 	err = r.db.Select(&licenses, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get active licenses from db: %v", err)
+		return nil, basemodel.InternalError(fmt.Errorf("failed to get active licenses from db: %v", err))
 	}
 
 	var active *model.License
@@ -97,7 +98,7 @@ func (r *Repo) InsertLicense(ctx context.Context, l *model.License) error {
 		l.ValidationMessage)
 
 	if err != nil {
-		zap.S().Errorf("error in inserting license data: ", zap.Error(err))
+		zap.L().Error("error in inserting license data: ", zap.Error(err))
 		return fmt.Errorf("failed to insert license in db: %v", err)
 	}
 
@@ -110,7 +111,7 @@ func (r *Repo) UpdatePlanDetails(ctx context.Context,
 	planDetails string) error {
 
 	if key == "" {
-		return fmt.Errorf("Update Plan Details failed: license key is required")
+		return fmt.Errorf("update plan details failed: license key is required")
 	}
 
 	query := `UPDATE licenses 
@@ -121,7 +122,7 @@ func (r *Repo) UpdatePlanDetails(ctx context.Context,
 	_, err := r.db.ExecContext(ctx, query, planDetails, time.Now(), key)
 
 	if err != nil {
-		zap.S().Errorf("error in updating license: ", zap.Error(err))
+		zap.L().Error("error in updating license: ", zap.Error(err))
 		return fmt.Errorf("failed to update license in db: %v", err)
 	}
 

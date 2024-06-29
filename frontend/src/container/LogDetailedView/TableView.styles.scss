@@ -5,12 +5,13 @@
 		.ant-table-row:hover {
 			.ant-table-cell {
 				.value-field {
-					display: flex;
-					justify-content: space-between;
-					align-items: center;
 					.action-btn {
 						display: flex;
-						gap: 4px;
+						position: absolute;
+						top: 50%;
+						right: 16px;
+						transform: translateY(-50%);
+						gap: 8px;
 					}
 				}
 			}
@@ -24,6 +25,30 @@
 			.ant-btn {
 				&:hover {
 					background-color: none !important;
+				}
+			}
+		}
+
+		.attribute-pin {
+			cursor: pointer;
+
+			padding: 0;
+			vertical-align: middle;
+			text-align: center;
+
+			.log-attribute-pin {
+				padding: 8px;
+
+				display: flex;
+				justify-content: center;
+				align-items: center;
+
+				.pin-attribute-icon {
+					border: none;
+
+					&.pinned svg {
+						fill: var(--bg-robin-500);
+					}
 				}
 			}
 		}
@@ -69,6 +94,10 @@
 
 		.value-field-container {
 			background: var(--bg-vanilla-300);
+
+			&.attribute-pin {
+				background: var(--bg-vanilla-100);
+			}
 
 			.action-btn {
 				.filter-btn {

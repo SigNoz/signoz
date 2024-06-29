@@ -354,6 +354,8 @@ type QueryRangeParamsV3 struct {
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
 	NoCache        bool                   `json:"noCache"`
+	Version        string                 `json:"-"`
+	FormatForWeb   bool                   `json:"formatForWeb,omitempty"`
 }
 
 type PromQuery struct {
@@ -400,32 +402,74 @@ type CompositeQuery struct {
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
 	Unit              string                      `json:"unit,omitempty"`
+	FillGaps          bool                        `json:"fillGaps,omitempty"`
+}
+
+func (c *CompositeQuery) EnabledQueries() int {
+	count := 0
+	switch c.QueryType {
+	case QueryTypeBuilder:
+		for _, query := range c.BuilderQueries {
+			if !query.Disabled {
+				count++
+			}
+		}
+	case QueryTypeClickHouseSQL:
+		for _, query := range c.ClickHouseQueries {
+			if !query.Disabled {
+				count++
+			}
+		}
+	case QueryTypePromQL:
+		for _, query := range c.PromQueries {
+			if !query.Disabled {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+func (c *CompositeQuery) Sanitize() {
+	// remove groupBy for queries with list panel type
+	for _, query := range c.BuilderQueries {
+		if len(query.GroupBy) > 0 && c.PanelType == PanelTypeList {
+			query.GroupBy = []AttributeKey{}
+		}
+	}
+
 }
 
 func (c *CompositeQuery) Validate() error {
 	if c == nil {
-		return nil
+		return fmt.Errorf("composite query is required")
 	}
 
 	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil {
-		return fmt.Errorf("composite query must contain at least one query")
+		return fmt.Errorf("composite query must contain at least one query type")
 	}
 
-	for name, query := range c.BuilderQueries {
-		if err := query.Validate(); err != nil {
-			return fmt.Errorf("builder query %s is invalid: %w", name, err)
+	if c.QueryType == QueryTypeBuilder {
+		for name, query := range c.BuilderQueries {
+			if err := query.Validate(c.PanelType); err != nil {
+				return fmt.Errorf("builder query %s is invalid: %w", name, err)
+			}
 		}
 	}
 
-	for name, query := range c.ClickHouseQueries {
-		if err := query.Validate(); err != nil {
-			return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
+	if c.QueryType == QueryTypeClickHouseSQL {
+		for name, query := range c.ClickHouseQueries {
+			if err := query.Validate(); err != nil {
+				return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
+			}
 		}
 	}
 
-	for name, query := range c.PromQueries {
-		if err := query.Validate(); err != nil {
-			return fmt.Errorf("prom query %s is invalid: %w", name, err)
+	if c.QueryType == QueryTypePromQL {
+		for name, query := range c.PromQueries {
+			if err := query.Validate(); err != nil {
+				return fmt.Errorf("prom query %s is invalid: %w", name, err)
+			}
 		}
 	}
 
@@ -509,11 +553,11 @@ const (
 	SpaceAggregationMin          SpaceAggregation = "min"
 	SpaceAggregationMax          SpaceAggregation = "max"
 	SpaceAggregationCount        SpaceAggregation = "count"
-	SpaceAggregationPercentile50 SpaceAggregation = "percentile_50"
-	SpaceAggregationPercentile75 SpaceAggregation = "percentile_75"
-	SpaceAggregationPercentile90 SpaceAggregation = "percentile_90"
-	SpaceAggregationPercentile95 SpaceAggregation = "percentile_95"
-	SpaceAggregationPercentile99 SpaceAggregation = "percentile_99"
+	SpaceAggregationPercentile50 SpaceAggregation = "p50"
+	SpaceAggregationPercentile75 SpaceAggregation = "p75"
+	SpaceAggregationPercentile90 SpaceAggregation = "p90"
+	SpaceAggregationPercentile95 SpaceAggregation = "p95"
+	SpaceAggregationPercentile99 SpaceAggregation = "p99"
 )
 
 func (s SpaceAggregation) Validate() error {
@@ -638,10 +682,39 @@ type BuilderQuery struct {
 	ShiftBy            int64
 }
 
-func (b *BuilderQuery) Validate() error {
+// CanDefaultZero returns true if the missing value can be substituted by zero
+// For example, for an aggregation window [Tx - Tx+1], with an aggregation operator `count`
+// The lack of data can always be interpreted as zero. No data for requests count = zero requests
+// This is true for all aggregations that have `count`ing involved.
+//
+// The same can't be true for others, `sum` of no values doesn't necessarily mean zero.
+// We can't decide whether or not should it be zero.
+func (b *BuilderQuery) CanDefaultZero() bool {
+	switch b.DataSource {
+	case DataSourceMetrics:
+		if b.AggregateOperator.IsRateOperator() ||
+			b.TimeAggregation.IsRateOperator() ||
+			b.AggregateOperator == AggregateOperatorCount ||
+			b.AggregateOperator == AggregateOperatorCountDistinct ||
+			b.TimeAggregation == TimeAggregationCount ||
+			b.TimeAggregation == TimeAggregationCountDistinct {
+			return true
+		}
+	case DataSourceTraces, DataSourceLogs:
+		if b.AggregateOperator.IsRateOperator() ||
+			b.AggregateOperator == AggregateOperatorCount ||
+			b.AggregateOperator == AggregateOperatorCountDistinct {
+			return true
+		}
+	}
+	return false
+}
+
+func (b *BuilderQuery) Validate(panelType PanelType) error {
 	if b == nil {
 		return nil
 	}
+
 	if b.QueryName == "" {
 		return fmt.Errorf("query name is required")
 	}
@@ -654,19 +727,22 @@ func (b *BuilderQuery) Validate() error {
 		}
 		if b.DataSource == DataSourceMetrics {
 			// if AggregateOperator is specified, then the request is using v3 payload
-			if b.AggregateOperator != "" {
-				if err := b.AggregateOperator.Validate(); err != nil {
-					return fmt.Errorf("aggregate operator is invalid: %w", err)
-				}
-			} else {
-				if err := b.TimeAggregation.Validate(); err != nil {
-					return fmt.Errorf("time aggregation is invalid: %w", err)
-				}
+			// if b.AggregateOperator != "" && b.SpaceAggregation == SpaceAggregationUnspecified {
+			// 	if err := b.AggregateOperator.Validate(); err != nil {
+			// 		return fmt.Errorf("aggregate operator is invalid: %w", err)
+			// 	}
+			// } else {
+			// 	// the time aggregation is not needed for percentile operators
+			// 	if !IsPercentileOperator(b.SpaceAggregation) {
+			// 		if err := b.TimeAggregation.Validate(); err != nil {
+			// 			return fmt.Errorf("time aggregation is invalid: %w", err)
+			// 		}
+			// 	}
 
-				if err := b.SpaceAggregation.Validate(); err != nil {
-					return fmt.Errorf("space aggregation is invalid: %w", err)
-				}
-			}
+			// 	if err := b.SpaceAggregation.Validate(); err != nil {
+			// 		return fmt.Errorf("space aggregation is invalid: %w", err)
+			// 	}
+			// }
 		} else {
 			if err := b.AggregateOperator.Validate(); err != nil {
 				return fmt.Errorf("aggregate operator is invalid: %w", err)
@@ -683,13 +759,17 @@ func (b *BuilderQuery) Validate() error {
 		}
 	}
 	if b.GroupBy != nil {
+		// if len(b.GroupBy) > 0 && panelType == PanelTypeList {
+		// 	return fmt.Errorf("group by is not supported for list panel type")
+		// }
+
 		for _, groupBy := range b.GroupBy {
 			if err := groupBy.Validate(); err != nil {
 				return fmt.Errorf("group by is invalid %w", err)
 			}
 		}
 
-		if b.DataSource == DataSourceMetrics && len(b.GroupBy) > 0 {
+		if b.DataSource == DataSourceMetrics && len(b.GroupBy) > 0 && b.SpaceAggregation == SpaceAggregationUnspecified {
 			if b.AggregateOperator == AggregateOperatorNoOp || b.AggregateOperator == AggregateOperatorRate {
 				return fmt.Errorf("group by requires aggregate operator other than noop or rate")
 			}
@@ -723,13 +803,30 @@ func (b *BuilderQuery) Validate() error {
 				if len(function.Args) == 0 {
 					return fmt.Errorf("timeShiftBy param missing in query")
 				}
+				_, ok := function.Args[0].(float64)
+				if !ok {
+					// if string, attempt to convert to float
+					timeShiftBy, err := strconv.ParseFloat(function.Args[0].(string), 64)
+					if err != nil {
+						return fmt.Errorf("timeShiftBy param should be a number")
+					}
+					function.Args[0] = timeShiftBy
+				}
 			} else if function.Name == FunctionNameEWMA3 ||
 				function.Name == FunctionNameEWMA5 ||
 				function.Name == FunctionNameEWMA7 {
 				if len(function.Args) == 0 {
 					return fmt.Errorf("alpha param missing in query")
 				}
-				alpha := function.Args[0].(float64)
+				alpha, ok := function.Args[0].(float64)
+				if !ok {
+					// if string, attempt to convert to float
+					alpha, err := strconv.ParseFloat(function.Args[0].(string), 64)
+					if err != nil {
+						return fmt.Errorf("alpha param should be a float")
+					}
+					function.Args[0] = alpha
+				}
 				if alpha < 0 || alpha > 1 {
 					return fmt.Errorf("alpha param should be between 0 and 1")
 				}
@@ -739,6 +836,15 @@ func (b *BuilderQuery) Validate() error {
 				function.Name == FunctionNameClampMin {
 				if len(function.Args) == 0 {
 					return fmt.Errorf("threshold param missing in query")
+				}
+				_, ok := function.Args[0].(float64)
+				if !ok {
+					// if string, attempt to convert to float
+					threshold, err := strconv.ParseFloat(function.Args[0].(string), 64)
+					if err != nil {
+						return fmt.Errorf("threshold param should be a float")
+					}
+					function.Args[0] = threshold
 				}
 			}
 		}
@@ -882,10 +988,30 @@ type QueryRangeResponse struct {
 	Result                []*Result `json:"result"`
 }
 
+type TableColumn struct {
+	Name string `json:"name"`
+	// QueryName is the name of the query that this column belongs to
+	QueryName string `json:"queryName"`
+	// IsValueColumn is true if this column is a value column
+	// i.e it is the column that contains the actual value that is being plotted
+	IsValueColumn bool `json:"isValueColumn"`
+}
+
+type TableRow struct {
+	Data      map[string]interface{} `json:"data"`
+	QueryName string                 `json:"-"`
+}
+
+type Table struct {
+	Columns []*TableColumn `json:"columns"`
+	Rows    []*TableRow    `json:"rows"`
+}
+
 type Result struct {
-	QueryName string    `json:"queryName"`
-	Series    []*Series `json:"series"`
-	List      []*Row    `json:"list"`
+	QueryName string    `json:"queryName,omitempty"`
+	Series    []*Series `json:"series,omitempty"`
+	List      []*Row    `json:"list,omitempty"`
+	Table     *Table    `json:"table,omitempty"`
 }
 
 type LogsLiveTailClient struct {
@@ -896,10 +1022,9 @@ type LogsLiveTailClient struct {
 }
 
 type Series struct {
-	Labels            map[string]string   `json:"labels"`
-	LabelsArray       []map[string]string `json:"labelsArray"`
-	Points            []Point             `json:"values"`
-	GroupingSetsPoint *Point              `json:"-"`
+	Labels      map[string]string   `json:"labels"`
+	LabelsArray []map[string]string `json:"labelsArray"`
+	Points      []Point             `json:"values"`
 }
 
 func (s *Series) SortPoints() {

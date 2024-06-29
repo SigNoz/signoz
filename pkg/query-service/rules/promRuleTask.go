@@ -10,6 +10,7 @@ import (
 	"github.com/go-kit/log"
 	opentracing "github.com/opentracing/opentracing-go"
 	plabels "github.com/prometheus/prometheus/model/labels"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.uber.org/zap"
 )
 
@@ -27,20 +28,21 @@ type PromRuleTask struct {
 	evaluationTime       time.Duration
 	lastEvaluation       time.Time
 
-	markStale   bool
-	done        chan struct{}
-	terminated  chan struct{}
-	managerDone chan struct{}
+	markStale  bool
+	done       chan struct{}
+	terminated chan struct{}
 
 	pause  bool
 	logger log.Logger
 	notify NotifyFunc
+
+	ruleDB RuleDB
 }
 
 // newPromRuleTask holds rules that have promql condition
 // and evalutes the rule at a given frequency
-func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *PromRuleTask {
-	zap.S().Info("Initiating a new rule group:", name, "\t frequency:", frequency)
+func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *PromRuleTask {
+	zap.L().Info("Initiating a new rule group", zap.String("name", name), zap.Duration("frequency", frequency))
 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
@@ -57,6 +59,7 @@ func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, o
 		done:                 make(chan struct{}),
 		terminated:           make(chan struct{}),
 		notify:               notify,
+		ruleDB:               ruleDB,
 		logger:               log.With(opts.Logger, "group", name),
 	}
 }
@@ -312,11 +315,33 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
-	zap.S().Info("promql rule task:", g.name, "\t eval started at:", ts)
+	zap.L().Info("promql rule task", zap.String("name", g.name), zap.Time("eval started at", ts))
+
+	maintenance, err := g.ruleDB.GetAllPlannedMaintenance(ctx)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+	}
+
 	for i, rule := range g.rules {
 		if rule == nil {
 			continue
 		}
+
+		shouldSkip := false
+		for _, m := range maintenance {
+			zap.L().Info("checking if rule should be skipped", zap.String("rule", rule.ID()), zap.Any("maintenance", m))
+			if m.shouldSkip(rule.ID(), ts) {
+				shouldSkip = true
+				break
+			}
+		}
+
+		if shouldSkip {
+			zap.L().Info("rule should be skipped", zap.String("rule", rule.ID()))
+			continue
+		}
+
 		select {
 		case <-g.done:
 			return
@@ -335,12 +360,19 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetEvaluationTimestamp(t)
 			}(time.Now())
 
+			kvs := map[string]string{
+				"alertID": rule.ID(),
+				"source":  "alerts",
+				"client":  "query-service",
+			}
+			ctx = context.WithValue(ctx, common.LogCommentKey, kvs)
+
 			_, err := rule.Eval(ctx, ts, g.opts.Queriers)
 			if err != nil {
 				rule.SetHealth(HealthBad)
 				rule.SetLastError(err)
 
-				zap.S().Warn("msg", "Evaluating rule failed", "rule", rule, "err", err)
+				zap.L().Warn("Evaluating rule failed", zap.String("ruleid", rule.ID()), zap.Error(err))
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.

@@ -6,9 +6,11 @@ import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
+import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import history from 'lib/history';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
@@ -21,13 +23,17 @@ import {
 } from './context/OnboardingContext';
 import { DataSourceType } from './Steps/DataSource/DataSource';
 import {
+	defaultApplicationDataSource,
 	defaultAwsServices,
+	defaultAzureServices,
 	defaultInfraMetricsType,
 	defaultLogsType,
+	moduleRouteMap,
 } from './utils/dataSourceUtils';
 import {
 	APM_STEPS,
 	AWS_MONITORING_STEPS,
+	AZURE_MONITORING_STEPS,
 	getSteps,
 	INFRASTRUCTURE_MONITORING_STEPS,
 	LOGS_MANAGEMENT_STEPS,
@@ -38,6 +44,7 @@ export enum ModulesMap {
 	LogsManagement = 'LogsManagement',
 	InfrastructureMonitoring = 'InfrastructureMonitoring',
 	AwsMonitoring = 'AwsMonitoring',
+	AzureMonitoring = 'AzureMonitoring',
 }
 
 export interface ModuleProps {
@@ -77,6 +84,12 @@ export const useCases = {
 		desc:
 			'Monitor your traces, logs and metrics for AWS services like EC2, ECS, EKS etc.',
 	},
+	AzureMonitoring: {
+		id: ModulesMap.AzureMonitoring,
+		title: 'Azure Monitoring',
+		desc:
+			'Monitor your traces, logs and metrics for Azure services like AKS, Container Apps, App Service etc.',
+	},
 };
 
 export default function Onboarding(): JSX.Element {
@@ -89,6 +102,7 @@ export default function Onboarding(): JSX.Element {
 	const [current, setCurrent] = useState(0);
 	const isDarkMode = useIsDarkMode();
 	const { trackEvent } = useAnalytics();
+	const { location } = history;
 
 	const {
 		selectedDataSource,
@@ -167,6 +181,7 @@ export default function Onboarding(): JSX.Element {
 		setSelectedModuleSteps(APM_STEPS);
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		if (selectedModule?.id === ModulesMap.InfrastructureMonitoring) {
 			if (selectedDataSource) {
@@ -189,14 +204,25 @@ export default function Onboarding(): JSX.Element {
 				setSelectedModuleSteps(AWS_MONITORING_STEPS);
 				updateSelectedDataSource(defaultAwsServices);
 			}
+		} else if (selectedModule?.id === ModulesMap.AzureMonitoring) {
+			if (selectedDataSource) {
+				setModuleStepsBasedOnSelectedDataSource(selectedDataSource);
+			} else {
+				setSelectedModuleSteps(AZURE_MONITORING_STEPS);
+				updateSelectedDataSource(defaultAzureServices);
+			}
 		} else if (selectedModule?.id === ModulesMap.APM) {
 			handleAPMSteps();
+
+			if (!selectedDataSource) {
+				updateSelectedDataSource(defaultApplicationDataSource);
+			}
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedModule, selectedDataSource, selectedEnvironment, selectedMethod]);
 
-	const handleNext = (): void => {
+	const handleNextStep = (): void => {
 		if (activeStep <= 3) {
 			const nextStep = activeStep + 1;
 
@@ -217,11 +243,41 @@ export default function Onboarding(): JSX.Element {
 		}
 	};
 
+	const handleNext = (): void => {
+		if (activeStep <= 3) {
+			handleNextStep();
+			history.replace(moduleRouteMap[selectedModule.id as ModulesMap]);
+		}
+	};
+
 	const handleModuleSelect = (module: ModuleProps): void => {
 		setSelectedModule(module);
 		updateSelectedModule(module);
 		updateSelectedDataSource(null);
 	};
+
+	useEffect(() => {
+		const { pathname } = location;
+
+		if (pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING) {
+			handleModuleSelect(useCases.APM);
+			updateSelectedDataSource(defaultApplicationDataSource);
+			handleNextStep();
+		} else if (pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING) {
+			handleModuleSelect(useCases.InfrastructureMonitoring);
+			handleNextStep();
+		} else if (pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT) {
+			handleModuleSelect(useCases.LogsManagement);
+			handleNextStep();
+		} else if (pathname === ROUTES.GET_STARTED_AWS_MONITORING) {
+			handleModuleSelect(useCases.AwsMonitoring);
+			handleNextStep();
+		} else if (pathname === ROUTES.GET_STARTED_AZURE_MONITORING) {
+			handleModuleSelect(useCases.AzureMonitoring);
+			handleNextStep();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	return (
 		<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
@@ -285,6 +341,7 @@ export default function Onboarding(): JSX.Element {
 							setActiveStep(activeStep - 1);
 							setSelectedModule(useCases.APM);
 							resetProgress();
+							history.push(ROUTES.GET_STARTED);
 						}}
 						selectedModule={selectedModule}
 						selectedModuleSteps={selectedModuleSteps}

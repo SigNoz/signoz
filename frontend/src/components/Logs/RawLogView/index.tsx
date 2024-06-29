@@ -21,11 +21,11 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
-import LogStateIndicator, {
-	LogType,
-} from '../LogStateIndicator/LogStateIndicator';
+import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
+import { getLogIndicatorType } from '../LogStateIndicator/utils';
 // styles
 import { RawLogContent, RawLogViewContainer } from './styles';
 import { RawLogViewProps } from './types';
@@ -62,9 +62,7 @@ function RawLogView({
 	const isDarkMode = useIsDarkMode();
 	const isReadOnlyLog = !isLogsExplorerPage || isReadOnly;
 
-	const severityText = data.severity_text ? `${data.severity_text} |` : '';
-
-	const logType = data?.attributes_string?.log_level || LogType.INFO;
+	const logType = getLogIndicatorType(data);
 
 	const updatedSelecedFields = useMemo(
 		() => selectedFields.filter((e) => e.name !== 'id'),
@@ -88,17 +86,16 @@ function RawLogView({
 		attributesText += ' | ';
 	}
 
-	const text = useMemo(
-		() =>
+	const text = useMemo(() => {
+		const date =
 			typeof data.timestamp === 'string'
-				? `${dayjs(data.timestamp).format()} | ${attributesText} ${severityText} ${
-						data.body
-				  }`
-				: `${dayjs(
-						data.timestamp / 1e6,
-				  ).format()} | ${attributesText} ${severityText} ${data.body}`,
-		[data.timestamp, data.body, severityText, attributesText],
-	);
+				? dayjs(data.timestamp)
+				: dayjs(data.timestamp / 1e6);
+
+		return `${date.format('YYYY-MM-DD HH:mm:ss.SSS')} | ${attributesText} ${
+			data.body
+		}`;
+	}, [data.timestamp, data.body, attributesText]);
 
 	const handleClickExpand = useCallback(() => {
 		if (activeContextLog || isReadOnly) return;
@@ -145,7 +142,9 @@ function RawLogView({
 
 	const html = useMemo(
 		() => ({
-			__html: convert.toHtml(dompurify.sanitize(text)),
+			__html: convert.toHtml(
+				dompurify.sanitize(text, { FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS] }),
+			),
 		}),
 		[text],
 	);
@@ -164,7 +163,11 @@ function RawLogView({
 		>
 			<LogStateIndicator
 				type={logType}
-				isActive={activeLog?.id === data.id || activeContextLog?.id === data.id}
+				isActive={
+					activeLog?.id === data.id ||
+					activeContextLog?.id === data.id ||
+					isActiveLog
+				}
 			/>
 
 			<RawLogContent

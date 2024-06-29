@@ -15,6 +15,7 @@ import { useQueryBuilder } from './useQueryBuilder';
 export const useGetExplorerQueryRange = (
 	requestData: Query | null,
 	panelType: PANEL_TYPES | null,
+	version: string,
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
 	params?: Record<string, unknown>,
 	isDependentOnQB = true,
@@ -47,6 +48,7 @@ export const useGetExplorerQueryRange = (
 			query: requestData || initialQueriesMap.metrics,
 			params,
 		},
+		version,
 		{
 			...options,
 			retry: false,

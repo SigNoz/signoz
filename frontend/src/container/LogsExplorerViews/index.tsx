@@ -3,6 +3,7 @@ import './LogsExplorerViews.styles.scss';
 
 import { Button } from 'antd';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
@@ -13,13 +14,15 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
+import Download from 'container/DownloadV2/DownloadV2';
+import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
+import dayjs from 'dayjs';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { LogTimeRange } from 'hooks/logs/types';
@@ -32,8 +35,9 @@ import useClickOutside from 'hooks/useClickOutside';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { FlatLogData } from 'lib/logs/flatLogData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { defaultTo, isEmpty } from 'lodash-es';
+import { cloneDeep, defaultTo, isEmpty, omit, set } from 'lodash-es';
 import { Sliders } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -113,6 +117,12 @@ function LogsExplorerViews({
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
 
+	const { options, config } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: initialDataSource || DataSource.LOGS,
+		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
+	});
+
 	const orderByTimestamp: OrderByPayload | null = useMemo(() => {
 		const timestampOrderBy = listQuery?.orderBy.find(
 			(item) => item.columnName === 'timestamp',
@@ -170,10 +180,10 @@ function LogsExplorerViews({
 		() =>
 			updateAllQueriesOperators(
 				currentQuery || initialQueriesMap.logs,
-				PANEL_TYPES.TIME_SERIES,
+				selectedPanelType,
 				DataSource.LOGS,
 			),
-		[currentQuery, updateAllQueriesOperators],
+		[currentQuery, selectedPanelType, updateAllQueriesOperators],
 	);
 
 	const handleModeChange = (panelType: PANEL_TYPES): void => {
@@ -189,13 +199,19 @@ function LogsExplorerViews({
 		data: listChartData,
 		isFetching: isFetchingListChartData,
 		isLoading: isLoadingListChartData,
-	} = useGetExplorerQueryRange(listChartQuery, PANEL_TYPES.TIME_SERIES, {
-		enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
-	});
+	} = useGetExplorerQueryRange(
+		listChartQuery,
+		PANEL_TYPES.TIME_SERIES,
+		DEFAULT_ENTITY_VERSION,
+		{
+			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
+		},
+	);
 
 	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
 		requestData,
 		panelType,
+		DEFAULT_ENTITY_VERSION,
 		{
 			keepPreviousData: true,
 			enabled: !isLimit && !!requestData,
@@ -299,6 +315,14 @@ function LogsExplorerViews({
 		isLoading: isUpdateDashboardLoading,
 	} = useUpdateDashboard();
 
+	const getUpdatedQueryForExport = useCallback((): Query => {
+		const updatedQuery = cloneDeep(currentQuery);
+
+		set(updatedQuery, 'builder.queryData[0].pageSize', 10);
+
+		return updatedQuery;
+	}, [currentQuery]);
+
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null): void => {
 			if (!dashboard || !panelType) return;
@@ -309,11 +333,17 @@ function LogsExplorerViews({
 
 			const widgetId = v4();
 
+			const query =
+				panelType === PANEL_TYPES.LIST
+					? getUpdatedQueryForExport()
+					: exportDefaultQuery;
+
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
-				exportDefaultQuery,
+				query,
 				widgetId,
 				panelTypeParam,
+				options.selectColumns,
 			);
 
 			updateDashboard(updatedDashboard, {
@@ -343,7 +373,7 @@ function LogsExplorerViews({
 					}
 
 					const dashboardEditView = generateExportToDashboardLink({
-						query: exportDefaultQuery,
+						query,
 						panelType: panelTypeParam,
 						dashboardId: data.payload?.uuid || '',
 						widgetId,
@@ -355,7 +385,9 @@ function LogsExplorerViews({
 			});
 		},
 		[
+			getUpdatedQueryForExport,
 			exportDefaultQuery,
+			options.selectColumns,
 			history,
 			notifications,
 			panelType,
@@ -399,7 +431,7 @@ function LogsExplorerViews({
 
 	useEffect(() => {
 		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
-		const currentData = data?.payload.data.newResult.data.result || [];
+		const currentData = data?.payload?.data?.newResult?.data?.result || [];
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
 				...item.data,
@@ -449,12 +481,6 @@ function LogsExplorerViews({
 		panelType,
 		selectedView,
 	]);
-
-	const { options, config } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.METRICS,
-		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
-	});
 
 	const chartData = useMemo(() => {
 		if (!stagedQuery) return [];
@@ -516,6 +542,23 @@ function LogsExplorerViews({
 		},
 	});
 
+	const flattenLogData = useMemo(
+		() =>
+			logs.map((log) => {
+				const timestamp =
+					typeof log.timestamp === 'string'
+						? dayjs(log.timestamp).format('YYYY-MM-DD HH:mm:ss.SSS')
+						: dayjs(log.timestamp / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
+
+				return FlatLogData({
+					timestamp,
+					body: log.body,
+					...omit(log, 'timestamp', 'body'),
+				});
+			}),
+		[logs],
+	);
+
 	return (
 		<div className="logs-explorer-views-container">
 			{showHistogram && (
@@ -571,11 +614,17 @@ function LogsExplorerViews({
 					<div className="logs-actions-container">
 						{selectedPanelType === PANEL_TYPES.LIST && (
 							<div className="tab-options">
+								<Download
+									data={flattenLogData}
+									isLoading={isFetching}
+									fileName="log_data"
+								/>
 								<div className="format-options-container" ref={menuRef}>
 									<Button
 										className="periscope-btn"
 										onClick={handleToggleShowFormatOptions}
 										icon={<Sliders size={14} />}
+										data-testid="periscope-btn"
 									/>
 
 									{showFormatMenuItems && (
@@ -617,7 +666,7 @@ function LogsExplorerViews({
 
 					{selectedPanelType === PANEL_TYPES.TABLE && (
 						<LogsExplorerTable
-							data={data?.payload.data.newResult.data.result || []}
+							data={data?.payload?.data?.newResult?.data?.result || []}
 							isLoading={isLoading || isFetching}
 							isError={isError}
 						/>
@@ -627,7 +676,7 @@ function LogsExplorerViews({
 
 			<GoToTop />
 
-			<ExplorerOptions
+			<ExplorerOptionWrapper
 				disabled={!stagedQuery}
 				query={exportDefaultQuery}
 				isLoading={isUpdateDashboardLoading}

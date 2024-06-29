@@ -41,6 +41,7 @@ export const useFetchKeysAndValues = (
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [sourceKeys, setSourceKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
+	const [isAggregateFetching, setAggregateFetching] = useState<boolean>(false);
 
 	const memoizedSearchParams = useMemo(
 		() => [
@@ -106,22 +107,29 @@ export const useFetchKeysAndValues = (
 		if (!tagKey || !tagOperator) {
 			return;
 		}
+		setAggregateFetching(true);
 
-		const { payload } = await getAttributesValues({
-			aggregateOperator: query.aggregateOperator,
-			dataSource: query.dataSource,
-			aggregateAttribute: query.aggregateAttribute.key,
-			attributeKey: filterAttributeKey?.key ?? tagKey,
-			filterAttributeKeyDataType: filterAttributeKey?.dataType ?? DataTypes.EMPTY,
-			tagType: filterAttributeKey?.type ?? '',
-			searchText: isInNInOperator(tagOperator)
-				? tagValue[tagValue.length - 1]?.toString() ?? '' // last element of tagvalue will be always user search value
-				: tagValue?.toString() ?? '',
-		});
+		try {
+			const { payload } = await getAttributesValues({
+				aggregateOperator: query.aggregateOperator,
+				dataSource: query.dataSource,
+				aggregateAttribute: query.aggregateAttribute.key,
+				attributeKey: filterAttributeKey?.key ?? tagKey,
+				filterAttributeKeyDataType: filterAttributeKey?.dataType ?? DataTypes.EMPTY,
+				tagType: filterAttributeKey?.type ?? '',
+				searchText: isInNInOperator(tagOperator)
+					? tagValue[tagValue.length - 1]?.toString() ?? '' // last element of tagvalue will be always user search value
+					: tagValue?.toString() ?? '',
+			});
 
-		if (payload) {
-			const values = Object.values(payload).find((el) => !!el) || [];
-			setResults(values);
+			if (payload) {
+				const values = Object.values(payload).find((el) => !!el) || [];
+				setResults(values);
+			}
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setAggregateFetching(false);
 		}
 	};
 
@@ -157,7 +165,7 @@ export const useFetchKeysAndValues = (
 	return {
 		keys,
 		results,
-		isFetching,
+		isFetching: isFetching || isAggregateFetching,
 		sourceKeys,
 		handleRemoveSourceKey,
 	};

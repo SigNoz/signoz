@@ -1,7 +1,27 @@
-.color-selector-button {
-    border: none;
+.color-selector-space {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
 }
 
-.color-selector-light {
-    border: 1px solid #d9d9d9;
+.color-selector-button {
+	border: none;
+	width: 100%;
+
+	.ant-btn {
+		box-shadow: none;
+		background-color: unset;
+	}
+}
+
+.lightMode {
+	.color-selector-button {
+		background-color: var(--bg-vanilla-300);
+
+		.ant-btn {
+			box-shadow: none;
+			background-color: unset;
+		}
+	}
 }

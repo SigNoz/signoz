@@ -5,6 +5,7 @@ import {
 	CloseCircleTwoTone,
 	LoadingOutlined,
 } from '@ant-design/icons';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
@@ -72,6 +73,9 @@ export default function LogsConnectionStatus(): JSX.Element {
 					reduceTo: 'sum',
 					offset: 0,
 					pageSize: 100,
+					timeAggregation: '',
+					spaceAggregation: '',
+					functions: [],
 				},
 			],
 			queryFormulas: [],
@@ -84,6 +88,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 	const { data, isFetching, error, isError } = useGetExplorerQueryRange(
 		requestData,
 		PANEL_TYPES.LIST,
+		DEFAULT_ENTITY_VERSION,
 		{
 			keepPreviousData: true,
 			refetchInterval: pollingInterval,
@@ -112,7 +117,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 			}
 		}
 
-		const currentData = data?.payload.data.newResult.data.result || [];
+		const currentData = data?.payload?.data?.newResult?.data?.result || [];
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
 				...item.data,

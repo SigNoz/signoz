@@ -47,7 +47,7 @@ function LogExplorerQuerySection({
 		const isTable = panelTypes === PANEL_TYPES.TABLE;
 		const isList = panelTypes === PANEL_TYPES.LIST;
 		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: isTable, isDisabled: true },
+			stepInterval: { isHidden: isTable, isDisabled: false },
 			having: { isHidden: isList, isDisabled: true },
 			filters: {
 				customKey: 'body',
@@ -62,6 +62,7 @@ function LogExplorerQuerySection({
 		index: 0,
 		query,
 		filterConfigs,
+		entityVersion: '',
 	});
 
 	const renderOrderBy = useCallback(
@@ -103,6 +104,7 @@ function LogExplorerQuerySection({
 					config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}
 					filterConfigs={filterConfigs}
 					queryComponents={queryComponents}
+					version="v3" // setting this to v3 as we this is rendered in logs explorer
 				/>
 			)}
 		</>

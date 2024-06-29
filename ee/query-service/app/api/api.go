@@ -2,14 +2,17 @@ package api
 
 import (
 	"net/http"
+	"net/http/httputil"
 	"time"
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/dao"
+	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -21,7 +24,6 @@ import (
 type APIHandlerOptions struct {
 	DataConnector                 interfaces.DataConnector
 	SkipConfig                    *basemodel.SkipConfig
-	PreferDelta                   bool
 	PreferSpanMetrics             bool
 	MaxIdleConns                  int
 	MaxOpenConns                  int
@@ -31,8 +33,10 @@ type APIHandlerOptions struct {
 	UsageManager                  *usage.Manager
 	FeatureFlags                  baseint.FeatureLookup
 	LicenseManager                *license.Manager
+	IntegrationsController        *integrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	Cache                         cache.Cache
+	Gateway                       *httputil.ReverseProxy
 	// Querier Influx Interval
 	FluxInterval time.Duration
 }
@@ -48,7 +52,6 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
 		SkipConfig:                    opts.SkipConfig,
-		PerferDelta:                   opts.PreferDelta,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
 		MaxIdleConns:                  opts.MaxIdleConns,
 		MaxOpenConns:                  opts.MaxOpenConns,
@@ -56,6 +59,7 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		AppDao:                        opts.AppDao,
 		RuleManager:                   opts.RulesManager,
 		FeatureFlags:                  opts.FeatureFlags,
+		IntegrationsController:        opts.IntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		Cache:                         opts.Cache,
 		FluxInterval:                  opts.FluxInterval,
@@ -90,6 +94,10 @@ func (ah *APIHandler) UM() *usage.Manager {
 
 func (ah *APIHandler) AppDao() dao.ModelDao {
 	return ah.opts.AppDao
+}
+
+func (ah *APIHandler) Gateway() *httputil.ReverseProxy {
+	return ah.opts.Gateway
 }
 
 func (ah *APIHandler) CheckFeature(f string) bool {
@@ -149,7 +157,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v1/register", am.OpenAccess(ah.registerUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", am.OpenAccess(ah.loginUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(ah.searchTraces)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/metrics/query_range", am.ViewAccess(ah.queryRangeMetricsV2)).Methods(http.MethodPost)
 
 	// PAT APIs
 	router.HandleFunc("/api/v1/pats", am.AdminAccess(ah.createPAT)).Methods(http.MethodPost)
@@ -167,6 +174,9 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v2/licenses",
 		am.ViewAccess(ah.listLicensesV2)).
 		Methods(http.MethodGet)
+
+	// Gateway
+	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.AdminAccess(ah.ServeGatewayHTTP))
 
 	ah.APIHandler.RegisterRoutes(router, am)
 

@@ -10,13 +10,15 @@ import {
 	LeftCircleOutlined,
 } from '@ant-design/icons';
 import { Button, Space, Steps, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { stepsMap } from 'container/OnboardingContainer/constants/stepsConfig';
 import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import history from 'lib/history';
-import { isEmpty } from 'lodash-es';
+import { isEmpty, isNull } from 'lodash-es';
+import { HelpCircle } from 'lucide-react';
 import { useState } from 'react';
 
 import { useOnboardingContext } from '../../context/OnboardingContext';
@@ -91,7 +93,10 @@ export default function ModuleStepsContainer({
 			name: selectedDataSourceName = '',
 		} = selectedDataSource as DataSourceType;
 
-		if (step.id === environmentDetailsStep && selectedEnvironment === '') {
+		if (
+			step.id === environmentDetailsStep &&
+			(selectedEnvironment === '' || isNull(selectedEnvironment))
+		) {
 			updateErrorDetails('Please select environment');
 			return false;
 		}
@@ -376,6 +381,31 @@ export default function ModuleStepsContainer({
 		history.push('/');
 	};
 
+	const handleFacingIssuesClick = (): void => {
+		logEvent('Onboarding V2: Facing Issues Sending Data to SigNoz', {
+			dataSource: selectedDataSource?.id,
+			framework: selectedFramework,
+			environment: selectedEnvironment,
+			module: activeStep?.module?.id,
+			step: activeStep?.step?.id,
+		});
+
+		const message = `Hi Team,
+
+I am facing issues sending data to SigNoz. Here are my application details
+
+Data Source: ${selectedDataSource?.name}
+Framework:
+Environment:
+Module: ${activeStep?.module?.id}
+
+Thanks
+`;
+		if (window.Intercom) {
+			window.Intercom('showNewMessage', message);
+		}
+	};
+
 	return (
 		<div className="onboarding-module-steps">
 			<div className="steps-container">
@@ -451,6 +481,15 @@ export default function ModuleStepsContainer({
 
 					<Button onClick={handleNext} type="primary" icon={<ArrowRightOutlined />}>
 						{current < lastStepIndex ? 'Continue to next step' : 'Done'}
+					</Button>
+
+					<Button
+						className="periscope-btn"
+						onClick={handleFacingIssuesClick}
+						danger
+						icon={<HelpCircle size={14} />}
+					>
+						Facing issues sending data to SigNoz?
 					</Button>
 				</div>
 			</div>

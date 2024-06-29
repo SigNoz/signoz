@@ -1,6 +1,6 @@
 {
 	"create_dashboard": "Create Dashboard",
-	"import_json": "Import JSON",
+	"import_json": "Import Dashboard JSON",
 	"import_grafana_json": "Import Grafana JSON",
 	"copy_to_clipboard": "Copy To ClipBoard",
 	"download_json": "Download JSON",
@@ -9,13 +9,14 @@
 	"upload_json_file": "Upload JSON file",
 	"paste_json_below": "Paste JSON below",
 	"error_upload_json": "Invalid JSON",
-	"load_json": "Load JSON",
+	"import_and_next": "Import and Next",
 	"import_dashboard_by_pasting": "Import dashboard by pasting JSON or importing JSON file",
 	"error_loading_json": "Error loading JSON file",
 	"empty_json_not_allowed": "Empty JSON is not allowed",
 	"new_dashboard_title": "Sample Title",
 	"layout_saved_successfully": "Layout saved successfully",
 	"add_panel": "Add Panel",
+	"add_row": "Add Row",
 	"save_layout": "Save Layout",
 	"variable_updated_successfully": "Variable updated successfully",
 	"error_while_updating_variable": "Error while updating variable",
@@ -25,5 +26,5 @@
 	"dashboard_unsave_changes": "There are unsaved changes in the Query builder, please stage and run the query or the changes will be lost. Press OK to discard.",
 	"dashboard_save_changes": "Your graph built with {{queryTag}} query will be saved. Press OK to confirm.",
 	"your_graph_build_with": "Your graph built with",
-	"dashboar_ok_confirm": "query will be saved. Press OK to confirm."
+	"dashboard_ok_confirm": "query will be saved. Press OK to confirm."
 }

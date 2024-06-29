@@ -42,17 +42,6 @@ const (
 	defaultEncoding                Encoding      = EncodingJSON
 )
 
-const (
-	suffixEnabled         = ".enabled"
-	suffixDatasource      = ".datasource"
-	suffixOperationsTable = ".operations-table"
-	suffixIndexTable      = ".index-table"
-	suffixSpansTable      = ".spans-table"
-	suffixWriteBatchDelay = ".write-batch-delay"
-	suffixWriteBatchSize  = ".write-batch-size"
-	suffixEncoding        = ".encoding"
-)
-
 // NamespaceConfig is Clickhouse's internal configuration data
 type namespaceConfig struct {
 	namespace               string
@@ -106,7 +95,7 @@ func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 		options.DialTimeout = cfg.DialTimeout
 	}
 
-	zap.S().Infof("Connecting to Clickhouse at %s, Secure: %t, MaxIdleConns: %d, MaxOpenConns: %d, DialTimeout: %s", options.Addr, options.TLS != nil, options.MaxIdleConns, options.MaxOpenConns, options.DialTimeout)
+	zap.L().Info("Connecting to Clickhouse", zap.String("at", options.Addr[0]), zap.Int("MaxIdleConns", options.MaxIdleConns), zap.Int("MaxOpenConns", options.MaxOpenConns), zap.Duration("DialTimeout", options.DialTimeout))
 	db, err := clickhouse.Open(options)
 	if err != nil {
 		return nil, err

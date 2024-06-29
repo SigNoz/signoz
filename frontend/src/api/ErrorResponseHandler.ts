@@ -16,7 +16,7 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 				return {
 					statusCode,
 					payload: null,
-					error: data.errorType,
+					error: data.errorType || data.type,
 					message: null,
 				};
 			}
@@ -30,7 +30,8 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 				statusCode,
 				payload: null,
 				error: errorMessage,
-				message: null,
+				message: (response.data as any)?.status,
+				body: JSON.stringify((response.data as any).data),
 			};
 		}
 

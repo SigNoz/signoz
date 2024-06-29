@@ -19,16 +19,14 @@ import (
 // step is in seconds
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, error) {
 
-	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, mq.TimeAggregation)
-
-	if mq.ShiftBy != 0 {
-		start = start - mq.ShiftBy*1000
-		end = end - mq.ShiftBy*1000
-	}
+	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, *mq)
 
 	var quantile float64
 
-	if v3.IsPercentileOperator(mq.SpaceAggregation) {
+	percentileOperator := mq.SpaceAggregation
+
+	if v3.IsPercentileOperator(mq.SpaceAggregation) &&
+		mq.AggregateAttribute.Type != v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
 		quantile = v3.GetPercentileFromOperator(mq.SpaceAggregation)
 		// If quantile is set, we need to group by le
 		// and set the space aggregation to sum
@@ -81,8 +79,10 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	groupBy := helpers.GroupByAttributeKeyTags(groupByWithoutLe...)
 	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, groupByWithoutLe)
 
-	if quantile != 0 {
+	// fixed-bucket histogram quantiles are calculated with UDF
+	if quantile != 0 && mq.AggregateAttribute.Type != v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
 		query = fmt.Sprintf(`SELECT %s, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s`, groupBy, quantile, query, groupBy, orderBy)
+		mq.SpaceAggregation = percentileOperator
 	}
 
 	return query, nil

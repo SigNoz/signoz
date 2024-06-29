@@ -2,11 +2,18 @@ const ROUTES = {
 	SIGN_UP: '/signup',
 	LOGIN: '/login',
 	SERVICE_METRICS: '/services/:servicename',
+	SERVICE_TOP_LEVEL_OPERATIONS: '/services/:servicename/top-level-operations',
 	SERVICE_MAP: '/service-map',
 	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',
 	TRACES_EXPLORER: '/traces-explorer',
 	GET_STARTED: '/get-started',
+	GET_STARTED_APPLICATION_MONITORING: '/get-started/application-monitoring',
+	GET_STARTED_LOGS_MANAGEMENT: '/get-started/logs-management',
+	GET_STARTED_INFRASTRUCTURE_MONITORING:
+		'/get-started/infrastructure-monitoring',
+	GET_STARTED_AWS_MONITORING: '/get-started/aws-monitoring',
+	GET_STARTED_AZURE_MONITORING: '/get-started/azure-monitoring',
 	USAGE_EXPLORER: '/usage-explorer',
 	APPLICATION: '/services',
 	ALL_DASHBOARD: '/dashboard',
@@ -42,10 +49,11 @@ const ROUTES = {
 	TRACE_EXPLORER: '/trace-explorer',
 	BILLING: '/billing',
 	SUPPORT: '/support',
-	LOGS_SAVE_VIEWS: '/logs-save-views',
-	TRACES_SAVE_VIEWS: '/traces-save-views',
+	LOGS_SAVE_VIEWS: '/logs/saved-views',
+	TRACES_SAVE_VIEWS: '/traces/saved-views',
 	WORKSPACE_LOCKED: '/workspace-locked',
 	SHORTCUTS: '/shortcuts',
+	INTEGRATIONS: '/integrations',
 } as const;
 
 export default ROUTES;

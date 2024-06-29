@@ -1,4 +1,4 @@
-import { AutoComplete, Col, Input, Typography } from 'antd';
+import { AutoComplete, Input, Typography } from 'antd';
 import { find } from 'lodash-es';
 import { Dispatch, SetStateAction } from 'react';
 
@@ -13,14 +13,17 @@ const findCategoryByName = (
 ): Record<string, string> | undefined =>
 	find(flattenedCategories, (option) => option.name === searchValue);
 
+type OnSelectType = Dispatch<SetStateAction<string>> | ((val: string) => void);
 function YAxisUnitSelector({
 	defaultValue,
 	onSelect,
 	fieldLabel,
+	handleClear,
 }: {
 	defaultValue: string;
-	onSelect: Dispatch<SetStateAction<string>>;
+	onSelect: OnSelectType;
 	fieldLabel: string;
+	handleClear?: () => void;
 }): JSX.Element {
 	const onSelectHandler = (selectedValue: string): void => {
 		onSelect(findCategoryByName(selectedValue)?.id || '');
@@ -29,12 +32,15 @@ function YAxisUnitSelector({
 		value: options.name,
 	}));
 	return (
-		<Col style={{ marginBottom: 12, marginTop: 12 }}>
-			<Typography.Text>{fieldLabel}</Typography.Text>
+		<div className="y-axis-unit-selector">
+			<Typography.Text className="heading">{fieldLabel}</Typography.Text>
 			<AutoComplete
 				style={{ width: '100%' }}
+				rootClassName="y-axis-root-popover"
 				options={options}
+				allowClear
 				defaultValue={findCategoryById(defaultValue)?.name}
+				onClear={handleClear}
 				onSelect={onSelectHandler}
 				filterOption={(inputValue, option): boolean => {
 					if (option) {
@@ -45,10 +51,14 @@ function YAxisUnitSelector({
 					return false;
 				}}
 			>
-				<Input size="large" placeholder="Unit" allowClear />
+				<Input placeholder="Unit" rootClassName="input" />
 			</AutoComplete>
-		</Col>
+		</div>
 	);
 }
 
 export default YAxisUnitSelector;
+
+YAxisUnitSelector.defaultProps = {
+	handleClear: (): void => {},
+};

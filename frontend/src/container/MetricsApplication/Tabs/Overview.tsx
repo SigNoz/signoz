@@ -19,13 +19,12 @@ import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
 
 import { GraphTitle, SERVICE_CHART_ID } from '../constant';
@@ -46,22 +45,17 @@ import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
+	useGetAPMToTracesQueries,
 } from './util';
 
 function Application(): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { search, pathname } = useLocation();
 	const { queries } = useResourceAttribute();
 	const urlQuery = useUrlQuery();
 
-	const selectedTags = useMemo(
-		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
-		[queries],
-	);
 	const isSpanMetricEnabled = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
 		?.active;
 
@@ -93,13 +87,15 @@ function Application(): JSX.Element {
 		isLoading: topLevelOperationsIsLoading,
 		isError: topLevelOperationsIsError,
 	} = useQuery<ServiceDataProps>({
-		queryKey: [servicename, minTime, maxTime, selectedTags],
+		queryKey: [servicename],
 		queryFn: getTopLevelOperations,
 	});
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
+
+	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
 
 	const tagFilterItems = useMemo(
 		() =>
@@ -115,49 +111,41 @@ function Application(): JSX.Element {
 		[servicename, topLevelOperations],
 	);
 
-	const operationPerSecWidget = useMemo(
-		() =>
-			getWidgetQueryBuilder({
-				query: {
-					queryType: EQueryType.QUERY_BUILDER,
-					promql: [],
-					builder: operationPerSec({
-						servicename,
-						tagFilterItems,
-						topLevelOperations: topLevelOperationsRoute,
-					}),
-					clickhouse_sql: [],
-					id: uuid(),
-				},
-				title: GraphTitle.RATE_PER_OPS,
-				panelTypes: PANEL_TYPES.TIME_SERIES,
-				yAxisUnit: 'ops',
-				id: SERVICE_CHART_ID.rps,
+	const operationPerSecWidget = getWidgetQueryBuilder({
+		query: {
+			queryType: EQueryType.QUERY_BUILDER,
+			promql: [],
+			builder: operationPerSec({
+				servicename,
+				tagFilterItems,
+				topLevelOperations: topLevelOperationsRoute,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
-	);
+			clickhouse_sql: [],
+			id: uuid(),
+		},
+		title: GraphTitle.RATE_PER_OPS,
+		panelTypes: PANEL_TYPES.TIME_SERIES,
+		yAxisUnit: 'ops',
+		id: SERVICE_CHART_ID.rps,
+	});
 
-	const errorPercentageWidget = useMemo(
-		() =>
-			getWidgetQueryBuilder({
-				query: {
-					queryType: EQueryType.QUERY_BUILDER,
-					promql: [],
-					builder: errorPercentage({
-						servicename,
-						tagFilterItems,
-						topLevelOperations: topLevelOperationsRoute,
-					}),
-					clickhouse_sql: [],
-					id: uuid(),
-				},
-				title: GraphTitle.ERROR_PERCENTAGE,
-				panelTypes: PANEL_TYPES.TIME_SERIES,
-				yAxisUnit: '%',
-				id: SERVICE_CHART_ID.errorPercentage,
+	const errorPercentageWidget = getWidgetQueryBuilder({
+		query: {
+			queryType: EQueryType.QUERY_BUILDER,
+			promql: [],
+			builder: errorPercentage({
+				servicename,
+				tagFilterItems,
+				topLevelOperations: topLevelOperationsRoute,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
-	);
+			clickhouse_sql: [],
+			id: uuid(),
+		},
+		title: GraphTitle.ERROR_PERCENTAGE,
+		panelTypes: PANEL_TYPES.TIME_SERIES,
+		yAxisUnit: '%',
+		id: SERVICE_CHART_ID.errorPercentage,
+	});
 
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {
@@ -176,7 +164,10 @@ function Application(): JSX.Element {
 		[dispatch, pathname, urlQuery],
 	);
 
-	const onErrorTrackHandler = (timestamp: number): (() => void) => (): void => {
+	const onErrorTrackHandler = (
+		timestamp: number,
+		apmToTraceQuery: Query,
+	): (() => void) => (): void => {
 		const currentTime = timestamp;
 		const tPlusOne = timestamp + 60 * 1000;
 
@@ -187,14 +178,37 @@ function Application(): JSX.Element {
 		const avialableParams = routeConfig[ROUTES.TRACE];
 		const queryString = getQueryString(avialableParams, urlParams);
 
-		history.replace(
-			`${
-				ROUTES.TRACE
-			}?selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1&${queryString.join(
-				'',
-			)}`,
+		const JSONCompositeQuery = encodeURIComponent(
+			JSON.stringify(apmToTraceQuery),
 		);
+
+		const newTraceExplorerPath = `${
+			ROUTES.TRACES_EXPLORER
+		}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
+			QueryParams.compositeQuery
+		}=${JSONCompositeQuery}&${queryString.join('&')}`;
+
+		history.push(newTraceExplorerPath);
 	};
+
+	const errorTrackQuery = useGetAPMToTracesQueries({
+		servicename,
+		filters: [
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'hasError',
+					dataType: DataTypes.bool,
+					type: 'tag',
+					isColumn: true,
+					isJSON: false,
+					id: 'hasError--bool--tag--true',
+				},
+				op: 'in',
+				value: ['true'],
+			},
+		],
+	});
 
 	return (
 		<>
@@ -219,6 +233,7 @@ function Application(): JSX.Element {
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
+							apmToTraceQuery,
 						})}
 					>
 						View Traces
@@ -246,6 +261,7 @@ function Application(): JSX.Element {
 								servicename,
 								selectedTraceTags,
 								timestamp: selectedTimeStamp,
+								apmToTraceQuery,
 							})}
 						>
 							View Traces
@@ -262,7 +278,7 @@ function Application(): JSX.Element {
 							type="default"
 							size="small"
 							id="Error_button"
-							onClick={onErrorTrackHandler(selectedTimeStamp)}
+							onClick={onErrorTrackHandler(selectedTimeStamp, errorTrackQuery)}
 						>
 							View Traces
 						</Button>

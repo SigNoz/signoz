@@ -25,7 +25,7 @@ export const getAggregateKeys = async ({
 		const response: AxiosResponse<{
 			data: IQueryAutocompleteResponse;
 		}> = await ApiV3Instance.get(
-			`autocomplete/attribute_keys?${createQueryParams({
+			`/autocomplete/attribute_keys?${createQueryParams({
 				aggregateOperator,
 				searchText,
 				dataSource,

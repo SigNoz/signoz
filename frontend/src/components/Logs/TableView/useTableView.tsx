@@ -7,12 +7,11 @@ import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { defaultTo } from 'lodash-es';
 import { useMemo } from 'react';
+import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
-import LogStateIndicator, {
-	LogType,
-} from '../LogStateIndicator/LogStateIndicator';
+import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
+import { getLogIndicatorTypeForTable } from '../LogStateIndicator/utils';
 import {
 	defaultListViewPanelStyle,
 	defaultTableStyle,
@@ -78,13 +77,13 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				render: (field, item): ColumnTypeRender<Record<string, unknown>> => {
 					const date =
 						typeof field === 'string'
-							? dayjs(field).format()
-							: dayjs(field / 1e6).format();
+							? dayjs(field).format('YYYY-MM-DD HH:mm:ss.SSS')
+							: dayjs(field / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
 					return {
 						children: (
 							<div className="table-timestamp">
 								<LogStateIndicator
-									type={defaultTo(item.log_level, LogType.INFO) as string}
+									type={getLogIndicatorTypeForTable(item)}
 									isActive={
 										activeLog?.id === item.id || activeContextLog?.id === item.id
 									}
@@ -109,7 +108,11 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					children: (
 						<TableBodyContent
 							dangerouslySetInnerHTML={{
-								__html: convert.toHtml(dompurify.sanitize(field)),
+								__html: convert.toHtml(
+									dompurify.sanitize(field, {
+										FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+									}),
+								),
 							}}
 							linesPerRow={linesPerRow}
 							isDarkMode={isDarkMode}

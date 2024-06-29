@@ -1,15 +1,15 @@
-import { Col, Row } from 'antd';
+import './LogsExplorer.styles.scss';
+
+import * as Sentry from '@sentry/react';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
-// import LogsTopNav from 'container/LogsTopNav';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useEffect, useMemo, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WrapperStyled } from './styles';
@@ -70,7 +70,7 @@ function LogsExplorer(): JSX.Element {
 	);
 
 	return (
-		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<Toolbar
 				showAutoRefresh={false}
 				leftActions={
@@ -87,21 +87,21 @@ function LogsExplorer(): JSX.Element {
 			/>
 
 			<WrapperStyled>
-				<Row gutter={[0, 0]}>
-					<Col xs={24}>
+				<div className="log-explorer-query-container">
+					<div>
 						<ExplorerCard sourcepage={DataSource.LOGS}>
 							<LogExplorerQuerySection selectedView={selectedView} />
 						</ExplorerCard>
-					</Col>
-					<Col xs={24}>
+					</div>
+					<div className="logs-explorer-views">
 						<LogsExplorerViews
 							selectedView={selectedView}
 							showHistogram={showHistogram}
 						/>
-					</Col>
-				</Row>
+					</div>
+				</div>
 			</WrapperStyled>
-		</ErrorBoundary>
+		</Sentry.ErrorBoundary>
 	);
 }
 

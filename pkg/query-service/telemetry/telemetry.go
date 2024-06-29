@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	ph "github.com/posthog/posthog-go"
 	"gopkg.in/segmentio/analytics-go.v3"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -22,45 +21,66 @@ import (
 )
 
 const (
-	TELEMETRY_EVENT_PATH                     = "API Call"
-	TELEMETRY_EVENT_USER                     = "User"
-	TELEMETRY_EVENT_INPRODUCT_FEEDBACK       = "InProduct Feedback Submitted"
-	TELEMETRY_EVENT_NUMBER_OF_SERVICES       = "Number of Services"
-	TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH    = "Number of Services V2"
-	TELEMETRY_EVENT_HEART_BEAT               = "Heart Beat"
-	TELEMETRY_EVENT_ORG_SETTINGS             = "Org Settings"
-	DEFAULT_SAMPLING                         = 0.1
-	TELEMETRY_LICENSE_CHECK_FAILED           = "License Check Failed"
-	TELEMETRY_LICENSE_UPDATED                = "License Updated"
-	TELEMETRY_LICENSE_ACT_FAILED             = "License Activation Failed"
-	TELEMETRY_EVENT_ENVIRONMENT              = "Environment"
-	TELEMETRY_EVENT_LANGUAGE                 = "Language"
-	TELEMETRY_EVENT_SERVICE                  = "ServiceName"
-	TELEMETRY_EVENT_LOGS_FILTERS             = "Logs Filters"
-	TELEMETRY_EVENT_DISTRIBUTED              = "Distributed"
-	TELEMETRY_EVENT_QUERY_RANGE_V3           = "Query Range V3 Metadata"
-	TELEMETRY_EVENT_DASHBOARDS_ALERTS        = "Dashboards/Alerts Info"
-	TELEMETRY_EVENT_ACTIVE_USER              = "Active User"
-	TELEMETRY_EVENT_ACTIVE_USER_PH           = "Active User V2"
-	TELEMETRY_EVENT_USER_INVITATION_SENT     = "User Invitation Sent"
-	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED = "User Invitation Accepted"
-	DEFAULT_CLOUD_EMAIL                      = "admin@signoz.cloud"
+	TELEMETRY_EVENT_PATH                             = "API Call"
+	TELEMETRY_EVENT_USER                             = "User"
+	TELEMETRY_EVENT_INPRODUCT_FEEDBACK               = "InProduct Feedback Submitted"
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES               = "Number of Services"
+	TELEMETRY_EVENT_HEART_BEAT                       = "Heart Beat"
+	TELEMETRY_EVENT_ORG_SETTINGS                     = "Org Settings"
+	DEFAULT_SAMPLING                                 = 0.1
+	TELEMETRY_LICENSE_CHECK_FAILED                   = "License Check Failed"
+	TELEMETRY_LICENSE_UPDATED                        = "License Updated"
+	TELEMETRY_LICENSE_ACT_FAILED                     = "License Activation Failed"
+	TELEMETRY_EVENT_ENVIRONMENT                      = "Environment"
+	TELEMETRY_EVENT_LANGUAGE                         = "Language"
+	TELEMETRY_EVENT_SERVICE                          = "ServiceName"
+	TELEMETRY_EVENT_LOGS_FILTERS                     = "Logs Filters"
+	TELEMETRY_EVENT_LARGE_TRACE_OPENED               = "Large Trace Opened"
+	TELEMETRY_EVENT_TRACE_DETAIL_API                 = "Trace Detail API"
+	TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED  = "Max spans in a trace limit reached"
+	TELEMETRY_EVENT_DISTRIBUTED                      = "Distributed"
+	TELEMETRY_EVENT_QUERY_RANGE_API                  = "Query Range API"
+	TELEMETRY_EVENT_DASHBOARDS_ALERTS                = "Dashboards/Alerts Info"
+	TELEMETRY_EVENT_ACTIVE_USER                      = "Active User"
+	TELEMETRY_EVENT_USER_INVITATION_SENT             = "User Invitation Sent"
+	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED         = "User Invitation Accepted"
+	TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY = "Successful Dashboard Panel Query"
+	TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY           = "Successful Alert Query"
+	DEFAULT_CLOUD_EMAIL                              = "admin@signoz.cloud"
 )
 
 var SAAS_EVENTS_LIST = map[string]struct{}{
-	TELEMETRY_EVENT_NUMBER_OF_SERVICES:       {},
-	TELEMETRY_EVENT_ACTIVE_USER:              {},
-	TELEMETRY_EVENT_HEART_BEAT:               {},
-	TELEMETRY_EVENT_LANGUAGE:                 {},
-	TELEMETRY_EVENT_SERVICE:                  {},
-	TELEMETRY_EVENT_ENVIRONMENT:              {},
-	TELEMETRY_EVENT_USER_INVITATION_SENT:     {},
-	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED: {},
-	TELEMETRY_EVENT_DASHBOARDS_ALERTS:        {},
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES:               {},
+	TELEMETRY_EVENT_HEART_BEAT:                       {},
+	TELEMETRY_EVENT_LANGUAGE:                         {},
+	TELEMETRY_EVENT_SERVICE:                          {},
+	TELEMETRY_EVENT_ENVIRONMENT:                      {},
+	TELEMETRY_EVENT_USER_INVITATION_SENT:             {},
+	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED:         {},
+	TELEMETRY_EVENT_DASHBOARDS_ALERTS:                {},
+	TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY: {},
+	TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY:           {},
+	TELEMETRY_EVENT_QUERY_RANGE_API:                  {},
+	TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED:  {},
+	TELEMETRY_EVENT_LARGE_TRACE_OPENED:               {},
+	TELEMETRY_EVENT_TRACE_DETAIL_API:                 {},
 }
 
-const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
-const ph_api_key = "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w"
+var OSS_EVENTS_LIST = map[string]struct{}{
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES: {},
+	TELEMETRY_EVENT_HEART_BEAT:         {},
+	TELEMETRY_EVENT_LANGUAGE:           {},
+	TELEMETRY_EVENT_ENVIRONMENT:        {},
+	TELEMETRY_EVENT_DASHBOARDS_ALERTS:  {},
+	TELEMETRY_EVENT_ACTIVE_USER:        {},
+	TELEMETRY_EVENT_PATH:               {},
+	TELEMETRY_EVENT_ORG_SETTINGS:       {},
+	TELEMETRY_LICENSE_CHECK_FAILED:     {},
+	TELEMETRY_LICENSE_UPDATED:          {},
+	TELEMETRY_LICENSE_ACT_FAILED:       {},
+}
+
+const api_key = "9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr"
 
 const IP_NOT_FOUND_PLACEHOLDER = "NA"
 const DEFAULT_NUMBER_OF_SERVICES = 6
@@ -93,18 +113,21 @@ func (a *Telemetry) IsSampled() bool {
 
 }
 
-func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) (bool, bool) {
+func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) (bool, bool, bool) {
 	signozLogsUsed := false
 	signozMetricsUsed := false
+	signozTracesUsed := false
 
 	if postData.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		for _, query := range postData.CompositeQuery.BuilderQueries {
-			if query.DataSource == v3.DataSourceLogs && len(query.Filters.Items) > 0 {
+			if query.DataSource == v3.DataSourceLogs && query.Filters != nil && len(query.Filters.Items) > 0 {
 				signozLogsUsed = true
 			} else if query.DataSource == v3.DataSourceMetrics &&
 				!strings.Contains(query.AggregateAttribute.Key, "signoz_") &&
 				len(query.AggregateAttribute.Key) > 0 {
 				signozMetricsUsed = true
+			} else if query.DataSource == v3.DataSourceTraces && query.Filters != nil && len(query.Filters.Items) > 0 {
+				signozTracesUsed = true
 			}
 		}
 	} else if postData.CompositeQuery.QueryType == v3.QueryTypePromQL {
@@ -118,9 +141,15 @@ func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) 
 			if strings.Contains(query.Query, "signoz_metrics") && len(query.Query) > 0 {
 				signozMetricsUsed = true
 			}
+			if strings.Contains(query.Query, "signoz_logs") && len(query.Query) > 0 {
+				signozLogsUsed = true
+			}
+			if strings.Contains(query.Query, "signoz_traces") && len(query.Query) > 0 {
+				signozTracesUsed = true
+			}
 		}
 	}
-	return signozLogsUsed, signozMetricsUsed
+	return signozLogsUsed, signozMetricsUsed, signozTracesUsed
 }
 
 func (telemetry *Telemetry) AddActiveTracesUser() {
@@ -140,9 +169,8 @@ func (telemetry *Telemetry) AddActiveLogsUser() {
 }
 
 type Telemetry struct {
-	operator      analytics.Client
+	ossOperator   analytics.Client
 	saasOperator  analytics.Client
-	phOperator    ph.Client
 	ipAddress     string
 	userEmail     string
 	isEnabled     bool
@@ -169,21 +197,15 @@ func createTelemetry() {
 	}
 
 	telemetry = &Telemetry{
-		operator:   analytics.New(api_key),
-		phOperator: ph.New(ph_api_key),
-		ipAddress:  getOutboundIP(),
-		rateLimits: make(map[string]int8),
-		activeUser: make(map[string]int8),
+		ossOperator: analytics.New(api_key),
+		ipAddress:   getOutboundIP(),
+		rateLimits:  make(map[string]int8),
+		activeUser:  make(map[string]int8),
 	}
 	telemetry.minRandInt = 0
 	telemetry.maxRandInt = int(1 / DEFAULT_SAMPLING)
 
-	rand.Seed(time.Now().UnixNano())
-
-	data := map[string]interface{}{}
-
 	telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
-	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
 
 	ticker := time.NewTicker(HEART_BEAT_DURATION)
 	activeUserTicker := time.NewTicker(ACTIVE_USER_DURATION)
@@ -191,6 +213,7 @@ func createTelemetry() {
 	rateLimitTicker := time.NewTicker(RATE_LIMIT_CHECK_DURATION)
 
 	go func() {
+		//lint:ignore S1000 false positive
 		for {
 			select {
 			case <-rateLimitTicker.C:
@@ -217,7 +240,12 @@ func createTelemetry() {
 				if (telemetry.activeUser["traces"] != 0) || (telemetry.activeUser["metrics"] != 0) || (telemetry.activeUser["logs"] != 0) {
 					telemetry.activeUser["any"] = 1
 				}
-				telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{"traces": telemetry.activeUser["traces"], "metrics": telemetry.activeUser["metrics"], "logs": telemetry.activeUser["logs"], "any": telemetry.activeUser["any"]}, "")
+				telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{
+					"traces":  telemetry.activeUser["traces"],
+					"metrics": telemetry.activeUser["metrics"],
+					"logs":    telemetry.activeUser["logs"],
+					"any":     telemetry.activeUser["any"]},
+					"", true, false)
 				telemetry.activeUser = map[string]int8{"traces": 0, "metrics": 0, "logs": 0, "any": 0}
 
 			case <-ticker.C:
@@ -225,17 +253,23 @@ func createTelemetry() {
 				tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
 
 				if len(tagsInfo.Env) != 0 {
-					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "")
+					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "", true, false)
 				}
 
-				for language, _ := range tagsInfo.Languages {
-					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": language}, "")
+				languages := []string{}
+				for language := range tagsInfo.Languages {
+					languages = append(languages, language)
 				}
-
-				for service, _ := range tagsInfo.Services {
-					telemetry.SendEvent(TELEMETRY_EVENT_SERVICE, map[string]interface{}{"serviceName": service}, "")
+				if len(languages) > 0 {
+					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": languages}, "", true, false)
 				}
-
+				services := []string{}
+				for service := range tagsInfo.Services {
+					services = append(services, service)
+				}
+				if len(services) > 0 {
+					telemetry.SendEvent(TELEMETRY_EVENT_SERVICE, map[string]interface{}{"serviceName": services}, "", true, false)
+				}
 				totalSpans, _ := telemetry.reader.GetTotalSpans(context.Background())
 				totalLogs, _ := telemetry.reader.GetTotalLogs(context.Background())
 				spansInLastHeartBeatInterval, _ := telemetry.reader.GetSpansInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
@@ -266,35 +300,58 @@ func createTelemetry() {
 				for key, value := range tsInfo {
 					data[key] = value
 				}
-				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
 
+				users, apiErr := telemetry.reader.GetUsers(context.Background())
+				if apiErr == nil {
+					for _, user := range users {
+						if user.Email == DEFAULT_CLOUD_EMAIL {
+							continue
+						}
+						telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, user.Email, false, false)
+					}
+				}
 				alertsInfo, err := telemetry.reader.GetAlertsInfo(context.Background())
-				if err != nil {
-					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
-				} else {
+				if err == nil {
 					dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
 					if err == nil {
-						dashboardsAlertsData := map[string]interface{}{
-							"totalDashboards":   dashboardsInfo.TotalDashboards,
-							"logsBasedPanels":   dashboardsInfo.LogsBasedPanels,
-							"metricBasedPanels": dashboardsInfo.MetricBasedPanels,
-							"tracesBasedPanels": dashboardsInfo.TracesBasedPanels,
-							"totalAlerts":       alertsInfo.TotalAlerts,
-							"logsBasedAlerts":   alertsInfo.LogsBasedAlerts,
-							"metricBasedAlerts": alertsInfo.MetricBasedAlerts,
-							"tracesBasedAlerts": alertsInfo.TracesBasedAlerts,
+						channels, err := telemetry.reader.GetChannels()
+						if err == nil {
+							savedViewsInfo, err := telemetry.reader.GetSavedViewsInfo(context.Background())
+							if err == nil {
+								dashboardsAlertsData := map[string]interface{}{
+									"totalDashboards":                 dashboardsInfo.TotalDashboards,
+									"totalDashboardsWithPanelAndName": dashboardsInfo.TotalDashboardsWithPanelAndName,
+									"logsBasedPanels":                 dashboardsInfo.LogsBasedPanels,
+									"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
+									"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
+									"totalAlerts":                     alertsInfo.TotalAlerts,
+									"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
+									"metricBasedAlerts":               alertsInfo.MetricBasedAlerts,
+									"tracesBasedAlerts":               alertsInfo.TracesBasedAlerts,
+									"totalChannels":                   len(*channels),
+									"totalSavedViews":                 savedViewsInfo.TotalSavedViews,
+									"logsSavedViews":                  savedViewsInfo.LogsSavedViews,
+									"tracesSavedViews":                savedViewsInfo.TracesSavedViews,
+								}
+								// send event only if there are dashboards or alerts or channels
+								if (dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0) && apiErr == nil {
+									for _, user := range users {
+										if user.Email == DEFAULT_CLOUD_EMAIL {
+											continue
+										}
+										telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, user.Email, false, false)
+									}
+								}
+							}
 						}
-						// send event only if there are dashboards or alerts
-						if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 {
-							telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
-						}
-					} else {
-						telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
 					}
+				}
+				if err != nil || apiErr != nil {
+					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
 				}
 
 				getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(context.Background())
-				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval, "")
+				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval, "", true, false)
 			}
 		}
 	}()
@@ -343,18 +400,16 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 		})
 	}
 
-	a.operator.Enqueue(analytics.Identify{
+	a.ossOperator.Enqueue(analytics.Identify{
 		UserId: a.ipAddress,
 		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
 	})
 	// Updating a groups properties
-	a.phOperator.Enqueue(ph.GroupIdentify{
-		Type: "companyDomain",
-		Key:  a.getCompanyDomain(),
-		Properties: ph.NewProperties().
-			Set("companyDomain", a.getCompanyDomain()),
+	a.ossOperator.Enqueue(analytics.Group{
+		UserId:  a.ipAddress,
+		GroupId: a.getCompanyDomain(),
+		Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
 	})
-
 }
 
 func (a *Telemetry) SetCountUsers(countUsers int8) {
@@ -402,19 +457,16 @@ func (a *Telemetry) checkEvents(event string) bool {
 	return sendEvent
 }
 
-func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, opts ...bool) {
+func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, rateLimitFlag bool, viaEventsAPI bool) {
 
 	// ignore telemetry for default user
-	if userEmail == DEFAULT_CLOUD_EMAIL {
+	if userEmail == DEFAULT_CLOUD_EMAIL || a.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
 		return
 	}
 
 	if userEmail != "" {
 		a.SetUserEmail(userEmail)
-	}
-	rateLimitFlag := true
-	if len(opts) > 0 {
-		rateLimitFlag = opts[0]
+		a.SetCompanyDomain(userEmail)
 	}
 
 	if !a.isTelemetryEnabled() {
@@ -443,7 +495,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 		}
 	}
 
-	// zap.S().Info(data)
+	// zap.L().Info(data)
 	properties := analytics.NewProperties()
 	properties.Set("version", version.GetVersion())
 	properties.Set("deploymentType", getDeploymentType())
@@ -461,7 +513,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 	// check if event is part of SAAS_EVENTS_LIST
 	_, isSaaSEvent := SAAS_EVENTS_LIST[event]
 
-	if a.saasOperator != nil && a.GetUserEmail() != "" && isSaaSEvent {
+	if a.saasOperator != nil && a.GetUserEmail() != "" && (isSaaSEvent || viaEventsAPI) {
 		a.saasOperator.Enqueue(analytics.Track{
 			Event:      event,
 			UserId:     a.GetUserEmail(),
@@ -474,33 +526,19 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 		})
 	}
 
-	a.operator.Enqueue(analytics.Track{
-		Event:      event,
-		UserId:     userId,
-		Properties: properties,
-	})
+	_, isOSSEvent := OSS_EVENTS_LIST[event]
 
-	if event == TELEMETRY_EVENT_NUMBER_OF_SERVICES {
-
-		a.phOperator.Enqueue(ph.Capture{
-			DistinctId: userId,
-			Event:      TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH,
-			Properties: ph.Properties(properties),
-			Groups: ph.NewGroups().
-				Set("companyDomain", a.getCompanyDomain()),
+	if a.ossOperator != nil && isOSSEvent {
+		a.ossOperator.Enqueue(analytics.Track{
+			Event:      event,
+			UserId:     userId,
+			Properties: properties,
+			Context: &analytics.Context{
+				Extra: map[string]interface{}{
+					"groupId": a.getCompanyDomain(),
+				},
+			},
 		})
-
-	}
-	if event == TELEMETRY_EVENT_ACTIVE_USER {
-
-		a.phOperator.Enqueue(ph.Capture{
-			DistinctId: userId,
-			Event:      TELEMETRY_EVENT_ACTIVE_USER_PH,
-			Properties: ph.Properties(properties),
-			Groups: ph.NewGroups().
-				Set("companyDomain", a.getCompanyDomain()),
-		})
-
 	}
 }
 

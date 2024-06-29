@@ -1,3 +1,4 @@
+import { Color } from '@signozhq/design-tokens';
 import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 import { getActiveLogBackground } from 'utils/logs';
@@ -27,7 +28,12 @@ export const TableRowStyled = styled.tr<{
 	$isDarkMode: boolean;
 }>`
 	td {
-		${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
+		${({ $isActiveLog, $isDarkMode }): string =>
+			$isActiveLog
+				? `background-color: ${
+						$isDarkMode ? Color.BG_SLATE_500 : Color.BG_VANILLA_300
+				  } !important`
+				: ''}
 	}
 
 	cursor: pointer;

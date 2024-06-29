@@ -14,12 +14,15 @@ export interface QueryData {
 	queryName: string;
 	legend?: string;
 	values: [number, string][];
+	quantity?: number[];
+	unit?: string;
 }
 
 export interface SeriesItem {
 	labels: {
 		[key: string]: string;
 	};
+	labelsArray: { [key: string]: string }[];
 	values: { timestamp: number; value: string }[];
 }
 
@@ -28,6 +31,9 @@ export interface QueryDataV3 {
 	queryName: string;
 	legend?: string;
 	series: SeriesItem[] | null;
+	quantity?: number;
+	unitPrice?: number;
+	unit?: string;
 }
 
 export interface Props {

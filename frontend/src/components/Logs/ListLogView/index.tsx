@@ -9,19 +9,20 @@ import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useCallback, useMemo, useState } from 'react';
 // interfaces
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
+import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 // components
 import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
-import LogStateIndicator, {
-	LogType,
-} from '../LogStateIndicator/LogStateIndicator';
+import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
+import { getLogIndicatorType } from '../LogStateIndicator/utils';
 // styles
 import {
 	Container,
@@ -37,15 +38,24 @@ const convert = new Convert();
 interface LogFieldProps {
 	fieldKey: string;
 	fieldValue: string;
+	linesPerRow?: number;
 }
 
-type LogSelectedFieldProps = LogFieldProps &
+type LogSelectedFieldProps = Omit<LogFieldProps, 'linesPerRow'> &
 	Pick<AddToQueryHOCProps, 'onAddToQuery'>;
 
-function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
+function LogGeneralField({
+	fieldKey,
+	fieldValue,
+	linesPerRow = 1,
+}: LogFieldProps): JSX.Element {
 	const html = useMemo(
 		() => ({
-			__html: convert.toHtml(dompurify.sanitize(fieldValue)),
+			__html: convert.toHtml(
+				dompurify.sanitize(fieldValue, {
+					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				}),
+			),
 		}),
 		[fieldValue],
 	);
@@ -55,7 +65,11 @@ function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 			<Text ellipsis type="secondary" className="log-field-key">
 				{`${fieldKey} : `}
 			</Text>
-			<LogText dangerouslySetInnerHTML={html} className="log-value" />
+			<LogText
+				dangerouslySetInnerHTML={html}
+				className="log-value"
+				linesPerRow={linesPerRow > 1 ? linesPerRow : undefined}
+			/>
 		</TextContainer>
 	);
 }
@@ -92,6 +106,7 @@ type ListLogViewProps = {
 	onSetActiveLog: (log: ILog) => void;
 	onAddToQuery: AddToQueryHOCProps['onAddToQuery'];
 	activeLog?: ILog | null;
+	linesPerRow: number;
 };
 
 function ListLogView({
@@ -100,6 +115,7 @@ function ListLogView({
 	onSetActiveLog,
 	onAddToQuery,
 	activeLog,
+	linesPerRow,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
@@ -113,6 +129,8 @@ function ListLogView({
 		onSetActiveLog: handleSetActiveContextLog,
 		onClearActiveLog: handleClearActiveContextLog,
 	} = useActiveLog();
+
+	const isDarkMode = useIsDarkMode();
 
 	const handlerClearActiveContextLog = useCallback(
 		(event: React.MouseEvent | React.KeyboardEvent) => {
@@ -144,12 +162,12 @@ function ListLogView({
 	const timestampValue = useMemo(
 		() =>
 			typeof flattenLogData.timestamp === 'string'
-				? dayjs(flattenLogData.timestamp).format()
-				: dayjs(flattenLogData.timestamp / 1e6).format(),
+				? dayjs(flattenLogData.timestamp).format('YYYY-MM-DD HH:mm:ss.SSS')
+				: dayjs(flattenLogData.timestamp / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS'),
 		[flattenLogData.timestamp],
 	);
 
-	const logType = logData?.attributes_string?.log_level || LogType.INFO;
+	const logType = getLogIndicatorType(logData);
 
 	const handleMouseEnter = (): void => {
 		setHasActionButtons(true);
@@ -163,6 +181,7 @@ function ListLogView({
 		<>
 			<Container
 				$isActiveLog={isHighlighted}
+				$isDarkMode={isDarkMode}
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 				onClick={handleDetailedView}
@@ -176,7 +195,11 @@ function ListLogView({
 					/>
 					<div>
 						<LogContainer>
-							<LogGeneralField fieldKey="Log" fieldValue={flattenLogData.body} />
+							<LogGeneralField
+								fieldKey="Log"
+								fieldValue={flattenLogData.body}
+								linesPerRow={linesPerRow}
+							/>
 							{flattenLogData.stream && (
 								<LogGeneralField fieldKey="Stream" fieldValue={flattenLogData.stream} />
 							)}
@@ -217,6 +240,10 @@ function ListLogView({
 
 ListLogView.defaultProps = {
 	activeLog: null,
+};
+
+LogGeneralField.defaultProps = {
+	linesPerRow: 1,
 };
 
 export default ListLogView;

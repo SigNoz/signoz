@@ -1,5 +1,7 @@
 import { useMachine } from '@xstate/react';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { encode } from 'js-base64';
 import history from 'lib/history';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
@@ -30,6 +32,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 	const [queries, setQueries] = useState<IResourceAttribute[]>(
 		getResourceAttributeQueriesFromURL(),
 	);
+	const urlQuery = useUrlQuery();
 
 	const [optionsData, setOptionsData] = useState<OptionsData>({
 		mode: undefined,
@@ -45,16 +48,15 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 	const dispatchQueries = useCallback(
 		(queries: IResourceAttribute[]): void => {
-			history.replace({
-				pathname,
-				search:
-					queries && queries.length
-						? `?resourceAttribute=${encode(JSON.stringify(queries))}`
-						: '',
-			});
+			urlQuery.set(
+				QueryParams.resourceAttributes,
+				encode(JSON.stringify(queries)),
+			);
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			history.replace(generatedUrl);
 			setQueries(queries);
 		},
-		[pathname],
+		[pathname, urlQuery],
 	);
 
 	const [state, send] = useMachine(ResourceAttributesFilterMachine, {
@@ -62,12 +64,14 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			onSelectTagKey: () => {
 				handleLoading(true);
 				GetTagKeys()
-					.then((tagKeys) =>
+					.then((tagKeys) => {
+						const options = mappingWithRoutesAndKeys(pathname, tagKeys);
+
 						setOptionsData({
-							options: mappingWithRoutesAndKeys(pathname, tagKeys),
+							options,
 							mode: undefined,
-						}),
-					)
+						});
+					})
 					.finally(() => {
 						handleLoading(false);
 					});
@@ -96,6 +100,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 				}
 
 				const generatedQuery = createQuery([...staging, selectedQuery]);
+
 				if (generatedQuery) {
 					dispatchQueries([...queries, generatedQuery]);
 				}
@@ -125,6 +130,29 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			setSelectedQueries([...value]);
 		},
 		[optionsData.mode, send],
+	);
+
+	const handleEnvironmentChange = useCallback(
+		(environments: string[]): void => {
+			const staging = ['resource_deployment_environment', 'IN'];
+
+			const queriesCopy = queries.filter(
+				(query) => query.tagKey !== 'resource_deployment_environment',
+			);
+
+			if (environments && Array.isArray(environments) && environments.length > 0) {
+				const generatedQuery = createQuery([...staging, environments]);
+
+				if (generatedQuery) {
+					dispatchQueries([...queriesCopy, generatedQuery]);
+				}
+			} else {
+				dispatchQueries([...queriesCopy]);
+			}
+
+			send('RESET');
+		},
+		[dispatchQueries, queries, send],
 	);
 
 	const handleClose = useCallback(
@@ -159,12 +187,14 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			handleFocus,
 			loading,
 			handleChange,
+			handleEnvironmentChange,
 			selectedQuery,
 			optionsData,
 		}),
 		[
 			handleBlur,
 			handleChange,
+			handleEnvironmentChange,
 			handleClearAll,
 			handleClose,
 			handleFocus,

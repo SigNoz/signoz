@@ -143,7 +143,7 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 	}
 }
 
-func quoteEscapedString(str string) string {
+func QuoteEscapedString(str string) string {
 	// https://clickhouse.com/docs/en/sql-reference/syntax#string
 	str = strings.ReplaceAll(str, `\`, `\\`)
 	str = strings.ReplaceAll(str, `'`, `\'`)
@@ -161,19 +161,19 @@ func ClickHouseFormattedValue(v interface{}) string {
 	case float32, float64:
 		return fmt.Sprintf("%f", x)
 	case string:
-		return fmt.Sprintf("'%s'", quoteEscapedString(x))
+		return fmt.Sprintf("'%s'", QuoteEscapedString(x))
 	case bool:
 		return fmt.Sprintf("%v", x)
 
 	case []interface{}:
 		if len(x) == 0 {
-			return ""
+			return "[]"
 		}
 		switch x[0].(type) {
 		case string:
 			str := "["
 			for idx, sVal := range x {
-				str += fmt.Sprintf("'%s'", quoteEscapedString(sVal.(string)))
+				str += fmt.Sprintf("'%s'", QuoteEscapedString(sVal.(string)))
 				if idx != len(x)-1 {
 					str += ","
 				}
@@ -183,11 +183,11 @@ func ClickHouseFormattedValue(v interface{}) string {
 		case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64, float32, float64, bool:
 			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
 		default:
-			zap.S().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
-			return ""
+			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
+			return "[]"
 		}
 	default:
-		zap.S().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
+		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
 		return ""
 	}
 }
@@ -243,7 +243,7 @@ func GetClickhouseColumnName(typeName string, dataType, field string) string {
 	// if name contains . replace it with `$$`
 	field = strings.ReplaceAll(field, ".", "$$")
 
-	colName := fmt.Sprintf("%s_%s_%s", strings.ToLower(typeName), strings.ToLower(dataType), field)
+	colName := fmt.Sprintf("`%s_%s_%s`", strings.ToLower(typeName), strings.ToLower(dataType), field)
 	return colName
 }
 

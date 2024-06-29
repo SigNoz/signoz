@@ -18,6 +18,8 @@
 	}
 
 	.ant-drawer-body {
+		display: flex;
+		flex-direction: column;
 		padding: 16px;
 	}
 

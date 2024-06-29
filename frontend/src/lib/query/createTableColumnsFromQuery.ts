@@ -1,20 +1,25 @@
 import { ColumnsType } from 'antd/es/table';
 import { ColumnType } from 'antd/lib/table';
 import {
+	initialClickHouseData,
 	initialFormulaBuilderFormValues,
 	initialQueryBuilderFormValues,
+	initialQueryPromQLData,
 } from 'constants/queryBuilder';
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { isObject } from 'lodash-es';
+import { get, isEqual, isNaN, isObject } from 'lodash-es';
 import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
+	IClickHouseQuery,
+	IPromQLQuery,
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { ListItem, QueryDataV3, SeriesItem } from 'types/api/widgets/getQuery';
+import { EQueryType } from 'types/common/dashboard';
 import { QueryBuilderData } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
@@ -30,7 +35,7 @@ export type RowData = {
 };
 
 export type DynamicColumn = {
-	query: IBuilderQuery | IBuilderFormula;
+	query: IBuilderQuery | IBuilderFormula | IClickHouseQuery | IPromQLQuery;
 	field: string;
 	dataIndex: string;
 	title: string;
@@ -75,24 +80,43 @@ const isValueExist = (
 };
 
 const getQueryByName = <T extends keyof QueryBuilderData>(
-	builder: QueryBuilderData,
+	query: Query,
 	currentQueryName: string,
 	type: T,
-): T extends 'queryData' ? IBuilderQuery : IBuilderFormula => {
-	const queryArray = builder[type];
-	const defaultValue =
-		type === 'queryData'
-			? initialQueryBuilderFormValues
-			: initialFormulaBuilderFormValues;
+): IBuilderQuery | IBuilderFormula | IClickHouseQuery | IPromQLQuery => {
+	if (query.queryType === EQueryType.CLICKHOUSE) {
+		const queryArray = query.clickhouse_sql;
+		const defaultQueryValue = initialClickHouseData;
 
-	const currentQuery =
-		queryArray.find((q) => q.queryName === currentQueryName) || defaultValue;
+		return (
+			queryArray.find((q) => q.name === currentQueryName) || defaultQueryValue
+		);
+	}
+	if (query.queryType === EQueryType.QUERY_BUILDER) {
+		const queryArray = query.builder[type];
+		const defaultValue =
+			type === 'queryData'
+				? initialQueryBuilderFormValues
+				: initialFormulaBuilderFormValues;
 
-	return currentQuery as T extends 'queryData' ? IBuilderQuery : IBuilderFormula;
+		const currentQuery =
+			queryArray.find((q) => q.queryName === currentQueryName) || defaultValue;
+
+		return currentQuery as T extends 'queryData'
+			? IBuilderQuery
+			: IBuilderFormula;
+	}
+
+	const queryArray = query.promql;
+	const defaultQueryValue = initialQueryPromQLData;
+
+	return (
+		queryArray.find((q) => q.name === currentQueryName) || defaultQueryValue
+	);
 };
 
 const addLabels = (
-	query: IBuilderQuery | IBuilderFormula,
+	query: IBuilderQuery | IBuilderFormula | IClickHouseQuery | IPromQLQuery,
 	label: string,
 	dynamicColumns: DynamicColumns,
 ): void => {
@@ -111,11 +135,13 @@ const addLabels = (
 };
 
 const addOperatorFormulaColumns = (
-	query: IBuilderFormula | IBuilderQuery,
+	query: IBuilderFormula | IBuilderQuery | IClickHouseQuery | IPromQLQuery,
 	dynamicColumns: DynamicColumns,
+	queryType: EQueryType,
 	customLabel?: string,
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): void => {
-	if (isFormula(query.queryName)) {
+	if (isFormula(get(query, 'queryName', ''))) {
 		const formulaQuery = query as IBuilderFormula;
 		let formulaLabel = `${formulaQuery.queryName}(${formulaQuery.expression})`;
 
@@ -137,27 +163,68 @@ const addOperatorFormulaColumns = (
 		return;
 	}
 
-	const currentQueryData = query as IBuilderQuery;
+	if (queryType === EQueryType.QUERY_BUILDER) {
+		const currentQueryData = query as IBuilderQuery;
+		let operatorLabel = `${currentQueryData.aggregateOperator}`;
+		if (currentQueryData.aggregateAttribute.key) {
+			operatorLabel += `(${currentQueryData.aggregateAttribute.key})`;
+		}
 
-	let operatorLabel = `${currentQueryData.aggregateOperator}`;
-	if (currentQueryData.aggregateAttribute.key) {
-		operatorLabel += `(${currentQueryData.aggregateAttribute.key})`;
+		if (currentQueryData.legend) {
+			operatorLabel = currentQueryData.legend;
+		}
+
+		const operatorColumn: DynamicColumn = {
+			query,
+			field: currentQueryData.queryName,
+			dataIndex: currentQueryData.queryName,
+			title: customLabel || operatorLabel,
+			data: [],
+			type: 'operator',
+		};
+
+		dynamicColumns.push(operatorColumn);
 	}
 
-	if (currentQueryData.legend) {
-		operatorLabel = currentQueryData.legend;
+	if (queryType === EQueryType.CLICKHOUSE) {
+		const currentQueryData = query as IClickHouseQuery;
+		let operatorLabel = `${currentQueryData.name}`;
+
+		if (currentQueryData.legend) {
+			operatorLabel = currentQueryData.legend;
+		}
+
+		const operatorColumn: DynamicColumn = {
+			query,
+			field: currentQueryData.name,
+			dataIndex: currentQueryData.name,
+			title: customLabel || operatorLabel,
+			data: [],
+			type: 'operator',
+		};
+
+		dynamicColumns.push(operatorColumn);
 	}
 
-	const operatorColumn: DynamicColumn = {
-		query,
-		field: currentQueryData.queryName,
-		dataIndex: currentQueryData.queryName,
-		title: customLabel || operatorLabel,
-		data: [],
-		type: 'operator',
-	};
+	if (queryType === EQueryType.PROM) {
+		const currentQueryData = query as IPromQLQuery;
+		let operatorLabel = `${currentQueryData.name}`;
 
-	dynamicColumns.push(operatorColumn);
+		if (currentQueryData.legend) {
+			operatorLabel = currentQueryData.legend;
+		}
+
+		const operatorColumn: DynamicColumn = {
+			query,
+			field: currentQueryData.name,
+			dataIndex: currentQueryData.name,
+			title: customLabel || operatorLabel,
+			data: [],
+			type: 'operator',
+		};
+
+		dynamicColumns.push(operatorColumn);
+	}
 };
 
 const transformColumnTitles = (
@@ -175,8 +242,16 @@ const transformColumnTitles = (
 		if (sameValues.length > 1) {
 			return {
 				...item,
-				dataIndex: `${item.title} - ${item.query.queryName}`,
-				title: `${item.title} - ${item.query.queryName}`,
+				dataIndex: `${item.title} - ${get(
+					item.query,
+					'queryName',
+					get(item.query, 'name', ''),
+				)}`,
+				title: `${item.title} - ${get(
+					item.query,
+					'queryName',
+					get(item.query, 'name', ''),
+				)}`,
 			};
 		}
 
@@ -190,7 +265,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 		const { series, queryName, list } = currentQuery;
 
 		const currentStagedQuery = getQueryByName(
-			query.builder,
+			query,
 			queryName,
 			isFormula(queryName) ? 'queryFormulas' : 'queryData',
 		);
@@ -210,15 +285,18 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 				addOperatorFormulaColumns(
 					currentStagedQuery,
 					dynamicColumns,
-					isEveryValuesExist ? undefined : currentStagedQuery.queryName,
+					query.queryType,
+					isEveryValuesExist ? undefined : get(currentStagedQuery, 'queryName', ''),
 				);
 			}
 
 			series.forEach((seria) => {
-				Object.keys(seria.labels).forEach((label) => {
-					if (label === currentQuery?.queryName) return;
+				seria.labelsArray?.forEach((lab) => {
+					Object.keys(lab).forEach((label) => {
+						if (label === currentQuery?.queryName) return;
 
-					addLabels(currentStagedQuery, label, dynamicColumns);
+						addLabels(currentStagedQuery, label, dynamicColumns);
+					});
 				});
 			});
 		}
@@ -258,12 +336,7 @@ const findSeriaValueFromAnotherQuery = (
 		const localLabelEntries = Object.entries(seria.labels);
 		if (localLabelEntries.length !== labelEntries.length) return;
 
-		const isExistLabels = localLabelEntries.find(([key, value]) =>
-			labelEntries.find(
-				([currentKey, currentValue]) =>
-					currentKey === key && currentValue === value,
-			),
-		);
+		const isExistLabels = isEqual(localLabelEntries, labelEntries);
 
 		if (isExistLabels) {
 			value = seria;
@@ -292,6 +365,7 @@ const fillRestAggregationData = (
 	queryTableData: QueryDataV3[],
 	seria: SeriesItem,
 	equalQueriesByLabels: string[],
+	isEqualQuery: boolean,
 ): void => {
 	const nextQueryData =
 		queryTableData.find((q) => q.queryName === column.field) || null;
@@ -301,14 +375,13 @@ const fillRestAggregationData = (
 		nextQueryData,
 	);
 
+	const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
 	if (targetSeria) {
-		const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
 		if (!isEqual) {
+			// This line is crucial. It ensures that no additional rows are added to the table for similar labels across all formulas here is how this check is applied: signoz/frontend/src/lib/query/createTableColumnsFromQuery.ts line number 370
 			equalQueriesByLabels.push(column.field);
 		}
-
-		column.data.push(parseFloat(targetSeria.values[0].value).toFixed(2));
-	} else {
+	} else if (!isEqualQuery) {
 		column.data.push('N/A');
 	}
 };
@@ -357,11 +430,13 @@ const fillDataFromSeries = (
 			}
 
 			if (column.type !== 'field' && column.field !== queryName) {
+				// This code is executed only when there are multiple formulas. It checks if there are similar labels present in other formulas and, if found, adds them to the corresponding column data in the table.
 				fillRestAggregationData(
 					column,
 					queryTableData,
 					seria,
 					equalQueriesByLabels,
+					isEqualQuery,
 				);
 
 				return;
@@ -463,6 +538,22 @@ const generateTableColumns = (
 			title: item.title,
 			width: QUERY_TABLE_CONFIG.width,
 			render: renderColumnCell && renderColumnCell[item.dataIndex],
+			sorter: (a: RowData, b: RowData): number => {
+				const valueA = Number(
+					a[`${item.dataIndex}_without_unit`] ?? a[item.dataIndex],
+				);
+				const valueB = Number(
+					b[`${item.dataIndex}_without_unit`] ?? b[item.dataIndex],
+				);
+
+				if (!isNaN(valueA) && !isNaN(valueB)) {
+					return valueA - valueB;
+				}
+
+				return ((a[item.dataIndex] as string) || '').localeCompare(
+					(b[item.dataIndex] as string) || '',
+				);
+			},
 		};
 
 		return [...acc, column];
@@ -480,6 +571,29 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 	const sortedQueryTableData = queryTableData.sort((a, b) =>
 		a.queryName < b.queryName ? -1 : 1,
 	);
+
+	// the reason we need this is because the filling of values in rows doesn't account for mismatch enteries
+	// in the response. Example : Series A -> [label1, label2] and Series B -> [label2,label1] this isn't accounted for
+	sortedQueryTableData.forEach((q) => {
+		q.series?.forEach((s) => {
+			s.labelsArray?.sort((a, b) =>
+				Object.keys(a)[0] < Object.keys(b)[0] ? -1 : 1,
+			);
+		});
+		q.series?.sort((a, b) => {
+			let labelA = '';
+			let labelB = '';
+			a.labelsArray?.forEach((lab) => {
+				labelA += Object.values(lab)[0];
+			});
+
+			b.labelsArray?.forEach((lab) => {
+				labelB += Object.values(lab)[0];
+			});
+
+			return labelA < labelB ? -1 : 1;
+		});
+	});
 
 	const dynamicColumns = getDynamicColumns(sortedQueryTableData, query);
 

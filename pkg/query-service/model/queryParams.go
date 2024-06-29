@@ -164,6 +164,12 @@ type GetTopOperationsParams struct {
 	Limit       int             `json:"limit"`
 }
 
+type RegisterEventParams struct {
+	EventName   string                 `json:"eventName"`
+	Attributes  map[string]interface{} `json:"attributes"`
+	RateLimited bool                   `json:"rateLimited"`
+}
+
 type GetUsageParams struct {
 	StartTime   string
 	EndTime     string
@@ -368,11 +374,9 @@ type GetFilteredSpansParams struct {
 	SpanKind           string          `json:"spanKind"`
 	Status             []string        `json:"status"`
 	HttpRoute          []string        `json:"httpRoute"`
-	HttpCode           []string        `json:"httpCode"`
 	HttpUrl            []string        `json:"httpUrl"`
 	HttpHost           []string        `json:"httpHost"`
 	HttpMethod         []string        `json:"httpMethod"`
-	Component          []string        `json:"component"`
 	RPCMethod          []string        `json:"rpcMethod"`
 	ResponseStatusCode []string        `json:"responseStatusCode"`
 	StartStr           string          `json:"start"`
@@ -396,11 +400,9 @@ type GetFilteredSpanAggregatesParams struct {
 	SpanKind           string          `json:"spanKind"`
 	Status             []string        `json:"status"`
 	HttpRoute          []string        `json:"httpRoute"`
-	HttpCode           []string        `json:"httpCode"`
 	HttpUrl            []string        `json:"httpUrl"`
 	HttpHost           []string        `json:"httpHost"`
 	HttpMethod         []string        `json:"httpMethod"`
-	Component          []string        `json:"component"`
 	RPCMethod          []string        `json:"rpcMethod"`
 	ResponseStatusCode []string        `json:"responseStatusCode"`
 	MinDuration        string          `json:"minDuration"`
@@ -418,17 +420,24 @@ type GetFilteredSpanAggregatesParams struct {
 	End                *time.Time
 }
 
+type SearchTracesParams struct {
+	TraceID          string `json:"traceId"`
+	LevelUp          int    `json:"levelUp"`
+	LevelDown        int    `json:"levelDown"`
+	SpanID           string `json:"spanId"`
+	SpansRenderLimit int    `json:"spansRenderLimit"`
+	MaxSpansInTrace  int    `json:"maxSpansInTrace"`
+}
+
 type SpanFilterParams struct {
 	TraceID            []string `json:"traceID"`
 	Status             []string `json:"status"`
 	ServiceName        []string `json:"serviceName"`
 	SpanKind           string   `json:"spanKind"`
 	HttpRoute          []string `json:"httpRoute"`
-	HttpCode           []string `json:"httpCode"`
 	HttpUrl            []string `json:"httpUrl"`
 	HttpHost           []string `json:"httpHost"`
 	HttpMethod         []string `json:"httpMethod"`
-	Component          []string `json:"component"`
 	Operation          []string `json:"operation"`
 	RPCMethod          []string `json:"rpcMethod"`
 	ResponseStatusCode []string `json:"responseStatusCode"`
@@ -447,12 +456,10 @@ type TagFilterParams struct {
 	Status             []string `json:"status"`
 	ServiceName        []string `json:"serviceName"`
 	HttpRoute          []string `json:"httpRoute"`
-	HttpCode           []string `json:"httpCode"`
 	SpanKind           string   `json:"spanKind"`
 	HttpUrl            []string `json:"httpUrl"`
 	HttpHost           []string `json:"httpHost"`
 	HttpMethod         []string `json:"httpMethod"`
-	Component          []string `json:"component"`
 	Operation          []string `json:"operation"`
 	RPCMethod          []string `json:"rpcMethod"`
 	ResponseStatusCode []string `json:"responseStatusCode"`

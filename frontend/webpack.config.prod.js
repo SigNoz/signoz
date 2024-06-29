@@ -14,6 +14,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const Critters = require('critters-webpack-plugin');
+const { RetryChunkLoadPlugin } = require('webpack-retry-chunk-load-plugin');
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ const plugins = [
 		template: 'src/index.html.ejs',
 		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 		SEGMENT_ID: process.env.SEGMENT_ID,
+		POSTHOG_KEY: process.env.POSTHOG_KEY,
 		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
 		SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
 		SENTRY_ORG: process.env.SENTRY_ORG,
@@ -48,6 +50,7 @@ const plugins = [
 			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
 			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 			SEGMENT_ID: process.env.SEGMENT_ID,
+			POSTHOG_KEY: process.env.POSTHOG_KEY,
 			CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
 			SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
 			SENTRY_ORG: process.env.SENTRY_ORG,
@@ -71,6 +74,9 @@ const plugins = [
 		org: process.env.SENTRY_ORG,
 		project: process.env.SENTRY_PROJECT_ID,
 	}),
+	new RetryChunkLoadPlugin({
+		maxRetries: 2,
+	}),
 ];
 
 if (process.env.BUNDLE_ANALYSER === 'true') {
@@ -79,6 +85,7 @@ if (process.env.BUNDLE_ANALYSER === 'true') {
 
 const config = {
 	mode: 'production',
+	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	output: {
 		path: resolve(__dirname, './build'),

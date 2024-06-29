@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"math/rand"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -14,10 +13,6 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
-
-func init() {
-	rand.Seed(2000)
-}
 
 // Repo handles DDL and DML ops on ingestion rules
 type Repo struct {
@@ -151,7 +146,7 @@ func (r *Repo) insertConfig(
 
 	// allowing empty elements for logs - use case is deleting all pipelines
 	if len(elements) == 0 && c.ElementType != ElementTypeLogPipelines {
-		zap.S().Error("insert config called with no elements ", c.ElementType)
+		zap.L().Error("insert config called with no elements ", zap.String("ElementType", string(c.ElementType)))
 		return model.BadRequest(fmt.Errorf("config must have atleast one element"))
 	}
 
@@ -159,7 +154,7 @@ func (r *Repo) insertConfig(
 		// the version can not be set by the user, we want to auto-assign the versions
 		// in a monotonically increasing order starting with 1. hence, we reject insert
 		// requests with version anything other than 0. here, 0 indicates un-assigned
-		zap.S().Error("invalid version assignment while inserting agent config", c.Version, c.ElementType)
+		zap.L().Error("invalid version assignment while inserting agent config", zap.Int("version", c.Version), zap.String("ElementType", string(c.ElementType)))
 		return model.BadRequest(fmt.Errorf(
 			"user defined versions are not supported in the agent config",
 		))
@@ -167,7 +162,7 @@ func (r *Repo) insertConfig(
 
 	configVersion, err := r.GetLatestVersion(ctx, c.ElementType)
 	if err != nil && err.Type() != model.ErrorNotFound {
-		zap.S().Error("failed to fetch latest config version", err)
+		zap.L().Error("failed to fetch latest config version", zap.Error(err))
 		return model.InternalError(fmt.Errorf("failed to fetch latest config version"))
 	}
 
@@ -212,7 +207,7 @@ func (r *Repo) insertConfig(
 		c.DeployResult)
 
 	if dbErr != nil {
-		zap.S().Error("error in inserting config version: ", zap.Error(dbErr))
+		zap.L().Error("error in inserting config version: ", zap.Error(dbErr))
 		return model.InternalError(errors.Wrap(dbErr, "failed to insert ingestion rule"))
 	}
 
@@ -258,7 +253,7 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 
 	_, err := r.db.ExecContext(ctx, updateQuery, status, result, lastHash, lastconf, version, string(elementType))
 	if err != nil {
-		zap.S().Error("failed to update deploy status", err)
+		zap.L().Error("failed to update deploy status", zap.Error(err))
 		return model.BadRequest(fmt.Errorf("failed to  update deploy status"))
 	}
 
@@ -276,7 +271,7 @@ func (r *Repo) updateDeployStatusByHash(
 
 	_, err := r.db.ExecContext(ctx, updateQuery, status, result, confighash)
 	if err != nil {
-		zap.S().Error("failed to update deploy status", err)
+		zap.L().Error("failed to update deploy status", zap.Error(err))
 		return model.InternalError(errors.Wrap(err, "failed to update deploy status"))
 	}
 

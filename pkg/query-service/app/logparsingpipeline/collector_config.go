@@ -138,10 +138,15 @@ func buildLogsProcessors(current []string, logsParserPipeline []string) ([]strin
 
 func checkDuplicateString(pipeline []string) bool {
 	exists := make(map[string]bool, len(pipeline))
-	zap.S().Debugf("checking duplicate processors in the pipeline:", pipeline)
+	zap.L().Debug("checking duplicate processors in the pipeline:", zap.Any("pipeline", pipeline))
 	for _, processor := range pipeline {
 		name := processor
 		if _, ok := exists[name]; ok {
+			zap.L().Error(
+				"duplicate processor name detected in generated collector config for log pipelines",
+				zap.String("processor", processor),
+				zap.Any("pipeline", pipeline),
+			)
 			return true
 		}
 

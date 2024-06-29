@@ -24,7 +24,7 @@ func CollectorConfProcessorName(p Pipeline) string {
 func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []string, error) {
 	processors := map[string]interface{}{}
 	names := []string{}
-	for _, v := range pipelines {
+	for pipelineIdx, v := range pipelines {
 		if !v.Enabled {
 			continue
 		}
@@ -70,6 +70,12 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 			Operators: v.Config,
 		}
 		name := CollectorConfProcessorName(v)
+
+		// Ensure name is unique
+		if _, nameExists := processors[name]; nameExists {
+			name = fmt.Sprintf("%s-%d", name, pipelineIdx)
+		}
+
 		processors[name] = processor
 		names = append(names, name)
 	}

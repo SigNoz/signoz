@@ -72,6 +72,9 @@ function KeyboardHotkeysProvider({
 		shortcutKey = shortcutKey + isAltKey + isShiftKey + isMetaKey;
 
 		if (shortcuts.current[shortcutKey]) {
+			event.preventDefault();
+			event.stopImmediatePropagation();
+
 			shortcuts.current[shortcutKey]();
 		}
 	};

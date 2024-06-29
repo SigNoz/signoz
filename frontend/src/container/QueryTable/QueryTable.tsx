@@ -22,7 +22,8 @@ export function QueryTable({
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
 	const { loading } = props;
 	const { columns: newColumns, dataSource: newDataSource } = useMemo(() => {
 		if (columns && dataSource) {

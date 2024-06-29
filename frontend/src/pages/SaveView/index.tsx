@@ -32,13 +32,19 @@ import {
 } from 'lucide-react';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { AppState } from 'store/reducers';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
+import AppReducer from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
 
 import { ROUTES_VS_SOURCEPAGE, SOURCEPAGE_VS_ROUTES } from './constants';
 import { deleteViewHandler } from './utils';
+
+const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
 function SaveView(): JSX.Element {
 	const { pathname } = useLocation();
@@ -60,6 +66,8 @@ function SaveView(): JSX.Element {
 	const hideDeleteViewModal = (): void => {
 		setIsDeleteModalOpen(false);
 	};
+
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const handleDeleteModelOpen = (uuid: string, name: string): void => {
 		setActiveViewKey(uuid);
@@ -217,6 +225,9 @@ function SaveView(): JSX.Element {
 
 				// Combine time and date
 				const formattedDateAndTime = `${formattedTime} ⎯ ${formattedDate}`;
+
+				const isEditDeleteSupported = allowedRoles.includes(role as string);
+
 				return (
 					<div className="column-render">
 						<div className="title-with-action">
@@ -234,11 +245,13 @@ function SaveView(): JSX.Element {
 							<div className="action-btn">
 								<PenLine
 									size={14}
+									className={isEditDeleteSupported ? '' : 'hidden'}
 									onClick={(): void => handleEditModelOpen(view, bgColor)}
 								/>
 								<Compass size={14} onClick={(): void => handleRedirectQuery(view)} />
 								<Trash2
 									size={14}
+									className={isEditDeleteSupported ? '' : 'hidden'}
 									color={Color.BG_CHERRY_500}
 									onClick={(): void => handleDeleteModelOpen(view.uuid, view.name)}
 								/>
@@ -264,12 +277,21 @@ function SaveView(): JSX.Element {
 		},
 	];
 
+	const paginationConfig = { pageSize: 5, hideOnSinglePage: true };
+
 	return (
 		<div className="save-view-container">
 			<div className="save-view-content">
 				<Typography.Title className="title">Views</Typography.Title>
 				<Typography.Text className="subtitle">
-					Manage your saved views for logs.
+					Manage your saved views for {ROUTES_VS_SOURCEPAGE[pathname]}.{' '}
+					<Typography.Link
+						className="learn-more"
+						href="https://signoz.io/docs/product-features/saved-view/?utm_source=product&utm_medium=views-tab"
+						target="_blank"
+					>
+						Learn more
+					</Typography.Link>
 				</Typography.Text>
 				<Input
 					placeholder="Search for views..."
@@ -283,7 +305,7 @@ function SaveView(): JSX.Element {
 					dataSource={dataSource}
 					loading={isLoading || isRefetching}
 					showHeader={false}
-					pagination={{ pageSize: 5 }}
+					pagination={paginationConfig}
 				/>
 			</div>
 

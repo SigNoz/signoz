@@ -16,10 +16,12 @@ export const prepareQueryRangePayload = ({
 	query,
 	globalSelectedInterval,
 	graphType,
+	formatForWeb,
 	selectedTime,
 	tableParams,
 	variables = {},
 	params = {},
+	fillGaps = false,
 }: GetQueryResultsProps): PrepareQueryRangePayload => {
 	let legendMap: Record<string, string> = {};
 	const { allowSelectedIntervalForStepGen, ...restParams } = params;
@@ -27,6 +29,7 @@ export const prepareQueryRangePayload = ({
 	const compositeQuery: QueryRangePayload['compositeQuery'] = {
 		queryType: query.queryType,
 		panelType: graphType,
+		fillGaps,
 	};
 
 	switch (query.queryType) {
@@ -100,6 +103,7 @@ export const prepareQueryRangePayload = ({
 			inputFormat: 'ns',
 		}),
 		variables,
+		formatForWeb,
 		compositeQuery,
 		...restParams,
 	};

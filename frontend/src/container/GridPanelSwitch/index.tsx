@@ -3,7 +3,6 @@ import { getComponentForPanelType } from 'constants/panelTypes';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GRID_TABLE_CONFIG } from 'container/GridTableComponent/config';
 import { FC, forwardRef, memo, useMemo } from 'react';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { GridPanelSwitchProps, PropsTypePropsMap } from './types';
 
@@ -20,10 +19,7 @@ const GridPanelSwitch = forwardRef<
 			query,
 			options,
 			thresholds,
-			selectedLogFields,
-			selectedTracesFields,
 			dataSource,
-			selectedTime,
 		},
 		ref,
 	): JSX.Element | null => {
@@ -45,41 +41,20 @@ const GridPanelSwitch = forwardRef<
 					query,
 					thresholds,
 				},
-				[PANEL_TYPES.LIST]:
-					dataSource === DataSource.LOGS
-						? {
-								selectedLogsFields: selectedLogFields || [],
-								query,
-								selectedTime,
-						  }
-						: {
-								selectedTracesFields: selectedTracesFields || [],
-								query,
-								selectedTime,
-						  },
+				[PANEL_TYPES.LIST]: null,
+				[PANEL_TYPES.PIE]: null,
 				[PANEL_TYPES.TRACE]: null,
 				[PANEL_TYPES.BAR]: {
 					data,
 					options,
 					ref,
 				},
+				[PANEL_TYPES.HISTOGRAM]: null,
 				[PANEL_TYPES.EMPTY_WIDGET]: null,
 			};
 
 			return result;
-		}, [
-			data,
-			options,
-			ref,
-			yAxisUnit,
-			thresholds,
-			panelData,
-			query,
-			dataSource,
-			selectedLogFields,
-			selectedTime,
-			selectedTracesFields,
-		]);
+		}, [data, options, ref, yAxisUnit, thresholds, panelData, query]);
 
 		const Component = getComponentForPanelType(panelType, dataSource) as FC<
 			PropsTypePropsMap[typeof panelType]

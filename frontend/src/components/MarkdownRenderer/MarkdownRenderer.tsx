@@ -1,10 +1,14 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+
+import logEvent from 'api/common/logEvent';
+import { isEmpty } from 'lodash-es';
 import ReactMarkdown from 'react-markdown';
 import { CodeProps } from 'react-markdown/lib/ast-to-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import rehypeRaw from 'rehype-raw';
 
 import CodeCopyBtn from './CodeCopyBtn/CodeCopyBtn';
 
@@ -13,10 +17,28 @@ interface LinkProps {
 	children: React.ReactElement;
 }
 
-function Pre({ children }: { children: React.ReactNode }): JSX.Element {
+function Pre({
+	children,
+	elementDetails,
+	trackCopyAction,
+}: {
+	children: React.ReactNode;
+	trackCopyAction: boolean;
+	elementDetails: Record<string, unknown>;
+}): JSX.Element {
+	const { trackingTitle = '', ...rest } = elementDetails;
+
+	const handleClick = (additionalInfo?: Record<string, unknown>): void => {
+		const trackingData = { ...rest, copiedContent: additionalInfo };
+
+		if (trackCopyAction && !isEmpty(trackingTitle)) {
+			logEvent(trackingTitle as string, trackingData);
+		}
+	};
+
 	return (
 		<pre className="code-snippet-container">
-			<CodeCopyBtn>{children}</CodeCopyBtn>
+			<CodeCopyBtn onCopyClick={handleClick}>{children}</CodeCopyBtn>
 			{children}
 		</pre>
 	);
@@ -74,28 +96,48 @@ const interpolateMarkdown = (
 	return interpolatedContent;
 };
 
+function CustomTag({ color }: { color: string }): JSX.Element {
+	return <h1 style={{ color }}>This is custom element</h1>;
+}
+
 function MarkdownRenderer({
 	markdownContent,
 	variables,
+	trackCopyAction,
+	elementDetails,
 }: {
 	markdownContent: any;
 	variables: any;
+	trackCopyAction?: boolean;
+	elementDetails?: Record<string, unknown>;
 }): JSX.Element {
 	const interpolatedMarkdown = interpolateMarkdown(markdownContent, variables);
 
 	return (
 		<ReactMarkdown
+			rehypePlugins={[rehypeRaw as any]}
 			components={{
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
 				a: Link,
-				pre: Pre,
+				pre: ({ children }) =>
+					Pre({
+						children,
+						elementDetails: elementDetails ?? {},
+						trackCopyAction: !!trackCopyAction,
+					}),
 				code: Code,
+				customtag: CustomTag,
 			}}
 		>
 			{interpolatedMarkdown}
 		</ReactMarkdown>
 	);
 }
+
+MarkdownRenderer.defaultProps = {
+	elementDetails: {},
+	trackCopyAction: false,
+};
 
 export { Code, Link, MarkdownRenderer, Pre };

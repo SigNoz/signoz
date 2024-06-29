@@ -1,3 +1,4 @@
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValues,
@@ -126,6 +127,7 @@ export const useLogsData = ({
 	const { data, isFetching } = useGetExplorerQueryRange(
 		requestData,
 		panelType,
+		DEFAULT_ENTITY_VERSION,
 		{
 			keepPreviousData: true,
 			enabled: !isLimit && !!requestData,
@@ -143,7 +145,7 @@ export const useLogsData = ({
 
 	useEffect(() => {
 		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
-		const currentData = data?.payload.data.newResult.data.result || [];
+		const currentData = data?.payload?.data?.newResult?.data?.result || [];
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
 				...item.data,

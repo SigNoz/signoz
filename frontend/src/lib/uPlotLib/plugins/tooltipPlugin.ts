@@ -3,6 +3,7 @@ import { themeColors } from 'constants/theme';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import getLabelName from 'lib/getLabelName';
+import { get } from 'lodash-es';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { placement } from '../placement';
@@ -18,14 +19,33 @@ interface UplotTooltipDataProps {
 	value: number;
 	tooltipValue: string;
 	textContent: string;
+	queryName: string;
+}
+
+function getTooltipBaseValue(
+	data: any[],
+	index: number,
+	idx: number,
+	stackBarChart: boolean | undefined,
+): any {
+	if (stackBarChart && index + 1 < data.length) {
+		return data[index][idx] - data[index + 1][idx];
+	}
+
+	return data[index][idx];
 }
 
 const generateTooltipContent = (
 	seriesList: any[],
 	data: any[],
 	idx: number,
+	isDarkMode: boolean,
 	yAxisUnit?: string,
 	series?: uPlot.Options['series'],
+	isBillingUsageGraphs?: boolean,
+	isHistogramGraphs?: boolean,
+	isMergedSeries?: boolean,
+	stackBarChart?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -35,6 +55,7 @@ const generateTooltipContent = (
 
 	let tooltipTitle = '';
 	const formattedData: Record<string, UplotTooltipDataProps> = {};
+	const duplicatedLegendLabels: Record<string, true> = {};
 
 	function sortTooltipContentBasedOnValue(
 		tooltipDataObj: Record<string, UplotTooltipDataProps>,
@@ -47,18 +68,67 @@ const generateTooltipContent = (
 	if (Array.isArray(series) && series.length > 0) {
 		series.forEach((item, index) => {
 			if (index === 0) {
-				tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY HH:mm:ss');
+				if (isBillingUsageGraphs) {
+					tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY');
+				} else {
+					tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY HH:mm:ss');
+				}
 			} else if (item.show) {
-				const { metric = {}, queryName = '', legend = '' } =
-					seriesList[index - 1] || {};
+				const {
+					metric = {},
+					queryName = '',
+					legend = '',
+					quantity = [],
+					unit = '',
+				} = seriesList[index - 1] || {};
 
-				const value = data[index][idx];
-				const label = getLabelName(metric, queryName || '', legend || '');
+				const value = getTooltipBaseValue(data, index, idx, stackBarChart);
 
-				const color = generateColor(label, themeColors.chartcolors);
+				const dataIngested = quantity[idx];
+				const label = isMergedSeries
+					? ''
+					: getLabelName(metric, queryName || '', legend || '');
+
+				let color = generateColor(
+					label,
+					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+				);
+
+				// in case of billing graph pick colors from the series options
+				if (isBillingUsageGraphs) {
+					let clr;
+					series.forEach((item) => {
+						if (item.label === label) {
+							clr = get(item, '_fill');
+						}
+					});
+					color = clr ?? color;
+				}
+
+				let tooltipItemLabel = label;
 
 				if (Number.isFinite(value)) {
 					const tooltipValue = getToolTipValue(value, yAxisUnit);
+					const dataIngestedFormated = getToolTipValue(dataIngested);
+					if (
+						duplicatedLegendLabels[label] ||
+						Object.prototype.hasOwnProperty.call(formattedData, label)
+					) {
+						duplicatedLegendLabels[label] = true;
+						const tempDataObj = formattedData[label];
+
+						if (tempDataObj) {
+							const newLabel = `${tempDataObj.queryName}: ${tempDataObj.label}`;
+
+							tempDataObj.textContent = `${newLabel} : ${tempDataObj.tooltipValue}`;
+
+							formattedData[newLabel] = tempDataObj;
+
+							delete formattedData[label];
+						}
+
+						tooltipItemLabel = `${queryName}: ${label}`;
+					}
 
 					const dataObj = {
 						show: item.show || false,
@@ -69,11 +139,15 @@ const generateTooltipContent = (
 						focus: item?._focus || false,
 						value,
 						tooltipValue,
-						textContent: `${label} : ${tooltipValue}`,
+						queryName,
+						textContent: isBillingUsageGraphs
+							? `${tooltipItemLabel} : $${tooltipValue} - ${dataIngestedFormated} ${unit}`
+							: `${tooltipItemLabel} : ${tooltipValue}`,
 					};
 
 					tooltipCount += 1;
-					formattedData[label] = dataObj;
+
+					formattedData[tooltipItemLabel] = dataObj;
 				}
 			}
 		});
@@ -95,7 +169,7 @@ const generateTooltipContent = (
 
 	const div = document.createElement('div');
 	div.classList.add('tooltip-content-row');
-	div.textContent = tooltipTitle;
+	div.textContent = isHistogramGraphs ? '' : tooltipTitle;
 	div.classList.add('tooltip-content-header');
 	container.appendChild(div);
 
@@ -140,10 +214,25 @@ const generateTooltipContent = (
 	return container;
 };
 
-const tooltipPlugin = (
-	apiResponse: MetricRangePayloadProps | undefined,
-	yAxisUnit?: string,
-): any => {
+type ToolTipPluginProps = {
+	apiResponse: MetricRangePayloadProps | undefined;
+	yAxisUnit?: string;
+	isBillingUsageGraphs?: boolean;
+	isHistogramGraphs?: boolean;
+	isMergedSeries?: boolean;
+	stackBarChart?: boolean;
+	isDarkMode: boolean;
+};
+
+const tooltipPlugin = ({
+	apiResponse,
+	yAxisUnit,
+	isBillingUsageGraphs,
+	isHistogramGraphs,
+	isMergedSeries,
+	stackBarChart,
+	isDarkMode,
+}: ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
 	let bLeft: any;
@@ -201,8 +290,13 @@ const tooltipPlugin = (
 							apiResult,
 							u.data,
 							idx,
+							isDarkMode,
 							yAxisUnit,
 							u.series,
+							isBillingUsageGraphs,
+							isHistogramGraphs,
+							isMergedSeries,
+							stackBarChart,
 						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });

@@ -6,8 +6,10 @@ describe('Services', () => {
 	test('Should render the component', () => {
 		render(<Metrics />);
 
-		const inputBox = screen.getByRole('combobox');
+		const inputBox = screen.getByTestId('resource-attributes-filter');
 		expect(inputBox).toBeInTheDocument();
+
+		expect(screen.getByTestId('resource-environment-filter')).toBeInTheDocument();
 
 		const application = screen.getByRole('columnheader', {
 			name: /application search/i,

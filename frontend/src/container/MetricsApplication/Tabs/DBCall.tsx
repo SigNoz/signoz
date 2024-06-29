@@ -1,4 +1,5 @@
 import { Col } from 'antd';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import {
@@ -26,10 +27,13 @@ import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
+	useGetAPMToTracesQueries,
 } from './util';
 
 function DBCall(): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+
+	const servicename = decodeURIComponent(encodedServiceName);
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
 
@@ -67,6 +71,7 @@ function DBCall(): JSX.Element {
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'reqps',
 				id: SERVICE_CHART_ID.dbCallsRPS,
+				fillSpans: false,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -86,10 +91,16 @@ function DBCall(): JSX.Element {
 				title: GraphTitle.DATABASE_CALLS_AVG_DURATION,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'ms',
-				id: SERVICE_CHART_ID.dbCallsAvgDuration,
+				id: GraphTitle.DATABASE_CALLS_AVG_DURATION,
+				fillSpans: true,
 			}),
 		[servicename, tagFilterItems],
 	);
+
+	const apmToTraceQuery = useGetAPMToTracesQueries({
+		servicename,
+		isDBCall: true,
+	});
 
 	return (
 		<Row gutter={24}>
@@ -102,6 +113,7 @@ function DBCall(): JSX.Element {
 						servicename,
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
+						apmToTraceQuery,
 					})}
 				>
 					View Traces
@@ -109,8 +121,6 @@ function DBCall(): JSX.Element {
 				<Card data-testid="database_call_rps">
 					<GraphContainer>
 						<Graph
-							fillSpans={false}
-							name="database_call_rps"
 							widget={databaseCallsRPSWidget}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
@@ -121,6 +131,7 @@ function DBCall(): JSX.Element {
 									'database_call_rps',
 								);
 							}}
+							version={ENTITY_VERSION_V4}
 						/>
 					</GraphContainer>
 				</Card>
@@ -135,6 +146,7 @@ function DBCall(): JSX.Element {
 						servicename,
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
+						apmToTraceQuery,
 					})}
 				>
 					View Traces
@@ -143,8 +155,6 @@ function DBCall(): JSX.Element {
 				<Card data-testid="database_call_avg_duration">
 					<GraphContainer>
 						<Graph
-							fillSpans
-							name="database_call_avg_duration"
 							widget={databaseCallsAverageDurationWidget}
 							headerMenuList={MENU_ITEMS}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
@@ -156,6 +166,7 @@ function DBCall(): JSX.Element {
 									'database_call_avg_duration',
 								);
 							}}
+							version={ENTITY_VERSION_V4}
 						/>
 					</GraphContainer>
 				</Card>

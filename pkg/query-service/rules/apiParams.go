@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
@@ -32,7 +31,7 @@ func newApiErrorBadData(err error) *model.ApiError {
 
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
-	Alert       string   `yaml:"alert,omitempty" json:"alert,omitempty"`
+	AlertName   string   `yaml:"alert,omitempty" json:"alert,omitempty"`
 	AlertType   string   `yaml:"alertType,omitempty" json:"alertType,omitempty"`
 	Description string   `yaml:"description,omitempty" json:"description,omitempty"`
 	RuleType    RuleType `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
@@ -49,6 +48,8 @@ type PostableRule struct {
 	Source string `json:"source,omitempty"`
 
 	PreferredChannels []string `json:"preferredChannels,omitempty"`
+
+	Version string `json:"version,omitempty"`
 
 	// legacy
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
@@ -72,18 +73,15 @@ func parseIntoRule(initRule PostableRule, content []byte, kind string) (*Postabl
 	var err error
 	if kind == "json" {
 		if err = json.Unmarshal(content, rule); err != nil {
-			zap.S().Debugf("postable rule content", string(content), "\t kind:", kind)
 			return nil, []error{fmt.Errorf("failed to load json")}
 		}
 	} else if kind == "yaml" {
 		if err = yaml.Unmarshal(content, rule); err != nil {
-			zap.S().Debugf("postable rule content", string(content), "\t kind:", kind)
 			return nil, []error{fmt.Errorf("failed to load yaml")}
 		}
 	} else {
 		return nil, []error{fmt.Errorf("invalid data type")}
 	}
-	zap.S().Debugf("postable rule(parsed):", rule)
 
 	if rule.RuleCondition == nil && rule.Expr != "" {
 		// account for legacy rules
@@ -123,8 +121,6 @@ func parseIntoRule(initRule PostableRule, content []byte, kind string) (*Postabl
 			}
 		}
 	}
-
-	zap.S().Debugf("postable rule:", rule, "\t condition", rule.RuleCondition.String())
 
 	if errs := rule.Validate(); len(errs) > 0 {
 		return nil, errs
@@ -192,7 +188,7 @@ func (r *PostableRule) Validate() (errs []error) {
 }
 
 func testTemplateParsing(rl *PostableRule) (errs []error) {
-	if rl.Alert == "" {
+	if rl.AlertName == "" {
 		// Not an alerting rule.
 		return errs
 	}
@@ -204,7 +200,7 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 		tmpl := NewTemplateExpander(
 			context.TODO(),
 			defs+text,
-			"__alert_"+rl.Alert,
+			"__alert_"+rl.AlertName,
 			tmplData,
 			times.Time(timestamp.FromTime(time.Now())),
 			nil,
