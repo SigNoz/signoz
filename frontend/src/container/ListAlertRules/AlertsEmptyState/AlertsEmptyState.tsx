@@ -2,6 +2,7 @@ import './AlertsEmptyState.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Divider, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
@@ -10,11 +11,25 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
 
 import AlertInfoCard from './AlertInfoCard';
 import { ALERT_CARDS, ALERT_INFO_LINKS } from './alertLinks';
 import InfoLinkText from './InfoLinkText';
+
+const alertLogEvents = (
+	title: string,
+	link: string,
+	dataSource?: DataSource,
+): void => {
+	const attributes = {
+		link,
+		page: 'Alert empty state page',
+	};
+
+	logEvent(title, dataSource ? { ...attributes, dataSource } : attributes);
+};
 
 export function AlertsEmptyState(): JSX.Element {
 	const { t } = useTranslation('common');
@@ -91,18 +106,33 @@ export function AlertsEmptyState(): JSX.Element {
 								link="https://youtu.be/xjxNIqiv4_M"
 								leftIconVisible
 								rightIconVisible
+								onClick={(): void =>
+									alertLogEvents(
+										'Alert: Video tutorial link clicked',
+										'https://youtu.be/xjxNIqiv4_M',
+									)
+								}
 							/>
 						</div>
 
-						{ALERT_INFO_LINKS.map((info) => (
-							<InfoLinkText
-								key={info.link}
-								infoText={info.infoText}
-								link={info.link}
-								leftIconVisible={info.leftIconVisible}
-								rightIconVisible={info.rightIconVisible}
-							/>
-						))}
+						{ALERT_INFO_LINKS.map((info) => {
+							const logEventTriggered = (): void =>
+								alertLogEvents(
+									'Alert: Tutorial doc link clicked',
+									info.link,
+									info.dataSource,
+								);
+							return (
+								<InfoLinkText
+									key={info.link}
+									infoText={info.infoText}
+									link={info.link}
+									leftIconVisible={info.leftIconVisible}
+									rightIconVisible={info.rightIconVisible}
+									onClick={logEventTriggered}
+								/>
+							);
+						})}
 					</div>
 				</section>
 				<div className="get-started-text">
@@ -113,14 +143,23 @@ export function AlertsEmptyState(): JSX.Element {
 					</Divider>
 				</div>
 
-				{ALERT_CARDS.map((card) => (
-					<AlertInfoCard
-						key={card.link}
-						header={card.header}
-						subheader={card.subheader}
-						link={card.link}
-					/>
-				))}
+				{ALERT_CARDS.map((card) => {
+					const logEventTriggered = (): void =>
+						alertLogEvents(
+							'Alert: Sample alert link clicked',
+							card.link,
+							card.dataSource,
+						);
+					return (
+						<AlertInfoCard
+							key={card.link}
+							header={card.header}
+							subheader={card.subheader}
+							link={card.link}
+							onClick={logEventTriggered}
+						/>
+					);
+				})}
 			</div>
 		</div>
 	);

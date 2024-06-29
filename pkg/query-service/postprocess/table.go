@@ -2,6 +2,7 @@ package postprocess
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -9,20 +10,21 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-func getAutoColNameForQuery(queryName string, params *v3.QueryRangeParamsV3) string {
-	q := params.CompositeQuery.BuilderQueries[queryName]
-	if q.DataSource == v3.DataSourceTraces || q.DataSource == v3.DataSourceLogs {
-		if q.AggregateAttribute.Key != "" {
-			return fmt.Sprintf("%s(%s)", q.AggregateOperator, q.AggregateAttribute.Key)
-		}
-		return string(q.AggregateOperator)
-	} else if q.DataSource == v3.DataSourceMetrics {
-		if q.SpaceAggregation != "" && params.Version == "v4" {
-			return fmt.Sprintf("%s(%s)", q.SpaceAggregation, q.AggregateAttribute.Key)
-		}
-		return fmt.Sprintf("%s(%s)", q.AggregateOperator, q.AggregateAttribute.Key)
+func roundToTwoDecimal(number float64) float64 {
+	// Handle very small numbers
+	if math.Abs(number) < 0.000001 {
+		return 0
 	}
-	return queryName
+
+	// Determine the number of decimal places to round to
+	decimalPlaces := 2
+	if math.Abs(number) < 0.01 {
+		decimalPlaces = int(math.Ceil(-math.Log10(math.Abs(number)))) + 1
+	}
+
+	// Round to the determined number of decimal places
+	scale := math.Pow(10, float64(decimalPlaces))
+	return math.Round(number*scale) / scale
 }
 
 func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRangeParamsV3) []*v3.Result {
@@ -55,10 +57,10 @@ func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRan
 	// There will be one column for each label key and one column for each query name
 	columns := make([]*v3.TableColumn, 0, len(labelKeys)+len(results))
 	for _, key := range labelKeys {
-		columns = append(columns, &v3.TableColumn{Name: key})
+		columns = append(columns, &v3.TableColumn{Name: key, IsValueColumn: false})
 	}
 	for _, result := range results {
-		columns = append(columns, &v3.TableColumn{Name: result.QueryName})
+		columns = append(columns, &v3.TableColumn{Name: result.QueryName, QueryName: result.QueryName, IsValueColumn: true})
 	}
 
 	// Create a map to store unique rows
@@ -72,8 +74,8 @@ func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRan
 
 			// Create a key for the row based on labels
 			var keyParts []string
-			rowData := make([]interface{}, len(columns))
-			for i, key := range labelKeys {
+			rowData := make(map[string]interface{}, len(columns))
+			for _, key := range labelKeys {
 				value := "n/a"
 				for _, labels := range series.LabelsArray {
 					if v, ok := labels[key]; ok {
@@ -82,21 +84,21 @@ func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRan
 					}
 				}
 				keyParts = append(keyParts, fmt.Sprintf("%s=%s", key, value))
-				rowData[i] = value
+				rowData[key] = value
 			}
 			rowKey := strings.Join(keyParts, ",")
 
 			// Get or create the row
 			row, ok := rowMap[rowKey]
 			if !ok {
-				row = &v3.TableRow{Data: rowData}
+				row = &v3.TableRow{Data: rowData, QueryName: result.QueryName}
 				rowMap[rowKey] = row
 			}
 
 			// Add the value for this query
-			for i, col := range columns {
+			for _, col := range columns {
 				if col.Name == result.QueryName {
-					row.Data[i] = series.Points[0].Value
+					row.Data[col.Name] = roundToTwoDecimal(series.Points[0].Value)
 					break
 				}
 			}
@@ -106,11 +108,6 @@ func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRan
 	// Convert rowMap to a slice of TableRows
 	rows := make([]*v3.TableRow, 0, len(rowMap))
 	for _, row := range rowMap {
-		for i, value := range row.Data {
-			if value == nil {
-				row.Data[i] = "n/a"
-			}
-		}
 		rows = append(rows, row)
 	}
 
@@ -122,11 +119,15 @@ func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRan
 	sort.Strings(queryNames)
 
 	// Sort rows based on OrderBy from BuilderQueries
-	sortRows(rows, columns, params.CompositeQuery.BuilderQueries, queryNames)
+	sortRows(rows, params.CompositeQuery.BuilderQueries, queryNames)
 
-	for _, column := range columns {
-		if _, exists := params.CompositeQuery.BuilderQueries[column.Name]; exists {
-			column.Name = getAutoColNameForQuery(column.Name, params)
+	for _, row := range rows {
+		for _, col := range columns {
+			if col.IsValueColumn {
+				if row.Data[col.Name] == nil {
+					row.Data[col.Name] = "n/a"
+				}
+			}
 		}
 	}
 
@@ -141,9 +142,11 @@ func TransformToTableForBuilderQueries(results []*v3.Result, params *v3.QueryRan
 	return []*v3.Result{&tableResult}
 }
 
-func sortRows(rows []*v3.TableRow, columns []*v3.TableColumn, builderQueries map[string]*v3.BuilderQuery, queryNames []string) {
-	sort.SliceStable(rows, func(i, j int) bool {
-		for _, queryName := range queryNames {
+func sortRows(rows []*v3.TableRow, builderQueries map[string]*v3.BuilderQuery, queryNames []string) {
+	// use reverse order of queryNames
+	for i := len(queryNames) - 1; i >= 0; i-- {
+		queryName := queryNames[i]
+		sort.SliceStable(rows, func(i, j int) bool {
 			query := builderQueries[queryName]
 			orderByList := query.OrderBy
 			if len(orderByList) == 0 {
@@ -155,23 +158,12 @@ func sortRows(rows []*v3.TableRow, columns []*v3.TableColumn, builderQueries map
 				if name == constants.SigNozOrderByValue {
 					name = queryName
 				}
-				colIndex := -1
-				for k, col := range columns {
-					if col.Name == name {
-						colIndex = k
-						break
-					}
-				}
-				if colIndex == -1 {
-					continue
-				}
 
-				valI := rows[i].Data[colIndex]
-				valJ := rows[j].Data[colIndex]
+				valI := rows[i].Data[name]
+				valJ := rows[j].Data[name]
 
-				// Handle "n/a" values
-				if valI == "n/a" && valJ == "n/a" {
-					continue
+				if valI == nil || valJ == nil {
+					return rows[i].QueryName < rows[j].QueryName
 				}
 
 				// Compare based on the data type
@@ -211,9 +203,9 @@ func sortRows(rows []*v3.TableRow, columns []*v3.TableColumn, builderQueries map
 					}
 				}
 			}
-		}
-		return false
-	})
+			return false
+		})
+	}
 }
 
 func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
@@ -248,11 +240,11 @@ func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
 	// So we create a column for each query name that has at least one point
 	columns := make([]*v3.TableColumn, 0)
 	for _, key := range labelKeys {
-		columns = append(columns, &v3.TableColumn{Name: key})
+		columns = append(columns, &v3.TableColumn{Name: key, IsValueColumn: false})
 	}
 	for _, result := range results {
 		if len(result.Series) > 0 && len(result.Series[0].Points) > 0 {
-			columns = append(columns, &v3.TableColumn{Name: result.QueryName})
+			columns = append(columns, &v3.TableColumn{Name: result.QueryName, QueryName: result.QueryName, IsValueColumn: true})
 		}
 	}
 
@@ -261,8 +253,8 @@ func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
 		for _, series := range result.Series {
 
 			// Create a key for the row based on labels
-			rowData := make([]interface{}, len(columns))
-			for i, key := range labelKeys {
+			rowData := make(map[string]interface{}, len(columns))
+			for _, key := range labelKeys {
 				value := "n/a"
 				for _, labels := range series.LabelsArray {
 					if v, ok := labels[key]; ok {
@@ -270,20 +262,30 @@ func TransformToTableForClickHouseQueries(results []*v3.Result) []*v3.Result {
 						break
 					}
 				}
-				rowData[i] = value
+				rowData[key] = value
 			}
 
 			// Get or create the row
-			row := &v3.TableRow{Data: rowData}
+			row := &v3.TableRow{Data: rowData, QueryName: result.QueryName}
 
 			// Add the value for this query
-			for i, col := range columns {
+			for _, col := range columns {
 				if col.Name == result.QueryName && len(series.Points) > 0 {
-					row.Data[i] = series.Points[0].Value
+					row.Data[col.Name] = roundToTwoDecimal(series.Points[0].Value)
 					break
 				}
 			}
 			rows = append(rows, row)
+		}
+	}
+
+	for _, row := range rows {
+		for _, col := range columns {
+			if col.IsValueColumn {
+				if row.Data[col.Name] == nil {
+					row.Data[col.Name] = "n/a"
+				}
+			}
 		}
 	}
 

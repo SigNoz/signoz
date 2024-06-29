@@ -1,4 +1,5 @@
 import { Form, Row } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import FormAlertRules from 'container/FormAlertRules';
@@ -68,6 +69,8 @@ function CreateRules(): JSX.Element {
 	useEffect(() => {
 		if (alertType) {
 			onSelectType(alertType);
+		} else {
+			logEvent('Alert: New alert data source selection page visited', {});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [alertType]);
