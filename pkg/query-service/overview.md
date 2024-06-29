@@ -32,7 +32,7 @@ The service uses complex SQL queries to fetch and aggregate data from ClickHouse
 
 ## Code References
 - **README.md**: Provides detailed setup instructions and environment variable configurations.
-```
+```bash
 # Query Service
 
 Query service is the interface between frontend and databases. It is written in **Golang**. It will have modules for all supported databases. Query service is responsible to:
@@ -47,7 +47,7 @@ https://github.com/SigNoz/signoz/blob/main/CONTRIBUTING.md#to-run-clickhouse-set
 
 
 - **Interface Definitions**: Defines the methods exposed by the Query Service.
-```
+```go
 
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
@@ -62,7 +62,7 @@ https://github.com/SigNoz/signoz/blob/main/CONTRIBUTING.md#to-run-clickhouse-set
 
 
 - **HTTP Handlers**: Implements the HTTP handlers for various API endpoints.
-```
+```go
 
 func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request) {
 
@@ -108,7 +108,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 
 
 - **SQL Queries**: Contains the SQL queries used to fetch and process data.
-```
+```SQL
 WITH
 -- Subquery for p99 calculation
 p99_query AS (
