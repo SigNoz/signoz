@@ -749,3 +749,136 @@ func TestPrepareLinksToTraces(t *testing.T) {
 	link := rule.prepareLinksToTraces(ts, labels.Labels{})
 	assert.Contains(t, link, "&timeRange=%7B%22start%22%3A1705468620000000000%2C%22end%22%3A1705468920000000000%2C%22pageSize%22%3A100%7D&startTime=1705468620000000000&endTime=1705468920000000000")
 }
+
+func TestThresholdRuleLabelNormalization(t *testing.T) {
+	postableRule := PostableRule{
+		AlertName:  "Tricky Condition Tests",
+		AlertType:  "METRIC_BASED_ALERT",
+		RuleType:   RuleTypeThreshold,
+		EvalWindow: Duration(5 * time.Minute),
+		Frequency:  Duration(1 * time.Minute),
+		RuleCondition: &RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "probe_success",
+						},
+						AggregateOperator: v3.AggregateOperatorNoOp,
+						DataSource:        v3.DataSourceMetrics,
+						Expression:        "A",
+					},
+				},
+			},
+		},
+	}
+
+	cases := []struct {
+		values      v3.Series
+		expectAlert bool
+		compareOp   string
+		matchType   string
+		target      float64
+	}{
+		// Test cases for Equals Always
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+				},
+				Labels: map[string]string{
+					"service.name": "frontend",
+				},
+				LabelsArray: []map[string]string{
+					{
+						"service.name": "frontend",
+					},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "3", // Equals
+			matchType:   "2", // Always
+			target:      0.0,
+		},
+	}
+
+	fm := featureManager.StartManager()
+	for idx, c := range cases {
+		postableRule.RuleCondition.CompareOp = CompareOp(c.compareOp)
+		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
+		postableRule.RuleCondition.Target = &c.target
+
+		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
+		if err != nil {
+			assert.NoError(t, err)
+		}
+
+		values := c.values
+		for i := range values.Points {
+			values.Points[i].Timestamp = time.Now().UnixMilli()
+		}
+
+		sample, shoulAlert := rule.shouldAlert(c.values)
+		for name, value := range c.values.Labels {
+			assert.Equal(t, value, sample.Metric.Get(normalizeLabelName(name)))
+		}
+
+		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
+	}
+}
+
+func TestThresholdRuleClickHouseTmpl(t *testing.T) {
+	postableRule := PostableRule{
+		AlertName:  "Tricky Condition Tests",
+		AlertType:  "METRIC_BASED_ALERT",
+		RuleType:   RuleTypeThreshold,
+		EvalWindow: Duration(5 * time.Minute),
+		Frequency:  Duration(1 * time.Minute),
+		RuleCondition: &RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeClickHouseSQL,
+				ClickHouseQueries: map[string]*v3.ClickHouseQuery{
+					"A": {
+						Query: "SELECT 1 >= {{.start_timestamp_ms}} AND 1 <= {{.end_timestamp_ms}}",
+					},
+				},
+			},
+		},
+	}
+
+	// 01:39:47
+	ts := time.Unix(1717205987, 0)
+
+	cases := []struct {
+		expectedQuery string
+	}{
+		// Test cases for Equals Always
+		{
+			// 01:32:00 - 01:37:00
+			expectedQuery: "SELECT 1 >= 1717205520000 AND 1 <= 1717205820000",
+		},
+	}
+
+	fm := featureManager.StartManager()
+	for idx, c := range cases {
+		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
+		if err != nil {
+			assert.NoError(t, err)
+		}
+
+		params := rule.prepareQueryRange(ts)
+
+		assert.Equal(t, c.expectedQuery, params.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
+
+		secondTimeParams := rule.prepareQueryRange(ts)
+
+		assert.Equal(t, c.expectedQuery, secondTimeParams.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
+	}
+}

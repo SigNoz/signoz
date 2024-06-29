@@ -1,5 +1,6 @@
 import './Pipelines.styles.scss';
 
+import * as Sentry from '@sentry/react';
 import type { TabsProps } from 'antd';
 import { Tabs } from 'antd';
 import getPipeline from 'api/pipeline/get';
@@ -9,7 +10,6 @@ import PipelinePage from 'container/PipelinePage/Layouts/Pipeline';
 import { useNotifications } from 'hooks/useNotifications';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useEffect, useMemo } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { SuccessResponse } from 'types/api';
@@ -82,13 +82,13 @@ function Pipelines(): JSX.Element {
 	}
 
 	return (
-		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<Tabs
 				className="pipeline-tabs"
 				defaultActiveKey="pipelines"
 				items={tabItems}
 			/>
-		</ErrorBoundary>
+		</Sentry.ErrorBoundary>
 	);
 }
 

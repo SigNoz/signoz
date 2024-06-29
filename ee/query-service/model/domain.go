@@ -104,7 +104,7 @@ func (od *OrgDomain) GetSAMLCert() string {
 // requesting OAuth and also used in processing response from google
 func (od *OrgDomain) PrepareGoogleOAuthProvider(siteUrl *url.URL) (sso.OAuthCallbackProvider, error) {
 	if od.GoogleAuthConfig == nil {
-		return nil, fmt.Errorf("Google auth is not setup correctly for this domain")
+		return nil, fmt.Errorf("GOOGLE OAUTH is not setup correctly for this domain")
 	}
 
 	return od.GoogleAuthConfig.GetProvider(od.Name, siteUrl)

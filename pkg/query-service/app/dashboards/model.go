@@ -83,6 +83,22 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("error in creating notification_channles table: %s", err.Error())
 	}
 
+	tableSchema := `CREATE TABLE IF NOT EXISTS planned_maintenance (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		description TEXT,
+		alert_ids TEXT,
+		schedule TEXT NOT NULL,
+		created_at datetime NOT NULL,
+		created_by TEXT NOT NULL,
+		updated_at datetime NOT NULL,
+		updated_by TEXT NOT NULL
+	);`
+	_, err = db.Exec(tableSchema)
+	if err != nil {
+		return nil, fmt.Errorf("error in creating planned_maintenance table: %s", err.Error())
+	}
+
 	table_schema = `CREATE TABLE IF NOT EXISTS ttl_status (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		transaction_id TEXT NOT NULL,
@@ -690,7 +706,7 @@ func countTraceAndLogsPanel(data map[string]interface{}) (int64, int64) {
 	count := int64(0)
 	totalPanels := int64(0)
 	if data != nil && data["widgets"] != nil {
-		widgets, ok := data["widgets"].(interface{})
+		widgets, ok := data["widgets"]
 		if ok {
 			data, ok := widgets.([]interface{})
 			if ok {
@@ -698,9 +714,9 @@ func countTraceAndLogsPanel(data map[string]interface{}) (int64, int64) {
 					sData, ok := widget.(map[string]interface{})
 					if ok && sData["query"] != nil {
 						totalPanels++
-						query, ok := sData["query"].(interface{}).(map[string]interface{})
+						query, ok := sData["query"].(map[string]interface{})
 						if ok && query["queryType"] == "builder" && query["builder"] != nil {
-							builderData, ok := query["builder"].(interface{}).(map[string]interface{})
+							builderData, ok := query["builder"].(map[string]interface{})
 							if ok && builderData["queryData"] != nil {
 								builderQueryData, ok := builderData["queryData"].([]interface{})
 								if ok {
@@ -726,7 +742,7 @@ func countTraceAndLogsPanel(data map[string]interface{}) (int64, int64) {
 func getWidgetIds(data map[string]interface{}) []string {
 	widgetIds := []string{}
 	if data != nil && data["widgets"] != nil {
-		widgets, ok := data["widgets"].(interface{})
+		widgets, ok := data["widgets"]
 		if ok {
 			data, ok := widgets.([]interface{})
 			if ok {

@@ -22,13 +22,30 @@ interface UplotTooltipDataProps {
 	queryName: string;
 }
 
+function getTooltipBaseValue(
+	data: any[],
+	index: number,
+	idx: number,
+	stackBarChart: boolean | undefined,
+): any {
+	if (stackBarChart && index + 1 < data.length) {
+		return data[index][idx] - data[index + 1][idx];
+	}
+
+	return data[index][idx];
+}
+
 const generateTooltipContent = (
 	seriesList: any[],
 	data: any[],
 	idx: number,
+	isDarkMode: boolean,
 	yAxisUnit?: string,
 	series?: uPlot.Options['series'],
 	isBillingUsageGraphs?: boolean,
+	isHistogramGraphs?: boolean,
+	isMergedSeries?: boolean,
+	stackBarChart?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -65,11 +82,17 @@ const generateTooltipContent = (
 					unit = '',
 				} = seriesList[index - 1] || {};
 
-				const value = data[index][idx];
-				const dataIngested = quantity[idx];
-				const label = getLabelName(metric, queryName || '', legend || '');
+				const value = getTooltipBaseValue(data, index, idx, stackBarChart);
 
-				let color = generateColor(label, themeColors.chartcolors);
+				const dataIngested = quantity[idx];
+				const label = isMergedSeries
+					? ''
+					: getLabelName(metric, queryName || '', legend || '');
+
+				let color = generateColor(
+					label,
+					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+				);
 
 				// in case of billing graph pick colors from the series options
 				if (isBillingUsageGraphs) {
@@ -146,7 +169,7 @@ const generateTooltipContent = (
 
 	const div = document.createElement('div');
 	div.classList.add('tooltip-content-row');
-	div.textContent = tooltipTitle;
+	div.textContent = isHistogramGraphs ? '' : tooltipTitle;
 	div.classList.add('tooltip-content-header');
 	container.appendChild(div);
 
@@ -191,11 +214,25 @@ const generateTooltipContent = (
 	return container;
 };
 
-const tooltipPlugin = (
-	apiResponse: MetricRangePayloadProps | undefined,
-	yAxisUnit?: string,
-	isBillingUsageGraphs?: boolean,
-): any => {
+type ToolTipPluginProps = {
+	apiResponse: MetricRangePayloadProps | undefined;
+	yAxisUnit?: string;
+	isBillingUsageGraphs?: boolean;
+	isHistogramGraphs?: boolean;
+	isMergedSeries?: boolean;
+	stackBarChart?: boolean;
+	isDarkMode: boolean;
+};
+
+const tooltipPlugin = ({
+	apiResponse,
+	yAxisUnit,
+	isBillingUsageGraphs,
+	isHistogramGraphs,
+	isMergedSeries,
+	stackBarChart,
+	isDarkMode,
+}: ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
 	let bLeft: any;
@@ -253,9 +290,13 @@ const tooltipPlugin = (
 							apiResult,
 							u.data,
 							idx,
+							isDarkMode,
 							yAxisUnit,
 							u.series,
 							isBillingUsageGraphs,
+							isHistogramGraphs,
+							isMergedSeries,
+							stackBarChart,
 						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });

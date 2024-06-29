@@ -24,6 +24,7 @@ function Overview(props: OverviewProps): JSX.Element {
 	];
 
 	const assetLabelMap = ['Pipelines', 'Dashboards', 'Alerts'];
+
 	return (
 		<div className="integration-detail-overview">
 			<div className="integration-detail-overview-left-container">

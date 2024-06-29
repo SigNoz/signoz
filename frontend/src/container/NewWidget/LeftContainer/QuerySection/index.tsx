@@ -12,7 +12,6 @@ import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interface
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo } from 'lodash-es';
@@ -33,7 +32,6 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import AppReducer from 'types/reducer/app';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
@@ -45,10 +43,6 @@ function QuerySection({
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const urlQuery = useUrlQuery();
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -80,8 +74,6 @@ function QuerySection({
 				return;
 			}
 
-			const updatedQuery = updateStepInterval(query, maxTime, minTime);
-
 			const selectedWidgetIndex = getSelectedWidgetIndex(
 				selectedDashboard,
 				selectedWidget.id,
@@ -102,18 +94,16 @@ function QuerySection({
 						...previousWidgets,
 						{
 							...selectedWidget,
-							query: updatedQuery,
+							query,
 						},
 						...nextWidgets,
 					],
 				},
 			});
-			redirectWithQueryBuilderData(updatedQuery);
+			redirectWithQueryBuilderData(query);
 		},
 		[
 			selectedDashboard,
-			maxTime,
-			minTime,
 			selectedWidget,
 			setSelectedDashboard,
 			redirectWithQueryBuilderData,
@@ -137,7 +127,7 @@ function QuerySection({
 
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: false, isDisabled: true },
+			stepInterval: { isHidden: false, isDisabled: false },
 		};
 
 		return config;
@@ -147,11 +137,10 @@ function QuerySection({
 		{
 			key: EQueryType.QUERY_BUILDER,
 			label: (
-				<Tooltip title="Query Builder">
-					<Button className="nav-btns">
-						<Atom size={14} />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<Atom size={14} />
+					<Typography>Query Builder</Typography>
+				</Button>
 			),
 			tab: <Typography>Query Builder</Typography>,
 			children: (
@@ -169,11 +158,10 @@ function QuerySection({
 		{
 			key: EQueryType.QUERY_BUILDER,
 			label: (
-				<Tooltip title="Query Builder">
-					<Button className="nav-btns">
-						<Atom size={14} />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<Atom size={14} />
+					<Typography>Query Builder</Typography>
+				</Button>
 			),
 			tab: <Typography>Query Builder</Typography>,
 			children: (
@@ -187,11 +175,10 @@ function QuerySection({
 		{
 			key: EQueryType.CLICKHOUSE,
 			label: (
-				<Tooltip title="ClickHouse">
-					<Button className="nav-btns">
-						<Terminal size={14} />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<Terminal size={14} />
+					<Typography>ClickHouse Query</Typography>
+				</Button>
 			),
 			tab: <Typography>ClickHouse Query</Typography>,
 			children: <ClickHouseQueryContainer />,
@@ -204,6 +191,7 @@ function QuerySection({
 						<PromQLIcon
 							fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 						/>
+						<Typography>PromQL</Typography>
 					</Button>
 				</Tooltip>
 			),

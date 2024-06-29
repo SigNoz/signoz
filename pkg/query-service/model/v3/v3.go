@@ -354,6 +354,8 @@ type QueryRangeParamsV3 struct {
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
 	NoCache        bool                   `json:"noCache"`
+	Version        string                 `json:"-"`
+	FormatForWeb   bool                   `json:"formatForWeb,omitempty"`
 }
 
 type PromQuery struct {
@@ -400,6 +402,7 @@ type CompositeQuery struct {
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
 	Unit              string                      `json:"unit,omitempty"`
+	FillGaps          bool                        `json:"fillGaps,omitempty"`
 }
 
 func (c *CompositeQuery) EnabledQueries() int {
@@ -425,6 +428,16 @@ func (c *CompositeQuery) EnabledQueries() int {
 		}
 	}
 	return count
+}
+
+func (c *CompositeQuery) Sanitize() {
+	// remove groupBy for queries with list panel type
+	for _, query := range c.BuilderQueries {
+		if len(query.GroupBy) > 0 && c.PanelType == PanelTypeList {
+			query.GroupBy = []AttributeKey{}
+		}
+	}
+
 }
 
 func (c *CompositeQuery) Validate() error {
@@ -669,6 +682,34 @@ type BuilderQuery struct {
 	ShiftBy            int64
 }
 
+// CanDefaultZero returns true if the missing value can be substituted by zero
+// For example, for an aggregation window [Tx - Tx+1], with an aggregation operator `count`
+// The lack of data can always be interpreted as zero. No data for requests count = zero requests
+// This is true for all aggregations that have `count`ing involved.
+//
+// The same can't be true for others, `sum` of no values doesn't necessarily mean zero.
+// We can't decide whether or not should it be zero.
+func (b *BuilderQuery) CanDefaultZero() bool {
+	switch b.DataSource {
+	case DataSourceMetrics:
+		if b.AggregateOperator.IsRateOperator() ||
+			b.TimeAggregation.IsRateOperator() ||
+			b.AggregateOperator == AggregateOperatorCount ||
+			b.AggregateOperator == AggregateOperatorCountDistinct ||
+			b.TimeAggregation == TimeAggregationCount ||
+			b.TimeAggregation == TimeAggregationCountDistinct {
+			return true
+		}
+	case DataSourceTraces, DataSourceLogs:
+		if b.AggregateOperator.IsRateOperator() ||
+			b.AggregateOperator == AggregateOperatorCount ||
+			b.AggregateOperator == AggregateOperatorCountDistinct {
+			return true
+		}
+	}
+	return false
+}
+
 func (b *BuilderQuery) Validate(panelType PanelType) error {
 	if b == nil {
 		return nil
@@ -718,9 +759,9 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 		}
 	}
 	if b.GroupBy != nil {
-		if len(b.GroupBy) > 0 && panelType == PanelTypeList {
-			return fmt.Errorf("group by is not supported for list panel type")
-		}
+		// if len(b.GroupBy) > 0 && panelType == PanelTypeList {
+		// 	return fmt.Errorf("group by is not supported for list panel type")
+		// }
 
 		for _, groupBy := range b.GroupBy {
 			if err := groupBy.Validate(); err != nil {
@@ -947,10 +988,30 @@ type QueryRangeResponse struct {
 	Result                []*Result `json:"result"`
 }
 
+type TableColumn struct {
+	Name string `json:"name"`
+	// QueryName is the name of the query that this column belongs to
+	QueryName string `json:"queryName"`
+	// IsValueColumn is true if this column is a value column
+	// i.e it is the column that contains the actual value that is being plotted
+	IsValueColumn bool `json:"isValueColumn"`
+}
+
+type TableRow struct {
+	Data      map[string]interface{} `json:"data"`
+	QueryName string                 `json:"-"`
+}
+
+type Table struct {
+	Columns []*TableColumn `json:"columns"`
+	Rows    []*TableRow    `json:"rows"`
+}
+
 type Result struct {
-	QueryName string    `json:"queryName"`
-	Series    []*Series `json:"series"`
-	List      []*Row    `json:"list"`
+	QueryName string    `json:"queryName,omitempty"`
+	Series    []*Series `json:"series,omitempty"`
+	List      []*Row    `json:"list,omitempty"`
+	Table     *Table    `json:"table,omitempty"`
 }
 
 type LogsLiveTailClient struct {
@@ -961,10 +1022,9 @@ type LogsLiveTailClient struct {
 }
 
 type Series struct {
-	Labels            map[string]string   `json:"labels"`
-	LabelsArray       []map[string]string `json:"labelsArray"`
-	Points            []Point             `json:"values"`
-	GroupingSetsPoint *Point              `json:"-"`
+	Labels      map[string]string   `json:"labels"`
+	LabelsArray []map[string]string `json:"labelsArray"`
+	Points      []Point             `json:"values"`
 }
 
 func (s *Series) SortPoints() {

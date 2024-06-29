@@ -119,12 +119,12 @@ func NewCollectorSimulator(
 		return nil, cleanupFn, model.InternalError(errors.Wrap(err, "could not close tmp simulation config file"))
 	}
 
-	fp := fileprovider.New()
+	fp := fileprovider.NewFactory()
 	confProvider, err := otelcol.NewConfigProvider(otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
-			URIs:       []string{simulationConfigPath},
-			Providers:  map[string]confmap.Provider{fp.Scheme(): fp},
-			Converters: []confmap.Converter{expandconverter.New()},
+			URIs:               []string{simulationConfigPath},
+			ProviderFactories:  []confmap.ProviderFactory{fp},
+			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
 		},
 	})
 	if err != nil {

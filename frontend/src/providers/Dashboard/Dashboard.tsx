@@ -9,6 +9,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import useAxiosError from 'hooks/useAxiosError';
 import useTabVisibility from 'hooks/useTabFocus';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
@@ -51,6 +52,8 @@ const DashboardContext = createContext<IDashboardContext>({
 	layouts: [],
 	panelMap: {},
 	setPanelMap: () => {},
+	listSortOrder: { columnKey: 'createdAt', order: 'descend', pagination: '1' },
+	setListSortOrder: () => {},
 	setLayouts: () => {},
 	setSelectedDashboard: () => {},
 	updatedTimeRef: {} as React.MutableRefObject<Dayjs | null>,
@@ -77,6 +80,17 @@ export function DashboardProvider({
 	const isDashboardPage = useRouteMatch<Props>({
 		path: ROUTES.DASHBOARD,
 		exact: true,
+	});
+
+	const params = useUrlQuery();
+	const orderColumnParam = params.get('columnKey');
+	const orderQueryParam = params.get('order');
+	const paginationParam = params.get('page');
+
+	const [listSortOrder, setListSortOrder] = useState({
+		columnKey: orderColumnParam || 'updatedAt',
+		order: orderQueryParam || 'descend',
+		pagination: paginationParam || '1',
 	});
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -341,6 +355,8 @@ export function DashboardProvider({
 			selectedDashboard,
 			dashboardId,
 			layouts,
+			listSortOrder,
+			setListSortOrder,
 			panelMap,
 			setLayouts,
 			setPanelMap,
@@ -359,6 +375,8 @@ export function DashboardProvider({
 			selectedDashboard,
 			dashboardId,
 			layouts,
+			listSortOrder,
+			setListSortOrder,
 			panelMap,
 			toScrollWidgetId,
 			updateLocalStorageDashboardVariables,

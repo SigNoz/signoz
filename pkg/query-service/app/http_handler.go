@@ -39,7 +39,6 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
@@ -66,23 +65,17 @@ func NewRouter() *mux.Router {
 	return mux.NewRouter().UseEncodedPath()
 }
 
-// APIHandler implements the query service public API by registering routes at httpPrefix
+// APIHandler implements the query service public API
 type APIHandler struct {
-	// queryService *querysvc.QueryService
-	// queryParser  queryParser
-	basePath          string
-	apiPrefix         string
 	reader            interfaces.Reader
 	skipConfig        *model.SkipConfig
 	appDao            dao.ModelDao
 	alertManager      am.Manager
 	ruleManager       *rules.Manager
 	featureFlags      interfaces.FeatureLookup
-	ready             func(http.HandlerFunc) http.HandlerFunc
 	querier           interfaces.Querier
 	querierV2         interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
-	preferDelta       bool
 	preferSpanMetrics bool
 
 	// temporalityMap is a map of metric name to temporality
@@ -112,7 +105,6 @@ type APIHandlerOpts struct {
 
 	SkipConfig *model.SkipConfig
 
-	PerferDelta       bool
 	PreferSpanMetrics bool
 
 	MaxIdleConns int
@@ -172,7 +164,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		reader:                        opts.Reader,
 		appDao:                        opts.AppDao,
 		skipConfig:                    opts.SkipConfig,
-		preferDelta:                   opts.PerferDelta,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		maxIdleConns:                  opts.MaxIdleConns,
@@ -193,8 +184,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
-
-	aH.ready = aH.testReady
 
 	dashboards.LoadDashboardFiles(aH.featureFlags)
 	// if errReadingDashboards != nil {
@@ -227,32 +216,6 @@ type structuredResponse struct {
 type structuredError struct {
 	Code int    `json:"code,omitempty"`
 	Msg  string `json:"msg"`
-	// TraceID ui.TraceID `json:"traceID,omitempty"`
-}
-
-var corsHeaders = map[string]string{
-	"Access-Control-Allow-Headers":  "Accept, Authorization, Content-Type, Origin",
-	"Access-Control-Allow-Methods":  "GET, OPTIONS",
-	"Access-Control-Allow-Origin":   "*",
-	"Access-Control-Expose-Headers": "Date",
-}
-
-// Enables cross-site script calls.
-func setCORS(w http.ResponseWriter) {
-	for h, v := range corsHeaders {
-		w.Header().Set(h, v)
-	}
-}
-
-type apiFunc func(r *http.Request) (interface{}, *model.ApiError, func())
-
-// Checks if server is ready, calls f if it is, returns 503 if it is not.
-func (aH *APIHandler) testReady(f http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		f(w, r)
-
-	}
 }
 
 type ApiResponse struct {
@@ -374,6 +337,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
 	router.HandleFunc("/api/v1/testRule", am.EditAccess(aH.testRule)).Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/downtime_schedules", am.OpenAccess(aH.listDowntimeSchedules)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.OpenAccess(aH.getDowntimeSchedule)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/downtime_schedules", am.OpenAccess(aH.createDowntimeSchedule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.OpenAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.OpenAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
@@ -535,6 +504,102 @@ func (aH *APIHandler) populateTemporality(ctx context.Context, qp *v3.QueryRange
 	return nil
 }
 
+func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Request) {
+	schedules, err := aH.ruleManager.RuleDB().GetAllPlannedMaintenance(r.Context())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	// The schedules are stored as JSON in the database, so we need to filter them here
+	// Since the number of schedules is expected to be small, this should be fine
+
+	if r.URL.Query().Get("active") != "" {
+		activeSchedules := make([]rules.PlannedMaintenance, 0)
+		active, _ := strconv.ParseBool(r.URL.Query().Get("active"))
+		for _, schedule := range schedules {
+			now := time.Now().In(time.FixedZone(schedule.Schedule.Timezone, 0))
+			if schedule.IsActive(now) == active {
+				activeSchedules = append(activeSchedules, schedule)
+			}
+		}
+		schedules = activeSchedules
+	}
+
+	if r.URL.Query().Get("recurring") != "" {
+		recurringSchedules := make([]rules.PlannedMaintenance, 0)
+		recurring, _ := strconv.ParseBool(r.URL.Query().Get("recurring"))
+		for _, schedule := range schedules {
+			if schedule.IsRecurring() == recurring {
+				recurringSchedules = append(recurringSchedules, schedule)
+			}
+		}
+		schedules = recurringSchedules
+	}
+
+	aH.Respond(w, schedules)
+}
+
+func (aH *APIHandler) getDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	schedule, err := aH.ruleManager.RuleDB().GetPlannedMaintenanceByID(r.Context(), id)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, schedule)
+}
+
+func (aH *APIHandler) createDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	var schedule rules.PlannedMaintenance
+	err := json.NewDecoder(r.Body).Decode(&schedule)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := schedule.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	_, err = aH.ruleManager.RuleDB().CreatePlannedMaintenance(r.Context(), schedule)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	var schedule rules.PlannedMaintenance
+	err := json.NewDecoder(r.Body).Decode(&schedule)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := schedule.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	_, err = aH.ruleManager.RuleDB().EditPlannedMaintenance(r.Context(), schedule, id)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	_, err := aH.ruleManager.RuleDB().DeletePlannedMaintenance(r.Context(), id)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, nil)
+}
+
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 
 	rules, err := aH.ruleManager.ListRuleStates(r.Context())
@@ -558,6 +623,9 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 	ic := aH.IntegrationsController
 	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context())
+	if err != nil {
+		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(err))
+	}
 	allDashboards = append(allDashboards, installedIntegrationDashboards...)
 
 	tagsFromReq, ok := r.URL.Query()["tags"]
@@ -659,7 +727,7 @@ func prepareQuery(r *http.Request) (string, error) {
 
 	for _, op := range notAllowedOps {
 		if strings.Contains(strings.ToLower(query), op) {
-			return "", fmt.Errorf("Operation %s is not allowed", op)
+			return "", fmt.Errorf("operation %s is not allowed", op)
 		}
 	}
 
@@ -762,13 +830,17 @@ func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, r *http.Request, sign
 		return
 	}
 	aH.Respond(w, dashboard)
-	return
 }
 
 func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 	b, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		return
+	}
 
 	var importData model.GrafanaJSON
 
@@ -1045,9 +1117,6 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) queryRangeMetricsFromClickhouse(w http.ResponseWriter, r *http.Request) {
-
-}
 func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
 
 	query, apiErrorObj := parseQueryRangeRequest(r)
@@ -1085,11 +1154,11 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			RespondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			RespondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
 		}
-		RespondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 		return
 	}
 
@@ -1140,11 +1209,11 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			RespondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			RespondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
 		}
-		RespondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{
@@ -1321,13 +1390,13 @@ func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 
-	traceId, spanId, levelUpInt, levelDownInt, err := ParseSearchTracesParams(r)
+	params, err := ParseSearchTracesParams(r)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading params")
 		return
 	}
 
-	result, err := aH.reader.SearchTraces(r.Context(), traceId, spanId, levelUpInt, levelDownInt, 0, nil)
+	result, err := aH.reader.SearchTraces(r.Context(), params, nil)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1767,7 +1836,7 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
-			Err: errors.New("User not found"),
+			Err: errors.New("user not found"),
 		}, nil)
 		return
 	}
@@ -1834,7 +1903,7 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorNotFound,
-			Err: errors.New("User not found"),
+			Err: errors.New("no user found"),
 		}, nil)
 		return
 	}
@@ -1907,7 +1976,7 @@ func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorNotFound,
-			Err: errors.New("No user found"),
+			Err: errors.New("no user found"),
 		}, nil)
 		return
 	}
@@ -1956,7 +2025,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 
 		if len(adminUsers) == 1 {
 			RespondError(w, &model.ApiError{
-				Err: errors.New("Cannot demote the last admin"),
+				Err: errors.New("cannot demote the last admin"),
 				Typ: model.ErrorInternal}, nil)
 			return
 		}
@@ -2008,6 +2077,9 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		"organizationName": req.Name,
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
+	if err != nil {
+		zap.L().Error("failed to get user email from jwt", zap.Error(err))
+	}
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail, true, false)
 
 	aH.WriteJSON(w, r, map[string]string{"data": "org updated successfully"})
@@ -2345,7 +2417,7 @@ func (ah *APIHandler) calculateLogsConnectionStatus(
 			},
 		},
 	}
-	queryRes, err, _ := ah.querier.QueryRange(
+	queryRes, _, err := ah.querier.QueryRange(
 		ctx, qrParams, map[string]v3.AttributeKey{},
 	)
 	if err != nil {
@@ -2865,185 +2937,6 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	aH.Respond(w, response)
 }
 
-func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]error) {
-	type channelResult struct {
-		Series []*v3.Series
-		Err    error
-		Name   string
-		Query  string
-	}
-
-	ch := make(chan channelResult, len(queries))
-	var wg sync.WaitGroup
-
-	for name, query := range queries {
-		wg.Add(1)
-		go func(name, query string) {
-			defer wg.Done()
-
-			seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
-
-			if err != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
-				return
-			}
-			ch <- channelResult{Series: seriesList, Name: name, Query: query}
-		}(name, query)
-	}
-
-	wg.Wait()
-	close(ch)
-
-	var errs []error
-	errQuriesByName := make(map[string]error)
-	res := make([]*v3.Result, 0)
-	// read values from the channel
-	for r := range ch {
-		if r.Err != nil {
-			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Err
-			continue
-		}
-		res = append(res, &v3.Result{
-			QueryName: r.Name,
-			Series:    r.Series,
-		})
-	}
-	if len(errs) != 0 {
-		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
-	}
-	return res, nil, nil
-}
-
-func (aH *APIHandler) execClickHouseListQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]error) {
-	type channelResult struct {
-		List  []*v3.Row
-		Err   error
-		Name  string
-		Query string
-	}
-
-	ch := make(chan channelResult, len(queries))
-	var wg sync.WaitGroup
-
-	for name, query := range queries {
-		wg.Add(1)
-		go func(name, query string) {
-			defer wg.Done()
-			rowList, err := aH.reader.GetListResultV3(ctx, query)
-
-			if err != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
-				return
-			}
-			ch <- channelResult{List: rowList, Name: name, Query: query}
-		}(name, query)
-	}
-
-	wg.Wait()
-	close(ch)
-
-	var errs []error
-	errQuriesByName := make(map[string]error)
-	res := make([]*v3.Result, 0)
-	// read values from the channel
-	for r := range ch {
-		if r.Err != nil {
-			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Err
-			continue
-		}
-		res = append(res, &v3.Result{
-			QueryName: r.Name,
-			List:      r.List,
-		})
-	}
-	if len(errs) != 0 {
-		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
-	}
-	return res, nil, nil
-}
-
-func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangeParams *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]error) {
-	type channelResult struct {
-		Series []*v3.Series
-		Err    error
-		Name   string
-		Query  string
-	}
-
-	ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeQuery.PromQueries))
-	var wg sync.WaitGroup
-
-	for name, query := range metricsQueryRangeParams.CompositeQuery.PromQueries {
-		if query.Disabled {
-			continue
-		}
-		wg.Add(1)
-		go func(name string, query *v3.PromQuery) {
-			var seriesList []*v3.Series
-			defer wg.Done()
-			tmpl := template.New("promql-query")
-			tmpl, tmplErr := tmpl.Parse(query.Query)
-			if tmplErr != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
-				return
-			}
-			var queryBuf bytes.Buffer
-			tmplErr = tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
-			if tmplErr != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
-				return
-			}
-			query.Query = queryBuf.String()
-			queryModel := model.QueryRangeParams{
-				Start: time.UnixMilli(metricsQueryRangeParams.Start),
-				End:   time.UnixMilli(metricsQueryRangeParams.End),
-				Step:  time.Duration(metricsQueryRangeParams.Step * int64(time.Second)),
-				Query: query.Query,
-			}
-			promResult, _, err := aH.reader.GetQueryRangeResult(ctx, &queryModel)
-			if err != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query.Query}
-				return
-			}
-			matrix, _ := promResult.Matrix()
-			for _, v := range matrix {
-				var s v3.Series
-				s.Labels = v.Metric.Copy().Map()
-				for _, p := range v.Floats {
-					s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.F})
-				}
-				seriesList = append(seriesList, &s)
-			}
-			ch <- channelResult{Series: seriesList, Name: name, Query: query.Query}
-		}(name, query)
-	}
-
-	wg.Wait()
-	close(ch)
-
-	var errs []error
-	errQuriesByName := make(map[string]error)
-	res := make([]*v3.Result, 0)
-	// read values from the channel
-	for r := range ch {
-		if r.Err != nil {
-			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Err
-			continue
-		}
-		res = append(res, &v3.Result{
-			QueryName: r.Name,
-			Series:    r.Series,
-		})
-	}
-	if len(errs) != 0 {
-		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
-	}
-	return res, nil, nil
-}
-
 func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
 	data := map[string]v3.AttributeKey{}
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
@@ -3262,6 +3155,7 @@ func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request)
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
+	queryRangeParams.Version = "v3"
 
 	aH.Respond(w, queryRangeParams)
 }
@@ -3294,7 +3188,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	result, err, errQuriesByName = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
+	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
@@ -3302,6 +3196,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		return
 	}
 
+	postprocess.ApplyHavingClause(result, queryRangeParams)
 	postprocess.ApplyMetricLimit(result, queryRangeParams)
 
 	sendQueryResultEvents(r, result, queryRangeParams)
@@ -3309,6 +3204,18 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	// are executed in clickhouse directly and we wanted to add support for timeshift
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		postprocess.ApplyFunctions(result, queryRangeParams)
+	}
+
+	if queryRangeParams.CompositeQuery.FillGaps {
+		postprocess.FillGaps(result, queryRangeParams)
+	}
+
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable && queryRangeParams.FormatForWeb {
+		if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+			result = postprocess.TransformToTableForClickHouseQueries(result)
+		} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+			result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+		}
 	}
 
 	resp := v3.QueryRangeResponse{
@@ -3550,7 +3457,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	result, err, errQuriesByName = aH.querierV2.QueryRange(ctx, queryRangeParams, spanKeys)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
@@ -3559,8 +3466,10 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-
 		result, err = postprocess.PostProcessResult(result, queryRangeParams)
+	} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL &&
+		queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable && queryRangeParams.FormatForWeb {
+		result = postprocess.TransformToTableForClickHouseQueries(result)
 	}
 
 	if err != nil {
@@ -3584,6 +3493,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
+	queryRangeParams.Version = "v4"
 
 	// add temporality for each metric
 	temporalityErr := aH.populateTemporality(r.Context(), queryRangeParams)

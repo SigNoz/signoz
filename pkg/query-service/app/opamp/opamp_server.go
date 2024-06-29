@@ -14,10 +14,8 @@ import (
 var opAmpServer *Server
 
 type Server struct {
-	server       server.OpAMPServer
-	agents       *model.Agents
-	logger       *zap.Logger
-	capabilities int32
+	server server.OpAMPServer
+	agents *model.Agents
 
 	agentConfigProvider AgentConfigProvider
 
@@ -98,8 +96,7 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 		)
 	}
 
-	var response *protobufs.ServerToAgent
-	response = &protobufs.ServerToAgent{
+	response := &protobufs.ServerToAgent{
 		InstanceUid:  agentID,
 		Capabilities: uint64(capabilities),
 	}

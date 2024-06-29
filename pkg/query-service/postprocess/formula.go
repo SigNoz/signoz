@@ -24,10 +24,13 @@ func isSubset(super, sub map[string]string) bool {
 }
 
 // Function to find unique label sets
-func findUniqueLabelSets(results []*v3.Result) []map[string]string {
+func findUniqueLabelSets(results []*v3.Result, queriesInExpression map[string]struct{}) []map[string]string {
 	allLabelSets := make([]map[string]string, 0)
 	// The size of the `results` small, It is the number of queries in the request
 	for _, result := range results {
+		if _, ok := queriesInExpression[result.QueryName]; !ok {
+			continue
+		}
 		// The size of the `result.Series` slice is usually small, It is the number of series in the query result.
 		// We will limit the number of series in the query result to order of 100-1000.
 		for _, series := range result.Series {
@@ -60,7 +63,12 @@ func findUniqueLabelSets(results []*v3.Result) []map[string]string {
 }
 
 // Function to join series on timestamp and calculate new values
-func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, expression *govaluate.EvaluableExpression) (*v3.Series, error) {
+func joinAndCalculate(
+	results []*v3.Result,
+	uniqueLabelSet map[string]string,
+	expression *govaluate.EvaluableExpression,
+	canDefaultZero map[string]bool,
+) (*v3.Series, error) {
 
 	uniqueTimestamps := make(map[int64]struct{})
 	// map[queryName]map[timestamp]value
@@ -103,15 +111,31 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 	for _, timestamp := range timestamps {
 		values := make(map[string]interface{})
 		for queryName, series := range seriesMap {
-			values[queryName] = series[timestamp]
+			if _, ok := series[timestamp]; ok {
+				values[queryName] = series[timestamp]
+			}
 		}
 
 		// If the value is not present in the values map, set it to 0
 		for _, v := range expression.Vars() {
-			if _, ok := values[v]; !ok {
+			if _, ok := values[v]; !ok && canDefaultZero[v] {
 				values[v] = 0
 			}
 		}
+
+		canEval := true
+
+		for _, v := range expression.Vars() {
+			if _, ok := values[v]; !ok {
+				canEval = false
+			}
+		}
+
+		if !canEval {
+			// not enough values for expression evaluation
+			continue
+		}
+
 		newValue, err := expression.Evaluate(values)
 		if err != nil {
 			return nil, err
@@ -136,16 +160,25 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 // 2. For each unique label set, find a series that matches the label set from each query result
 // 3. Join the series on timestamp and calculate the new values
 // 4. Return the new series
-func processResults(results []*v3.Result, expression *govaluate.EvaluableExpression) (*v3.Result, error) {
-	uniqueLabelSets := findUniqueLabelSets(results)
+func processResults(
+	results []*v3.Result,
+	expression *govaluate.EvaluableExpression,
+	canDefaultZero map[string]bool,
+) (*v3.Result, error) {
+
+	queriesInExpression := make(map[string]struct{})
+	for _, v := range expression.Vars() {
+		queriesInExpression[v] = struct{}{}
+	}
+	uniqueLabelSets := findUniqueLabelSets(results, queriesInExpression)
 	newSeries := make([]*v3.Series, 0)
 
 	for _, labelSet := range uniqueLabelSets {
-		series, err := joinAndCalculate(results, labelSet, expression)
+		series, err := joinAndCalculate(results, labelSet, expression, canDefaultZero)
 		if err != nil {
 			return nil, err
 		}
-		if series != nil {
+		if series != nil && len(series.Points) != 0 {
 			labelsArray := make([]map[string]string, 0)
 			for k, v := range series.Labels {
 				labelsArray = append(labelsArray, map[string]string{k: v})
@@ -249,20 +282,9 @@ func EvalFuncs() map[string]govaluate.ExpressionFunction {
 	GoValuateFuncs["radians"] = func(args ...interface{}) (interface{}, error) {
 		return args[0].(float64) * math.Pi / 180, nil
 	}
-
+	// Returns the current Unix timestamp in seconds.
 	GoValuateFuncs["now"] = func(args ...interface{}) (interface{}, error) {
-		return time.Now().Unix(), nil
-	}
-
-	GoValuateFuncs["toUnixTimestamp"] = func(args ...interface{}) (interface{}, error) {
-		if len(args) != 1 {
-			return nil, fmt.Errorf("toUnixTimestamp requires exactly one argument")
-		}
-		t, err := time.Parse(time.RFC3339, args[0].(string))
-		if err != nil {
-			return nil, err
-		}
-		return t.Unix(), nil
+		return float64(time.Now().Unix()), nil
 	}
 
 	return GoValuateFuncs

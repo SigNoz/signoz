@@ -30,6 +30,7 @@ export function ThemeProvider({ children }: ThemeProviderProps): JSX.Element {
 			setTheme(THEME_MODE.LIGHT);
 			set(LOCALSTORAGE.THEME, THEME_MODE.LIGHT);
 		}
+		set(LOCALSTORAGE.THEME_ANALYTICS_V1, '');
 	}, [theme]);
 
 	const value = useMemo(

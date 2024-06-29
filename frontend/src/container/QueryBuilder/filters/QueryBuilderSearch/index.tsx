@@ -180,7 +180,7 @@ function QueryBuilderSearch({
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
 
 			const filterAttribute = [...initialSourceKeys, ...sourceKeys].find(
-				(key) => key.key === getRemovePrefixFromKey(tagKey),
+				(key) => key?.key === getRemovePrefixFromKey(tagKey),
 			);
 
 			const computedTagValue =

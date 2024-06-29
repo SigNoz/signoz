@@ -17,11 +17,12 @@ import (
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
 
+	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
+	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
@@ -30,19 +31,6 @@ import (
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
-
-func parseUser(r *http.Request) (*model.User, error) {
-
-	var user model.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		return nil, err
-	}
-	if len(user.Email) == 0 {
-		return nil, fmt.Errorf("email field not found")
-	}
-
-	return &user, nil
-}
 
 func parseGetTopOperationsRequest(r *http.Request) (*model.GetTopOperationsParams, error) {
 	var postData *model.GetTopOperationsParams
@@ -250,28 +238,46 @@ func parseGetServicesRequest(r *http.Request) (*model.GetServicesParams, error) 
 	return postData, nil
 }
 
-func ParseSearchTracesParams(r *http.Request) (string, string, int, int, error) {
+func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error) {
 	vars := mux.Vars(r)
-	traceId := vars["traceId"]
-	spanId := r.URL.Query().Get("spanId")
-	levelUp := r.URL.Query().Get("levelUp")
-	levelDown := r.URL.Query().Get("levelDown")
-	if levelUp == "" || levelUp == "null" {
-		levelUp = "0"
+	params := &model.SearchTracesParams{}
+	params.TraceID = vars["traceId"]
+	params.SpanID = r.URL.Query().Get("spanId")
+
+	levelUpStr := r.URL.Query().Get("levelUp")
+	levelDownStr := r.URL.Query().Get("levelDown")
+	SpanRenderLimitStr := r.URL.Query().Get("spanRenderLimit")
+	if levelUpStr == "" || levelUpStr == "null" {
+		levelUpStr = "0"
 	}
-	if levelDown == "" || levelDown == "null" {
-		levelDown = "0"
+	if levelDownStr == "" || levelDownStr == "null" {
+		levelDownStr = "0"
+	}
+	if SpanRenderLimitStr == "" || SpanRenderLimitStr == "null" {
+		SpanRenderLimitStr = constants.SpanRenderLimitStr
 	}
 
-	levelUpInt, err := strconv.Atoi(levelUp)
+	levelUpInt, err := strconv.Atoi(levelUpStr)
 	if err != nil {
-		return "", "", 0, 0, err
+		return nil, err
 	}
-	levelDownInt, err := strconv.Atoi(levelDown)
+	levelDownInt, err := strconv.Atoi(levelDownStr)
 	if err != nil {
-		return "", "", 0, 0, err
+		return nil, err
 	}
-	return traceId, spanId, levelUpInt, levelDownInt, nil
+	SpanRenderLimitInt, err := strconv.Atoi(SpanRenderLimitStr)
+	if err != nil {
+		return nil, err
+	}
+	MaxSpansInTraceInt, err := strconv.Atoi(constants.MaxSpansInTraceStr)
+	if err != nil {
+		return nil, err
+	}
+	params.LevelUp = levelUpInt
+	params.LevelDown = levelDownInt
+	params.SpansRenderLimit = SpanRenderLimitInt
+	params.MaxSpansInTrace = MaxSpansInTraceInt
+	return params, nil
 }
 
 func DoesExistInSlice(item string, list []string) bool {
@@ -327,16 +333,16 @@ func parseFilteredSpansRequest(r *http.Request, aH *APIHandler) (*model.GetFilte
 	}
 
 	if len(postData.Order) != 0 {
-		if postData.Order != constants.Ascending && postData.Order != constants.Descending {
+		if postData.Order != baseconstants.Ascending && postData.Order != baseconstants.Descending {
 			return nil, errors.New("order param is not in correct format")
 		}
-		if postData.OrderParam != constants.Duration && postData.OrderParam != constants.Timestamp {
+		if postData.OrderParam != baseconstants.Duration && postData.OrderParam != baseconstants.Timestamp {
 			return nil, errors.New("order param is not in correct format")
 		}
-		if postData.OrderParam == constants.Duration && !aH.CheckFeature(constants.DurationSort) {
-			return nil, model.ErrFeatureUnavailable{Key: constants.DurationSort}
-		} else if postData.OrderParam == constants.Timestamp && !aH.CheckFeature(constants.TimestampSort) {
-			return nil, model.ErrFeatureUnavailable{Key: constants.TimestampSort}
+		if postData.OrderParam == baseconstants.Duration && !aH.CheckFeature(baseconstants.DurationSort) {
+			return nil, model.ErrFeatureUnavailable{Key: baseconstants.DurationSort}
+		} else if postData.OrderParam == baseconstants.Timestamp && !aH.CheckFeature(baseconstants.TimestampSort) {
+			return nil, model.ErrFeatureUnavailable{Key: baseconstants.TimestampSort}
 		}
 	}
 	tags, err := extractTagKeys(postData.Tags)
@@ -375,7 +381,7 @@ func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpan
 		return nil, errors.New("function param missing in query")
 	} else {
 		if !DoesExistInSlice(function, allowedFunctions) {
-			return nil, errors.New(fmt.Sprintf("given function: %s is not allowed in query", function))
+			return nil, fmt.Errorf("given function: %s is not allowed in query", function)
 		}
 	}
 
@@ -530,11 +536,11 @@ func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
 	}
 
 	if len(postData.Order) > 0 && !DoesExistInSlice(postData.Order, allowedOrderDirections) {
-		return nil, errors.New(fmt.Sprintf("given order: %s is not allowed in query", postData.Order))
+		return nil, fmt.Errorf("given order: %s is not allowed in query", postData.Order)
 	}
 
 	if len(postData.Order) > 0 && !DoesExistInSlice(postData.OrderParam, allowedOrderParams) {
-		return nil, errors.New(fmt.Sprintf("given orderParam: %s is not allowed in query", postData.OrderParam))
+		return nil, fmt.Errorf("given orderParam: %s is not allowed in query", postData.OrderParam)
 	}
 
 	return postData, nil
@@ -640,29 +646,6 @@ func parseTime(param string, r *http.Request) (*time.Time, error) {
 
 }
 
-func parseTimeMinusBuffer(param string, r *http.Request) (*time.Time, error) {
-
-	timeStr := r.URL.Query().Get(param)
-	if len(timeStr) == 0 {
-		return nil, fmt.Errorf("%s param missing in query", param)
-	}
-
-	timeUnix, err := strconv.ParseInt(timeStr, 10, 64)
-	if err != nil || len(timeStr) == 0 {
-		return nil, fmt.Errorf("%s param is not in correct timestamp format", param)
-	}
-
-	timeUnixNow := time.Now().UnixNano()
-	if timeUnix > timeUnixNow-30000000000 {
-		timeUnix = timeUnix - 30000000000
-	}
-
-	timeFmt := time.Unix(0, timeUnix)
-
-	return &timeFmt, nil
-
-}
-
 func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 
 	// make sure either of the query params are present
@@ -676,14 +659,14 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 	}
 
 	// Validate the type parameter
-	if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL && typeTTL != constants.LogsTTL {
+	if typeTTL != baseconstants.TraceTTL && typeTTL != baseconstants.MetricsTTL && typeTTL != baseconstants.LogsTTL {
 		return nil, fmt.Errorf("type param should be metrics|traces|logs, got %v", typeTTL)
 	}
 
 	// Validate the TTL duration.
 	durationParsed, err := time.ParseDuration(delDuration)
 	if err != nil || durationParsed.Seconds() <= 0 {
-		return nil, fmt.Errorf("Not a valid TTL duration %v", delDuration)
+		return nil, fmt.Errorf("not a valid TTL duration %v", delDuration)
 	}
 
 	var toColdParsed time.Duration
@@ -692,10 +675,10 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 	if len(coldStorage) > 0 {
 		toColdParsed, err = time.ParseDuration(toColdDuration)
 		if err != nil || toColdParsed.Seconds() <= 0 {
-			return nil, fmt.Errorf("Not a valid toCold TTL duration %v", toColdDuration)
+			return nil, fmt.Errorf("not a valid toCold TTL duration %v", toColdDuration)
 		}
 		if toColdParsed.Seconds() != 0 && toColdParsed.Seconds() >= durationParsed.Seconds() {
-			return nil, fmt.Errorf("Delete TTL should be greater than cold storage move TTL.")
+			return nil, fmt.Errorf("delete TTL should be greater than cold storage move TTL")
 		}
 	}
 
@@ -715,7 +698,7 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 		return nil, fmt.Errorf("type param cannot be empty from the query")
 	} else {
 		// Validate the type parameter
-		if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL && typeTTL != constants.LogsTTL {
+		if typeTTL != baseconstants.TraceTTL && typeTTL != baseconstants.MetricsTTL && typeTTL != baseconstants.LogsTTL {
 			return nil, fmt.Errorf("type param should be metrics|traces|logs, got %v", typeTTL)
 		}
 	}
@@ -821,15 +804,6 @@ func parseChangePasswordRequest(r *http.Request) (*model.ChangePasswordRequest, 
 	}
 
 	return &req, nil
-}
-
-func parseFilterSet(r *http.Request) (*model.FilterSet, error) {
-	var filterSet model.FilterSet
-	err := json.NewDecoder(r.Body).Decode(&filterSet)
-	if err != nil {
-		return nil, err
-	}
-	return &filterSet, nil
 }
 
 func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequest, error) {
@@ -983,6 +957,9 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 	if err := json.NewDecoder(r.Body).Decode(&queryRangeParams); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
+
+	// sanitize the request body
+	queryRangeParams.CompositeQuery.Sanitize()
 
 	// validate the request body
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
