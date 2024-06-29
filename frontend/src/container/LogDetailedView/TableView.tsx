@@ -294,7 +294,6 @@ function TableView({
 									color: Color.BG_SIENNA_400,
 									whiteSpace: 'pre-wrap',
 									tabSize: 4,
-									fontFamily: `'Space Mono', monospace`,
 								}}
 							>
 								{removeEscapeCharacters(fieldData.value)}
