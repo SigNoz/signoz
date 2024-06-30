@@ -28,12 +28,17 @@ export const SEVERITY_TEXT_TYPE = {
 	FATAL2: 'FATAL2',
 	FATAL3: 'FATAL3',
 	FATAL4: 'FATAL4',
+	UNKNOWN: 'UNKNOWN',
 } as const;
 
 export const LogType = {
+	TRACE: 'TRACE',
+	DEBUG: 'DEBUG',
 	INFO: 'INFO',
-	WARNING: 'WARNING',
+	WARN: 'WARN',
 	ERROR: 'ERROR',
+	FATAL: 'FATAL',
+	UNKNOWN: 'UNKNOWN',
 } as const;
 
 function LogStateIndicator({
