@@ -19,7 +19,7 @@ function QuerySection(): JSX.Element {
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const isList = panelTypes === PANEL_TYPES.LIST;
 		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: false, isDisabled: true },
+			stepInterval: { isHidden: false, isDisabled: false },
 			limit: { isHidden: isList, isDisabled: true },
 			having: { isHidden: isList, isDisabled: true },
 		};
@@ -56,7 +56,7 @@ function QuerySection(): JSX.Element {
 				version="v3" // setting this to v3 as we this is rendered in logs explorer
 				actions={
 					<ButtonWrapper>
-						<Button onClick={handleRunQuery} type="primary">
+						<Button onClick={(): void => handleRunQuery()} type="primary">
 							Run Query
 						</Button>
 					</ButtonWrapper>

@@ -3,7 +3,9 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
+import logEvent from 'api/common/logEvent';
 import DropDown from 'components/DropDown/DropDown';
+import { listAlertMessage } from 'components/facingIssueBtn/util';
 import {
 	DynamicColumnsKey,
 	TableDataSource,
@@ -40,7 +42,7 @@ import {
 } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
-import { filterAlerts } from './utils';
+import { alertActionLogEvent, filterAlerts } from './utils';
 
 const { Search } = Input;
 
@@ -53,6 +55,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		['add_new_alert', 'action'],
 		role,
 	);
+
+	const [editLoader, setEditLoader] = useState<boolean>(false);
+	const [cloneLoader, setCloneLoader] = useState<boolean>(false);
 
 	const params = useUrlQuery();
 	const orderColumnParam = params.get('columnKey');
@@ -103,29 +108,41 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	}, [notificationsApi, t]);
 
 	const onClickNewAlertHandler = useCallback(() => {
+		logEvent('Alert: New alert button clicked', {
+			number: allAlertRules?.length,
+		});
 		featureResponse
 			.refetch()
 			.then(() => {
 				history.push(ROUTES.ALERTS_NEW);
 			})
 			.catch(handleError);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [featureResponse, handleError]);
 
 	const onEditHandler = (record: GettableAlert) => (): void => {
+		setEditLoader(true);
 		featureResponse
 			.refetch()
 			.then(() => {
 				const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
-
-				history.push(
-					`${ROUTES.EDIT_ALERTS}?ruleId=${record.id.toString()}&${
-						QueryParams.compositeQuery
-					}=${encodeURIComponent(JSON.stringify(compositeQuery))}&panelTypes=${
-						record.condition.compositeQuery.panelType
-					}`,
+				params.set(
+					QueryParams.compositeQuery,
+					encodeURIComponent(JSON.stringify(compositeQuery)),
 				);
+
+				params.set(
+					QueryParams.panelTypes,
+					record.condition.compositeQuery.panelType,
+				);
+
+				params.set(QueryParams.ruleId, record.id.toString());
+
+				setEditLoader(false);
+				history.push(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
 			})
-			.catch(handleError);
+			.catch(handleError)
+			.finally(() => setEditLoader(false));
 	};
 
 	const onCloneHandler = (
@@ -137,32 +154,41 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		};
 		const apiReq = { data: copyAlert };
 
-		const response = await saveAlertApi(apiReq);
+		try {
+			setCloneLoader(true);
+			const response = await saveAlertApi(apiReq);
 
-		if (response.statusCode === 200) {
-			notificationsApi.success({
-				message: 'Success',
-				description: 'Alert cloned successfully',
-			});
+			if (response.statusCode === 200) {
+				notificationsApi.success({
+					message: 'Success',
+					description: 'Alert cloned successfully',
+				});
 
-			const { data: refetchData, status } = await refetch();
-			if (status === 'success' && refetchData.payload) {
-				setData(refetchData.payload || []);
-				setTimeout(() => {
-					const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
-					history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${clonedAlert.id}`);
-				}, 2000);
-			}
-			if (status === 'error') {
+				const { data: refetchData, status } = await refetch();
+				if (status === 'success' && refetchData.payload) {
+					setData(refetchData.payload || []);
+					setTimeout(() => {
+						const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
+						params.set(QueryParams.ruleId, String(clonedAlert.id));
+						history.push(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
+					}, 2000);
+				}
+				if (status === 'error') {
+					notificationsApi.error({
+						message: t('something_went_wrong'),
+					});
+				}
+			} else {
 				notificationsApi.error({
-					message: t('something_went_wrong'),
+					message: 'Error',
+					description: response.error || t('something_went_wrong'),
 				});
 			}
-		} else {
-			notificationsApi.error({
-				message: 'Error',
-				description: response.error || t('something_went_wrong'),
-			});
+		} catch (error) {
+			handleError();
+			console.error(error);
+		} finally {
+			setCloneLoader(false);
 		}
 	};
 
@@ -300,6 +326,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 10,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
 				<DropDown
+					onDropDownItemClick={(item): void => alertActionLogEvent(item.key, record)}
 					element={[
 						<ToggleAlertState
 							key="1"
@@ -307,10 +334,20 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 							setData={setData}
 							id={id}
 						/>,
-						<ColumnButton key="2" onClick={onEditHandler(record)} type="link">
+						<ColumnButton
+							key="2"
+							onClick={onEditHandler(record)}
+							type="link"
+							loading={editLoader}
+						>
 							Edit
 						</ColumnButton>,
-						<ColumnButton key="3" onClick={onCloneHandler(record)} type="link">
+						<ColumnButton
+							key="3"
+							onClick={onCloneHandler(record)}
+							type="link"
+							loading={cloneLoader}
+						>
 							Clone
 						</ColumnButton>,
 						<DeleteAlert
@@ -325,6 +362,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		});
 	}
 
+	const paginationConfig = {
+		defaultCurrent: Number(paginationParam) || 1,
+	};
 	return (
 		<>
 			<SearchContainer>
@@ -337,7 +377,8 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					<TextToolTip
 						{...{
 							text: `More details on how to create alerts`,
-							url: 'https://signoz.io/docs/userguide/alerts-management/',
+							url:
+								'https://signoz.io/docs/alerts/?utm_source=product&utm_medium=list-alerts',
 						}}
 					/>
 
@@ -353,10 +394,18 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				columns={columns}
 				rowKey="id"
 				dataSource={data}
+				shouldSendAlertsLogEvent
 				dynamicColumns={dynamicColumns}
 				onChange={handleChange}
-				pagination={{
-					defaultCurrent: Number(paginationParam) || 1,
+				pagination={paginationConfig}
+				facingIssueBtn={{
+					attributes: {
+						screen: 'Alert list page',
+					},
+					eventName: 'Alert: Facing Issues in alert',
+					buttonText: 'Facing issues with alerts?',
+					message: listAlertMessage,
+					onHoverText: 'Click here to get help with alerts',
 				}}
 			/>
 		</>

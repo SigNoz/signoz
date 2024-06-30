@@ -287,7 +287,7 @@ function CustomTimePicker({
 					)
 				}
 				arrow={false}
-				trigger="hover"
+				trigger="click"
 				open={open}
 				onOpenChange={handleOpenChange}
 				style={{

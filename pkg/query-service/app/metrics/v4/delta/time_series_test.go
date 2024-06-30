@@ -210,7 +210,7 @@ func TestPrepareTimeseriesQuery(t *testing.T) {
 			},
 			start:                 1701794980000,
 			end:                   1701796780000,
-			expectedQueryContains: "SELECT service_name, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'service_name') as service_name, fingerprint FROM signoz_metrics.time_series_v4 WHERE metric_name = 'http_requests' AND temporality = 'Delta' AND unix_milli >= 1701792000000 AND unix_milli < 1701796780000 AND like(JSONExtractString(labels, 'service_name'), '%payment_service%')) as filtered_time_series USING fingerprint WHERE metric_name = 'http_requests' AND unix_milli >= 1701794980000 AND unix_milli < 1701796780000 GROUP BY GROUPING SETS ( (service_name, ts), (service_name) ) ORDER BY service_name ASC, ts ASC",
+			expectedQueryContains: "SELECT service_name, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'service_name') as service_name, fingerprint FROM signoz_metrics.time_series_v4 WHERE metric_name = 'http_requests' AND temporality = 'Delta' AND unix_milli >= 1701792000000 AND unix_milli < 1701796780000 AND like(JSONExtractString(labels, 'service_name'), '%payment_service%')) as filtered_time_series USING fingerprint WHERE metric_name = 'http_requests' AND unix_milli >= 1701794980000 AND unix_milli < 1701796780000 GROUP BY service_name, ts ORDER BY service_name ASC, ts ASC",
 		},
 		{
 			name: "test time aggregation = rate, space aggregation percentile99, type = ExponentialHistogram",
@@ -244,7 +244,7 @@ func TestPrepareTimeseriesQuery(t *testing.T) {
 			},
 			start:                 1701794980000,
 			end:                   1701796780000,
-			expectedQueryContains: "SELECT service_name, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, quantilesDDMerge(0.01, 0.990000)(sketch)[1] as value FROM signoz_metrics.distributed_exp_hist INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'service_name') as service_name, fingerprint FROM signoz_metrics.time_series_v4 WHERE metric_name = 'signoz_latency' AND temporality = 'Delta' AND unix_milli >= 1701792000000 AND unix_milli < 1701796780000) as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency' AND unix_milli >= 1701794980000 AND unix_milli < 1701796780000 GROUP BY GROUPING SETS ( (service_name, ts), (service_name) ) ORDER BY service_name ASC, ts ASC",
+			expectedQueryContains: "SELECT service_name, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, quantilesDDMerge(0.01, 0.990000)(sketch)[1] as value FROM signoz_metrics.distributed_exp_hist INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'service_name') as service_name, fingerprint FROM signoz_metrics.time_series_v4 WHERE metric_name = 'signoz_latency' AND temporality = 'Delta' AND unix_milli >= 1701792000000 AND unix_milli < 1701796780000) as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency' AND unix_milli >= 1701794980000 AND unix_milli < 1701796780000 GROUP BY service_name, ts ORDER BY service_name ASC, ts ASC",
 		},
 	}
 

@@ -2,8 +2,8 @@ package logparsingpipeline
 
 import (
 	"context"
-	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	_ "github.com/SigNoz/signoz-otel-collector/pkg/parser/grok"
@@ -74,9 +74,9 @@ func SimulatePipelinesProcessing(
 		timeout,
 	)
 	if apiErr != nil {
-		return nil, collectorErrs, model.WrapApiError(apiErr, fmt.Sprintf(
+		return nil, collectorErrs, model.WrapApiError(apiErr,
 			"could not simulate log pipelines processing.\nCollector errors",
-		))
+		)
 	}
 
 	outputSignozLogs := PLogsToSignozLogs(outputPLogs)
@@ -91,7 +91,15 @@ func SimulatePipelinesProcessing(
 		delete(sigLog.Attributes_int64, inputOrderAttribute)
 	}
 
-	return outputSignozLogs, collectorErrs, nil
+	for _, log := range collectorErrs {
+		// if log is empty or log comes from featuregate.go, then remove it
+		if log == "" || strings.Contains(log, "featuregate.go") {
+			continue
+		}
+		collectorWarnAndErrorLogs = append(collectorWarnAndErrorLogs, log)
+	}
+
+	return outputSignozLogs, collectorWarnAndErrorLogs, nil
 }
 
 // plog doesn't contain an ID field.

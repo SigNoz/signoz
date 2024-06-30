@@ -2,6 +2,7 @@
 import { TableProps } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { ColumnGroupType, ColumnType } from 'antd/lib/table';
+import { FacingIssueBtnProps } from 'components/facingIssueBtn/FacingIssueBtn';
 
 import { TableDataSource } from './contants';
 
@@ -12,6 +13,8 @@ export interface DynamicColumnTableProps extends TableProps<any> {
 	tablesource: typeof TableDataSource[keyof typeof TableDataSource];
 	dynamicColumns: TableProps<any>['columns'];
 	onDragColumn?: (fromIndex: number, toIndex: number) => void;
+	facingIssueBtn?: FacingIssueBtnProps;
+	shouldSendAlertsLogEvent?: boolean;
 }
 
 export type GetVisibleColumnsFunction = (

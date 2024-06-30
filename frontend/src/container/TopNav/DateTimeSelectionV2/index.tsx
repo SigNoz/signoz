@@ -19,9 +19,9 @@ import {
 	defaultLiveQueryDataConfig,
 } from 'container/LiveLogs/constants';
 import { QueryHistoryState } from 'container/LiveLogs/types';
+import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
@@ -59,9 +59,11 @@ import { Form, FormContainer, FormItem } from './styles';
 
 function DateTimeSelection({
 	showAutoRefresh,
+	hideShareModal = false,
 	location,
 	updateTimeInterval,
 	globalTimeLoading,
+	showOldExplorerCTA = false,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
@@ -168,7 +170,7 @@ function DateTimeSelection({
 						: [],
 				listQueryPayload:
 					listQuery && listQuery[1]
-						? listQuery[1].payload?.data.newResult.data.result || []
+						? listQuery[1].payload?.data?.newResult?.data?.result || []
 						: [],
 			};
 		}
@@ -312,8 +314,6 @@ function DateTimeSelection({
 			return;
 		}
 
-		const { maxTime, minTime } = GetMinMax(value, getTime());
-
 		if (!isLogsExplorerPage) {
 			urlQuery.delete('startTime');
 			urlQuery.delete('endTime');
@@ -330,7 +330,8 @@ function DateTimeSelection({
 			return;
 		}
 		// the second boolean param directs the qb about the time change so to merge the query and retain the current state
-		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime), true);
+		// we removed update step interval to stop auto updating the value on time change
+		initQueryBuilderData(stagedQuery, true);
 	};
 
 	const onRefreshHandler = (): void => {
@@ -339,7 +340,6 @@ function DateTimeSelection({
 	};
 
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
-		// console.log('dateTimeRange', dateTimeRange);
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
@@ -381,8 +381,6 @@ function DateTimeSelection({
 
 		setIsValidteRelativeTime(true);
 
-		const { maxTime, minTime } = GetMinMax(dateTimeStr, getTime());
-
 		if (!isLogsExplorerPage) {
 			urlQuery.delete('startTime');
 			urlQuery.delete('endTime');
@@ -398,7 +396,8 @@ function DateTimeSelection({
 		}
 
 		// the second boolean param directs the qb about the time change so to merge the query and retain the current state
-		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime), true);
+		// we removed update step interval to stop auto updating the value on time change
+		initQueryBuilderData(stagedQuery, true);
 	};
 
 	const getCustomOrIntervalTime = (
@@ -561,6 +560,11 @@ function DateTimeSelection({
 
 	return (
 		<div className="date-time-selector">
+			{showOldExplorerCTA && (
+				<div style={{ marginRight: 12 }}>
+					<NewExplorerCTA />
+				</div>
+			)}
 			{!hasSelectedTimeError && !refreshButtonHidden && (
 				<RefreshText
 					{...{
@@ -620,21 +624,23 @@ function DateTimeSelection({
 						</div>
 					)}
 
-					<Popover
-						rootClassName="shareable-link-popover-root"
-						className="shareable-link-popover"
-						placement="bottomRight"
-						content={shareModalContent}
-						arrow={false}
-						trigger={['hover']}
-					>
-						<Button
-							className="share-link-btn periscope-btn"
-							icon={<Send size={14} />}
+					{!hideShareModal && (
+						<Popover
+							rootClassName="shareable-link-popover-root"
+							className="shareable-link-popover"
+							placement="bottomRight"
+							content={shareModalContent}
+							arrow={false}
+							trigger={['hover']}
 						>
-							Share
-						</Button>
-					</Popover>
+							<Button
+								className="share-link-btn periscope-btn"
+								icon={<Send size={14} />}
+							>
+								Share
+							</Button>
+						</Popover>
+					)}
 				</FormContainer>
 			</Form>
 		</div>
@@ -643,7 +649,14 @@ function DateTimeSelection({
 
 interface DateTimeSelectionV2Props {
 	showAutoRefresh: boolean;
+	hideShareModal?: boolean;
+	showOldExplorerCTA?: boolean;
 }
+
+DateTimeSelection.defaultProps = {
+	hideShareModal: false,
+	showOldExplorerCTA: false,
+};
 interface DispatchProps {
 	updateTimeInterval: (
 		interval: Time | CustomTimeType,

@@ -109,7 +109,11 @@ export const GetTagKeys = async (): Promise<IOption[]> => {
 	if (!payload || !payload?.data) {
 		return [];
 	}
-	return payload.data
+
+	const keys =
+		payload.data.attributeKeys?.map((attributeKey) => attributeKey.key) || [];
+
+	return keys
 		.filter((tagKey: string) => tagKey !== 'resource_deployment_environment')
 		.map((tagKey: string) => ({
 			label: convertMetricKeyToTrace(tagKey),
@@ -125,7 +129,9 @@ export const getEnvironmentTagKeys = async (): Promise<IOption[]> => {
 	if (!payload || !payload?.data) {
 		return [];
 	}
-	return payload.data.map((tagKey: string) => ({
+	const keys =
+		payload.data.attributeKeys?.map((attributeKey) => attributeKey.key) || [];
+	return keys.map((tagKey: string) => ({
 		label: convertMetricKeyToTrace(tagKey),
 		value: tagKey,
 	}));
@@ -140,7 +146,10 @@ export const getEnvironmentTagValues = async (): Promise<IOption[]> => {
 	if (!payload || !payload?.data) {
 		return [];
 	}
-	return payload.data.map((tagValue: string) => ({
+
+	const values = payload.data.stringAttributeValues || [];
+
+	return values.map((tagValue: string) => ({
 		label: tagValue,
 		value: tagValue,
 	}));
@@ -155,7 +164,10 @@ export const GetTagValues = async (tagKey: string): Promise<IOption[]> => {
 	if (!payload || !payload?.data) {
 		return [];
 	}
-	return payload.data.map((tagValue: string) => ({
+
+	const values = payload.data.stringAttributeValues || [];
+
+	return values.map((tagValue: string) => ({
 		label: tagValue,
 		value: tagValue,
 	}));
@@ -164,8 +176,6 @@ export const GetTagValues = async (tagKey: string): Promise<IOption[]> => {
 export const createQuery = (
 	selectedItems: Array<string | string[]> = [],
 ): IResourceAttribute | null => {
-	console.log('selectedItems', selectedItems);
-
 	if (selectedItems.length === 3) {
 		return {
 			id: uuid().slice(0, 8),
@@ -180,6 +190,7 @@ export const createQuery = (
 export const updateQuery = (
 	queryKey: string,
 	selectedItems: Array<string | string[]> = [],
+	// eslint-disable-next-line sonarjs/no-identical-functions
 ): IResourceAttribute | null => {
 	if (selectedItems.length === 3) {
 		return {

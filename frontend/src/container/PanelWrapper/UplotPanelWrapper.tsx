@@ -1,3 +1,6 @@
+import './UplotPanelWrapper.styles.scss';
+
+import { Alert } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Uplot from 'components/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -8,6 +11,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { cloneDeep, isEqual, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -25,6 +29,7 @@ function UplotPanelWrapper({
 	onToggleModelHandler,
 	onClickHandler,
 	onDragSelect,
+	selectedGraph,
 }: PanelWrapperProps): JSX.Element {
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
@@ -33,6 +38,8 @@ function UplotPanelWrapper({
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const { currentQuery } = useQueryBuilder();
+
+	const [hiddenGraph, setHiddenGraph] = useState<{ [key: string]: boolean }>();
 
 	useEffect(() => {
 		if (toScrollWidgetId === widget.id) {
@@ -77,7 +84,25 @@ function UplotPanelWrapper({
 	const chartData = getUPlotChartData(
 		queryResponse?.data?.payload,
 		widget.fillSpans,
+		widget?.stackedBarChart,
+		hiddenGraph,
 	);
+
+	useEffect(() => {
+		if (widget.panelTypes === PANEL_TYPES.BAR && widget?.stackedBarChart) {
+			const graphV = cloneDeep(graphVisibility)?.slice(1);
+			const isSomeSelectedLegend = graphV?.some((v) => v === false);
+			if (isSomeSelectedLegend) {
+				const hiddenIndex = graphV?.findIndex((v) => v === true);
+				if (!isUndefined(hiddenIndex) && hiddenIndex !== -1) {
+					const updatedHiddenGraph = { [hiddenIndex]: true };
+					if (!isEqual(hiddenGraph, updatedHiddenGraph)) {
+						setHiddenGraph(updatedHiddenGraph);
+					}
+				}
+			}
+		}
+	}, [graphVisibility, hiddenGraph, widget.panelTypes, widget?.stackedBarChart]);
 
 	const options = useMemo(
 		() =>
@@ -96,8 +121,11 @@ function UplotPanelWrapper({
 				softMin: widget.softMin === undefined ? null : widget.softMin,
 				graphsVisibilityStates: graphVisibility,
 				setGraphsVisibilityStates: setGraphVisibility,
-				panelType: widget.panelTypes,
+				panelType: selectedGraph || widget.panelTypes,
 				currentQuery,
+				stackBarChart: widget?.stackedBarChart,
+				hiddenGraph,
+				setHiddenGraph,
 			}),
 		[
 			widget?.id,
@@ -106,6 +134,7 @@ function UplotPanelWrapper({
 			widget.softMax,
 			widget.softMin,
 			widget.panelTypes,
+			widget?.stackedBarChart,
 			queryResponse.data?.payload,
 			containerDimensions,
 			isDarkMode,
@@ -115,16 +144,25 @@ function UplotPanelWrapper({
 			maxTimeScale,
 			graphVisibility,
 			setGraphVisibility,
+			selectedGraph,
 			currentQuery,
+			hiddenGraph,
 		],
 	);
 
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			<Uplot options={options} data={chartData} ref={lineChartRef} />
-			{isFullViewMode && setGraphVisibility && (
+			{widget?.stackedBarChart && isFullViewMode && (
+				<Alert
+					message="Selecting multiple legends is currently not supported in case of stacked bar charts"
+					type="info"
+					className="info-text"
+				/>
+			)}
+			{isFullViewMode && setGraphVisibility && !widget?.stackedBarChart && (
 				<GraphManager
-					data={chartData}
+					data={getUPlotChartData(queryResponse?.data?.payload, widget.fillSpans)}
 					name={widget.id}
 					options={options}
 					yAxisUnit={widget.yAxisUnit}

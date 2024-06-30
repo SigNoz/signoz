@@ -27,6 +27,7 @@ import {
 import { useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
@@ -109,9 +110,13 @@ function HeaderContainer(): JSX.Element {
 
 	const { data: licenseData, isFetching, status: licenseStatus } = useLicense();
 
+	const licensesStatus: string =
+		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ||
+		'';
+
 	const isLicenseActive =
-		licenseData?.payload?.licenses?.find((e) => e.isCurrent)?.status ===
-		LICENSE_PLAN_STATUS.VALID;
+		licensesStatus?.toLocaleLowerCase() ===
+		LICENSE_PLAN_STATUS.VALID.toLocaleLowerCase();
 
 	useEffect(() => {
 		if (

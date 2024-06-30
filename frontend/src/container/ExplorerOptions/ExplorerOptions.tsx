@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './ExplorerOptions.styles.scss';
 
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -288,7 +289,7 @@ function ExplorerOptions({
 	const isEditDeleteSupported = allowedRoles.includes(role as string);
 
 	return (
-		<>
+		<div className="explorer-options-container">
 			{isQueryUpdated && !isExplorerOptionHidden && (
 				<div
 					className={cx(
@@ -373,34 +374,64 @@ function ExplorerOptions({
 							onClick={handleSaveViewModalToggle}
 							className={isEditDeleteSupported ? '' : 'hidden'}
 							disabled={viewsIsLoading || isRefetching}
+							icon={<Disc3 size={16} />}
 						>
-							<Disc3 size={16} /> Save this view
+							Save this view
 						</Button>
 					</div>
 
 					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
 
 					<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
-						<Tooltip title="Create Alerts">
+						<Button
+							disabled={disabled}
+							shape="round"
+							onClick={onCreateAlertsHandler}
+							icon={<ConciergeBell size={16} />}
+						>
+							Create an Alert
+						</Button>
+
+						<Button
+							type="primary"
+							disabled={disabled}
+							shape="round"
+							onClick={onAddToDashboard}
+							icon={<Plus size={16} />}
+						>
+							Add to Dashboard
+						</Button>
+					</div>
+					<div className="actions">
+						<Tooltip
+							title={
+								<div>
+									{sourcepage === DataSource.LOGS
+										? 'Learn more about Logs explorer '
+										: 'Learn more about Traces explorer '}
+									<Typography.Link
+										href={
+											sourcepage === DataSource.LOGS
+												? 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar'
+												: 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar'
+										}
+										target="_blank"
+									>
+										{' '}
+										here
+									</Typography.Link>{' '}
+								</div>
+							}
+						>
+							<InfoCircleOutlined className="info-icon" />
+						</Tooltip>
+						<Tooltip title="Hide">
 							<Button
 								disabled={disabled}
 								shape="circle"
-								onClick={onCreateAlertsHandler}
-							>
-								<ConciergeBell size={16} />
-							</Button>
-						</Tooltip>
-
-						<Tooltip title="Add to Dashboard">
-							<Button disabled={disabled} shape="circle" onClick={onAddToDashboard}>
-								<Plus size={16} />
-							</Button>
-						</Tooltip>
-
-						<Tooltip title="Hide">
-							<Button disabled={disabled} shape="circle" onClick={hideToolbar}>
-								<PanelBottomClose size={16} />
-							</Button>
+								onClick={hideToolbar}
+								icon={<PanelBottomClose size={16} />}
+							/>
 						</Tooltip>
 					</div>
 				</div>
@@ -413,6 +444,7 @@ function ExplorerOptions({
 				isQueryUpdated={isQueryUpdated}
 				handleClearSelect={handleClearSelect}
 				onUpdateQueryHandler={onUpdateQueryHandler}
+				isEditDeleteSupported={isEditDeleteSupported}
 			/>
 
 			<Modal
@@ -461,7 +493,7 @@ function ExplorerOptions({
 					onExport={onExport}
 				/>
 			</Modal>
-		</>
+		</div>
 	);
 }
 

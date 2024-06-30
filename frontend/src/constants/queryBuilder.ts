@@ -174,8 +174,8 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 		sourceNames: alphabet,
 	}),
 	disabled: false,
-	having: [],
 	stepInterval: 60,
+	having: [],
 	limit: null,
 	orderBy: [],
 	groupBy: [],
@@ -285,7 +285,14 @@ export enum PANEL_TYPES {
 	LIST = 'list',
 	TRACE = 'trace',
 	BAR = 'bar',
+	PIE = 'pie',
+	HISTOGRAM = 'histogram',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum PANEL_GROUP_TYPES {
+	ROW = 'row',
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

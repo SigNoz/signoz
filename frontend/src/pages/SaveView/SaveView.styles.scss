@@ -18,12 +18,15 @@
 		}
 
 		.subtitle {
-			color: var(---bg-vanilla-400);
+			color: var(--bg-vanilla-400);
 			font-size: var(--font-size-sm);
 			font-style: normal;
 			font-weight: var(--font-weight-normal);
 			line-height: 20px; /* 142.857% */
 			letter-spacing: -0.07px;
+		}
+		.learn-more {
+			font-size: 14px;
 		}
 
 		.ant-input-affix-wrapper {

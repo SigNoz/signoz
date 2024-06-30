@@ -1,0 +1,49 @@
+{
+  "id": "clickhouse",
+  "title": "Clickhouse",
+  "description": "Monitor Clickhouse with metrics and logs",
+  "author": {
+    "name": "SigNoz",
+    "email": "integrations@signoz.io",
+    "homepage": "https://signoz.io"
+  },
+  "icon": "file://icon.svg",
+  "categories": [
+    "Database"
+  ],
+  "overview": "file://overview.md",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "file://config/prerequisites.md"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "file://config/collect-metrics.md"
+    },
+    {
+      "title": "Collect Server Logs",
+      "instructions": "file://config/collect-logs.md"
+    },
+    {
+      "title": "Collect Query Logs",
+      "instructions": "file://config/collect-query-logs.md"
+    }
+  ],
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": [
+      "file://assets/dashboards/overview.json"
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "logs": {
+      "attribute_key": "source",
+      "attribute_value": "clickhouse"
+    }
+  },
+  "data_collected": "file://data-collected.json"
+}

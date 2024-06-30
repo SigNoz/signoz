@@ -1,24 +1,34 @@
 import './QueryFunctions.styles.scss';
 
-import { Button, Tooltip } from 'antd';
+import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { cloneDeep, pullAt } from 'lodash-es';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { QueryFunctionProps } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryFunctionsTypes } from 'types/common/queryBuilder';
+import {
+	IBuilderQuery,
+	QueryFunctionProps,
+} from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
 
 import Function from './Function';
 
-const defaultFunctionStruct: QueryFunctionProps = {
+const defaultMetricFunctionStruct: QueryFunctionProps = {
 	name: QueryFunctionsTypes.CUTOFF_MIN,
 	args: [],
 };
 
+const defaultLogFunctionStruct: QueryFunctionProps = {
+	name: QueryFunctionsTypes.TIME_SHIFT,
+	args: [],
+};
+
 interface QueryFunctionsProps {
+	query: IBuilderQuery;
 	queryFunctions: QueryFunctionProps[];
 	onChange: (functions: QueryFunctionProps[]) => void;
+	maxFunctions: number;
 }
 
 // SVG component
@@ -71,8 +81,10 @@ function FunctionIcon({
 }
 
 export default function QueryFunctions({
+	query,
 	queryFunctions,
 	onChange,
+	maxFunctions = 3,
 }: QueryFunctionsProps): JSX.Element {
 	const [functions, setFunctions] = useState<QueryFunctionProps[]>(
 		queryFunctions,
@@ -81,6 +93,11 @@ export default function QueryFunctions({
 	const isDarkMode = useIsDarkMode();
 
 	const handleAddNewFunction = (): void => {
+		const defaultFunctionStruct =
+			query.dataSource === DataSource.LOGS
+				? defaultLogFunctionStruct
+				: defaultMetricFunctionStruct;
+
 		const updatedFunctionsArr = [
 			...functions,
 			{
@@ -149,6 +166,7 @@ export default function QueryFunctions({
 			<div className="query-functions-list">
 				{functions.map((func, index) => (
 					<Function
+						query={query}
 						funcData={func}
 						index={index}
 						// eslint-disable-next-line react/no-array-index-key
@@ -162,15 +180,28 @@ export default function QueryFunctions({
 
 			<Tooltip
 				title={
-					functions && functions.length >= 3
-						? 'Functions are in early access. You can add a maximum of 3 function as of now.'
-						: ''
+					functions && functions.length >= 3 ? (
+						'Functions are in early access. You can add a maximum of 3 function as of now.'
+					) : (
+						<div style={{ textAlign: 'center' }}>
+							Add new function
+							<Typography.Link
+								style={{ textDecoration: 'underline' }}
+								href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#functions-for-extended-data-analysis"
+								target="_blank"
+							>
+								{' '}
+								<br />
+								Learn more
+							</Typography.Link>
+						</div>
+					)
 				}
 				placement="right"
 			>
 				<Button
 					className="periscope-btn add-function-btn"
-					disabled={functions && functions.length >= 3}
+					disabled={functions && functions.length >= maxFunctions}
 					onClick={handleAddNewFunction}
 				>
 					<Plus size={14} color={!isDarkMode ? '#0B0C0E' : 'white'} />

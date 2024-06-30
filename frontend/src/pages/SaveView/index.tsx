@@ -277,12 +277,21 @@ function SaveView(): JSX.Element {
 		},
 	];
 
+	const paginationConfig = { pageSize: 5, hideOnSinglePage: true };
+
 	return (
 		<div className="save-view-container">
 			<div className="save-view-content">
 				<Typography.Title className="title">Views</Typography.Title>
 				<Typography.Text className="subtitle">
-					Manage your saved views for logs.
+					Manage your saved views for {ROUTES_VS_SOURCEPAGE[pathname]}.{' '}
+					<Typography.Link
+						className="learn-more"
+						href="https://signoz.io/docs/product-features/saved-view/?utm_source=product&utm_medium=views-tab"
+						target="_blank"
+					>
+						Learn more
+					</Typography.Link>
 				</Typography.Text>
 				<Input
 					placeholder="Search for views..."
@@ -296,7 +305,7 @@ function SaveView(): JSX.Element {
 					dataSource={dataSource}
 					loading={isLoading || isRefetching}
 					showHeader={false}
-					pagination={{ pageSize: 5 }}
+					pagination={paginationConfig}
 				/>
 			</div>
 

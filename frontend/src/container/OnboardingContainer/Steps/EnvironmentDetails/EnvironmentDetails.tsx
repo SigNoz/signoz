@@ -35,6 +35,10 @@ const supportedEnvironments: SupportedEnvironmentsProps[] = [
 		name: 'MacOS ARM64',
 		id: 'macOsARM64',
 	},
+	{
+		name: 'Docker',
+		id: 'docker',
+	},
 ];
 
 export default function EnvironmentDetails(): JSX.Element {
@@ -122,6 +126,12 @@ export default function EnvironmentDetails(): JSX.Element {
 					) {
 						return null;
 					}
+					if (
+						selectedModule?.id !== useCases.APM.id &&
+						environment.id === 'docker'
+					) {
+						return null;
+					}
 
 					return (
 						<Card
@@ -149,7 +159,7 @@ export default function EnvironmentDetails(): JSX.Element {
 
 			<div className="request-entity-container">
 				<Typography.Text>
-					Cannot find what you’re looking for? Request a data source
+					Cannot find what you’re looking for? Request an environment
 				</Typography.Text>
 
 				<div className="form-section">

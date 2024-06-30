@@ -47,7 +47,7 @@ function LogExplorerQuerySection({
 		const isTable = panelTypes === PANEL_TYPES.TABLE;
 		const isList = panelTypes === PANEL_TYPES.LIST;
 		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: isTable, isDisabled: true },
+			stepInterval: { isHidden: isTable, isDisabled: false },
 			having: { isHidden: isList, isDisabled: true },
 			filters: {
 				customKey: 'body',

@@ -33,6 +33,7 @@ import MissingSpansMessage from './Missingtrace';
 import SelectedSpanDetails from './SelectedSpanDetails';
 import * as styles from './styles';
 import { FlameGraphMissingSpansContainer, GanttChartWrapper } from './styles';
+import SubTreeMessage from './SubTree';
 import {
 	formUrlParams,
 	getSortedData,
@@ -46,6 +47,12 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		() => spanServiceNameToColorMapping(response[0].events),
 		[response],
 	);
+
+	const traceStartTime = useMemo(() => response[0].startTimestampMillis, [
+		response,
+	]);
+
+	const traceEndTime = useMemo(() => response[0].endTimestampMillis, [response]);
 
 	const urlQuery = useUrlQuery();
 	const [spanId] = useState<string | null>(urlQuery.get('spanId'));
@@ -142,9 +149,10 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 							Trace Details
 						</StyledTypography.Title>
 						<StyledTypography.Text styledclass={[styles.removeMargin]}>
-							{traceMetaData.totalSpans} Span
+							{traceMetaData.totalSpans} Spans
 						</StyledTypography.Text>
 						{hasMissingSpans && <MissingSpansMessage />}
+						{response[0]?.isSubTree && <SubTreeMessage />}
 					</StyledCol>
 					<Col flex="auto">
 						{map(tree.spanTree, (tree) => (
@@ -244,19 +252,22 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 			<Sider
 				className={cx('span-details-sider', isDarkMode ? 'dark' : 'light')}
-				style={{ background: isDarkMode ? '#000' : '#fff' }}
+				style={{ background: isDarkMode ? '#0b0c0e' : '#fff' }}
 				theme={isDarkMode ? 'dark' : 'light'}
 				collapsible
 				collapsed={collapsed}
 				reverseArrow
 				width={300}
 				collapsedWidth={40}
+				defaultCollapsed
 				onCollapse={(value): void => setCollapsed(value)}
 			>
 				{!collapsed && (
 					<StyledCol styledclass={[styles.selectedSpanDetailContainer]}>
 						<SelectedSpanDetails
 							firstSpanStartTime={firstSpanStartTime}
+							traceStartTime={traceStartTime}
+							traceEndTime={traceEndTime}
 							tree={[
 								...(getSelectedNode.spanTree ? getSelectedNode.spanTree : []),
 								...(getSelectedNode.missingSpanTree

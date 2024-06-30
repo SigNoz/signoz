@@ -77,7 +77,16 @@ processors:
       # This is added to ensure the uniqueness of the timeseries
       # Otherwise, identical timeseries produced by multiple replicas of
       # collectors result in incorrect APM metrics
-      - name: 'signoz.collector.id'
+      - name: signoz.collector.id
+      - name: service.version
+      - name: browser.platform
+      - name: browser.mobile
+      - name: k8s.cluster.name
+      - name: k8s.node.name
+      - name: k8s.namespace.name
+      - name: host.name
+      - name: host.type
+      - name: container.name
   # memory_limiter:
   #   # 80% of maximum memory up to 2G
   #   limit_mib: 1500
@@ -108,21 +117,30 @@ processors:
       # Otherwise, identical timeseries produced by multiple replicas of
       # collectors result in incorrect APM metrics
       - name: signoz.collector.id
+      - name: service.version
+      - name: browser.platform
+      - name: browser.mobile
+      - name: k8s.cluster.name
+      - name: k8s.node.name
+      - name: k8s.namespace.name
+      - name: host.name
+      - name: host.type
+      - name: container.name
 
 exporters:
   clickhousetraces:
-    datasource: tcp://clickhouse:9000/?database=signoz_traces
+    datasource: tcp://clickhouse:9000/signoz_traces
     docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
     low_cardinal_exception_grouping: ${LOW_CARDINAL_EXCEPTION_GROUPING}
   clickhousemetricswrite:
-    endpoint: tcp://clickhouse:9000/?database=signoz_metrics
+    endpoint: tcp://clickhouse:9000/signoz_metrics
     resource_to_telemetry_conversion:
       enabled: true
   clickhousemetricswrite/prometheus:
-    endpoint: tcp://clickhouse:9000/?database=signoz_metrics
+    endpoint: tcp://clickhouse:9000/signoz_metrics
   # logging: {}
   clickhouselogsexporter:
-    dsn: tcp://clickhouse:9000/
+    dsn: tcp://clickhouse:9000/signoz_logs
     docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
     timeout: 10s
 extensions:

@@ -90,7 +90,7 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating tables: %v", err.Error())
+		return nil, fmt.Errorf("error in creating tables: %v", err.Error())
 	}
 
 	mds := &ModelDaoSqlite{db: db}

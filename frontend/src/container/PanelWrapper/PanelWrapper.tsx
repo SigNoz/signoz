@@ -13,9 +13,11 @@ function PanelWrapper({
 	onToggleModelHandler,
 	onClickHandler,
 	onDragSelect,
+	selectedGraph,
+	tableProcessedDataRef,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
-		widget.panelTypes
+		selectedGraph || widget.panelTypes
 	] as FC<PanelWrapperProps>;
 
 	if (!Component) {
@@ -33,6 +35,8 @@ function PanelWrapper({
 			onToggleModelHandler={onToggleModelHandler}
 			onClickHandler={onClickHandler}
 			onDragSelect={onDragSelect}
+			selectedGraph={selectedGraph}
+			tableProcessedDataRef={tableProcessedDataRef}
 		/>
 	);
 }

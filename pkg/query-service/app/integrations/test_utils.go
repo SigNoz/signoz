@@ -96,19 +96,9 @@ func (t *TestAvailableIntegrationsRepo) list(
 				Alerts:     []rules.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
-				Logs: &v3.FilterSet{
-					Operator: "AND",
-					Items: []v3.FilterItem{
-						{
-							Key: v3.AttributeKey{
-								Key:      "source",
-								DataType: v3.AttributeKeyDataTypeString,
-								Type:     v3.AttributeKeyTypeTag,
-							},
-							Operator: "=",
-							Value:    "nginx",
-						},
-					},
+				Logs: &LogsConnectionTest{
+					AttributeKey:   "source",
+					AttributeValue: "nginx",
 				},
 			},
 		}, {
@@ -174,19 +164,9 @@ func (t *TestAvailableIntegrationsRepo) list(
 				Alerts:     []rules.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
-				Logs: &v3.FilterSet{
-					Operator: "AND",
-					Items: []v3.FilterItem{
-						{
-							Key: v3.AttributeKey{
-								Key:      "source",
-								DataType: v3.AttributeKeyDataTypeString,
-								Type:     v3.AttributeKeyTypeTag,
-							},
-							Operator: "=",
-							Value:    "nginx",
-						},
-					},
+				Logs: &LogsConnectionTest{
+					AttributeKey:   "source",
+					AttributeValue: "nginx",
 				},
 			},
 		},

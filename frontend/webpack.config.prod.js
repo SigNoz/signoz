@@ -27,6 +27,7 @@ const plugins = [
 		template: 'src/index.html.ejs',
 		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 		SEGMENT_ID: process.env.SEGMENT_ID,
+		POSTHOG_KEY: process.env.POSTHOG_KEY,
 		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
 		SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
 		SENTRY_ORG: process.env.SENTRY_ORG,
@@ -49,6 +50,7 @@ const plugins = [
 			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
 			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 			SEGMENT_ID: process.env.SEGMENT_ID,
+			POSTHOG_KEY: process.env.POSTHOG_KEY,
 			CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
 			SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
 			SENTRY_ORG: process.env.SENTRY_ORG,
@@ -83,7 +85,7 @@ if (process.env.BUNDLE_ANALYSER === 'true') {
 
 const config = {
 	mode: 'production',
-	devtool: 'eval-source-map',
+	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	output: {
 		path: resolve(__dirname, './build'),

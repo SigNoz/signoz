@@ -8,8 +8,10 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	_ "net/http/pprof" // http profiler
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -23,9 +25,9 @@ import (
 	"go.signoz.io/signoz/ee/query-service/auth"
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/dao"
+	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
-	baseInterface "go.signoz.io/signoz/pkg/query-service/interfaces"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
@@ -62,7 +64,6 @@ type ServerOptions struct {
 	// alert specific params
 	DisableRules      bool
 	RuleRepoURL       string
-	PreferDelta       bool
 	PreferSpanMetrics bool
 	MaxIdleConns      int
 	MaxOpenConns      int
@@ -70,14 +71,13 @@ type ServerOptions struct {
 	CacheConfigPath   string
 	FluxInterval      string
 	Cluster           string
+	GatewayUrl        string
 }
 
 // Server runs HTTP api service
 type Server struct {
 	serverOptions *ServerOptions
-	conn          net.Listener
 	ruleManager   *rules.Manager
-	separatePorts bool
 
 	// public http router
 	httpConn   net.Listener
@@ -86,9 +86,6 @@ type Server struct {
 	// private http
 	privateConn net.Listener
 	privateHTTP *http.Server
-
-	// feature flags
-	featureLookup baseint.FeatureLookup
 
 	// Usage manager
 	usageManager *usage.Manager
@@ -121,8 +118,33 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	localDB.SetMaxOpenConns(10)
 
+	gatewayFeature := basemodel.Feature{
+		Name:       "GATEWAY",
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	}
+
+	//Activate this feature if the url is not empty
+	var gatewayProxy *httputil.ReverseProxy
+	if serverOptions.GatewayUrl == "" {
+		gatewayFeature.Active = false
+		gatewayProxy, err = gateway.NewNoopProxy()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		zap.L().Info("Enabling gateway feature flag ...")
+		gatewayFeature.Active = true
+		gatewayProxy, err = gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", localDB)
+	lm, err := licensepkg.StartManager("sqlite", localDB, gatewayFeature)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +255,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:                 reader,
 		SkipConfig:                    skipConfig,
-		PreferDelta:                   serverOptions.PreferDelta,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
 		MaxIdleConns:                  serverOptions.MaxIdleConns,
 		MaxOpenConns:                  serverOptions.MaxOpenConns,
@@ -247,6 +268,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
+		Gateway:                       gatewayProxy,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -287,7 +309,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, error) {
 
-	r := mux.NewRouter()
+	r := baseapp.NewRouter()
 
 	r.Use(baseapp.LogCommentEnricher)
 	r.Use(setTimeoutMiddleware)
@@ -314,7 +336,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, error) {
 
-	r := mux.NewRouter()
+	r := baseapp.NewRouter()
 
 	// add auth middleware
 	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
@@ -328,7 +350,6 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	r.Use(loggingMiddleware)
 
 	apiHandler.RegisterRoutes(r, am)
-	apiHandler.RegisterMetricsRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterIntegrationRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
@@ -356,7 +377,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.L().Info(path+"\ttimeTaken:"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path))
+		zap.L().Info(path, zap.Duration("timeTaken", time.Since(startTime)), zap.String("path", path))
 	})
 }
 
@@ -368,7 +389,7 @@ func loggingMiddlewarePrivate(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.L().Info(path+"\tprivatePort: true \ttimeTaken"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
+		zap.L().Info(path, zap.Duration("timeTaken", time.Since(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
 	})
 }
 
@@ -393,13 +414,14 @@ func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
 }
 
-func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface{}, bool) {
-	pathToExtractBodyFrom := "/api/v3/query_range"
+func extractQueryRangeData(path string, r *http.Request) (map[string]interface{}, bool) {
+	pathToExtractBodyFromV3 := "/api/v3/query_range"
+	pathToExtractBodyFromV4 := "/api/v4/query_range"
 
 	data := map[string]interface{}{}
 	var postData *v3.QueryRangeParamsV3
 
-	if path == pathToExtractBodyFrom && (r.Method == "POST") {
+	if (r.Method == "POST") && ((path == pathToExtractBodyFromV3) || (path == pathToExtractBodyFromV4)) {
 		if r.Body != nil {
 			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
@@ -415,6 +437,25 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 
 	} else {
 		return nil, false
+	}
+
+	referrer := r.Header.Get("Referer")
+
+	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the referrer", zap.Error(err))
+	}
+	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the alert: ", zap.Error(err))
+	}
+	logsExplorerMatched, err := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the logs explorer: ", zap.Error(err))
+	}
+	traceExplorerMatched, err := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the trace explorer: ", zap.Error(err))
 	}
 
 	signozMetricsUsed := false
@@ -445,6 +486,20 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 		data["tracesUsed"] = signozTracesUsed
 		userEmail, err := baseauth.GetEmailFromJwt(r.Context())
 		if err == nil {
+			// switch case to set data["screen"] based on the referrer
+			switch {
+			case dashboardMatched:
+				data["screen"] = "panel"
+			case alertMatched:
+				data["screen"] = "alert"
+			case logsExplorerMatched:
+				data["screen"] = "logs-explorer"
+			case traceExplorerMatched:
+				data["screen"] = "traces-explorer"
+			default:
+				data["screen"] = "unknown"
+				return data, true
+			}
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail, true, false)
 		}
 	}
@@ -472,7 +527,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
-		queryRangeV3data, metadataExists := extractQueryRangeV3Data(path, r)
+		queryRangeData, metadataExists := extractQueryRangeData(path, r)
 		getActiveLogs(path, r)
 
 		lrw := NewLoggingResponseWriter(w)
@@ -480,7 +535,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
 		if metadataExists {
-			for key, value := range queryRangeV3data {
+			for key, value := range queryRangeData {
 				data[key] = value
 			}
 		}
@@ -648,7 +703,7 @@ func makeRulesManager(
 	db *sqlx.DB,
 	ch baseint.Reader,
 	disableRules bool,
-	fm baseInterface.FeatureLookup) (*rules.Manager, error) {
+	fm baseint.FeatureLookup) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
@@ -676,6 +731,7 @@ func makeRulesManager(
 		Logger:       nil,
 		DisableRules: disableRules,
 		FeatureFlags: fm,
+		Reader:       ch,
 	}
 
 	// create Manager

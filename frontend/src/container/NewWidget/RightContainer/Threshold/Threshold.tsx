@@ -1,18 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './Threshold.styles.scss';
 
-import { CheckOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import {
-	Card,
-	Divider,
-	Input,
-	InputNumber,
-	Select,
-	Space,
-	Typography,
-} from 'antd';
+import { Button, Input, InputNumber, Select, Space, Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { Check, Pencil, Trash2, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
 
@@ -29,6 +21,7 @@ import { ThresholdProps } from './types';
 
 const wrapStyle = {
 	flexWrap: 'wrap',
+	gap: '10px',
 } as React.CSSProperties;
 
 function Threshold({
@@ -90,6 +83,16 @@ function Threshold({
 		);
 	};
 
+	const discardHandler = (): void => {
+		setIsEditMode(false);
+		setOperator(thresholdOperator);
+		setValue(thresholdValue);
+		setUnit(thresholdUnit);
+		setColor(thresholdColor);
+		setFormat(thresholdFormat);
+		setLabel(thresholdLabel);
+		setTableSelectedOption(thresholdTableOptions);
+	};
 	const editHandler = (): void => {
 		setIsEditMode(true);
 	};
@@ -187,7 +190,6 @@ function Threshold({
 		setLabel(event.target.value);
 	};
 
-	const backgroundColor = !isDarkMode ? '#ffffff' : '#141414';
 	const allowDragAndDrop = panelTypeVsDragAndDrop[selectedGraph];
 
 	return (
@@ -197,147 +199,165 @@ function Threshold({
 			data-handler-id={handlerId}
 			className="threshold-container"
 		>
-			<Card
-				className={
-					isDarkMode
-						? `threshold-card threshold-card-dark`
-						: `threshold-card threshold-card-light`
-				}
-			>
-				<div className="threshold-card-container">
-					<div className="threshold-action-button">
-						{isEditMode ? (
-							<CheckOutlined onClick={saveHandler} />
-						) : (
-							<EditOutlined className="threshold-action-icon" onClick={editHandler} />
-						)}
-						<Divider type="vertical" />
-						<DeleteOutlined
-							className="threshold-action-icon"
+			<div className="threshold-card-container">
+				{!isEditMode && (
+					<div className="edit-action-btns">
+						<Button
+							type="text"
+							icon={<Pencil size={14} />}
+							className="edit-btn"
+							onClick={editHandler}
+						/>
+						<Button
+							type="text"
+							icon={<Trash2 size={14} />}
+							className="delete-btn"
 							onClick={deleteHandler}
 						/>
 					</div>
-					<div>
-						<Space
-							direction={
-								selectedGraph === PANEL_TYPES.TABLE ? 'vertical' : 'horizontal'
-							}
-						>
-							{selectedGraph === PANEL_TYPES.TIME_SERIES && (
-								<Space style={wrapStyle}>
-									<Typography.Text>Label</Typography.Text>
-									{isEditMode ? (
-										<Input
-											defaultValue={label}
-											onChange={handleLabelChange}
-											bordered={!isDarkMode}
-											style={{ backgroundColor }}
-										/>
-									) : (
-										<ShowCaseValue width="180px" value={label || 'none'} />
-									)}
-								</Space>
+				)}
+				<div style={{ width: '100%' }}>
+					{selectedGraph === PANEL_TYPES.TIME_SERIES && (
+						<div className="time-series-alerts">
+							<Typography.Text className="label">Label</Typography.Text>
+							{isEditMode ? (
+								<Input
+									defaultValue={label}
+									onChange={handleLabelChange}
+									bordered={!isDarkMode}
+									className="label-input"
+								/>
+							) : (
+								<ShowCaseValue value={label || 'none'} className="label-input" />
 							)}
-							{(selectedGraph === PANEL_TYPES.VALUE ||
-								selectedGraph === PANEL_TYPES.TABLE) && (
-								<>
-									<Typography.Text>
-										If value {selectedGraph === PANEL_TYPES.TABLE ? 'in' : 'is'}
-									</Typography.Text>
-									{isEditMode ? (
-										<>
-											{selectedGraph === PANEL_TYPES.TABLE && (
-												<Space style={wrapStyle}>
-													<Select
-														style={{
-															minWidth: '150px',
-															backgroundColor,
-															borderRadius: '5px',
-														}}
-														defaultValue={tableSelectedOption}
-														options={tableOptions}
-														bordered={!isDarkMode}
-														showSearch
-														onChange={handleTableOptionsChange}
-													/>
-													<Typography.Text>is</Typography.Text>
-												</Space>
-											)}
+						</div>
+					)}
+					{(selectedGraph === PANEL_TYPES.VALUE ||
+						selectedGraph === PANEL_TYPES.TABLE) && (
+						<div className="value-table-alerts">
+							<Typography.Text className="typography">
+								If value {selectedGraph === PANEL_TYPES.TABLE ? 'in' : 'is'}
+							</Typography.Text>
+							{isEditMode ? (
+								<div>
+									{selectedGraph === PANEL_TYPES.TABLE && (
+										<Space style={wrapStyle}>
 											<Select
-												style={{ minWidth: '73px', backgroundColor }}
-												defaultValue={operator}
-												options={operatorOptions}
-												onChange={handleOperatorChange}
+												defaultValue={tableSelectedOption}
+												options={tableOptions}
 												bordered={!isDarkMode}
+												showSearch
+												onChange={handleTableOptionsChange}
+												rootClassName="operator-input-root"
+												className="operator-input"
 											/>
-										</>
-									) : (
-										<>
-											{selectedGraph === PANEL_TYPES.TABLE && (
-												<Space style={wrapStyle}>
-													<ShowCaseValue width="150px" value={tableSelectedOption} />
-													<Typography.Text>is</Typography.Text>
-												</Space>
-											)}
-											<ShowCaseValue width="49px" value={operator} />
-										</>
+											<Typography.Text className="typography">is</Typography.Text>
+										</Space>
 									)}
-								</>
-							)}
-						</Space>
-					</div>
-					<div className="threshold-units-selector">
-						<Space style={wrapStyle}>
-							{isEditMode ? (
-								<InputNumber
-									style={{ backgroundColor }}
-									defaultValue={value}
-									onChange={handleValueChange}
-									bordered={!isDarkMode}
-								/>
+									<Select
+										defaultValue={operator}
+										options={operatorOptions}
+										onChange={handleOperatorChange}
+										bordered={!isDarkMode}
+										style={{ marginLeft: '10px' }}
+										rootClassName="operator-input-root"
+										className="operator-input"
+									/>
+								</div>
 							) : (
-								<ShowCaseValue width="60px" value={value} />
+								<div>
+									{selectedGraph === PANEL_TYPES.TABLE && (
+										<Space>
+											<ShowCaseValue
+												value={tableSelectedOption}
+												className="typography-preview"
+											/>
+											<Typography.Text
+												className="typography"
+												style={{ marginRight: '10px' }}
+											>
+												is
+											</Typography.Text>
+										</Space>
+									)}
+									<ShowCaseValue
+										width="50px"
+										value={operator}
+										className="typography-preview"
+									/>
+								</div>
 							)}
-							{isEditMode ? (
-								<Select
-									style={{ minWidth: '200px', backgroundColor }}
-									bordered={!isDarkMode}
-									defaultValue={unit}
-									options={unitOptions}
-									onChange={handleUnitChange}
-									showSearch
-								/>
-							) : (
-								<ShowCaseValue width="200px" value={unit} />
-							)}
-						</Space>
-					</div>
-					<div>
-						<Space direction="vertical">
-							<Typography.Text>Show with</Typography.Text>
-							<Space style={wrapStyle}>
-								{isEditMode ? (
-									<>
-										<ColorSelector setColor={setColor} thresholdColor={color} />
-										<Select
-											style={{ minWidth: '100px', backgroundColor }}
-											defaultValue={format}
-											options={showAsOptions}
-											onChange={handlerFormatChange}
-											bordered={!isDarkMode}
-										/>
-									</>
-								) : (
-									<>
-										<ShowCaseValue width="120px" value={<CustomColor color={color} />} />
-										<ShowCaseValue width="100px" value={format} />
-									</>
-								)}
-							</Space>
-						</Space>
-					</div>
+						</div>
+					)}
 				</div>
-			</Card>
+				<div className="threshold-units-selector">
+					{isEditMode ? (
+						<InputNumber
+							defaultValue={value}
+							onChange={handleValueChange}
+							className="unit-input"
+						/>
+					) : (
+						<ShowCaseValue value={value} className="unit-input" />
+					)}
+					{isEditMode ? (
+						<Select
+							defaultValue={unit}
+							options={unitOptions}
+							onChange={handleUnitChange}
+							showSearch
+							className="unit-selection"
+						/>
+					) : (
+						<ShowCaseValue value={unit} className="unit-selection-prev" />
+					)}
+				</div>
+				<div className="thresholds-color-selector">
+					{isEditMode ? (
+						<>
+							<div className="color-selector">
+								<ColorSelector setColor={setColor} thresholdColor={color} />
+							</div>
+							<Select
+								defaultValue={format}
+								options={showAsOptions}
+								onChange={handlerFormatChange}
+								rootClassName="color-format"
+							/>
+						</>
+					) : (
+						<>
+							<ShowCaseValue
+								value={<CustomColor color={color} />}
+								className="color-selector"
+							/>
+							<ShowCaseValue
+								width="100px"
+								value={format}
+								className="color-format-prev"
+							/>
+						</>
+					)}
+				</div>
+				{isEditMode && (
+					<div className="threshold-action-button">
+						<Button
+							className="discard-btn"
+							icon={<X size={14} />}
+							onClick={discardHandler}
+						>
+							Discard
+						</Button>
+						<Button
+							className="save-changes"
+							icon={<Check size={14} />}
+							onClick={saveHandler}
+						>
+							Save Changes
+						</Button>
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }

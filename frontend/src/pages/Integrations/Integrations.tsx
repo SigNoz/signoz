@@ -8,6 +8,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import Header from './Header';
 import IntegrationDetailPage from './IntegrationDetailPage/IntegrationDetailPage';
 import IntegrationsList from './IntegrationsList';
+import { RequestIntegrationBtn } from './RequestIntegrationBtn';
 import { INTEGRATION_TELEMETRY_EVENTS } from './utils';
 
 function Integrations(): JSX.Element {
@@ -15,7 +16,7 @@ function Integrations(): JSX.Element {
 	const history = useHistory();
 	const location = useLocation();
 
-	const { trackPageView, trackEvent } = useAnalytics();
+	const { trackEvent } = useAnalytics();
 
 	const selectedIntegration = useMemo(() => urlQuery.get('integration'), [
 		urlQuery,
@@ -42,7 +43,7 @@ function Integrations(): JSX.Element {
 	);
 
 	useEffect(() => {
-		trackPageView(location.pathname);
+		trackEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_LIST_VISITED);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
@@ -55,6 +56,7 @@ function Integrations(): JSX.Element {
 						selectedIntegration={selectedIntegration}
 						setSelectedIntegration={setSelectedIntegration}
 						activeDetailTab={activeDetailTab}
+						setActiveDetailTab={setActiveDetailTab}
 					/>
 				) : (
 					<>
@@ -64,6 +66,7 @@ function Integrations(): JSX.Element {
 							searchTerm={searchTerm}
 							setActiveDetailTab={setActiveDetailTab}
 						/>
+						<RequestIntegrationBtn />
 					</>
 				)}
 			</div>
