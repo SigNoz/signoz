@@ -192,7 +192,7 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "hello 'world'", Operator: "contains"},
 		}},
-		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'message')] ILIKE '%hello \\'world\\'%'",
+		ExpectedFilter: "lower(attributes_string_value[indexOf(attributes_string_key, 'message')]) LIKE lower('%hello \\'world\\'%')",
 	},
 	{
 		Name: "Test not contains",
