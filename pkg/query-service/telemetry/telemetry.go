@@ -85,7 +85,7 @@ const api_key = "9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr"
 const IP_NOT_FOUND_PLACEHOLDER = "NA"
 const DEFAULT_NUMBER_OF_SERVICES = 6
 
-const HEART_BEAT_DURATION = 12 * time.Hour
+const HEART_BEAT_DURATION = 1 * time.Minute
 
 const ACTIVE_USER_DURATION = 6 * time.Hour
 
@@ -185,6 +185,12 @@ type Telemetry struct {
 	patTokenUser  bool
 	countUsers    int8
 	mutex         sync.RWMutex
+
+	alertsInfoCallback func(ctx context.Context) (*model.AlertsInfo, error)
+}
+
+func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*model.AlertsInfo, error)) {
+	a.alertsInfoCallback = callback
 }
 
 func createTelemetry() {
@@ -310,7 +316,7 @@ func createTelemetry() {
 						telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, user.Email, false, false)
 					}
 				}
-				alertsInfo, err := telemetry.reader.GetAlertsInfo(context.Background())
+				alertsInfo, err := telemetry.alertsInfoCallback(context.Background())
 				if err == nil {
 					dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
 					if err == nil {
