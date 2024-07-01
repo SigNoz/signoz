@@ -46,6 +46,9 @@ func fillGap(series *v3.Series, start, end, step int64) *v3.Series {
 
 // TODO(srikanthccv): can WITH FILL be perfect substitute for all cases https://clickhouse.com/docs/en/sql-reference/statements/select/order-by#order-by-expr-with-fill-modifier
 func FillGaps(results []*v3.Result, params *v3.QueryRangeParamsV3) {
+	if params.CompositeQuery.PanelType != v3.PanelTypeGraph {
+		return
+	}
 	for _, result := range results {
 		// A `result` item in `results` contains the query result for individual query.
 		// If there are no series in the result, we add empty series and `fillGap` adds all zeros
