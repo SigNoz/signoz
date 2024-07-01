@@ -2213,6 +2213,25 @@ func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMidd
 		"", am.ViewAccess(ah.ListIntegrations),
 	).Methods(http.MethodGet)
 }
+func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/preferences").Subrouter()
+
+	subRouter.HandleFunc(
+		"/{preferenceKey}", am.ViewAccess(ah.createPreference),
+	).Methods(http.MethodPost)
+	
+	subRouter.HandleFunc(
+		"/{preferenceKey}", am.ViewAccess(ah.getPreference),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"/{preferenceKey}", am.ViewAccess(ah.updatePreference),
+	).Methods(http.MethodPut)
+
+	subRouter.HandleFunc(
+		"/{preferenceKey}", am.ViewAccess(ah.deletePreference),
+	).Methods(http.MethodDelete)
+}
 
 func (ah *APIHandler) ListIntegrations(
 	w http.ResponseWriter, r *http.Request,
@@ -2495,6 +2514,89 @@ func (ah *APIHandler) UninstallIntegration(
 
 	ah.Respond(w, map[string]interface{}{})
 }
+
+// preference CRUD
+
+func (ah *APIHandler) createPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.UninstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, map[string]interface{}{})
+}
+
+func (ah *APIHandler) getPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.UninstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, map[string]interface{}{})
+}
+
+func (ah *APIHandler) updatePreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.UninstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, map[string]interface{}{})
+}
+
+func (ah *APIHandler) deletePreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.UninstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, map[string]interface{}{})
+}
+
 
 // logs
 func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware) {
