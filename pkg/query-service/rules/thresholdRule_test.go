@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -938,6 +939,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		compareOp    string
 		matchType    string
 		target       float64
+		summaryAny   []string
 	}{
 		{
 			targetUnit: "s",
@@ -968,6 +970,12 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			compareOp:    "1", // Above
 			matchType:    "1", // Once
 			target:       200,
+			summaryAny: []string{
+				"observed metric value is 299 ms",
+				"the observed metric value is 573 ms",
+				"the observed metric value is 572 ms",
+				"the observed metric value is 301 ms",
+			},
 		},
 		{
 			targetUnit: "decgbytes",
@@ -1000,6 +1008,10 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
 		postableRule.RuleCondition.TargetUnit = c.targetUnit
+		postableRule.Annotations = map[string]string{
+			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
+		}
 
 		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "")
@@ -1024,5 +1036,17 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		}
 
 		assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+		if c.expectAlerts != 0 {
+			foundCount := 0
+			for _, item := range rule.active {
+				for _, summary := range c.summaryAny {
+					if strings.Contains(item.Annotations.Get("summary"), summary) {
+						foundCount++
+						break
+					}
+				}
+			}
+			assert.Equal(t, c.expectAlerts, foundCount, "case %d", idx)
+		}
 	}
 }
