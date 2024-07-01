@@ -18,6 +18,11 @@ type UserPreference struct {
 	PreferenceKey   string `json:"preference_key" db:"preference_key"`
 	PreferenceValue string `json:"preference_value" db:"preference_value"`
 }
+
+type OrgPreference struct {
+	PreferenceKey   string `json:"preference_key" db:"preference_key"`
+	PreferenceValue string `json:"preference_value" db:"preference_value"`
+}
 type Preference struct {
 	Id           string `json:"id" db:"id"`
 	Name         string `json:"name" db:"name"`
@@ -37,7 +42,18 @@ type UpdateUserPreferenceRequest struct {
 	PreferenceValue string `json:"preference_value"`
 }
 
+type UpdateOrgPreferenceRequest struct {
+	OrgId           string `json:"org_id"`
+	PreferenceKey   string `json:"preference_key"`
+	PreferenceValue string `json:"preference_value"`
+}
+
 type UpdateUserPreferenceResponse struct {
+	PreferenceKey   string `json:"preference_key"`
+	PreferenceValue string `json:"preference_value"`
+}
+
+type UpdateOrgPreferenceResponse struct {
 	PreferenceKey   string `json:"preference_key"`
 	PreferenceValue string `json:"preference_value"`
 }
@@ -77,8 +93,6 @@ func InitDB(datasourceName string) error {
 	if unmarshalErr := json.Unmarshal(bootstrapPreferences, &preferences); unmarshalErr != nil {
 		return fmt.Errorf("error in unmarshalling bootstrap preferences: %s", unmarshalErr.Error())
 	}
-
-	fmt.Println(preferences)
 
 	for _, preference := range preferences {
 
@@ -274,6 +288,100 @@ func UpdateUserPreference(ctx context.Context, req *UpdateUserPreferenceRequest)
 	}
 
 	return &UpdateUserPreferenceResponse{
+		PreferenceKey:   preferenceKey,
+		PreferenceValue: preferenceValue,
+	}, nil
+}
+
+func GetOrgPreference(ctx context.Context, preferenceKey string, orgId string) (*UserPreferenceWithDefault, *model.ApiError) {
+	orgPreference := []OrgPreference{}
+
+	// get the preference key and value from the org preference table
+	query := `SELECT preference_key, preference_value FROM org_preference WHERE preference_key = $1 AND org_id = $2;`
+	err := db.Select(&orgPreference, query, preferenceKey, orgId)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	// get the details for the preference entity
+	preference := Preference{}
+	query = `SELECT org, default_value FROM preference WHERE id = $1;`
+	err = db.Get(&preference, query, preferenceKey)
+
+	// return if unable to fetch the preference entity as we won't be sure about preference being enabled or not
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("error while fetching the preference entity: %s", preferenceKey)}
+	}
+
+	// return err if the preference is not enabled for org scope
+	if preference.OrgScope != 1 {
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference not enabled with key: %s", preferenceKey)}
+	}
+
+	orgPreferenceWithDefault := UserPreferenceWithDefault{}
+
+	if len(orgPreference) == 0 {
+		orgPreferenceWithDefault.PreferenceKey = preferenceKey
+		orgPreferenceWithDefault.PreferenceValue = ""
+	} else if len(orgPreference) == 1 {
+		orgPreferenceWithDefault.PreferenceKey = orgPreference[0].PreferenceKey
+		orgPreferenceWithDefault.PreferenceValue = orgPreference[0].PreferenceValue
+	} else {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference key: %s", preferenceKey)}
+	}
+
+	orgPreferenceWithDefault.DefaultValue = preference.DefaultValue
+
+	return &orgPreferenceWithDefault, nil
+}
+
+// todo [vikrantgupta25]: take care of depends_on field here itself!
+func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (*UpdateOrgPreferenceResponse, *model.ApiError) {
+	preferenceKey := req.PreferenceKey
+	preferenceValue := req.PreferenceValue
+	orgId := req.OrgId
+
+	orgPreference := []OrgPreference{}
+
+	// return error if there is no preference key in the request
+	if preferenceKey == "" {
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference key found in the request")}
+	}
+
+	if orgId == "" {
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org id found in the request")}
+	}
+
+	query := `SELECT preference_key FROM org_preference WHERE preference_key= $1 AND org_id= $2;`
+	err := db.Select(&orgPreference, query, preferenceKey, orgId)
+
+	// return the error if the select statement to find the current org preferences fails
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting the preference value: %s", err)}
+	}
+
+	if len(orgPreference) == 0 {
+		query = `INSERT INTO org_preference(preference_key,preference_value,org_id) VALUES($1,$2,$3);`
+		_, err = db.Exec(query, preferenceKey, preferenceValue, orgId)
+
+		// return the error if the insert statement fails
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
+		}
+
+	} else if len(orgPreference) == 1 {
+		query = `UPDATE org_preference SET preference_value= $1 WHERE preference_key=$2 AND org_id=$3;`
+		_, err = db.Exec(query, preferenceValue, preferenceKey, orgId)
+		// return the error if the update statement fails
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
+		}
+	} else {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference: %s", err)}
+	}
+
+	return &UpdateOrgPreferenceResponse{
 		PreferenceKey:   preferenceKey,
 		PreferenceValue: preferenceValue,
 	}, nil

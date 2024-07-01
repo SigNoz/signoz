@@ -2242,12 +2242,47 @@ func (ah *APIHandler) updateUserPreference(w http.ResponseWriter, r *http.Reques
 	ah.Respond(w, preference)
 
 }
-func (ah *APIHandler) getOrgPreference(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getOrgPreference(w http.ResponseWriter, r *http.Request) {
+	preferenceKey := r.URL.Query().Get("preferenceKey")
+	orgId := r.URL.Query().Get("orgId")
 
+	if preferenceKey == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference key found in the request")}, nil)
+		return
+	}
+
+	if orgId == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org id found in the request")}, nil)
+		return
+	}
+
+	preference, err := preferences.GetOrgPreference(r.Context(), preferenceKey, orgId)
+
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
 }
 
 func (ah *APIHandler) updateOrgPreference(w http.ResponseWriter, r *http.Request) {
+	req := preferences.UpdateOrgPreferenceRequest{}
 
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), &req)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
 }
 
 // Integrations
