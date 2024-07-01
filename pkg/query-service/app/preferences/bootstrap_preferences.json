@@ -1,0 +1,27 @@
+[
+    {
+        "id": "LOGS_SAVED_VIEWS",
+        "name": "Logs saved views",
+        "default_value":"false",
+        "depends_on":"",
+        "user": 1,
+        "org": 1
+    },
+    {
+        "id": "LOGS_TOOLBAR_COLLAPSED",
+        "name": "Logs toolbar collapsed",
+        "default_value":"false",
+        "depends_on":"",
+        "user": 1,
+        "org": 0
+    },
+    {
+        "id": "LOGS_TOOLBAR_COLLAPSED_TEST",
+        "name": "Logs toolbar collapsed",
+        "default_value":"false",
+        "depends_on":"",
+        "user": 1,
+        "org": 0
+    }
+    
+]

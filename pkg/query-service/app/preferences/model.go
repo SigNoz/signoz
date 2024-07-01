@@ -2,7 +2,10 @@ package preferences
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/fs"
+	"os"
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/common"
@@ -20,8 +23,8 @@ type Preference struct {
 	Name         string `json:"name" db:"name"`
 	DefaultValue string `json:"default_value" db:"default_value"`
 	DependsOn    string `json:"depends_on" db:"depends_on"`
-	UserScope    int    `json:"userEnabled" db:"user"`
-	OrgScope     int    `json:"orgEnabled" db:"org"`
+	UserScope    int    `json:"user" db:"user"`
+	OrgScope     int    `json:"org" db:"org"`
 }
 
 type UserPreferenceWithDefault struct {
@@ -61,6 +64,44 @@ func InitDB(datasourceName string) error {
 	_, err = db.Exec(table_schema)
 	if err != nil {
 		return fmt.Errorf("error in creating preference table: %s", err.Error())
+	}
+
+	bootstrapPreferences, fileError := fs.ReadFile(os.DirFS("../../pkg/query-service/app/preferences"), "bootstrap_preferences.json")
+
+	if fileError != nil {
+		return fmt.Errorf("error in reading bootstrap preferences: %s", fileError.Error())
+	}
+
+	preferences := []Preference{}
+
+	if unmarshalErr := json.Unmarshal(bootstrapPreferences, &preferences); unmarshalErr != nil {
+		return fmt.Errorf("error in unmarshalling bootstrap preferences: %s", unmarshalErr.Error())
+	}
+
+	fmt.Println(preferences)
+
+	for _, preference := range preferences {
+
+		var preferenceFromDB []Preference
+		query := `SELECT id FROM preference WHERE id=$1;`
+		err = db.Select(&preferenceFromDB, query, preference.Id)
+
+		if err != nil {
+			return fmt.Errorf("error in finding bootstrap entries in preference entity: %s", err.Error())
+		}
+
+		if len(preferenceFromDB) == 0 {
+			query = `INSERT INTO preference(id,name,default_value,depends_on,user,org) VALUES($1,$2,$3,$4,$5,$6);`
+
+			_, err = db.Exec(query, preference.Id, preference.Name, preference.DefaultValue, preference.DependsOn, preference.UserScope, preference.OrgScope)
+
+			if err != nil {
+				return fmt.Errorf("error in adding bootstrap preference: %s", err.Error())
+			}
+		} else if len(preferenceFromDB) > 1 {
+			return fmt.Errorf("multiple entries found for preference entity while bootstrapping: %s", preference.Id)
+		}
+
 	}
 
 	// create the preference group entity
@@ -191,6 +232,7 @@ func GetUserPreference(ctx context.Context, preferenceKey string) (*UserPreferen
 	return &userPreferenceWithDefault, nil
 }
 
+// todo [vikrantgupta25]: take care of depends_on field here itself!
 func UpdateUserPreference(ctx context.Context, req *UpdateUserPreferenceRequest) (*UpdateUserPreferenceResponse, *model.ApiError) {
 	preferenceKey := req.PreferenceKey
 	preferenceValue := req.PreferenceValue
