@@ -330,7 +330,6 @@ func GetUserPreference(ctx context.Context, preferenceKey string) (*UserPreferen
 	return &userPreferenceWithDefault, nil
 }
 
-// todo [vikrantgupta25]: take care of depends_on field here itself!
 func UpdateUserPreference(ctx context.Context, req *UpdateUserPreferenceRequest) (*UpdateUserPreferenceResponse, *model.ApiError) {
 	preferenceKey := req.PreferenceKey
 	preferenceValue := req.PreferenceValue
@@ -360,12 +359,8 @@ func UpdateUserPreference(ctx context.Context, req *UpdateUserPreferenceRequest)
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
 		}
 
-		// query = `UPDATE preference SET user=1 WHERE depends_on=$1;`
-		// _, err = db.Exec(query, preferenceKey)
-
-		// if err != nil {
-		// 	return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in updating the dependent preference entities: %s", err)}
-		// }
+		// TODO [vikrantgupta25]: on the basis of preference value enable / disable the fields dependent on them and then recursively based on their
+		// already set values in user_preference or default values set deeper nestings. similar logic for else if as well
 
 	} else if len(userPreference) == 1 {
 		query = `UPDATE user_preference SET preference_value= $1 WHERE preference_key=$2 AND user_id=$3;`
@@ -427,7 +422,6 @@ func GetOrgPreference(ctx context.Context, preferenceKey string, orgId string) (
 	return &orgPreferenceWithDefault, nil
 }
 
-// todo [vikrantgupta25]: take care of depends_on field here itself!
 func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (*UpdateOrgPreferenceResponse, *model.ApiError) {
 	preferenceKey := req.PreferenceKey
 	preferenceValue := req.PreferenceValue
@@ -460,6 +454,9 @@ func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
 		}
+
+		// TODO [vikrantgupta25]: on the basis of preference value enable / disable the fields dependent on them and then recursively based on their
+		// already set values in org_preference or default values set deeper nestings. similar logic for else if as well
 
 	} else if len(orgPreference) == 1 {
 		query = `UPDATE org_preference SET preference_value= $1 WHERE preference_key=$2 AND org_id=$3;`
