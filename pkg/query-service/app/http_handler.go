@@ -2224,6 +2224,22 @@ func (aH *APIHandler) getUserPreference(w http.ResponseWriter, r *http.Request) 
 }
 
 func (ah *APIHandler) updateUserPreference(w http.ResponseWriter, r *http.Request) {
+	req := preferences.UpdateUserPreferenceRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateUserPreference(r.Context(), &req)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
 
 }
 func (ah *APIHandler) getOrgPreference(w http.ResponseWriter, r *http.Request) {

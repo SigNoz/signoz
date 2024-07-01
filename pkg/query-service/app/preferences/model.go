@@ -15,7 +15,6 @@ type UserPreference struct {
 	PreferenceKey   string `json:"preference_key" db:"preference_key"`
 	PreferenceValue string `json:"preference_value" db:"preference_value"`
 }
-
 type Preference struct {
 	Id           string `json:"id" db:"id"`
 	Name         string `json:"name" db:"name"`
@@ -28,6 +27,16 @@ type Preference struct {
 type UserPreferenceWithDefault struct {
 	UserPreference
 	DefaultValue string `json:"default_value" db:"default_value"`
+}
+
+type UpdateUserPreferenceRequest struct {
+	PreferenceKey   string `json:"preference_key"`
+	PreferenceValue string `json:"preference_value"`
+}
+
+type UpdateUserPreferenceResponse struct {
+	PreferenceKey   string `json:"preference_key"`
+	PreferenceValue string `json:"preference_value"`
 }
 
 func InitDB(datasourceName string) error {
@@ -139,17 +148,15 @@ func InitDB(datasourceName string) error {
 }
 
 func GetUserPreference(ctx context.Context, preferenceKey string) (*UserPreferenceWithDefault, *model.ApiError) {
-	userPreference := UserPreference{}
+	userPreference := []UserPreference{}
 	user := common.GetUserFromContext(ctx)
 
 	// get the preference key and value from the user preference table
 	query := `SELECT preference_key, preference_value FROM user_preference WHERE preference_key = $1 AND user_id = $2;`
-	err := db.Get(&userPreference, query, preferenceKey, user.Id)
+	err := db.Select(&userPreference, query, preferenceKey, user.Id)
 
-	// return if there is no value for the preference found
-	// TODO [vikrant25] change this as if no preference is found then return the default value
 	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no user preference found with key: %s", preferenceKey)}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
 	// get the details for the preference entity
@@ -169,9 +176,61 @@ func GetUserPreference(ctx context.Context, preferenceKey string) (*UserPreferen
 
 	userPreferenceWithDefault := UserPreferenceWithDefault{}
 
-	userPreferenceWithDefault.PreferenceKey = userPreference.PreferenceKey
-	userPreferenceWithDefault.PreferenceValue = userPreference.PreferenceValue
+	if len(userPreference) == 0 {
+		userPreferenceWithDefault.PreferenceKey = preferenceKey
+		userPreferenceWithDefault.PreferenceValue = ""
+	} else if len(userPreference) == 1 {
+		userPreferenceWithDefault.PreferenceKey = userPreference[0].PreferenceKey
+		userPreferenceWithDefault.PreferenceValue = userPreference[0].PreferenceValue
+	} else {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference key: %s", preferenceKey)}
+	}
+
 	userPreferenceWithDefault.DefaultValue = preference.DefaultValue
 
 	return &userPreferenceWithDefault, nil
+}
+
+func UpdateUserPreference(ctx context.Context, req *UpdateUserPreferenceRequest) (*UpdateUserPreferenceResponse, *model.ApiError) {
+	preferenceKey := req.PreferenceKey
+	preferenceValue := req.PreferenceValue
+	user := common.GetUserFromContext(ctx)
+
+	userPreference := []UserPreference{}
+
+	// return error if there is no preference key in the request
+	if preferenceKey == "" {
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference key found in the request")}
+	}
+
+	query := `SELECT preference_key FROM user_preference WHERE preference_key= $1 AND user_id= $2;`
+	err := db.Select(&userPreference, query, preferenceKey, user.Id)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting the preference value: %s", err)}
+	}
+
+	if len(userPreference) == 0 {
+		query = `INSERT INTO user_preference(preference_key,preference_value,user_id) VALUES($1,$2,$3);`
+		_, err = db.Exec(query, preferenceKey, preferenceValue, user.Id)
+
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
+		}
+
+	} else if len(userPreference) == 1 {
+		query = `UPDATE user_preference SET preference_value= $1 WHERE preference_key=$2 AND user_id=$3;`
+		_, err = db.Exec(query, preferenceValue, preferenceKey, user.Id)
+		// return the error if the update statement fails
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
+		}
+	} else {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference: %s", err)}
+	}
+
+	return &UpdateUserPreferenceResponse{
+		PreferenceKey:   preferenceKey,
+		PreferenceValue: preferenceValue,
+	}, nil
 }
