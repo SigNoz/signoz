@@ -206,6 +206,7 @@ func UpdateUserPreference(ctx context.Context, req *UpdateUserPreferenceRequest)
 	query := `SELECT preference_key FROM user_preference WHERE preference_key= $1 AND user_id= $2;`
 	err := db.Select(&userPreference, query, preferenceKey, user.Id)
 
+	// return the error if the select statement to find the current user preferences fails
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting the preference value: %s", err)}
 	}
@@ -214,6 +215,7 @@ func UpdateUserPreference(ctx context.Context, req *UpdateUserPreferenceRequest)
 		query = `INSERT INTO user_preference(preference_key,preference_value,user_id) VALUES($1,$2,$3);`
 		_, err = db.Exec(query, preferenceKey, preferenceValue, user.Id)
 
+		// return the error if the insert statement fails
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
 		}
