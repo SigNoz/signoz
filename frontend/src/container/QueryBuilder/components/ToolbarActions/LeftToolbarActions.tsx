@@ -10,7 +10,7 @@ interface LeftToolbarActionsProps {
 	selectedView: string;
 	onToggleHistrogramVisibility: () => void;
 	onChangeSelectedView: (view: SELECTED_VIEWS) => void;
-	showHistogram: boolean;
+	showFrequencyChart: boolean;
 }
 
 const activeTab = 'active-tab';
@@ -22,7 +22,7 @@ export default function LeftToolbarActions({
 	selectedView,
 	onToggleHistrogramVisibility,
 	onChangeSelectedView,
-	showHistogram,
+	showFrequencyChart,
 }: LeftToolbarActionsProps): JSX.Element {
 	const { clickhouse, search, queryBuilder: QB } = items;
 
@@ -71,11 +71,11 @@ export default function LeftToolbarActions({
 				)}
 			</div>
 
-			<div className="histogram-view-controller">
-				<Typography>Histogram</Typography>
+			<div className="frequency-chart-view-controller">
+				<Typography>Frequency chart</Typography>
 				<Switch
 					size="small"
-					checked={showHistogram}
+					checked={showFrequencyChart}
 					defaultChecked
 					onChange={onToggleHistrogramVisibility}
 				/>
