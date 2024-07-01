@@ -1,5 +1,6 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphComponentProps } from 'container/GridCardLayout/GridCard/types';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
@@ -21,4 +22,12 @@ export type PanelWrapperProps = {
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	onDragSelect: (start: number, end: number) => void;
 	selectedGraph?: PANEL_TYPES;
+	tableProcessedDataRef?: React.MutableRefObject<RowData[]>;
+};
+
+export type TooltipData = {
+	label: string;
+	key: string;
+	value: string;
+	color: string;
 };

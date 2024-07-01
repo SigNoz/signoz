@@ -192,7 +192,8 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					conditions = append(conditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					columnName := getClickhouseColumnName(item.Key)
-					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, item.Value))
+					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
 				default:
 					columnName := getClickhouseColumnName(item.Key)
 					fmtVal := utils.ClickHouseFormattedValue(value)
@@ -252,6 +253,8 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	} else if panelType == v3.PanelTypeTable {
 		queryTmpl =
 			"SELECT now() as ts,"
+		// step or aggregate interval is whole time period in case of table panel
+		step = (utils.GetEpochNanoSecs(end) - utils.GetEpochNanoSecs(start)) / 1000000000
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmpl =

@@ -19,9 +19,11 @@ import (
 // step is in seconds
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, error) {
 
-	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, mq.TimeAggregation)
+	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, *mq)
 
 	var quantile float64
+
+	percentileOperator := mq.SpaceAggregation
 
 	if v3.IsPercentileOperator(mq.SpaceAggregation) &&
 		mq.AggregateAttribute.Type != v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
@@ -80,6 +82,7 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	// fixed-bucket histogram quantiles are calculated with UDF
 	if quantile != 0 && mq.AggregateAttribute.Type != v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
 		query = fmt.Sprintf(`SELECT %s, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s`, groupBy, quantile, query, groupBy, orderBy)
+		mq.SpaceAggregation = percentileOperator
 	}
 
 	return query, nil

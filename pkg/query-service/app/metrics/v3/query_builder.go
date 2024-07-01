@@ -2,10 +2,11 @@ package v3
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
+	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -51,136 +52,23 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 // See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
 var rateWithoutNegative = `If((value - lagInFrame(value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window))) `
 
-// buildMetricsTimeSeriesFilterQuery builds the sub-query to be used for filtering
-// timeseries based on search criteria
-func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.AttributeKey, mq *v3.BuilderQuery) (string, error) {
-	metricName := mq.AggregateAttribute.Key
-	aggregateOperator := mq.AggregateOperator
-	var conditions []string
-	if mq.Temporality == v3.Delta {
-		conditions = append(conditions, fmt.Sprintf("metric_name = %s AND temporality = '%s' ", utils.ClickHouseFormattedValue(metricName), v3.Delta))
-	} else {
-		conditions = append(conditions, fmt.Sprintf("metric_name = %s AND temporality IN ['%s', '%s']", utils.ClickHouseFormattedValue(metricName), v3.Cumulative, v3.Unspecified))
-	}
-
-	if fs != nil && len(fs.Items) != 0 {
-		for _, item := range fs.Items {
-			toFormat := item.Value
-			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
-			// if the received value is an array for like/match op, just take the first value
-			// or should we throw an error?
-			if op == v3.FilterOperatorLike || op == v3.FilterOperatorRegex || op == v3.FilterOperatorNotLike || op == v3.FilterOperatorNotRegex {
-				x, ok := item.Value.([]interface{})
-				if ok {
-					if len(x) == 0 {
-						continue
-					}
-					toFormat = x[0]
-				}
-			}
-
-			if op == v3.FilterOperatorContains || op == v3.FilterOperatorNotContains {
-				toFormat = fmt.Sprintf("%%%s%%", toFormat)
-			}
-			fmtVal := utils.ClickHouseFormattedValue(toFormat)
-			switch op {
-			case v3.FilterOperatorEqual:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorNotEqual:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorIn:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorNotIn:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorLike:
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case v3.FilterOperatorNotLike:
-				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case v3.FilterOperatorRegex:
-				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case v3.FilterOperatorNotRegex:
-				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case v3.FilterOperatorGreaterThan:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') > %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorGreaterThanOrEq:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') >= %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorLessThan:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') < %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorLessThanOrEq:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') <= %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorContains:
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case v3.FilterOperatorNotContains:
-				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case v3.FilterOperatorExists:
-				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", item.Key.Key))
-			case v3.FilterOperatorNotExists:
-				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", item.Key.Key))
-			default:
-				return "", fmt.Errorf("unsupported operation")
-			}
-		}
-	}
-	queryString := strings.Join(conditions, " AND ")
-
-	var selectLabels string
-	if aggregateOperator == v3.AggregateOperatorNoOp || aggregateOperator == v3.AggregateOperatorRate {
-		selectLabels = "labels,"
-	} else {
-		for _, tag := range groupTags {
-			selectLabels += fmt.Sprintf(" JSONExtractString(labels, '%s') as %s,", tag.Key, tag.Key)
-		}
-	}
-
-	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_LOCAL_TABLENAME, queryString)
-
-	return filterSubQuery, nil
-}
-
-func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string) (string, error) {
+func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	metricQueryGroupBy := mq.GroupBy
 
-	// if the aggregate operator is a histogram quantile, and user has not forgotten
-	// the le tag in the group by then add the le tag to the group by
-	if mq.AggregateOperator == v3.AggregateOperatorHistQuant50 ||
-		mq.AggregateOperator == v3.AggregateOperatorHistQuant75 ||
-		mq.AggregateOperator == v3.AggregateOperatorHistQuant90 ||
-		mq.AggregateOperator == v3.AggregateOperatorHistQuant95 ||
-		mq.AggregateOperator == v3.AggregateOperatorHistQuant99 {
-		found := false
-		for _, tag := range mq.GroupBy {
-			if tag.Key == "le" {
-				found = true
-				break
-			}
-		}
-		if !found {
-			metricQueryGroupBy = append(
-				metricQueryGroupBy,
-				v3.AttributeKey{
-					Key:      "le",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeTag,
-					IsColumn: false,
-				},
-			)
-		}
-	}
-
-	filterSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, metricQueryGroupBy, mq)
+	filterSubQuery, err := helpers.PrepareTimeseriesFilterQueryV3(start, end, mq)
 	if err != nil {
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms < %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli < %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
 		"SELECT %s" +
-			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
+			" toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as value" +
-			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
+			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_V4_TABLENAME +
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
@@ -309,9 +197,9 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	case v3.AggregateOperatorNoOp:
 		queryTmpl :=
 			"SELECT fingerprint, labels as fullLabels," +
-				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
+				" toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL %d SECOND) as ts," +
 				" any(value) as value" +
-				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
+				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_V4_TABLENAME +
 				" INNER JOIN" +
 				" (%s) as filtered_time_series" +
 				" USING fingerprint" +
@@ -329,11 +217,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 // `ts` is always added to the group by clause
 func groupingSets(tags ...string) string {
 	withTs := append(tags, "ts")
-	if len(withTs) > 1 {
-		return fmt.Sprintf(`GROUPING SETS ( (%s), (%s) )`, strings.Join(withTs, ", "), strings.Join(tags, ", "))
-	} else {
-		return strings.Join(withTs, ", ")
-	}
+	return strings.Join(withTs, ", ")
 }
 
 // groupBy returns a string of comma separated tags for group by clause
@@ -448,28 +332,49 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 // start and end are in milliseconds
 // step is in seconds
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
-	start = start - (start % (mq.StepInterval * 1000))
-	// if the query is a rate query, we adjust the start time by one more step
-	// so that we can calculate the rate for the first data point
-	if mq.AggregateOperator.IsRateOperator() && mq.Temporality != v3.Delta {
-		start -= mq.StepInterval * 1000
+
+	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, *mq)
+
+	// if the aggregate operator is a histogram quantile, and user has not forgotten
+	// the le tag in the group by then add the le tag to the group by
+	if mq.AggregateOperator == v3.AggregateOperatorHistQuant50 ||
+		mq.AggregateOperator == v3.AggregateOperatorHistQuant75 ||
+		mq.AggregateOperator == v3.AggregateOperatorHistQuant90 ||
+		mq.AggregateOperator == v3.AggregateOperatorHistQuant95 ||
+		mq.AggregateOperator == v3.AggregateOperatorHistQuant99 {
+		found := false
+		for _, tag := range mq.GroupBy {
+			if tag.Key == "le" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			mq.GroupBy = append(
+				mq.GroupBy,
+				v3.AttributeKey{
+					Key:      "le",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+					IsColumn: false,
+				},
+			)
+		}
 	}
-	adjustStep := int64(math.Min(float64(mq.StepInterval), 60))
-	end = end - (end % (adjustStep * 1000))
 
 	var query string
 	var err error
 	if mq.Temporality == v3.Delta {
 		if panelType == v3.PanelTypeTable {
-			query, err = buildDeltaMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+			query, err = buildDeltaMetricQueryForTable(start, end, mq.StepInterval, mq)
 		} else {
-			query, err = buildDeltaMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+			query, err = buildDeltaMetricQuery(start, end, mq.StepInterval, mq)
 		}
 	} else {
 		if panelType == v3.PanelTypeTable {
-			query, err = buildMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+			query, err = buildMetricQueryForTable(start, end, mq.StepInterval, mq)
 		} else {
-			query, err = buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+			query, err = buildMetricQuery(start, end, mq.StepInterval, mq)
 		}
 	}
 

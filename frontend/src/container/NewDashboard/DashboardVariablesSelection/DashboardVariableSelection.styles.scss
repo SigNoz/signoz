@@ -1,16 +1,97 @@
-.variable-name {
-	font-size: 0.8rem;
-	min-width: 100px;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	color: gray;
+.variable-item {
+	display: flex;
+	align-items: center;
+
+	.variable-name {
+		display: flex;
+		min-width: 56px;
+		height: 32px;
+		padding: 6px 6px 6px 8px;
+		align-items: center;
+		gap: 4px;
+		border-radius: 2px 0px 0px 2px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+		color: var(--bg-robin-300);
+		font-family: Inter;
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 16px; /* 133.333% */
+	}
+
+	.variable-value {
+		display: flex;
+		min-width: 120px;
+		height: 32px;
+		padding: 6px 6px 6px 8px;
+		align-items: center;
+		gap: 4px;
+		border-radius: 0px 2px 2px 0px;
+		border: 1px solid var(--bg-slate-400);
+		border-left: none;
+		background: var(--bg-ink-400);
+		color: var(--bg-vanilla-400);
+		font-family: Inter;
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 16px; /* 133.333% */
+	}
+
+	.variable-select {
+		.ant-select-item {
+			display: flex;
+			align-items: center;
+		}
+
+		.all-label {
+			display: flex;
+			gap: 16px;
+		}
+
+		.dropdown-checkbox-label {
+			display: grid;
+			grid-template-columns: 24px 1fr;
+		}
+
+		.dropdown-value {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+
+			.option-text {
+				max-width: 180px;
+				padding: 0 8px;
+			}
+
+			.toggle-tag-label {
+				padding-left: 8px;
+				right: 40px;
+				font-weight: normal;
+				position: absolute;
+			}
+		}
+	}
 }
 
-.variable-item {
-	.variable-select {
-		.ant-select-dropdown {
-			max-width: 300px;
+.dropdown-styles {
+	min-width: 300px;
+	max-width: 350px;
+}
+
+.lightMode {
+	.variable-item {
+		.variable-name {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+			color: var(--bg-robin-300);
+		}
+
+		.variable-value {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+			color: var(--bg-ink-400);
 		}
 	}
 }

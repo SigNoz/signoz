@@ -1,4 +1,6 @@
 import { Row, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
+import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -12,6 +14,37 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 
 	const optionList = getOptionList(t);
 
+	function handleRedirection(option: AlertTypes): void {
+		let url = '';
+		switch (option) {
+			case AlertTypes.METRICS_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
+				break;
+			case AlertTypes.LOGS_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
+				break;
+			case AlertTypes.TRACES_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
+				break;
+			case AlertTypes.EXCEPTIONS_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
+				break;
+			default:
+				break;
+		}
+
+		logEvent('Alert: Sample alert link clicked', {
+			dataSource: ALERTS_DATA_SOURCE_MAP[option],
+			link: url,
+			page: 'New alert data source selection page',
+		});
+
+		window.open(url, '_blank');
+	}
 	const renderOptions = useMemo(
 		() => (
 			<>
@@ -23,7 +56,16 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 							onSelect(option.selection);
 						}}
 					>
-						{option.description}
+						{option.description}{' '}
+						<Typography.Link
+							onClick={(e): void => {
+								e.preventDefault();
+								e.stopPropagation();
+								handleRedirection(option.selection);
+							}}
+						>
+							Click here to see how to create a sample alert.
+						</Typography.Link>{' '}
 					</AlertTypeCard>
 				))}
 			</>

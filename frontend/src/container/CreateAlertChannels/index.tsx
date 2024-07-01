@@ -13,11 +13,12 @@ import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testTelegram from 'api/channels/testTelegram';
 import testWebhookApi from 'api/channels/testWebhook';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -47,6 +48,10 @@ function CreateAlertChannels({
 
 	const [formInstance] = Form.useForm();
 
+	useEffect(() => {
+		logEvent('Alert Channel: Create channel page visited', {});
+	}, []);
+
 	const [selectedConfig, setSelectedConfig] = useState<
 		Partial<
 			SlackChannel &
@@ -58,13 +63,14 @@ function CreateAlertChannels({
 				EmailChannel
 		>
 	>({
+		send_resolved: true,
 		text: `{{ range .Alerts -}}
      *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
 
      *Summary:* {{ .Annotations.summary }}
      *Description:* {{ .Annotations.description }}
-     *RelatedLogs:* {{ .Annotations.related_logs }}
-     *RelatedTraces:* {{ .Annotations.related_traces }}
+     *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}
+     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}
 
      *Details:*
        {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
@@ -131,7 +137,7 @@ function CreateAlertChannels({
 			api_url: selectedConfig?.api_url || '',
 			channel: selectedConfig?.channel || '',
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			text: selectedConfig?.text || '',
 			title: selectedConfig?.title || '',
 		}),
@@ -150,19 +156,25 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('channel_creation_failed'),
-				});
+				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_creation_failed'),
+			});
+			return {
+				status: 'failed',
+				statusMessage: response.error || t('channel_creation_failed'),
+			};
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
 		}
-		setSavingState(false);
 	}, [prepareSlackRequest, t, notifications]);
 
 	const prepareWebhookRequest = useCallback(() => {
@@ -170,7 +182,7 @@ function CreateAlertChannels({
 		let request: WebhookChannel = {
 			api_url: selectedConfig?.api_url || '',
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 		};
 
 		if (selectedConfig?.username !== '' || selectedConfig?.password !== '') {
@@ -211,19 +223,25 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('channel_creation_failed'),
-				});
+				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_creation_failed'),
+			});
+			return {
+				status: 'failed',
+				statusMessage: response.error || t('channel_creation_failed'),
+			};
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
 		}
-		setSavingState(false);
 	}, [prepareWebhookRequest, t, notifications]);
 
 	const preparePagerRequest = useCallback(() => {
@@ -238,7 +256,7 @@ function CreateAlertChannels({
 
 		return {
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			routing_key: selectedConfig?.routing_key || '',
 			client: selectedConfig?.client || '',
 			client_url: selectedConfig?.client_url || '',
@@ -256,8 +274,8 @@ function CreateAlertChannels({
 		setSavingState(true);
 		const request = preparePagerRequest();
 
-		if (request) {
-			try {
+		try {
+			if (request) {
 				const response = await createPagerApi(request);
 
 				if (response.statusCode === 200) {
@@ -266,27 +284,38 @@ function CreateAlertChannels({
 						description: t('channel_creation_done'),
 					});
 					history.replace(ROUTES.ALL_CHANNELS);
-				} else {
-					notifications.error({
-						message: 'Error',
-						description: response.error || t('channel_creation_failed'),
-					});
+					return { status: 'success', statusMessage: t('channel_creation_done') };
 				}
-			} catch (e) {
 				notifications.error({
 					message: 'Error',
-					description: t('channel_creation_failed'),
+					description: response.error || t('channel_creation_failed'),
 				});
+				return {
+					status: 'failed',
+					statusMessage: response.error || t('channel_creation_failed'),
+				};
 			}
+			notifications.error({
+				message: 'Error',
+				description: t('channel_creation_failed'),
+			});
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description: t('channel_creation_failed'),
+			});
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
 		}
-		setSavingState(false);
 	}, [t, notifications, preparePagerRequest]);
 
 	const prepareOpsgenieRequest = useCallback(
 		() => ({
 			api_key: selectedConfig?.api_key || '',
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			description: selectedConfig?.description || '',
 			message: selectedConfig?.message || '',
 			priority: selectedConfig?.priority || '',
@@ -306,19 +335,25 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('channel_creation_failed'),
-				});
+				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_creation_failed'),
+			});
+			return {
+				status: 'failed',
+				statusMessage: response.error || t('channel_creation_failed'),
+			};
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
 		}
-		setSavingState(false);
 	}, [prepareOpsgenieRequest, t, notifications]);
 
 	const prepareTelegramRequest = useCallback(
@@ -361,7 +396,7 @@ function CreateAlertChannels({
 	const prepareEmailRequest = useCallback(
 		() => ({
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			to: selectedConfig?.to || '',
 			html: selectedConfig?.html || '',
 			headers: selectedConfig?.headers || {},
@@ -380,26 +415,32 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('channel_creation_failed'),
-				});
+				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_creation_failed'),
+			});
+			return {
+				status: 'failed',
+				statusMessage: response.error || t('channel_creation_failed'),
+			};
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
 		}
-		setSavingState(false);
 	}, [prepareEmailRequest, t, notifications]);
 
 	const prepareMsTeamsRequest = useCallback(
 		() => ({
 			webhook_url: selectedConfig?.webhook_url || '',
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			text: selectedConfig?.text || '',
 			title: selectedConfig?.title || '',
 		}),
@@ -418,19 +459,25 @@ function CreateAlertChannels({
 					description: t('channel_creation_done'),
 				});
 				history.replace(ROUTES.ALL_CHANNELS);
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('channel_creation_failed'),
-				});
+				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_creation_failed'),
+			});
+			return {
+				status: 'failed',
+				statusMessage: response.error || t('channel_creation_failed'),
+			};
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
 		}
-		setSavingState(false);
 	}, [prepareMsTeamsRequest, t, notifications]);
 
 	const onSaveHandler = useCallback(
@@ -449,7 +496,15 @@ function CreateAlertChannels({
 				const functionToCall = functionMapper[value as keyof typeof functionMapper];
 
 				if (functionToCall) {
-					functionToCall();
+					const result = await functionToCall();
+					logEvent('Alert Channel: Save channel', {
+						type: value,
+						sendResolvedAlert: selectedConfig.send_resolved,
+						name: selectedConfig.name,
+						new: 'true',
+						status: result?.status,
+						statusMessage: result?.statusMessage,
+					});
 				} else {
 					notifications.error({
 						message: 'Error',
@@ -458,6 +513,7 @@ function CreateAlertChannels({
 				}
 			}
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			onSlackHandler,
 			onWebhookHandler,
@@ -526,14 +582,25 @@ function CreateAlertChannels({
 						description: t('channel_test_failed'),
 					});
 				}
+
+				logEvent('Alert Channel: Test notification', {
+					type: channelType,
+					sendResolvedAlert: selectedConfig.send_resolved,
+					name: selectedConfig.name,
+					new: 'true',
+					status:
+						response && response.statusCode === 200 ? 'Test success' : 'Test failed',
+				});
 			} catch (error) {
 				notifications.error({
 					message: 'Error',
 					description: t('channel_test_unexpected'),
 				});
 			}
+
 			setTestingState(false);
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			prepareWebhookRequest,
 			t,

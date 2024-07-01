@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { Form } from 'antd';
 import editEmail from 'api/channels/editEmail';
 import editMsTeamsApi from 'api/channels/editMsTeams';
@@ -13,6 +14,7 @@ import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testTelegram from 'api/channels/testTelegram';
 import testWebhookApi from 'api/channels/testWebhook';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
@@ -76,7 +78,7 @@ function EditAlertChannels({
 			api_url: selectedConfig?.api_url || '',
 			channel: selectedConfig?.channel || '',
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			text: selectedConfig?.text || '',
 			title: selectedConfig?.title || '',
 			id,
@@ -93,7 +95,7 @@ function EditAlertChannels({
 				description: t('webhook_url_required'),
 			});
 			setSavingState(false);
-			return;
+			return { status: 'failed', statusMessage: t('webhook_url_required') };
 		}
 
 		const response = await editSlackApi(prepareSlackRequest());
@@ -105,13 +107,17 @@ function EditAlertChannels({
 			});
 
 			history.replace(ROUTES.ALL_CHANNELS);
-		} else {
-			notifications.error({
-				message: 'Error',
-				description: response.error || t('channel_edit_failed'),
-			});
+			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
+		notifications.error({
+			message: 'Error',
+			description: response.error || t('channel_edit_failed'),
+		});
 		setSavingState(false);
+		return {
+			status: 'failed',
+			statusMessage: response.error || t('channel_edit_failed'),
+		};
 	}, [prepareSlackRequest, t, notifications, selectedConfig]);
 
 	const prepareWebhookRequest = useCallback(() => {
@@ -119,7 +125,7 @@ function EditAlertChannels({
 		return {
 			api_url: selectedConfig?.api_url || '',
 			name: name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			username,
 			password,
 			id,
@@ -140,13 +146,13 @@ function EditAlertChannels({
 		if (selectedConfig?.api_url === '') {
 			showError(t('webhook_url_required'));
 			setSavingState(false);
-			return;
+			return { status: 'failed', statusMessage: t('webhook_url_required') };
 		}
 
 		if (username && (!password || password === '')) {
 			showError(t('username_no_password'));
 			setSavingState(false);
-			return;
+			return { status: 'failed', statusMessage: t('username_no_password') };
 		}
 
 		const response = await editWebhookApi(prepareWebhookRequest());
@@ -158,10 +164,15 @@ function EditAlertChannels({
 			});
 
 			history.replace(ROUTES.ALL_CHANNELS);
-		} else {
-			showError(response.error || t('channel_edit_failed'));
+			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
+		showError(response.error || t('channel_edit_failed'));
+
 		setSavingState(false);
+		return {
+			status: 'failed',
+			statusMessage: response.error || t('channel_edit_failed'),
+		};
 	}, [prepareWebhookRequest, t, notifications, selectedConfig]);
 
 	const prepareEmailRequest = useCallback(
@@ -185,13 +196,18 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 			history.replace(ROUTES.ALL_CHANNELS);
-		} else {
-			notifications.error({
-				message: 'Error',
-				description: response.error || t('channel_edit_failed'),
-			});
+			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
+		notifications.error({
+			message: 'Error',
+			description: response.error || t('channel_edit_failed'),
+		});
+
 		setSavingState(false);
+		return {
+			status: 'failed',
+			statusMessage: response.error || t('channel_edit_failed'),
+		};
 	}, [prepareEmailRequest, t, notifications]);
 
 	const preparePagerRequest = useCallback(
@@ -222,7 +238,7 @@ function EditAlertChannels({
 				description: validationError,
 			});
 			setSavingState(false);
-			return;
+			return { status: 'failed', statusMessage: validationError };
 		}
 		const response = await editPagerApi(preparePagerRequest());
 
@@ -233,13 +249,18 @@ function EditAlertChannels({
 			});
 
 			history.replace(ROUTES.ALL_CHANNELS);
-		} else {
-			notifications.error({
-				message: 'Error',
-				description: response.error || t('channel_edit_failed'),
-			});
+			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
+		notifications.error({
+			message: 'Error',
+			description: response.error || t('channel_edit_failed'),
+		});
+
 		setSavingState(false);
+		return {
+			status: 'failed',
+			statusMessage: response.error || t('channel_edit_failed'),
+		};
 	}, [preparePagerRequest, notifications, selectedConfig, t]);
 
 	const prepareOpsgenieRequest = useCallback(
@@ -263,7 +284,7 @@ function EditAlertChannels({
 				description: t('api_key_required'),
 			});
 			setSavingState(false);
-			return;
+			return { status: 'failed', statusMessage: t('api_key_required') };
 		}
 
 		const response = await editOpsgenie(prepareOpsgenieRequest());
@@ -275,13 +296,18 @@ function EditAlertChannels({
 			});
 
 			history.replace(ROUTES.ALL_CHANNELS);
-		} else {
-			notifications.error({
-				message: 'Error',
-				description: response.error || t('channel_edit_failed'),
-			});
+			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
+		notifications.error({
+			message: 'Error',
+			description: response.error || t('channel_edit_failed'),
+		});
+
 		setSavingState(false);
+		return {
+			status: 'failed',
+			statusMessage: response.error || t('channel_edit_failed'),
+		};
 	}, [prepareOpsgenieRequest, t, notifications, selectedConfig]);
 
 	const prepareTelegramRequest = useCallback(
@@ -329,7 +355,7 @@ function EditAlertChannels({
 		() => ({
 			webhook_url: selectedConfig?.webhook_url || '',
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			text: selectedConfig?.text || '',
 			title: selectedConfig?.title || '',
 			id,
@@ -346,7 +372,7 @@ function EditAlertChannels({
 				description: t('webhook_url_required'),
 			});
 			setSavingState(false);
-			return;
+			return { status: 'failed', statusMessage: t('webhook_url_required') };
 		}
 
 		const response = await editMsTeamsApi(prepareMsTeamsRequest());
@@ -358,33 +384,48 @@ function EditAlertChannels({
 			});
 
 			history.replace(ROUTES.ALL_CHANNELS);
-		} else {
-			notifications.error({
-				message: 'Error',
-				description: response.error || t('channel_edit_failed'),
-			});
+			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
+		notifications.error({
+			message: 'Error',
+			description: response.error || t('channel_edit_failed'),
+		});
+
 		setSavingState(false);
+		return {
+			status: 'failed',
+			statusMessage: response.error || t('channel_edit_failed'),
+		};
 	}, [prepareMsTeamsRequest, t, notifications, selectedConfig]);
 
 	const onSaveHandler = useCallback(
-		(value: ChannelType) => {
+		async (value: ChannelType) => {
+			let result;
 			if (value === ChannelType.Slack) {
-				onSlackEditHandler();
+				result = await onSlackEditHandler();
 			} else if (value === ChannelType.Webhook) {
-				onWebhookEditHandler();
+				result = await onWebhookEditHandler();
 			} else if (value === ChannelType.Pagerduty) {
-				onPagerEditHandler();
+				result = await onPagerEditHandler();
 			} else if (value === ChannelType.MsTeams) {
-				onMsTeamsEditHandler();
+				result = await onMsTeamsEditHandler();
 			} else if (value === ChannelType.Opsgenie) {
-				onOpsgenieEditHandler();
+				result = await onOpsgenieEditHandler();
 			} else if (value === ChannelType.Telegram) {
-				onTelegramEditHandler();
+				result = await onTelegramEditHandler();
 			} else if (value === ChannelType.Email) {
-				onEmailEditHandler();
+				result = await onEmailEditHandler();
 			}
+			logEvent('Alert Channel: Save channel', {
+				type: value,
+				sendResolvedAlert: selectedConfig.send_resolved,
+				name: selectedConfig.name,
+				new: 'false',
+				status: result?.status,
+				statusMessage: result?.statusMessage,
+			});
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			onSlackEditHandler,
 			onWebhookEditHandler,
@@ -451,6 +492,14 @@ function EditAlertChannels({
 						description: t('channel_test_failed'),
 					});
 				}
+				logEvent('Alert Channel: Test notification', {
+					type: channelType,
+					sendResolvedAlert: selectedConfig.send_resolved,
+					name: selectedConfig.name,
+					new: 'false',
+					status:
+						response && response.statusCode === 200 ? 'Test success' : 'Test failed',
+				});
 			} catch (error) {
 				notifications.error({
 					message: 'Error',
@@ -459,6 +508,7 @@ function EditAlertChannels({
 			}
 			setTestingState(false);
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			t,
 			prepareWebhookRequest,

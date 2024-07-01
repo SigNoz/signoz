@@ -1,30 +1,21 @@
 import { volcano } from '@ant-design/colors';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Popover, Typography } from 'antd';
-
-function PopOverContent(): JSX.Element {
-	return (
-		<div>
-			More details on missing spans{' '}
-			<a
-				href="https://signoz.io/docs/userguide/traces/#missing-spans"
-				rel="noopener noreferrer"
-				target="_blank"
-			>
-				here
-			</a>
-		</div>
-	);
-}
+import { WarningOutlined } from '@ant-design/icons';
+import { Typography } from 'antd';
 
 function MissingSpansMessage(): JSX.Element {
 	return (
-		<Popover content={PopOverContent} trigger="hover" placement="bottom">
-			<Typography>
-				<InfoCircleOutlined style={{ color: volcano[6], marginRight: '0.3rem' }} />
-				This trace has missing spans
-			</Typography>
-		</Popover>
+		<Typography>
+			<WarningOutlined style={{ color: volcano[6], marginRight: '0.3rem' }} />
+			This trace has missing spans, more details{' '}
+			<a
+				href="https://signoz.io/docs/userguide/traces/?utm_source=product&utm_medium=trace-details#missing-spans"
+				target="_blank"
+				style={{ textDecoration: 'underline' }}
+				rel="noreferrer"
+			>
+				here
+			</a>
+		</Typography>
 	);
 }
 

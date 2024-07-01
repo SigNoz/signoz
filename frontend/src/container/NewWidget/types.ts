@@ -24,6 +24,9 @@ export interface WidgetGraphProps {
 	selectedWidget: Widgets;
 	selectedGraph: PANEL_TYPES;
 	selectedTime: timePreferance;
+	requestData: GetQueryResultsProps;
+	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
+	isLoadingPanelData: boolean;
 }
 
 export type WidgetGraphContainerProps = {
@@ -34,4 +37,5 @@ export type WidgetGraphContainerProps = {
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	selectedGraph: PANEL_TYPES;
 	selectedWidget: Widgets;
+	isLoadingPanelData: boolean;
 };

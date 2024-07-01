@@ -2,8 +2,6 @@ import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphContainerProps } from 'container/NewWidget/types';
-// import useUrlQuery from 'hooks/useUrlQuery';
-// import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
 import { NotFoundContainer } from './styles';
@@ -14,6 +12,7 @@ function WidgetGraphContainer({
 	queryResponse,
 	setRequestData,
 	selectedWidget,
+	isLoadingPanelData,
 }: WidgetGraphContainerProps): JSX.Element {
 	if (queryResponse.data && selectedGraph === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
@@ -38,9 +37,13 @@ function WidgetGraphContainer({
 		return <Spinner size="large" tip="Loading..." />;
 	}
 
+	if (isLoadingPanelData) {
+		return <Spinner size="large" tip="Loading..." />;
+	}
+
 	if (
 		selectedGraph !== PANEL_TYPES.LIST &&
-		queryResponse.data?.payload.data.result.length === 0
+		queryResponse.data?.payload.data?.result?.length === 0
 	) {
 		return (
 			<NotFoundContainer>
@@ -50,8 +53,16 @@ function WidgetGraphContainer({
 	}
 	if (
 		selectedGraph === PANEL_TYPES.LIST &&
-		queryResponse.data?.payload.data.newResult.data.result.length === 0
+		queryResponse.data?.payload?.data?.newResult?.data?.result?.length === 0
 	) {
+		return (
+			<NotFoundContainer>
+				<Typography>No Data</Typography>
+			</NotFoundContainer>
+		);
+	}
+
+	if (queryResponse.isIdle) {
 		return (
 			<NotFoundContainer>
 				<Typography>No Data</Typography>

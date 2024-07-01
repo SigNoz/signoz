@@ -1,13 +1,15 @@
+import './TimePreference.styles.scss';
+
 import { DownOutlined } from '@ant-design/icons';
-import { Button, Dropdown } from 'antd';
+import { Button, Dropdown, Typography } from 'antd';
 import TimeItems, {
 	timePreferance,
 	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
+import { Globe } from 'lucide-react';
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 
 import { menuItems } from './config';
-import { TextContainer } from './styles';
 
 function TimePreference({
 	setSelectedTime,
@@ -32,13 +34,22 @@ function TimePreference({
 	);
 
 	return (
-		<TextContainer noButtonMargin>
-			<Dropdown menu={menu}>
-				<Button>
-					{selectedTime.name} <DownOutlined />
-				</Button>
-			</Dropdown>
-		</TextContainer>
+		<Dropdown
+			menu={menu}
+			rootClassName="time-selection-menu"
+			className="time-selection-target"
+			trigger={['click']}
+		>
+			<Button>
+				<div className="button-selected-text">
+					<Globe size={14} />
+					<Typography.Text className="selected-value">
+						{selectedTime.name}
+					</Typography.Text>
+				</div>
+				<DownOutlined />
+			</Button>
+		</Dropdown>
 	);
 }
 

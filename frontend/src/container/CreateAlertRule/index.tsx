@@ -1,7 +1,10 @@
 import { Form, Row } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import { QueryParams } from 'constants/query';
 import FormAlertRules from 'container/FormAlertRules';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import history from 'lib/history';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -18,15 +21,25 @@ import SelectAlertType from './SelectAlertType';
 
 function CreateRules(): JSX.Element {
 	const [initValues, setInitValues] = useState<AlertDef | null>(null);
-	const [alertType, setAlertType] = useState<AlertTypes>(
-		AlertTypes.METRICS_BASED_ALERT,
-	);
 
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
 	const version = queryParams.get('version');
+	const alertTypeFromParams = queryParams.get(QueryParams.alertType);
 
 	const compositeQuery = useGetCompositeQueryParam();
+	function getAlertTypeFromDataSource(): AlertTypes | null {
+		if (!compositeQuery) {
+			return null;
+		}
+		const dataSource = compositeQuery?.builder?.queryData[0]?.dataSource;
+
+		return ALERT_TYPE_VS_SOURCE_MAPPING[dataSource];
+	}
+
+	const [alertType, setAlertType] = useState<AlertTypes>(
+		(alertTypeFromParams as AlertTypes) || getAlertTypeFromDataSource(),
+	);
 
 	const [formInstance] = Form.useForm();
 
@@ -48,21 +61,19 @@ function CreateRules(): JSX.Element {
 					version: version || ENTITY_VERSION_V4,
 				});
 		}
+		queryParams.set(QueryParams.alertType, typ);
+		const generatedUrl = `${location.pathname}?${queryParams.toString()}`;
+		history.replace(generatedUrl);
 	};
 
 	useEffect(() => {
-		if (!compositeQuery) {
-			return;
-		}
-		const dataSource = compositeQuery?.builder?.queryData[0]?.dataSource;
-
-		const alertType = ALERT_TYPE_VS_SOURCE_MAPPING[dataSource];
-
 		if (alertType) {
 			onSelectType(alertType);
+		} else {
+			logEvent('Alert: New alert data source selection page visited', {});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [compositeQuery]);
+	}, [alertType]);
 
 	if (!initValues) {
 		return (

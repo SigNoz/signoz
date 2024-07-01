@@ -18,21 +18,29 @@ export const navigateToTrace = ({
 	minTime,
 	maxTime,
 	selectedTraceTags,
+	apmToTraceQuery,
 }: NavigateToTraceProps): void => {
 	const urlParams = new URLSearchParams();
 	urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
 	urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
-	history.push(
-		`${
-			ROUTES.TRACE
-		}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false,"operation":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&spanAggregateCurrentPage=1`,
-	);
+
+	const JSONCompositeQuery = encodeURIComponent(JSON.stringify(apmToTraceQuery));
+
+	const newTraceExplorerPath = `${
+		ROUTES.TRACES_EXPLORER
+	}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
+		QueryParams.compositeQuery
+	}=${JSONCompositeQuery}`;
+
+	history.push(newTraceExplorerPath);
 };
 
 export const getNearestHighestBucketValue = (
 	value: number,
 	buckets: number[],
 ): string => {
+	// sort the buckets
+	buckets.sort((a, b) => a - b);
 	const nearestBucket = buckets.find((bucket) => bucket >= value);
 	return nearestBucket?.toString() || '+Inf';
 };

@@ -143,7 +143,7 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 	}
 }
 
-func quoteEscapedString(str string) string {
+func QuoteEscapedString(str string) string {
 	// https://clickhouse.com/docs/en/sql-reference/syntax#string
 	str = strings.ReplaceAll(str, `\`, `\\`)
 	str = strings.ReplaceAll(str, `'`, `\'`)
@@ -161,19 +161,19 @@ func ClickHouseFormattedValue(v interface{}) string {
 	case float32, float64:
 		return fmt.Sprintf("%f", x)
 	case string:
-		return fmt.Sprintf("'%s'", quoteEscapedString(x))
+		return fmt.Sprintf("'%s'", QuoteEscapedString(x))
 	case bool:
 		return fmt.Sprintf("%v", x)
 
 	case []interface{}:
 		if len(x) == 0 {
-			return ""
+			return "[]"
 		}
 		switch x[0].(type) {
 		case string:
 			str := "["
 			for idx, sVal := range x {
-				str += fmt.Sprintf("'%s'", quoteEscapedString(sVal.(string)))
+				str += fmt.Sprintf("'%s'", QuoteEscapedString(sVal.(string)))
 				if idx != len(x)-1 {
 					str += ","
 				}
@@ -184,7 +184,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
 		default:
 			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
-			return ""
+			return "[]"
 		}
 	default:
 		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))

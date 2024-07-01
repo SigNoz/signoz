@@ -11,11 +11,7 @@ import (
 // `ts` is always added to the group by clause
 func groupingSets(tags ...string) string {
 	withTs := append(tags, "ts")
-	if len(withTs) > 1 {
-		return fmt.Sprintf(`GROUPING SETS ( (%s), (%s) )`, strings.Join(withTs, ", "), strings.Join(tags, ", "))
-	} else {
-		return strings.Join(withTs, ", ")
-	}
+	return strings.Join(withTs, ", ")
 }
 
 // GroupingSetsByAttributeKeyTags returns a string of comma separated tags for group by clause

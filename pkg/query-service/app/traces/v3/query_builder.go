@@ -174,7 +174,8 @@ func buildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (
 			if operator, ok := tracesOperatorMappingV3[item.Operator]; ok {
 				switch item.Operator {
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
-					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, item.Value))
+					val = utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, val))
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
@@ -262,6 +263,8 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	} else if panelType == v3.PanelTypeTable {
 		queryTmpl =
 			"SELECT now() as ts,"
+		// step or aggregate interval is whole time period in case of table panel
+		step = (end*getZerosForEpochNano(end) - start*getZerosForEpochNano(start)) / 1000000000
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmpl =

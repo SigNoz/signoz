@@ -11,7 +11,8 @@ const (
 var LicenseSignozIo = "https://license.signoz.io/api/v1"
 var LicenseAPIKey = GetOrDefaultEnv("SIGNOZ_LICENSE_API_KEY", "")
 var SaasSegmentKey = GetOrDefaultEnv("SIGNOZ_SAAS_SEGMENT_KEY", "")
-var SpanLimitStr = GetOrDefaultEnv("SPAN_LIMIT", "5000")
+var SpanRenderLimitStr = GetOrDefaultEnv("SPAN_RENDER_LIMIT", "2500")
+var MaxSpansInTraceStr = GetOrDefaultEnv("MAX_SPANS_IN_TRACE", "250000")
 
 func GetOrDefaultEnv(key string, fallback string) string {
 	v := os.Getenv(key)

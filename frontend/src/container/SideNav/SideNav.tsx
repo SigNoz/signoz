@@ -152,9 +152,13 @@ function SideNav({
 
 	const { t } = useTranslation('');
 
+	const licenseStatus: string =
+		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ||
+		'';
+
 	const isLicenseActive =
-		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ===
-		LICENSE_PLAN_STATUS.VALID;
+		licenseStatus?.toLocaleLowerCase() ===
+		LICENSE_PLAN_STATUS.VALID.toLocaleLowerCase();
 
 	const isEnterprise = licenseData?.payload?.licenses?.some(
 		(license: License) =>
@@ -209,7 +213,9 @@ function SideNav({
 				if (event && isCtrlMetaKey(event)) {
 					openInNewTab(`${key}?${queryString.join('&')}`);
 				} else {
-					history.push(`${key}?${queryString.join('&')}`);
+					history.push(`${key}?${queryString.join('&')}`, {
+						from: pathname,
+					});
 				}
 			}
 		},
@@ -278,7 +284,7 @@ function SideNav({
 	}, [isCloudUserVal, isEnterprise, isFetching]);
 
 	useEffect(() => {
-		if (!isCloudUserVal) {
+		if (!(isCloudUserVal || isEECloudUser())) {
 			let updatedMenuItems = [...menuItems];
 			updatedMenuItems = updatedMenuItems.filter(
 				(item) => item.key !== ROUTES.INTEGRATIONS,

@@ -29,6 +29,8 @@ export const getComponentForPanelType = (
 		[PANEL_TYPES.LIST]:
 			dataSource === DataSource.LOGS ? LogsPanelComponent : TracesTableComponent,
 		[PANEL_TYPES.BAR]: Uplot,
+		[PANEL_TYPES.PIE]: null,
+		[PANEL_TYPES.HISTOGRAM]: Uplot,
 		[PANEL_TYPES.EMPTY_WIDGET]: null,
 	};
 
@@ -38,4 +40,5 @@ export const getComponentForPanelType = (
 export const AVAILABLE_EXPORT_PANEL_TYPES = [
 	PANEL_TYPES.TIME_SERIES,
 	PANEL_TYPES.TABLE,
+	PANEL_TYPES.LIST,
 ];

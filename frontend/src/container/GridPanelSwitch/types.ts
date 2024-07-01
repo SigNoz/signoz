@@ -38,9 +38,11 @@ export type PropsTypePropsMap = {
 	[PANEL_TYPES.VALUE]: GridValueComponentProps;
 	[PANEL_TYPES.TABLE]: GridTableComponentProps;
 	[PANEL_TYPES.TRACE]: null;
+	[PANEL_TYPES.PIE]: null;
 	[PANEL_TYPES.LIST]: null;
 	[PANEL_TYPES.BAR]: UplotProps & {
 		ref: ForwardedRef<ToggleGraphProps | undefined>;
 	};
+	[PANEL_TYPES.HISTOGRAM]: null;
 	[PANEL_TYPES.EMPTY_WIDGET]: null;
 };

@@ -12,6 +12,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
@@ -33,7 +34,6 @@ import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
 import { getLocalStorageGraphVisibilityState } from './utils';
-// import { getLocalStorageGraphVisibilityState } from './utils';
 
 function WidgetGraphComponent({
 	widget,
@@ -59,7 +59,7 @@ function WidgetGraphComponent({
 
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
-		Array(queryResponse.data?.payload?.data.result.length || 0).fill(true),
+		Array(queryResponse.data?.payload?.data?.result?.length || 0).fill(true),
 	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -71,6 +71,8 @@ function WidgetGraphComponent({
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	const tableProcessedDataRef = useRef<RowData[]>([]);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -129,15 +131,22 @@ function WidgetGraphComponent({
 
 		const uuid = v4();
 
+		// this is added to make sure the cloned panel is of the same dimensions as the original one
+		const originalPanelLayout = selectedDashboard.data.layout?.find(
+			(l) => l.i === widget.id,
+		);
+
+		// added the cloned panel on the top as it is given most priority when arranging
+		// in the layout. React_grid_layout assigns priority from top, hence no random position for cloned panel
 		const layout = [
-			...(selectedDashboard.data.layout || []),
 			{
 				i: uuid,
-				w: 6,
+				w: originalPanelLayout?.w || 6,
 				x: 0,
-				h: 3,
+				h: originalPanelLayout?.h || 6,
 				y: 0,
 			},
+			...(selectedDashboard.data.layout || []),
 		];
 
 		updateDashboardMutation.mutateAsync(
@@ -158,7 +167,11 @@ function WidgetGraphComponent({
 				},
 			},
 			{
-				onSuccess: () => {
+				onSuccess: (updatedDashboard) => {
+					if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
+					if (setSelectedDashboard && updatedDashboard.payload) {
+						setSelectedDashboard(updatedDashboard.payload);
+					}
 					notifications.success({
 						message: 'Panel cloned successfully, redirecting to new copy.',
 					});
@@ -209,7 +222,7 @@ function WidgetGraphComponent({
 			const {
 				graphVisibilityStates: localStoredVisibilityState,
 			} = getLocalStorageGraphVisibilityState({
-				apiResponse: queryResponse.data.payload.data.result,
+				apiResponse: queryResponse.data?.payload?.data?.result,
 				name: widget.id,
 			});
 			setGraphVisibility(localStoredVisibilityState);
@@ -284,6 +297,7 @@ function WidgetGraphComponent({
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
+					tableProcessedDataRef={tableProcessedDataRef}
 				/>
 			</Modal>
 
@@ -301,6 +315,7 @@ function WidgetGraphComponent({
 					headerMenuList={headerMenuList}
 					isWarning={isWarning}
 					isFetchingResponse={isFetchingResponse}
+					tableProcessedDataRef={tableProcessedDataRef}
 				/>
 			</div>
 			{queryResponse.isLoading && widget.panelTypes !== PANEL_TYPES.LIST && (
@@ -319,6 +334,7 @@ function WidgetGraphComponent({
 						graphVisibility={graphVisibility}
 						onClickHandler={onClickHandler}
 						onDragSelect={onDragSelect}
+						tableProcessedDataRef={tableProcessedDataRef}
 					/>
 				</div>
 			)}

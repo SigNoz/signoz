@@ -3,11 +3,11 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getTimeString from 'lib/getTimeString';
+import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useRef, useState } from 'react';
@@ -35,7 +35,11 @@ function GridCardGraph({
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
+	const {
+		toScrollWidgetId,
+		setToScrollWidgetId,
+		variablesToGetUpdated,
+	} = useDashboard();
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -85,12 +89,16 @@ function GridCardGraph({
 		}
 	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
 
-	const updatedQuery = useStepInterval(widget?.query);
+	const updatedQuery = widget?.query;
 
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
 
-	const queryEnabledCondition = isVisible && !isEmptyWidget && isQueryEnabled;
+	const queryEnabledCondition =
+		isVisible &&
+		!isEmptyWidget &&
+		isQueryEnabled &&
+		isEmpty(variablesToGetUpdated);
 
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		if (widget.panelTypes !== PANEL_TYPES.LIST) {
@@ -100,6 +108,8 @@ function GridCardGraph({
 				query: updatedQuery,
 				globalSelectedInterval,
 				variables: getDashboardVariables(variables),
+				fillGaps: widget.fillSpans,
+				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
 			};
 		}
 		updatedQuery.builder.queryData[0].pageSize = 10;
@@ -114,8 +124,19 @@ function GridCardGraph({
 					limit: updatedQuery.builder.queryData[0].limit || 0,
 				},
 			},
+			fillGaps: widget.fillSpans,
 		};
 	});
+
+	useEffect(() => {
+		if (!isEqual(updatedQuery, requestData.query)) {
+			setRequestData((prev) => ({
+				...prev,
+				query: updatedQuery,
+			}));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [updatedQuery]);
 
 	const queryResponse = useGetQueryRange(
 		{
@@ -134,6 +155,7 @@ function GridCardGraph({
 				widget?.query,
 				widget?.panelTypes,
 				widget.timePreferance,
+				widget.fillSpans,
 				requestData,
 			],
 			retry(failureCount, error): boolean {
@@ -166,7 +188,8 @@ function GridCardGraph({
 
 	const menuList =
 		widget.panelTypes === PANEL_TYPES.TABLE ||
-		widget.panelTypes === PANEL_TYPES.LIST
+		widget.panelTypes === PANEL_TYPES.LIST ||
+		widget.panelTypes === PANEL_TYPES.PIE
 			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
 			: headerMenuList;
 

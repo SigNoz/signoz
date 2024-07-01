@@ -42,12 +42,14 @@ const GridPanelSwitch = forwardRef<
 					thresholds,
 				},
 				[PANEL_TYPES.LIST]: null,
+				[PANEL_TYPES.PIE]: null,
 				[PANEL_TYPES.TRACE]: null,
 				[PANEL_TYPES.BAR]: {
 					data,
 					options,
 					ref,
 				},
+				[PANEL_TYPES.HISTOGRAM]: null,
 				[PANEL_TYPES.EMPTY_WIDGET]: null,
 			};
 
