@@ -1,8 +1,10 @@
 import './TraceLoading.styles.scss';
 
 import { Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 export function TracesLoading(): JSX.Element {
+	const { t } = useTranslation('trace');
 	return (
 		<div className="loading-traces">
 			<div className="loading-traces-content">
@@ -12,10 +14,7 @@ export function TracesLoading(): JSX.Element {
 					alt="wait-icon"
 				/>
 
-				<Typography>
-					Just a bit of patience, just a little bit’s enough ⎯ we’re getting your
-					traces!
-				</Typography>
+				<Typography>{t('trace_loading_placeholder')}</Typography>
 			</div>
 		</div>
 	);
