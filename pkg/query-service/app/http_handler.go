@@ -29,6 +29,7 @@ import (
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
@@ -2188,6 +2189,51 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	w.Write(resp)
 }
 
+// Preferences
+
+func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/preferences").Subrouter()
+
+	subRouter.HandleFunc("/user", am.ViewAccess(ah.getUserPreference)).Methods(http.MethodGet)
+
+	subRouter.HandleFunc("/user", am.ViewAccess(ah.updateUserPreference)).Methods(http.MethodPost)
+
+	subRouter.HandleFunc("/org", am.ViewAccess(ah.getOrgPreference)).Methods(http.MethodGet)
+
+	subRouter.HandleFunc("/org", am.ViewAccess(ah.updateOrgPreference)).Methods(http.MethodPost)
+
+}
+
+func (aH *APIHandler) getUserPreference(w http.ResponseWriter, r *http.Request) {
+	preferenceKey := r.URL.Query().Get("preferenceKey")
+
+	// if no preference key is found in the request return here
+	if preferenceKey == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference key found in the request")}, nil)
+		return
+	}
+
+	preference, err := preferences.GetUserPreference(r.Context(), preferenceKey)
+
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (ah *APIHandler) updateUserPreference(w http.ResponseWriter, r *http.Request) {
+
+}
+func (ah *APIHandler) getOrgPreference(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (ah *APIHandler) updateOrgPreference(w http.ResponseWriter, r *http.Request) {
+
+}
+
 // Integrations
 func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()
@@ -2212,25 +2258,6 @@ func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMidd
 	subRouter.HandleFunc(
 		"", am.ViewAccess(ah.ListIntegrations),
 	).Methods(http.MethodGet)
-}
-func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddleware) {
-	subRouter := router.PathPrefix("/api/v1/preferences").Subrouter()
-
-	subRouter.HandleFunc(
-		"/{preferenceKey}", am.ViewAccess(ah.createPreference),
-	).Methods(http.MethodPost)
-	
-	subRouter.HandleFunc(
-		"/{preferenceKey}", am.ViewAccess(ah.getPreference),
-	).Methods(http.MethodGet)
-
-	subRouter.HandleFunc(
-		"/{preferenceKey}", am.ViewAccess(ah.updatePreference),
-	).Methods(http.MethodPut)
-
-	subRouter.HandleFunc(
-		"/{preferenceKey}", am.ViewAccess(ah.deletePreference),
-	).Methods(http.MethodDelete)
 }
 
 func (ah *APIHandler) ListIntegrations(
@@ -2514,89 +2541,6 @@ func (ah *APIHandler) UninstallIntegration(
 
 	ah.Respond(w, map[string]interface{}{})
 }
-
-// preference CRUD
-
-func (ah *APIHandler) createPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	req := integrations.UninstallIntegrationRequest{}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	ah.Respond(w, map[string]interface{}{})
-}
-
-func (ah *APIHandler) getPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	req := integrations.UninstallIntegrationRequest{}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	ah.Respond(w, map[string]interface{}{})
-}
-
-func (ah *APIHandler) updatePreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	req := integrations.UninstallIntegrationRequest{}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	ah.Respond(w, map[string]interface{}{})
-}
-
-func (ah *APIHandler) deletePreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	req := integrations.UninstallIntegrationRequest{}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	ah.Respond(w, map[string]interface{}{})
-}
-
 
 // logs
 func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware) {
