@@ -32,6 +32,17 @@ type Preference struct {
 	OrgScope     int    `json:"org" db:"org"`
 }
 
+type PreferenceGroup struct {
+	Id          string `json:"id" db:"id"`
+	Name        string `json:"name" db:"name"`
+	ParentGroup string `json:"parent_group" db:"parent_group"`
+}
+
+type PreferenceToGroup struct {
+	PreferenceId      string `json:"preference_id" db:"preference_id"`
+	PreferenceGroupId string `json:"preference_group_id" db:"preference_group_id"`
+}
+
 type UserPreferenceWithDefault struct {
 	UserPreference
 	DefaultValue string `json:"default_value" db:"default_value"`
@@ -82,6 +93,7 @@ func InitDB(datasourceName string) error {
 		return fmt.Errorf("error in creating preference table: %s", err.Error())
 	}
 
+	// bootstrap the preference entity data
 	bootstrapPreferences, fileError := fs.ReadFile(os.DirFS("../../pkg/query-service/app/preferences"), "bootstrap_preferences.json")
 
 	if fileError != nil {
@@ -129,6 +141,42 @@ func InitDB(datasourceName string) error {
 	if err != nil {
 		return fmt.Errorf("error in creating preference group table: %s", err.Error())
 	}
+	// bootstrap the preference group entity data
+	bootstrapPreferenceGroup, fileError := fs.ReadFile(os.DirFS("../../pkg/query-service/app/preferences"), "bootstrap_preference_groups.json")
+
+	if fileError != nil {
+		return fmt.Errorf("error in reading bootstrap preference group: %s", fileError.Error())
+	}
+
+	preferenceGroups := []PreferenceGroup{}
+
+	if unmarshalErr := json.Unmarshal(bootstrapPreferenceGroup, &preferenceGroups); unmarshalErr != nil {
+		return fmt.Errorf("error in unmarshalling bootstrap preference groups: %s", unmarshalErr.Error())
+	}
+
+	for _, preferenceGroup := range preferenceGroups {
+
+		var preferenceGroupFromDB []PreferenceGroup
+		query := `SELECT id FROM preference_group WHERE id=$1;`
+		err = db.Select(&preferenceGroupFromDB, query, preferenceGroup.Id)
+
+		if err != nil {
+			return fmt.Errorf("error in finding bootstrap entries in preference group entity: %s", err.Error())
+		}
+
+		if len(preferenceGroupFromDB) == 0 {
+			query = `INSERT INTO preference_group(id,name,parent_group) VALUES($1,$2,$3);`
+
+			_, err = db.Exec(query, preferenceGroup.Id, preferenceGroup.Name, preferenceGroup.ParentGroup)
+
+			if err != nil {
+				return fmt.Errorf("error in adding bootstrap preference group: %s", err.Error())
+			}
+		} else if len(preferenceGroupFromDB) > 1 {
+			return fmt.Errorf("multiple entries found for preference group entity while bootstrapping: %s", preferenceGroup.Id)
+		}
+
+	}
 
 	// create the relational table between preference and preference group
 	table_schema = `
@@ -150,6 +198,42 @@ func InitDB(datasourceName string) error {
 	_, err = db.Exec(table_schema)
 	if err != nil {
 		return fmt.Errorf("error in creating preference_to_group table: %s", err.Error())
+	}
+	// bootstrap the preference_to_group relational table data
+	bootstrapPreferenceToGroup, fileError := fs.ReadFile(os.DirFS("../../pkg/query-service/app/preferences"), "bootstrap_preference_to_group.json")
+
+	if fileError != nil {
+		return fmt.Errorf("error in reading bootstrap preference to group: %s", fileError.Error())
+	}
+
+	preferenceToGroups := []PreferenceToGroup{}
+
+	if unmarshalErr := json.Unmarshal(bootstrapPreferenceToGroup, &preferenceToGroups); unmarshalErr != nil {
+		return fmt.Errorf("error in unmarshalling bootstrap preference to group: %s", unmarshalErr.Error())
+	}
+
+	for _, preferenceToGroup := range preferenceToGroups {
+
+		var preferenceToGroupFromDB []PreferenceToGroup
+		query := `SELECT id FROM preference_to_group WHERE preference_id=$1 AND preference_group_id=$2;`
+		err = db.Select(&preferenceToGroupFromDB, query, preferenceToGroup.PreferenceId, preferenceToGroup.PreferenceGroupId)
+
+		if err != nil {
+			return fmt.Errorf("error in finding bootstrap entries in preference to group entity: %s", err.Error())
+		}
+
+		if len(preferenceToGroupFromDB) == 0 {
+			query = `INSERT INTO preference_to_group(preference_id,preference_group_id) VALUES($1,$2);`
+
+			_, err = db.Exec(query, preferenceToGroup.PreferenceId, preferenceToGroup.PreferenceGroupId)
+
+			if err != nil {
+				return fmt.Errorf("error in adding bootstrap preference to group: %s", err.Error())
+			}
+		} else if len(preferenceToGroupFromDB) > 1 {
+			return fmt.Errorf("multiple entries found for preference to group entity while bootstrapping: %s and %s", preferenceToGroup.PreferenceId, preferenceToGroup.PreferenceGroupId)
+		}
+
 	}
 
 	// create the user preference table
@@ -275,6 +359,13 @@ func UpdateUserPreference(ctx context.Context, req *UpdateUserPreferenceRequest)
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
 		}
+
+		// query = `UPDATE preference SET user=1 WHERE depends_on=$1;`
+		// _, err = db.Exec(query, preferenceKey)
+
+		// if err != nil {
+		// 	return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in updating the dependent preference entities: %s", err)}
+		// }
 
 	} else if len(userPreference) == 1 {
 		query = `UPDATE user_preference SET preference_value= $1 WHERE preference_key=$2 AND user_id=$3;`
