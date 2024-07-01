@@ -118,6 +118,12 @@ func easyjson6ff3ac1dDecodeGoSignozIoSignozPkgQueryServiceModel(in *jlexer.Lexer
 			}
 		case "rootName":
 			out.RootName = string(in.String())
+		case "statusMessage":
+			out.StatusMessage = string(in.String())
+		case "statusCodeString":
+			out.StatusCodeString = string(in.String())
+		case "spanKind":
+			out.SpanKind = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -232,6 +238,21 @@ func easyjson6ff3ac1dEncodeGoSignozIoSignozPkgQueryServiceModel(out *jwriter.Wri
 		const prefix string = ",\"rootName\":"
 		out.RawString(prefix)
 		out.String(string(in.RootName))
+	}
+	{
+		const prefix string = ",\"statusMessage\":"
+		out.RawString(prefix)
+		out.String(string(in.StatusMessage))
+	}
+	{
+		const prefix string = ",\"statusCodeString\":"
+		out.RawString(prefix)
+		out.String(string(in.StatusCodeString))
+	}
+	{
+		const prefix string = ",\"spanKind\":"
+		out.RawString(prefix)
+		out.String(string(in.SpanKind))
 	}
 	out.RawByte('}')
 }

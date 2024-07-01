@@ -10,7 +10,7 @@ func EnabledPaths() map[string]struct{} {
 
 func ignoreEvents(event string, attributes map[string]interface{}) bool {
 
-	if event == TELEMETRY_EVENT_ACTIVE_USER || event == TELEMETRY_EVENT_ACTIVE_USER_PH {
+	if event == TELEMETRY_EVENT_ACTIVE_USER {
 		for attr_key, attr_val := range attributes {
 
 			if attr_key == "any" && attr_val.(int8) == 0 {

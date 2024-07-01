@@ -356,6 +356,8 @@ type QueryRangeParamsV3 struct {
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
 	NoCache        bool                   `json:"noCache"`
+	Version        string                 `json:"-"`
+	FormatForWeb   bool                   `json:"formatForWeb,omitempty"`
 }
 
 type PromQuery struct {
@@ -428,6 +430,16 @@ func (c *CompositeQuery) EnabledQueries() int {
 		}
 	}
 	return count
+}
+
+func (c *CompositeQuery) Sanitize() {
+	// remove groupBy for queries with list panel type
+	for _, query := range c.BuilderQueries {
+		if len(query.GroupBy) > 0 && c.PanelType == PanelTypeList {
+			query.GroupBy = []AttributeKey{}
+		}
+	}
+
 }
 
 func (c *CompositeQuery) Validate() error {
@@ -749,9 +761,9 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 		}
 	}
 	if b.GroupBy != nil {
-		if len(b.GroupBy) > 0 && panelType == PanelTypeList {
-			return fmt.Errorf("group by is not supported for list panel type")
-		}
+		// if len(b.GroupBy) > 0 && panelType == PanelTypeList {
+		// 	return fmt.Errorf("group by is not supported for list panel type")
+		// }
 
 		for _, groupBy := range b.GroupBy {
 			if err := groupBy.Validate(); err != nil {
@@ -978,10 +990,30 @@ type QueryRangeResponse struct {
 	Result                []*Result `json:"result"`
 }
 
+type TableColumn struct {
+	Name string `json:"name"`
+	// QueryName is the name of the query that this column belongs to
+	QueryName string `json:"queryName"`
+	// IsValueColumn is true if this column is a value column
+	// i.e it is the column that contains the actual value that is being plotted
+	IsValueColumn bool `json:"isValueColumn"`
+}
+
+type TableRow struct {
+	Data      map[string]interface{} `json:"data"`
+	QueryName string                 `json:"-"`
+}
+
+type Table struct {
+	Columns []*TableColumn `json:"columns"`
+	Rows    []*TableRow    `json:"rows"`
+}
+
 type Result struct {
-	QueryName string    `json:"queryName"`
-	Series    []*Series `json:"series"`
-	List      []*Row    `json:"list"`
+	QueryName string    `json:"queryName,omitempty"`
+	Series    []*Series `json:"series,omitempty"`
+	List      []*Row    `json:"list,omitempty"`
+	Table     *Table    `json:"table,omitempty"`
 }
 
 type LogsLiveTailClient struct {

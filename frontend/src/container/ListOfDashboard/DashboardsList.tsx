@@ -609,6 +609,16 @@ function DashboardsList(): JSX.Element {
 		</>
 	);
 
+	const paginationConfig = data.length > 20 && {
+		pageSize: 20,
+		showTotal: showPaginationItem,
+		showSizeChanger: false,
+		onChange: (page: any): void => handlePageSizeUpdate(page),
+		current: Number(sortOrder.pagination),
+		defaultCurrent: Number(sortOrder.pagination) || 1,
+		hideOnSinglePage: true,
+	};
+
 	return (
 		<div className="dashboards-list-container">
 			<div className="dashboards-list-view-content">
@@ -699,7 +709,16 @@ function DashboardsList(): JSX.Element {
 										New Dashboard
 									</Button>
 								</Dropdown>
-								<Button type="text" className="learn-more">
+								<Button
+									type="text"
+									className="learn-more"
+									onClick={(): void => {
+										window.open(
+											'https://signoz.io/docs/userguide/manage-dashboards?utm_source=product&utm_medium=dashboard-list-empty-state',
+											'_blank',
+										);
+									}}
+								>
 									Learn more
 								</Button>
 								<ArrowUpRight size={16} className="learn-more-arrow" />
@@ -813,16 +832,7 @@ function DashboardsList(): JSX.Element {
 									showSorterTooltip
 									loading={isDashboardListLoading || isFilteringDashboards}
 									showHeader={false}
-									pagination={
-										data.length > 20 && {
-											pageSize: 20,
-											showTotal: showPaginationItem,
-											showSizeChanger: false,
-											onChange: (page): void => handlePageSizeUpdate(page),
-											current: Number(sortOrder.pagination),
-											defaultCurrent: Number(sortOrder.pagination) || 1,
-										}
-									}
+									pagination={paginationConfig}
 								/>
 							</>
 						)}
