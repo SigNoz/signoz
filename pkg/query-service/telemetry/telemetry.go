@@ -85,7 +85,7 @@ const api_key = "9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr"
 const IP_NOT_FOUND_PLACEHOLDER = "NA"
 const DEFAULT_NUMBER_OF_SERVICES = 6
 
-const HEART_BEAT_DURATION = 1 * time.Minute
+const HEART_BEAT_DURATION = 12 * time.Hour
 
 const ACTIVE_USER_DURATION = 6 * time.Hour
 
