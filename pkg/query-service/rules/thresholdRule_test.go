@@ -946,10 +946,10 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			yAxisUnit:  "ns",
 			values: [][]interface{}{
 				{float64(572588400), "attr", time.Now()},
-				{float64(572386400), "attr", time.Now()},
-				{float64(300947400), "attr", time.Now()},
-				{float64(299316000), "attr", time.Now()},
-				{float64(66640400.00000001), "attr", time.Now()},
+				{float64(572386400), "attr", time.Now().Add(1 * time.Second)},
+				{float64(300947400), "attr", time.Now().Add(2 * time.Second)},
+				{float64(299316000), "attr", time.Now().Add(3 * time.Second)},
+				{float64(66640400.00000001), "attr", time.Now().Add(4 * time.Second)},
 			},
 			expectAlerts: 0,
 			compareOp:    "1", // Above
@@ -961,10 +961,10 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			yAxisUnit:  "ns",
 			values: [][]interface{}{
 				{float64(572588400), "attr", time.Now()},
-				{float64(572386400), "attr", time.Now()},
-				{float64(300947400), "attr", time.Now()},
-				{float64(299316000), "attr", time.Now()},
-				{float64(66640400.00000001), "attr", time.Now()},
+				{float64(572386400), "attr", time.Now().Add(1 * time.Second)},
+				{float64(300947400), "attr", time.Now().Add(2 * time.Second)},
+				{float64(299316000), "attr", time.Now().Add(3 * time.Second)},
+				{float64(66640400.00000001), "attr", time.Now().Add(4 * time.Second)},
 			},
 			expectAlerts: 4,
 			compareOp:    "1", // Above
@@ -982,10 +982,10 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			yAxisUnit:  "bytes",
 			values: [][]interface{}{
 				{float64(2863284053), "attr", time.Now()},
-				{float64(2863388842), "attr", time.Now()},
-				{float64(300947400), "attr", time.Now()},
-				{float64(299316000), "attr", time.Now()},
-				{float64(66640400.00000001), "attr", time.Now()},
+				{float64(2863388842), "attr", time.Now().Add(1 * time.Second)},
+				{float64(300947400), "attr", time.Now().Add(2 * time.Second)},
+				{float64(299316000), "attr", time.Now().Add(3 * time.Second)},
+				{float64(66640400.00000001), "attr", time.Now().Add(4 * time.Second)},
 			},
 			expectAlerts: 0,
 			compareOp:    "1", // Above
