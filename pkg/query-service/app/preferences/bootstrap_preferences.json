@@ -5,7 +5,8 @@
         "default_value":"false",
         "depends_on":"",
         "user": 1,
-        "org": 1
+        "org": 1,
+        "group_id": "SAVED_VIEWS"
     },
     {
         "id": "LOGS_TOOLBAR_COLLAPSED",
@@ -13,7 +14,8 @@
         "default_value":"false",
         "depends_on":"",
         "user": 1,
-        "org": 0
+        "org": 0,
+        "group_id": "LOGS"
     },
     {
         "id": "SOME_ORG_PREFERENCE",
@@ -21,7 +23,8 @@
         "default_value":"false",
         "depends_on":"",
         "user": 0,
-        "org": 1
+        "org": 1,
+        "group_id": "ORG"
     },
     {
         "id": "SOME_ORG_PREFERENCE_DEP",
@@ -29,6 +32,7 @@
         "default_value":"false",
         "depends_on":"",
         "user": 0,
-        "org": 1
+        "org": 1,
+        "group_id": "ORG_DEPENDENT"
     }
 ]

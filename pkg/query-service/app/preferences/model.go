@@ -14,15 +14,6 @@ import (
 
 var db *sqlx.DB
 
-type UserPreference struct {
-	PreferenceKey   string `json:"preference_key" db:"preference_key"`
-	PreferenceValue string `json:"preference_value" db:"preference_value"`
-}
-
-type OrgPreference struct {
-	PreferenceKey   string `json:"preference_key" db:"preference_key"`
-	PreferenceValue string `json:"preference_value" db:"preference_value"`
-}
 type Preference struct {
 	Id           string `json:"id" db:"id"`
 	Name         string `json:"name" db:"name"`
@@ -30,6 +21,7 @@ type Preference struct {
 	DependsOn    string `json:"depends_on" db:"depends_on"`
 	UserScope    int    `json:"user" db:"user"`
 	OrgScope     int    `json:"org" db:"org"`
+	GroupId      string `json:"group_id" db:"group_id"`
 }
 
 type PreferenceGroup struct {
@@ -38,64 +30,27 @@ type PreferenceGroup struct {
 	ParentGroup string `json:"parent_group" db:"parent_group"`
 }
 
-type PreferenceToGroup struct {
-	PreferenceId      string `json:"preference_id" db:"preference_id"`
-	PreferenceGroupId string `json:"preference_group_id" db:"preference_group_id"`
-}
-
-type UserPreferenceWithDefault struct {
-	UserPreference
-	DefaultValue string `json:"default_value" db:"default_value"`
-}
-
-type UpdateUserPreferenceRequest struct {
-	PreferenceKey   string `json:"preference_key"`
-	PreferenceValue string `json:"preference_value"`
+type PreferenceKV struct {
+	PreferenceId    string `json:"preference_id" db:"preference_id"`
+	PreferenceValue string `json:"preference_value" db:"preference_value"`
 }
 
 type UpdateOrgPreferenceRequest struct {
 	OrgId           string `json:"org_id"`
-	PreferenceKey   string `json:"preference_key"`
-	PreferenceValue string `json:"preference_value"`
-}
-
-type UpdateUserPreferenceResponse struct {
-	PreferenceKey   string `json:"preference_key"`
-	PreferenceValue string `json:"preference_value"`
-}
-
-type UpdateOrgPreferenceResponse struct {
-	PreferenceKey   string `json:"preference_key"`
+	PreferenceId    string `json:"preference_id"`
 	PreferenceValue string `json:"preference_value"`
 }
 
 type AllPreferenceResponse struct {
 	GroupId     string                  `json:"group_id"`
 	GroupName   string                  `json:"group_name"`
-	Preferences []AllPreferenceJoins    `json:"preferences"`
+	Preferences []Preferences           `json:"preferences"`
 	ChildGroup  []AllPreferenceResponse `json:"child_groups"`
 }
 
-type AllPreferenceJoins struct {
-	Id           string      `json:"id" db:"id"`
-	Name         string      `json:"name" db:"name"`
-	Value        interface{} `json:"value" db:"value"`
-	DefaultValue string      `json:"default_value" db:"default_value"`
-	GroupId      string      `json:"group_id" db:"group_id"`
-	GroupName    string      `json:"group_name" db:"group_name"`
-	ParentGroup  string      `json:"parent_group" db:"parent_group"`
-}
-
-type AllPreferenceUserJoins struct {
-	Id           string      `json:"id" db:"id"`
-	Name         string      `json:"name" db:"name"`
-	UserValue    interface{} `json:"user_value" db:"user_value"`
-	OrgValue     interface{} `json:"org_value" db:"org_value"`
-	OrgScope     int         `json:"org" db:"org"`
-	DefaultValue string      `json:"default_value" db:"default_value"`
-	GroupId      string      `json:"group_id" db:"group_id"`
-	GroupName    string      `json:"group_name" db:"group_name"`
-	ParentGroup  string      `json:"parent_group" db:"parent_group"`
+type Preferences struct {
+	Preference
+	Value string `json:"value" db:"value"`
 }
 
 func InitDB(datasourceName string) error {
@@ -107,60 +62,8 @@ func InitDB(datasourceName string) error {
 		return err
 	}
 
-	// create the preference entity
-	table_schema := `CREATE TABLE IF NOT EXISTS preference(
-		id TEXT PRIMARY KEY NOT NULL,
-		name TEXT,
-		default_value TEXT,
-		depends_on TEXT,
-		user INTEGER DEFAULT 0,
-		org INTEGER DEFAULT 0
-	);`
-
-	_, err = db.Exec(table_schema)
-	if err != nil {
-		return fmt.Errorf("error in creating preference table: %s", err.Error())
-	}
-
-	// bootstrap the preference entity data
-	bootstrapPreferences, fileError := fs.ReadFile(os.DirFS("../../pkg/query-service/app/preferences"), "bootstrap_preferences.json")
-
-	if fileError != nil {
-		return fmt.Errorf("error in reading bootstrap preferences: %s", fileError.Error())
-	}
-
-	preferences := []Preference{}
-
-	if unmarshalErr := json.Unmarshal(bootstrapPreferences, &preferences); unmarshalErr != nil {
-		return fmt.Errorf("error in unmarshalling bootstrap preferences: %s", unmarshalErr.Error())
-	}
-
-	for _, preference := range preferences {
-
-		var preferenceFromDB []Preference
-		query := `SELECT id FROM preference WHERE id=$1;`
-		err = db.Select(&preferenceFromDB, query, preference.Id)
-
-		if err != nil {
-			return fmt.Errorf("error in finding bootstrap entries in preference entity: %s", err.Error())
-		}
-
-		if len(preferenceFromDB) == 0 {
-			query = `INSERT INTO preference(id,name,default_value,depends_on,user,org) VALUES($1,$2,$3,$4,$5,$6);`
-
-			_, err = db.Exec(query, preference.Id, preference.Name, preference.DefaultValue, preference.DependsOn, preference.UserScope, preference.OrgScope)
-
-			if err != nil {
-				return fmt.Errorf("error in adding bootstrap preference: %s", err.Error())
-			}
-		} else if len(preferenceFromDB) > 1 {
-			return fmt.Errorf("multiple entries found for preference entity while bootstrapping: %s", preference.Id)
-		}
-
-	}
-
 	// create the preference group entity
-	table_schema = `CREATE TABLE IF NOT EXISTS preference_group(
+	table_schema := `CREATE TABLE IF NOT EXISTS preference_group(
 		id TEXT PRIMARY KEY NOT NULL,
 		name TEXT,
 		parent_group TEXT
@@ -207,60 +110,59 @@ func InitDB(datasourceName string) error {
 
 	}
 
-	// create the relational table between preference and preference group
-	table_schema = `
-	PRAGMA foreign_keys = ON;
-	CREATE TABLE IF NOT EXISTS preference_to_group (
-    	preference_id TEXT NOT NULL,
-    	preference_group_id TEXT NOT NULL,
-    	PRIMARY KEY (preference_id, preference_group_id),
-    	FOREIGN KEY (preference_id)
-        	REFERENCES preference(id)
-        	ON UPDATE CASCADE
-        	ON DELETE CASCADE,
-    	FOREIGN KEY (preference_group_id)
+	// create the preference entity
+	table_schema = `CREATE TABLE IF NOT EXISTS preference(
+		id TEXT PRIMARY KEY NOT NULL,
+		name TEXT,
+		default_value TEXT,
+		depends_on TEXT,
+		user INTEGER DEFAULT 0,
+		org INTEGER DEFAULT 0,
+		group_id TEXT,
+		FOREIGN KEY (group_id)
         	REFERENCES preference_group(id)
         	ON UPDATE CASCADE
         	ON DELETE CASCADE
-);`
+	);`
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return fmt.Errorf("error in creating preference_to_group table: %s", err.Error())
+		return fmt.Errorf("error in creating preference table: %s", err.Error())
 	}
-	// bootstrap the preference_to_group relational table data
-	bootstrapPreferenceToGroup, fileError := fs.ReadFile(os.DirFS("../../pkg/query-service/app/preferences"), "bootstrap_preference_to_group.json")
+
+	// bootstrap the preference entity data
+	bootstrapPreferences, fileError := fs.ReadFile(os.DirFS("../../pkg/query-service/app/preferences"), "bootstrap_preferences.json")
 
 	if fileError != nil {
-		return fmt.Errorf("error in reading bootstrap preference to group: %s", fileError.Error())
+		return fmt.Errorf("error in reading bootstrap preferences: %s", fileError.Error())
 	}
 
-	preferenceToGroups := []PreferenceToGroup{}
+	preferences := []Preference{}
 
-	if unmarshalErr := json.Unmarshal(bootstrapPreferenceToGroup, &preferenceToGroups); unmarshalErr != nil {
-		return fmt.Errorf("error in unmarshalling bootstrap preference to group: %s", unmarshalErr.Error())
+	if unmarshalErr := json.Unmarshal(bootstrapPreferences, &preferences); unmarshalErr != nil {
+		return fmt.Errorf("error in unmarshalling bootstrap preferences: %s", unmarshalErr.Error())
 	}
 
-	for _, preferenceToGroup := range preferenceToGroups {
+	for _, preference := range preferences {
 
-		var preferenceToGroupFromDB []PreferenceToGroup
-		query := `SELECT preference_id FROM preference_to_group WHERE preference_id=$1 AND preference_group_id=$2;`
-		err = db.Select(&preferenceToGroupFromDB, query, preferenceToGroup.PreferenceId, preferenceToGroup.PreferenceGroupId)
+		var preferenceFromDB []Preference
+		query := `SELECT id FROM preference WHERE id=$1;`
+		err = db.Select(&preferenceFromDB, query, preference.Id)
 
 		if err != nil {
-			return fmt.Errorf("error in finding bootstrap entries in preference to group entity: %s", err.Error())
+			return fmt.Errorf("error in finding bootstrap entries in preference entity: %s", err.Error())
 		}
 
-		if len(preferenceToGroupFromDB) == 0 {
-			query = `INSERT INTO preference_to_group(preference_id,preference_group_id) VALUES($1,$2);`
+		if len(preferenceFromDB) == 0 {
+			query = `INSERT INTO preference(id,name,default_value,depends_on,user,org,group_id) VALUES($1,$2,$3,$4,$5,$6,$7);`
 
-			_, err = db.Exec(query, preferenceToGroup.PreferenceId, preferenceToGroup.PreferenceGroupId)
+			_, err = db.Exec(query, preference.Id, preference.Name, preference.DefaultValue, preference.DependsOn, preference.UserScope, preference.OrgScope, preference.GroupId)
 
 			if err != nil {
-				return fmt.Errorf("error in adding bootstrap preference to group: %s", err.Error())
+				return fmt.Errorf("error in adding bootstrap preference: %s", err.Error())
 			}
-		} else if len(preferenceToGroupFromDB) > 1 {
-			return fmt.Errorf("multiple entries found for preference to group entity while bootstrapping: %s and %s", preferenceToGroup.PreferenceId, preferenceToGroup.PreferenceGroupId)
+		} else if len(preferenceFromDB) > 1 {
+			return fmt.Errorf("multiple entries found for preference entity while bootstrapping: %s", preference.Id)
 		}
 
 	}
@@ -269,11 +171,11 @@ func InitDB(datasourceName string) error {
 	table_schema = `
 	PRAGMA foreign_keys = ON;
 	CREATE TABLE IF NOT EXISTS user_preference(
-		preference_key TEXT NOT NULL,
+		preference_id TEXT NOT NULL,
 		preference_value TEXT,
 		user_id TEXT NOT NULL,
-		PRIMARY KEY (preference_key,user_id),
-		FOREIGN KEY (preference_key)
+		PRIMARY KEY (preference_id,user_id),
+		FOREIGN KEY (preference_id)
 			REFERENCES preference(id)
 			ON UPDATE CASCADE 
 			ON DELETE CASCADE,
@@ -292,11 +194,11 @@ func InitDB(datasourceName string) error {
 	table_schema = `
 	PRAGMA foreign_keys = ON;
 	CREATE TABLE IF NOT EXISTS org_preference(
-		preference_key TEXT NOT NULL,
+		preference_id TEXT NOT NULL,
 		preference_value TEXT,
 		org_id TEXT NOT NULL,
-		PRIMARY KEY (preference_key,org_id),
-		FOREIGN KEY (preference_key)
+		PRIMARY KEY (preference_id,org_id),
+		FOREIGN KEY (preference_id)
 			REFERENCES preference(id)
 			ON UPDATE CASCADE 
 			ON DELETE CASCADE,
@@ -315,13 +217,22 @@ func InitDB(datasourceName string) error {
 	return nil
 }
 
-func GetUserPreference(ctx context.Context, preferenceKey string) (*UserPreferenceWithDefault, *model.ApiError) {
-	userPreference := []UserPreference{}
+func GetUserPreference(ctx context.Context, preferenceId string, orgId string) (*PreferenceKV, *model.ApiError) {
+	userPreference := []PreferenceKV{}
+	orgPreference := []PreferenceKV{}
 	user := common.GetUserFromContext(ctx)
 
-	// get the preference key and value from the user preference table
-	query := `SELECT preference_key, preference_value FROM user_preference WHERE preference_key = $1 AND user_id = $2;`
-	err := db.Select(&userPreference, query, preferenceKey, user.Id)
+	// get the preference id and value from the user preference table
+	query := `SELECT preference_id, preference_value FROM user_preference WHERE preference_id = $1 AND user_id = $2;`
+	err := db.Select(&userPreference, query, preferenceId, user.Id)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	// get the preference id and value from the org preference table
+	query = `SELECT preference_id,preference_value FROM org_preference WHERE preference_id=$1 AND org_id=$2;`
+	err = db.Select(&orgPreference, query, preferenceId, orgId)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
@@ -329,50 +240,52 @@ func GetUserPreference(ctx context.Context, preferenceKey string) (*UserPreferen
 
 	// get the details for the preference entity
 	preference := Preference{}
-	query = `SELECT user, default_value FROM preference WHERE id = $1;`
-	err = db.Get(&preference, query, preferenceKey)
+	query = `SELECT user, org , default_value FROM preference WHERE id = $1;`
+	err = db.Get(&preference, query, preferenceId)
 
 	// return if unable to fetch the preference entity as we won't be sure about preference being enabled or not
 	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("error while fetching the preference entity: %s", preferenceKey)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("error while fetching the preference entity: %s", preferenceId)}
 	}
 
 	// return err if the preference is not enabled for user scope
 	if preference.UserScope != 1 {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference not enabled with key: %s", preferenceKey)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference not enabled with key: %s", preferenceId)}
 	}
 
-	userPreferenceWithDefault := UserPreferenceWithDefault{}
-
-	if len(userPreference) == 0 {
-		userPreferenceWithDefault.PreferenceKey = preferenceKey
-		userPreferenceWithDefault.PreferenceValue = ""
-	} else if len(userPreference) == 1 {
-		userPreferenceWithDefault.PreferenceKey = userPreference[0].PreferenceKey
-		userPreferenceWithDefault.PreferenceValue = userPreference[0].PreferenceValue
-	} else {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference key: %s", preferenceKey)}
+	if len(userPreference) > 1 || len(orgPreference) > 1 {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference id: %s", preferenceId)}
 	}
 
-	userPreferenceWithDefault.DefaultValue = preference.DefaultValue
+	preferenceValue := PreferenceKV{PreferenceId: preferenceId, PreferenceValue: preference.DefaultValue}
 
-	return &userPreferenceWithDefault, nil
+	if preference.OrgScope == 1 {
+		if len(orgPreference) == 1 {
+			preferenceValue.PreferenceValue = orgPreference[0].PreferenceValue
+		}
+	}
+
+	if len(userPreference) == 1 {
+		preferenceValue.PreferenceValue = userPreference[0].PreferenceValue
+	}
+
+	return &preferenceValue, nil
 }
 
-func UpdateUserPreference(ctx context.Context, req *UpdateUserPreferenceRequest) (*UpdateUserPreferenceResponse, *model.ApiError) {
-	preferenceKey := req.PreferenceKey
+func UpdateUserPreference(ctx context.Context, req *PreferenceKV) (*PreferenceKV, *model.ApiError) {
+	preferenceId := req.PreferenceId
 	preferenceValue := req.PreferenceValue
 	user := common.GetUserFromContext(ctx)
 
-	userPreference := []UserPreference{}
+	userPreference := []PreferenceKV{}
 
-	// return error if there is no preference key in the request
-	if preferenceKey == "" {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference key found in the request")}
+	// return error if there is no preference id in the request
+	if preferenceId == "" {
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference id found in the request")}
 	}
 
-	query := `SELECT preference_key FROM user_preference WHERE preference_key= $1 AND user_id= $2;`
-	err := db.Select(&userPreference, query, preferenceKey, user.Id)
+	query := `SELECT preference_id FROM user_preference WHERE preference_id= $1 AND user_id= $2;`
+	err := db.Select(&userPreference, query, preferenceId, user.Id)
 
 	// return the error if the select statement to find the current user preferences fails
 	if err != nil {
@@ -380,42 +293,37 @@ func UpdateUserPreference(ctx context.Context, req *UpdateUserPreferenceRequest)
 	}
 
 	if len(userPreference) == 0 {
-		query = `INSERT INTO user_preference(preference_key,preference_value,user_id) VALUES($1,$2,$3);`
-		_, err = db.Exec(query, preferenceKey, preferenceValue, user.Id)
+		query = `INSERT INTO user_preference(preference_id,preference_value,user_id) VALUES($1,$2,$3);`
+		_, err = db.Exec(query, preferenceId, preferenceValue, user.Id)
 
 		// return the error if the insert statement fails
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
 		}
 
-		// TODO [vikrantgupta25]: on the basis of preference value enable / disable the fields dependent on them and then recursively based on their
-		// already set values in user_preference or default values set deeper nestings. similar logic for else if as well
-		// updateDependentUserPreferences(preferenceKey, preferenceValue)
-
 	} else if len(userPreference) == 1 {
-		query = `UPDATE user_preference SET preference_value= $1 WHERE preference_key=$2 AND user_id=$3;`
-		_, err = db.Exec(query, preferenceValue, preferenceKey, user.Id)
+		query = `UPDATE user_preference SET preference_value= $1 WHERE preference_id=$2 AND user_id=$3;`
+		_, err = db.Exec(query, preferenceValue, preferenceId, user.Id)
 		// return the error if the update statement fails
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
 		}
-		// updateDependentUserPreferences(preferenceKey, preferenceValue)
 	} else {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference: %s", err)}
 	}
 
-	return &UpdateUserPreferenceResponse{
-		PreferenceKey:   preferenceKey,
+	return &PreferenceKV{
+		PreferenceId:    preferenceId,
 		PreferenceValue: preferenceValue,
 	}, nil
 }
 
-func GetOrgPreference(ctx context.Context, preferenceKey string, orgId string) (*UserPreferenceWithDefault, *model.ApiError) {
-	orgPreference := []OrgPreference{}
+func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*PreferenceKV, *model.ApiError) {
+	orgPreference := []PreferenceKV{}
 
-	// get the preference key and value from the org preference table
-	query := `SELECT preference_key, preference_value FROM org_preference WHERE preference_key = $1 AND org_id = $2;`
-	err := db.Select(&orgPreference, query, preferenceKey, orgId)
+	// get the preference id and value from the org preference table
+	query := `SELECT preference_id, preference_value FROM org_preference WHERE preference_id = $1 AND org_id = $2;`
+	err := db.Select(&orgPreference, query, preferenceId, orgId)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
@@ -424,53 +332,47 @@ func GetOrgPreference(ctx context.Context, preferenceKey string, orgId string) (
 	// get the details for the preference entity
 	preference := Preference{}
 	query = `SELECT org, default_value FROM preference WHERE id = $1;`
-	err = db.Get(&preference, query, preferenceKey)
+	err = db.Get(&preference, query, preferenceId)
 
 	// return if unable to fetch the preference entity as we won't be sure about preference being enabled or not
 	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("error while fetching the preference entity: %s", preferenceKey)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("error while fetching the preference entity: %s", preferenceId)}
 	}
 
 	// return err if the preference is not enabled for org scope
 	if preference.OrgScope != 1 {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference not enabled with key: %s", preferenceKey)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference not enabled with key: %s", preferenceId)}
 	}
 
-	orgPreferenceWithDefault := UserPreferenceWithDefault{}
+	preferenceValue := PreferenceKV{PreferenceId: preferenceId, PreferenceValue: preference.DefaultValue}
 
-	if len(orgPreference) == 0 {
-		orgPreferenceWithDefault.PreferenceKey = preferenceKey
-		orgPreferenceWithDefault.PreferenceValue = ""
-	} else if len(orgPreference) == 1 {
-		orgPreferenceWithDefault.PreferenceKey = orgPreference[0].PreferenceKey
-		orgPreferenceWithDefault.PreferenceValue = orgPreference[0].PreferenceValue
-	} else {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference key: %s", preferenceKey)}
+	if len(orgPreference) == 1 {
+		preferenceValue.PreferenceValue = orgPreference[0].PreferenceValue
+	} else if len(orgPreference) > 1 {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference id: %s", preferenceId)}
 	}
 
-	orgPreferenceWithDefault.DefaultValue = preference.DefaultValue
-
-	return &orgPreferenceWithDefault, nil
+	return &preferenceValue, nil
 }
 
-func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (*UpdateOrgPreferenceResponse, *model.ApiError) {
-	preferenceKey := req.PreferenceKey
+func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (*PreferenceKV, *model.ApiError) {
+	preferenceId := req.PreferenceId
 	preferenceValue := req.PreferenceValue
 	orgId := req.OrgId
 
-	orgPreference := []OrgPreference{}
+	orgPreference := []PreferenceKV{}
 
-	// return error if there is no preference key in the request
-	if preferenceKey == "" {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference key found in the request")}
+	// return error if there is no preference id in the request
+	if preferenceId == "" {
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference id found in the request")}
 	}
 
 	if orgId == "" {
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org id found in the request")}
 	}
 
-	query := `SELECT preference_key FROM org_preference WHERE preference_key= $1 AND org_id= $2;`
-	err := db.Select(&orgPreference, query, preferenceKey, orgId)
+	query := `SELECT preference_id FROM org_preference WHERE preference_id= $1 AND org_id= $2;`
+	err := db.Select(&orgPreference, query, preferenceId, orgId)
 
 	// return the error if the select statement to find the current org preferences fails
 	if err != nil {
@@ -478,20 +380,17 @@ func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (
 	}
 
 	if len(orgPreference) == 0 {
-		query = `INSERT INTO org_preference(preference_key,preference_value,org_id) VALUES($1,$2,$3);`
-		_, err = db.Exec(query, preferenceKey, preferenceValue, orgId)
+		query = `INSERT INTO org_preference(preference_id,preference_value,org_id) VALUES($1,$2,$3);`
+		_, err = db.Exec(query, preferenceId, preferenceValue, orgId)
 
 		// return the error if the insert statement fails
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
 		}
 
-		// TODO [vikrantgupta25]: on the basis of preference value enable / disable the fields dependent on them and then recursively based on their
-		// already set values in org_preference or default values set deeper nestings. similar logic for else if as well
-
 	} else if len(orgPreference) == 1 {
-		query = `UPDATE org_preference SET preference_value= $1 WHERE preference_key=$2 AND org_id=$3;`
-		_, err = db.Exec(query, preferenceValue, preferenceKey, orgId)
+		query = `UPDATE org_preference SET preference_value= $1 WHERE preference_id=$2 AND org_id=$3;`
+		_, err = db.Exec(query, preferenceValue, preferenceId, orgId)
 		// return the error if the update statement fails
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
@@ -500,49 +399,72 @@ func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference: %s", err)}
 	}
 
-	return &UpdateOrgPreferenceResponse{
-		PreferenceKey:   preferenceKey,
+	return &PreferenceKV{
+		PreferenceId:    preferenceId,
 		PreferenceValue: preferenceValue,
 	}, nil
 }
 
 func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferenceResponse, *model.ApiError) {
 
-	allOrgPreferences := []AllPreferenceJoins{}
+	orgPreferencesWithGroups := []Preference{}
 	query := `
 	SELECT 
-    	preference.id AS id,
-    	preference.name AS name,
-    	preference.default_value AS default_value,
-    	preference_group.id AS group_id,
-    	preference_group.name AS group_name,
-    	preference_group.parent_group AS parent_group,
-    	org_preference.preference_value AS value
+    	id,
+    	name,
+    	default_value,
+		depends_on,
+		user,
+		org,
+    	group_id
   	FROM 
     	preference
-    	INNER JOIN preference_to_group ON preference.id = preference_to_group.preference_id
-    	INNER JOIN preference_group ON preference_to_group.preference_group_id = preference_group.id
-    	LEFT JOIN org_preference ON org_preference.preference_key = preference.id AND org_preference.org_id=$1
   	WHERE preference.org = 1;`
 
-	err := db.Select(&allOrgPreferences, query, orgId)
+	err := db.Select(&orgPreferencesWithGroups, query, orgId)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all org preferences: %s", err)}
 	}
 
-	if len(allOrgPreferences) == 0 {
+	if len(orgPreferencesWithGroups) == 0 {
 		return nil, nil
 	}
 
-	groupPreferenceMap := map[string][]AllPreferenceJoins{}
+	orgPreferenceValues := []PreferenceKV{}
+	query = `
+	SELECT preference_id, preference_value FROM org_preference WHERE org_id=$1;
+	`
+	err = db.Select(&orgPreferenceValues, query, orgId)
 
-	for _, preference := range allOrgPreferences {
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all org preference values: %s", err)}
+	}
+
+	preferenceValueMap := map[string]string{}
+
+	for _, preferenceValue := range orgPreferenceValues {
+		preferenceValueMap[preferenceValue.PreferenceId] = preferenceValue.PreferenceValue
+	}
+
+	groupPreferenceMap := map[string][]Preferences{}
+
+	for _, preference := range orgPreferencesWithGroups {
+		preferenceWithValue := Preferences{}
+		preferenceWithValue.Value = preferenceValueMap[preference.Id]
+		preferenceWithValue.Id = preference.Id
+		preferenceWithValue.Name = preference.Name
+		preferenceWithValue.DefaultValue = preference.DefaultValue
+		preferenceWithValue.GroupId = preference.GroupId
+		preferenceWithValue.DependsOn = preference.DependsOn
+		preferenceWithValue.UserScope = preference.UserScope
+		preferenceWithValue.OrgScope = preference.OrgScope
+
 		value, seen := groupPreferenceMap[preference.GroupId]
 		if !seen {
-			groupPreferenceMap[preference.GroupId] = append([]AllPreferenceJoins{}, preference)
+			groupPreferenceMap[preference.GroupId] = append([]Preferences{}, preferenceWithValue)
 		} else {
-			groupPreferenceMap[preference.GroupId] = append(value, preference)
+			groupPreferenceMap[preference.GroupId] = append(value, preferenceWithValue)
 		}
 	}
 
@@ -566,57 +488,88 @@ func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferenceR
 
 	user := common.GetUserFromContext(ctx)
 
-	allUserPreferences := []AllPreferenceUserJoins{}
+	allUserPreferencesWithGroups := []Preference{}
 	query := `
 	SELECT 
-		preference.id AS id,
-		preference.name AS name,
-		preference.default_value AS default_value,
-		preference_group.id AS group_id,
-		preference_group.name AS group_name,
-		preference_group.parent_group AS parent_group,
-		user_preference.preference_value AS user_value,
-		org_preference.preference_value AS org_value,
-		preference.org
-	FROM 
-		preference
-		INNER JOIN preference_to_group ON preference.id = preference_to_group.preference_id
-		INNER JOIN preference_group ON preference_to_group.preference_group_id = preference_group.id
-		LEFT JOIN user_preference ON user_preference.preference_key = preference.id AND user_preference.user_id=$1
-		LEFT JOIN org_preference ON org_preference.preference_key = preference.id AND org_preference.org_id=$2
-	WHERE preference.user = 1;`
+    	id,
+    	name,
+    	default_value,
+		depends_on,
+		user,
+		org,
+    	group_id
+  	FROM 
+    	preference
+  	WHERE preference.user = 1;`
 
-	err := db.Select(&allUserPreferences, query, user.Id, orgId)
+	err := db.Select(&allUserPreferencesWithGroups, query, user.Id, orgId)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all user preferences: %s", err)}
 	}
 
-	if len(allUserPreferences) == 0 {
+	if len(allUserPreferencesWithGroups) == 0 {
 		return nil, nil
 	}
 
-	groupPreferenceMap := map[string][]AllPreferenceJoins{}
+	orgPreferenceValues := []PreferenceKV{}
+	query = `
+	SELECT preference_id, preference_value FROM org_preference WHERE org_id=$1;
+	`
+	err = db.Select(&orgPreferenceValues, query, orgId)
 
-	for _, preference := range allUserPreferences {
-		userPreference := AllPreferenceJoins{}
-		userPreference.Id = preference.Id
-		userPreference.Name = preference.Name
-		if preference.UserValue != nil {
-			userPreference.Value = preference.UserValue
-		} else if preference.OrgScope == 1 {
-			userPreference.Value = preference.OrgValue
-		} else {
-			userPreference.Value = nil
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all org preference values: %s", err)}
+	}
+
+	orgPreferenceValueMap := map[string]string{}
+
+	for _, preferenceValue := range orgPreferenceValues {
+		orgPreferenceValueMap[preferenceValue.PreferenceId] = preferenceValue.PreferenceValue
+	}
+
+	userPreferenceValues := []PreferenceKV{}
+	query = `
+	SELECT preference_id, preference_value FROM user_preference WHERE user_id=$1;
+	`
+	err = db.Select(&userPreferenceValues, query, user.Id)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all user preference values: %s", err)}
+	}
+
+	userPreferenceValueMap := map[string]string{}
+
+	for _, preferenceValue := range userPreferenceValues {
+		userPreferenceValueMap[preferenceValue.PreferenceId] = preferenceValue.PreferenceValue
+	}
+
+	groupPreferenceMap := map[string][]Preferences{}
+
+	for _, preference := range allUserPreferencesWithGroups {
+		preferenceWithValue := Preferences{}
+		if preference.OrgScope == 1 {
+			preferenceWithValue.Value = orgPreferenceValueMap[preference.Id]
 		}
-		userPreference.GroupName = preference.GroupName
-		userPreference.GroupId = preference.GroupId
-		userPreference.ParentGroup = preference.ParentGroup
+
+		if preference.UserScope == 1 {
+			if value, seen := userPreferenceValueMap[preference.Id]; seen {
+				preferenceWithValue.Value = value
+			}
+		}
+		preferenceWithValue.Id = preference.Id
+		preferenceWithValue.Name = preference.Name
+		preferenceWithValue.DefaultValue = preference.DefaultValue
+		preferenceWithValue.GroupId = preference.GroupId
+		preferenceWithValue.DependsOn = preference.DependsOn
+		preferenceWithValue.UserScope = preference.UserScope
+		preferenceWithValue.OrgScope = preference.OrgScope
+
 		value, seen := groupPreferenceMap[preference.GroupId]
 		if !seen {
-			groupPreferenceMap[preference.GroupId] = append([]AllPreferenceJoins{}, userPreference)
+			groupPreferenceMap[preference.GroupId] = append([]Preferences{}, preferenceWithValue)
 		} else {
-			groupPreferenceMap[preference.GroupId] = append(value, userPreference)
+			groupPreferenceMap[preference.GroupId] = append(value, preferenceWithValue)
 		}
 	}
 
@@ -630,14 +583,14 @@ func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferenceR
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all preference groups: %s", err)}
 	}
 
-	allOrgPreferenceTree := buildGroupTree(preferenceGroups, "", groupPreferenceMap)
-	fmt.Println(allOrgPreferenceTree)
+	allUserPreferenceTree := buildGroupTree(preferenceGroups, "", groupPreferenceMap)
+	fmt.Println(allUserPreferenceTree)
 
-	return &allOrgPreferenceTree, nil
+	return &allUserPreferenceTree, nil
 }
 
 // recursively create the preference group tree
-func buildGroupTree(groups []PreferenceGroup, parentID string, groupPreferenceMap map[string][]AllPreferenceJoins) []AllPreferenceResponse {
+func buildGroupTree(groups []PreferenceGroup, parentID string, groupPreferenceMap map[string][]Preferences) []AllPreferenceResponse {
 	tree := []AllPreferenceResponse{}
 
 	for _, group := range groups {
