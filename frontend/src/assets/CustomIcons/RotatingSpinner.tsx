@@ -14,6 +14,7 @@ export default function RotatingSpinner({
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 			aria-label="loading"
+			data-icon="loading"
 		>
 			<path
 				d="M12.875 22C18.3978 22 22.875 17.5228 22.875 12C22.875 6.47715 18.3978 2 12.875 2C7.35215 2 2.875 6.47715 2.875 12C2.875 17.5228 7.35215 22 12.875 22Z"
