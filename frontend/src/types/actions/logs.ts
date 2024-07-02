@@ -36,6 +36,9 @@ export const SET_VIEW_MODE = 'SET_VIEW_MODE';
 export const UPDATE_SELECTED_FIELDS = 'LOGS_UPDATE_SELECTED_FIELDS';
 export const UPDATE_INTERESTING_FIELDS = 'LOGS_UPDATE_INTERESTING_FIELDS';
 export const SET_LOGS_ORDER = 'SET_LOGS_ORDER';
+export const SET_IS_INITIAL_LOG_QUERY = 'SET_IS_INITIAL_LOG_QUERY';
+export const SET_IS_INITIAL_LOG_AGGREGATE_QUERY =
+	'SET_IS_INITIAL_LOG_AGGREGATE_QUERY';
 
 export interface GetFields {
 	type: typeof GET_FIELDS;
@@ -148,6 +151,16 @@ export interface SetLogsOrder {
 	payload: OrderPreferenceItems;
 }
 
+export interface SetIsInitialLogQuery {
+	type: typeof SET_IS_INITIAL_LOG_QUERY;
+	payload: boolean;
+}
+
+export interface SetIsInitialLogAggregateQuery {
+	type: typeof SET_IS_INITIAL_LOG_AGGREGATE_QUERY;
+	payload: boolean;
+}
+
 export type LogsActions =
 	| GetFields
 	| SetFields
@@ -172,4 +185,6 @@ export type LogsActions =
 	| SetLinesPerRow
 	| SetViewMode
 	| UpdateSelectedInterestFields
-	| SetLogsOrder;
+	| SetLogsOrder
+	| SetIsInitialLogQuery
+	| SetIsInitialLogAggregateQuery;

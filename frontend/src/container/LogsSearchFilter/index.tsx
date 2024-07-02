@@ -12,12 +12,7 @@ import { getLogs } from 'store/actions/logs/getLogs';
 import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import {
-	FLUSH_LOGS,
-	SET_LOADING,
-	SET_LOADING_AGGREGATE,
-	TOGGLE_LIVE_TAIL,
-} from 'types/actions/logs';
+import { FLUSH_LOGS, SET_LOADING, TOGGLE_LIVE_TAIL } from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -137,15 +132,6 @@ function SearchFilter({
 	const urlQueryString = urlQuery.get('q');
 
 	useEffect(() => {
-		dispatch({
-			type: SET_LOADING,
-			payload: true,
-		});
-		dispatch({
-			type: SET_LOADING_AGGREGATE,
-			payload: true,
-		});
-
 		const debouncedHandleSearch = debounce(handleSearch, 600);
 
 		debouncedHandleSearch(urlQueryString || '');

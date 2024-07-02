@@ -1,7 +1,9 @@
 import GetLogsAggregate from 'api/logs/GetLogsAggregate';
 import { Dispatch } from 'redux';
+import store from 'store';
 import AppActions from 'types/actions';
 import {
+	SET_IS_INITIAL_LOG_AGGREGATE_QUERY,
 	SET_LOADING_AGGREGATE,
 	SET_LOGS_AGGREGATE_SERIES,
 } from 'types/actions/logs';
@@ -13,11 +15,12 @@ export const getLogsAggregate = (
 ): ((dispatch: Dispatch<AppActions>) => void) => async (
 	dispatch,
 ): Promise<void> => {
-	dispatch({
-		type: SET_LOADING_AGGREGATE,
-		payload: true,
-	});
-
+	if (store.getState().logs.isInitialLogQuery) {
+		dispatch({
+			type: SET_LOADING_AGGREGATE,
+			payload: true,
+		});
+	}
 	const response = await GetLogsAggregate(props);
 	if (response.payload) {
 		const convertedArray: ILogsAggregate[] = Object.values(
@@ -37,6 +40,11 @@ export const getLogsAggregate = (
 
 	dispatch({
 		type: SET_LOADING_AGGREGATE,
+		payload: false,
+	});
+
+	dispatch({
+		type: SET_IS_INITIAL_LOG_AGGREGATE_QUERY,
 		payload: false,
 	});
 };
