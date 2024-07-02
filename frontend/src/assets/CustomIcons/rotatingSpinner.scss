@@ -1,0 +1,20 @@
+.rotate {
+	animation: rotate 0.5s linear infinite;
+}
+
+@keyframes rotate {
+	0% {
+		transform: rotate(0deg);
+		transform-origin: 50% 50%;
+	}
+
+	50% {
+		transform: rotate(180deg);
+		transform-origin: 50% 50%;
+	}
+
+	100% {
+		transform: rotate(360deg);
+		transform-origin: 50% 50%;
+	}
+}

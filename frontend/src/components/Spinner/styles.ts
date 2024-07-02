@@ -13,4 +13,12 @@ export const SpinerStyle = styled.div<Props>`
 	justify-content: center;
 	align-items: center;
 	height: ${({ height = '100vh' }): number | string => height};
+	${({ color }): string =>
+		color
+			? `
+		svg {
+			fill: ${color}
+		}
+	`
+			: ''}
 `;
