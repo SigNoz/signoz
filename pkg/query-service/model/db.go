@@ -87,6 +87,7 @@ type UserPayload struct {
 	Role         string   `json:"role"`
 	Organization string   `json:"organization"`
 	Flags        UserFlag `json:"flags"`
+	OldRole      string   `json:"oldRole"`
 }
 
 type Group struct {
