@@ -907,7 +907,8 @@ const (
 	FilterOperatorNotContains     FilterOperator = "ncontains"
 	FilterOperatorRegex           FilterOperator = "regex"
 	FilterOperatorNotRegex        FilterOperator = "nregex"
-	// (I)LIKE is faster than REGEX and supports index
+	// (I)LIKE is faster than REGEX
+	// ilike doesn't support index so internally we use lower(body) like for query
 	FilterOperatorLike    FilterOperator = "like"
 	FilterOperatorNotLike FilterOperator = "nlike"
 
