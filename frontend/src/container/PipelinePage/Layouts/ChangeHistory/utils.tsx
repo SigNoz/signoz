@@ -2,10 +2,9 @@ import {
 	CheckCircleFilled,
 	CloseCircleFilled,
 	ExclamationCircleFilled,
-	LoadingOutlined,
 	MinusCircleFilled,
 } from '@ant-design/icons';
-import { Spin } from 'antd';
+import Spinner from 'components/Spinner';
 
 export function getDeploymentStage(value: string): string {
 	switch (value) {
@@ -28,7 +27,11 @@ export function getDeploymentStageIcon(value: string): JSX.Element {
 	switch (value) {
 		case 'IN_PROGRESS':
 			return (
-				<Spin indicator={<LoadingOutlined style={{ fontSize: 15 }} spin />} />
+				<Spinner
+					height="100%"
+					style={{ margin: 0, display: 'inline' }}
+					color="white"
+				/>
 			);
 		case 'DEPLOYED':
 			return <CheckCircleFilled />;

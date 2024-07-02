@@ -1,8 +1,8 @@
 import './Integrations.styles.scss';
 
-import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Input, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import Spinner from 'components/Spinner';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
@@ -73,7 +73,7 @@ export function RequestIntegrationBtn(): JSX.Element {
 						className="periscope-btn primary"
 						icon={
 							isSubmittingRequestForIntegration ? (
-								<LoadingOutlined />
+								<Spinner color="white" />
 							) : (
 								<Check size={12} />
 							)

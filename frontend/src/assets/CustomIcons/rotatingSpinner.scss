@@ -1,0 +1,15 @@
+.rotate {
+	animation: rotate 0.5s linear 1000;
+	transform-origin: 50% 50%;
+	animation-fill-mode: forwards;
+}
+
+@keyframes rotate {
+	0% {
+		transform: rotateZ(0deg);
+	}
+
+	100% {
+		transform: rotateZ(360deg);
+	}
+}

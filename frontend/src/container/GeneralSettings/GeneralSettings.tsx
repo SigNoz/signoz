@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Divider, Modal, Row, Spin, Typography } from 'antd';
+import { Button, Card, Col, Divider, Modal, Row, Typography } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
+import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -421,7 +421,7 @@ function GeneralSettings({
 				saveButtonText:
 					metricsTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spinner />
 							{t('retention_save_button.pending', { name: 'metrics' })}
 						</span>
 					) : (
@@ -462,7 +462,7 @@ function GeneralSettings({
 				saveButtonText:
 					tracesTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spinner />
 							{t('retention_save_button.pending', { name: 'traces' })}
 						</span>
 					) : (
@@ -501,7 +501,7 @@ function GeneralSettings({
 				saveButtonText:
 					logsTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spinner />
 							{t('retention_save_button.pending', { name: 'logs' })}
 						</span>
 					) : (
