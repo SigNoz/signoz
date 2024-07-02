@@ -1,20 +1,15 @@
 .rotate {
-	animation: rotate 0.5s linear infinite;
+	animation: rotate 0.5s linear 1000; /* High iteration count */
+	transform-origin: 50% 50%;
+	animation-fill-mode: forwards; /* Maintains final state after animation */
 }
 
 @keyframes rotate {
 	0% {
-		transform: rotate(0deg);
-		transform-origin: 50% 50%;
-	}
-
-	50% {
-		transform: rotate(180deg);
-		transform-origin: 50% 50%;
+		transform: rotateZ(0deg);
 	}
 
 	100% {
-		transform: rotate(360deg);
-		transform-origin: 50% 50%;
+		transform: rotateZ(360deg);
 	}
 }
