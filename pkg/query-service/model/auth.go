@@ -51,7 +51,8 @@ type UserJwtObject struct {
 
 type LoginResponse struct {
 	UserJwtObject
-	UserId string `json:"userId"`
+	UserId  string `json:"userId"`
+	OldRole string `json:"oldRole"`
 }
 
 type ChangePasswordRequest struct {
