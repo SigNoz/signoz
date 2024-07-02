@@ -3,15 +3,18 @@
 import './Onboarding.styles.scss';
 
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Card, Typography } from 'antd';
+import { Button, Card, Form, Typography } from 'antd';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
+import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/InviteUserModal';
+import { InviteMemberFormValues } from 'container/OrganizationSettings/PendingInvitesContainer';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
-import { useEffect, useState } from 'react';
+import { UserPlus } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
 
@@ -279,58 +282,98 @@ export default function Onboarding(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const [form] = Form.useForm<InviteMemberFormValues>();
+	const [
+		isInviteTeamMemberModalOpen,
+		setIsInviteTeamMemberModalOpen,
+	] = useState<boolean>(false);
+
+	const toggleModal = useCallback(
+		(value: boolean): void => {
+			setIsInviteTeamMemberModalOpen(value);
+			if (!value) {
+				form.resetFields();
+			}
+		},
+		[form],
+	);
+
 	return (
 		<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
 			{activeStep === 1 && (
-				<>
-					<FullScreenHeader />
-					<div className="onboardingHeader">
-						<h1> Select a use-case to get started</h1>
-					</div>
-					<div className="modulesContainer">
-						<div className="moduleContainerRowStyles">
-							{Object.keys(ModulesMap).map((module) => {
-								const selectedUseCase = (useCases as any)[module];
+				<div className="onboarding-page">
+					<div>
+						<div onClick={(): void => history.push('/')} className="skip-to-console">
+							Skip
+						</div>
+						<FullScreenHeader />
+						<div className="onboardingHeader">
+							<h1> Select a use-case to get started</h1>
+						</div>
+						<div className="modulesContainer">
+							<div className="moduleContainerRowStyles">
+								{Object.keys(ModulesMap).map((module) => {
+									const selectedUseCase = (useCases as any)[module];
 
-								return (
-									<Card
-										className={cx(
-											'moduleStyles',
-											selectedModule.id === selectedUseCase.id ? 'selected' : '',
-										)}
-										style={{
-											backgroundColor: isDarkMode ? '#000' : '#FFF',
-										}}
-										key={selectedUseCase.id}
-										onClick={(): void => handleModuleSelect(selectedUseCase)}
-									>
-										<Typography.Title
-											className="moduleTitleStyle"
-											level={4}
+									return (
+										<Card
+											className={cx(
+												'moduleStyles',
+												selectedModule.id === selectedUseCase.id ? 'selected' : '',
+											)}
 											style={{
-												borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #ddd',
-												backgroundColor: isDarkMode ? '#141414' : '#FFF',
+												backgroundColor: isDarkMode ? '#000' : '#FFF',
 											}}
+											key={selectedUseCase.id}
+											onClick={(): void => handleModuleSelect(selectedUseCase)}
 										>
-											{selectedUseCase.title}
-										</Typography.Title>
-										<Typography.Paragraph
-											className="moduleDesc"
-											style={{ backgroundColor: isDarkMode ? '#000' : '#FFF' }}
-										>
-											{selectedUseCase.desc}
-										</Typography.Paragraph>
-									</Card>
-								);
-							})}
+											<Typography.Title
+												className="moduleTitleStyle"
+												level={4}
+												style={{
+													borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #ddd',
+													backgroundColor: isDarkMode ? '#141414' : '#FFF',
+												}}
+											>
+												{selectedUseCase.title}
+											</Typography.Title>
+											<Typography.Paragraph
+												className="moduleDesc"
+												style={{ backgroundColor: isDarkMode ? '#000' : '#FFF' }}
+											>
+												{selectedUseCase.desc}
+											</Typography.Paragraph>
+										</Card>
+									);
+								})}
+							</div>
+						</div>
+						<div className="continue-to-next-step">
+							<Button
+								type="primary"
+								icon={<ArrowRightOutlined />}
+								onClick={handleNext}
+							>
+								Get Started
+							</Button>
 						</div>
 					</div>
-					<div className="continue-to-next-step">
-						<Button type="primary" icon={<ArrowRightOutlined />} onClick={handleNext}>
-							Get Started
-						</Button>
+					<div className="invite-member-wrapper">
+						<Typography.Text className="helper-text">
+							Not the right person to get started? No worries! Invite someone who can.
+						</Typography.Text>
+						<div className="invite-member">
+							<Typography.Text>Invite your teammates</Typography.Text>
+							<Button
+								onClick={(): void => setIsInviteTeamMemberModalOpen(true)}
+								icon={<UserPlus size={16} />}
+								type="primary"
+							>
+								Invite
+							</Button>
+						</div>
 					</div>
-				</>
+				</div>
 			)}
 
 			{activeStep > 1 && (
@@ -345,9 +388,15 @@ export default function Onboarding(): JSX.Element {
 						}}
 						selectedModule={selectedModule}
 						selectedModuleSteps={selectedModuleSteps}
+						setIsInviteTeamMemberModalOpen={setIsInviteTeamMemberModalOpen}
 					/>
 				</div>
 			)}
+			<InviteUserModal
+				form={form}
+				isInviteTeamMemberModalOpen={isInviteTeamMemberModalOpen}
+				toggleModal={toggleModal}
+			/>
 		</div>
 	);
 }

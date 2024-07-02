@@ -1,9 +1,8 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Modal, Space, Typography } from 'antd';
+import { Button, Form, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteInvite from 'api/user/deleteInvite';
 import getPendingInvites from 'api/user/getPendingInvites';
-import sendInvite from 'api/user/sendInvite';
 import { ResizeTable } from 'components/ResizeTable';
 import { INVITE_MEMBERS_HASH } from 'constants/app';
 import ROUTES from 'constants/routes';
@@ -19,7 +18,7 @@ import { PayloadProps } from 'types/api/user/getPendingInvites';
 import AppReducer from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
-import InviteTeamMembers from '../InviteTeamMembers';
+import InviteUserModal from '../InviteUserModal/InviteUserModal';
 import { TitleWrapper } from './styles';
 
 function PendingInvitesContainer(): JSX.Element {
@@ -28,7 +27,6 @@ function PendingInvitesContainer(): JSX.Element {
 		setIsInviteTeamMemberModalOpen,
 	] = useState<boolean>(false);
 	const [form] = Form.useForm<InviteMemberFormValues>();
-	const [isInvitingMembers, setIsInvitingMembers] = useState<boolean>(false);
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const [state, setText] = useCopyToClipboard();
 	const { notifications } = useNotifications();
@@ -191,59 +189,59 @@ function PendingInvitesContainer(): JSX.Element {
 		},
 	];
 
-	const onInviteClickHandler = useCallback(
-		async (values: InviteMemberFormValues): Promise<void> => {
-			try {
-				setIsInvitingMembers(true);
-				values.members.forEach(
-					async (member): Promise<void> => {
-						const { error, statusCode } = await sendInvite({
-							email: member.email,
-							name: member.name,
-							role: member.role,
-							frontendBaseUrl: window.location.origin,
-						});
+	// const onInviteClickHandler = useCallback(
+	// 	async (values: InviteMemberFormValues): Promise<void> => {
+	// 		try {
+	// 			setIsInvitingMembers(true);
+	// 			values.members.forEach(
+	// 				async (member): Promise<void> => {
+	// 					const { error, statusCode } = await sendInvite({
+	// 						email: member.email,
+	// 						name: member.name,
+	// 						role: member.role,
+	// 						frontendBaseUrl: window.location.origin,
+	// 					});
 
-						if (statusCode !== 200) {
-							notifications.error({
-								message:
-									error ||
-									t('something_went_wrong', {
-										ns: 'common',
-									}),
-							});
-						}
-					},
-				);
+	// 					if (statusCode !== 200) {
+	// 						notifications.error({
+	// 							message:
+	// 								error ||
+	// 								t('something_went_wrong', {
+	// 									ns: 'common',
+	// 								}),
+	// 						});
+	// 					}
+	// 				},
+	// 			);
 
-				setTimeout(async () => {
-					const { data, status } = await getPendingInvitesResponse.refetch();
-					if (status === 'success' && data.payload) {
-						setDataSource(getParsedInviteData(data?.payload || []));
-					}
-					setIsInvitingMembers(false);
-					toggleModal(false);
-				}, 2000);
-			} catch (error) {
-				notifications.error({
-					message: t('something_went_wrong', {
-						ns: 'common',
-					}),
-				});
-			}
-		},
-		[
-			getParsedInviteData,
-			getPendingInvitesResponse,
-			notifications,
-			t,
-			toggleModal,
-		],
-	);
+	// 			setTimeout(async () => {
+	// 				const { data, status } = await getPendingInvitesResponse.refetch();
+	// 				if (status === 'success' && data.payload) {
+	// 					setDataSource(getParsedInviteData(data?.payload || []));
+	// 				}
+	// 				setIsInvitingMembers(false);
+	// 				toggleModal(false);
+	// 			}, 2000);
+	// 		} catch (error) {
+	// 			notifications.error({
+	// 				message: t('something_went_wrong', {
+	// 					ns: 'common',
+	// 				}),
+	// 			});
+	// 		}
+	// 	},
+	// 	[
+	// 		getParsedInviteData,
+	// 		getPendingInvitesResponse,
+	// 		notifications,
+	// 		t,
+	// 		toggleModal,
+	// 	],
+	// );
 
 	return (
 		<div>
-			<Modal
+			{/* <Modal
 				title={t('invite_team_members')}
 				open={isInviteTeamMemberModalOpen}
 				onCancel={(): void => toggleModal(false)}
@@ -267,7 +265,14 @@ function PendingInvitesContainer(): JSX.Element {
 				]}
 			>
 				<InviteTeamMembers form={form} onFinish={onInviteClickHandler} />
-			</Modal>
+			</Modal> */}
+
+			<InviteUserModal
+				form={form}
+				isInviteTeamMemberModalOpen={isInviteTeamMemberModalOpen}
+				setDataSource={setDataSource}
+				toggleModal={toggleModal}
+			/>
 
 			<Space direction="vertical" size="middle">
 				<TitleWrapper>
