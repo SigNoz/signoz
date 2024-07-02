@@ -33,7 +33,6 @@ interface ModuleStepsContainerProps {
 	onReselectModule: any;
 	selectedModule: ModuleProps;
 	selectedModuleSteps: SelectedModuleStepProps[];
-	// inviteUserProps: InviteUserModalProps;
 	setIsInviteTeamMemberModalOpen: (value: SetStateAction<boolean>) => void;
 }
 
