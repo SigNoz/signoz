@@ -1,5 +1,6 @@
 import './rotatingSpinner.scss';
 
+import { DEFAULT_SPINNER_COLOR } from 'components/Spinner/constants';
 import { CSSProperties } from 'styled-components';
 
 export default function RotatingSpinner({
@@ -37,5 +38,5 @@ interface RotatingSpinnerProps {
 	color?: CSSProperties['stroke'];
 }
 RotatingSpinner.defaultProps = {
-	color: '#4566d6',
+	color: DEFAULT_SPINNER_COLOR,
 };

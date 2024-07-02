@@ -2,6 +2,7 @@ import { Spin, SpinProps } from 'antd';
 import SpinnerIcon from 'assets/CustomIcons/RotatingSpinner';
 import { CSSProperties } from 'react';
 
+import { DEFAULT_SPINNER_COLOR } from './constants';
 import { SpinerStyle } from './styles';
 
 const getStyleForSize = (
@@ -52,7 +53,7 @@ Spinner.defaultProps = {
 	tip: undefined,
 	height: undefined,
 	style: {},
-	color: '#4566d6',
+	color: DEFAULT_SPINNER_COLOR,
 };
 
 export default Spinner;
