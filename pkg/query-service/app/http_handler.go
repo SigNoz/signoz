@@ -29,6 +29,7 @@ import (
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
@@ -2186,6 +2187,144 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	resp, _ := marshall(response)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resp)
+}
+
+// Preferences
+
+func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/preferences").Subrouter()
+
+	subRouter.HandleFunc("/user", am.ViewAccess(ah.getUserPreference)).Methods(http.MethodGet)
+
+	subRouter.HandleFunc("/user", am.ViewAccess(ah.updateUserPreference)).Methods(http.MethodPost)
+
+	subRouter.HandleFunc("/user/all", am.ViewAccess(ah.getAllUserPreference)).Methods(http.MethodGet)
+
+	subRouter.HandleFunc("/org", am.ViewAccess(ah.getOrgPreference)).Methods(http.MethodGet)
+
+	subRouter.HandleFunc("/org", am.ViewAccess(ah.updateOrgPreference)).Methods(http.MethodPost)
+
+	subRouter.HandleFunc("/org/all", am.ViewAccess(ah.getAllOrgPreference)).Methods(http.MethodGet)
+
+}
+
+func (aH *APIHandler) getAllUserPreference(w http.ResponseWriter, r *http.Request) {
+
+	orgId := r.URL.Query().Get("orgId")
+
+	if orgId == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org id found in the request")}, nil)
+		return
+	}
+
+	preference, err := preferences.GetAllUserPreferences(r.Context(), orgId)
+
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (aH *APIHandler) getUserPreference(w http.ResponseWriter, r *http.Request) {
+	preferenceKey := r.URL.Query().Get("preferenceKey")
+
+	// if no preference key is found in the request return here
+	if preferenceKey == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference key found in the request")}, nil)
+		return
+	}
+
+	preference, err := preferences.GetUserPreference(r.Context(), preferenceKey)
+
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (ah *APIHandler) updateUserPreference(w http.ResponseWriter, r *http.Request) {
+	req := preferences.UpdateUserPreferenceRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateUserPreference(r.Context(), &req)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+
+}
+
+func (aH *APIHandler) getAllOrgPreference(w http.ResponseWriter, r *http.Request) {
+
+	orgId := r.URL.Query().Get("orgId")
+
+	if orgId == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org id found in the request")}, nil)
+		return
+	}
+
+	preference, err := preferences.GetAllOrgPreferences(r.Context(), orgId)
+
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+func (aH *APIHandler) getOrgPreference(w http.ResponseWriter, r *http.Request) {
+	preferenceKey := r.URL.Query().Get("preferenceKey")
+	orgId := r.URL.Query().Get("orgId")
+
+	if preferenceKey == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference key found in the request")}, nil)
+		return
+	}
+
+	if orgId == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org id found in the request")}, nil)
+		return
+	}
+
+	preference, err := preferences.GetOrgPreference(r.Context(), preferenceKey, orgId)
+
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (ah *APIHandler) updateOrgPreference(w http.ResponseWriter, r *http.Request) {
+	req := preferences.UpdateOrgPreferenceRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), &req)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
 }
 
 // Integrations

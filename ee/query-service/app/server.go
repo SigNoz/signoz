@@ -41,6 +41,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
@@ -105,6 +106,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	modelDao, err := dao.InitDao("sqlite", baseconst.RELATIONAL_DATASOURCE_PATH)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := preferences.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH); err != nil {
 		return nil, err
 	}
 
@@ -352,6 +357,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterIntegrationRoutes(r, am)
+	apiHandler.RegisterPreferenceRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)
 
