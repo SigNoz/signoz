@@ -1,5 +1,5 @@
-import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Popover, Spin, Typography } from 'antd';
+import { Button, Popover, Typography } from 'antd';
+import Spinner from 'components/Spinner';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import {
@@ -29,7 +29,7 @@ function FieldItem({
 
 	const renderContent = useMemo(() => {
 		if (isLoading) {
-			return <Spin spinning size="small" indicator={<LoadingOutlined spin />} />;
+			return <Spinner height="100%" style={{ margin: 0 }} />;
 		}
 
 		if (isHovered) {

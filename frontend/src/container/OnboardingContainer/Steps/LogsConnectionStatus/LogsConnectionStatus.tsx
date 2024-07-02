@@ -1,10 +1,7 @@
 import './LogsConnectionStatus.styles.scss';
 
-import {
-	CheckCircleTwoTone,
-	CloseCircleTwoTone,
-	LoadingOutlined,
-} from '@ant-design/icons';
+import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
+import Spinner from 'components/Spinner';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Header from 'container/OnboardingContainer/common/Header/Header';
@@ -242,7 +239,14 @@ export default function LogsConnectionStatus(): JSX.Element {
 					<div className="label"> Status </div>
 
 					<div className="status">
-						{(loading || isFetching) && <LoadingOutlined />}
+						{(loading || isFetching) && (
+							<Spinner
+								size="small"
+								color="white"
+								height="100%"
+								style={{ margin: 0 }}
+							/>
+						)}
 						{!(loading || isFetching) && isReceivingData && (
 							<>
 								<CheckCircleTwoTone twoToneColor="#52c41a" />

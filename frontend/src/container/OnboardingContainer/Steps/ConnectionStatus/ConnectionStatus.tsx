@@ -1,10 +1,7 @@
 import './ConnectionStatus.styles.scss';
 
-import {
-	CheckCircleTwoTone,
-	CloseCircleTwoTone,
-	LoadingOutlined,
-} from '@ant-design/icons';
+import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
+import Spinner from 'components/Spinner';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import useAnalytics from 'hooks/analytics/useAnalytics';
@@ -252,7 +249,9 @@ export default function ConnectionStatus(): JSX.Element {
 					<div className="label"> Status </div>
 
 					<div className="status">
-						{(loading || isServiceLoading) && <LoadingOutlined />}
+						{(loading || isServiceLoading) && (
+							<Spinner height="100%" style={{ margin: 0 }} />
+						)}
 						{!(loading || isServiceLoading) && isReceivingData && (
 							<>
 								<CheckCircleTwoTone twoToneColor="#52c41a" />

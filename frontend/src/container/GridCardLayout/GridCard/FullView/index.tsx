@@ -1,7 +1,7 @@
 import './WidgetFullView.styles.scss';
 
-import { LoadingOutlined, SyncOutlined } from '@ant-design/icons';
-import { Button, Spin } from 'antd';
+import { SyncOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
@@ -182,7 +182,7 @@ function FullView({
 				{fullViewOptions && (
 					<TimeContainer $panelType={widget.panelTypes}>
 						{response.isFetching && (
-							<Spin spinning indicator={<LoadingOutlined spin />} />
+							<Spinner height="100%" style={{ margin: 0 }} tip="Loading..." />
 						)}
 						<TimePreference
 							selectedTime={selectedTime}
