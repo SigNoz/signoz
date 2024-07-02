@@ -1,7 +1,7 @@
 .rotate {
-	animation: rotate 0.5s linear 1000; /* High iteration count */
+	animation: rotate 0.5s linear 1000;
 	transform-origin: 50% 50%;
-	animation-fill-mode: forwards; /* Maintains final state after animation */
+	animation-fill-mode: forwards;
 }
 
 @keyframes rotate {
