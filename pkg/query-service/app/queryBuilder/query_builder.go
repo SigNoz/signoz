@@ -139,6 +139,8 @@ func expressionToQuery(
 		prevVar = variable
 	}
 	formulaQuery = fmt.Sprintf("SELECT %s, %s as value FROM ", joinUsing, formula.ExpressionString()) + formulaSubQuery
+
+	// this cannot be moved to postprocess right now.
 	if len(qp.CompositeQuery.BuilderQueries[queryName].Having) > 0 {
 		conditions := []string{}
 		for _, having := range qp.CompositeQuery.BuilderQueries[queryName].Having {
@@ -368,12 +370,6 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 				}
 			}
 
-			if len(query.Having) > 0 {
-				for idx, having := range query.Having {
-					parts = append(parts, fmt.Sprintf("having-%d=%s", idx, having.CacheKey()))
-				}
-			}
-
 			key := strings.Join(parts, "&")
 			keys[queryName] = key
 		} else if query.Expression == queryName && query.DataSource == v3.DataSourceMetrics {
@@ -400,12 +396,6 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 			if len(query.GroupBy) > 0 {
 				for idx, groupBy := range query.GroupBy {
 					parts = append(parts, fmt.Sprintf("groupBy-%d=%s", idx, groupBy.CacheKey()))
-				}
-			}
-
-			if len(query.Having) > 0 {
-				for idx, having := range query.Having {
-					parts = append(parts, fmt.Sprintf("having-%d=%s", idx, having.CacheKey()))
 				}
 			}
 

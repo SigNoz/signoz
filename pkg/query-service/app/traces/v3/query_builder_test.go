@@ -936,7 +936,7 @@ var testBuildTracesQueryData = []struct {
 		TableName: "signoz_traces.distributed_signoz_index_v2",
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(stringTagMap['name']))) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
-			" group by ts having value > 10 order by value DESC",
+			" group by ts order by value DESC",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -964,7 +964,7 @@ var testBuildTracesQueryData = []struct {
 		TableName: "signoz_traces.distributed_signoz_index_v2",
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value from " +
 			"signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"AND stringTagMap['method'] = 'GET' AND has(stringTagMap, 'name') group by ts having value > 10 order by value DESC",
+			"AND stringTagMap['method'] = 'GET' AND has(stringTagMap, 'name') group by ts order by value DESC",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -992,7 +992,7 @@ var testBuildTracesQueryData = []struct {
 		TableName: "signoz_traces.distributed_signoz_index_v2",
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(stringTagMap['name']))) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"AND stringTagMap['method'] = 'GET' group by ts having value > 10 order by value DESC",
+			"AND stringTagMap['method'] = 'GET' group by ts order by value DESC",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -1020,7 +1020,7 @@ var testBuildTracesQueryData = []struct {
 		TableName: "signoz_traces.distributed_signoz_index_v2",
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"AND stringTagMap['method'] = 'GET' AND has(stringTagMap, 'name') group by ts having value > 10",
+			"AND stringTagMap['method'] = 'GET' AND has(stringTagMap, 'name') group by ts",
 		PanelType: v3.PanelTypeValue,
 	},
 	{

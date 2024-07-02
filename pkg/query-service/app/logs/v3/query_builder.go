@@ -242,11 +242,6 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 
 	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
 
-	having := having(mq.Having)
-	if having != "" {
-		having = " having " + having
-	}
-
 	var queryTmpl string
 	if graphLimitQtype == constants.FirstQueryGraphLimit {
 		queryTmpl = "SELECT"
@@ -266,7 +261,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 			" %s as value " +
 			"from signoz_logs.distributed_logs " +
 			"where " + timeFilter + "%s" +
-			"%s%s" +
+			"%s" +
 			"%s"
 
 	// we dont need value for first query
@@ -301,7 +296,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		}
 
 		op := fmt.Sprintf("count(%s)/%f", aggregationKey, rate)
-		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
@@ -314,7 +309,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		}
 
 		op := fmt.Sprintf("%s(%s)/%f", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)
-		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorP05,
@@ -327,19 +322,19 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		v3.AggregateOperatorP95,
 		v3.AggregateOperatorP99:
 		op := fmt.Sprintf("quantile(%v)(%s)", aggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
 		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
 		op := "toFloat64(count(*))"
-		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
 		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
-		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s%s order by %s"
@@ -428,15 +423,6 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 
 	str := strings.Join(orderByArray, ",")
 	return str
-}
-
-func having(items []v3.Having) string {
-	// aggregate something and filter on that aggregate
-	var having []string
-	for _, item := range items {
-		having = append(having, fmt.Sprintf("value %s %s", item.Operator, utils.ClickHouseFormattedValue(item.Value)))
-	}
-	return strings.Join(having, " AND ")
 }
 
 func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v3.AggregateOperator) (string, error) {
