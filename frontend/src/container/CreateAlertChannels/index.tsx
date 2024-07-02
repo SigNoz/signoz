@@ -4,12 +4,14 @@ import createMsTeamsApi from 'api/channels/createMsTeams';
 import createOpsgenie from 'api/channels/createOpsgenie';
 import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
+import createTelegram from 'api/channels/createTelegram';
 import createWebhookApi from 'api/channels/createWebhook';
 import testEmail from 'api/channels/testEmail';
 import testMsTeamsApi from 'api/channels/testMsTeams';
 import testOpsGenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
+import testTelegram from 'api/channels/testTelegram';
 import testWebhookApi from 'api/channels/testWebhook';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -26,6 +28,7 @@ import {
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
+	TelegramChannel,
 	ValidatePagerChannel,
 	WebhookChannel,
 } from './config';
@@ -33,6 +36,7 @@ import {
 	EmailInitialConfig,
 	OpsgenieInitialConfig,
 	PagerInitialConfig,
+	TelegramInitialConfig,
 } from './defaults';
 import { isChannelType } from './utils';
 
@@ -55,6 +59,7 @@ function CreateAlertChannels({
 				PagerChannel &
 				MsTeamsChannel &
 				OpsgenieChannel &
+				TelegramChannel &
 				EmailChannel
 		>
 	>({
@@ -106,6 +111,13 @@ function CreateAlertChannels({
 				setSelectedConfig((selectedConfig) => ({
 					...selectedConfig,
 					...OpsgenieInitialConfig,
+				}));
+			}
+
+			if (value === ChannelType.Telegram && currentType !== value) {
+				setSelectedConfig((selectedConfig) => ({
+					...selectedConfig,
+					...TelegramInitialConfig,
 				}));
 			}
 
@@ -344,6 +356,43 @@ function CreateAlertChannels({
 		}
 	}, [prepareOpsgenieRequest, t, notifications]);
 
+	const prepareTelegramRequest = useCallback(
+		() => ({
+			name: selectedConfig?.name || '',
+			api_key: selectedConfig?.api_key || '',
+			chat_id: selectedConfig?.chat_id || '',
+			message: selectedConfig?.message || '',
+		}),
+		[selectedConfig],
+	);
+
+	const onTelegramHandler = useCallback(async () => {
+		setSavingState(true);
+
+		try {
+			const response = await createTelegram(prepareTelegramRequest());
+
+			if (response.statusCode === 200) {
+				notifications.success({
+					message: 'Success',
+					description: t('channel_creation_done'),
+				});
+				history.replace(ROUTES.ALL_CHANNELS);
+			} else {
+				notifications.error({
+					message: 'Error',
+					description: response.error || t('channel_creation_failed'),
+				});
+			}
+		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description: t('channel_creation_failed'),
+			});
+		}
+		setSavingState(false);
+	}, [prepareTelegramRequest, t, notifications]);
+
 	const prepareEmailRequest = useCallback(
 		() => ({
 			name: selectedConfig?.name || '',
@@ -438,6 +487,7 @@ function CreateAlertChannels({
 				[ChannelType.Webhook]: onWebhookHandler,
 				[ChannelType.Pagerduty]: onPagerHandler,
 				[ChannelType.Opsgenie]: onOpsgenieHandler,
+				[ChannelType.Telegram]: onTelegramHandler,
 				[ChannelType.MsTeams]: onMsTeamsHandler,
 				[ChannelType.Email]: onEmailHandler,
 			};
@@ -469,6 +519,7 @@ function CreateAlertChannels({
 			onWebhookHandler,
 			onPagerHandler,
 			onOpsgenieHandler,
+			onTelegramHandler,
 			onMsTeamsHandler,
 			onEmailHandler,
 			notifications,
@@ -502,6 +553,10 @@ function CreateAlertChannels({
 					case ChannelType.Opsgenie:
 						request = prepareOpsgenieRequest();
 						response = await testOpsGenie(request);
+						break;
+					case ChannelType.Telegram:
+						request = prepareTelegramRequest();
+						response = await testTelegram(request);
 						break;
 					case ChannelType.Email:
 						request = prepareEmailRequest();
@@ -551,6 +606,7 @@ function CreateAlertChannels({
 			t,
 			preparePagerRequest,
 			prepareOpsgenieRequest,
+			prepareTelegramRequest,
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
 			prepareEmailRequest,
@@ -582,6 +638,7 @@ function CreateAlertChannels({
 					...selectedConfig,
 					...PagerInitialConfig,
 					...OpsgenieInitialConfig,
+					...TelegramInitialConfig,
 					...EmailInitialConfig,
 				},
 			}}

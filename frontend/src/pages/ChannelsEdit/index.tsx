@@ -81,6 +81,15 @@ function ChannelsEdit(): JSX.Element {
 			};
 		}
 
+		if (value && 'telegram_configs' in value) {
+			const telegramConfig = value.telegram_configs[0];
+			channel = telegramConfig;
+			return {
+				type: ChannelType.Telegram,
+				channel,
+			};
+		}
+
 		if (value && 'email_configs' in value) {
 			const emailConfig = value.email_configs[0];
 			channel = emailConfig;

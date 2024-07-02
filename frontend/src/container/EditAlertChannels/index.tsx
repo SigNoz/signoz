@@ -1,15 +1,18 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { Form } from 'antd';
 import editEmail from 'api/channels/editEmail';
 import editMsTeamsApi from 'api/channels/editMsTeams';
 import editOpsgenie from 'api/channels/editOpsgenie';
 import editPagerApi from 'api/channels/editPager';
 import editSlackApi from 'api/channels/editSlack';
+import editTelegram from 'api/channels/editTelegram';
 import editWebhookApi from 'api/channels/editWebhook';
 import testEmail from 'api/channels/testEmail';
 import testMsTeamsApi from 'api/channels/testMsTeams';
 import testOpsgenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
+import testTelegram from 'api/channels/testTelegram';
 import testWebhookApi from 'api/channels/testWebhook';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -20,6 +23,7 @@ import {
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
+	TelegramChannel,
 	ValidatePagerChannel,
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
@@ -44,6 +48,7 @@ function EditAlertChannels({
 				PagerChannel &
 				MsTeamsChannel &
 				OpsgenieChannel &
+				TelegramChannel &
 				EmailChannel
 		>
 	>({
@@ -305,6 +310,47 @@ function EditAlertChannels({
 		};
 	}, [prepareOpsgenieRequest, t, notifications, selectedConfig]);
 
+	const prepareTelegramRequest = useCallback(
+		() => ({
+			name: selectedConfig.name || '',
+			api_key: selectedConfig.api_key || '',
+			chat_id: selectedConfig.chat_id || '',
+			message: selectedConfig.message || '',
+			id,
+		}),
+		[id, selectedConfig],
+	);
+
+	const onTelegramEditHandler = useCallback(async () => {
+		setSavingState(true);
+
+		if (selectedConfig?.api_key === '') {
+			notifications.error({
+				message: 'Error',
+				description: t('api_key_required'),
+			});
+			setSavingState(false);
+			return;
+		}
+
+		const response = await editTelegram(prepareTelegramRequest());
+
+		if (response.statusCode === 200) {
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+
+			history.replace(ROUTES.ALL_CHANNELS);
+		} else {
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_edit_failed'),
+			});
+		}
+		setSavingState(false);
+	}, [prepareTelegramRequest, t, notifications, selectedConfig]);
+
 	const prepareMsTeamsRequest = useCallback(
 		() => ({
 			webhook_url: selectedConfig?.webhook_url || '',
@@ -365,6 +411,8 @@ function EditAlertChannels({
 				result = await onMsTeamsEditHandler();
 			} else if (value === ChannelType.Opsgenie) {
 				result = await onOpsgenieEditHandler();
+			} else if (value === ChannelType.Telegram) {
+				result = await onTelegramEditHandler();
 			} else if (value === ChannelType.Email) {
 				result = await onEmailEditHandler();
 			}
@@ -384,6 +432,7 @@ function EditAlertChannels({
 			onPagerEditHandler,
 			onMsTeamsEditHandler,
 			onOpsgenieEditHandler,
+			onTelegramEditHandler,
 			onEmailEditHandler,
 		],
 	);
@@ -414,6 +463,10 @@ function EditAlertChannels({
 					case ChannelType.Opsgenie:
 						request = prepareOpsgenieRequest();
 						if (request) response = await testOpsgenie(request);
+						break;
+					case ChannelType.Telegram:
+						request = prepareTelegramRequest();
+						if (request) response = await testTelegram(request);
 						break;
 					case ChannelType.Email:
 						request = prepareEmailRequest();
@@ -463,6 +516,7 @@ function EditAlertChannels({
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
 			prepareOpsgenieRequest,
+			prepareTelegramRequest,
 			prepareEmailRequest,
 			notifications,
 		],
