@@ -3,10 +3,7 @@ import { Space, Tooltip } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
-import {
-	createTableColumnsFromQuery,
-	RowData,
-} from 'lib/query/createTableColumnsFromQuery';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep, get, isEmpty, set } from 'lodash-es';
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +11,11 @@ import { eventEmitter } from 'utils/getEventEmitter';
 
 import { WrapperStyled } from './styles';
 import { GridTableComponentProps } from './types';
-import { findMatchingThreshold } from './utils';
+import {
+	createColumnsAndDataSource,
+	findMatchingThreshold,
+	TableData,
+} from './utils';
 
 function GridTableComponent({
 	data,
@@ -25,28 +26,26 @@ function GridTableComponent({
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
+
+	// create columns and dataSource in the ui friendly structure
+	// use the query from the widget here to extract the legend information
 	const { columns, dataSource: originalDataSource } = useMemo(
-		() =>
-			createTableColumnsFromQuery({
-				query,
-				queryTableData: data,
-			}),
-		[data, query],
+		() => createColumnsAndDataSource((data as unknown) as TableData, query),
+		[query, data],
 	);
+
 	const createDataInCorrectFormat = useCallback(
 		(dataSource: RowData[]): RowData[] =>
 			dataSource.map((d) => {
 				const finalObject = {};
-				const keys = Object.keys(d);
-				keys.forEach((k) => {
-					const label = get(
-						columns.find((c) => get(c, 'dataIndex', '') === k) || {},
-						'title',
-						'',
+
+				// we use the order of the columns here to have similar download as the user view
+				columns.forEach((k) => {
+					set(
+						finalObject,
+						get(k, 'title', '') as string,
+						get(d, get(k, 'dataIndex', ''), 'n/a'),
 					);
-					if (label) {
-						set(finalObject, label as string, d[k]);
-					}
 				});
 				return finalObject as RowData;
 			}),
@@ -65,7 +64,11 @@ function GridTableComponent({
 					const newValue = { ...val };
 					Object.keys(val).forEach((k) => {
 						if (columnUnits[k]) {
-							newValue[k] = getYAxisFormattedValue(String(val[k]), columnUnits[k]);
+							// the check below takes care of not adding units for rows that have n/a values
+							newValue[k] =
+								val[k] !== 'n/a'
+									? getYAxisFormattedValue(String(val[k]), columnUnits[k])
+									: val[k];
 							newValue[`${k}_without_unit`] = val[k];
 						}
 					});

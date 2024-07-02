@@ -43,6 +43,7 @@ func TestFillGaps(t *testing.T) {
 				Start: 1000,
 				End:   5000,
 				CompositeQuery: &v3.CompositeQuery{
+					PanelType: v3.PanelTypeGraph,
 					BuilderQueries: map[string]*v3.BuilderQuery{
 						"query1": {
 							QueryName:    "query1",
@@ -82,6 +83,7 @@ func TestFillGaps(t *testing.T) {
 				Start: 1000,
 				End:   5000,
 				CompositeQuery: &v3.CompositeQuery{
+					PanelType: v3.PanelTypeGraph,
 					BuilderQueries: map[string]*v3.BuilderQuery{
 						"query1": {
 							QueryName:    "query1",
@@ -121,6 +123,7 @@ func TestFillGaps(t *testing.T) {
 				Start: 1000,
 				End:   5000,
 				CompositeQuery: &v3.CompositeQuery{
+					PanelType: v3.PanelTypeGraph,
 					BuilderQueries: map[string]*v3.BuilderQuery{
 						"query1": {
 							QueryName:    "query1",
@@ -138,6 +141,39 @@ func TestFillGaps(t *testing.T) {
 						{Timestamp: 3000, Value: 0.0},
 						{Timestamp: 4000, Value: 0.0},
 						{Timestamp: 5000, Value: 0.0},
+					}),
+				}),
+			},
+		},
+		{
+			name: "Single series with gaps and panel type is not graph",
+			results: []*v3.Result{
+				createResult("query1", []*v3.Series{
+					createSeries([]v3.Point{
+						{Timestamp: 1000, Value: 1.0},
+						{Timestamp: 3000, Value: 3.0},
+					}),
+				}),
+			},
+			params: &v3.QueryRangeParamsV3{
+				Start: 1000,
+				End:   5000,
+				CompositeQuery: &v3.CompositeQuery{
+					PanelType: v3.PanelTypeList,
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"query1": {
+							QueryName:    "query1",
+							Expression:   "query1",
+							StepInterval: 1,
+						},
+					},
+				},
+			},
+			expected: []*v3.Result{
+				createResult("query1", []*v3.Series{
+					createSeries([]v3.Point{
+						{Timestamp: 1000, Value: 1.0},
+						{Timestamp: 3000, Value: 3.0},
 					}),
 				}),
 			},
