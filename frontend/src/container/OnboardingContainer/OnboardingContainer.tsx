@@ -15,6 +15,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { UserPlus } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
 
@@ -106,6 +107,7 @@ export default function Onboarding(): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { trackEvent } = useAnalytics();
 	const { location } = history;
+	const { t } = useTranslation(['onboarding']);
 
 	const {
 		selectedDataSource,
@@ -360,16 +362,16 @@ export default function Onboarding(): JSX.Element {
 					</div>
 					<div className="invite-member-wrapper">
 						<Typography.Text className="helper-text">
-							Not the right person to get started? No worries! Invite someone who can.
+							{t('invite_user_helper_text')}
 						</Typography.Text>
 						<div className="invite-member">
-							<Typography.Text>Invite your teammates</Typography.Text>
+							<Typography.Text>{t('invite_user')}</Typography.Text>
 							<Button
 								onClick={(): void => setIsInviteTeamMemberModalOpen(true)}
 								icon={<UserPlus size={16} />}
 								type="primary"
 							>
-								Invite
+								{t('invite')}
 							</Button>
 						</div>
 					</div>

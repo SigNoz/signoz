@@ -189,84 +189,8 @@ function PendingInvitesContainer(): JSX.Element {
 		},
 	];
 
-	// const onInviteClickHandler = useCallback(
-	// 	async (values: InviteMemberFormValues): Promise<void> => {
-	// 		try {
-	// 			setIsInvitingMembers(true);
-	// 			values.members.forEach(
-	// 				async (member): Promise<void> => {
-	// 					const { error, statusCode } = await sendInvite({
-	// 						email: member.email,
-	// 						name: member.name,
-	// 						role: member.role,
-	// 						frontendBaseUrl: window.location.origin,
-	// 					});
-
-	// 					if (statusCode !== 200) {
-	// 						notifications.error({
-	// 							message:
-	// 								error ||
-	// 								t('something_went_wrong', {
-	// 									ns: 'common',
-	// 								}),
-	// 						});
-	// 					}
-	// 				},
-	// 			);
-
-	// 			setTimeout(async () => {
-	// 				const { data, status } = await getPendingInvitesResponse.refetch();
-	// 				if (status === 'success' && data.payload) {
-	// 					setDataSource(getParsedInviteData(data?.payload || []));
-	// 				}
-	// 				setIsInvitingMembers(false);
-	// 				toggleModal(false);
-	// 			}, 2000);
-	// 		} catch (error) {
-	// 			notifications.error({
-	// 				message: t('something_went_wrong', {
-	// 					ns: 'common',
-	// 				}),
-	// 			});
-	// 		}
-	// 	},
-	// 	[
-	// 		getParsedInviteData,
-	// 		getPendingInvitesResponse,
-	// 		notifications,
-	// 		t,
-	// 		toggleModal,
-	// 	],
-	// );
-
 	return (
 		<div>
-			{/* <Modal
-				title={t('invite_team_members')}
-				open={isInviteTeamMemberModalOpen}
-				onCancel={(): void => toggleModal(false)}
-				centered
-				destroyOnClose
-				footer={[
-					<Button key="back" onClick={(): void => toggleModal(false)} type="default">
-						{t('cancel', {
-							ns: 'common',
-						})}
-					</Button>,
-					<Button
-						key={t('invite_team_members').toString()}
-						onClick={form.submit}
-						type="primary"
-						disabled={isInvitingMembers}
-						loading={isInvitingMembers}
-					>
-						{t('invite_team_members')}
-					</Button>,
-				]}
-			>
-				<InviteTeamMembers form={form} onFinish={onInviteClickHandler} />
-			</Modal> */}
-
 			<InviteUserModal
 				form={form}
 				isInviteTeamMemberModalOpen={isInviteTeamMemberModalOpen}
