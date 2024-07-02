@@ -53,7 +53,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
@@ -3418,36 +3417,6 @@ func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
 		TracesBasedPanels: tracesPanelCount,
 		MetricBasedPanels: metricsPanelCount,
 	}
-}
-
-func (r *ClickHouseReader) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
-	alertsInfo := model.AlertsInfo{}
-	// fetch alerts from rules db
-	query := "SELECT data FROM rules"
-	var alertsData []string
-	err := r.localDB.Select(&alertsData, query)
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return &alertsInfo, err
-	}
-	for _, alert := range alertsData {
-		var rule rules.GettableRule
-		err = json.Unmarshal([]byte(alert), &rule)
-		if err != nil {
-			zap.L().Error("invalid rule data", zap.Error(err))
-			continue
-		}
-		if rule.AlertType == "LOGS_BASED_ALERT" {
-			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
-		} else if rule.AlertType == "METRIC_BASED_ALERT" {
-			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
-		} else if rule.AlertType == "TRACES_BASED_ALERT" {
-			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
-		}
-		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1
-	}
-
-	return &alertsInfo, nil
 }
 
 func (r *ClickHouseReader) GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error) {
