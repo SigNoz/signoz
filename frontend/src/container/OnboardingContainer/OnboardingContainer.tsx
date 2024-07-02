@@ -306,11 +306,11 @@ export default function Onboarding(): JSX.Element {
 				<div className="onboarding-page">
 					<div>
 						<div onClick={(): void => history.push('/')} className="skip-to-console">
-							Skip
+							{t('skip')}
 						</div>
 						<FullScreenHeader />
 						<div className="onboardingHeader">
-							<h1> Select a use-case to get started</h1>
+							<h1>{t('select_use_case')}</h1>
 						</div>
 						<div className="modulesContainer">
 							<div className="moduleContainerRowStyles">
@@ -356,7 +356,7 @@ export default function Onboarding(): JSX.Element {
 								icon={<ArrowRightOutlined />}
 								onClick={handleNext}
 							>
-								Get Started
+								{t('get_started')}
 							</Button>
 						</div>
 					</div>
