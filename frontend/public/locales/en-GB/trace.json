@@ -7,5 +7,6 @@
 		"column": "Column",
 		"maxLines": "Max lines per Row",
 		"addColumn": "Add a column"
-	}
+	},
+	"trace_loading_placeholder": "Just a bit of patience, just a little bit’s enough ⎯ we’re getting your traces!"
 }

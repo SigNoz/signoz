@@ -14,6 +14,7 @@ import { convertDataValueToMs } from './utils';
 
 function TimeSeriesViewContainer({
 	dataSource = DataSource.TRACES,
+	isFilterApplied,
 }: TimeSeriesViewProps): JSX.Element {
 	const { stagedQuery, currentQuery, panelType } = useQueryBuilder();
 
@@ -70,8 +71,7 @@ function TimeSeriesViewContainer({
 
 	return (
 		<TimeSeriesView
-			// TODO handle this when revamping trace explorer
-			isFilterApplied={false}
+			isFilterApplied={isFilterApplied}
 			isError={isError}
 			isLoading={isLoading}
 			data={responseData}
@@ -83,6 +83,7 @@ function TimeSeriesViewContainer({
 
 interface TimeSeriesViewProps {
 	dataSource?: DataSource;
+	isFilterApplied: boolean;
 }
 
 TimeSeriesViewContainer.defaultProps = {
