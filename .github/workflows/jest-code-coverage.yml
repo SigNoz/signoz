@@ -1,0 +1,32 @@
+name: Code Coverage
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - release/v*
+  pull_request:
+    branches:
+      - develop
+      - main
+      - release/v*
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - uses: jwalton/gh-find-current-pr@v1
+        id: findPr
+      - uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          package-manager: yarn
+          working-directory: frontend
+          test-script: yarn jest:coverage
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          output: comment
+          prnumber: ${{ steps.findPr.outputs.number }}
