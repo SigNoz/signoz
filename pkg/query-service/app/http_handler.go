@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"regexp"
 	"slices"
@@ -1325,14 +1326,44 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
 
 	var start, end time.Time
+	var services []string
 
-	result, _, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end)
+	// get from the request query
+	if len(r.URL.Query()["services"]) > 0 {
+		services = strings.Split(r.URL.Query()["services"][0], ",")
+	}
+	startEpoch := r.URL.Query()["start"]
+	if len(startEpoch) > 0 {
+		startEpochInt, err := strconv.ParseInt(startEpoch[0], 10, 64)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading start time")
+			return
+		}
+		start = time.Unix(0, startEpochInt*int64(time.Millisecond))
+	}
+	endEpoch := r.URL.Query()["end"]
+	if len(endEpoch) > 0 {
+		endEpochInt, err := strconv.ParseInt(endEpoch[0], 10, 64)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading end time")
+			return
+		}
+		end = time.Unix(0, endEpochInt*int64(time.Millisecond))
+	}
+
+	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end, services)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	aH.WriteJSON(w, r, result)
+	cappedResult := map[string][]string{}
+	for svc, ops := range *result {
+		ops = ops[:int(math.Min(5000, float64(len(ops))))]
+		cappedResult[svc] = ops
+	}
+
+	aH.WriteJSON(w, r, cappedResult)
 }
 
 func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {

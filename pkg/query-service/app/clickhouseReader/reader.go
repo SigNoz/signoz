@@ -707,29 +707,33 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 	return &services, nil
 }
 
-func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig, start, end time.Time) (*map[string][]string, *map[string][]string, *model.ApiError) {
+func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig, start, end time.Time, services []string) (*map[string][]string, *model.ApiError) {
 
 	start = start.In(time.UTC)
 
 	// The `top_level_operations` that have `time` >= start
 	operations := map[string][]string{}
 	// All top level operations for a service
+	// We can't use the `end` because the `top_level_operations` table has the most recent instances of the operations
+	// We can only use the `start` time to filter the operations
 	allOperations := map[string][]string{}
-	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName, time FROM %s.%s`, r.TraceDB, r.topLevelOperationsTable)
+	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName FROM %s.%s WHERE time >= @start`, r.TraceDB, r.topLevelOperationsTable)
+	if len(services) > 0 {
+		query += ` AND serviceName IN @services`
+	}
 
-	rows, err := r.db.Query(ctx, query)
+	rows, err := r.db.Query(ctx, query, clickhouse.Named("start", start), clickhouse.Named("services", services))
 
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
 	defer rows.Close()
 	for rows.Next() {
 		var name, serviceName string
-		var t time.Time
-		if err := rows.Scan(&name, &serviceName, &t); err != nil {
-			return nil, nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error in reading data")}
+		if err := rows.Scan(&name, &serviceName); err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error in reading data")}
 		}
 		if _, ok := operations[serviceName]; !ok {
 			operations[serviceName] = []string{}
@@ -741,13 +745,9 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 			continue
 		}
 		allOperations[serviceName] = append(allOperations[serviceName], name)
-		// We can't use the `end` because the `top_level_operations` table has the most recent instances of the operations
-		// We can only use the `start` time to filter the operations
-		if t.After(start) {
-			operations[serviceName] = append(operations[serviceName], name)
-		}
+		operations[serviceName] = append(operations[serviceName], name)
 	}
-	return &operations, &allOperations, nil
+	return &operations, nil
 }
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
@@ -756,7 +756,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
 	}
 
-	topLevelOps, allTopLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig, *queryParams.Start, *queryParams.End)
+	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig, *queryParams.Start, *queryParams.End, nil)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -780,7 +780,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 			// the top level operations are high, we want to warn to let user know the issue
 			// with the instrumentation
 			serviceItem.DataWarning = model.DataWarning{
-				TopLevelOps: (*allTopLevelOps)[svc],
+				TopLevelOps: (*topLevelOps)[svc],
 			}
 
 			// default max_query_size = 262144
@@ -869,7 +869,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams, skipConfig *model.SkipConfig) (*[]model.ServiceOverviewItem, *model.ApiError) {
 
-	topLevelOps, _, apiErr := r.GetTopLevelOperations(ctx, skipConfig, *queryParams.Start, *queryParams.End)
+	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig, *queryParams.Start, *queryParams.End, nil)
 	if apiErr != nil {
 		return nil, apiErr
 	}
