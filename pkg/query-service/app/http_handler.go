@@ -2210,7 +2210,14 @@ func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddl
 
 func (aH *APIHandler) getAllUserPreference(w http.ResponseWriter, r *http.Request) {
 
-	preference, err := preferences.GetAllUserPreferences(r.Context())
+	orgId := r.URL.Query().Get("orgId")
+
+	if orgId == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org id found in the request")}, nil)
+		return
+	}
+
+	preference, err := preferences.GetAllUserPreferences(r.Context(), orgId)
 
 	if err != nil {
 		RespondError(w, err, nil)

@@ -86,6 +86,18 @@ type AllPreferenceJoins struct {
 	ParentGroup  string      `json:"parent_group" db:"parent_group"`
 }
 
+type AllPreferenceUserJoins struct {
+	Id           string      `json:"id" db:"id"`
+	Name         string      `json:"name" db:"name"`
+	UserValue    interface{} `json:"user_value" db:"user_value"`
+	OrgValue     interface{} `json:"org_value" db:"org_value"`
+	OrgScope     int         `json:"org" db:"org"`
+	DefaultValue string      `json:"default_value" db:"default_value"`
+	GroupId      string      `json:"group_id" db:"group_id"`
+	GroupName    string      `json:"group_name" db:"group_name"`
+	ParentGroup  string      `json:"parent_group" db:"parent_group"`
+}
+
 func InitDB(datasourceName string) error {
 	var err error
 
@@ -550,10 +562,81 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferenceRe
 	return &allOrgPreferenceTree, nil
 }
 
-func GetAllUserPreferences(ctx context.Context) (*[]AllPreferenceResponse, *model.ApiError) {
-	return nil, nil
+func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferenceResponse, *model.ApiError) {
+
+	user := common.GetUserFromContext(ctx)
+
+	allUserPreferences := []AllPreferenceUserJoins{}
+	query := `
+	SELECT 
+		preference.id AS id,
+		preference.name AS name,
+		preference.default_value AS default_value,
+		preference_group.id AS group_id,
+		preference_group.name AS group_name,
+		preference_group.parent_group AS parent_group,
+		user_preference.preference_value AS user_value,
+		org_preference.preference_value AS org_value,
+		preference.org
+	FROM 
+		preference
+		INNER JOIN preference_to_group ON preference.id = preference_to_group.preference_id
+		INNER JOIN preference_group ON preference_to_group.preference_group_id = preference_group.id
+		LEFT JOIN user_preference ON user_preference.preference_key = preference.id AND user_preference.user_id=$1
+		LEFT JOIN org_preference ON org_preference.preference_key = preference.id AND org_preference.org_id=$2
+	WHERE preference.user = 1;`
+
+	err := db.Select(&allUserPreferences, query, user.Id, orgId)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all user preferences: %s", err)}
+	}
+
+	if len(allUserPreferences) == 0 {
+		return nil, nil
+	}
+
+	groupPreferenceMap := map[string][]AllPreferenceJoins{}
+
+	for _, preference := range allUserPreferences {
+		userPreference := AllPreferenceJoins{}
+		userPreference.Id = preference.Id
+		userPreference.Name = preference.Name
+		if preference.UserValue != nil {
+			userPreference.Value = preference.UserValue
+		} else if preference.OrgScope == 1 {
+			userPreference.Value = preference.OrgValue
+		} else {
+			userPreference.Value = nil
+		}
+		userPreference.GroupName = preference.GroupName
+		userPreference.GroupId = preference.GroupId
+		userPreference.ParentGroup = preference.ParentGroup
+		value, seen := groupPreferenceMap[preference.GroupId]
+		if !seen {
+			groupPreferenceMap[preference.GroupId] = append([]AllPreferenceJoins{}, userPreference)
+		} else {
+			groupPreferenceMap[preference.GroupId] = append(value, userPreference)
+		}
+	}
+
+	preferenceGroups := []PreferenceGroup{}
+
+	query = `SELECT * FROM preference_group;`
+
+	err = db.Select(&preferenceGroups, query)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all preference groups: %s", err)}
+	}
+
+	allOrgPreferenceTree := buildGroupTree(preferenceGroups, "", groupPreferenceMap)
+	fmt.Println(allOrgPreferenceTree)
+
+	return &allOrgPreferenceTree, nil
 }
 
+// recursively create the preference group tree
 func buildGroupTree(groups []PreferenceGroup, parentID string, groupPreferenceMap map[string][]AllPreferenceJoins) []AllPreferenceResponse {
 	tree := []AllPreferenceResponse{}
 
