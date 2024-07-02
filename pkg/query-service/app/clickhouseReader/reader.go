@@ -507,6 +507,9 @@ func getChannelType(receiver *am.Receiver) string {
 	if receiver.OpsGenieConfigs != nil {
 		return "opsgenie"
 	}
+    if receiver.TelegramConfigs != nil {
+        return "telegram"
+    }
 	if receiver.PagerdutyConfigs != nil {
 		return "pagerduty"
 	}
