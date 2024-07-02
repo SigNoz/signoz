@@ -1,10 +1,15 @@
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
-import { Tag } from 'antd';
 import { useState } from 'react';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import ExapandableRow from './ExapandableRow';
-import { IconContainer, StatusContainer, TableCell, TableRow } from './styles';
+import {
+	EllipsisTag,
+	IconContainer,
+	StatusContainer,
+	TableCell,
+	TableRow,
+} from './styles';
 
 function TableRowComponent({
 	tags,
@@ -26,9 +31,9 @@ function TableRowComponent({
 						</IconContainer>
 						<>
 							{tags.map((tag) => (
-								<Tag color="magenta" key={tag}>
+								<EllipsisTag color="magenta" key={tag} title={tag}>
 									{tag}
-								</Tag>
+								</EllipsisTag>
 							))}
 						</>
 					</StatusContainer>
