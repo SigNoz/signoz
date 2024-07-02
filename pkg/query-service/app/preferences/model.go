@@ -69,6 +69,23 @@ type UpdateOrgPreferenceResponse struct {
 	PreferenceValue string `json:"preference_value"`
 }
 
+type AllPreferenceResponse struct {
+	GroupId     string                  `json:"group_id"`
+	GroupName   string                  `json:"group_name"`
+	Preferences []AllPreferenceJoins    `json:"preferences"`
+	ChildGroup  []AllPreferenceResponse `json:"child_groups"`
+}
+
+type AllPreferenceJoins struct {
+	Id           string      `json:"id" db:"id"`
+	Name         string      `json:"name" db:"name"`
+	Value        interface{} `json:"value" db:"value"`
+	DefaultValue string      `json:"default_value" db:"default_value"`
+	GroupId      string      `json:"group_id" db:"group_id"`
+	GroupName    string      `json:"group_name" db:"group_name"`
+	ParentGroup  string      `json:"parent_group" db:"parent_group"`
+}
+
 func InitDB(datasourceName string) error {
 	var err error
 
@@ -215,7 +232,7 @@ func InitDB(datasourceName string) error {
 	for _, preferenceToGroup := range preferenceToGroups {
 
 		var preferenceToGroupFromDB []PreferenceToGroup
-		query := `SELECT id FROM preference_to_group WHERE preference_id=$1 AND preference_group_id=$2;`
+		query := `SELECT preference_id FROM preference_to_group WHERE preference_id=$1 AND preference_group_id=$2;`
 		err = db.Select(&preferenceToGroupFromDB, query, preferenceToGroup.PreferenceId, preferenceToGroup.PreferenceGroupId)
 
 		if err != nil {
@@ -361,6 +378,7 @@ func UpdateUserPreference(ctx context.Context, req *UpdateUserPreferenceRequest)
 
 		// TODO [vikrantgupta25]: on the basis of preference value enable / disable the fields dependent on them and then recursively based on their
 		// already set values in user_preference or default values set deeper nestings. similar logic for else if as well
+		// updateDependentUserPreferences(preferenceKey, preferenceValue)
 
 	} else if len(userPreference) == 1 {
 		query = `UPDATE user_preference SET preference_value= $1 WHERE preference_key=$2 AND user_id=$3;`
@@ -369,6 +387,7 @@ func UpdateUserPreference(ctx context.Context, req *UpdateUserPreferenceRequest)
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
 		}
+		// updateDependentUserPreferences(preferenceKey, preferenceValue)
 	} else {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference: %s", err)}
 	}
@@ -473,4 +492,84 @@ func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (
 		PreferenceKey:   preferenceKey,
 		PreferenceValue: preferenceValue,
 	}, nil
+}
+
+func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferenceResponse, *model.ApiError) {
+
+	allOrgPreferences := []AllPreferenceJoins{}
+	query := `
+	SELECT 
+    	preference.id AS id,
+    	preference.name AS name,
+    	preference.default_value AS default_value,
+    	preference_group.id AS group_id,
+    	preference_group.name AS group_name,
+    	preference_group.parent_group AS parent_group,
+    	org_preference.preference_value AS value
+  	FROM 
+    	preference
+    	INNER JOIN preference_to_group ON preference.id = preference_to_group.preference_id
+    	INNER JOIN preference_group ON preference_to_group.preference_group_id = preference_group.id
+    	LEFT JOIN org_preference ON org_preference.preference_key = preference.id AND org_preference.org_id=$1
+  	WHERE preference.org = 1;`
+
+	err := db.Select(&allOrgPreferences, query, orgId)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all org preferences: %s", err)}
+	}
+
+	if len(allOrgPreferences) == 0 {
+		return nil, nil
+	}
+
+	groupPreferenceMap := map[string][]AllPreferenceJoins{}
+
+	for _, preference := range allOrgPreferences {
+		value, seen := groupPreferenceMap[preference.GroupId]
+		if !seen {
+			groupPreferenceMap[preference.GroupId] = append([]AllPreferenceJoins{}, preference)
+		} else {
+			groupPreferenceMap[preference.GroupId] = append(value, preference)
+		}
+	}
+
+	preferenceGroups := []PreferenceGroup{}
+
+	query = `SELECT * FROM preference_group;`
+
+	err = db.Select(&preferenceGroups, query)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all preference groups: %s", err)}
+	}
+
+	allOrgPreferenceTree := buildGroupTree(preferenceGroups, "", groupPreferenceMap)
+	fmt.Println(allOrgPreferenceTree)
+
+	return &allOrgPreferenceTree, nil
+}
+
+func GetAllUserPreferences(ctx context.Context) (*[]AllPreferenceResponse, *model.ApiError) {
+	return nil, nil
+}
+
+func buildGroupTree(groups []PreferenceGroup, parentID string, groupPreferenceMap map[string][]AllPreferenceJoins) []AllPreferenceResponse {
+	tree := []AllPreferenceResponse{}
+
+	for _, group := range groups {
+		treeNode := AllPreferenceResponse{}
+		if group.ParentGroup == parentID {
+			children := buildGroupTree(groups, group.Id, groupPreferenceMap)
+			treeNode.GroupId = group.Id
+			treeNode.GroupName = group.Name
+			treeNode.ChildGroup = children
+			if val, seen := groupPreferenceMap[group.Id]; seen {
+				treeNode.Preferences = val
+			}
+			tree = append(tree, treeNode)
+		}
+	}
+
+	return tree
 }

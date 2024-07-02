@@ -2198,10 +2198,26 @@ func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddl
 
 	subRouter.HandleFunc("/user", am.ViewAccess(ah.updateUserPreference)).Methods(http.MethodPost)
 
+	subRouter.HandleFunc("/user/all", am.ViewAccess(ah.getAllUserPreference)).Methods(http.MethodGet)
+
 	subRouter.HandleFunc("/org", am.ViewAccess(ah.getOrgPreference)).Methods(http.MethodGet)
 
 	subRouter.HandleFunc("/org", am.ViewAccess(ah.updateOrgPreference)).Methods(http.MethodPost)
 
+	subRouter.HandleFunc("/org/all", am.ViewAccess(ah.getAllOrgPreference)).Methods(http.MethodGet)
+
+}
+
+func (aH *APIHandler) getAllUserPreference(w http.ResponseWriter, r *http.Request) {
+
+	preference, err := preferences.GetAllUserPreferences(r.Context())
+
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
 }
 
 func (aH *APIHandler) getUserPreference(w http.ResponseWriter, r *http.Request) {
@@ -2241,6 +2257,25 @@ func (ah *APIHandler) updateUserPreference(w http.ResponseWriter, r *http.Reques
 
 	ah.Respond(w, preference)
 
+}
+
+func (aH *APIHandler) getAllOrgPreference(w http.ResponseWriter, r *http.Request) {
+
+	orgId := r.URL.Query().Get("orgId")
+
+	if orgId == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org id found in the request")}, nil)
+		return
+	}
+
+	preference, err := preferences.GetAllOrgPreferences(r.Context(), orgId)
+
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
 }
 func (aH *APIHandler) getOrgPreference(w http.ResponseWriter, r *http.Request) {
 	preferenceKey := r.URL.Query().Get("preferenceKey")
