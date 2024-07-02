@@ -275,6 +275,24 @@ var testValidateAndCastValueData = []struct {
 		want:    nil,
 		wantErr: true,
 	},
+	{
+		name: "v3.AttributeKeyDataTypeInt64: valid float32",
+		args: args{
+			v:        float32(1000),
+			dataType: v3.AttributeKeyDataTypeInt64,
+		},
+		want:    int64(1000),
+		wantErr: false,
+	},
+	{
+		name: "v3.AttributeKeyDataTypeInt64: valid float64",
+		args: args{
+			v:        float64(1000),
+			dataType: v3.AttributeKeyDataTypeInt64,
+		},
+		want:    int64(1000),
+		wantErr: false,
+	},
 }
 
 // Test cases for ValidateAndCastValue function in pkg/query-service/utils/format.go
