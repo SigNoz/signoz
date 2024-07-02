@@ -25,6 +25,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
@@ -111,6 +112,8 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 	}
 
 	db := NewRuleDB(o.DBConn)
+
+	telemetry.GetInstance().SetAlertsInfoCallback(db.GetAlertsInfo)
 
 	m := &Manager{
 		tasks:        map[string]Task{},
