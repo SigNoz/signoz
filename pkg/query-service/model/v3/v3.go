@@ -304,7 +304,7 @@ const (
 	AttributeKeyTypeUnspecified          AttributeKeyType = ""
 	AttributeKeyTypeTag                  AttributeKeyType = "tag"
 	AttributeKeyTypeResource             AttributeKeyType = "resource"
-	AttributeKeyTypeInstrumentationScope AttributeKeyType = "instrumentation_scope"
+	AttributeKeyTypeInstrumentationScope AttributeKeyType = "scope"
 )
 
 type AttributeKey struct {
