@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import { Modal } from 'antd';
 import getDashboard from 'api/dashboard/get';
 import lockDashboardApi from 'api/dashboard/lockDashboard';
@@ -87,6 +88,11 @@ export function DashboardProvider({
 		exact: true,
 	});
 
+	// added extra checks here in case wrong values appear use the default values rather than empty dashboards
+	const supportedOrderColumnKeys = ['createdAt', 'updatedAt'];
+
+	const supportedOrderKeys = ['ascend', 'descend'];
+
 	const params = useUrlQuery();
 	// since the dashboard provider is wrapped at the very top of the application hence it initialises these values from other pages as well.
 	// pick the below params from URL only if the user is on the dashboards list page.
@@ -95,8 +101,16 @@ export function DashboardProvider({
 	const paginationParam = isDashboardListPage && params.get('page');
 
 	const [listSortOrder, setListSortOrder] = useState({
-		columnKey: orderColumnParam || 'updatedAt',
-		order: orderQueryParam || 'descend',
+		columnKey: orderColumnParam
+			? supportedOrderColumnKeys.includes(orderColumnParam)
+				? orderColumnParam
+				: 'updatedAt'
+			: 'updatedAt',
+		order: orderQueryParam
+			? supportedOrderKeys.includes(orderQueryParam)
+				? orderQueryParam
+				: 'descend'
+			: 'descend',
 		pagination: paginationParam || '1',
 	});
 
