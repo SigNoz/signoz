@@ -1,0 +1,65 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`dashboard list page should render the list even when the columnKey or the order is mismatched 1`] = `
+<div>
+   
+  <div
+    class="dashboards-list-container"
+  >
+    <div
+      class="dashboards-list-view-content"
+    >
+      <div
+        class="dashboards-list-title-container"
+      >
+        <h1
+          class="ant-typography title css-dev-only-do-not-override-2i2tap"
+        >
+          Dashboards
+        </h1>
+        <div
+          class="ant-flex css-dev-only-do-not-override-2i2tap ant-flex-align-center ant-flex-justify-space-between"
+        >
+          <span
+            class="ant-typography subtitle css-dev-only-do-not-override-2i2tap"
+          >
+            Create and manage dashboards for your workspace.
+          </span>
+        </div>
+      </div>
+      <div
+        class="loading-dashboard-details"
+      >
+        <div
+          class="ant-skeleton ant-skeleton-element ant-skeleton-active skeleton-1 css-dev-only-do-not-override-2i2tap"
+        >
+          <span
+            class="ant-skeleton-input ant-skeleton-input-lg skeleton-1"
+          />
+        </div>
+        <div
+          class="ant-skeleton ant-skeleton-element ant-skeleton-active skeleton-1 css-dev-only-do-not-override-2i2tap"
+        >
+          <span
+            class="ant-skeleton-input ant-skeleton-input-lg skeleton-1"
+          />
+        </div>
+        <div
+          class="ant-skeleton ant-skeleton-element ant-skeleton-active skeleton-1 css-dev-only-do-not-override-2i2tap"
+        >
+          <span
+            class="ant-skeleton-input ant-skeleton-input-lg skeleton-1"
+          />
+        </div>
+        <div
+          class="ant-skeleton ant-skeleton-element ant-skeleton-active skeleton-1 css-dev-only-do-not-override-2i2tap"
+        >
+          <span
+            class="ant-skeleton-input ant-skeleton-input-lg skeleton-1"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
