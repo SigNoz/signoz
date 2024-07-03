@@ -125,7 +125,7 @@ func getPathIndexFilter(path string) string {
 		}
 	}
 	if len(filters) > 0 {
-		return fmt.Sprintf("lower(body) like '%%%s%%'", strings.Join(filters, "%"))
+		return fmt.Sprintf("lower(body) like lower('%%%s%%')", strings.Join(filters, "%"))
 	}
 	return ""
 }
@@ -189,7 +189,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 		op == v3.FilterOperatorHas {
 		val, ok := item.Value.(string)
 		if ok && len(val) >= NGRAM_SIZE {
-			filters = append(filters, fmt.Sprintf("lower(body) like '%%%s%%'", strings.ToLower(val)))
+			filters = append(filters, fmt.Sprintf("lower(body) like lower('%%%s%%')", strings.ToLower(val)))
 		}
 	}
 

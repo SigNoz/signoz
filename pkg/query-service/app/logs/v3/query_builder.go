@@ -51,6 +51,8 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotExists:       "not has(%s_%s_key, '%s')",
 }
 
+const BODY = "body"
+
 func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
 	if columnType == v3.AttributeKeyTypeTag {
 		return "attributes"
@@ -193,14 +195,21 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					columnName := getClickhouseColumnName(item.Key)
 					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
-					conditions = append(conditions, fmt.Sprintf("lower(%s) %s lower('%%%s%%')", columnName, logsOp, val))
+					if columnName == BODY {
+						conditions = append(conditions, fmt.Sprintf("lower(%s) %s lower('%%%s%%')", columnName, logsOp, val))
+					} else {
+						conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
+					}
 				default:
 					columnName := getClickhouseColumnName(item.Key)
 					fmtVal := utils.ClickHouseFormattedValue(value)
 
 					// for use lower for like and ilike
 					if op == v3.FilterOperatorLike || op == v3.FilterOperatorNotLike {
-						columnName = fmt.Sprintf("lower(%s)", columnName)
+						if columnName == BODY {
+							columnName = fmt.Sprintf("lower(%s)", columnName)
+							fmtVal = fmt.Sprintf("lower(%s)", fmtVal)
+						}
 						fmtVal = strings.ToLower(fmtVal)
 					}
 
