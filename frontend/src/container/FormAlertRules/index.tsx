@@ -12,8 +12,10 @@ import {
 } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
+import logEvent from 'api/common/logEvent';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { alertHelpMessage } from 'components/facingIssueBtn/util';
+import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -338,8 +340,13 @@ function FormAlertRules({
 			return;
 		}
 		const postableAlert = memoizedPreparePostData();
-
 		setLoading(true);
+
+		let logData = {
+			status: 'error',
+			statusMessage: t('unexpected_error'),
+		};
+
 		try {
 			const apiReq =
 				ruleId && ruleId > 0
@@ -349,10 +356,15 @@ function FormAlertRules({
 			const response = await saveAlertApi(apiReq);
 
 			if (response.statusCode === 200) {
+				logData = {
+					status: 'success',
+					statusMessage:
+						!ruleId || ruleId === 0 ? t('rule_created') : t('rule_edited'),
+				};
+
 				notifications.success({
 					message: 'Success',
-					description:
-						!ruleId || ruleId === 0 ? t('rule_created') : t('rule_edited'),
+					description: logData.statusMessage,
 				});
 
 				// invalidate rule in cache
@@ -367,18 +379,42 @@ function FormAlertRules({
 					history.replace(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`);
 				}, 2000);
 			} else {
+				logData = {
+					status: 'error',
+					statusMessage: response.error || t('unexpected_error'),
+				};
+
 				notifications.error({
 					message: 'Error',
-					description: response.error || t('unexpected_error'),
+					description: logData.statusMessage,
 				});
 			}
 		} catch (e) {
+			logData = {
+				status: 'error',
+				statusMessage: t('unexpected_error'),
+			};
+
 			notifications.error({
 				message: 'Error',
-				description: t('unexpected_error'),
+				description: logData.statusMessage,
 			});
 		}
+
 		setLoading(false);
+
+		logEvent('Alert: Save alert', {
+			...logData,
+			dataSource: ALERTS_DATA_SOURCE_MAP[postableAlert?.alertType as AlertTypes],
+			channelNames: postableAlert?.preferredChannels,
+			broadcastToAll: postableAlert?.broadcastToAll,
+			isNewRule: !ruleId || ruleId === 0,
+			ruleId,
+			queryType: currentQuery.queryType,
+			alertId: postableAlert?.id,
+			alertName: postableAlert?.alert,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isFormValid,
 		memoizedPreparePostData,
@@ -414,6 +450,7 @@ function FormAlertRules({
 		}
 		const postableAlert = memoizedPreparePostData();
 
+		let statusResponse = { status: 'failed', message: '' };
 		setLoading(true);
 		try {
 			const response = await testAlertApi({ data: postableAlert });
@@ -425,25 +462,43 @@ function FormAlertRules({
 						message: 'Error',
 						description: t('no_alerts_found'),
 					});
+					statusResponse = { status: 'failed', message: t('no_alerts_found') };
 				} else {
 					notifications.success({
 						message: 'Success',
 						description: t('rule_test_fired'),
 					});
+					statusResponse = { status: 'success', message: t('rule_test_fired') };
 				}
 			} else {
 				notifications.error({
 					message: 'Error',
 					description: response.error || t('unexpected_error'),
 				});
+				statusResponse = {
+					status: 'failed',
+					message: response.error || t('unexpected_error'),
+				};
 			}
 		} catch (e) {
 			notifications.error({
 				message: 'Error',
 				description: t('unexpected_error'),
 			});
+			statusResponse = { status: 'failed', message: t('unexpected_error') };
 		}
 		setLoading(false);
+		logEvent('Alert: Test notification', {
+			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
+			channelNames: postableAlert?.preferredChannels,
+			broadcastToAll: postableAlert?.broadcastToAll,
+			isNewRule: !ruleId || ruleId === 0,
+			ruleId,
+			queryType: currentQuery.queryType,
+			status: statusResponse.status,
+			statusMessage: statusResponse.message,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [t, isFormValid, memoizedPreparePostData, notifications]);
 
 	const renderBasicInfo = (): JSX.Element => (
@@ -513,6 +568,16 @@ function FormAlertRules({
 
 	const isRuleCreated = !ruleId || ruleId === 0;
 
+	useEffect(() => {
+		if (!isRuleCreated) {
+			logEvent('Alert: Edit page visited', {
+				ruleId,
+				dataSource: ALERTS_DATA_SOURCE_MAP[alertType as AlertTypes],
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	function handleRedirection(option: AlertTypes): void {
 		let url = '';
 		switch (option) {
@@ -535,6 +600,13 @@ function FormAlertRules({
 			default:
 				break;
 		}
+		logEvent('Alert: Check example alert clicked', {
+			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
+			isNewRule: !ruleId || ruleId === 0,
+			ruleId,
+			queryType: currentQuery.queryType,
+			link: url,
+		});
 		window.open(url, '_blank');
 	}
 
@@ -572,6 +644,7 @@ function FormAlertRules({
 							alertDef={alertDef}
 							panelType={panelType || PANEL_TYPES.TIME_SERIES}
 							key={currentQuery.queryType}
+							ruleId={ruleId}
 						/>
 
 						<RuleOptions

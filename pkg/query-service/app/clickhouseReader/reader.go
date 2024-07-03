@@ -53,7 +53,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
@@ -1942,7 +1941,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	end := time.Now()
 	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
 	searchSpansResult := []model.SearchSpansResult{{
-		Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
+		Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
 		Events:    make([][]interface{}, len(searchScanResponses)),
 		IsSubTree: false,
 	},
@@ -1993,8 +1992,8 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		}
 	}
 
-	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano/1000000)
-	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano/1000000)
+	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
+	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
 
 	return &searchSpansResult, nil
 }
@@ -3420,36 +3419,6 @@ func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
 	}
 }
 
-func (r *ClickHouseReader) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
-	alertsInfo := model.AlertsInfo{}
-	// fetch alerts from rules db
-	query := "SELECT data FROM rules"
-	var alertsData []string
-	err := r.localDB.Select(&alertsData, query)
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return &alertsInfo, err
-	}
-	for _, alert := range alertsData {
-		var rule rules.GettableRule
-		err = json.Unmarshal([]byte(alert), &rule)
-		if err != nil {
-			zap.L().Error("invalid rule data", zap.Error(err))
-			continue
-		}
-		if rule.AlertType == "LOGS_BASED_ALERT" {
-			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
-		} else if rule.AlertType == "METRIC_BASED_ALERT" {
-			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
-		} else if rule.AlertType == "TRACES_BASED_ALERT" {
-			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
-		}
-		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1
-	}
-
-	return &alertsInfo, nil
-}
-
 func (r *ClickHouseReader) GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error) {
 	savedViewsInfo := model.SavedViewsInfo{}
 	savedViews, err := explorer.GetViews()
@@ -4434,8 +4403,8 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 		case *time.Time:
 			point.Timestamp = v.UnixMilli()
 		case *float64, *float32:
-			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Float())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float()))
@@ -4447,9 +4416,9 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 		case **float64, **float32:
 			val := reflect.ValueOf(v)
 			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
-				isValidPoint = true
 				value := reflect.ValueOf(v).Elem().Elem().Float()
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					isValidPoint = true
 					point.Value = value
 				} else {
 					groupBy = append(groupBy, fmt.Sprintf("%v", value))
@@ -4460,8 +4429,8 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				}
 			}
 		case *uint, *uint8, *uint64, *uint16, *uint32:
-			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Uint())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
@@ -4473,9 +4442,9 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 		case **uint, **uint8, **uint64, **uint16, **uint32:
 			val := reflect.ValueOf(v)
 			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
-				isValidPoint = true
 				value := reflect.ValueOf(v).Elem().Elem().Uint()
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					isValidPoint = true
 					point.Value = float64(value)
 				} else {
 					groupBy = append(groupBy, fmt.Sprintf("%v", value))
@@ -4486,8 +4455,8 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				}
 			}
 		case *int, *int8, *int16, *int32, *int64:
-			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Int())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
@@ -4499,9 +4468,9 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 		case **int, **int8, **int16, **int32, **int64:
 			val := reflect.ValueOf(v)
 			if val.IsValid() && !val.IsNil() && !val.Elem().IsNil() {
-				isValidPoint = true
 				value := reflect.ValueOf(v).Elem().Elem().Int()
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
+					isValidPoint = true
 					point.Value = float64(value)
 				} else {
 					groupBy = append(groupBy, fmt.Sprintf("%v", value))

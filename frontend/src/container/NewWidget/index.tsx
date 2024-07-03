@@ -7,7 +7,7 @@ import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { chartHelpMessage } from 'components/facingIssueBtn/util';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
 import { DEFAULT_BUCKET_COUNT } from 'container/PanelWrapper/constants';
@@ -18,6 +18,8 @@ import useAxiosError from 'hooks/useAxiosError';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import history from 'lib/history';
 import { defaultTo, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
@@ -38,6 +40,8 @@ import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { getGraphType, getGraphTypeForFormat } from 'utils/getGraphType';
 
 import LeftContainer from './LeftContainer';
 import QueryTypeTag from './LeftContainer/QueryTypeTag';
@@ -83,6 +87,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
+	const { selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const { widgets = [] } = selectedDashboard?.data || {};
 
@@ -278,6 +286,65 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const handleError = useAxiosError();
 
+	// this loading state is to take care of mismatch in the responses for table and other panels
+	// hence while changing the query contains the older value and the processing logic fails
+	const [isLoadingPanelData, setIsLoadingPanelData] = useState<boolean>(false);
+
+	// request data should be handled by the parent and the child components should consume the same
+	// this has been moved here from the left container
+	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
+		if (selectedWidget && selectedGraph !== PANEL_TYPES.LIST) {
+			return {
+				selectedTime: selectedWidget?.timePreferance,
+				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
+				query: stagedQuery || initialQueriesMap.metrics,
+				globalSelectedInterval,
+				formatForWeb:
+					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
+					PANEL_TYPES.TABLE,
+				variables: getDashboardVariables(selectedDashboard?.data.variables),
+			};
+		}
+		const updatedQuery = { ...(stagedQuery || initialQueriesMap.metrics) };
+		updatedQuery.builder.queryData[0].pageSize = 10;
+		redirectWithQueryBuilderData(updatedQuery);
+		return {
+			query: updatedQuery,
+			graphType: PANEL_TYPES.LIST,
+			selectedTime: selectedTime.enum || 'GLOBAL_TIME',
+			globalSelectedInterval,
+			tableParams: {
+				pagination: {
+					offset: 0,
+					limit: updatedQuery.builder.queryData[0].limit || 0,
+				},
+			},
+		};
+	});
+
+	useEffect(() => {
+		if (stagedQuery) {
+			setIsLoadingPanelData(false);
+			setRequestData((prev) => ({
+				...prev,
+				selectedTime: selectedTime.enum || prev.selectedTime,
+				globalSelectedInterval,
+				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
+				query: stagedQuery,
+				fillGaps: selectedWidget.fillSpans || false,
+				formatForWeb:
+					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
+					PANEL_TYPES.TABLE,
+			}));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		stagedQuery,
+		selectedTime,
+		selectedWidget.fillSpans,
+		globalSelectedInterval,
+	]);
+
 	const onClickSaveHandler = useCallback(() => {
 		if (!selectedDashboard) {
 			return;
@@ -402,6 +469,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	}, [dashboardId]);
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
+		setIsLoadingPanelData(true);
 		const updatedQuery = handleQueryChange(type as any, supersetQuery);
 		setGraphType(type);
 		redirectWithQueryBuilderData(
@@ -527,6 +595,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							setSelectedTracesFields={setSelectedTracesFields}
 							selectedWidget={selectedWidget}
 							selectedTime={selectedTime}
+							requestData={requestData}
+							setRequestData={setRequestData}
+							isLoadingPanelData={isLoadingPanelData}
 						/>
 					)}
 				</LeftContainerWrapper>

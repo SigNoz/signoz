@@ -583,11 +583,11 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 		q.series?.sort((a, b) => {
 			let labelA = '';
 			let labelB = '';
-			a.labelsArray.forEach((lab) => {
+			a.labelsArray?.forEach((lab) => {
 				labelA += Object.values(lab)[0];
 			});
 
-			b.labelsArray.forEach((lab) => {
+			b.labelsArray?.forEach((lab) => {
 				labelB += Object.values(lab)[0];
 			});
 
