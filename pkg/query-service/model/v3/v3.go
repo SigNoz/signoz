@@ -401,8 +401,11 @@ type CompositeQuery struct {
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
-	Unit              string                      `json:"unit,omitempty"`
-	FillGaps          bool                        `json:"fillGaps,omitempty"`
+	// Unit for the time series data shown in the graph
+	// This is used in alerts to format the value and threshold
+	Unit string `json:"unit,omitempty"`
+	// FillGaps is used to fill the gaps in the time series data
+	FillGaps bool `json:"fillGaps,omitempty"`
 }
 
 func (c *CompositeQuery) EnabledQueries() int {
