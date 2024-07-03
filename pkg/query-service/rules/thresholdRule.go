@@ -165,13 +165,22 @@ func (r *ThresholdRule) PreferredChannels() []string {
 	return r.preferredChannels
 }
 
+// targetVal returns the target value for the rule condition
+// when the y-axis and target units are non-empty, it
+// converts the target value to the y-axis unit
 func (r *ThresholdRule) targetVal() float64 {
 	if r.ruleCondition == nil || r.ruleCondition.Target == nil {
 		return 0
 	}
 
+	// get the converter for the target unit
 	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
-	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
+	// convert the target value to the y-axis unit
+	value := unitConverter.Convert(converter.Value{
+		F: *r.ruleCondition.Target,
+		U: converter.Unit(r.ruleCondition.TargetUnit),
+	}, converter.Unit(r.Unit()))
+
 	return value.F
 }
 
@@ -874,8 +883,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
-		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
-		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
+		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
 		zap.L().Debug("Alert template data for rule", zap.String("name", r.Name()), zap.String("formatter", valueFormatter.Name()), zap.String("value", value), zap.String("threshold", threshold))
 
 		tmplData := AlertTemplateData(l, value, threshold)

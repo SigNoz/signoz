@@ -2,6 +2,7 @@ import { rest } from 'msw';
 
 import { billingSuccessResponse } from './__mockdata__/billing';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
+import { membersResponse } from './__mockdata__/members';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
 import { serviceSuccessResponse } from './__mockdata__/services';
 import { topLevelOperationSuccessResponse } from './__mockdata__/top_level_operations';
@@ -25,6 +26,9 @@ export const handlers = [
 			res(ctx.status(200), ctx.json(topLevelOperationSuccessResponse)),
 	),
 
+	rest.get('http://localhost/api/v1/orgUsers/*', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(membersResponse)),
+	),
 	rest.get(
 		'http://localhost/api/v3/autocomplete/attribute_keys',
 		(req, res, ctx) => {
