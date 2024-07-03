@@ -82,10 +82,17 @@ export function DashboardProvider({
 		exact: true,
 	});
 
+	const isDashboardListPage = useRouteMatch<Props>({
+		path: ROUTES.ALL_DASHBOARD,
+		exact: true,
+	});
+
 	const params = useUrlQuery();
-	const orderColumnParam = params.get('columnKey');
-	const orderQueryParam = params.get('order');
-	const paginationParam = params.get('page');
+	// since the dashboard provider is wrapped at the very top of the application hence it initialises these values from other pages as well.
+	// pick the below params from URL only if the user is on the dashboards list page.
+	const orderColumnParam = isDashboardListPage && params.get('columnKey');
+	const orderQueryParam = isDashboardListPage && params.get('order');
+	const paginationParam = isDashboardListPage && params.get('page');
 
 	const [listSortOrder, setListSortOrder] = useState({
 		columnKey: orderColumnParam || 'updatedAt',
