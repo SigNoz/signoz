@@ -603,7 +603,12 @@ func buildGroupTree(groups []PreferenceGroup, parentID string, groupPreferenceMa
 			if val, seen := groupPreferenceMap[group.Id]; seen {
 				treeNode.Preferences = val
 			}
-			tree = append(tree, treeNode)
+			// if there are no preferences in the current group and there are no child groups then do not push the node to the tree
+			if len(children) == 0 && treeNode.Preferences == nil {
+				continue
+			} else {
+				tree = append(tree, treeNode)
+			}
 		}
 	}
 
