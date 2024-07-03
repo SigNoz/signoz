@@ -218,29 +218,6 @@ func existsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (st
 	}
 }
 
-func handleEmptyValuesInGroupBy(keys map[string]v3.AttributeKey, groupBy []v3.AttributeKey) (string, error) {
-	filterItems := []v3.FilterItem{}
-	if len(groupBy) != 0 {
-		for _, item := range groupBy {
-			key := enrichKeyWithMetadata(item, keys)
-			if !key.IsColumn {
-				filterItems = append(filterItems, v3.FilterItem{
-					Key:      item,
-					Operator: v3.FilterOperatorExists,
-				})
-			}
-		}
-	}
-	if len(filterItems) != 0 {
-		filterSet := v3.FilterSet{
-			Operator: "AND",
-			Items:    filterItems,
-		}
-		return buildTracesFilterQuery(&filterSet, keys)
-	}
-	return "", nil
-}
-
 func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, keys map[string]v3.AttributeKey, panelType v3.PanelType, options Options) (string, error) {
 
 	filterSubQuery, err := buildTracesFilterQuery(mq.Filters, keys)
@@ -282,12 +259,6 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		queryTmpl = "SELECT " + getSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + queryTmpl + ")"
 	}
-
-	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(keys, mq.GroupBy)
-	if err != nil {
-		return "", err
-	}
-	filterSubQuery += emptyValuesInGroupByFilter
 
 	groupBy := groupByAttributeKeyTags(panelType, options.GraphLimitQtype, mq.GroupBy...)
 	if groupBy != "" {
