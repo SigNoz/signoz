@@ -89,8 +89,6 @@ function DashboardsList(): JSX.Element {
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
 
-	console.log(dashboardListResponse, isDashboardListLoading);
-
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const {
@@ -402,7 +400,7 @@ function DashboardsList(): JSX.Element {
 		{
 			title: 'Dashboards',
 			key: 'dashboard',
-			render: (dashboard: Data): JSX.Element => {
+			render: (dashboard: Data, _, index): JSX.Element => {
 				const timeOptions: Intl.DateTimeFormatOptions = {
 					hour: '2-digit',
 					minute: '2-digit',
@@ -447,7 +445,9 @@ function DashboardsList(): JSX.Element {
 									style={{ height: '14px', width: '14px' }}
 									alt="dashboard-image"
 								/>
-								<Typography.Text>{dashboard.name}</Typography.Text>
+								<Typography.Text data-testid={`dashboard-title-${index}`}>
+									{dashboard.name}
+								</Typography.Text>
 							</div>
 
 							<div className="tags-with-actions">
