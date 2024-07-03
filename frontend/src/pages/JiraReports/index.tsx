@@ -37,7 +37,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import dayjs, { Dayjs } from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import createQueryParams from 'lib/createQueryParams';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 /* eslint-disable */
 interface PieData {
 	CLOSED: number;
@@ -312,7 +312,7 @@ function JiraReports(): JSX.Element {
 								style={{ display: 'inline' }}
 								href={`${
 									process.env.FRONTEND_API_ENDPOINT
-								}/exceptions?${createQueryParams({
+								}/website/exceptions?${createQueryParams({
 									serviceName: record.issue_project_id,
 									message: record.issue_title,
 									startTime: `${curTimeList[0].startOf('day').valueOf()}000000`,

@@ -20,6 +20,7 @@ import history from 'lib/history';
 import { ReactNode, useCallback, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -62,16 +63,16 @@ function WidgetHeader({
 	isWarning,
 	isFetchingResponse,
 }: IWidgetHeaderProps): JSX.Element | null {
+	const { pathname } = useLocation();
+
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
 		history.push(
-			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${
-				widget.panelTypes
-			}&${QueryParams.compositeQuery}=${encodeURIComponent(
-				JSON.stringify(widget.query),
-			)}`,
+			`${pathname}/new?widgetId=${widgetId}&graphType=${widget.panelTypes}&${
+				QueryParams.compositeQuery
+			}=${encodeURIComponent(JSON.stringify(widget.query))}`,
 		);
-	}, [widget.id, widget.panelTypes, widget.query]);
+	}, [widget.id, widget.panelTypes, widget.query, pathname]);
 
 	const onCreateAlertsHandler = useCreateAlerts(widget);
 
