@@ -221,7 +221,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
 		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND has(attributes_string_key, 'host')",
+		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
 	},
 	{
 		Name: "Test groupBy isColumn",
@@ -229,7 +229,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
 		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
-		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND `attribute_string_host_exists`=true",
+		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
 	},
 	{
 		Name: "Wrong data",
@@ -413,7 +413,7 @@ var testBuildLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'host.name')] as `host.name`, " +
 			"toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'method.name')]))) as value from signoz_logs.distributed_logs " +
-			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'host.name') AND has(attributes_string_key, 'method.name') " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'method.name') " +
 			"group by `host.name`,ts order by `host.name` ASC",
 	},
 	{
@@ -434,7 +434,7 @@ var testBuildLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, `attribute_string_host$$name` as `host.name`, toFloat64(count(distinct(`attribute_string_method$$name`))) as value" +
 			" from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-			"AND `attribute_string_host$$name_exists`=true AND `attribute_string_method$$name_exists`=true " +
+			"AND `attribute_string_method$$name_exists`=true " +
 			"group by `host.name`,ts " +
 			"order by `host.name` ASC",
 	},
@@ -463,7 +463,6 @@ var testBuildLogsQueryData = []struct {
 			"toFloat64(count(distinct(`attribute_string_name`))) as value from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND resources_string_value[indexOf(resources_string_key, 'x')] != 'abc' " +
-			"AND has(attributes_string_key, 'method') " +
 			"AND `attribute_string_name_exists`=true " +
 			"group by `method`,ts " +
 			"order by `method` ASC",
@@ -494,8 +493,6 @@ var testBuildLogsQueryData = []struct {
 			"toFloat64(count(distinct(`attribute_string_name`))) as value from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND resources_string_value[indexOf(resources_string_key, 'x')] != 'abc' " +
-			"AND has(attributes_string_key, 'method') " +
-			"AND has(resources_string_key, 'x') " +
 			"AND `attribute_string_name_exists`=true " +
 			"group by `method`,`x`,ts " +
 			"order by `method` ASC,`x` ASC",
@@ -525,7 +522,6 @@ var testBuildLogsQueryData = []struct {
 			"from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
-			"AND has(attributes_string_key, 'method') " +
 			"AND has(attributes_float64_key, 'bytes') " +
 			"group by `method`,ts " +
 			"order by `method` ASC",
@@ -555,7 +551,6 @@ var testBuildLogsQueryData = []struct {
 			"from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
-			"AND has(attributes_string_key, 'method') " +
 			"AND `attribute_float64_bytes_exists`=true " +
 			"group by `method`,ts " +
 			"order by `method` ASC",
@@ -585,7 +580,6 @@ var testBuildLogsQueryData = []struct {
 			"from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
-			"AND has(attributes_string_key, 'method') " +
 			"AND `attribute_float64_bytes_exists`=true " +
 			"group by `method`,ts " +
 			"order by `method` ASC",
@@ -615,7 +609,6 @@ var testBuildLogsQueryData = []struct {
 			"from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
-			"AND has(attributes_string_key, 'method') " +
 			"AND `attribute_float64_bytes_exists`=true " +
 			"group by `method`,ts " +
 			"order by `method` ASC",
@@ -641,7 +634,6 @@ var testBuildLogsQueryData = []struct {
 			"quantile(0.05)(`attribute_float64_bytes`) as value " +
 			"from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-			"AND has(attributes_string_key, 'method') " +
 			"AND `attribute_float64_bytes_exists`=true " +
 			"group by `method`,ts " +
 			"order by `method` ASC",
@@ -666,7 +658,6 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`" +
 			", sum(`attribute_float64_bytes`)/1.000000 as value from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-			"AND has(attributes_string_key, 'method') " +
 			"AND `attribute_float64_bytes_exists`=true " +
 			"group by `method`,ts order by `method` ASC",
 	},
@@ -690,7 +681,6 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`" +
 			", count(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/60.000000 as value " +
 			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-			"AND has(attributes_string_key, 'method') " +
 			"AND has(attributes_float64_key, 'bytes') " +
 			"group by `method`,ts " +
 			"order by `method` ASC",
@@ -716,7 +706,6 @@ var testBuildLogsQueryData = []struct {
 			"attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
 			"sum(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/1.000000 as value " +
 			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-			"AND has(attributes_string_key, 'method') " +
 			"AND has(attributes_float64_key, 'bytes') " +
 			"group by `method`,ts " +
 			"order by `method` ASC",
@@ -910,7 +899,7 @@ var testBuildLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'name') group by `name` order by value DESC",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) group by `name` order by value DESC",
 	},
 	{
 		Name:      "TABLE: Test rate with groupBy",
@@ -927,7 +916,7 @@ var testBuildLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, count()/97.000000 as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'name') group by `name` order by value DESC",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, count()/97.000000 as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) group by `name` order by value DESC",
 	},
 	{
 		Name:      "TABLE: Test count with groupBy, orderBy",
@@ -947,7 +936,7 @@ var testBuildLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) group by `name` order by `name` DESC",
 	},
 	{
 		Name:      "TABLE: Test count with JSON Filter, groupBy, orderBy",
@@ -981,7 +970,7 @@ var testBuildLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%' AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%' group by `name` order by `name` DESC",
 	},
 	{
 		Name:      "TABLE: Test count with JSON Filter Array, groupBy, orderBy",
@@ -1015,7 +1004,7 @@ var testBuildLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service') AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service') group by `name` order by `name` DESC",
 	},
 }
 
@@ -1198,7 +1187,7 @@ var testPrepLogsQueryData = []struct {
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') group by `method` order by value DESC) LIMIT 10",
+		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'name') group by `method` order by value DESC) LIMIT 10",
 		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 	},
 	{
@@ -1221,7 +1210,7 @@ var testPrepLogsQueryData = []struct {
 			OrderBy: []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "ASC"}},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') group by `method` order by value ASC) LIMIT 10",
+		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'name') group by `method` order by value ASC) LIMIT 10",
 		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 	},
 	{
@@ -1244,7 +1233,7 @@ var testPrepLogsQueryData = []struct {
 			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') group by `method` order by `method` ASC) LIMIT 10",
+		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'name') group by `method` order by `method` ASC) LIMIT 10",
 		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 	},
 	{
@@ -1266,7 +1255,7 @@ var testPrepLogsQueryData = []struct {
 			Limit:   2,
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') AND (`method`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `method`,ts order by value DESC",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'name') AND (`method`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `method`,ts order by value DESC",
 		Options:       Options{GraphLimitQtype: constants.SecondQueryGraphLimit},
 	},
 	{
@@ -1289,7 +1278,7 @@ var testPrepLogsQueryData = []struct {
 			Limit:   2,
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') AND (`method`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `method`,ts order by `method` ASC",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'name') AND (`method`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `method`,ts order by `method` ASC",
 		Options:       Options{GraphLimitQtype: constants.SecondQueryGraphLimit},
 	},
 	// Live tail

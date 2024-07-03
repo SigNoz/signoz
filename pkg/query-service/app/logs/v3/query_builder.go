@@ -205,18 +205,6 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 		}
 	}
 
-	// add group by conditions to filter out log lines which doesn't have the key
-	for _, attr := range groupBy {
-		if !attr.IsColumn {
-			columnType := getClickhouseLogsColumnType(attr.Type)
-			columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
-			conditions = append(conditions, fmt.Sprintf("has(%s_%s_key, '%s')", columnType, columnDataType, attr.Key))
-		} else if attr.Type != v3.AttributeKeyTypeUnspecified {
-			// for materialzied columns
-			conditions = append(conditions, fmt.Sprintf("%s_exists`=true", strings.TrimSuffix(getClickhouseColumnName(attr), "`")))
-		}
-	}
-
 	// add conditions for aggregate attribute
 	if aggregateAttribute.Key != "" {
 		existsFilter := GetExistsNexistsFilter(v3.FilterOperatorExists, v3.FilterItem{Key: aggregateAttribute})
