@@ -587,7 +587,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 			<PanelContainer>
 				<LeftContainerWrapper isDarkMode={useIsDarkMode()}>
-					<OverlayScrollbar style={{ height: '100%' }}>
+					<OverlayScrollbar>
 						{selectedWidget && (
 							<LeftContainer
 								selectedGraph={graphType}
@@ -606,7 +606,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper>
-					<OverlayScrollbar style={{ height: '100%' }}>
+					<OverlayScrollbar>
 						<RightContainer
 							setGraphHandler={setGraphHandler}
 							title={title}

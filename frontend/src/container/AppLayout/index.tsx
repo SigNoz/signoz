@@ -310,7 +310,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent data-overlayscrollbars-initialize>
-							<OverlayScrollbar style={{ height: '100%' }}>
+							<OverlayScrollbar>
 								<ChildrenContainer
 									style={{
 										margin:
