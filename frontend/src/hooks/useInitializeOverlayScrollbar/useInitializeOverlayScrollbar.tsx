@@ -1,3 +1,4 @@
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useOverlayScrollbars } from 'overlayscrollbars-react';
 import {
 	Dispatch,
@@ -13,11 +14,16 @@ const useInitializeOverlayScrollbar = (): {
 	rootRef: RefObject<HTMLDivElement>;
 } => {
 	const rootRef = useRef(null);
-
+	const isDarkMode = useIsDarkMode();
 	const [scroller, setScroller] = useState(null);
 	const [initialize, osInstance] = useOverlayScrollbars({
 		defer: true,
-		options: { scrollbars: { autoHide: 'scroll', theme: 'os-theme-dark' } },
+		options: {
+			scrollbars: {
+				autoHide: 'scroll',
+				theme: isDarkMode ? 'os-theme-light' : 'os-theme-dark',
+			},
+		},
 	});
 
 	useEffect(() => {
