@@ -1,5 +1,5 @@
-import OverlayScrollbarForTypicalChildren from 'components/OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
-import OverlayScrollbarForVirtuosoChildren from 'components/OverlayScrollbarForVirtuosoChildren/OverlayScrollbarForVirtuosoChildren';
+import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
+import VirtuosoOverlayScrollbar from 'components/VirtuosoOverlayScrollbar/VirtuosoOverlayScrollbar';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { PartialOptions } from 'overlayscrollbars';
 import { CSSProperties, ReactElement, useMemo } from 'react';
@@ -32,16 +32,16 @@ function OverlayScrollbar({
 
 	if (isVirtuoso) {
 		return (
-			<OverlayScrollbarForVirtuosoChildren style={style} options={options}>
+			<VirtuosoOverlayScrollbar style={style} options={options}>
 				{children}
-			</OverlayScrollbarForVirtuosoChildren>
+			</VirtuosoOverlayScrollbar>
 		);
 	}
 
 	return (
-		<OverlayScrollbarForTypicalChildren style={style} options={options}>
+		<TypicalOverlayScrollbar style={style} options={options}>
 			{children}
-		</OverlayScrollbarForTypicalChildren>
+		</TypicalOverlayScrollbar>
 	);
 }
 

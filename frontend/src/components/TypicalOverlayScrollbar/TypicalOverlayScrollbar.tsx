@@ -1,4 +1,4 @@
-import './overlayScrollbarsComponentProps.scss';
+import './typicalOverlayScrollbar.scss';
 
 import { PartialOptions } from 'overlayscrollbars';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
@@ -10,7 +10,7 @@ interface Props {
 	options?: PartialOptions;
 }
 
-export default function OverlayScrollbarForTypicalChildren({
+export default function TypicalOverlayScrollbar({
 	children,
 	style,
 	options,
@@ -27,4 +27,4 @@ export default function OverlayScrollbarForTypicalChildren({
 	);
 }
 
-OverlayScrollbarForTypicalChildren.defaultProps = { style: {}, options: {} };
+TypicalOverlayScrollbar.defaultProps = { style: {}, options: {} };
