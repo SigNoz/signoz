@@ -91,6 +91,10 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 			return x, nil
 		case int, int64:
 			return x, nil
+		case float32:
+			return int64(x), nil
+		case float64:
+			return int64(x), nil
 		case string:
 			int64val, err := strconv.ParseInt(x, 10, 64)
 			if err != nil {
