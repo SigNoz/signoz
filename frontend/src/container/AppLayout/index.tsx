@@ -9,6 +9,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import cx from 'classnames';
+import OverlayScrollbarForTypicalChildren from 'components/OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import SideNav from 'container/SideNav';
@@ -17,7 +18,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import OverlayScrollbarForTypicalChildren from 'OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import {
 	ReactNode,

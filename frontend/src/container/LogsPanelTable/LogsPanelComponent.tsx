@@ -3,6 +3,7 @@ import './LogsPanelComponent.styles.scss';
 import { Table } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
+import OverlayScrollbarForTypicalChildren from 'components/OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Controls from 'container/Controls';
@@ -14,7 +15,6 @@ import { useLogsData } from 'hooks/useLogsData';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import OverlayScrollbarForTypicalChildren from 'OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
 import {
 	Dispatch,
 	HTMLAttributes,

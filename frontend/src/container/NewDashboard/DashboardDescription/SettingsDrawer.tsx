@@ -2,7 +2,7 @@ import './Description.styles.scss';
 
 import { Button } from 'antd';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
-import OverlayScrollbarForTypicalChildren from 'OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
+import OverlayScrollbarForTypicalChildren from 'components/OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
 import { useRef, useState } from 'react';
 
 import DashboardSettingsContent from '../DashboardSettings';

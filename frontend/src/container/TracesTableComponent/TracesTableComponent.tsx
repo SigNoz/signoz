@@ -1,6 +1,7 @@
 import './TracesTableComponent.styles.scss';
 
 import { Table } from 'antd';
+import OverlayScrollbarForTypicalChildren from 'components/OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import Controls from 'container/Controls';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
@@ -14,7 +15,6 @@ import { Pagination } from 'hooks/queryPagination';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import OverlayScrollbarForTypicalChildren from 'OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
 import {
 	Dispatch,
 	HTMLAttributes,
