@@ -1,12 +1,11 @@
+import './overlayScrollbarsComponentProps.scss';
+
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { PartialOptions } from 'overlayscrollbars';
-import {
-	OverlayScrollbarsComponent,
-	OverlayScrollbarsComponentProps,
-} from 'overlayscrollbars-react';
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { CSSProperties, ReactElement } from 'react';
 
-interface Props extends OverlayScrollbarsComponentProps {
+interface Props {
 	children: ReactElement;
 	style?: CSSProperties;
 	options?: PartialOptions;
@@ -29,7 +28,8 @@ export default function OverlayScrollbarForTypicalChildren({
 				},
 				...options,
 			}}
-			style={{ height: 'calc(100% - 70px)', ...style }}
+			style={style}
+			className="overlay-scrollbar"
 		>
 			{children}
 		</OverlayScrollbarsComponent>
