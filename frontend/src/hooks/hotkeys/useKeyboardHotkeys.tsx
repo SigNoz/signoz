@@ -91,7 +91,9 @@ function KeyboardHotkeysProvider({
 			if (!shortcuts.current[keyCombination]) {
 				shortcuts.current[keyCombination] = callback;
 			} else {
-				throw new Error('This shortcut is already present in current scope');
+				throw new Error(
+					`This shortcut is already present in current scope :- ${keyCombination}`,
+				);
 			}
 		},
 		[shortcuts],
