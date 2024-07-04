@@ -5,7 +5,7 @@ import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { chartHelpMessage } from 'components/facingIssueBtn/util';
-import OverlayScrollbarForTypicalChildren from 'components/OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -587,7 +587,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 			<PanelContainer>
 				<LeftContainerWrapper isDarkMode={useIsDarkMode()}>
-					<OverlayScrollbarForTypicalChildren style={{ height: '100%' }}>
+					<OverlayScrollbar style={{ height: '100%' }}>
 						{selectedWidget && (
 							<LeftContainer
 								selectedGraph={graphType}
@@ -602,11 +602,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								isLoadingPanelData={isLoadingPanelData}
 							/>
 						)}
-					</OverlayScrollbarForTypicalChildren>
+					</OverlayScrollbar>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper>
-					<OverlayScrollbarForTypicalChildren style={{ height: '100%' }}>
+					<OverlayScrollbar style={{ height: '100%' }}>
 						<RightContainer
 							setGraphHandler={setGraphHandler}
 							title={title}
@@ -644,7 +644,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							softMax={softMax}
 							setSoftMax={setSoftMax}
 						/>
-					</OverlayScrollbarForTypicalChildren>
+					</OverlayScrollbar>
 				</RightContainerWrapper>
 			</PanelContainer>
 			<Modal

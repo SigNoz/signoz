@@ -2,7 +2,7 @@ import './ContextLogRenderer.styles.scss';
 
 import { Skeleton } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
-import OverlayScrollbarForVirtuosoChildren from 'components/OverlayScrollbarForVirtuosoChildren/OverlayScrollbarForVirtuosoChildren';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import ShowButton from 'container/LogsContextList/ShowButton';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useCallback, useEffect, useState } from 'react';
@@ -95,7 +95,7 @@ function ContextLogRenderer({
 					}}
 				/>
 			)}
-			<OverlayScrollbarForVirtuosoChildren>
+			<OverlayScrollbar isVirtuoso>
 				<Virtuoso
 					className="virtuoso-list"
 					initialTopMostItemIndex={0}
@@ -103,7 +103,7 @@ function ContextLogRenderer({
 					itemContent={getItemContent}
 					style={{ height: `calc(${logs.length} * 32px)` }}
 				/>
-			</OverlayScrollbarForVirtuosoChildren>
+			</OverlayScrollbar>
 			{isAfterLogsFetching && (
 				<Skeleton
 					style={{

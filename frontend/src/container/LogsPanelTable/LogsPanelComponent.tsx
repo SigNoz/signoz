@@ -3,7 +3,7 @@ import './LogsPanelComponent.styles.scss';
 import { Table } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
-import OverlayScrollbarForTypicalChildren from 'components/OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Controls from 'container/Controls';
@@ -208,7 +208,7 @@ function LogsPanelComponent({
 		<>
 			<div className="logs-table">
 				<div className="resize-table">
-					<OverlayScrollbarForTypicalChildren>
+					<OverlayScrollbar>
 						<Table
 							pagination={false}
 							tableLayout="fixed"
@@ -220,7 +220,7 @@ function LogsPanelComponent({
 							columns={columns}
 							onRow={handleRow}
 						/>
-					</OverlayScrollbarForTypicalChildren>
+					</OverlayScrollbar>
 				</div>
 				{!widget.query.builder.queryData[0].limit && (
 					<div className="controller">

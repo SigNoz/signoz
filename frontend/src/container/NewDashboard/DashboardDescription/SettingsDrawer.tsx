@@ -2,7 +2,7 @@ import './Description.styles.scss';
 
 import { Button } from 'antd';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
-import OverlayScrollbarForTypicalChildren from 'components/OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { useRef, useState } from 'react';
 
 import DashboardSettingsContent from '../DashboardSettings';
@@ -42,9 +42,9 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 				open={visible}
 				rootClassName="settings-container-root"
 			>
-				<OverlayScrollbarForTypicalChildren>
+				<OverlayScrollbar>
 					<DashboardSettingsContent variableViewModeRef={variableViewModeRef} />
-				</OverlayScrollbarForTypicalChildren>
+				</OverlayScrollbar>
 			</DrawerContainer>
 		</>
 	);

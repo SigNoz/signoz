@@ -1,16 +1,21 @@
 import './overlayScrollbarForVirtuosoChildren.scss';
 
 import useInitializeOverlayScrollbar from 'hooks/useInitializeOverlayScrollbar/useInitializeOverlayScrollbar';
-import React, { ReactElement } from 'react';
+import { PartialOptions } from 'overlayscrollbars';
+import React, { CSSProperties, ReactElement } from 'react';
 
 interface OverlayScrollbarForVirtuosoChildrenProps {
 	children: ReactElement;
+	style?: CSSProperties;
+	options: PartialOptions;
 }
 
 export default function OverlayScrollbarForVirtuosoChildren({
 	children,
+	style,
+	options,
 }: OverlayScrollbarForVirtuosoChildrenProps): JSX.Element {
-	const { rootRef, setScroller } = useInitializeOverlayScrollbar();
+	const { rootRef, setScroller } = useInitializeOverlayScrollbar(options);
 
 	const enhancedChild = React.cloneElement(children, {
 		scrollerRef: setScroller,
@@ -21,8 +26,11 @@ export default function OverlayScrollbarForVirtuosoChildren({
 			data-overlayscrollbars-initialize=""
 			ref={rootRef}
 			className="overlay-scroll-wrapper"
+			style={style}
 		>
 			{enhancedChild}
 		</div>
 	);
 }
+
+OverlayScrollbarForVirtuosoChildren.defaultProps = { style: {} };

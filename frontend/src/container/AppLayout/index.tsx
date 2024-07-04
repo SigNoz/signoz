@@ -9,7 +9,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import cx from 'classnames';
-import OverlayScrollbarForTypicalChildren from 'components/OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import SideNav from 'container/SideNav';
@@ -307,7 +307,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				<div className={cx('app-content', collapsed ? 'collapsed' : '')}>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent>
-							<OverlayScrollbarForTypicalChildren style={{ height: '100%' }}>
+							<OverlayScrollbar style={{ height: '100%' }}>
 								<ChildrenContainer
 									style={{
 										margin:
@@ -323,7 +323,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}
 									{children}
 								</ChildrenContainer>
-							</OverlayScrollbarForTypicalChildren>
+							</OverlayScrollbar>
 						</LayoutContent>
 					</Sentry.ErrorBoundary>
 				</div>

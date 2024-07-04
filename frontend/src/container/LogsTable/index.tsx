@@ -7,7 +7,7 @@ import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import LogsTableView from 'components/Logs/TableView';
-import OverlayScrollbarForVirtuosoChildren from 'components/OverlayScrollbarForVirtuosoChildren/OverlayScrollbarForVirtuosoChildren';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
@@ -98,9 +98,9 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 
 		return (
 			<Card className="logs-card" bodyStyle={CARD_BODY_STYLE}>
-				<OverlayScrollbarForVirtuosoChildren>
+				<OverlayScrollbar isVirtuoso>
 					<Virtuoso totalCount={logs.length} itemContent={getItemContent} />
-				</OverlayScrollbarForVirtuosoChildren>
+				</OverlayScrollbar>
 			</Card>
 		);
 	}, [getItemContent, linesPerRow, logs, onSetActiveLog, selected, viewMode]);

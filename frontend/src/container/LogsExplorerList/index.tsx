@@ -6,7 +6,7 @@ import { VIEW_TYPES } from 'components/LogDetail/constants';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
-import OverlayScrollbarForVirtuosoChildren from 'components/OverlayScrollbarForVirtuosoChildren/OverlayScrollbarForVirtuosoChildren';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -134,7 +134,7 @@ function LogsExplorerList({
 				style={{ width: '100%', marginTop: '20px' }}
 				bodyStyle={CARD_BODY_STYLE}
 			>
-				<OverlayScrollbarForVirtuosoChildren>
+				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
 						ref={ref}
 						initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
@@ -144,7 +144,7 @@ function LogsExplorerList({
 						itemContent={getItemContent}
 						components={components}
 					/>
-				</OverlayScrollbarForVirtuosoChildren>
+				</OverlayScrollbar>
 			</Card>
 		);
 	}, [
