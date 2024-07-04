@@ -12,6 +12,7 @@ import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import VirtuosoOverlayScrollbar from 'container/VirtuosoOverlayScrollbar/VirtuosoOverlayScrollbar';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useEventSource } from 'providers/EventSource';
@@ -128,13 +129,15 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
-							<Virtuoso
-								ref={ref}
-								initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
-								data={logs}
-								totalCount={logs.length}
-								itemContent={getItemContent}
-							/>
+							<VirtuosoOverlayScrollbar>
+								<Virtuoso
+									ref={ref}
+									initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
+									data={logs}
+									totalCount={logs.length}
+									itemContent={getItemContent}
+								/>
+							</VirtuosoOverlayScrollbar>
 						</Card>
 					)}
 				</InfinityWrapperStyled>

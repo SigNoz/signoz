@@ -4,6 +4,7 @@ import { Skeleton } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import ShowButton from 'container/LogsContextList/ShowButton';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import VirtuosoOverlayScrollbar from 'container/VirtuosoOverlayScrollbar/VirtuosoOverlayScrollbar';
 import { useCallback, useEffect, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
@@ -94,13 +95,15 @@ function ContextLogRenderer({
 					}}
 				/>
 			)}
-			<Virtuoso
-				className="virtuoso-list"
-				initialTopMostItemIndex={0}
-				data={logs}
-				itemContent={getItemContent}
-				style={{ height: `calc(${logs.length} * 32px)` }}
-			/>
+			<VirtuosoOverlayScrollbar>
+				<Virtuoso
+					className="virtuoso-list"
+					initialTopMostItemIndex={0}
+					data={logs}
+					itemContent={getItemContent}
+					style={{ height: `calc(${logs.length} * 32px)` }}
+				/>
+			</VirtuosoOverlayScrollbar>
 			{isAfterLogsFetching && (
 				<Skeleton
 					style={{

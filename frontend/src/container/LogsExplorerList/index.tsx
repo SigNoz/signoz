@@ -13,6 +13,7 @@ import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import VirtuosoOverlayScrollbar from 'container/VirtuosoOverlayScrollbar/VirtuosoOverlayScrollbar';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -133,15 +134,17 @@ function LogsExplorerList({
 				style={{ width: '100%', marginTop: '20px' }}
 				bodyStyle={CARD_BODY_STYLE}
 			>
-				<Virtuoso
-					ref={ref}
-					initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
-					data={logs}
-					endReached={onEndReached}
-					totalCount={logs.length}
-					itemContent={getItemContent}
-					components={components}
-				/>
+				<VirtuosoOverlayScrollbar>
+					<Virtuoso
+						ref={ref}
+						initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
+						data={logs}
+						endReached={onEndReached}
+						totalCount={logs.length}
+						itemContent={getItemContent}
+						components={components}
+					/>
+				</VirtuosoOverlayScrollbar>
 			</Card>
 		);
 	}, [

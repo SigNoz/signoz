@@ -5,6 +5,7 @@ import Spinner from 'components/Spinner';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import VirtuosoOverlayScrollbar from 'container/VirtuosoOverlayScrollbar/VirtuosoOverlayScrollbar';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -187,14 +188,15 @@ function LogsContextList({
 					<EmptyText>No Data</EmptyText>
 				)}
 				{isFetching && <Spinner size="large" height="10rem" />}
-
-				<Virtuoso
-					className="virtuoso-list"
-					initialTopMostItemIndex={0}
-					data={logs}
-					itemContent={getItemContent}
-					followOutput={order === ORDERBY_FILTERS.DESC}
-				/>
+				<VirtuosoOverlayScrollbar>
+					<Virtuoso
+						className="virtuoso-list"
+						initialTopMostItemIndex={0}
+						data={logs}
+						itemContent={getItemContent}
+						followOutput={order === ORDERBY_FILTERS.DESC}
+					/>
+				</VirtuosoOverlayScrollbar>
 			</ListContainer>
 
 			{order === ORDERBY_FILTERS.DESC && (
