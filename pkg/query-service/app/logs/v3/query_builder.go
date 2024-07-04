@@ -210,9 +210,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 							columnName = fmt.Sprintf("lower(%s)", columnName)
 							fmtVal = fmt.Sprintf("lower(%s)", fmtVal)
 						}
-						fmtVal = strings.ToLower(fmtVal)
 					}
-
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 				}
 			} else {
