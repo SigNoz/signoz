@@ -16,6 +16,7 @@ export const prepareQueryRangePayload = ({
 	query,
 	globalSelectedInterval,
 	graphType,
+	formatForWeb,
 	selectedTime,
 	tableParams,
 	variables = {},
@@ -102,6 +103,7 @@ export const prepareQueryRangePayload = ({
 			inputFormat: 'ns',
 		}),
 		variables,
+		formatForWeb,
 		compositeQuery,
 		...restParams,
 	};

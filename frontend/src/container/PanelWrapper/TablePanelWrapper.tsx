@@ -9,7 +9,7 @@ function TablePanelWrapper({
 	tableProcessedDataRef,
 }: PanelWrapperProps): JSX.Element {
 	const panelData =
-		queryResponse.data?.payload?.data?.newResult?.data?.result || [];
+		(queryResponse.data?.payload?.data?.result?.[0] as any)?.table || [];
 	const { thresholds } = widget;
 	return (
 		<GridTableComponent

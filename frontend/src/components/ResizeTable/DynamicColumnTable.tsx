@@ -2,7 +2,9 @@
 import './DynamicColumnTable.syles.scss';
 
 import { Button, Dropdown, Flex, MenuProps, Switch } from 'antd';
+import { ColumnGroupType, ColumnType } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
+import logEvent from 'api/common/logEvent';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { SlidersHorizontal } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
@@ -22,6 +24,7 @@ function DynamicColumnTable({
 	dynamicColumns,
 	onDragColumn,
 	facingIssueBtn,
+	shouldSendAlertsLogEvent,
 	...restProps
 }: DynamicColumnTableProps): JSX.Element {
 	const [columnsData, setColumnsData] = useState<ColumnsType | undefined>(
@@ -47,11 +50,18 @@ function DynamicColumnTable({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [columns, dynamicColumns]);
 
-	const onToggleHandler = (index: number) => (
-		checked: boolean,
-		event: React.MouseEvent<HTMLButtonElement>,
-	): void => {
+	const onToggleHandler = (
+		index: number,
+		column: ColumnGroupType<any> | ColumnType<any>,
+	) => (checked: boolean, event: React.MouseEvent<HTMLButtonElement>): void => {
 		event.stopPropagation();
+
+		if (shouldSendAlertsLogEvent) {
+			logEvent('Alert: Column toggled', {
+				column: column?.title,
+				action: checked ? 'Enable' : 'Disable',
+			});
+		}
 		setVisibleColumns({
 			tablesource,
 			dynamicColumns,
@@ -75,7 +85,7 @@ function DynamicColumnTable({
 					<div>{column.title?.toString()}</div>
 					<Switch
 						checked={columnsData?.findIndex((c) => c.key === column.key) !== -1}
-						onChange={onToggleHandler(index)}
+						onChange={onToggleHandler(index, column)}
 					/>
 				</div>
 			),
