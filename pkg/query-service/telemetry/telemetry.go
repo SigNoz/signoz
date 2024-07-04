@@ -185,6 +185,12 @@ type Telemetry struct {
 	patTokenUser  bool
 	countUsers    int8
 	mutex         sync.RWMutex
+
+	alertsInfoCallback func(ctx context.Context) (*model.AlertsInfo, error)
+}
+
+func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*model.AlertsInfo, error)) {
+	a.alertsInfoCallback = callback
 }
 
 func createTelemetry() {
@@ -310,7 +316,7 @@ func createTelemetry() {
 						telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, user.Email, false, false)
 					}
 				}
-				alertsInfo, err := telemetry.reader.GetAlertsInfo(context.Background())
+				alertsInfo, err := telemetry.alertsInfoCallback(context.Background())
 				if err == nil {
 					dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
 					if err == nil {
