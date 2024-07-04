@@ -1,6 +1,5 @@
 import { Form, FormInstance, Input, Select, Switch, Typography } from 'antd';
 import { Store } from 'antd/lib/form/interface';
-import UpgradePrompt from 'components/Upgrade/UpgradePrompt';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import {
@@ -39,27 +38,13 @@ function FormAlertChannels({
 	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
-	const isUserOnEEPlan = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN);
-
 	const feature = `ALERT_CHANNEL_${type.toUpperCase()}`;
 
 	const hasFeature = useFeatureFlags(
 		isFeatureKeys(feature) ? feature : FeatureKeys.ALERT_CHANNEL_SLACK,
 	);
 
-	const isOssFeature = useFeatureFlags(FeatureKeys.OSS);
-
 	const renderSettings = (): ReactElement | null => {
-		if (
-			// for ee plan
-			!isOssFeature?.active &&
-			(!hasFeature || !hasFeature.active) &&
-			type === 'msteams'
-		) {
-			// channel type is not available for users plan
-			return <UpgradePrompt />;
-		}
-
 		switch (type) {
 			case ChannelType.Slack:
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
@@ -128,13 +113,9 @@ function FormAlertChannels({
 						<Select.Option value="email" key="email">
 							Email
 						</Select.Option>
-						{!isOssFeature?.active && (
-							<Select.Option value="msteams" key="msteams">
-								<div>
-									Microsoft Teams {!isUserOnEEPlan && '(Supported in Paid Plans Only)'}{' '}
-								</div>
-							</Select.Option>
-						)}
+						<Select.Option value="msteams" key="msteams">
+							Microsoft Teams
+						</Select.Option>
 					</Select>
 				</Form.Item>
 
@@ -169,7 +150,7 @@ function FormAlertChannels({
 	);
 }
 
-interface FormAlertChannelsProps {
+export interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
 	setSelectedConfig: Dispatch<
