@@ -73,6 +73,7 @@ func getPath(keyArr []string) string {
 
 func getJSONFilterKey(key v3.AttributeKey, op v3.FilterOperator, isArray bool) (string, error) {
 	keyArr := strings.Split(key.Key, ".")
+	// i.e it should be at least body.name, and not something like body
 	if len(keyArr) < 2 {
 		return "", fmt.Errorf("incorrect key, should contain at least 2 parts")
 	}
