@@ -18,6 +18,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import OverlayScrollbar from 'OverlayScrollbar/OverlayScrollbar';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import {
 	ReactNode,
@@ -345,21 +346,23 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				<div className={cx('app-content', collapsed ? 'collapsed' : '')}>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent>
-							<ChildrenContainer
-								style={{
-									margin:
-										isLogsView() ||
-										isTracesView() ||
-										isDashboardView() ||
-										isDashboardWidgetView() ||
-										isDashboardListView()
-											? 0
-											: '0 1rem',
-								}}
-							>
-								{isToDisplayLayout && !renderFullScreen && <TopNav />}
-								{children}
-							</ChildrenContainer>
+							<OverlayScrollbar style={{ height: '100%' }}>
+								<ChildrenContainer
+									style={{
+										margin:
+											isLogsView() ||
+											isTracesView() ||
+											isDashboardView() ||
+											isDashboardWidgetView() ||
+											isDashboardListView()
+												? 0
+												: '0 1rem',
+									}}
+								>
+									{isToDisplayLayout && !renderFullScreen && <TopNav />}
+									{children}
+								</ChildrenContainer>
+							</OverlayScrollbar>
 						</LayoutContent>
 					</Sentry.ErrorBoundary>
 				</div>

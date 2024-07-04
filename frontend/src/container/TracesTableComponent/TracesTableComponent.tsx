@@ -14,6 +14,7 @@ import { Pagination } from 'hooks/queryPagination';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import OverlayScrollbar from 'OverlayScrollbar/OverlayScrollbar';
 import {
 	Dispatch,
 	HTMLAttributes,
@@ -86,17 +87,19 @@ function TracesTableComponent({
 	return (
 		<div className="traces-table">
 			<div className="resize-table">
-				<Table
-					pagination={false}
-					tableLayout="fixed"
-					scroll={{ x: true }}
-					loading={queryResponse.isFetching}
-					style={tableStyles}
-					dataSource={transformedQueryTableData}
-					columns={columns}
-					onRow={handleRow}
-					sticky
-				/>
+				<OverlayScrollbar>
+					<Table
+						pagination={false}
+						tableLayout="fixed"
+						scroll={{ x: true }}
+						loading={queryResponse.isFetching}
+						style={tableStyles}
+						dataSource={transformedQueryTableData}
+						columns={columns}
+						onRow={handleRow}
+						sticky
+					/>
+				</OverlayScrollbar>
 			</div>
 			<div className="controller">
 				<Controls

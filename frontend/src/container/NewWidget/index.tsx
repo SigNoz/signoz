@@ -23,6 +23,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import history from 'lib/history';
 import { defaultTo, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
+import OverlayScrollbar from 'OverlayScrollbar/OverlayScrollbar';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -586,60 +587,64 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 			<PanelContainer>
 				<LeftContainerWrapper isDarkMode={useIsDarkMode()}>
-					{selectedWidget && (
-						<LeftContainer
-							selectedGraph={graphType}
-							selectedLogFields={selectedLogFields}
-							setSelectedLogFields={setSelectedLogFields}
-							selectedTracesFields={selectedTracesFields}
-							setSelectedTracesFields={setSelectedTracesFields}
-							selectedWidget={selectedWidget}
-							selectedTime={selectedTime}
-							requestData={requestData}
-							setRequestData={setRequestData}
-							isLoadingPanelData={isLoadingPanelData}
-						/>
-					)}
+					<OverlayScrollbar style={{ height: '100%' }}>
+						{selectedWidget && (
+							<LeftContainer
+								selectedGraph={graphType}
+								selectedLogFields={selectedLogFields}
+								setSelectedLogFields={setSelectedLogFields}
+								selectedTracesFields={selectedTracesFields}
+								setSelectedTracesFields={setSelectedTracesFields}
+								selectedWidget={selectedWidget}
+								selectedTime={selectedTime}
+								requestData={requestData}
+								setRequestData={setRequestData}
+								isLoadingPanelData={isLoadingPanelData}
+							/>
+						)}
+					</OverlayScrollbar>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper>
-					<RightContainer
-						setGraphHandler={setGraphHandler}
-						title={title}
-						setTitle={setTitle}
-						description={description}
-						setDescription={setDescription}
-						stacked={stacked}
-						setStacked={setStacked}
-						stackedBarChart={stackedBarChart}
-						setStackedBarChart={setStackedBarChart}
-						opacity={opacity}
-						yAxisUnit={yAxisUnit}
-						columnUnits={columnUnits}
-						setColumnUnits={setColumnUnits}
-						bucketCount={bucketCount}
-						bucketWidth={bucketWidth}
-						combineHistogram={combineHistogram}
-						setCombineHistogram={setCombineHistogram}
-						setBucketWidth={setBucketWidth}
-						setBucketCount={setBucketCount}
-						setOpacity={setOpacity}
-						selectedNullZeroValue={selectedNullZeroValue}
-						setSelectedNullZeroValue={setSelectedNullZeroValue}
-						selectedGraph={graphType}
-						setSelectedTime={setSelectedTime}
-						selectedTime={selectedTime}
-						setYAxisUnit={setYAxisUnit}
-						thresholds={thresholds}
-						setThresholds={setThresholds}
-						selectedWidget={selectedWidget}
-						isFillSpans={isFillSpans}
-						setIsFillSpans={setIsFillSpans}
-						softMin={softMin}
-						setSoftMin={setSoftMin}
-						softMax={softMax}
-						setSoftMax={setSoftMax}
-					/>
+					<OverlayScrollbar style={{ height: '100%' }}>
+						<RightContainer
+							setGraphHandler={setGraphHandler}
+							title={title}
+							setTitle={setTitle}
+							description={description}
+							setDescription={setDescription}
+							stacked={stacked}
+							setStacked={setStacked}
+							stackedBarChart={stackedBarChart}
+							setStackedBarChart={setStackedBarChart}
+							opacity={opacity}
+							yAxisUnit={yAxisUnit}
+							columnUnits={columnUnits}
+							setColumnUnits={setColumnUnits}
+							bucketCount={bucketCount}
+							bucketWidth={bucketWidth}
+							combineHistogram={combineHistogram}
+							setCombineHistogram={setCombineHistogram}
+							setBucketWidth={setBucketWidth}
+							setBucketCount={setBucketCount}
+							setOpacity={setOpacity}
+							selectedNullZeroValue={selectedNullZeroValue}
+							setSelectedNullZeroValue={setSelectedNullZeroValue}
+							selectedGraph={graphType}
+							setSelectedTime={setSelectedTime}
+							selectedTime={selectedTime}
+							setYAxisUnit={setYAxisUnit}
+							thresholds={thresholds}
+							setThresholds={setThresholds}
+							selectedWidget={selectedWidget}
+							isFillSpans={isFillSpans}
+							setIsFillSpans={setIsFillSpans}
+							softMin={softMin}
+							setSoftMin={setSoftMin}
+							softMax={softMax}
+							setSoftMax={setSoftMax}
+						/>
+					</OverlayScrollbar>
 				</RightContainerWrapper>
 			</PanelContainer>
 			<Modal
