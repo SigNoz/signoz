@@ -231,7 +231,7 @@ type TagType string
 const (
 	TagTypeTag                  TagType = "tag"
 	TagTypeResource             TagType = "resource"
-	TagTypeInstrumentationScope TagType = "instrumentation_scope"
+	TagTypeInstrumentationScope TagType = "scope"
 )
 
 func (q TagType) Validate() error {
