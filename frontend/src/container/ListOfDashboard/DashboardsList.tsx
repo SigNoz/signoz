@@ -707,6 +707,7 @@ function DashboardsList(): JSX.Element {
 								<Button
 									type="text"
 									className="learn-more"
+									data-testid="learn-more"
 									onClick={(): void => {
 										window.open(
 											'https://signoz.io/docs/userguide/manage-dashboards?utm_source=product&utm_medium=dashboard-list-empty-state',

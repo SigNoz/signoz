@@ -43,3 +43,8 @@ export const dashboardSuccessResponse = {
 		},
 	],
 };
+
+export const dashboardEmptyState = {
+	status: 'sucsess',
+	data: [],
+};

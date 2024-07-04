@@ -1,6 +1,9 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import ROUTES from 'constants/routes';
 import DashboardsList from 'container/ListOfDashboard';
+import { dashboardEmptyState } from 'mocks-server/__mockdata__/dashboards';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
@@ -14,6 +17,9 @@ jest.mock('react-router-dom', () => ({
 		},
 	}),
 }));
+
+const mockWindowOpen = jest.fn();
+window.open = mockWindowOpen;
 
 describe('dashboard list page', () => {
 	// should render on updatedAt and descend when the column key and order is messed up
@@ -130,5 +136,72 @@ describe('dashboard list page', () => {
 		expect(
 			document.querySelector('.ant-table-pagination'),
 		).not.toBeInTheDocument();
+	});
+
+	it('dashboard empty search state', async () => {
+		const mockLocation = {
+			pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.ALL_DASHBOARD}/`,
+			search: `columnKey=createdAt&order=descend&page=1&search=someRandomString`,
+		};
+		(useLocation as jest.Mock).mockReturnValue(mockLocation);
+		const { getByText } = render(
+			<MemoryRouter
+				initialEntries={[
+					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
+				]}
+			>
+				<DashboardProvider>
+					<DashboardsList />
+				</DashboardProvider>
+			</MemoryRouter>,
+		);
+
+		await waitFor(() =>
+			expect(
+				getByText(
+					'No dashboards found for someRandomString. Create a new dashboard?',
+				),
+			).toBeInTheDocument(),
+		);
+	});
+
+	it('dashboard empty state', async () => {
+		const mockLocation = {
+			pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.ALL_DASHBOARD}/`,
+			search: `columnKey=createdAt&order=descend&page=1`,
+		};
+		(useLocation as jest.Mock).mockReturnValue(mockLocation);
+		server.use(
+			rest.get('http://localhost/api/v1/dashboards', (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(dashboardEmptyState)),
+			),
+		);
+		const { getByText, getByTestId } = render(
+			<MemoryRouter
+				initialEntries={[
+					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
+				]}
+			>
+				<DashboardProvider>
+					<DashboardsList />
+				</DashboardProvider>
+			</MemoryRouter>,
+		);
+
+		await waitFor(() =>
+			expect(getByText('No dashboards yet.')).toBeInTheDocument(),
+		);
+
+		const learnMoreButton = getByTestId('learn-more');
+		expect(learnMoreButton).toBeInTheDocument();
+		fireEvent.click(learnMoreButton);
+
+		// test the correct link to be added for the dashboards empty state
+		await waitFor(() =>
+			expect(mockWindowOpen).toHaveBeenCalledWith(
+				'https://signoz.io/docs/userguide/manage-dashboards?utm_source=product&utm_medium=dashboard-list-empty-state',
+				'_blank',
+			),
+		);
 	});
 });
