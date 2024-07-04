@@ -1,15 +1,15 @@
-import './virtuosoOverlayScrollbar.scss';
+import './overlayScrollbarForVirtuosoChildren.scss';
 
 import useInitializeOverlayScrollbar from 'hooks/useInitializeOverlayScrollbar/useInitializeOverlayScrollbar';
 import React, { ReactElement } from 'react';
 
-interface VirtuosoOverlayScrollbarProps {
+interface OverlayScrollbarForVirtuosoChildrenProps {
 	children: ReactElement;
 }
 
-export default function VirtuosoOverlayScrollbar({
+export default function OverlayScrollbarForVirtuosoChildren({
 	children,
-}: VirtuosoOverlayScrollbarProps): JSX.Element {
+}: OverlayScrollbarForVirtuosoChildrenProps): JSX.Element {
 	const { rootRef, setScroller } = useInitializeOverlayScrollbar();
 
 	const enhancedChild = React.cloneElement(children, {

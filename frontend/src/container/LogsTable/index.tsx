@@ -7,9 +7,9 @@ import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import LogsTableView from 'components/Logs/TableView';
+import OverlayScrollbarForVirtuosoChildren from 'components/OverlayScrollbarForVirtuosoChildren/OverlayScrollbarForVirtuosoChildren';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
-import VirtuosoOverlayScrollbar from 'container/VirtuosoOverlayScrollbar/VirtuosoOverlayScrollbar';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -98,9 +98,9 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 
 		return (
 			<Card className="logs-card" bodyStyle={CARD_BODY_STYLE}>
-				<VirtuosoOverlayScrollbar>
+				<OverlayScrollbarForVirtuosoChildren>
 					<Virtuoso totalCount={logs.length} itemContent={getItemContent} />
-				</VirtuosoOverlayScrollbar>
+				</OverlayScrollbarForVirtuosoChildren>
 			</Card>
 		);
 	}, [getItemContent, linesPerRow, logs, onSetActiveLog, selected, viewMode]);
