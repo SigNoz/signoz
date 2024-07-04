@@ -773,6 +773,7 @@ function DashboardsList(): JSX.Element {
 															type="text"
 															className={cx('sort-btns')}
 															onClick={(): void => sortHandle('createdAt')}
+															data-testid="sort-by-last-created"
 														>
 															Last created
 															{sortOrder.columnKey === 'createdAt' && <Check size={14} />}
@@ -781,6 +782,7 @@ function DashboardsList(): JSX.Element {
 															type="text"
 															className={cx('sort-btns')}
 															onClick={(): void => sortHandle('updatedAt')}
+															data-testid="sort-by-last-updated"
 														>
 															Last updated
 															{sortOrder.columnKey === 'updatedAt' && <Check size={14} />}
@@ -791,7 +793,7 @@ function DashboardsList(): JSX.Element {
 												placement="bottomRight"
 												arrow={false}
 											>
-												<ArrowDownWideNarrow size={14} />
+												<ArrowDownWideNarrow size={14} data-testid="sort-by" />
 											</Popover>
 										</Tooltip>
 										<Popover
