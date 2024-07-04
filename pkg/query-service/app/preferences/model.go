@@ -2,6 +2,7 @@ package preferences
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -88,15 +89,12 @@ func InitDB(datasourceName string) error {
 
 	for _, preferenceGroup := range preferenceGroups {
 
-		var preferenceGroupFromDB []PreferenceGroup
+		var preferenceGroupFromDB PreferenceGroup
 		query := `SELECT id FROM preference_group WHERE id=$1;`
-		err = db.Select(&preferenceGroupFromDB, query, preferenceGroup.Id)
+		err = db.Get(&preferenceGroupFromDB, query, preferenceGroup.Id)
 
-		if err != nil {
-			return fmt.Errorf("error in finding bootstrap entries in preference group entity: %s", err.Error())
-		}
-
-		if len(preferenceGroupFromDB) == 0 {
+		// if the preference group is not present then insert the same
+		if err == sql.ErrNoRows {
 			query = `INSERT INTO preference_group(id,name,parent_group) VALUES($1,$2,$3);`
 
 			_, err = db.Exec(query, preferenceGroup.Id, preferenceGroup.Name, preferenceGroup.ParentGroup)
@@ -104,8 +102,9 @@ func InitDB(datasourceName string) error {
 			if err != nil {
 				return fmt.Errorf("error in adding bootstrap preference group: %s", err.Error())
 			}
-		} else if len(preferenceGroupFromDB) > 1 {
-			return fmt.Errorf("multiple entries found for preference group entity while bootstrapping: %s", preferenceGroup.Id)
+		} else if err != nil {
+			// if there is some other error in query return from here
+			return fmt.Errorf("error in bootstrap entries in preference group entity: %s", err.Error())
 		}
 
 	}
@@ -145,15 +144,12 @@ func InitDB(datasourceName string) error {
 
 	for _, preference := range preferences {
 
-		var preferenceFromDB []Preference
+		var preferenceFromDB Preference
 		query := `SELECT id FROM preference WHERE id=$1;`
-		err = db.Select(&preferenceFromDB, query, preference.Id)
+		err = db.Get(&preferenceFromDB, query, preference.Id)
 
-		if err != nil {
-			return fmt.Errorf("error in finding bootstrap entries in preference entity: %s", err.Error())
-		}
-
-		if len(preferenceFromDB) == 0 {
+		// if the preference entity is not present insert the same
+		if err == sql.ErrNoRows {
 			query = `INSERT INTO preference(id,name,default_value,depends_on,user,org,group_id) VALUES($1,$2,$3,$4,$5,$6,$7);`
 
 			_, err = db.Exec(query, preference.Id, preference.Name, preference.DefaultValue, preference.DependsOn, preference.UserScope, preference.OrgScope, preference.GroupId)
@@ -161,8 +157,9 @@ func InitDB(datasourceName string) error {
 			if err != nil {
 				return fmt.Errorf("error in adding bootstrap preference: %s", err.Error())
 			}
-		} else if len(preferenceFromDB) > 1 {
-			return fmt.Errorf("multiple entries found for preference entity while bootstrapping: %s", preference.Id)
+		} else if err != nil {
+			// if there is some other error in query return from here
+			return fmt.Errorf("error in bootstrap entries in preference entity: %s", err.Error())
 		}
 
 	}
@@ -218,23 +215,23 @@ func InitDB(datasourceName string) error {
 }
 
 func GetUserPreference(ctx context.Context, preferenceId string, orgId string) (*PreferenceKV, *model.ApiError) {
-	userPreference := []PreferenceKV{}
-	orgPreference := []PreferenceKV{}
+	userPreference := PreferenceKV{}
+	orgPreference := PreferenceKV{}
 	user := common.GetUserFromContext(ctx)
 
 	// get the preference id and value from the user preference table
 	query := `SELECT preference_id, preference_value FROM user_preference WHERE preference_id = $1 AND user_id = $2;`
-	err := db.Select(&userPreference, query, preferenceId, user.Id)
+	err := db.Get(&userPreference, query, preferenceId, user.Id)
 
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
 	// get the preference id and value from the org preference table
 	query = `SELECT preference_id,preference_value FROM org_preference WHERE preference_id=$1 AND org_id=$2;`
-	err = db.Select(&orgPreference, query, preferenceId, orgId)
+	err = db.Get(&orgPreference, query, preferenceId, orgId)
 
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
@@ -243,30 +240,24 @@ func GetUserPreference(ctx context.Context, preferenceId string, orgId string) (
 	query = `SELECT user, org , default_value FROM preference WHERE id = $1;`
 	err = db.Get(&preference, query, preferenceId)
 
-	// return if unable to fetch the preference entity as we won't be sure about preference being enabled or not
+	// return if unable to fetch the preference entity as we won't be sure about preference being enabled or not also if the preference doesn't exist
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("error while fetching the preference entity: %s", preferenceId)}
 	}
 
 	// return err if the preference is not enabled for user scope
 	if preference.UserScope != 1 {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference not enabled with key: %s", preferenceId)}
-	}
-
-	if len(userPreference) > 1 || len(orgPreference) > 1 {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference id: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference not enabled for user scope with key: %s", preferenceId)}
 	}
 
 	preferenceValue := PreferenceKV{PreferenceId: preferenceId, PreferenceValue: preference.DefaultValue}
 
-	if preference.OrgScope == 1 {
-		if len(orgPreference) == 1 {
-			preferenceValue.PreferenceValue = orgPreference[0].PreferenceValue
-		}
+	if preference.OrgScope == 1 && orgPreference.PreferenceId != "" {
+		preferenceValue.PreferenceValue = orgPreference.PreferenceValue
 	}
 
-	if len(userPreference) == 1 {
-		preferenceValue.PreferenceValue = userPreference[0].PreferenceValue
+	if userPreference.PreferenceId != "" {
+		preferenceValue.PreferenceValue = userPreference.PreferenceValue
 	}
 
 	return &preferenceValue, nil
@@ -277,39 +268,32 @@ func UpdateUserPreference(ctx context.Context, req *PreferenceKV) (*PreferenceKV
 	preferenceValue := req.PreferenceValue
 	user := common.GetUserFromContext(ctx)
 
-	userPreference := []PreferenceKV{}
-
 	// return error if there is no preference id in the request
 	if preferenceId == "" {
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference id found in the request")}
 	}
 
-	query := `SELECT preference_id FROM user_preference WHERE preference_id= $1 AND user_id= $2;`
-	err := db.Select(&userPreference, query, preferenceId, user.Id)
+	preference := Preference{}
+	query := `SELECT user FROM preference WHERE id=$1;`
+	err := db.Get(&preference, query, preferenceId)
 
-	// return the error if the select statement to find the current user preferences fails
 	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting the preference value: %s", err)}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("no such preference exists: %s", err)}
 	}
 
-	if len(userPreference) == 0 {
-		query = `INSERT INTO user_preference(preference_id,preference_value,user_id) VALUES($1,$2,$3);`
-		_, err = db.Exec(query, preferenceId, preferenceValue, user.Id)
+	if preference.UserScope != 1 {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("this preference is not enabled at user scope: %s", preferenceId)}
+	}
 
-		// return the error if the insert statement fails
-		if err != nil {
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
-		}
+	query = `INSERT INTO user_preference(preference_id,preference_value,user_id) VALUES($1,$2,$3)
+	ON CONFLICT(preference_id,user_id) DO
+	UPDATE SET preference_value= $2 WHERE preference_id=$1 AND user_id=$3;
+	`
 
-	} else if len(userPreference) == 1 {
-		query = `UPDATE user_preference SET preference_value= $1 WHERE preference_id=$2 AND user_id=$3;`
-		_, err = db.Exec(query, preferenceValue, preferenceId, user.Id)
-		// return the error if the update statement fails
-		if err != nil {
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
-		}
-	} else {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference: %s", err)}
+	_, err = db.Exec(query, preferenceId, preferenceValue, user.Id)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
 	}
 
 	return &PreferenceKV{
@@ -319,13 +303,13 @@ func UpdateUserPreference(ctx context.Context, req *PreferenceKV) (*PreferenceKV
 }
 
 func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*PreferenceKV, *model.ApiError) {
-	orgPreference := []PreferenceKV{}
+	orgPreference := PreferenceKV{}
 
 	// get the preference id and value from the org preference table
 	query := `SELECT preference_id, preference_value FROM org_preference WHERE preference_id = $1 AND org_id = $2;`
-	err := db.Select(&orgPreference, query, preferenceId, orgId)
+	err := db.Get(&orgPreference, query, preferenceId, orgId)
 
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
@@ -346,10 +330,8 @@ func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*
 
 	preferenceValue := PreferenceKV{PreferenceId: preferenceId, PreferenceValue: preference.DefaultValue}
 
-	if len(orgPreference) == 1 {
-		preferenceValue.PreferenceValue = orgPreference[0].PreferenceValue
-	} else if len(orgPreference) > 1 {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference id: %s", preferenceId)}
+	if orgPreference.PreferenceId != "" {
+		preferenceValue.PreferenceValue = orgPreference.PreferenceValue
 	}
 
 	return &preferenceValue, nil
@@ -360,8 +342,6 @@ func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (
 	preferenceValue := req.PreferenceValue
 	orgId := req.OrgId
 
-	orgPreference := []PreferenceKV{}
-
 	// return error if there is no preference id in the request
 	if preferenceId == "" {
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference id found in the request")}
@@ -371,32 +351,27 @@ func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org id found in the request")}
 	}
 
-	query := `SELECT preference_id FROM org_preference WHERE preference_id= $1 AND org_id= $2;`
-	err := db.Select(&orgPreference, query, preferenceId, orgId)
+	preference := Preference{}
+	query := `SELECT org FROM preference WHERE id=$1;`
+	err := db.Get(&preference, query, preferenceId)
 
-	// return the error if the select statement to find the current org preferences fails
 	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting the preference value: %s", err)}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("no such preference exists: %s", err)}
 	}
 
-	if len(orgPreference) == 0 {
-		query = `INSERT INTO org_preference(preference_id,preference_value,org_id) VALUES($1,$2,$3);`
-		_, err = db.Exec(query, preferenceId, preferenceValue, orgId)
+	if preference.OrgScope != 1 {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("this preference is not enabled at org scope: %s", preferenceId)}
+	}
 
-		// return the error if the insert statement fails
-		if err != nil {
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
-		}
+	query = `INSERT INTO org_preference(preference_id,preference_value,org_id) VALUES($1,$2,$3)
+	ON CONFLICT(preference_id,org_id) DO
+	UPDATE SET preference_value= $2 WHERE preference_id=$1 AND org_id=$3;
+	`
 
-	} else if len(orgPreference) == 1 {
-		query = `UPDATE org_preference SET preference_value= $1 WHERE preference_id=$2 AND org_id=$3;`
-		_, err = db.Exec(query, preferenceValue, preferenceId, orgId)
-		// return the error if the update statement fails
-		if err != nil {
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
-		}
-	} else {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("more than one value found for preference: %s", err)}
+	_, err = db.Exec(query, preferenceId, preferenceValue, orgId)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err)}
 	}
 
 	return &PreferenceKV{
@@ -451,7 +426,11 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferenceRe
 
 	for _, preference := range orgPreferencesWithGroups {
 		preferenceWithValue := Preferences{}
-		preferenceWithValue.Value = preferenceValueMap[preference.Id]
+		if preferenceValueMap[preference.Id] == "" {
+			preferenceWithValue.Value = preference.DefaultValue
+		} else {
+			preferenceWithValue.Value = preferenceValueMap[preference.Id]
+		}
 		preferenceWithValue.Id = preference.Id
 		preferenceWithValue.Name = preference.Name
 		preferenceWithValue.DefaultValue = preference.DefaultValue
@@ -556,6 +535,9 @@ func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferenceR
 			if value, seen := userPreferenceValueMap[preference.Id]; seen {
 				preferenceWithValue.Value = value
 			}
+		}
+		if preferenceWithValue.Value == "" {
+			preferenceWithValue.Value = preference.DefaultValue
 		}
 		preferenceWithValue.Id = preference.Id
 		preferenceWithValue.Name = preference.Name

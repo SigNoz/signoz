@@ -2200,11 +2200,11 @@ func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddl
 
 	subRouter.HandleFunc("/user/all", am.ViewAccess(ah.getAllUserPreference)).Methods(http.MethodGet)
 
-	subRouter.HandleFunc("/org", am.ViewAccess(ah.getOrgPreference)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/org", am.AdminAccess(ah.getOrgPreference)).Methods(http.MethodGet)
 
-	subRouter.HandleFunc("/org", am.ViewAccess(ah.updateOrgPreference)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/org", am.AdminAccess(ah.updateOrgPreference)).Methods(http.MethodPost)
 
-	subRouter.HandleFunc("/org/all", am.ViewAccess(ah.getAllOrgPreference)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/org/all", am.AdminAccess(ah.getAllOrgPreference)).Methods(http.MethodGet)
 
 }
 
