@@ -23,7 +23,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import history from 'lib/history';
 import { defaultTo, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
-import OverlayScrollbar from 'OverlayScrollbar/OverlayScrollbar';
+import OverlayScrollbarForTypicalChildren from 'OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -587,7 +587,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 			<PanelContainer>
 				<LeftContainerWrapper isDarkMode={useIsDarkMode()}>
-					<OverlayScrollbar style={{ height: '100%' }}>
+					<OverlayScrollbarForTypicalChildren style={{ height: '100%' }}>
 						{selectedWidget && (
 							<LeftContainer
 								selectedGraph={graphType}
@@ -602,11 +602,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								isLoadingPanelData={isLoadingPanelData}
 							/>
 						)}
-					</OverlayScrollbar>
+					</OverlayScrollbarForTypicalChildren>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper>
-					<OverlayScrollbar style={{ height: '100%' }}>
+					<OverlayScrollbarForTypicalChildren style={{ height: '100%' }}>
 						<RightContainer
 							setGraphHandler={setGraphHandler}
 							title={title}
@@ -644,7 +644,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							softMax={softMax}
 							setSoftMax={setSoftMax}
 						/>
-					</OverlayScrollbar>
+					</OverlayScrollbarForTypicalChildren>
 				</RightContainerWrapper>
 			</PanelContainer>
 			<Modal

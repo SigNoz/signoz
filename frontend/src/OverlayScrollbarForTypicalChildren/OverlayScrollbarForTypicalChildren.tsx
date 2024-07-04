@@ -12,7 +12,7 @@ interface Props extends OverlayScrollbarsComponentProps {
 	options?: PartialOptions;
 }
 
-export default function OverlayScrollbar({
+export default function OverlayScrollbarForTypicalChildren({
 	children,
 	style,
 	options,
@@ -36,4 +36,4 @@ export default function OverlayScrollbar({
 	);
 }
 
-OverlayScrollbar.defaultProps = { style: {}, options: {} };
+OverlayScrollbarForTypicalChildren.defaultProps = { style: {}, options: {} };

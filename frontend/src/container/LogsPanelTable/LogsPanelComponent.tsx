@@ -14,7 +14,7 @@ import { useLogsData } from 'hooks/useLogsData';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import OverlayScrollbar from 'OverlayScrollbar/OverlayScrollbar';
+import OverlayScrollbarForTypicalChildren from 'OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
 import {
 	Dispatch,
 	HTMLAttributes,
@@ -208,7 +208,7 @@ function LogsPanelComponent({
 		<>
 			<div className="logs-table">
 				<div className="resize-table">
-					<OverlayScrollbar>
+					<OverlayScrollbarForTypicalChildren>
 						<Table
 							pagination={false}
 							tableLayout="fixed"
@@ -220,7 +220,7 @@ function LogsPanelComponent({
 							columns={columns}
 							onRow={handleRow}
 						/>
-					</OverlayScrollbar>
+					</OverlayScrollbarForTypicalChildren>
 				</div>
 				{!widget.query.builder.queryData[0].limit && (
 					<div className="controller">

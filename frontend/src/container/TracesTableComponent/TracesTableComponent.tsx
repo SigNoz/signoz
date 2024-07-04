@@ -14,7 +14,7 @@ import { Pagination } from 'hooks/queryPagination';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import OverlayScrollbar from 'OverlayScrollbar/OverlayScrollbar';
+import OverlayScrollbarForTypicalChildren from 'OverlayScrollbarForTypicalChildren/OverlayScrollbarForTypicalChildren';
 import {
 	Dispatch,
 	HTMLAttributes,
@@ -87,7 +87,7 @@ function TracesTableComponent({
 	return (
 		<div className="traces-table">
 			<div className="resize-table">
-				<OverlayScrollbar>
+				<OverlayScrollbarForTypicalChildren>
 					<Table
 						pagination={false}
 						tableLayout="fixed"
@@ -99,7 +99,7 @@ function TracesTableComponent({
 						onRow={handleRow}
 						sticky
 					/>
-				</OverlayScrollbar>
+				</OverlayScrollbarForTypicalChildren>
 			</div>
 			<div className="controller">
 				<Controls
