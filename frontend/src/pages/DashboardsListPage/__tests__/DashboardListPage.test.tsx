@@ -64,6 +64,7 @@ describe('dashboard list page', () => {
 		expect(secondElement.textContent).toBe('captain america');
 	});
 
+	// change the sort by order and dashboards list ot be updated accordingly
 	it('dashboards list should be correctly updated on choosing the different sortBy from dropdown values', async () => {
 		const { getByText, getByTestId } = render(
 			<MemoryRouter
