@@ -21,6 +21,7 @@ export default function TypicalOverlayScrollbar({
 			options={options}
 			style={style}
 			className="overlay-scrollbar"
+			data-overlayscrollbars-initialize
 		>
 			{children}
 		</OverlayScrollbarsComponent>

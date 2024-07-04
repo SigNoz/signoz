@@ -304,9 +304,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						collapsed={collapsed}
 					/>
 				)}
-				<div className={cx('app-content', collapsed ? 'collapsed' : '')}>
+				<div
+					className={cx('app-content', collapsed ? 'collapsed' : '')}
+					data-overlayscrollbars-initialize
+				>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-						<LayoutContent>
+						<LayoutContent data-overlayscrollbars-initialize>
 							<OverlayScrollbar style={{ height: '100%' }}>
 								<ChildrenContainer
 									style={{

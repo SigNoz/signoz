@@ -19,11 +19,12 @@ export default function VirtuosoOverlayScrollbar({
 
 	const enhancedChild = React.cloneElement(children, {
 		scrollerRef: setScroller,
+		'data-overlayscrollbars-initialize': true,
 	});
 
 	return (
 		<div
-			data-overlayscrollbars-initialize=""
+			data-overlayscrollbars-initialize
 			ref={rootRef}
 			className="overlay-scroll-wrapper"
 			style={style}
