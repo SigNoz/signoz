@@ -87,9 +87,6 @@ function ClickHouseQueryBuilder({
 				'editor.background': Color.BG_INK_300,
 			},
 		});
-		document.fonts.ready.then(() => {
-			monaco.editor.remeasureFonts();
-		});
 	}
 
 	return (
@@ -105,6 +102,11 @@ function ClickHouseQueryBuilder({
 				height="200px"
 				onChange={handleUpdateEditor}
 				value={queryData.query}
+				onMount={(_, monaco): void => {
+					document.fonts.ready.then(() => {
+						monaco.editor.remeasureFonts();
+					});
+				}}
 				options={{
 					scrollbar: {
 						alwaysConsumeMouseWheel: false,
