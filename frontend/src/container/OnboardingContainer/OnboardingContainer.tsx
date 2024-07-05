@@ -4,6 +4,7 @@ import './Onboarding.styles.scss';
 
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
@@ -305,7 +306,13 @@ export default function Onboarding(): JSX.Element {
 			{activeStep === 1 && (
 				<div className="onboarding-page">
 					<div>
-						<div onClick={(): void => history.push('/')} className="skip-to-console">
+						<div
+							onClick={(): void => {
+								logEvent('Onboarding V2: Skip Button Clicked', {});
+								history.push('/');
+							}}
+							className="skip-to-console"
+						>
 							{t('skip')}
 						</div>
 						<FullScreenHeader />
@@ -367,7 +374,13 @@ export default function Onboarding(): JSX.Element {
 						<div className="invite-member">
 							<Typography.Text>{t('invite_user')}</Typography.Text>
 							<Button
-								onClick={(): void => setIsInviteTeamMemberModalOpen(true)}
+								onClick={(): void => {
+									logEvent('Onboarding V2: Invite Member', {
+										module: selectedModule?.id,
+										page: 'homepage',
+									});
+									setIsInviteTeamMemberModalOpen(true);
+								}}
 								icon={<UserPlus size={16} />}
 								type="primary"
 							>

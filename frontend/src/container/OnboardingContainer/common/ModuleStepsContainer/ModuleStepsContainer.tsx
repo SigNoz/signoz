@@ -440,7 +440,13 @@ Thanks
 					/>
 				</div>
 				<Button
-					onClick={(): void => setIsInviteTeamMemberModalOpen(true)}
+					onClick={(): void => {
+						logEvent('Onboarding V2: Invite Member', {
+							module: selectedModule?.id,
+							page: 'sidebar',
+						});
+						setIsInviteTeamMemberModalOpen(true);
+					}}
 					icon={<UserPlus size={16} />}
 					className="invite-user-btn"
 				>
