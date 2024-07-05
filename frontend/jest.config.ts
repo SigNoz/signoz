@@ -9,6 +9,7 @@ const config: Config.InitialOptions = {
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
 		'\\.(css|less|scss)$': '<rootDir>/__mocks__/cssMock.ts',
+		'\\.md$': '<rootDir>/__mocks__/cssMock.ts',
 	},
 	globals: {
 		extensionsToTreatAsEsm: ['.ts'],
@@ -23,7 +24,7 @@ const config: Config.InitialOptions = {
 		'^.+\\.(js|jsx)$': 'babel-jest',
 	},
 	transformIgnorePatterns: [
-		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens|d3-interpolate|d3-color)/)',
+		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens|d3-interpolate|d3-color|react-markdown|vfile|vfile-message)/)',
 	],
 	setupFilesAfterEnv: ['<rootDir>jest.setup.ts'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],

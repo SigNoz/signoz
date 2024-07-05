@@ -27,6 +27,7 @@ export interface InviteUserModalProps {
 	toggleModal: (value: boolean) => void;
 	form: FormInstance<InviteMemberFormValues>;
 	setDataSource?: Dispatch<SetStateAction<DataProps[]>>;
+	shouldCallApi?: boolean;
 }
 
 interface DataProps {
@@ -43,6 +44,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 		toggleModal,
 		form,
 		setDataSource,
+		shouldCallApi = false,
 	} = props;
 	const { notifications } = useNotifications();
 	const { t } = useTranslation(['organizationsettings', 'common']);
@@ -53,13 +55,14 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 	const getPendingInvitesResponse = useQuery({
 		queryFn: getPendingInvites,
 		queryKey: ['getPendingInvites', user?.accessJwt],
+		enabled: shouldCallApi,
 	});
 
 	const getParsedInviteData = useCallback(
 		(payload: PayloadProps = []) =>
 			payload?.map((data) => ({
 				key: data.createdAt,
-				name: data.name,
+				name: data?.name,
 				email: data.email,
 				accessLevel: data.role,
 				inviteLink: `${window.location.origin}${ROUTES.SIGN_UP}?token=${data.token}`,
@@ -92,7 +95,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 					async (member): Promise<void> => {
 						const { error, statusCode } = await sendInvite({
 							email: member.email,
-							name: member.name,
+							name: member?.name,
 							role: member.role,
 							frontendBaseUrl: window.location.origin,
 						});
@@ -119,7 +122,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 						setDataSource?.(getParsedInviteData(data?.payload || []));
 					}
 					setIsInvitingMembers?.(false);
-					toggleModal(false);
+					toggleModal?.(false);
 				}, 2000);
 			} catch (error) {
 				notifications.error({
@@ -146,6 +149,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 			open={isInviteTeamMemberModalOpen}
 			onCancel={(): void => toggleModal(false)}
 			centered
+			data-testid="invite-team-members-modal"
 			destroyOnClose
 			footer={[
 				<Button key="back" onClick={(): void => toggleModal(false)} type="default">
@@ -156,6 +160,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 				<Button
 					key={t('invite_team_members').toString()}
 					onClick={modalForm.submit}
+					data-testid="invite-team-members-button"
 					type="primary"
 					disabled={isInvitingMembers}
 					loading={isInvitingMembers}
@@ -171,6 +176,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 
 InviteUserModal.defaultProps = {
 	setDataSource: (): void => {},
+	shouldCallApi: false,
 };
 
 export default InviteUserModal;

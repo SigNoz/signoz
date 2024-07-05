@@ -196,6 +196,7 @@ function PendingInvitesContainer(): JSX.Element {
 				isInviteTeamMemberModalOpen={isInviteTeamMemberModalOpen}
 				setDataSource={setDataSource}
 				toggleModal={toggleModal}
+				shouldCallApi
 			/>
 
 			<Space direction="vertical" size="middle">
