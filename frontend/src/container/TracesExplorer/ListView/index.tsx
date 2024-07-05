@@ -129,6 +129,12 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		[columns, onDragColumns],
 	);
 
+	const isDataPresent =
+		!isLoading &&
+		!isFetching &&
+		!isError &&
+		transformedQueryTableData.length === 0;
+
 	return (
 		<Container>
 			{transformedQueryTableData.length !== 0 && (
@@ -146,19 +152,11 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				<TracesLoading />
 			)}
 
-			{!isLoading &&
-				!isFetching &&
-				!isError &&
-				!isFilterApplied &&
-				transformedQueryTableData.length === 0 && (
-					<NoLogs dataSource={DataSource.TRACES} />
-				)}
+			{isDataPresent && !isFilterApplied && (
+				<NoLogs dataSource={DataSource.TRACES} />
+			)}
 
-			{!isLoading &&
-				!isFetching &&
-				transformedQueryTableData.length === 0 &&
-				!isError &&
-				isFilterApplied && <EmptyLogsSearch />}
+			{isDataPresent && isFilterApplied && <EmptyLogsSearch />}
 
 			{!isError && transformedQueryTableData.length !== 0 && (
 				<ResizeTable
