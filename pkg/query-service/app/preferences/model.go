@@ -394,18 +394,7 @@ func GetAllOrgPreferences(ctx context.Context) (*[]AllPreferenceResponse, *model
 
 	orgId := common.GetUserFromContext(ctx).OrgId
 	orgPreferencesWithGroups := []Preference{}
-	query := `
-	SELECT 
-        id,
-        name,
-        default_value,
-	    depends_on,
-	    user,
-	    org,
-        group_id
-  	FROM 
-        preference
-  	WHERE preference.org = 1;`
+	query := `SELECT id,name,default_value,depends_on,user,org,group_id FROM preference WHERE preference.org = 1;`
 
 	err := db.Select(&orgPreferencesWithGroups, query, orgId)
 
@@ -479,18 +468,7 @@ func GetAllUserPreferences(ctx context.Context) (*[]AllPreferenceResponse, *mode
 	orgId := user.OrgId
 
 	allUserPreferencesWithGroups := []Preference{}
-	query := `
-	SELECT 
-        id,
-        name,
-        default_value,
-	    depends_on,
-	    user,
-	    org,
-        group_id
-  	FROM 
-        preference
-  	WHERE preference.user = 1;`
+	query := `SELECT id,name,default_value,depends_on,user,org,group_id FROM preferenceWHERE preference.user = 1;`
 
 	err := db.Select(&allUserPreferencesWithGroups, query, user.Id, orgId)
 
