@@ -7,8 +7,6 @@ import { generatePath, Link } from 'react-router-dom';
 import { ListItem } from 'types/api/widgets/getQuery';
 
 export const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];
-export const TRACES_DETAILS_LINK =
-	'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=traces-explorer-trace-tab#traces-view';
 
 export const columns: ColumnsType<ListItem['data']> = [
 	{

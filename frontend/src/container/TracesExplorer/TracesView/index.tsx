@@ -15,10 +15,11 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import DOCLINKS from 'utils/docLinks';
 
 import TraceExplorerControls from '../Controls';
 import { TracesLoading } from '../TraceLoading/TraceLoading';
-import { columns, PER_PAGE_OPTIONS, TRACES_DETAILS_LINK } from './configs';
+import { columns, PER_PAGE_OPTIONS } from './configs';
 import { ActionsContainer, Container } from './styles';
 
 interface TracesViewProps {
@@ -77,7 +78,7 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 				<ActionsContainer>
 					<Typography>
 						This tab only shows Root Spans. More details
-						<Typography.Link href={TRACES_DETAILS_LINK} target="_blank">
+						<Typography.Link href={DOCLINKS.TRACES_DETAILS_LINK} target="_blank">
 							{' '}
 							here
 						</Typography.Link>
