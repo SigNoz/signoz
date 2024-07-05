@@ -2210,14 +2210,7 @@ func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddl
 
 func (aH *APIHandler) getAllUserPreference(w http.ResponseWriter, r *http.Request) {
 
-	orgId := r.URL.Query().Get("orgId")
-
-	if orgId == "" {
-		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org id found in the request")}, nil)
-		return
-	}
-
-	preference, err := preferences.GetAllUserPreferences(r.Context(), orgId)
+	preference, err := preferences.GetAllUserPreferences(r.Context())
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -2229,7 +2222,6 @@ func (aH *APIHandler) getAllUserPreference(w http.ResponseWriter, r *http.Reques
 
 func (aH *APIHandler) getUserPreference(w http.ResponseWriter, r *http.Request) {
 	preferenceId := r.URL.Query().Get("preferenceId")
-	orgId := r.URL.Query().Get("orgId")
 
 	// if no preference key is found in the request return here
 	if preferenceId == "" {
@@ -2237,13 +2229,7 @@ func (aH *APIHandler) getUserPreference(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// if no org id is found in the request return here
-	if orgId == "" {
-		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org Id found in the request")}, nil)
-		return
-	}
-
-	preference, err := preferences.GetUserPreference(r.Context(), preferenceId, orgId)
+	preference, err := preferences.GetUserPreference(r.Context(), preferenceId)
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -2275,14 +2261,7 @@ func (ah *APIHandler) updateUserPreference(w http.ResponseWriter, r *http.Reques
 
 func (aH *APIHandler) getAllOrgPreference(w http.ResponseWriter, r *http.Request) {
 
-	orgId := r.URL.Query().Get("orgId")
-
-	if orgId == "" {
-		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org id found in the request")}, nil)
-		return
-	}
-
-	preference, err := preferences.GetAllOrgPreferences(r.Context(), orgId)
+	preference, err := preferences.GetAllOrgPreferences(r.Context())
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -2293,19 +2272,13 @@ func (aH *APIHandler) getAllOrgPreference(w http.ResponseWriter, r *http.Request
 }
 func (aH *APIHandler) getOrgPreference(w http.ResponseWriter, r *http.Request) {
 	preferenceId := r.URL.Query().Get("preferenceId")
-	orgId := r.URL.Query().Get("orgId")
 
 	if preferenceId == "" {
 		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference id found in the request")}, nil)
 		return
 	}
 
-	if orgId == "" {
-		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no org id found in the request")}, nil)
-		return
-	}
-
-	preference, err := preferences.GetOrgPreference(r.Context(), preferenceId, orgId)
+	preference, err := preferences.GetOrgPreference(r.Context(), preferenceId)
 
 	if err != nil {
 		RespondError(w, err, nil)

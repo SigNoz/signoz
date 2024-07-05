@@ -37,7 +37,6 @@ type PreferenceKV struct {
 }
 
 type UpdateOrgPreferenceRequest struct {
-	OrgId           string `json:"org_id"`
 	PreferenceId    string `json:"preference_id"`
 	PreferenceValue string `json:"preference_value"`
 }
@@ -214,10 +213,11 @@ func InitDB(datasourceName string) error {
 	return nil
 }
 
-func GetUserPreference(ctx context.Context, preferenceId string, orgId string) (*PreferenceKV, *model.ApiError) {
+func GetUserPreference(ctx context.Context, preferenceId string) (*PreferenceKV, *model.ApiError) {
 	userPreference := PreferenceKV{}
 	orgPreference := PreferenceKV{}
 	user := common.GetUserFromContext(ctx)
+	orgId := user.OrgId
 
 	// get the preference id and value from the user preference table
 	query := `SELECT preference_id, preference_value FROM user_preference WHERE preference_id = $1 AND user_id = $2;`
@@ -241,13 +241,16 @@ func GetUserPreference(ctx context.Context, preferenceId string, orgId string) (
 	err = db.Get(&preference, query, preferenceId)
 
 	// return if unable to fetch the preference entity as we won't be sure about preference being enabled or not also if the preference doesn't exist
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("error while fetching the preference entity: %s", preferenceId)}
+
+	if err == sql.ErrNoRows {
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no preference found with preference Id: %s", preferenceId)}
+	} else if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while fetching the preference entity: %s", err)}
 	}
 
 	// return err if the preference is not enabled for user scope
 	if preference.UserScope != 1 {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference not enabled for user scope with key: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("preference not enabled for user scope with key: %s", preferenceId)}
 	}
 
 	preferenceValue := PreferenceKV{PreferenceId: preferenceId, PreferenceValue: preference.DefaultValue}
@@ -277,12 +280,14 @@ func UpdateUserPreference(ctx context.Context, req *PreferenceKV) (*PreferenceKV
 	query := `SELECT user FROM preference WHERE id=$1;`
 	err := db.Get(&preference, query, preferenceId)
 
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("no such preference exists: %s", err)}
+	if err == sql.ErrNoRows {
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no such preference exists: %s", preferenceId)}
+	} else if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in fetching the preference: %s", err)}
 	}
 
 	if preference.UserScope != 1 {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("this preference is not enabled at user scope: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("this preference is not enabled at user scope: %s", preferenceId)}
 	}
 
 	query = `INSERT INTO user_preference(preference_id,preference_value,user_id) VALUES($1,$2,$3)
@@ -302,8 +307,9 @@ func UpdateUserPreference(ctx context.Context, req *PreferenceKV) (*PreferenceKV
 	}, nil
 }
 
-func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*PreferenceKV, *model.ApiError) {
+func GetOrgPreference(ctx context.Context, preferenceId string) (*PreferenceKV, *model.ApiError) {
 	orgPreference := PreferenceKV{}
+	orgId := common.GetUserFromContext(ctx).OrgId
 
 	// get the preference id and value from the org preference table
 	query := `SELECT preference_id, preference_value FROM org_preference WHERE preference_id = $1 AND org_id = $2;`
@@ -319,13 +325,15 @@ func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*
 	err = db.Get(&preference, query, preferenceId)
 
 	// return if unable to fetch the preference entity as we won't be sure about preference being enabled or not
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("error while fetching the preference entity: %s", preferenceId)}
+	if err == sql.ErrNoRows {
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no such preference exists: %s", preferenceId)}
+	} else if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in fetching the preference: %s", err)}
 	}
 
 	// return err if the preference is not enabled for org scope
 	if preference.OrgScope != 1 {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference not enabled with key: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("preference not enabled with key: %s", preferenceId)}
 	}
 
 	preferenceValue := PreferenceKV{PreferenceId: preferenceId, PreferenceValue: preference.DefaultValue}
@@ -340,7 +348,7 @@ func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*
 func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (*PreferenceKV, *model.ApiError) {
 	preferenceId := req.PreferenceId
 	preferenceValue := req.PreferenceValue
-	orgId := req.OrgId
+	orgId := common.GetUserFromContext(ctx).OrgId
 
 	// return error if there is no preference id in the request
 	if preferenceId == "" {
@@ -355,12 +363,14 @@ func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (
 	query := `SELECT org FROM preference WHERE id=$1;`
 	err := db.Get(&preference, query, preferenceId)
 
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("no such preference exists: %s", err)}
+	if err == sql.ErrNoRows {
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no such preference exists: %s", preferenceId)}
+	} else if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in fetching the preference: %s", err)}
 	}
 
 	if preference.OrgScope != 1 {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("this preference is not enabled at org scope: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("this preference is not enabled at org scope: %s", preferenceId)}
 	}
 
 	query = `INSERT INTO org_preference(preference_id,preference_value,org_id) VALUES($1,$2,$3)
@@ -380,20 +390,21 @@ func UpdateOrgPreference(ctx context.Context, req *UpdateOrgPreferenceRequest) (
 	}, nil
 }
 
-func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferenceResponse, *model.ApiError) {
+func GetAllOrgPreferences(ctx context.Context) (*[]AllPreferenceResponse, *model.ApiError) {
 
+	orgId := common.GetUserFromContext(ctx).OrgId
 	orgPreferencesWithGroups := []Preference{}
 	query := `
 	SELECT 
-    	id,
-    	name,
-    	default_value,
-		depends_on,
-		user,
-		org,
-    	group_id
+        id,
+        name,
+        default_value,
+	    depends_on,
+	    user,
+	    org,
+        group_id
   	FROM 
-    	preference
+        preference
   	WHERE preference.org = 1;`
 
 	err := db.Select(&orgPreferencesWithGroups, query, orgId)
@@ -458,27 +469,27 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferenceRe
 	}
 
 	allOrgPreferenceTree := buildGroupTree(preferenceGroups, "", groupPreferenceMap)
-	fmt.Println(allOrgPreferenceTree)
 
 	return &allOrgPreferenceTree, nil
 }
 
-func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferenceResponse, *model.ApiError) {
+func GetAllUserPreferences(ctx context.Context) (*[]AllPreferenceResponse, *model.ApiError) {
 
 	user := common.GetUserFromContext(ctx)
+	orgId := user.OrgId
 
 	allUserPreferencesWithGroups := []Preference{}
 	query := `
 	SELECT 
-    	id,
-    	name,
-    	default_value,
-		depends_on,
-		user,
-		org,
-    	group_id
+        id,
+        name,
+        default_value,
+	    depends_on,
+	    user,
+	    org,
+        group_id
   	FROM 
-    	preference
+        preference
   	WHERE preference.user = 1;`
 
 	err := db.Select(&allUserPreferencesWithGroups, query, user.Id, orgId)
@@ -566,7 +577,6 @@ func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferenceR
 	}
 
 	allUserPreferenceTree := buildGroupTree(preferenceGroups, "", groupPreferenceMap)
-	fmt.Println(allUserPreferenceTree)
 
 	return &allUserPreferenceTree, nil
 }
