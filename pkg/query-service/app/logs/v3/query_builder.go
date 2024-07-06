@@ -196,7 +196,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					columnName := getClickhouseColumnName(item.Key)
 					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
 					if columnName == BODY {
-						logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from like and ilike
+						logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
 						conditions = append(conditions, fmt.Sprintf("lower(%s) %s lower('%%%s%%')", columnName, logsOp, val))
 					} else {
 						conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
@@ -208,7 +208,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					// for use lower for like and ilike
 					if op == v3.FilterOperatorLike || op == v3.FilterOperatorNotLike {
 						if columnName == BODY {
-							logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from like and ilike
+							logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
 							columnName = fmt.Sprintf("lower(%s)", columnName)
 							fmtVal = fmt.Sprintf("lower(%s)", fmtVal)
 						}
