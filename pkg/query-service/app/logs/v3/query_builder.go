@@ -39,10 +39,10 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorLessThanOrEq:    "<=",
 	v3.FilterOperatorGreaterThan:     ">",
 	v3.FilterOperatorGreaterThanOrEq: ">=",
-	v3.FilterOperatorLike:            "LIKE",
-	v3.FilterOperatorNotLike:         "NOT LIKE",
-	v3.FilterOperatorContains:        "LIKE",
-	v3.FilterOperatorNotContains:     "NOT LIKE",
+	v3.FilterOperatorLike:            "ILIKE",
+	v3.FilterOperatorNotLike:         "NOT ILIKE",
+	v3.FilterOperatorContains:        "ILIKE",
+	v3.FilterOperatorNotContains:     "NOT ILIKE",
 	v3.FilterOperatorRegex:           "match(%s, %s)",
 	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorIn:              "IN",
@@ -196,6 +196,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					columnName := getClickhouseColumnName(item.Key)
 					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
 					if columnName == BODY {
+						logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from like and ilike
 						conditions = append(conditions, fmt.Sprintf("lower(%s) %s lower('%%%s%%')", columnName, logsOp, val))
 					} else {
 						conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
@@ -207,6 +208,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					// for use lower for like and ilike
 					if op == v3.FilterOperatorLike || op == v3.FilterOperatorNotLike {
 						if columnName == BODY {
+							logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from like and ilike
 							columnName = fmt.Sprintf("lower(%s)", columnName)
 							fmtVal = fmt.Sprintf("lower(%s)", fmtVal)
 						}
