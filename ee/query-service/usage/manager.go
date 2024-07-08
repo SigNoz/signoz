@@ -121,7 +121,7 @@ func (lm *Manager) UploadUsage() {
 
 	for _, db := range dbs {
 		dbusages := []model.UsageDB{}
-		err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db, db), time.Now().Add(-(48 * time.Hour)))
+		err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db, db), time.Now().Add(-(72 * time.Hour)))
 		if err != nil && !strings.Contains(err.Error(), "doesn't exist") {
 			zap.L().Error("failed to get usage from clickhouse: %v", zap.Error(err))
 			return
