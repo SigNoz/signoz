@@ -246,17 +246,19 @@ function ChartPreview({
 	return (
 		<ChartContainer>
 			{headline}
-			{(queryResponse?.isError || queryResponse?.error) && (
-				<FailedMessageContainer color="red" title="Failed to refresh the chart">
-					<InfoCircleOutlined />{' '}
-					{queryResponse.error.message || t('preview_chart_unexpected_error')}
-				</FailedMessageContainer>
-			)}
-			{chartData && !queryResponse.isError && (
-				<div ref={graphRef} style={{ height: '100%' }}>
-					{queryResponse.isLoading && (
-						<Spinner size="large" tip="Loading..." height="100%" />
-					)}
+
+			<div ref={graphRef} style={{ height: '100%' }}>
+				{queryResponse.isLoading && (
+					<Spinner size="large" tip="Loading..." height="100%" />
+				)}
+				{(queryResponse?.isError || queryResponse?.error) && (
+					<FailedMessageContainer color="red" title="Failed to refresh the chart">
+						<InfoCircleOutlined />{' '}
+						{queryResponse.error.message || t('preview_chart_unexpected_error')}
+					</FailedMessageContainer>
+				)}
+
+				{chartData && !queryResponse.isError && (
 					<GridPanelSwitch
 						options={options}
 						panelType={graphType}
@@ -268,8 +270,8 @@ function ChartPreview({
 						query={query || initialQueriesMap.metrics}
 						yAxisUnit={yAxisUnit}
 					/>
-				</div>
-			)}
+				)}
+			</div>
 		</ChartContainer>
 	);
 }

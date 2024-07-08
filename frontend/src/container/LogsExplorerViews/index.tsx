@@ -63,10 +63,10 @@ import { v4 } from 'uuid';
 
 function LogsExplorerViews({
 	selectedView,
-	showHistogram,
+	showFrequencyChart,
 }: {
 	selectedView: SELECTED_VIEWS;
-	showHistogram: boolean;
+	showFrequencyChart: boolean;
 }): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
@@ -561,7 +561,7 @@ function LogsExplorerViews({
 
 	return (
 		<div className="logs-explorer-views-container">
-			{showHistogram && (
+			{showFrequencyChart && (
 				<LogsExplorerChart
 					className="logs-histogram"
 					isLoading={isFetchingListChartData || isLoadingListChartData}

@@ -10,6 +10,7 @@ import posthog from 'posthog-js';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { ReactQueryDevtools } from 'react-query/devtools';
 import { Provider } from 'react-redux';
 import store from 'store';
 
@@ -72,6 +73,9 @@ if (container) {
 						<Provider store={store}>
 							<AppRoutes />
 						</Provider>
+						{process.env.NODE_ENV === 'development' && (
+							<ReactQueryDevtools initialIsOpen={false} />
+						)}
 					</QueryClientProvider>
 				</ThemeProvider>
 			</HelmetProvider>
