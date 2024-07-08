@@ -19,6 +19,7 @@ import axios from 'axios';
 import cx from 'classnames';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -48,6 +49,7 @@ import {
 	Dispatch,
 	SetStateAction,
 	useCallback,
+	useEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -90,6 +92,10 @@ function ExplorerOptions({
 	const history = useHistory();
 	const ref = useRef<RefSelectProps>(null);
 	const isDarkMode = useIsDarkMode();
+	const isLogsExplorer = sourcepage === DataSource.LOGS;
+	const PRESERVED_VIEW_LOCAL_STORAGE_KEY = isLogsExplorer
+		? LOCALSTORAGE.LAST_USED_SAVED_LOGS_VIEW
+		: LOCALSTORAGE.LAST_USED_SAVED_TRACES_VIEW;
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
@@ -283,12 +289,25 @@ function ExplorerOptions({
 				viewName: option?.value,
 			});
 		}
+
+		localStorage.setItem(
+			PRESERVED_VIEW_LOCAL_STORAGE_KEY,
+			JSON.stringify({
+				key: option.key,
+				value: option.value,
+			}),
+		);
+
 		if (ref.current) {
 			ref.current.blur();
 		}
 	};
 
 	const handleClearSelect = (): void => {
+		if (localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY)) {
+			localStorage.removeItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
+		}
+
 		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
 	};
 
@@ -355,6 +374,29 @@ function ExplorerOptions({
 			setIsExplorerOptionHidden(true);
 		}
 	};
+
+	const [
+		isRecentlyUsedSavedViewSelected,
+		setIsRecentlyUsedSavedViewSelected,
+	] = useState(false);
+
+	useEffect(() => {
+		const value = localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
+		const lastPreservedView = JSON.parse(value || '{}');
+
+		if (!!lastPreservedView?.key && viewsData?.data?.data) {
+			if (!isRecentlyUsedSavedViewSelected) {
+				onMenuItemSelectHandler({
+					key: lastPreservedView.key,
+				});
+			}
+			setIsRecentlyUsedSavedViewSelected(true);
+		}
+
+		return (): void => setIsRecentlyUsedSavedViewSelected(true);
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [viewsData?.data?.data]);
 
 	const isEditDeleteSupported = allowedRoles.includes(role as string);
 
@@ -476,12 +518,12 @@ function ExplorerOptions({
 						<Tooltip
 							title={
 								<div>
-									{sourcepage === DataSource.LOGS
+									{isLogsExplorer
 										? 'Learn more about Logs explorer '
 										: 'Learn more about Traces explorer '}
 									<Typography.Link
 										href={
-											sourcepage === DataSource.LOGS
+											isLogsExplorer
 												? 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar'
 												: 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar'
 										}

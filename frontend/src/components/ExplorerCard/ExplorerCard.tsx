@@ -18,6 +18,7 @@ import {
 import axios from 'axios';
 import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -29,6 +30,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
+import { DataSource } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { ExploreHeaderToolTip, SaveButtonText } from './constants';
@@ -78,10 +80,18 @@ function ExplorerCard({
 	const handleOpenChange = (newOpen = false): void => {
 		setIsOpen(newOpen);
 	};
+	const PRESERVED_VIEW_LOCAL_STORAGE_KEY =
+		sourcepage === DataSource.LOGS
+			? LOCALSTORAGE.LAST_USED_SAVED_LOGS_VIEW
+			: LOCALSTORAGE.LAST_USED_SAVED_TRACES_VIEW;
+	const value = localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
+	const lastUsedView = JSON.parse(value ?? '{}');
 
-	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
+	const viewName =
+		useGetSearchQueryParam(QueryParams.viewName) ?? lastUsedView?.value ?? '';
 
-	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
+	const viewKey =
+		useGetSearchQueryParam(QueryParams.viewKey) ?? lastUsedView?.key ?? '';
 
 	const isQueryUpdated = isStagedQueryUpdated(viewsData?.data?.data, viewKey);
 
