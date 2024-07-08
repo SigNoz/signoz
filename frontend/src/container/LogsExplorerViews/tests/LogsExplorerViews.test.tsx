@@ -120,11 +120,7 @@ describe('LogsExplorerViews -', () => {
 
 		// switch to table view
 		await userEvent.click(queryByTestId('table-view') as HTMLElement);
-		expect(
-			queryByText(
-				'Just a bit of patience, just a little bit’s enough ⎯ we’re getting your logs!',
-			),
-		).toBeInTheDocument();
+		expect(queryByText('pending_data_placeholder')).toBeInTheDocument();
 	});
 
 	it('check error state', async () => {
