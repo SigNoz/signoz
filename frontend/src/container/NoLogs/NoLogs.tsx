@@ -6,6 +6,7 @@ import history from 'lib/history';
 import { ArrowUpRight } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 import { isCloudUser } from 'utils/app';
+import DOCLINKS from 'utils/docLinks';
 
 export default function NoLogs({
 	dataSource,
@@ -25,8 +26,10 @@ export default function NoLogs({
 					? ROUTES.GET_STARTED_APPLICATION_MONITORING
 					: ROUTES.GET_STARTED_LOGS_MANAGEMENT,
 			);
+		} else if (dataSource === 'traces') {
+			window.open(DOCLINKS.TRACES_EXPLORER_EMPTY_STATE, '_blank');
 		} else {
-			window.open(`https://signoz.io/docs/userguide/${dataSource}/`, '_blank');
+			window.open(`${DOCLINKS.USER_GUIDE}${dataSource}/`, '_blank');
 		}
 	};
 	return (
