@@ -6,5 +6,6 @@
 	"share": "Share",
 	"save": "Save",
 	"edit": "Edit",
-	"logged_in": "Logged In"
+	"logged_in": "Logged In",
+	"pending_data_placeholder": "Just a bit of patience, just a little bit’s enough ⎯ we’re getting your {{dataSource}}!"
 }
