@@ -122,7 +122,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 						setDataSource?.(getParsedInviteData(data?.payload || []));
 					}
 					setIsInvitingMembers?.(false);
-					toggleModal?.(false);
+					toggleModal(false);
 				}, 2000);
 			} catch (error) {
 				notifications.error({
