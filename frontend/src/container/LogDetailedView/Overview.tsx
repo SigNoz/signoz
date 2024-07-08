@@ -53,7 +53,6 @@ function Overview({
 			enabled: false,
 		},
 		fontWeight: 400,
-		// fontFamily: 'SF Mono',
 		fontFamily: 'Space Mono',
 		fontSize: 13,
 		lineHeight: '18px',
@@ -80,12 +79,6 @@ function Overview({
 			colors: {
 				'editor.background': Color.BG_INK_400,
 			},
-			// fontFamily: 'SF Mono',
-			fontFamily: 'Space Mono',
-			fontSize: 12,
-			fontWeight: 'normal',
-			lineHeight: 18,
-			letterSpacing: -0.06,
 		});
 	}
 
@@ -124,6 +117,11 @@ function Overview({
 									onChange={(): void => {}}
 									height="20vh"
 									theme={isDarkMode ? 'my-theme' : 'light'}
+									onMount={(_, monaco): void => {
+										document.fonts.ready.then(() => {
+											monaco.editor.remeasureFonts();
+										});
+									}}
 									// eslint-disable-next-line react/jsx-no-bind
 									beforeMount={setEditorTheme}
 								/>
