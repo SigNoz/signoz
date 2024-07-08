@@ -42,6 +42,7 @@ function TracesTableComponent({
 		setRequestData((prev) => ({
 			...prev,
 			tableParams: {
+				...prev.tableParams,
 				pagination,
 			},
 		}));
