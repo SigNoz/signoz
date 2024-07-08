@@ -462,9 +462,16 @@ func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.Use
 
 	// If refresh token is valid, then simply authorize the login request.
 	if len(req.RefreshToken) > 0 {
-		user, err := validateUser(req.RefreshToken)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to validate refresh token")
+		userFromToken, errToken := validateUser(req.RefreshToken)
+		if errToken != nil {
+			return nil, errors.Wrap(errToken, "failed to validate refresh token")
+		}
+
+		// also get user details from DB, because the user may have been
+		// deleted, or the role may have been updated
+		user, err := dao.DB().GetUserByEmail(ctx, userFromToken.Email)
+		if err != nil || user == nil {
+			return nil, errors.Wrap(err.Err, "user not found")
 		}
 
 		return user, nil
