@@ -54,6 +54,33 @@ export const handlers = [
 			// ?metricName=signoz_calls_total&tagKey=resource_signoz_collector_id
 			const metricName = req.url.searchParams.get('metricName');
 			const tagKey = req.url.searchParams.get('tagKey');
+			console.log('metricName', metricName);
+
+			const attributeKey = req.url.searchParams.get('attributeKey');
+
+			if (attributeKey === 'serviceName') {
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							stringAttributeValues: [
+								'customer',
+								'demo-app',
+								'driver',
+								'frontend',
+								'mysql',
+								'redis',
+								'route',
+								'go-grpc-otel-server',
+								'test',
+							],
+							numberAttributeValues: null,
+							boolAttributeValues: null,
+						},
+					}),
+				);
+			}
 
 			if (
 				metricName === 'signoz_calls_total' &&
