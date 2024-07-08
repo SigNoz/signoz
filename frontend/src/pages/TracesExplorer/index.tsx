@@ -23,7 +23,7 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { cloneDeep, set } from 'lodash-es';
+import { cloneDeep, isEmpty, set } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
@@ -61,6 +61,12 @@ function TracesExplorer(): JSX.Element {
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const currentTab = panelType || PANEL_TYPES.LIST;
+
+	const listQuery = useMemo(() => {
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+
+		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
+	}, [stagedQuery]);
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -101,6 +107,7 @@ function TracesExplorer(): JSX.Element {
 
 	const tabsItems = getTabsItems({
 		isListViewDisabled: isMultipleQueries || isGroupByExist,
+		isFilterApplied: !isEmpty(listQuery?.filters.items),
 	});
 
 	const exportDefaultQuery = useMemo(
