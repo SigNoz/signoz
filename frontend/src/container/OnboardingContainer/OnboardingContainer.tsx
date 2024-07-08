@@ -12,7 +12,6 @@ import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/InviteUserModal';
 import { InviteMemberFormValues } from 'container/OrganizationSettings/PendingInvitesContainer';
 import useAnalytics from 'hooks/analytics/useAnalytics';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { UserPlus } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -105,7 +104,6 @@ export default function Onboarding(): JSX.Element {
 	const [selectedModuleSteps, setSelectedModuleSteps] = useState(APM_STEPS);
 	const [activeStep, setActiveStep] = useState(1);
 	const [current, setCurrent] = useState(0);
-	const isDarkMode = useIsDarkMode();
 	const { trackEvent } = useAnalytics();
 	const { location } = history;
 	const { t } = useTranslation(['onboarding']);
@@ -302,70 +300,51 @@ export default function Onboarding(): JSX.Element {
 	);
 
 	return (
-		<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
+		<div className="container">
 			{activeStep === 1 && (
 				<div className="onboarding-page">
-					<div>
-						<div
-							onClick={(): void => {
-								logEvent('Onboarding V2: Skip Button Clicked', {});
-								history.push('/');
-							}}
-							className="skip-to-console"
-						>
-							{t('skip')}
-						</div>
-						<FullScreenHeader />
-						<div className="onboardingHeader">
-							<h1>{t('select_use_case')}</h1>
-						</div>
-						<div className="modulesContainer">
-							<div className="moduleContainerRowStyles">
-								{Object.keys(ModulesMap).map((module) => {
-									const selectedUseCase = (useCases as any)[module];
+					<div
+						onClick={(): void => {
+							logEvent('Onboarding V2: Skip Button Clicked', {});
+							history.push('/');
+						}}
+						className="skip-to-console"
+					>
+						{t('skip')}
+					</div>
+					<FullScreenHeader />
+					<div className="onboardingHeader">
+						<h1>{t('select_use_case')}</h1>
+					</div>
+					<div className="modulesContainer">
+						<div className="moduleContainerRowStyles">
+							{Object.keys(ModulesMap).map((module) => {
+								const selectedUseCase = (useCases as any)[module];
 
-									return (
-										<Card
-											className={cx(
-												'moduleStyles',
-												selectedModule.id === selectedUseCase.id ? 'selected' : '',
-											)}
-											style={{
-												backgroundColor: isDarkMode ? '#000' : '#FFF',
-											}}
-											key={selectedUseCase.id}
-											onClick={(): void => handleModuleSelect(selectedUseCase)}
-										>
-											<Typography.Title
-												className="moduleTitleStyle"
-												level={4}
-												style={{
-													borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #ddd',
-													backgroundColor: isDarkMode ? '#141414' : '#FFF',
-												}}
-											>
-												{selectedUseCase.title}
-											</Typography.Title>
-											<Typography.Paragraph
-												className="moduleDesc"
-												style={{ backgroundColor: isDarkMode ? '#000' : '#FFF' }}
-											>
-												{selectedUseCase.desc}
-											</Typography.Paragraph>
-										</Card>
-									);
-								})}
-							</div>
+								return (
+									<Card
+										className={cx(
+											'moduleStyles',
+											selectedModule.id === selectedUseCase.id ? 'selected' : '',
+										)}
+										key={selectedUseCase.id}
+										onClick={(): void => handleModuleSelect(selectedUseCase)}
+									>
+										<Typography.Title className="moduleTitleStyle" level={4}>
+											{selectedUseCase.title}
+										</Typography.Title>
+										<Typography.Paragraph className="moduleDesc">
+											{selectedUseCase.desc}
+										</Typography.Paragraph>
+									</Card>
+								);
+							})}
 						</div>
-						<div className="continue-to-next-step">
-							<Button
-								type="primary"
-								icon={<ArrowRightOutlined />}
-								onClick={handleNext}
-							>
-								{t('get_started')}
-							</Button>
-						</div>
+					</div>
+					<div className="continue-to-next-step">
+						<Button type="primary" icon={<ArrowRightOutlined />} onClick={handleNext}>
+							{t('get_started')}
+						</Button>
 					</div>
 					<div className="invite-member-wrapper">
 						<Typography.Text className="helper-text">

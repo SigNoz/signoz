@@ -91,7 +91,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 		async (values: InviteMemberFormValues): Promise<void> => {
 			try {
 				setIsInvitingMembers?.(true);
-				values.members.forEach(
+				values?.members?.forEach(
 					async (member): Promise<void> => {
 						const { error, statusCode } = await sendInvite({
 							email: member.email,
