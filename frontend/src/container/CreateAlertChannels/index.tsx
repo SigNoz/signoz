@@ -359,8 +359,8 @@ function CreateAlertChannels({
 	const prepareTelegramRequest = useCallback(
 		() => ({
 			name: selectedConfig?.name || '',
-			api_key: selectedConfig?.api_key || '',
-			chat_id: selectedConfig?.chat_id || '',
+			token: selectedConfig?.token || '',
+			chat: selectedConfig?.chat || 0,
 			message: selectedConfig?.message || '',
 		}),
 		[selectedConfig],

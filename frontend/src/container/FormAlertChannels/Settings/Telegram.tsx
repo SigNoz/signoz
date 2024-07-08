@@ -9,22 +9,26 @@ function TelegramProps({ setSelectedConfig }: TelegramFormProps): JSX.Element {
 
 	return (
 		<>
-			<Form.Item name="api_key" label={t('field_telegram_api_key')}>
+			<Form.Item name="token" label={t('field_telegram_api_key')}>
 				<Input
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
 							...value,
-							api_key: event.target.value,
+							token: event.target.value,
 						}));
 					}}
 				/>
 			</Form.Item>
-			<Form.Item name="chat_id" label={t('field_telegram_chat_id')}>
+			<Form.Item name="chat" label={t('field_telegram_chat_id')}>
 				<Input
 					onChange={(event): void => {
+						const num = parseInt(event.target.value, 10);
+						if (Number.isNaN(num)) {
+							return;
+						}
 						setSelectedConfig((value) => ({
 							...value,
-							chat_id: event.target.value,
+							chat: num,
 						}));
 					}}
 				/>

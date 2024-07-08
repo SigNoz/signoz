@@ -65,13 +65,9 @@ export interface OpsgenieChannel extends Channel {
 }
 
 export interface TelegramChannel extends Channel {
-	api_key: string;
-	chat_id: string;
+	token: string;
+	chat: number;
 	message: string;
-	// A set of arbitrary key/value pairs that provide further detail
-	// about the alert.
-	details?: string;
-	detailsArray?: Record<string, string>;
 }
 
 export interface EmailChannel extends Channel {

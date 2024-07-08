@@ -13,12 +13,9 @@ const editTelegram = async (
 			telegram_configs: [
 				{
 					send_resolved: true,
-					api_key: props.api_key,
-					chat_id: props.chat_id,
+					token: props.token,
+					chat: props.chat,
 					message: props.message,
-					details: {
-						...props.detailsArray,
-					},
 				},
 			],
 		});
