@@ -1,14 +1,14 @@
-import './LogsLoading.styles.scss';
+import './TraceLoading.styles.scss';
 
 import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { DataSource } from 'types/common/queryBuilder';
 
-export function LogsLoading(): JSX.Element {
+export function TracesLoading(): JSX.Element {
 	const { t } = useTranslation('common');
 	return (
-		<div className="loading-logs">
-			<div className="loading-logs-content">
+		<div className="loading-traces">
+			<div className="loading-traces-content">
 				<img
 					className="loading-gif"
 					src="/Icons/loading-plane.gif"
@@ -16,7 +16,7 @@ export function LogsLoading(): JSX.Element {
 				/>
 
 				<Typography>
-					{t('pending_data_placeholder', { dataSource: DataSource.LOGS })}
+					{t('pending_data_placeholder', { dataSource: DataSource.TRACES })}
 				</Typography>
 			</div>
 		</div>
