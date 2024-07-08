@@ -141,11 +141,6 @@ function ImportJSON({
 			colors: {
 				'editor.background': Color.BG_INK_300,
 			},
-			fontFamily: 'Space Mono',
-			fontSize: 20,
-			fontWeight: 'normal',
-			lineHeight: 18,
-			letterSpacing: -0.06,
 		});
 	}
 
@@ -233,6 +228,11 @@ function ImportJSON({
 						fontFamily: 'Space Mono',
 					}}
 					theme={isDarkMode ? 'my-theme' : 'light'}
+					onMount={(_, monaco): void => {
+						document.fonts.ready.then(() => {
+							monaco.editor.remeasureFonts();
+						});
+					}}
 					// eslint-disable-next-line react/jsx-no-bind
 					beforeMount={setEditorTheme}
 				/>
