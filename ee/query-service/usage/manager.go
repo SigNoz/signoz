@@ -112,7 +112,7 @@ func (lm *Manager) UploadUsage() {
 					tenant, collector_id, exporter_id, MAX(timestamp) as ts 
 					FROM %s.distributed_usage as u2 
 					where timestamp >= $1 
-					GROUP BY tenant, collector_id, exporter_id 
+					GROUP BY tenant, collector_id, exporter_id, date(timestamp) 
 				) as t1
 		ON 
 		u1.tenant = t1.tenant AND u1.collector_id = t1.collector_id AND u1.exporter_id = t1.exporter_id and u1.timestamp = t1.ts 
@@ -121,7 +121,7 @@ func (lm *Manager) UploadUsage() {
 
 	for _, db := range dbs {
 		dbusages := []model.UsageDB{}
-		err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db, db), time.Now().Add(-(24 * time.Hour)))
+		err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db, db), time.Now().Add(-(48 * time.Hour)))
 		if err != nil && !strings.Contains(err.Error(), "doesn't exist") {
 			zap.L().Error("failed to get usage from clickhouse: %v", zap.Error(err))
 			return
