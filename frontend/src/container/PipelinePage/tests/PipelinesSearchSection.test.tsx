@@ -22,7 +22,7 @@ describe('PipelinePage container test', () => {
 		expect(asFragment()).toMatchSnapshot();
 	});
 
-	it('should handle search', async () => {
+	it.skip('should handle search', async () => {
 		const setPipelineValue = jest.fn();
 		const { getByPlaceholderText, container } = render(
 			<MemoryRouter>

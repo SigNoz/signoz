@@ -142,6 +142,11 @@ func checkDuplicateString(pipeline []string) bool {
 	for _, processor := range pipeline {
 		name := processor
 		if _, ok := exists[name]; ok {
+			zap.L().Error(
+				"duplicate processor name detected in generated collector config for log pipelines",
+				zap.String("processor", processor),
+				zap.Any("pipeline", pipeline),
+			)
 			return true
 		}
 
