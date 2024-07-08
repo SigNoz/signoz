@@ -9,6 +9,7 @@ const config: Config.InitialOptions = {
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
 		'\\.(css|less|scss)$': '<rootDir>/__mocks__/cssMock.ts',
+		'\\.md$': '<rootDir>/__mocks__/cssMock.ts',
 	},
 	globals: {
 		extensionsToTreatAsEsm: ['.ts'],

@@ -2,6 +2,7 @@ import { rest } from 'msw';
 
 import { billingSuccessResponse } from './__mockdata__/billing';
 import { dashboardSuccessResponse } from './__mockdata__/dashboards';
+import { inviteUser } from './__mockdata__/invite_user';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
 import { membersResponse } from './__mockdata__/members';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
@@ -93,5 +94,12 @@ export const handlers = [
 
 	rest.get('http://localhost/api/v1/dashboards', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(dashboardSuccessResponse)),
+	),
+
+	rest.get('http://localhost/api/v1/invite', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(inviteUser)),
+	),
+	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(inviteUser)),
 	),
 ];
