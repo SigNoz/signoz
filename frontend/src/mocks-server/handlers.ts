@@ -133,7 +133,6 @@ export const handlers = [
 		res(ctx.status(200), ctx.json(licensesSuccessResponse)),
 	),
 
-	// ?licenseKey=58707e3d-3bdb-44e7-8c89-a9be237939f4
 	rest.get('http://localhost/api/v1/billing', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(billingSuccessResponse)),
 	),
