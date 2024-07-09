@@ -3576,6 +3576,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 
 	} else {
 		// We are not allowing to delete a materialized column
+		// For more details please check https://github.com/SigNoz/signoz/issues/4566
 		return model.ForbiddenError(errors.New("Removing a selected field is not allowed, please reach out to support."))
 
 		// Delete the index first
