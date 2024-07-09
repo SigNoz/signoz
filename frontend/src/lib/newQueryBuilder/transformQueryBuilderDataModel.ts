@@ -21,7 +21,7 @@ export const transformQueryBuilderDataModel = (
 	Object.entries(data).forEach(([, value]) => {
 		if (FORMULA_REGEXP.test(value.queryName)) {
 			const formula = value as IBuilderFormula;
-			const baseFormula = query?.queryFormulas.find(
+			const baseFormula = query?.queryFormulas?.find(
 				(f) => f.queryName === value.queryName,
 			);
 			if (!isUndefined(baseFormula)) {
@@ -35,7 +35,7 @@ export const transformQueryBuilderDataModel = (
 			}
 		} else {
 			const queryFromData = value as IBuilderQuery;
-			const baseQuery = query?.queryData.find(
+			const baseQuery = query?.queryData?.find(
 				(q) => q.queryName === queryFromData.queryName,
 			);
 
