@@ -53,7 +53,7 @@ function Overview({
 			enabled: false,
 		},
 		fontWeight: 400,
-		fontFamily: 'Space Mono',
+		fontFamily: 'Geist Mono',
 		fontSize: 13,
 		lineHeight: '18px',
 		colorDecorators: true,
