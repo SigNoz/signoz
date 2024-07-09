@@ -41,7 +41,10 @@ const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 		});
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
-				const updatedQuery = mapQueryDataFromApi(data.compositeQuery);
+				const updatedQuery = mapQueryDataFromApi(
+					data.compositeQuery,
+					widget?.query,
+				);
 
 				history.push(
 					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
