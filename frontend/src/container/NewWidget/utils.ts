@@ -372,8 +372,12 @@ export function handleQueryChange(
 		builder: {
 			...supersetQuery.builder,
 			queryData: supersetQuery.builder.queryData.map((query, index) => {
-				const { dataSource } = query;
-				const tempQuery = { ...initialQueryBuilderFormValuesMap[dataSource] };
+				const { dataSource, expression, queryName } = query;
+				const tempQuery = {
+					...initialQueryBuilderFormValuesMap[dataSource],
+					expression,
+					queryName,
+				};
 
 				const fieldsToSelect =
 					panelTypeDataSourceFormValuesMap[newPanelType][dataSource].builder
