@@ -362,6 +362,7 @@ function CreateAlertChannels({
 			token: selectedConfig?.token || '',
 			chat: selectedConfig?.chat || 0,
 			message: selectedConfig?.message || '',
+			parse_mode: 'HTML',
 		}),
 		[selectedConfig],
 	);

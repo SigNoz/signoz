@@ -25,7 +25,7 @@
   "field_opsgenie_description": "Description",
   "field_telegram_api_key": "API Key",
   "field_telegram_chat_id": "ChatId",
-  "field_telegram_message": "Message",
+  "field_telegram_message": "Message Template",
   "placeholder_opsgenie_description": "Description",
   "help_email_to": "Email address(es) to send alerts to (comma separated)",
   "field_email_to": "To",

@@ -4,12 +4,14 @@ import { useTranslation } from 'react-i18next';
 
 import { TelegramChannel } from '../../CreateAlertChannels/config';
 
+const { TextArea } = Input;
+
 function TelegramProps({ setSelectedConfig }: TelegramFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
 
 	return (
 		<>
-			<Form.Item name="token" label={t('field_telegram_api_key')}>
+			<Form.Item name="token" label={t('field_telegram_api_key')} required>
 				<Input
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
@@ -19,7 +21,7 @@ function TelegramProps({ setSelectedConfig }: TelegramFormProps): JSX.Element {
 					}}
 				/>
 			</Form.Item>
-			<Form.Item name="chat" label={t('field_telegram_chat_id')}>
+			<Form.Item name="chat" label={t('field_telegram_chat_id')} required>
 				<Input
 					onChange={(event): void => {
 						const num = parseInt(event.target.value, 10);
@@ -34,7 +36,8 @@ function TelegramProps({ setSelectedConfig }: TelegramFormProps): JSX.Element {
 				/>
 			</Form.Item>
 			<Form.Item name="message" label={t('field_telegram_message')}>
-				<Input
+				<TextArea
+					rows={4}
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
 							...value,

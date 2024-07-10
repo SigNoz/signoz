@@ -16,6 +16,7 @@ const editTelegram = async (
 					token: props.token,
 					chat: props.chat,
 					message: props.message,
+					parse_mode: 'HTML',
 				},
 			],
 		});

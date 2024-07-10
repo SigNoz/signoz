@@ -58,10 +58,11 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 
 export const TelegramInitialConfig: Partial<TelegramChannel> = {
 	message: `
-        <u><b>Alerts Firing</b></u>%0A
-        {{ range .Alerts.Firing }}
-            - Message: {{ .Annotations.message }} %0A
-        {{ end }}
+    {{ if gt (len .Alerts.Firing) 0 }}
+    Alerts Firing: {{ range .Alerts.Firing }} 
+    {{ range .Annotations.SortedPairs }}  - {{ .Name }} = {{ .Value }} {{end}}
+    {{ end }}  
+    {{ end }}
     `,
 };
 
