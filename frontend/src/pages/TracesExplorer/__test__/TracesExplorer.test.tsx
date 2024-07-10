@@ -267,4 +267,51 @@ describe('TracesExplorer - ', () => {
 		expect(await findByText('HTTP GET /customer')).toBeInTheDocument();
 		expect(getByTestId('name-HTTP GET /customer')).toBeChecked();
 	});
+
+	it('test edge cases of undefined filters', async () => {
+		jest.spyOn(compositeQueryHook, 'useGetCompositeQueryParam').mockReturnValue({
+			...compositeQuery,
+			builder: {
+				...compositeQuery.builder,
+				queryData: compositeQuery.builder.queryData.map(
+					(item) =>
+						({
+							...item,
+							filters: undefined,
+						} as any),
+				),
+			},
+		});
+
+		const { getByText } = render(<Filter setOpen={jest.fn()} />);
+
+		Object.values(AllTraceFilterKeyValue).forEach((filter) => {
+			expect(getByText(filter)).toBeInTheDocument();
+		});
+	});
+
+	it('test edge cases of undefined filters - items', async () => {
+		jest.spyOn(compositeQueryHook, 'useGetCompositeQueryParam').mockReturnValue({
+			...compositeQuery,
+			builder: {
+				...compositeQuery.builder,
+				queryData: compositeQuery.builder.queryData.map(
+					(item) =>
+						({
+							...item,
+							filters: {
+								...item.filters,
+								items: undefined,
+							},
+						} as any),
+				),
+			},
+		});
+
+		const { getByText } = render(<Filter setOpen={jest.fn()} />);
+
+		Object.values(AllTraceFilterKeyValue).forEach((filter) => {
+			expect(getByText(filter)).toBeInTheDocument();
+		});
+	});
 });
