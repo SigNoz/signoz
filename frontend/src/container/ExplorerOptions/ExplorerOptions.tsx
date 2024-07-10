@@ -32,6 +32,7 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
+import { cloneDeep } from 'lodash-es';
 import {
 	Check,
 	ConciergeBell,
@@ -103,13 +104,28 @@ function ExplorerOptions({
 
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
+	const handleConditionalQueryModification = useCallback((): string => {
+		if (query?.builder?.queryData?.[0]?.aggregateOperator !== 'noop') {
+			return JSON.stringify(query);
+		}
+
+		// Modify aggregateOperator to count, as noop is not supported in alerts
+		const modifiedQuery = cloneDeep(query);
+
+		modifiedQuery.builder.queryData[0].aggregateOperator = 'count';
+
+		return JSON.stringify(modifiedQuery);
+	}, [query]);
+
 	const onCreateAlertsHandler = useCallback(() => {
+		const stringifiedQuery = handleConditionalQueryModification();
+
 		history.push(
 			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-				JSON.stringify(query),
+				stringifiedQuery,
 			)}`,
 		);
-	}, [history, query]);
+	}, [handleConditionalQueryModification, history]);
 
 	const onCancel = (value: boolean) => (): void => {
 		onModalToggle(value);
