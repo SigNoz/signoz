@@ -98,6 +98,7 @@ describe('TracesExplorer - ', () => {
 
 		const { getByText } = render(<Filter setOpen={jest.fn()} />);
 
+		// we should have all the filters
 		Object.values(AllTraceFilterKeyValue).forEach((filter) => {
 			expect(getByText(filter)).toBeInTheDocument();
 		});
@@ -123,6 +124,7 @@ describe('TracesExplorer - ', () => {
 
 		const { getByText } = render(<Filter setOpen={jest.fn()} />);
 
+		// we should have all the filters
 		Object.values(AllTraceFilterKeyValue).forEach((filter) => {
 			expect(getByText(filter)).toBeInTheDocument();
 		});
