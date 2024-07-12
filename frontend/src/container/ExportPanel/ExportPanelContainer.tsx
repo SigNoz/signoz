@@ -1,5 +1,6 @@
 import { Button, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useAxiosError from 'hooks/useAxiosError';
 import { useCallback, useMemo, useState } from 'react';
@@ -70,6 +71,7 @@ function ExportPanelContainer({
 				ns: 'dashboard',
 			}),
 			uploadedGrafana: false,
+			version: ENTITY_VERSION_V4,
 		});
 	}, [t, createNewDashboard]);
 
