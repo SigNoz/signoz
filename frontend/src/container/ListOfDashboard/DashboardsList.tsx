@@ -35,6 +35,10 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { get, isEmpty } from 'lodash-es';
+import { isUndefined } from 'lodash-es';
+import { useRef } from 'react';
+import logEvent from 'api/common/logEvent';
+
 import {
 	ArrowDownWideNarrow,
 	ArrowUpRight,
@@ -269,6 +273,7 @@ function DashboardsList(): JSX.Element {
 
 	const onNewDashboardHandler = useCallback(async () => {
 		try {
+			logEvent('Dashboard List: Create dashboard clicked', {});
 			setNewDashboardState({
 				...newDashboardState,
 				loading: true,
@@ -305,6 +310,8 @@ function DashboardsList(): JSX.Element {
 	}, [newDashboardState, t]);
 
 	const onModalHandler = (uploadedGrafana: boolean): void => {
+		logEvent('Dashboard List: Import JSON clicked', {});
+
 		setIsImportJSONModalVisible((state) => !state);
 		setUploadedGrafana(uploadedGrafana);
 	};
@@ -441,6 +448,10 @@ function DashboardsList(): JSX.Element {
 					} else {
 						history.push(getLink());
 					}
+					logEvent('Dashboard List: Clicked on dashboard', {
+						dashboardId: dashboard.id,
+						dashboardName: dashboard.name,
+					});
 				};
 
 				return (
@@ -619,6 +630,20 @@ function DashboardsList(): JSX.Element {
 		hideOnSinglePage: true,
 	};
 
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (
+			!logEventCalledRef.current &&
+			!isDashboardListLoading &&
+			!isUndefined(dashboardListResponse)
+		) {
+			logEvent('Dashboard List: Page visited', {
+				number: dashboardListResponse?.length,
+			});
+			logEventCalledRef.current = true;
+		}
+	}, [isDashboardListLoading]);
+
 	return (
 		<div className="dashboards-list-container">
 			<div className="dashboards-list-view-content">
@@ -705,6 +730,9 @@ function DashboardsList(): JSX.Element {
 										type="text"
 										className="new-dashboard"
 										icon={<Plus size={14} />}
+										onClick={(): void => {
+											logEvent('Dashboard List: New dashboard clicked', {});
+										}}
 									>
 										New Dashboard
 									</Button>
@@ -745,6 +773,9 @@ function DashboardsList(): JSX.Element {
 										type="primary"
 										className="periscope-btn primary btn"
 										icon={<Plus size={14} />}
+										onClick={(): void => {
+											logEvent('Dashboard List: New dashboard clicked', {});
+										}}
 									>
 										New dashboard
 									</Button>

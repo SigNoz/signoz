@@ -18,6 +18,8 @@ import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { DashboardData } from 'types/api/dashboard/getAll';
 
+import logEvent from 'api/common/logEvent';
+
 function ImportJSON({
 	isImportJSONModalVisible,
 	uploadedGrafana,
@@ -67,6 +69,8 @@ function ImportJSON({
 	const onClickLoadJsonHandler = async (): Promise<void> => {
 		try {
 			setDashboardCreating(true);
+			logEvent('Dashboard List: Import and next clicked', {});
+
 			const dashboardData = JSON.parse(editorValue) as DashboardData;
 
 			if (dashboardData?.layout) {
@@ -86,6 +90,10 @@ function ImportJSON({
 						dashboardId: response.payload.uuid,
 					}),
 				);
+				logEvent('Dashboard List: New dashboard imported successfully', {
+					dashboardId: response.payload?.uuid,
+					dashboardName: response.payload?.data?.title,
+				});
 			} else if (response.error === 'feature usage exceeded') {
 				setIsFeatureAlert(true);
 				notifications.error({
@@ -180,6 +188,9 @@ function ImportJSON({
 								type="default"
 								className="periscope-btn"
 								icon={<MonitorDot size={14} />}
+								onClick={(): void => {
+									logEvent('Dashboard List: Upload JSON file clicked', {});
+								}}
 							>
 								{' '}
 								{t('upload_json_file')}

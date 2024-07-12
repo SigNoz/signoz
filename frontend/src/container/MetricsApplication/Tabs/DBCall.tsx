@@ -17,6 +17,10 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
+import { isUndefined } from 'lodash-es';
+import { useRef, useEffect } from 'react';
+import logEvent from 'api/common/logEvent';
+
 import { GraphTitle, MENU_ITEMS, SERVICE_CHART_ID } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
@@ -96,6 +100,23 @@ function DBCall(): JSX.Element {
 			}),
 		[servicename, tagFilterItems],
 	);
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current) {
+			const selectedEnvironment = queries.map((val) => {
+				if (val.tagKey === 'resource_deployment_environment') {
+					return val.tagValue;
+				}
+			});
+			logEvent('APM: Service detail page visited', {
+				selectedEnvironment: selectedEnvironment?.[0]?.[0],
+				resourceAttributeUsed: !!queries.length,
+				section: 'dbMetrics',
+			});
+			logEventCalledRef.current = true;
+		}
+	}, []);
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({
 		servicename,

@@ -60,6 +60,8 @@ import {
 	getIsQueryModified,
 	handleQueryChange,
 } from './utils';
+import { useRef } from 'react';
+import logEvent from 'api/common/logEvent';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const {
@@ -99,6 +101,21 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
 	const [isNewDashboard, setIsNewDashboard] = useState<boolean>(false);
+	console.log(isNewDashboard);
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current) {
+			logEvent('Panel Edit: Page visited', {
+				panelType: selectedWidget.panelTypes,
+				dashboardId: selectedDashboard?.uuid,
+				widgetId: selectedWidget.id,
+				dashboardName: selectedDashboard?.data.title,
+				isNewPanel: '',
+				dataSource: '',
+			});
+			logEventCalledRef.current = true;
+		}
+	}, []);
 
 	useEffect(() => {
 		const widgetId = query.get('widgetId');
@@ -481,6 +498,15 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	};
 
 	const onSaveDashboard = useCallback((): void => {
+		logEvent('Panel Edit: Save changes', {
+			panelType: selectedWidget.panelTypes,
+			dashboardId: selectedDashboard?.uuid,
+			widgetId: selectedWidget.id,
+			dashboardName: selectedDashboard?.data.title,
+			queryType: currentQuery.queryType,
+			isNewPanel: '',
+			dataSource: '',
+		});
 		setSaveModal(true);
 	}, []);
 

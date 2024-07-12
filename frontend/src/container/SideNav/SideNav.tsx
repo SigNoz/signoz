@@ -44,7 +44,7 @@ import defaultMenuItems, {
 import NavItem from './NavItem/NavItem';
 import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
-
+import logEvent from 'api/common/logEvent';
 interface UserManagementMenuItems {
 	key: string;
 	label: string;
@@ -179,6 +179,10 @@ function SideNav({
 	};
 
 	const onClickShortcuts = (e: MouseEvent): void => {
+		logEvent('Sidebar: Menu clicked', {
+			menuRoute: '/shortcuts',
+			menuLabel: 'Keyboard Shortcuts',
+		});
 		if (isCtrlMetaKey(e)) {
 			openInNewTab('/shortcuts');
 		} else {
@@ -187,6 +191,10 @@ function SideNav({
 	};
 
 	const onClickGetStarted = (event: MouseEvent): void => {
+		logEvent('Sidebar: Menu clicked', {
+			menuRoute: '/get-started',
+			menuLabel: 'Get Started',
+		});
 		if (isCtrlMetaKey(event)) {
 			openInNewTab('/get-started');
 		} else {
@@ -313,6 +321,10 @@ function SideNav({
 		} else if (item) {
 			onClickHandler(item?.key as string, event);
 		}
+		logEvent('Sidebar: Menu clicked', {
+			menuRoute: item.key,
+			menuLabel: item.label,
+		});
 	};
 
 	useEffect(() => {
@@ -440,6 +452,10 @@ function SideNav({
 									isActive={activeMenuKey === item?.key}
 									onClick={(event: MouseEvent): void => {
 										handleUserManagentMenuItemClick(item?.key as string, event);
+										logEvent('Sidebar: Menu clicked', {
+											menuRoute: item.key,
+											menuLabel: item.label,
+										});
 									}}
 								/>
 							),
@@ -456,6 +472,10 @@ function SideNav({
 									} else {
 										history.push(`${inviteMemberMenuItem.key}`);
 									}
+									logEvent('Sidebar: Menu clicked', {
+										menuRoute: inviteMemberMenuItem.key,
+										menuLabel: inviteMemberMenuItem.label,
+									});
 								}}
 							/>
 						)}
@@ -470,6 +490,10 @@ function SideNav({
 										userSettingsMenuItem?.key as string,
 										event,
 									);
+									logEvent('Sidebar: Menu clicked', {
+										menuRoute: userSettingsMenuItem.key,
+										menuLabel: 'User',
+									});
 								}}
 							/>
 						)}

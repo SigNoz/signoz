@@ -35,6 +35,7 @@ import AppReducer from 'types/reducer/app';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
+import logEvent from 'api/common/logEvent';
 
 function QuerySection({
 	selectedGraph,
@@ -122,6 +123,15 @@ function QuerySection({
 	};
 
 	const handleRunQuery = (): void => {
+		logEvent('Panel Edit: Stage and run query', {
+			dataSource: '',
+			panelType: selectedWidget.panelTypes,
+			queryType: currentQuery.queryType,
+			widgetId: selectedWidget.id,
+			dashboardId: selectedDashboard?.uuid,
+			dashboardName: selectedDashboard?.data.title,
+			isNewPanel: '',
+		});
 		handleStageQuery(currentQuery);
 	};
 

@@ -47,6 +47,9 @@ import {
 	onViewTracePopupClick,
 	useGetAPMToTracesQueries,
 } from './util';
+import { isUndefined } from 'lodash-es';
+import { useRef, useEffect } from 'react';
+import logEvent from 'api/common/logEvent';
 
 function Application(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
@@ -80,6 +83,23 @@ function Application(): JSX.Element {
 			),
 		[handleSetTimeStamp],
 	);
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current) {
+			const selectedEnvironment = queries.map((val) => {
+				if (val.tagKey === 'resource_deployment_environment') {
+					return val.tagValue;
+				}
+			});
+			logEvent('APM: Service detail page visited', {
+				selectedEnvironment: selectedEnvironment?.[0]?.[0],
+				resourceAttributeUsed: !!queries.length,
+				section: 'overview',
+			});
+			logEventCalledRef.current = true;
+		}
+	}, []);
 
 	const {
 		data: topLevelOperations,

@@ -12,6 +12,7 @@ import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
+import logEvent from 'api/common/logEvent';
 
 export default function DashboardEmptyState(): JSX.Element {
 	const {
@@ -36,6 +37,11 @@ export default function DashboardEmptyState(): JSX.Element {
 
 	const onEmptyWidgetHandler = useCallback(() => {
 		handleToggleDashboardSlider(true);
+		logEvent('Dashboard Detail: Add new panel clicked', {
+			dashboardId: selectedDashboard?.uuid,
+			dashboardName: selectedDashboard?.data.title,
+			numberOfPanels: 0,
+		});
 	}, [handleToggleDashboardSlider]);
 	return (
 		<section className="dashboard-empty-state">

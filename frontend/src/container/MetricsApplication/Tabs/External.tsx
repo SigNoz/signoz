@@ -30,6 +30,8 @@ import {
 	onViewTracePopupClick,
 	useGetAPMToTracesQueries,
 } from './util';
+import { useRef, useEffect } from 'react';
+import logEvent from 'api/common/logEvent';
 
 function External(): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
@@ -113,6 +115,23 @@ function External(): JSX.Element {
 			},
 		],
 	});
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current) {
+			const selectedEnvironment = queries.map((val) => {
+				if (val.tagKey === 'resource_deployment_environment') {
+					return val.tagValue;
+				}
+			});
+			logEvent('APM: Service detail page visited', {
+				selectedEnvironment: selectedEnvironment?.[0]?.[0],
+				resourceAttributeUsed: !!queries.length,
+				section: 'externalMetrics',
+			});
+			logEventCalledRef.current = true;
+		}
+	}, []);
 
 	const externalCallRPSWidget = useMemo(
 		() =>

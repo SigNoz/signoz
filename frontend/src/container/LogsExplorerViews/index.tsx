@@ -60,6 +60,8 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
+import { isUndefined } from 'lodash-es';
+import logEvent from 'api/common/logEvent';
 
 function LogsExplorerViews({
 	selectedView,
@@ -309,6 +311,18 @@ function LogsExplorerViews({
 			orderByTimestamp,
 		],
 	);
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isUndefined(data?.payload)) {
+			const currentData = data?.payload?.data?.newResult?.data?.result || [];
+			logEvent('Logs Explorer: Page visited', {
+				panelType: panelType,
+				// isEmpty: !(currentData.length > 0 && currentData[0].list),
+			});
+			logEventCalledRef.current = true;
+		}
+	}, [data?.payload]);
 
 	const {
 		mutate: updateDashboard,

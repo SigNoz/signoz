@@ -15,6 +15,9 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
+import { isUndefined } from 'lodash-es';
+import logEvent from 'api/common/logEvent';
+import { useEffect, useRef } from 'react';
 
 import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
@@ -111,8 +114,27 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		}));
 
 	const onClickTraceHandler = (): void => {
+		logEvent('Exception: Navigate to trace detail page', {
+			groupId: errorDetail.groupID,
+			spanId: errorDetail.spanID,
+			traceId: errorDetail.traceID,
+			exceptionId: errorDetail.errorId,
+		});
 		history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
 	};
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isUndefined(data)) {
+			logEvent('Exception: Detail page visited', {
+				groupId: errorDetail.groupID,
+				spanId: errorDetail.spanID,
+				traceId: errorDetail.traceID,
+				exceptionId: errorDetail.errorId
+			});
+			logEventCalledRef.current = true;
+		}
+	}, [data]);
 
 	return (
 		<>

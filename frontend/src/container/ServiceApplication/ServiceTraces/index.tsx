@@ -11,6 +11,10 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 
+import { isUndefined } from 'lodash-es';
+import { useRef, useEffect } from 'react';
+import logEvent from 'api/common/logEvent';
+
 import SkipOnBoardingModal from '../SkipOnBoardModal';
 import ServiceTraceTable from './ServiceTracesTable';
 
@@ -44,6 +48,28 @@ function ServiceTraces(): JSX.Element {
 		localStorageSet(SKIP_ONBOARDING, 'true');
 		setSkipOnboarding(true);
 	};
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isUndefined(data)) {
+			const selectedEnvironment = queries.map((val) => {
+				if (val.tagKey === 'resource_deployment_environment') {
+					return val.tagValue;
+				}
+			});
+			let rps = 0;
+			data.forEach(function (service) {
+				rps += service.callRate;
+			});
+			logEvent('APM: List page visited', {
+				numberOfServices: data?.length,
+				selectedEnvironment: selectedEnvironment?.[0]?.[0],
+				resourceAttributeUsed: !!queries.length,
+				rps: rps,
+			});
+			logEventCalledRef.current = true;
+		}
+	}, [data]);
 
 	if (
 		services.length === 0 &&

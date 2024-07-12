@@ -45,6 +45,11 @@ import GridCard from './GridCard';
 import { Card, CardContainer, ReactGridLayout } from './styles';
 import { removeUndefinedValuesFromLayout } from './utils';
 import { WidgetRowHeader } from './WidgetRow';
+import { isUndefined } from 'lodash-es';
+import { useRef } from 'react';
+import logEvent from 'api/common/logEvent';
+import { dashboardName } from '../../../tests/dashboards/utils';
+import { f } from 'msw/lib/glossary-de6278a9';
 
 interface GraphLayoutProps {
 	handle: FullScreenHandle;
@@ -126,6 +131,20 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		setDashboardLayout(sortLayout(layouts));
 	}, [layouts]);
 
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isUndefined(data)) {
+			logEvent('Dashboard Detail: Opened', {
+				dashboardId: data.uuid,
+				dashboardName: data.title,
+				numberOfPanels: data.widgets?.length,
+				// numberOfVariables: variables,
+				// numberOfSections: rows,
+				// tags: tags,
+			});
+			logEventCalledRef.current = true;
+		}
+	}, [data]);
 	const onSaveHandler = (): void => {
 		if (!selectedDashboard) return;
 

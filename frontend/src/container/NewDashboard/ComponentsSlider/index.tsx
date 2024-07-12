@@ -12,6 +12,7 @@ import { v4 as uuid } from 'uuid';
 import { PANEL_TYPES_INITIAL_QUERY } from './constants';
 import menuItems from './menuItems';
 import { Text } from './styles';
+import logEvent from 'api/common/logEvent';
 
 function DashboardGraphSlider(): JSX.Element {
 	const { handleToggleDashboardSlider, isDashboardSliderOpen } = useDashboard();
@@ -20,6 +21,13 @@ function DashboardGraphSlider(): JSX.Element {
 	const onClickHandler = (name: PANEL_TYPES) => (): void => {
 		const id = uuid();
 		handleToggleDashboardSlider(false);
+		logEvent('Dashboard Detail: New panel type selected', {
+			dashboardId: '',
+			dashboardName: '',
+			numberOfPanels: 0,
+			panelType: name,
+			widgetId: id,
+		});
 		const queryParamsLog = {
 			graphType: name,
 			widgetId: id,

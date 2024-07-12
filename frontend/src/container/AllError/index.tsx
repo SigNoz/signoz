@@ -32,6 +32,9 @@ import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Exception, PayloadProps } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isUndefined } from 'lodash-es';
+import { useRef } from 'react';
+import logEvent from 'api/common/logEvent';
 
 import { FilterDropdownExtendsProps } from './types';
 import {
@@ -409,6 +412,26 @@ function AllErrors(): JSX.Element {
 		},
 		[pathname],
 	);
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (
+			!logEventCalledRef.current &&
+			!isUndefined(errorCountResponse.data?.payload)
+		) {
+			const selectedEnvironment = queries.map((val) => {
+				if (val.tagKey === 'resource_deployment_environment') {
+					return val.tagValue;
+				}
+			});
+			logEvent('Exception: List page visited', {
+				numberOfExceptions: errorCountResponse.data?.payload,
+				selectedEnvironment: selectedEnvironment?.[0]?.[0],
+				resourceAttributeUsed: !!queries.length,
+			});
+			logEventCalledRef.current = true;
+		}
+	}, [errorCountResponse.data?.payload]);
 
 	return (
 		<ResizeTable

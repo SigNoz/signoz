@@ -49,6 +49,7 @@ import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
 import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
 
+import logEvent from 'api/common/logEvent';
 interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
 }
@@ -126,6 +127,11 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const onEmptyWidgetHandler = useCallback(() => {
 		handleToggleDashboardSlider(true);
+		logEvent('Dashboard Detail: Add new panel clicked', {
+			dashboardId: selectedDashboard?.uuid,
+			dashboardName: selectedDashboard?.data.title,
+			numberOfPanels: selectedDashboard?.data.widgets?.length,
+		});
 	}, [handleToggleDashboardSlider]);
 
 	const handleLockDashboardToggle = (): void => {
