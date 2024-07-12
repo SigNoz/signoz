@@ -56,7 +56,7 @@ export function Filter(props: FilterProps): JSX.Element {
 			return {} as FilterType;
 		}
 
-		return filters.items
+		return (filters.items || [])
 			.filter((item) =>
 				Object.keys(AllTraceFilterKeyValue).includes(item.key?.key as string),
 			)
