@@ -22,6 +22,7 @@ export type PanelWrapperProps = {
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	onDragSelect: (start: number, end: number) => void;
 	selectedGraph?: PANEL_TYPES;
+	timeFormat?: '24H' | '12H';
 	tableProcessedDataRef?: React.MutableRefObject<RowData[]>;
 };
 

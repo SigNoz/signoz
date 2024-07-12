@@ -28,6 +28,7 @@ function WidgetGraph({
 	queryResponse,
 	setRequestData,
 	selectedGraph,
+	timeFormat,
 }: WidgetGraphProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dispatch = useDispatch();
@@ -109,6 +110,7 @@ function WidgetGraph({
 				setRequestData={setRequestData}
 				onDragSelect={onDragSelect}
 				selectedGraph={selectedGraph}
+				timeFormat={timeFormat}
 			/>
 		</div>
 	);
@@ -122,6 +124,11 @@ interface WidgetGraphProps {
 	>;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	selectedGraph: PANEL_TYPES;
+	timeFormat?: '24H' | '12H';
 }
+
+WidgetGraph.defaultProps = {
+	timeFormat: '12H',
+};
 
 export default WidgetGraph;

@@ -255,6 +255,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		enum: selectedWidget?.timePreferance || 'GLOBAL_TIME',
 	});
 
+	const [timeFormat, setTimeFormat] = useState<'24H' | '12H'>('12H');
+
 	const updateDashboardMutation = useUpdateDashboard();
 
 	const { afterWidgets, preWidgets } = useMemo(() => {
@@ -598,6 +600,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							requestData={requestData}
 							setRequestData={setRequestData}
 							isLoadingPanelData={isLoadingPanelData}
+							timeFormat={timeFormat}
 						/>
 					)}
 				</LeftContainerWrapper>
@@ -639,6 +642,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						setSoftMin={setSoftMin}
 						softMax={softMax}
 						setSoftMax={setSoftMax}
+						setTimeFormat={setTimeFormat}
+						timeFormat={timeFormat}
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>

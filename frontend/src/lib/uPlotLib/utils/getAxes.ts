@@ -21,7 +21,11 @@ function format24HourTime(ts, includeDate = false): string {
 	return timeStr;
 }
 
-const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
+const getAxes = (
+	isDarkMode: boolean,
+	yAxisUnit?: string,
+	timeFormat?: '24H' | '12H',
+): any => [
 	{
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
 		grid: {
@@ -35,8 +39,12 @@ const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
 			show: true,
 		},
 		gap: 5,
-		values: (_self, ticks): any =>
-			ticks.map((ts, i) => format24HourTime(ts, i % 5 === 0)), // Include date every 5th tick
+		...(timeFormat === '24H'
+			? {
+					values: (_self, ticks): any =>
+						ticks.map((ts, i) => format24HourTime(ts, i % 5 === 0)), // Include date every 5th tick
+			  }
+			: {}),
 	},
 	{
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line

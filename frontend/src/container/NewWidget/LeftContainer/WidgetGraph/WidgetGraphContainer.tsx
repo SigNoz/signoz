@@ -13,6 +13,7 @@ function WidgetGraphContainer({
 	setRequestData,
 	selectedWidget,
 	isLoadingPanelData,
+	timeFormat,
 }: WidgetGraphContainerProps): JSX.Element {
 	if (queryResponse.data && selectedGraph === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
@@ -76,6 +77,7 @@ function WidgetGraphContainer({
 			queryResponse={queryResponse}
 			setRequestData={setRequestData}
 			selectedGraph={selectedGraph}
+			timeFormat={timeFormat}
 		/>
 	);
 }

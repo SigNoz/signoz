@@ -30,6 +30,7 @@ function UplotPanelWrapper({
 	onClickHandler,
 	onDragSelect,
 	selectedGraph,
+	timeFormat,
 }: PanelWrapperProps): JSX.Element {
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
@@ -38,6 +39,7 @@ function UplotPanelWrapper({
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const { currentQuery } = useQueryBuilder();
+	console.log('timeFormat', timeFormat);
 
 	const [hiddenGraph, setHiddenGraph] = useState<{ [key: string]: boolean }>();
 
@@ -126,6 +128,7 @@ function UplotPanelWrapper({
 				stackBarChart: widget?.stackedBarChart,
 				hiddenGraph,
 				setHiddenGraph,
+				timeFormat,
 			}),
 		[
 			widget?.id,
@@ -147,6 +150,7 @@ function UplotPanelWrapper({
 			selectedGraph,
 			currentQuery,
 			hiddenGraph,
+			timeFormat,
 		],
 	);
 
