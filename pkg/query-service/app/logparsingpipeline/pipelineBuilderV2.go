@@ -45,6 +45,13 @@ func PreparePipelineProcessor(pipelines []Pipeline) (
 			},
 		}
 	}
+
+	// TODO(Raj): with error_mode: ignore, errors in ottl statements get logged and processing
+	// continues on to the next statement.
+	// So operators that get translated to multiple ottl statements must behave atomically
+	// as much as possible - if a statement for the op fails, there is no point running the
+	// statements that follow.
+
 	return processors, names, nil
 }
 
@@ -317,17 +324,22 @@ func ottlStatementsForJsonParser(operator PipelineOperator) (
 			"couldn't generate nil check for parseFrom of json parser op %s: %w", operator.Name, err,
 		)
 	}
-	whereClause := strings.Join([]string{
-		exprToOttl(parseFromNotNilCheck),
-		fmt.Sprintf(`IsMatch(%s, "^\\s*{.*}\\s*$")`, logTransformPathToOttlPath(operator.ParseFrom)),
-	}, " and ")
 
-	return ottlStatementsForExtractingMapValue(
-		whereClause,
+	mapExtractStmts := ottlStatementsForExtractingMapValue(
 		fmt.Sprintf("ParseJSON(%s)", logTransformPathToOttlPath(operator.ParseFrom)),
 		logTransformPathToOttlPath(operator.ParseTo),
-	), nil
+	)
 
+	stmts := ottlStatementsWithPrependedConditions(
+		mapExtractStmts,
+		exprToOttl(parseFromNotNilCheck),
+		fmt.Sprintf(
+			`IsMatch(%s, "^\\s*{.*}\\s*$")`,
+			logTransformPathToOttlPath(operator.ParseFrom),
+		),
+	)
+
+	return stmts, nil
 }
 
 func ottlStatementsForTimeParser(operator PipelineOperator) (
@@ -509,8 +521,6 @@ func ottlStatementsForTraceParser(operator PipelineOperator) (
 
 // TODO(Raj): This should be used in regex and grok parser too?
 func ottlStatementsForExtractingMapValue(
-	// TODO(Raj): `filterClause` is not needed as an input?
-	filterClause string,
 	mapGenerator string,
 	target string,
 ) []ottlStatement {
@@ -523,7 +533,7 @@ func ottlStatementsForExtractingMapValue(
 		editor: fmt.Sprintf(
 			`set(cache["%s"], %s)`, cacheKey, mapGenerator,
 		),
-		conditions: []string{filterClause},
+		conditions: []string{},
 	})
 
 	// Set target to a map if not already one.
@@ -625,4 +635,20 @@ func escapeDoubleQuotesForOttl(str string) string {
 
 func exprToOttl(expr string) string {
 	return fmt.Sprintf(`EXPR("%s")`, escapeDoubleQuotesForOttl(expr))
+}
+
+func ottlStatementsWithPrependedConditions(
+	statements []ottlStatement,
+	conditionsToPrepend ...string,
+) []ottlStatement {
+	stmts := []ottlStatement{}
+	for _, s := range statements {
+		stmts = append(stmts, ottlStatement{
+			editor: s.editor,
+			conditions: append(
+				conditionsToPrepend, s.conditions...,
+			),
+		})
+	}
+	return stmts
 }
