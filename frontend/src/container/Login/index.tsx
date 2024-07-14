@@ -224,7 +224,12 @@ function Login({
 					<ParentContainer>
 						<Label htmlFor="Password">{t('label_password')}</Label>
 						<FormContainer.Item name="password">
-							<Input.Password required id="currentPassword" disabled={isLoading} />
+							<Input.Password
+								required
+								id="currentPassword"
+								data-testid="reset_password"
+								disabled={isLoading}
+							/>
 						</FormContainer.Item>
 						<Tooltip title={t('prompt_forgot_password')}>
 							<Typography.Link>{t('forgot_password')}</Typography.Link>
