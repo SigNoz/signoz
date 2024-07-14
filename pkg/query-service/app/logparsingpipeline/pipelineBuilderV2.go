@@ -131,290 +131,109 @@ func ottlStatementsForPipeline(pipeline Pipeline) ([]string, error) {
 		return stmt
 	}
 
-	appendStatement := func(statement string, additionalFilter string) {
-		conditions := []string{}
-		if len(additionalFilter) > 0 {
-			conditions = append(conditions, additionalFilter)
-		}
-		stmt := pipelineStmt(statement, conditions)
-
-		ottlStatements = append(ottlStatements, stmt.toString())
-	}
-
-	appendDeleteStatement := func(path string) {
-		fieldPath := logTransformPathToOttlPath(path)
-		fieldPathParts := rSplitAfterN(fieldPath, "[", 2)
-		target := fieldPathParts[0]
-		key := fieldPathParts[1][1 : len(fieldPathParts[1])-1]
-
-		pathNotNilCheck, err := fieldNotNilCheck(path)
-		if err != nil {
-			panic(err)
-		}
-
-		appendStatement(
-			fmt.Sprintf(`delete_key(%s, %s)`, target, key),
-			exprForOttl(pathNotNilCheck),
-		)
-	}
-
-	appendMapExtractStatements := func(
-		filterClause string,
-		mapGenerator string,
-		target string,
-	) {
-		cacheKey := uuid.NewString()
-		// Extract parsed map to cache.
-		appendStatement(fmt.Sprintf(
-			`set(cache["%s"], %s)`, cacheKey, mapGenerator,
-		), filterClause)
-
-		// Set target to a map if not already one.
-		appendStatement(fmt.Sprintf(
-			`set(%s, ParseJSON("{}"))`, logTransformPathToOttlPath(target),
-		), strings.Join([]string{
-			fmt.Sprintf(`cache["%s"] != nil`, cacheKey),
-			fmt.Sprintf("not IsMap(%s)", logTransformPathToOttlPath(target)),
-		}, " and "))
-
-		appendStatement(
-			fmt.Sprintf(
-				`merge_maps(%s, cache["%s"], "upsert")`,
-				logTransformPathToOttlPath(target), cacheKey,
-			),
-			fmt.Sprintf(`cache["%s"] != nil`, cacheKey),
-		)
-	}
-
 	for _, operator := range pipeline.Config {
 		if operator.Enabled {
 
 			if operator.Type == "add" {
-				value := fmt.Sprintf(`"%s"`, operator.Value)
-				condition := ""
-				if strings.HasPrefix(operator.Value, "EXPR(") {
-					expression := strings.TrimSuffix(strings.TrimPrefix(operator.Value, "EXPR("), ")")
-					value = exprForOttl(expression)
-					fieldsNotNilCheck, err := fieldsReferencedInExprNotNilCheck(expression)
-					if err != nil {
-						return nil, fmt.Errorf(
-							"could'nt generate nil check for fields referenced in value expr of add operator %s: %w",
-							operator.Name, err,
-						)
-					}
-					if fieldsNotNilCheck != "" {
-						condition = exprForOttl(fieldsNotNilCheck)
-					}
+				stmts, err := ottlStatementsForAddOperator((operator))
+				if err != nil {
+					return nil, fmt.Errorf("couldn't generate ottl for add operator: %w", err)
 				}
-				appendStatement(
-					fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.Field), value),
-					condition,
-				)
+				for _, s := range stmts {
+					ps := pipelineStmt(s.editor, s.conditions)
+					ottlStatements = append(ottlStatements, ps.toString())
+				}
 
 			} else if operator.Type == "remove" {
-				appendDeleteStatement(operator.Field)
+				stmts, err := ottlStatementsForRemoveOperator((operator))
+				if err != nil {
+					return nil, fmt.Errorf("couldn't generate ottl for remove operator: %w", err)
+				}
+				for _, s := range stmts {
+					ps := pipelineStmt(s.editor, s.conditions)
+					ottlStatements = append(ottlStatements, ps.toString())
+				}
 
 			} else if operator.Type == "copy" {
-				appendStatement(fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.To), logTransformPathToOttlPath(operator.From)), "")
+				stmts, err := ottlStatementsForCopyOperator((operator))
+				if err != nil {
+					return nil, fmt.Errorf("couldn't generate ottl for copy operator: %w", err)
+				}
+				for _, s := range stmts {
+					ps := pipelineStmt(s.editor, s.conditions)
+					ottlStatements = append(ottlStatements, ps.toString())
+				}
 
 			} else if operator.Type == "move" {
-				appendStatement(fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.To), logTransformPathToOttlPath(operator.From)), "")
-				appendDeleteStatement(operator.From)
+				// appendStatement(fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.To), logTransformPathToOttlPath(operator.From)), "")
+				// appendDeleteStatement(operator.From)
+				stmts, err := ottlStatementsForMoveOperator((operator))
+				if err != nil {
+					return nil, fmt.Errorf("couldn't generate ottl for move operator: %w", err)
+				}
+				for _, s := range stmts {
+					ps := pipelineStmt(s.editor, s.conditions)
+					ottlStatements = append(ottlStatements, ps.toString())
+				}
 
 			} else if operator.Type == "regex_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				stmts, err := ottlStatementsForRegexParser(operator)
 				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of regex op %s: %w", operator.Name, err,
-					)
+					return nil, fmt.Errorf("couldn't generate ottl for regex parser: %w", err)
 				}
-				appendStatement(
-					fmt.Sprintf(
-						`merge_maps(%s, ExtractPatterns(%s, "%s"), "upsert")`,
-						logTransformPathToOttlPath(operator.ParseTo),
-						logTransformPathToOttlPath(operator.ParseFrom),
-						escapeDoubleQuotesForOttl(operator.Regex),
-					),
-					exprForOttl(parseFromNotNilCheck),
-				)
+				for _, s := range stmts {
+					ps := pipelineStmt(s.editor, s.conditions)
+					ottlStatements = append(ottlStatements, ps.toString())
+				}
 
 			} else if operator.Type == "grok_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				stmts, err := ottlStatementsForGrokParser(operator)
 				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of grok op %s: %w", operator.Name, err,
-					)
+					return nil, fmt.Errorf("couldn't generate ottl for grok parser: %w", err)
 				}
-				appendStatement(
-					fmt.Sprintf(
-						`merge_maps(%s, GrokParse(%s, "%s"), "upsert")`,
-						logTransformPathToOttlPath(operator.ParseTo),
-						logTransformPathToOttlPath(operator.ParseFrom),
-						escapeDoubleQuotesForOttl(operator.Pattern),
-					),
-					exprForOttl(parseFromNotNilCheck),
-				)
+				for _, s := range stmts {
+					ps := pipelineStmt(s.editor, s.conditions)
+					ottlStatements = append(ottlStatements, ps.toString())
+				}
 
 			} else if operator.Type == "json_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				stmts, err := ottlStatementsForJsonParser(operator)
 				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of json parser op %s: %w", operator.Name, err,
-					)
+					return nil, fmt.Errorf("couldn't generate ottl for json parser: %w", err)
 				}
-				whereClause := strings.Join([]string{
-					exprForOttl(parseFromNotNilCheck),
-					fmt.Sprintf(`IsMatch(%s, "^\\s*{.*}\\s*$")`, logTransformPathToOttlPath(operator.ParseFrom)),
-				}, " and ")
-
-				appendMapExtractStatements(
-					whereClause,
-					fmt.Sprintf("ParseJSON(%s)", logTransformPathToOttlPath(operator.ParseFrom)),
-					logTransformPathToOttlPath(operator.ParseTo),
-				)
+				for _, s := range stmts {
+					ps := pipelineStmt(s.editor, s.conditions)
+					ottlStatements = append(ottlStatements, ps.toString())
+				}
 
 			} else if operator.Type == "time_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				stmts, err := ottlStatementsForTimeParser(operator)
 				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of json parser op %s: %w", operator.Name, err,
-					)
+					return nil, fmt.Errorf("couldn't generate ottl for time parser: %w", err)
 				}
-
-				whereClauseParts := []string{exprForOttl(parseFromNotNilCheck)}
-
-				if operator.LayoutType == "strptime" {
-					regex, err := RegexForStrptimeLayout(operator.Layout)
-					if err != nil {
-						return nil, fmt.Errorf(
-							"couldn't generate layout regex for time_parser %s: %w", operator.Name, err,
-						)
-					}
-					whereClauseParts = append(whereClauseParts,
-						fmt.Sprintf(`IsMatch(%s, "%s")`, logTransformPathToOttlPath(operator.ParseFrom), regex),
-					)
-
-					appendStatement(
-						fmt.Sprintf(
-							`set(time, Time(%s, "%s"))`,
-							logTransformPathToOttlPath(operator.ParseFrom),
-							operator.Layout,
-						),
-						strings.Join(whereClauseParts, " and "),
-					)
-
-				} else if operator.LayoutType == "epoch" {
-					valueRegex := `^\\s*[0-9]+\\s*$`
-					if strings.Contains(operator.Layout, ".") {
-						valueRegex = `^\\s*[0-9]+\\.[0-9]+\\s*$`
-					}
-
-					whereClauseParts = append(whereClauseParts,
-						exprForOttl(fmt.Sprintf(
-							`string(%s) matches "%s"`, operator.ParseFrom, valueRegex,
-						)),
-					)
-
-					timeValue := fmt.Sprintf("Double(%s)", logTransformPathToOttlPath(operator.ParseFrom))
-					if strings.HasPrefix(operator.Layout, "seconds") {
-						timeValue = fmt.Sprintf("%s * 1000000000", timeValue)
-					} else if operator.Layout == "milliseconds" {
-						timeValue = fmt.Sprintf("%s * 1000000", timeValue)
-					} else if operator.Layout == "microseconds" {
-						timeValue = fmt.Sprintf("%s * 1000", timeValue)
-					}
-					appendStatement(
-						fmt.Sprintf(`set(time_unix_nano, %s)`, timeValue),
-						strings.Join(whereClauseParts, " and "),
-					)
-				} else {
-					return nil, fmt.Errorf("unsupported time layout %s", operator.LayoutType)
+				for _, s := range stmts {
+					ps := pipelineStmt(s.editor, s.conditions)
+					ottlStatements = append(ottlStatements, ps.toString())
 				}
 
 			} else if operator.Type == "severity_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				stmts, err := ottlStatementsForSeverityParser(operator)
 				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of severity parser %s: %w", operator.Name, err,
-					)
+					return nil, fmt.Errorf("couldn't generate ottl for serverity parser: %w", err)
 				}
-
-				for severity, valuesToMap := range operator.SeverityMapping {
-					for _, value := range valuesToMap {
-						// Special case for 2xx 3xx 4xx and 5xx
-						isSpecialValue, err := regexp.MatchString(`^\s*[2|3|4|5]xx\s*$`, strings.ToLower(value))
-						if err != nil {
-							return nil, fmt.Errorf("couldn't regex match for wildcard severity values: %w", err)
-						}
-						if isSpecialValue {
-							whereClause := strings.Join([]string{
-								exprForOttl(parseFromNotNilCheck),
-								exprForOttl(fmt.Sprintf(`type(%s) in ["int", "float"] && %s == float(int(%s))`, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom)),
-								exprForOttl(fmt.Sprintf(`string(int(%s)) matches "^%s$"`, operator.ParseFrom, fmt.Sprintf("%s[0-9]{2}", value[0:1]))),
-							}, " and ")
-							appendStatement(fmt.Sprintf("set(severity_number, SEVERITY_NUMBER_%s)", strings.ToUpper(severity)), whereClause)
-							appendStatement(fmt.Sprintf(`set(severity_text, "%s")`, strings.ToUpper(severity)), whereClause)
-						} else {
-							whereClause := strings.Join([]string{
-								exprForOttl(parseFromNotNilCheck),
-								fmt.Sprintf(
-									`IsString(%s)`,
-									logTransformPathToOttlPath(operator.ParseFrom),
-								),
-								fmt.Sprintf(
-									`IsMatch(%s, "^\\s*%s\\s*$")`,
-									logTransformPathToOttlPath(operator.ParseFrom), value,
-								),
-							}, " and ")
-							appendStatement(fmt.Sprintf("set(severity_number, SEVERITY_NUMBER_%s)", strings.ToUpper(severity)), whereClause)
-							appendStatement(fmt.Sprintf(`set(severity_text, "%s")`, strings.ToUpper(severity)), whereClause)
-						}
-					}
+				for _, s := range stmts {
+					ps := pipelineStmt(s.editor, s.conditions)
+					ottlStatements = append(ottlStatements, ps.toString())
 				}
 			} else if operator.Type == "trace_parser" {
-				// panic("TODO(Raj): Implement trace parser translation")
-				if operator.TraceId != nil && len(operator.TraceId.ParseFrom) > 0 {
-					parseFromNotNilCheck, err := fieldNotNilCheck(operator.TraceId.ParseFrom)
-					if err != nil {
-						return nil, fmt.Errorf(
-							"couldn't generate nil check for TraceId.parseFrom %s: %w", operator.Name, err,
-						)
-					}
-					// TODO(Raj): Also check for trace id regex pattern
-					appendStatement(
-						fmt.Sprintf(`set(trace_id.string, %s)`, logTransformPathToOttlPath(operator.TraceId.ParseFrom)),
-						exprForOttl(parseFromNotNilCheck),
-					)
+
+				stmts, err := ottlStatementsForTraceParser(operator)
+				if err != nil {
+					return nil, fmt.Errorf("couldn't generate ottl for trace operator: %w", err)
 				}
-
-				if operator.SpanId != nil && len(operator.SpanId.ParseFrom) > 0 {
-					parseFromNotNilCheck, err := fieldNotNilCheck(operator.SpanId.ParseFrom)
-					if err != nil {
-						return nil, fmt.Errorf(
-							"couldn't generate nil check for TraceId.parseFrom %s: %w", operator.Name, err,
-						)
-					}
-					// TODO(Raj): Also check for span id regex pattern
-					appendStatement(
-						fmt.Sprintf("set(span_id.string, %s)", logTransformPathToOttlPath(operator.SpanId.ParseFrom)),
-						exprForOttl(parseFromNotNilCheck),
-					)
-
-				}
-
-				if operator.TraceFlags != nil && len(operator.TraceFlags.ParseFrom) > 0 {
-
-					parseFromNotNilCheck, err := fieldNotNilCheck(operator.TraceFlags.ParseFrom)
-					if err != nil {
-						return nil, fmt.Errorf(
-							"couldn't generate nil check for TraceId.parseFrom %s: %w", operator.Name, err,
-						)
-					}
-					// TODO(Raj): Also check for trace flags hex regex pattern
-					appendStatement(
-						fmt.Sprintf(`set(flags, HexToInt(%s))`, logTransformPathToOttlPath(operator.TraceFlags.ParseFrom)),
-						exprForOttl(parseFromNotNilCheck),
-					)
+				for _, s := range stmts {
+					ps := pipelineStmt(s.editor, s.conditions)
+					ottlStatements = append(ottlStatements, ps.toString())
 				}
 
 			} else {
@@ -427,6 +246,366 @@ func ottlStatementsForPipeline(pipeline Pipeline) ([]string, error) {
 	removePipelineMarker()
 
 	return ottlStatements, nil
+}
+func ottlStatementsForAddOperator(
+	operator PipelineOperator,
+) ([]ottlStatement, error) {
+	value := fmt.Sprintf(`"%s"`, operator.Value)
+	condition := ""
+	if strings.HasPrefix(operator.Value, "EXPR(") {
+		expression := strings.TrimSuffix(strings.TrimPrefix(operator.Value, "EXPR("), ")")
+		value = exprForOttl(expression)
+		fieldsNotNilCheck, err := fieldsReferencedInExprNotNilCheck(expression)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"could'nt generate nil check for fields referenced in value expr of add operator %s: %w",
+				operator.Name, err,
+			)
+		}
+		if fieldsNotNilCheck != "" {
+			condition = exprForOttl(fieldsNotNilCheck)
+		}
+	}
+
+	return []ottlStatement{{
+		editor:     fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.Field), value),
+		conditions: []string{condition},
+	}}, nil
+}
+
+func ottlStatementsForRemoveOperator(operator PipelineOperator) (
+	[]ottlStatement, error,
+) {
+	stmt, err := ottlStatementForDeletingField(operator.Field)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't generate ottl for remove operator: %w", err)
+	}
+	return []ottlStatement{*stmt}, nil
+}
+
+func ottlStatementsForCopyOperator(operator PipelineOperator) (
+	[]ottlStatement, error,
+) {
+	return []ottlStatement{{
+		editor:     fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.To), logTransformPathToOttlPath(operator.From)),
+		conditions: []string{},
+	}}, nil
+}
+
+func ottlStatementsForMoveOperator(operator PipelineOperator) (
+	[]ottlStatement, error,
+) {
+	stmts := []ottlStatement{}
+
+	stmts = append(stmts, ottlStatement{
+		editor:     fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.To), logTransformPathToOttlPath(operator.From)),
+		conditions: []string{},
+	})
+
+	deleteStmt, err := ottlStatementForDeletingField(operator.From)
+	if err != nil {
+		return nil, fmt.Errorf("couldnt' generate delete stmt for move op: %w", err)
+	}
+	stmts = append(stmts, *deleteStmt)
+
+	return stmts, nil
+}
+
+func ottlStatementsForRegexParser(operator PipelineOperator) (
+	[]ottlStatement, error,
+) {
+	parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"couldn't generate nil check for parseFrom of regex op %s: %w", operator.Name, err,
+		)
+	}
+	return []ottlStatement{{
+		editor: fmt.Sprintf(
+			`merge_maps(%s, ExtractPatterns(%s, "%s"), "upsert")`,
+			logTransformPathToOttlPath(operator.ParseTo),
+			logTransformPathToOttlPath(operator.ParseFrom),
+			escapeDoubleQuotesForOttl(operator.Regex),
+		),
+		conditions: []string{exprForOttl(parseFromNotNilCheck)},
+	}}, nil
+
+}
+
+func ottlStatementsForGrokParser(operator PipelineOperator) (
+	[]ottlStatement, error,
+) {
+	parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"couldn't generate nil check for parseFrom of grok op %s: %w", operator.Name, err,
+		)
+	}
+	return []ottlStatement{{
+		editor: fmt.Sprintf(
+			`merge_maps(%s, GrokParse(%s, "%s"), "upsert")`,
+			logTransformPathToOttlPath(operator.ParseTo),
+			logTransformPathToOttlPath(operator.ParseFrom),
+			escapeDoubleQuotesForOttl(operator.Pattern),
+		),
+		conditions: []string{exprForOttl(parseFromNotNilCheck)},
+	}}, nil
+}
+
+func ottlStatementsForJsonParser(operator PipelineOperator) (
+	[]ottlStatement, error,
+) {
+	parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"couldn't generate nil check for parseFrom of json parser op %s: %w", operator.Name, err,
+		)
+	}
+	whereClause := strings.Join([]string{
+		exprForOttl(parseFromNotNilCheck),
+		fmt.Sprintf(`IsMatch(%s, "^\\s*{.*}\\s*$")`, logTransformPathToOttlPath(operator.ParseFrom)),
+	}, " and ")
+
+	return ottlStatementsForExtractingMapValue(
+		whereClause,
+		fmt.Sprintf("ParseJSON(%s)", logTransformPathToOttlPath(operator.ParseFrom)),
+		logTransformPathToOttlPath(operator.ParseTo),
+	), nil
+
+}
+
+func ottlStatementsForTimeParser(operator PipelineOperator) (
+	[]ottlStatement, error,
+) {
+	stmts := []ottlStatement{}
+
+	parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"couldn't generate nil check for parseFrom of json parser op %s: %w", operator.Name, err,
+		)
+	}
+
+	whereClauseParts := []string{exprForOttl(parseFromNotNilCheck)}
+
+	if operator.LayoutType == "strptime" {
+		regex, err := RegexForStrptimeLayout(operator.Layout)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"couldn't generate layout regex for time_parser %s: %w", operator.Name, err,
+			)
+		}
+		whereClauseParts = append(whereClauseParts,
+			fmt.Sprintf(`IsMatch(%s, "%s")`, logTransformPathToOttlPath(operator.ParseFrom), regex),
+		)
+
+		stmts = append(stmts, ottlStatement{
+			editor: fmt.Sprintf(
+				`set(time, Time(%s, "%s"))`,
+				logTransformPathToOttlPath(operator.ParseFrom),
+				operator.Layout,
+			),
+			conditions: whereClauseParts,
+		})
+
+	} else if operator.LayoutType == "epoch" {
+		valueRegex := `^\\s*[0-9]+\\s*$`
+		if strings.Contains(operator.Layout, ".") {
+			valueRegex = `^\\s*[0-9]+\\.[0-9]+\\s*$`
+		}
+
+		whereClauseParts = append(whereClauseParts,
+			exprForOttl(fmt.Sprintf(
+				`string(%s) matches "%s"`, operator.ParseFrom, valueRegex,
+			)),
+		)
+
+		timeValue := fmt.Sprintf("Double(%s)", logTransformPathToOttlPath(operator.ParseFrom))
+		if strings.HasPrefix(operator.Layout, "seconds") {
+			timeValue = fmt.Sprintf("%s * 1000000000", timeValue)
+		} else if operator.Layout == "milliseconds" {
+			timeValue = fmt.Sprintf("%s * 1000000", timeValue)
+		} else if operator.Layout == "microseconds" {
+			timeValue = fmt.Sprintf("%s * 1000", timeValue)
+		}
+		stmts = append(stmts, ottlStatement{
+			editor:     fmt.Sprintf(`set(time_unix_nano, %s)`, timeValue),
+			conditions: whereClauseParts,
+		})
+	} else {
+		return nil, fmt.Errorf("unsupported time layout %s", operator.LayoutType)
+	}
+
+	return stmts, nil
+}
+
+func ottlStatementsForSeverityParser(operator PipelineOperator) (
+	[]ottlStatement, error,
+) {
+	stmts := []ottlStatement{}
+
+	parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"couldn't generate nil check for parseFrom of severity parser %s: %w", operator.Name, err,
+		)
+	}
+
+	for severity, valuesToMap := range operator.SeverityMapping {
+		for _, value := range valuesToMap {
+			// Special case for 2xx 3xx 4xx and 5xx
+			isSpecialValue, err := regexp.MatchString(`^\s*[2|3|4|5]xx\s*$`, strings.ToLower(value))
+			if err != nil {
+				return nil, fmt.Errorf("couldn't regex match for wildcard severity values: %w", err)
+			}
+			if isSpecialValue {
+				whereClause := strings.Join([]string{
+					exprForOttl(parseFromNotNilCheck),
+					exprForOttl(fmt.Sprintf(`type(%s) in ["int", "float"] && %s == float(int(%s))`, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom)),
+					exprForOttl(fmt.Sprintf(`string(int(%s)) matches "^%s$"`, operator.ParseFrom, fmt.Sprintf("%s[0-9]{2}", value[0:1]))),
+				}, " and ")
+				stmts = append(stmts, ottlStatement{
+					editor:     fmt.Sprintf("set(severity_number, SEVERITY_NUMBER_%s)", strings.ToUpper(severity)),
+					conditions: []string{whereClause},
+				})
+				stmts = append(stmts, ottlStatement{
+					editor:     fmt.Sprintf(`set(severity_text, "%s")`, strings.ToUpper(severity)),
+					conditions: []string{whereClause},
+				})
+			} else {
+				whereClause := strings.Join([]string{
+					exprForOttl(parseFromNotNilCheck),
+					fmt.Sprintf(
+						`IsString(%s)`,
+						logTransformPathToOttlPath(operator.ParseFrom),
+					),
+					fmt.Sprintf(
+						`IsMatch(%s, "^\\s*%s\\s*$")`,
+						logTransformPathToOttlPath(operator.ParseFrom), value,
+					),
+				}, " and ")
+
+				stmts = append(stmts, ottlStatement{
+					editor:     fmt.Sprintf("set(severity_number, SEVERITY_NUMBER_%s)", strings.ToUpper(severity)),
+					conditions: []string{whereClause},
+				})
+				stmts = append(stmts, ottlStatement{
+					editor:     fmt.Sprintf(`set(severity_text, "%s")`, strings.ToUpper(severity)),
+					conditions: []string{whereClause},
+				})
+			}
+		}
+	}
+
+	return stmts, nil
+}
+
+func ottlStatementsForTraceParser(operator PipelineOperator) (
+	[]ottlStatement, error,
+) {
+	stmts := []ottlStatement{}
+
+	// panic("TODO(Raj): Implement trace parser translation")
+	if operator.TraceId != nil && len(operator.TraceId.ParseFrom) > 0 {
+		parseFromNotNilCheck, err := fieldNotNilCheck(operator.TraceId.ParseFrom)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"couldn't generate nil check for TraceId.parseFrom %s: %w", operator.Name, err,
+			)
+		}
+		// TODO(Raj): Also check for trace id regex pattern
+		stmts = append(stmts, ottlStatement{
+			editor:     fmt.Sprintf(`set(trace_id.string, %s)`, logTransformPathToOttlPath(operator.TraceId.ParseFrom)),
+			conditions: []string{exprForOttl(parseFromNotNilCheck)},
+		})
+	}
+
+	if operator.SpanId != nil && len(operator.SpanId.ParseFrom) > 0 {
+		parseFromNotNilCheck, err := fieldNotNilCheck(operator.SpanId.ParseFrom)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"couldn't generate nil check for TraceId.parseFrom %s: %w", operator.Name, err,
+			)
+		}
+		// TODO(Raj): Also check for span id regex pattern
+		stmts = append(stmts, ottlStatement{
+			editor:     fmt.Sprintf("set(span_id.string, %s)", logTransformPathToOttlPath(operator.SpanId.ParseFrom)),
+			conditions: []string{exprForOttl(parseFromNotNilCheck)},
+		})
+
+	}
+
+	if operator.TraceFlags != nil && len(operator.TraceFlags.ParseFrom) > 0 {
+
+		parseFromNotNilCheck, err := fieldNotNilCheck(operator.TraceFlags.ParseFrom)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"couldn't generate nil check for TraceId.parseFrom %s: %w", operator.Name, err,
+			)
+		}
+		// TODO(Raj): Also check for trace flags hex regex pattern
+		stmts = append(stmts, ottlStatement{
+			editor:     fmt.Sprintf(`set(flags, HexToInt(%s))`, logTransformPathToOttlPath(operator.TraceFlags.ParseFrom)),
+			conditions: []string{exprForOttl(parseFromNotNilCheck)},
+		})
+	}
+	return stmts, nil
+}
+
+func ottlStatementsForExtractingMapValue(
+	filterClause string,
+	mapGenerator string,
+	target string,
+) []ottlStatement {
+	stmts := []ottlStatement{}
+
+	cacheKey := uuid.NewString()
+
+	// Extract parsed map to cache.
+	stmts = append(stmts, ottlStatement{
+		editor: fmt.Sprintf(
+			`set(cache["%s"], %s)`, cacheKey, mapGenerator,
+		),
+		conditions: []string{filterClause},
+	})
+
+	// Set target to a map if not already one.
+	stmts = append(stmts, ottlStatement{
+		editor: fmt.Sprintf(
+			`set(%s, ParseJSON("{}"))`, logTransformPathToOttlPath(target),
+		),
+		conditions: []string{
+			fmt.Sprintf(`cache["%s"] != nil`, cacheKey),
+			fmt.Sprintf("not IsMap(%s)", logTransformPathToOttlPath(target)),
+		},
+	})
+
+	stmts = append(stmts, ottlStatement{
+		editor: fmt.Sprintf(
+			`merge_maps(%s, cache["%s"], "upsert")`,
+			logTransformPathToOttlPath(target), cacheKey,
+		),
+		conditions: []string{fmt.Sprintf(`cache["%s"] != nil`, cacheKey)},
+	})
+
+	return stmts
+}
+
+func ottlStatementForDeletingField(fieldPath string) (*ottlStatement, error) {
+	ottlPath := logTransformPathToOttlPath(fieldPath)
+	fieldPathParts := rSplitAfterN(ottlPath, "[", 2)
+	target := fieldPathParts[0]
+	key := fieldPathParts[1][1 : len(fieldPathParts[1])-1]
+
+	pathNotNilCheck, err := fieldNotNilCheck(fieldPath)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't generate nil check for path %s: %w", fieldPath, err)
+	}
+
+	return &ottlStatement{
+		editor:     fmt.Sprintf(`delete_key(%s, %s)`, target, key),
+		conditions: []string{exprForOttl(pathNotNilCheck)},
+	}, nil
 }
 
 // a.b?.c -> ["a", "b", "c"]
