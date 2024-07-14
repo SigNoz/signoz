@@ -228,7 +228,7 @@ function Login({
 							<Input.Password
 								required
 								id="currentPassword"
-								data-testid="reset_password"
+								data-testid="password"
 								disabled={isLoading}
 							/>
 						</FormContainer.Item>

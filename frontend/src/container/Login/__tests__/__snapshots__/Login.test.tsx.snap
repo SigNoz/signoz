@@ -1,0 +1,176 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Login Flow providing shaheer@signoz.io as email and pressing next, should make the login_with_sso button visible 1`] = `
+.c0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  min-width: 390px;
+  min-height: 430px;
+  max-width: 432px;
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  -webkit-align-items: flex-start;
+  -webkit-box-align: flex-start;
+  -ms-flex-align: flex-start;
+  align-items: flex-start;
+}
+
+.c0.c0.c0.ant-card-body {
+  min-width: 100%;
+}
+
+.c3 {
+  margin-bottom: 11px;
+  margin-top: 19px;
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 24px;
+}
+
+.c1 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-align-items: flex-start;
+  -webkit-box-align: flex-start;
+  -ms-flex-align: flex-start;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.c1 .ant-form-item {
+  margin-bottom: 0px;
+}
+
+.c2 {
+  width: 100%;
+}
+
+<div>
+   
+  <div
+    class="ant-card ant-card-bordered c0 css-dev-only-do-not-override-2i2tap"
+  >
+    <div
+      class="ant-card-body"
+    >
+      <form
+        class="ant-form ant-form-horizontal css-dev-only-do-not-override-2i2tap c1"
+      >
+        <h4
+          class="ant-typography css-dev-only-do-not-override-2i2tap"
+        >
+          login_page_title
+        </h4>
+        <div
+          class="c2"
+        >
+          <label
+            class="c3"
+            for="signupEmail"
+          >
+            label_email
+          </label>
+          <div
+            class="ant-form-item css-dev-only-do-not-override-2i2tap ant-form-item-has-success"
+          >
+            <div
+              class="ant-row ant-form-item-row css-dev-only-do-not-override-2i2tap"
+            >
+              <div
+                class="ant-col ant-form-item-control css-dev-only-do-not-override-2i2tap"
+              >
+                <div
+                  class="ant-form-item-control-input"
+                >
+                  <div
+                    class="ant-form-item-control-input-content"
+                  >
+                    <input
+                      class="ant-input ant-input-status-success css-dev-only-do-not-override-2i2tap"
+                      data-testid="email"
+                      id="loginEmail"
+                      placeholder="placeholder_email"
+                      required=""
+                      type="email"
+                      value="shaheer@signoz.io"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="ant-space css-dev-only-do-not-override-2i2tap ant-space-vertical ant-space-align-start"
+          style="column-gap: 20px; row-gap: 20px; margin-top: 1.3125rem;"
+        >
+          <div
+            class="ant-space-item"
+          >
+            <button
+              class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-primary ant-btn-loading"
+              data-testid="initiate_login"
+              disabled=""
+              type="button"
+            >
+              <span
+                class="ant-btn-icon ant-btn-loading-icon"
+              >
+                <span
+                  aria-label="loading"
+                  class="anticon anticon-loading anticon-spin"
+                  role="img"
+                >
+                  <svg
+                    aria-hidden="true"
+                    data-icon="loading"
+                    fill="currentColor"
+                    focusable="false"
+                    height="1em"
+                    viewBox="0 0 1024 1024"
+                    width="1em"
+                  >
+                    <path
+                      d="M988 548c-19.9 0-36-16.1-36-36 0-59.4-11.6-117-34.6-171.3a440.45 440.45 0 00-94.3-139.9 437.71 437.71 0 00-139.9-94.3C629 83.6 571.4 72 512 72c-19.9 0-36-16.1-36-36s16.1-36 36-36c69.1 0 136.2 13.5 199.3 40.3C772.3 66 827 103 874 150c47 47 83.9 101.8 109.7 162.7 26.7 63.1 40.2 130.2 40.2 199.3.1 19.9-16 36-35.9 36z"
+                    />
+                  </svg>
+                </span>
+              </span>
+              <span>
+                button_initiate_login
+              </span>
+            </button>
+          </div>
+          <div
+            class="ant-space-item"
+          />
+          <div
+            class="ant-space-item"
+          >
+            <div
+              class="ant-typography css-dev-only-do-not-override-2i2tap"
+              style="color: rgb(172, 172, 172);"
+            >
+              <i>
+                prompt_no_account
+              </i>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+`;
