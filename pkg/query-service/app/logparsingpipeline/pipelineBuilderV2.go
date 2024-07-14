@@ -12,7 +12,9 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
 )
 
-func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []string, error) {
+func PreparePipelineProcessor(pipelines []Pipeline) (
+	map[string]interface{}, []string, error,
+) {
 	processors := map[string]interface{}{}
 	names := []string{}
 
@@ -46,12 +48,85 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 	return processors, names, nil
 }
 
-// representation for ottl statements used for putting
-// together ottl statements for pipelines
+func ottlStatementsForPipeline(pipeline Pipeline) ([]string, error) {
+	enabledOperators := []PipelineOperator{}
+	for _, op := range pipeline.Config {
+		if op.Enabled {
+			enabledOperators = append(enabledOperators, op)
+		}
+	}
+	if len(enabledOperators) < 1 {
+		return []string{}, nil
+	}
+
+	// We are generating one or more ottl statements per pipeline operator.
+	// ottl statements have individual where conditions per statement
+	// The simplest path is to add where clause for pipeline filter to each statement.
+	// However, this breaks if an early operator statement in the pipeline ends up
+	// modifying the fields referenced in the pipeline filter.
+	// To work around this, we add statements before and after the actual pipeline
+	// operator statements, that add and remove a pipeline specific marker, ensuring
+	// all operators in a pipeline get to act on the log even if an op changes the filter referenced fields.
+	pipelineMarker := fmt.Sprintf(
+		"%s-%s", pipeline.Alias, pipeline.Id, // pipeline.Id is guaranteed to be unique by DB.
+	)
+
+	addPipelineMarkerOttlStmt := fmt.Sprintf(
+		`set(attributes["__matched-log-pipeline__"], "%s")`, pipelineMarker,
+	)
+
+	filterExpr, err := queryBuilderToExpr.Parse(pipeline.Filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse pipeline filter: %w", err)
+	}
+	if len(filterExpr) > 0 {
+		// TODO(Raj): Update qb2Expr logic to work directly with ottl
+		filterOttl := exprToOttl(filterExpr)
+		addPipelineMarkerOttlStmt += fmt.Sprintf(" where %s", filterOttl)
+	}
+
+	pipelineOttlStatements := []string{addPipelineMarkerOttlStmt}
+
+	// Add ottl statements for implementing enabled pipeline operators
+
+	logMatchesPipeline := fmt.Sprintf(
+		`attributes["__matched-log-pipeline__"] == "%s"`, pipelineMarker,
+	)
+
+	for _, operator := range enabledOperators {
+		stmts, err := ottlStatementsForPipelineOperator(operator)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"couldn't generate ottl for %s operator: %w", operator.Type, err,
+			)
+		}
+
+		for _, s := range stmts {
+			// prepend pipeline marker check to operator ottl statement conditions
+			s.conditions = append([]string{logMatchesPipeline}, s.conditions...)
+			pipelineOttlStatements = append(pipelineOttlStatements, s.toString())
+		}
+	}
+
+	// Add a final ottl statement for the pipeline for removing pipeline marker
+	removePipelineMarkerFromMatchingLogs := fmt.Sprintf(
+		`delete_key(attributes, "__matched-log-pipeline__") where %s`, logMatchesPipeline,
+	)
+	pipelineOttlStatements = append(
+		pipelineOttlStatements, removePipelineMarkerFromMatchingLogs,
+	)
+
+	return pipelineOttlStatements, nil
+}
+
+// Operator specific ottl generation helpers follow
+
+// struct for helping put ottl statements together
 type ottlStatement struct {
 	// All ottl statements have exactly 1 "editor" for transforming log
 	editor string
 	// editor only gets applied if a log matches the condition
+	// `conditions` get joined with `AND` when being rendered to final ottl statements
 	conditions []string
 }
 
@@ -68,69 +143,8 @@ func (s *ottlStatement) toString() string {
 	}
 
 	return fmt.Sprintf(
-		"%s where %s",
-		s.editor,
-		strings.Join(conditions, " and "),
+		"%s where %s", s.editor, strings.Join(conditions, " and "),
 	)
-}
-
-func ottlStatementsForPipeline(pipeline Pipeline) ([]string, error) {
-	ottlStatements := []string{}
-
-	enabledOperators := []PipelineOperator{}
-	for _, op := range pipeline.Config {
-		if op.Enabled {
-			enabledOperators = append(enabledOperators, op)
-		}
-	}
-	if len(enabledOperators) < 1 {
-		return ottlStatements, nil
-	}
-
-	filterExpr, err := queryBuilderToExpr.Parse(pipeline.Filter)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse pipeline filter: %w", err)
-	}
-
-	// We are generating one or more ottl statements per pipeline operator.
-	// ottl statements have individual where conditions per statement
-	// The simplest path is to add where clause for pipeline filter to each statement.
-	// However, this breaks if an early operator statement in the pipeline ends up
-	// modifying the fields referenced in the pipeline filter.
-	// To work around this, we add statements before and after the actual pipeline
-	// operator statements, that add and remove a pipeline specific marker, ensuring
-	// all operators in a pipeline get to act on the log even if an op changes the filter referenced fields.
-	pipelineMarker := fmt.Sprintf("%s-%s", pipeline.Alias, pipeline.Id) // pipeline.Id is guranteed to be unique by DB.
-	addMarkerStatement := fmt.Sprintf(`set(attributes["__matched-log-pipeline__"], "%s")`, pipelineMarker)
-	if len(filterExpr) > 0 {
-		addMarkerStatement += fmt.Sprintf(" where %s", exprForOttl(filterExpr))
-	}
-	ottlStatements = append(ottlStatements, addMarkerStatement)
-
-	pipelineMarkerCondition := fmt.Sprintf(
-		`attributes["__matched-log-pipeline__"] == "%s"`, pipelineMarker,
-	)
-
-	for _, operator := range enabledOperators {
-		stmts, err := ottlStatementsForPipelineOperator(operator)
-		if err != nil {
-			return nil, fmt.Errorf("couldn't generate ottl for add operator: %w", err)
-		}
-
-		for _, s := range stmts {
-			s.conditions = append(
-				[]string{pipelineMarkerCondition}, s.conditions...,
-			)
-			ottlStatements = append(ottlStatements, s.toString())
-		}
-	}
-
-	// Remove pipeline marker from matching logs
-	ottlStatements = append(ottlStatements, fmt.Sprintf(
-		`delete_key(attributes, "__matched-log-pipeline__") where %s`, pipelineMarkerCondition,
-	))
-
-	return ottlStatements, nil
 }
 
 func ottlStatementsForPipelineOperator(operator PipelineOperator) (
@@ -175,26 +189,32 @@ func ottlStatementsForPipelineOperator(operator PipelineOperator) (
 func ottlStatementsForAddOperator(
 	operator PipelineOperator,
 ) ([]ottlStatement, error) {
+	conditions := []string{}
 	value := fmt.Sprintf(`"%s"`, operator.Value)
-	condition := ""
+
+	// Handling for adding dynamic values using golang expr as allowed by logstransform add operator
+	// See https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/operator/transformer/add/transformer.go#L49
+	// Expression values are enclosed in `EXPR(...)`. Note that only uppercase `EXPR(...)` is supported
 	if strings.HasPrefix(operator.Value, "EXPR(") {
 		expression := strings.TrimSuffix(strings.TrimPrefix(operator.Value, "EXPR("), ")")
-		value = exprForOttl(expression)
+		value = exprToOttl(expression)
+
+		// Also add non-nil check condition for fields referenced in the value expression
 		fieldsNotNilCheck, err := fieldsReferencedInExprNotNilCheck(expression)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"could'nt generate nil check for fields referenced in value expr of add operator %s: %w",
+				"couldn't generate nil check for fields referenced in value expr of add operator %s: %w",
 				operator.Name, err,
 			)
 		}
 		if fieldsNotNilCheck != "" {
-			condition = exprForOttl(fieldsNotNilCheck)
+			conditions = append(conditions, exprToOttl(fieldsNotNilCheck))
 		}
 	}
 
 	return []ottlStatement{{
 		editor:     fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.Field), value),
-		conditions: []string{condition},
+		conditions: conditions,
 	}}, nil
 }
 
@@ -212,7 +232,12 @@ func ottlStatementsForCopyOperator(operator PipelineOperator) (
 	[]ottlStatement, error,
 ) {
 	return []ottlStatement{{
-		editor:     fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.To), logTransformPathToOttlPath(operator.From)),
+		editor: fmt.Sprintf(
+			`set(%s, %s)`,
+			logTransformPathToOttlPath(operator.To),
+			logTransformPathToOttlPath(operator.From),
+		),
+		// TODO(Raj): What if operator.From is nil? Add a test
 		conditions: []string{},
 	}}, nil
 }
@@ -220,16 +245,19 @@ func ottlStatementsForCopyOperator(operator PipelineOperator) (
 func ottlStatementsForMoveOperator(operator PipelineOperator) (
 	[]ottlStatement, error,
 ) {
-	stmts := []ottlStatement{}
-
-	stmts = append(stmts, ottlStatement{
-		editor:     fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.To), logTransformPathToOttlPath(operator.From)),
+	stmts := []ottlStatement{{
+		editor: fmt.Sprintf(
+			`set(%s, %s)`,
+			logTransformPathToOttlPath(operator.To),
+			logTransformPathToOttlPath(operator.From),
+		),
+		// TODO(Raj): What happens if operatore.From is nil here.
 		conditions: []string{},
-	})
+	}}
 
 	deleteStmt, err := ottlStatementForDeletingField(operator.From)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt' generate delete stmt for move op: %w", err)
+		return nil, fmt.Errorf("couldn't generate delete stmt for move op: %w", err)
 	}
 	stmts = append(stmts, *deleteStmt)
 
@@ -245,6 +273,8 @@ func ottlStatementsForRegexParser(operator PipelineOperator) (
 			"couldn't generate nil check for parseFrom of regex op %s: %w", operator.Name, err,
 		)
 	}
+
+	// TODO(Raj): What happens if ParseTo is not a map? Add a test for this
 	return []ottlStatement{{
 		editor: fmt.Sprintf(
 			`merge_maps(%s, ExtractPatterns(%s, "%s"), "upsert")`,
@@ -252,7 +282,7 @@ func ottlStatementsForRegexParser(operator PipelineOperator) (
 			logTransformPathToOttlPath(operator.ParseFrom),
 			escapeDoubleQuotesForOttl(operator.Regex),
 		),
-		conditions: []string{exprForOttl(parseFromNotNilCheck)},
+		conditions: []string{exprToOttl(parseFromNotNilCheck)},
 	}}, nil
 
 }
@@ -266,6 +296,7 @@ func ottlStatementsForGrokParser(operator PipelineOperator) (
 			"couldn't generate nil check for parseFrom of grok op %s: %w", operator.Name, err,
 		)
 	}
+	// TODO(Raj): What happens if ParseTo is not a map? Add a test for this
 	return []ottlStatement{{
 		editor: fmt.Sprintf(
 			`merge_maps(%s, GrokParse(%s, "%s"), "upsert")`,
@@ -273,7 +304,7 @@ func ottlStatementsForGrokParser(operator PipelineOperator) (
 			logTransformPathToOttlPath(operator.ParseFrom),
 			escapeDoubleQuotesForOttl(operator.Pattern),
 		),
-		conditions: []string{exprForOttl(parseFromNotNilCheck)},
+		conditions: []string{exprToOttl(parseFromNotNilCheck)},
 	}}, nil
 }
 
@@ -287,7 +318,7 @@ func ottlStatementsForJsonParser(operator PipelineOperator) (
 		)
 	}
 	whereClause := strings.Join([]string{
-		exprForOttl(parseFromNotNilCheck),
+		exprToOttl(parseFromNotNilCheck),
 		fmt.Sprintf(`IsMatch(%s, "^\\s*{.*}\\s*$")`, logTransformPathToOttlPath(operator.ParseFrom)),
 	}, " and ")
 
@@ -311,7 +342,7 @@ func ottlStatementsForTimeParser(operator PipelineOperator) (
 		)
 	}
 
-	whereClauseParts := []string{exprForOttl(parseFromNotNilCheck)}
+	whereClauseParts := []string{exprToOttl(parseFromNotNilCheck)}
 
 	if operator.LayoutType == "strptime" {
 		regex, err := RegexForStrptimeLayout(operator.Layout)
@@ -340,7 +371,7 @@ func ottlStatementsForTimeParser(operator PipelineOperator) (
 		}
 
 		whereClauseParts = append(whereClauseParts,
-			exprForOttl(fmt.Sprintf(
+			exprToOttl(fmt.Sprintf(
 				`string(%s) matches "%s"`, operator.ParseFrom, valueRegex,
 			)),
 		)
@@ -385,9 +416,9 @@ func ottlStatementsForSeverityParser(operator PipelineOperator) (
 			}
 			if isSpecialValue {
 				whereClause := strings.Join([]string{
-					exprForOttl(parseFromNotNilCheck),
-					exprForOttl(fmt.Sprintf(`type(%s) in ["int", "float"] && %s == float(int(%s))`, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom)),
-					exprForOttl(fmt.Sprintf(`string(int(%s)) matches "^%s$"`, operator.ParseFrom, fmt.Sprintf("%s[0-9]{2}", value[0:1]))),
+					exprToOttl(parseFromNotNilCheck),
+					exprToOttl(fmt.Sprintf(`type(%s) in ["int", "float"] && %s == float(int(%s))`, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom)),
+					exprToOttl(fmt.Sprintf(`string(int(%s)) matches "^%s$"`, operator.ParseFrom, fmt.Sprintf("%s[0-9]{2}", value[0:1]))),
 				}, " and ")
 				stmts = append(stmts, ottlStatement{
 					editor:     fmt.Sprintf("set(severity_number, SEVERITY_NUMBER_%s)", strings.ToUpper(severity)),
@@ -399,7 +430,7 @@ func ottlStatementsForSeverityParser(operator PipelineOperator) (
 				})
 			} else {
 				whereClause := strings.Join([]string{
-					exprForOttl(parseFromNotNilCheck),
+					exprToOttl(parseFromNotNilCheck),
 					fmt.Sprintf(
 						`IsString(%s)`,
 						logTransformPathToOttlPath(operator.ParseFrom),
@@ -430,7 +461,6 @@ func ottlStatementsForTraceParser(operator PipelineOperator) (
 ) {
 	stmts := []ottlStatement{}
 
-	// panic("TODO(Raj): Implement trace parser translation")
 	if operator.TraceId != nil && len(operator.TraceId.ParseFrom) > 0 {
 		parseFromNotNilCheck, err := fieldNotNilCheck(operator.TraceId.ParseFrom)
 		if err != nil {
@@ -441,7 +471,7 @@ func ottlStatementsForTraceParser(operator PipelineOperator) (
 		// TODO(Raj): Also check for trace id regex pattern
 		stmts = append(stmts, ottlStatement{
 			editor:     fmt.Sprintf(`set(trace_id.string, %s)`, logTransformPathToOttlPath(operator.TraceId.ParseFrom)),
-			conditions: []string{exprForOttl(parseFromNotNilCheck)},
+			conditions: []string{exprToOttl(parseFromNotNilCheck)},
 		})
 	}
 
@@ -455,7 +485,7 @@ func ottlStatementsForTraceParser(operator PipelineOperator) (
 		// TODO(Raj): Also check for span id regex pattern
 		stmts = append(stmts, ottlStatement{
 			editor:     fmt.Sprintf("set(span_id.string, %s)", logTransformPathToOttlPath(operator.SpanId.ParseFrom)),
-			conditions: []string{exprForOttl(parseFromNotNilCheck)},
+			conditions: []string{exprToOttl(parseFromNotNilCheck)},
 		})
 
 	}
@@ -471,13 +501,15 @@ func ottlStatementsForTraceParser(operator PipelineOperator) (
 		// TODO(Raj): Also check for trace flags hex regex pattern
 		stmts = append(stmts, ottlStatement{
 			editor:     fmt.Sprintf(`set(flags, HexToInt(%s))`, logTransformPathToOttlPath(operator.TraceFlags.ParseFrom)),
-			conditions: []string{exprForOttl(parseFromNotNilCheck)},
+			conditions: []string{exprToOttl(parseFromNotNilCheck)},
 		})
 	}
 	return stmts, nil
 }
 
+// TODO(Raj): This should be used in regex and grok parser too?
 func ottlStatementsForExtractingMapValue(
+	// TODO(Raj): `filterClause` is not needed as an input?
 	filterClause string,
 	mapGenerator string,
 	target string,
@@ -529,7 +561,7 @@ func ottlStatementForDeletingField(fieldPath string) (*ottlStatement, error) {
 
 	return &ottlStatement{
 		editor:     fmt.Sprintf(`delete_key(%s, %s)`, target, key),
-		conditions: []string{exprForOttl(pathNotNilCheck)},
+		conditions: []string{exprToOttl(pathNotNilCheck)},
 	}, nil
 }
 
@@ -591,6 +623,6 @@ func escapeDoubleQuotesForOttl(str string) string {
 	)
 }
 
-func exprForOttl(expr string) string {
+func exprToOttl(expr string) string {
 	return fmt.Sprintf(`EXPR("%s")`, escapeDoubleQuotesForOttl(expr))
 }
