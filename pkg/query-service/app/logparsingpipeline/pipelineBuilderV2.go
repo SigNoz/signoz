@@ -75,7 +75,6 @@ func (s *ottlStatement) toString() string {
 }
 
 func ottlStatementsForPipeline(pipeline Pipeline) ([]string, error) {
-
 	ottlStatements := []string{}
 
 	enabledOperators := []PipelineOperator{}
@@ -107,146 +106,72 @@ func ottlStatementsForPipeline(pipeline Pipeline) ([]string, error) {
 		addMarkerStatement += fmt.Sprintf(" where %s", exprForOttl(filterExpr))
 	}
 	ottlStatements = append(ottlStatements, addMarkerStatement)
-	pipelineMarkerWhereClause := fmt.Sprintf(
+
+	pipelineMarkerCondition := fmt.Sprintf(
 		`attributes["__matched-log-pipeline__"] == "%s"`, pipelineMarker,
 	)
 
-	// to be called at the end
-	removePipelineMarker := func() {
-		ottlStatements = append(ottlStatements, fmt.Sprintf(
-			`delete_key(attributes, "__matched-log-pipeline__") where %s`, pipelineMarkerWhereClause,
-		))
-	}
-
-	pipelineStmt := func(editor string, conditions []string) ottlStatement {
-		stmt := ottlStatement{
-			editor:     editor,
-			conditions: []string{pipelineMarkerWhereClause},
+	for _, operator := range enabledOperators {
+		stmts, err := ottlStatementsForPipelineOperator(operator)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't generate ottl for add operator: %w", err)
 		}
 
-		if len(conditions) > 0 {
-			stmt.conditions = append(stmt.conditions, conditions...)
-		}
-
-		return stmt
-	}
-
-	for _, operator := range pipeline.Config {
-		if operator.Enabled {
-
-			if operator.Type == "add" {
-				stmts, err := ottlStatementsForAddOperator((operator))
-				if err != nil {
-					return nil, fmt.Errorf("couldn't generate ottl for add operator: %w", err)
-				}
-				for _, s := range stmts {
-					ps := pipelineStmt(s.editor, s.conditions)
-					ottlStatements = append(ottlStatements, ps.toString())
-				}
-
-			} else if operator.Type == "remove" {
-				stmts, err := ottlStatementsForRemoveOperator((operator))
-				if err != nil {
-					return nil, fmt.Errorf("couldn't generate ottl for remove operator: %w", err)
-				}
-				for _, s := range stmts {
-					ps := pipelineStmt(s.editor, s.conditions)
-					ottlStatements = append(ottlStatements, ps.toString())
-				}
-
-			} else if operator.Type == "copy" {
-				stmts, err := ottlStatementsForCopyOperator((operator))
-				if err != nil {
-					return nil, fmt.Errorf("couldn't generate ottl for copy operator: %w", err)
-				}
-				for _, s := range stmts {
-					ps := pipelineStmt(s.editor, s.conditions)
-					ottlStatements = append(ottlStatements, ps.toString())
-				}
-
-			} else if operator.Type == "move" {
-				// appendStatement(fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.To), logTransformPathToOttlPath(operator.From)), "")
-				// appendDeleteStatement(operator.From)
-				stmts, err := ottlStatementsForMoveOperator((operator))
-				if err != nil {
-					return nil, fmt.Errorf("couldn't generate ottl for move operator: %w", err)
-				}
-				for _, s := range stmts {
-					ps := pipelineStmt(s.editor, s.conditions)
-					ottlStatements = append(ottlStatements, ps.toString())
-				}
-
-			} else if operator.Type == "regex_parser" {
-				stmts, err := ottlStatementsForRegexParser(operator)
-				if err != nil {
-					return nil, fmt.Errorf("couldn't generate ottl for regex parser: %w", err)
-				}
-				for _, s := range stmts {
-					ps := pipelineStmt(s.editor, s.conditions)
-					ottlStatements = append(ottlStatements, ps.toString())
-				}
-
-			} else if operator.Type == "grok_parser" {
-				stmts, err := ottlStatementsForGrokParser(operator)
-				if err != nil {
-					return nil, fmt.Errorf("couldn't generate ottl for grok parser: %w", err)
-				}
-				for _, s := range stmts {
-					ps := pipelineStmt(s.editor, s.conditions)
-					ottlStatements = append(ottlStatements, ps.toString())
-				}
-
-			} else if operator.Type == "json_parser" {
-				stmts, err := ottlStatementsForJsonParser(operator)
-				if err != nil {
-					return nil, fmt.Errorf("couldn't generate ottl for json parser: %w", err)
-				}
-				for _, s := range stmts {
-					ps := pipelineStmt(s.editor, s.conditions)
-					ottlStatements = append(ottlStatements, ps.toString())
-				}
-
-			} else if operator.Type == "time_parser" {
-				stmts, err := ottlStatementsForTimeParser(operator)
-				if err != nil {
-					return nil, fmt.Errorf("couldn't generate ottl for time parser: %w", err)
-				}
-				for _, s := range stmts {
-					ps := pipelineStmt(s.editor, s.conditions)
-					ottlStatements = append(ottlStatements, ps.toString())
-				}
-
-			} else if operator.Type == "severity_parser" {
-				stmts, err := ottlStatementsForSeverityParser(operator)
-				if err != nil {
-					return nil, fmt.Errorf("couldn't generate ottl for serverity parser: %w", err)
-				}
-				for _, s := range stmts {
-					ps := pipelineStmt(s.editor, s.conditions)
-					ottlStatements = append(ottlStatements, ps.toString())
-				}
-			} else if operator.Type == "trace_parser" {
-
-				stmts, err := ottlStatementsForTraceParser(operator)
-				if err != nil {
-					return nil, fmt.Errorf("couldn't generate ottl for trace operator: %w", err)
-				}
-				for _, s := range stmts {
-					ps := pipelineStmt(s.editor, s.conditions)
-					ottlStatements = append(ottlStatements, ps.toString())
-				}
-
-			} else {
-				return nil, fmt.Errorf("unsupported pipeline operator type: %s", operator.Type)
-			}
-
+		for _, s := range stmts {
+			s.conditions = append(
+				[]string{pipelineMarkerCondition}, s.conditions...,
+			)
+			ottlStatements = append(ottlStatements, s.toString())
 		}
 	}
 
-	removePipelineMarker()
+	// Remove pipeline marker from matching logs
+	ottlStatements = append(ottlStatements, fmt.Sprintf(
+		`delete_key(attributes, "__matched-log-pipeline__") where %s`, pipelineMarkerCondition,
+	))
 
 	return ottlStatements, nil
 }
+
+func ottlStatementsForPipelineOperator(operator PipelineOperator) (
+	[]ottlStatement, error,
+) {
+
+	if operator.Type == "add" {
+		return ottlStatementsForAddOperator((operator))
+
+	} else if operator.Type == "remove" {
+		return ottlStatementsForRemoveOperator((operator))
+
+	} else if operator.Type == "copy" {
+		return ottlStatementsForCopyOperator((operator))
+
+	} else if operator.Type == "move" {
+		return ottlStatementsForMoveOperator((operator))
+
+	} else if operator.Type == "regex_parser" {
+		return ottlStatementsForRegexParser(operator)
+
+	} else if operator.Type == "grok_parser" {
+		return ottlStatementsForGrokParser(operator)
+
+	} else if operator.Type == "json_parser" {
+		return ottlStatementsForJsonParser(operator)
+
+	} else if operator.Type == "time_parser" {
+		return ottlStatementsForTimeParser(operator)
+
+	} else if operator.Type == "severity_parser" {
+		return ottlStatementsForSeverityParser(operator)
+
+	} else if operator.Type == "trace_parser" {
+		return ottlStatementsForTraceParser(operator)
+
+	}
+
+	return nil, fmt.Errorf("unsupported pipeline operator type: %s", operator.Type)
+}
+
 func ottlStatementsForAddOperator(
 	operator PipelineOperator,
 ) ([]ottlStatement, error) {
