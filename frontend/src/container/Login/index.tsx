@@ -213,6 +213,7 @@ function Login({
 						<Input
 							type="email"
 							id="loginEmail"
+							data-testid="email"
 							required
 							placeholder={t('placeholder_email')}
 							autoFocus
@@ -248,6 +249,7 @@ function Login({
 							loading={precheckInProcess}
 							type="primary"
 							onClick={onNextHandler}
+							data-testid="initiate_login"
 						>
 							{t('button_initiate_login')}
 						</Button>
