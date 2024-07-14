@@ -97,15 +97,16 @@ export const handlers = [
 	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(inviteUser)),
 	),
-	rest.get('http://localhost/api/v1/loginPrecheck', (_, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json({
-				statusCode: 200,
-				error: null,
-				message: 'response.statusText',
-				payload: {},
-			}),
-		),
-	),
+	// TODO(shaheer): uncomment while working on Login with SSO Tests
+	// rest.get('http://localhost/api/v1/loginPrecheck', (_, res, ctx) =>
+	// 	res(
+	// 		ctx.status(200),
+	// 		ctx.json({
+	// 			statusCode: 200,
+	// 			error: null,
+	// 			message: 'response.statusText',
+	// 			payload: {},
+	// 		}),
+	// 	),
+	// ),
 ];
