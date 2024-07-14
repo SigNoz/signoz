@@ -16,6 +16,7 @@ import {
 	Wrapper,
 } from './styles';
 import { filterOptions, getSelectOptions } from './utils';
+// import logEvent from 'api/common/logEvent';
 
 function ExportPanelContainer({
 	isLoading,
@@ -66,6 +67,13 @@ function ExportPanelContainer({
 	);
 
 	const handleNewDashboard = useCallback(async () => {
+		// logEvent('Logs Explorer: Add to dashboard successful', {
+		// 	// panelType: panelType,
+		// 	isNewDashboard: true,
+		// 	dashboardName: t('new_dashboard_title', {
+		// 		ns: 'dashboard',
+		// 	}),
+		// });
 		createNewDashboard({
 			title: t('new_dashboard_title', {
 				ns: 'dashboard',

@@ -360,6 +360,12 @@ function LogsExplorerViews({
 				options.selectColumns,
 			);
 
+			logEvent('Logs Explorer: Add to dashboard successful', {
+				panelType: panelType,
+				isNewDashboard: false,
+				dashboardName: dashboard?.data?.title,
+			});
+
 			updateDashboard(updatedDashboard, {
 				onSuccess: (data) => {
 					if (data.error) {

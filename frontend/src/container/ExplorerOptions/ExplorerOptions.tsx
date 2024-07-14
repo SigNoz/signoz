@@ -58,6 +58,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
+import logEvent from 'api/common/logEvent';
 
 import ExplorerOptionsHideArea from './ExplorerOptionsHideArea';
 import {
@@ -94,6 +95,15 @@ function ExplorerOptions({
 	}, []);
 
 	const handleSaveViewModalToggle = (): void => {
+		if (sourcepage == DataSource.TRACES) {
+			logEvent('Traces Explorer: Save view clicked', {
+				panelType: panelType,
+			});
+		} else if (sourcepage == DataSource.LOGS) {
+			logEvent('Logs Explorer: Save view clicked', {
+				panelType: panelType,
+			});
+		}
 		setIsSaveModalOpen(!isSaveModalOpen);
 	};
 
@@ -104,6 +114,15 @@ function ExplorerOptions({
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const onCreateAlertsHandler = useCallback(() => {
+		if (sourcepage == DataSource.TRACES) {
+			logEvent('Traces Explorer: Create alert', {
+				panelType: panelType,
+			});
+		} else if (sourcepage == DataSource.LOGS) {
+			logEvent('Logs Explorer: Create alert', {
+				panelType: panelType,
+			});
+		}
 		history.push(
 			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
 				JSON.stringify(query),
@@ -116,6 +135,15 @@ function ExplorerOptions({
 	};
 
 	const onAddToDashboard = (): void => {
+		if (sourcepage == DataSource.TRACES) {
+			logEvent('Traces Explorer: Add to dashboard clicked', {
+				panelType: panelType,
+			});
+		} else if (sourcepage == DataSource.LOGS) {
+			logEvent('Logs Explorer: Add to dashboard clicked', {
+				panelType: panelType,
+			});
+		}
 		setIsExport(true);
 	};
 
@@ -224,6 +252,10 @@ function ExplorerOptions({
 		onMenuItemSelectHandler({
 			key: option.key,
 		});
+		logEvent('Traces Explorer: Select view', {
+			panelType: panelType,
+			viewName: option.value,
+		});
 		if (ref.current) {
 			ref.current.blur();
 		}
@@ -259,6 +291,17 @@ function ExplorerOptions({
 			viewName: newViewName,
 			setNewViewName,
 		});
+		if (sourcepage == DataSource.TRACES) {
+			logEvent('Traces Explorer: Save view successful', {
+				panelType: panelType,
+				viewName: newViewName,
+			});
+		} else if (sourcepage == DataSource.LOGS) {
+			logEvent('Logs Explorer: Save view successful', {
+				panelType: panelType,
+				viewName: newViewName,
+			});
+		}
 	};
 
 	// TODO: Remove this and move this to scss file

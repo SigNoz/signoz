@@ -159,6 +159,12 @@ function TracesExplorer(): JSX.Element {
 				options.selectColumns,
 			);
 
+			logEvent('Traces Explorer: Add to dashboard successful', {
+				panelType: panelType,
+				isNewDashboard: false,
+				dashboardName: dashboard?.data?.title,
+			});
+
 			updateDashboard(updatedDashboard, {
 				onSuccess: (data) => {
 					if (data.error) {

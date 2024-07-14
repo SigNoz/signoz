@@ -43,6 +43,9 @@ import { USER_ROLES } from 'types/roles';
 
 import { ROUTES_VS_SOURCEPAGE, SOURCEPAGE_VS_ROUTES } from './constants';
 import { deleteViewHandler } from './utils';
+import { isUndefined } from 'lodash-es';
+import { useRef } from 'react';
+import logEvent from 'api/common/logEvent';
 
 const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
@@ -143,6 +146,21 @@ function SaveView(): JSX.Element {
 		viewName: newViewName,
 	});
 
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isLoading) {
+			if (sourcepage == DataSource.TRACES) {
+				logEvent('Traces Views: Views visited', {
+					number: viewsData?.data.data.length,
+				});
+			} else if (sourcepage == DataSource.LOGS) {
+				logEvent('Logs Views: Views visited', {
+					number: viewsData?.data.data.length,
+				});
+			}
+			logEventCalledRef.current = true;
+		}
+	}, [viewsData?.data.data, isLoading]);
 	const onUpdateQueryHandler = (): void => {
 		updateViewAsync(
 			{

@@ -22,6 +22,7 @@ import {
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
+import logEvent from 'api/common/logEvent';
 
 import {
 	AllTraceFilterKeys,
@@ -197,6 +198,12 @@ export function Filter(props: FilterProps): JSX.Element {
 					})),
 				},
 			};
+			// if selectedFilters{
+			logEvent('Traces Explorer: Sidebar filter used', {
+				// panelType: selectedWidget.panelTypes,
+				selectedFilters,
+			});
+			// }
 			redirectWithQueryBuilderData(preparedQuery);
 		},
 		[currentQuery, redirectWithQueryBuilderData, selectedFilters],

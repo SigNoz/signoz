@@ -46,6 +46,10 @@ import {
 	getTableColumn,
 	getUpdatedRow,
 } from './utils';
+import { isUndefined } from 'lodash-es';
+
+import { useRef, useEffect } from 'react';
+import logEvent from 'api/common/logEvent';
 
 function PipelinesListEmptyState(): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
@@ -465,6 +469,16 @@ function PipelineListsView({
 		expandIcon: ({ expanded, onExpand, record }: ExpandRowConfig) =>
 			getExpandIcon(expanded, onExpand, record),
 	};
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isUndefined(currPipelineData)) {
+			logEvent('Logs Pipelines: List page visited', {
+				number: currPipelineData?.length,
+			});
+			logEventCalledRef.current = true;
+		}
+	}, [currPipelineData]);
 
 	return (
 		<>

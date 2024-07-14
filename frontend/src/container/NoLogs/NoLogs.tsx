@@ -7,6 +7,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 import { isCloudUser } from 'utils/app';
 import DOCLINKS from 'utils/docLinks';
+import logEvent from 'api/common/logEvent';
 
 export default function NoLogs({
 	dataSource,
@@ -21,6 +22,11 @@ export default function NoLogs({
 		e.stopPropagation();
 
 		if (cloudUser) {
+			if (dataSource == DataSource.TRACES) {
+				logEvent('Traces Explorer: Navigate to onboarding', {});
+			} else if (dataSource == DataSource.LOGS) {
+				logEvent('Logs Explorer: Navigate to onboarding', {});
+			}
 			history.push(
 				dataSource === 'traces'
 					? ROUTES.GET_STARTED_APPLICATION_MONITORING

@@ -16,8 +16,15 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
+import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 
-const useCreateAlerts = (widget?: Widgets): VoidFunction => {
+import logEvent from 'api/common/logEvent';
+
+const useCreateAlerts = (
+	widget?: Widgets,
+	caller?: string,
+	isNewPanel?: boolean,
+): VoidFunction => {
 	const queryRangeMutation = useMutation(getQueryRangeFormat);
 
 	const { selectedTime: globalSelectedInterval } = useSelector<
@@ -32,6 +39,27 @@ const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 	return useCallback(() => {
 		if (!widget) return;
 
+		if (caller == 'panelView') {
+			logEvent('Panel Edit: Create alert', {
+				panelType: widget.panelTypes,
+				isNewDashboard: false,
+				dashboardName: selectedDashboard?.data?.title,
+				dashboardId: selectedDashboard?.uuid,
+				// isNewPanel,
+				widgetId: widget.id,
+				queryType: widget.query.queryType,
+			});
+		} else if (caller == 'dashboardView') {
+			logEvent('Dashboard Detail: Panel action', {
+				action: MenuItemKeys.CreateAlerts,
+				panelType: widget.panelTypes,
+				isNewDashboard: false,
+				dashboardName: selectedDashboard?.data?.title,
+				dashboardId: selectedDashboard?.uuid,
+				widgetId: widget.id,
+				queryType: widget.query.queryType,
+			});
+		}
 		const { queryPayload } = prepareQueryRangePayload({
 			query: widget.query,
 			globalSelectedInterval,
