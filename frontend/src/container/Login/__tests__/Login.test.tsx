@@ -69,26 +69,25 @@ describe('Login Flow', () => {
 		);
 	});
 
-	// TODO(shaheer): find the root cause of why this test is failing
-	// test('providing shaheer@signoz.io as email and pressing next, should make the login_with_sso button visible', async () => {
-	// 	const { getByText, getByTestId } = render(
-	// 		<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />,
-	// 	);
-	// 	act(() => {
-	// 		// Simulate typing into the email field
-	// 		fireEvent.change(getByTestId('email'), {
-	// 			target: { value: 'shaheer@signoz.io' },
-	// 		});
+	test('providing shaheer@signoz.io as email and pressing next, should make the login_with_sso button visible', async () => {
+		const { getByText, getByTestId } = render(
+			<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />,
+		);
+		act(() => {
+			// Simulate typing into the email field
+			fireEvent.change(getByTestId('email'), {
+				target: { value: 'shaheer@signoz.io' },
+			});
 
-	// 		// Simulate clicking the 'Next' button
-	// 		fireEvent.click(getByTestId('initiate_login'));
-	// 	});
+			// Simulate clicking the 'Next' button
+			fireEvent.click(getByTestId('initiate_login'));
+		});
 
-	// 	// Wait for the SSO button to appear
-	// 	await waitFor(() => {
-	// 		expect(getByText('login_with_sso')).toBeInTheDocument();
-	// 	});
-	// });
+		// Wait for the SSO button to appear
+		await waitFor(() => {
+			expect(getByText('login_with_sso')).toBeInTheDocument();
+		});
+	});
 
 	test.skip('Display email, password, forgot password if password=Y', () => {
 		const { getByTestId, getByText } = render(
