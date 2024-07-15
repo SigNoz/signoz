@@ -21,6 +21,7 @@ import {
 	Typography,
 } from 'antd';
 import { TableProps } from 'antd/lib';
+import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
@@ -34,11 +35,7 @@ import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { get, isEmpty } from 'lodash-es';
-import { isUndefined } from 'lodash-es';
-import { useRef } from 'react';
-import logEvent from 'api/common/logEvent';
-
+import { get, isEmpty, isUndefined } from 'lodash-es';
 import {
 	ArrowDownWideNarrow,
 	ArrowUpRight,
@@ -64,6 +61,7 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -642,6 +640,7 @@ function DashboardsList(): JSX.Element {
 			});
 			logEventCalledRef.current = true;
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isDashboardListLoading]);
 
 	return (

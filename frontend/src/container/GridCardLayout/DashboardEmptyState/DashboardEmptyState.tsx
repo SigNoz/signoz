@@ -3,6 +3,7 @@ import './DashboardEmptyState.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import SettingsDrawer from 'container/NewDashboard/DashboardDescription/SettingsDrawer';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -12,7 +13,6 @@ import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
-import logEvent from 'api/common/logEvent';
 
 export default function DashboardEmptyState(): JSX.Element {
 	const {
@@ -40,8 +40,9 @@ export default function DashboardEmptyState(): JSX.Element {
 		logEvent('Dashboard Detail: Add new panel clicked', {
 			dashboardId: selectedDashboard?.uuid,
 			dashboardName: selectedDashboard?.data.title,
-			numberOfPanels: 0,
+			numberOfPanels: selectedDashboard?.data.widgets?.length,
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [handleToggleDashboardSlider]);
 	return (
 		<section className="dashboard-empty-state">

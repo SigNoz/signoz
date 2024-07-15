@@ -2,8 +2,8 @@ import './EmptyLogsSearch.styles.scss';
 
 import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
 import { useEffect, useRef } from 'react';
+import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
 
 export default function EmptyLogsSearch({
 	dataSource,
@@ -15,17 +15,18 @@ export default function EmptyLogsSearch({
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
-			if (dataSource == DataSource.TRACES) {
+			if (dataSource === DataSource.TRACES) {
 				logEvent('Traces Explorer: No results', {
 					panelType,
 				});
-			} else if (dataSource == DataSource.LOGS) {
+			} else if (dataSource === DataSource.LOGS) {
 				logEvent('Logs Explorer: No results', {
 					panelType,
 				});
 			}
 			logEventCalledRef.current = true;
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	return (

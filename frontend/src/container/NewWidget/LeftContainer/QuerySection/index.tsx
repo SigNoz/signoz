@@ -2,6 +2,7 @@ import './QuerySection.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -14,7 +15,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { defaultTo } from 'lodash-es';
+import { defaultTo, isUndefined } from 'lodash-es';
 import { Atom, Play, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -35,7 +36,6 @@ import AppReducer from 'types/reducer/app';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
-import logEvent from 'api/common/logEvent';
 
 function QuerySection({
 	selectedGraph,
@@ -123,14 +123,17 @@ function QuerySection({
 	};
 
 	const handleRunQuery = (): void => {
+		const widgetId = urlQuery.get('widgetId');
+		const isNewPanel = isUndefined(widgets?.find((e) => e.id === widgetId));
+
 		logEvent('Panel Edit: Stage and run query', {
-			dataSource: '',
+			dataSource: currentQuery.builder?.queryData?.[0]?.dataSource,
 			panelType: selectedWidget.panelTypes,
 			queryType: currentQuery.queryType,
 			widgetId: selectedWidget.id,
 			dashboardId: selectedDashboard?.uuid,
 			dashboardName: selectedDashboard?.data.title,
-			isNewPanel: '',
+			isNewPanel,
 		});
 		handleStageQuery(currentQuery);
 	};
