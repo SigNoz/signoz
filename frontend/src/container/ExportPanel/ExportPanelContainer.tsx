@@ -42,7 +42,7 @@ function ExportPanelContainer({
 	} = useMutation(createDashboard, {
 		onSuccess: (data) => {
 			if (data.payload) {
-				onExport(data?.payload);
+				onExport(data?.payload, true);
 			}
 			refetch();
 		},
@@ -56,7 +56,7 @@ function ExportPanelContainer({
 			({ uuid }) => uuid === selectedDashboardId,
 		);
 
-		onExport(currentSelectedDashboard || null);
+		onExport(currentSelectedDashboard || null, false);
 	}, [data, selectedDashboardId, onExport]);
 
 	const handleSelect = useCallback(
@@ -67,13 +67,6 @@ function ExportPanelContainer({
 	);
 
 	const handleNewDashboard = useCallback(async () => {
-		// logEvent('Logs Explorer: Add to dashboard successful', {
-		// 	// panelType: panelType,
-		// 	isNewDashboard: true,
-		// 	dashboardName: t('new_dashboard_title', {
-		// 		ns: 'dashboard',
-		// 	}),
-		// });
 		createNewDashboard({
 			title: t('new_dashboard_title', {
 				ns: 'dashboard',

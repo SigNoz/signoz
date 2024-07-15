@@ -14,6 +14,7 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
+import logEvent from 'api/common/logEvent';
 import axios from 'axios';
 import cx from 'classnames';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
@@ -58,7 +59,6 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import logEvent from 'api/common/logEvent';
 
 import ExplorerOptionsHideArea from './ExplorerOptionsHideArea';
 import {
@@ -94,14 +94,21 @@ function ExplorerOptions({
 		setIsExport(value);
 	}, []);
 
+	const {
+		currentQuery,
+		panelType,
+		isStagedQueryUpdated,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
+
 	const handleSaveViewModalToggle = (): void => {
-		if (sourcepage == DataSource.TRACES) {
+		if (sourcepage === DataSource.TRACES) {
 			logEvent('Traces Explorer: Save view clicked', {
-				panelType: panelType,
+				panelType,
 			});
-		} else if (sourcepage == DataSource.LOGS) {
+		} else if (sourcepage === DataSource.LOGS) {
 			logEvent('Logs Explorer: Save view clicked', {
-				panelType: panelType,
+				panelType,
 			});
 		}
 		setIsSaveModalOpen(!isSaveModalOpen);
@@ -114,13 +121,13 @@ function ExplorerOptions({
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const onCreateAlertsHandler = useCallback(() => {
-		if (sourcepage == DataSource.TRACES) {
+		if (sourcepage === DataSource.TRACES) {
 			logEvent('Traces Explorer: Create alert', {
-				panelType: panelType,
+				panelType,
 			});
-		} else if (sourcepage == DataSource.LOGS) {
+		} else if (sourcepage === DataSource.LOGS) {
 			logEvent('Logs Explorer: Create alert', {
-				panelType: panelType,
+				panelType,
 			});
 		}
 		history.push(
@@ -128,6 +135,7 @@ function ExplorerOptions({
 				JSON.stringify(query),
 			)}`,
 		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [history, query]);
 
 	const onCancel = (value: boolean) => (): void => {
@@ -135,13 +143,13 @@ function ExplorerOptions({
 	};
 
 	const onAddToDashboard = (): void => {
-		if (sourcepage == DataSource.TRACES) {
+		if (sourcepage === DataSource.TRACES) {
 			logEvent('Traces Explorer: Add to dashboard clicked', {
-				panelType: panelType,
+				panelType,
 			});
-		} else if (sourcepage == DataSource.LOGS) {
+		} else if (sourcepage === DataSource.LOGS) {
 			logEvent('Logs Explorer: Add to dashboard clicked', {
-				panelType: panelType,
+				panelType,
 			});
 		}
 		setIsExport(true);
@@ -154,13 +162,6 @@ function ExplorerOptions({
 		isRefetching,
 		refetch: refetchAllView,
 	} = useGetAllViews(sourcepage);
-
-	const {
-		currentQuery,
-		panelType,
-		isStagedQueryUpdated,
-		redirectWithQueryBuilderData,
-	} = useQueryBuilder();
 
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 
@@ -252,10 +253,17 @@ function ExplorerOptions({
 		onMenuItemSelectHandler({
 			key: option.key,
 		});
-		logEvent('Traces Explorer: Select view', {
-			panelType: panelType,
-			viewName: option.value,
-		});
+		if (sourcepage === DataSource.TRACES) {
+			logEvent('Traces Explorer: Select view', {
+				panelType,
+				viewName: option.value,
+			});
+		} else if (sourcepage === DataSource.LOGS) {
+			logEvent('Logs Explorer: Select view', {
+				panelType,
+				viewName: option.value,
+			});
+		}
 		if (ref.current) {
 			ref.current.blur();
 		}
@@ -291,14 +299,14 @@ function ExplorerOptions({
 			viewName: newViewName,
 			setNewViewName,
 		});
-		if (sourcepage == DataSource.TRACES) {
+		if (sourcepage === DataSource.TRACES) {
 			logEvent('Traces Explorer: Save view successful', {
-				panelType: panelType,
+				panelType,
 				viewName: newViewName,
 			});
-		} else if (sourcepage == DataSource.LOGS) {
+		} else if (sourcepage === DataSource.LOGS) {
 			logEvent('Logs Explorer: Save view successful', {
-				panelType: panelType,
+				panelType,
 				viewName: newViewName,
 			});
 		}
@@ -542,7 +550,7 @@ function ExplorerOptions({
 
 export interface ExplorerOptionsProps {
 	isLoading?: boolean;
-	onExport: (dashboard: Dashboard | null) => void;
+	onExport: (dashboard: Dashboard | null, isNewDashboard?: boolean) => void;
 	query: Query | null;
 	disabled: boolean;
 	sourcepage: DataSource;
