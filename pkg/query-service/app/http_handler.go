@@ -83,6 +83,7 @@ type APIHandler struct {
 	// querying the v4 table on low cardinal temporality column
 	// should be fast but we can still avoid the query if we have the data in memory
 	temporalityMap map[string]map[v3.Temporality]bool
+	temporalityMux sync.Mutex
 
 	maxIdleConns int
 	maxOpenConns int
@@ -454,6 +455,9 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 
 // populateTemporality adds the temporality to the query if it is not present
 func (aH *APIHandler) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+
+	aH.temporalityMux.Lock()
+	defer aH.temporalityMux.Unlock()
 
 	missingTemporality := make([]string, 0)
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
