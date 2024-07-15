@@ -1,6 +1,10 @@
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { createColumnsAndDataSource, getQueryLegend } from '../utils';
+import {
+	createColumnsAndDataSource,
+	getQueryLegend,
+	sortFunction,
+} from '../utils';
 import {
 	expectedOutputWithLegends,
 	tableDataMultipleQueriesSuccessResponse,
@@ -38,5 +42,89 @@ describe('Table Panel utils', () => {
 
 		// should return undefined when legend not present
 		expect(getQueryLegend(query, 'B')).toBe(undefined);
+	});
+
+	it('sorter function for table sorting', () => {
+		let rowA: {
+			A: string | number;
+			timestamp: number;
+			key: string;
+		} = {
+			A: 22.4,
+			timestamp: 111111,
+			key: '1111',
+		};
+		let rowB: {
+			A: string | number;
+			timestamp: number;
+			key: string;
+		} = {
+			A: 'n/a',
+			timestamp: 111112,
+			key: '1112',
+		};
+		const item = {
+			isValueColumn: true,
+			name: 'A',
+			queryName: 'A',
+		};
+		// A has value and value is considered bigger than n/a hence 1
+		expect(sortFunction(rowA, rowB, item)).toBe(1);
+
+		rowA = {
+			A: 'n/a',
+			timestamp: 111111,
+			key: '1111',
+		};
+		rowB = {
+			A: 22.4,
+			timestamp: 111112,
+			key: '1112',
+		};
+
+		// B has value and value is considered bigger than n/a hence -1
+		expect(sortFunction(rowA, rowB, item)).toBe(-1);
+
+		rowA = {
+			A: 11,
+			timestamp: 111111,
+			key: '1111',
+		};
+		rowB = {
+			A: 22,
+			timestamp: 111112,
+			key: '1112',
+		};
+
+		// A and B has value , since B > A hence A-B
+		expect(sortFunction(rowA, rowB, item)).toBe(-11);
+
+		rowA = {
+			A: 'read',
+			timestamp: 111111,
+			key: '1111',
+		};
+		rowB = {
+			A: 'write',
+			timestamp: 111112,
+			key: '1112',
+		};
+
+		// A and B are strings so A is smaller than B because r comes before w hence -1
+		expect(sortFunction(rowA, rowB, item)).toBe(-1);
+
+		rowA = {
+			A: 'n/a',
+			timestamp: 111111,
+			key: '1111',
+		};
+		rowB = {
+			A: 'n/a',
+			timestamp: 111112,
+			key: '1112',
+		};
+
+		// A and B are strings n/a , since both of them are same hence 0
+		expect(sortFunction(rowA, rowB, item)).toBe(0);
 	});
 });

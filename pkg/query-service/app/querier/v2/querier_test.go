@@ -1,4 +1,4 @@
-package querier
+package v2
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
+func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 	// There are five scenarios:
 	// 1. Cached time range is a subset of the requested time range
 	// 2. Cached time range is a superset of the requested time range
@@ -211,7 +211,7 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 	}
 }
 
-func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
+func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 
 	testCases := []struct {
 		name           string
@@ -411,7 +411,7 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 	}
 }
 
-func TestQueryRange(t *testing.T) {
+func TestV2QueryRange(t *testing.T) {
 	params := []*v3.QueryRangeParamsV3{
 		{
 			Start: 1675115596722,
@@ -424,6 +424,7 @@ func TestQueryRange(t *testing.T) {
 					"A": {
 						QueryName:          "A",
 						DataSource:         v3.DataSourceMetrics,
+						Temporality:        v3.Delta,
 						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
 						Filters: &v3.FilterSet{
@@ -441,6 +442,8 @@ func TestQueryRange(t *testing.T) {
 							{Key: "method", IsColumn: false},
 						},
 						AggregateOperator: v3.AggregateOperatorSumRate,
+						TimeAggregation:   v3.TimeAggregationRate,
+						SpaceAggregation:  v3.SpaceAggregationSum,
 						Expression:        "A",
 					},
 				},
@@ -456,6 +459,7 @@ func TestQueryRange(t *testing.T) {
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						Temporality:        v3.Delta,
 						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
 						DataSource:         v3.DataSourceMetrics,
@@ -474,12 +478,14 @@ func TestQueryRange(t *testing.T) {
 							{Key: "method", IsColumn: false},
 						},
 						AggregateOperator: v3.AggregateOperatorSumRate,
+						TimeAggregation:   v3.TimeAggregationRate,
+						SpaceAggregation:  v3.SpaceAggregationSum,
 						Expression:        "A",
 					},
 				},
 			},
 		},
-		// No caching for traces & logs yet
+		// No caching for traces yet
 		{
 			Start: 1675115596722,
 			End:   1675115596722 + 120*60*1000,
@@ -572,8 +578,8 @@ func TestQueryRange(t *testing.T) {
 	}
 	q := NewQuerier(opts)
 	expectedTimeRangeInQueryString := []string{
-		fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", 1675115520000, 1675115580000+120*60*1000),
-		fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", 1675115520000+120*60*1000, 1675115580000+180*60*1000),
+		fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", 1675115580000, 1675115580000+120*60*1000),
+		fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", 1675115580000+120*60*1000, 1675115580000+180*60*1000),
 		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", 1675115580000*1000000, (1675115580000+120*60*1000)*int64(1000000)),
 		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675115580000+60*60*1000)*int64(1000000), (1675115580000+180*60*1000)*int64(1000000)),
 	}
@@ -593,7 +599,7 @@ func TestQueryRange(t *testing.T) {
 	}
 }
 
-func TestQueryRangeValueType(t *testing.T) {
+func TestV2QueryRangeValueType(t *testing.T) {
 	// There shouldn't be any caching for value panel type
 	params := []*v3.QueryRangeParamsV3{
 		{
@@ -620,6 +626,8 @@ func TestQueryRangeValueType(t *testing.T) {
 							},
 						},
 						AggregateOperator: v3.AggregateOperatorSumRate,
+						TimeAggregation:   v3.TimeAggregationRate,
+						SpaceAggregation:  v3.SpaceAggregationSum,
 						Expression:        "A",
 						ReduceTo:          v3.ReduceToOperatorLast,
 					},
@@ -703,7 +711,7 @@ func TestQueryRangeValueType(t *testing.T) {
 }
 
 // test timeshift
-func TestQueryRangeTimeShift(t *testing.T) {
+func TestV2QueryRangeTimeShift(t *testing.T) {
 	params := []*v3.QueryRangeParamsV3{
 		{
 			Start: 1675115596722,               //31, 3:23
@@ -755,7 +763,7 @@ func TestQueryRangeTimeShift(t *testing.T) {
 }
 
 // timeshift works with caching
-func TestQueryRangeTimeShiftWithCache(t *testing.T) {
+func TestV2QueryRangeTimeShiftWithCache(t *testing.T) {
 	params := []*v3.QueryRangeParamsV3{
 		{
 			Start: 1675115596722 + 60*60*1000 - 86400*1000,  //30, 4:23
@@ -853,7 +861,7 @@ func TestQueryRangeTimeShiftWithCache(t *testing.T) {
 }
 
 // timeshift with limit queries
-func TestQueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
+func TestV2QueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 	params := []*v3.QueryRangeParamsV3{
 		{
 			Start: 1675115596722 + 60*60*1000 - 86400*1000,  //30, 4:23
@@ -952,7 +960,7 @@ func TestQueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 	}
 }
 
-func TestQueryRangeValueTypePromQL(t *testing.T) {
+func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 	// There shouldn't be any caching for value panel type
 	params := []*v3.QueryRangeParamsV3{
 		{
