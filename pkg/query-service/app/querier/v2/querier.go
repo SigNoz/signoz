@@ -50,8 +50,10 @@ type querier struct {
 	// TODO(srikanthccv): remove this once we have a proper mock
 	testingMode     bool
 	queriesExecuted []string
-	returnedSeries  []*v3.Series
-	returnedErr     error
+	// tuple of start and end time in milliseconds
+	timeRanges     [][]int
+	returnedSeries []*v3.Series
+	returnedErr    error
 }
 
 type QuerierOptions struct {
@@ -117,6 +119,7 @@ func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.
 func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangeParams) ([]*v3.Series, error) {
 	q.queriesExecuted = append(q.queriesExecuted, params.Query)
 	if q.testingMode && q.reader == nil {
+		q.timeRanges = append(q.timeRanges, []int{int(params.Start.UnixMilli()), int(params.End.UnixMilli())})
 		return q.returnedSeries, q.returnedErr
 	}
 	promResult, _, err := q.reader.GetQueryRangeResult(ctx, params)
@@ -538,4 +541,8 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 
 func (q *querier) QueriesExecuted() []string {
 	return q.queriesExecuted
+}
+
+func (q *querier) TimeRanges() [][]int {
+	return q.timeRanges
 }
