@@ -90,8 +90,14 @@ function KeyboardHotkeysProvider({
 		(keyCombination: string, callback: () => void): void => {
 			if (!shortcuts.current[keyCombination]) {
 				shortcuts.current[keyCombination] = callback;
+			} else if (process.env.NODE_ENV === 'development') {
+				throw new Error(
+					`This shortcut is already present in current scope :- ${keyCombination}`,
+				);
 			} else {
-				throw new Error('This shortcut is already present in current scope');
+				console.error(
+					`This shortcut is already present in current scope :- ${keyCombination}`,
+				);
 			}
 		},
 		[shortcuts],

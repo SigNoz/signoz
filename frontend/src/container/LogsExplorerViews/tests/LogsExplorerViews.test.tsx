@@ -76,7 +76,10 @@ const renderer = (): RenderResult =>
 							<VirtuosoMockContext.Provider
 								value={{ viewportHeight: 300, itemHeight: 100 }}
 							>
-								<LogsExplorerViews selectedView={SELECTED_VIEWS.SEARCH} showHistogram />
+								<LogsExplorerViews
+									selectedView={SELECTED_VIEWS.SEARCH}
+									showFrequencyChart
+								/>
 							</VirtuosoMockContext.Provider>
 						</QueryBuilderProvider>
 					</MockQueryClientProvider>

@@ -266,3 +266,10 @@ modal 			-  1000
 notifications	-  2050
 
 */
+
+@font-face {
+	font-family: 'Geist Mono';
+	src: local('Geist Mono'),
+		url('../public/fonts/GeistMonoVF.woff2') format('woff');
+	/* Add other formats if needed (e.g., woff2, truetype, opentype, svg) */
+}
