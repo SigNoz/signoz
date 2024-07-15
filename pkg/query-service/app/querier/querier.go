@@ -342,10 +342,10 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 		wg.Add(1)
 		go func(queryName string, promQuery *v3.PromQuery) {
 			defer wg.Done()
-			cacheKey := cacheKeys[queryName]
+			cacheKey, ok := cacheKeys[queryName]
 			var cachedData []byte
 			// Ensure NoCache is not set and cache is not nil
-			if !params.NoCache && q.cache != nil {
+			if !params.NoCache && q.cache != nil && ok {
 				data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
 				zap.L().Info("cache retrieve status", zap.String("status", retrieveStatus.String()))
 				if err == nil {
@@ -373,7 +373,7 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 			channelResults <- channelResult{Err: nil, Name: queryName, Query: promQuery.Query, Series: mergedSeries}
 
 			// Cache the seriesList for future queries
-			if len(missedSeries) > 0 && !params.NoCache && q.cache != nil {
+			if len(missedSeries) > 0 && !params.NoCache && q.cache != nil && ok {
 				mergedSeriesData, err := json.Marshal(mergedSeries)
 				if err != nil {
 					zap.L().Error("error marshalling merged series", zap.Error(err))
