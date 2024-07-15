@@ -1,5 +1,5 @@
 import Login from 'container/Login';
-import { act, fireEvent, render, waitFor } from 'tests/test-utils';
+import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 const errorNotification = jest.fn();
 jest.mock('hooks/useNotifications', () => ({
@@ -13,33 +13,29 @@ jest.mock('hooks/useNotifications', () => ({
 
 describe('Login Flow', () => {
 	test('Login form is rendered correctly', async () => {
-		const { getByRole, getByText } = render(
-			<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />,
-		);
+		render(<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />);
 
-		const headingElement = getByRole('heading', {
+		const headingElement = screen.getByRole('heading', {
 			name: 'login_page_title',
 		});
 		expect(headingElement).toBeInTheDocument();
 
-		const textboxElement = getByRole('textbox');
+		const textboxElement = screen.getByRole('textbox');
 		expect(textboxElement).toBeInTheDocument();
 
-		const buttonElement = getByRole('button', {
+		const buttonElement = screen.getByRole('button', {
 			name: 'button_initiate_login',
 		});
 		expect(buttonElement).toBeInTheDocument();
 
-		const noAccountPromptElement = getByText('prompt_no_account');
+		const noAccountPromptElement = screen.getByText('prompt_no_account');
 		expect(noAccountPromptElement).toBeInTheDocument();
 	});
 
 	test(`Display "invalid_email" if email is not provided`, async () => {
-		const { getByText } = render(
-			<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />,
-		);
+		render(<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />);
 
-		const buttonElement = getByText('button_initiate_login');
+		const buttonElement = screen.getByText('button_initiate_login');
 		fireEvent.click(buttonElement);
 
 		await waitFor(() =>
@@ -49,15 +45,13 @@ describe('Login Flow', () => {
 		);
 	});
 
-	test.skip('Display invalid_config if invalid email is provided and next clicked', async () => {
-		const { getByRole } = render(
-			<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />,
-		);
+	test('Display invalid_config if invalid email is provided and next clicked', async () => {
+		render(<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />);
 
-		const textboxElement = getByRole('textbox');
+		const textboxElement = screen.getByRole('textbox');
 		fireEvent.change(textboxElement, { target: { value: 'test' } });
 
-		const buttonElement = getByRole('button', {
+		const buttonElement = screen.getByRole('button', {
 			name: 'button_initiate_login',
 		});
 		fireEvent.click(buttonElement);
@@ -70,53 +64,43 @@ describe('Login Flow', () => {
 	});
 
 	test('providing shaheer@signoz.io as email and pressing next, should make the login_with_sso button visible', async () => {
-		const { getByText, getByTestId } = render(
-			<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />,
-		);
+		render(<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="" />);
 		act(() => {
-			// Simulate typing into the email field
-			fireEvent.change(getByTestId('email'), {
+			fireEvent.change(screen.getByTestId('email'), {
 				target: { value: 'shaheer@signoz.io' },
 			});
 
-			// Simulate clicking the 'Next' button
-			fireEvent.click(getByTestId('initiate_login'));
+			fireEvent.click(screen.getByTestId('initiate_login'));
 		});
 
-		// Wait for the SSO button to appear
 		await waitFor(() => {
-			expect(getByText('login_with_sso')).toBeInTheDocument();
+			expect(screen.getByText('login_with_sso')).toBeInTheDocument();
 		});
 	});
 
-	test.skip('Display email, password, forgot password if password=Y', () => {
-		const { getByTestId, getByText } = render(
-			<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="Y" />,
-		);
+	test('Display email, password, forgot password if password=Y', () => {
+		render(<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="Y" />);
 
-		const emailTextBox = getByTestId('email');
-
-		const passwordTextBox = getByTestId('password');
-
-		const forgotPasswordLink = getByText('forgot_password');
-
+		const emailTextBox = screen.getByTestId('email');
 		expect(emailTextBox).toBeInTheDocument();
+
+		const passwordTextBox = screen.getByTestId('password');
 		expect(passwordTextBox).toBeInTheDocument();
+
+		const forgotPasswordLink = screen.getByText('forgot_password');
 		expect(forgotPasswordLink).toBeInTheDocument();
 	});
-	test.skip('Display tooltip with "prompt_forgot_password" if forgot password is clicked while password=Y', async () => {
-		const { getByRole, getByText } = render(
-			<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="Y" />,
-		);
 
-		const forgotPasswordLink = getByText('forgot_password');
+	test('Display tooltip with "prompt_forgot_password" if forgot password is clicked while password=Y', async () => {
+		render(<Login ssoerror="" jwt="" refreshjwt="" userId="" withPassword="Y" />);
+		const forgotPasswordLink = screen.getByText('forgot_password');
 
 		act(() => {
 			fireEvent.mouseOver(forgotPasswordLink);
 		});
 
 		await waitFor(() => {
-			const forgotPasswordTooltip = getByRole('tooltip', {
+			const forgotPasswordTooltip = screen.getByRole('tooltip', {
 				name: 'prompt_forgot_password',
 			});
 			expect(forgotPasswordLink).toBeInTheDocument();

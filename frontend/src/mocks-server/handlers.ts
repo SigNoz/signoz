@@ -98,20 +98,25 @@ export const handlers = [
 		res(ctx.status(200), ctx.json(inviteUser)),
 	),
 
-	rest.get('http://localhost/api/v1/loginPrecheck', (_, res, ctx) =>
-		res(
+	rest.get('http://localhost/api/v1/loginPrecheck', (req, res, ctx) => {
+		// if email is shaheer@signoz.io return status 200 else 500
+		const email = req.url.searchParams.get('email');
+		if (email === 'test') {
+			return res(ctx.status(500));
+		}
+
+		return res(
 			ctx.status(200),
 			ctx.json({
 				status: 'success',
 				data: {
 					sso: true,
-					ssoUrl:
-						'https://accounts.google.com/o/oauth2/v2/auth?client_id=30557428044-h3rutagujvjmdo1en1e4tsd9ohh8n7ae.apps.googleusercontent.com&hd=signoz.io&redirect_uri=https%3A%2F%2Fstagingapp.signoz.io%2Fapi%2Fv1%2Fcomplete%2Fgoogle&response_type=code&scope=email&state=https%3A%2F%2Fstagingapp.signoz.io%2Flogin%3FdomainId%3D55127de6%3A4c30%3A4930%3A8d4c%3Af6df8eae7f36',
+					ssoUrl: '',
 					canSelfRegister: false,
 					isUser: true,
 					ssoError: '',
 				},
 			}),
-		),
-	),
+		);
+	}),
 ];
