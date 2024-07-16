@@ -50,7 +50,7 @@ function ServiceTraces(): JSX.Element {
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(data)) {
-			const selectedEnvironment = queries.find(
+			const selectedEnvironments = queries.find(
 				(val) => val.tagKey === 'resource_deployment_environment',
 			)?.tagValue;
 
@@ -58,7 +58,7 @@ function ServiceTraces(): JSX.Element {
 
 			logEvent('APM: List page visited', {
 				numberOfServices: data?.length,
-				selectedEnvironment: selectedEnvironment?.[0]?.[0],
+				selectedEnvironments,
 				resourceAttributeUsed: !!queries.length,
 				rps,
 			});

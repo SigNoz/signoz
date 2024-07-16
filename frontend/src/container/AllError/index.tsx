@@ -418,13 +418,13 @@ function AllErrors(): JSX.Element {
 			!logEventCalledRef.current &&
 			!isUndefined(errorCountResponse.data?.payload)
 		) {
-			const selectedEnvironment = queries.find(
+			const selectedEnvironments = queries.find(
 				(val) => val.tagKey === 'resource_deployment_environment',
 			)?.tagValue;
 
 			logEvent('Exception: List page visited', {
 				numberOfExceptions: errorCountResponse.data?.payload,
-				selectedEnvironment: selectedEnvironment?.[0]?.[0],
+				selectedEnvironments,
 				resourceAttributeUsed: !!queries.length,
 			});
 			logEventCalledRef.current = true;

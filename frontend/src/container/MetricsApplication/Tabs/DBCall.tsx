@@ -102,12 +102,12 @@ function DBCall(): JSX.Element {
 
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
-			const selectedEnvironment = queries.find(
+			const selectedEnvironments = queries.find(
 				(val) => val.tagKey === 'resource_deployment_environment',
 			)?.tagValue;
 
 			logEvent('APM: Service detail page visited', {
-				selectedEnvironment: selectedEnvironment?.[0]?.[0],
+				selectedEnvironments,
 				resourceAttributeUsed: !!queries.length,
 				section: 'dbMetrics',
 			});
