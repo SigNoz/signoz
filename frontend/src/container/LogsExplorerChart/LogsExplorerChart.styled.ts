@@ -9,6 +9,6 @@ export const CardStyled = styled(Card)`
 		height: 200px;
 		min-height: 200px;
 		padding: 0 16px 16px 16px;
-		font-family: 'Space Mono', monospace;
+		font-family: 'Geist Mono';
 	}
 `;

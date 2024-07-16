@@ -3575,38 +3575,42 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		}
 
 	} else {
+		// We are not allowing to delete a materialized column
+		// For more details please check https://github.com/SigNoz/signoz/issues/4566
+		return model.ForbiddenError(errors.New("Removing a selected field is not allowed, please reach out to support."))
+
 		// Delete the index first
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx`", r.logsDB, r.logsLocalTable, r.cluster, strings.TrimSuffix(colname, "`"))
-		err := r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-		}
+		// query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx`", r.logsDB, r.logsLocalTable, r.cluster, strings.TrimSuffix(colname, "`"))
+		// err := r.db.Exec(ctx, query)
+		// if err != nil {
+		// 	return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		// }
 
-		for _, table := range []string{r.logsTable, r.logsLocalTable} {
-			// drop materialized column from logs table
-			query := "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s "
-			err := r.db.Exec(ctx, fmt.Sprintf(query,
-				r.logsDB, table,
-				r.cluster,
-				colname,
-			),
-			)
-			if err != nil {
-				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-			}
+		// for _, table := range []string{r.logsTable, r.logsLocalTable} {
+		// 	// drop materialized column from logs table
+		// 	query := "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s "
+		// 	err := r.db.Exec(ctx, fmt.Sprintf(query,
+		// 		r.logsDB, table,
+		// 		r.cluster,
+		// 		colname,
+		// 	),
+		// 	)
+		// 	if err != nil {
+		// 		return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		// 	}
 
-			// drop exists column on logs table
-			query = "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s_exists` "
-			err = r.db.Exec(ctx, fmt.Sprintf(query,
-				r.logsDB, table,
-				r.cluster,
-				strings.TrimSuffix(colname, "`"),
-			),
-			)
-			if err != nil {
-				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-			}
-		}
+		// 	// drop exists column on logs table
+		// 	query = "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s_exists` "
+		// 	err = r.db.Exec(ctx, fmt.Sprintf(query,
+		// 		r.logsDB, table,
+		// 		r.cluster,
+		// 		strings.TrimSuffix(colname, "`"),
+		// 	),
+		// 	)
+		// 	if err != nil {
+		// 		return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		// 	}
+		// }
 	}
 	return nil
 }

@@ -951,3 +951,102 @@ func TestQueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 		}
 	}
 }
+
+func TestQueryRangeValueTypePromQL(t *testing.T) {
+	// There shouldn't be any caching for value panel type
+	params := []*v3.QueryRangeParamsV3{
+		{
+			Start: 1675115596722,
+			End:   1675115596722 + 120*60*1000,
+			Step:  5 * time.Minute.Milliseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypePromQL,
+				PanelType: v3.PanelTypeValue,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {
+						Query: "signoz_calls_total",
+					},
+				},
+			},
+		},
+		{
+			Start: 1675115596722 + 60*60*1000,
+			End:   1675115596722 + 180*60*1000,
+			Step:  5 * time.Minute.Milliseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypePromQL,
+				PanelType: v3.PanelTypeValue,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {
+						Query: "signoz_latency_bucket",
+					},
+				},
+			},
+		},
+	}
+	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	opts := QuerierOptions{
+		Cache:        cache,
+		Reader:       nil,
+		FluxInterval: 5 * time.Minute,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+
+		TestingMode: true,
+		ReturnedSeries: []*v3.Series{
+			{
+				Labels: map[string]string{
+					"method":       "GET",
+					"service_name": "test",
+					"__name__":     "doesn't matter",
+				},
+				Points: []v3.Point{
+					{Timestamp: 1675115596722, Value: 1},
+					{Timestamp: 1675115596722 + 60*60*1000, Value: 2},
+					{Timestamp: 1675115596722 + 120*60*1000, Value: 3},
+				},
+			},
+		},
+	}
+	q := NewQuerier(opts)
+
+	expectedQueryAndTimeRanges := []struct {
+		query  string
+		ranges []missInterval
+	}{
+		{
+			query: "signoz_calls_total",
+			ranges: []missInterval{
+				{start: 1675115596722, end: 1675115596722 + 120*60*1000},
+			},
+		},
+		{
+			query: "signoz_latency_bucket",
+			ranges: []missInterval{
+				{start: 1675115596722 + 60*60*1000, end: 1675115596722 + 180*60*1000},
+			},
+		},
+	}
+
+	for i, param := range params {
+		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		if err != nil {
+			t.Errorf("expected no error, got %s", err)
+		}
+		if len(errByName) > 0 {
+			t.Errorf("expected no error, got %v", errByName)
+		}
+
+		if !strings.Contains(q.QueriesExecuted()[i], expectedQueryAndTimeRanges[i].query) {
+			t.Errorf("expected query to contain %s, got %s", expectedQueryAndTimeRanges[i].query, q.QueriesExecuted()[i])
+		}
+		if len(q.TimeRanges()[i]) != 2 {
+			t.Errorf("expected time ranges to be %v, got %v", expectedQueryAndTimeRanges[i].ranges, q.TimeRanges()[i])
+		}
+		if q.TimeRanges()[i][0] != int(expectedQueryAndTimeRanges[i].ranges[0].start) {
+			t.Errorf("expected time ranges to be %v, got %v", expectedQueryAndTimeRanges[i].ranges, q.TimeRanges()[i])
+		}
+		if q.TimeRanges()[i][1] != int(expectedQueryAndTimeRanges[i].ranges[0].end) {
+			t.Errorf("expected time ranges to be %v, got %v", expectedQueryAndTimeRanges[i].ranges, q.TimeRanges()[i])
+		}
+	}
+}
