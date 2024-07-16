@@ -18,7 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func prepareLogsQuery(ctx context.Context,
+func prepareLogsQuery(_ context.Context,
 	start,
 	end int64,
 	builderQuery *v3.BuilderQuery,
