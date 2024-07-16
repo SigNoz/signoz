@@ -26,10 +26,8 @@ export const transformQueryBuilderDataModel = (
 			);
 			if (!isUndefined(baseFormula)) {
 				// this is part of the flow where we create alerts from dashboard.
-				// we pass the widget query as the base query and accept the expression from the format API response.
-				// which fills the variable values inside the same and is used to create the alerts.
-				// do not accept the full object as the stepInterval field is subject to changes
-				queryFormulas.push({ ...baseFormula, expression: formula.expression });
+				// we pass the formula as is from the widget query as we do not want anything to update in formula from the format api call
+				queryFormulas.push({ ...baseFormula });
 			} else {
 				queryFormulas.push({ ...initialFormulaBuilderFormValues, ...formula });
 			}

@@ -1,10 +1,13 @@
 import { mapQueryDataFromApi } from '../mapQueryDataFromApi';
 import {
+	compositeQueriesWithFunctions,
 	compositeQueryWithoutVariables,
 	compositeQueryWithVariables,
 	defaultOutput,
+	outputWithFunctions,
 	replaceVariables,
 	stepIntervalUnchanged,
+	widgetQueriesWithFunctions,
 	widgetQueryWithoutVariables,
 	widgetQueryWithVariables,
 } from './mapQueryDataFromApiInputs';
@@ -25,7 +28,7 @@ describe('mapQueryDataFromApi function tests', () => {
 		expect(output).toStrictEqual(stepIntervalUnchanged);
 	});
 
-	it('should update filters and expressions from the composite query', () => {
+	it('should update filter from the composite query', () => {
 		const output = mapQueryDataFromApi(
 			compositeQueryWithVariables,
 			widgetQueryWithVariables,
@@ -33,6 +36,15 @@ describe('mapQueryDataFromApi function tests', () => {
 
 		// replace the variables in the widget query and leave the rest items untouched
 		expect(output).toStrictEqual(replaceVariables);
+	});
+
+	it('should not update the step intervals with multiple queries and functions', () => {
+		const output = mapQueryDataFromApi(
+			compositeQueriesWithFunctions,
+			widgetQueriesWithFunctions,
+		);
+
+		expect(output).toStrictEqual(outputWithFunctions);
 	});
 
 	it('should use the default query values and the compositeQuery object when query is not passed', () => {
