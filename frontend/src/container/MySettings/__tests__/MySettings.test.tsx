@@ -45,7 +45,7 @@ describe('MySettings Flows', () => {
 	});
 
 	describe('Dark/Light Theme Switch', () => {
-		test('Dark and Light theme buttons are displayed properly', async () => {
+		it('Should display Dark and Light theme buttons properly', async () => {
 			expect(screen.getByText('Dark')).toBeInTheDocument();
 
 			const darkThemeIcon = screen.getByTestId('dark-theme-icon');
@@ -58,7 +58,7 @@ describe('MySettings Flows', () => {
 			expect(lightThemeIcon.tagName).toBe('svg');
 		});
 
-		test('Dark and Light buttons should activate on click', async () => {
+		it('Should activate Dark and Light buttons on click', async () => {
 			const initialSelectedOption = screen.getByRole('radio', {
 				name: ThemeOptions.Dark,
 			});
@@ -72,7 +72,7 @@ describe('MySettings Flows', () => {
 			expect(newThemeOption).toBeChecked();
 		});
 
-		test('Clicking Light theme should switch the theme', async () => {
+		it('Should switch the them on clicking Light theme', async () => {
 			const lightThemeOption = screen.getByRole('radio', {
 				name: /light/i,
 			});
@@ -85,7 +85,7 @@ describe('MySettings Flows', () => {
 	});
 
 	describe('User Details Form', () => {
-		test('User Details Form is displayed properly', () => {
+		it('Should properly display the User Details Form', () => {
 			const userDetailsHeader = screen.getByRole('heading', {
 				name: /user details/i,
 			});
@@ -107,7 +107,7 @@ describe('MySettings Flows', () => {
 			expect(roleTextbox).toBeInTheDocument();
 		});
 
-		test('Update name button works properly', async () => {
+		it('Should update the name on clicking Update button', async () => {
 			const nameTextbox = screen.getByTestId('name-textbox');
 			const updateNameButton = screen.getByTestId('update-name-button');
 
@@ -126,7 +126,7 @@ describe('MySettings Flows', () => {
 	});
 
 	// describe('Logout button', () => {
-	// 	test('Logout should work properly', async () => {
+	// 	it('Should redirect to /login on clicking Logout', async () => {
 	// 		const logoutButton = screen.getByTestId('logout-button');
 	// 		fireEvent.click(logoutButton);
 	// 		await waitFor(() => {
@@ -146,7 +146,7 @@ describe('MySettings Flows', () => {
 			submitButtonElement = screen.getByTestId('update-password-button');
 		});
 
-		test('Password Reset Form is displayed properly', () => {
+		it('Should properly display the Password Reset Form', () => {
 			const passwordResetHeader = screen.getByTestId('change-password-header');
 			expect(passwordResetHeader).toBeInTheDocument();
 
@@ -166,7 +166,7 @@ describe('MySettings Flows', () => {
 			expect(savePasswordIcon.tagName).toBe('svg');
 		});
 
-		test('Show validation error if password is less than 8 characters', async () => {
+		it('Should display validation error if password is less than 8 characters', async () => {
 			const currentPasswordTextbox = screen.getByTestId(
 				'current-password-textbox',
 			);
@@ -182,7 +182,7 @@ describe('MySettings Flows', () => {
 			});
 		});
 
-		test("Different passwords should show 'invalid credentials' error", async () => {
+		test("Should display 'inavlid credentials' error if different current and new passwords are provided", async () => {
 			act(() => {
 				fireEvent.change(currentPasswordTextbox, {
 					target: { value: '123456879' },
@@ -196,7 +196,7 @@ describe('MySettings Flows', () => {
 			await waitFor(() => expect(errorNotification).toHaveBeenCalled());
 		});
 
-		test('"Change Password" button should be disabled if current / new password is less than 8 characters', () => {
+		it('Should check if the "Change Password" button is disabled in case current / new password is less than 8 characters', () => {
 			act(() => {
 				fireEvent.change(currentPasswordTextbox, {
 					target: { value: '123' },
@@ -207,7 +207,7 @@ describe('MySettings Flows', () => {
 			expect(submitButtonElement).toBeDisabled();
 		});
 
-		test("Enable 'Change Password' button when password is at least 8 characters ", async () => {
+		test("Should check if 'Change Password' button is enabled when password is at least 8 characters ", async () => {
 			expect(submitButtonElement).toBeDisabled();
 
 			act(() => {
@@ -220,7 +220,7 @@ describe('MySettings Flows', () => {
 			expect(submitButtonElement).toBeEnabled();
 		});
 
-		test("Disable 'Change Password' button when current and new passwords are the same ", async () => {
+		test("Should check if 'Change Password' button is disabled when current and new passwords are the same ", async () => {
 			expect(submitButtonElement).toBeDisabled();
 
 			act(() => {
