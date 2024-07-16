@@ -411,7 +411,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						trigger="click"
 						placement="bottomRight"
 					>
-						<Button icon={<Ellipsis size={14} />} type="text" className="icons" />
+						<Button
+							icon={<Ellipsis size={14} />}
+							type="text"
+							className="icons"
+							data-testid="options"
+						/>
 					</Popover>
 					{!isDashboardLocked && editDashboard && (
 						<SettingsDrawer drawerTitle="Dashboard Configuration" />
@@ -422,7 +427,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							onClick={onEmptyWidgetHandler}
 							icon={<PlusOutlined />}
 							type="primary"
-							data-testid="add-panel"
+							data-testid="add-panel-header"
 						>
 							New Panel
 						</Button>

@@ -234,6 +234,7 @@ function WidgetHeader({
 				)}
 				<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
 					<MoreOutlined
+						data-testid="widget-header-options"
 						className={`widget-header-more-options ${
 							parentHover ? 'widget-header-hover' : ''
 						}`}

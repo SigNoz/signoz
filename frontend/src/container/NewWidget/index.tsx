@@ -563,7 +563,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		<Container>
 			<div className="edit-header">
 				<div className="left-header">
-					<X size={14} onClick={onClickDiscardHandler} className="discard-icon" />
+					<X
+						size={14}
+						onClick={onClickDiscardHandler}
+						className="discard-icon"
+						data-testid="discard-button"
+					/>
 					<Flex align="center" gap={24}>
 						<Typography.Text className="configure-panel">
 							Configure panel

@@ -191,6 +191,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			labelInValue
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
+			data-testid="group-by"
 		/>
 	);
 });

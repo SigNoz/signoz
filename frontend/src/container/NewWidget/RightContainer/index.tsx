@@ -163,6 +163,7 @@ function RightContainer({
 					value={selectedGraph}
 					style={{ width: '100%' }}
 					className="panel-type-select"
+					data-testid="panel-change-select"
 				>
 					{graphTypes.map((item) => (
 						<Option key={item.name} value={item.name}>
