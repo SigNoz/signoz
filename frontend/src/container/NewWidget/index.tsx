@@ -3,6 +3,7 @@ import './NewWidget.styles.scss';
 
 import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { chartHelpMessage } from 'components/facingIssueBtn/util';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -31,7 +32,7 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, useParams } from 'react-router-dom';
@@ -101,12 +102,26 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const [isNewDashboard, setIsNewDashboard] = useState<boolean>(false);
 
+	const logEventCalledRef = useRef(false);
+
 	useEffect(() => {
 		const widgetId = query.get('widgetId');
 		const selectedWidget = widgets?.find((e) => e.id === widgetId);
 		const isWidgetNotPresent = isUndefined(selectedWidget);
 		if (isWidgetNotPresent) {
 			setIsNewDashboard(true);
+		}
+
+		if (!logEventCalledRef.current) {
+			logEvent('Panel Edit: Page visited', {
+				panelType: selectedWidget?.panelTypes,
+				dashboardId: selectedDashboard?.uuid,
+				widgetId: selectedWidget?.id,
+				dashboardName: selectedDashboard?.data.title,
+				isNewPanel: !!isWidgetNotPresent,
+				dataSource: currentQuery.builder.queryData?.[0]?.dataSource,
+			});
+			logEventCalledRef.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -482,7 +497,20 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	};
 
 	const onSaveDashboard = useCallback((): void => {
+		const widgetId = query.get('widgetId');
+		const selectWidget = widgets?.find((e) => e.id === widgetId);
+
+		logEvent('Panel Edit: Save changes', {
+			panelType: selectedWidget.panelTypes,
+			dashboardId: selectedDashboard?.uuid,
+			widgetId: selectedWidget.id,
+			dashboardName: selectedDashboard?.data.title,
+			queryType: currentQuery.queryType,
+			isNewPanel: isUndefined(selectWidget),
+			dataSource: currentQuery.builder.queryData?.[0]?.dataSource,
+		});
 		setSaveModal(true);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const isQueryBuilderActive = useIsFeatureDisabled(

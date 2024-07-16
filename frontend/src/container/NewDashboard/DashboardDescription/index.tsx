@@ -2,6 +2,7 @@ import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -126,6 +127,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const onEmptyWidgetHandler = useCallback(() => {
 		handleToggleDashboardSlider(true);
+		logEvent('Dashboard Detail: Add new panel clicked', {
+			dashboardId: selectedDashboard?.uuid,
+			dashboardName: selectedDashboard?.data.title,
+			numberOfPanels: selectedDashboard?.data.widgets?.length,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [handleToggleDashboardSlider]);
 
 	const handleLockDashboardToggle = (): void => {

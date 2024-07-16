@@ -172,7 +172,9 @@ function LogsExplorerList({
 				!isFetching &&
 				logs.length === 0 &&
 				!isError &&
-				isFilterApplied && <EmptyLogsSearch />}
+				isFilterApplied && (
+					<EmptyLogsSearch dataSource={DataSource.LOGS} panelType="LIST" />
+				)}
 
 			{isError && !isLoading && !isFetching && <LogsError />}
 

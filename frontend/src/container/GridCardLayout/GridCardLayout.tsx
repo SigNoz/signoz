@@ -3,6 +3,7 @@ import './GridCardLayout.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -15,7 +16,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
-import { defaultTo } from 'lodash-es';
+import { defaultTo, isUndefined } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import {
 	Check,
@@ -27,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FullScreen, FullScreenHandle } from 'react-full-screen';
 import { ItemCallback, Layout } from 'react-grid-layout';
 import { useDispatch, useSelector } from 'react-redux';
@@ -126,6 +127,18 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		setDashboardLayout(sortLayout(layouts));
 	}, [layouts]);
 
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isUndefined(data)) {
+			logEvent('Dashboard Detail: Opened', {
+				dashboardId: data.uuid,
+				dashboardName: data.title,
+				numberOfPanels: data.widgets?.length,
+				numberOfVariables: Object.keys(data?.variables || {}).length || 0,
+			});
+			logEventCalledRef.current = true;
+		}
+	}, [data]);
 	const onSaveHandler = (): void => {
 		if (!selectedDashboard) return;
 
