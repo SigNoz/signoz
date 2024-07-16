@@ -1,3 +1,4 @@
+import logEvent from 'api/common/logEvent';
 import getTopLevelOperations, {
 	ServiceDataProps,
 } from 'api/metrics/getTopLevelOperations';
@@ -17,7 +18,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
@@ -47,9 +48,6 @@ import {
 	onViewTracePopupClick,
 	useGetAPMToTracesQueries,
 } from './util';
-import { isUndefined } from 'lodash-es';
-import { useRef, useEffect } from 'react';
-import logEvent from 'api/common/logEvent';
 
 function Application(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
@@ -99,6 +97,7 @@ function Application(): JSX.Element {
 			});
 			logEventCalledRef.current = true;
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const {

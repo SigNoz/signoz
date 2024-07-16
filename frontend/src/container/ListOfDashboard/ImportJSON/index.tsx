@@ -5,6 +5,7 @@ import { ExclamationCircleTwoTone } from '@ant-design/icons';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Modal, Space, Typography, Upload, UploadProps } from 'antd';
+import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/dashboard/create';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -17,8 +18,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { DashboardData } from 'types/api/dashboard/getAll';
-
-import logEvent from 'api/common/logEvent';
 
 function ImportJSON({
 	isImportJSONModalVisible,

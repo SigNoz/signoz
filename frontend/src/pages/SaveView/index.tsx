@@ -10,6 +10,7 @@ import {
 	TableProps,
 	Typography,
 } from 'antd';
+import logEvent from 'api/common/logEvent';
 import {
 	getViewDetailsUsingViewKey,
 	showErrorNotification,
@@ -30,7 +31,7 @@ import {
 	Trash2,
 	X,
 } from 'lucide-react';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -43,9 +44,6 @@ import { USER_ROLES } from 'types/roles';
 
 import { ROUTES_VS_SOURCEPAGE, SOURCEPAGE_VS_ROUTES } from './constants';
 import { deleteViewHandler } from './utils';
-import { isUndefined } from 'lodash-es';
-import { useRef } from 'react';
-import logEvent from 'api/common/logEvent';
 
 const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
@@ -149,17 +147,18 @@ function SaveView(): JSX.Element {
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isLoading) {
-			if (sourcepage == DataSource.TRACES) {
+			if (sourcepage === DataSource.TRACES) {
 				logEvent('Traces Views: Views visited', {
 					number: viewsData?.data.data.length,
 				});
-			} else if (sourcepage == DataSource.LOGS) {
+			} else if (sourcepage === DataSource.LOGS) {
 				logEvent('Logs Views: Views visited', {
 					number: viewsData?.data.data.length,
 				});
 			}
 			logEventCalledRef.current = true;
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [viewsData?.data.data, isLoading]);
 	const onUpdateQueryHandler = (): void => {
 		updateViewAsync(

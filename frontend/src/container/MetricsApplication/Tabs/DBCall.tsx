@@ -1,4 +1,5 @@
 import { Col } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
@@ -11,15 +12,11 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
-
-import { isUndefined } from 'lodash-es';
-import { useRef, useEffect } from 'react';
-import logEvent from 'api/common/logEvent';
 
 import { GraphTitle, MENU_ITEMS, SERVICE_CHART_ID } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
@@ -102,6 +99,7 @@ function DBCall(): JSX.Element {
 	);
 
 	const logEventCalledRef = useRef(false);
+
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
 			const selectedEnvironment = queries.map((val) => {
@@ -116,6 +114,7 @@ function DBCall(): JSX.Element {
 			});
 			logEventCalledRef.current = true;
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({

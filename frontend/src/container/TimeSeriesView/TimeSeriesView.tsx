@@ -156,7 +156,7 @@ function TimeSeriesView({
 					!isLoading &&
 					!isError &&
 					isFilterApplied && (
-						<EmptyLogsSearch dataSource={dataSource} panelType={'TIME_SERIES'} />
+						<EmptyLogsSearch dataSource={dataSource} panelType="TIME_SERIES" />
 					)}
 
 				{chartData &&

@@ -12,6 +12,7 @@ import { ColumnType, TablePaginationConfig } from 'antd/es/table';
 import { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { ColumnsType } from 'antd/lib/table';
 import { FilterConfirmProps } from 'antd/lib/table/interface';
+import logEvent from 'api/common/logEvent';
 import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
 import { ResizeTable } from 'components/ResizeTable';
@@ -23,7 +24,8 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import { useCallback, useEffect, useMemo } from 'react';
+import { isUndefined } from 'lodash-es';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -32,9 +34,6 @@ import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Exception, PayloadProps } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { isUndefined } from 'lodash-es';
-import { useRef } from 'react';
-import logEvent from 'api/common/logEvent';
 
 import { FilterDropdownExtendsProps } from './types';
 import {

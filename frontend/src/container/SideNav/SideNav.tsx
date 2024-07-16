@@ -4,6 +4,7 @@ import './SideNav.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tooltip } from 'antd';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
@@ -44,7 +45,7 @@ import defaultMenuItems, {
 import NavItem from './NavItem/NavItem';
 import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
-import logEvent from 'api/common/logEvent';
+
 interface UserManagementMenuItems {
 	key: string;
 	label: string;
@@ -179,6 +180,7 @@ function SideNav({
 	};
 
 	const onClickShortcuts = (e: MouseEvent): void => {
+		// eslint-disable-next-line sonarjs/no-duplicate-string
 		logEvent('Sidebar: Menu clicked', {
 			menuRoute: '/shortcuts',
 			menuLabel: 'Keyboard Shortcuts',

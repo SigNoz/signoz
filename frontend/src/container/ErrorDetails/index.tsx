@@ -1,6 +1,7 @@
 import './styles.scss';
 
 import { Button, Divider, Space, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
 import { ResizeTable } from 'components/ResizeTable';
@@ -9,15 +10,13 @@ import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
+import { isUndefined } from 'lodash-es';
 import { urlKey } from 'pages/ErrorDetails/utils';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
-import { isUndefined } from 'lodash-es';
-import logEvent from 'api/common/logEvent';
-import { useEffect, useRef } from 'react';
 
 import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
@@ -130,10 +129,11 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				groupId: errorDetail.groupID,
 				spanId: errorDetail.spanID,
 				traceId: errorDetail.traceID,
-				exceptionId: errorDetail.errorId
+				exceptionId: errorDetail.errorId,
 			});
 			logEventCalledRef.current = true;
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
 	return (
