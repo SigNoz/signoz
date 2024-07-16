@@ -16,7 +16,6 @@ import {
 	Wrapper,
 } from './styles';
 import { filterOptions, getSelectOptions } from './utils';
-// import logEvent from 'api/common/logEvent';
 
 function ExportPanelContainer({
 	isLoading,
