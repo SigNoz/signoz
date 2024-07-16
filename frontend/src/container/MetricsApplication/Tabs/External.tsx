@@ -118,11 +118,10 @@ function External(): JSX.Element {
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
-			const selectedEnvironment = queries.map((val) => {
-				if (val.tagKey === 'resource_deployment_environment') {
-					return val.tagValue;
-				}
-			});
+			const selectedEnvironment = queries.find(
+				(val) => val.tagKey === 'resource_deployment_environment',
+			)?.tagValue;
+
 			logEvent('APM: Service detail page visited', {
 				selectedEnvironment: selectedEnvironment?.[0]?.[0],
 				resourceAttributeUsed: !!queries.length,

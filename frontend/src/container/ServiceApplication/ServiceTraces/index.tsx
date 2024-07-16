@@ -50,15 +50,12 @@ function ServiceTraces(): JSX.Element {
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(data)) {
-			const selectedEnvironment = queries.map((val) => {
-				if (val.tagKey === 'resource_deployment_environment') {
-					return val.tagValue;
-				}
-			});
-			let rps = 0;
-			data.forEach(function (service) {
-				rps += service.callRate;
-			});
+			const selectedEnvironment = queries.find(
+				(val) => val.tagKey === 'resource_deployment_environment',
+			)?.tagValue;
+
+			const rps = data.reduce((total, service) => total + service.callRate, 0);
+
 			logEvent('APM: List page visited', {
 				numberOfServices: data?.length,
 				selectedEnvironment: selectedEnvironment?.[0]?.[0],

@@ -418,11 +418,10 @@ function AllErrors(): JSX.Element {
 			!logEventCalledRef.current &&
 			!isUndefined(errorCountResponse.data?.payload)
 		) {
-			const selectedEnvironment = queries.map((val) => {
-				if (val.tagKey === 'resource_deployment_environment') {
-					return val.tagValue;
-				}
-			});
+			const selectedEnvironment = queries.find(
+				(val) => val.tagKey === 'resource_deployment_environment',
+			)?.tagValue;
+
 			logEvent('Exception: List page visited', {
 				numberOfExceptions: errorCountResponse.data?.payload,
 				selectedEnvironment: selectedEnvironment?.[0]?.[0],
@@ -430,6 +429,7 @@ function AllErrors(): JSX.Element {
 			});
 			logEventCalledRef.current = true;
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [errorCountResponse.data?.payload]);
 
 	return (
