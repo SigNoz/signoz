@@ -48,6 +48,7 @@ export interface ChartPreviewProps {
 	userQueryKey?: string;
 	allowSelectedIntervalForStepGen?: boolean;
 	yAxisUnit: string;
+	setQueryStatus?: (status: string) => void;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -62,6 +63,7 @@ function ChartPreview({
 	allowSelectedIntervalForStepGen = false,
 	alertDef,
 	yAxisUnit,
+	setQueryStatus,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const dispatch = useDispatch();
@@ -149,10 +151,10 @@ function ChartPreview({
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);
-
+		if (setQueryStatus) setQueryStatus(queryResponse.status);
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
-	}, [maxTime, minTime, globalSelectedInterval, queryResponse]);
+	}, [maxTime, minTime, globalSelectedInterval, queryResponse, setQueryStatus]);
 
 	if (queryResponse.data && graphType === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
@@ -284,6 +286,7 @@ ChartPreview.defaultProps = {
 	userQueryKey: '',
 	allowSelectedIntervalForStepGen: false,
 	alertDef: undefined,
+	setQueryStatus: (): void => {},
 };
 
 export default ChartPreview;

@@ -2,6 +2,7 @@ import './Description.styles.scss';
 
 import { Button } from 'antd';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { useRef, useState } from 'react';
 
 import DashboardSettingsContent from '../DashboardSettings';
@@ -41,7 +42,9 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 				open={visible}
 				rootClassName="settings-container-root"
 			>
-				<DashboardSettingsContent variableViewModeRef={variableViewModeRef} />
+				<OverlayScrollbar>
+					<DashboardSettingsContent variableViewModeRef={variableViewModeRef} />
+				</OverlayScrollbar>
 			</DrawerContainer>
 		</>
 	);

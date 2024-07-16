@@ -41,7 +41,7 @@ function ExportPanelContainer({
 	} = useMutation(createDashboard, {
 		onSuccess: (data) => {
 			if (data.payload) {
-				onExport(data?.payload);
+				onExport(data?.payload, true);
 			}
 			refetch();
 		},
@@ -55,7 +55,7 @@ function ExportPanelContainer({
 			({ uuid }) => uuid === selectedDashboardId,
 		);
 
-		onExport(currentSelectedDashboard || null);
+		onExport(currentSelectedDashboard || null, false);
 	}, [data, selectedDashboardId, onExport]);
 
 	const handleSelect = useCallback(

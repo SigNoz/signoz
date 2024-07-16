@@ -156,7 +156,9 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				<NoLogs dataSource={DataSource.TRACES} />
 			)}
 
-			{isDataPresent && isFilterApplied && <EmptyLogsSearch />}
+			{isDataPresent && isFilterApplied && (
+				<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="LIST" />
+			)}
 
 			{!isError && transformedQueryTableData.length !== 0 && (
 				<ResizeTable
