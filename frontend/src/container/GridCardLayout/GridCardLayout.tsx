@@ -428,7 +428,11 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	return isDashboardEmpty ? (
 		<DashboardEmptyState />
 	) : (
-		<FullScreen handle={handle} className="fullscreen-grid-container">
+		<FullScreen
+			handle={handle}
+			className="fullscreen-grid-container"
+			data-overlayscrollbars-initialize
+		>
 			<ReactGridLayout
 				cols={12}
 				rowHeight={45}

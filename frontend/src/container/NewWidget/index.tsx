@@ -5,6 +5,7 @@ import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { chartHelpMessage } from 'components/facingIssueBtn/util';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -586,60 +587,64 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 			<PanelContainer>
 				<LeftContainerWrapper isDarkMode={useIsDarkMode()}>
-					{selectedWidget && (
-						<LeftContainer
-							selectedGraph={graphType}
-							selectedLogFields={selectedLogFields}
-							setSelectedLogFields={setSelectedLogFields}
-							selectedTracesFields={selectedTracesFields}
-							setSelectedTracesFields={setSelectedTracesFields}
-							selectedWidget={selectedWidget}
-							selectedTime={selectedTime}
-							requestData={requestData}
-							setRequestData={setRequestData}
-							isLoadingPanelData={isLoadingPanelData}
-						/>
-					)}
+					<OverlayScrollbar>
+						{selectedWidget && (
+							<LeftContainer
+								selectedGraph={graphType}
+								selectedLogFields={selectedLogFields}
+								setSelectedLogFields={setSelectedLogFields}
+								selectedTracesFields={selectedTracesFields}
+								setSelectedTracesFields={setSelectedTracesFields}
+								selectedWidget={selectedWidget}
+								selectedTime={selectedTime}
+								requestData={requestData}
+								setRequestData={setRequestData}
+								isLoadingPanelData={isLoadingPanelData}
+							/>
+						)}
+					</OverlayScrollbar>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper>
-					<RightContainer
-						setGraphHandler={setGraphHandler}
-						title={title}
-						setTitle={setTitle}
-						description={description}
-						setDescription={setDescription}
-						stacked={stacked}
-						setStacked={setStacked}
-						stackedBarChart={stackedBarChart}
-						setStackedBarChart={setStackedBarChart}
-						opacity={opacity}
-						yAxisUnit={yAxisUnit}
-						columnUnits={columnUnits}
-						setColumnUnits={setColumnUnits}
-						bucketCount={bucketCount}
-						bucketWidth={bucketWidth}
-						combineHistogram={combineHistogram}
-						setCombineHistogram={setCombineHistogram}
-						setBucketWidth={setBucketWidth}
-						setBucketCount={setBucketCount}
-						setOpacity={setOpacity}
-						selectedNullZeroValue={selectedNullZeroValue}
-						setSelectedNullZeroValue={setSelectedNullZeroValue}
-						selectedGraph={graphType}
-						setSelectedTime={setSelectedTime}
-						selectedTime={selectedTime}
-						setYAxisUnit={setYAxisUnit}
-						thresholds={thresholds}
-						setThresholds={setThresholds}
-						selectedWidget={selectedWidget}
-						isFillSpans={isFillSpans}
-						setIsFillSpans={setIsFillSpans}
-						softMin={softMin}
-						setSoftMin={setSoftMin}
-						softMax={softMax}
-						setSoftMax={setSoftMax}
-					/>
+					<OverlayScrollbar>
+						<RightContainer
+							setGraphHandler={setGraphHandler}
+							title={title}
+							setTitle={setTitle}
+							description={description}
+							setDescription={setDescription}
+							stacked={stacked}
+							setStacked={setStacked}
+							stackedBarChart={stackedBarChart}
+							setStackedBarChart={setStackedBarChart}
+							opacity={opacity}
+							yAxisUnit={yAxisUnit}
+							columnUnits={columnUnits}
+							setColumnUnits={setColumnUnits}
+							bucketCount={bucketCount}
+							bucketWidth={bucketWidth}
+							combineHistogram={combineHistogram}
+							setCombineHistogram={setCombineHistogram}
+							setBucketWidth={setBucketWidth}
+							setBucketCount={setBucketCount}
+							setOpacity={setOpacity}
+							selectedNullZeroValue={selectedNullZeroValue}
+							setSelectedNullZeroValue={setSelectedNullZeroValue}
+							selectedGraph={graphType}
+							setSelectedTime={setSelectedTime}
+							selectedTime={selectedTime}
+							setYAxisUnit={setYAxisUnit}
+							thresholds={thresholds}
+							setThresholds={setThresholds}
+							selectedWidget={selectedWidget}
+							isFillSpans={isFillSpans}
+							setIsFillSpans={setIsFillSpans}
+							softMin={softMin}
+							setSoftMin={setSoftMin}
+							softMax={softMax}
+							setSoftMax={setSoftMax}
+						/>
+					</OverlayScrollbar>
 				</RightContainerWrapper>
 			</PanelContainer>
 			<Modal
