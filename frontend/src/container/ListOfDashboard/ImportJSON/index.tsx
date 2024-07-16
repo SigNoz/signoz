@@ -5,6 +5,7 @@ import { ExclamationCircleTwoTone } from '@ant-design/icons';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Modal, Space, Typography, Upload, UploadProps } from 'antd';
+import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/dashboard/create';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -67,6 +68,8 @@ function ImportJSON({
 	const onClickLoadJsonHandler = async (): Promise<void> => {
 		try {
 			setDashboardCreating(true);
+			logEvent('Dashboard List: Import and next clicked', {});
+
 			const dashboardData = JSON.parse(editorValue) as DashboardData;
 
 			if (dashboardData?.layout) {
@@ -86,6 +89,10 @@ function ImportJSON({
 						dashboardId: response.payload.uuid,
 					}),
 				);
+				logEvent('Dashboard List: New dashboard imported successfully', {
+					dashboardId: response.payload?.uuid,
+					dashboardName: response.payload?.data?.title,
+				});
 			} else if (response.error === 'feature usage exceeded') {
 				setIsFeatureAlert(true);
 				notifications.error({
@@ -180,6 +187,9 @@ function ImportJSON({
 								type="default"
 								className="periscope-btn"
 								icon={<MonitorDot size={14} />}
+								onClick={(): void => {
+									logEvent('Dashboard List: Upload JSON file clicked', {});
+								}}
 							>
 								{' '}
 								{t('upload_json_file')}

@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { ColumnsType, ColumnType } from 'antd/es/table';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
@@ -105,6 +106,39 @@ export function getQueryLegend(
 	return legend;
 }
 
+export function sortFunction(
+	a: RowData,
+	b: RowData,
+	item: {
+		name: string;
+		queryName: string;
+		isValueColumn: boolean;
+	},
+): number {
+	// assumption :- number values is bigger than 'n/a'
+	const valueA = Number(a[`${item.name}_without_unit`] ?? a[item.name]);
+	const valueB = Number(b[`${item.name}_without_unit`] ?? b[item.name]);
+
+	// if both the values are numbers then return the difference here
+	if (!isNaN(valueA) && !isNaN(valueB)) {
+		return valueA - valueB;
+	}
+
+	// if valueB is a number then make it bigger value
+	if (isNaN(valueA) && !isNaN(valueB)) {
+		return -1;
+	}
+
+	// if valueA is number make it the bigger value
+	if (!isNaN(valueA) && isNaN(valueB)) {
+		return 1;
+	}
+
+	// if both of them are strings do the localecompare
+	return ((a[item.name] as string) || '').localeCompare(
+		(b[item.name] as string) || '',
+	);
+}
 export function createColumnsAndDataSource(
 	data: TableData,
 	currentQuery: Query,
@@ -123,18 +157,7 @@ export function createColumnsAndDataSource(
 				title: !isEmpty(legend) ? legend : item.name,
 				width: QUERY_TABLE_CONFIG.width,
 				render: renderColumnCell && renderColumnCell[item.name],
-				sorter: (a: RowData, b: RowData): number => {
-					const valueA = Number(a[`${item.name}_without_unit`] ?? a[item.name]);
-					const valueB = Number(b[`${item.name}_without_unit`] ?? b[item.name]);
-
-					if (!isNaN(valueA) && !isNaN(valueB)) {
-						return valueA - valueB;
-					}
-
-					return ((a[item.name] as string) || '').localeCompare(
-						(b[item.name] as string) || '',
-					);
-				},
+				sorter: (a: RowData, b: RowData): number => sortFunction(a, b, item),
 			};
 
 			return [...acc, column];

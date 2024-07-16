@@ -79,7 +79,7 @@ function WidgetHeader({
 		);
 	}, [widget.id, widget.panelTypes, widget.query]);
 
-	const onCreateAlertsHandler = useCreateAlerts(widget);
+	const onCreateAlertsHandler = useCreateAlerts(widget, 'dashboardView');
 
 	const onDownloadHandler = useCallback((): void => {
 		const csv = unparse(tableProcessedDataRef.current);
