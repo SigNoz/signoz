@@ -4,7 +4,28 @@ import { getToolTipValue } from 'components/Graph/yAxisConfig';
 
 import getGridColor from './getGridColor';
 
-const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
+function format24HourTime(ts, includeDate = false): string {
+	const date = new Date(ts * 1000);
+	const hours = date.getHours().toString().padStart(2, '0');
+	const minutes = date.getMinutes().toString().padStart(2, '0');
+	const timeStr = `${hours}:${minutes}`;
+
+	if (includeDate) {
+		const day = date.getDate().toString().padStart(2, '0');
+		const month = (date.getMonth() + 1).toString().padStart(2, '0');
+		const year = date.getFullYear();
+		const dateStr = `${month}/${day}/${year}`;
+		return `${timeStr}\n${dateStr}`;
+	}
+
+	return timeStr;
+}
+
+const getAxes = (
+	isDarkMode: boolean,
+	yAxisUnit?: string,
+	timeFormat?: '24H' | '12H',
+): any => [
 	{
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
 		grid: {
@@ -18,6 +39,12 @@ const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
 			show: true,
 		},
 		gap: 5,
+		...(timeFormat === '24H'
+			? {
+					values: (_self, ticks): any =>
+						ticks.map((ts, i) => format24HourTime(ts, i % 5 === 0)), // Include date every 5th tick
+			  }
+			: {}),
 	},
 	{
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
@@ -61,4 +88,5 @@ const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
 		},
 	},
 ];
+
 export default getAxes;
