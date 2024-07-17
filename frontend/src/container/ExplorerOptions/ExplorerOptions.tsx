@@ -14,6 +14,7 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
+import logEvent from 'api/common/logEvent';
 import axios from 'axios';
 import cx from 'classnames';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
@@ -93,7 +94,23 @@ function ExplorerOptions({
 		setIsExport(value);
 	}, []);
 
+	const {
+		currentQuery,
+		panelType,
+		isStagedQueryUpdated,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
+
 	const handleSaveViewModalToggle = (): void => {
+		if (sourcepage === DataSource.TRACES) {
+			logEvent('Traces Explorer: Save view clicked', {
+				panelType,
+			});
+		} else if (sourcepage === DataSource.LOGS) {
+			logEvent('Logs Explorer: Save view clicked', {
+				panelType,
+			});
+		}
 		setIsSaveModalOpen(!isSaveModalOpen);
 	};
 
@@ -104,11 +121,21 @@ function ExplorerOptions({
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const onCreateAlertsHandler = useCallback(() => {
+		if (sourcepage === DataSource.TRACES) {
+			logEvent('Traces Explorer: Create alert', {
+				panelType,
+			});
+		} else if (sourcepage === DataSource.LOGS) {
+			logEvent('Logs Explorer: Create alert', {
+				panelType,
+			});
+		}
 		history.push(
 			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
 				JSON.stringify(query),
 			)}`,
 		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [history, query]);
 
 	const onCancel = (value: boolean) => (): void => {
@@ -116,6 +143,15 @@ function ExplorerOptions({
 	};
 
 	const onAddToDashboard = (): void => {
+		if (sourcepage === DataSource.TRACES) {
+			logEvent('Traces Explorer: Add to dashboard clicked', {
+				panelType,
+			});
+		} else if (sourcepage === DataSource.LOGS) {
+			logEvent('Logs Explorer: Add to dashboard clicked', {
+				panelType,
+			});
+		}
 		setIsExport(true);
 	};
 
@@ -126,13 +162,6 @@ function ExplorerOptions({
 		isRefetching,
 		refetch: refetchAllView,
 	} = useGetAllViews(sourcepage);
-
-	const {
-		currentQuery,
-		panelType,
-		isStagedQueryUpdated,
-		redirectWithQueryBuilderData,
-	} = useQueryBuilder();
 
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 
@@ -224,6 +253,17 @@ function ExplorerOptions({
 		onMenuItemSelectHandler({
 			key: option.key,
 		});
+		if (sourcepage === DataSource.TRACES) {
+			logEvent('Traces Explorer: Select view', {
+				panelType,
+				viewName: option.value,
+			});
+		} else if (sourcepage === DataSource.LOGS) {
+			logEvent('Logs Explorer: Select view', {
+				panelType,
+				viewName: option.value,
+			});
+		}
 		if (ref.current) {
 			ref.current.blur();
 		}
@@ -259,6 +299,17 @@ function ExplorerOptions({
 			viewName: newViewName,
 			setNewViewName,
 		});
+		if (sourcepage === DataSource.TRACES) {
+			logEvent('Traces Explorer: Save view successful', {
+				panelType,
+				viewName: newViewName,
+			});
+		} else if (sourcepage === DataSource.LOGS) {
+			logEvent('Logs Explorer: Save view successful', {
+				panelType,
+				viewName: newViewName,
+			});
+		}
 	};
 
 	// TODO: Remove this and move this to scss file
@@ -499,7 +550,7 @@ function ExplorerOptions({
 
 export interface ExplorerOptionsProps {
 	isLoading?: boolean;
-	onExport: (dashboard: Dashboard | null) => void;
+	onExport: (dashboard: Dashboard | null, isNewDashboard?: boolean) => void;
 	query: Query | null;
 	disabled: boolean;
 	sourcepage: DataSource;

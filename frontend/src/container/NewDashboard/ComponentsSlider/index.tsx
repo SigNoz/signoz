@@ -1,6 +1,7 @@
 import './ComponentSlider.styles.scss';
 
 import { Card, Modal } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import createQueryParams from 'lib/createQueryParams';
@@ -20,6 +21,13 @@ function DashboardGraphSlider(): JSX.Element {
 	const onClickHandler = (name: PANEL_TYPES) => (): void => {
 		const id = uuid();
 		handleToggleDashboardSlider(false);
+		logEvent('Dashboard Detail: New panel type selected', {
+			// dashboardId: '',
+			// dashboardName: '',
+			// numberOfPanels: 0, // todo - at this point we don't know these attributes
+			panelType: name,
+			widgetId: id,
+		});
 		const queryParamsLog = {
 			graphType: name,
 			widgetId: id,
@@ -47,7 +55,6 @@ function DashboardGraphSlider(): JSX.Element {
 				PANEL_TYPES_INITIAL_QUERY[name],
 			),
 		};
-
 		if (name === PANEL_TYPES.LIST) {
 			history.push(
 				`${history.location.pathname}/new?${createQueryParams(queryParamsLog)}`,

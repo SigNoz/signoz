@@ -1,3 +1,4 @@
+import logEvent from 'api/common/logEvent';
 import getTopLevelOperations, {
 	ServiceDataProps,
 } from 'api/metrics/getTopLevelOperations';
@@ -17,7 +18,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
@@ -80,6 +81,23 @@ function Application(): JSX.Element {
 			),
 		[handleSetTimeStamp],
 	);
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current) {
+			const selectedEnvironments = queries.find(
+				(val) => val.tagKey === 'resource_deployment_environment',
+			)?.tagValue;
+
+			logEvent('APM: Service detail page visited', {
+				selectedEnvironments,
+				resourceAttributeUsed: !!queries.length,
+				section: 'overview',
+			});
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const {
 		data: topLevelOperations,

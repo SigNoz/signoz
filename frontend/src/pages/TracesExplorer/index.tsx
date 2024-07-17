@@ -3,6 +3,7 @@ import './TracesExplorer.styles.scss';
 import { FilterOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import { Button, Card, Tabs, Tooltip } from 'antd';
+import logEvent from 'api/common/logEvent';
 import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -23,9 +24,9 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { cloneDeep, set } from 'lodash-es';
+import { cloneDeep, isEmpty, set } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -61,6 +62,12 @@ function TracesExplorer(): JSX.Element {
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const currentTab = panelType || PANEL_TYPES.LIST;
+
+	const listQuery = useMemo(() => {
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+
+		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
+	}, [stagedQuery]);
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -101,6 +108,7 @@ function TracesExplorer(): JSX.Element {
 
 	const tabsItems = getTabsItems({
 		isListViewDisabled: isMultipleQueries || isGroupByExist,
+		isFilterApplied: !isEmpty(listQuery?.filters.items),
 	});
 
 	const exportDefaultQuery = useMemo(
@@ -128,7 +136,7 @@ function TracesExplorer(): JSX.Element {
 	};
 
 	const handleExport = useCallback(
-		(dashboard: Dashboard | null): void => {
+		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
 			if (!dashboard || !panelType) return;
 
 			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(panelType)
@@ -149,6 +157,12 @@ function TracesExplorer(): JSX.Element {
 				panelTypeParam,
 				options.selectColumns,
 			);
+
+			logEvent('Traces Explorer: Add to dashboard successful', {
+				panelType,
+				isNewDashboard,
+				dashboardName: dashboard?.data?.title,
+			});
 
 			updateDashboard(updatedDashboard, {
 				onSuccess: (data) => {
@@ -216,6 +230,13 @@ function TracesExplorer(): JSX.Element {
 		currentPanelType,
 	]);
 	const [isOpen, setOpen] = useState<boolean>(true);
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current) {
+			logEvent('Traces Explorer: Page visited', {});
+			logEventCalledRef.current = true;
+		}
+	}, []);
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
