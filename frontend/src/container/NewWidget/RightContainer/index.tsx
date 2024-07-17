@@ -82,7 +82,7 @@ function RightContainer({
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
 
-	const onCreateAlertsHandler = useCreateAlerts(selectedWidget);
+	const onCreateAlertsHandler = useCreateAlerts(selectedWidget, 'panelView');
 
 	const allowThreshold = panelTypeVsThreshold[selectedGraph];
 	const allowSoftMinMax = panelTypeVsSoftMinMax[selectedGraph];
@@ -163,6 +163,7 @@ function RightContainer({
 					value={selectedGraph}
 					style={{ width: '100%' }}
 					className="panel-type-select"
+					data-testid="panel-change-select"
 				>
 					{graphTypes.map((item) => (
 						<Option key={item.name} value={item.name}>

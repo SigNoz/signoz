@@ -101,6 +101,7 @@ function FormAlertRules({
 	const isNewRule = ruleId === 0;
 
 	const [loading, setLoading] = useState(false);
+	const [queryStatus, setQueryStatus] = useState<string>('');
 
 	// alertDef holds the form values to be posted
 	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
@@ -523,6 +524,7 @@ function FormAlertRules({
 			alertDef={alertDef}
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
+			setQueryStatus={setQueryStatus}
 		/>
 	);
 
@@ -540,6 +542,7 @@ function FormAlertRules({
 			selectedInterval={globalSelectedInterval}
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
+			setQueryStatus={setQueryStatus}
 		/>
 	);
 
@@ -665,7 +668,8 @@ function FormAlertRules({
 									disabled={
 										isAlertNameMissing ||
 										isAlertAvailableToSave ||
-										!isChannelConfigurationValid
+										!isChannelConfigurationValid ||
+										queryStatus === 'error'
 									}
 								>
 									{isNewRule ? t('button_createrule') : t('button_savechanges')}
@@ -674,7 +678,11 @@ function FormAlertRules({
 
 							<ActionButton
 								loading={loading || false}
-								disabled={isAlertNameMissing || !isChannelConfigurationValid}
+								disabled={
+									isAlertNameMissing ||
+									!isChannelConfigurationValid ||
+									queryStatus === 'error'
+								}
 								type="default"
 								onClick={onTestRuleHandler}
 							>

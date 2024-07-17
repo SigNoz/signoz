@@ -9,6 +9,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import cx from 'classnames';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import SideNav from 'container/SideNav';
@@ -303,24 +304,29 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						collapsed={collapsed}
 					/>
 				)}
-				<div className={cx('app-content', collapsed ? 'collapsed' : '')}>
+				<div
+					className={cx('app-content', collapsed ? 'collapsed' : '')}
+					data-overlayscrollbars-initialize
+				>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-						<LayoutContent>
-							<ChildrenContainer
-								style={{
-									margin:
-										isLogsView() ||
-										isTracesView() ||
-										isDashboardView() ||
-										isDashboardWidgetView() ||
-										isDashboardListView()
-											? 0
-											: '0 1rem',
-								}}
-							>
-								{isToDisplayLayout && !renderFullScreen && <TopNav />}
-								{children}
-							</ChildrenContainer>
+						<LayoutContent data-overlayscrollbars-initialize>
+							<OverlayScrollbar>
+								<ChildrenContainer
+									style={{
+										margin:
+											isLogsView() ||
+											isTracesView() ||
+											isDashboardView() ||
+											isDashboardWidgetView() ||
+											isDashboardListView()
+												? 0
+												: '0 1rem',
+									}}
+								>
+									{isToDisplayLayout && !renderFullScreen && <TopNav />}
+									{children}
+								</ChildrenContainer>
+							</OverlayScrollbar>
 						</LayoutContent>
 					</Sentry.ErrorBoundary>
 				</div>
