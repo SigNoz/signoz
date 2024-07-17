@@ -223,10 +223,10 @@ func createTelemetry() {
 			}
 		}
 	}()
-
+	ctx := context.Background()
 	// Define heartbeat function
 	heartbeatFunc := func() {
-		tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
+		tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(ctx, HEART_BEAT_DURATION)
 
 		if len(tagsInfo.Env) != 0 {
 			telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "", true, false)
@@ -246,18 +246,18 @@ func createTelemetry() {
 		if len(services) > 0 {
 			telemetry.SendEvent(TELEMETRY_EVENT_SERVICE, map[string]interface{}{"serviceName": services}, "", true, false)
 		}
-		totalSpans, _ := telemetry.reader.GetTotalSpans(context.Background())
-		totalLogs, _ := telemetry.reader.GetTotalLogs(context.Background())
-		spansInLastHeartBeatInterval, _ := telemetry.reader.GetSpansInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
-		getSamplesInfoInLastHeartBeatInterval, _ := telemetry.reader.GetSamplesInfoInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
-		totalSamples, _ := telemetry.reader.GetTotalSamples(context.Background())
-		tsInfo, _ := telemetry.reader.GetTimeSeriesInfo(context.Background())
+		totalSpans, _ := telemetry.reader.GetTotalSpans(ctx)
+		totalLogs, _ := telemetry.reader.GetTotalLogs(ctx)
+		spansInLastHeartBeatInterval, _ := telemetry.reader.GetSpansInLastHeartBeatInterval(ctx, HEART_BEAT_DURATION)
+		getSamplesInfoInLastHeartBeatInterval, _ := telemetry.reader.GetSamplesInfoInLastHeartBeatInterval(ctx, HEART_BEAT_DURATION)
+		totalSamples, _ := telemetry.reader.GetTotalSamples(ctx)
+		tsInfo, _ := telemetry.reader.GetTimeSeriesInfo(ctx)
 
-		getLogsInfoInLastHeartBeatInterval, _ := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
+		getLogsInfoInLastHeartBeatInterval, _ := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(ctx, HEART_BEAT_DURATION)
 
-		traceTTL, _ := telemetry.reader.GetTTL(context.Background(), &model.GetTTLParams{Type: constants.TraceTTL})
-		metricsTTL, _ := telemetry.reader.GetTTL(context.Background(), &model.GetTTLParams{Type: constants.MetricsTTL})
-		logsTTL, _ := telemetry.reader.GetTTL(context.Background(), &model.GetTTLParams{Type: constants.LogsTTL})
+		traceTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.TraceTTL})
+		metricsTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.MetricsTTL})
+		logsTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.LogsTTL})
 
 		data := map[string]interface{}{
 			"totalSpans":                            totalSpans,
@@ -277,7 +277,7 @@ func createTelemetry() {
 			data[key] = value
 		}
 
-		users, apiErr := telemetry.reader.GetUsers(context.Background())
+		users, apiErr := telemetry.reader.GetUsers(ctx)
 		if apiErr == nil {
 			for _, user := range users {
 				if user.Email == DEFAULT_CLOUD_EMAIL {
@@ -287,13 +287,13 @@ func createTelemetry() {
 			}
 		}
 
-		alertsInfo, err := telemetry.alertsInfoCallback(context.Background())
+		alertsInfo, err := telemetry.alertsInfoCallback(ctx)
 		if err == nil {
-			dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
+			dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(ctx)
 			if err == nil {
 				channels, err := telemetry.reader.GetChannels()
 				if err == nil {
-					savedViewsInfo, err := telemetry.reader.GetSavedViewsInfo(context.Background())
+					savedViewsInfo, err := telemetry.reader.GetSavedViewsInfo(ctx)
 					if err == nil {
 						dashboardsAlertsData := map[string]interface{}{
 							"totalDashboards":                 dashboardsInfo.TotalDashboards,
@@ -327,20 +327,20 @@ func createTelemetry() {
 			telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
 		}
 
-		getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(context.Background())
+		getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(ctx)
 		telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval, "", true, false)
 	}
 
 	// Define active user function
 	activeUserFunc := func() {
 		if telemetry.activeUser["logs"] != 0 {
-			getLogsInfoInLastHeartBeatInterval, err := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(context.Background(), ACTIVE_USER_DURATION)
+			getLogsInfoInLastHeartBeatInterval, err := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(ctx, ACTIVE_USER_DURATION)
 			if err != nil && getLogsInfoInLastHeartBeatInterval == 0 {
 				telemetry.activeUser["logs"] = 0
 			}
 		}
 		if telemetry.activeUser["metrics"] != 0 {
-			getSamplesInfoInLastHeartBeatInterval, err := telemetry.reader.GetSamplesInfoInLastHeartBeatInterval(context.Background(), ACTIVE_USER_DURATION)
+			getSamplesInfoInLastHeartBeatInterval, err := telemetry.reader.GetSamplesInfoInLastHeartBeatInterval(ctx, ACTIVE_USER_DURATION)
 			if err != nil && getSamplesInfoInLastHeartBeatInterval == 0 {
 				telemetry.activeUser["metrics"] = 0
 			}
