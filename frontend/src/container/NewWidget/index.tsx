@@ -559,6 +559,29 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [onSaveDashboard]);
 
+	useEffect(() => {
+		if (selectedGraph === PANEL_TYPES.LIST) {
+			const initialDataSource = currentQuery.builder.queryData[0].dataSource;
+			if (initialDataSource === DataSource.LOGS) {
+				setRequestData((prev) => ({
+					...prev,
+					tableParams: {
+						...prev.tableParams,
+						selectColumns: selectedLogFields,
+					},
+				}));
+			} else if (initialDataSource === DataSource.TRACES) {
+				setRequestData((prev) => ({
+					...prev,
+					tableParams: {
+						...prev.tableParams,
+						selectColumns: selectedTracesFields,
+					},
+				}));
+			}
+		}
+	}, [selectedLogFields, selectedTracesFields, currentQuery, selectedGraph]);
+
 	return (
 		<Container>
 			<div className="edit-header">
