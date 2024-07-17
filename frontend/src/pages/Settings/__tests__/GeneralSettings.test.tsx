@@ -18,19 +18,16 @@ const types = [
 		testId: 'Metrics',
 		header: 'Metrics',
 		modalTestId: 'Metrics-modal',
-		confirmationText: 'retention_confirmation',
 	},
 	{
 		testId: 'Traces',
 		header: 'Traces',
 		modalTestId: 'Traces-modal',
-		confirmationText: 'retention_confirmation',
 	},
 	{
 		testId: 'Logs',
 		header: 'Logs',
 		modalTestId: 'Logs-modal',
-		confirmationText: 'retention_confirmation',
 	},
 ];
 
@@ -69,42 +66,42 @@ describe('General Settings Page', () => {
 					}),
 				).toBeInTheDocument();
 			});
-			it('should check if Metrics body is properly displayed', () => {
-				const metricsCard = screen.getByTestId(testId);
+			it(`should check if ${header} body is properly displayed`, () => {
+				const sectionCard = screen.getByTestId(testId);
 
-				const retentionFieldLabel = within(metricsCard).getByTestId(
+				const retentionFieldLabel = within(sectionCard).getByTestId(
 					'retention-field-label',
 				);
 				expect(retentionFieldLabel).toBeInTheDocument();
 
-				const retentionFieldInput = within(metricsCard).getByTestId(
+				const retentionFieldInput = within(sectionCard).getByTestId(
 					'retention-field-input',
 				);
 				expect(retentionFieldInput).toBeInTheDocument();
 
-				const retentionFieldDropdown = within(metricsCard).getByTestId(
+				const retentionFieldDropdown = within(sectionCard).getByTestId(
 					'retention-field-dropdown',
 				);
 				expect(retentionFieldDropdown).toBeInTheDocument();
-				const retentionSubmitButton = within(metricsCard).getByTestId(
+				const retentionSubmitButton = within(sectionCard).getByTestId(
 					'retention-submit-button',
 				);
 				expect(retentionSubmitButton).toBeInTheDocument();
 			});
 			it('Should check if save button is disabled by default', () => {
-				const metricsCard = screen.getByTestId(header);
-				const retentionSubmitButton = within(metricsCard).getByTestId(
+				const sectionCard = screen.getByTestId(header);
+				const retentionSubmitButton = within(sectionCard).getByTestId(
 					'retention-submit-button',
 				);
 				expect(retentionSubmitButton).toBeDisabled();
 			});
 			it('Should check if changing the value of the textbox enables the save button ', () => {
-				const metricsCard = screen.getByTestId(header);
-				const retentionFieldInput = within(metricsCard).getByTestId(
+				const sectionCard = screen.getByTestId(header);
+				const retentionFieldInput = within(sectionCard).getByTestId(
 					'retention-field-input',
 				);
 
-				const retentionSubmitButton = within(metricsCard).getByTestId(
+				const retentionSubmitButton = within(sectionCard).getByTestId(
 					'retention-submit-button',
 				);
 				expect(retentionSubmitButton).toBeDisabled();
@@ -114,8 +111,8 @@ describe('General Settings Page', () => {
 				expect(retentionSubmitButton).toBeEnabled();
 			});
 			it('Should check if "retention_null_value_error" is displayed if the value is not set ', async () => {
-				const metricsCard = screen.getByTestId(header);
-				const retentionFieldInput = within(metricsCard).getByTestId(
+				const sectionCard = screen.getByTestId(header);
+				const retentionFieldInput = within(sectionCard).getByTestId(
 					'retention-field-input',
 				);
 
@@ -128,13 +125,13 @@ describe('General Settings Page', () => {
 				).toBeInTheDocument();
 			});
 			it('should display the modal when a value is provided and save is clicked', async () => {
-				const metricsCard = screen.getByTestId(header);
+				const sectionCard = screen.getByTestId(header);
 
-				const retentionFieldInput = within(metricsCard).getByTestId(
+				const retentionFieldInput = within(sectionCard).getByTestId(
 					'retention-field-input',
 				);
 
-				const retentionSubmitButton = within(metricsCard).getByTestId(
+				const retentionSubmitButton = within(sectionCard).getByTestId(
 					'retention-submit-button',
 				);
 				act(() => {
@@ -152,13 +149,13 @@ describe('General Settings Page', () => {
 			describe(`${header} Modal`, () => {
 				let sectionModal: HTMLElement;
 				beforeEach(() => {
-					const metricsCard = screen.getByTestId(header);
+					const sectionCard = screen.getByTestId(header);
 
-					const retentionFieldInput = within(metricsCard).getByTestId(
+					const retentionFieldInput = within(sectionCard).getByTestId(
 						'retention-field-input',
 					);
 
-					const retentionSubmitButton = within(metricsCard).getByTestId(
+					const retentionSubmitButton = within(sectionCard).getByTestId(
 						'retention-submit-button',
 					);
 					act(() => {
