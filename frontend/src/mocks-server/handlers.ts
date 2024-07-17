@@ -97,4 +97,12 @@ export const handlers = [
 	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(inviteUser)),
 	),
+	rest.post('http://localhost/api/v1/settings/ttl', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				message: 'move ttl has been successfully set up',
+			}),
+		),
+	),
 ];

@@ -95,9 +95,11 @@ function Retention({
 
 	return (
 		<RetentionContainer>
-			<Row justify="space-between">
+			<Row justify="space-between" aria-label={text}>
 				<Col span={12} style={{ display: 'flex' }}>
-					<RetentionFieldLabel>{text}</RetentionFieldLabel>
+					<RetentionFieldLabel data-testid="retention-field-label">
+						{text}
+					</RetentionFieldLabel>
 				</Col>
 				<Row justify="end">
 					<RetentionFieldInputContainer>
@@ -106,12 +108,14 @@ function Retention({
 							disabled={isCloudUserVal}
 							onChange={(e): void => onChangeHandler(e, setSelectedValue)}
 							style={{ width: 75 }}
+							data-testid="retention-field-input"
 						/>
 						<Select
 							value={selectedTimeUnit}
 							onChange={currentSelectedOption}
 							disabled={isCloudUserVal}
 							style={{ width: 100 }}
+							data-testid="retention-field-dropdown"
 						>
 							{menuItems}
 						</Select>

@@ -1,0 +1,183 @@
+/* eslint-disable sonarjs/no-duplicate-string */
+import GeneralSettingsContainer from 'container/GeneralSettings/GeneralSettings';
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from 'tests/test-utils';
+
+import { generalSettingsProps } from './mock';
+
+const tooltipText = /More details on how to set retention period/;
+
+const types = [
+	{
+		testId: 'Metrics',
+		header: 'Metrics',
+		modalTestId: 'Metrics-modal',
+		confirmationText: 'retention_confirmation',
+	},
+	{
+		testId: 'Traces',
+		header: 'Traces',
+		modalTestId: 'Traces-modal',
+		confirmationText: 'retention_confirmation',
+	},
+	{
+		testId: 'Logs',
+		header: 'Logs',
+		modalTestId: 'Logs-modal',
+		confirmationText: 'retention_confirmation',
+	},
+];
+
+describe('General Settings Page', () => {
+	beforeEach(() => {
+		render(
+			<GeneralSettingsContainer
+				metricsTtlValuesPayload={generalSettingsProps.metricsTtlValuesPayload}
+				tracesTtlValuesPayload={generalSettingsProps.tracesTtlValuesPayload}
+				logsTtlValuesPayload={generalSettingsProps.logsTtlValuesPayload}
+				getAvailableDiskPayload={generalSettingsProps.getAvailableDiskPayload}
+				metricsTtlValuesRefetch={generalSettingsProps.metricsTtlValuesRefetch}
+				tracesTtlValuesRefetch={generalSettingsProps.tracesTtlValuesRefetch}
+				logsTtlValuesRefetch={generalSettingsProps.logsTtlValuesRefetch}
+			/>,
+		);
+	});
+
+	it('should properly display the help icon', async () => {
+		const helpIcon = screen.getByLabelText('question-circle');
+
+		fireEvent.mouseOver(helpIcon);
+
+		await waitFor(() => {
+			const tooltip = screen.getByText(tooltipText);
+			expect(tooltip).toBeInTheDocument();
+		});
+	});
+
+	types.forEach(({ testId, header, modalTestId }) => {
+		describe(`${header} Card`, () => {
+			it(`should be able to find "${header}" as the header `, () => {
+				expect(
+					screen.getByRole('heading', {
+						name: header,
+					}),
+				).toBeInTheDocument();
+			});
+			it('should check if Metrics body is properly displayed', () => {
+				const metricsCard = screen.getByTestId(testId);
+
+				const retentionFieldLabel = within(metricsCard).getByTestId(
+					'retention-field-label',
+				);
+				expect(retentionFieldLabel).toBeInTheDocument();
+
+				const retentionFieldInput = within(metricsCard).getByTestId(
+					'retention-field-input',
+				);
+				expect(retentionFieldInput).toBeInTheDocument();
+
+				const retentionFieldDropdown = within(metricsCard).getByTestId(
+					'retention-field-dropdown',
+				);
+				expect(retentionFieldDropdown).toBeInTheDocument();
+				const retentionSubmitButton = within(metricsCard).getByTestId(
+					'retention-submit-button',
+				);
+				expect(retentionSubmitButton).toBeInTheDocument();
+			});
+			it('Should check if save button is disabled by default', () => {
+				const metricsCard = screen.getByTestId(header);
+				const retentionSubmitButton = within(metricsCard).getByTestId(
+					'retention-submit-button',
+				);
+				expect(retentionSubmitButton).toBeDisabled();
+			});
+			it('Should check if changing the value of the textbox enables the save button ', () => {
+				const metricsCard = screen.getByTestId(header);
+				const retentionFieldInput = within(metricsCard).getByTestId(
+					'retention-field-input',
+				);
+
+				const retentionSubmitButton = within(metricsCard).getByTestId(
+					'retention-submit-button',
+				);
+				expect(retentionSubmitButton).toBeDisabled();
+				act(() => {
+					fireEvent.change(retentionFieldInput, { target: { value: '2' } });
+				});
+				expect(retentionSubmitButton).toBeEnabled();
+			});
+			it('Should check if "retention_null_value_error" is displayed if the value is not set ', async () => {
+				const metricsCard = screen.getByTestId(header);
+				const retentionFieldInput = within(metricsCard).getByTestId(
+					'retention-field-input',
+				);
+
+				act(() => {
+					fireEvent.change(retentionFieldInput, { target: { value: 0 } });
+				});
+
+				expect(
+					await screen.findByText('retention_null_value_error'),
+				).toBeInTheDocument();
+			});
+			it('should display the modal when a value is provided and save is clicked', async () => {
+				const metricsCard = screen.getByTestId(header);
+
+				const retentionFieldInput = within(metricsCard).getByTestId(
+					'retention-field-input',
+				);
+
+				const retentionSubmitButton = within(metricsCard).getByTestId(
+					'retention-submit-button',
+				);
+				act(() => {
+					fireEvent.change(retentionFieldInput, { target: { value: 1 } });
+					fireEvent.click(retentionSubmitButton);
+				});
+
+				const sectionModal = screen.getByTestId(modalTestId);
+
+				expect(
+					await within(sectionModal).findByText('retention_confirmation'),
+				).toBeInTheDocument();
+			});
+
+			describe(`${header} Modal`, () => {
+				let sectionModal: HTMLElement;
+				beforeEach(() => {
+					const metricsCard = screen.getByTestId(header);
+
+					const retentionFieldInput = within(metricsCard).getByTestId(
+						'retention-field-input',
+					);
+
+					const retentionSubmitButton = within(metricsCard).getByTestId(
+						'retention-submit-button',
+					);
+					act(() => {
+						fireEvent.change(retentionFieldInput, { target: { value: 1 } });
+						fireEvent.click(retentionSubmitButton);
+					});
+
+					sectionModal = screen.getByTestId(modalTestId);
+				});
+
+				it('Should check if the modal is properly displayed', async () => {
+					expect(
+						within(sectionModal).getByText('retention_confirmation'),
+					).toBeInTheDocument();
+					expect(
+						within(sectionModal).getByText('retention_confirmation_description'),
+					).toBeInTheDocument();
+				});
+			});
+		});
+	});
+});

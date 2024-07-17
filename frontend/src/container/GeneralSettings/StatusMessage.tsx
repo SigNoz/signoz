@@ -60,6 +60,7 @@ function StatusMessage({
 					style={{
 						color: messageColor,
 					}}
+					data-testid="status-message"
 				>
 					{statusMessage}
 				</Col>

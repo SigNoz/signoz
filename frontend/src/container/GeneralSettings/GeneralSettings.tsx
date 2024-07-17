@@ -524,7 +524,13 @@ function GeneralSettings({
 		) {
 			return (
 				<Fragment key={category.name}>
-					<Col xs={22} xl={11} key={category.name} style={{ margin: '0.5rem' }}>
+					<Col
+						xs={22}
+						xl={11}
+						key={category.name}
+						style={{ margin: '0.5rem' }}
+						data-testid={category.name}
+					>
 						<Card style={{ height: '100%' }}>
 							<Typography.Title style={{ margin: 0 }} level={3}>
 								{category.name}
@@ -554,6 +560,7 @@ function GeneralSettings({
 											type="primary"
 											onClick={category.save.modalOpen}
 											disabled={category.save.isDisabled}
+											data-testid="retention-submit-button"
 										>
 											{category.save.saveButtonText}
 										</Button>
@@ -574,6 +581,7 @@ function GeneralSettings({
 										centered
 										open={category.save.modal}
 										confirmLoading={category.save.apiLoading}
+										data-testid={`${category.name}-modal`}
 									>
 										<Typography>
 											{t('retention_confirmation_description', {
@@ -597,14 +605,16 @@ function GeneralSettings({
 			<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
 				<ErrorTextContainer>
 					{!isCloudUserVal && (
-						<TextToolTip
-							{...{
-								text: `More details on how to set retention period`,
-								url: 'https://signoz.io/docs/userguide/retention-period/',
-							}}
-						/>
+						<div data-testid="help-icon">
+							<TextToolTip
+								{...{
+									text: `More details on how to set retention period`,
+									url: 'https://signoz.io/docs/userguide/retention-period/',
+								}}
+							/>
+						</div>
 					)}
-					{errorText && <ErrorText>{errorText}</ErrorText>}
+					{errorText && <ErrorText data-testid="error-text">{errorText}</ErrorText>}
 				</ErrorTextContainer>
 
 				<Row justify="start">{renderConfig}</Row>
@@ -615,7 +625,7 @@ function GeneralSettings({
 	);
 }
 
-interface GeneralSettingsProps {
+export interface GeneralSettingsProps {
 	getAvailableDiskPayload: GetDisksPayload;
 	metricsTtlValuesPayload: GetRetentionPeriodMetricsPayload;
 	tracesTtlValuesPayload: GetRetentionPeriodTracesPayload;
