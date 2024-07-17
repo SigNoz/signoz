@@ -1,6 +1,7 @@
 .fullscreen-grid-container {
 	overflow: auto;
 	margin: 8px -8px;
+	margin-right: 0;
 
 	.react-grid-layout {
 		border: none !important;

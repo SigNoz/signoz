@@ -7,6 +7,7 @@ import {
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
 import { Button, Flex, Tooltip, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -197,6 +198,11 @@ export function Filter(props: FilterProps): JSX.Element {
 					})),
 				},
 			};
+			if (selectedFilters) {
+				logEvent('Traces Explorer: Sidebar filter used', {
+					selectedFilters,
+				});
+			}
 			redirectWithQueryBuilderData(preparedQuery);
 		},
 		[currentQuery, redirectWithQueryBuilderData, selectedFilters],
