@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
 	"math"
 	"sort"
 	"strconv"
@@ -287,7 +288,11 @@ func (item *SearchSpanResponseItem) GetValues() []interface{} {
 
 	references := []OtelSpanRef{}
 	jsonbody, _ := json.Marshal(item.References)
-	json.Unmarshal(jsonbody, &references)
+	err := json.Unmarshal(jsonbody, &references)
+	if err != nil {
+		zap.L().Error("Error in unmarshalling references", zap.Error(err))
+		return nil
+	}
 
 	referencesStringArray := []string{}
 	for _, item := range references {
@@ -672,7 +677,11 @@ type ClusterInfo struct {
 func (ci *ClusterInfo) GetMapFromStruct() map[string]interface{} {
 	var clusterInfoMap map[string]interface{}
 	data, _ := json.Marshal(*ci)
-	json.Unmarshal(data, &clusterInfoMap)
+	err := json.Unmarshal(data, &clusterInfoMap)
+	if err != nil {
+		zap.L().Error("Error in unmarshalling cluster info struct to map", zap.Error(err))
+		return nil
+	}
 	return clusterInfoMap
 }
 

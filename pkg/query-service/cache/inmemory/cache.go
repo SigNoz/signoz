@@ -1,6 +1,7 @@
 package inmemory
 
 import (
+	"go.uber.org/zap"
 	"time"
 
 	go_cache "github.com/patrickmn/go-cache"
@@ -47,7 +48,11 @@ func (c *cache) SetTTL(cacheKey string, ttl time.Duration) {
 	if !found {
 		return
 	}
-	c.cc.Replace(cacheKey, item, ttl)
+	err := c.cc.Replace(cacheKey, item, ttl)
+	if err != nil {
+		zap.L().Error("error setting TTL for cache entry", zap.Error(err))
+		return
+	}
 }
 
 // Remove removes the cache entry

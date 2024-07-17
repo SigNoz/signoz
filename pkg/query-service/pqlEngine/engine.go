@@ -3,6 +3,7 @@ package promql
 import (
 	"context"
 	"fmt"
+	"go.uber.org/zap"
 	"time"
 
 	"github.com/go-kit/log"
@@ -40,10 +41,18 @@ func FromReader(ch interfaces.Reader) (*PqlEngine, error) {
 func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 
 	logLevel := promlog.AllowedLevel{}
-	logLevel.Set("debug")
+	err := logLevel.Set("debug")
+	if err != nil {
+		zap.L().Error("error setting log level", zap.Error(err))
+		return nil, err
+	}
 
 	allowedFormat := promlog.AllowedFormat{}
-	allowedFormat.Set("logfmt")
+	err = allowedFormat.Set("logfmt")
+	if err != nil {
+		zap.L().Error("error setting log format", zap.Error(err))
+		return nil, err
+	}
 
 	promlogConfig := promlog.Config{
 		Level:  &logLevel,
@@ -79,7 +88,11 @@ func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 	)
 	fanoutStorage := pstorage.NewFanout(logger, remoteStorage)
 
-	remoteStorage.ApplyConfig(config)
+	err = remoteStorage.ApplyConfig(config)
+	if err != nil {
+		zap.L().Error("error applying config", zap.Error(err))
+		return nil, err
+	}
 
 	return &PqlEngine{
 		engine:        e,

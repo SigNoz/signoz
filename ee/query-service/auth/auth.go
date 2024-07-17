@@ -39,7 +39,10 @@ func GetUserFromRequest(r *http.Request, apiHandler *api.APIHandler) (*basemodel
 				return nil, err
 			}
 			telemetry.GetInstance().SetPatTokenUser()
-			dao.UpdatePATLastUsed(ctx, patToken, time.Now().Unix())
+			baeApiErr := dao.UpdatePATLastUsed(ctx, patToken, time.Now().Unix())
+			if baeApiErr != nil {
+				zap.L().Error("Error while updating PAT last used: ", zap.Any("baeApiErr", baeApiErr))
+			}
 			user.User.GroupId = group.Id
 			user.User.Id = pat.Id
 			return &basemodel.UserPayload{

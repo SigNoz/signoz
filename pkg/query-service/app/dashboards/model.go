@@ -239,7 +239,10 @@ func CreateDashboard(ctx context.Context, data map[string]interface{}, fm interf
 
 	traceAndLogsPanelUsage, _ := countTraceAndLogsPanel(data)
 	if traceAndLogsPanelUsage > 0 {
-		updateFeatureUsage(fm, traceAndLogsPanelUsage)
+		apiError := updateFeatureUsage(fm, traceAndLogsPanelUsage)
+		if apiError != nil {
+			return nil, apiError
+		}
 	}
 
 	return dash, nil
@@ -289,7 +292,10 @@ func DeleteDashboard(ctx context.Context, uuid string, fm interfaces.FeatureLook
 
 	traceAndLogsPanelUsage, _ := countTraceAndLogsPanel(dashboard.Data)
 	if traceAndLogsPanelUsage > 0 {
-		updateFeatureUsage(fm, -traceAndLogsPanelUsage)
+		apiError := updateFeatureUsage(fm, -traceAndLogsPanelUsage)
+		if apiError != nil {
+			return apiError
+		}
 	}
 
 	return nil
@@ -366,7 +372,10 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 	}
 	if existingCount != newCount {
 		// if the count of trace and logs panel has changed, we need to update feature flag count as well
-		updateFeatureUsage(fm, newCount-existingCount)
+		apiError := updateFeatureUsage(fm, newCount-existingCount)
+		if apiError != nil {
+			return nil, apiError
+		}
 	}
 	return dashboard, nil
 }

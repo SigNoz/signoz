@@ -134,7 +134,7 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 
 		settingVersionsUsed = append(settingVersionsUsed, configId)
 
-		m.updateDeployStatus(
+		apiError := m.updateDeployStatus(
 			context.Background(),
 			featureType,
 			configVersion,
@@ -143,6 +143,11 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 			configId,
 			serializedSettingsUsed,
 		)
+		if apiError != nil {
+			return nil, "", errors.Wrap(apiError.ToError(), fmt.Sprintf(
+				"failed to update deploy status for %s", featureType,
+			))
+		}
 
 	}
 
@@ -173,9 +178,12 @@ func (m *Manager) ReportConfigDeploymentStatus(
 			newStatus = string(DeployFailed)
 			message = fmt.Sprintf("%s: %s", agentId, err.Error())
 		}
-		m.updateDeployStatusByHash(
+		apiError := m.updateDeployStatusByHash(
 			context.Background(), featureConfId, newStatus, message,
 		)
+		if apiError != nil {
+			zap.L().Error("failed to update deploy status", zap.Error(apiError.ToError()))
+		}
 	}
 }
 
@@ -252,7 +260,10 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiEr
 			return model.InternalError(fmt.Errorf("failed to deploy the config"))
 		}
 
-		m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
+		apiError := m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
+		if apiError != nil {
+			return apiError
+		}
 	case ElementTypeDropRules:
 		var filterConfig *filterprocessor.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &filterConfig); err != nil {
@@ -270,7 +281,10 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiEr
 			return err
 		}
 
-		m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
+		apiError := m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
+		if apiError != nil {
+			return apiError
+		}
 	}
 
 	return nil
@@ -301,8 +315,7 @@ func UpsertFilterProcessor(ctx context.Context, version int, config *filterproce
 		zap.L().Warn("unexpected error while transforming processor config to yaml", zap.Error(yamlErr))
 	}
 
-	m.updateDeployStatus(ctx, ElementTypeDropRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
-	return nil
+	return m.updateDeployStatus(ctx, ElementTypeDropRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
 }
 
 // OnConfigUpdate is a callback function passed to opamp server.
@@ -325,7 +338,10 @@ func (m *Manager) OnConfigUpdate(agentId string, hash string, err error) {
 		message = fmt.Sprintf("%s: %s", agentId, err.Error())
 	}
 
-	m.updateDeployStatusByHash(context.Background(), hash, status, message)
+	apiError := m.updateDeployStatusByHash(context.Background(), hash, status, message)
+	if apiError != nil {
+		zap.L().Error("failed to update deploy status", zap.Error(apiError.ToError()))
+	}
 }
 
 // UpsertSamplingProcessor updates the agent config with new filter processor params
@@ -352,6 +368,9 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 		zap.L().Warn("unexpected error while transforming processor config to yaml", zap.Error(yamlErr))
 	}
 
-	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
+	apiError := m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
+	if apiError != nil {
+		return apiError.ToError()
+	}
 	return nil
 }

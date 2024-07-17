@@ -27,6 +27,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// nolint:staticcheck
 func initZapLog(enableQueryServiceLogOTLPExport bool) *zap.Logger {
 	config := zap.NewProductionConfig()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -115,7 +116,12 @@ func main() {
 	loggerMgr := initZapLog(enableQueryServiceLogOTLPExport)
 
 	zap.ReplaceGlobals(loggerMgr)
-	defer loggerMgr.Sync() // flushes buffer, if any
+	defer func(loggerMgr *zap.Logger) {
+		err := loggerMgr.Sync()
+		if err != nil {
+			zap.L().Error("Failed to sync logger", zap.Error(err))
+		}
+	}(loggerMgr) // flushes buffer, if any
 
 	version.PrintVersion()
 
@@ -173,7 +179,11 @@ func main() {
 			zap.L().Info("Received HealthCheck status: ", zap.Int("status", int(status)))
 		case <-signalsChannel:
 			zap.L().Fatal("Received OS Interrupt Signal ... ")
-			server.Stop()
+			err := server.Stop()
+			if err != nil {
+				zap.L().Error("Failed to stop server", zap.Error(err))
+				return
+			}
 		}
 	}
 }

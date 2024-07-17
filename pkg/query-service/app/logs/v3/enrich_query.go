@@ -2,6 +2,7 @@ package v3
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"strconv"
 	"strings"
 
@@ -94,7 +95,11 @@ func Enrich(params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey) {
 		if query.Expression != queryName && query.DataSource != v3.DataSourceLogs {
 			continue
 		}
-		enrichLogsQuery(query, fields)
+		err := enrichLogsQuery(query, fields)
+		if err != nil {
+			zap.L().Error("error enriching logs query", zap.Error(err))
+			return
+		}
 	}
 }
 

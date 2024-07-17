@@ -145,7 +145,11 @@ func (lm *Manager) GetLicenses(ctx context.Context) (response []model.License, a
 	}
 
 	for _, l := range licenses {
-		l.ParsePlan()
+		err := l.ParsePlan()
+		if err != nil {
+			zap.L().Error("error in parsing plan details: ", zap.Error(err))
+			return nil, nil
+		}
 
 		if l.Key == lm.activeLicense.Key {
 			l.IsCurrent = true
@@ -169,7 +173,11 @@ func (lm *Manager) Validator(ctx context.Context) {
 	tick := time.NewTicker(validationFrequency)
 	defer tick.Stop()
 
-	lm.Validate(ctx)
+	err := lm.Validate(ctx)
+	if err != nil {
+		zap.L().Error("failed to validate license", zap.Error(err))
+		return
+	}
 
 	for {
 		select {
@@ -180,7 +188,11 @@ func (lm *Manager) Validator(ctx context.Context) {
 			case <-lm.done:
 				return
 			case <-tick.C:
-				lm.Validate(ctx)
+				err := lm.Validate(ctx)
+				if err != nil {
+					zap.L().Error("failed to validate license", zap.Error(err))
+					return
+				}
 			}
 		}
 

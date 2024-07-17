@@ -71,7 +71,11 @@ func (srv *Server) Stop() {
 		defer cleanup()
 	}
 
-	srv.server.Stop(context.Background())
+	err := srv.server.Stop(context.Background())
+	if err != nil {
+		zap.L().Error("failed to stop server", zap.Error(err))
+		return
+	}
 }
 
 func (srv *Server) onDisconnect(conn types.Connection) {

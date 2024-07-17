@@ -197,8 +197,11 @@ func GenerateCollectorConfigWithPipelines(
 		processors[procName] = escapedConf
 	}
 
-	// Add processors to unmarshaled collector config `c`
-	buildLogParsingProcessors(c, processors)
+	// Add processors to unmarshalled collector config `c`
+	err = buildLogParsingProcessors(c, processors)
+	if err != nil {
+		return nil, nil
+	}
 
 	// build the new processor list in service.pipelines.logs
 	p, err := getOtelPipelineFromConfig(c)

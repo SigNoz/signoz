@@ -359,5 +359,9 @@ func (agent *Agent) SendToAgent(msg *protobufs.ServerToAgent) {
 	agent.connMutex.Lock()
 	defer agent.connMutex.Unlock()
 
-	agent.conn.Send(context.Background(), msg)
+	err := agent.conn.Send(context.Background(), msg)
+	if err != nil {
+		zap.L().Error(err.Error())
+		return
+	}
 }

@@ -186,7 +186,11 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
 
-	dashboards.LoadDashboardFiles(aH.featureFlags)
+	err = dashboards.LoadDashboardFiles(aH.featureFlags)
+	if err != nil {
+		zap.L().Error("error loading dashboard files", zap.Error(err))
+		return nil, err
+	}
 	// if errReadingDashboards != nil {
 	// 	return nil, errReadingDashboards
 	// }
@@ -2189,7 +2193,10 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	}
 	resp, _ := marshall(response)
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(resp)
+	write, err := w.Write(resp)
+	if err != nil {
+		zap.L().Error("failed to write response", zap.Error(err), zap.Int("bytesWritten", write))
+	}
 }
 
 // Integrations
@@ -2594,8 +2601,16 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 		case log := <-client.Logs:
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
-			enc.Encode(log)
-			fmt.Fprintf(w, "data: %v\n\n", buf.String())
+			err := enc.Encode(log)
+			if err != nil {
+				zap.L().Error("failed to encode log", zap.Error(err))
+				return
+			}
+			_, err = fmt.Fprintf(w, "data: %v\n\n", buf.String())
+			if err != nil {
+				zap.L().Error("failed to write log", zap.Error(err))
+				return
+			}
 			flusher.Flush()
 		case <-client.Done:
 			zap.L().Debug("done!")
@@ -3264,8 +3279,15 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 		case log := <-client.Logs:
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
-			enc.Encode(log)
-			fmt.Fprintf(w, "data: %v\n\n", buf.String())
+			err := enc.Encode(log)
+			if err != nil {
+				zap.L().Error("failed to encode log", zap.Error(err))
+			}
+			_, err = fmt.Fprintf(w, "data: %v\n\n", buf.String())
+			if err != nil {
+				zap.L().Error("failed to write log", zap.Error(err))
+				return
+			}
 			flusher.Flush()
 		case <-client.Done:
 			zap.L().Debug("done!")

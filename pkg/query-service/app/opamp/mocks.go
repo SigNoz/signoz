@@ -2,6 +2,7 @@ package opamp
 
 import (
 	"context"
+	"go.uber.org/zap"
 	"log"
 	"net"
 
@@ -80,7 +81,11 @@ func (ta *MockAgentConfigProvider) RecommendAgentConfig(baseConfYaml []byte) (
 		return nil, "", errors.Wrap(err, "could not unmarshal baseConf")
 	}
 
-	k.Set("extensions.zpages.endpoint", ta.ZPagesEndpoint)
+	err = k.Set("extensions.zpages.endpoint", ta.ZPagesEndpoint)
+	if err != nil {
+		zap.L().Error("could not set zpages endpoint", zap.Error(err))
+		return nil, "", err
+	}
 	recommendedYaml, err := k.Marshal(yaml.Parser())
 	if err != nil {
 		return nil, "", errors.Wrap(err, "could not marshal recommended conf")
