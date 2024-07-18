@@ -477,7 +477,7 @@ type Options struct {
 }
 
 func isOrderByTs(orderBy []v3.OrderBy) bool {
-	if len(orderBy) == 1 && orderBy[0].Key == constants.TIMESTAMP {
+	if len(orderBy) == 1 && (orderBy[0].Key == constants.TIMESTAMP || orderBy[0].ColumnName == constants.TIMESTAMP) {
 		return true
 	}
 	return false
