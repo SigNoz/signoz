@@ -1,0 +1,15 @@
+[
+    {
+        "key": "LOGS_TOOLBAR_COLLAPSED",
+        "name": "Logs toolbar collapsed",
+        "description":"",
+        "valueType":"boolean",
+        "defaultValue":false,
+        "allowedValues":[true,false],
+        "range": {
+            "min": 0,
+            "max": 0
+        },
+        "allowedScopes":["user","org"]
+    }
+]

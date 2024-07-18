@@ -29,6 +29,7 @@ import (
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
@@ -2190,6 +2191,121 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	resp, _ := marshall(response)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resp)
+}
+
+// Preferences
+func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/preferences").Subrouter()
+
+	// user actions
+	subRouter.HandleFunc("/user/{preferenceId}", am.ViewAccess(ah.getUserPreference)).Methods(http.MethodGet)
+
+	subRouter.HandleFunc("/user/{preferenceId}", am.ViewAccess(ah.updateUserPreference)).Methods(http.MethodPost)
+
+	subRouter.HandleFunc("/user/all", am.ViewAccess(ah.getAllUserPreferences)).Methods(http.MethodGet)
+
+	// org actions
+	subRouter.HandleFunc("/org/{preferenceId}", am.AdminAccess(ah.getOrgPreference)).Methods(http.MethodGet)
+
+	subRouter.HandleFunc("/org/{preferenceId}", am.AdminAccess(ah.updateOrgPreference)).Methods(http.MethodPost)
+
+	subRouter.HandleFunc("/org/all", am.AdminAccess(ah.getAllOrgPreferences)).Methods(http.MethodGet)
+}
+
+func (ah *APIHandler) getUserPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	integration, apiErr := ah.IntegrationsController.GetIntegration(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration details")
+		return
+	}
+
+	ah.Respond(w, integration)
+}
+
+func (ah *APIHandler) updateUserPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	integration, apiErr := ah.IntegrationsController.GetIntegration(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration details")
+		return
+	}
+
+	ah.Respond(w, integration)
+}
+
+func (ah *APIHandler) getAllUserPreferences(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	integration, apiErr := ah.IntegrationsController.GetIntegration(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration details")
+		return
+	}
+
+	ah.Respond(w, integration)
+}
+
+func (ah *APIHandler) getOrgPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	preference, apiErr := preferences.GetOrgPreference(
+		r.Context(), preferenceId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
+func (ah *APIHandler) updateOrgPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	req := preferences.UpdatePreference{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
+func (ah *APIHandler) getAllOrgPreferences(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	integration, apiErr := ah.IntegrationsController.GetIntegration(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration details")
+		return
+	}
+
+	ah.Respond(w, integration)
 }
 
 // Integrations
