@@ -256,12 +256,12 @@ function ExplorerOptions({
 		if (sourcepage === DataSource.TRACES) {
 			logEvent('Traces Explorer: Select view', {
 				panelType,
-				viewName: option.value,
+				viewName: option?.value,
 			});
 		} else if (sourcepage === DataSource.LOGS) {
 			logEvent('Logs Explorer: Select view', {
 				panelType,
-				viewName: option.value,
+				viewName: option?.value,
 			});
 		}
 		if (ref.current) {
