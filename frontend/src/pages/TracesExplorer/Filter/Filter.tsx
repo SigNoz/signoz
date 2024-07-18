@@ -231,7 +231,11 @@ export function Filter(props: FilterProps): JSX.Element {
 					</Tooltip>
 				</Flex>
 				<Tooltip title="Collapse" placement="right">
-					<Button onClick={(): void => setOpen(false)} className="arrow-icon">
+					<Button
+						onClick={(): void => setOpen(false)}
+						className="arrow-icon"
+						data-testid="toggle-filter-panel"
+					>
 						<VerticalAlignTopOutlined rotate={270} />
 					</Button>
 				</Tooltip>

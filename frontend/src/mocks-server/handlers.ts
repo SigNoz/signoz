@@ -164,4 +164,15 @@ export const handlers = [
 	rest.get('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(explorerView)),
 	),
+
+	rest.post('http://localhost/api/v1/event', (req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				statusCode: 200,
+				error: null,
+				payload: 'Event Processed Successfully',
+			}),
+		),
+	),
 ];

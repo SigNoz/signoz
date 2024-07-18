@@ -1,8 +1,7 @@
 import './TraceDetails.styles.scss';
 
 import { FilterOutlined } from '@ant-design/icons';
-import { Button, Col, Typography } from 'antd';
-import Sider from 'antd/es/layout/Sider';
+import { Button, Col, Layout, Typography } from 'antd';
 import cx from 'classnames';
 import {
 	StyledCol,
@@ -41,6 +40,8 @@ import {
 	IIntervalUnit,
 	INTERVAL_UNITS,
 } from './utils';
+
+const { Sider } = Layout;
 
 function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	const spanServiceColors = useMemo(

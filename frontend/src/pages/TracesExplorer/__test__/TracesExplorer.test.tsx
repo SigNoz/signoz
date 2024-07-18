@@ -13,6 +13,7 @@ import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import TracesExplorer from '..';
 import { Filter } from '../Filter/Filter';
 import { AllTraceFilterKeyValue } from '../Filter/filterUtils';
 
@@ -38,6 +39,14 @@ jest.mock('uplot', () => {
 		default: uplotMock,
 	};
 });
+
+jest.mock(
+	'container/TopNav/DateTimeSelectionV2/index.tsx',
+	() =>
+		function MockDateTimeSelection(): JSX.Element {
+			return <div>MockDateTimeSelection</div>;
+		},
+);
 
 function checkIfSectionIsOpen(
 	getByTestId: (testId: string) => HTMLElement,
@@ -428,5 +437,23 @@ describe('TracesExplorer - ', () => {
 				redirectWithQueryBuilderData.mock.calls.length - 1
 			][0].builder.queryData[0].filters.items,
 		).toEqual([]);
+	});
+
+	it('filter panel should collapse & uncollapsed', async () => {
+		const { getByText, getByTestId } = render(<TracesExplorer />);
+
+		Object.values(AllTraceFilterKeyValue).forEach((filter) => {
+			expect(getByText(filter)).toBeInTheDocument();
+		});
+
+		// Filter panel should collapse
+		const collapseButton = getByTestId('toggle-filter-panel');
+		expect(collapseButton).toBeInTheDocument();
+		fireEvent.click(collapseButton);
+
+		// uncollapse btn should be present
+		expect(
+			await screen.findByTestId('filter-uncollapse-btn'),
+		).toBeInTheDocument();
 	});
 });
