@@ -59,7 +59,7 @@ function ServiceTraces(): JSX.Element {
 			logEvent('APM: List page visited', {
 				numberOfServices: data?.length,
 				selectedEnvironments,
-				resourceAttributeUsed: !!queries.length,
+				resourceAttributeUsed: !!queries?.length,
 				rps,
 			});
 			logEventCalledRef.current = true;

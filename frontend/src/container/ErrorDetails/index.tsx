@@ -114,10 +114,10 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	const onClickTraceHandler = (): void => {
 		logEvent('Exception: Navigate to trace detail page', {
-			groupId: errorDetail.groupID,
+			groupId: errorDetail?.groupID,
 			spanId: errorDetail.spanID,
 			traceId: errorDetail.traceID,
-			exceptionId: errorDetail.errorId,
+			exceptionId: errorDetail?.errorId,
 		});
 		history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
 	};
@@ -126,10 +126,10 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(data)) {
 			logEvent('Exception: Detail page visited', {
-				groupId: errorDetail.groupID,
+				groupId: errorDetail?.groupID,
 				spanId: errorDetail.spanID,
 				traceId: errorDetail.traceID,
-				exceptionId: errorDetail.errorId,
+				exceptionId: errorDetail?.errorId,
 			});
 			logEventCalledRef.current = true;
 		}

@@ -108,7 +108,7 @@ function DBCall(): JSX.Element {
 
 			logEvent('APM: Service detail page visited', {
 				selectedEnvironments,
-				resourceAttributeUsed: !!queries.length,
+				resourceAttributeUsed: !!queries?.length,
 				section: 'dbMetrics',
 			});
 			logEventCalledRef.current = true;
