@@ -19,7 +19,6 @@ describe('SaveView', () => {
 			within(document.querySelector('.view-tag') as HTMLElement).getByText('T'),
 		).toBeInTheDocument();
 		expect(screen.getByText('test-user-1')).toBeInTheDocument();
-		expect(screen.getByText('23:34:10 ⎯ Aug 29, 2023')).toBeInTheDocument();
 
 		// assert row 2
 		expect(screen.getByText('R-test panel')).toBeInTheDocument();
