@@ -581,7 +581,7 @@ function GeneralSettings({
 										centered
 										open={category.save.modal}
 										confirmLoading={category.save.apiLoading}
-										data-testid={`${category.name}-modal`}
+										data-testid={`${category.name.toLowerCase()}-modal`}
 									>
 										<Typography>
 											{t('retention_confirmation_description', {

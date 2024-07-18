@@ -17,17 +17,17 @@ const types = [
 	{
 		testId: 'metrics-card',
 		header: 'Metrics',
-		modalTestId: 'Metrics-modal',
+		modalTestId: 'metrics-modal',
 	},
 	{
 		testId: 'traces-card',
 		header: 'Traces',
-		modalTestId: 'Traces-modal',
+		modalTestId: 'traces-modal',
 	},
 	{
 		testId: 'logs-card',
 		header: 'Logs',
-		modalTestId: 'Logs-modal',
+		modalTestId: 'logs-modal',
 	},
 ];
 
