@@ -30,7 +30,7 @@ For SigNoz Community Slack,         visit http://signoz.io/slack/
 For archive of discussions about SigNoz,       visit https://knowledgebase.signoz.io/
 
 %s.
-Copyright 2022 SigNoz
+Copyright 2024 SigNoz
 `,
 		buildVersion, buildHash, buildTime, gitBranch,
 		runtime.Version(), licenseInfo)
