@@ -57,7 +57,7 @@ import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
@@ -122,14 +122,16 @@ function ExplorerOptions({
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const handleConditionalQueryModification = useCallback((): string => {
-		if (query?.builder?.queryData?.[0]?.aggregateOperator !== 'noop') {
+		if (
+			query?.builder?.queryData?.[0]?.aggregateOperator !== StringOperators.NOOP
+		) {
 			return JSON.stringify(query);
 		}
 
 		// Modify aggregateOperator to count, as noop is not supported in alerts
 		const modifiedQuery = cloneDeep(query);
 
-		modifiedQuery.builder.queryData[0].aggregateOperator = 'count';
+		modifiedQuery.builder.queryData[0].aggregateOperator = StringOperators.COUNT;
 
 		return JSON.stringify(modifiedQuery);
 	}, [query]);
@@ -144,8 +146,8 @@ function ExplorerOptions({
 				panelType,
 			});
 		}
-    
-    const stringifiedQuery = handleConditionalQueryModification();
+
+		const stringifiedQuery = handleConditionalQueryModification();
 
 		history.push(
 			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
