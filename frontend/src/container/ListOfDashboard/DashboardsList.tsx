@@ -73,7 +73,6 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { isCloudUser } from 'utils/app';
 
-import useUrlQuery from '../../hooks/useUrlQuery';
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
 import { DeleteButton } from './TableComponents/DeleteButton';
@@ -86,7 +85,7 @@ import {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardsList(): JSX.Element {
 	const {
-		data: dashboardListResponse = [],
+		data: dashboardListResponse,
 		isLoading: isDashboardListLoading,
 		error: dashboardFetchError,
 		refetch: refetchDashboardList,
@@ -99,12 +98,14 @@ function DashboardsList(): JSX.Element {
 		setListSortOrder: setSortOrder,
 	} = useDashboard();
 
+	const [searchString, setSearchString] = useState<string>(
+		sortOrder.search || '',
+	);
 	const [action, createNewDashboard] = useComponentPermission(
 		['action', 'create_new_dashboards'],
 		role,
 	);
 
-	const [searchValue, setSearchValue] = useState<string>('');
 	const [
 		showNewDashboardTemplatesModal,
 		setShowNewDashboardTemplatesModal,
@@ -122,10 +123,6 @@ function DashboardsList(): JSX.Element {
 	const [isConfigureMetadataOpen, setIsConfigureMetadata] = useState<boolean>(
 		false,
 	);
-
-	const params = useUrlQuery();
-	const searchParams = params.get('search');
-	const [searchString, setSearchString] = useState<string>(searchParams || '');
 
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
 		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');
@@ -188,14 +185,6 @@ function DashboardsList(): JSX.Element {
 		setDashboards(sortedDashboards);
 	};
 
-	useEffect(() => {
-		params.set('columnKey', sortOrder.columnKey as string);
-		params.set('order', sortOrder.order as string);
-		params.set('page', sortOrder.pagination || '1');
-		history.replace({ search: params.toString() });
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [sortOrder]);
-
 	const sortHandle = (key: string): void => {
 		if (!dashboards) return;
 		if (key === 'createdAt') {
@@ -204,6 +193,7 @@ function DashboardsList(): JSX.Element {
 				columnKey: 'createdAt',
 				order: 'descend',
 				pagination: sortOrder.pagination || '1',
+				search: sortOrder.search || '',
 			});
 		} else if (key === 'updatedAt') {
 			sortDashboardsByUpdatedAt(dashboards);
@@ -211,21 +201,19 @@ function DashboardsList(): JSX.Element {
 				columnKey: 'updatedAt',
 				order: 'descend',
 				pagination: sortOrder.pagination || '1',
+				search: sortOrder.search || '',
 			});
 		}
 	};
 
 	function handlePageSizeUpdate(page: number): void {
-		setSortOrder((order) => ({
-			...order,
-			pagination: String(page),
-		}));
+		setSortOrder({ ...sortOrder, pagination: String(page) });
 	}
 
 	useEffect(() => {
 		const filteredDashboards = filterDashboard(
 			searchString,
-			dashboardListResponse,
+			dashboardListResponse || [],
 		);
 		if (sortOrder.columnKey === 'updatedAt') {
 			sortDashboardsByUpdatedAt(filteredDashboards || []);
@@ -236,6 +224,7 @@ function DashboardsList(): JSX.Element {
 				columnKey: 'updatedAt',
 				order: 'descend',
 				pagination: sortOrder.pagination || '1',
+				search: sortOrder.search || '',
 			});
 			sortDashboardsByUpdatedAt(filteredDashboards || []);
 		}
@@ -245,6 +234,7 @@ function DashboardsList(): JSX.Element {
 		setSortOrder,
 		sortOrder.columnKey,
 		sortOrder.pagination,
+		sortOrder.search,
 	]);
 
 	const [newDashboardState, setNewDashboardState] = useState({
@@ -316,12 +306,15 @@ function DashboardsList(): JSX.Element {
 
 	const handleSearch = (event: ChangeEvent<HTMLInputElement>): void => {
 		setIsFilteringDashboards(true);
-		setSearchValue(event.target.value);
 		const searchText = (event as React.BaseSyntheticEvent)?.target?.value || '';
-		const filteredDashboards = filterDashboard(searchText, dashboardListResponse);
+		const filteredDashboards = filterDashboard(
+			searchText,
+			dashboardListResponse || [],
+		);
 		setDashboards(filteredDashboards);
 		setIsFilteringDashboards(false);
 		setSearchString(searchText);
+		setSortOrder({ ...sortOrder, search: searchText });
 	};
 
 	const [state, setCopy] = useCopyToClipboard();
@@ -412,7 +405,7 @@ function DashboardsList(): JSX.Element {
 		{
 			title: 'Dashboards',
 			key: 'dashboard',
-			render: (dashboard: Data): JSX.Element => {
+			render: (dashboard: Data, _, index): JSX.Element => {
 				const timeOptions: Intl.DateTimeFormatOptions = {
 					hour: '2-digit',
 					minute: '2-digit',
@@ -461,7 +454,9 @@ function DashboardsList(): JSX.Element {
 									style={{ height: '14px', width: '14px' }}
 									alt="dashboard-image"
 								/>
-								<Typography.Text>{dashboard.name}</Typography.Text>
+								<Typography.Text data-testid={`dashboard-title-${index}`}>
+									{dashboard.name}
+								</Typography.Text>
 							</div>
 
 							<div className="tags-with-actions">
@@ -701,7 +696,7 @@ function DashboardsList(): JSX.Element {
 							<ArrowUpRight size={16} className="learn-more-arrow" />
 						</section>
 					</div>
-				) : dashboards?.length === 0 && !searchValue ? (
+				) : dashboards?.length === 0 && !searchString ? (
 					<div className="dashboard-empty-state">
 						<img
 							src="/Icons/dashboards.svg"
@@ -739,6 +734,7 @@ function DashboardsList(): JSX.Element {
 								<Button
 									type="text"
 									className="learn-more"
+									data-testid="learn-more"
 									onClick={(): void => {
 										window.open(
 											'https://signoz.io/docs/userguide/manage-dashboards?utm_source=product&utm_medium=dashboard-list-empty-state',
@@ -758,7 +754,7 @@ function DashboardsList(): JSX.Element {
 							<Input
 								placeholder="Search by name, description, or tags..."
 								prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
-								value={searchValue}
+								value={searchString}
 								onChange={handleSearch}
 							/>
 							{createNewDashboard && (
@@ -786,7 +782,7 @@ function DashboardsList(): JSX.Element {
 							<div className="no-search">
 								<img src="/Icons/emptyState.svg" alt="img" className="img" />
 								<Typography.Text className="text">
-									No dashboards found for {searchValue}. Create a new dashboard?
+									No dashboards found for {searchString}. Create a new dashboard?
 								</Typography.Text>
 							</div>
 						) : (
@@ -808,6 +804,7 @@ function DashboardsList(): JSX.Element {
 															type="text"
 															className={cx('sort-btns')}
 															onClick={(): void => sortHandle('createdAt')}
+															data-testid="sort-by-last-created"
 														>
 															Last created
 															{sortOrder.columnKey === 'createdAt' && <Check size={14} />}
@@ -816,6 +813,7 @@ function DashboardsList(): JSX.Element {
 															type="text"
 															className={cx('sort-btns')}
 															onClick={(): void => sortHandle('updatedAt')}
+															data-testid="sort-by-last-updated"
 														>
 															Last updated
 															{sortOrder.columnKey === 'updatedAt' && <Check size={14} />}
@@ -826,7 +824,7 @@ function DashboardsList(): JSX.Element {
 												placement="bottomRight"
 												arrow={false}
 											>
-												<ArrowDownWideNarrow size={14} />
+												<ArrowDownWideNarrow size={14} data-testid="sort-by" />
 											</Popover>
 										</Tooltip>
 										<Popover
