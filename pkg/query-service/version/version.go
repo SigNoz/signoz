@@ -25,9 +25,9 @@ Commit timestamp : %v
 Branch           : %v
 Go version       : %v
 
-For SigNoz Official Documentation,  visit https://signoz.io/docs
-For SigNoz Community Slack,         visit http://signoz.io/slack
-For discussions about SigNoz,       visit https://community.signoz.io
+For SigNoz Official Documentation,  visit https://signoz.io/docs/
+For SigNoz Community Slack,         visit http://signoz.io/slack/
+For archive of discussions about SigNoz,       visit https://knowledgebase.signoz.io/
 
 %s.
 Copyright 2022 SigNoz
