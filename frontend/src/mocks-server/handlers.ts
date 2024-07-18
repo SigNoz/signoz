@@ -170,7 +170,6 @@ export const handlers = [
 	rest.get('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(explorerView)),
 	),
-<<<<<<< HEAD
 
 	rest.post('http://localhost/api/v1/event', (req, res, ctx) =>
 		res(
@@ -182,6 +181,4 @@ export const handlers = [
 			}),
 		),
 	),
-=======
->>>>>>> a39cd8647 (feat: added clear and rest btn test cases for traces filters)
 ];
