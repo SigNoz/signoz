@@ -125,10 +125,9 @@ function GridCardGraph({
 					offset: 0,
 					limit: updatedQuery.builder.queryData[0].limit || 0,
 				},
+				// we do not need select columns in case of logs
 				selectColumns:
-					initialDataSource === DataSource.LOGS
-						? widget.selectedLogFields
-						: widget.selectedTracesFields,
+					initialDataSource === DataSource.TRACES && widget.selectedTracesFields,
 			},
 			fillGaps: widget.fillSpans,
 		};
