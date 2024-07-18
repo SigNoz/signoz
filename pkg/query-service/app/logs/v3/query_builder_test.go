@@ -1391,11 +1391,11 @@ var testPrepLogsQueryData = []struct {
 			AggregateOperator: v3.AggregateOperatorNoOp,
 			Expression:        "A",
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "logid", Operator: "="},
+				{Key: v3.AttributeKey{Key: "id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "logid", Operator: "<"},
 			},
 			},
 			OrderBy: []v3.OrderBy{
-				v3.OrderBy{
+				{
 					ColumnName: "timestamp",
 					Order:      "DESC",
 				},
@@ -1407,7 +1407,7 @@ var testPrepLogsQueryData = []struct {
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  " +
 			"attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  " +
 			"attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string " +
-			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND id = 'logid' order by " +
+			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND id < 'logid' order by " +
 			"timestamp DESC LIMIT 100",
 	},
 	{
@@ -1425,7 +1425,7 @@ var testPrepLogsQueryData = []struct {
 			},
 			},
 			OrderBy: []v3.OrderBy{
-				v3.OrderBy{
+				{
 					ColumnName: "mycolumn",
 					Order:      "DESC",
 				},
