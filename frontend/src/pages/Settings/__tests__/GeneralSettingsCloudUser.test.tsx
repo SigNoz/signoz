@@ -13,15 +13,15 @@ jest.mock('utils/app', () => {
 
 const types = [
 	{
-		testId: 'Metrics',
+		testId: 'metrics-card',
 		header: 'Metrics',
 	},
 	{
-		testId: 'Traces',
+		testId: 'traces-card',
 		header: 'Traces',
 	},
 	{
-		testId: 'Logs',
+		testId: 'logs-card',
 		header: 'Logs',
 	},
 ];

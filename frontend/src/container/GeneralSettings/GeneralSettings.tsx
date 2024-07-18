@@ -529,7 +529,7 @@ function GeneralSettings({
 						xl={11}
 						key={category.name}
 						style={{ margin: '0.5rem' }}
-						data-testid={category.name}
+						data-testid={`${category.name.toLowerCase()}-card`}
 					>
 						<Card style={{ height: '100%' }}>
 							<Typography.Title style={{ margin: 0 }} level={3}>

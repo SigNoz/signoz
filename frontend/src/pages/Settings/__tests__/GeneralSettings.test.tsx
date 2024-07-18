@@ -15,17 +15,17 @@ const tooltipText = /More details on how to set retention period/;
 
 const types = [
 	{
-		testId: 'Metrics',
+		testId: 'metrics-card',
 		header: 'Metrics',
 		modalTestId: 'Metrics-modal',
 	},
 	{
-		testId: 'Traces',
+		testId: 'traces-card',
 		header: 'Traces',
 		modalTestId: 'Traces-modal',
 	},
 	{
-		testId: 'Logs',
+		testId: 'logs-card',
 		header: 'Logs',
 		modalTestId: 'Logs-modal',
 	},
@@ -89,14 +89,14 @@ describe('General Settings Page', () => {
 				expect(retentionSubmitButton).toBeInTheDocument();
 			});
 			it('Should check if save button is disabled by default', () => {
-				const sectionCard = screen.getByTestId(header);
+				const sectionCard = screen.getByTestId(testId);
 				const retentionSubmitButton = within(sectionCard).getByTestId(
 					'retention-submit-button',
 				);
 				expect(retentionSubmitButton).toBeDisabled();
 			});
 			it('Should check if changing the value of the textbox enables the save button ', () => {
-				const sectionCard = screen.getByTestId(header);
+				const sectionCard = screen.getByTestId(testId);
 				const retentionFieldInput = within(sectionCard).getByTestId(
 					'retention-field-input',
 				);
@@ -111,7 +111,7 @@ describe('General Settings Page', () => {
 				expect(retentionSubmitButton).toBeEnabled();
 			});
 			it('Should check if "retention_null_value_error" is displayed if the value is not set ', async () => {
-				const sectionCard = screen.getByTestId(header);
+				const sectionCard = screen.getByTestId(testId);
 				const retentionFieldInput = within(sectionCard).getByTestId(
 					'retention-field-input',
 				);
@@ -125,7 +125,7 @@ describe('General Settings Page', () => {
 				).toBeInTheDocument();
 			});
 			it('should display the modal when a value is provided and save is clicked', async () => {
-				const sectionCard = screen.getByTestId(header);
+				const sectionCard = screen.getByTestId(testId);
 
 				const retentionFieldInput = within(sectionCard).getByTestId(
 					'retention-field-input',
@@ -149,7 +149,7 @@ describe('General Settings Page', () => {
 			describe(`${header} Modal`, () => {
 				let sectionModal: HTMLElement;
 				beforeEach(() => {
-					const sectionCard = screen.getByTestId(header);
+					const sectionCard = screen.getByTestId(testId);
 
 					const retentionFieldInput = within(sectionCard).getByTestId(
 						'retention-field-input',
