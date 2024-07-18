@@ -224,6 +224,7 @@ export function Filter(props: FilterProps): JSX.Element {
 						<Button
 							onClick={(): void => handleRun({ resetAll: true })}
 							className="sync-icon"
+							data-testid="reset-filters"
 						>
 							<SyncOutlined />
 						</Button>

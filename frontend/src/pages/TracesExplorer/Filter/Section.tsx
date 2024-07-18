@@ -96,7 +96,11 @@ export function Section(props: SectionProps): JSX.Element {
 							  },
 					]}
 				/>
-				<Button type="link" onClick={onClearHandler}>
+				<Button
+					type="link"
+					onClick={onClearHandler}
+					data-testid={`collapse-${panelName}-clearBtn`}
+				>
 					Clear All
 				</Button>
 			</div>

@@ -2,6 +2,7 @@ import { rest } from 'msw';
 
 import { billingSuccessResponse } from './__mockdata__/billing';
 import { dashboardSuccessResponse } from './__mockdata__/dashboards';
+import { explorerView } from './__mockdata__/explorer_views';
 import { inviteUser } from './__mockdata__/invite_user';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
 import { membersResponse } from './__mockdata__/members';
@@ -146,5 +147,21 @@ export const handlers = [
 	),
 	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(inviteUser)),
+	),
+
+	rest.get(
+		'http://localhost/api/v3/autocomplete/aggregate_attributes',
+		(req, res, ctx) =>
+			res(
+				ctx.status(200),
+				ctx.json({
+					status: 'success',
+					data: { attributeKeys: null },
+				}),
+			),
+	),
+
+	rest.get('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(explorerView)),
 	),
 ];
