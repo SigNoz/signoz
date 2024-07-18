@@ -2,6 +2,7 @@
 import './LogsExplorerViews.styles.scss';
 
 import { Button } from 'antd';
+import logEvent from 'api/common/logEvent';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -37,7 +38,14 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { cloneDeep, defaultTo, isEmpty, omit, set } from 'lodash-es';
+import {
+	cloneDeep,
+	defaultTo,
+	isEmpty,
+	isUndefined,
+	omit,
+	set,
+} from 'lodash-es';
 import { Sliders } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -310,6 +318,19 @@ function LogsExplorerViews({
 		],
 	);
 
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isUndefined(data?.payload)) {
+			const currentData = data?.payload?.data?.newResult?.data?.result || [];
+			logEvent('Logs Explorer: Page visited', {
+				panelType,
+				isEmpty: !currentData?.[0]?.list,
+			});
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload]);
+
 	const {
 		mutate: updateDashboard,
 		isLoading: isUpdateDashboardLoading,
@@ -324,7 +345,7 @@ function LogsExplorerViews({
 	}, [currentQuery]);
 
 	const handleExport = useCallback(
-		(dashboard: Dashboard | null): void => {
+		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
 			if (!dashboard || !panelType) return;
 
 			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(panelType)
@@ -345,6 +366,12 @@ function LogsExplorerViews({
 				panelTypeParam,
 				options.selectColumns,
 			);
+
+			logEvent('Logs Explorer: Add to dashboard successful', {
+				panelType,
+				isNewDashboard,
+				dashboardName: dashboard?.data?.title,
+			});
 
 			updateDashboard(updatedDashboard, {
 				onSuccess: (data) => {

@@ -105,7 +105,9 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 				!isFetching &&
 				(tableData || []).length === 0 &&
 				!isError &&
-				isFilterApplied && <EmptyLogsSearch />}
+				isFilterApplied && (
+					<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="TRACE" />
+				)}
 
 			{(tableData || []).length !== 0 && (
 				<ResizeTable

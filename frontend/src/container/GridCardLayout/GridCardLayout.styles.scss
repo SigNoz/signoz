@@ -1,6 +1,7 @@
 .fullscreen-grid-container {
 	overflow: auto;
 	margin: 8px -8px;
+	margin-right: 0;
 
 	.react-grid-layout {
 		border: none !important;
@@ -49,7 +50,7 @@
 	.footer {
 		display: flex;
 		flex-direction: column;
-		position: absolute;
+		position: fixed;
 		bottom: 0;
 		width: -webkit-fill-available;
 
