@@ -40,6 +40,14 @@ jest.mock('uplot', () => {
 	};
 });
 
+jest.mock(
+	'container/TopNav/DateTimeSelectionV2/index.tsx',
+	() =>
+		function MockDateTimeSelection(): JSX.Element {
+			return <div>MockDateTimeSelection</div>;
+		},
+);
+
 function checkIfSectionIsOpen(
 	getByTestId: (testId: string) => HTMLElement,
 	panelName: string,
@@ -429,5 +437,23 @@ describe('TracesExplorer - ', () => {
 				redirectWithQueryBuilderData.mock.calls.length - 1
 			][0].builder.queryData[0].filters.items,
 		).toEqual([]);
+	});
+
+	it('filter panel should collapse & uncollapsed', async () => {
+		const { getByText, getByTestId } = render(<TracesExplorer />);
+
+		Object.values(AllTraceFilterKeyValue).forEach((filter) => {
+			expect(getByText(filter)).toBeInTheDocument();
+		});
+
+		// Filter panel should collapse
+		const collapseButton = getByTestId('toggle-filter-panel');
+		expect(collapseButton).toBeInTheDocument();
+		fireEvent.click(collapseButton);
+
+		// uncollapse btn should be present
+		expect(
+			await screen.findByTestId('filter-uncollapse-btn'),
+		).toBeInTheDocument();
 	});
 });
