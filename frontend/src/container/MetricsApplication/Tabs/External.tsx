@@ -124,7 +124,7 @@ function External(): JSX.Element {
 
 			logEvent('APM: Service detail page visited', {
 				selectedEnvironments,
-				resourceAttributeUsed: !!queries.length,
+				resourceAttributeUsed: !!queries?.length,
 				section: 'externalMetrics',
 			});
 			logEventCalledRef.current = true;
