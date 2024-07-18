@@ -227,6 +227,54 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 	return queryString, nil
 }
 
+func getResourceBucketFilters(fs *v3.FilterSet) (string, error) {
+	var conditions []string
+	// only add the resource attributes to the filters here
+	if fs != nil && len(fs.Items) != 0 {
+		for _, item := range fs.Items {
+			// skip anything other than resource attribute
+			if item.Key.Type != v3.AttributeKeyTypeResource {
+				continue
+			}
+
+			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
+			var value interface{}
+			var err error
+			if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
+				value, err = utils.ValidateAndCastValue(item.Value, item.Key.DataType)
+				if err != nil {
+					return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
+				}
+			}
+
+			columnName := fmt.Sprintf("simpleJSONExtractString(labels, '%s')", item.Key.Key)
+
+			if logsOp, ok := logOperators[op]; ok {
+				switch op {
+				// case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
+				// 	conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
+				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
+					fmtVal := utils.ClickHouseFormattedValue(value)
+					conditions = append(conditions, fmt.Sprintf(logsOp, columnName, fmtVal))
+				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
+					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
+				default:
+					fmtVal := utils.ClickHouseFormattedValue(value)
+					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
+				}
+			} else {
+				return "", fmt.Errorf("unsupported operator: %s", op)
+			}
+		}
+	}
+	if len(conditions) == 0 {
+		return "", nil
+	}
+	conditionStr := strings.Join(conditions, " AND ")
+	return conditionStr, nil
+}
+
 func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, preferRPM bool) (string, error) {
 
 	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute)
@@ -238,7 +286,31 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	// timerange will be sent in epoch millisecond
-	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", utils.GetEpochNanoSecs(start), utils.GetEpochNanoSecs(end))
+	logsStart := utils.GetEpochNanoSecs(start)
+	logsEnd := utils.GetEpochNanoSecs(end)
+	bucketStart := logsStart / 1000000000
+	bucketEnd := logsEnd / 1000000000
+	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", logsStart, logsEnd)
+
+	tableName := "distributed_logs"
+	if panelType != v3.PanelTypeList || len(filterSubQuery) > 0 || len(mq.GroupBy) > 0 {
+		tableName = "distributed_logs_v2"
+		timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_end <= %d)", bucketStart, bucketEnd)
+	}
+
+	resourceBucketFilters, err := getResourceBucketFilters(mq.Filters)
+	if err != nil {
+		return "", err
+	}
+
+	if len(resourceBucketFilters) > 0 {
+		filter := " AND (resource_fingerprint GLOBAL IN (" +
+			"SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
+			"WHERE (seen_at_ts_bucket_start >= %d) AND (seen_at_ts_bucket_start <= %d) AND "
+		filter = fmt.Sprintf(filter, bucketStart, bucketEnd)
+
+		filterSubQuery = filterSubQuery + filter + resourceBucketFilters + "))"
+	}
 
 	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
 
@@ -264,8 +336,8 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	queryTmpl =
 		queryTmpl + selectLabels +
 			" %s as value " +
-			"from signoz_logs.distributed_logs " +
-			"where " + timeFilter + "%s" +
+			"from signoz_logs." + tableName +
+			" where " + timeFilter + "%s" +
 			"%s%s" +
 			"%s"
 
@@ -342,8 +414,8 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
-		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s%s order by %s"
-		query := fmt.Sprintf(queryTmpl, timeFilter, filterSubQuery, orderBy)
+		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.%s where %s%s order by %s"
+		query := fmt.Sprintf(queryTmpl, tableName, timeFilter, filterSubQuery, orderBy)
 		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator")
