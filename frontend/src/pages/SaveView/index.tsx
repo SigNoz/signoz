@@ -149,11 +149,11 @@ function SaveView(): JSX.Element {
 		if (!logEventCalledRef.current && !isLoading) {
 			if (sourcepage === DataSource.TRACES) {
 				logEvent('Traces Views: Views visited', {
-					number: viewsData?.data.data.length,
+					number: viewsData?.data?.data?.length,
 				});
 			} else if (sourcepage === DataSource.LOGS) {
 				logEvent('Logs Views: Views visited', {
-					number: viewsData?.data.data.length,
+					number: viewsData?.data?.data?.length,
 				});
 			}
 			logEventCalledRef.current = true;

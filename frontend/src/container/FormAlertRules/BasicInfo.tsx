@@ -88,7 +88,7 @@ function BasicInfo({
 		if (!channels.loading && isNewRule) {
 			logEvent('Alert: New alert creation page visited', {
 				dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
-				numberOfChannels: channels.payload?.length,
+				numberOfChannels: channels?.payload?.length,
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps

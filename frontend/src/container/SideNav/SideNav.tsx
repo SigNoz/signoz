@@ -324,8 +324,8 @@ function SideNav({
 			onClickHandler(item?.key as string, event);
 		}
 		logEvent('Sidebar: Menu clicked', {
-			menuRoute: item.key,
-			menuLabel: item.label,
+			menuRoute: item?.key,
+			menuLabel: item?.label,
 		});
 	};
 
@@ -455,8 +455,8 @@ function SideNav({
 									onClick={(event: MouseEvent): void => {
 										handleUserManagentMenuItemClick(item?.key as string, event);
 										logEvent('Sidebar: Menu clicked', {
-											menuRoute: item.key,
-											menuLabel: item.label,
+											menuRoute: item?.key,
+											menuLabel: item?.label,
 										});
 									}}
 								/>
@@ -475,8 +475,8 @@ function SideNav({
 										history.push(`${inviteMemberMenuItem.key}`);
 									}
 									logEvent('Sidebar: Menu clicked', {
-										menuRoute: inviteMemberMenuItem.key,
-										menuLabel: inviteMemberMenuItem.label,
+										menuRoute: inviteMemberMenuItem?.key,
+										menuLabel: inviteMemberMenuItem?.label,
 									});
 								}}
 							/>
@@ -493,7 +493,7 @@ function SideNav({
 										event,
 									);
 									logEvent('Sidebar: Menu clicked', {
-										menuRoute: userSettingsMenuItem.key,
+										menuRoute: userSettingsMenuItem?.key,
 										menuLabel: 'User',
 									});
 								}}
