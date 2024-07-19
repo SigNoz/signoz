@@ -1,6 +1,7 @@
 package integrations
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"strings"
@@ -26,8 +27,8 @@ func (bi *BuiltInIntegrations) list(ctx context.Context) (
 	[]IntegrationDetails, *model.ApiError,
 ) {
 	integrations := maps.Values(builtInIntegrations)
-	slices.SortFunc(integrations, func(i1, i2 IntegrationDetails) bool {
-		return i1.Id < i2.Id
+	slices.SortFunc(integrations, func(i1, i2 IntegrationDetails) int {
+		return strings.Compare(i1.Id, i2.Id)
 	})
 	return integrations, nil
 }
@@ -120,7 +121,9 @@ func readBuiltInIntegration(dirpath string) (
 	}
 
 	var integration IntegrationDetails
-	err = json.Unmarshal(hydratedSpecJson, &integration)
+	decoder := json.NewDecoder(bytes.NewReader(hydratedSpecJson))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&integration)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't parse hydrated JSON spec read from %s: %w",

@@ -192,7 +192,8 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					conditions = append(conditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					columnName := getClickhouseColumnName(item.Key)
-					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, item.Value))
+					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
 				default:
 					columnName := getClickhouseColumnName(item.Key)
 					fmtVal := utils.ClickHouseFormattedValue(value)
@@ -476,7 +477,7 @@ type Options struct {
 }
 
 func isOrderByTs(orderBy []v3.OrderBy) bool {
-	if len(orderBy) == 1 && orderBy[0].Key == constants.TIMESTAMP {
+	if len(orderBy) == 1 && (orderBy[0].Key == constants.TIMESTAMP || orderBy[0].ColumnName == constants.TIMESTAMP) {
 		return true
 	}
 	return false

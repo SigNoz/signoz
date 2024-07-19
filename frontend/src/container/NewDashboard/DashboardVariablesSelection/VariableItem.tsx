@@ -1,27 +1,46 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react/jsx-props-no-spreading */
+/* eslint-disable no-nested-ternary */
 import './DashboardVariableSelection.styles.scss';
 
 import { orange } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
-import { Input, Popover, Select, Typography } from 'antd';
+import {
+	Checkbox,
+	Input,
+	Popover,
+	Select,
+	Tag,
+	Tooltip,
+	Typography,
+} from 'antd';
+import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { debounce } from 'lodash-es';
+import { debounce, isArray, isString } from 'lodash-es';
 import map from 'lodash-es/map';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { variablePropsToPayloadVariables } from '../utils';
-import { SelectItemStyle, VariableContainer, VariableValue } from './styles';
+import { SelectItemStyle } from './styles';
 import { areArraysEqual } from './util';
 
 const ALL_SELECT_VALUE = '__ALL__';
 
 const variableRegexPattern = /\{\{\s*?\.([^\s}]+)\s*?\}\}/g;
+
+enum ToggleTagValue {
+	Only = 'Only',
+	All = 'All',
+}
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
@@ -33,12 +52,17 @@ interface VariableItemProps {
 		allSelected: boolean,
 	) => void;
 	variablesToGetUpdated: string[];
+	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const getSelectValue = (
 	selectedValue: IDashboardVariable['selectedValue'],
+	variableData: IDashboardVariable,
 ): string | string[] => {
 	if (Array.isArray(selectedValue)) {
+		if (!variableData.multiSelect && selectedValue.length === 1) {
+			return selectedValue[0]?.toString() || '';
+		}
 		return selectedValue.map((item) => item.toString());
 	}
 	return selectedValue?.toString() || '';
@@ -50,6 +74,7 @@ function VariableItem({
 	existingVariables,
 	onValueUpdate,
 	variablesToGetUpdated,
+	setVariablesToGetUpdated,
 }: VariableItemProps): JSX.Element {
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
 		[],
@@ -108,10 +133,28 @@ function VariableItem({
 
 					if (!areArraysEqual(newOptionsData, oldOptionsData)) {
 						/* eslint-disable no-useless-escape */
+
+						let valueNotInList = false;
+
+						if (isArray(variableData.selectedValue)) {
+							variableData.selectedValue.forEach((val) => {
+								const isUsed = newOptionsData.includes(val);
+
+								if (!isUsed) {
+									valueNotInList = true;
+								}
+							});
+						} else if (isString(variableData.selectedValue)) {
+							const isUsed = newOptionsData.includes(variableData.selectedValue);
+
+							if (!isUsed) {
+								valueNotInList = true;
+							}
+						}
 						if (
 							variableData.type === 'QUERY' &&
 							variableData.name &&
-							variablesToGetUpdated.includes(variableData.name)
+							(variablesToGetUpdated.includes(variableData.name) || valueNotInList)
 						) {
 							let value = variableData.selectedValue;
 							let allSelected = false;
@@ -130,6 +173,10 @@ function VariableItem({
 						}
 
 						setOptionsData(newOptionsData);
+					} else {
+						setVariablesToGetUpdated((prev) =>
+							prev.filter((name) => name !== variableData.name),
+						);
 					}
 				}
 			} catch (e) {
@@ -175,7 +222,7 @@ function VariableItem({
 	});
 
 	const handleChange = (value: string | string[]): void => {
-		if (variableData.name)
+		if (variableData.name) {
 			if (
 				value === ALL_SELECT_VALUE ||
 				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE)) ||
@@ -185,25 +232,29 @@ function VariableItem({
 			} else {
 				onValueUpdate(variableData.name, variableData.id, value, false);
 			}
+		}
 	};
 
 	// do not debounce the above function as we do not need debounce in select variables
 	const debouncedHandleChange = debounce(handleChange, 500);
 
 	const { selectedValue } = variableData;
-	const selectedValueStringified = useMemo(() => getSelectValue(selectedValue), [
-		selectedValue,
-	]);
+	const selectedValueStringified = useMemo(
+		() => getSelectValue(selectedValue, variableData),
+		[selectedValue, variableData],
+	);
 
-	const selectValue = variableData.allSelected
-		? 'ALL'
-		: selectedValueStringified;
+	const enableSelectAll = variableData.multiSelect && variableData.showALLOption;
 
-	const mode =
+	const selectValue =
+		variableData.allSelected && enableSelectAll
+			? 'ALL'
+			: selectedValueStringified;
+
+	const mode: 'multiple' | undefined =
 		variableData.multiSelect && !variableData.allSelected
 			? 'multiple'
 			: undefined;
-	const enableSelectAll = variableData.multiSelect && variableData.showALLOption;
 
 	useEffect(() => {
 		// Fetch options for CUSTOM Type
@@ -213,12 +264,123 @@ function VariableItem({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [variableData.type, variableData.customValue]);
 
+	const checkAll = (e: MouseEvent): void => {
+		e.stopPropagation();
+		e.preventDefault();
+		const isChecked =
+			variableData.allSelected || selectValue.includes(ALL_SELECT_VALUE);
+
+		if (isChecked) {
+			handleChange([]);
+		} else {
+			handleChange(ALL_SELECT_VALUE);
+		}
+	};
+
+	const handleOptionSelect = (
+		e: CheckboxChangeEvent,
+		option: string | number | boolean,
+	): void => {
+		const newSelectedValue = Array.isArray(selectedValue)
+			? ((selectedValue.filter(
+					(val) => val.toString() !== option.toString(),
+			  ) as unknown) as string[])
+			: [];
+
+		if (
+			!e.target.checked &&
+			Array.isArray(selectedValueStringified) &&
+			selectedValueStringified.includes(option.toString())
+		) {
+			if (newSelectedValue.length === 0) {
+				handleChange(ALL_SELECT_VALUE);
+				return;
+			}
+			if (newSelectedValue.length === 1) {
+				handleChange(newSelectedValue[0].toString());
+				return;
+			}
+			handleChange(newSelectedValue);
+		} else if (!e.target.checked && selectedValue === option.toString()) {
+			handleChange(ALL_SELECT_VALUE);
+		} else if (newSelectedValue.length === optionsData.length - 1) {
+			handleChange(ALL_SELECT_VALUE);
+		}
+	};
+
+	const [optionState, setOptionState] = useState({
+		tag: '',
+		visible: false,
+	});
+
+	function currentToggleTagValue({
+		option,
+	}: {
+		option: string;
+	}): ToggleTagValue {
+		if (
+			option.toString() === selectValue ||
+			(Array.isArray(selectValue) &&
+				selectValue?.includes(option.toString()) &&
+				selectValue.length === 1)
+		) {
+			return ToggleTagValue.All;
+		}
+		return ToggleTagValue.Only;
+	}
+
+	function handleToggle(e: ChangeEvent, option: string): void {
+		e.stopPropagation();
+		const mode = currentToggleTagValue({ option: option as string });
+		const isChecked =
+			variableData.allSelected ||
+			option.toString() === selectValue ||
+			(Array.isArray(selectValue) && selectValue?.includes(option.toString()));
+
+		if (isChecked) {
+			if (mode === ToggleTagValue.Only) {
+				handleChange(option.toString());
+			} else if (!variableData.multiSelect) {
+				handleChange(option.toString());
+			} else {
+				handleChange(ALL_SELECT_VALUE);
+			}
+		} else {
+			handleChange(option.toString());
+		}
+	}
+
+	function retProps(
+		option: string,
+	): {
+		onMouseOver: () => void;
+		onMouseOut: () => void;
+	} {
+		return {
+			onMouseOver: (): void =>
+				setOptionState({
+					tag: option.toString(),
+					visible: true,
+				}),
+			onMouseOut: (): void =>
+				setOptionState({
+					tag: option.toString(),
+					visible: false,
+				}),
+		};
+	}
+
+	const ensureValidOption = (option: string): boolean =>
+		!(
+			currentToggleTagValue({ option }) === ToggleTagValue.All && !enableSelectAll
+		);
+
 	return (
-		<VariableContainer className="variable-item">
+		<div className="variable-item">
 			<Typography.Text className="variable-name" ellipsis>
 				${variableData.name}
 			</Typography.Text>
-			<VariableValue>
+			<div className="variable-value">
 				{variableData.type === 'TEXTBOX' ? (
 					<Input
 						placeholder="Enter value"
@@ -246,19 +408,35 @@ function VariableItem({
 							onChange={handleChange}
 							bordered={false}
 							placeholder="Select value"
-							placement="bottomRight"
+							placement="bottomLeft"
 							mode={mode}
-							dropdownMatchSelectWidth={false}
 							style={SelectItemStyle}
 							loading={isLoading}
 							showSearch
 							data-testid="variable-select"
 							className="variable-select"
+							popupClassName="dropdown-styles"
+							maxTagCount={4}
 							getPopupContainer={popupContainer}
+							// eslint-disable-next-line react/no-unstable-nested-components
+							tagRender={(props): JSX.Element => (
+								<Tag closable onClose={props.onClose}>
+									{props.value}
+								</Tag>
+							)}
+							// eslint-disable-next-line react/no-unstable-nested-components
+							maxTagPlaceholder={(omittedValues): JSX.Element => (
+								<Tooltip title={omittedValues.map(({ value }) => value).join(', ')}>
+									<span>+ {omittedValues.length} </span>
+								</Tooltip>
+							)}
 						>
 							{enableSelectAll && (
 								<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
-									ALL
+									<div className="all-label" onClick={(e): void => checkAll(e as any)}>
+										<Checkbox checked={variableData.allSelected} />
+										ALL
+									</div>
 								</Select.Option>
 							)}
 							{map(optionsData, (option) => (
@@ -267,7 +445,45 @@ function VariableItem({
 									key={option.toString()}
 									value={option}
 								>
-									{option.toString()}
+									<div
+										className={variableData.multiSelect ? 'dropdown-checkbox-label' : ''}
+									>
+										{variableData.multiSelect && (
+											<Checkbox
+												onChange={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													handleOptionSelect(e, option);
+												}}
+												checked={
+													variableData.allSelected ||
+													option.toString() === selectValue ||
+													(Array.isArray(selectValue) &&
+														selectValue?.includes(option.toString()))
+												}
+											/>
+										)}
+										<div
+											className="dropdown-value"
+											{...retProps(option as string)}
+											onClick={(e): void => handleToggle(e as any, option as string)}
+										>
+											<Tooltip title={option.toString()} placement="bottomRight">
+												<Typography.Text ellipsis className="option-text">
+													{option.toString()}
+												</Typography.Text>
+											</Tooltip>
+
+											{variableData.multiSelect &&
+												optionState.tag === option.toString() &&
+												optionState.visible &&
+												ensureValidOption(option as string) && (
+													<Typography.Text className="toggle-tag-label">
+														{currentToggleTagValue({ option: option as string })}
+													</Typography.Text>
+												)}
+										</div>
+									</div>
 								</Select.Option>
 							))}
 						</Select>
@@ -283,8 +499,8 @@ function VariableItem({
 						</Popover>
 					</span>
 				)}
-			</VariableValue>
-		</VariableContainer>
+			</div>
+		</div>
 	);
 }
 

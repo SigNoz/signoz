@@ -158,6 +158,7 @@ jobs:
           echo 'SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> frontend/.env
           echo 'TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> frontend/.env
           echo 'TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> frontend/.env
+          echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> frontend/.env
       - name: Install dependencies
         working-directory: frontend
         run: yarn install

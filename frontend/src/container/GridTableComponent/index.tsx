@@ -1,31 +1,96 @@
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Space, Tooltip } from 'antd';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
-import { createTableColumnsFromQuery } from 'lib/query/createTableColumnsFromQuery';
-import { memo, ReactNode, useEffect, useMemo } from 'react';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { cloneDeep, get, isEmpty, set } from 'lodash-es';
+import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { eventEmitter } from 'utils/getEventEmitter';
 
 import { WrapperStyled } from './styles';
 import { GridTableComponentProps } from './types';
-import { findMatchingThreshold } from './utils';
+import {
+	createColumnsAndDataSource,
+	findMatchingThreshold,
+	TableData,
+} from './utils';
 
 function GridTableComponent({
 	data,
 	query,
 	thresholds,
+	columnUnits,
+	tableProcessedDataRef,
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
-	const { columns, dataSource } = useMemo(
-		() =>
-			createTableColumnsFromQuery({
-				query,
-				queryTableData: data,
-			}),
-		[data, query],
+
+	// create columns and dataSource in the ui friendly structure
+	// use the query from the widget here to extract the legend information
+	const { columns, dataSource: originalDataSource } = useMemo(
+		() => createColumnsAndDataSource((data as unknown) as TableData, query),
+		[query, data],
 	);
+
+	const createDataInCorrectFormat = useCallback(
+		(dataSource: RowData[]): RowData[] =>
+			dataSource.map((d) => {
+				const finalObject = {};
+
+				// we use the order of the columns here to have similar download as the user view
+				columns.forEach((k) => {
+					set(
+						finalObject,
+						get(k, 'title', '') as string,
+						get(d, get(k, 'dataIndex', ''), 'n/a'),
+					);
+				});
+				return finalObject as RowData;
+			}),
+		[columns],
+	);
+
+	const applyColumnUnits = useCallback(
+		(dataSource: RowData[]): RowData[] => {
+			let mutateDataSource = cloneDeep(dataSource);
+			if (isEmpty(columnUnits)) {
+				return mutateDataSource;
+			}
+
+			mutateDataSource = mutateDataSource.map(
+				(val): RowData => {
+					const newValue = { ...val };
+					Object.keys(val).forEach((k) => {
+						if (columnUnits[k]) {
+							// the check below takes care of not adding units for rows that have n/a values
+							newValue[k] =
+								val[k] !== 'n/a'
+									? getYAxisFormattedValue(String(val[k]), columnUnits[k])
+									: val[k];
+							newValue[`${k}_without_unit`] = val[k];
+						}
+					});
+					return newValue;
+				},
+			);
+
+			return mutateDataSource;
+		},
+		[columnUnits],
+	);
+
+	const dataSource = useMemo(() => applyColumnUnits(originalDataSource), [
+		applyColumnUnits,
+		originalDataSource,
+	]);
+	useEffect(() => {
+		if (tableProcessedDataRef) {
+			// eslint-disable-next-line no-param-reassign
+			tableProcessedDataRef.current = createDataInCorrectFormat(dataSource);
+		}
+	}, [createDataInCorrectFormat, dataSource, tableProcessedDataRef]);
 
 	const newColumnData = columns.map((e) => ({
 		...e,

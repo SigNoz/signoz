@@ -11,6 +11,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
 
 	"go.uber.org/zap"
@@ -36,7 +37,6 @@ func main() {
 	var ruleRepoURL, cacheConfigPath, fluxInterval string
 	var cluster string
 
-	var preferDelta bool
 	var preferSpanMetrics bool
 
 	var maxIdleConns int
@@ -46,12 +46,13 @@ func main() {
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
-	flag.BoolVar(&preferDelta, "prefer-delta", false, "(prefer delta over cumulative metrics)")
 	flag.BoolVar(&preferSpanMetrics, "prefer-span-metrics", false, "(prefer span metrics for service level metrics)")
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", constants.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
-	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
+	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(the interval to exclude data from being cached to avoid incorrect cache for data in motion)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
+	// Allow using the consistent naming with the signoz collector
+	flag.StringVar(&cluster, "cluster-name", "cluster", "(cluster name - defaults to 'cluster')")
 	flag.IntVar(&maxIdleConns, "max-idle-conns", 50, "(number of connections to maintain in the pool, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
 	flag.IntVar(&maxOpenConns, "max-open-conns", 100, "(max connections for use at any time, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
 	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
@@ -68,7 +69,6 @@ func main() {
 		HTTPHostPort:      constants.HTTPHostPort,
 		PromConfigPath:    promConfigPath,
 		SkipTopLvlOpsPath: skipTopLvlOpsPath,
-		PreferDelta:       preferDelta,
 		PreferSpanMetrics: preferSpanMetrics,
 		PrivateHostPort:   constants.PrivateHostPort,
 		DisableRules:      disableRules,
@@ -88,6 +88,12 @@ func main() {
 		zap.L().Warn("No JWT secret key is specified.")
 	} else {
 		zap.L().Info("JWT secret key set successfully.")
+	}
+
+	if err := migrate.Migrate(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+		zap.L().Error("Failed to migrate", zap.Error(err))
+	} else {
+		zap.L().Info("Migration successful")
 	}
 
 	server, err := app.NewServer(serverOptions)

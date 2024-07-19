@@ -301,6 +301,19 @@ var testGetJSONFilterData = []struct {
 		Filter: "JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%'",
 	},
 	{
+		Name: "contains operator with quotes",
+		FilterItem: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.message",
+				DataType: "string",
+				IsJSON:   true,
+			},
+			Operator: "contains",
+			Value:    "hello 'world'",
+		},
+		Filter: "JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%hello \\'world\\'%'",
+	},
+	{
 		Name: "exists",
 		FilterItem: v3.FilterItem{
 			Key: v3.AttributeKey{

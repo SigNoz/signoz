@@ -135,7 +135,7 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 				},
 				y: {
 					...getYAxisScale({
-						series: graphCompatibleData?.data.newResult.data.result,
+						series: graphCompatibleData?.data?.newResult?.data?.result,
 						yAxisUnit: '',
 						softMax: null,
 						softMin: null,
@@ -159,11 +159,15 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 			},
 			padding: [32, 32, 16, 16],
 			plugins: [
-				tooltipPlugin(
-					fillMissingValuesForQuantities(graphCompatibleData, chartData[0]),
-					'',
-					true,
-				),
+				tooltipPlugin({
+					apiResponse: fillMissingValuesForQuantities(
+						graphCompatibleData,
+						chartData[0],
+					),
+					yAxisUnit: '',
+					isBillingUsageGraphs: true,
+					isDarkMode,
+				}),
 			],
 		}),
 		[

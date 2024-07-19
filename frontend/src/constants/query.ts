@@ -31,4 +31,5 @@ export enum QueryParams {
 	pagination = 'pagination',
 	relativeTime = 'relativeTime',
 	alertType = 'alertType',
+	ruleId = 'ruleId',
 }

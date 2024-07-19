@@ -28,7 +28,7 @@ func createLogsExporter(
 
 func NewFactory() exporter.Factory {
 	return exporter.NewFactory(
-		"memory",
+		component.MustNewType("memory"),
 		createDefaultConfig,
 		exporter.WithLogs(createLogsExporter, component.StabilityLevelBeta))
 }

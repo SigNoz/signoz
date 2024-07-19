@@ -7,6 +7,7 @@ export type OrderByFilterProps = {
 	query: IBuilderQuery;
 	onChange: (values: OrderByPayload[]) => void;
 	isListViewPanel?: boolean;
+	entityVersion?: string;
 };
 
 export type OrderByFilterValue = {

@@ -4,6 +4,8 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
+import NoLogs from 'container/NoLogs/NoLogs';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -20,11 +22,16 @@ import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { TracesLoading } from '../TraceLoading/TraceLoading';
 import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
 import { Container, ErrorText, tableStyles } from './styles';
 import { getListColumns, getTraceLink, transformDataWithDate } from './utils';
 
-function ListView(): JSX.Element {
+interface ListViewProps {
+	isFilterApplied: boolean;
+}
+
+function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
@@ -49,7 +56,7 @@ function ListView(): JSX.Element {
 		QueryParams.pagination,
 	);
 
-	const { data, isFetching, isError } = useGetQueryRange(
+	const { data, isFetching, isLoading, isError } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.traces,
 			graphType: panelType || PANEL_TYPES.LIST,
@@ -86,7 +93,7 @@ function ListView(): JSX.Element {
 		data?.payload?.data?.newResult?.data?.result[0]?.list?.length;
 	const totalCount = useMemo(() => dataLength || 0, [dataLength]);
 
-	const queryTableDataResult = data?.payload.data.newResult.data.result;
+	const queryTableDataResult = data?.payload?.data?.newResult?.data?.result;
 	const queryTableData = useMemo(() => queryTableDataResult || [], [
 		queryTableDataResult,
 	]);
@@ -122,18 +129,38 @@ function ListView(): JSX.Element {
 		[columns, onDragColumns],
 	);
 
+	const isDataPresent =
+		!isLoading &&
+		!isFetching &&
+		!isError &&
+		transformedQueryTableData.length === 0;
+
 	return (
 		<Container>
-			<TraceExplorerControls
-				isLoading={isFetching}
-				totalCount={totalCount}
-				config={config}
-				perPageOptions={PER_PAGE_OPTIONS}
-			/>
+			{transformedQueryTableData.length !== 0 && (
+				<TraceExplorerControls
+					isLoading={isFetching}
+					totalCount={totalCount}
+					config={config}
+					perPageOptions={PER_PAGE_OPTIONS}
+				/>
+			)}
 
 			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
 
-			{!isError && (
+			{(isLoading || (isFetching && transformedQueryTableData.length === 0)) && (
+				<TracesLoading />
+			)}
+
+			{isDataPresent && !isFilterApplied && (
+				<NoLogs dataSource={DataSource.TRACES} />
+			)}
+
+			{isDataPresent && isFilterApplied && (
+				<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="LIST" />
+			)}
+
+			{!isError && transformedQueryTableData.length !== 0 && (
 				<ResizeTable
 					tableLayout="fixed"
 					pagination={false}

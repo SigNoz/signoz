@@ -1,16 +1,25 @@
 import './TimeSeriesView.styles.scss';
 
 import Uplot from 'components/Uplot';
+import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
+import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useUrlQuery from 'hooks/useUrlQuery';
+import GetMinMax from 'lib/getMinMax';
+import getTimeString from 'lib/getTimeString';
+import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -29,6 +38,10 @@ function TimeSeriesView({
 	dataSource,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
+
+	const dispatch = useDispatch();
+	const urlQuery = useUrlQuery();
+	const location = useLocation();
 
 	const chartData = useMemo(() => getUPlotChartData(data?.payload), [
 		data?.payload,
@@ -59,7 +72,60 @@ function TimeSeriesView({
 		setMaxTimeScale(endTime);
 	}, [maxTime, minTime, globalSelectedInterval, data]);
 
+	const onDragSelect = useCallback(
+		(start: number, end: number): void => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+
+			const { maxTime, minTime } = GetMinMax('custom', [
+				startTimestamp,
+				endTimestamp,
+			]);
+
+			urlQuery.set(QueryParams.startTime, minTime.toString());
+			urlQuery.set(QueryParams.endTime, maxTime.toString());
+			urlQuery.delete(QueryParams.relativeTime);
+			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			history.push(generatedUrl);
+		},
+		[dispatch, location.pathname, urlQuery],
+	);
+
+	const handleBackNavigation = (): void => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const startTime = searchParams.get(QueryParams.startTime);
+		const endTime = searchParams.get(QueryParams.endTime);
+		const relativeTime = searchParams.get(
+			QueryParams.relativeTime,
+		) as CustomTimeType;
+
+		if (relativeTime) {
+			dispatch(UpdateTimeInterval(relativeTime));
+		} else if (startTime && endTime && startTime !== endTime) {
+			dispatch(
+				UpdateTimeInterval('custom', [
+					parseInt(getTimeString(startTime), 10),
+					parseInt(getTimeString(endTime), 10),
+				]),
+			);
+		}
+	};
+
+	useEffect(() => {
+		window.addEventListener('popstate', handleBackNavigation);
+
+		return (): void => {
+			window.removeEventListener('popstate', handleBackNavigation);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	const chartOptions = getUPlotChartOptions({
+		onDragSelect,
 		yAxisUnit: yAxisUnit || '',
 		apiResponse: data?.payload,
 		dimensions: {
@@ -81,14 +147,17 @@ function TimeSeriesView({
 				style={{ height: '100%', width: '100%' }}
 				ref={graphRef}
 			>
-				{isLoading && <LogsLoading />}
+				{isLoading &&
+					(dataSource === DataSource.LOGS ? <LogsLoading /> : <TracesLoading />)}
 
 				{chartData &&
 					chartData[0] &&
 					chartData[0]?.length === 0 &&
 					!isLoading &&
 					!isError &&
-					isFilterApplied && <EmptyLogsSearch />}
+					isFilterApplied && (
+						<EmptyLogsSearch dataSource={dataSource} panelType="TIME_SERIES" />
+					)}
 
 				{chartData &&
 					chartData[0] &&

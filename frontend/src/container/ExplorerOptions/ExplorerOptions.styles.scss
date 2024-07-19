@@ -1,18 +1,27 @@
+.explorer-options-container {
+	position: fixed;
+	bottom: 24px;
+	left: calc(50% + 240px);
+	transform: translate(calc(-50% - 120px), 0);
+	transition: left 0.2s linear;
+
+	display: flex;
+	gap: 16px;
+	background-color: transparent;
+}
+
 .hide-update {
 	left: calc(50% - 72px) !important;
 }
+
 .explorer-update {
-	position: fixed;
-	bottom: 24px;
-	left: calc(50% - 352px);
-	display: flex;
+	display: inline-flex;
 	align-items: center;
 	gap: 12px;
 	padding: 10px 12px;
 	border-radius: 50px;
 	border: 1px solid var(--bg-slate-400);
 	background: rgba(22, 24, 29, 0.6);
-	box-shadow: 4px 4px 16px 4px rgba(0, 0, 0, 0.25);
 	backdrop-filter: blur(20px);
 
 	.action-icon {
@@ -38,16 +47,10 @@
 }
 
 .explorer-options {
-	position: fixed;
-	bottom: 24px;
-	left: calc(50% + 240px);
 	padding: 10px 12px;
-	transform: translate(calc(-50% - 120px), 0);
-	transition: left 0.2s linear;
 	border: 1px solid var(--bg-slate-400);
 	border-radius: 50px;
 	background: rgba(22, 24, 29, 0.6);
-	box-shadow: 4px 4px 16px 4px rgba(0, 0, 0, 0.25);
 	backdrop-filter: blur(20px);
 
 	cursor: default;
@@ -64,6 +67,10 @@
 
 	.view-options,
 	.actions {
+		.info-icon {
+			padding: 8px;
+		}
+
 		.hidden {
 			display: none;
 		}
@@ -84,8 +91,7 @@
 			box-shadow: none !important;
 
 			&.ant-btn-round {
-				padding-inline-start: 10px;
-				padding-inline-end: 8px;
+				padding: 8px 12px 8px 10px;
 				font-weight: 500;
 			}
 
@@ -120,7 +126,7 @@
 
 .app-content {
 	&.collapsed {
-		.explorer-options {
+		.explorer-options-container {
 			left: calc(50% + 72px);
 		}
 	}
@@ -251,6 +257,10 @@
 				border: 1px solid var(--bg-vanilla-300);
 				color: var(--bg-ink-200);
 				background-color: var(--bg-vanilla-300);
+			}
+
+			.info-icon {
+				color: var(--bg-ink-200);
 			}
 		}
 	}

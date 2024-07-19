@@ -25,6 +25,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
@@ -61,6 +62,7 @@ type ManagerOptions struct {
 	ResendDelay  time.Duration
 	DisableRules bool
 	FeatureFlags interfaces.FeatureLookup
+	Reader       interfaces.Reader
 }
 
 // The Manager manages recording and alerting rules.
@@ -79,6 +81,7 @@ type Manager struct {
 	logger log.Logger
 
 	featureFlags interfaces.FeatureLookup
+	reader       interfaces.Reader
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -108,7 +111,9 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		return nil, err
 	}
 
-	db := newRuleDB(o.DBConn)
+	db := NewRuleDB(o.DBConn)
+
+	telemetry.GetInstance().SetAlertsInfoCallback(db.GetAlertsInfo)
 
 	m := &Manager{
 		tasks:        map[string]Task{},
@@ -119,6 +124,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		block:        make(chan struct{}),
 		logger:       o.Logger,
 		featureFlags: o.FeatureFlags,
+		reader:       o.Reader,
 	}
 	return m, nil
 }
@@ -128,6 +134,10 @@ func (m *Manager) Start() {
 		zap.L().Error("failed to initialize alerting rules manager", zap.Error(err))
 	}
 	m.run()
+}
+
+func (m *Manager) RuleDB() RuleDB {
+	return m.ruleDB
 }
 
 func (m *Manager) Pause(b bool) {
@@ -516,6 +526,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 			r,
 			ThresholdRuleOpts{},
 			m.featureFlags,
+			m.reader,
 		)
 
 		if err != nil {
@@ -525,7 +536,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		rules = append(rules, tr)
 
 		// create ch rule task for evalution
-		task = newTask(TaskTypeCh, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
+		task = newTask(TaskTypeCh, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc(), m.ruleDB)
 
 		// add rule to memory
 		m.rules[ruleId] = tr
@@ -547,7 +558,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		rules = append(rules, pr)
 
 		// create promql rule task for evalution
-		task = newTask(TaskTypeProm, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
+		task = newTask(TaskTypeProm, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc(), m.ruleDB)
 
 		// add rule to memory
 		m.rules[ruleId] = pr
@@ -879,6 +890,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 				SendAlways:    true,
 			},
 			m.featureFlags,
+			m.reader,
 		)
 
 		if err != nil {

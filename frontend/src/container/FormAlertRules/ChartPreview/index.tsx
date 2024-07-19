@@ -48,6 +48,7 @@ export interface ChartPreviewProps {
 	userQueryKey?: string;
 	allowSelectedIntervalForStepGen?: boolean;
 	yAxisUnit: string;
+	setQueryStatus?: (status: string) => void;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -62,6 +63,7 @@ function ChartPreview({
 	allowSelectedIntervalForStepGen = false,
 	alertDef,
 	yAxisUnit,
+	setQueryStatus,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const dispatch = useDispatch();
@@ -149,10 +151,10 @@ function ChartPreview({
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);
-
+		if (setQueryStatus) setQueryStatus(queryResponse.status);
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
-	}, [maxTime, minTime, globalSelectedInterval, queryResponse]);
+	}, [maxTime, minTime, globalSelectedInterval, queryResponse, setQueryStatus]);
 
 	if (queryResponse.data && graphType === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
@@ -246,28 +248,32 @@ function ChartPreview({
 	return (
 		<ChartContainer>
 			{headline}
-			{(queryResponse?.isError || queryResponse?.error) && (
-				<FailedMessageContainer color="red" title="Failed to refresh the chart">
-					<InfoCircleOutlined />{' '}
-					{queryResponse.error.message || t('preview_chart_unexpected_error')}
-				</FailedMessageContainer>
-			)}
-			{queryResponse.isLoading && (
-				<Spinner size="large" tip="Loading..." height="70vh" />
-			)}
-			{chartData && !queryResponse.isError && (
-				<div ref={graphRef} style={{ height: '100%' }}>
+
+			<div ref={graphRef} style={{ height: '100%' }}>
+				{queryResponse.isLoading && (
+					<Spinner size="large" tip="Loading..." height="100%" />
+				)}
+				{(queryResponse?.isError || queryResponse?.error) && (
+					<FailedMessageContainer color="red" title="Failed to refresh the chart">
+						<InfoCircleOutlined />{' '}
+						{queryResponse.error.message || t('preview_chart_unexpected_error')}
+					</FailedMessageContainer>
+				)}
+
+				{chartData && !queryResponse.isError && (
 					<GridPanelSwitch
 						options={options}
 						panelType={graphType}
 						data={chartData}
 						name={name || 'Chart Preview'}
-						panelData={queryResponse.data?.payload.data.newResult.data.result || []}
+						panelData={
+							queryResponse.data?.payload?.data?.newResult?.data?.result || []
+						}
 						query={query || initialQueriesMap.metrics}
 						yAxisUnit={yAxisUnit}
 					/>
-				</div>
-			)}
+				)}
+			</div>
 		</ChartContainer>
 	);
 }
@@ -280,6 +286,7 @@ ChartPreview.defaultProps = {
 	userQueryKey: '',
 	allowSelectedIntervalForStepGen: false,
 	alertDef: undefined,
+	setQueryStatus: (): void => {},
 };
 
 export default ChartPreview;

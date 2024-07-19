@@ -1,6 +1,8 @@
 package logs
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -429,6 +431,54 @@ func TestGenerateSQLQuery(t *testing.T) {
 			res, _, err := GenerateSQLWhere(&generateSQLQueryFields, &test.Filter)
 			So(err, ShouldBeNil)
 			So(res, ShouldEqual, test.SqlFilter)
+		})
+	}
+}
+
+var parseLogFilterParams = []struct {
+	Name                    string
+	ReqParams               string
+	ExpectedLogFilterParams *model.LogsFilterParams
+}{
+	{
+		Name:      "test with proper order by",
+		ReqParams: "order=desc&q=service.name='myservice'&limit=10",
+		ExpectedLogFilterParams: &model.LogsFilterParams{
+			Limit:   10,
+			OrderBy: "timestamp",
+			Order:   DESC,
+			Query:   "service.name='myservice'",
+		},
+	},
+	{
+		Name:      "test with proper order by asc",
+		ReqParams: "order=asc&q=service.name='myservice'&limit=10",
+		ExpectedLogFilterParams: &model.LogsFilterParams{
+			Limit:   10,
+			OrderBy: "timestamp",
+			Order:   ASC,
+			Query:   "service.name='myservice'",
+		},
+	},
+	{
+		Name:      "test with incorrect order by",
+		ReqParams: "order=undefined&q=service.name='myservice'&limit=10",
+		ExpectedLogFilterParams: &model.LogsFilterParams{
+			Limit:   10,
+			OrderBy: "timestamp",
+			Order:   DESC,
+			Query:   "service.name='myservice'",
+		},
+	},
+}
+
+func TestParseLogFilterParams(t *testing.T) {
+	for _, test := range parseLogFilterParams {
+		Convey(test.Name, t, func() {
+			req := httptest.NewRequest(http.MethodGet, "/logs?"+test.ReqParams, nil)
+			params, err := ParseLogFilterParams(req)
+			So(err, ShouldBeNil)
+			So(params, ShouldEqual, test.ExpectedLogFilterParams)
 		})
 	}
 }

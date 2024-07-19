@@ -66,21 +66,25 @@ export default function QBEntityOptions({
 				<div className="left-col-items">
 					<div className="options periscope-btn-group">
 						<Button.Group>
-							<Button
-								value="search"
-								className="periscope-btn collapse"
-								onClick={onCollapseEntity}
-							>
-								{isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-							</Button>
-							<Button
-								value="query-builder"
-								className="periscope-btn visibility-toggle"
-								onClick={onToggleVisibility}
-								disabled={isListViewPanel}
-							>
-								{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
-							</Button>
+							<Tooltip title={isCollapsed ? 'Uncollapse' : 'Collapse'}>
+								<Button
+									value="search"
+									className="periscope-btn collapse"
+									onClick={onCollapseEntity}
+								>
+									{isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+								</Button>
+							</Tooltip>
+							<Tooltip title={entityData.disabled ? 'Show' : 'Hide'}>
+								<Button
+									value="query-builder"
+									className="periscope-btn visibility-toggle"
+									onClick={onToggleVisibility}
+									disabled={isListViewPanel}
+								>
+									{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
+								</Button>
+							</Tooltip>
 
 							{entityType === 'query' && (
 								<Tooltip title={`Clone Query ${entityData.queryName}`}>

@@ -1,3 +1,7 @@
+import './ComponentSlider.styles.scss';
+
+import { Card, Modal } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import createQueryParams from 'lib/createQueryParams';
@@ -8,15 +12,22 @@ import { v4 as uuid } from 'uuid';
 
 import { PANEL_TYPES_INITIAL_QUERY } from './constants';
 import menuItems from './menuItems';
-import { Card, Container, Text } from './styles';
+import { Text } from './styles';
 
 function DashboardGraphSlider(): JSX.Element {
-	const { handleToggleDashboardSlider } = useDashboard();
+	const { handleToggleDashboardSlider, isDashboardSliderOpen } = useDashboard();
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onClickHandler = (name: PANEL_TYPES) => (): void => {
 		const id = uuid();
 		handleToggleDashboardSlider(false);
+		logEvent('Dashboard Detail: New panel type selected', {
+			// dashboardId: '',
+			// dashboardName: '',
+			// numberOfPanels: 0, // todo - at this point we don't know these attributes
+			panelType: name,
+			widgetId: id,
+		});
 		const queryParamsLog = {
 			graphType: name,
 			widgetId: id,
@@ -44,7 +55,6 @@ function DashboardGraphSlider(): JSX.Element {
 				PANEL_TYPES_INITIAL_QUERY[name],
 			),
 		};
-
 		if (name === PANEL_TYPES.LIST) {
 			history.push(
 				`${history.location.pathname}/new?${createQueryParams(queryParamsLog)}`,
@@ -56,15 +66,29 @@ function DashboardGraphSlider(): JSX.Element {
 		}
 	};
 
+	const handleCardClick = (panelType: PANEL_TYPES): void => {
+		onClickHandler(panelType)();
+	};
+
 	return (
-		<Container>
-			{menuItems.map(({ name, icon, display }) => (
-				<Card onClick={onClickHandler(name)} id={name} key={name}>
-					{icon}
-					<Text>{display}</Text>
-				</Card>
-			))}
-		</Container>
+		<Modal
+			open={isDashboardSliderOpen}
+			onCancel={(): void => {
+				handleToggleDashboardSlider(false);
+			}}
+			rootClassName="graph-selection"
+			footer={null}
+			title="New Panel"
+		>
+			<div className="panel-selection">
+				{menuItems.map(({ name, icon, display }) => (
+					<Card onClick={(): void => handleCardClick(name)} id={name} key={name}>
+						{icon}
+						<Text>{display}</Text>
+					</Card>
+				))}
+			</div>
+		</Modal>
 	);
 }
 

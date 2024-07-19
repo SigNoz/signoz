@@ -1,3 +1,4 @@
+import logEvent from 'api/common/logEvent';
 import getTopLevelOperations, {
 	ServiceDataProps,
 } from 'api/metrics/getTopLevelOperations';
@@ -17,11 +18,13 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
@@ -43,6 +46,7 @@ import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
+	useGetAPMToTracesQueries,
 } from './util';
 
 function Application(): JSX.Element {
@@ -78,6 +82,23 @@ function Application(): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current) {
+			const selectedEnvironments = queries.find(
+				(val) => val.tagKey === 'resource_deployment_environment',
+			)?.tagValue;
+
+			logEvent('APM: Service detail page visited', {
+				selectedEnvironments,
+				resourceAttributeUsed: !!queries?.length,
+				section: 'overview',
+			});
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	const {
 		data: topLevelOperations,
 		error: topLevelOperationsError,
@@ -91,6 +112,8 @@ function Application(): JSX.Element {
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
+
+	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
 
 	const tagFilterItems = useMemo(
 		() =>
@@ -159,7 +182,10 @@ function Application(): JSX.Element {
 		[dispatch, pathname, urlQuery],
 	);
 
-	const onErrorTrackHandler = (timestamp: number): (() => void) => (): void => {
+	const onErrorTrackHandler = (
+		timestamp: number,
+		apmToTraceQuery: Query,
+	): (() => void) => (): void => {
 		const currentTime = timestamp;
 		const tPlusOne = timestamp + 60 * 1000;
 
@@ -170,14 +196,37 @@ function Application(): JSX.Element {
 		const avialableParams = routeConfig[ROUTES.TRACE];
 		const queryString = getQueryString(avialableParams, urlParams);
 
-		history.replace(
-			`${
-				ROUTES.TRACE
-			}?selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1&${queryString.join(
-				'',
-			)}`,
+		const JSONCompositeQuery = encodeURIComponent(
+			JSON.stringify(apmToTraceQuery),
 		);
+
+		const newTraceExplorerPath = `${
+			ROUTES.TRACES_EXPLORER
+		}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
+			QueryParams.compositeQuery
+		}=${JSONCompositeQuery}&${queryString.join('&')}`;
+
+		history.push(newTraceExplorerPath);
 	};
+
+	const errorTrackQuery = useGetAPMToTracesQueries({
+		servicename,
+		filters: [
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'hasError',
+					dataType: DataTypes.bool,
+					type: 'tag',
+					isColumn: true,
+					isJSON: false,
+					id: 'hasError--bool--tag--true',
+				},
+				op: 'in',
+				value: ['true'],
+			},
+		],
+	});
 
 	return (
 		<>
@@ -202,6 +251,7 @@ function Application(): JSX.Element {
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
+							apmToTraceQuery,
 						})}
 					>
 						View Traces
@@ -229,6 +279,7 @@ function Application(): JSX.Element {
 								servicename,
 								selectedTraceTags,
 								timestamp: selectedTimeStamp,
+								apmToTraceQuery,
 							})}
 						>
 							View Traces
@@ -245,7 +296,7 @@ function Application(): JSX.Element {
 							type="default"
 							size="small"
 							id="Error_button"
-							onClick={onErrorTrackHandler(selectedTimeStamp)}
+							onClick={onErrorTrackHandler(selectedTimeStamp, errorTrackQuery)}
 						>
 							View Traces
 						</Button>

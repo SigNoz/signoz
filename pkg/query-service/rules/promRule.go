@@ -111,13 +111,22 @@ func (r *PromRule) Condition() *RuleCondition {
 	return r.ruleCondition
 }
 
+// targetVal returns the target value for the rule condition
+// when the y-axis and target units are non-empty, it
+// converts the target value to the y-axis unit
 func (r *PromRule) targetVal() float64 {
 	if r.ruleCondition == nil || r.ruleCondition.Target == nil {
 		return 0
 	}
 
+	// get the converter for the target unit
 	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
-	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
+	// convert the target value to the y-axis unit
+	value := unitConverter.Convert(converter.Value{
+		F: *r.ruleCondition.Target,
+		U: converter.Unit(r.ruleCondition.TargetUnit),
+	}, converter.Unit(r.Unit()))
+
 	return value.F
 }
 
@@ -370,8 +379,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		}
 		zap.L().Debug("alerting for series", zap.String("name", r.Name()), zap.Any("series", series))
 
-		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
-		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
+		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
 
 		tmplData := AlertTemplateData(l, valueFormatter.Format(alertSmpl.F, r.Unit()), threshold)
 		// Inject some convenience variables that are easier to remember for users

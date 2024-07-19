@@ -14,6 +14,8 @@ import (
 	html_template "html/template"
 	text_template "text/template"
 
+	"golang.org/x/text/cases"
+
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 )
 
@@ -96,7 +98,7 @@ func NewTemplateExpander(
 				return html_template.HTML(text)
 			},
 			"match":   regexp.MatchString,
-			"title":   strings.Title,
+			"title":   cases.Title,
 			"toUpper": strings.ToUpper,
 			"toLower": strings.ToLower,
 			"sortByLabel": func(label string, v tmplQueryResults) tmplQueryResults {

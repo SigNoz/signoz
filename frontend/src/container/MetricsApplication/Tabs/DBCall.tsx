@@ -1,4 +1,5 @@
 import { Col } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
@@ -11,7 +12,7 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -27,6 +28,7 @@ import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
+	useGetAPMToTracesQueries,
 } from './util';
 
 function DBCall(): JSX.Element {
@@ -96,6 +98,29 @@ function DBCall(): JSX.Element {
 		[servicename, tagFilterItems],
 	);
 
+	const logEventCalledRef = useRef(false);
+
+	useEffect(() => {
+		if (!logEventCalledRef.current) {
+			const selectedEnvironments = queries.find(
+				(val) => val.tagKey === 'resource_deployment_environment',
+			)?.tagValue;
+
+			logEvent('APM: Service detail page visited', {
+				selectedEnvironments,
+				resourceAttributeUsed: !!queries?.length,
+				section: 'dbMetrics',
+			});
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const apmToTraceQuery = useGetAPMToTracesQueries({
+		servicename,
+		isDBCall: true,
+	});
+
 	return (
 		<Row gutter={24}>
 			<Col span={12}>
@@ -107,6 +132,7 @@ function DBCall(): JSX.Element {
 						servicename,
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
+						apmToTraceQuery,
 					})}
 				>
 					View Traces
@@ -139,6 +165,7 @@ function DBCall(): JSX.Element {
 						servicename,
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
+						apmToTraceQuery,
 					})}
 				>
 					View Traces

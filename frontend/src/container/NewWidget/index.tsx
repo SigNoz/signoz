@@ -1,24 +1,30 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './NewWidget.styles.scss';
 
-import { LockFilled, WarningOutlined } from '@ant-design/icons';
-import { Button, Modal, Space, Tooltip, Typography } from 'antd';
+import { WarningOutlined } from '@ant-design/icons';
+import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { chartHelpMessage } from 'components/facingIssueBtn/util';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
+import { DEFAULT_BUCKET_COUNT } from 'container/PanelWrapper/constants';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useAxiosError from 'hooks/useAxiosError';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
-import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import history from 'lib/history';
 import { defaultTo, isUndefined } from 'lodash-es';
+import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -26,16 +32,18 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { ColumnUnit, Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { getGraphType, getGraphTypeForFormat } from 'utils/getGraphType';
 
 import LeftContainer from './LeftContainer';
 import QueryTypeTag from './LeftContainer/QueryTypeTag';
@@ -43,7 +51,6 @@ import RightContainer from './RightContainer';
 import { ThresholdProps } from './RightContainer/Threshold/types';
 import TimeItems, { timePreferance } from './RightContainer/timeItems';
 import {
-	ButtonContainer,
 	Container,
 	LeftContainerWrapper,
 	PanelContainer,
@@ -82,6 +89,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
+	const { selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const { widgets = [] } = selectedDashboard?.data || {};
 
@@ -91,12 +102,26 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const [isNewDashboard, setIsNewDashboard] = useState<boolean>(false);
 
+	const logEventCalledRef = useRef(false);
+
 	useEffect(() => {
 		const widgetId = query.get('widgetId');
 		const selectedWidget = widgets?.find((e) => e.id === widgetId);
 		const isWidgetNotPresent = isUndefined(selectedWidget);
 		if (isWidgetNotPresent) {
 			setIsNewDashboard(true);
+		}
+
+		if (!logEventCalledRef.current) {
+			logEvent('Panel Edit: Page visited', {
+				panelType: selectedWidget?.panelTypes,
+				dashboardId: selectedDashboard?.uuid,
+				widgetId: selectedWidget?.id,
+				dashboardName: selectedDashboard?.data.title,
+				isNewPanel: !!isWidgetNotPresent,
+				dataSource: currentQuery.builder.queryData?.[0]?.dataSource,
+			});
+			logEventCalledRef.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -125,6 +150,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [stacked, setStacked] = useState<boolean>(
 		selectedWidget?.isStacked || false,
 	);
+
+	const [stackedBarChart, setStackedBarChart] = useState<boolean>(
+		selectedWidget?.stackedBarChart || false,
+	);
 	const [opacity, setOpacity] = useState<string>(selectedWidget?.opacity || '1');
 	const [thresholds, setThresholds] = useState<ThresholdProps[]>(
 		selectedWidget?.thresholds || [],
@@ -137,6 +166,18 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	);
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
+
+	const [bucketWidth, setBucketWidth] = useState<number>(
+		selectedWidget?.bucketWidth || 0,
+	);
+
+	const [bucketCount, setBucketCount] = useState<number>(
+		selectedWidget?.bucketCount || DEFAULT_BUCKET_COUNT,
+	);
+
+	const [combineHistogram, setCombineHistogram] = useState<boolean>(
+		selectedWidget?.mergeAllActiveQueries || false,
+	);
 
 	const [softMin, setSoftMin] = useState<number | null>(
 		selectedWidget?.softMin === null || selectedWidget?.softMin === undefined
@@ -158,6 +199,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			: selectedWidget?.softMax || 0,
 	);
 
+	const [columnUnits, setColumnUnits] = useState<ColumnUnit>(
+		selectedWidget?.columnUnits || {},
+	);
+
 	useEffect(() => {
 		setSelectedWidget((prev) => {
 			if (!prev) {
@@ -176,11 +221,17 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				softMin,
 				softMax,
 				fillSpans: isFillSpans,
+				columnUnits,
+				bucketCount,
+				stackedBarChart,
+				bucketWidth,
+				mergeAllActiveQueries: combineHistogram,
 				selectedLogFields,
 				selectedTracesFields,
 			};
 		});
 	}, [
+		columnUnits,
 		currentQuery,
 		description,
 		isFillSpans,
@@ -194,6 +245,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		thresholds,
 		title,
 		yAxisUnit,
+		bucketWidth,
+		bucketCount,
+		combineHistogram,
+		stackedBarChart,
 	]);
 
 	const closeModal = (): void => {
@@ -245,7 +300,66 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		return { selectedWidget, preWidgets, afterWidgets };
 	}, [selectedDashboard, query]);
 
-	const { notifications } = useNotifications();
+	const handleError = useAxiosError();
+
+	// this loading state is to take care of mismatch in the responses for table and other panels
+	// hence while changing the query contains the older value and the processing logic fails
+	const [isLoadingPanelData, setIsLoadingPanelData] = useState<boolean>(false);
+
+	// request data should be handled by the parent and the child components should consume the same
+	// this has been moved here from the left container
+	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
+		if (selectedWidget && selectedGraph !== PANEL_TYPES.LIST) {
+			return {
+				selectedTime: selectedWidget?.timePreferance,
+				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
+				query: stagedQuery || initialQueriesMap.metrics,
+				globalSelectedInterval,
+				formatForWeb:
+					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
+					PANEL_TYPES.TABLE,
+				variables: getDashboardVariables(selectedDashboard?.data.variables),
+			};
+		}
+		const updatedQuery = { ...(stagedQuery || initialQueriesMap.metrics) };
+		updatedQuery.builder.queryData[0].pageSize = 10;
+		redirectWithQueryBuilderData(updatedQuery);
+		return {
+			query: updatedQuery,
+			graphType: PANEL_TYPES.LIST,
+			selectedTime: selectedTime.enum || 'GLOBAL_TIME',
+			globalSelectedInterval,
+			tableParams: {
+				pagination: {
+					offset: 0,
+					limit: updatedQuery.builder.queryData[0].limit || 0,
+				},
+			},
+		};
+	});
+
+	useEffect(() => {
+		if (stagedQuery) {
+			setIsLoadingPanelData(false);
+			setRequestData((prev) => ({
+				...prev,
+				selectedTime: selectedTime.enum || prev.selectedTime,
+				globalSelectedInterval,
+				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
+				query: stagedQuery,
+				fillGaps: selectedWidget.fillSpans || false,
+				formatForWeb:
+					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
+					PANEL_TYPES.TABLE,
+			}));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		stagedQuery,
+		selectedTime,
+		selectedWidget.fillSpans,
+		globalSelectedInterval,
+	]);
 
 	const onClickSaveHandler = useCallback(() => {
 		if (!selectedDashboard) {
@@ -271,28 +385,60 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			uuid: selectedDashboard.uuid,
 			data: {
 				...selectedDashboard.data,
-				widgets: [
-					...preWidgets,
-					{
-						...(selectedWidget || ({} as Widgets)),
-						description: selectedWidget?.description || '',
-						timePreferance: selectedTime.enum,
-						isStacked: selectedWidget?.isStacked || false,
-						opacity: selectedWidget?.opacity || '1',
-						nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
-						title: selectedWidget?.title,
-						yAxisUnit: selectedWidget?.yAxisUnit,
-						panelTypes: graphType,
-						query: currentQuery,
-						thresholds: selectedWidget?.thresholds,
-						softMin: selectedWidget?.softMin || 0,
-						softMax: selectedWidget?.softMax || 0,
-						fillSpans: selectedWidget?.fillSpans,
-						selectedLogFields: selectedWidget?.selectedLogFields || [],
-						selectedTracesFields: selectedWidget?.selectedTracesFields || [],
-					},
-					...afterWidgets,
-				],
+				widgets: isNewDashboard
+					? [
+							...afterWidgets,
+							{
+								...(selectedWidget || ({} as Widgets)),
+								description: selectedWidget?.description || '',
+								timePreferance: selectedTime.enum,
+								isStacked: selectedWidget?.isStacked || false,
+								opacity: selectedWidget?.opacity || '1',
+								nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
+								title: selectedWidget?.title,
+								stackedBarChart: selectedWidget?.stackedBarChart || false,
+								yAxisUnit: selectedWidget?.yAxisUnit,
+								panelTypes: graphType,
+								query: currentQuery,
+								thresholds: selectedWidget?.thresholds,
+								columnUnits: selectedWidget?.columnUnits,
+								softMin: selectedWidget?.softMin || 0,
+								softMax: selectedWidget?.softMax || 0,
+								fillSpans: selectedWidget?.fillSpans,
+								bucketWidth: selectedWidget?.bucketWidth || 0,
+								bucketCount: selectedWidget?.bucketCount || 0,
+								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
+								selectedLogFields: selectedWidget?.selectedLogFields || [],
+								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
+							},
+					  ]
+					: [
+							...preWidgets,
+							{
+								...(selectedWidget || ({} as Widgets)),
+								description: selectedWidget?.description || '',
+								timePreferance: selectedTime.enum,
+								isStacked: selectedWidget?.isStacked || false,
+								opacity: selectedWidget?.opacity || '1',
+								nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
+								title: selectedWidget?.title,
+								stackedBarChart: selectedWidget?.stackedBarChart || false,
+								yAxisUnit: selectedWidget?.yAxisUnit,
+								panelTypes: graphType,
+								query: currentQuery,
+								thresholds: selectedWidget?.thresholds,
+								columnUnits: selectedWidget?.columnUnits,
+								softMin: selectedWidget?.softMin || 0,
+								softMax: selectedWidget?.softMax || 0,
+								fillSpans: selectedWidget?.fillSpans,
+								bucketWidth: selectedWidget?.bucketWidth || 0,
+								bucketCount: selectedWidget?.bucketCount || 0,
+								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
+								selectedLogFields: selectedWidget?.selectedLogFields || [],
+								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
+							},
+							...afterWidgets,
+					  ],
 				layout: [...updatedLayout],
 			},
 		};
@@ -306,11 +452,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					pathname: generatePath(ROUTES.DASHBOARD, { dashboardId }),
 				});
 			},
-			onError: () => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
-			},
+			onError: handleError,
 		});
 	}, [
 		selectedDashboard,
@@ -323,11 +465,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		currentQuery,
 		afterWidgets,
 		updateDashboardMutation,
+		handleError,
 		setSelectedDashboard,
 		setToScrollWidgetId,
 		featureResponse,
 		dashboardId,
-		notifications,
 	]);
 
 	const onClickDiscardHandler = useCallback(() => {
@@ -343,6 +485,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	}, [dashboardId]);
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
+		setIsLoadingPanelData(true);
 		const updatedQuery = handleQueryChange(type as any, supersetQuery);
 		setGraphType(type);
 		redirectWithQueryBuilderData(
@@ -354,7 +497,20 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	};
 
 	const onSaveDashboard = useCallback((): void => {
+		const widgetId = query.get('widgetId');
+		const selectWidget = widgets?.find((e) => e.id === widgetId);
+
+		logEvent('Panel Edit: Save changes', {
+			panelType: selectedWidget.panelTypes,
+			dashboardId: selectedDashboard?.uuid,
+			widgetId: selectedWidget.id,
+			dashboardName: selectedDashboard?.data.title,
+			queryType: currentQuery.queryType,
+			isNewPanel: isUndefined(selectWidget),
+			dataSource: currentQuery.builder.queryData?.[0]?.dataSource,
+		});
 		setSaveModal(true);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const isQueryBuilderActive = useIsFeatureDisabled(
@@ -403,95 +559,148 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [onSaveDashboard]);
 
+	useEffect(() => {
+		if (selectedGraph === PANEL_TYPES.LIST) {
+			const initialDataSource = currentQuery.builder.queryData[0].dataSource;
+			if (initialDataSource === DataSource.LOGS) {
+				setRequestData((prev) => ({
+					...prev,
+					tableParams: {
+						...prev.tableParams,
+						selectColumns: selectedLogFields,
+					},
+				}));
+			} else if (initialDataSource === DataSource.TRACES) {
+				setRequestData((prev) => ({
+					...prev,
+					tableParams: {
+						...prev.tableParams,
+						selectColumns: selectedTracesFields,
+					},
+				}));
+			}
+		}
+	}, [selectedLogFields, selectedTracesFields, currentQuery, selectedGraph]);
+
 	return (
 		<Container>
-			<div className="facing-issue-btn-container">
-				<FacingIssueBtn
-					attributes={{
-						uuid: selectedDashboard?.uuid,
-						title: selectedDashboard?.data.title,
-						panelType: graphType,
-						widgetId: query.get('widgetId'),
-						queryType: currentQuery.queryType,
-						screen: 'Dashboard list page',
-					}}
-					eventName="Dashboard: Facing Issues in dashboard"
-					buttonText="Need help with this chart?"
-					message={chartHelpMessage(selectedDashboard, graphType)}
-					onHoverText="Click here to get help in creating chart"
-				/>
-				<ButtonContainer>
-					{isSaveDisabled && (
-						<Tooltip title={MESSAGE.PANEL}>
-							<Button
-								icon={<LockFilled />}
-								type="primary"
-								disabled={isSaveDisabled}
-								onClick={onSaveDashboard}
-							>
-								Save Changes
-							</Button>
-						</Tooltip>
-					)}
-
-					{!isSaveDisabled && (
+			<div className="edit-header">
+				<div className="left-header">
+					<X
+						size={14}
+						onClick={onClickDiscardHandler}
+						className="discard-icon"
+						data-testid="discard-button"
+					/>
+					<Flex align="center" gap={24}>
+						<Typography.Text className="configure-panel">
+							Configure panel
+						</Typography.Text>
+						<FacingIssueBtn
+							attributes={{
+								uuid: selectedDashboard?.uuid,
+								title: selectedDashboard?.data.title,
+								screen: 'Dashboard widget',
+								panelType: graphType,
+								widgetId: query.get('widgetId'),
+								queryType: currentQuery.queryType,
+							}}
+							eventName="Dashboard: Facing Issues in dashboard"
+							message={chartHelpMessage(selectedDashboard, graphType)}
+							buttonText="Facing issues with dashboards?"
+							onHoverText="Click here to get help with dashboard widget"
+						/>
+					</Flex>
+				</div>
+				{isSaveDisabled && (
+					<Tooltip title={MESSAGE.PANEL}>
 						<Button
 							type="primary"
 							data-testid="new-widget-save"
 							loading={updateDashboardMutation.isLoading}
 							disabled={isSaveDisabled}
 							onClick={onSaveDashboard}
+							className="save-btn"
 						>
 							Save Changes
 						</Button>
-					)}
-					<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
-				</ButtonContainer>
+					</Tooltip>
+				)}
+				{!isSaveDisabled && (
+					<Button
+						type="primary"
+						data-testid="new-widget-save"
+						loading={updateDashboardMutation.isLoading}
+						disabled={isSaveDisabled}
+						onClick={onSaveDashboard}
+						icon={<Check size={14} />}
+						className="save-btn"
+					>
+						Save Changes
+					</Button>
+				)}
 			</div>
 
 			<PanelContainer>
-				<LeftContainerWrapper flex={5}>
-					{selectedWidget && (
-						<LeftContainer
-							selectedGraph={graphType}
-							selectedLogFields={selectedLogFields}
-							setSelectedLogFields={setSelectedLogFields}
-							selectedTracesFields={selectedTracesFields}
-							setSelectedTracesFields={setSelectedTracesFields}
-							selectedWidget={selectedWidget}
-							selectedTime={selectedTime}
-						/>
-					)}
+				<LeftContainerWrapper isDarkMode={useIsDarkMode()}>
+					<OverlayScrollbar>
+						{selectedWidget && (
+							<LeftContainer
+								selectedGraph={graphType}
+								selectedLogFields={selectedLogFields}
+								setSelectedLogFields={setSelectedLogFields}
+								selectedTracesFields={selectedTracesFields}
+								setSelectedTracesFields={setSelectedTracesFields}
+								selectedWidget={selectedWidget}
+								selectedTime={selectedTime}
+								requestData={requestData}
+								setRequestData={setRequestData}
+								isLoadingPanelData={isLoadingPanelData}
+							/>
+						)}
+					</OverlayScrollbar>
 				</LeftContainerWrapper>
 
-				<RightContainerWrapper flex={1}>
-					<RightContainer
-						setGraphHandler={setGraphHandler}
-						title={title}
-						setTitle={setTitle}
-						description={description}
-						setDescription={setDescription}
-						stacked={stacked}
-						setStacked={setStacked}
-						opacity={opacity}
-						yAxisUnit={yAxisUnit}
-						setOpacity={setOpacity}
-						selectedNullZeroValue={selectedNullZeroValue}
-						setSelectedNullZeroValue={setSelectedNullZeroValue}
-						selectedGraph={graphType}
-						setSelectedTime={setSelectedTime}
-						selectedTime={selectedTime}
-						setYAxisUnit={setYAxisUnit}
-						thresholds={thresholds}
-						setThresholds={setThresholds}
-						selectedWidget={selectedWidget}
-						isFillSpans={isFillSpans}
-						setIsFillSpans={setIsFillSpans}
-						softMin={softMin}
-						setSoftMin={setSoftMin}
-						softMax={softMax}
-						setSoftMax={setSoftMax}
-					/>
+				<RightContainerWrapper>
+					<OverlayScrollbar>
+						<RightContainer
+							setGraphHandler={setGraphHandler}
+							title={title}
+							setTitle={setTitle}
+							description={description}
+							setDescription={setDescription}
+							stacked={stacked}
+							setStacked={setStacked}
+							stackedBarChart={stackedBarChart}
+							setStackedBarChart={setStackedBarChart}
+							opacity={opacity}
+							yAxisUnit={yAxisUnit}
+							columnUnits={columnUnits}
+							setColumnUnits={setColumnUnits}
+							bucketCount={bucketCount}
+							bucketWidth={bucketWidth}
+							combineHistogram={combineHistogram}
+							setCombineHistogram={setCombineHistogram}
+							setBucketWidth={setBucketWidth}
+							setBucketCount={setBucketCount}
+							setOpacity={setOpacity}
+							selectedNullZeroValue={selectedNullZeroValue}
+							setSelectedNullZeroValue={setSelectedNullZeroValue}
+							selectedGraph={graphType}
+							setSelectedTime={setSelectedTime}
+							selectedTime={selectedTime}
+							setYAxisUnit={setYAxisUnit}
+							thresholds={thresholds}
+							setThresholds={setThresholds}
+							selectedWidget={selectedWidget}
+							isFillSpans={isFillSpans}
+							setIsFillSpans={setIsFillSpans}
+							softMin={softMin}
+							setSoftMin={setSoftMin}
+							softMax={softMax}
+							setSoftMax={setSoftMax}
+						/>
+					</OverlayScrollbar>
 				</RightContainerWrapper>
 			</PanelContainer>
 			<Modal
@@ -519,7 +728,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				{!isQueryModified ? (
 					<Typography>
 						{t('your_graph_build_with')}{' '}
-						<QueryTypeTag queryType={currentQuery.queryType} />
+						<QueryTypeTag queryType={currentQuery.queryType} />{' '}
 						{t('dashboard_ok_confirm')}
 					</Typography>
 				) : (

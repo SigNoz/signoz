@@ -14,10 +14,11 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/cache/status"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/postprocess"
 	"go.uber.org/zap"
 )
 
-func prepareLogsQuery(ctx context.Context,
+func prepareLogsQuery(_ context.Context,
 	start,
 	end int64,
 	builderQuery *v3.BuilderQuery,
@@ -121,7 +122,7 @@ func (q *querier) runBuilderQuery(
 				cachedData = data
 			}
 		}
-		misses := q.findMissingTimeRanges(start, end, params.Step, cachedData)
+		misses := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
@@ -256,7 +257,7 @@ func (q *querier) runBuilderQuery(
 			cachedData = data
 		}
 	}
-	misses := q.findMissingTimeRanges(start, end, params.Step, cachedData)
+	misses := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
 	missedSeries := make([]*v3.Series, 0)
 	cachedSeries := make([]*v3.Series, 0)
 	for _, miss := range misses {
@@ -358,7 +359,8 @@ func (q *querier) runBuilderExpression(
 			cachedData = data
 		}
 	}
-	misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
+	step := postprocess.StepIntervalForFunction(params, queryName)
+	misses := q.findMissingTimeRanges(params.Start, params.End, step, cachedData)
 	missedSeries := make([]*v3.Series, 0)
 	cachedSeries := make([]*v3.Series, 0)
 	for _, miss := range misses {

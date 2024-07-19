@@ -41,18 +41,8 @@
   },
   "connection_tests": {
     "logs": {
-      "op": "AND",
-      "items": [
-        {
-          "key": {
-            "type": "tag",
-            "key": "source",
-            "dataType": "string"
-          },
-          "op": "=",
-          "value": "clickhouse"
-        }
-      ]
+      "attribute_key": "source",
+      "attribute_value": "clickhouse"
     }
   },
   "data_collected": "file://data-collected.json"

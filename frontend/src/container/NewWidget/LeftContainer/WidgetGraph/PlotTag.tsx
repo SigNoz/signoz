@@ -1,8 +1,8 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { Spline } from 'lucide-react';
 import { EQueryType } from 'types/common/dashboard';
 
 import QueryTypeTag from '../QueryTypeTag';
-import { PlotTagWrapperStyled } from './styles';
 
 interface IPlotTagProps {
 	queryType: EQueryType;
@@ -15,9 +15,10 @@ function PlotTag({ queryType, panelType }: IPlotTagProps): JSX.Element | null {
 	}
 
 	return (
-		<PlotTagWrapperStyled $panelType={panelType}>
-			Plotted using <QueryTypeTag queryType={queryType} />
-		</PlotTagWrapperStyled>
+		<div className="plot-tag">
+			<Spline size={14} />
+			Plotted with <QueryTypeTag queryType={queryType} />
+		</div>
 	);
 }
 

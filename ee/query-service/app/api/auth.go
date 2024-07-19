@@ -14,7 +14,6 @@ import (
 
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
@@ -51,7 +50,7 @@ func (ah *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if all looks good, call auth
-	resp, err := auth.Login(ctx, &req)
+	resp, err := baseauth.Login(ctx, &req)
 	if ah.HandleError(w, err, http.StatusUnauthorized) {
 		return
 	}
@@ -130,7 +129,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 		// no-sso, validate password
-		if err := auth.ValidatePassword(req.Password); err != nil {
+		if err := baseauth.ValidatePassword(req.Password); err != nil {
 			RespondError(w, model.InternalError(fmt.Errorf("password is not in a valid format")), nil)
 			return
 		}
@@ -241,6 +240,11 @@ func (ah *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 	// prepare google callback handler using parsedState -
 	// which contains redirect URL (front-end endpoint)
 	callbackHandler, err := domain.PrepareGoogleOAuthProvider(parsedState)
+	if err != nil {
+		zap.L().Error("[receiveGoogleAuth] failed to prepare google oauth provider", zap.String("domain", domain.String()), zap.Error(err))
+		handleSsoError(w, r, redirectUri)
+		return
+	}
 
 	identity, err := callbackHandler.HandleCallback(r)
 	if err != nil {

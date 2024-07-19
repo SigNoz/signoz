@@ -1,6 +1,9 @@
 import './QuerySection.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
+import PromQLIcon from 'assets/Dashboard/PromQl';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
@@ -10,9 +13,9 @@ import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interface
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { defaultTo } from 'lodash-es';
+import { defaultTo, isUndefined } from 'lodash-es';
 import { Atom, Play, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -30,7 +33,6 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import AppReducer from 'types/reducer/app';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
@@ -43,15 +45,13 @@ function QuerySection({
 	const urlQuery = useUrlQuery();
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 
 	const { selectedDashboard, setSelectedDashboard } = useDashboard();
+
+	const isDarkMode = useIsDarkMode();
 
 	const { widgets } = selectedDashboard?.data || {};
 
@@ -75,8 +75,6 @@ function QuerySection({
 				return;
 			}
 
-			const updatedQuery = updateStepInterval(query, maxTime, minTime);
-
 			const selectedWidgetIndex = getSelectedWidgetIndex(
 				selectedDashboard,
 				selectedWidget.id,
@@ -97,18 +95,16 @@ function QuerySection({
 						...previousWidgets,
 						{
 							...selectedWidget,
-							query: updatedQuery,
+							query,
 						},
 						...nextWidgets,
 					],
 				},
 			});
-			redirectWithQueryBuilderData(updatedQuery);
+			redirectWithQueryBuilderData(query);
 		},
 		[
 			selectedDashboard,
-			maxTime,
-			minTime,
 			selectedWidget,
 			setSelectedDashboard,
 			redirectWithQueryBuilderData,
@@ -127,12 +123,24 @@ function QuerySection({
 	};
 
 	const handleRunQuery = (): void => {
+		const widgetId = urlQuery.get('widgetId');
+		const isNewPanel = isUndefined(widgets?.find((e) => e.id === widgetId));
+
+		logEvent('Panel Edit: Stage and run query', {
+			dataSource: currentQuery.builder?.queryData?.[0]?.dataSource,
+			panelType: selectedWidget.panelTypes,
+			queryType: currentQuery.queryType,
+			widgetId: selectedWidget.id,
+			dashboardId: selectedDashboard?.uuid,
+			dashboardName: selectedDashboard?.data.title,
+			isNewPanel,
+		});
 		handleStageQuery(currentQuery);
 	};
 
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: false, isDisabled: true },
+			stepInterval: { isHidden: false, isDisabled: false },
 		};
 
 		return config;
@@ -142,11 +150,10 @@ function QuerySection({
 		{
 			key: EQueryType.QUERY_BUILDER,
 			label: (
-				<Tooltip title="Query Builder">
-					<Button className="nav-btns">
-						<Atom size={14} />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<Atom size={14} />
+					<Typography>Query Builder</Typography>
+				</Button>
 			),
 			tab: <Typography>Query Builder</Typography>,
 			children: (
@@ -164,11 +171,10 @@ function QuerySection({
 		{
 			key: EQueryType.QUERY_BUILDER,
 			label: (
-				<Tooltip title="Query Builder">
-					<Button className="nav-btns">
-						<Atom size={14} />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<Atom size={14} />
+					<Typography>Query Builder</Typography>
+				</Button>
 			),
 			tab: <Typography>Query Builder</Typography>,
 			children: (
@@ -182,11 +188,10 @@ function QuerySection({
 		{
 			key: EQueryType.CLICKHOUSE,
 			label: (
-				<Tooltip title="ClickHouse">
-					<Button className="nav-btns">
-						<Terminal size={14} />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<Terminal size={14} />
+					<Typography>ClickHouse Query</Typography>
+				</Button>
 			),
 			tab: <Typography>ClickHouse Query</Typography>,
 			children: <ClickHouseQueryContainer />,
@@ -196,7 +201,10 @@ function QuerySection({
 			label: (
 				<Tooltip title="PromQL">
 					<Button className="nav-btns">
-						<img src="/Icons/promQL.svg" alt="Prom Ql" className="prom-ql-icon" />
+						<PromQLIcon
+							fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
+						/>
+						<Typography>PromQL</Typography>
 					</Button>
 				</Tooltip>
 			),
@@ -228,7 +236,10 @@ function QuerySection({
 				onChange={handleQueryCategoryChange}
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-						<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
+						<TextToolTip
+							text="This will temporarily save the current query and graph state. This will persist across tab change"
+							url="https://signoz.io/docs/userguide/query-builder?utm_source=product&utm_medium=query-builder"
+						/>
 						<Button
 							loading={queryResponse.isFetching}
 							type="primary"

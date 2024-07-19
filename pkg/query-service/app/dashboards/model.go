@@ -83,6 +83,22 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("error in creating notification_channles table: %s", err.Error())
 	}
 
+	tableSchema := `CREATE TABLE IF NOT EXISTS planned_maintenance (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		description TEXT,
+		alert_ids TEXT,
+		schedule TEXT NOT NULL,
+		created_at datetime NOT NULL,
+		created_by TEXT NOT NULL,
+		updated_at datetime NOT NULL,
+		updated_by TEXT NOT NULL
+	);`
+	_, err = db.Exec(tableSchema)
+	if err != nil {
+		return nil, fmt.Errorf("error in creating planned_maintenance table: %s", err.Error())
+	}
+
 	table_schema = `CREATE TABLE IF NOT EXISTS ttl_status (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		transaction_id TEXT NOT NULL,
@@ -326,7 +342,15 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 	if existingTotal > newTotal && existingTotal-newTotal > 1 {
 		// if the total count of panels has reduced by more than 1,
 		// return error
-		return nil, model.BadRequest(fmt.Errorf("deleting more than one panel is not supported"))
+		existingIds := getWidgetIds(dashboard.Data)
+		newIds := getWidgetIds(data)
+
+		differenceIds := getIdDifference(existingIds, newIds)
+
+		if len(differenceIds) > 1 {
+			return nil, model.BadRequest(fmt.Errorf("deleting more than one panel is not supported"))
+		}
+
 	}
 
 	dashboard.UpdatedAt = time.Now()
@@ -682,7 +706,7 @@ func countTraceAndLogsPanel(data map[string]interface{}) (int64, int64) {
 	count := int64(0)
 	totalPanels := int64(0)
 	if data != nil && data["widgets"] != nil {
-		widgets, ok := data["widgets"].(interface{})
+		widgets, ok := data["widgets"]
 		if ok {
 			data, ok := widgets.([]interface{})
 			if ok {
@@ -690,9 +714,9 @@ func countTraceAndLogsPanel(data map[string]interface{}) (int64, int64) {
 					sData, ok := widget.(map[string]interface{})
 					if ok && sData["query"] != nil {
 						totalPanels++
-						query, ok := sData["query"].(interface{}).(map[string]interface{})
+						query, ok := sData["query"].(map[string]interface{})
 						if ok && query["queryType"] == "builder" && query["builder"] != nil {
-							builderData, ok := query["builder"].(interface{}).(map[string]interface{})
+							builderData, ok := query["builder"].(map[string]interface{})
 							if ok && builderData["queryData"] != nil {
 								builderQueryData, ok := builderData["queryData"].([]interface{})
 								if ok {
@@ -713,4 +737,53 @@ func countTraceAndLogsPanel(data map[string]interface{}) (int64, int64) {
 		}
 	}
 	return count, totalPanels
+}
+
+func getWidgetIds(data map[string]interface{}) []string {
+	widgetIds := []string{}
+	if data != nil && data["widgets"] != nil {
+		widgets, ok := data["widgets"]
+		if ok {
+			data, ok := widgets.([]interface{})
+			if ok {
+				for _, widget := range data {
+					sData, ok := widget.(map[string]interface{})
+					if ok && sData["query"] != nil && sData["id"] != nil {
+						id, ok := sData["id"].(string)
+
+						if ok {
+							widgetIds = append(widgetIds, id)
+						}
+
+					}
+				}
+			}
+		}
+	}
+	return widgetIds
+}
+
+func getIdDifference(existingIds []string, newIds []string) []string {
+	// Convert newIds array to a map for faster lookups
+	newIdsMap := make(map[string]bool)
+	for _, id := range newIds {
+		newIdsMap[id] = true
+	}
+
+	// Initialize a map to keep track of elements in the difference array
+	differenceMap := make(map[string]bool)
+
+	// Initialize the difference array
+	difference := []string{}
+
+	// Iterate through existingIds
+	for _, id := range existingIds {
+		// If the id is not found in newIds, and it's not already in the difference array
+		if _, found := newIdsMap[id]; !found && !differenceMap[id] {
+			difference = append(difference, id)
+			differenceMap[id] = true // Mark the id as seen in the difference array
+		}
+	}
+
+	return difference
 }

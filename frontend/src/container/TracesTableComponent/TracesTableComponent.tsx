@@ -1,6 +1,7 @@
 import './TracesTableComponent.styles.scss';
 
 import { Table } from 'antd';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import Controls from 'container/Controls';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
@@ -42,6 +43,7 @@ function TracesTableComponent({
 		setRequestData((prev) => ({
 			...prev,
 			tableParams: {
+				...prev.tableParams,
 				pagination,
 			},
 		}));
@@ -54,7 +56,7 @@ function TracesTableComponent({
 	const totalCount = useMemo(() => dataLength || 0, [dataLength]);
 
 	const queryTableDataResult =
-		queryResponse.data?.payload.data.newResult.data.result;
+		queryResponse.data?.payload?.data?.newResult?.data?.result;
 	const queryTableData = useMemo(() => queryTableDataResult || [], [
 		queryTableDataResult,
 	]);
@@ -86,17 +88,19 @@ function TracesTableComponent({
 	return (
 		<div className="traces-table">
 			<div className="resize-table">
-				<Table
-					pagination={false}
-					tableLayout="fixed"
-					scroll={{ x: true }}
-					loading={queryResponse.isFetching}
-					style={tableStyles}
-					dataSource={transformedQueryTableData}
-					columns={columns}
-					onRow={handleRow}
-					sticky
-				/>
+				<OverlayScrollbar>
+					<Table
+						pagination={false}
+						tableLayout="fixed"
+						scroll={{ x: true }}
+						loading={queryResponse.isFetching}
+						style={tableStyles}
+						dataSource={transformedQueryTableData}
+						columns={columns}
+						onRow={handleRow}
+						sticky
+					/>
+				</OverlayScrollbar>
 			</div>
 			<div className="controller">
 				<Controls

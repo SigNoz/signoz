@@ -55,6 +55,10 @@ func GetAlertManagerApiPrefix() string {
 	return "http://alertmanager:9093/api/"
 }
 
+var TELEMETRY_HEART_BEAT_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_HEART_BEAT_DURATION_MINUTES", 720)
+
+var TELEMETRY_ACTIVE_USER_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_ACTIVE_USER_DURATION_MINUTES", 360)
+
 var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email_template.html")
 
 // Alert manager channel subpath
@@ -154,11 +158,9 @@ const (
 	TraceID                        = "traceID"
 	ServiceName                    = "serviceName"
 	HttpRoute                      = "httpRoute"
-	HttpCode                       = "httpCode"
 	HttpHost                       = "httpHost"
 	HttpUrl                        = "httpUrl"
 	HttpMethod                     = "httpMethod"
-	Component                      = "component"
 	OperationDB                    = "name"
 	OperationRequest               = "operation"
 	Status                         = "status"
@@ -193,7 +195,6 @@ var GroupByColMap = map[string]struct{}{
 	HttpRoute:          {},
 	HttpUrl:            {},
 	HttpMethod:         {},
-	Component:          {},
 	OperationDB:        {},
 	DBName:             {},
 	DBOperation:        {},
@@ -206,12 +207,9 @@ var GroupByColMap = map[string]struct{}{
 
 const (
 	SIGNOZ_METRIC_DBNAME                      = "signoz_metrics"
-	SIGNOZ_SAMPLES_TABLENAME                  = "distributed_samples_v2"
 	SIGNOZ_SAMPLES_V4_TABLENAME               = "distributed_samples_v4"
-	SIGNOZ_TIMESERIES_TABLENAME               = "distributed_time_series_v2"
 	SIGNOZ_TRACE_DBNAME                       = "signoz_traces"
 	SIGNOZ_SPAN_INDEX_TABLENAME               = "distributed_signoz_index_v2"
-	SIGNOZ_TIMESERIES_LOCAL_TABLENAME         = "time_series_v2"
 	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME      = "time_series_v4"
 	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME = "time_series_v4_6hrs"
 	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME = "time_series_v4_1day"
@@ -236,6 +234,18 @@ func GetOrDefaultEnv(key string, fallback string) string {
 		return fallback
 	}
 	return v
+}
+
+func GetOrDefaultEnvInt(key string, fallback int) int {
+	v := os.Getenv(key)
+	if len(v) == 0 {
+		return fallback
+	}
+	intVal, err := strconv.Atoi(v)
+	if err != nil {
+		return fallback
+	}
+	return intVal
 }
 
 const (
@@ -303,9 +313,11 @@ const (
 // written clickhouse query. The column alias indcate which value is
 // to be considered as final result (or target)
 var ReservedColumnTargetAliases = map[string]struct{}{
-	"result": {},
-	"res":    {},
-	"value":  {},
+	"__result": {},
+	"__value":  {},
+	"result":   {},
+	"res":      {},
+	"value":    {},
 }
 
 // logsPPLPfx is a short constant for logsPipelinePrefix
