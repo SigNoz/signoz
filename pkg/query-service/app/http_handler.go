@@ -2198,18 +2198,18 @@ func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddl
 	subRouter := router.PathPrefix("/api/v1/preferences").Subrouter()
 
 	// user actions
+	subRouter.HandleFunc("/user/all", am.ViewAccess(ah.getAllUserPreferences)).Methods(http.MethodGet)
+
 	subRouter.HandleFunc("/user/{preferenceId}", am.ViewAccess(ah.getUserPreference)).Methods(http.MethodGet)
 
 	subRouter.HandleFunc("/user/{preferenceId}", am.ViewAccess(ah.updateUserPreference)).Methods(http.MethodPost)
 
-	subRouter.HandleFunc("/user/all", am.ViewAccess(ah.getAllUserPreferences)).Methods(http.MethodGet)
-
 	// org actions
+	subRouter.HandleFunc("/org/all", am.AdminAccess(ah.getAllOrgPreferences)).Methods(http.MethodGet)
+
 	subRouter.HandleFunc("/org/{preferenceId}", am.AdminAccess(ah.getOrgPreference)).Methods(http.MethodGet)
 
 	subRouter.HandleFunc("/org/{preferenceId}", am.AdminAccess(ah.updateOrgPreference)).Methods(http.MethodPost)
-
-	subRouter.HandleFunc("/org/all", am.AdminAccess(ah.getAllOrgPreferences)).Methods(http.MethodGet)
 }
 
 func (ah *APIHandler) getUserPreference(

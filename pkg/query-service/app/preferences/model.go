@@ -235,7 +235,59 @@ func UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceVal
 }
 
 func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences, *model.ApiError) {
-	return nil, nil
+	// filter out all the org enabled preferences from the preference variable
+	allOrgPreferences := []AllPreferences{}
+
+	// fetch all the org preference values stored in org_preference table
+	orgPreferenceValues := []PreferenceKV{}
+
+	query := `SELECT preference_id,preference_value FROM org_preference WHERE org_id=$1;`
+	err := db.Select(&orgPreferenceValues, query, orgId)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all org preference values: %s", err)}
+	}
+
+	// create a map of key vs values from the above response
+	preferenceValueMap := map[string]interface{}{}
+
+	for _, preferenceValue := range orgPreferenceValues {
+		preferenceValueMap[preferenceValue.PreferenceId] = preferenceValue.PreferenceValue
+	}
+
+	// update in the above filtered list wherver value present in the map
+	for _, preference := range preferences {
+		isEnabledForOrgScope := false
+
+		preferenceWithValue := AllPreferences{}
+		preferenceWithValue.Key = preference.Key
+		preferenceWithValue.Name = preference.Name
+		preferenceWithValue.Description = preference.Description
+		preferenceWithValue.AllowedScopes = preference.AllowedScopes
+		preferenceWithValue.AllowedValues = preference.AllowedValues
+		preferenceWithValue.DefaultValue = preference.DefaultValue
+		preferenceWithValue.Range = preference.Range
+		preferenceWithValue.ValueType = preference.ValueType
+
+		for _, scope := range preference.AllowedScopes {
+			if scope == "org" {
+				isEnabledForOrgScope = true
+			}
+		}
+
+		if isEnabledForOrgScope {
+			ok, seen := preferenceValueMap[preference.Key]
+
+			if seen {
+				preferenceWithValue.Value = ok
+			} else {
+				preferenceWithValue.Value = preference.DefaultValue
+			}
+
+			allOrgPreferences = append(allOrgPreferences, preferenceWithValue)
+		}
+	}
+	return &allOrgPreferences, nil
 }
 
 // user preference functions
@@ -377,5 +429,85 @@ func UpdateUserPreference(ctx context.Context, preferenceId string, preferenceVa
 }
 
 func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferences, *model.ApiError) {
-	return nil, nil
+	user := common.GetUserFromContext(ctx)
+	allUserPreferences := []AllPreferences{}
+
+	// fetch all the org preference values stored in org_preference table
+	orgPreferenceValues := []PreferenceKV{}
+
+	query := `SELECT preference_id,preference_value FROM org_preference WHERE org_id=$1;`
+	err := db.Select(&orgPreferenceValues, query, orgId)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all org preference values: %s", err)}
+	}
+
+	// create a map of key vs values from the above response
+	preferenceOrgValueMap := map[string]interface{}{}
+
+	for _, preferenceValue := range orgPreferenceValues {
+		preferenceOrgValueMap[preferenceValue.PreferenceId] = preferenceValue.PreferenceValue
+	}
+
+	// fetch all the user preference values stored in user_preference table
+	userPreferenceValues := []PreferenceKV{}
+
+	query = `SELECT preference_id,preference_value FROM user_preference WHERE user_id=$1;`
+	err = db.Select(&userPreferenceValues, query, user.User.Id)
+
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all user preference values: %s", err)}
+	}
+
+	// create a map of key vs values from the above response
+	preferenceUserValueMap := map[string]interface{}{}
+
+	for _, preferenceValue := range userPreferenceValues {
+		preferenceUserValueMap[preferenceValue.PreferenceId] = preferenceValue.PreferenceValue
+	}
+
+	// update in the above filtered list wherver value present in the map
+	for _, preference := range preferences {
+		isEnabledForOrgScope := false
+		isEnabledForUserScope := false
+
+		preferenceWithValue := AllPreferences{}
+		preferenceWithValue.Key = preference.Key
+		preferenceWithValue.Name = preference.Name
+		preferenceWithValue.Description = preference.Description
+		preferenceWithValue.AllowedScopes = preference.AllowedScopes
+		preferenceWithValue.AllowedValues = preference.AllowedValues
+		preferenceWithValue.DefaultValue = preference.DefaultValue
+		preferenceWithValue.Range = preference.Range
+		preferenceWithValue.ValueType = preference.ValueType
+
+		for _, scope := range preference.AllowedScopes {
+			if scope == "org" {
+				isEnabledForOrgScope = true
+			}
+			if scope == "user" {
+				isEnabledForUserScope = true
+			}
+		}
+
+		if isEnabledForUserScope {
+			preferenceWithValue.Value = preference.DefaultValue
+
+			if isEnabledForOrgScope {
+				ok, seen := preferenceOrgValueMap[preference.Key]
+				if seen {
+					preferenceWithValue.Value = ok
+				}
+			}
+
+			ok, seen := preferenceUserValueMap[preference.Key]
+
+			if seen {
+				preferenceWithValue.Value = ok
+			}
+
+			allUserPreferences = append(allUserPreferences, preferenceWithValue)
+		}
+	}
+	return &allUserPreferences, nil
 }
