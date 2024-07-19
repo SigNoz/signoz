@@ -64,38 +64,4 @@ The OpenTelemetry.Exporter.Options get or set the target to which the exporter i
 This is done by configuring an OpenTelemetry [TracerProvider](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/trace/customizing-the-sdk#readme) using extension methods and setting it to auto-start when the host is started.
 
 
-&nbsp;
 
-### Step 3: Dockerize your application
-
-Since the crucial environment variables like SIGNOZ_INGESTION_KEY, Ingestion Endpoint and Service name are set in the `program.cs` file, you don't need to add any additional steps in your Dockerfile.
-
-An **example** of a Dockerfile could look like this:
-
-```bash
-
-# Use the Microsoft official .NET SDK image to build the application
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
-WORKDIR /app
-
-# Copy the CSPROJ file and restore any dependencies (via NUGET)
-COPY *.csproj ./
-RUN dotnet restore
-
-# Copy the rest of the project files and build the application
-COPY . ./
-RUN dotnet publish -c Release -o out
-
-# Generate the runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
-WORKDIR /app
-COPY --from=build-env /app/out .
-
-# Expose port 5145 for the application
-EXPOSE 5145
-
-# Set the ASPNETCORE_URLS environment variable to listen on port 5145
-ENV ASPNETCORE_URLS=http://+:5145
-
-ENTRYPOINT ["dotnet", "YOUR-APPLICATION.dll"]
-```
