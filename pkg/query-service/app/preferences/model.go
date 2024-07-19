@@ -124,6 +124,33 @@ func InitDB(datasourceName string) error {
 	return nil
 }
 
+func getValueType(preferenceValue interface{}) string {
+	var typeOfValue string
+	switch preferenceValue.(type) {
+	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
+		typeOfValue = "integer"
+	case float32, float64:
+		typeOfValue = "float"
+	case string:
+		typeOfValue = "string"
+	case bool:
+		typeOfValue = "boolean"
+	default:
+		typeOfValue = "unknown"
+	}
+	return typeOfValue
+}
+
+func checkIfInAllowedValues(preferenceValue interface{}, preference Preference) bool {
+	isInAllowedValues := false
+	for _, value := range preference.AllowedValues {
+		if value == preferenceValue {
+			isInAllowedValues = true
+		}
+	}
+	return isInAllowedValues
+}
+
 // org preference functions
 func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*PreferenceKV, *model.ApiError) {
 	// check if the preference key exists or not
@@ -182,34 +209,16 @@ func UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceVal
 	}
 
 	// check if the preference value being provided is of preference valueType
-	var typeOfValue string
-	switch preferenceValue.(type) {
-	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
-		typeOfValue = "integer"
-	case float32, float64:
-		typeOfValue = "float"
-	case string:
-		typeOfValue = "string"
-	case bool:
-		typeOfValue = "boolean"
-	default:
-		typeOfValue = "unknown"
-	}
-
+	typeOfValue := getValueType(preferenceValue)
 	if typeOfValue != preference.ValueType {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not of expected type: %s", preference.ValueType)}
 	}
 
 	// check the validity of the value being part of allowed values or the range specified if any
 	if preference.AllowedValues != nil {
-		isInAllowedValues := false
-		for _, value := range preference.AllowedValues {
-			if value == preferenceValue {
-				isInAllowedValues = true
-			}
-		}
+		isInAllowedValues := checkIfInAllowedValues(preferenceValue, preference)
 		if !isInAllowedValues {
-			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the list of allowedValues: %s", preference.AllowedValues...)}
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the list of allowedValues: %v", preference.AllowedValues)}
 		}
 	} else {
 		if preferenceValue.(int) < preference.Range.Min || preferenceValue.(int) > preference.Range.Max {
@@ -376,34 +385,16 @@ func UpdateUserPreference(ctx context.Context, preferenceId string, preferenceVa
 	}
 
 	// check for the preferenceValue to be of the same type as preference.ValueType
-	var typeOfValue string
-	switch preferenceValue.(type) {
-	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
-		typeOfValue = "integer"
-	case float32, float64:
-		typeOfValue = "float"
-	case string:
-		typeOfValue = "string"
-	case bool:
-		typeOfValue = "boolean"
-	default:
-		typeOfValue = "unknown"
-	}
-
+	typeOfValue := getValueType(preferenceValue)
 	if typeOfValue != preference.ValueType {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not of expected type: %s", preference.ValueType)}
 	}
 
 	// check if the preferenceValue exists in the allowed values
 	if preference.AllowedValues != nil {
-		isInAllowedValues := false
-		for _, value := range preference.AllowedValues {
-			if value == preferenceValue {
-				isInAllowedValues = true
-			}
-		}
+		isInAllowedValues := checkIfInAllowedValues(preferenceValue, preference)
 		if !isInAllowedValues {
-			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the list of allowedValues: %s", preference.AllowedValues...)}
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the list of allowedValues: %v", preference.AllowedValues)}
 		}
 	} else {
 		if preferenceValue.(int) < preference.Range.Min || preferenceValue.(int) > preference.Range.Max {
