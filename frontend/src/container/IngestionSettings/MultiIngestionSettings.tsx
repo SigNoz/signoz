@@ -35,6 +35,7 @@ import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionK
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import {
+	ArrowUpRight,
 	CalendarClock,
 	Check,
 	Copy,
@@ -875,10 +876,34 @@ function MultiIngestionSettings(): JSX.Element {
 	return (
 		<div className="ingestion-key-container">
 			<div className="ingestion-key-content">
+				<div className="mb-24">
+					<Typography.Title className="title"> Ingestion URL </Typography.Title>
+					<Typography.Text className="subtitle">
+						Find your ingestion URL and learn more about sending data to SigNoz{' '}
+						<a
+							href="https://signoz.io/docs/ingestion/signoz-cloud/overview/"
+							target="_blank"
+							className="learn-more"
+							rel="noreferrer"
+						>
+							here <ArrowUpRight size={14} />
+						</a>
+					</Typography.Text>
+				</div>
+
 				<header>
 					<Typography.Title className="title"> Ingestion Keys </Typography.Title>
 					<Typography.Text className="subtitle">
-						Create and manage ingestion keys for the SigNoz Cloud
+						Create and manage ingestion keys for the SigNoz Cloud{' '}
+						<a
+							href="https://signoz.io/docs/ingestion/signoz-cloud/keys/"
+							target="_blank"
+							className="learn-more"
+							rel="noreferrer"
+						>
+							{' '}
+							Learn more <ArrowUpRight size={14} />
+						</a>
 					</Typography.Text>
 				</header>
 

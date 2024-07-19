@@ -940,3 +940,26 @@
 		border-color: var(--bg-vanilla-300) !important;
 	}
 }
+
+.learn-more {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	gap: 2px;
+}
+
+.mt-8 {
+	margin-top: 8px;
+}
+
+.mt-12 {
+	margin-top: 12px;
+}
+
+.mt-24 {
+	margin-top: 24px;
+}
+
+.mb-24 {
+	margin-bottom: 24px;
+}
