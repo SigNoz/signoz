@@ -27,6 +27,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
@@ -91,6 +92,10 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	if err := dao.InitDao("sqlite", constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+		return nil, err
+	}
+
+	if err := preferences.InitDB(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
 		return nil, err
 	}
 
@@ -273,6 +278,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	api.RegisterRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterIntegrationRoutes(r, am)
+	api.RegisterPreferenceRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
 	api.RegisterQueryRangeV4Routes(r, am)
 
