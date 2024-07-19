@@ -29,6 +29,18 @@ type Preference struct {
 	AllowedScopes []string      `json:"allowedScopes"`
 }
 
+type AllPreferences struct {
+	Key           string        `json:"key"`
+	Name          string        `json:"name"`
+	Description   string        `json:"description"`
+	ValueType     string        `json:"valueType"`
+	DefaultValue  interface{}   `json:"defaultValue"`
+	Value         interface{}   `json:"value"`
+	AllowedValues []interface{} `json:"allowedValues"`
+	Range         Range         `json:"range"`
+	AllowedScopes []string      `json:"allowedScopes"`
+}
+
 type PreferenceKV struct {
 	PreferenceId    string      `json:"preference_id" db:"preference_id"`
 	PreferenceValue interface{} `json:"preference_value" db:"preference_value"`
@@ -222,6 +234,10 @@ func UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceVal
 	}, nil
 }
 
+func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences, *model.ApiError) {
+	return nil, nil
+}
+
 // user preference functions
 func GetUserPreference(ctx context.Context, preferenceId string, orgId string) (*PreferenceKV, *model.ApiError) {
 
@@ -358,4 +374,8 @@ func UpdateUserPreference(ctx context.Context, preferenceId string, preferenceVa
 		PreferenceId:    preferenceId,
 		PreferenceValue: preferenceValue,
 	}, nil
+}
+
+func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferences, *model.ApiError) {
+	return nil, nil
 }

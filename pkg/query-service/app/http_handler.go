@@ -2252,16 +2252,16 @@ func (ah *APIHandler) updateUserPreference(
 func (ah *APIHandler) getAllUserPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	integrationId := mux.Vars(r)["integrationId"]
-	integration, apiErr := ah.IntegrationsController.GetIntegration(
-		r.Context(), integrationId,
+	orgId := r.URL.Query().Get("orgId")
+	preference, apiErr := preferences.GetAllUserPreferences(
+		r.Context(), orgId,
 	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch integration details")
+		RespondError(w, apiErr, nil)
 		return
 	}
 
-	ah.Respond(w, integration)
+	ah.Respond(w, preference)
 }
 
 func (ah *APIHandler) getOrgPreference(
@@ -2305,16 +2305,16 @@ func (ah *APIHandler) updateOrgPreference(
 func (ah *APIHandler) getAllOrgPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	integrationId := mux.Vars(r)["integrationId"]
-	integration, apiErr := ah.IntegrationsController.GetIntegration(
-		r.Context(), integrationId,
+	orgId := r.URL.Query().Get("orgId")
+	preference, apiErr := preferences.GetAllOrgPreferences(
+		r.Context(), orgId,
 	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch integration details")
+		RespondError(w, apiErr, nil)
 		return
 	}
 
-	ah.Respond(w, integration)
+	ah.Respond(w, preference)
 }
 
 // Integrations
