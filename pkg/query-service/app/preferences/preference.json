@@ -1,11 +1,11 @@
 [
     {
-        "key": "LOGS_TOOLBAR_COLLAPSED",
+        "key": "DASHBOARDS_LIST_VIEW",
         "name": "Logs toolbar collapsed",
         "description":"",
-        "valueType":"boolean",
-        "defaultValue":false,
-        "allowedValues":[true,false],
+        "valueType":"string",
+        "defaultValue":"grid",
+        "allowedValues":["grid","list"],
         "range": {
             "min": 0,
             "max": 0

@@ -2215,31 +2215,38 @@ func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddl
 func (ah *APIHandler) getUserPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	integrationId := mux.Vars(r)["integrationId"]
-	integration, apiErr := ah.IntegrationsController.GetIntegration(
-		r.Context(), integrationId,
+	preferenceId := mux.Vars(r)["preferenceId"]
+	orgId := r.URL.Query().Get("orgId")
+	preference, apiErr := preferences.GetUserPreference(
+		r.Context(), preferenceId, orgId,
 	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch integration details")
+		RespondError(w, apiErr, nil)
 		return
 	}
 
-	ah.Respond(w, integration)
+	ah.Respond(w, preference)
 }
 
 func (ah *APIHandler) updateUserPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	integrationId := mux.Vars(r)["integrationId"]
-	integration, apiErr := ah.IntegrationsController.GetIntegration(
-		r.Context(), integrationId,
-	)
+	preferenceId := mux.Vars(r)["preferenceId"]
+	req := preferences.UpdatePreference{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch integration details")
+		RespondError(w, apiErr, nil)
 		return
 	}
 
-	ah.Respond(w, integration)
+	ah.Respond(w, preference)
 }
 
 func (ah *APIHandler) getAllUserPreferences(
@@ -2261,8 +2268,9 @@ func (ah *APIHandler) getOrgPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	preferenceId := mux.Vars(r)["preferenceId"]
+	orgId := r.URL.Query().Get("orgId")
 	preference, apiErr := preferences.GetOrgPreference(
-		r.Context(), preferenceId,
+		r.Context(), preferenceId, orgId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -2277,6 +2285,7 @@ func (ah *APIHandler) updateOrgPreference(
 ) {
 	preferenceId := mux.Vars(r)["preferenceId"]
 	req := preferences.UpdatePreference{}
+	orgId := r.URL.Query().Get("orgId")
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 
@@ -2284,7 +2293,7 @@ func (ah *APIHandler) updateOrgPreference(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue)
+	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, orgId)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
