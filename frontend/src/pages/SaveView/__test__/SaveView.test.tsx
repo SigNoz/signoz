@@ -1,10 +1,27 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable sonarjs/no-duplicate-string */
+import ROUTES from 'constants/routes';
 import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { MemoryRouter, Route } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
 
 import SaveView from '..';
+
+const handleExplorerTabChangeTest = jest.fn();
+jest.mock('hooks/useHandleExplorerTabChange', () => ({
+	useHandleExplorerTabChange: () => ({
+		handleExplorerTabChange: handleExplorerTabChangeTest,
+	}),
+}));
+
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: jest.fn().mockReturnValue({
+		pathname: `${ROUTES.TRACES_SAVE_VIEWS}`,
+	}),
+}));
 
 describe('SaveView', () => {
 	it('should render the SaveView component', async () => {
@@ -25,41 +42,56 @@ describe('SaveView', () => {
 		expect(screen.getByText('test-user-test')).toBeInTheDocument();
 	});
 
-	// it('explorer icon should take the user to the related explorer page', async () => {
-	// 	render(<SaveView />);
+	it('explorer icon should take the user to the related explorer page', async () => {
+		render(
+			<MemoryRouter initialEntries={['/traces/saved-views']}>
+				<Route path="/traces/saved-views">
+					<SaveView />
+				</Route>
+			</MemoryRouter>,
+		);
 
-	// 	expect(await screen.findByText('Table View')).toBeInTheDocument();
+		expect(await screen.findByText('Table View')).toBeInTheDocument();
 
-	// 	const explorerIcon = await screen.findAllByTestId('go-to-explorer');
-	// 	expect(explorerIcon[0]).toBeInTheDocument();
-	// 	// expect(explorerIcon[0]).toHaveAttribute('href', '/traces-explorer');
+		const explorerIcon = await screen.findAllByTestId('go-to-explorer');
+		expect(explorerIcon[0]).toBeInTheDocument();
 
-	// 	// Simulate click on explorer icon
-	// 	fireEvent.click(explorerIcon[0]);
+		// Simulate click on explorer icon
+		fireEvent.click(explorerIcon[0]);
 
-	// 	await waitFor(() => expect(restt).toHaveBeenCalled());
+		await waitFor(() =>
+			expect(handleExplorerTabChangeTest).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.anything(),
+				'/traces-explorer', // Asserts the third argument is '/traces-explorer'
+			),
+		);
+	});
 
-	// 	await waitFor(() => expect(window.location.href).toBe('/traces-explorer'));
-	// });
+	it('should render the SaveView component with a search input', async () => {
+		render(<SaveView />);
+		const searchInput = screen.getByPlaceholderText('Search for views...');
+		expect(await screen.findByText('Table View')).toBeInTheDocument();
 
-	// it('should render the SaveView component with a search input', async () => {
-	// 	const { container, getByText } = render(<SaveView />);
-	// 	const searchInput = screen.getByPlaceholderText('Search for views...');
-	// 	expect(searchInput).toBeInTheDocument();
+		expect(searchInput).toBeInTheDocument();
 
-	// 	// search for 'R-test panel'
-	// 	searchInput.focus();
-	// 	(searchInput as HTMLInputElement).setSelectionRange(
-	// 		0,
-	// 		(searchInput as HTMLInputElement).value.length,
-	// 	);
+		// search for 'R-test panel'
+		searchInput.focus();
+		(searchInput as HTMLInputElement).setSelectionRange(
+			0,
+			(searchInput as HTMLInputElement).value.length,
+		);
 
-	// 	fireEvent.change(searchInput, { target: { value: 'R-test panel' } });
-	// 	expect(searchInput).toHaveValue('R-test panel');
-	// 	searchInput.blur();
+		fireEvent.change(searchInput, { target: { value: 'R-test panel' } });
+		expect(searchInput).toHaveValue('R-test panel');
+		searchInput.blur();
 
-	// 	expect(await screen.findByText('R-test panel')).toBeInTheDocument();
-	// });
+		expect(await screen.findByText('R-test panel')).toBeInTheDocument();
+
+		// Table View should not be present now
+		const savedViews = screen.getAllByRole('row');
+		expect(savedViews).toHaveLength(1);
+	});
 
 	it('should be able to edit name of view', async () => {
 		server.use(
