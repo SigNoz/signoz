@@ -437,9 +437,10 @@ var testLogsWithFormula = []struct {
 		},
 		ExpectedQuery: "SELECT A.`key_1` as `key_1`, A.`ts` as `ts`, A.value + B.value as value FROM " +
 			"(SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_bool_value[indexOf(attributes_bool_key, 'key_1')] as `key_1`, toFloat64(count(*)) as value from " +
-			"signoz_logs.distributed_logs where (timestamp >= 1702979275000000000 AND timestamp <= 1702981075000000000) AND attributes_bool_value[indexOf(attributes_bool_key, 'key_1')] = true AND " +
-			"has(attributes_bool_key, 'key_1') group by `key_1`,ts order by value DESC) as A  INNER JOIN (SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, " +
-			"attributes_bool_value[indexOf(attributes_bool_key, 'key_1')] as `key_1`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1702979275000000000 AND timestamp <= 1702981075000000000) " +
+			"signoz_logs.distributed_logs_v2 where (timestamp >= 1702979275000000000 AND timestamp <= 1702981075000000000) AND (ts_bucket_start >= 1702979275 AND ts_bucket_start <= 1702981075) " +
+			"AND attributes_bool_value[indexOf(attributes_bool_key, 'key_1')] = true AND has(attributes_bool_key, 'key_1') group by `key_1`,ts order by value DESC) as A  INNER JOIN (SELECT " +
+			"toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_bool_value[indexOf(attributes_bool_key, 'key_1')] as `key_1`, toFloat64(count(*)) as value " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1702979275000000000 AND timestamp <= 1702981075000000000) AND (ts_bucket_start >= 1702979275 AND ts_bucket_start <= 1702981075) " +
 			"AND attributes_bool_value[indexOf(attributes_bool_key, 'key_2')] = true AND has(attributes_bool_key, 'key_1') group by `key_1`,ts order by value DESC) as B  ON A.`key_1` = B.`key_1` AND A.`ts` = B.`ts`",
 	},
 	{
@@ -497,9 +498,10 @@ var testLogsWithFormula = []struct {
 			},
 		},
 		ExpectedQuery: "SELECT A.`key1.1` as `key1.1`, A.`ts` as `ts`, A.value + B.value as value FROM (SELECT now() as ts, attributes_bool_value[indexOf(attributes_bool_key, 'key1.1')] as `key1.1`, " +
-			"toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1702979056000000000 AND timestamp <= 1702982656000000000) AND attributes_bool_value[indexOf(attributes_bool_key, 'key1.1')] = true AND " +
-			"has(attributes_bool_key, 'key1.1') group by `key1.1` order by value DESC) as A  INNER JOIN (SELECT now() as ts, attributes_bool_value[indexOf(attributes_bool_key, 'key1.1')] as `key1.1`, " +
-			"toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1702979056000000000 AND timestamp <= 1702982656000000000) AND attributes_bool_value[indexOf(attributes_bool_key, 'key1.2')] = true AND " +
+			"toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1702979056000000000 AND timestamp <= 1702982656000000000) AND (ts_bucket_start >= 1702979056 AND ts_bucket_start <= 1702982656) " +
+			"AND attributes_bool_value[indexOf(attributes_bool_key, 'key1.1')] = true AND has(attributes_bool_key, 'key1.1') group by `key1.1` order by value DESC) as A  INNER JOIN (SELECT now() as ts, " +
+			"attributes_bool_value[indexOf(attributes_bool_key, 'key1.1')] as `key1.1`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1702979056000000000 AND timestamp <= 1702982656000000000) " +
+			"AND (ts_bucket_start >= 1702979056 AND ts_bucket_start <= 1702982656) AND attributes_bool_value[indexOf(attributes_bool_key, 'key1.2')] = true AND " +
 			"has(attributes_bool_key, 'key1.1') group by `key1.1` order by value DESC) as B  ON A.`key1.1` = B.`key1.1` AND A.`ts` = B.`ts`",
 	},
 	{
@@ -557,10 +559,11 @@ var testLogsWithFormula = []struct {
 			},
 		},
 		ExpectedQuery: "SELECT A.`key1.1` as `key1.1`, A.`ts` as `ts`, A.value - B.value as value FROM (SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, " +
-			"`attribute_bool_key1$$1` as `key1.1`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1702980884000000000 AND timestamp <= 1702984484000000000) AND " +
-			"`attribute_bool_key_2` = true AND `attribute_bool_key1$$1_exists`=true group by `key1.1`,ts order by value DESC) as A  INNER JOIN (SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), " +
-			"INTERVAL 60 SECOND) AS ts, `attribute_bool_key1$$1` as `key1.1`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1702980884000000000 AND " +
-			"timestamp <= 1702984484000000000) AND attributes_bool_value[indexOf(attributes_bool_key, 'key_1')] = true AND `attribute_bool_key1$$1_exists`=true group by `key1.1`,ts order by value DESC) as B  " +
+			"`attribute_bool_key1$$1` as `key1.1`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1702980884000000000 AND timestamp <= 1702984484000000000) AND " +
+			"(ts_bucket_start >= 1702980884 AND ts_bucket_start <= 1702984484) AND `attribute_bool_key_2` = true AND `attribute_bool_key1$$1_exists`=true group by `key1.1`,ts order by value DESC) as " +
+			"A  INNER JOIN (SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, `attribute_bool_key1$$1` as `key1.1`, toFloat64(count(*)) as value from " +
+			"signoz_logs.distributed_logs_v2 where (timestamp >= 1702980884000000000 AND timestamp <= 1702984484000000000) AND (ts_bucket_start >= 1702980884 AND ts_bucket_start <= 1702984484) AND " +
+			"attributes_bool_value[indexOf(attributes_bool_key, 'key_1')] = true AND `attribute_bool_key1$$1_exists`=true group by `key1.1`,ts order by value DESC) as B  " +
 			"ON A.`key1.1` = B.`key1.1` AND A.`ts` = B.`ts`",
 	},
 }

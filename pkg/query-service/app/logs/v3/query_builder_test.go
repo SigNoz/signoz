@@ -447,8 +447,8 @@ var testBuildLogsQueryData = []struct {
 		},
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value " +
-			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-			"AND (ts_bucket_start >= 1680066360 AND ts_bucket_end <= 1680066458) group by ts order by value DESC",
+			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
+			"group by ts order by value DESC",
 	},
 	{
 		Name:      "Test aggregate count on a attribute",
@@ -465,7 +465,7 @@ var testBuildLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value " +
 			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-			"AND (ts_bucket_start >= 1680066360 AND ts_bucket_end <= 1680066458) AND has(attributes_string_key, 'user_name') group by ts order by value DESC",
+			"AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) AND has(attributes_string_key, 'user_name') group by ts order by value DESC",
 	},
 	{
 		Name:      "Test aggregate count on a with filter",
@@ -485,7 +485,7 @@ var testBuildLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value " +
 			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND " +
-			"(ts_bucket_start >= 1680066360 AND ts_bucket_end <= 1680066458) AND " +
+			"(ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) AND " +
 			"attributes_float64_value[indexOf(attributes_float64_key, 'bytes')] > 100.000000 AND has(attributes_string_key, 'user_name') " +
 			"group by ts order by value DESC",
 	},
@@ -507,367 +507,371 @@ var testBuildLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value " +
 			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND " +
-			"(ts_bucket_start >= 1680066360 AND ts_bucket_end <= 1680066458) AND resources_float64_value[indexOf(resources_float64_key, 'bytes')] > 100.000000 AND " +
+			"(ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) AND resources_float64_value[indexOf(resources_float64_key, 'bytes')] > 100.000000 AND " +
 			"has(attributes_string_key, 'user_name') AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
 			"WHERE (seen_at_ts_bucket_start >= 1680066360) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'bytes') > 100.000000))" +
 			" group by ts order by value DESC",
 	},
-	// {
-	// 	Name:      "Test aggregate count distinct and order by value",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-	// 		AggregateOperator:  v3.AggregateOperatorCountDistinct,
-	// 		Expression:         "A",
-	// 		OrderBy:            []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "ASC"}},
-	// 	},
-	// 	TableName:     "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(`attribute_string_name`))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND `attribute_string_name_exists`=true group by ts order by value ASC",
-	// },
-	// {
-	// 	Name:      "Test aggregate count distinct on non selected field",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-	// 		AggregateOperator:  v3.AggregateOperatorCountDistinct,
-	// 		Expression:         "A",
-	// 	},
-	// 	TableName:     "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'name') group by ts order by value DESC",
-	// },
-	// {
-	// 	Name:      "Test aggregate count distinct on non selected field containing dot",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "method.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-	// 		AggregateOperator:  v3.AggregateOperatorCountDistinct,
-	// 		Expression:         "A",
-	// 		GroupBy:            []v3.AttributeKey{{Key: "host.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-	// 		OrderBy:            []v3.OrderBy{{ColumnName: "host.name", Order: "ASC"}, {ColumnName: "ts", Order: "ASC", Key: "ts"}},
-	// 	},
-	// 	TableName: "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'host.name')] as `host.name`, " +
-	// 		"toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'method.name')]))) as value from signoz_logs.distributed_logs_v2 " +
-	// 		"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'host.name') AND has(attributes_string_key, 'method.name') " +
-	// 		"group by `host.name`,ts order by `host.name` ASC",
-	// },
-	// {
-	// 	Name:      "Test aggregate count distinct on selected field containing dot",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "method.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-	// 		AggregateOperator:  v3.AggregateOperatorCountDistinct,
-	// 		Expression:         "A",
-	// 		GroupBy:            []v3.AttributeKey{{Key: "host.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
-	// 		OrderBy:            []v3.OrderBy{{ColumnName: "host.name", Order: "ASC"}, {ColumnName: "ts", Order: "ASC", Key: "ts", IsColumn: true}},
-	// 	},
+	{
+		Name:      "Test aggregate count distinct and order by value",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			OrderBy:            []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "ASC"}},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(`attribute_string_name`))) as value " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) AND `attribute_string_name_exists`=true group by " +
+			"ts order by value ASC",
+	},
+	{
+		Name:      "Test aggregate count distinct on non selected field",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) AND has(attributes_string_key, 'name') group by ts order by value DESC",
+	},
+	{
+		Name:      "Test aggregate count distinct on non selected field containing dot",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "method.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			GroupBy:            []v3.AttributeKey{{Key: "host.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy:            []v3.OrderBy{{ColumnName: "host.name", Order: "ASC"}, {ColumnName: "ts", Order: "ASC", Key: "ts"}},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'host.name')] as `host.name`, " +
+			"toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'method.name')]))) as value from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) AND has(attributes_string_key, 'host.name') " +
+			"AND has(attributes_string_key, 'method.name') group by `host.name`,ts order by `host.name` ASC",
+	},
+	{
+		Name:      "Test aggregate count distinct on selected field containing dot",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "method.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			GroupBy:            []v3.AttributeKey{{Key: "host.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
+			OrderBy:            []v3.OrderBy{{ColumnName: "host.name", Order: "ASC"}, {ColumnName: "ts", Order: "ASC", Key: "ts", IsColumn: true}},
+		},
 
-	// 	TableName: "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, `attribute_string_host$$name` as `host.name`, toFloat64(count(distinct(`attribute_string_method$$name`))) as value" +
-	// 		" from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-	// 		"AND `attribute_string_host$$name_exists`=true AND `attribute_string_method$$name_exists`=true " +
-	// 		"group by `host.name`,ts " +
-	// 		"order by `host.name` ASC",
-	// },
-	// {
-	// 	Name:      "Test aggregate count distinct with filter and groupBy",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-	// 		AggregateOperator:  v3.AggregateOperatorCountDistinct,
-	// 		Expression:         "A",
-	// 		Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-	// 			{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
-	// 			{Key: v3.AttributeKey{Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "abc", Operator: "!="},
-	// 		},
-	// 		},
-	// 		GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-	// 		OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}, {ColumnName: "ts", Order: "ASC", Key: "ts", IsColumn: true}},
-	// 	},
-	// 	TableName: "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
-	// 		" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
-	// 		"toFloat64(count(distinct(`attribute_string_name`))) as value from signoz_logs.distributed_logs_v2 " +
-	// 		"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-	// 		"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND resources_string_value[indexOf(resources_string_key, 'x')] != 'abc' " +
-	// 		"AND has(attributes_string_key, 'method') " +
-	// 		"AND `attribute_string_name_exists`=true " +
-	// 		"group by `method`,ts " +
-	// 		"order by `method` ASC",
-	// },
-	// {
-	// 	Name:      "Test aggregate count with multiple filter,groupBy and orderBy",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-	// 		AggregateOperator:  v3.AggregateOperatorCountDistinct,
-	// 		Expression:         "A",
-	// 		Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-	// 			{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
-	// 			{Key: v3.AttributeKey{Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "abc", Operator: "!="},
-	// 		},
-	// 		},
-	// 		GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, {Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}},
-	// 		OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}, {ColumnName: "x", Order: "ASC"}},
-	// 	},
-	// 	TableName: "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
-	// 		" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
-	// 		"resources_string_value[indexOf(resources_string_key, 'x')] as `x`, " +
-	// 		"toFloat64(count(distinct(`attribute_string_name`))) as value from signoz_logs.distributed_logs_v2 " +
-	// 		"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-	// 		"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND resources_string_value[indexOf(resources_string_key, 'x')] != 'abc' " +
-	// 		"AND has(attributes_string_key, 'method') " +
-	// 		"AND has(resources_string_key, 'x') " +
-	// 		"AND `attribute_string_name_exists`=true " +
-	// 		"group by `method`,`x`,ts " +
-	// 		"order by `method` ASC,`x` ASC",
-	// },
-	// {
-	// 	Name:      "Test aggregate avg",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag},
-	// 		AggregateOperator:  v3.AggregateOperatorAvg,
-	// 		Expression:         "A",
-	// 		Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-	// 			{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
-	// 		},
-	// 		},
-	// 		GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-	// 		OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}, {ColumnName: "x", Order: "ASC", Key: "x", IsColumn: true}},
-	// 	},
-	// 	TableName: "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
-	// 		" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
-	// 		"avg(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')]) as value " +
-	// 		"from signoz_logs.distributed_logs_v2 " +
-	// 		"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-	// 		"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
-	// 		"AND has(attributes_string_key, 'method') " +
-	// 		"AND has(attributes_float64_key, 'bytes') " +
-	// 		"group by `method`,ts " +
-	// 		"order by `method` ASC",
-	// },
-	// {
-	// 	Name:      "Test aggregate sum",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-	// 		AggregateOperator:  v3.AggregateOperatorSum,
-	// 		Expression:         "A",
-	// 		Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-	// 			{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
-	// 		},
-	// 		},
-	// 		GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-	// 		OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
-	// 	},
-	// 	TableName: "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
-	// 		" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
-	// 		"sum(`attribute_float64_bytes`) as value " +
-	// 		"from signoz_logs.distributed_logs_v2 " +
-	// 		"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-	// 		"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
-	// 		"AND has(attributes_string_key, 'method') " +
-	// 		"AND `attribute_float64_bytes_exists`=true " +
-	// 		"group by `method`,ts " +
-	// 		"order by `method` ASC",
-	// },
-	// {
-	// 	Name:      "Test aggregate min",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-	// 		AggregateOperator:  v3.AggregateOperatorMin,
-	// 		Expression:         "A",
-	// 		Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-	// 			{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
-	// 		},
-	// 		},
-	// 		GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-	// 		OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
-	// 	},
-	// 	TableName: "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
-	// 		" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
-	// 		"min(`attribute_float64_bytes`) as value " +
-	// 		"from signoz_logs.distributed_logs_v2 " +
-	// 		"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-	// 		"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
-	// 		"AND has(attributes_string_key, 'method') " +
-	// 		"AND `attribute_float64_bytes_exists`=true " +
-	// 		"group by `method`,ts " +
-	// 		"order by `method` ASC",
-	// },
-	// {
-	// 	Name:      "Test aggregate max",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-	// 		AggregateOperator:  v3.AggregateOperatorMax,
-	// 		Expression:         "A",
-	// 		Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-	// 			{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
-	// 		},
-	// 		},
-	// 		GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-	// 		OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
-	// 	},
-	// 	TableName: "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
-	// 		" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
-	// 		"max(`attribute_float64_bytes`) as value " +
-	// 		"from signoz_logs.distributed_logs_v2 " +
-	// 		"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-	// 		"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
-	// 		"AND has(attributes_string_key, 'method') " +
-	// 		"AND `attribute_float64_bytes_exists`=true " +
-	// 		"group by `method`,ts " +
-	// 		"order by `method` ASC",
-	// },
-	// {
-	// 	Name:      "Test aggregate PXX",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-	// 		AggregateOperator:  v3.AggregateOperatorP05,
-	// 		Expression:         "A",
-	// 		Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
-	// 		GroupBy:            []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-	// 		OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
-	// 	},
-	// 	TableName: "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
-	// 		" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
-	// 		"quantile(0.05)(`attribute_float64_bytes`) as value " +
-	// 		"from signoz_logs.distributed_logs_v2 " +
-	// 		"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-	// 		"AND has(attributes_string_key, 'method') " +
-	// 		"AND `attribute_float64_bytes_exists`=true " +
-	// 		"group by `method`,ts " +
-	// 		"order by `method` ASC",
-	// },
-	// {
-	// 	Name:      "Test aggregate RateSum",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-	// 		AggregateOperator:  v3.AggregateOperatorRateSum,
-	// 		Expression:         "A",
-	// 		Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
-	// 		GroupBy:            []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-	// 		OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
-	// 	},
-	// 	TableName: "logs",
-	// 	PreferRPM: true,
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`" +
-	// 		", sum(`attribute_float64_bytes`)/1.000000 as value from signoz_logs.distributed_logs_v2 " +
-	// 		"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-	// 		"AND has(attributes_string_key, 'method') " +
-	// 		"AND `attribute_float64_bytes_exists`=true " +
-	// 		"group by `method`,ts order by `method` ASC",
-	// },
-	// {
-	// 	Name:      "Test aggregate rate",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
-	// 		AggregateOperator:  v3.AggregateOperatorRate,
-	// 		Expression:         "A",
-	// 		Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
-	// 		GroupBy:            []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-	// 		OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
-	// 	},
-	// 	TableName: "logs",
-	// 	PreferRPM: false,
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`" +
-	// 		", count(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/60.000000 as value " +
-	// 		"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-	// 		"AND has(attributes_string_key, 'method') " +
-	// 		"AND has(attributes_float64_key, 'bytes') " +
-	// 		"group by `method`,ts " +
-	// 		"order by `method` ASC",
-	// },
-	// {
-	// 	Name:      "Test aggregate RateSum without materialized column",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
-	// 		AggregateOperator:  v3.AggregateOperatorRateSum,
-	// 		Expression:         "A",
-	// 		Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
-	// 		GroupBy:            []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-	// 		OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
-	// 	},
-	// 	TableName: "logs",
-	// 	PreferRPM: true,
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, " +
-	// 		"attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
-	// 		"sum(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/1.000000 as value " +
-	// 		"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-	// 		"AND has(attributes_string_key, 'method') " +
-	// 		"AND has(attributes_float64_key, 'bytes') " +
-	// 		"group by `method`,ts " +
-	// 		"order by `method` ASC",
-	// },
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, `attribute_string_host$$name` as `host.name`, toFloat64(count(distinct(`attribute_string_method$$name`))) as value" +
+			" from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND `attribute_string_host$$name_exists`=true AND `attribute_string_method$$name_exists`=true " +
+			"group by `host.name`,ts " +
+			"order by `host.name` ASC",
+	},
+	{
+		Name:      "Test aggregate count distinct with filter and groupBy",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+				{Key: v3.AttributeKey{Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "abc", Operator: "!="},
+			},
+			},
+			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}, {ColumnName: "ts", Order: "ASC", Key: "ts", IsColumn: true}},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
+			" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
+			"toFloat64(count(distinct(`attribute_string_name`))) as value from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND resources_string_value[indexOf(resources_string_key, 'x')] != 'abc' " +
+			"AND has(attributes_string_key, 'method') AND `attribute_string_name_exists`=true " +
+			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
+			"WHERE (seen_at_ts_bucket_start >= 1680066360) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'x') != 'abc')) " +
+			"group by `method`,ts " +
+			"order by `method` ASC",
+	},
+	{
+		Name:      "Test aggregate count with multiple filter,groupBy and orderBy",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+				{Key: v3.AttributeKey{Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "abc", Operator: "!="},
+			},
+			},
+			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, {Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}},
+			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}, {ColumnName: "x", Order: "ASC"}},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
+			" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
+			"resources_string_value[indexOf(resources_string_key, 'x')] as `x`, " +
+			"toFloat64(count(distinct(`attribute_string_name`))) as value from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND resources_string_value[indexOf(resources_string_key, 'x')] != 'abc' " +
+			"AND has(attributes_string_key, 'method') AND has(resources_string_key, 'x') AND `attribute_string_name_exists`=true " +
+			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
+			"WHERE (seen_at_ts_bucket_start >= 1680066360) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'x') != 'abc')) " +
+			"group by `method`,`x`,ts " +
+			"order by `method` ASC,`x` ASC",
+	},
+	{
+		Name:      "Test aggregate avg",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorAvg,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			},
+			},
+			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}, {ColumnName: "x", Order: "ASC", Key: "x", IsColumn: true}},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
+			" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
+			"avg(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')]) as value " +
+			"from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
+			"AND has(attributes_string_key, 'method') " +
+			"AND has(attributes_float64_key, 'bytes') " +
+			"group by `method`,ts " +
+			"order by `method` ASC",
+	},
+	{
+		Name:      "Test aggregate sum",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			AggregateOperator:  v3.AggregateOperatorSum,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			},
+			},
+			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
+			" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
+			"sum(`attribute_float64_bytes`) as value " +
+			"from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
+			"AND has(attributes_string_key, 'method') " +
+			"AND `attribute_float64_bytes_exists`=true " +
+			"group by `method`,ts " +
+			"order by `method` ASC",
+	},
+	{
+		Name:      "Test aggregate min",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			AggregateOperator:  v3.AggregateOperatorMin,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			},
+			},
+			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
+			" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
+			"min(`attribute_float64_bytes`) as value " +
+			"from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
+			"AND has(attributes_string_key, 'method') " +
+			"AND `attribute_float64_bytes_exists`=true " +
+			"group by `method`,ts " +
+			"order by `method` ASC",
+	},
+	{
+		Name:      "Test aggregate max",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			AggregateOperator:  v3.AggregateOperatorMax,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			},
+			},
+			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
+			" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
+			"max(`attribute_float64_bytes`) as value " +
+			"from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
+			"AND has(attributes_string_key, 'method') " +
+			"AND `attribute_float64_bytes_exists`=true " +
+			"group by `method`,ts " +
+			"order by `method` ASC",
+	},
+	{
+		Name:      "Test aggregate PXX",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			AggregateOperator:  v3.AggregateOperatorP05,
+			Expression:         "A",
+			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			GroupBy:            []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
+			" attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
+			"quantile(0.05)(`attribute_float64_bytes`) as value " +
+			"from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND has(attributes_string_key, 'method') " +
+			"AND `attribute_float64_bytes_exists`=true " +
+			"group by `method`,ts " +
+			"order by `method` ASC",
+	},
+	{
+		Name:      "Test aggregate RateSum",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			AggregateOperator:  v3.AggregateOperatorRateSum,
+			Expression:         "A",
+			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			GroupBy:            []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
+		},
+		TableName: "logs",
+		PreferRPM: true,
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`" +
+			", sum(`attribute_float64_bytes`)/1.000000 as value from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND has(attributes_string_key, 'method') " +
+			"AND `attribute_float64_bytes_exists`=true " +
+			"group by `method`,ts order by `method` ASC",
+	},
+	{
+		Name:      "Test aggregate rate",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
+			AggregateOperator:  v3.AggregateOperatorRate,
+			Expression:         "A",
+			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			GroupBy:            []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
+		},
+		TableName: "logs",
+		PreferRPM: false,
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`" +
+			", count(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/60.000000 as value " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND has(attributes_string_key, 'method') " +
+			"AND has(attributes_float64_key, 'bytes') " +
+			"group by `method`,ts " +
+			"order by `method` ASC",
+	},
+	{
+		Name:      "Test aggregate RateSum without materialized column",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
+			AggregateOperator:  v3.AggregateOperatorRateSum,
+			Expression:         "A",
+			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			GroupBy:            []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
+		},
+		TableName: "logs",
+		PreferRPM: true,
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, " +
+			"attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
+			"sum(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/1.000000 as value " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND has(attributes_string_key, 'method') " +
+			"AND has(attributes_float64_key, 'bytes') " +
+			"group by `method`,ts " +
+			"order by `method` ASC",
+	},
 	{
 		Name:      "Test Noop",
 		PanelType: v3.PanelTypeList,
@@ -925,246 +929,264 @@ var testBuildLogsQueryData = []struct {
 			"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool," +
 			"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string " +
 			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
-			"AND (ts_bucket_start >= 1680066360 AND ts_bucket_end <= 1680066458) AND severity_number != 0 order by timestamp DESC",
+			"AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) AND severity_number != 0 order by timestamp DESC",
 	},
-	// {
-	// 	Name:      "Test aggregate with having clause",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-	// 		AggregateOperator:  v3.AggregateOperatorCountDistinct,
-	// 		Expression:         "A",
-	// 		Having: []v3.Having{
-	// 			{
-	// 				ColumnName: "name",
-	// 				Operator:   ">",
-	// 				Value:      10,
-	// 			},
-	// 		},
-	// 	},
-	// 	TableName:     "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
-	// },
-	// {
-	// 	Name:      "Test aggregate with having clause and filters",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-	// 		AggregateOperator:  v3.AggregateOperatorCountDistinct,
-	// 		Expression:         "A",
-	// 		Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-	// 			{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
-	// 		},
-	// 		},
-	// 		Having: []v3.Having{
-	// 			{
-	// 				ColumnName: "name",
-	// 				Operator:   ">",
-	// 				Value:      10,
-	// 			},
-	// 		},
-	// 	},
-	// 	TableName:     "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
-	// },
-	// {
-	// 	Name:      "Test top level key",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-	// 		AggregateOperator:  v3.AggregateOperatorCountDistinct,
-	// 		Expression:         "A",
-	// 		Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-	// 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "%test%", Operator: "like"},
-	// 		},
-	// 		},
-	// 		Having: []v3.Having{
-	// 			{
-	// 				ColumnName: "name",
-	// 				Operator:   ">",
-	// 				Value:      10,
-	// 			},
-	// 		},
-	// 	},
-	// 	TableName:     "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND body ILIKE '%test%' AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
-	// },
-	// {
-	// 	Name:      "Test attribute with same name as top level key",
-	// 	PanelType: v3.PanelTypeGraph,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:          "A",
-	// 		StepInterval:       60,
-	// 		AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-	// 		AggregateOperator:  v3.AggregateOperatorCountDistinct,
-	// 		Expression:         "A",
-	// 		Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-	// 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "%test%", Operator: "like"},
-	// 		},
-	// 		},
-	// 		Having: []v3.Having{
-	// 			{
-	// 				ColumnName: "name",
-	// 				Operator:   ">",
-	// 				Value:      10,
-	// 			},
-	// 		},
-	// 	},
-	// 	TableName:     "logs",
-	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'body')] ILIKE '%test%' AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
-	// },
+	{
+		Name:      "Test aggregate with having clause",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			Having: []v3.Having{
+				{
+					ColumnName: "name",
+					Operator:   ">",
+					Value:      10,
+				},
+			},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
+	},
+	{
+		Name:      "Test aggregate with having clause and filters",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			},
+			},
+			Having: []v3.Having{
+				{
+					ColumnName: "name",
+					Operator:   ">",
+					Value:      10,
+				},
+			},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
+	},
+	{
+		Name:      "Test top level key",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "%test%", Operator: "like"},
+			},
+			},
+			Having: []v3.Having{
+				{
+					ColumnName: "name",
+					Operator:   ">",
+					Value:      10,
+				},
+			},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND body ILIKE '%test%' AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
+	},
+	{
+		Name:      "Test attribute with same name as top level key",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "%test%", Operator: "like"},
+			},
+			},
+			Having: []v3.Having{
+				{
+					ColumnName: "name",
+					Operator:   ">",
+					Value:      10,
+				},
+			},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND attributes_string_value[indexOf(attributes_string_key, 'body')] ILIKE '%test%' AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
+	},
 
-	// // Tests for table panel type
-	// {
-	// 	Name:      "TABLE: Test count",
-	// 	PanelType: v3.PanelTypeTable,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:         "A",
-	// 		StepInterval:      60,
-	// 		AggregateOperator: v3.AggregateOperatorCount,
-	// 		Expression:        "A",
-	// 	},
-	// 	TableName:     "logs",
-	// 	ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) order by value DESC",
-	// },
-	// {
-	// 	Name:      "TABLE: Test count with groupBy",
-	// 	PanelType: v3.PanelTypeTable,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:         "A",
-	// 		StepInterval:      60,
-	// 		AggregateOperator: v3.AggregateOperatorCount,
-	// 		Expression:        "A",
-	// 		GroupBy: []v3.AttributeKey{
-	// 			{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-	// 		},
-	// 	},
-	// 	TableName:     "logs",
-	// 	ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'name') group by `name` order by value DESC",
-	// },
-	// {
-	// 	Name:      "TABLE: Test rate with groupBy",
-	// 	PanelType: v3.PanelTypeTable,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:         "A",
-	// 		StepInterval:      60,
-	// 		AggregateOperator: v3.AggregateOperatorRate,
-	// 		Expression:        "A",
-	// 		GroupBy: []v3.AttributeKey{
-	// 			{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-	// 		},
-	// 	},
-	// 	TableName:     "logs",
-	// 	ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, count()/97.000000 as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'name') group by `name` order by value DESC",
-	// },
-	// {
-	// 	Name:      "TABLE: Test count with groupBy, orderBy",
-	// 	PanelType: v3.PanelTypeTable,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:         "A",
-	// 		StepInterval:      60,
-	// 		AggregateOperator: v3.AggregateOperatorCount,
-	// 		Expression:        "A",
-	// 		GroupBy: []v3.AttributeKey{
-	// 			{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-	// 		},
-	// 		OrderBy: []v3.OrderBy{
-	// 			{ColumnName: "name", Order: "DESC"},
-	// 		},
-	// 	},
-	// 	TableName:     "logs",
-	// 	ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
-	// },
-	// {
-	// 	Name:      "TABLE: Test count with JSON Filter, groupBy, orderBy",
-	// 	PanelType: v3.PanelTypeTable,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:         "A",
-	// 		StepInterval:      60,
-	// 		AggregateOperator: v3.AggregateOperatorCount,
-	// 		Expression:        "A",
-	// 		Filters: &v3.FilterSet{
-	// 			Operator: "AND",
-	// 			Items: []v3.FilterItem{
-	// 				{
-	// 					Key: v3.AttributeKey{
-	// 						Key:      "body.message",
-	// 						DataType: "string",
-	// 						IsJSON:   true,
-	// 					},
-	// 					Operator: "contains",
-	// 					Value:    "a",
-	// 				},
-	// 			},
-	// 		},
-	// 		GroupBy: []v3.AttributeKey{
-	// 			{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-	// 		},
-	// 		OrderBy: []v3.OrderBy{
-	// 			{ColumnName: "name", Order: "DESC"},
-	// 		},
-	// 	},
-	// 	TableName:     "logs",
-	// 	ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%' AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
-	// },
-	// {
-	// 	Name:      "TABLE: Test count with JSON Filter Array, groupBy, orderBy",
-	// 	PanelType: v3.PanelTypeTable,
-	// 	Start:     1680066360726210000,
-	// 	End:       1680066458000000000,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		QueryName:         "A",
-	// 		StepInterval:      60,
-	// 		AggregateOperator: v3.AggregateOperatorCount,
-	// 		Expression:        "A",
-	// 		Filters: &v3.FilterSet{
-	// 			Operator: "AND",
-	// 			Items: []v3.FilterItem{
-	// 				{
-	// 					Key: v3.AttributeKey{
-	// 						Key:      "body.requestor_list[*]",
-	// 						DataType: "array(string)",
-	// 						IsJSON:   true,
-	// 					},
-	// 					Operator: "has",
-	// 					Value:    "index_service",
-	// 				},
-	// 			},
-	// 		},
-	// 		GroupBy: []v3.AttributeKey{
-	// 			{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-	// 		},
-	// 		OrderBy: []v3.OrderBy{
-	// 			{ColumnName: "name", Order: "DESC"},
-	// 		},
-	// 	},
-	// 	TableName:     "logs",
-	// 	ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service') AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
-	// },
+	// Tests for table panel type
+	{
+		Name:      "TABLE: Test count",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			StepInterval:      60,
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) order by value DESC",
+	},
+	{
+		Name:      "TABLE: Test count with groupBy",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			StepInterval:      60,
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			GroupBy: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where " +
+			"(timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND has(attributes_string_key, 'name') group by `name` order by value DESC",
+	},
+	{
+		Name:      "TABLE: Test rate with groupBy",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			StepInterval:      60,
+			AggregateOperator: v3.AggregateOperatorRate,
+			Expression:        "A",
+			GroupBy: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, count()/97.000000 as value from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND has(attributes_string_key, 'name') group by `name` order by value DESC",
+	},
+	{
+		Name:      "TABLE: Test count with groupBy, orderBy",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			StepInterval:      60,
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			GroupBy: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			},
+			OrderBy: []v3.OrderBy{
+				{ColumnName: "name", Order: "DESC"},
+			},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
+	},
+	{
+		Name:      "TABLE: Test count with JSON Filter, groupBy, orderBy",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			StepInterval:      60,
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			Filters: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "body.message",
+							DataType: "string",
+							IsJSON:   true,
+						},
+						Operator: "contains",
+						Value:    "a",
+					},
+				},
+			},
+			GroupBy: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			},
+			OrderBy: []v3.OrderBy{
+				{ColumnName: "name", Order: "DESC"},
+			},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%' AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
+	},
+	{
+		Name:      "TABLE: Test count with JSON Filter Array, groupBy, orderBy",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			StepInterval:      60,
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			Filters: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "body.requestor_list[*]",
+							DataType: "array(string)",
+							IsJSON:   true,
+						},
+						Operator: "has",
+						Value:    "index_service",
+					},
+				},
+			},
+			GroupBy: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			},
+			OrderBy: []v3.OrderBy{
+				{ColumnName: "name", Order: "DESC"},
+			},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service') AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
+	},
 }
 
 func TestBuildLogsQuery(t *testing.T) {
@@ -1309,11 +1331,6 @@ func TestOrderBy(t *testing.T) {
 	}
 }
 
-// if there is no group by then there is no point of limit in ts and table queries
-// since the above will result in a single ts
-
-// handle only when there is a group by something.
-
 var testPrepLogsQueryData = []struct {
 	Name              string
 	PanelType         v3.PanelType
@@ -1345,9 +1362,11 @@ var testPrepLogsQueryData = []struct {
 			Limit:   10,
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') group by `method` order by value DESC) LIMIT 10",
-		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
+		TableName: "logs",
+		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) " +
+			"as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') group by `method` order by value DESC) LIMIT 10",
+		Options: Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 	},
 	{
 		Name:      "Test TS with limit- first - with order by value",
@@ -1368,9 +1387,11 @@ var testPrepLogsQueryData = []struct {
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 			OrderBy: []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "ASC"}},
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') group by `method` order by value ASC) LIMIT 10",
-		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
+		TableName: "logs",
+		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) " +
+			"as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') group by `method` order by value ASC) LIMIT 10",
+		Options: Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 	},
 	{
 		Name:      "Test TS with limit- first - with order by attribute",
@@ -1391,9 +1412,11 @@ var testPrepLogsQueryData = []struct {
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') group by `method` order by `method` ASC) LIMIT 10",
-		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
+		TableName: "logs",
+		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) " +
+			"as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') group by `method` order by `method` ASC) LIMIT 10",
+		Options: Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 	},
 	{
 		Name:      "Test TS with limit- second",
@@ -1413,9 +1436,12 @@ var testPrepLogsQueryData = []struct {
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 			Limit:   2,
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') AND (`method`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `method`,ts order by value DESC",
-		Options:       Options{GraphLimitQtype: constants.SecondQueryGraphLimit},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
+			"toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) " +
+			"AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') " +
+			"AND has(attributes_string_key, 'name') AND (`method`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `method`,ts order by value DESC",
+		Options: Options{GraphLimitQtype: constants.SecondQueryGraphLimit},
 	},
 	{
 		Name:      "Test TS with limit- second - with order by",
@@ -1436,9 +1462,12 @@ var testPrepLogsQueryData = []struct {
 			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 			Limit:   2,
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') AND (`method`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `method`,ts order by `method` ASC",
-		Options:       Options{GraphLimitQtype: constants.SecondQueryGraphLimit},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
+			"toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) " +
+			"AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') " +
+			"AND has(attributes_string_key, 'name') AND (`method`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `method`,ts order by `method` ASC",
+		Options: Options{GraphLimitQtype: constants.SecondQueryGraphLimit},
 	},
 	// Live tail
 	{
@@ -1456,9 +1485,12 @@ var testPrepLogsQueryData = []struct {
 			},
 			},
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND ",
-		Options:       Options{IsLivetailQuery: true},
+		TableName: "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  " +
+			"attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  " +
+			"attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as " +
+			"resources_string from signoz_logs.distributed_logs where attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND ",
+		Options: Options{IsLivetailQuery: true},
 	},
 	{
 		Name:      "Live Tail Query with contains",
@@ -1475,9 +1507,12 @@ var testPrepLogsQueryData = []struct {
 			},
 			},
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where attributes_string_value[indexOf(attributes_string_key, 'method')] ILIKE '%GET%' AND ",
-		Options:       Options{IsLivetailQuery: true},
+		TableName: "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  " +
+			"attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  " +
+			"attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as " +
+			"resources_string from signoz_logs.distributed_logs where attributes_string_value[indexOf(attributes_string_key, 'method')] ILIKE '%GET%' AND ",
+		Options: Options{IsLivetailQuery: true},
 	},
 	{
 		Name:      "Live Tail Query W/O filter",
@@ -1491,9 +1526,12 @@ var testPrepLogsQueryData = []struct {
 			Expression:        "A",
 			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where ",
-		Options:       Options{IsLivetailQuery: true},
+		TableName: "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  " +
+			"attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  " +
+			"attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as " +
+			"resources_string from signoz_logs.distributed_logs where ",
+		Options: Options{IsLivetailQuery: true},
 	},
 	{
 		Name:      "Table query w/o limit",
@@ -1508,7 +1546,7 @@ var testPrepLogsQueryData = []struct {
 			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) order by value DESC",
+		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) order by value DESC",
 		Options:       Options{},
 	},
 	{
@@ -1525,7 +1563,7 @@ var testPrepLogsQueryData = []struct {
 			Limit:             10,
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) order by value DESC LIMIT 10",
+		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) order by value DESC LIMIT 10",
 		Options:       Options{},
 	},
 }
@@ -1570,8 +1608,11 @@ var testPrepLogsQueryLimitOffsetData = []struct {
 			Offset:            0,
 			PageSize:          5,
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) order by `timestamp` desc LIMIT 1",
+		TableName: "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
+			"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  " +
+			"attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string " +
+			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) order by `timestamp` desc LIMIT 1",
 	},
 	{
 		Name:      "Test limit greater than pageSize - order by ts",
@@ -1591,8 +1632,12 @@ var testPrepLogsQueryLimitOffsetData = []struct {
 			Offset:   10,
 			PageSize: 10,
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by `timestamp` desc LIMIT 10",
+		TableName: "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
+			"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
+			"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from " +
+			"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) " +
+			"AND id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by `timestamp` desc LIMIT 10",
 	},
 	{
 		Name:      "Test limit less than pageSize  - order by custom",
@@ -1610,8 +1655,11 @@ var testPrepLogsQueryLimitOffsetData = []struct {
 			Offset:            0,
 			PageSize:          5,
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) order by attributes_string_value[indexOf(attributes_string_key, 'method')] desc LIMIT 1 OFFSET 0",
+		TableName: "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
+			"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
+			"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from " +
+			"signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) order by attributes_string_value[indexOf(attributes_string_key, 'method')] desc LIMIT 1 OFFSET 0",
 	},
 	{
 		Name:      "Test limit greater than pageSize - order by custom",
@@ -1631,8 +1679,12 @@ var testPrepLogsQueryLimitOffsetData = []struct {
 			Offset:   50,
 			PageSize: 50,
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by attributes_string_value[indexOf(attributes_string_key, 'method')] desc LIMIT 50 OFFSET 50",
+		TableName: "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
+			"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
+			"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from " +
+			"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680066360 AND ts_bucket_start <= 1680066458) AND " +
+			"id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by attributes_string_value[indexOf(attributes_string_key, 'method')] desc LIMIT 50 OFFSET 50",
 	},
 }
 

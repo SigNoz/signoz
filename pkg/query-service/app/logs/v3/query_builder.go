@@ -293,9 +293,11 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", logsStart, logsEnd)
 
 	tableName := "distributed_logs"
-	if panelType != v3.PanelTypeList || len(filterSubQuery) > 0 || len(mq.GroupBy) > 0 {
+
+	// panel type filter is not added because user can choose table type and get the default count
+	if len(filterSubQuery) > 0 || len(mq.GroupBy) > 0 {
 		tableName = "distributed_logs_v2"
-		timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_end <= %d)", bucketStart, bucketEnd)
+		timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", bucketStart, bucketEnd)
 	}
 
 	resourceBucketFilters, err := getResourceBucketFilters(mq.Filters)
