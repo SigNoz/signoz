@@ -3,6 +3,7 @@ import './LogsPanelComponent.styles.scss';
 import { Table } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Controls from 'container/Controls';
@@ -207,17 +208,19 @@ function LogsPanelComponent({
 		<>
 			<div className="logs-table">
 				<div className="resize-table">
-					<Table
-						pagination={false}
-						tableLayout="fixed"
-						scroll={{ x: `calc(50vw - 10px)` }}
-						sticky
-						loading={queryResponse.isFetching}
-						style={tableStyles}
-						dataSource={flattenLogData}
-						columns={columns}
-						onRow={handleRow}
-					/>
+					<OverlayScrollbar>
+						<Table
+							pagination={false}
+							tableLayout="fixed"
+							scroll={{ x: `calc(50vw - 10px)` }}
+							sticky
+							loading={queryResponse.isFetching}
+							style={tableStyles}
+							dataSource={flattenLogData}
+							columns={columns}
+							onRow={handleRow}
+						/>
+					</OverlayScrollbar>
 				</div>
 				{!widget.query.builder.queryData[0].limit && (
 					<div className="controller">

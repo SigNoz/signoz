@@ -110,4 +110,5 @@ type Querier interface {
 
 	// test helpers
 	QueriesExecuted() []string
+	TimeRanges() [][]int
 }

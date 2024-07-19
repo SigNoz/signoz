@@ -1,7 +1,14 @@
 import './Filter.styles.scss';
 
 import { Button, Collapse, Divider } from 'antd';
-import { Dispatch, MouseEvent, SetStateAction } from 'react';
+import {
+	Dispatch,
+	MouseEvent,
+	SetStateAction,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 
 import { DurationSection } from './DurationSection';
 import {
@@ -18,8 +25,28 @@ interface SectionProps {
 	setSelectedFilters: Dispatch<SetStateAction<FilterType | undefined>>;
 	handleRun: (props?: HandleRunProps) => void;
 }
+
 export function Section(props: SectionProps): JSX.Element {
 	const { panelName, setSelectedFilters, selectedFilters, handleRun } = props;
+
+	const defaultOpenPanes = useMemo(
+		() =>
+			Array.from(
+				new Set([
+					...Object.keys(selectedFilters || {}),
+					'hasError',
+					'durationNano',
+					'serviceName',
+				]),
+			),
+		[selectedFilters],
+	);
+
+	const [activeKeys, setActiveKeys] = useState<string[]>(defaultOpenPanes);
+
+	useEffect(() => {
+		setActiveKeys(defaultOpenPanes);
+	}, [defaultOpenPanes]);
 
 	const onClearHandler = (e: MouseEvent): void => {
 		e.stopPropagation();
@@ -41,11 +68,8 @@ export function Section(props: SectionProps): JSX.Element {
 				<Collapse
 					bordered={false}
 					className="collapseContainer"
-					defaultActiveKey={
-						['hasError', 'durationNano', 'serviceName'].includes(panelName)
-							? panelName
-							: undefined
-					}
+					activeKey={activeKeys}
+					onChange={(keys): void => setActiveKeys(keys as string[])}
 					items={[
 						panelName === 'durationNano'
 							? {

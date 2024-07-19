@@ -79,7 +79,7 @@ function WidgetHeader({
 		);
 	}, [widget.id, widget.panelTypes, widget.query]);
 
-	const onCreateAlertsHandler = useCreateAlerts(widget);
+	const onCreateAlertsHandler = useCreateAlerts(widget, 'dashboardView');
 
 	const onDownloadHandler = useCallback((): void => {
 		const csv = unparse(tableProcessedDataRef.current);
@@ -234,6 +234,7 @@ function WidgetHeader({
 				)}
 				<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
 					<MoreOutlined
+						data-testid="widget-header-options"
 						className={`widget-header-more-options ${
 							parentHover ? 'widget-header-hover' : ''
 						}`}

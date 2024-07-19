@@ -76,7 +76,10 @@ const renderer = (): RenderResult =>
 							<VirtuosoMockContext.Provider
 								value={{ viewportHeight: 300, itemHeight: 100 }}
 							>
-								<LogsExplorerViews selectedView={SELECTED_VIEWS.SEARCH} showHistogram />
+								<LogsExplorerViews
+									selectedView={SELECTED_VIEWS.SEARCH}
+									showFrequencyChart
+								/>
 							</VirtuosoMockContext.Provider>
 						</QueryBuilderProvider>
 					</MockQueryClientProvider>
@@ -120,11 +123,7 @@ describe('LogsExplorerViews -', () => {
 
 		// switch to table view
 		await userEvent.click(queryByTestId('table-view') as HTMLElement);
-		expect(
-			queryByText(
-				'Just a bit of patience, just a little bit’s enough ⎯ we’re getting your logs!',
-			),
-		).toBeInTheDocument();
+		expect(queryByText('pending_data_placeholder')).toBeInTheDocument();
 	});
 
 	it('check error state', async () => {

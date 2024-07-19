@@ -3,15 +3,19 @@
 import './Onboarding.styles.scss';
 
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Card, Typography } from 'antd';
+import { Button, Card, Form, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
+import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/InviteUserModal';
+import { InviteMemberFormValues } from 'container/OrganizationSettings/PendingInvitesContainer';
 import useAnalytics from 'hooks/analytics/useAnalytics';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
-import { useEffect, useState } from 'react';
+import { UserPlus } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
 
@@ -100,9 +104,9 @@ export default function Onboarding(): JSX.Element {
 	const [selectedModuleSteps, setSelectedModuleSteps] = useState(APM_STEPS);
 	const [activeStep, setActiveStep] = useState(1);
 	const [current, setCurrent] = useState(0);
-	const isDarkMode = useIsDarkMode();
 	const { trackEvent } = useAnalytics();
 	const { location } = history;
+	const { t } = useTranslation(['onboarding']);
 
 	const {
 		selectedDataSource,
@@ -279,13 +283,38 @@ export default function Onboarding(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const [form] = Form.useForm<InviteMemberFormValues>();
+	const [
+		isInviteTeamMemberModalOpen,
+		setIsInviteTeamMemberModalOpen,
+	] = useState<boolean>(false);
+
+	const toggleModal = useCallback(
+		(value: boolean): void => {
+			setIsInviteTeamMemberModalOpen(value);
+			if (!value) {
+				form.resetFields();
+			}
+		},
+		[form],
+	);
+
 	return (
-		<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
+		<div className="container">
 			{activeStep === 1 && (
-				<>
+				<div className="onboarding-page">
+					<div
+						onClick={(): void => {
+							logEvent('Onboarding V2: Skip Button Clicked', {});
+							history.push('/');
+						}}
+						className="skip-to-console"
+					>
+						{t('skip')}
+					</div>
 					<FullScreenHeader />
 					<div className="onboardingHeader">
-						<h1> Select a use-case to get started</h1>
+						<h1>{t('select_use_case')}</h1>
 					</div>
 					<div className="modulesContainer">
 						<div className="moduleContainerRowStyles">
@@ -298,26 +327,13 @@ export default function Onboarding(): JSX.Element {
 											'moduleStyles',
 											selectedModule.id === selectedUseCase.id ? 'selected' : '',
 										)}
-										style={{
-											backgroundColor: isDarkMode ? '#000' : '#FFF',
-										}}
 										key={selectedUseCase.id}
 										onClick={(): void => handleModuleSelect(selectedUseCase)}
 									>
-										<Typography.Title
-											className="moduleTitleStyle"
-											level={4}
-											style={{
-												borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #ddd',
-												backgroundColor: isDarkMode ? '#141414' : '#FFF',
-											}}
-										>
+										<Typography.Title className="moduleTitleStyle" level={4}>
 											{selectedUseCase.title}
 										</Typography.Title>
-										<Typography.Paragraph
-											className="moduleDesc"
-											style={{ backgroundColor: isDarkMode ? '#000' : '#FFF' }}
-										>
+										<Typography.Paragraph className="moduleDesc">
 											{selectedUseCase.desc}
 										</Typography.Paragraph>
 									</Card>
@@ -327,10 +343,31 @@ export default function Onboarding(): JSX.Element {
 					</div>
 					<div className="continue-to-next-step">
 						<Button type="primary" icon={<ArrowRightOutlined />} onClick={handleNext}>
-							Get Started
+							{t('get_started')}
 						</Button>
 					</div>
-				</>
+					<div className="invite-member-wrapper">
+						<Typography.Text className="helper-text">
+							{t('invite_user_helper_text')}
+						</Typography.Text>
+						<div className="invite-member">
+							<Typography.Text>{t('invite_user')}</Typography.Text>
+							<Button
+								onClick={(): void => {
+									logEvent('Onboarding V2: Invite Member', {
+										module: selectedModule?.id,
+										page: 'homepage',
+									});
+									setIsInviteTeamMemberModalOpen(true);
+								}}
+								icon={<UserPlus size={16} />}
+								type="primary"
+							>
+								{t('invite')}
+							</Button>
+						</div>
+					</div>
+				</div>
 			)}
 
 			{activeStep > 1 && (
@@ -345,9 +382,15 @@ export default function Onboarding(): JSX.Element {
 						}}
 						selectedModule={selectedModule}
 						selectedModuleSteps={selectedModuleSteps}
+						setIsInviteTeamMemberModalOpen={setIsInviteTeamMemberModalOpen}
 					/>
 				</div>
 			)}
+			<InviteUserModal
+				form={form}
+				isInviteTeamMemberModalOpen={isInviteTeamMemberModalOpen}
+				toggleModal={toggleModal}
+			/>
 		</div>
 	);
 }

@@ -1,8 +1,11 @@
 import './LogsLoading.styles.scss';
 
 import { Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { DataSource } from 'types/common/queryBuilder';
 
 export function LogsLoading(): JSX.Element {
+	const { t } = useTranslation('common');
 	return (
 		<div className="loading-logs">
 			<div className="loading-logs-content">
@@ -13,8 +16,7 @@ export function LogsLoading(): JSX.Element {
 				/>
 
 				<Typography>
-					Just a bit of patience, just a little bit’s enough ⎯ we’re getting your
-					logs!
+					{t('pending_data_placeholder', { dataSource: DataSource.LOGS })}
 				</Typography>
 			</div>
 		</div>

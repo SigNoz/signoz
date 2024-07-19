@@ -124,6 +124,9 @@ const getSpanWithoutChildren = (
 	value: span.value,
 	event: span.event,
 	hasError: span.hasError,
+	spanKind: span.spanKind,
+	statusCodeString: span.statusCodeString,
+	statusMessage: span.statusMessage,
 });
 
 export const isSpanPresentInSearchString = (
