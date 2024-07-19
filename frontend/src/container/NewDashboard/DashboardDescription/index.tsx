@@ -266,6 +266,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		urlQuery.set('columnKey', listSortOrder.columnKey as string);
 		urlQuery.set('order', listSortOrder.order as string);
 		urlQuery.set('page', listSortOrder.pagination as string);
+		urlQuery.set('search', listSortOrder.search as string);
 		urlQuery.delete(QueryParams.relativeTime);
 
 		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlQuery.toString()}`;
