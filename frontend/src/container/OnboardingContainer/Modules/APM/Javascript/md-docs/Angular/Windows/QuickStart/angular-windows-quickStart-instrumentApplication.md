@@ -1,0 +1,99 @@
+&nbsp;
+
+**Step 1.** Install OpenTelemetry packages
+
+```bash
+npm install --save @opentelemetry/sdk-trace-web@^1.21.0                                                                   
+npm install --save @opentelemetry/instrumentation@^0.48.0
+npm install --save @opentelemetry/auto-instrumentations-web@^0.36.0
+npm install --save @opentelemetry/exporter-trace-otlp-http@^0.48.0
+npm install --save @opentelemetry/resources@^1.21.0
+npm install --save @opentelemetry/propagator-b3@^1.21.0
+npm install --save @opentelemetry/semantic-conventions@^1.21.0
+```
+
+**Step 2.** Create `instrument.ts` file<br></br>
+You need to configure the endpoint for SigNoz cloud in this file.
+
+```ts
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import {
+  WebTracerProvider,
+  ConsoleSpanExporter,
+  SimpleSpanProcessor,
+  BatchSpanProcessor,
+} from '@opentelemetry/sdk-trace-web';
+import { getWebAutoInstrumentations } from '@opentelemetry/auto-instrumentations-web';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { Resource } from '@opentelemetry/resources';
+import { B3Propagator } from '@opentelemetry/propagator-b3';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+
+const resource = Resource.default().merge(
+  new Resource({
+    [SemanticResourceAttributes.SERVICE_NAME]: '<service_name>',
+    [SemanticResourceAttributes.SERVICE_VERSION]: '0.1.0',
+  })
+);
+
+const provider = new WebTracerProvider({ resource });
+
+provider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
+
+provider.addSpanProcessor(
+  new BatchSpanProcessor(
+    new OTLPTraceExporter({
+      url: 'https://ingest.{REGION}.signoz.cloud:443/v1/traces',
+      headers: {
+        'signoz-access-token': '<signoz_ingestion_key>',
+      },
+    })
+  )
+);
+
+provider.register({
+  propagator: new B3Propagator(),
+});
+
+registerInstrumentations({
+  instrumentations: [
+    getWebAutoInstrumentations({
+      '@opentelemetry/instrumentation-document-load': {},
+      '@opentelemetry/instrumentation-user-interaction': {},
+      '@opentelemetry/instrumentation-fetch': {
+        propagateTraceHeaderCorsUrls: /.+/,
+      },
+      '@opentelemetry/instrumentation-xml-http-request': {
+        propagateTraceHeaderCorsUrls: /.+/,
+      },
+    }),
+  ],
+});
+
+```
+- `<service_name>` : Name of your service.
+- `<signoz_ingestion_key>` : You can find your ingestion key from SigNoz cloud account details sent on your email.
+
+OpenTelemetry Node SDK currently does not detect the headers from `.env` files as of today. That’s why we need to include the variables in the `instrument.ts` file itself.
+
+Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
+
+| Region | Endpoint |
+| --- | --- |
+| US |	ingest.us.signoz.cloud:443/v1/traces |
+| IN |	ingest.in.signoz.cloud:443/v1/traces |
+| EU | ingest.eu.signoz.cloud:443/v1/traces |
+
+
+
+**Step 3.** Add the below import to your `main.ts` file.
+
+{/* <Admonition type="info">
+The below import should be the first line in the main file of your application (Ex -> `main.ts`)
+</Admonition>  */}
+
+
+    
+```jsx
+import './app/instrument';
+```
