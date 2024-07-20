@@ -6,9 +6,29 @@
         "valueType":"string",
         "defaultValue":"grid",
         "allowedValues":["grid","list"],
+        "isDescreteValues": true,
+        "allowedScopes":["user","org"]
+    },
+    {
+        "key": "LOGS_TOOLBAR_COLLAPSED",
+        "name": "Logs toolbar",
+        "description":"",
+        "valueType":"boolean",
+        "defaultValue":false,
+        "allowedValues":[true,false],
+        "isDescreteValues": true,
+        "allowedScopes":["user","org"]
+    },
+    {
+        "key": "MAX_DEPTH_ALLOWED",
+        "name": "Logs",
+        "description":"",
+        "valueType":"integer",
+        "defaultValue":10,
+        "isDescreteValues": false,
         "range": {
             "min": 0,
-            "max": 0
+            "max": 100
         },
         "allowedScopes":["user","org"]
     }

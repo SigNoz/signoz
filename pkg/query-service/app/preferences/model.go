@@ -14,19 +14,112 @@ import (
 )
 
 type Range struct {
-	Min int `json:"min"`
-	Max int `json:"max"`
+	Min int64 `json:"min"`
+	Max int64 `json:"max"`
 }
 
 type Preference struct {
-	Key           string        `json:"key"`
-	Name          string        `json:"name"`
-	Description   string        `json:"description"`
-	ValueType     string        `json:"valueType"`
-	DefaultValue  interface{}   `json:"defaultValue"`
-	AllowedValues []interface{} `json:"allowedValues"`
-	Range         Range         `json:"range"`
-	AllowedScopes []string      `json:"allowedScopes"`
+	Key              string        `json:"key"`
+	Name             string        `json:"name"`
+	Description      string        `json:"description"`
+	ValueType        string        `json:"valueType"`
+	DefaultValue     interface{}   `json:"defaultValue"`
+	AllowedValues    []interface{} `json:"allowedValues"`
+	IsDescreteValues bool          `json:"isDescreteValues"`
+	Range            Range         `json:"range"`
+	AllowedScopes    []string      `json:"allowedScopes"`
+}
+
+func (p *Preference) ErrorValueTypeMismatch() *model.ApiError {
+	return &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not of expected type: %s", p.ValueType)}
+}
+
+const (
+	PreferenceValueTypeInteger string = "integer"
+	PreferenceValueTypeFloat   string = "float"
+	PreferenceValueTypeString  string = "string"
+	PreferenceValueTypeBoolean string = "boolean"
+)
+
+const (
+	OrgAllowedScope  string = "org"
+	UserAllowedScope string = "user"
+)
+
+func checkIfInAllowedValues(preferenceValue interface{}, preference *Preference) bool {
+	isInAllowedValues := false
+	for _, value := range preference.AllowedValues {
+		if value == preferenceValue {
+			isInAllowedValues = true
+		}
+	}
+	return isInAllowedValues
+}
+
+func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
+	switch p.ValueType {
+	case PreferenceValueTypeInteger:
+		val, ok := preferenceValue.(int64)
+		if !ok {
+			return p.ErrorValueTypeMismatch()
+		}
+		if p.IsDescreteValues {
+			if val < p.Range.Min || val > p.Range.Max {
+				return &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the range specified, min: %v , max:%v", p.Range.Min, p.Range.Max)}
+			}
+		}
+	case PreferenceValueTypeString:
+		_, ok := preferenceValue.(string)
+		if !ok {
+			return p.ErrorValueTypeMismatch()
+		}
+	case PreferenceValueTypeFloat:
+		_, ok := preferenceValue.(float64)
+		if !ok {
+			return p.ErrorValueTypeMismatch()
+		}
+	case PreferenceValueTypeBoolean:
+		_, ok := preferenceValue.(bool)
+		if !ok {
+			return p.ErrorValueTypeMismatch()
+		}
+	}
+
+	// check the validity of the value being part of allowed values or the range specified if any
+	if !p.IsDescreteValues {
+		if p.AllowedValues != nil {
+			isInAllowedValues := checkIfInAllowedValues(preferenceValue, p)
+			if !isInAllowedValues {
+				return &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the list of allowedValues: %v", p.AllowedValues)}
+			}
+		}
+	}
+	return nil
+}
+
+func (p *Preference) IsEnabledForScope(scope string) bool {
+	isPreferenceEnabledForGivenScope := false
+	if p.AllowedScopes != nil {
+		for _, allowedScope := range p.AllowedScopes {
+			if allowedScope == scope {
+				isPreferenceEnabledForGivenScope = true
+			}
+		}
+	}
+	return isPreferenceEnabledForGivenScope
+}
+
+func (p *Preference) SanitizeValue(preferenceValue interface{}) interface{} {
+	switch p.ValueType {
+	case PreferenceValueTypeBoolean:
+		if preferenceValue == "1" {
+			return true
+		} else {
+			return false
+		}
+	default:
+		return preferenceValue
+	}
 }
 
 type AllPreferences struct {
@@ -124,33 +217,6 @@ func InitDB(datasourceName string) error {
 	return nil
 }
 
-func getValueType(preferenceValue interface{}) string {
-	var typeOfValue string
-	switch preferenceValue.(type) {
-	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
-		typeOfValue = "integer"
-	case float32, float64:
-		typeOfValue = "float"
-	case string:
-		typeOfValue = "string"
-	case bool:
-		typeOfValue = "boolean"
-	default:
-		typeOfValue = "unknown"
-	}
-	return typeOfValue
-}
-
-func checkIfInAllowedValues(preferenceValue interface{}, preference Preference) bool {
-	isInAllowedValues := false
-	for _, value := range preference.AllowedValues {
-		if value == preferenceValue {
-			isInAllowedValues = true
-		}
-	}
-	return isInAllowedValues
-}
-
 // org preference functions
 func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*PreferenceKV, *model.ApiError) {
 	// check if the preference key exists or not
@@ -160,12 +226,7 @@ func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*
 	}
 
 	// check if the preference is enabled for org scope or not
-	isPreferenceEnabled := false
-	for _, scope := range preference.AllowedScopes {
-		if scope == "org" {
-			isPreferenceEnabled = true
-		}
-	}
+	isPreferenceEnabled := preference.IsEnabledForScope(OrgAllowedScope)
 	if !isPreferenceEnabled {
 		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("preference is not enabled at org scope: %s", preferenceId)}
 	}
@@ -186,8 +247,10 @@ func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*
 	}
 
 	// else return the value fetched from the org_preference table
-	// TODO convert the type here based on the preference.ValueType
-	return &orgPreference, nil
+	return &PreferenceKV{
+		PreferenceId:    preferenceId,
+		PreferenceValue: preference.SanitizeValue(orgPreference.PreferenceValue),
+	}, nil
 }
 
 func UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceValue interface{}, orgId string) (*PreferenceKV, *model.ApiError) {
@@ -198,32 +261,14 @@ func UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceVal
 	}
 
 	// check if the preference is enabled at org scope or not
-	isPreferenceEnabled := false
-	for _, scope := range preference.AllowedScopes {
-		if scope == "org" {
-			isPreferenceEnabled = true
-		}
-	}
+	isPreferenceEnabled := preference.IsEnabledForScope(OrgAllowedScope)
 	if !isPreferenceEnabled {
 		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("preference is not enabled at org scope: %s", preferenceId)}
 	}
 
-	// check if the preference value being provided is of preference valueType
-	typeOfValue := getValueType(preferenceValue)
-	if typeOfValue != preference.ValueType {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not of expected type: %s", preference.ValueType)}
-	}
-
-	// check the validity of the value being part of allowed values or the range specified if any
-	if preference.AllowedValues != nil {
-		isInAllowedValues := checkIfInAllowedValues(preferenceValue, preference)
-		if !isInAllowedValues {
-			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the list of allowedValues: %v", preference.AllowedValues)}
-		}
-	} else {
-		if preferenceValue.(int) < preference.Range.Min || preferenceValue.(int) > preference.Range.Max {
-			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the range specified, min: %v , max:%v", preference.Range.Min, preference.Range.Max)}
-		}
+	err := preference.IsValidValue(preferenceValue)
+	if err != nil {
+		return nil, err
 	}
 
 	// update the values in the org_preference table and return the key and the value
@@ -231,10 +276,10 @@ func UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceVal
 	ON CONFLICT(preference_id,org_id) DO
 	UPDATE SET preference_value= $2 WHERE preference_id=$1 AND org_id=$3;`
 
-	_, err := db.Exec(query, preferenceId, preferenceValue, orgId)
+	_, dberr := db.Exec(query, preferenceId, preferenceValue, orgId)
 
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err.Error())}
+	if dberr != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", dberr.Error())}
 	}
 
 	return &PreferenceKV{
@@ -266,8 +311,7 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences,
 
 	// update in the above filtered list wherver value present in the map
 	for _, preference := range preferences {
-		isEnabledForOrgScope := false
-
+		isEnabledForOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
 		preferenceWithValue := AllPreferences{}
 		preferenceWithValue.Key = preference.Key
 		preferenceWithValue.Name = preference.Name
@@ -278,12 +322,6 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences,
 		preferenceWithValue.Range = preference.Range
 		preferenceWithValue.ValueType = preference.ValueType
 
-		for _, scope := range preference.AllowedScopes {
-			if scope == "org" {
-				isEnabledForOrgScope = true
-			}
-		}
-
 		if isEnabledForOrgScope {
 			ok, seen := preferenceValueMap[preference.Key]
 
@@ -293,6 +331,7 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences,
 				preferenceWithValue.Value = preference.DefaultValue
 			}
 
+			preferenceWithValue.Value = preference.SanitizeValue(preferenceWithValue.Value)
 			allOrgPreferences = append(allOrgPreferences, preferenceWithValue)
 		}
 	}
@@ -315,17 +354,9 @@ func GetUserPreference(ctx context.Context, preferenceId string, orgId string) (
 	}
 
 	// check if the preference is enabled at user scope
-	isPreferenceEnabled := false
-	isPreferenceEnabledAtOrgScope := false
-	for _, scope := range preference.AllowedScopes {
-		if scope == "user" {
-			isPreferenceEnabled = true
-		}
-		if scope == "org" {
-			isPreferenceEnabledAtOrgScope = true
-		}
-	}
-	if !isPreferenceEnabled {
+	isPreferenceEnabledAtUserScope := preference.IsEnabledForScope(UserAllowedScope)
+	isPreferenceEnabledAtOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
+	if !isPreferenceEnabledAtUserScope {
 		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("preference is not enabled at user scope: %s", preferenceId)}
 	}
 
@@ -362,7 +393,10 @@ func GetUserPreference(ctx context.Context, preferenceId string, orgId string) (
 		preferenceValue.PreferenceValue = userPreference.PreferenceValue
 	}
 
-	return &preferenceValue, nil
+	return &PreferenceKV{
+		PreferenceId:    preferenceValue.PreferenceId,
+		PreferenceValue: preference.SanitizeValue(preferenceValue.PreferenceValue),
+	}, nil
 }
 
 func UpdateUserPreference(ctx context.Context, preferenceId string, preferenceValue interface{}) (*PreferenceKV, *model.ApiError) {
@@ -374,43 +408,24 @@ func UpdateUserPreference(ctx context.Context, preferenceId string, preferenceVa
 	}
 
 	// check if the preference is enabled at user scope
-	isPreferenceEnabled := false
-	for _, scope := range preference.AllowedScopes {
-		if scope == "user" {
-			isPreferenceEnabled = true
-		}
-	}
-	if !isPreferenceEnabled {
+	isPreferenceEnabledAtUserScope := preference.IsEnabledForScope(UserAllowedScope)
+	if !isPreferenceEnabledAtUserScope {
 		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("preference is not enabled at user scope: %s", preferenceId)}
 	}
 
-	// check for the preferenceValue to be of the same type as preference.ValueType
-	typeOfValue := getValueType(preferenceValue)
-	if typeOfValue != preference.ValueType {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not of expected type: %s", preference.ValueType)}
+	err := preference.IsValidValue(preferenceValue)
+	if err != nil {
+		return nil, err
 	}
-
-	// check if the preferenceValue exists in the allowed values
-	if preference.AllowedValues != nil {
-		isInAllowedValues := checkIfInAllowedValues(preferenceValue, preference)
-		if !isInAllowedValues {
-			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the list of allowedValues: %v", preference.AllowedValues)}
-		}
-	} else {
-		if preferenceValue.(int) < preference.Range.Min || preferenceValue.(int) > preference.Range.Max {
-			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the range specified, min: %v , max:%v", preference.Range.Min, preference.Range.Max)}
-		}
-	}
-
 	// update the user preference values
 	query := `INSERT INTO user_preference(preference_id,preference_value,user_id) VALUES($1,$2,$3)
 	ON CONFLICT(preference_id,user_id) DO
 	UPDATE SET preference_value= $2 WHERE preference_id=$1 AND user_id=$3;`
 
-	_, err := db.Exec(query, preferenceId, preferenceValue, user.User.Id)
+	_, dberrr := db.Exec(query, preferenceId, preferenceValue, user.User.Id)
 
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", err.Error())}
+	if dberrr != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", dberrr.Error())}
 	}
 
 	return &PreferenceKV{
@@ -459,8 +474,8 @@ func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferences
 
 	// update in the above filtered list wherver value present in the map
 	for _, preference := range preferences {
-		isEnabledForOrgScope := false
-		isEnabledForUserScope := false
+		isEnabledForOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
+		isEnabledForUserScope := preference.IsEnabledForScope(UserAllowedScope)
 
 		preferenceWithValue := AllPreferences{}
 		preferenceWithValue.Key = preference.Key
@@ -471,15 +486,6 @@ func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferences
 		preferenceWithValue.DefaultValue = preference.DefaultValue
 		preferenceWithValue.Range = preference.Range
 		preferenceWithValue.ValueType = preference.ValueType
-
-		for _, scope := range preference.AllowedScopes {
-			if scope == "org" {
-				isEnabledForOrgScope = true
-			}
-			if scope == "user" {
-				isEnabledForUserScope = true
-			}
-		}
 
 		if isEnabledForUserScope {
 			preferenceWithValue.Value = preference.DefaultValue
@@ -497,6 +503,7 @@ func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferences
 				preferenceWithValue.Value = ok
 			}
 
+			preferenceWithValue.Value = preference.SanitizeValue(preferenceWithValue.Value)
 			allUserPreferences = append(allUserPreferences, preferenceWithValue)
 		}
 	}
