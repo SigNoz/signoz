@@ -61,9 +61,13 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
 	case PreferenceValueTypeInteger:
 		val, ok := preferenceValue.(int64)
 		if !ok {
-			return p.ErrorValueTypeMismatch()
+			floatVal, ok := preferenceValue.(float64)
+			if !ok || floatVal != float64(int64(floatVal)) {
+				return p.ErrorValueTypeMismatch()
+			}
+			val = int64(floatVal)
 		}
-		if p.IsDescreteValues {
+		if !p.IsDescreteValues {
 			if val < p.Range.Min || val > p.Range.Max {
 				return &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the range specified, min: %v , max:%v", p.Range.Min, p.Range.Max)}
 			}
