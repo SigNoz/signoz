@@ -90,7 +90,7 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
 	}
 
 	// check the validity of the value being part of allowed values or the range specified if any
-	if !p.IsDescreteValues {
+	if p.IsDescreteValues {
 		if p.AllowedValues != nil {
 			isInAllowedValues := checkIfInAllowedValues(preferenceValue, p)
 			if !isInAllowedValues {
