@@ -40,6 +40,7 @@ import {
 	Check,
 	Copy,
 	Infinity,
+	Info,
 	Minus,
 	PenLine,
 	Plus,
@@ -876,9 +877,10 @@ function MultiIngestionSettings(): JSX.Element {
 	return (
 		<div className="ingestion-key-container">
 			<div className="ingestion-key-content">
-				<div className="mb-24">
-					<Typography.Title className="title"> Ingestion URL </Typography.Title>
-					<Typography.Text className="subtitle">
+				<div className="ingestion-setup-details-links">
+					<Info size={14} />
+
+					<span>
 						Find your ingestion URL and learn more about sending data to SigNoz{' '}
 						<a
 							href="https://signoz.io/docs/ingestion/signoz-cloud/overview/"
@@ -888,7 +890,7 @@ function MultiIngestionSettings(): JSX.Element {
 						>
 							here <ArrowUpRight size={14} />
 						</a>
-					</Typography.Text>
+					</span>
 				</div>
 
 				<header>
