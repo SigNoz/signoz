@@ -123,15 +123,16 @@ func (p *Preference) SanitizeValue(preferenceValue interface{}) interface{} {
 }
 
 type AllPreferences struct {
-	Key           string        `json:"key"`
-	Name          string        `json:"name"`
-	Description   string        `json:"description"`
-	ValueType     string        `json:"valueType"`
-	DefaultValue  interface{}   `json:"defaultValue"`
-	Value         interface{}   `json:"value"`
-	AllowedValues []interface{} `json:"allowedValues"`
-	Range         Range         `json:"range"`
-	AllowedScopes []string      `json:"allowedScopes"`
+	Key              string        `json:"key"`
+	Name             string        `json:"name"`
+	Description      string        `json:"description"`
+	ValueType        string        `json:"valueType"`
+	DefaultValue     interface{}   `json:"defaultValue"`
+	Value            interface{}   `json:"value"`
+	IsDescreteValues bool          `json:"isDescreteValues"`
+	AllowedValues    []interface{} `json:"allowedValues"`
+	Range            Range         `json:"range"`
+	AllowedScopes    []string      `json:"allowedScopes"`
 }
 
 type PreferenceKV struct {
@@ -321,6 +322,7 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences,
 		preferenceWithValue.DefaultValue = preference.DefaultValue
 		preferenceWithValue.Range = preference.Range
 		preferenceWithValue.ValueType = preference.ValueType
+		preferenceWithValue.IsDescreteValues = preference.IsDescreteValues
 
 		if isEnabledForOrgScope {
 			ok, seen := preferenceValueMap[preference.Key]
@@ -486,6 +488,7 @@ func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferences
 		preferenceWithValue.DefaultValue = preference.DefaultValue
 		preferenceWithValue.Range = preference.Range
 		preferenceWithValue.ValueType = preference.ValueType
+		preferenceWithValue.IsDescreteValues = preference.IsDescreteValues
 
 		if isEnabledForUserScope {
 			preferenceWithValue.Value = preference.DefaultValue
