@@ -145,4 +145,70 @@ describe('TraceDetail', () => {
 
 		expect(queryByText('Details for selected Span')).not.toBeInTheDocument();
 	});
+
+	it('should be able to selected another span and see its detail', async () => {
+		const { getByText } = render(
+			<MemoryRouter initialEntries={['/trace/000000000000000071dc9b0a338729b4']}>
+				<Route path={ROUTES.TRACE_DETAIL}>
+					<TraceDetail />
+				</Route>
+				,
+			</MemoryRouter>,
+		);
+
+		expect(await screen.findByText('Trace Details')).toBeInTheDocument();
+
+		const spanTitle = getByText('/driver.DriverService/FindNearest');
+		expect(spanTitle).toBeInTheDocument();
+		fireEvent.click(spanTitle);
+
+		// Tag details
+		[
+			{ title: 'client-uuid', value: '6fb81b8ca91b2b4d' },
+			{ title: 'component', value: 'gRPC' },
+			{ title: 'host.name', value: '4f6ec470feea' },
+		].forEach((tag) => {
+			expect(getByText(tag.title)).toBeInTheDocument();
+			expect(getByText(tag.value)).toBeInTheDocument();
+		});
+	});
+
+	it('focus on selected span and reset focus action', async () => {
+		const { getByText, getAllByText } = render(
+			<MemoryRouter initialEntries={['/trace/000000000000000071dc9b0a338729b4']}>
+				<Route path={ROUTES.TRACE_DETAIL}>
+					<TraceDetail />
+				</Route>
+				,
+			</MemoryRouter>,
+		);
+
+		expect(await screen.findByText('Trace Details')).toBeInTheDocument();
+
+		const spanTitle = getByText('/driver.DriverService/FindNearest');
+		expect(spanTitle).toBeInTheDocument();
+		fireEvent.click(spanTitle);
+
+		expect(await screen.findByText('6fb81b8ca91b2b4d')).toBeInTheDocument();
+
+		// focus on selected span
+		const focusButton = getByText('Focus on selected span');
+		expect(focusButton).toBeInTheDocument();
+		fireEvent.click(focusButton);
+
+		// assert selected span
+		expect(getByText('15 Spans')).toBeInTheDocument();
+		expect(getAllByText('/driver.DriverService/FindNearest')).toHaveLength(3);
+		expect(getByText('173.10 ms')).toBeInTheDocument();
+
+		// reset focus
+		expect(screen.queryByText('HTTP GET /dispatch')).not.toBeInTheDocument();
+
+		const resetFocusButton = getByText('Reset Focus');
+		expect(resetFocusButton).toBeInTheDocument();
+		fireEvent.click(resetFocusButton);
+
+		expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalled();
+		expect(screen.queryByText('HTTP GET /dispatch')).toBeInTheDocument();
+	});
 });
