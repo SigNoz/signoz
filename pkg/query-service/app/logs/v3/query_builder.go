@@ -227,7 +227,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 	return queryString, nil
 }
 
-func getResourceBucketFilters(fs *v3.FilterSet) (string, error) {
+func getResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, aggregateAttribute v3.AttributeKey) (string, error) {
 	var conditions []string
 	// only add the resource attributes to the filters here
 	if fs != nil && len(fs.Items) != 0 {
@@ -268,9 +268,24 @@ func getResourceBucketFilters(fs *v3.FilterSet) (string, error) {
 			}
 		}
 	}
+
+	// for aggregate attribute add exists check in resources
+	for _, attr := range groupBy {
+		if attr.Type != v3.AttributeKeyTypeResource {
+			continue
+		}
+		conditions = append(conditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", attr.Key))
+	}
+
+	// for group by add exists check in resources
+	if aggregateAttribute.Key != "" && aggregateAttribute.Type == v3.AttributeKeyTypeResource {
+		conditions = append(conditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", aggregateAttribute.Key))
+	}
+
 	if len(conditions) == 0 {
 		return "", nil
 	}
+
 	conditionStr := strings.Join(conditions, " AND ")
 	return conditionStr, nil
 }
@@ -288,8 +303,11 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	// timerange will be sent in epoch millisecond
 	logsStart := utils.GetEpochNanoSecs(start)
 	logsEnd := utils.GetEpochNanoSecs(end)
-	bucketStart := logsStart / 1000000000
+
+	// this is added so that the bucket start considers all the fingerprints.
+	bucketStart := logsStart/1000000000 - 1800
 	bucketEnd := logsEnd / 1000000000
+
 	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", logsStart, logsEnd)
 
 	tableName := "distributed_logs"
@@ -297,10 +315,13 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	// panel type filter is not added because user can choose table type and get the default count
 	if len(filterSubQuery) > 0 || len(mq.GroupBy) > 0 {
 		tableName = "distributed_logs_v2"
+
+		// if bucketStart is less the the min resource bucket seconds then 30 mins from it.
+
 		timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", bucketStart, bucketEnd)
 	}
 
-	resourceBucketFilters, err := getResourceBucketFilters(mq.Filters)
+	resourceBucketFilters, err := getResourceBucketFilters(mq.Filters, mq.GroupBy, mq.AggregateAttribute)
 	if err != nil {
 		return "", err
 	}
