@@ -1,3 +1,5 @@
+import './Tags.styles.scss';
+
 import { Tooltip } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Fragment, useMemo } from 'react';
@@ -26,7 +28,12 @@ function Tag({ tags, onToggleHandler, setText }: TagProps): JSX.Element {
 				<Container>
 					<CustomSubTitle>{tags.key}</CustomSubTitle>
 					<SubTextContainer isDarkMode={isDarkMode}>
-						<Tooltip overlay={(): string => value}>
+						<Tooltip
+							overlayClassName="tagTooltip"
+							placement="left"
+							autoAdjustOverflow
+							title={value}
+						>
 							<CustomSubText
 								ellipsis={{
 									rows: isEllipsed ? 2 : 0,

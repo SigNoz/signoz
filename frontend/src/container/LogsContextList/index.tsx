@@ -1,6 +1,7 @@
 import './LogsContextList.styles.scss';
 
 import RawLogView from 'components/Logs/RawLogView';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -187,14 +188,15 @@ function LogsContextList({
 					<EmptyText>No Data</EmptyText>
 				)}
 				{isFetching && <Spinner size="large" height="10rem" />}
-
-				<Virtuoso
-					className="virtuoso-list"
-					initialTopMostItemIndex={0}
-					data={logs}
-					itemContent={getItemContent}
-					followOutput={order === ORDERBY_FILTERS.DESC}
-				/>
+				<OverlayScrollbar isVirtuoso>
+					<Virtuoso
+						className="virtuoso-list"
+						initialTopMostItemIndex={0}
+						data={logs}
+						itemContent={getItemContent}
+						followOutput={order === ORDERBY_FILTERS.DESC}
+					/>
+				</OverlayScrollbar>
 			</ListContainer>
 
 			{order === ORDERBY_FILTERS.DESC && (

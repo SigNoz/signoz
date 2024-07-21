@@ -17,11 +17,7 @@ function getXAxisTimestamps(seriesList: QueryData[]): number[] {
 	return timestampsArr.sort((a, b) => a - b);
 }
 
-function fillMissingXAxisTimestamps(
-	timestampArr: number[],
-	data: any[],
-	fillSpans: boolean,
-): any {
+function fillMissingXAxisTimestamps(timestampArr: number[], data: any[]): any {
 	// Generate a set of all timestamps in the range
 	const allTimestampsSet = new Set(timestampArr);
 	const processedData = JSON.parse(JSON.stringify(data));
@@ -35,14 +31,14 @@ function fillMissingXAxisTimestamps(
 		);
 
 		missingTimestamps.forEach((timestamp) => {
-			const value = fillSpans ? 0 : null;
+			const value = null;
 
 			entry.values.push([timestamp, value]);
 		});
 
 		entry.values.forEach((v) => {
 			if (Number.isNaN(v[1])) {
-				const replaceValue = fillSpans ? 0 : null;
+				const replaceValue = null;
 				// eslint-disable-next-line no-param-reassign
 				v[1] = replaceValue;
 			} else if (v[1] !== null) {
@@ -85,11 +81,7 @@ export const getUPlotChartData = (
 ): any[] => {
 	const seriesList = apiResponse?.data?.result || [];
 	const timestampArr = getXAxisTimestamps(seriesList);
-	const yAxisValuesArr = fillMissingXAxisTimestamps(
-		timestampArr,
-		seriesList,
-		fillSpans || false,
-	);
+	const yAxisValuesArr = fillMissingXAxisTimestamps(timestampArr, seriesList);
 
 	return [
 		timestampArr,

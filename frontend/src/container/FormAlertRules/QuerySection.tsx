@@ -2,6 +2,7 @@ import './QuerySection.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip } from 'antd';
+import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -31,6 +32,7 @@ function QuerySection({
 	runQuery,
 	alertDef,
 	panelType,
+	ruleId,
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -158,7 +160,15 @@ function QuerySection({
 								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
 									<Button
 										type="primary"
-										onClick={runQuery}
+										onClick={(): void => {
+											runQuery();
+											logEvent('Alert: Stage and run query', {
+												dataSource: ALERTS_DATA_SOURCE_MAP[alertType],
+												isNewRule: !ruleId || ruleId === 0,
+												ruleId,
+												queryType: queryCategory,
+											});
+										}}
 										className="stage-run-query"
 										icon={<Play size={14} />}
 									>
@@ -228,6 +238,7 @@ interface QuerySectionProps {
 	runQuery: VoidFunction;
 	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
+	ruleId: number;
 }
 
 export default QuerySection;

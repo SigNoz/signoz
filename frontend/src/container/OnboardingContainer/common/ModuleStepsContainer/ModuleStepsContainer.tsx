@@ -18,8 +18,8 @@ import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUti
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import history from 'lib/history';
 import { isEmpty, isNull } from 'lodash-es';
-import { HelpCircle } from 'lucide-react';
-import { useState } from 'react';
+import { HelpCircle, UserPlus } from 'lucide-react';
+import { SetStateAction, useState } from 'react';
 
 import { useOnboardingContext } from '../../context/OnboardingContext';
 import {
@@ -33,6 +33,7 @@ interface ModuleStepsContainerProps {
 	onReselectModule: any;
 	selectedModule: ModuleProps;
 	selectedModuleSteps: SelectedModuleStepProps[];
+	setIsInviteTeamMemberModalOpen: (value: SetStateAction<boolean>) => void;
 }
 
 interface MetaDataProps {
@@ -63,6 +64,7 @@ export default function ModuleStepsContainer({
 	onReselectModule,
 	selectedModule,
 	selectedModuleSteps,
+	setIsInviteTeamMemberModalOpen,
 }: ModuleStepsContainerProps): JSX.Element {
 	const {
 		activeStep,
@@ -409,32 +411,47 @@ Thanks
 	return (
 		<div className="onboarding-module-steps">
 			<div className="steps-container">
-				<div className="steps-container-header">
-					<div className="brand-logo" onClick={handleLogoClick}>
-						<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
+				<div>
+					<div className="steps-container-header">
+						<div className="brand-logo" onClick={handleLogoClick}>
+							<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
 
-						<div className="brand-logo-name">SigNoz</div>
+							<div className="brand-logo-name">SigNoz</div>
+						</div>
 					</div>
+
+					<Space style={{ marginBottom: '24px' }}>
+						<Button
+							style={{ display: 'flex', alignItems: 'center' }}
+							type="default"
+							icon={<LeftCircleOutlined />}
+							onClick={onReselectModule}
+						>
+							{selectedModule.title}
+						</Button>
+					</Space>
+
+					<Steps
+						direction="vertical"
+						size="small"
+						status="finish"
+						current={current}
+						items={selectedModuleSteps}
+					/>
 				</div>
-
-				<Space style={{ marginBottom: '24px' }}>
-					<Button
-						style={{ display: 'flex', alignItems: 'center' }}
-						type="default"
-						icon={<LeftCircleOutlined />}
-						onClick={onReselectModule}
-					>
-						{selectedModule.title}
-					</Button>
-				</Space>
-
-				<Steps
-					direction="vertical"
-					size="small"
-					status="finish"
-					current={current}
-					items={selectedModuleSteps}
-				/>
+				<Button
+					onClick={(): void => {
+						logEvent('Onboarding V2: Invite Member', {
+							module: selectedModule?.id,
+							page: 'sidebar',
+						});
+						setIsInviteTeamMemberModalOpen(true);
+					}}
+					icon={<UserPlus size={16} />}
+					className="invite-user-btn"
+				>
+					Invite teammates
+				</Button>
 			</div>
 
 			<div className="selected-step-content">

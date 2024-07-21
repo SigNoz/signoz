@@ -4,7 +4,7 @@ import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { defaultTo, isEmpty } from 'lodash-es';
+import { isArray, isEmpty } from 'lodash-es';
 import {
 	ChangeEvent,
 	Dispatch,
@@ -17,6 +17,7 @@ import {
 import {
 	addFilter,
 	AllTraceFilterKeys,
+	convertToStringArr,
 	FilterType,
 	HandleRunProps,
 	removeFilter,
@@ -37,15 +38,14 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 	const [searchFilter, setSearchFilter] = useState<string>('');
 	const [searchText, setSearchText] = useState<string>('');
 	const [checkedItems, setCheckedItems] = useState<string[]>(
-		defaultTo(selectedFilters?.[type]?.values as string[], []),
+		convertToStringArr(selectedFilters?.[type]?.values),
 	);
 
 	const [results, setResults] = useState<string[]>([]);
 	const [isFetching, setFetching] = useState<boolean>(false);
 
 	useEffect(
-		() =>
-			setCheckedItems(defaultTo(selectedFilters?.[type]?.values as string[], [])),
+		() => setCheckedItems(convertToStringArr(selectedFilters?.[type]?.values)),
 		[selectedFilters, type],
 	);
 
@@ -92,17 +92,21 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 		if (checked) {
 			addFilter(type, newValue, setSelectedFilters, keys);
 			setCheckedItems((prev) => {
-				if (!prev.includes(newValue)) {
-					prev.push(newValue);
+				const arr = prev || [];
+				if (isArray(arr) && !arr.includes(newValue)) {
+					arr.push(newValue);
 				}
-				return prev;
+				return convertToStringArr(arr);
 			});
 		} else if (checkedItems.length === 1) {
 			handleRun({ clearByType: type });
 			setCheckedItems([]);
 		} else {
 			removeFilter(type, newValue, setSelectedFilters, keys);
-			setCheckedItems((prev) => prev.filter((item) => item !== newValue));
+			setCheckedItems((prev) => {
+				const prevValue = convertToStringArr(prev);
+				return prevValue.filter((item) => item !== newValue);
+			});
 		}
 	};
 

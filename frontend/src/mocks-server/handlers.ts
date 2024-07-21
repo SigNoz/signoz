@@ -1,7 +1,10 @@
 import { rest } from 'msw';
 
 import { billingSuccessResponse } from './__mockdata__/billing';
+import { dashboardSuccessResponse } from './__mockdata__/dashboards';
+import { inviteUser } from './__mockdata__/invite_user';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
+import { membersResponse } from './__mockdata__/members';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
 import { serviceSuccessResponse } from './__mockdata__/services';
 import { topLevelOperationSuccessResponse } from './__mockdata__/top_level_operations';
@@ -25,6 +28,9 @@ export const handlers = [
 			res(ctx.status(200), ctx.json(topLevelOperationSuccessResponse)),
 	),
 
+	rest.get('http://localhost/api/v1/orgUsers/*', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(membersResponse)),
+	),
 	rest.get(
 		'http://localhost/api/v3/autocomplete/attribute_keys',
 		(req, res, ctx) => {
@@ -84,5 +90,16 @@ export const handlers = [
 	// ?licenseKey=58707e3d-3bdb-44e7-8c89-a9be237939f4
 	rest.get('http://localhost/api/v1/billing', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(billingSuccessResponse)),
+	),
+
+	rest.get('http://localhost/api/v1/dashboards', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(dashboardSuccessResponse)),
+	),
+
+	rest.get('http://localhost/api/v1/invite', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(inviteUser)),
+	),
+	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(inviteUser)),
 	),
 ];

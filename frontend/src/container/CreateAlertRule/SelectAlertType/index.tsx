@@ -1,4 +1,6 @@
 import { Row, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
+import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -34,6 +36,13 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 			default:
 				break;
 		}
+
+		logEvent('Alert: Sample alert link clicked', {
+			dataSource: ALERTS_DATA_SOURCE_MAP[option],
+			link: url,
+			page: 'New alert data source selection page',
+		});
+
 		window.open(url, '_blank');
 	}
 	const renderOptions = useMemo(

@@ -17,6 +17,7 @@ function WidgetGraph({
 	queryResponse,
 	setRequestData,
 	selectedWidget,
+	isLoadingPanelData,
 }: WidgetGraphContainerProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 
@@ -43,6 +44,7 @@ function WidgetGraph({
 			)}
 
 			<WidgetGraphComponent
+				isLoadingPanelData={isLoadingPanelData}
 				selectedGraph={selectedGraph}
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}

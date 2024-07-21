@@ -3,6 +3,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
+import logEvent from 'api/common/logEvent';
 import DropDown from 'components/DropDown/DropDown';
 import { listAlertMessage } from 'components/facingIssueBtn/util';
 import {
@@ -41,7 +42,7 @@ import {
 } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
-import { filterAlerts } from './utils';
+import { alertActionLogEvent, filterAlerts } from './utils';
 
 const { Search } = Input;
 
@@ -107,12 +108,16 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	}, [notificationsApi, t]);
 
 	const onClickNewAlertHandler = useCallback(() => {
+		logEvent('Alert: New alert button clicked', {
+			number: allAlertRules?.length,
+		});
 		featureResponse
 			.refetch()
 			.then(() => {
 				history.push(ROUTES.ALERTS_NEW);
 			})
 			.catch(handleError);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [featureResponse, handleError]);
 
 	const onEditHandler = (record: GettableAlert) => (): void => {
@@ -321,6 +326,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 10,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
 				<DropDown
+					onDropDownItemClick={(item): void => alertActionLogEvent(item.key, record)}
 					element={[
 						<ToggleAlertState
 							key="1"
@@ -356,6 +362,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		});
 	}
 
+	const paginationConfig = {
+		defaultCurrent: Number(paginationParam) || 1,
+	};
 	return (
 		<>
 			<SearchContainer>
@@ -385,11 +394,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				columns={columns}
 				rowKey="id"
 				dataSource={data}
+				shouldSendAlertsLogEvent
 				dynamicColumns={dynamicColumns}
 				onChange={handleChange}
-				pagination={{
-					defaultCurrent: Number(paginationParam) || 1,
-				}}
+				pagination={paginationConfig}
 				facingIssueBtn={{
 					attributes: {
 						screen: 'Alert list page',

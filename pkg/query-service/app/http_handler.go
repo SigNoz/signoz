@@ -76,7 +76,6 @@ type APIHandler struct {
 	querier           interfaces.Querier
 	querierV2         interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
-	preferDelta       bool
 	preferSpanMetrics bool
 
 	// temporalityMap is a map of metric name to temporality
@@ -84,6 +83,7 @@ type APIHandler struct {
 	// querying the v4 table on low cardinal temporality column
 	// should be fast but we can still avoid the query if we have the data in memory
 	temporalityMap map[string]map[v3.Temporality]bool
+	temporalityMux sync.Mutex
 
 	maxIdleConns int
 	maxOpenConns int
@@ -106,7 +106,6 @@ type APIHandlerOpts struct {
 
 	SkipConfig *model.SkipConfig
 
-	PerferDelta       bool
 	PreferSpanMetrics bool
 
 	MaxIdleConns int
@@ -166,7 +165,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		reader:                        opts.Reader,
 		appDao:                        opts.AppDao,
 		skipConfig:                    opts.SkipConfig,
-		preferDelta:                   opts.PerferDelta,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		maxIdleConns:                  opts.MaxIdleConns,
@@ -461,6 +459,9 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 
 // populateTemporality adds the temporality to the query if it is not present
 func (aH *APIHandler) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+
+	aH.temporalityMux.Lock()
+	defer aH.temporalityMux.Unlock()
 
 	missingTemporality := make([]string, 0)
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
@@ -3086,6 +3087,7 @@ func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request)
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
+	queryRangeParams.Version = "v3"
 
 	aH.Respond(w, queryRangeParams)
 }
@@ -3138,6 +3140,14 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 	if queryRangeParams.CompositeQuery.FillGaps {
 		postprocess.FillGaps(result, queryRangeParams)
+	}
+
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable && queryRangeParams.FormatForWeb {
+		if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+			result = postprocess.TransformToTableForClickHouseQueries(result)
+		} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+			result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+		}
 	}
 
 	resp := v3.QueryRangeResponse{
@@ -3388,8 +3398,10 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-
 		result, err = postprocess.PostProcessResult(result, queryRangeParams)
+	} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL &&
+		queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable && queryRangeParams.FormatForWeb {
+		result = postprocess.TransformToTableForClickHouseQueries(result)
 	}
 
 	if err != nil {
@@ -3413,6 +3425,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
+	queryRangeParams.Version = "v4"
 
 	// add temporality for each metric
 	temporalityErr := aH.populateTemporality(r.Context(), queryRangeParams)

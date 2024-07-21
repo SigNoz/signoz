@@ -354,6 +354,8 @@ type QueryRangeParamsV3 struct {
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
 	NoCache        bool                   `json:"noCache"`
+	Version        string                 `json:"-"`
+	FormatForWeb   bool                   `json:"formatForWeb,omitempty"`
 }
 
 type PromQuery struct {
@@ -399,8 +401,11 @@ type CompositeQuery struct {
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
-	Unit              string                      `json:"unit,omitempty"`
-	FillGaps          bool                        `json:"fillGaps,omitempty"`
+	// Unit for the time series data shown in the graph
+	// This is used in alerts to format the value and threshold
+	Unit string `json:"unit,omitempty"`
+	// FillGaps is used to fill the gaps in the time series data
+	FillGaps bool `json:"fillGaps,omitempty"`
 }
 
 func (c *CompositeQuery) EnabledQueries() int {
@@ -986,10 +991,30 @@ type QueryRangeResponse struct {
 	Result                []*Result `json:"result"`
 }
 
+type TableColumn struct {
+	Name string `json:"name"`
+	// QueryName is the name of the query that this column belongs to
+	QueryName string `json:"queryName"`
+	// IsValueColumn is true if this column is a value column
+	// i.e it is the column that contains the actual value that is being plotted
+	IsValueColumn bool `json:"isValueColumn"`
+}
+
+type TableRow struct {
+	Data      map[string]interface{} `json:"data"`
+	QueryName string                 `json:"-"`
+}
+
+type Table struct {
+	Columns []*TableColumn `json:"columns"`
+	Rows    []*TableRow    `json:"rows"`
+}
+
 type Result struct {
-	QueryName string    `json:"queryName"`
-	Series    []*Series `json:"series"`
-	List      []*Row    `json:"list"`
+	QueryName string    `json:"queryName,omitempty"`
+	Series    []*Series `json:"series,omitempty"`
+	List      []*Row    `json:"list,omitempty"`
+	Table     *Table    `json:"table,omitempty"`
 }
 
 type LogsLiveTailClient struct {

@@ -2,6 +2,7 @@
 import './LogsExplorerViews.styles.scss';
 
 import { Button } from 'antd';
+import logEvent from 'api/common/logEvent';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -37,7 +38,14 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { defaultTo, isEmpty, omit } from 'lodash-es';
+import {
+	cloneDeep,
+	defaultTo,
+	isEmpty,
+	isUndefined,
+	omit,
+	set,
+} from 'lodash-es';
 import { Sliders } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -63,10 +71,10 @@ import { v4 } from 'uuid';
 
 function LogsExplorerViews({
 	selectedView,
-	showHistogram,
+	showFrequencyChart,
 }: {
 	selectedView: SELECTED_VIEWS;
-	showHistogram: boolean;
+	showFrequencyChart: boolean;
 }): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
@@ -116,6 +124,12 @@ function LogsExplorerViews({
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
+
+	const { options, config } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: initialDataSource || DataSource.LOGS,
+		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
+	});
 
 	const orderByTimestamp: OrderByPayload | null = useMemo(() => {
 		const timestampOrderBy = listQuery?.orderBy.find(
@@ -174,10 +188,10 @@ function LogsExplorerViews({
 		() =>
 			updateAllQueriesOperators(
 				currentQuery || initialQueriesMap.logs,
-				PANEL_TYPES.TIME_SERIES,
+				selectedPanelType,
 				DataSource.LOGS,
 			),
-		[currentQuery, updateAllQueriesOperators],
+		[currentQuery, selectedPanelType, updateAllQueriesOperators],
 	);
 
 	const handleModeChange = (panelType: PANEL_TYPES): void => {
@@ -304,13 +318,34 @@ function LogsExplorerViews({
 		],
 	);
 
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isUndefined(data?.payload)) {
+			const currentData = data?.payload?.data?.newResult?.data?.result || [];
+			logEvent('Logs Explorer: Page visited', {
+				panelType,
+				isEmpty: !currentData?.[0]?.list,
+			});
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload]);
+
 	const {
 		mutate: updateDashboard,
 		isLoading: isUpdateDashboardLoading,
 	} = useUpdateDashboard();
 
+	const getUpdatedQueryForExport = useCallback((): Query => {
+		const updatedQuery = cloneDeep(currentQuery);
+
+		set(updatedQuery, 'builder.queryData[0].pageSize', 10);
+
+		return updatedQuery;
+	}, [currentQuery]);
+
 	const handleExport = useCallback(
-		(dashboard: Dashboard | null): void => {
+		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
 			if (!dashboard || !panelType) return;
 
 			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(panelType)
@@ -319,12 +354,24 @@ function LogsExplorerViews({
 
 			const widgetId = v4();
 
+			const query =
+				panelType === PANEL_TYPES.LIST
+					? getUpdatedQueryForExport()
+					: exportDefaultQuery;
+
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
-				exportDefaultQuery,
+				query,
 				widgetId,
 				panelTypeParam,
+				options.selectColumns,
 			);
+
+			logEvent('Logs Explorer: Add to dashboard successful', {
+				panelType,
+				isNewDashboard,
+				dashboardName: dashboard?.data?.title,
+			});
 
 			updateDashboard(updatedDashboard, {
 				onSuccess: (data) => {
@@ -353,7 +400,7 @@ function LogsExplorerViews({
 					}
 
 					const dashboardEditView = generateExportToDashboardLink({
-						query: exportDefaultQuery,
+						query,
 						panelType: panelTypeParam,
 						dashboardId: data.payload?.uuid || '',
 						widgetId,
@@ -365,7 +412,9 @@ function LogsExplorerViews({
 			});
 		},
 		[
+			getUpdatedQueryForExport,
 			exportDefaultQuery,
+			options.selectColumns,
 			history,
 			notifications,
 			panelType,
@@ -460,12 +509,6 @@ function LogsExplorerViews({
 		selectedView,
 	]);
 
-	const { options, config } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.METRICS,
-		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
-	});
-
 	const chartData = useMemo(() => {
 		if (!stagedQuery) return [];
 
@@ -545,7 +588,7 @@ function LogsExplorerViews({
 
 	return (
 		<div className="logs-explorer-views-container">
-			{showHistogram && (
+			{showFrequencyChart && (
 				<LogsExplorerChart
 					className="logs-histogram"
 					isLoading={isFetchingListChartData || isLoadingListChartData}

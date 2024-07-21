@@ -54,6 +54,7 @@ describe('VariableItem', () => {
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -69,6 +70,7 @@ describe('VariableItem', () => {
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -83,6 +85,7 @@ describe('VariableItem', () => {
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -111,6 +114,7 @@ describe('VariableItem', () => {
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -134,6 +138,7 @@ describe('VariableItem', () => {
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -149,6 +154,7 @@ describe('VariableItem', () => {
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);

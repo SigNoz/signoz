@@ -8,6 +8,7 @@
 	"GET_STARTED_LOGS_MANAGEMENT": "SigNoz | Get Started | Logs",
 	"GET_STARTED_INFRASTRUCTURE_MONITORING": "SigNoz | Get Started | Infrastructure",
 	"GET_STARTED_AWS_MONITORING": "SigNoz | Get Started | AWS",
+	"GET_STARTED_AZURE_MONITORING": "SigNoz | Get Started | AZURE",
 	"TRACE": "SigNoz | Trace",
 	"TRACE_DETAIL": "SigNoz | Trace Detail",
 	"TRACES_EXPLORER": "SigNoz | Traces Explorer",
