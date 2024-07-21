@@ -39,6 +39,9 @@
 .steps-container {
 	width: 20%;
 	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
 
 	.steps-container-header {
 		display: flex;
@@ -67,6 +70,30 @@
 
 				color: #fff;
 			}
+		}
+	}
+
+	.invite-user-btn {
+		display: flex;
+		width: 170px;
+		height: 32px;
+		padding: 6px;
+		justify-content: center;
+		align-items: center;
+		border-radius: 2px;
+		margin-bottom: 31px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+		box-shadow: none;
+
+		.ant-typography {
+			color: var(--bg-vanilla-400);
+			font-family: Inter;
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 10px;
+			letter-spacing: 0.12px;
 		}
 	}
 }
@@ -194,6 +221,15 @@
 				.brand-logo-name {
 					color: black;
 				}
+			}
+		}
+
+		.invite-user-btn {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+
+			.ant-typography {
+				color: var(--bg-slate-200);
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-import { Button, Modal, Tabs, Typography } from 'antd';
+import { Button, Modal, Tabs, Tooltip, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
 import { QueryParams } from 'constants/query';
@@ -102,8 +102,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 						marginTop: '16px',
 					}}
 				>
-					{' '}
-					Details for selected Span{' '}
+					Details for selected Span
 				</Typography.Text>
 
 				<Typography.Text style={{ fontWeight: 700 }}>Service</Typography.Text>
@@ -113,6 +112,30 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				<Typography.Text style={{ fontWeight: 700 }}>Operation</Typography.Text>
 
 				<Typography>{tree.name}</Typography>
+
+				<Typography.Text style={{ fontWeight: 700 }}>SpanKind</Typography.Text>
+
+				<Typography>{tree.spanKind}</Typography>
+
+				<Typography.Text style={{ fontWeight: 700 }}>
+					StatusCodeString
+				</Typography.Text>
+
+				<Tooltip placement="left" title={tree.statusCodeString}>
+					<Typography>{tree.statusCodeString}</Typography>
+				</Tooltip>
+
+				{tree.statusMessage && (
+					<>
+						<Typography.Text style={{ fontWeight: 700 }}>
+							StatusMessage
+						</Typography.Text>
+
+						<Tooltip placement="left" title={tree.statusMessage}>
+							<Typography>{tree.statusMessage}</Typography>
+						</Tooltip>
+					</>
+				)}
 
 				<Button size="small" style={{ marginTop: '8px' }} onClick={onLogsHandler}>
 					Go to Related logs

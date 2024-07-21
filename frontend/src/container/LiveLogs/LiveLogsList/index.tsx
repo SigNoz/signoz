@@ -3,6 +3,7 @@ import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -128,13 +129,15 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
-							<Virtuoso
-								ref={ref}
-								initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
-								data={logs}
-								totalCount={logs.length}
-								itemContent={getItemContent}
-							/>
+							<OverlayScrollbar isVirtuoso>
+								<Virtuoso
+									ref={ref}
+									initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
+									data={logs}
+									totalCount={logs.length}
+									itemContent={getItemContent}
+								/>
+							</OverlayScrollbar>
 						</Card>
 					)}
 				</InfinityWrapperStyled>
