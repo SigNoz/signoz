@@ -9,10 +9,12 @@ import { DataSource } from 'types/common/queryBuilder';
 
 interface GetTabsItemsProps {
 	isListViewDisabled: boolean;
+	isFilterApplied: boolean;
 }
 
 export const getTabsItems = ({
 	isListViewDisabled,
+	isFilterApplied,
 }: GetTabsItemsProps): TabsProps['items'] => [
 	{
 		label: (
@@ -23,7 +25,7 @@ export const getTabsItems = ({
 			/>
 		),
 		key: PANEL_TYPES.LIST,
-		children: <ListView />,
+		children: <ListView isFilterApplied={isFilterApplied} />,
 		disabled: isListViewDisabled,
 	},
 	{
@@ -35,13 +37,18 @@ export const getTabsItems = ({
 			/>
 		),
 		key: PANEL_TYPES.TRACE,
-		children: <TracesView />,
+		children: <TracesView isFilterApplied={isFilterApplied} />,
 		disabled: isListViewDisabled,
 	},
 	{
 		label: <TabLabel label="Time Series" isDisabled={false} />,
 		key: PANEL_TYPES.TIME_SERIES,
-		children: <TimeSeriesView dataSource={DataSource.TRACES} />,
+		children: (
+			<TimeSeriesView
+				dataSource={DataSource.TRACES}
+				isFilterApplied={isFilterApplied}
+			/>
+		),
 	},
 	{
 		label: 'Table View',
