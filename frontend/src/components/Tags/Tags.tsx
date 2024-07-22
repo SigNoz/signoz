@@ -5,7 +5,6 @@ import { Button } from 'antd';
 import { Tag } from 'antd/lib';
 import Input from 'components/Input';
 import { Check, X } from 'lucide-react';
-import { TweenOneGroup } from 'rc-tween-one';
 import React, { Dispatch, SetStateAction, useState } from 'react';
 
 function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
@@ -46,41 +45,19 @@ function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
 		func(value);
 	};
 
-	const forMap = (tag: string): React.ReactElement => (
-		<span key={tag} style={{ display: 'inline-block' }}>
-			<Tag
-				closable
-				onClose={(e): void => {
-					e.preventDefault();
-					handleClose(tag);
-				}}
-			>
-				{tag}
-			</Tag>
-		</span>
-	);
-
-	const tagChild = tags.map(forMap);
-
-	const renderTagsAnimated = (): React.ReactElement => (
-		<TweenOneGroup
-			appear={false}
-			className="tags"
-			enter={{ scale: 0.8, opacity: 0, type: 'from', duration: 100 }}
-			leave={{ opacity: 0, width: 0, scale: 0, duration: 200 }}
-			onEnd={(e): void => {
-				if (e.type === 'appear' || e.type === 'enter') {
-					(e.target as any).style = 'display: inline-block';
-				}
-			}}
-		>
-			{tagChild}
-		</TweenOneGroup>
-	);
-
 	return (
 		<div className="tags-container">
-			{renderTagsAnimated()}
+			{tags.map<React.ReactNode>((tag) => (
+				<Tag
+					key={tag}
+					closable
+					style={{ userSelect: 'none' }}
+					onClose={(): void => handleClose(tag)}
+				>
+					<span>{tag}</span>
+				</Tag>
+			))}
+
 			{inputVisible && (
 				<div className="add-tag-container">
 					<Input
