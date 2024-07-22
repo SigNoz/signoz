@@ -6,7 +6,7 @@
         "valueType":"string",
         "defaultValue":"grid",
         "allowedValues":["grid","list"],
-        "isDescreteValues": true,
+        "isDiscreteValues": true,
         "allowedScopes":["user","org"]
     },
     {
@@ -16,7 +16,7 @@
         "valueType":"boolean",
         "defaultValue":false,
         "allowedValues":[true,false],
-        "isDescreteValues": true,
+        "isDiscreteValues": true,
         "allowedScopes":["user","org"]
     },
     {
@@ -25,7 +25,7 @@
         "description":"",
         "valueType":"integer",
         "defaultValue":10,
-        "isDescreteValues": false,
+        "isDiscreteValues": false,
         "range": {
             "min": 0,
             "max": 100

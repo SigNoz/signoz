@@ -2195,21 +2195,21 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 
 // Preferences
 func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddleware) {
-	subRouter := router.PathPrefix("/api/v1/preferences").Subrouter()
+	subRouter := router.PathPrefix("/api/v1").Subrouter()
 
 	// user actions
-	subRouter.HandleFunc("/user/all", am.ViewAccess(ah.getAllUserPreferences)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/user/preferences", am.ViewAccess(ah.getAllUserPreferences)).Methods(http.MethodGet)
 
-	subRouter.HandleFunc("/user/{preferenceId}", am.ViewAccess(ah.getUserPreference)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/user/preferences/{preferenceId}", am.ViewAccess(ah.getUserPreference)).Methods(http.MethodGet)
 
-	subRouter.HandleFunc("/user/{preferenceId}", am.ViewAccess(ah.updateUserPreference)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/user/preferences/{preferenceId}", am.ViewAccess(ah.updateUserPreference)).Methods(http.MethodPost)
 
 	// org actions
-	subRouter.HandleFunc("/org/all", am.AdminAccess(ah.getAllOrgPreferences)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/org/preferences", am.AdminAccess(ah.getAllOrgPreferences)).Methods(http.MethodGet)
 
-	subRouter.HandleFunc("/org/{preferenceId}", am.AdminAccess(ah.getOrgPreference)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/org/preferences/{preferenceId}", am.AdminAccess(ah.getOrgPreference)).Methods(http.MethodGet)
 
-	subRouter.HandleFunc("/org/{preferenceId}", am.AdminAccess(ah.updateOrgPreference)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/org/preferences/{preferenceId}", am.AdminAccess(ah.updateOrgPreference)).Methods(http.MethodPost)
 }
 
 func (ah *APIHandler) getUserPreference(

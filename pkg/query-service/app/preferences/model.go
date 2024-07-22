@@ -25,7 +25,7 @@ type Preference struct {
 	ValueType        string        `json:"valueType"`
 	DefaultValue     interface{}   `json:"defaultValue"`
 	AllowedValues    []interface{} `json:"allowedValues"`
-	IsDescreteValues bool          `json:"isDescreteValues"`
+	IsDiscreteValues bool          `json:"isDiscreteValues"`
 	Range            Range         `json:"range"`
 	AllowedScopes    []string      `json:"allowedScopes"`
 }
@@ -46,9 +46,9 @@ const (
 	UserAllowedScope string = "user"
 )
 
-func checkIfInAllowedValues(preferenceValue interface{}, preference *Preference) bool {
+func (p *Preference) checkIfInAllowedValues(preferenceValue interface{}) bool {
 	isInAllowedValues := false
-	for _, value := range preference.AllowedValues {
+	for _, value := range p.AllowedValues {
 		if value == preferenceValue {
 			isInAllowedValues = true
 		}
@@ -67,7 +67,7 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
 			}
 			val = int64(floatVal)
 		}
-		if !p.IsDescreteValues {
+		if !p.IsDiscreteValues {
 			if val < p.Range.Min || val > p.Range.Max {
 				return &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the range specified, min: %v , max:%v", p.Range.Min, p.Range.Max)}
 			}
@@ -90,9 +90,9 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
 	}
 
 	// check the validity of the value being part of allowed values or the range specified if any
-	if p.IsDescreteValues {
+	if p.IsDiscreteValues {
 		if p.AllowedValues != nil {
-			isInAllowedValues := checkIfInAllowedValues(preferenceValue, p)
+			isInAllowedValues := p.checkIfInAllowedValues(preferenceValue)
 			if !isInAllowedValues {
 				return &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the list of allowedValues: %v", p.AllowedValues)}
 			}
@@ -133,7 +133,7 @@ type AllPreferences struct {
 	ValueType        string        `json:"valueType"`
 	DefaultValue     interface{}   `json:"defaultValue"`
 	Value            interface{}   `json:"value"`
-	IsDescreteValues bool          `json:"isDescreteValues"`
+	IsDiscreteValues bool          `json:"isDiscreteValues"`
 	AllowedValues    []interface{} `json:"allowedValues"`
 	Range            Range         `json:"range"`
 	AllowedScopes    []string      `json:"allowedScopes"`
@@ -326,7 +326,7 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences,
 		preferenceWithValue.DefaultValue = preference.DefaultValue
 		preferenceWithValue.Range = preference.Range
 		preferenceWithValue.ValueType = preference.ValueType
-		preferenceWithValue.IsDescreteValues = preference.IsDescreteValues
+		preferenceWithValue.IsDiscreteValues = preference.IsDiscreteValues
 
 		if isEnabledForOrgScope {
 			ok, seen := preferenceValueMap[preference.Key]
@@ -492,7 +492,7 @@ func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferences
 		preferenceWithValue.DefaultValue = preference.DefaultValue
 		preferenceWithValue.Range = preference.Range
 		preferenceWithValue.ValueType = preference.ValueType
-		preferenceWithValue.IsDescreteValues = preference.IsDescreteValues
+		preferenceWithValue.IsDiscreteValues = preference.IsDiscreteValues
 
 		if isEnabledForUserScope {
 			preferenceWithValue.Value = preference.DefaultValue
