@@ -563,11 +563,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		if (selectedGraph === PANEL_TYPES.LIST) {
 			const initialDataSource = currentQuery.builder.queryData[0].dataSource;
 			if (initialDataSource === DataSource.LOGS) {
+				// we do not need selected log columns in the request data as the entire response contains all the necessary data
 				setRequestData((prev) => ({
 					...prev,
 					tableParams: {
 						...prev.tableParams,
-						selectColumns: selectedLogFields,
 					},
 				}));
 			} else if (initialDataSource === DataSource.TRACES) {
