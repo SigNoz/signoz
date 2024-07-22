@@ -251,6 +251,7 @@ function TracesExplorer(): JSX.Element {
 								<Button
 									onClick={(): void => setOpen(!isOpen)}
 									className="filter-outlined-btn"
+									data-testid="filter-uncollapse-btn"
 								>
 									<FilterOutlined />
 								</Button>

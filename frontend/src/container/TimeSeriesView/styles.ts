@@ -1,5 +1,4 @@
-import { Typography } from 'antd';
-import Card from 'antd/es/card/Card';
+import { Card, Typography } from 'antd';
 import styled from 'styled-components';
 
 export const Container = styled(Card)`

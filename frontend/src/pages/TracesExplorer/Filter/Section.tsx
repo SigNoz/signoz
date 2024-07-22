@@ -64,7 +64,7 @@ export function Section(props: SectionProps): JSX.Element {
 	return (
 		<div>
 			<Divider plain className="divider" />
-			<div className="section-body-header">
+			<div className="section-body-header" data-testid={`collapse-${panelName}`}>
 				<Collapse
 					bordered={false}
 					className="collapseContainer"
@@ -96,7 +96,11 @@ export function Section(props: SectionProps): JSX.Element {
 							  },
 					]}
 				/>
-				<Button type="link" onClick={onClearHandler}>
+				<Button
+					type="link"
+					onClick={onClearHandler}
+					data-testid={`collapse-${panelName}-clearBtn`}
+				>
 					Clear All
 				</Button>
 			</div>
