@@ -190,7 +190,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 		op == v3.FilterOperatorHas {
 		val, ok := item.Value.(string)
 		if ok && len(val) >= NGRAM_SIZE {
-			filters = append(filters, fmt.Sprintf("lower(body) like lower('%%%s%%')", strings.ToLower(val)))
+			filters = append(filters, fmt.Sprintf("lower(body) like lower('%%%s%%')", utils.QuoteEscapedString(strings.ToLower(val))))
 		}
 	}
 

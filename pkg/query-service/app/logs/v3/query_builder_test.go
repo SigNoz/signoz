@@ -304,7 +304,7 @@ var timeSeriesFilterQueryData = []struct {
 		ExpectedFilter: "lower(body) LIKE lower('%test%') AND lower(body) NOT LIKE lower('%test1%')",
 	},
 	{
-		Name: "Test for body contains and ncontains",
+		Name: "Test for body like and nlike",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Operator: "like", Value: "test"},
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Operator: "nlike", Value: "test1"},
