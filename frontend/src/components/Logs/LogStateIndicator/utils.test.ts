@@ -49,6 +49,28 @@ describe('getLogIndicatorType', () => {
 		expect(getLogIndicatorType(log)).toBe('FATAL');
 	});
 
+	it('case insensitive severity_text should be valid', () => {
+		const log = {
+			date: '2024-02-29T12:34:46Z',
+			timestamp: 1646115296,
+			id: '123456',
+			traceId: '987654',
+			spanId: '54321',
+			traceFlags: 0,
+			severityText: 'INFO',
+			severityNumber: 2,
+			body: 'Sample log Message',
+			resources_string: {},
+			attributesString: {},
+			attributes_string: {},
+			attributesInt: {},
+			attributesFloat: {},
+			severity_text: 'fatAl',
+			severity_number: 0,
+		};
+		expect(getLogIndicatorType(log)).toBe('FATAL');
+	});
+
 	it('should return log level if severityText and severityNumber is missing', () => {
 		const log: ILog = {
 			date: '2024-02-29T12:34:58Z',

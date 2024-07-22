@@ -92,16 +92,22 @@ const getLogType = (
 
 export const getLogIndicatorType = (logData: ILog): string => {
 	const defaultType = logData.attributes_string?.log_level || LogType.INFO;
-	return getLogType(logData.severity_text, logData.severity_number, defaultType);
+	// convert the severity_text to upper case for the comparison to support case insensitive values
+	return getLogType(
+		logData?.severity_text?.toUpperCase(),
+		logData?.severity_number || 0,
+		defaultType,
+	);
 };
 
 export const getLogIndicatorTypeForTable = (
 	log: Record<string, unknown>,
 ): string => {
 	const defaultType = (log.log_level as string) || LogType.INFO;
+	// convert the severity_text to upper case for the comparison to support case insensitive values
 	return getLogType(
-		log.severity_text as string,
-		log.severity_number as number,
+		(log?.severity_text as string)?.toUpperCase(),
+		(log?.severity_number as number) || 0,
 		defaultType,
 	);
 };
