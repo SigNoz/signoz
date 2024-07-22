@@ -42,4 +42,5 @@ export const VariableValue = styled(Typography)`
 export const SelectItemStyle = {
 	minWidth: 120,
 	fontSize: '0.8rem',
+	width: '100%',
 };

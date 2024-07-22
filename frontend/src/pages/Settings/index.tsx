@@ -1,5 +1,7 @@
 import RouteTab from 'components/RouteTab';
+import { FeatureKeys } from 'constants/features';
 import useComponentPermission from 'hooks/useComponentPermission';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import history from 'lib/history';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,11 +21,12 @@ function SettingsPage(): JSX.Element {
 	);
 	const { t } = useTranslation(['routes']);
 
-	const routes = useMemo(() => getRoutes(role, isCurrentOrgSettings, t), [
-		role,
-		isCurrentOrgSettings,
-		t,
-	]);
+	const isGatewayEnabled = !!useFeatureFlag(FeatureKeys.GATEWAY)?.active;
+
+	const routes = useMemo(
+		() => getRoutes(role, isCurrentOrgSettings, isGatewayEnabled, t),
+		[role, isCurrentOrgSettings, isGatewayEnabled, t],
+	);
 
 	return <RouteTab routes={routes} activeKey={pathname} history={history} />;
 }

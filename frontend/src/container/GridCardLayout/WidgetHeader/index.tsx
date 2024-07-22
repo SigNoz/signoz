@@ -2,6 +2,7 @@ import './WidgetHeader.styles.scss';
 
 import {
 	AlertOutlined,
+	CloudDownloadOutlined,
 	CopyOutlined,
 	DeleteOutlined,
 	EditFilled,
@@ -17,6 +18,9 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { isEmpty } from 'lodash-es';
+import { unparse } from 'papaparse';
 import { ReactNode, useCallback, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -46,6 +50,7 @@ interface IWidgetHeaderProps {
 	headerMenuList?: MenuItemKeys[];
 	isWarning: boolean;
 	isFetchingResponse: boolean;
+	tableProcessedDataRef: React.MutableRefObject<RowData[]>;
 }
 
 function WidgetHeader({
@@ -61,6 +66,7 @@ function WidgetHeader({
 	headerMenuList,
 	isWarning,
 	isFetchingResponse,
+	tableProcessedDataRef,
 }: IWidgetHeaderProps): JSX.Element | null {
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
@@ -73,7 +79,18 @@ function WidgetHeader({
 		);
 	}, [widget.id, widget.panelTypes, widget.query]);
 
-	const onCreateAlertsHandler = useCreateAlerts(widget);
+	const onCreateAlertsHandler = useCreateAlerts(widget, 'dashboardView');
+
+	const onDownloadHandler = useCallback((): void => {
+		const csv = unparse(tableProcessedDataRef.current);
+		const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+		const csvUrl = URL.createObjectURL(csvBlob);
+		const downloadLink = document.createElement('a');
+		downloadLink.href = csvUrl;
+		downloadLink.download = `${!isEmpty(title) ? title : 'table-panel'}.csv`;
+		downloadLink.click();
+		downloadLink.remove();
+	}, [tableProcessedDataRef, title]);
 
 	const keyMethodMapping = useMemo(
 		() => ({
@@ -82,8 +99,16 @@ function WidgetHeader({
 			[MenuItemKeys.Delete]: onDelete,
 			[MenuItemKeys.Clone]: onClone,
 			[MenuItemKeys.CreateAlerts]: onCreateAlertsHandler,
+			[MenuItemKeys.Download]: onDownloadHandler,
 		}),
-		[onDelete, onEditHandler, onView, onClone, onCreateAlertsHandler],
+		[
+			onView,
+			onEditHandler,
+			onDelete,
+			onClone,
+			onCreateAlertsHandler,
+			onDownloadHandler,
+		],
 	);
 
 	const onMenuItemSelectHandler: MenuProps['onClick'] = useCallback(
@@ -129,6 +154,13 @@ function WidgetHeader({
 				disabled: !editWidget,
 			},
 			{
+				key: MenuItemKeys.Download,
+				icon: <CloudDownloadOutlined />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Download],
+				isVisible: widget.panelTypes === PANEL_TYPES.TABLE,
+				disabled: false,
+			},
+			{
 				key: MenuItemKeys.Delete,
 				icon: <DeleteOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
@@ -144,7 +176,13 @@ function WidgetHeader({
 				disabled: false,
 			},
 		],
-		[headerMenuList, queryResponse.isFetching, editWidget, deleteWidget],
+		[
+			headerMenuList,
+			queryResponse.isFetching,
+			editWidget,
+			deleteWidget,
+			widget.panelTypes,
+		],
 	);
 
 	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
@@ -196,6 +234,7 @@ function WidgetHeader({
 				)}
 				<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
 					<MoreOutlined
+						data-testid="widget-header-options"
 						className={`widget-header-more-options ${
 							parentHover ? 'widget-header-hover' : ''
 						}`}

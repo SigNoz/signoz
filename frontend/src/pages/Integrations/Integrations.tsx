@@ -8,6 +8,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import Header from './Header';
 import IntegrationDetailPage from './IntegrationDetailPage/IntegrationDetailPage';
 import IntegrationsList from './IntegrationsList';
+import { RequestIntegrationBtn } from './RequestIntegrationBtn';
 import { INTEGRATION_TELEMETRY_EVENTS } from './utils';
 
 function Integrations(): JSX.Element {
@@ -65,6 +66,7 @@ function Integrations(): JSX.Element {
 							searchTerm={searchTerm}
 							setActiveDetailTab={setActiveDetailTab}
 						/>
+						<RequestIntegrationBtn />
 					</>
 				)}
 			</div>

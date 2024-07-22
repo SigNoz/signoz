@@ -2,7 +2,7 @@ import './ToolbarActions.styles.scss';
 
 import { Button, Switch, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
-import { Atom, MousePointerSquare, Terminal } from 'lucide-react';
+import { Atom, SquareMousePointer, Terminal } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 
 interface LeftToolbarActionsProps {
@@ -10,7 +10,7 @@ interface LeftToolbarActionsProps {
 	selectedView: string;
 	onToggleHistrogramVisibility: () => void;
 	onChangeSelectedView: (view: SELECTED_VIEWS) => void;
-	showHistogram: boolean;
+	showFrequencyChart: boolean;
 }
 
 const activeTab = 'active-tab';
@@ -22,7 +22,7 @@ export default function LeftToolbarActions({
 	selectedView,
 	onToggleHistrogramVisibility,
 	onChangeSelectedView,
-	showHistogram,
+	showFrequencyChart,
 }: LeftToolbarActionsProps): JSX.Element {
 	const { clickhouse, search, queryBuilder: QB } = items;
 
@@ -39,7 +39,7 @@ export default function LeftToolbarActions({
 						)}
 						onClick={(): void => onChangeSelectedView(SELECTED_VIEWS.SEARCH)}
 					>
-						<MousePointerSquare size={14} data-testid="search-view" />
+						<SquareMousePointer size={14} data-testid="search-view" />
 					</Button>
 				</Tooltip>
 				<Tooltip title="Query Builder">
@@ -71,11 +71,11 @@ export default function LeftToolbarActions({
 				)}
 			</div>
 
-			<div className="histogram-view-controller">
-				<Typography>Histogram</Typography>
+			<div className="frequency-chart-view-controller">
+				<Typography>Frequency chart</Typography>
 				<Switch
 					size="small"
-					checked={showHistogram}
+					checked={showFrequencyChart}
 					defaultChecked
 					onChange={onToggleHistrogramVisibility}
 				/>

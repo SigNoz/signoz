@@ -9,35 +9,48 @@ jobs:
     runs-on: ubuntu-latest
     environment: testing
     if: ${{ github.event.label.name == 'testing-deploy' }}
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     steps:
-      - name: Executing remote ssh commands using ssh key
-        uses: appleboy/ssh-action@v1.0.3
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: 'sdk'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: 'ssh'
+        shell: bash
         env:
           GITHUB_BRANCH: ${{ github.head_ref || github.ref_name }}
           GITHUB_SHA: ${{ github.sha }}
-        with:
-          host: ${{ secrets.HOST_DNS }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          envs: GITHUB_BRANCH,GITHUB_SHA
-          command_timeout: 60m
-          script: |
-            echo "GITHUB_BRANCH: ${GITHUB_BRANCH}"
-            echo "GITHUB_SHA: ${GITHUB_SHA}"
-            export DOCKER_TAG="${GITHUB_SHA:0:7}" # needed for child process to access it
-            export DEV_BUILD="1"
-            export PATH="/usr/local/go/bin/:$PATH" # needed for Golang to work
-            docker system prune --force
-            cd ~/signoz
-            git status
-            git add .
-            git stash push -m "stashed on $(date --iso-8601=seconds)"
-            git fetch origin
-            git checkout develop
-            git pull
-            # This is added to include the scenerio when new commit in PR is force-pushed
-            git branch -D ${GITHUB_BRANCH}
-            git checkout --track origin/${GITHUB_BRANCH}
-            make build-ee-query-service-amd64
-            make build-frontend-amd64
-            make run-signoz
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+          GCP_ZONE: ${{ secrets.GCP_ZONE }}
+          GCP_INSTANCE: ${{ secrets.GCP_INSTANCE }}
+          CLOUDSDK_CORE_DISABLE_PROMPTS: 1
+        run: |
+          read -r -d '' COMMAND <<EOF || true
+          echo "GITHUB_BRANCH: ${GITHUB_BRANCH}"
+          echo "GITHUB_SHA: ${GITHUB_SHA}"
+          export DOCKER_TAG="${GITHUB_SHA:0:7}" # needed for child process to access it
+          export DEV_BUILD="1"
+          export PATH="/usr/local/go/bin/:$PATH" # needed for Golang to work
+          docker system prune --force
+          cd ~/signoz
+          git status
+          git add .
+          git stash push -m "stashed on $(date --iso-8601=seconds)"
+          git fetch origin
+          git checkout develop
+          git pull
+          # This is added to include the scenerio when new commit in PR is force-pushed
+          git branch -D ${GITHUB_BRANCH}
+          git checkout --track origin/${GITHUB_BRANCH}
+          make build-ee-query-service-amd64
+          make build-frontend-amd64
+          make run-testing
+          EOF
+          gcloud beta compute ssh ${GCP_INSTANCE} --zone ${GCP_ZONE} --ssh-key-expire-after=15m --tunnel-through-iap --project ${GCP_PROJECT} --command "${COMMAND}"

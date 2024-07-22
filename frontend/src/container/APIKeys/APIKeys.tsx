@@ -68,7 +68,7 @@ type ExpiryOption = {
 	label: string;
 };
 
-const EXPIRATION_WITHIN_SEVEN_DAYS = 7;
+export const EXPIRATION_WITHIN_SEVEN_DAYS = 7;
 
 const API_KEY_EXPIRY_OPTIONS: ExpiryOption[] = [
 	{ value: '1', label: '1 day' },
@@ -78,6 +78,25 @@ const API_KEY_EXPIRY_OPTIONS: ExpiryOption[] = [
 	{ value: '365', label: '1 year' },
 	{ value: '0', label: 'No Expiry' },
 ];
+
+export const isExpiredToken = (expiryTimestamp: number): boolean => {
+	if (expiryTimestamp === 0) {
+		return false;
+	}
+	const currentTime = dayjs();
+	const tokenExpiresAt = dayjs.unix(expiryTimestamp);
+	return tokenExpiresAt.isBefore(currentTime);
+};
+
+export const getDateDifference = (
+	createdTimestamp: number,
+	expiryTimestamp: number,
+): number => {
+	const differenceInSeconds = Math.abs(expiryTimestamp - createdTimestamp);
+
+	// Convert seconds to days
+	return differenceInSeconds / (60 * 60 * 24);
+};
 
 function APIKeys(): JSX.Element {
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -309,25 +328,6 @@ function APIKeys(): JSX.Element {
 		}
 
 		hideAddViewModal();
-	};
-
-	const getDateDifference = (
-		createdTimestamp: number,
-		expiryTimestamp: number,
-	): number => {
-		const differenceInSeconds = Math.abs(expiryTimestamp - createdTimestamp);
-
-		// Convert seconds to days
-		return differenceInSeconds / (60 * 60 * 24);
-	};
-
-	const isExpiredToken = (expiryTimestamp: number): boolean => {
-		if (expiryTimestamp === 0) {
-			return false;
-		}
-		const currentTime = dayjs();
-		const tokenExpiresAt = dayjs.unix(expiryTimestamp);
-		return tokenExpiresAt.isBefore(currentTime);
 	};
 
 	const columns: TableProps<APIKeyProps>['columns'] = [

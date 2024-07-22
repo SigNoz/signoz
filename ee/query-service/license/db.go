@@ -48,8 +48,9 @@ func (r *Repo) GetLicenses(ctx context.Context) ([]model.License, error) {
 	return licenses, nil
 }
 
-// GetActiveLicense fetches the latest active license from DB
-func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, error) {
+// GetActiveLicense fetches the latest active license from DB.
+// If the license is not present, expect a nil license and a nil error in the output.
+func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel.ApiError) {
 	var err error
 	licenses := []model.License{}
 
@@ -57,7 +58,7 @@ func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, error) {
 
 	err = r.db.Select(&licenses, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get active licenses from db: %v", err)
+		return nil, basemodel.InternalError(fmt.Errorf("failed to get active licenses from db: %v", err))
 	}
 
 	var active *model.License
@@ -110,7 +111,7 @@ func (r *Repo) UpdatePlanDetails(ctx context.Context,
 	planDetails string) error {
 
 	if key == "" {
-		return fmt.Errorf("Update Plan Details failed: license key is required")
+		return fmt.Errorf("update plan details failed: license key is required")
 	}
 
 	query := `UPDATE licenses 

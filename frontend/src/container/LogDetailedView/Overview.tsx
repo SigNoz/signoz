@@ -35,7 +35,7 @@ function Overview({
 	onClickActionItem,
 	isListViewPanel = false,
 }: Props): JSX.Element {
-	const [isWrapWord, setIsWrapWord] = useState<boolean>(false);
+	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
 	const [isAttributesExpanded, setIsAttributesExpanded] = useState<boolean>(
 		true,
@@ -48,13 +48,12 @@ function Overview({
 		automaticLayout: true,
 		readOnly: true,
 		height: '40vh',
-		wordWrap: 'on',
+		wordWrap: isWrapWord ? 'on' : 'off',
 		minimap: {
 			enabled: false,
 		},
 		fontWeight: 400,
-		// fontFamily: 'SF Mono',
-		fontFamily: 'Space Mono',
+		fontFamily: 'Geist Mono',
 		fontSize: 13,
 		lineHeight: '18px',
 		colorDecorators: true,
@@ -80,12 +79,6 @@ function Overview({
 			colors: {
 				'editor.background': Color.BG_INK_400,
 			},
-			// fontFamily: 'SF Mono',
-			fontFamily: 'Space Mono',
-			fontSize: 12,
-			fontWeight: 'normal',
-			lineHeight: 18,
-			letterSpacing: -0.06,
 		});
 	}
 
@@ -118,12 +111,17 @@ function Overview({
 						children: (
 							<div className="logs-body-content">
 								<MEditor
-									value={isWrapWord ? JSON.stringify(logData.body) : logData.body}
-									language={isWrapWord ? 'placetext' : 'json'}
+									value={logData.body}
+									language="json"
 									options={options}
 									onChange={(): void => {}}
 									height="20vh"
 									theme={isDarkMode ? 'my-theme' : 'light'}
+									onMount={(_, monaco): void => {
+										document.fonts.ready.then(() => {
+											monaco.editor.remeasureFonts();
+										});
+									}}
 									// eslint-disable-next-line react/jsx-no-bind
 									beforeMount={setEditorTheme}
 								/>
@@ -143,7 +141,7 @@ function Overview({
 								</div>
 							</div>
 						),
-						extra: <Tag className="tag">{isWrapWord ? 'Raw' : 'JSON'}</Tag>,
+						// extra: <Tag className="tag">JSON</Tag>,
 						className: 'collapse-content',
 					},
 				]}

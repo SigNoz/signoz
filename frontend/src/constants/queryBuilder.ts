@@ -174,8 +174,8 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 		sourceNames: alphabet,
 	}),
 	disabled: false,
-	having: [],
 	stepInterval: 60,
+	having: [],
 	limit: null,
 	orderBy: [],
 	groupBy: [],
@@ -286,6 +286,7 @@ export enum PANEL_TYPES {
 	TRACE = 'trace',
 	BAR = 'bar',
 	PIE = 'pie',
+	HISTOGRAM = 'histogram',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
 

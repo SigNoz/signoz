@@ -14,6 +14,7 @@ import (
 	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -49,8 +50,10 @@ type querier struct {
 	// TODO(srikanthccv): remove this once we have a proper mock
 	testingMode     bool
 	queriesExecuted []string
-	returnedSeries  []*v3.Series
-	returnedErr     error
+	// tuple of start and end time in milliseconds
+	timeRanges     [][]int
+	returnedSeries []*v3.Series
+	returnedErr    error
 }
 
 type QuerierOptions struct {
@@ -99,7 +102,7 @@ func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.
 		points := make([]v3.Point, 0)
 		for pointIdx := range series.Points {
 			point := series.Points[pointIdx]
-			if point.Timestamp > 0 {
+			if point.Timestamp >= 0 {
 				points = append(points, point)
 			} else {
 				pointsWithNegativeTimestamps++
@@ -116,6 +119,7 @@ func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.
 func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangeParams) ([]*v3.Series, error) {
 	q.queriesExecuted = append(q.queriesExecuted, params.Query)
 	if q.testingMode && q.reader == nil {
+		q.timeRanges = append(q.timeRanges, []int{int(params.Start.UnixMilli()), int(params.End.UnixMilli())})
 		return q.returnedSeries, q.returnedErr
 	}
 	promResult, _, err := q.reader.GetQueryRangeResult(ctx, params)
@@ -283,7 +287,7 @@ func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 	return mergedSeries
 }
 
-func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, error, map[string]string) {
+func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
 
 	cacheKeys := q.keyGenerator.GenerateKeys(params)
 
@@ -306,13 +310,13 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 	close(ch)
 
 	results := make([]*v3.Result, 0)
-	errQueriesByName := make(map[string]string)
+	errQueriesByName := make(map[string]error)
 	var errs []error
 
 	for result := range ch {
 		if result.Err != nil {
 			errs = append(errs, result.Err)
-			errQueriesByName[result.Name] = result.Err.Error()
+			errQueriesByName[result.Name] = result.Err
 			continue
 		}
 		results = append(results, &v3.Result{
@@ -326,10 +330,10 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 		err = fmt.Errorf("error in builder queries")
 	}
 
-	return results, err, errQueriesByName
+	return results, errQueriesByName, err
 }
 
-func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]string) {
+func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 	channelResults := make(chan channelResult, len(params.CompositeQuery.PromQueries))
 	var wg sync.WaitGroup
 	cacheKeys := q.keyGenerator.GenerateKeys(params)
@@ -341,10 +345,10 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 		wg.Add(1)
 		go func(queryName string, promQuery *v3.PromQuery) {
 			defer wg.Done()
-			cacheKey := cacheKeys[queryName]
+			cacheKey, ok := cacheKeys[queryName]
 			var cachedData []byte
 			// Ensure NoCache is not set and cache is not nil
-			if !params.NoCache && q.cache != nil {
+			if !params.NoCache && q.cache != nil && ok {
 				data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
 				zap.L().Info("cache retrieve status", zap.String("status", retrieveStatus.String()))
 				if err == nil {
@@ -372,7 +376,7 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 			channelResults <- channelResult{Err: nil, Name: queryName, Query: promQuery.Query, Series: mergedSeries}
 
 			// Cache the seriesList for future queries
-			if len(missedSeries) > 0 && !params.NoCache && q.cache != nil {
+			if len(missedSeries) > 0 && !params.NoCache && q.cache != nil && ok {
 				mergedSeriesData, err := json.Marshal(mergedSeries)
 				if err != nil {
 					zap.L().Error("error marshalling merged series", zap.Error(err))
@@ -390,13 +394,13 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 	close(channelResults)
 
 	results := make([]*v3.Result, 0)
-	errQueriesByName := make(map[string]string)
+	errQueriesByName := make(map[string]error)
 	var errs []error
 
 	for result := range channelResults {
 		if result.Err != nil {
 			errs = append(errs, result.Err)
-			errQueriesByName[result.Name] = result.Err.Error()
+			errQueriesByName[result.Name] = result.Err
 			continue
 		}
 		results = append(results, &v3.Result{
@@ -410,10 +414,10 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 		err = fmt.Errorf("error in prom queries")
 	}
 
-	return results, err, errQueriesByName
+	return results, errQueriesByName, err
 }
 
-func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]string) {
+func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 	channelResults := make(chan channelResult, len(params.CompositeQuery.ClickHouseQueries))
 	var wg sync.WaitGroup
 	for queryName, clickHouseQuery := range params.CompositeQuery.ClickHouseQueries {
@@ -431,13 +435,13 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	close(channelResults)
 
 	results := make([]*v3.Result, 0)
-	errQueriesByName := make(map[string]string)
+	errQueriesByName := make(map[string]error)
 	var errs []error
 
 	for result := range channelResults {
 		if result.Err != nil {
 			errs = append(errs, result.Err)
-			errQueriesByName[result.Name] = result.Err.Error()
+			errQueriesByName[result.Name] = result.Err
 			continue
 		}
 		results = append(results, &v3.Result{
@@ -450,15 +454,15 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	if len(errs) > 0 {
 		err = fmt.Errorf("error in clickhouse queries")
 	}
-	return results, err, errQueriesByName
+	return results, errQueriesByName, err
 }
 
-func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, error, map[string]string) {
+func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
 
 	queries, err := q.builder.PrepareQueries(params, keys)
 
 	if err != nil {
-		return nil, err, nil
+		return nil, nil, err
 	}
 
 	ch := make(chan channelResult, len(queries))
@@ -482,13 +486,13 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 	close(ch)
 
 	var errs []error
-	errQuriesByName := make(map[string]string)
+	errQuriesByName := make(map[string]error)
 	res := make([]*v3.Result, 0)
 	// read values from the channel
 	for r := range ch {
 		if r.Err != nil {
 			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Query
+			errQuriesByName[r.Name] = r.Err
 			continue
 		}
 		res = append(res, &v3.Result{
@@ -497,27 +501,34 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 		})
 	}
 	if len(errs) != 0 {
-		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
+		return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
 	}
 	return res, nil, nil
 }
 
-func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, error, map[string]string) {
+func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
 	var results []*v3.Result
 	var err error
-	var errQueriesByName map[string]string
+	var errQueriesByName map[string]error
 	if params.CompositeQuery != nil {
 		switch params.CompositeQuery.QueryType {
 		case v3.QueryTypeBuilder:
 			if params.CompositeQuery.PanelType == v3.PanelTypeList || params.CompositeQuery.PanelType == v3.PanelTypeTrace {
-				results, err, errQueriesByName = q.runBuilderListQueries(ctx, params, keys)
+				results, errQueriesByName, err = q.runBuilderListQueries(ctx, params, keys)
 			} else {
-				results, err, errQueriesByName = q.runBuilderQueries(ctx, params, keys)
+				results, errQueriesByName, err = q.runBuilderQueries(ctx, params, keys)
+			}
+			// in builder query, the only errors we expose are the ones that exceed the resource limits
+			// everything else is internal error as they are not actionable by the user
+			for name, err := range errQueriesByName {
+				if !chErrors.IsResourceLimitError(err) {
+					delete(errQueriesByName, name)
+				}
 			}
 		case v3.QueryTypePromQL:
-			results, err, errQueriesByName = q.runPromQueries(ctx, params)
+			results, errQueriesByName, err = q.runPromQueries(ctx, params)
 		case v3.QueryTypeClickHouseSQL:
-			results, err, errQueriesByName = q.runClickHouseQueries(ctx, params)
+			results, errQueriesByName, err = q.runClickHouseQueries(ctx, params)
 		default:
 			err = fmt.Errorf("invalid query type")
 		}
@@ -532,9 +543,13 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 		}
 	}
 
-	return results, err, errQueriesByName
+	return results, errQueriesByName, err
 }
 
 func (q *querier) QueriesExecuted() []string {
 	return q.queriesExecuted
+}
+
+func (q *querier) TimeRanges() [][]int {
+	return q.timeRanges
 }

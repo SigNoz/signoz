@@ -1,12 +1,16 @@
 import './QuerySection.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip } from 'antd';
+import logEvent from 'api/common/logEvent';
+import PromQLIcon from 'assets/Dashboard/PromQl';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Atom, Play, Terminal } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +32,7 @@ function QuerySection({
 	runQuery,
 	alertDef,
 	panelType,
+	ruleId,
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -47,6 +52,8 @@ function QuerySection({
 	const renderPromqlUI = (): JSX.Element => <PromqlSection />;
 
 	const renderChQueryUI = (): JSX.Element => <ChQuerySection />;
+
+	const isDarkMode = useIsDarkMode();
 
 	const renderMetricUI = (): JSX.Element => (
 		<QueryBuilder
@@ -113,14 +120,16 @@ function QuerySection({
 				label: (
 					<Tooltip title="PromQL">
 						<Button className="nav-btns">
-							<img src="/Icons/promQL.svg" alt="Prom Ql" className="prom-ql-icon" />
+							<PromQLIcon
+								fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
+							/>
 						</Button>
 					</Tooltip>
 				),
 				key: EQueryType.PROM,
 			},
 		],
-		[],
+		[isDarkMode],
 	);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -151,7 +160,15 @@ function QuerySection({
 								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
 									<Button
 										type="primary"
-										onClick={runQuery}
+										onClick={(): void => {
+											runQuery();
+											logEvent('Alert: Stage and run query', {
+												dataSource: ALERTS_DATA_SOURCE_MAP[alertType],
+												isNewRule: !ruleId || ruleId === 0,
+												ruleId,
+												queryType: queryCategory,
+											});
+										}}
 										className="stage-run-query"
 										icon={<Play size={14} />}
 									>
@@ -221,6 +238,7 @@ interface QuerySectionProps {
 	runQuery: VoidFunction;
 	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
+	ruleId: number;
 }
 
 export default QuerySection;

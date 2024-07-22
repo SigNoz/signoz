@@ -52,14 +52,14 @@ var BasicPlan = basemodel.FeatureSet{
 		Name:       basemodel.QueryBuilderPanels,
 		Active:     true,
 		Usage:      0,
-		UsageLimit: 20,
+		UsageLimit: -1,
 		Route:      "",
 	},
 	basemodel.Feature{
 		Name:       basemodel.QueryBuilderAlerts,
 		Active:     true,
 		Usage:      0,
-		UsageLimit: 10,
+		UsageLimit: -1,
 		Route:      "",
 	},
 	basemodel.Feature{

@@ -144,7 +144,8 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 			fmtVal := utils.ClickHouseFormattedValue(value)
 			filter = fmt.Sprintf(logsOp, key, fmtVal)
 		case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
-			filter = fmt.Sprintf("%s %s '%%%s%%'", key, logsOp, item.Value)
+			val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+			filter = fmt.Sprintf("%s %s '%%%s%%'", key, logsOp, val)
 		default:
 			fmtVal := utils.ClickHouseFormattedValue(value)
 			filter = fmt.Sprintf("%s %s %s", key, logsOp, fmtVal)

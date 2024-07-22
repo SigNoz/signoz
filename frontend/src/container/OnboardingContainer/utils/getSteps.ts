@@ -22,7 +22,13 @@ import {
 	RestartOtelCollector,
 	RunApplicationStep,
 	SelectMethodStep,
+	SendHostmetricsLogs,
+	SendLogs,
 	SendLogsCloudwatch,
+	SendMetrics,
+	SendTraces,
+	SetupAzureEventsHub,
+	SetupCentralCollectorStep,
 	SetupDaemonService,
 	SetupLogDrains,
 	SetupOtelCollectorStep,
@@ -56,6 +62,10 @@ export const INFRASTRUCTURE_MONITORING_STEPS: SelectedModuleStepProps[] = [
 ];
 
 export const AWS_MONITORING_STEPS: SelectedModuleStepProps[] = [DataSourceStep];
+
+export const AZURE_MONITORING_STEPS: SelectedModuleStepProps[] = [
+	DataSourceStep,
+];
 
 export const getSteps = ({
 	selectedDataSource,
@@ -144,6 +154,70 @@ export const getSteps = ({
 			];
 		case 'awsEks':
 			return [DataSourceStep, SetupOtelCollectorStep, MonitorDashboard];
+		case 'azureVm':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendHostmetricsLogs,
+			];
+		// eslint-disable-next-line sonarjs/no-duplicated-branches
+		case 'azureAks':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendTraces,
+				SendLogs,
+				SendMetrics,
+			];
+		// eslint-disable-next-line sonarjs/no-duplicated-branches
+		case 'azureAppService':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendTraces,
+				SendLogs,
+				SendMetrics,
+			];
+		// eslint-disable-next-line sonarjs/no-duplicated-branches
+		case 'azureFunctions':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendTraces,
+				SendLogs,
+				SendMetrics,
+			];
+		// eslint-disable-next-line sonarjs/no-duplicated-branches
+		case 'azureContainerApps':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendTraces,
+				SendLogs,
+				SendMetrics,
+			];
+		// eslint-disable-next-line sonarjs/no-duplicated-branches
+		case 'azureBlobStorage':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendLogs,
+				SendMetrics,
+			];
+		// eslint-disable-next-line sonarjs/no-duplicated-branches
+		case 'azureSQLDatabaseMetrics':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendMetrics,
+			];
 
 		default:
 			return [DataSourceStep];

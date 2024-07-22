@@ -58,7 +58,9 @@ func ParseLogFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
 		res.OrderBy = val[0]
 	}
 	if val, ok := params[ORDER]; ok {
-		res.Order = val[0]
+		if val[0] == ASC || val[0] == DESC {
+			res.Order = val[0]
+		}
 	}
 	if val, ok := params["q"]; ok {
 		res.Query = val[0]

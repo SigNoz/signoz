@@ -2,12 +2,15 @@ package rules
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
@@ -27,6 +30,24 @@ type RuleDB interface {
 
 	// GetStoredRule for a given ID from DB
 	GetStoredRule(ctx context.Context, id string) (*StoredRule, error)
+
+	// CreatePlannedMaintenance stores a given maintenance in db
+	CreatePlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance) (int64, error)
+
+	// DeletePlannedMaintenance deletes the given maintenance in the db
+	DeletePlannedMaintenance(ctx context.Context, id string) (string, error)
+
+	// GetPlannedMaintenanceByID fetches the maintenance definition from db by id
+	GetPlannedMaintenanceByID(ctx context.Context, id string) (*PlannedMaintenance, error)
+
+	// EditPlannedMaintenance updates the given maintenance in the db
+	EditPlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance, id string) (string, error)
+
+	// GetAllPlannedMaintenance fetches the maintenance definitions from db
+	GetAllPlannedMaintenance(ctx context.Context) ([]PlannedMaintenance, error)
+
+	// used for internal telemetry
+	GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error)
 }
 
 type StoredRule struct {
@@ -49,7 +70,7 @@ type ruleDB struct {
 
 // todo: move init methods for creating tables
 
-func newRuleDB(db *sqlx.DB) RuleDB {
+func NewRuleDB(db *sqlx.DB) RuleDB {
 	return &ruleDB{
 		db,
 	}
@@ -201,4 +222,111 @@ func (r *ruleDB) GetStoredRule(ctx context.Context, id string) (*StoredRule, err
 	}
 
 	return rule, nil
+}
+
+func (r *ruleDB) GetAllPlannedMaintenance(ctx context.Context) ([]PlannedMaintenance, error) {
+	maintenances := []PlannedMaintenance{}
+
+	query := "SELECT id, name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by FROM planned_maintenance"
+
+	err := r.Select(&maintenances, query)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, err
+	}
+
+	return maintenances, nil
+}
+
+func (r *ruleDB) GetPlannedMaintenanceByID(ctx context.Context, id string) (*PlannedMaintenance, error) {
+	maintenance := &PlannedMaintenance{}
+
+	query := "SELECT id, name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by FROM planned_maintenance WHERE id=$1"
+	err := r.Get(maintenance, query, id)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, err
+	}
+
+	return maintenance, nil
+}
+
+func (r *ruleDB) CreatePlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance) (int64, error) {
+
+	email, _ := auth.GetEmailFromJwt(ctx)
+	maintenance.CreatedBy = email
+	maintenance.CreatedAt = time.Now()
+	maintenance.UpdatedBy = email
+	maintenance.UpdatedAt = time.Now()
+
+	query := "INSERT INTO planned_maintenance (name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
+
+	result, err := r.Exec(query, maintenance.Name, maintenance.Description, maintenance.Schedule, maintenance.AlertIds, maintenance.CreatedAt, maintenance.CreatedBy, maintenance.UpdatedAt, maintenance.UpdatedBy)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return 0, err
+	}
+
+	return result.LastInsertId()
+}
+
+func (r *ruleDB) DeletePlannedMaintenance(ctx context.Context, id string) (string, error) {
+	query := "DELETE FROM planned_maintenance WHERE id=$1"
+	_, err := r.Exec(query, id)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return "", err
+	}
+
+	return "", nil
+}
+
+func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance, id string) (string, error) {
+	email, _ := auth.GetEmailFromJwt(ctx)
+	maintenance.UpdatedBy = email
+	maintenance.UpdatedAt = time.Now()
+
+	query := "UPDATE planned_maintenance SET name=$1, description=$2, schedule=$3, alert_ids=$4, updated_at=$5, updated_by=$6 WHERE id=$7"
+	_, err := r.Exec(query, maintenance.Name, maintenance.Description, maintenance.Schedule, maintenance.AlertIds, maintenance.UpdatedAt, maintenance.UpdatedBy, id)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return "", err
+	}
+
+	return "", nil
+}
+
+func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
+	alertsInfo := model.AlertsInfo{}
+	// fetch alerts from rules db
+	query := "SELECT data FROM rules"
+	var alertsData []string
+	err := r.Select(&alertsData, query)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return &alertsInfo, err
+	}
+	for _, alert := range alertsData {
+		var rule GettableRule
+		err = json.Unmarshal([]byte(alert), &rule)
+		if err != nil {
+			zap.L().Error("invalid rule data", zap.Error(err))
+			continue
+		}
+		if rule.AlertType == "LOGS_BASED_ALERT" {
+			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
+		} else if rule.AlertType == "METRIC_BASED_ALERT" {
+			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
+		} else if rule.AlertType == "TRACES_BASED_ALERT" {
+			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
+		}
+		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1
+	}
+
+	return &alertsInfo, nil
 }

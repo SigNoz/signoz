@@ -46,6 +46,8 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 		},
 	];
 
+	const paginationConfig = { pageSize: 20, hideOnSinglePage: true };
+
 	return (
 		<div className="integration-data-collected">
 			<div className="logs-section">
@@ -59,7 +61,7 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 						index % 2 === 0 ? 'table-row-dark' : ''
 					}
 					dataSource={logsData}
-					pagination={{ pageSize: 20 }}
+					pagination={paginationConfig}
 					className="logs-section-table"
 				/>
 			</div>
@@ -74,7 +76,7 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 						index % 2 === 0 ? 'table-row-dark' : ''
 					}
 					dataSource={metricsData}
-					pagination={{ pageSize: 20 }}
+					pagination={paginationConfig}
 					className="metrics-section-table"
 				/>
 			</div>
