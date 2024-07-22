@@ -220,6 +220,23 @@ export const handlers = [
 			}),
 		),
 	),
+	rest.get('http://localhost/api/v1/getResetPasswordToken/:id', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				userId: '32232512-3322-5f3d-ae4d-361947324f19c',
+				token: '2a05d2b240da25c6f7a400bd3529c318',
+			}),
+		),
+	),
+	rest.delete('http://localhost/api/v1/invite/:email', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				data: 'invite revoked successfully',
+			}),
+		),
+	),
 	rest.post('http://localhost/api/v1//channels', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(allAlertChannels)),
 	),
