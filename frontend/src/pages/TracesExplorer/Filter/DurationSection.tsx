@@ -109,6 +109,7 @@ export function DurationSection(props: DurationProps): JSX.Element {
 					className="min-max-input"
 					onChange={onChangeMinHandler}
 					value={preMin}
+					data-testid="min-input"
 					addonAfter="ms"
 				/>
 				<Input
@@ -118,6 +119,7 @@ export function DurationSection(props: DurationProps): JSX.Element {
 					className="min-max-input"
 					onChange={onChangeMaxHandler}
 					value={preMax}
+					data-testid="max-input"
 					addonAfter="ms"
 				/>
 			</div>

@@ -131,6 +131,14 @@ var timeSeriesFilterQueryData = []struct {
 		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'user_name')] = 'john' AND resources_string_value[indexOf(resources_string_key, 'k8s_namespace')] != 'my_service'",
 	},
 	{
+		Name: "Test attribute and resource attribute with different case",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "%JoHn%", Operator: "like"},
+			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "%MyService%", Operator: "nlike"},
+		}},
+		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'user_name')] ILIKE '%JoHn%' AND resources_string_value[indexOf(resources_string_key, 'k8s_namespace')] NOT ILIKE '%MyService%'",
+	},
+	{
 		Name: "Test materialized column",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "john", Operator: "="},
@@ -286,6 +294,22 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "status", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Operator: "nexists"},
 		}},
 		ExpectedFilter: "`attribute_int64_status_exists`=false",
+	},
+	{
+		Name: "Test for body contains and ncontains",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Operator: "contains", Value: "test"},
+			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Operator: "ncontains", Value: "test1"},
+		}},
+		ExpectedFilter: "lower(body) LIKE lower('%test%') AND lower(body) NOT LIKE lower('%test1%')",
+	},
+	{
+		Name: "Test for body like and nlike",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Operator: "like", Value: "test"},
+			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Operator: "nlike", Value: "test1"},
+		}},
+		ExpectedFilter: "lower(body) LIKE lower('test') AND lower(body) NOT LIKE lower('test1')",
 	},
 }
 
@@ -851,7 +875,7 @@ var testBuildLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND body ILIKE '%test%' AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND lower(body) LIKE lower('%test%') AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
 	},
 	{
 		Name:      "Test attribute with same name as top level key",
@@ -981,7 +1005,7 @@ var testBuildLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%' AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND lower(body) like lower('%message%') AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%' AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
 	},
 	{
 		Name:      "TABLE: Test count with JSON Filter Array, groupBy, orderBy",
@@ -1015,7 +1039,7 @@ var testBuildLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service') AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND lower(body) like lower('%requestor_list%') AND lower(body) like lower('%index_service%') AND has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service') AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
 	},
 }
 
