@@ -71,15 +71,17 @@ const getLogType = (
 	severityNumber: number,
 	defaultType: string,
 ): string => {
-	if (severityText) {
-		const logType = getLogTypeBySeverityText(severityText);
+	// give priority to the severityNumber
+	if (severityNumber) {
+		const logType = getLogTypeBySeverityNumber(severityNumber);
 		if (logType !== LogType.UNKNOWN) {
 			return logType;
 		}
 	}
 
-	if (severityNumber) {
-		const logType = getLogTypeBySeverityNumber(severityNumber);
+	// is severityNumber is not present then rely on the severityText
+	if (severityText) {
+		const logType = getLogTypeBySeverityText(severityText);
 		if (logType !== LogType.UNKNOWN) {
 			return logType;
 		}

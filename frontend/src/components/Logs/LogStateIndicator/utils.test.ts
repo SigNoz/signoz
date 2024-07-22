@@ -1,9 +1,10 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import { ILog } from 'types/api/logs/log';
 
 import { getLogIndicatorType, getLogIndicatorTypeForTable } from './utils';
 
 describe('getLogIndicatorType', () => {
-	it('should return severity type for valid log with severityText', () => {
+	it('severity_number should be given priority over severity_text', () => {
 		const log = {
 			date: '2024-02-29T12:34:46Z',
 			timestamp: 1646115296,
@@ -22,10 +23,33 @@ describe('getLogIndicatorType', () => {
 			severity_text: 'INFO',
 			severity_number: 2,
 		};
-		expect(getLogIndicatorType(log)).toBe('INFO');
+		// severity_number should get priority over severity_text
+		expect(getLogIndicatorType(log)).toBe('TRACE');
 	});
 
-	it('should return log level if severityText is missing', () => {
+	it('severity_text should be used when severity_number is absent ', () => {
+		const log = {
+			date: '2024-02-29T12:34:46Z',
+			timestamp: 1646115296,
+			id: '123456',
+			traceId: '987654',
+			spanId: '54321',
+			traceFlags: 0,
+			severityText: 'INFO',
+			severityNumber: 2,
+			body: 'Sample log Message',
+			resources_string: {},
+			attributesString: {},
+			attributes_string: {},
+			attributesInt: {},
+			attributesFloat: {},
+			severity_text: 'FATAL',
+			severity_number: 0,
+		};
+		expect(getLogIndicatorType(log)).toBe('FATAL');
+	});
+
+	it('should return log level if severityText and severityNumber is missing', () => {
 		const log: ILog = {
 			date: '2024-02-29T12:34:58Z',
 			timestamp: 1646115296,
@@ -37,14 +61,16 @@ describe('getLogIndicatorType', () => {
 			body: 'Sample log',
 			resources_string: {},
 			attributesString: {},
-			attributes_string: {},
+			attributes_string: {
+				log_level: 'INFO' as never,
+			},
 			attributesInt: {},
 			attributesFloat: {},
-			severity_text: 'FATAL',
+			severity_text: 'some_random',
 			severityText: '',
-			severity_number: 2,
+			severity_number: 0,
 		};
-		expect(getLogIndicatorType(log)).toBe('FATAL');
+		expect(getLogIndicatorType(log)).toBe('INFO');
 	});
 });
 
@@ -67,7 +93,7 @@ describe('getLogIndicatorTypeForTable', () => {
 			attributesFloat: {},
 			severity_text: 'WARN',
 		};
-		expect(getLogIndicatorTypeForTable(log)).toBe('WARN');
+		expect(getLogIndicatorTypeForTable(log)).toBe('TRACE');
 	});
 
 	it('should return log level if severityText is missing', () => {
