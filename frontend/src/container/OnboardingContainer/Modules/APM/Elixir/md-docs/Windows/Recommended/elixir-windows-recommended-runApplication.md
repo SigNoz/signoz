@@ -43,7 +43,7 @@ end
 You need to configure your application to send telemtry data by adding the follwing config to your `runtime.exs` file:
 
 ```elixir
-config :opentelemetry, :resource, service: %{name: "YOUR_APP_NAME"}
+config :opentelemetry, :resource, service: %{name: "{{MYAPP}}"}
 
 config :opentelemetry, :processors,
     otel_batch_processor: %{
@@ -53,5 +53,3 @@ config :opentelemetry, :processors,
       }
   }
 ```
-
-`YOUR_APP_NAME`: Your application or service name.

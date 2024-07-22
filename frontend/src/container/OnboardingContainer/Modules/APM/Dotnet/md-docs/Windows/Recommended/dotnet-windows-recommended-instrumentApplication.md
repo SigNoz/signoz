@@ -21,10 +21,6 @@ dotnet add package OpenTelemetry.AutoInstrumentation
 
 In your `Program.cs` file, add OpenTelemetry as a service. Here, we are configuring these variables:
 
-`serviceName` - It is the name of your service.
-
-`otlpOptions.Endpoint` - It is the endpoint for your OTel Collector agent.
-
 &nbsp;
 
 Here’s a sample `Program.cs` file with the configured variables:

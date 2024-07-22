@@ -31,7 +31,7 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 
 const resource = Resource.default().merge(
   new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: '<service_name>',
+    [SemanticResourceAttributes.SERVICE_NAME]: '{{MYAPP}}',
     [SemanticResourceAttributes.SERVICE_VERSION]: '0.1.0',
   })
 );
@@ -43,9 +43,9 @@ provider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
 provider.addSpanProcessor(
   new BatchSpanProcessor(
     new OTLPTraceExporter({
-      url: 'https://ingest.{REGION}.signoz.cloud:443/v1/traces',
+      url: 'https://ingest.{{REGION}}.signoz.cloud:443/v1/traces',
       headers: {
-        'signoz-access-token': '<signoz_ingestion_key>',
+        'signoz-access-token': '{{SIGNOZ_INGESTION_KEY}}',
       },
     })
   )
@@ -71,19 +71,8 @@ registerInstrumentations({
 });
 
 ```
-- `<service_name>` : Name of your service.
-- `<signoz_ingestion_key>` : You can find your ingestion key from SigNoz cloud account details sent on your email.
 
 OpenTelemetry Node SDK currently does not detect the headers from `.env` files as of today. That’s why we need to include the variables in the `instrument.ts` file itself.
-
-Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
-
-| Region | Endpoint |
-| --- | --- |
-| US |	ingest.us.signoz.cloud:443/v1/traces |
-| IN |	ingest.in.signoz.cloud:443/v1/traces |
-| EU | ingest.eu.signoz.cloud:443/v1/traces |
-
 
 
 **Step 3.** Add the below import to your `main.ts` file.
@@ -92,8 +81,6 @@ Depending on the choice of your region for SigNoz cloud, the ingest endpoint wil
 The below import should be the first line in the main file of your application (Ex -> `main.ts`)
 </Admonition>  */}
 
-
-    
 ```jsx
 import './app/instrument';
 ```

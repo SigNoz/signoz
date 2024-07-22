@@ -48,7 +48,7 @@ OpenTelemetry::SDK.configure do |c|
   c.resource = OpenTelemetry::SDK::Resources::Resource.create({
     OpenTelemetry::SemanticConventions::Resource::HOST_NAME => '<your-host-name>',
   })
-  c.service_name = '<YOUR_SERVICE_NAME>'    # The name of the application.
+  c.service_name = '{{MYAPP}}'    # The name of the application.
   c.use_all()    # The libraries supported by automatic OpenTelemetry observation. 
 end
 ```

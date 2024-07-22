@@ -1,7 +1,7 @@
 Set `OTEL_EXPORTER_OTLP_ENDPOINT` as env variable using powershell:
 
 ```bash
-$env:OTEL_EXPORTER_OTLP_ENDPOINT="<otlp_endpoint>"
+$env:OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.{{REGION}}.signoz.cloud:443/v1/traces"
 ```
 
 **Run the application** <br></br>

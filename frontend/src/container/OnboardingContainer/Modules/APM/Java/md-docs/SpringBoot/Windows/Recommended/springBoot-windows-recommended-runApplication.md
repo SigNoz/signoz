@@ -1,7 +1,7 @@
 Run your application<br></br>
 
 ```bash
-java -javaagent:$PWD/opentelemetry-javaagent.jar -jar <myapp>.jar
+java -javaagent:/opentelemetry-javaagent.jar -jar <myapp>.jar
 ```
 
 - `<myapp>` is the name of your application jar file

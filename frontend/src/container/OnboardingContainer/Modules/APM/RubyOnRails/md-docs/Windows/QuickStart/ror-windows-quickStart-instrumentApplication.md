@@ -38,14 +38,14 @@ OpenTelemetry::SDK.configure do |c|
     OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(
       OpenTelemetry::Exporter::OTLP::Exporter.new(
         endpoint: '<SIGNOZ_URL>',
-        headers: { 'signoz-access-token' => '<SIGNOZ_INGESTION_KEY>' } 
+        headers: { 'signoz-access-token' => '{{SIGNOZ_INGESTION_KEY}}' } 
       )
     )
   )
   c.resource = OpenTelemetry::SDK::Resources::Resource.create({
     OpenTelemetry::SemanticConventions::Resource::HOST_NAME => '<your-host-name>',
   })
-  c.service_name = '<YOUR_SERVICE_NAME>'    # The name of the application.
+  c.service_name = '{{MYAPP}}'    # The name of the application.
   c.use_all()    # The libraries supported by automatic OpenTelemetry observation. 
 end
 ```

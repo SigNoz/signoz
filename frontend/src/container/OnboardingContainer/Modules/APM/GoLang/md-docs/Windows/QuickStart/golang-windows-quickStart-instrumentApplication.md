@@ -18,9 +18,10 @@
    
    ```bash
     var (
-        serviceName  = os.Getenv("SERVICE_NAME")
-        collectorURL = os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
-        insecure     = os.Getenv("INSECURE_MODE")
+        serviceName  = "{{MYAPP}}")
+        collectorURL = "https://ingest.{{REGION}}.signoz.cloud:443"
+        headers="signoz-access-token={{SIGNOZ_INGESTION_KEY}}"
+        insecure = os.Getenv("INSECURE_MODE")
     )
     ```
     
@@ -58,6 +59,7 @@
             otlptracegrpc.NewClient(
                 secureOption,
                 otlptracegrpc.WithEndpoint(collectorURL),
+                otlptracegrpc.WithHeaders(headers),
             ),
         )
 
@@ -67,7 +69,7 @@
         resources, err := resource.New(
             context.Background(),
             resource.WithAttributes(
-                attribute.String("service.name", serviceName),
+                attribute.String("{{MYAPP}}", serviceName),
                 attribute.String("library.language", "go"),
             ),
         )

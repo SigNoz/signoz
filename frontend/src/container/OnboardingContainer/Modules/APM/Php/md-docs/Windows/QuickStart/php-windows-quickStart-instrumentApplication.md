@@ -88,14 +88,14 @@ use OpenTelemetry\API\Common\Signal\Signals;
 function initOpenTelemetry()
 { 
  $resource = ResourceInfoFactory::emptyResource()->merge(ResourceInfo::create(Attributes::create([
- ResourceAttributes::SERVICE_NAME => '<SERVICE_NAME>'
+ ResourceAttributes::SERVICE_NAME => '{{MYAPP}}'
  ])));
 
 
  $headers = [
- 'signoz-access-token' => "<INGESTION_KEY>",
+ 'signoz-access-token' => "{{SIGNOZ_INGESTION_KEY}}",
  ];
- $transport = (new GrpcTransportFactory())->create('<SIGNOZ_ENDPOINT>' . OtlpUtil::method(Signals::TRACE), 'application/x-protobuf', $headers);
+ $transport = (new GrpcTransportFactory())->create('https://ingest.{{REGION}}.signoz.cloud:443/v1/traces"' . OtlpUtil::method(Signals::TRACE), 'application/x-protobuf', $headers);
  $spanExporter = new SpanExporter($transport);
 
 
@@ -116,12 +116,3 @@ function initOpenTelemetry()
 }
 ?>
 ```
-
-You can change the env vars value by referencing values from the following lookup table
-
-| Environment Variable                  | Value                                        |
-|-------------------------------|----------------------------------------------|
-| OTEL_SERVICE_NAME              | `<SERVICE_NAME>` replace it with name of your app                         |
-| OTEL_EXPORTER_OTLP_ENDPOINT    | `<SIGNOZ_ENDPOINT>` replace this with SigNoz cloud endpoint                       |
-| OTEL_EXPORTER_OTLP_HEADERS     | signoz-access-token=`<INGESTION_KEY>` replace this with the ingestion key which you must have received in mail        |
-| php -S localhost:8080 app.php             | you can replace this with the run command of your PHP application                        |

@@ -109,12 +109,6 @@ project_root/
 
 Paste these in `.env` file 
 ```bash
-OTEL_EXPORTER_OTLP_ENDPOINT=<otel_collector_endpoint>
-OTEL_RESOURCE_ATTRIBUTES=<service_name>
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+OTEL_RESOURCE_ATTRIBUTES={{MYAPP}}
 ```
-
-
-| Variable                        | Description                                                                                                                                                                 |
-|---------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| OTEL_EXPORTER_OTLP_ENDPOINT     | This is the endpoint of your OTel Collector. If you have hosted it somewhere, provide the URL. Otherwise, the default is `http://localhost:4317` if you have followed our guide. |
-| OTEL_RESOURCE_ATTRIBUTES=service.name        | Specify  as the value. This will be the name of your Rust application on SigNoz services page, allowing you to uniquely identify the application traces.        |
