@@ -3525,7 +3525,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 
 		// create materialized column
 
-		for _, table := range []string{r.logsLocalTableV2, r.logsTable} {
+		for _, table := range []string{r.logsLocalTableV2, r.logsTableV2} {
 			q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s DEFAULT %s[indexOf(%s, '%s')] CODEC(ZSTD(1))"
 			query := fmt.Sprintf(q,
 				r.logsDB, table,
