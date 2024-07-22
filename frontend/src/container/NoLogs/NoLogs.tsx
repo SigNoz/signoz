@@ -1,6 +1,7 @@
 import './NoLogs.styles.scss';
 
 import { Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { ArrowUpRight } from 'lucide-react';
@@ -21,6 +22,11 @@ export default function NoLogs({
 		e.stopPropagation();
 
 		if (cloudUser) {
+			if (dataSource === DataSource.TRACES) {
+				logEvent('Traces Explorer: Navigate to onboarding', {});
+			} else if (dataSource === DataSource.LOGS) {
+				logEvent('Logs Explorer: Navigate to onboarding', {});
+			}
 			history.push(
 				dataSource === 'traces'
 					? ROUTES.GET_STARTED_APPLICATION_MONITORING
