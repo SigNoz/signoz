@@ -1,3 +1,3 @@
-import commonOrganizationSettingsTests from './OrganizationSettingsCommonTests.test';
+import commonOrganizationSettingsTests from './OrganizationSettingsCommonTests';
 
 commonOrganizationSettingsTests({ isNonSSoTests: true });
