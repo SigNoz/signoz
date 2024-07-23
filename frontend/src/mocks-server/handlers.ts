@@ -163,6 +163,9 @@ export const handlers = [
 				status: 'error',
 				errorType: 'forbidden',
 				error: 'invalid credentials',
+			}),
+		),
+	),
 
 	rest.get(
 		'http://localhost/api/v3/autocomplete/aggregate_attributes',
