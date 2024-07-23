@@ -284,18 +284,17 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences,
 	// update in the above filtered list wherver value present in the map
 	for _, preference := range preferenceMap {
 		isEnabledForOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
-		preferenceWithValue := AllPreferences{}
-		preferenceWithValue.Key = preference.Key
-		preferenceWithValue.Name = preference.Name
-		preferenceWithValue.Description = preference.Description
-		preferenceWithValue.AllowedScopes = preference.AllowedScopes
-		preferenceWithValue.AllowedValues = preference.AllowedValues
-		preferenceWithValue.DefaultValue = preference.DefaultValue
-		preferenceWithValue.Range = preference.Range
-		preferenceWithValue.ValueType = preference.ValueType
-		preferenceWithValue.IsDiscreteValues = preference.IsDiscreteValues
-
 		if isEnabledForOrgScope {
+			preferenceWithValue := AllPreferences{}
+			preferenceWithValue.Key = preference.Key
+			preferenceWithValue.Name = preference.Name
+			preferenceWithValue.Description = preference.Description
+			preferenceWithValue.AllowedScopes = preference.AllowedScopes
+			preferenceWithValue.AllowedValues = preference.AllowedValues
+			preferenceWithValue.DefaultValue = preference.DefaultValue
+			preferenceWithValue.Range = preference.Range
+			preferenceWithValue.ValueType = preference.ValueType
+			preferenceWithValue.IsDiscreteValues = preference.IsDiscreteValues
 			ok, seen := preferenceValueMap[preference.Key]
 
 			if seen {
@@ -326,11 +325,11 @@ func GetUserPreference(ctx context.Context, preferenceId string, orgId string, u
 
 	// check if the preference is enabled at user scope
 	isPreferenceEnabledAtUserScope := preference.IsEnabledForScope(UserAllowedScope)
-	isPreferenceEnabledAtOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
 	if !isPreferenceEnabledAtUserScope {
 		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("preference is not enabled at user scope: %s", preferenceId)}
 	}
 
+	isPreferenceEnabledAtOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
 	// get the value from the org scope if enabled at org scope
 	if isPreferenceEnabledAtOrgScope {
 		orgPreference := PreferenceKV{}
@@ -443,23 +442,22 @@ func GetAllUserPreferences(ctx context.Context, orgId string, userId string) (*[
 
 	// update in the above filtered list wherver value present in the map
 	for _, preference := range preferenceMap {
-		isEnabledForOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
 		isEnabledForUserScope := preference.IsEnabledForScope(UserAllowedScope)
 
-		preferenceWithValue := AllPreferences{}
-		preferenceWithValue.Key = preference.Key
-		preferenceWithValue.Name = preference.Name
-		preferenceWithValue.Description = preference.Description
-		preferenceWithValue.AllowedScopes = preference.AllowedScopes
-		preferenceWithValue.AllowedValues = preference.AllowedValues
-		preferenceWithValue.DefaultValue = preference.DefaultValue
-		preferenceWithValue.Range = preference.Range
-		preferenceWithValue.ValueType = preference.ValueType
-		preferenceWithValue.IsDiscreteValues = preference.IsDiscreteValues
-
 		if isEnabledForUserScope {
+			preferenceWithValue := AllPreferences{}
+			preferenceWithValue.Key = preference.Key
+			preferenceWithValue.Name = preference.Name
+			preferenceWithValue.Description = preference.Description
+			preferenceWithValue.AllowedScopes = preference.AllowedScopes
+			preferenceWithValue.AllowedValues = preference.AllowedValues
+			preferenceWithValue.DefaultValue = preference.DefaultValue
+			preferenceWithValue.Range = preference.Range
+			preferenceWithValue.ValueType = preference.ValueType
+			preferenceWithValue.IsDiscreteValues = preference.IsDiscreteValues
 			preferenceWithValue.Value = preference.DefaultValue
 
+			isEnabledForOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
 			if isEnabledForOrgScope {
 				ok, seen := preferenceOrgValueMap[preference.Key]
 				if seen {

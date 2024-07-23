@@ -407,14 +407,14 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.getUserPreference)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.updateUserPreference)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.updateUserPreference)).Methods(http.MethodPut)
 
 	// org actions
 	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.getAllOrgPreferences)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.getOrgPreference)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.updateOrgPreference)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.updateOrgPreference)).Methods(http.MethodPut)
 
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
