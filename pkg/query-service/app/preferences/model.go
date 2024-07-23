@@ -298,10 +298,10 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences,
 			preferenceWithValue.Range = preference.Range
 			preferenceWithValue.ValueType = preference.ValueType
 			preferenceWithValue.IsDiscreteValues = preference.IsDiscreteValues
-			ok, seen := preferenceValueMap[preference.Key]
+			value, seen := preferenceValueMap[preference.Key]
 
 			if seen {
-				preferenceWithValue.Value = ok
+				preferenceWithValue.Value = value
 			} else {
 				preferenceWithValue.Value = preference.DefaultValue
 			}
