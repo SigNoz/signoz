@@ -1,12 +1,5 @@
-// import ROUTES from 'constants/routes';
 import MySettingsContainer from 'container/MySettings';
 import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
-
-// const historyPush = jest.fn();
-// jest.mock('lib/history', () => ({
-// 	__esModule: true,
-// 	push: historyPush,
-// }));
 
 const toggleThemeFunction = jest.fn();
 
@@ -124,16 +117,6 @@ describe('MySettings Flows', () => {
 			);
 		});
 	});
-
-	// describe('Logout button', () => {
-	// 	it('Should redirect to /login on clicking Logout', async () => {
-	// 		const logoutButton = screen.getByTestId('logout-button');
-	// 		fireEvent.click(logoutButton);
-	// 		await waitFor(() => {
-	// 			expect(historyPush).toHaveBeenCalledWith(ROUTES.LOGIN);
-	// 		});
-	// 	});
-	// });
 
 	describe('Reset password', () => {
 		let currentPasswordTextbox: Node | Window;
