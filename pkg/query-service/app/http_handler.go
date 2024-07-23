@@ -36,6 +36,7 @@ import (
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
@@ -2216,9 +2217,9 @@ func (ah *APIHandler) getUserPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	preferenceId := mux.Vars(r)["preferenceId"]
-	orgId := r.URL.Query().Get("orgId")
+	user := common.GetUserFromContext(r.Context())
 	preference, apiErr := preferences.GetUserPreference(
-		r.Context(), preferenceId, orgId,
+		r.Context(), preferenceId, user.User.OrgId, user.User.Id,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -2232,6 +2233,7 @@ func (ah *APIHandler) updateUserPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
 	req := preferences.UpdatePreference{}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -2240,7 +2242,7 @@ func (ah *APIHandler) updateUserPreference(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue)
+	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.Id)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -2252,9 +2254,9 @@ func (ah *APIHandler) updateUserPreference(
 func (ah *APIHandler) getAllUserPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	orgId := r.URL.Query().Get("orgId")
+	user := common.GetUserFromContext(r.Context())
 	preference, apiErr := preferences.GetAllUserPreferences(
-		r.Context(), orgId,
+		r.Context(), user.User.OrgId, user.User.Id,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -2268,9 +2270,9 @@ func (ah *APIHandler) getOrgPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	preferenceId := mux.Vars(r)["preferenceId"]
-	orgId := r.URL.Query().Get("orgId")
+	user := common.GetUserFromContext(r.Context())
 	preference, apiErr := preferences.GetOrgPreference(
-		r.Context(), preferenceId, orgId,
+		r.Context(), preferenceId, user.User.OrgId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -2285,7 +2287,7 @@ func (ah *APIHandler) updateOrgPreference(
 ) {
 	preferenceId := mux.Vars(r)["preferenceId"]
 	req := preferences.UpdatePreference{}
-	orgId := r.URL.Query().Get("orgId")
+	user := common.GetUserFromContext(r.Context())
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 
@@ -2293,7 +2295,7 @@ func (ah *APIHandler) updateOrgPreference(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, orgId)
+	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.OrgId)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -2305,9 +2307,9 @@ func (ah *APIHandler) updateOrgPreference(
 func (ah *APIHandler) getAllOrgPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	orgId := r.URL.Query().Get("orgId")
+	user := common.GetUserFromContext(r.Context())
 	preference, apiErr := preferences.GetAllOrgPreferences(
-		r.Context(), orgId,
+		r.Context(), user.User.OrgId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)

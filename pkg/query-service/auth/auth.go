@@ -505,6 +505,7 @@ func GenerateJWTForUser(user *model.User) (model.UserJwtObject, error) {
 		"gid":   user.GroupId,
 		"email": user.Email,
 		"exp":   j.AccessJwtExpiry,
+		"orgId": user.OrgId,
 	})
 
 	j.AccessJwt, err = token.SignedString([]byte(JwtSecret))
@@ -518,6 +519,7 @@ func GenerateJWTForUser(user *model.User) (model.UserJwtObject, error) {
 		"gid":   user.GroupId,
 		"email": user.Email,
 		"exp":   j.RefreshJwtExpiry,
+		"orgId": user.OrgId,
 	})
 
 	j.RefreshJwt, err = token.SignedString([]byte(JwtSecret))

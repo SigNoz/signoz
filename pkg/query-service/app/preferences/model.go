@@ -3,14 +3,10 @@ package preferences
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
-	"io/fs"
-	"os"
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/common"
 )
 
 type Range struct {
@@ -144,8 +140,6 @@ var db *sqlx.DB
 
 var preferences []Preference
 
-var preferenceMap map[string]Preference
-
 func InitDB(datasourceName string) error {
 	var err error
 	db, err = sqlx.Open("sqlite3", datasourceName)
@@ -192,25 +186,6 @@ func InitDB(datasourceName string) error {
 		return fmt.Errorf("error in creating org_preference table: %s", err.Error())
 	}
 
-	preferenceFromFile, fileErr := fs.ReadFile(os.DirFS("../../pkg/query-service/app/preferences"), "preference.json")
-
-	if fileErr != nil {
-		return fmt.Errorf("error in reading preferences from file : %s", fileErr.Error())
-	}
-
-	if unmarshalErr := json.Unmarshal(preferenceFromFile, &preferences); unmarshalErr != nil {
-		return fmt.Errorf("error in unmarshalling preferences from file : %s", unmarshalErr.Error())
-	}
-
-	preferenceMap = map[string]Preference{}
-	for _, preference := range preferences {
-		_, seen := preferenceMap[preference.Key]
-		if seen {
-			return fmt.Errorf("duplicate preference key in the preferences: %s", preference.Key)
-		}
-		preferenceMap[preference.Key] = preference
-	}
-
 	return nil
 }
 
@@ -234,13 +209,15 @@ func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*
 	err := db.Get(&orgPreference, query, preferenceId, orgId)
 
 	// if the value doesn't exist in db then return the default value
-	if err == sql.ErrNoRows {
-		return &PreferenceKV{
-			PreferenceId:    preferenceId,
-			PreferenceValue: preference.DefaultValue,
-		}, nil
-	} else if err != nil {
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return &PreferenceKV{
+				PreferenceId:    preferenceId,
+				PreferenceValue: preference.DefaultValue,
+			}, nil
+		}
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in fetching the org preference: %s", err.Error())}
+
 	}
 
 	// else return the value fetched from the org_preference table
@@ -337,9 +314,7 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences,
 }
 
 // user preference functions
-func GetUserPreference(ctx context.Context, preferenceId string, orgId string) (*PreferenceKV, *model.ApiError) {
-
-	user := common.GetUserFromContext(ctx)
+func GetUserPreference(ctx context.Context, preferenceId string, orgId string, userId string) (*PreferenceKV, *model.ApiError) {
 	// check if the preference key exists
 	preference, seen := preferenceMap[preferenceId]
 	if !seen {
@@ -381,7 +356,7 @@ func GetUserPreference(ctx context.Context, preferenceId string, orgId string) (
 	userPreference := PreferenceKV{}
 
 	query := `SELECT preference_id, preference_value FROM user_preference WHERE preference_id=$1 AND user_id=$2;`
-	err := db.Get(&userPreference, query, preferenceId, user.User.Id)
+	err := db.Get(&userPreference, query, preferenceId, userId)
 
 	if err != nil && err != sql.ErrNoRows {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting user preference values: %s", err.Error())}
@@ -397,8 +372,7 @@ func GetUserPreference(ctx context.Context, preferenceId string, orgId string) (
 	}, nil
 }
 
-func UpdateUserPreference(ctx context.Context, preferenceId string, preferenceValue interface{}) (*PreferenceKV, *model.ApiError) {
-	user := common.GetUserFromContext(ctx)
+func UpdateUserPreference(ctx context.Context, preferenceId string, preferenceValue interface{}, userId string) (*PreferenceKV, *model.ApiError) {
 	// check if the preference id is valid
 	preference, seen := preferenceMap[preferenceId]
 	if !seen {
@@ -420,7 +394,7 @@ func UpdateUserPreference(ctx context.Context, preferenceId string, preferenceVa
 	ON CONFLICT(preference_id,user_id) DO
 	UPDATE SET preference_value= $2 WHERE preference_id=$1 AND user_id=$3;`
 
-	_, dberrr := db.Exec(query, preferenceId, preferenceValue, user.User.Id)
+	_, dberrr := db.Exec(query, preferenceId, preferenceValue, userId)
 
 	if dberrr != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", dberrr.Error())}
@@ -432,8 +406,7 @@ func UpdateUserPreference(ctx context.Context, preferenceId string, preferenceVa
 	}, nil
 }
 
-func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferences, *model.ApiError) {
-	user := common.GetUserFromContext(ctx)
+func GetAllUserPreferences(ctx context.Context, orgId string, userId string) (*[]AllPreferences, *model.ApiError) {
 	allUserPreferences := []AllPreferences{}
 
 	// fetch all the org preference values stored in org_preference table
@@ -457,7 +430,7 @@ func GetAllUserPreferences(ctx context.Context, orgId string) (*[]AllPreferences
 	userPreferenceValues := []PreferenceKV{}
 
 	query = `SELECT preference_id,preference_value FROM user_preference WHERE user_id=$1;`
-	err = db.Select(&userPreferenceValues, query, user.User.Id)
+	err = db.Select(&userPreferenceValues, query, userId)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all user preference values: %s", err)}

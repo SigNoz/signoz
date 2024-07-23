@@ -52,6 +52,7 @@ func validateUser(tok string) (*model.UserPayload, error) {
 			Id:      claims["id"].(string),
 			GroupId: claims["gid"].(string),
 			Email:   claims["email"].(string),
+			OrgId:   claims["orgId"].(string),
 		},
 	}, nil
 }
