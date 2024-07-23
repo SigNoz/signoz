@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/ee/query-service/model"
@@ -53,6 +54,7 @@ func (p *Preference) checkIfInAllowedValues(preferenceValue interface{}) bool {
 }
 
 func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
+	typeSafeValue := preferenceValue
 	switch p.ValueType {
 	case PreferenceValueTypeInteger:
 		val, ok := preferenceValue.(int64)
@@ -62,6 +64,7 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
 				return p.ErrorValueTypeMismatch()
 			}
 			val = int64(floatVal)
+			typeSafeValue = val
 		}
 		if !p.IsDiscreteValues {
 			if val < p.Range.Min || val > p.Range.Max {
@@ -88,7 +91,7 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
 	// check the validity of the value being part of allowed values or the range specified if any
 	if p.IsDiscreteValues {
 		if p.AllowedValues != nil {
-			isInAllowedValues := p.checkIfInAllowedValues(preferenceValue)
+			isInAllowedValues := p.checkIfInAllowedValues(typeSafeValue)
 			if !isInAllowedValues {
 				return &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the list of allowedValues: %v", p.AllowedValues)}
 			}
@@ -101,7 +104,7 @@ func (p *Preference) IsEnabledForScope(scope string) bool {
 	isPreferenceEnabledForGivenScope := false
 	if p.AllowedScopes != nil {
 		for _, allowedScope := range p.AllowedScopes {
-			if allowedScope == scope {
+			if allowedScope == strings.ToLower(scope) {
 				isPreferenceEnabledForGivenScope = true
 			}
 		}
@@ -112,7 +115,7 @@ func (p *Preference) IsEnabledForScope(scope string) bool {
 func (p *Preference) SanitizeValue(preferenceValue interface{}) interface{} {
 	switch p.ValueType {
 	case PreferenceValueTypeBoolean:
-		if preferenceValue == "1" {
+		if preferenceValue == "1" || preferenceValue == true {
 			return true
 		} else {
 			return false
@@ -192,13 +195,13 @@ func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*
 	// check if the preference key exists or not
 	preference, seen := preferenceMap[preferenceId]
 	if !seen {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("no such preferenceId exists: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no such preferenceId exists: %s", preferenceId)}
 	}
 
 	// check if the preference is enabled for org scope or not
 	isPreferenceEnabled := preference.IsEnabledForScope(OrgAllowedScope)
 	if !isPreferenceEnabled {
-		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("preference is not enabled at org scope: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference is not enabled at org scope: %s", preferenceId)}
 	}
 
 	// fetch the value from the database
@@ -229,13 +232,13 @@ func UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceVal
 	// check if the preference key exists or not
 	preference, seen := preferenceMap[preferenceId]
 	if !seen {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("no such preferenceId exists: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no such preferenceId exists: %s", preferenceId)}
 	}
 
 	// check if the preference is enabled at org scope or not
 	isPreferenceEnabled := preference.IsEnabledForScope(OrgAllowedScope)
 	if !isPreferenceEnabled {
-		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("preference is not enabled at org scope: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference is not enabled at org scope: %s", preferenceId)}
 	}
 
 	err := preference.IsValidValue(preferenceValue)
@@ -315,7 +318,7 @@ func GetUserPreference(ctx context.Context, preferenceId string, orgId string, u
 	// check if the preference key exists
 	preference, seen := preferenceMap[preferenceId]
 	if !seen {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("no such preferenceId exists: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no such preferenceId exists: %s", preferenceId)}
 	}
 
 	preferenceValue := PreferenceKV{
@@ -326,7 +329,7 @@ func GetUserPreference(ctx context.Context, preferenceId string, orgId string, u
 	// check if the preference is enabled at user scope
 	isPreferenceEnabledAtUserScope := preference.IsEnabledForScope(UserAllowedScope)
 	if !isPreferenceEnabledAtUserScope {
-		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("preference is not enabled at user scope: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference is not enabled at user scope: %s", preferenceId)}
 	}
 
 	isPreferenceEnabledAtOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
@@ -373,13 +376,13 @@ func UpdateUserPreference(ctx context.Context, preferenceId string, preferenceVa
 	// check if the preference id is valid
 	preference, seen := preferenceMap[preferenceId]
 	if !seen {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("no such preferenceId exists: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no such preferenceId exists: %s", preferenceId)}
 	}
 
 	// check if the preference is enabled at user scope
 	isPreferenceEnabledAtUserScope := preference.IsEnabledForScope(UserAllowedScope)
 	if !isPreferenceEnabledAtUserScope {
-		return nil, &model.ApiError{Typ: model.ErrorForbidden, Err: fmt.Errorf("preference is not enabled at user scope: %s", preferenceId)}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("preference is not enabled at user scope: %s", preferenceId)}
 	}
 
 	err := preference.IsValidValue(preferenceValue)
@@ -459,16 +462,16 @@ func GetAllUserPreferences(ctx context.Context, orgId string, userId string) (*[
 
 			isEnabledForOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
 			if isEnabledForOrgScope {
-				ok, seen := preferenceOrgValueMap[preference.Key]
+				value, seen := preferenceOrgValueMap[preference.Key]
 				if seen {
-					preferenceWithValue.Value = ok
+					preferenceWithValue.Value = value
 				}
 			}
 
-			ok, seen := preferenceUserValueMap[preference.Key]
+			value, seen := preferenceUserValueMap[preference.Key]
 
 			if seen {
-				preferenceWithValue.Value = ok
+				preferenceWithValue.Value = value
 			}
 
 			preferenceWithValue.Value = preference.SanitizeValue(preferenceWithValue.Value)
