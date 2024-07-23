@@ -400,6 +400,22 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
+	// === Preference APIs === 
+	
+	// user actions
+	router.HandleFunc("/api/v1/user/preferences", am.ViewAccess(aH.getAllUserPreferences)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.getUserPreference)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.updateUserPreference)).Methods(http.MethodPost)
+
+	// org actions
+	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.getAllOrgPreferences)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.getOrgPreference)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.updateOrgPreference)).Methods(http.MethodPost)
+
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.getInvite)).Methods(http.MethodGet)
@@ -2195,23 +2211,6 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 }
 
 // Preferences
-func (ah *APIHandler) RegisterPreferenceRoutes(router *mux.Router, am *AuthMiddleware) {
-	subRouter := router.PathPrefix("/api/v1/preferences").Subrouter()
-
-	// user actions
-	subRouter.HandleFunc("/user", am.ViewAccess(ah.getAllUserPreferences)).Methods(http.MethodGet)
-
-	subRouter.HandleFunc("/user/{preferenceId}", am.ViewAccess(ah.getUserPreference)).Methods(http.MethodGet)
-
-	subRouter.HandleFunc("/user/{preferenceId}", am.ViewAccess(ah.updateUserPreference)).Methods(http.MethodPost)
-
-	// org actions
-	subRouter.HandleFunc("/org", am.AdminAccess(ah.getAllOrgPreferences)).Methods(http.MethodGet)
-
-	subRouter.HandleFunc("/org/{preferenceId}", am.AdminAccess(ah.getOrgPreference)).Methods(http.MethodGet)
-
-	subRouter.HandleFunc("/org/{preferenceId}", am.AdminAccess(ah.updateOrgPreference)).Methods(http.MethodPost)
-}
 
 func (ah *APIHandler) getUserPreference(
 	w http.ResponseWriter, r *http.Request,
