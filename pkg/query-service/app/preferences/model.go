@@ -138,8 +138,6 @@ type UpdatePreference struct {
 
 var db *sqlx.DB
 
-var preferences []Preference
-
 func InitDB(datasourceName string) error {
 	var err error
 	db, err = sqlx.Open("sqlite3", datasourceName)
@@ -284,7 +282,7 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences,
 	}
 
 	// update in the above filtered list wherver value present in the map
-	for _, preference := range preferences {
+	for _, preference := range preferenceMap {
 		isEnabledForOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
 		preferenceWithValue := AllPreferences{}
 		preferenceWithValue.Key = preference.Key
@@ -444,7 +442,7 @@ func GetAllUserPreferences(ctx context.Context, orgId string, userId string) (*[
 	}
 
 	// update in the above filtered list wherver value present in the map
-	for _, preference := range preferences {
+	for _, preference := range preferenceMap {
 		isEnabledForOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
 		isEnabledForUserScope := preference.IsEnabledForScope(UserAllowedScope)
 
