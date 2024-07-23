@@ -1,5 +1,3 @@
-import commonTests from './OrganizationSettingsCommonTests.test';
+import commonOrganizationSettingsTests from './OrganizationSettingsCommonTests.test';
 
-describe('Organization Settings Page', () => {
-	commonTests();
-});
+commonOrganizationSettingsTests({ isNonSSoTests: false });
