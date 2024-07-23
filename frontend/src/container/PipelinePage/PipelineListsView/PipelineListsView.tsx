@@ -3,11 +3,19 @@ import './styles.scss';
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Card, Modal, Table, Typography } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
+import logEvent from 'api/common/logEvent';
 import savePipeline from 'api/pipeline/post';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useNotifications } from 'hooks/useNotifications';
+import { isUndefined } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
@@ -465,6 +473,16 @@ function PipelineListsView({
 		expandIcon: ({ expanded, onExpand, record }: ExpandRowConfig) =>
 			getExpandIcon(expanded, onExpand, record),
 	};
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isUndefined(currPipelineData)) {
+			logEvent('Logs Pipelines: List page visited', {
+				number: currPipelineData?.length,
+			});
+			logEventCalledRef.current = true;
+		}
+	}, [currPipelineData]);
 
 	return (
 		<>

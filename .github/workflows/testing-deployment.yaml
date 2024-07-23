@@ -30,6 +30,7 @@ jobs:
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
           GCP_ZONE: ${{ secrets.GCP_ZONE }}
           GCP_INSTANCE: ${{ secrets.GCP_INSTANCE }}
+          CLOUDSDK_CORE_DISABLE_PROMPTS: 1
         run: |
           read -r -d '' COMMAND <<EOF || true
           echo "GITHUB_BRANCH: ${GITHUB_BRANCH}"
@@ -52,4 +53,4 @@ jobs:
           make build-frontend-amd64
           make run-testing
           EOF
-          gcloud compute ssh ${GCP_INSTANCE} --zone ${GCP_ZONE} --ssh-key-expire-after=15m --tunnel-through-iap --project ${GCP_PROJECT} --command "${COMMAND}"
+          gcloud beta compute ssh ${GCP_INSTANCE} --zone ${GCP_ZONE} --ssh-key-expire-after=15m --tunnel-through-iap --project ${GCP_PROJECT} --command "${COMMAND}"

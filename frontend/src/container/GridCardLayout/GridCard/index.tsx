@@ -14,6 +14,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
@@ -113,6 +114,7 @@ function GridCardGraph({
 			};
 		}
 		updatedQuery.builder.queryData[0].pageSize = 10;
+		const initialDataSource = updatedQuery.builder.queryData[0].dataSource;
 		return {
 			query: updatedQuery,
 			graphType: PANEL_TYPES.LIST,
@@ -123,6 +125,9 @@ function GridCardGraph({
 					offset: 0,
 					limit: updatedQuery.builder.queryData[0].limit || 0,
 				},
+				// we do not need select columns in case of logs
+				selectColumns:
+					initialDataSource === DataSource.TRACES && widget.selectedTracesFields,
 			},
 			fillGaps: widget.fillSpans,
 		};

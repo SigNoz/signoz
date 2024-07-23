@@ -26,7 +26,10 @@ export const getRoutes = (
 		settings.push(...organizationSettings(t));
 	}
 
-	if (isGatewayEnabled && userRole === USER_ROLES.ADMIN) {
+	if (
+		isGatewayEnabled &&
+		(userRole === USER_ROLES.ADMIN || userRole === USER_ROLES.EDITOR)
+	) {
 		settings.push(...multiIngestionSettings(t));
 	}
 
