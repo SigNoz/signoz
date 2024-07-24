@@ -405,13 +405,17 @@ function DateTimeSelection({
 		time: Time,
 		currentRoute: string,
 	): Time | CustomTimeType => {
+		// if the relativeTime param is present in the url give top most preference to the same
+		if (relativeTimeFromUrl != null) {
+			return relativeTimeFromUrl as Time;
+		}
+
+		// if the startTime and endTime params are present in the url give next preference to the them.
 		if (searchEndTime !== null && searchStartTime !== null) {
 			return 'custom';
 		}
 
-		if (relativeTimeFromUrl != null) {
-			return relativeTimeFromUrl as Time;
-		}
+		// if nothing is present in the url for time range then rely on the local storage values
 		if (
 			(localstorageEndTime === null || localstorageStartTime === null) &&
 			time === 'custom'
@@ -419,6 +423,7 @@ function DateTimeSelection({
 			return getDefaultOption(currentRoute);
 		}
 
+		// if not present in the local storage as well then rely on the defaults set for the page
 		if (OLD_RELATIVE_TIME_VALUES.indexOf(time) > -1) {
 			return convertOldTimeToNewValidCustomTimeFormat(time);
 		}
