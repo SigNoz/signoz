@@ -47,8 +47,8 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorIn:              "IN",
 	v3.FilterOperatorNotIn:           "NOT IN",
-	v3.FilterOperatorExists:          "has(%s_%s_key, '%s')",
-	v3.FilterOperatorNotExists:       "not has(%s_%s_key, '%s')",
+	v3.FilterOperatorExists:          "mapContains(%s_%s, '%s')",
+	v3.FilterOperatorNotExists:       "not mapContains(%s_%s, '%s')",
 }
 
 func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
@@ -59,11 +59,8 @@ func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
 }
 
 func getClickhouseLogsColumnDataType(columnDataType v3.AttributeKeyDataType) string {
-	if columnDataType == v3.AttributeKeyDataTypeFloat64 {
-		return "float64"
-	}
-	if columnDataType == v3.AttributeKeyDataTypeInt64 {
-		return "int64"
+	if columnDataType == v3.AttributeKeyDataTypeFloat64 || columnDataType == v3.AttributeKeyDataTypeInt64 {
+		return "number"
 	}
 	if columnDataType == v3.AttributeKeyDataTypeBool {
 		return "bool"
@@ -83,7 +80,7 @@ func getClickhouseColumnName(key v3.AttributeKey) string {
 	if !key.IsColumn {
 		columnType := getClickhouseLogsColumnType(key.Type)
 		columnDataType := getClickhouseLogsColumnDataType(key.DataType)
-		clickhouseColumn = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", columnType, columnDataType, columnType, columnDataType, key.Key)
+		clickhouseColumn = fmt.Sprintf("%s_%s['%s']", columnType, columnDataType, key.Key)
 		return clickhouseColumn
 	}
 
@@ -210,7 +207,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 		if !attr.IsColumn {
 			columnType := getClickhouseLogsColumnType(attr.Type)
 			columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
-			conditions = append(conditions, fmt.Sprintf("has(%s_%s_key, '%s')", columnType, columnDataType, attr.Key))
+			conditions = append(conditions, fmt.Sprintf("mapContains(%s_%s, '%s')", columnType, columnDataType, attr.Key))
 		} else if attr.Type != v3.AttributeKeyTypeUnspecified {
 			// for materialzied columns
 			conditions = append(conditions, fmt.Sprintf("%s_exists`=true", strings.TrimSuffix(getClickhouseColumnName(attr), "`")))
@@ -437,7 +434,11 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
-		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.%s where %s%s order by %s"
+		sqlSelect := constants.LogsSQLSelect
+		if len(filterSubQuery) > 0 {
+			sqlSelect = constants.LogsSQLSelectV2
+		}
+		queryTmpl := sqlSelect + "from signoz_logs.%s where %s%s order by %s"
 		query := fmt.Sprintf(queryTmpl, tableName, timeFilter, filterSubQuery, orderBy)
 		return query, nil
 	default:
@@ -453,11 +454,13 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorNoOp:
-		query := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where "
 		if len(filterSubQuery) > 0 {
-			query = query + filterSubQuery + " AND "
+			query := constants.LogsSQLSelectV2 + "from signoz_logs.distributed_logs where "
+			query += filterSubQuery + " AND "
+			return query, nil
 		}
 
+		query := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where "
 		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator in live tail")
