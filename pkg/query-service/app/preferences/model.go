@@ -43,14 +43,72 @@ const (
 	UserAllowedScope string = "user"
 )
 
-func (p *Preference) checkIfInAllowedValues(preferenceValue interface{}) bool {
-	isInAllowedValues := false
-	for _, value := range p.AllowedValues {
-		if value == preferenceValue {
-			isInAllowedValues = true
+func (p *Preference) checkIfInAllowedValues(preferenceValue interface{}) (bool, *model.ApiError) {
+
+	switch p.ValueType {
+	case PreferenceValueTypeInteger:
+		_, ok := preferenceValue.(int64)
+		if !ok {
+			return false, p.ErrorValueTypeMismatch()
+		}
+	case PreferenceValueTypeFloat:
+		_, ok := preferenceValue.(float64)
+		if !ok {
+			return false, p.ErrorValueTypeMismatch()
+		}
+	case PreferenceValueTypeString:
+		_, ok := preferenceValue.(string)
+		if !ok {
+			return false, p.ErrorValueTypeMismatch()
+		}
+	case PreferenceValueTypeBoolean:
+		_, ok := preferenceValue.(bool)
+		if !ok {
+			return false, p.ErrorValueTypeMismatch()
 		}
 	}
-	return isInAllowedValues
+	isInAllowedValues := false
+	for _, value := range p.AllowedValues {
+		switch p.ValueType {
+		case PreferenceValueTypeInteger:
+			allowedValue, ok := value.(int64)
+			if !ok {
+				return false, p.ErrorValueTypeMismatch()
+			}
+
+			if allowedValue == preferenceValue {
+				isInAllowedValues = true
+			}
+		case PreferenceValueTypeFloat:
+			allowedValue, ok := value.(float64)
+			if !ok {
+				return false, p.ErrorValueTypeMismatch()
+			}
+
+			if allowedValue == preferenceValue {
+				isInAllowedValues = true
+			}
+		case PreferenceValueTypeString:
+			allowedValue, ok := value.(string)
+			if !ok {
+				return false, p.ErrorValueTypeMismatch()
+			}
+
+			if allowedValue == preferenceValue {
+				isInAllowedValues = true
+			}
+		case PreferenceValueTypeBoolean:
+			allowedValue, ok := value.(bool)
+			if !ok {
+				return false, p.ErrorValueTypeMismatch()
+			}
+
+			if allowedValue == preferenceValue {
+				isInAllowedValues = true
+			}
+		}
+	}
+	return isInAllowedValues, nil
 }
 
 func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
@@ -91,7 +149,11 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
 	// check the validity of the value being part of allowed values or the range specified if any
 	if p.IsDiscreteValues {
 		if p.AllowedValues != nil {
-			isInAllowedValues := p.checkIfInAllowedValues(typeSafeValue)
+			isInAllowedValues, valueMisMatchErr := p.checkIfInAllowedValues(typeSafeValue)
+
+			if valueMisMatchErr != nil {
+				return valueMisMatchErr
+			}
 			if !isInAllowedValues {
 				return &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the list of allowedValues: %v", p.AllowedValues)}
 			}
