@@ -62,7 +62,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const { data: licenseData, isFetching } = useLicense();
 
-	const { pathname, search } = useLocation();
+	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
 
 	const [getUserVersionResponse, getUserLatestVersionResponse] = useQueries([
@@ -201,8 +201,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		pathname === ROUTES.GET_STARTED_AWS_MONITORING ||
 		pathname === ROUTES.GET_STARTED_AZURE_MONITORING;
 
-	const removeTopNav = pathname === ROUTES.ALERTS_NEW && !search;
-
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 
 	useEffect(() => {
@@ -325,7 +323,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 												: '0 1rem',
 									}}
 								>
-									{isToDisplayLayout && !renderFullScreen && !removeTopNav && <TopNav />}
+									{isToDisplayLayout && !renderFullScreen && <TopNav />}
 									{children}
 								</ChildrenContainer>
 							</OverlayScrollbar>
