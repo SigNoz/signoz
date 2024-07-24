@@ -3518,21 +3518,23 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 
 	colname := utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
 
+	dataType := strings.ToLower(field.DataType)
+	if field.DataType == "int64" || field.DataType == "float64" {
+		dataType = "number"
+	}
+	attrColName := fmt.Sprintf("%s_%s", field.Type, dataType)
+
 	// if a field is selected it means that the field needs to be indexed
 	if field.Selected {
-		keyColName := fmt.Sprintf("%s_%s_key", field.Type, strings.ToLower(field.DataType))
-		valueColName := fmt.Sprintf("%s_%s_value", field.Type, strings.ToLower(field.DataType))
-
 		// create materialized column
 
 		for _, table := range []string{r.logsLocalTableV2, r.logsTableV2} {
-			q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s DEFAULT %s[indexOf(%s, '%s')] CODEC(ZSTD(1))"
+			q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s DEFAULT %s['%s'] CODEC(ZSTD(1))"
 			query := fmt.Sprintf(q,
 				r.logsDB, table,
 				r.cluster,
 				colname, field.DataType,
-				valueColName,
-				keyColName,
+				attrColName,
 				field.Name,
 			)
 			err := r.db.Exec(ctx, query)
@@ -3540,11 +3542,11 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 			}
 
-			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists` bool DEFAULT if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
+			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists` bool DEFAULT if(mapContains(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
 				r.logsDB, table,
 				r.cluster,
 				strings.TrimSuffix(colname, "`"),
-				keyColName,
+				attrColName,
 				field.Name,
 			)
 			err = r.db.Exec(ctx, query)
