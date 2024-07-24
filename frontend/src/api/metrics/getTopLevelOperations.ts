@@ -1,9 +1,9 @@
 import axios from 'api';
 
 interface GetTopLevelOperationsProps {
-	service: string;
-	start: number;
-	end: number;
+	service?: string;
+	start?: number;
+	end?: number;
 }
 
 const getTopLevelOperations = async (

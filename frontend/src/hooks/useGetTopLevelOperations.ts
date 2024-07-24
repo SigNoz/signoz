@@ -10,7 +10,7 @@ type UseGetTopLevelOperations = (
 const useGetTopLevelOperations: UseGetTopLevelOperations = (queryKey) =>
 	useQuery<ServiceDataProps>({
 		queryKey,
-		queryFn: getTopLevelOperations,
+		queryFn: (): Promise<ServiceDataProps> => getTopLevelOperations({}),
 	});
 
 export default useGetTopLevelOperations;
