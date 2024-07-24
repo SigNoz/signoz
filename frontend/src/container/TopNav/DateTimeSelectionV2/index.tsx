@@ -73,6 +73,7 @@ function DateTimeSelection({
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
+	const relativeTimeFromUrl = urlQuery.get(QueryParams.relativeTime);
 	const queryClient = useQueryClient();
 	const [enableAbsoluteTime, setEnableAbsoluteTime] = useState(false);
 	const [isValidteRelativeTime, setIsValidteRelativeTime] = useState(false);
@@ -407,6 +408,10 @@ function DateTimeSelection({
 		if (searchEndTime !== null && searchStartTime !== null) {
 			return 'custom';
 		}
+
+		if (relativeTimeFromUrl != null) {
+			return relativeTimeFromUrl as Time;
+		}
 		if (
 			(localstorageEndTime === null || localstorageStartTime === null) &&
 			time === 'custom'
@@ -448,7 +453,11 @@ function DateTimeSelection({
 
 		setRefreshButtonHidden(updatedTime === 'custom');
 
-		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
+		if (updatedTime !== 'custom') {
+			updateTimeInterval(updatedTime);
+		} else {
+			updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
+		}
 
 		if (updatedTime !== 'custom') {
 			urlQuery.delete('startTime');
