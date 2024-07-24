@@ -56,7 +56,21 @@ function LogsExplorerChart({
 
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
+			urlQuery.set(
+				QueryParams.timeRange,
+				JSON.stringify({
+					start: minTime.toString(),
+					end: maxTime.toString(),
+					pageSize: 100,
+				}),
+			);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			console.log(
+				new Date(minTime / 1000000),
+				new Date(maxTime / 1000000),
+				minTime,
+				maxTime,
+			);
 			history.push(generatedUrl);
 		},
 		[dispatch, location.pathname, urlQuery],

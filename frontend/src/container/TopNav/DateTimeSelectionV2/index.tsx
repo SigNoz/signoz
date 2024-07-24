@@ -28,7 +28,7 @@ import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { isObject } from 'lodash-es';
 import { Check, Copy, Info, Send } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -292,11 +292,6 @@ function DateTimeSelection({
 		return `Refreshed ${secondsDiff} sec ago`;
 	}, [maxTime, minTime, selectedTime]);
 
-	const isLogsExplorerPage = useMemo(
-		() => location.pathname === ROUTES.LOGS_EXPLORER,
-		[location.pathname],
-	);
-
 	const onSelectHandler = (value: Time | CustomTimeType): void => {
 		if (value !== 'custom') {
 			setIsOpen(false);
@@ -315,15 +310,13 @@ function DateTimeSelection({
 			return;
 		}
 
-		if (!isLogsExplorerPage) {
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
+		urlQuery.delete('startTime');
+		urlQuery.delete('endTime');
 
-			urlQuery.set(QueryParams.relativeTime, value);
+		urlQuery.set(QueryParams.relativeTime, value);
 
-			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
-		}
+		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+		history.replace(generatedUrl);
 
 		// For logs explorer - time range handling is managed in useCopyLogLink.ts:52
 
@@ -358,16 +351,14 @@ function DateTimeSelection({
 
 				updateLocalStorageForRoutes(JSON.stringify({ startTime, endTime }));
 
-				if (!isLogsExplorerPage) {
-					urlQuery.set(
-						QueryParams.startTime,
-						startTime?.toDate().getTime().toString(),
-					);
-					urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
-					urlQuery.delete(QueryParams.relativeTime);
-					const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-					history.replace(generatedUrl);
-				}
+				urlQuery.set(
+					QueryParams.startTime,
+					startTime?.toDate().getTime().toString(),
+				);
+				urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
+				urlQuery.delete(QueryParams.relativeTime);
+				const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+				history.replace(generatedUrl);
 			}
 		}
 	};
@@ -382,15 +373,13 @@ function DateTimeSelection({
 
 		setIsValidteRelativeTime(true);
 
-		if (!isLogsExplorerPage) {
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
+		urlQuery.delete('startTime');
+		urlQuery.delete('endTime');
 
-			urlQuery.set(QueryParams.relativeTime, dateTimeStr);
+		urlQuery.set(QueryParams.relativeTime, dateTimeStr);
 
-			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
-		}
+		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+		history.replace(generatedUrl);
 
 		if (!stagedQuery) {
 			return;
