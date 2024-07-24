@@ -1,7 +1,19 @@
 import axios from 'api';
 
-const getTopLevelOperations = async (): Promise<ServiceDataProps> => {
-	const response = await axios.post(`/service/top_level_operations`);
+interface GetTopLevelOperationsProps {
+	service: string;
+	start: number;
+	end: number;
+}
+
+const getTopLevelOperations = async (
+	props: GetTopLevelOperationsProps,
+): Promise<ServiceDataProps> => {
+	const response = await axios.post(`/service/top_level_operations`, {
+		start: `${props.start}`,
+		end: `${props.end}`,
+		service: props.service,
+	});
 	return response.data;
 };
 
