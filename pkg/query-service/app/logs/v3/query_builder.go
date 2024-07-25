@@ -269,8 +269,10 @@ func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, ord
 
 			if logsOp, ok := logOperators[op]; ok {
 				switch op {
-				// case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
-				// 	conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
+				case v3.FilterOperatorExists:
+					andConditions = append(andConditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", item.Key.Key))
+				case v3.FilterOperatorNotExists:
+					andConditions = append(andConditions, fmt.Sprintf("not simpleJSONHas(labels, '%s')", item.Key.Key))
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					fmtVal := utils.ClickHouseFormattedValue(value)
 					andConditions = append(andConditions, fmt.Sprintf(logsOp, columnName, fmtVal))

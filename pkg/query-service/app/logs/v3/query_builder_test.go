@@ -153,20 +153,20 @@ var timeResourceBucketFilterData = []struct {
 		}},
 		ExpectedFilter: "simpleJSONExtractString(labels, 'name') NOT IN ['john','bunny']",
 	},
-	// {
-	// 	Name: "Test exists",
-	// 	FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-	// 		{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "", Operator: "exists"},
-	// 	}},
-	// 	ExpectedFilter: "mapContains(attributes_string, 'bytes')",
-	// },
-	// {
-	// 	Name: "Test not exists",
-	// 	FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-	// 		{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "", Operator: "nexists"},
-	// 	}},
-	// 	ExpectedFilter: "not mapContains(attributes_string, 'bytes')",
-	// },
+	{
+		Name: "Test exists",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "", Operator: "exists"},
+		}},
+		ExpectedFilter: "simpleJSONHas(labels, 'bytes')",
+	},
+	{
+		Name: "Test not exists",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "", Operator: "nexists"},
+		}},
+		ExpectedFilter: "not simpleJSONHas(labels, 'bytes')",
+	},
 	{
 		Name: "Test contains",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
