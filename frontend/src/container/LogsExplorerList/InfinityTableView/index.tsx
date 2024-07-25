@@ -1,3 +1,5 @@
+import './InfinityTableView.styles.scss';
+
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { useTableView } from 'components/Logs/TableView/useTableView';
@@ -138,6 +140,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						tableViewProps.activeLogIndex !== -1 ? tableViewProps.activeLogIndex : 0
 					}
 					style={infinityDefaultStyles}
+					className="logs-table"
 					data={dataSource}
 					components={{
 						// eslint-disable-next-line react/jsx-props-no-spreading

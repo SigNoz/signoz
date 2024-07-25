@@ -1,0 +1,11 @@
+.logs-table {
+	table tbody tr {
+		&:hover {
+			background-color: rgba(171, 189, 255, 0.04);
+
+			td {
+				background-color: rgba(171, 189, 255, 0.04);
+			}
+		}
+	}
+}

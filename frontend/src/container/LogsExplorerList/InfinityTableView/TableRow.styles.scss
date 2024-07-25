@@ -2,3 +2,51 @@
 	cursor: pointer;
 	position: relative;
 }
+
+.log-timestamp {
+	width: 240px;
+	max-width: 240px;
+	min-width: 240px;
+	padding: 4px 8px 6px;
+
+	div {
+		font-weight: 400;
+		line-height: 20px; /* 128.571% */
+		letter-spacing: 0.2px;
+	}
+}
+
+.log-body {
+	margin: 4px 0;
+	width: 700px;
+	max-width: 700px;
+	min-width: 700px;
+	color: white;
+	padding: 4px 8px 6px;
+
+	div {
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px; /* 128.571% */
+		letter-spacing: 0.1px;
+
+		width: 100%;
+		min-width: 0 !important;
+	}
+}
+
+.log-actions {
+	position: absolute;
+	right: 0;
+	height: 100%;
+
+	vertical-align: middle;
+}
+
+.lightMode {
+	.log-body {
+		color: '#1d1d1d';
+		background-color: #ffffffd5;
+	}
+}
