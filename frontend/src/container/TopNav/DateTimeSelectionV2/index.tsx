@@ -23,7 +23,7 @@ import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
-import GetMinMax from 'lib/getMinMax';
+import GetMinMax, { isValidTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { isObject } from 'lodash-es';
@@ -406,7 +406,8 @@ function DateTimeSelection({
 		currentRoute: string,
 	): Time | CustomTimeType => {
 		// if the relativeTime param is present in the url give top most preference to the same
-		if (relativeTimeFromUrl != null) {
+		// if the relativeTime param is not valid then move to next preference
+		if (relativeTimeFromUrl != null && isValidTimeFormat(relativeTimeFromUrl)) {
 			return relativeTimeFromUrl as Time;
 		}
 
