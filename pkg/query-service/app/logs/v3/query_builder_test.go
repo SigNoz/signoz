@@ -118,6 +118,7 @@ var timeResourceBucketFilterData = []struct {
 	Name               string
 	FilterSet          *v3.FilterSet
 	GroupBy            []v3.AttributeKey
+	OrderBy            []v3.OrderBy
 	AggregateAttribute v3.AttributeKey
 	ExpectedFilter     string
 	Fields             map[string]v3.AttributeKey
@@ -221,17 +222,34 @@ var timeResourceBucketFilterData = []struct {
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.%", Operator: "like"},
 		}},
 		GroupBy: []v3.AttributeKey{
-			v3.AttributeKey{Key: "service.name", Type: v3.AttributeKeyTypeResource},
+			{Key: "service.name", Type: v3.AttributeKeyTypeResource},
 		},
 		AggregateAttribute: v3.AttributeKey{Key: "container_name", Type: v3.AttributeKeyTypeResource},
-		ExpectedFilter:     "simpleJSONExtractString(labels, 'host') ILIKE '102.%' AND simpleJSONHas(labels, 'service.name') AND simpleJSONHas(labels, 'container_name')",
+		ExpectedFilter:     "simpleJSONExtractString(labels, 'host') ILIKE '102.%' AND simpleJSONHas(labels, 'container_name') AND ( simpleJSONHas(labels, 'service.name') )",
+	},
+	{
+		Name: "Test attribute, multiple group by, multiple orderBy, aggregate attribute",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.%", Operator: "like"},
+		}},
+		GroupBy: []v3.AttributeKey{
+			{Key: "service.name", Type: v3.AttributeKeyTypeResource},
+			{Key: "project.name", Type: v3.AttributeKeyTypeResource},
+			{Key: "method.name", Type: v3.AttributeKeyTypeTag},
+		},
+		OrderBy: []v3.OrderBy{
+			{Key: "service.name", Type: v3.AttributeKeyTypeResource, Order: "DESC"},
+			{Key: "project.name", Type: v3.AttributeKeyTypeResource, Order: "DESC"},
+		},
+		AggregateAttribute: v3.AttributeKey{Key: "container_name", Type: v3.AttributeKeyTypeResource},
+		ExpectedFilter:     "simpleJSONExtractString(labels, 'host') ILIKE '102.%' AND simpleJSONHas(labels, 'container_name') AND ( simpleJSONHas(labels, 'service.name') OR simpleJSONHas(labels, 'project.name') )",
 	},
 }
 
-func TestBuildLogsResourceFilterQuery(t *testing.T) {
+func TestBuildResourceFilters(t *testing.T) {
 	for _, tt := range timeResourceBucketFilterData {
 		Convey("TestBuildLogsResourceFilterQuery", t, func() {
-			query, err := getResourceBucketFilters(tt.FilterSet, tt.GroupBy, tt.AggregateAttribute)
+			query, err := buildResourceBucketFilters(tt.FilterSet, tt.GroupBy, tt.OrderBy, tt.AggregateAttribute)
 			if tt.Error != "" {
 				So(err.Error(), ShouldEqual, tt.Error)
 			} else {
@@ -685,7 +703,7 @@ var testBuildLogsQueryData = []struct {
 			"AND mapContains(attributes_string, 'method') AND mapContains(resources_string, 'x') AND `attribute_string_name_exists`=true " +
 			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
 			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'x') != 'abc' " +
-			"AND simpleJSONHas(labels, 'x'))) group by `method`,`x`,ts " +
+			"AND ( simpleJSONHas(labels, 'x') ))) group by `method`,`x`,ts " +
 			"order by `method` ASC,`x` ASC",
 	},
 	{

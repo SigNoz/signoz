@@ -51,7 +51,11 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotExists:       "not mapContains(%s_%s, '%s')",
 }
 
-const BODY = "body"
+const (
+	BODY                                = "body"
+	DISTRIBUTED_LOGS_V2                 = "distributed_logs_v2"
+	DISTRIBUTED_LOGS_V2_RESOURCE_BUCKET = "distributed_logs_v2_resource_bucket"
+)
 
 func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
 	if columnType == v3.AttributeKeyTypeTag {
@@ -240,8 +244,9 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 	return queryString, nil
 }
 
-func getResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, aggregateAttribute v3.AttributeKey) (string, error) {
-	var conditions []string
+func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, orderBy []v3.OrderBy, aggregateAttribute v3.AttributeKey) (string, error) {
+	var andConditions []string
+	var orConditions []string
 	// only add the resource attributes to the filters here
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
@@ -268,13 +273,13 @@ func getResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, aggre
 				// 	conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					fmtVal := utils.ClickHouseFormattedValue(value)
-					conditions = append(conditions, fmt.Sprintf(logsOp, columnName, fmtVal))
+					andConditions = append(andConditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
-					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
+					andConditions = append(andConditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
 				default:
 					fmtVal := utils.ClickHouseFormattedValue(value)
-					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
+					andConditions = append(andConditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 				}
 			} else {
 				return "", fmt.Errorf("unsupported operator: %s", op)
@@ -282,24 +287,33 @@ func getResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, aggre
 		}
 	}
 
+	// for group by add exists check in resources
+	if aggregateAttribute.Key != "" && aggregateAttribute.Type == v3.AttributeKeyTypeResource {
+		andConditions = append(andConditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", aggregateAttribute.Key))
+	}
+
 	// for aggregate attribute add exists check in resources
+	// we are using OR for groupBy and orderby as we just want to filter out the logs using fingerprint
 	for _, attr := range groupBy {
 		if attr.Type != v3.AttributeKeyTypeResource {
 			continue
 		}
-		conditions = append(conditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", attr.Key))
+		orConditions = append(orConditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", attr.Key))
 	}
 
-	// for group by add exists check in resources
-	if aggregateAttribute.Key != "" && aggregateAttribute.Type == v3.AttributeKeyTypeResource {
-		conditions = append(conditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", aggregateAttribute.Key))
+	// for orderBy it's not required as the keys will be already present in the group by
+	// so no point in adding them
+
+	if len(orConditions) > 0 {
+		orConditionStr := "( " + strings.Join(orConditions, " OR ") + " )"
+		andConditions = append(andConditions, orConditionStr)
 	}
 
-	if len(conditions) == 0 {
+	if len(andConditions) == 0 {
 		return "", nil
 	}
 
-	conditionStr := strings.Join(conditions, " AND ")
+	conditionStr := strings.Join(andConditions, " AND ")
 	return conditionStr, nil
 }
 
@@ -327,21 +341,21 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 
 	// panel type filter is not added because user can choose table type and get the default count
 	if len(filterSubQuery) > 0 || len(mq.GroupBy) > 0 {
-		tableName = "distributed_logs_v2"
+		tableName = DISTRIBUTED_LOGS_V2
 
 		timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", bucketStart, bucketEnd)
 	}
 
-	resourceBucketFilters, err := getResourceBucketFilters(mq.Filters, mq.GroupBy, mq.AggregateAttribute)
+	resourceBucketFilters, err := buildResourceBucketFilters(mq.Filters, mq.GroupBy, mq.OrderBy, mq.AggregateAttribute)
 	if err != nil {
 		return "", err
 	}
 
 	if len(resourceBucketFilters) > 0 {
 		filter := " AND (resource_fingerprint GLOBAL IN (" +
-			"SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
+			"SELECT fingerprint FROM signoz_logs.%s " +
 			"WHERE (seen_at_ts_bucket_start >= %d) AND (seen_at_ts_bucket_start <= %d) AND "
-		filter = fmt.Sprintf(filter, bucketStart, bucketEnd)
+		filter = fmt.Sprintf(filter, DISTRIBUTED_LOGS_V2_RESOURCE_BUCKET, bucketStart, bucketEnd)
 
 		filterSubQuery = filterSubQuery + filter + resourceBucketFilters + "))"
 	}
@@ -452,7 +466,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		// with noop any filter or different order by other than ts will use new table
 		if len(filterSubQuery) > 0 || !isOrderByTs(mq.OrderBy) {
 			sqlSelect = constants.LogsSQLSelectV2
-			tableName = "distributed_logs_v2"
+			tableName = DISTRIBUTED_LOGS_V2
 		}
 		queryTmpl := sqlSelect + "from signoz_logs.%s where %s%s order by %s"
 		query := fmt.Sprintf(queryTmpl, tableName, timeFilter, filterSubQuery, orderBy)
