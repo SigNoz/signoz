@@ -317,7 +317,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	logsStart := utils.GetEpochNanoSecs(start)
 	logsEnd := utils.GetEpochNanoSecs(end)
 
-	// this is added so that the bucket start considers all the fingerprints.
+	// -1800 this is added so that the bucket start considers all the fingerprints.
 	bucketStart := logsStart/1000000000 - 1800
 	bucketEnd := logsEnd / 1000000000
 
@@ -328,8 +328,6 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	// panel type filter is not added because user can choose table type and get the default count
 	if len(filterSubQuery) > 0 || len(mq.GroupBy) > 0 {
 		tableName = "distributed_logs_v2"
-
-		// if bucketStart is less the the min resource bucket seconds then 30 mins from it.
 
 		timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", bucketStart, bucketEnd)
 	}
@@ -451,8 +449,10 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		sqlSelect := constants.LogsSQLSelect
-		if len(filterSubQuery) > 0 {
+		// with noop any filter or different order by other than ts will use new table
+		if len(filterSubQuery) > 0 || !isOrderByTs(mq.OrderBy) {
 			sqlSelect = constants.LogsSQLSelectV2
+			tableName = "distributed_logs_v2"
 		}
 		queryTmpl := sqlSelect + "from signoz_logs.%s where %s%s order by %s"
 		query := fmt.Sprintf(queryTmpl, tableName, timeFilter, filterSubQuery, orderBy)
