@@ -39,15 +39,15 @@ function FormAlertChannels({
 	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
-	const isUserOnEEPlan = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN); // true
+	const isUserOnEEPlan = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN);
 
 	const feature = `ALERT_CHANNEL_${type.toUpperCase()}`;
 
 	const hasFeature = useFeatureFlags(
 		isFeatureKeys(feature) ? feature : FeatureKeys.ALERT_CHANNEL_SLACK,
-	); // true
+	);
 
-	const isOssFeature = useFeatureFlags(FeatureKeys.OSS); // true
+	const isOssFeature = useFeatureFlags(FeatureKeys.OSS);
 
 	const renderSettings = (): ReactElement | null => {
 		if (

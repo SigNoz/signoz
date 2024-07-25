@@ -1,10 +1,3 @@
-// created_at: string;
-// data: string;
-// id: ""string"";
-// name: string;
-// type: string;
-// updated_at: string;
-
 export const allAlertChannels = [
 	{
 		id: '3',

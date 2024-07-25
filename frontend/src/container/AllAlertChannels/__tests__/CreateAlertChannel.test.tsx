@@ -39,6 +39,9 @@ jest.mock('hooks/useFeatureFlag', () => ({
 }));
 
 describe('Create Alert Channel', () => {
+	afterEach(() => {
+		jest.clearAllMocks();
+	});
 	describe('Should check if the new alert channel is properly displayed with the cascading fields of slack channel ', () => {
 		beforeEach(() => {
 			render(<CreateAlertChannels preType={ChannelType.Slack} />);
@@ -171,6 +174,7 @@ describe('Create Alert Channel', () => {
 			beforeEach(() => {
 				render(<CreateAlertChannels preType={ChannelType.Webhook} />);
 			});
+
 			it('Should check if the selected item in the type dropdown has text "Webhook"', () => {
 				expect(screen.getByText('Webhook')).toBeInTheDocument();
 			});
@@ -199,6 +203,7 @@ describe('Create Alert Channel', () => {
 			beforeEach(() => {
 				render(<CreateAlertChannels preType={ChannelType.Pagerduty} />);
 			});
+
 			it('Should check if the selected item in the type dropdown has text "Pagerduty"', () => {
 				expect(screen.getByText('Pagerduty')).toBeInTheDocument();
 			});

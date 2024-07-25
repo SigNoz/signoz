@@ -66,7 +66,6 @@ describe('Alert Channels Settings List page', () => {
 			act(() => {
 				fireEvent.click(deleteButton);
 			});
-			screen.debug(deleteButton);
 
 			await waitFor(() => {
 				expect(successNotification).toBeCalledWith({

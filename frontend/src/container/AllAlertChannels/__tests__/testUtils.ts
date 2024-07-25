@@ -26,7 +26,6 @@ export const testLabelInputAndHelpValue = ({
 		expect(input).toBeRequired();
 	}
 	if (value) {
-		screen.debug(input);
 		expect(input).toHaveValue(value);
 	}
 };

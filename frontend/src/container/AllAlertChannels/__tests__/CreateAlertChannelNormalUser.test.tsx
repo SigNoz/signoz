@@ -19,12 +19,12 @@ import { render, screen } from 'tests/test-utils';
 import { testLabelInputAndHelpValue } from './testUtils';
 
 describe('Create Alert Channel (Normal User)', () => {
+	afterEach(() => {
+		jest.clearAllMocks();
+	});
 	describe('Should check if the new alert channel is properly displayed with the cascading fields of slack channel ', () => {
 		beforeEach(() => {
 			render(<CreateAlertChannels preType={ChannelType.Slack} />);
-		});
-		afterEach(() => {
-			jest.clearAllMocks();
 		});
 		it('Should check if the title is "New Notification Channels"', () => {
 			expect(screen.getByText('page_title_create')).toBeInTheDocument();
@@ -98,9 +98,7 @@ describe('Create Alert Channel (Normal User)', () => {
 			beforeEach(() => {
 				render(<CreateAlertChannels preType={ChannelType.Webhook} />);
 			});
-			afterEach(() => {
-				jest.clearAllMocks();
-			});
+
 			it('Should check if the selected item in the type dropdown has text "Webhook"', () => {
 				expect(screen.getByText('Webhook')).toBeInTheDocument();
 			});
@@ -129,9 +127,7 @@ describe('Create Alert Channel (Normal User)', () => {
 			beforeEach(() => {
 				render(<CreateAlertChannels preType={ChannelType.Pagerduty} />);
 			});
-			afterEach(() => {
-				jest.clearAllMocks();
-			});
+
 			it('Should check if the selected item in the type dropdown has text "Pagerduty"', () => {
 				expect(screen.getByText('Pagerduty')).toBeInTheDocument();
 			});
@@ -228,9 +224,6 @@ describe('Create Alert Channel (Normal User)', () => {
 			beforeEach(() => {
 				render(<CreateAlertChannels preType={ChannelType.Opsgenie} />);
 			});
-			afterEach(() => {
-				jest.clearAllMocks();
-			});
 
 			it('Should check if the selected item in the type dropdown has text "Opsgenie"', () => {
 				expect(screen.getByText('Opsgenie')).toBeInTheDocument();
@@ -297,9 +290,6 @@ describe('Create Alert Channel (Normal User)', () => {
 			beforeEach(() => {
 				render(<CreateAlertChannels preType={ChannelType.Email} />);
 			});
-			afterEach(() => {
-				jest.clearAllMocks();
-			});
 
 			it('Should check if the selected item in the type dropdown has text "Email"', () => {
 				expect(screen.getByText('Email')).toBeInTheDocument();
@@ -316,9 +306,6 @@ describe('Create Alert Channel (Normal User)', () => {
 		describe('Microsoft Teams', () => {
 			beforeEach(() => {
 				render(<CreateAlertChannels preType={ChannelType.MsTeams} />);
-			});
-			afterEach(() => {
-				jest.clearAllMocks();
 			});
 
 			it('Should check if the selected item in the type dropdown has text "Microsoft Teams (Supported in Paid Plans Only)"', () => {
