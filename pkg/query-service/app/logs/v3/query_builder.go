@@ -270,15 +270,20 @@ func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, ord
 			if logsOp, ok := logOperators[op]; ok {
 				switch op {
 				case v3.FilterOperatorExists:
-					andConditions = append(andConditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", item.Key.Key))
+					andConditions = append(andConditions, fmt.Sprintf("simpleJSONHas(labels, '%s') AND labels like '%%%s%%'", item.Key.Key, item.Key.Key))
 				case v3.FilterOperatorNotExists:
-					andConditions = append(andConditions, fmt.Sprintf("not simpleJSONHas(labels, '%s')", item.Key.Key))
+					andConditions = append(andConditions, fmt.Sprintf("not simpleJSONHas(labels, '%s') AND labels not like '%%%s%%'", item.Key.Key, item.Key.Key))
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					fmtVal := utils.ClickHouseFormattedValue(value)
 					andConditions = append(andConditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
 					andConditions = append(andConditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
+					if op == v3.FilterOperatorContains {
+						andConditions = append(andConditions, fmt.Sprintf("labels like '%%%s%%%s%%'", item.Key.Key, val))
+					} else {
+						andConditions = append(andConditions, fmt.Sprintf("labels not like '%%%s%%%s%%'", item.Key.Key, val))
+					}
 				default:
 					fmtVal := utils.ClickHouseFormattedValue(value)
 					andConditions = append(andConditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
@@ -291,7 +296,7 @@ func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, ord
 
 	// for group by add exists check in resources
 	if aggregateAttribute.Key != "" && aggregateAttribute.Type == v3.AttributeKeyTypeResource {
-		andConditions = append(andConditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", aggregateAttribute.Key))
+		andConditions = append(andConditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND labels like '%%%s%%')", aggregateAttribute.Key, aggregateAttribute.Key))
 	}
 
 	// for aggregate attribute add exists check in resources
@@ -300,7 +305,7 @@ func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, ord
 		if attr.Type != v3.AttributeKeyTypeResource {
 			continue
 		}
-		orConditions = append(orConditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", attr.Key))
+		orConditions = append(orConditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND labels like '%%%s%%')", attr.Key, aggregateAttribute.Key))
 	}
 
 	// for orderBy it's not required as the keys will be already present in the group by

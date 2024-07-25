@@ -158,35 +158,35 @@ var timeResourceBucketFilterData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "", Operator: "exists"},
 		}},
-		ExpectedFilter: "simpleJSONHas(labels, 'bytes')",
+		ExpectedFilter: "simpleJSONHas(labels, 'bytes') AND labels like '%bytes%'",
 	},
 	{
 		Name: "Test not exists",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "", Operator: "nexists"},
 		}},
-		ExpectedFilter: "not simpleJSONHas(labels, 'bytes')",
+		ExpectedFilter: "not simpleJSONHas(labels, 'bytes') AND labels not like '%bytes%'",
 	},
 	{
 		Name: "Test contains",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.", Operator: "contains"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'host') ILIKE '%102.%'",
+		ExpectedFilter: "simpleJSONExtractString(labels, 'host') ILIKE '%102.%' AND labels like '%host%102.%'",
 	},
 	{
 		Name: "Test contains with single quotes",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "hello 'world'", Operator: "contains"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'message') ILIKE '%hello \\'world\\'%'",
+		ExpectedFilter: "simpleJSONExtractString(labels, 'message') ILIKE '%hello \\'world\\'%' AND labels like '%message%hello \\'world\\'%'",
 	},
 	{
 		Name: "Test not contains",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.", Operator: "ncontains"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'host') NOT ILIKE '%102.%'",
+		ExpectedFilter: "simpleJSONExtractString(labels, 'host') NOT ILIKE '%102.%' AND labels not like '%host%102.%'",
 	},
 	{
 		Name: "Test regex",
@@ -225,7 +225,8 @@ var timeResourceBucketFilterData = []struct {
 			{Key: "service.name", Type: v3.AttributeKeyTypeResource},
 		},
 		AggregateAttribute: v3.AttributeKey{Key: "container_name", Type: v3.AttributeKeyTypeResource},
-		ExpectedFilter:     "simpleJSONExtractString(labels, 'host') ILIKE '102.%' AND simpleJSONHas(labels, 'container_name') AND ( simpleJSONHas(labels, 'service.name') )",
+		ExpectedFilter: "simpleJSONExtractString(labels, 'host') ILIKE '102.%' AND (simpleJSONHas(labels, 'container_name') AND labels like '%container_name%') " +
+			"AND ( (simpleJSONHas(labels, 'service.name') AND labels like '%container_name%') )",
 	},
 	{
 		Name: "Test attribute, multiple group by, multiple orderBy, aggregate attribute",
@@ -242,7 +243,8 @@ var timeResourceBucketFilterData = []struct {
 			{Key: "project.name", Type: v3.AttributeKeyTypeResource, Order: "DESC"},
 		},
 		AggregateAttribute: v3.AttributeKey{Key: "container_name", Type: v3.AttributeKeyTypeResource},
-		ExpectedFilter:     "simpleJSONExtractString(labels, 'host') ILIKE '102.%' AND simpleJSONHas(labels, 'container_name') AND ( simpleJSONHas(labels, 'service.name') OR simpleJSONHas(labels, 'project.name') )",
+		ExpectedFilter: "simpleJSONExtractString(labels, 'host') ILIKE '102.%' AND (simpleJSONHas(labels, 'container_name') AND labels like '%container_name%') AND " +
+			"( (simpleJSONHas(labels, 'service.name') AND labels like '%container_name%') OR (simpleJSONHas(labels, 'project.name') AND labels like '%container_name%') )",
 	},
 }
 
@@ -703,7 +705,7 @@ var testBuildLogsQueryData = []struct {
 			"AND mapContains(attributes_string, 'method') AND mapContains(resources_string, 'x') AND `attribute_string_name_exists`=true " +
 			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
 			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'x') != 'abc' " +
-			"AND ( simpleJSONHas(labels, 'x') ))) group by `method`,`x`,ts " +
+			"AND ( (simpleJSONHas(labels, 'x') AND labels like '%name%') ))) group by `method`,`x`,ts " +
 			"order by `method` ASC,`x` ASC",
 	},
 	{
