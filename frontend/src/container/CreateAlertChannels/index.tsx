@@ -449,8 +449,8 @@ function CreateAlertChannels({
 					const result = await functionToCall();
 					logEvent('Alert Channel: Save channel', {
 						type: value,
-						sendResolvedAlert: selectedConfig.send_resolved,
-						name: selectedConfig.name,
+						sendResolvedAlert: selectedConfig?.send_resolved,
+						name: selectedConfig?.name,
 						new: 'true',
 						status: result?.status,
 						statusMessage: result?.statusMessage,
@@ -530,8 +530,8 @@ function CreateAlertChannels({
 
 				logEvent('Alert Channel: Test notification', {
 					type: channelType,
-					sendResolvedAlert: selectedConfig.send_resolved,
-					name: selectedConfig.name,
+					sendResolvedAlert: selectedConfig?.send_resolved,
+					name: selectedConfig?.name,
 					new: 'true',
 					status:
 						response && response.statusCode === 200 ? 'Test success' : 'Test failed',
