@@ -42,30 +42,29 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 
 ### Application Metrics
 
-![application_metrics](https://user-images.githubusercontent.com/83692067/226637410-900dbc5e-6705-4b11-a10c-bd0faeb2a92f.png)
-
+![application-metrics](https://github.com/user-attachments/assets/c55fa043-1b2d-4516-a4ca-e7bdd3c5b0b2)
 
 ### Distributed Tracing
-<img width="2068" alt="distributed_tracing_2 2" src="https://user-images.githubusercontent.com/83692067/226536447-bae58321-6a22-4ed3-af80-e3e964cb3489.png">
+![ditributed-tracing-02](https://github.com/user-attachments/assets/e1a00fe4-e471-4320-8075-f314a787c376)
 
-<img width="2068" alt="distributed_tracing_1" src="https://user-images.githubusercontent.com/83692067/226536462-939745b6-4f9d-45a6-8016-814837e7f7b4.png">
+![distributed-tracing-03](https://github.com/user-attachments/assets/67e9d988-9f55-4c23-8ad6-bec7dffc1354)
 
 ### Logs Management
 
-<img width="2068" alt="logs_management" src="https://user-images.githubusercontent.com/83692067/226536482-b8a5c4af-b69c-43d5-969c-338bd5eaf1a5.png">
+![logs-management](https://github.com/user-attachments/assets/09beaaf1-2d93-4e75-a8bb-5e6a07d74746)
 
 ### Infrastructure Monitoring
 
-<img width="2068" alt="infrastructure_monitoring" src="https://user-images.githubusercontent.com/83692067/226536496-f38c4dbf-e03c-4158-8be0-32d4a61158c7.png">
+![hostmetrics-dashboard](https://github.com/user-attachments/assets/cfcbe08b-3ffa-4612-a36a-1bcad6a4c4d0)
 
 ### Exceptions Monitoring
 
-![exceptions_light](https://user-images.githubusercontent.com/83692067/226637967-4188d024-3ac9-4799-be95-f5ea9c45436f.png)
+![exceptions-monitoring](https://github.com/user-attachments/assets/2da4c60c-205e-4d79-ac87-dcf743b7427e)
 
 
 ### Alerts
 
-<img width="2068" alt="alerts_management" src="https://user-images.githubusercontent.com/83692067/226536548-2c81e2e8-c12d-47e8-bad7-c6be79055def.png">
+![alerts](https://github.com/user-attachments/assets/da736030-3327-4241-8bf2-581cf80442b8)
 
 
 <br /><br />
@@ -198,14 +197,14 @@ Not sure how to get started? Just ping us on `#contributing` in our [slack commu
 
 #### Frontend
 
-- [Palash Gupta](https://github.com/palashgdev)
 - [Yunus M](https://github.com/YounixM)
-- [Rajat Dabade](https://github.com/Rajat-Dabade)
+- [Vikrant Gupta](https://github.com/vikrantgupta25)
+- [Sagar Rajput](https://github.com/SagarRajput-7)
 
 #### DevOps
 
 - [Prashant Shahi](https://github.com/prashant-shahi)
-- [Dhawal Sanghvi](https://github.com/dhawal1248)
+- [Vibhu Pandey](https://github.com/grandwizard28)
 
 <br /><br />
 
