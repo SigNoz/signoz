@@ -283,7 +283,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						className="dashboard-btn"
 						onClick={(): void => goToListPage()}
 					>
-						Dashboard
+						Dashboard /
 					</Button>
 					<Button
 						type="text"
