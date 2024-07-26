@@ -270,33 +270,44 @@ func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, ord
 			if logsOp, ok := logOperators[op]; ok {
 				switch op {
 				case v3.FilterOperatorExists:
-					andConditions = append(andConditions, fmt.Sprintf("simpleJSONHas(labels, '%s') AND labels like '%%%s%%'", item.Key.Key, item.Key.Key))
+					andConditions = append(andConditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", item.Key.Key))
 				case v3.FilterOperatorNotExists:
-					andConditions = append(andConditions, fmt.Sprintf("not simpleJSONHas(labels, '%s') AND labels not like '%%%s%%'", item.Key.Key, item.Key.Key))
+					andConditions = append(andConditions, fmt.Sprintf("not simpleJSONHas(labels, '%s')", item.Key.Key))
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					fmtVal := utils.ClickHouseFormattedValue(value)
 					andConditions = append(andConditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
 					andConditions = append(andConditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
-					if op == v3.FilterOperatorContains {
-						andConditions = append(andConditions, fmt.Sprintf("labels like '%%%s%%%s%%'", item.Key.Key, val))
-					} else {
-						andConditions = append(andConditions, fmt.Sprintf("labels not like '%%%s%%%s%%'", item.Key.Key, val))
-					}
 				default:
 					fmtVal := utils.ClickHouseFormattedValue(value)
 					andConditions = append(andConditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 				}
+
+				// add index filters
+				switch op {
+				case v3.FilterOperatorContains, v3.FilterOperatorEqual, v3.FilterOperatorLike:
+					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					andConditions = append(andConditions, fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", item.Key.Key, val))
+				case v3.FilterOperatorNotContains, v3.FilterOperatorNotEqual, v3.FilterOperatorNotLike:
+					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					andConditions = append(andConditions, fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", item.Key.Key, val))
+				case v3.FilterOperatorNotRegex, v3.FilterOperatorNotIn:
+					andConditions = append(andConditions, fmt.Sprintf("lower(labels) not like '%%%s%%'", strings.ToLower(item.Key.Key)))
+				default:
+					andConditions = append(andConditions, fmt.Sprintf("lower(labels) like '%%%s%%'", strings.ToLower(item.Key.Key)))
+				}
+
 			} else {
 				return "", fmt.Errorf("unsupported operator: %s", op)
 			}
+
 		}
 	}
 
 	// for group by add exists check in resources
 	if aggregateAttribute.Key != "" && aggregateAttribute.Type == v3.AttributeKeyTypeResource {
-		andConditions = append(andConditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND labels like '%%%s%%')", aggregateAttribute.Key, aggregateAttribute.Key))
+		andConditions = append(andConditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND lower(labels) like '%%%s%%')", aggregateAttribute.Key, strings.ToLower(aggregateAttribute.Key)))
 	}
 
 	// for aggregate attribute add exists check in resources
@@ -305,7 +316,7 @@ func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, ord
 		if attr.Type != v3.AttributeKeyTypeResource {
 			continue
 		}
-		orConditions = append(orConditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND labels like '%%%s%%')", attr.Key, aggregateAttribute.Key))
+		orConditions = append(orConditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND lower(labels) like '%%%s%%')", attr.Key, strings.ToLower(attr.Key)))
 	}
 
 	// for orderBy it's not required as the keys will be already present in the group by
