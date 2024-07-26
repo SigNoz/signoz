@@ -14,26 +14,14 @@ func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) 
 	queueType := kafkaQueue
 
 	var cq *v3.CompositeQuery
-	if queryContext == "producer" {
-		chq, err := buildProducerClickHouseQuery(messagingQueue, queueType)
-		if err != nil {
-			return nil, err
-		}
-		cq, err = buildCompositeQueryProducer(chq)
 
-		if err != nil {
-			return nil, err
-		}
-	} else if queryContext == "consumer" {
-		chq, err := buildConsumerClickHouseQuery(messagingQueue, queueType)
-		if err != nil {
-			return nil, err
-		}
-		cq, err = buildCompositeQueryConsumer(chq)
-		if err != nil {
-			return nil, err
-		}
+	chq, err := buildClickHouseQuery(messagingQueue, queueType, queryContext)
+
+	if err != nil {
+		return nil, err
 	}
+
+	cq, err = buildCompositeQuery(chq, queryContext)
 
 	queryRangeParams := &v3.QueryRangeParamsV3{
 		Start:          messagingQueue.Start,
@@ -47,7 +35,7 @@ func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) 
 	return queryRangeParams, nil
 }
 
-func buildProducerClickHouseQuery(messagingQueue *MessagingQueue, queueType string) (*v3.ClickHouseQuery, error) {
+func buildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, queryContext string) (*v3.ClickHouseQuery, error) {
 	start := messagingQueue.Start
 	end := messagingQueue.End
 	topic, ok := messagingQueue.Variables["topic"]
@@ -60,45 +48,23 @@ func buildProducerClickHouseQuery(messagingQueue *MessagingQueue, queueType stri
 	if !ok {
 		return nil, fmt.Errorf("invalid type for Partition")
 	}
-	query := generateProducerSQL(start, end, topic, partition, queueType)
+
+	var query string
+	if queryContext == "producer" {
+		query = generateProducerSQL(start, end, topic, partition, queueType)
+	} else if queryContext == "consumer" {
+		query = generateConsumerSQL(start, end, topic, partition, queueType)
+	}
 
 	return &v3.ClickHouseQuery{
 		Query: query,
 	}, nil
 }
 
-func buildConsumerClickHouseQuery(messagingQueue *MessagingQueue, queueType string) (*v3.ClickHouseQuery, error) {
-	start := messagingQueue.Start
-	end := messagingQueue.End
-	topic, ok := messagingQueue.Variables["topic"]
-	if !ok {
-		return nil, fmt.Errorf("invalid type for Topic")
-	}
-
-	partition, ok := messagingQueue.Variables["partition"]
-
-	if !ok {
-		return nil, fmt.Errorf("invalid type for Partition")
-	}
-	query := generateConsumerSQL(start, end, topic, partition, queueType)
-
-	return &v3.ClickHouseQuery{
-		Query: query,
-	}, nil
-}
-
-func buildCompositeQueryProducer(chq *v3.ClickHouseQuery) (*v3.CompositeQuery, error) {
+func buildCompositeQuery(chq *v3.ClickHouseQuery, queryContext string) (*v3.CompositeQuery, error) {
 	return &v3.CompositeQuery{
 		QueryType:         v3.QueryTypeClickHouseSQL,
-		ClickHouseQueries: map[string]*v3.ClickHouseQuery{"producer": chq},
-		PanelType:         v3.PanelTypeTable,
-	}, nil
-}
-
-func buildCompositeQueryConsumer(chq *v3.ClickHouseQuery) (*v3.CompositeQuery, error) {
-	return &v3.CompositeQuery{
-		QueryType:         v3.QueryTypeClickHouseSQL,
-		ClickHouseQueries: map[string]*v3.ClickHouseQuery{"consumer": chq},
+		ClickHouseQueries: map[string]*v3.ClickHouseQuery{queryContext: chq},
 		PanelType:         v3.PanelTypeTable,
 	}, nil
 }

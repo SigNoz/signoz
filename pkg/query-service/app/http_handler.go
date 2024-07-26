@@ -2263,7 +2263,7 @@ func (aH *APIHandler) getProducerData(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	// parse the query params to retrieve the messaging queue struct
-	messagingQueue, apiErr := ParseMessagingQueueParams(r)
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -2304,7 +2304,7 @@ func (aH *APIHandler) getProducerData(
 func (aH *APIHandler) getConsumerData(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	messagingQueue, apiErr := ParseMessagingQueueParams(r)
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -2342,10 +2342,10 @@ func (aH *APIHandler) getConsumerData(
 	aH.Respond(w, resp)
 }
 
-// ParseMessagingQueueParams parse for messaging queue params
-func ParseMessagingQueueParams(r *http.Request) (*mq.MessagingQueue, *model.ApiError) {
-	var messagingQueue *mq.MessagingQueue
-	if err := json.NewDecoder(r.Body).Decode(&messagingQueue); err != nil {
+// ParseMessagingQueueBody parse for messaging queue params
+func ParseMessagingQueueBody(r *http.Request) (*mq.MessagingQueue, *model.ApiError) {
+	messagingQueue := new(mq.MessagingQueue)
+	if err := json.NewDecoder(r.Body).Decode(messagingQueue); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 	return messagingQueue, nil
