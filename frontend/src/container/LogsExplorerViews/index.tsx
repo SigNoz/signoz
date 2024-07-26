@@ -456,7 +456,6 @@ function LogsExplorerViews({
 	}, [handleSetConfig, panelTypes]);
 
 	useEffect(() => {
-		// const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
 		const currentData = data?.payload?.data?.newResult?.data?.result || [];
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
@@ -466,11 +465,6 @@ function LogsExplorerViews({
 			const newLogs = [...logs, ...currentLogs];
 
 			setLogs(newLogs);
-			// onTimeRangeChange({
-			// 	start: currentParams?.start,
-			// 	end: timeRange?.end || currentParams?.end,
-			// 	pageSize: newLogs.length,
-			// });
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps

@@ -65,12 +65,6 @@ function LogsExplorerChart({
 				}),
 			);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			console.log(
-				new Date(minTime / 1000000),
-				new Date(maxTime / 1000000),
-				minTime,
-				maxTime,
-			);
 			history.push(generatedUrl);
 		},
 		[dispatch, location.pathname, urlQuery],
