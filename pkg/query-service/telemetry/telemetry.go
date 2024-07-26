@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"context"
+	"go.uber.org/zap"
 	"io"
 	"math/rand"
 	"net/http"
@@ -186,6 +187,7 @@ func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*m
 	a.alertsInfoCallback = callback
 }
 
+//nolint:gosimple
 func createTelemetry() {
 	// Do not do anything in CI (not even resolving the outbound IP address)
 	if testing.Testing() {
@@ -400,7 +402,12 @@ func getOutboundIP() string {
 		return string(ip)
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			zap.L().Error("Failed to close response body", zap.Error(err))
+		}
+	}(resp.Body)
 	if err == nil {
 		ipBody, err := io.ReadAll(resp.Body)
 		if err == nil {
@@ -421,27 +428,43 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 		return
 	}
 	if a.saasOperator != nil {
-		a.saasOperator.Enqueue(analytics.Identify{
+		err := a.saasOperator.Enqueue(analytics.Identify{
 			UserId: a.userEmail,
 			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
 		})
-		a.saasOperator.Enqueue(analytics.Group{
+		if err != nil {
+			zap.L().Error("Failed to send identify event to saas operator", zap.Error(err))
+			return
+		}
+		err = a.saasOperator.Enqueue(analytics.Group{
 			UserId:  a.userEmail,
 			GroupId: a.getCompanyDomain(),
 			Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
 		})
+		if err != nil {
+			zap.L().Error("Failed to send group event to saas operator", zap.Error(err))
+			return
+		}
 	}
 
-	a.ossOperator.Enqueue(analytics.Identify{
+	err := a.ossOperator.Enqueue(analytics.Identify{
 		UserId: a.ipAddress,
 		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
 	})
+	if err != nil {
+		zap.L().Error("Failed to send identify event to oss operator", zap.Error(err))
+		return
+	}
 	// Updating a groups properties
-	a.ossOperator.Enqueue(analytics.Group{
+	err = a.ossOperator.Enqueue(analytics.Group{
 		UserId:  a.ipAddress,
 		GroupId: a.getCompanyDomain(),
 		Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
 	})
+	if err != nil {
+		zap.L().Error("Failed to send group event to oss operator", zap.Error(err))
+		return
+	}
 }
 
 func (a *Telemetry) SetCountUsers(countUsers int8) {
@@ -546,7 +569,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 	_, isSaaSEvent := SAAS_EVENTS_LIST[event]
 
 	if a.saasOperator != nil && a.GetUserEmail() != "" && (isSaaSEvent || viaEventsAPI) {
-		a.saasOperator.Enqueue(analytics.Track{
+		err := a.saasOperator.Enqueue(analytics.Track{
 			Event:      event,
 			UserId:     a.GetUserEmail(),
 			Properties: properties,
@@ -556,12 +579,16 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 				},
 			},
 		})
+		if err != nil {
+			zap.L().Error("Failed to send event to saas operator", zap.Error(err))
+			return
+		}
 	}
 
 	_, isOSSEvent := OSS_EVENTS_LIST[event]
 
 	if a.ossOperator != nil && isOSSEvent {
-		a.ossOperator.Enqueue(analytics.Track{
+		err := a.ossOperator.Enqueue(analytics.Track{
 			Event:      event,
 			UserId:     userId,
 			Properties: properties,
@@ -571,6 +598,10 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 				},
 			},
 		})
+		if err != nil {
+			zap.L().Error("Failed to send event to oss operator", zap.Error(err))
+			return
+		}
 	}
 }
 

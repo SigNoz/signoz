@@ -3,6 +3,7 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"testing"
@@ -56,13 +57,18 @@ func TestListDisks(t *testing.T) {
 	require.NoError(t, err)
 
 	var bearer = "Bearer " + loginResp.AccessJwt
-	req, err := http.NewRequest("POST", endpoint+"/api/v1/disks", nil)
+	req, _ := http.NewRequest("POST", endpoint+"/api/v1/disks", nil)
 	req.Header.Add("Authorization", bearer)
 
 	resp, err := client.Do(req)
 	require.NoError(t, err)
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			zap.L().Error("Error closing response body", zap.Error(err))
+		}
+	}(resp.Body)
 	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.JSONEq(t, `[{"name":"default","type":"local"}, {"name":"s3","type":"s3"}]`, string(b))
@@ -138,7 +144,12 @@ func getTTL(t *testing.T, table string, jwtToken string) *model.GetTTLResponseIt
 
 	require.NoError(t, err)
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			zap.L().Error("Error closing response body", zap.Error(err))
+		}
+	}(resp.Body)
 	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 

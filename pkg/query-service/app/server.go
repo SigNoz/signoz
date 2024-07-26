@@ -94,8 +94,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
-	explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
+	localDB, _ := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	_, err := explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
+	if err != nil {
+		zap.L().Error("Error initializing explorer", zap.Error(err))
+		return nil, err
+	}
 
 	if err != nil {
 		return nil, err
@@ -406,9 +410,17 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 			if err != nil {
 				return nil, false
 			}
-			r.Body.Close() //  must close
+			err = r.Body.Close()
+			if err != nil {
+				zap.L().Error("Error closing body", zap.Error(err))
+				return nil, false
+			} //  must close
 			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-			json.Unmarshal(bodyBytes, &postData)
+			err = json.Unmarshal(bodyBytes, &postData)
+			if err != nil {
+				zap.L().Error("Error unmarshalling body", zap.Error(err))
+				return nil, false
+			}
 
 		} else {
 			return nil, false

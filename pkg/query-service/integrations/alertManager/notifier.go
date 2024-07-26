@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"sync/atomic"
 
 	"net/http"
@@ -154,7 +155,11 @@ func (n *Notifier) Send(alerts ...*Alert) {
 	if d := len(alerts) - n.opts.QueueCapacity; d > 0 {
 		alerts = alerts[d:]
 
-		level.Warn(n.logger).Log("msg", "Alert batch larger than queue capacity, dropping alerts", "num_dropped", d)
+		err := level.Warn(n.logger).Log("msg", "Alert batch larger than queue capacity, dropping alerts", "num_dropped", d)
+		if err != nil {
+			zap.L().Error("Alert batch larger than queue capacity, dropping alerts", zap.Int("num_dropped", d))
+			return
+		}
 		//n.metrics.dropped.Add(float64(d))
 	}
 
@@ -163,7 +168,11 @@ func (n *Notifier) Send(alerts ...*Alert) {
 	if d := (len(n.queue) + len(alerts)) - n.opts.QueueCapacity; d > 0 {
 		n.queue = n.queue[d:]
 
-		level.Warn(n.logger).Log("msg", "Alert notification queue full, dropping alerts", "num_dropped", d)
+		err := level.Warn(n.logger).Log("msg", "Alert notification queue full, dropping alerts", "num_dropped", d)
+		if err != nil {
+			zap.L().Error("Alert notification queue full, dropping alerts", zap.Int("num_dropped", d))
+			return
+		}
 		//n.metrics.dropped.Add(float64(d))
 	}
 	n.queue = append(n.queue, alerts...)
@@ -182,7 +191,7 @@ func (n *Notifier) setMore() {
 	}
 }
 
-// Alertmanagers returns a slice of Alertmanager URLs.
+// Alertmanagers Alert managers returns a slice of Alertmanager URLs.
 func (n *Notifier) Alertmanagers() []*url.URL {
 	n.mtx.RLock()
 	amset := n.alertmanagers
@@ -256,7 +265,12 @@ func (n *Notifier) sendOne(ctx context.Context, c *http.Client, url string, b []
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			zap.L().Error("Error closing response body", zap.Error(err))
+		}
+	}(resp.Body)
 
 	// Any HTTP status 2xx is OK.
 	if resp.StatusCode/100 != 2 {
@@ -267,7 +281,11 @@ func (n *Notifier) sendOne(ctx context.Context, c *http.Client, url string, b []
 
 // Stop shuts down the notification handler.
 func (n *Notifier) Stop() {
-	level.Info(n.logger).Log("msg", "Stopping notification manager...")
+	err := level.Info(n.logger).Log("msg", "Stopping notification manager...")
+	if err != nil {
+		zap.L().Error("Stopping notification manager...")
+		return
+	}
 	n.cancel()
 }
 
@@ -297,7 +315,11 @@ func newAlertmanagerSet(urls []string, timeout time.Duration, logger log.Logger)
 	for _, u := range urls {
 		am, err := New(u)
 		if err != nil {
-			level.Error(s.logger).Log(fmt.Sprintf("invalid alert manager url %s: %s", u, err))
+			err := level.Error(s.logger).Log(fmt.Sprintf("invalid alert manager url %s: %s", u, err))
+			if err != nil {
+				zap.L().Error(fmt.Sprintf("invalid alert manager url %s: %s", u, err))
+				return nil, err
+			}
 		} else {
 			ams = append(ams, am)
 		}

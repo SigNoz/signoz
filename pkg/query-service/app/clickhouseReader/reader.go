@@ -217,9 +217,17 @@ func NewReaderFromClickhouseConnection(
 
 func (r *ClickHouseReader) Start(readerReady chan bool) {
 	logLevel := promlog.AllowedLevel{}
-	logLevel.Set("debug")
+	err := logLevel.Set("debug")
+	if err != nil {
+		zap.L().Error("Error setting log level", zap.Error(err))
+		return
+	}
 	allowedFormat := promlog.AllowedFormat{}
-	allowedFormat.Set("logfmt")
+	err = allowedFormat.Set("logfmt")
+	if err != nil {
+		zap.L().Error("Error setting log format", zap.Error(err))
+		return
+	}
 
 	promlogConfig := promlog.Config{
 		Level:  &logLevel,
@@ -324,7 +332,11 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 	readerReady <- true
 
 	if err := g.Run(); err != nil {
-		level.Error(logger).Log("err", err)
+		err := level.Error(logger).Log("err", err)
+		if err != nil {
+			zap.L().Error("Error in running group", zap.Error(err))
+			return
+		}
 		os.Exit(1)
 	}
 
@@ -339,7 +351,11 @@ func (r *ClickHouseReader) GetFanoutStorage() *storage.Storage {
 }
 
 func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (promConfig *config.Config, err error) {
-	level.Info(logger).Log("msg", "Loading configuration file", "filename", filename)
+	err = level.Info(logger).Log("msg", "Loading configuration file", "filename", filename)
+	if err != nil {
+		zap.L().Error("Error in loading configuration file", zap.Error(err))
+		return nil, err
+	}
 
 	conf, err := config.LoadFile(filename, false, false, logger)
 	if err != nil {
@@ -349,14 +365,22 @@ func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config
 	failed := false
 	for _, rl := range rls {
 		if err := rl(conf); err != nil {
-			level.Error(logger).Log("msg", "Failed to apply configuration", "err", err)
+			err := level.Error(logger).Log("msg", "Failed to apply configuration", "err", err)
+			if err != nil {
+				zap.L().Error("Error in applying configuration", zap.Error(err))
+				return nil, err
+			}
 			failed = true
 		}
 	}
 	if failed {
 		return nil, fmt.Errorf("one or more errors occurred while applying the new configuration (--config.file=%q)", filename)
 	}
-	level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
+	err = level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
+	if err != nil {
+		zap.L().Error("Error in loading configuration file", zap.Error(err))
+		return nil, err
+	}
 	return conf, nil
 }
 
@@ -451,21 +475,38 @@ func (r *ClickHouseReader) DeleteChannel(id string) *model.ApiError {
 		stmt, err := tx.Prepare(`DELETE FROM notification_channels WHERE id=$1;`)
 		if err != nil {
 			zap.L().Error("Error in preparing statement for INSERT to notification_channels", zap.Error(err))
-			tx.Rollback()
+			err := tx.Rollback()
+			if err != nil {
+				zap.L().Error("Error in rolling back transaction for DELETE command to notification_channels", zap.Error(err))
+				return nil
+			}
 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
-		defer stmt.Close()
+		defer func(stmt *sql.Stmt) {
+			err := stmt.Close()
+			if err != nil {
+				zap.L().Error("Error in closing prepared statement for DELETE command to notification_channels", zap.Error(err))
+			}
+		}(stmt)
 
 		if _, err := stmt.Exec(idInt); err != nil {
 			zap.L().Error("Error in Executing prepared statement for INSERT to notification_channels", zap.Error(err))
-			tx.Rollback() // return an error too, we may want to wrap them
+			err := tx.Rollback()
+			if err != nil {
+				zap.L().Error("Error in rolling back transaction for DELETE command to notification_channels", zap.Error(err))
+				return nil
+			} // return an error too, we may want to wrap them
 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
 	}
 
 	apiError := r.alertManager.DeleteRoute(channelToDelete.Name)
 	if apiError != nil {
-		tx.Rollback()
+		err := tx.Rollback()
+		if err != nil {
+			zap.L().Error("Error in rolling back transaction for DELETE command to notification_channels", zap.Error(err))
+			return nil
+		}
 		return apiError
 	}
 
@@ -566,21 +607,38 @@ func (r *ClickHouseReader) EditChannel(receiver *am.Receiver, id string) (*am.Re
 
 		if err != nil {
 			zap.L().Error("Error in preparing statement for UPDATE to notification_channels", zap.Error(err))
-			tx.Rollback()
+			err := tx.Rollback()
+			if err != nil {
+				zap.L().Error("Error in rolling back transaction for UPDATE command to notification_channels", zap.Error(err))
+				return nil, nil
+			}
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
-		defer stmt.Close()
+		defer func(stmt *sql.Stmt) {
+			err := stmt.Close()
+			if err != nil {
+				zap.L().Error("Error in closing prepared statement for UPDATE to notification_channels", zap.Error(err))
+			}
+		}(stmt)
 
 		if _, err := stmt.Exec(time.Now(), channel_type, string(receiverString), idInt); err != nil {
 			zap.L().Error("Error in Executing prepared statement for UPDATE to notification_channels", zap.Error(err))
-			tx.Rollback() // return an error too, we may want to wrap them
+			err := tx.Rollback()
+			if err != nil {
+				zap.L().Error("Error in rolling back transaction for UPDATE command to notification_channels", zap.Error(err))
+				return nil, nil
+			} // return an error too, we may want to wrap them
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
 	}
 
 	apiError := r.alertManager.EditRoute(receiver)
 	if apiError != nil {
-		tx.Rollback()
+		err := tx.Rollback()
+		if err != nil {
+			zap.L().Error("Error in rolling back transaction for UPDATE command to notification_channels", zap.Error(err))
+			return nil, nil
+		}
 		return nil, apiError
 	}
 
@@ -615,21 +673,38 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
 		if err != nil {
 			zap.L().Error("Error in preparing statement for INSERT to notification_channels", zap.Error(err))
-			tx.Rollback()
+			err := tx.Rollback()
+			if err != nil {
+				zap.L().Error("Error in rolling back transaction for INSERT command to notification_channels", zap.Error(err))
+				return nil, nil
+			}
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
-		defer stmt.Close()
+		defer func(stmt *sql.Stmt) {
+			err := stmt.Close()
+			if err != nil {
+				zap.L().Error("Error in closing prepared statement for INSERT to notification_channels", zap.Error(err))
+			}
+		}(stmt)
 
 		if _, err := stmt.Exec(time.Now(), time.Now(), receiver.Name, channel_type, string(receiverString)); err != nil {
 			zap.L().Error("Error in Executing prepared statement for INSERT to notification_channels", zap.Error(err))
-			tx.Rollback() // return an error too, we may want to wrap them
+			err := tx.Rollback()
+			if err != nil {
+				zap.L().Error("Error in rolling back transaction for INSERT command to notification_channels", zap.Error(err))
+				return nil, nil
+			} // return an error too, we may want to wrap them
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
 	}
 
 	apiError := r.alertManager.AddRoute(receiver)
 	if apiError != nil {
-		tx.Rollback()
+		err := tx.Rollback()
+		if err != nil {
+			zap.L().Error("Error in rolling back transaction for INSERT command to notification_channels", zap.Error(err))
+			return nil, nil
+		}
 		return nil, apiError
 	}
 
@@ -695,7 +770,12 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 		return nil, fmt.Errorf("error in processing sql query")
 	}
 
-	defer rows.Close()
+	defer func(rows driver.Rows) {
+		err := rows.Close()
+		if err != nil {
+			zap.L().Error("Error in closing rows", zap.Error(err))
+		}
+	}(rows)
 	for rows.Next() {
 		var serviceName string
 		if err := rows.Scan(&serviceName); err != nil {
@@ -723,7 +803,12 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 		return nil, nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
-	defer rows.Close()
+	defer func(rows driver.Rows) {
+		err := rows.Close()
+		if err != nil {
+			zap.L().Error("Error in closing rows", zap.Error(err))
+		}
+	}(rows)
 	for rows.Next() {
 		var name, serviceName string
 		var t time.Time
@@ -1951,7 +2036,11 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	start = time.Now()
 	for _, item := range searchScanResponses {
 		var jsonItem model.SearchSpanResponseItem
-		easyjson.Unmarshal([]byte(item.Model), &jsonItem)
+		err := easyjson.Unmarshal([]byte(item.Model), &jsonItem)
+		if err != nil {
+			zap.L().Error("Error in unmarshalling json", zap.Error(err))
+			return nil, err
+		}
 		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
 		searchSpanResponses = append(searchSpanResponses, jsonItem)
 		if startTime == 0 || jsonItem.TimeUnixNano < startTime {
@@ -3144,7 +3233,10 @@ func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {
 	var totalSpans uint64
 
 	queryStr := fmt.Sprintf("SELECT count() from %s.%s;", signozTraceDBName, signozTraceTableName)
-	r.db.QueryRow(ctx, queryStr).Scan(&totalSpans)
+	err := r.db.QueryRow(ctx, queryStr).Scan(&totalSpans)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+	}
 
 	return totalSpans, nil
 }
@@ -3155,7 +3247,11 @@ func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context, 
 
 	queryStr := fmt.Sprintf("SELECT count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, signozSpansTable, int(interval.Minutes()))
 
-	r.db.QueryRow(ctx, queryStr).Scan(&spansInLastHeartBeatInterval)
+	err := r.db.QueryRow(ctx, queryStr).Scan(&spansInLastHeartBeatInterval)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return 0, err
+	}
 
 	return spansInLastHeartBeatInterval, nil
 }
@@ -3165,7 +3261,11 @@ func (r *ClickHouseReader) GetTotalLogs(ctx context.Context) (uint64, error) {
 	var totalLogs uint64
 
 	queryStr := fmt.Sprintf("SELECT count() from %s.%s;", r.logsDB, r.logsTable)
-	r.db.QueryRow(ctx, queryStr).Scan(&totalLogs)
+	err := r.db.QueryRow(ctx, queryStr).Scan(&totalLogs)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return 0, err
+	}
 
 	return totalLogs, nil
 }
@@ -3212,7 +3312,11 @@ func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]in
 	for rows.Next() {
 
 		var value uint64
-		rows.Scan(&value)
+		err := rows.Scan(&value)
+		if err != nil {
+			zap.L().Error("Error in processing sql query", zap.Error(err))
+			return nil, err
+		}
 		totalTS += value
 		if count == 0 {
 			maxTS = value
@@ -3233,7 +3337,11 @@ func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Con
 
 	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%' and unix_milli > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, int(interval.Minutes()))
 
-	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
+	err := r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return 0, err
+	}
 
 	return totalSamples, nil
 }
@@ -3243,7 +3351,11 @@ func (r *ClickHouseReader) GetTotalSamples(ctx context.Context) (uint64, error) 
 
 	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%';", signozMetricDBName, signozSampleTableName)
 
-	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
+	err := r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return 0, err
+	}
 
 	return totalSamples, nil
 }
@@ -3253,7 +3365,11 @@ func (r *ClickHouseReader) GetDistributedInfoInLastHeartBeatInterval(ctx context
 	clusterInfo := []model.ClusterInfo{}
 
 	queryStr := `SELECT shard_num, shard_weight, replica_num, errors_count, slowdowns_count, estimated_recovery_time FROM system.clusters where cluster='cluster';`
-	r.db.Select(ctx, &clusterInfo, queryStr)
+	err := r.db.Select(ctx, &clusterInfo, queryStr)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, err
+	}
 	if len(clusterInfo) == 1 {
 		return clusterInfo[0].GetMapFromStruct(), nil
 	}
@@ -4282,7 +4398,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 		}, nil
 	}
 
-	query := "select distinct"
+	var query string
 	switch req.FilterAttributeKeyDataType {
 	case v3.AttributeKeyDataTypeInt64:
 		filterValueColumn = "int64TagValue"

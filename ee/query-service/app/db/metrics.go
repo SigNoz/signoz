@@ -5,6 +5,8 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/pkg/errors"
 	"reflect"
 	"regexp"
 	"sort"
@@ -29,7 +31,7 @@ func (r *ClickhouseReader) GetMetricResultEE(ctx context.Context, query string) 
 	if strings.Contains(query, "getSubTreeSpans(") {
 		var err error
 		query, hash, err = r.getSubTreeSpansCustomFunction(ctx, query, hash)
-		if err == fmt.Errorf("no spans found for the given query") {
+		if errors.Is(err, fmt.Errorf("no spans found for the given query")) {
 			return nil, "", nil
 		}
 		if err != nil {
@@ -58,7 +60,12 @@ func (r *ClickhouseReader) GetMetricResultEE(ctx context.Context, query string) 
 	// attribute key-value pairs for each group selection
 	attributesMap := make(map[string]map[string]string)
 
-	defer rows.Close()
+	defer func(rows driver.Rows) {
+		err := rows.Close()
+		if err != nil {
+			zap.L().Error("Error in closing rows", zap.Error(err))
+		}
+	}(rows)
 	for rows.Next() {
 		if err := rows.Scan(vars...); err != nil {
 			return nil, "", err
@@ -208,7 +215,10 @@ func (r *ClickhouseReader) getSubTreeSpansCustomFunction(ctx context.Context, qu
 	searchSpanResponses := []basemodel.SearchSpanResponseItem{}
 	for _, item := range searchScanResponses {
 		var jsonItem basemodel.SearchSpanResponseItem
-		json.Unmarshal([]byte(item.Model), &jsonItem)
+		err := json.Unmarshal([]byte(item.Model), &jsonItem)
+		if err != nil {
+			return "", "", err
+		}
 		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano())
 		if jsonItem.Events == nil {
 			jsonItem.Events = []string{}
@@ -263,7 +273,8 @@ func (r *ClickhouseReader) getSubTreeSpansCustomFunction(ctx context.Context, qu
 	return query, hash, nil
 }
 
-//lint:ignore SA4009 return hash is feeded to the query
+//lint:ignore SA4009 return hash is fed to the query
+//nolint:staticcheck
 func processQuery(query string, hash string) (string, string, string) {
 	re3 := regexp.MustCompile(`getSubTreeSpans`)
 

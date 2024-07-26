@@ -20,7 +20,11 @@ import (
 func generatePATToken() string {
 	// Generate a 32-byte random token.
 	token := make([]byte, 32)
-	rand.Read(token)
+	_, err := rand.Read(token)
+	if err != nil {
+		zap.L().Error("Error while generating PAT token", zap.Error(err))
+		return ""
+	}
 	// Encode the token in base64.
 	encodedToken := base64.StdEncoding.EncodeToString(token)
 	return encodedToken

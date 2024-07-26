@@ -311,7 +311,11 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 
 	if ok {
 		oldTask.Stop()
-		newTask.CopyState(oldTask)
+		err := newTask.CopyState(oldTask)
+		if err != nil {
+			zap.L().Error("failed to copy state from old task", zap.String("name", taskName), zap.Error(err))
+			return err
+		}
 	}
 	go func() {
 		// Wait with starting evaluation until the rule manager
@@ -398,7 +402,11 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 	}
 	if !m.opts.DisableRules {
 		if err := m.addTask(parsedRule, taskName); err != nil {
-			tx.Rollback()
+			err := tx.Rollback()
+			if err != nil {
+				zap.L().Error("error rolling back transaction", zap.Error(err))
+				return nil, err
+			}
 			return nil, err
 		}
 	}

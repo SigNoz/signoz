@@ -13,7 +13,10 @@ func TestStore(t *testing.T) {
 	c := WithClient(db)
 
 	mock.ExpectSet("key", []byte("value"), 10*time.Second).RedisNil()
-	c.Store("key", []byte("value"), 10*time.Second)
+	err := c.Store("key", []byte("value"), 10*time.Second)
+	if err != nil {
+		return
+	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -24,7 +27,10 @@ func TestRetrieve(t *testing.T) {
 	db, mock := redismock.NewClientMock()
 	c := WithClient(db)
 	mock.ExpectSet("key", []byte("value"), 10*time.Second).RedisNil()
-	c.Store("key", []byte("value"), 10*time.Second)
+	err := c.Store("key", []byte("value"), 10*time.Second)
+	if err != nil {
+		return
+	}
 
 	mock.ExpectGet("key").SetVal("value")
 	data, retrieveStatus, err := c.Retrieve("key", false)
@@ -49,7 +55,10 @@ func TestSetTTL(t *testing.T) {
 	db, mock := redismock.NewClientMock()
 	c := WithClient(db)
 	mock.ExpectSet("key", []byte("value"), 10*time.Second).RedisNil()
-	c.Store("key", []byte("value"), 10*time.Second)
+	err := c.Store("key", []byte("value"), 10*time.Second)
+	if err != nil {
+		return
+	}
 
 	mock.ExpectExpire("key", 4*time.Second).RedisNil()
 	c.SetTTL("key", 4*time.Second)
@@ -63,7 +72,10 @@ func TestRemove(t *testing.T) {
 	db, mock := redismock.NewClientMock()
 	c := WithClient(db)
 	mock.ExpectSet("key", []byte("value"), 10*time.Second).RedisNil()
-	c.Store("key", []byte("value"), 10*time.Second)
+	err := c.Store("key", []byte("value"), 10*time.Second)
+	if err != nil {
+		return
+	}
 
 	mock.ExpectDel("key").RedisNil()
 	c.Remove("key")
@@ -77,10 +89,16 @@ func TestBulkRemove(t *testing.T) {
 	db, mock := redismock.NewClientMock()
 	c := WithClient(db)
 	mock.ExpectSet("key", []byte("value"), 10*time.Second).RedisNil()
-	c.Store("key", []byte("value"), 10*time.Second)
+	err := c.Store("key", []byte("value"), 10*time.Second)
+	if err != nil {
+		return
+	}
 
 	mock.ExpectSet("key2", []byte("value2"), 10*time.Second).RedisNil()
-	c.Store("key2", []byte("value2"), 10*time.Second)
+	err = c.Store("key2", []byte("value2"), 10*time.Second)
+	if err != nil {
+		return
+	}
 
 	mock.ExpectDel("key").RedisNil()
 	mock.ExpectDel("key2").RedisNil()

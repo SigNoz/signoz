@@ -60,7 +60,12 @@ func main() {
 
 	loggerMgr := initZapLog()
 	zap.ReplaceGlobals(loggerMgr)
-	defer loggerMgr.Sync() // flushes buffer, if any
+	defer func(loggerMgr *zap.Logger) {
+		err := loggerMgr.Sync()
+		if err != nil {
+			zap.L().Error("Failed to sync logger", zap.Error(err))
+		}
+	}(loggerMgr) // flushes buffer, if any
 
 	logger := loggerMgr.Sugar()
 	version.PrintVersion()

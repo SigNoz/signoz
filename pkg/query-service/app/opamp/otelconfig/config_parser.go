@@ -1,6 +1,7 @@
 package otelconfig
 
 import (
+	"go.uber.org/zap"
 	"sync"
 
 	"go.opentelemetry.io/collector/confmap"
@@ -160,7 +161,11 @@ func (cp *ConfigParser) CheckProcessorInPipeline(pipelineName, name string) bool
 func (cp *ConfigParser) Merge(c *confmap.Conf) {
 	cp.lock.Lock()
 	defer cp.lock.Unlock()
-	cp.agentConf.Merge(c)
+	err := cp.agentConf.Merge(c)
+	if err != nil {
+		zap.L().Error("failed to merge config", zap.Error(err))
+		return
+	}
 }
 
 func (cp *ConfigParser) UpdateProcessors(processors map[string]interface{}) {

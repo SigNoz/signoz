@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -155,7 +156,11 @@ func createTestUser() (*model.User, *model.ApiError) {
 		return nil, apiErr
 	}
 
-	auth.InitAuthCache(ctx)
+	err := auth.InitAuthCache(ctx)
+	if err != nil {
+		zap.L().Error("error initializing auth cache", zap.Error(err))
+		return nil, nil
+	}
 
 	userId := uuid.NewString()
 	return dao.DB().CreateUser(

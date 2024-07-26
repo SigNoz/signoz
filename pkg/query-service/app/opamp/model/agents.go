@@ -29,7 +29,7 @@ func (a *Agents) Count() int {
 	return len(a.connections)
 }
 
-// Initialize the database and create schema if needed
+// InitDB Initialize the database and create schema if needed
 func InitDB(qsDB *sqlx.DB) (*sqlx.DB, error) {
 	db = qsDB
 
@@ -64,7 +64,11 @@ func (agents *Agents) RemoveConnection(conn types.Connection) {
 		agent := agents.agentsById[instanceId]
 		agent.CurrentStatus = AgentStatusDisconnected
 		agent.TerminatedAt = time.Now()
-		agent.Upsert()
+		err := agent.Upsert()
+		if err != nil {
+			zap.L().Error("Error updating agent status", zap.Error(err))
+			return
+		}
 		delete(agents.agentsById, instanceId)
 	}
 	delete(agents.connections, conn)

@@ -47,6 +47,7 @@ type APIHandler struct {
 }
 
 // NewAPIHandler returns an APIHandler
+// nolint:govet
 func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{

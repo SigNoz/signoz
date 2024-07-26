@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -95,23 +96,40 @@ func (r *ruleDB) CreateRuleTx(ctx context.Context, rule string) (int64, Tx, erro
 	stmt, err := tx.Prepare(`INSERT into rules (created_at, created_by, updated_at, updated_by, data) VALUES($1,$2,$3,$4,$5);`)
 	if err != nil {
 		zap.L().Error("Error in preparing statement for INSERT to rules", zap.Error(err))
-		tx.Rollback()
+		err := tx.Rollback()
+		if err != nil {
+			zap.L().Error("Error in rolling back transaction", zap.Error(err))
+			return 0, nil, err
+		}
 		return lastInsertId, nil, err
 	}
 
-	defer stmt.Close()
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			zap.L().Error("Error in closing prepared statement for INSERT to rules", zap.Error(err))
+		}
+	}(stmt)
 
 	result, err := stmt.Exec(createdAt, userEmail, updatedAt, userEmail, rule)
 	if err != nil {
 		zap.L().Error("Error in Executing prepared statement for INSERT to rules", zap.Error(err))
-		tx.Rollback() // return an error too, we may want to wrap them
+		err := tx.Rollback()
+		if err != nil {
+			zap.L().Error("Error in rolling back transaction", zap.Error(err))
+			return 0, nil, err
+		} // return an error too, we may want to wrap them
 		return lastInsertId, nil, err
 	}
 
 	lastInsertId, err = result.LastInsertId()
 	if err != nil {
 		zap.L().Error("Error in getting last insert id for INSERT to rules\n", zap.Error(err))
-		tx.Rollback() // return an error too, we may want to wrap them
+		err := tx.Rollback()
+		if err != nil {
+			zap.L().Error("Error in rolling back transaction", zap.Error(err))
+			return 0, nil, err
+		} // return an error too, we may want to wrap them
 		return lastInsertId, nil, err
 	}
 

@@ -399,7 +399,11 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				level.Warn(r.logger).Log("msg", "Expanding alert template failed", "err", err, "data", tmplData)
+				err := level.Warn(r.logger).Log("msg", "Expanding alert template failed", "err", err, "data", tmplData)
+				if err != nil {
+					zap.L().Error("error expanding alert template", zap.Error(err))
+					return ""
+				}
 			}
 			return result
 		}

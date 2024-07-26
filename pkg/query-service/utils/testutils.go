@@ -24,8 +24,16 @@ func NewQueryServiceDBForTests(t *testing.T) *sqlx.DB {
 	}
 
 	// TODO(Raj): This should not require passing in the DB file path
-	dao.InitDao("sqlite", testDBFilePath)
-	dashboards.InitDB(testDBFilePath)
+	err = dao.InitDao("sqlite", testDBFilePath)
+	if err != nil {
+		t.Fatalf("could not initialize dao: %v", err)
+		return nil
+	}
+	_, err = dashboards.InitDB(testDBFilePath)
+	if err != nil {
+		t.Fatalf("could not initialize dashboards db: %v", err)
+		return nil
+	}
 
 	return testDB
 }
