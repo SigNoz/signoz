@@ -1,3 +1,6 @@
+import './EditRules.styles.scss';
+
+import { Button, Card } from 'antd';
 import get from 'api/alerts/get';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
@@ -5,7 +8,6 @@ import EditRulesContainer from 'container/EditRules';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 
@@ -13,8 +15,6 @@ function EditRules(): JSX.Element {
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const ruleId = params.get('ruleId');
-
-	const { t } = useTranslation('common');
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
@@ -31,6 +31,10 @@ function EditRules(): JSX.Element {
 
 	const { notifications } = useNotifications();
 
+	const clickHandler = (): void => {
+		history.push(ROUTES.LIST_ALL_ALERT);
+	};
+
 	useEffect(() => {
 		if (!isValidRuleId) {
 			notifications.error({
@@ -45,7 +49,20 @@ function EditRules(): JSX.Element {
 		ruleId == null ||
 		(data?.payload?.data === undefined && !isLoading)
 	) {
-		return <div>{data?.error || t('something_went_wrong')}</div>;
+		return (
+			<div className="edit-rules-container">
+				<Card size="small" className="edit-rules-card">
+					<p className="content">
+						The Alert that you are trying to access is deleted.
+					</p>
+					<div className="btn-container">
+						<Button type="default" size="large" onClick={clickHandler}>
+							Return to Alerts Page
+						</Button>
+					</div>
+				</Card>
+			</div>
+		);
 	}
 
 	if (isLoading || isRefetching || !data?.payload) {
