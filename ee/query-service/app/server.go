@@ -8,7 +8,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	_ "net/http/pprof" // http profiler
 	"os"
 	"regexp"
@@ -118,33 +117,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	localDB.SetMaxOpenConns(10)
 
-	gatewayFeature := basemodel.Feature{
-		Name:       "GATEWAY",
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	}
-
-	//Activate this feature if the url is not empty
-	var gatewayProxy *httputil.ReverseProxy
-	if serverOptions.GatewayUrl == "" {
-		gatewayFeature.Active = false
-		gatewayProxy, err = gateway.NewNoopProxy()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		zap.L().Info("Enabling gateway feature flag ...")
-		gatewayFeature.Active = true
-		gatewayProxy, err = gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
-		if err != nil {
-			return nil, err
-		}
+	gatewayProxy, err := gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
+	if err != nil {
+		return nil, err
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", localDB, gatewayFeature)
+	lm, err := licensepkg.StartManager("sqlite", localDB)
 	if err != nil {
 		return nil, err
 	}
