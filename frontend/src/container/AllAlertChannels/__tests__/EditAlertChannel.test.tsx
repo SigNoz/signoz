@@ -42,7 +42,7 @@ describe('Should check if the edit alert channel is properly displayed ', () => 
 		testLabelInputAndHelpValue({
 			labelText: 'field_channel_name',
 			testId: 'channel-name-textbox',
-			value: 'Slack-Discord-Compatible',
+			value: 'Dummy-Channel',
 		});
 	});
 	it('Should check if Send resolved alerts label and checkbox are displayed properly and the checkbox is checked ', () => {
@@ -69,7 +69,7 @@ describe('Should check if the edit alert channel is properly displayed ', () => 
 			labelText: 'field_webhook_url',
 			testId: 'webhook-url-textbox',
 			value:
-				'https://discord.com/api/webhooks/1005695021418295378/diVHDbB1E1urFmE1iIAL4xMCt57G3VonBwXl1pNiYuBidBQMGbeNw0jJqAW2GeWQt8aS/slack',
+				'https://discord.com/api/webhooks/dummy_webhook_id/dummy_webhook_token/slack',
 		});
 	});
 
@@ -78,7 +78,7 @@ describe('Should check if the edit alert channel is properly displayed ', () => 
 			labelText: 'field_slack_recipient',
 			testId: 'slack-channel-textbox',
 			helpText: 'slack_channel_help',
-			value: '#general',
+			value: '#dummy_channel',
 		});
 	});
 

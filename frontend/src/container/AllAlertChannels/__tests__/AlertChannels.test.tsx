@@ -53,7 +53,7 @@ describe('Alert Channels Settings List page', () => {
 		});
 
 		it('Should check if the data in the table is displayed properly', () => {
-			expect(screen.getByText('Slack-Discord-Compatible')).toBeInTheDocument();
+			expect(screen.getByText('Dummy-Channel')).toBeInTheDocument();
 			expect(screen.getAllByText('slack')[0]).toBeInTheDocument();
 			expect(screen.getAllByText('column_channel_edit')[0]).toBeInTheDocument();
 			expect(screen.getAllByText('Delete')[0]).toBeInTheDocument();
