@@ -39,7 +39,7 @@ func ParseJWT(jwtStr string) (jwt.MapClaims, error) {
 	// the function validateUser panics to convert claims["orgId"] to string as the jwt.Parse doesn't check for claims. 
 	// the function jwt.ParseWithClaims does check for custom claims. 
 	// TODO[@vikrantgupta25] : to update this to the claims check function for better integrity of JWT
-	if claims["orgId"] != nil {
+	if claims["orgId"] == nil {
 		return nil, errors.Errorf("Org Id is missing in the claim")
 	}
 	return claims, nil
