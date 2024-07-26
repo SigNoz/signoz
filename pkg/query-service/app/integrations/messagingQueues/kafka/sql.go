@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func generateConsumerSQL(start, end int64, topic, partition string) string {
+func generateConsumerSQL(start, end int64, topic, partition, queueType string) string {
 	query := fmt.Sprintf(`
 WITH 
 -- Sub query for p99 calculation
@@ -18,6 +18,7 @@ p99_query AS (
         timestamp >= '%d'
       AND timestamp <= '%d'
       AND kind = 5
+      AND msgSystem = '%s' 
       AND stringTagMap['messaging.destination.name'] = '%s'
       AND stringTagMap['messaging.destination.partition.id'] = '%s'
     GROUP BY consumer_group, serviceName
@@ -34,6 +35,7 @@ rps_query AS (
         timestamp >= '%d'
         AND timestamp <= '%d'
         AND kind = 5
+		AND msgSystem = '%s' 
         AND stringTagMap['messaging.destination.name'] = '%s'
         AND stringTagMap['messaging.destination.partition.id'] = '%s'
     GROUP BY consumer_group, serviceName
@@ -51,6 +53,7 @@ error_rate_query AS (
         AND timestamp <= '%d'
         AND statusCode = 2
         AND kind = 5
+        AND msgSystem = '%s' 
         AND stringTagMap['messaging.destination.name'] = '%s'
         AND stringTagMap['messaging.destination.partition.id'] = '%s'
     GROUP BY consumer_group, serviceName
@@ -67,6 +70,7 @@ avg_msg_size_query AS (
         timestamp >= '%d'
         AND timestamp <= '%d'
         AND kind = 5
+        AND msgSystem = '%s' 
         AND stringTagMap['messaging.destination.name'] = '%s'
         AND stringTagMap['messaging.destination.partition.id'] = '%s'
     GROUP BY consumer_group, serviceName
@@ -90,11 +94,11 @@ FROM
         AND p99_query.serviceName = avg_msg_size_query.serviceName
 ORDER BY
     p99_query.consumer_group;
-`, start, end, topic, partition, end, start, start, end, topic, partition, end, start, start, end, topic, partition, end, start, topic, partition)
+`, start, end, queueType, topic, partition, end, start, start, end, queueType, topic, partition, end, start, start, end, queueType, topic, partition, end, start, queueType, topic, partition)
 	return query
 }
 
-func generateProducerSQL(start, end int64, topic, partition string) string {
+func generateProducerSQL(start, end int64, topic, partition, queueType string) string {
 	query := fmt.Sprintf(`
 
 -- producer
@@ -109,6 +113,7 @@ p99_query AS (
         timestamp >= '%d'
       AND timestamp <= '%d'
       AND kind = 4
+      AND msgSystem = '%s' 
       AND stringTagMap['messaging.destination.name'] = '%s'
       AND stringTagMap['messaging.destination.partition.id'] = '%s'
     GROUP BY serviceName
@@ -124,6 +129,7 @@ rps_query AS (
         timestamp >= '%d'
       AND timestamp <= '%d'
       AND kind = 4
+      AND msgSystem = '%s' 
       AND stringTagMap['messaging.destination.name'] = '%s'
       AND stringTagMap['messaging.destination.partition.id'] = '%s'
     GROUP BY serviceName
@@ -140,6 +146,7 @@ error_rate_query AS (
       AND timestamp <= '%d'
       AND statusCode = 2
       AND kind = 4
+      AND msgSystem = '%s' 
       AND stringTagMap['messaging.destination.name'] = '%s'
       AND stringTagMap['messaging.destination.partition.id'] = '%s'
     GROUP BY serviceName
@@ -160,6 +167,6 @@ FROM
 ORDER BY
     p99_query.serviceName;
 
-`, start, end, topic, partition, end, start, start, end, topic, partition, end, start, start, end, topic, partition)
+`, start, end, queueType, topic, partition, end, start, start, end, queueType, topic, partition, end, start, start, end, queueType, topic, partition)
 	return query
 }

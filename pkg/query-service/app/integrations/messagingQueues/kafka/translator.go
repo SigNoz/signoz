@@ -10,9 +10,12 @@ var defaultStepInterval int64 = 60
 
 func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) (*v3.QueryRangeParamsV3, error) {
 
+	// ToDo: propagate this through APIs when there are different handlers
+	queueType := kafkaQueue
+
 	var cq *v3.CompositeQuery
 	if queryContext == "producer" {
-		chq, err := buildProducerClickHouseQuery(messagingQueue)
+		chq, err := buildProducerClickHouseQuery(messagingQueue, queueType)
 		if err != nil {
 			return nil, err
 		}
@@ -22,7 +25,7 @@ func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) 
 			return nil, err
 		}
 	} else if queryContext == "consumer" {
-		chq, err := buildConsumerClickHouseQuery(messagingQueue)
+		chq, err := buildConsumerClickHouseQuery(messagingQueue, queueType)
 		if err != nil {
 			return nil, err
 		}
@@ -44,7 +47,7 @@ func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) 
 	return queryRangeParams, nil
 }
 
-func buildProducerClickHouseQuery(messagingQueue *MessagingQueue) (*v3.ClickHouseQuery, error) {
+func buildProducerClickHouseQuery(messagingQueue *MessagingQueue, queueType string) (*v3.ClickHouseQuery, error) {
 	start := messagingQueue.Start
 	end := messagingQueue.End
 	topic, ok := messagingQueue.Variables["topic"]
@@ -57,14 +60,14 @@ func buildProducerClickHouseQuery(messagingQueue *MessagingQueue) (*v3.ClickHous
 	if !ok {
 		return nil, fmt.Errorf("invalid type for Partition")
 	}
-	query := generateProducerSQL(start, end, topic, partition)
+	query := generateProducerSQL(start, end, topic, partition, queueType)
 
 	return &v3.ClickHouseQuery{
 		Query: query,
 	}, nil
 }
 
-func buildConsumerClickHouseQuery(messagingQueue *MessagingQueue) (*v3.ClickHouseQuery, error) {
+func buildConsumerClickHouseQuery(messagingQueue *MessagingQueue, queueType string) (*v3.ClickHouseQuery, error) {
 	start := messagingQueue.Start
 	end := messagingQueue.End
 	topic, ok := messagingQueue.Variables["topic"]
@@ -77,7 +80,7 @@ func buildConsumerClickHouseQuery(messagingQueue *MessagingQueue) (*v3.ClickHous
 	if !ok {
 		return nil, fmt.Errorf("invalid type for Partition")
 	}
-	query := generateConsumerSQL(start, end, topic, partition)
+	query := generateConsumerSQL(start, end, topic, partition, queueType)
 
 	return &v3.ClickHouseQuery{
 		Query: query,
