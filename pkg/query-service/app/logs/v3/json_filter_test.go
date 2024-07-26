@@ -298,7 +298,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "contains",
 			Value:    "a",
 		},
-		Filter: "lower(body) like lower('%message%') AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%'",
+		Filter: "lower(body) like lower('%message%') AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') LIKE '%a%'",
 	},
 	{
 		Name: "contains operator with quotes",
@@ -311,7 +311,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "contains",
 			Value:    "hello 'world'",
 		},
-		Filter: "lower(body) like lower('%message%') AND lower(body) like lower('%hello \\'world\\'%') AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%hello \\'world\\'%'",
+		Filter: "lower(body) like lower('%message%') AND lower(body) like lower('%hello \\'world\\'%') AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') LIKE '%hello \\'world\\'%'",
 	},
 	{
 		Name: "exists",

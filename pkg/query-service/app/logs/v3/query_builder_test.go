@@ -137,7 +137,7 @@ var timeResourceBucketFilterData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.%", Operator: "like"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'host') ILIKE '102.%' AND lower(labels) like '%host%102.%%'",
+		ExpectedFilter: "simpleJSONExtractString(labels, 'host') LIKE '102.%' AND lower(labels) like '%host%102.%%'",
 	},
 	{
 		Name: "Test IN",
@@ -172,21 +172,21 @@ var timeResourceBucketFilterData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.", Operator: "contains"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'host') ILIKE '%102.%' AND lower(labels) like '%host%102.%'",
+		ExpectedFilter: "simpleJSONExtractString(labels, 'host') LIKE '%102.%' AND lower(labels) like '%host%102.%'",
 	},
 	{
 		Name: "Test contains with single quotes",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "hello 'world'", Operator: "contains"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'message') ILIKE '%hello \\'world\\'%' AND lower(labels) like '%message%hello \\'world\\'%'",
+		ExpectedFilter: "simpleJSONExtractString(labels, 'message') LIKE '%hello \\'world\\'%' AND lower(labels) like '%message%hello \\'world\\'%'",
 	},
 	{
 		Name: "Test not contains",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.", Operator: "ncontains"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'host') NOT ILIKE '%102.%' AND lower(labels) not like '%host%102.%'",
+		ExpectedFilter: "simpleJSONExtractString(labels, 'host') NOT LIKE '%102.%' AND lower(labels) not like '%host%102.%'",
 	},
 	{
 		Name: "Test regex",
@@ -225,7 +225,7 @@ var timeResourceBucketFilterData = []struct {
 			{Key: "service.name", Type: v3.AttributeKeyTypeResource},
 		},
 		AggregateAttribute: v3.AttributeKey{Key: "container_name", Type: v3.AttributeKeyTypeResource},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'host') ILIKE '102.%' AND lower(labels) like '%host%102.%%' AND (simpleJSONHas(labels, 'container_name') AND " +
+		ExpectedFilter: "simpleJSONExtractString(labels, 'host') LIKE '102.%' AND lower(labels) like '%host%102.%%' AND (simpleJSONHas(labels, 'container_name') AND " +
 			"lower(labels) like '%container_name%') AND ( (simpleJSONHas(labels, 'service.name') AND lower(labels) like '%service.name%') )",
 	},
 	{
@@ -243,7 +243,7 @@ var timeResourceBucketFilterData = []struct {
 			{Key: "project.name", Type: v3.AttributeKeyTypeResource, Order: "DESC"},
 		},
 		AggregateAttribute: v3.AttributeKey{Key: "container_name", Type: v3.AttributeKeyTypeResource},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'host') ILIKE '102.%' AND lower(labels) like '%host%102.%%' AND (simpleJSONHas(labels, 'container_name') AND " +
+		ExpectedFilter: "simpleJSONExtractString(labels, 'host') LIKE '102.%' AND lower(labels) like '%host%102.%%' AND (simpleJSONHas(labels, 'container_name') AND " +
 			"lower(labels) like '%container_name%') AND ( (simpleJSONHas(labels, 'service.name') AND lower(labels) like '%service.name%') OR (simpleJSONHas(labels, 'project.name') AND lower(labels) like '%project.name%') )",
 	},
 }
@@ -285,7 +285,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "%JoHn%", Operator: "like"},
 			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "%MyService%", Operator: "nlike"},
 		}},
-		ExpectedFilter: "attributes_string['user_name'] ILIKE '%JoHn%' AND resources_string['k8s_namespace'] NOT ILIKE '%MyService%'",
+		ExpectedFilter: "attributes_string['user_name'] LIKE '%JoHn%' AND resources_string['k8s_namespace'] NOT LIKE '%MyService%'",
 	},
 	{
 		Name: "Test materialized column",
@@ -300,7 +300,7 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.%", Operator: "like"},
 		}},
-		ExpectedFilter: "attributes_string['host'] ILIKE '102.%'",
+		ExpectedFilter: "attributes_string['host'] LIKE '102.%'",
 	},
 	{
 		Name: "Test IN",
@@ -342,21 +342,21 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "contains"},
 		}},
-		ExpectedFilter: "attributes_string['host'] ILIKE '%102.%'",
+		ExpectedFilter: "attributes_string['host'] LIKE '%102.%'",
 	},
 	{
 		Name: "Test contains with single quotes",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "hello 'world'", Operator: "contains"},
 		}},
-		ExpectedFilter: "attributes_string['message'] ILIKE '%hello \\'world\\'%'",
+		ExpectedFilter: "attributes_string['message'] LIKE '%hello \\'world\\'%'",
 	},
 	{
 		Name: "Test not contains",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
-		ExpectedFilter: "attributes_string['host'] NOT ILIKE '%102.%'",
+		ExpectedFilter: "attributes_string['host'] NOT LIKE '%102.%'",
 	},
 	{
 		Name: "Test regex",
@@ -378,7 +378,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
 		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-		ExpectedFilter: "attributes_string['host'] NOT ILIKE '%102.%' AND mapContains(attributes_string, 'host')",
+		ExpectedFilter: "attributes_string['host'] NOT LIKE '%102.%' AND mapContains(attributes_string, 'host')",
 	},
 	{
 		Name: "Test groupBy isColumn",
@@ -386,7 +386,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
 		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
-		ExpectedFilter: "attributes_string['host'] NOT ILIKE '%102.%' AND `attribute_string_host_exists`=true",
+		ExpectedFilter: "attributes_string['host'] NOT LIKE '%102.%' AND `attribute_string_host_exists`=true",
 	},
 	{
 		Name: "Wrong data",
@@ -400,7 +400,7 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "%test%", Operator: "like"},
 		}},
-		ExpectedFilter: "attributes_string['body'] ILIKE '%test%'",
+		ExpectedFilter: "attributes_string['body'] LIKE '%test%'",
 	},
 	{
 		Name: "Test exists on top level field",
@@ -1090,7 +1090,7 @@ var testBuildLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string['name']))) as value " +
 			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND attributes_string['body'] ILIKE '%test%' AND mapContains(attributes_string, 'name') group by ts having value > 10 order by value DESC",
+			"AND attributes_string['body'] LIKE '%test%' AND mapContains(attributes_string, 'name') group by ts having value > 10 order by value DESC",
 	},
 
 	// Tests for table panel type
@@ -1202,7 +1202,7 @@ var testBuildLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT now() as ts, attributes_string['name'] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND lower(body) like lower('%message%') AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%' " +
+			"AND lower(body) like lower('%message%') AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') LIKE '%a%' " +
 			"AND mapContains(attributes_string, 'name') group by `name` order by `name` DESC",
 	},
 	{
@@ -1563,7 +1563,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName: "logs",
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string " +
-			"from signoz_logs.distributed_logs where attributes_string['method'] ILIKE '%GET%' AND ",
+			"from signoz_logs.distributed_logs where attributes_string['method'] LIKE '%GET%' AND ",
 		Options: Options{IsLivetailQuery: true},
 	},
 	{
