@@ -8,10 +8,10 @@ import {
 } from '@ant-design/icons';
 import { Button, Card, Skeleton, Typography } from 'antd';
 import updateCreditCardApi from 'api/billing/checkout';
+import logEvent from 'api/common/logEvent';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -27,7 +27,6 @@ export default function WorkspaceBlocked(): JSX.Element {
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const isAdmin = role === 'ADMIN';
 	const [activeLicense, setActiveLicense] = useState<License | null>(null);
-	const { trackEvent } = useAnalytics();
 
 	const { notifications } = useNotifications();
 
@@ -74,7 +73,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	);
 
 	const handleUpdateCreditCard = useCallback(async () => {
-		trackEvent('Workspace Blocked: User Clicked Update Credit Card');
+		logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
 
 		updateCreditCard({
 			licenseKey: activeLicense?.key || '',
@@ -85,7 +84,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	}, [activeLicense?.key, updateCreditCard]);
 
 	const handleExtendTrial = (): void => {
-		trackEvent('Workspace Blocked: User Clicked Extend Trial');
+		logEvent('Workspace Blocked: User Clicked Extend Trial', {});
 
 		notifications.info({
 			message: 'Extend Trial',

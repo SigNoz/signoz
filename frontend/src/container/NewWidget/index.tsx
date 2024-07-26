@@ -79,6 +79,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		stagedQuery,
 		redirectWithQueryBuilderData,
 		supersetQuery,
+		setSupersetQuery,
 	} = useQueryBuilder();
 
 	const isQueryModified = useMemo(
@@ -549,6 +550,17 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	]);
 
 	useEffect(() => {
+		/**
+		 * we need this extra handling for superset query because we cannot keep this in sync with current query
+		 * always.we do not sync superset query in the initQueryBuilderData because that function is called on all stage and run
+		 * actions. we do not want that as we loose out on superset functionalities if we do the same. hence initialising the superset query
+		 * on mount here with the currentQuery in the begining itself
+		 */
+		setSupersetQuery(currentQuery);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	useEffect(() => {
 		registerShortcut(DashboardShortcuts.SaveChanges, onSaveDashboard);
 		registerShortcut(DashboardShortcuts.DiscardChanges, onClickDiscardHandler);
 
@@ -563,11 +575,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		if (selectedGraph === PANEL_TYPES.LIST) {
 			const initialDataSource = currentQuery.builder.queryData[0].dataSource;
 			if (initialDataSource === DataSource.LOGS) {
+				// we do not need selected log columns in the request data as the entire response contains all the necessary data
 				setRequestData((prev) => ({
 					...prev,
 					tableParams: {
 						...prev.tableParams,
-						selectColumns: selectedLogFields,
 					},
 				}));
 			} else if (initialDataSource === DataSource.TRACES) {

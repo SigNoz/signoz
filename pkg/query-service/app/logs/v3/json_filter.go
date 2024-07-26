@@ -17,6 +17,7 @@ const (
 	ARRAY_INT64   = "Array(Int64)"
 	ARRAY_FLOAT64 = "Array(Float64)"
 	ARRAY_BOOL    = "Array(Bool)"
+	NGRAM_SIZE    = 4
 )
 
 var dataTypeMapping = map[string]string{
@@ -72,6 +73,7 @@ func getPath(keyArr []string) string {
 
 func getJSONFilterKey(key v3.AttributeKey, op v3.FilterOperator, isArray bool) (string, error) {
 	keyArr := strings.Split(key.Key, ".")
+	// i.e it should be at least body.name, and not something like body
 	if len(keyArr) < 2 {
 		return "", fmt.Errorf("incorrect key, should contain at least 2 parts")
 	}
@@ -104,6 +106,29 @@ func getJSONFilterKey(key v3.AttributeKey, op v3.FilterOperator, isArray bool) (
 	}
 
 	return keyname, nil
+}
+
+// takes the path and the values and generates where clauses for better usage of index
+func getPathIndexFilter(path string) string {
+	filters := []string{}
+	keyArr := strings.Split(path, ".")
+	if len(keyArr) < 2 {
+		return ""
+	}
+
+	for i, key := range keyArr {
+		if i == 0 {
+			continue
+		}
+		key = strings.TrimSuffix(key, "[*]")
+		if len(key) >= NGRAM_SIZE {
+			filters = append(filters, strings.ToLower(key))
+		}
+	}
+	if len(filters) > 0 {
+		return fmt.Sprintf("lower(body) like lower('%%%s%%')", strings.Join(filters, "%"))
+	}
+	return ""
 }
 
 func GetJSONFilter(item v3.FilterItem) (string, error) {
@@ -154,11 +179,28 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 		return "", fmt.Errorf("unsupported operator: %s", op)
 	}
 
+	filters := []string{}
+
+	pathFilter := getPathIndexFilter(item.Key.Key)
+	if pathFilter != "" {
+		filters = append(filters, pathFilter)
+	}
+	if op == v3.FilterOperatorContains ||
+		op == v3.FilterOperatorEqual ||
+		op == v3.FilterOperatorHas {
+		val, ok := item.Value.(string)
+		if ok && len(val) >= NGRAM_SIZE {
+			filters = append(filters, fmt.Sprintf("lower(body) like lower('%%%s%%')", utils.QuoteEscapedString(strings.ToLower(val))))
+		}
+	}
+
 	// add exists check for non array items as default values of int/float/bool will corrupt the results
 	if !isArray && !(item.Operator == v3.FilterOperatorExists || item.Operator == v3.FilterOperatorNotExists) {
 		existsFilter := fmt.Sprintf("JSON_EXISTS(body, '$.%s')", getPath(strings.Split(item.Key.Key, ".")[1:]))
 		filter = fmt.Sprintf("%s AND %s", existsFilter, filter)
 	}
 
-	return filter, nil
+	filters = append(filters, filter)
+
+	return strings.Join(filters, " AND "), nil
 }
