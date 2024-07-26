@@ -16,15 +16,15 @@ import { WrapperStyled } from './styles';
 import { SELECTED_VIEWS } from './utils';
 
 function LogsExplorer(): JSX.Element {
-	const [showHistogram, setShowHistogram] = useState(true);
+	const [showFrequencyChart, setShowFrequencyChart] = useState(true);
 	const [selectedView, setSelectedView] = useState<SELECTED_VIEWS>(
 		SELECTED_VIEWS.SEARCH,
 	);
 
 	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
-	const handleToggleShowHistogram = (): void => {
-		setShowHistogram(!showHistogram);
+	const handleToggleShowFrequencyChart = (): void => {
+		setShowFrequencyChart(!showFrequencyChart);
 	};
 
 	const handleChangeSelectedView = (view: SELECTED_VIEWS): void => {
@@ -78,8 +78,8 @@ function LogsExplorer(): JSX.Element {
 						items={toolbarViews}
 						selectedView={selectedView}
 						onChangeSelectedView={handleChangeSelectedView}
-						onToggleHistrogramVisibility={handleToggleShowHistogram}
-						showHistogram={showHistogram}
+						onToggleHistrogramVisibility={handleToggleShowFrequencyChart}
+						showFrequencyChart={showFrequencyChart}
 					/>
 				}
 				rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
@@ -96,7 +96,7 @@ function LogsExplorer(): JSX.Element {
 					<div className="logs-explorer-views">
 						<LogsExplorerViews
 							selectedView={selectedView}
-							showHistogram={showHistogram}
+							showFrequencyChart={showFrequencyChart}
 						/>
 					</div>
 				</div>

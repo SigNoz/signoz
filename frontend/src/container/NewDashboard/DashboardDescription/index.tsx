@@ -2,6 +2,7 @@ import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -126,6 +127,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const onEmptyWidgetHandler = useCallback(() => {
 		handleToggleDashboardSlider(true);
+		logEvent('Dashboard Detail: Add new panel clicked', {
+			dashboardId: selectedDashboard?.uuid,
+			dashboardName: selectedDashboard?.data.title,
+			numberOfPanels: selectedDashboard?.data.widgets?.length,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [handleToggleDashboardSlider]);
 
 	const handleLockDashboardToggle = (): void => {
@@ -259,6 +266,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		urlQuery.set('columnKey', listSortOrder.columnKey as string);
 		urlQuery.set('order', listSortOrder.order as string);
 		urlQuery.set('page', listSortOrder.pagination as string);
+		urlQuery.set('search', listSortOrder.search as string);
 		urlQuery.delete(QueryParams.relativeTime);
 
 		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlQuery.toString()}`;
@@ -292,17 +300,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						{title}
 					</Button>
 				</section>
-				<FacingIssueBtn
-					attributes={{
-						uuid: selectedDashboard?.uuid,
-						title: updatedTitle,
-						screen: 'Dashboard Details',
-					}}
-					eventName="Dashboard: Facing Issues in dashboard"
-					message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
-					buttonText="Facing issues with dashboards?"
-					onHoverText="Click here to get help with dashboard details"
-				/>
 			</div>
 			<section className="dashbord-details">
 				<div className="left-section">
@@ -315,6 +312,18 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					{isDashboardLocked && <LockKeyhole size={14} />}
 				</div>
 				<div className="right-section">
+					<FacingIssueBtn
+						attributes={{
+							uuid: selectedDashboard?.uuid,
+							title: updatedTitle,
+							screen: 'Dashboard Details',
+						}}
+						eventName="Dashboard: Facing Issues in dashboard"
+						message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
+						buttonText="Need help with this dashboard?"
+						onHoverText="Click here to get help with dashboard"
+						intercomMessageDisabled
+					/>
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					<Popover
 						open={isDashboardSettingsOpen}
@@ -404,7 +413,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						trigger="click"
 						placement="bottomRight"
 					>
-						<Button icon={<Ellipsis size={14} />} type="text" className="icons" />
+						<Button
+							icon={<Ellipsis size={14} />}
+							type="text"
+							className="icons"
+							data-testid="options"
+						/>
 					</Popover>
 					{!isDashboardLocked && editDashboard && (
 						<SettingsDrawer drawerTitle="Dashboard Configuration" />
@@ -415,7 +429,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							onClick={onEmptyWidgetHandler}
 							icon={<PlusOutlined />}
 							type="primary"
-							data-testid="add-panel"
+							data-testid="add-panel-header"
 						>
 							New Panel
 						</Button>

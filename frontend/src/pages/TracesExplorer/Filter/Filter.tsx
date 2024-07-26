@@ -7,6 +7,7 @@ import {
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
 import { Button, Flex, Tooltip, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -56,7 +57,7 @@ export function Filter(props: FilterProps): JSX.Element {
 			return {} as FilterType;
 		}
 
-		return filters.items
+		return (filters.items || [])
 			.filter((item) =>
 				Object.keys(AllTraceFilterKeyValue).includes(item.key?.key as string),
 			)
@@ -197,6 +198,11 @@ export function Filter(props: FilterProps): JSX.Element {
 					})),
 				},
 			};
+			if (selectedFilters) {
+				logEvent('Traces Explorer: Sidebar filter used', {
+					selectedFilters,
+				});
+			}
 			redirectWithQueryBuilderData(preparedQuery);
 		},
 		[currentQuery, redirectWithQueryBuilderData, selectedFilters],
@@ -218,13 +224,18 @@ export function Filter(props: FilterProps): JSX.Element {
 						<Button
 							onClick={(): void => handleRun({ resetAll: true })}
 							className="sync-icon"
+							data-testid="reset-filters"
 						>
 							<SyncOutlined />
 						</Button>
 					</Tooltip>
 				</Flex>
 				<Tooltip title="Collapse" placement="right">
-					<Button onClick={(): void => setOpen(false)} className="arrow-icon">
+					<Button
+						onClick={(): void => setOpen(false)}
+						className="arrow-icon"
+						data-testid="toggle-filter-panel"
+					>
 						<VerticalAlignTopOutlined rotate={270} />
 					</Button>
 				</Tooltip>

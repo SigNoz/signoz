@@ -13,6 +13,9 @@ describe('traces/getTreeLevelsCount', () => {
 		children,
 		serviceName: '',
 		serviceColour: '',
+		spanKind: '',
+		statusCodeString: '',
+		statusMessage: '',
 	});
 
 	test('should return 0 for empty tree', () => {
