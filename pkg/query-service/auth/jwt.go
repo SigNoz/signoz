@@ -20,6 +20,8 @@ var (
 )
 
 func ParseJWT(jwtStr string) (jwt.MapClaims, error) {
+	// TODO[@vikrantgupta25] : to update this to the claims check function for better integrity of JWT 
+	// reference - https://pkg.go.dev/github.com/golang-jwt/jwt/v5#Parser.ParseWithClaims
 	token, err := jwt.Parse(jwtStr, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.Errorf("unknown signing algo: %v", token.Header["alg"])
@@ -36,12 +38,6 @@ func ParseJWT(jwtStr string) (jwt.MapClaims, error) {
 		return nil, errors.Errorf("Not a valid jwt claim")
 	}
 
-	// the function validateUser panics to convert claims["orgId"] to string as the jwt.Parse doesn't check for claims. 
-	// the function jwt.ParseWithClaims does check for custom claims. 
-	// TODO[@vikrantgupta25] : to update this to the claims check function for better integrity of JWT
-	if claims["orgId"] == nil {
-		return nil, errors.Errorf("Org Id is missing in the claim")
-	}
 	return claims, nil
 }
 
@@ -54,12 +50,18 @@ func validateUser(tok string) (*model.UserPayload, error) {
 	if !claims.VerifyExpiresAt(now, true) {
 		return nil, model.ErrorTokenExpired
 	}
+
+	var orgId string
+	if claims["orgId"] != nil {
+		orgId = claims["orgId"].(string)		
+	}
+
 	return &model.UserPayload{
 		User: model.User{
 			Id:      claims["id"].(string),
 			GroupId: claims["gid"].(string),
 			Email:   claims["email"].(string),
-			OrgId:   claims["orgId"].(string),
+			OrgId:   orgId,
 		},
 	}, nil
 }
