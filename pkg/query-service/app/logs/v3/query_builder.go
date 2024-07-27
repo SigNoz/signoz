@@ -165,6 +165,12 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
+
+			// skip if it's a resource attribute
+			if item.Key.Type == v3.AttributeKeyTypeResource {
+				continue
+			}
+
 			if item.Key.IsJSON {
 				filter, err := GetJSONFilter(item)
 				if err != nil {
@@ -222,6 +228,11 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 
 	// add group by conditions to filter out log lines which doesn't have the key
 	for _, attr := range groupBy {
+		// skip if it's a resource attribute
+		if attr.Type == v3.AttributeKeyTypeResource {
+			continue
+		}
+
 		if !attr.IsColumn {
 			columnType := getClickhouseLogsColumnType(attr.Type)
 			columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
@@ -233,7 +244,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 	}
 
 	// add conditions for aggregate attribute
-	if aggregateAttribute.Key != "" {
+	if aggregateAttribute.Key != "" && aggregateAttribute.Type != v3.AttributeKeyTypeResource {
 		existsFilter := GetExistsNexistsFilter(v3.FilterOperatorExists, v3.FilterItem{Key: aggregateAttribute})
 		conditions = append(conditions, existsFilter)
 	}
@@ -321,7 +332,8 @@ func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, ord
 	// so no point in adding them
 
 	if len(orConditions) > 0 {
-		orConditionStr := "( " + strings.Join(orConditions, " OR ") + " )"
+		// TODO: change OR to AND once we know how to solve for group by
+		orConditionStr := "( " + strings.Join(orConditions, " AND ") + " )"
 		andConditions = append(andConditions, orConditionStr)
 	}
 
