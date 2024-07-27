@@ -2218,11 +2218,6 @@ func (ah *APIHandler) getUserPreference(
 	preferenceId := mux.Vars(r)["preferenceId"]
 	user := common.GetUserFromContext(r.Context())
 
-	if user.User.OrgId == "" {
-		RespondError(w,model.UnauthorizedError(errors.New("org id is not present in the jwt claims")),nil)
-		return
-	}
-
 	preference, apiErr := preferences.GetUserPreference(
 		r.Context(), preferenceId, user.User.OrgId, user.User.Id,
 	)
@@ -2260,10 +2255,6 @@ func (ah *APIHandler) getAllUserPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	user := common.GetUserFromContext(r.Context())
-	if user.User.OrgId == "" {
-		RespondError(w,model.UnauthorizedError(errors.New("org id is not present in the jwt claims")),nil)
-		return
-	}
 	preference, apiErr := preferences.GetAllUserPreferences(
 		r.Context(), user.User.OrgId, user.User.Id,
 	)
@@ -2280,10 +2271,6 @@ func (ah *APIHandler) getOrgPreference(
 ) {
 	preferenceId := mux.Vars(r)["preferenceId"]
 	user := common.GetUserFromContext(r.Context())
-	if user.User.OrgId == "" {
-		RespondError(w,model.UnauthorizedError(errors.New("org id is not present in the jwt claims")),nil)
-		return
-	}
 	preference, apiErr := preferences.GetOrgPreference(
 		r.Context(), preferenceId, user.User.OrgId,
 	)
@@ -2302,10 +2289,6 @@ func (ah *APIHandler) updateOrgPreference(
 	req := preferences.UpdatePreference{}
 	user := common.GetUserFromContext(r.Context())
 
-	if user.User.OrgId == "" {
-		RespondError(w,model.UnauthorizedError(errors.New("org id is not present in the jwt claims")),nil)
-		return
-	}
 	err := json.NewDecoder(r.Body).Decode(&req)
 
 	if err != nil {
@@ -2325,10 +2308,6 @@ func (ah *APIHandler) getAllOrgPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	user := common.GetUserFromContext(r.Context())
-	if user.User.OrgId == "" {
-		RespondError(w,model.UnauthorizedError(errors.New("org id is not present in the jwt claims")),nil)
-		return
-	}
 	preference, apiErr := preferences.GetAllOrgPreferences(
 		r.Context(), user.User.OrgId,
 	)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -273,7 +274,21 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	am := NewAuthMiddleware(auth.GetUserFromRequest)
+	// add auth middleware
+	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
+		user, err := auth.GetUserFromRequest(r)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if user.User.OrgId == "" {
+			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
+		}
+
+		return user, nil
+	}
+	am := NewAuthMiddleware(getUserFromRequest)
 
 	api.RegisterRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)

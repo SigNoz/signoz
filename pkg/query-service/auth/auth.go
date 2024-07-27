@@ -467,6 +467,10 @@ func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.Use
 			return nil, errors.Wrap(err, "failed to validate refresh token")
 		}
 
+		if user.OrgId == "" {
+			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
+		}
+
 		return user, nil
 	}
 
