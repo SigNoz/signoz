@@ -393,7 +393,11 @@ export function PlannedDowntimeForm(
 							loading={isLoading}
 							tagRender={noTagRenderer}
 							onChange={handleChange}
+							showSearch
 							options={alertOptions}
+							filterOption={(input, option): boolean =>
+								(option?.label as string)?.toLowerCase()?.includes(input.toLowerCase())
+							}
 							notFoundContent={
 								isLoading ? (
 									<span>

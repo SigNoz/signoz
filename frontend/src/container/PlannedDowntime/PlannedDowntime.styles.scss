@@ -169,7 +169,7 @@
 			}
 		}
 
-		.view-created-at {
+		.schedule-created-at {
 			border: 1px solid var(--bg-slate-500);
 			background-color: var(--bg-ink-400);
 			border-top: 0px;
@@ -316,7 +316,7 @@
 	}
 }
 
-.delete-view-modal {
+.delete-schedule-modal {
 	width: calc(100% - 30px) !important; /* Adjust the 20px as needed */
 	max-width: 384px;
 	.ant-modal-content {
@@ -429,7 +429,7 @@
 				color: var(--bg-ink-500);
 			}
 
-			.view-created-at {
+			.schedule-created-at {
 				border: 1px solid var(--bg-vanilla-300);
 				background-color: var(--bg-vanilla-100);
 				.ant-typography {
@@ -459,7 +459,7 @@
 		}
 	}
 
-	.delete-view-modal {
+	.delete-schedule-modal {
 		.ant-modal-content {
 			border: 1px solid var(--bg-vanilla-200);
 			background: var(--bg-vanilla-100);

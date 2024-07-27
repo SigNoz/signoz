@@ -263,7 +263,7 @@ export function CustomCollapseList(
 					/>
 				</Panel>
 			</Collapse>
-			<div className="view-created-at">
+			<div className="schedule-created-at">
 				<CalendarClock size={14} />
 				<Typography.Text>{formattedDateAndTime}</Typography.Text>
 			</div>
