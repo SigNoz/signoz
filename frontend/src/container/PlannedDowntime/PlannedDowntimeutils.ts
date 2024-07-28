@@ -192,24 +192,15 @@ export function getDurationInfo(
 	return { value: totalMinutes, unit: 'm' };
 }
 
-export interface SubOption {
-	label: string;
-	value: string;
-}
-
 export interface Option {
 	label: string;
 	value: string;
-	submenu?: SubOption[];
 }
 
 export const recurrenceOptionWithSubmenu: Option[] = [
 	recurrenceOptions.doesNotRepeat,
 	recurrenceOptions.daily,
-	{
-		...recurrenceOptions.weekly,
-		submenu: Object.values(recurrenceWeeklyOptions),
-	},
+	recurrenceOptions.weekly,
 	recurrenceOptions.monthly,
 ];
 
