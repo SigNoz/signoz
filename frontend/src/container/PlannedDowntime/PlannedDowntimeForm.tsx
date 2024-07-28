@@ -31,17 +31,15 @@ import { defaultTo, isEmpty } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 
-import {
-	DropdownWithSubMenu,
-	Option,
-	recurrenceOption,
-} from './DropdownWithSubMenu/DropdownWithSubMenu';
 import { AlertRuleTags } from './PlannedDowntimeList';
 import {
 	createEditDowntimeSchedule,
 	getAlertOptionsFromIds,
 	getDurationInfo,
+	getEndTime,
 	recurrenceOptions,
+	recurrenceOptionWithSubmenu,
+	recurrenceWeeklyOptions,
 } from './PlannedDowntimeutils';
 
 dayjs.locale('en');
@@ -93,10 +91,15 @@ export function PlannedDowntimeForm(
 	>([]);
 	const alertRuleFormName = 'alertRules';
 	const [saveLoading, setSaveLoading] = useState(false);
-	const [durationUnit, setDurationUnit] = useState<string>('m');
-	const [selectedRecurrenceOption, setSelectedRecurrenceOption] = useState<
-		string | null
-	>();
+	const [durationUnit, setDurationUnit] = useState<string>(
+		getDurationInfo(initialValues.schedule?.recurrence?.duration as string)
+			?.unit || '',
+	);
+
+	const [recurrenceType, setRecurrenceType] = useState<string | null>(
+		(initialValues.schedule?.recurrence?.repeatType as string) ||
+			recurrenceOptions.doesNotRepeat.value,
+	);
 
 	const { notifications } = useNotifications();
 
@@ -156,8 +159,7 @@ export function PlannedDowntimeForm(
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
 		const recurrenceData: Recurrence | undefined =
-			(values?.recurrenceSelect?.repeatType as Option)?.value ===
-			recurrenceOptions.doesNotRepeat.value
+			values?.recurrence?.repeatType === recurrenceOptions.doesNotRepeat.value
 				? undefined
 				: {
 						duration: values.recurrence?.duration
@@ -167,10 +169,10 @@ export function PlannedDowntimeForm(
 							? (values.endTime as string)
 							: undefined,
 						startTime: values.startTime as string,
-						repeatOn: !values?.recurrenceSelect?.repeatOn?.length
+						repeatOn: !values.recurrence?.repeatOn?.length
 							? undefined
-							: values?.recurrenceSelect?.repeatOn,
-						repeatType: (values?.recurrenceSelect?.repeatType as Option)?.value,
+							: values.recurrence?.repeatOn,
+						repeatType: values.recurrence?.repeatType,
 				  };
 
 		const payloadValues = { ...values, recurrence: recurrenceData };
@@ -226,19 +228,16 @@ export function PlannedDowntimeForm(
 				initialValues.alertIds || [],
 				alertOptions,
 			),
-			endTime: initialValues.schedule?.endTime
-				? dayjs(initialValues.schedule?.endTime)
-				: '',
+			endTime: getEndTime(initialValues),
 			startTime: initialValues.schedule?.startTime
 				? dayjs(initialValues.schedule?.startTime)
 				: '',
-			recurrenceSelect: initialValues.schedule?.recurrence
-				? initialValues.schedule?.recurrence
-				: {
-						repeatType: recurrenceOptions.doesNotRepeat,
-				  },
 			recurrence: {
 				...initialValues.schedule?.recurrence,
+				repeatType:
+					initialValues.kind === 'fixed'
+						? recurrenceOptions.doesNotRepeat.value
+						: (initialValues.schedule?.recurrence?.repeatType as string),
 				duration: getDurationInfo(
 					initialValues.schedule?.recurrence?.duration as string,
 				)?.value,
@@ -283,20 +282,17 @@ export function PlannedDowntimeForm(
 				layout="vertical"
 				className="createForm"
 				onFinish={onFinish}
+				onValuesChange={(): void => {
+					setRecurrenceType(form.getFieldValue('recurrence')?.repeatType as string);
+				}}
 				autoComplete="off"
 			>
-				<Form.Item
-					label="Name"
-					name="name"
-					required={false}
-					rules={formValidationRules}
-				>
+				<Form.Item label="Name" name="name" rules={formValidationRules}>
 					<Input placeholder="e.g. Upgrade downtime" />
 				</Form.Item>
 				<Form.Item
 					label="Starts from"
 					name="startTime"
-					required={false}
 					rules={formValidationRules}
 					className="formItemWithBullet"
 				>
@@ -309,62 +305,65 @@ export function PlannedDowntimeForm(
 				</Form.Item>
 				<Form.Item
 					label="Repeats every"
-					name="recurrenceSelect"
-					required={false}
+					name={['recurrence', 'repeatType']}
 					rules={formValidationRules}
 				>
-					<DropdownWithSubMenu
-						options={recurrenceOption}
-						form={form}
-						setRecurrenceOption={setSelectedRecurrenceOption}
+					<Select
+						placeholder="Select option..."
+						options={recurrenceOptionWithSubmenu}
 					/>
 				</Form.Item>
-				{selectedRecurrenceOption !== recurrenceOptions.doesNotRepeat.value && (
+				{recurrenceType === recurrenceOptions.weekly.value && (
 					<Form.Item
-						label="Duration"
-						name={['recurrence', 'duration']}
-						required={false}
+						label="Weekly occurernce"
+						name={['recurrence', 'repeatOn']}
 						rules={formValidationRules}
 					>
-						<Input
-							addonAfter={
-								<Select
-									defaultValue="m"
-									value={
-										getDurationInfo(
-											initialValues.schedule?.recurrence?.duration as string,
-										)?.unit
-									}
-									onChange={(value): void => setDurationUnit(value)}
-								>
-									<Select.Option value="m">Mins</Select.Option>
-									<Select.Option value="h">Hours</Select.Option>
-								</Select>
-							}
-							className="duration-input"
-							type="number"
-							placeholder="Enter duration"
-							min={1}
-							onWheel={(e): void => e.currentTarget.blur()}
+						<Select
+							placeholder="Select option..."
+							mode="multiple"
+							options={Object.values(recurrenceWeeklyOptions)}
 						/>
 					</Form.Item>
-				)}{' '}
-				<Form.Item
-					label="Timezone"
-					name="timezone"
-					required={false}
-					rules={formValidationRules}
-				>
+				)}
+				{recurrenceType &&
+					recurrenceType !== recurrenceOptions.doesNotRepeat.value && (
+						<Form.Item
+							label="Duration"
+							name={['recurrence', 'duration']}
+							rules={formValidationRules}
+						>
+							<Input
+								addonAfter={
+									<Select
+										defaultValue="m"
+										value={durationUnit}
+										onChange={(value): void => {
+											setDurationUnit(value);
+										}}
+									>
+										<Select.Option value="m">Mins</Select.Option>
+										<Select.Option value="h">Hours</Select.Option>
+									</Select>
+								}
+								className="duration-input"
+								type="number"
+								placeholder="Enter duration"
+								min={1}
+								onWheel={(e): void => e.currentTarget.blur()}
+							/>
+						</Form.Item>
+					)}
+				<Form.Item label="Timezone" name="timezone" rules={formValidationRules}>
 					<Select options={timeZoneItems} placeholder="Select timezone" showSearch />
 				</Form.Item>
 				<Form.Item
 					label="Ends on"
 					name="endTime"
-					required={false}
+					required={recurrenceType === recurrenceOptions.doesNotRepeat.value}
 					rules={[
 						{
-							required:
-								selectedRecurrenceOption === recurrenceOptions.doesNotRepeat.value,
+							required: recurrenceType === recurrenceOptions.doesNotRepeat.value,
 						},
 					]}
 					className="formItemWithBullet"
@@ -377,7 +376,12 @@ export function PlannedDowntimeForm(
 					/>
 				</Form.Item>
 				<div>
-					<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
+					<div className="alert-rule-form">
+						<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
+						<Typography style={{ marginBottom: 8 }} className="alert-rule-info">
+							(Leave empty to silence all alerts)
+						</Typography>
+					</div>
 					<Form.Item noStyle shouldUpdate>
 						<AlertRuleTags
 							closable
@@ -385,7 +389,7 @@ export function PlannedDowntimeForm(
 							handleClose={handleClose}
 						/>
 					</Form.Item>
-					<Form.Item name={alertRuleFormName} rules={formValidationRules}>
+					<Form.Item name={alertRuleFormName}>
 						<Select
 							placeholder="Search for alerts rules or groups..."
 							mode="multiple"

@@ -22,6 +22,7 @@ import {
 	formatDateTime,
 	getAlertOptionsFromIds,
 	getDuration,
+	getEndTime,
 	recurrenceInfo,
 } from './PlannedDowntimeutils';
 
@@ -220,6 +221,7 @@ export function CustomCollapseList(
 		setModalOpen,
 		handleDeleteDowntime,
 		setEditMode,
+		kind,
 	} = props;
 
 	const scheduleTime = schedule?.startTime ? schedule.startTime : createdAt;
@@ -227,6 +229,7 @@ export function CustomCollapseList(
 	const formattedDateAndTime = `Start time ⎯ ${formatDateTime(
 		defaultTo(scheduleTime, ''),
 	)}`;
+	const endTime = getEndTime({ kind, schedule });
 
 	return (
 		<>
@@ -255,7 +258,10 @@ export function CustomCollapseList(
 					<CollapseListContent
 						created_at={defaultTo(createdAt, '')}
 						created_by_name={defaultTo(createdBy, '')}
-						timeframe={[schedule?.startTime, schedule?.endTime]}
+						timeframe={[
+							schedule?.startTime?.toString(),
+							typeof endTime === 'string' ? endTime : endTime?.toString(),
+						]}
 						repeats={schedule?.recurrence}
 						updated_at={defaultTo(updatedAt, '')}
 						updated_by_name={defaultTo(updatedBy, '')}

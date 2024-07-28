@@ -149,6 +149,15 @@ export const recurrenceOptions = {
 	monthly: { label: 'Monthly', value: 'monthly' },
 };
 
+export const recurrenceWeeklyOptions = {
+	monday: { label: 'Monday', value: 'monday' },
+	tuesday: { label: 'Tuesday', value: 'tuesday' },
+	wednesday: { label: 'Wednesday', value: 'wednesday' },
+	thursday: { label: 'Thursday', value: 'thursday' },
+	friday: { label: 'Friday', value: 'friday' },
+	saturday: { label: 'Saturday', value: 'saturday' },
+	sunday: { label: 'Sunday', value: 'sunday' },
+};
 interface DurationInfo {
 	value: number;
 	unit: string;
@@ -160,17 +169,75 @@ export function getDurationInfo(
 	if (!durationString) {
 		return null;
 	}
-	// Regular expression to extract value and unit from the duration string
-	const durationRegex = /(\d+)([hms])/;
-	// Match the value and unit parts in the duration string
-	const match = durationString.match(durationRegex);
-	if (match && match.length >= 3) {
-		// Extract value and unit from the match
-		const value = parseInt(match[1], 10);
-		const unit = match[2];
-		// Return duration info object
-		return { value, unit };
+
+	// Regular expressions to extract hours, minutes
+	const hoursRegex = /(\d+)h/;
+	const minutesRegex = /(\d+)m/;
+
+	// Extract hours, minutes from the duration string
+	const hoursMatch = durationString.match(hoursRegex);
+	const minutesMatch = durationString.match(minutesRegex);
+
+	// Convert extracted values to integers, defaulting to 0 if not found
+	const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
+	const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
+
+	// If there are no minutes and only hours, return the hours
+	if (hours > 0 && minutes === 0) {
+		return { value: hours, unit: 'h' };
 	}
-	// If no value or unit part found, return null
-	return null;
+
+	// Otherwise, calculate the total duration in minutes
+	const totalMinutes = hours * 60 + minutes;
+	return { value: totalMinutes, unit: 'm' };
 }
+
+export interface SubOption {
+	label: string;
+	value: string;
+}
+
+export interface Option {
+	label: string;
+	value: string;
+	submenu?: SubOption[];
+}
+
+export const recurrenceOptionWithSubmenu: Option[] = [
+	recurrenceOptions.doesNotRepeat,
+	recurrenceOptions.daily,
+	{
+		...recurrenceOptions.weekly,
+		submenu: Object.values(recurrenceWeeklyOptions),
+	},
+	recurrenceOptions.monthly,
+];
+
+export const getRecurrenceOptionFromValue = (
+	value?: string | Option | null,
+): Option | null | undefined => {
+	if (!value) {
+		return null;
+	}
+	if (typeof value === 'string') {
+		return Object.values(recurrenceOptions).find(
+			(option) => option.value === value,
+		);
+	}
+	return value;
+};
+
+export const getEndTime = ({
+	kind,
+	schedule,
+}: Partial<
+	DowntimeSchedules & {
+		editMode: boolean;
+	}
+>): string | dayjs.Dayjs => {
+	if (kind === 'fixed') {
+		return schedule?.endTime ? dayjs(schedule.endTime) : '';
+	}
+
+	return schedule?.recurrence?.endTime ? dayjs(schedule.recurrence.endTime) : '';
+};
