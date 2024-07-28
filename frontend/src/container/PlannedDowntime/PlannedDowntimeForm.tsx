@@ -93,7 +93,7 @@ export function PlannedDowntimeForm(
 	const [saveLoading, setSaveLoading] = useState(false);
 	const [durationUnit, setDurationUnit] = useState<string>(
 		getDurationInfo(initialValues.schedule?.recurrence?.duration as string)
-			?.unit || '',
+			?.unit || 'm',
 	);
 
 	const [recurrenceType, setRecurrenceType] = useState<string | null>(
