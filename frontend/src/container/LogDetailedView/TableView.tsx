@@ -27,6 +27,7 @@ import { generatePath } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
+import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
 import { ActionItemProps } from './ActionItem';
@@ -48,6 +49,7 @@ interface TableViewProps {
 	fieldSearchInput: string;
 	selectedOptions: OptionsQuery;
 	isListViewPanel?: boolean;
+	listViewPanelSelectedFields?: IField[] | null;
 }
 
 type Props = TableViewProps &
@@ -61,6 +63,7 @@ function TableView({
 	onClickActionItem,
 	isListViewPanel = false,
 	selectedOptions,
+	listViewPanelSelectedFields,
 }: Props): JSX.Element | null {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
@@ -73,15 +76,30 @@ function TableView({
 
 	useEffect(() => {
 		const pinnedAttributes: Record<string, boolean> = {};
-		// handle the nested JSON struct here
-		selectedOptions.selectColumns.forEach((val) => {
-			const path = findKeyPath(logData, val.key, '');
-			if (path) {
-				pinnedAttributes[path] = true;
-			}
-		});
+
+		if (isListViewPanel) {
+			listViewPanelSelectedFields?.forEach((val) => {
+				const path = findKeyPath(logData, val.name, '');
+				if (path) {
+					pinnedAttributes[path] = true;
+				}
+			});
+		} else {
+			selectedOptions.selectColumns.forEach((val) => {
+				const path = findKeyPath(logData, val.key, '');
+				if (path) {
+					pinnedAttributes[path] = true;
+				}
+			});
+		}
+
 		setPinnedAttributes(pinnedAttributes);
-	}, [logData, selectedOptions.selectColumns]);
+	}, [
+		logData,
+		selectedOptions.selectColumns,
+		listViewPanelSelectedFields,
+		isListViewPanel,
+	]);
 
 	const flattenLogData: Record<string, string> | null = useMemo(
 		() => (logData ? flattenObject(logData) : null),
@@ -360,6 +378,7 @@ function TableView({
 
 TableView.defaultProps = {
 	isListViewPanel: false,
+	listViewPanelSelectedFields: null,
 };
 
 interface DataType {

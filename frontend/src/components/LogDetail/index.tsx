@@ -40,6 +40,7 @@ function LogDetail({
 	onClickActionItem,
 	selectedTab,
 	isListViewPanel = false,
+	listViewPanelSelectedFields,
 }: LogDetailProps): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
@@ -210,6 +211,7 @@ function LogDetail({
 					onClickActionItem={onClickActionItem}
 					isListViewPanel={isListViewPanel}
 					selectedOptions={options}
+					listViewPanelSelectedFields={listViewPanelSelectedFields}
 				/>
 			)}
 			{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}
