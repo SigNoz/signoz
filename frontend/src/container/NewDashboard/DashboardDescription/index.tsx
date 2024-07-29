@@ -317,7 +317,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						alt="dashboard-img"
 						style={{ width: '16px', height: '16px' }}
 					/>
-					<Typography.Text className="dashboard-title">{title}</Typography.Text>
+					<Typography.Text className="dashboard-title" data-testid="dashboard-title">
+						{title}
+					</Typography.Text>
 					{isDashboardLocked && <LockKeyhole size={14} />}
 				</div>
 				<div className="right-section">
@@ -354,6 +356,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 												icon={<LockKeyhole size={14} />}
 												disabled={selectedDashboard?.created_by === 'integration'}
 												onClick={handleLockDashboardToggle}
+												data-testid="lock-unlock-dashboard"
 											>
 												{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
 											</Button>
