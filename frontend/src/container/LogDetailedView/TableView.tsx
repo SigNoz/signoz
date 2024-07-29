@@ -33,6 +33,7 @@ import { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
 import {
 	filterKeyForField,
+	findKeyPath,
 	flattenObject,
 	jsonToDataNodes,
 	recursiveParseJSON,
@@ -74,10 +75,13 @@ function TableView({
 		const pinnedAttributes: Record<string, boolean> = {};
 		// handle the nested JSON struct here
 		selectedOptions.selectColumns.forEach((val) => {
-			pinnedAttributes[val.key] = true;
+			const path = findKeyPath(logData, val.key, '');
+			if (path) {
+				pinnedAttributes[path] = true;
+			}
 		});
 		setPinnedAttributes(pinnedAttributes);
-	}, [selectedOptions.selectColumns]);
+	}, [logData, selectedOptions.selectColumns]);
 
 	const flattenLogData: Record<string, string> | null = useMemo(
 		() => (logData ? flattenObject(logData) : null),
@@ -342,7 +346,6 @@ function TableView({
 
 	const sortedAttributes = sortPinnedAttributes(dataSource, pinnedAttributes);
 
-	console.log(sortedAttributes);
 	return (
 		<ResizeTable
 			columns={columns}
