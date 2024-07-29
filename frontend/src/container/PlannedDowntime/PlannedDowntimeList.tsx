@@ -320,6 +320,12 @@ export function PlannedDowntimeList({
 	const { notifications } = useNotifications();
 
 	const tableData = (downtimeSchedules.data?.data?.data || [])
+		.sort((a, b): number => {
+			if (a?.updatedAt && b?.updatedAt) {
+				return b.updatedAt.localeCompare(a.updatedAt);
+			}
+			return 0;
+		})
 		?.filter(
 			(data) =>
 				data?.name?.includes(searchValue.toLocaleString()) ||
