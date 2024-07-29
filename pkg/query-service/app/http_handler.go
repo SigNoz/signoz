@@ -29,12 +29,14 @@ import (
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
@@ -397,6 +399,22 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/nextPrevErrorIDs", am.ViewAccess(aH.getNextPrevErrorIDs)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
+
+	// === Preference APIs === 
+	
+	// user actions
+	router.HandleFunc("/api/v1/user/preferences", am.ViewAccess(aH.getAllUserPreferences)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.getUserPreference)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.updateUserPreference)).Methods(http.MethodPut)
+
+	// org actions
+	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.getAllOrgPreferences)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.getOrgPreference)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.updateOrgPreference)).Methods(http.MethodPut)
 
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
@@ -2190,6 +2208,115 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	resp, _ := marshall(response)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resp)
+}
+
+// Preferences
+
+func (ah *APIHandler) getUserPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
+
+	preference, apiErr := preferences.GetUserPreference(
+		r.Context(), preferenceId, user.User.OrgId, user.User.Id,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
+func (ah *APIHandler) updateUserPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
+	req := preferences.UpdatePreference{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.Id)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
+func (ah *APIHandler) getAllUserPreferences(
+	w http.ResponseWriter, r *http.Request,
+) {
+	user := common.GetUserFromContext(r.Context())
+	preference, apiErr := preferences.GetAllUserPreferences(
+		r.Context(), user.User.OrgId, user.User.Id,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
+func (ah *APIHandler) getOrgPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
+	preference, apiErr := preferences.GetOrgPreference(
+		r.Context(), preferenceId, user.User.OrgId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
+func (ah *APIHandler) updateOrgPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	req := preferences.UpdatePreference{}
+	user := common.GetUserFromContext(r.Context())
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.OrgId)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
+func (ah *APIHandler) getAllOrgPreferences(
+	w http.ResponseWriter, r *http.Request,
+) {
+	user := common.GetUserFromContext(r.Context())
+	preference, apiErr := preferences.GetAllOrgPreferences(
+		r.Context(), user.User.OrgId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
 }
 
 // Integrations
