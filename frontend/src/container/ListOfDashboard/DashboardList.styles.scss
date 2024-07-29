@@ -43,6 +43,10 @@
 				background: var(--bg-ink-400);
 				cursor: pointer;
 
+				.dashboard-link {
+					color: var(--Vanilla-100)
+				}
+
 				.title-with-action {
 					display: flex;
 					justify-content: space-between;
