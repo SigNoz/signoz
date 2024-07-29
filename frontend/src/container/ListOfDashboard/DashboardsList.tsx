@@ -455,7 +455,7 @@ function DashboardsList(): JSX.Element {
 									alt="dashboard-image"
 								/>
 								<Typography.Text data-testid={`dashboard-title-${index}`}>
-									<Link to={getLink()} className="dashboard-link">
+									<Link to={getLink()} className="dashboard-title">
 										{dashboard.name}
 									</Link>
 								</Typography.Text>
