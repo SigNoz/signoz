@@ -712,14 +712,13 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 
 	// The `top_level_operations` that have `time` >= start
 	operations := map[string][]string{}
-	// All top level operations for a service
 	// We can't use the `end` because the `top_level_operations` table has the most recent instances of the operations
 	// We can only use the `start` time to filter the operations
-	allOperations := map[string][]string{}
-	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName FROM %s.%s WHERE time >= @start`, r.TraceDB, r.topLevelOperationsTable)
+	query := fmt.Sprintf(`SELECT name, serviceName, max(time) as ts FROM %s.%s WHERE time >= @start`, r.TraceDB, r.topLevelOperationsTable)
 	if len(services) > 0 {
 		query += ` AND serviceName IN @services`
 	}
+	query += ` GROUP BY name, serviceName ORDER BY ts DESC LIMIT 5000`
 
 	rows, err := r.db.Query(ctx, query, clickhouse.Named("start", start), clickhouse.Named("services", services))
 
@@ -731,19 +730,16 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 	defer rows.Close()
 	for rows.Next() {
 		var name, serviceName string
-		if err := rows.Scan(&name, &serviceName); err != nil {
+		var t time.Time
+		if err := rows.Scan(&name, &serviceName, &t); err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error in reading data")}
 		}
 		if _, ok := operations[serviceName]; !ok {
-			operations[serviceName] = []string{}
-		}
-		if _, ok := allOperations[serviceName]; !ok {
-			allOperations[serviceName] = []string{}
+			operations[serviceName] = []string{"overflow_operation"}
 		}
 		if skipConfig.ShouldSkip(serviceName, name) {
 			continue
 		}
-		allOperations[serviceName] = append(allOperations[serviceName], name)
 		operations[serviceName] = append(operations[serviceName], name)
 	}
 	return &operations, nil
