@@ -142,16 +142,16 @@ var timeResourceBucketFilterData = []struct {
 	{
 		Name: "Test IN",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeResource}, Value: []interface{}{1, 2, 3, 4}, Operator: "in"},
+			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: []interface{}{"1", "2"}, Operator: "in"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'bytes') IN [1,2,3,4] AND lower(labels) like '%bytes%'",
+		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'bytes') IN ['1','2'] AND (lower(labels) like '%\"bytes\":\"1\"%' OR lower(labels) like '%\"bytes\":\"2\"%')",
 	},
 	{
 		Name: "Test NOT IN",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: []interface{}{"john", "bunny"}, Operator: "nin"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'name') NOT IN ['john','bunny'] AND lower(labels) not like '%name%'",
+		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'name') NOT IN ['john','bunny'] AND (lower(labels) not like '%\"name\":\"john\"%' AND lower(labels) not like '%\"name\":\"bunny\"%')",
 	},
 	{
 		Name: "Test exists",

@@ -302,8 +302,34 @@ func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, ord
 				case v3.FilterOperatorNotContains, v3.FilterOperatorNotEqual, v3.FilterOperatorNotLike:
 					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
 					andConditions = append(andConditions, fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", strings.ToLower(item.Key.Key), strings.ToLower(val)))
-				case v3.FilterOperatorNotRegex, v3.FilterOperatorNotIn:
+				case v3.FilterOperatorNotRegex:
 					andConditions = append(andConditions, fmt.Sprintf("lower(labels) not like '%%%s%%'", strings.ToLower(item.Key.Key)))
+				case v3.FilterOperatorIn, v3.FilterOperatorNotIn:
+
+					// for in operator value needs to used for indexing in a different way.
+					// eg1:= x in a,b,c = (labels like '%x%a%' or labels like '%"x":"b"%' or labels like '%"x"="c"%')
+					// eg1:= x nin a,b,c = (labels nlike '%x%a%' AND labels nlike '%"x"="b"' AND labels nlike '%"x"="c"%')
+					tCondition := []string{}
+
+					separator := " OR "
+					sqlOp := "like"
+					if op == v3.FilterOperatorNotIn {
+						separator = " AND "
+						sqlOp = "not like"
+					}
+					for _, v := range (item.Value).([]interface{}) {
+						// also resources attributes are always string values
+						strV, ok := v.(string)
+						if !ok {
+							continue
+						}
+
+						tCondition = append(tCondition, fmt.Sprintf("lower(labels) %s '%%\"%s\":\"%s\"%%'", sqlOp, strings.ToLower(item.Key.Key), strV))
+					}
+					if len(tCondition) > 0 {
+						andConditions = append(andConditions, "("+strings.Join(tCondition, separator)+")")
+					}
+
 				default:
 					andConditions = append(andConditions, fmt.Sprintf("lower(labels) like '%%%s%%'", strings.ToLower(item.Key.Key)))
 				}
