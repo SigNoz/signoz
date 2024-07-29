@@ -190,7 +190,6 @@ function LogsExplorerList({
 						onClose={onClearActiveLog}
 						onAddToQuery={onAddToQuery}
 						onClickActionItem={onAddToQuery}
-						options={options}
 					/>
 				</>
 			)}
