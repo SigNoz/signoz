@@ -1347,8 +1347,44 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
 
 	var start, end time.Time
+	var services []string
 
-	result, _, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end)
+	type topLevelOpsParams struct {
+		Service string `json:"service"`
+		Start   string `json:"start"`
+		End     string `json:"end"`
+	}
+
+	var params topLevelOpsParams
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		zap.L().Error("Error in getting req body for get top operations API", zap.Error(err))
+	}
+
+	if params.Service != "" {
+		services = []string{params.Service}
+	}
+
+	startEpoch := params.Start
+	if startEpoch != "" {
+		startEpochInt, err := strconv.ParseInt(startEpoch, 10, 64)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading start time")
+			return
+		}
+		start = time.Unix(0, startEpochInt)
+	}
+	endEpoch := params.End
+	if endEpoch != "" {
+		endEpochInt, err := strconv.ParseInt(endEpoch, 10, 64)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading end time")
+			return
+		}
+		end = time.Unix(0, endEpochInt)
+	}
+
+	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end, services)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
