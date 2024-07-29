@@ -415,6 +415,7 @@ function APIKeys(): JSX.Element {
 									<Button
 										className="periscope-btn ghost"
 										icon={<PenLine size={14} />}
+										data-testid="token-item-edit-button"
 										onClick={(e): void => {
 											e.stopPropagation();
 											e.preventDefault();
@@ -425,6 +426,7 @@ function APIKeys(): JSX.Element {
 									<Button
 										className="periscope-btn ghost"
 										icon={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+										data-testid="token-item-delete-button"
 										onClick={(e): void => {
 											e.stopPropagation();
 											e.preventDefault();
@@ -435,7 +437,7 @@ function APIKeys(): JSX.Element {
 							</div>
 						),
 						children: (
-							<div className="api-key-info-container">
+							<div className="api-key-info-container" data-testid="api-key-body">
 								{APIKey?.createdByUser && (
 									<Row>
 										<Col span={6}> Creator </Col>
@@ -477,7 +479,7 @@ function APIKeys(): JSX.Element {
 				];
 
 				return (
-					<div className="column-render">
+					<div className="column-render" data-testid="api-key-row">
 						<Collapse items={items} />
 
 						<div className="api-key-details">
@@ -523,7 +525,13 @@ function APIKeys(): JSX.Element {
 				<div className="api-keys-search-add-new">
 					<Input
 						placeholder="Search for token..."
-						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
+						prefix={
+							<Search
+								size={12}
+								color={Color.BG_VANILLA_400}
+								data-testid="search-icon"
+							/>
+						}
 						value={searchValue}
 						onChange={handleSearch}
 					/>
@@ -531,6 +539,7 @@ function APIKeys(): JSX.Element {
 					<Button
 						className="add-new-api-key-btn"
 						type="primary"
+						data-testid="api-keys-new-token-button"
 						onClick={showAddModal}
 					>
 						<Plus size={14} /> New Token
@@ -555,6 +564,7 @@ function APIKeys(): JSX.Element {
 			<Modal
 				className="delete-api-key-modal"
 				title={<span className="title">Delete Token</span>}
+				data-testid="delete-api-key-modal"
 				open={isDeleteModalOpen}
 				closable
 				afterClose={handleModalClose}
@@ -575,6 +585,7 @@ function APIKeys(): JSX.Element {
 						loading={isDeleteingAPIKey}
 						onClick={onDeleteHandler}
 						className="delete-btn"
+						data-testid="delete-modal-delete-button"
 					>
 						Delete Token
 					</Button>,
@@ -591,6 +602,7 @@ function APIKeys(): JSX.Element {
 			<Modal
 				className="api-key-modal"
 				title="Edit token"
+				data-testid="edit-api-key-modal"
 				open={isEditModalOpen}
 				key="edit-api-key-modal"
 				afterClose={handleModalClose}
@@ -613,6 +625,7 @@ function APIKeys(): JSX.Element {
 						loading={isLoadingUpdateAPIKey}
 						icon={<Check size={14} />}
 						onClick={onUpdateApiKey}
+						data-testid="edit-modal-update-button"
 					>
 						Update Token
 					</Button>,
@@ -668,6 +681,7 @@ function APIKeys(): JSX.Element {
 			{/* Create New Key Modal */}
 			<Modal
 				className="api-key-modal"
+				data-testid="create-api-key-modal"
 				title="Create new token"
 				open={isAddModalOpen}
 				key="create-api-key-modal"
@@ -763,13 +777,17 @@ function APIKeys(): JSX.Element {
 								className="expiration-selector"
 								placeholder="Expiration"
 								options={API_KEY_EXPIRY_OPTIONS}
+								data-testid="api-key-expiration-dropdown"
 							/>
 						</Form.Item>
 					</Form>
 				)}
 
 				{showNewAPIKeyDetails && (
-					<div className="api-key-info-container">
+					<div
+						className="api-key-info-container"
+						data-testid="new-token-success-modal"
+					>
 						<Row>
 							<Col span={8}>Token</Col>
 							<Col span={16}>
