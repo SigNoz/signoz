@@ -23,7 +23,7 @@ import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
-import GetMinMax from 'lib/getMinMax';
+import GetMinMax, { isValidTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { isObject } from 'lodash-es';
@@ -73,6 +73,7 @@ function DateTimeSelection({
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
+	const relativeTimeFromUrl = urlQuery.get(QueryParams.relativeTime);
 	const queryClient = useQueryClient();
 	const [enableAbsoluteTime, setEnableAbsoluteTime] = useState(false);
 	const [isValidteRelativeTime, setIsValidteRelativeTime] = useState(false);
@@ -404,9 +405,18 @@ function DateTimeSelection({
 		time: Time,
 		currentRoute: string,
 	): Time | CustomTimeType => {
+		// if the relativeTime param is present in the url give top most preference to the same
+		// if the relativeTime param is not valid then move to next preference
+		if (relativeTimeFromUrl != null && isValidTimeFormat(relativeTimeFromUrl)) {
+			return relativeTimeFromUrl as Time;
+		}
+
+		// if the startTime and endTime params are present in the url give next preference to the them.
 		if (searchEndTime !== null && searchStartTime !== null) {
 			return 'custom';
 		}
+
+		// if nothing is present in the url for time range then rely on the local storage values
 		if (
 			(localstorageEndTime === null || localstorageStartTime === null) &&
 			time === 'custom'
@@ -414,6 +424,7 @@ function DateTimeSelection({
 			return getDefaultOption(currentRoute);
 		}
 
+		// if not present in the local storage as well then rely on the defaults set for the page
 		if (OLD_RELATIVE_TIME_VALUES.indexOf(time) > -1) {
 			return convertOldTimeToNewValidCustomTimeFormat(time);
 		}
@@ -448,7 +459,11 @@ function DateTimeSelection({
 
 		setRefreshButtonHidden(updatedTime === 'custom');
 
-		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
+		if (updatedTime !== 'custom') {
+			updateTimeInterval(updatedTime);
+		} else {
+			updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
+		}
 
 		if (updatedTime !== 'custom') {
 			urlQuery.delete('startTime');

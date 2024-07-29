@@ -829,7 +829,7 @@ export function QueryBuilderProvider({
 				unit,
 			}));
 		},
-		[setCurrentQuery],
+		[setCurrentQuery, setSupersetQuery],
 	);
 
 	const query: Query = useMemo(

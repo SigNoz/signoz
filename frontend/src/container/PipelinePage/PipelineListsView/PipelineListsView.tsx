@@ -5,7 +5,6 @@ import { Card, Modal, Table, Typography } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import savePipeline from 'api/pipeline/post';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useNotifications } from 'hooks/useNotifications';
 import { isUndefined } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -100,7 +99,6 @@ function PipelineListsView({
 	const [modal, contextHolder] = Modal.useModal();
 	const { notifications } = useNotifications();
 	const [pipelineSearchValue, setPipelineSearchValue] = useState<string>('');
-	const { trackEvent } = useAnalytics();
 	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
 		cloneDeep(pipelineData?.pipelines || []),
 	);
@@ -376,7 +374,7 @@ function PipelineListsView({
 	const addNewPipelineHandler = useCallback((): void => {
 		setActionType(ActionType.AddPipeline);
 
-		trackEvent('Logs: Pipelines: Clicked Add New Pipeline', {
+		logEvent('Logs: Pipelines: Clicked Add New Pipeline', {
 			source: 'signoz-ui',
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -415,7 +413,7 @@ function PipelineListsView({
 			setCurrPipelineData(pipelinesInDB);
 			setPrevPipelineData(pipelinesInDB);
 
-			trackEvent('Logs: Pipelines: Saved Pipelines', {
+			logEvent('Logs: Pipelines: Saved Pipelines', {
 				count: pipelinesInDB.length,
 				enabled: pipelinesInDB.filter((p) => p.enabled).length,
 				source: 'signoz-ui',

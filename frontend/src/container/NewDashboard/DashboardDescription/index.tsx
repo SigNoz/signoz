@@ -300,17 +300,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						{title}
 					</Button>
 				</section>
-				<FacingIssueBtn
-					attributes={{
-						uuid: selectedDashboard?.uuid,
-						title: updatedTitle,
-						screen: 'Dashboard Details',
-					}}
-					eventName="Dashboard: Facing Issues in dashboard"
-					message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
-					buttonText="Facing issues with dashboards?"
-					onHoverText="Click here to get help with dashboard details"
-				/>
 			</div>
 			<section className="dashbord-details">
 				<div className="left-section">
@@ -323,6 +312,18 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					{isDashboardLocked && <LockKeyhole size={14} />}
 				</div>
 				<div className="right-section">
+					<FacingIssueBtn
+						attributes={{
+							uuid: selectedDashboard?.uuid,
+							title: updatedTitle,
+							screen: 'Dashboard Details',
+						}}
+						eventName="Dashboard: Facing Issues in dashboard"
+						message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
+						buttonText="Need help with this dashboard?"
+						onHoverText="Click here to get help with dashboard"
+						intercomMessageDisabled
+					/>
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					<Popover
 						open={isDashboardSettingsOpen}

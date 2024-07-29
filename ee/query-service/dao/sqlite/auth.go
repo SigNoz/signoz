@@ -20,10 +20,13 @@ import (
 func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (*basemodel.User, basemodel.BaseApiError) {
 	// get auth domain from email domain
 	domain, apierr := m.GetDomainByEmail(ctx, email)
-
 	if apierr != nil {
 		zap.L().Error("failed to get domain from email", zap.Error(apierr))
 		return nil, model.InternalErrorStr("failed to get domain from email")
+	}
+	if domain == nil {
+		zap.L().Error("email domain does not match any authenticated domain", zap.String("email", email))
+		return nil, model.InternalErrorStr("email domain does not match any authenticated domain")
 	}
 
 	hash, err := baseauth.PasswordHash(utils.GeneratePassowrd())

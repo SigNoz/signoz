@@ -5,9 +5,9 @@ import {
 	CloseCircleTwoTone,
 	LoadingOutlined,
 } from '@ant-design/icons';
+import logEvent from 'api/common/logEvent';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
@@ -40,8 +40,6 @@ export default function ConnectionStatus(): JSX.Element {
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
 		[queries],
 	);
-
-	const { trackEvent } = useAnalytics();
 
 	const [retryCount, setRetryCount] = useState(20); // Retry for 3 mins 20s
 	const [loading, setLoading] = useState(true);
@@ -155,7 +153,7 @@ export default function ConnectionStatus(): JSX.Element {
 		if (data || isError) {
 			setRetryCount(retryCount - 1);
 			if (retryCount < 0) {
-				trackEvent('Onboarding V2: Connection Status', {
+				logEvent('Onboarding V2: Connection Status', {
 					dataSource: selectedDataSource?.id,
 					framework: selectedFramework,
 					environment: selectedEnvironment,
@@ -174,7 +172,7 @@ export default function ConnectionStatus(): JSX.Element {
 					setLoading(false);
 					setIsReceivingData(true);
 
-					trackEvent('Onboarding V2: Connection Status', {
+					logEvent('Onboarding V2: Connection Status', {
 						dataSource: selectedDataSource?.id,
 						framework: selectedFramework,
 						environment: selectedEnvironment,

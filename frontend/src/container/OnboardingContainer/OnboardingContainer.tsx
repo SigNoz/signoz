@@ -11,7 +11,6 @@ import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/InviteUserModal';
 import { InviteMemberFormValues } from 'container/OrganizationSettings/PendingInvitesContainer';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import history from 'lib/history';
 import { UserPlus } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -104,7 +103,6 @@ export default function Onboarding(): JSX.Element {
 	const [selectedModuleSteps, setSelectedModuleSteps] = useState(APM_STEPS);
 	const [activeStep, setActiveStep] = useState(1);
 	const [current, setCurrent] = useState(0);
-	const { trackEvent } = useAnalytics();
 	const { location } = history;
 	const { t } = useTranslation(['onboarding']);
 
@@ -120,7 +118,7 @@ export default function Onboarding(): JSX.Element {
 	} = useOnboardingContext();
 
 	useEffectOnce(() => {
-		trackEvent('Onboarding V2 Started');
+		logEvent('Onboarding V2 Started', {});
 	});
 
 	const { status, data: ingestionData } = useQuery({
@@ -231,7 +229,7 @@ export default function Onboarding(): JSX.Element {
 			const nextStep = activeStep + 1;
 
 			// on next
-			trackEvent('Onboarding V2: Get Started', {
+			logEvent('Onboarding V2: Get Started', {
 				selectedModule: selectedModule.id,
 				nextStepId: nextStep,
 			});

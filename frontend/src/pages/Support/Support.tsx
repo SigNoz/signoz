@@ -1,7 +1,7 @@
 import './Support.styles.scss';
 
 import { Button, Card, Typography } from 'antd';
-import useAnalytics from 'hooks/analytics/useAnalytics';
+import logEvent from 'api/common/logEvent';
 import {
 	Book,
 	Cable,
@@ -85,7 +85,6 @@ const supportChannels = [
 ];
 
 export default function Support(): JSX.Element {
-	const { trackEvent } = useAnalytics();
 	const history = useHistory();
 
 	const handleChannelWithRedirects = (url: string): void => {
@@ -97,7 +96,7 @@ export default function Support(): JSX.Element {
 			const histroyState = history?.location?.state as any;
 
 			if (histroyState && histroyState?.from) {
-				trackEvent(`Support : From URL : ${histroyState.from}`);
+				logEvent(`Support : From URL : ${histroyState.from}`, {});
 			}
 		}
 
@@ -129,7 +128,7 @@ export default function Support(): JSX.Element {
 	};
 
 	const handleChannelClick = (channel: Channel): void => {
-		trackEvent(`Support : ${channel.name}`);
+		logEvent(`Support : ${channel.name}`, {});
 
 		switch (channel.key) {
 			case channelsMap.documentation:

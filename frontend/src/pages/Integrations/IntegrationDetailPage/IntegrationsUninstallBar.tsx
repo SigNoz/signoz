@@ -1,9 +1,9 @@
 import './IntegrationDetailPage.styles.scss';
 
 import { Button, Modal, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import unInstallIntegration from 'api/Integrations/uninstallIntegration';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useNotifications } from 'hooks/useNotifications';
 import { X } from 'lucide-react';
 import { useState } from 'react';
@@ -30,8 +30,6 @@ function IntergrationsUninstallBar(
 	const { notifications } = useNotifications();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
-	const { trackEvent } = useAnalytics();
-
 	const {
 		mutate: uninstallIntegration,
 		isLoading: isUninstallLoading,
@@ -52,7 +50,7 @@ function IntergrationsUninstallBar(
 	};
 
 	const handleOk = (): void => {
-		trackEvent(
+		logEvent(
 			INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_DETAIL_REMOVE_INTEGRATION,
 			{
 				integration: integrationId,
