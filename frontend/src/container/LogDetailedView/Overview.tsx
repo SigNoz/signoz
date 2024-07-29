@@ -12,6 +12,7 @@ import {
 	Typography,
 } from 'antd';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronRight, Search } from 'lucide-react';
 import { ReactNode, useState } from 'react';
@@ -23,6 +24,7 @@ import TableView from './TableView';
 interface OverviewProps {
 	logData: ILog;
 	isListViewPanel?: boolean;
+	selectedOptions: OptionsQuery;
 }
 
 type Props = OverviewProps &
@@ -34,6 +36,7 @@ function Overview({
 	onAddToQuery,
 	onClickActionItem,
 	isListViewPanel = false,
+	selectedOptions,
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
@@ -200,6 +203,7 @@ function Overview({
 									fieldSearchInput={fieldSearchInput}
 									onClickActionItem={onClickActionItem}
 									isListViewPanel={isListViewPanel}
+									selectedOptions={selectedOptions}
 								/>
 							</>
 						),

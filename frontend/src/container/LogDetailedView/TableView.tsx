@@ -6,17 +6,15 @@ import { LinkOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Space, Spin, Tooltip, Tree, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import getLocalStorageApi from 'api/browser/localstorage/get';
-import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import AddToQueryHOC, {
 	AddToQueryHOCProps,
 } from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
@@ -47,6 +45,7 @@ const RESTRICTED_FIELDS = ['timestamp'];
 interface TableViewProps {
 	logData: ILog;
 	fieldSearchInput: string;
+	selectedOptions: OptionsQuery;
 	isListViewPanel?: boolean;
 }
 
@@ -60,6 +59,7 @@ function TableView({
 	onAddToQuery,
 	onClickActionItem,
 	isListViewPanel = false,
+	selectedOptions,
 }: Props): JSX.Element | null {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
@@ -71,21 +71,13 @@ function TableView({
 	>({});
 
 	useEffect(() => {
-		const pinnedAttributesFromLocalStorage = getLocalStorageApi(
-			LOCALSTORAGE.PINNED_ATTRIBUTES,
-		);
-
-		if (pinnedAttributesFromLocalStorage) {
-			try {
-				const parsedPinnedAttributes = JSON.parse(pinnedAttributesFromLocalStorage);
-				setPinnedAttributes(parsedPinnedAttributes);
-			} catch (e) {
-				console.error('Error parsing pinned attributes from local storgage');
-			}
-		} else {
-			setPinnedAttributes({});
-		}
-	}, []);
+		const pinnedAttributes: Record<string, boolean> = {};
+		// handle the nested JSON struct here
+		selectedOptions.selectColumns.forEach((val) => {
+			pinnedAttributes[val.key] = true;
+		});
+		setPinnedAttributes(pinnedAttributes);
+	}, [selectedOptions.selectColumns]);
 
 	const flattenLogData: Record<string, string> | null = useMemo(
 		() => (logData ? flattenObject(logData) : null),
@@ -100,19 +92,6 @@ function TableView({
 		const validatedFieldValue = removeJSONStringifyQuotes(fieldValue);
 		if (onClickActionItem) {
 			onClickActionItem(fieldKey, validatedFieldValue, operator);
-		}
-	};
-
-	const togglePinAttribute = (record: DataType): void => {
-		if (record) {
-			const newPinnedAttributes = { ...pinnedAttributes };
-			newPinnedAttributes[record.key] = !newPinnedAttributes[record.key];
-			setPinnedAttributes(newPinnedAttributes);
-
-			setLocalStorageApi(
-				LOCALSTORAGE.PINNED_ATTRIBUTES,
-				JSON.stringify(newPinnedAttributes),
-			);
 		}
 	};
 
@@ -201,11 +180,8 @@ function TableView({
 								'pin-attribute-icon',
 								pinnedAttributes[record?.key] ? 'pinned' : '',
 							)}
-							onClick={(): void => {
-								togglePinAttribute(record);
-							}}
 						>
-							<Pin size={14} color={pinColor} />
+							{pinnedAttributes[record?.key] && <Pin size={14} color={pinColor} />}
 						</div>
 					</div>
 				);
@@ -366,6 +342,7 @@ function TableView({
 
 	const sortedAttributes = sortPinnedAttributes(dataSource, pinnedAttributes);
 
+	console.log(sortedAttributes);
 	return (
 		<ResizeTable
 			columns={columns}
