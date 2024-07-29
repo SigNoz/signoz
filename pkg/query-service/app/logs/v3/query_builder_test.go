@@ -130,28 +130,28 @@ var timeResourceBucketFilterData = []struct {
 			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "john", Operator: "="},
 			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "my_service", Operator: "!="},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'k8s_namespace') != 'my_service' AND lower(labels) not like '%k8s_namespace%my_service%'",
+		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'k8s_namespace') != 'my_service' AND lower(labels) not like '%k8s_namespace%my_service%'",
 	},
 	{
 		Name: "Test like",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.%", Operator: "like"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'host') LIKE '102.%' AND lower(labels) like '%host%102.%%'",
+		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'host') LIKE '102.%' AND lower(labels) like '%host%102.%%'",
 	},
 	{
 		Name: "Test IN",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeResource}, Value: []interface{}{1, 2, 3, 4}, Operator: "in"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'bytes') IN [1,2,3,4] AND lower(labels) like '%bytes%'",
+		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'bytes') IN [1,2,3,4] AND lower(labels) like '%bytes%'",
 	},
 	{
 		Name: "Test NOT IN",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: []interface{}{"john", "bunny"}, Operator: "nin"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'name') NOT IN ['john','bunny'] AND lower(labels) not like '%name%'",
+		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'name') NOT IN ['john','bunny'] AND lower(labels) not like '%name%'",
 	},
 	{
 		Name: "Test exists",
@@ -172,35 +172,35 @@ var timeResourceBucketFilterData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.", Operator: "contains"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'host') LIKE '%102.%' AND lower(labels) like '%host%102.%'",
+		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'host') LIKE '%102.%' AND lower(labels) like '%host%102.%'",
 	},
 	{
 		Name: "Test contains with single quotes",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "hello 'world'", Operator: "contains"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'message') LIKE '%hello \\'world\\'%' AND lower(labels) like '%message%hello \\'world\\'%'",
+		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'message') LIKE '%hello \\'world\\'%' AND lower(labels) like '%message%hello \\'world\\'%'",
 	},
 	{
 		Name: "Test not contains",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.", Operator: "ncontains"},
 		}},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'host') NOT LIKE '%102.%' AND lower(labels) not like '%host%102.%'",
+		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'host') NOT LIKE '%102.%' AND lower(labels) not like '%host%102.%'",
 	},
 	{
 		Name: "Test regex",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource, IsColumn: true}, Value: "host: \"(?P<host>\\S+)\"", Operator: "regex"},
 		}},
-		ExpectedFilter: "match(simpleJSONExtractString(labels, 'host'), 'host: \"(?P<host>\\\\S+)\"') AND lower(labels) like '%host%'",
+		ExpectedFilter: "match(simpleJSONExtractString(lower(labels), 'host'), 'host: \"(?P<host>\\\\S+)\"') AND lower(labels) like '%host%'",
 	},
 	{
 		Name: "Test not regex",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.", Operator: "nregex"},
 		}},
-		ExpectedFilter: "NOT match(simpleJSONExtractString(labels, 'host'), '102.') AND lower(labels) not like '%host%'",
+		ExpectedFilter: "NOT match(simpleJSONExtractString(lower(labels), 'host'), '102.') AND lower(labels) not like '%host%'",
 	},
 	{
 		Name: "Wrong data",
@@ -225,7 +225,7 @@ var timeResourceBucketFilterData = []struct {
 			{Key: "service.name", Type: v3.AttributeKeyTypeResource},
 		},
 		AggregateAttribute: v3.AttributeKey{Key: "container_name", Type: v3.AttributeKeyTypeResource},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'host') LIKE '102.%' AND lower(labels) like '%host%102.%%' AND (simpleJSONHas(labels, 'container_name') AND " +
+		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'host') LIKE '102.%' AND lower(labels) like '%host%102.%%' AND (simpleJSONHas(labels, 'container_name') AND " +
 			"lower(labels) like '%container_name%') AND ( (simpleJSONHas(labels, 'service.name') AND lower(labels) like '%service.name%') )",
 	},
 	{
@@ -243,7 +243,7 @@ var timeResourceBucketFilterData = []struct {
 			{Key: "project.name", Type: v3.AttributeKeyTypeResource, Order: "DESC"},
 		},
 		AggregateAttribute: v3.AttributeKey{Key: "container_name", Type: v3.AttributeKeyTypeResource},
-		ExpectedFilter: "simpleJSONExtractString(labels, 'host') LIKE '102.%' AND lower(labels) like '%host%102.%%' AND (simpleJSONHas(labels, 'container_name') AND " +
+		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'host') LIKE '102.%' AND lower(labels) like '%host%102.%%' AND (simpleJSONHas(labels, 'container_name') AND " +
 			"lower(labels) like '%container_name%') AND ( (simpleJSONHas(labels, 'service.name') AND lower(labels) like '%service.name%') AND (simpleJSONHas(labels, 'project.name') AND lower(labels) like '%project.name%') )",
 	},
 }
@@ -566,7 +566,7 @@ var testBuildLogsQueryData = []struct {
 			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND " +
 			"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND " +
 			"mapContains(attributes_string, 'user_name') AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
-			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'bytes') > 100.000000" +
+			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(lower(labels), 'bytes') > 100.000000" +
 			" AND lower(labels) like '%bytes%')) group by ts order by value DESC",
 	},
 	{
@@ -672,7 +672,7 @@ var testBuildLogsQueryData = []struct {
 			"AND attributes_string['method'] = 'GET' " +
 			"AND mapContains(attributes_string, 'method') AND `attribute_string_name_exists`=true " +
 			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
-			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'x') != 'abc' " +
+			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(lower(labels), 'x') != 'abc' " +
 			"AND lower(labels) not like '%x%abc%')) group by `method`,ts " +
 			"order by `method` ASC",
 	},
@@ -704,7 +704,7 @@ var testBuildLogsQueryData = []struct {
 			"AND attributes_string['method'] = 'GET' " +
 			"AND mapContains(attributes_string, 'method') AND `attribute_string_name_exists`=true " +
 			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
-			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'x') != 'abc' " +
+			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(lower(labels), 'x') != 'abc' " +
 			"AND lower(labels) not like '%x%abc%' AND ( (simpleJSONHas(labels, 'x') AND lower(labels) like '%x%') ))) group by `method`,`x`,ts order by `method` ASC,`x` ASC",
 	},
 	{

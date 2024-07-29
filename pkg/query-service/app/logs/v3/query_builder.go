@@ -274,7 +274,7 @@ func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, ord
 				}
 			}
 
-			columnName := fmt.Sprintf("simpleJSONExtractString(labels, '%s')", item.Key.Key)
+			columnName := fmt.Sprintf("simpleJSONExtractString(lower(labels), '%s')", item.Key.Key)
 
 			if logsOp, ok := logOperators[op]; ok {
 				switch op {
@@ -284,23 +284,24 @@ func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, ord
 					andConditions = append(andConditions, fmt.Sprintf("not simpleJSONHas(labels, '%s')", item.Key.Key))
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					fmtVal := utils.ClickHouseFormattedValue(value)
+					// for regex don't lowercase it as it will result in something else
 					andConditions = append(andConditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
-					andConditions = append(andConditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
+					andConditions = append(andConditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, strings.ToLower(val)))
 				default:
 					fmtVal := utils.ClickHouseFormattedValue(value)
-					andConditions = append(andConditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
+					andConditions = append(andConditions, fmt.Sprintf("%s %s %s", columnName, logsOp, strings.ToLower(fmtVal)))
 				}
 
 				// add index filters
 				switch op {
 				case v3.FilterOperatorContains, v3.FilterOperatorEqual, v3.FilterOperatorLike:
 					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
-					andConditions = append(andConditions, fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", item.Key.Key, val))
+					andConditions = append(andConditions, fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", strings.ToLower(item.Key.Key), strings.ToLower(val)))
 				case v3.FilterOperatorNotContains, v3.FilterOperatorNotEqual, v3.FilterOperatorNotLike:
 					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
-					andConditions = append(andConditions, fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", item.Key.Key, val))
+					andConditions = append(andConditions, fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", strings.ToLower(item.Key.Key), strings.ToLower(val)))
 				case v3.FilterOperatorNotRegex, v3.FilterOperatorNotIn:
 					andConditions = append(andConditions, fmt.Sprintf("lower(labels) not like '%%%s%%'", strings.ToLower(item.Key.Key)))
 				default:
@@ -365,18 +366,18 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 
 	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", logsStart, logsEnd)
 
-	tableName := "distributed_logs"
-
-	// panel type filter is not added because user can choose table type and get the default count
-	if len(filterSubQuery) > 0 || len(mq.GroupBy) > 0 {
-		tableName = DISTRIBUTED_LOGS_V2
-
-		timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", bucketStart, bucketEnd)
-	}
-
 	resourceBucketFilters, err := buildResourceBucketFilters(mq.Filters, mq.GroupBy, mq.OrderBy, mq.AggregateAttribute)
 	if err != nil {
 		return "", err
+	}
+
+	tableName := "distributed_logs"
+
+	// panel type filter is not added because user can choose table type and get the default count
+	if len(filterSubQuery) > 0 || len(mq.GroupBy) > 0 || len(resourceBucketFilters) > 0 {
+		tableName = DISTRIBUTED_LOGS_V2
+
+		timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", bucketStart, bucketEnd)
 	}
 
 	if len(resourceBucketFilters) > 0 {
