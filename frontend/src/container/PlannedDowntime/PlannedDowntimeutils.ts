@@ -12,6 +12,7 @@ import updateDowntimeSchedule, {
 } from 'api/plannedDowntime/updateDowntimeSchedule';
 import { showErrorNotification } from 'components/ExplorerCard/utils';
 import dayjs from 'dayjs';
+import { isEmpty } from 'lodash-es';
 import { UseMutateAsyncFunction } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
@@ -232,3 +233,7 @@ export const getEndTime = ({
 
 	return schedule?.recurrence?.endTime ? dayjs(schedule.recurrence.endTime) : '';
 };
+
+export const isScheduleRecurring = (
+	schedule?: DowntimeSchedules['schedule'],
+): boolean => (schedule ? !isEmpty(schedule?.recurrence) : false);

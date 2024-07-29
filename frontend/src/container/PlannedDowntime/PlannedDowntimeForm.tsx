@@ -37,6 +37,7 @@ import {
 	getAlertOptionsFromIds,
 	getDurationInfo,
 	getEndTime,
+	isScheduleRecurring,
 	recurrenceOptions,
 	recurrenceOptionWithSubmenu,
 	recurrenceWeeklyOptions,
@@ -231,10 +232,9 @@ export function PlannedDowntimeForm(
 				: '',
 			recurrence: {
 				...initialValues.schedule?.recurrence,
-				repeatType:
-					initialValues.kind === 'fixed'
-						? recurrenceOptions.doesNotRepeat.value
-						: (initialValues.schedule?.recurrence?.repeatType as string),
+				repeatType: !isScheduleRecurring(initialValues?.schedule)
+					? recurrenceOptions.doesNotRepeat.value
+					: (initialValues.schedule?.recurrence?.repeatType as string),
 				duration: getDurationInfo(
 					initialValues.schedule?.recurrence?.duration as string,
 				)?.value,
