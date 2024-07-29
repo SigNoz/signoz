@@ -11,6 +11,12 @@ import { useEffect } from 'react';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 
+import {
+	actualErrorMessage,
+	modifiedErrorMessage,
+	returnToAlertsPage,
+} from './constants';
+
 function EditRules(): JSX.Element {
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
@@ -53,11 +59,13 @@ function EditRules(): JSX.Element {
 			<div className="edit-rules-container">
 				<Card size="small" className="edit-rules-card">
 					<p className="content">
-						The Alert that you are trying to access is deleted.
+						{data?.message === actualErrorMessage
+							? modifiedErrorMessage
+							: data?.error}
 					</p>
 					<div className="btn-container">
 						<Button type="default" size="large" onClick={clickHandler}>
-							Return to Alerts Page
+							{returnToAlertsPage}
 						</Button>
 					</div>
 				</Card>
