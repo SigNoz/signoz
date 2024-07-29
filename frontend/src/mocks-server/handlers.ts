@@ -1,7 +1,10 @@
 import { rest } from 'msw';
 
 import { billingSuccessResponse } from './__mockdata__/billing';
-import { dashboardSuccessResponse } from './__mockdata__/dashboards';
+import {
+	dashboardSuccessResponse,
+	getDashboardById,
+} from './__mockdata__/dashboards';
 import { explorerView } from './__mockdata__/explorer_views';
 import { inviteUser } from './__mockdata__/invite_user';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
@@ -139,6 +142,10 @@ export const handlers = [
 
 	rest.get('http://localhost/api/v1/dashboards', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(dashboardSuccessResponse)),
+	),
+
+	rest.get('http://localhost/api/v1/dashboards/4', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(getDashboardById)),
 	),
 
 	rest.get('http://localhost/api/v1/invite', (_, res, ctx) =>

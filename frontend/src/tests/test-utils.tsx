@@ -42,6 +42,7 @@ const mockStored = (role?: string): any =>
 				accessJwt: '',
 				refreshJwt: '',
 			},
+			isLoggedIn: true,
 			org: [
 				{
 					createdAt: 0,
