@@ -110,9 +110,6 @@ export function PlannedDowntimeForm(
 
 	const saveHanlder = useCallback(
 		async (values: PlannedDowntimeFormData) => {
-			const formatDate = (date: string | dayjs.Dayjs): string | undefined =>
-				!isEmpty(date) ? dayjs(date).format('YYYY-MM-DDTHH:mm:ss[Z]') : undefined;
-
 			const createEditProps: DowntimeScheduleUpdatePayload = {
 				data: {
 					alertIds: values.alertRules
@@ -120,9 +117,9 @@ export function PlannedDowntimeForm(
 						.filter((alert) => alert !== undefined) as string[],
 					name: values.name,
 					schedule: {
-						startTime: formatDate(values.startTime),
+						startTime: values.startTime,
 						timezone: values.timezone,
-						endTime: formatDate(values.endTime),
+						endTime: values.endTime,
 						recurrence: values.recurrence as Recurrence,
 					},
 				},
