@@ -1,7 +1,16 @@
 import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
+import {
+	Button,
+	Card,
+	Input,
+	Modal,
+	Popover,
+	Tag,
+	Tooltip,
+	Typography,
+} from 'antd';
 import logEvent from 'api/common/logEvent';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
@@ -308,7 +317,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						alt="dashboard-img"
 						style={{ width: '16px', height: '16px' }}
 					/>
-					<Typography.Text className="dashboard-title">{title}</Typography.Text>
+					<Typography.Text className="dashboard-title" data-testid="dashboard-title">
+						{title}
+					</Typography.Text>
 					{isDashboardLocked && <LockKeyhole size={14} />}
 				</div>
 				<div className="right-section">
@@ -334,13 +345,22 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							<div className="menu-content">
 								<section className="section-1">
 									{(isAuthor || role === USER_ROLES.ADMIN) && (
-										<Button
-											type="text"
-											icon={<LockKeyhole size={14} />}
-											onClick={handleLockDashboardToggle}
+										<Tooltip
+											title={
+												selectedDashboard?.created_by === 'integration' &&
+												'Dashboards created by integrations cannot be unlocked'
+											}
 										>
-											{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
-										</Button>
+											<Button
+												type="text"
+												icon={<LockKeyhole size={14} />}
+												disabled={selectedDashboard?.created_by === 'integration'}
+												onClick={handleLockDashboardToggle}
+												data-testid="lock-unlock-dashboard"
+											>
+												{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
+											</Button>
+										</Tooltip>
 									)}
 
 									{!isDashboardLocked && editDashboard && (
