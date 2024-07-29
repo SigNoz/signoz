@@ -317,16 +317,27 @@ func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, ord
 						separator = " AND "
 						sqlOp = "not like"
 					}
-					for _, v := range (item.Value).([]interface{}) {
-						// also resources attributes are always string values
-						strV, ok := v.(string)
-						if !ok {
-							continue
-						}
 
-						tCondition = append(tCondition, fmt.Sprintf("lower(labels) %s '%%\"%s\":\"%s\"%%'", sqlOp, strings.ToLower(item.Key.Key), strV))
+					values := []string{}
+
+					switch item.Value.(type) {
+					case string:
+						values = append(values, item.Value.(string))
+					case []interface{}:
+						for _, v := range (item.Value).([]interface{}) {
+							// also resources attributes are always string values
+							strV, ok := v.(string)
+							if !ok {
+								continue
+							}
+							values = append(values, strV)
+						}
 					}
-					if len(tCondition) > 0 {
+
+					if len(values) > 0 {
+						for _, v := range values {
+							tCondition = append(tCondition, fmt.Sprintf("lower(labels) %s '%%\"%s\":\"%s\"%%'", sqlOp, strings.ToLower(item.Key.Key), strings.ToLower(v)))
+						}
 						andConditions = append(andConditions, "("+strings.Join(tCondition, separator)+")")
 					}
 
