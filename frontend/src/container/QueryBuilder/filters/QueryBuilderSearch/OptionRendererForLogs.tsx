@@ -11,12 +11,16 @@ function OptionRendererForLogs({
 	value,
 	dataType,
 	isIndexed,
+	setDynamicPlaceholder,
 }: OptionRendererProps): JSX.Element {
 	const optionType = getOptionType(label);
 
-	console.log(isIndexed);
 	return (
-		<span className="option">
+		<span
+			className="option"
+			onMouseEnter={(): void => setDynamicPlaceholder(value)}
+			onFocus={(): void => setDynamicPlaceholder(value)}
+		>
 			{optionType ? (
 				// <Tooltip title={`${value}`} placement="topLeft">
 				<div className="logs-options-select">
@@ -50,6 +54,7 @@ interface OptionRendererProps {
 	value: string;
 	dataType: string;
 	isIndexed: boolean;
+	setDynamicPlaceholder: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export default OptionRendererForLogs;

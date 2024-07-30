@@ -41,16 +41,19 @@ import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
 import { PLACEHOLDER } from './constant';
+import ExampleQueriesRendererForLogs from './ExampleQueriesRendererForLogs';
 import OptionRenderer from './OptionRenderer';
 import OptionRendererForLogs from './OptionRendererForLogs';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
+	convertExampleQueriesToOptions,
 	getOperatorValue,
 	getOptionGroupsForLogsExplorer,
 	getRemovePrefixFromKey,
 	getTagToken,
 	isExistsNotExistsOperator,
 	isInNInOperator,
+	sampleExampleQueries,
 } from './utils';
 
 function QueryBuilderSearch({
@@ -86,6 +89,9 @@ function QueryBuilderSearch({
 	console.log(key, isLogsExplorerPage, exampleQueries);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const [dynamicPlacholder, setDynamicPlaceholder] = useState<string>(
+		placeholder || '',
+	);
 	const selectRef = useRef<BaseSelectRef>(null);
 	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
 		searchValue,
@@ -243,10 +249,15 @@ function QueryBuilderSearch({
 			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
 	}, [deregisterShortcut, isLastQuery, registerShortcut]);
 
+	useEffect(() => {
+		if (!isOpen) {
+			setDynamicPlaceholder(placeholder || '');
+		}
+	}, [isOpen, placeholder]);
+
 	const optionGroups = getOptionGroupsForLogsExplorer(options);
 
-	console.log(options, optionGroups);
-
+	// conditional changes here to use a seperate component to render the example queries based on the option group label
 	const customRendererForLogsExplorer = optionGroups.map((optionGroup) => (
 		<Select.OptGroup key={optionGroup.label} label={optionGroup.title}>
 			{optionGroup.options.map((option) => (
@@ -256,6 +267,7 @@ function QueryBuilderSearch({
 						value={option.value}
 						dataType={option.dataType || ''}
 						isIndexed={option.isIndexed || false}
+						setDynamicPlaceholder={setDynamicPlaceholder}
 					/>
 					{option.selected && <StyledCheckOutlined />}
 				</Select.Option>
@@ -280,7 +292,7 @@ function QueryBuilderSearch({
 				onDropdownVisibleChange={setIsOpen}
 				autoClearSearchValue={false}
 				mode="multiple"
-				placeholder={placeholder}
+				placeholder={dynamicPlacholder}
 				value={queryTags}
 				searchValue={searchValue}
 				className={className}
@@ -301,16 +313,32 @@ function QueryBuilderSearch({
 					<div>
 						{menu}
 						{isLogsExplorerPage && (
-							<div className="keyboard-shortcuts">
-								<section className="navigate">
-									<ArrowDown size={10} className="icons" />
-									<ArrowUp size={10} className="icons" />
-									<span className="keyboard-text">to navigate</span>
-								</section>
-								<section className="update-query">
-									<CornerDownLeft size={10} className="icons" />
-									<span className="keyboard-text">to update query</span>
-								</section>
+							<div>
+								<div className="example-queries">
+									<div className="heading"> Example Queries </div>
+									<div className="query-container">
+										{convertExampleQueriesToOptions(
+											sampleExampleQueries as TagFilter[],
+										).map((query) => (
+											<ExampleQueriesRendererForLogs
+												key={query.label}
+												label={query.label}
+												value={query.value}
+											/>
+										))}
+									</div>
+								</div>
+								<div className="keyboard-shortcuts">
+									<section className="navigate">
+										<ArrowDown size={10} className="icons" />
+										<ArrowUp size={10} className="icons" />
+										<span className="keyboard-text">to navigate</span>
+									</section>
+									<section className="update-query">
+										<CornerDownLeft size={10} className="icons" />
+										<span className="keyboard-text">to update query</span>
+									</section>
+								</div>
 							</div>
 						)}
 					</div>

@@ -1,16 +1,17 @@
 import { OPERATORS } from 'constants/queryBuilder';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import { Option } from 'container/QueryBuilder/type';
+import { queryFilterTags } from 'hooks/queryBuilder/useTag';
 import { parse } from 'papaparse';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
 // eslint-disable-next-line no-useless-escape
 export const tagRegexp = /^\s*(.*?)\s*(\bIN\b|\bNOT_IN\b|\bLIKE\b|\bNOT_LIKE\b|\bREGEX\b|\bNOT_REGEX\b|=|!=|\bEXISTS\b|\bNOT_EXISTS\b|\bCONTAINS\b|\bNOT_CONTAINS\b|>=|>|<=|<|\bHAS\b|\bNHAS\b)\s*(.*)$/gi;
 
-enum OptionGroups {
+export enum OptionGroups {
 	SUGGESTED_FILTERS = 'Suggested Filters',
-	EXAMPLE_QUERIES = 'Example Queries',
 }
 
 export interface IOptionGroup {
@@ -23,11 +24,6 @@ const baseOptionGroups = [
 	{
 		label: OptionGroups.SUGGESTED_FILTERS,
 		title: 'Suggested Filters',
-		options: [],
-	},
-	{
-		label: OptionGroups.EXAMPLE_QUERIES,
-		title: 'Example Queries',
 		options: [],
 	},
 ];
@@ -187,17 +183,90 @@ export function getOptionType(label: string): MetricsType | undefined {
 	return optionType;
 }
 
-export function getOptionGroupsForLogsExplorer(
-	keys: Option[],
-	// exampleQueries: TagFilter[],
-): IOptionGroup[] {
+/**
+ *
+ * @param exampleQueries the example queries based on recommendation engine
+ * @returns the data formatted to the Option[]
+ */
+export function convertExampleQueriesToOptions(
+	exampleQueries: TagFilter[],
+): Option[] {
+	return exampleQueries.map((query) => ({
+		value: queryFilterTags(query).join(' , '),
+		label: queryFilterTags(query).join(' , '),
+	}));
+}
+
+export const sampleExampleQueries = [
+	{
+		items: [
+			{
+				id: '7cbade63',
+				key: {
+					key: 'container_id',
+					dataType: 'string',
+					type: 'tag',
+					isColumn: false,
+					isJSON: false,
+					id: 'container_id--string--tag--false',
+				},
+				op: '=',
+				value: 'debian',
+			},
+			{
+				id: '4094be10',
+				key: {
+					key: 'container_name',
+					dataType: 'string',
+					type: 'tag',
+					isColumn: false,
+					isJSON: false,
+					id: 'container_name--string--tag--false',
+				},
+				op: '=',
+				value: 'hotrod',
+			},
+		],
+		op: 'AND',
+	},
+	{
+		items: [
+			{
+				id: '7cbade63',
+				key: {
+					key: 'container_id',
+					dataType: 'string',
+					type: 'tag',
+					isColumn: false,
+					isJSON: false,
+					id: 'container_id--string--tag--false',
+				},
+				op: '=',
+				value: 'debian',
+			},
+			{
+				id: '4094be10',
+				key: {
+					key: 'container_name',
+					dataType: 'string',
+					type: 'tag',
+					isColumn: false,
+					isJSON: false,
+					id: 'container_name--string--tag--false',
+				},
+				op: '=',
+				value: 'xyz',
+			},
+		],
+		op: 'AND',
+	},
+];
+
+export function getOptionGroupsForLogsExplorer(keys: Option[]): IOptionGroup[] {
 	return baseOptionGroups.map((optionGroup) => {
 		if (optionGroup.label === OptionGroups.SUGGESTED_FILTERS) {
 			return { ...optionGroup, options: keys };
 		}
-		// if (optionGroup.label === OptionGroups.EXAMPLE_QUERIES) {
-		// 	return { ...optionGroup, options: exampleQueries };
-		// }
 		return optionGroup;
 	});
 }

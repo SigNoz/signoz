@@ -25,6 +25,45 @@
 		text-transform: uppercase;
 	}
 
+	.example-queries {
+		.heading {
+			padding: 12px 14px 8px 14px;
+			color: var(--bg-slate-200);
+			font-family: Inter;
+			font-size: 11px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 18px; /* 163.636% */
+			letter-spacing: 0.88px;
+			text-transform: uppercase;
+		}
+
+		.query-container {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			padding: 0px 12px 12px 12px;
+
+			.example-query {
+				display: flex;
+				padding: 4px 8px;
+				justify-content: center;
+				align-items: center;
+				gap: 10px;
+				border-radius: 2px;
+				background: var(--Ink-200, #23262e);
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: normal;
+				letter-spacing: -0.07px;
+				width: fit-content;
+			}
+		}
+	}
+
 	.ant-select-item-option-grouped {
 		padding-inline-start: 0px;
 		padding: 7px 13px;
