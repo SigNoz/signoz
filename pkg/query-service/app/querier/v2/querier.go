@@ -15,6 +15,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -450,7 +451,119 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	return results, errQueriesByName, err
 }
 
+type startEndArr struct {
+	Start int64
+	End   int64
+}
+
+func getTsStartEndArray(start, end int64) []startEndArr {
+	startNano := utils.GetEpochNanoSecs(start)
+	endNano := utils.GetEpochNanoSecs(end)
+	result := []startEndArr{}
+
+	hourNano := int64(3600000000000)
+	if endNano-startNano > hourNano {
+		bucket := hourNano
+		tStartNano := endNano - bucket
+
+		complete := false
+		for {
+			result = append(result, startEndArr{Start: tStartNano, End: endNano})
+			if complete {
+				break
+			}
+
+			bucket = bucket * 2
+			endNano = tStartNano
+			tStartNano = tStartNano - bucket
+
+			// break condition
+			if tStartNano <= startNano {
+				complete = true
+				tStartNano = startNano
+			}
+		}
+	}
+	return result
+}
+
+func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey, startEndArr []startEndArr) ([]*v3.Result, map[string]error, error) {
+	// check the timerange
+	res := make([]*v3.Result, 0)
+	qName := ""
+	pageSize := uint64(0)
+
+	// it will run only once
+	for name, v := range params.CompositeQuery.BuilderQueries {
+		qName = name
+		pageSize = v.PageSize
+	}
+	data := []*v3.Row{}
+
+	for _, v := range startEndArr {
+		params.Start = v.Start
+		params.End = v.End
+
+		params.CompositeQuery.BuilderQueries[qName].PageSize = pageSize - uint64(len(data))
+		queries, err := q.builder.PrepareQueries(params, keys)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// only one query
+		for name, query := range queries {
+			rowList, err := q.reader.GetListResultV3(ctx, query)
+			if err != nil {
+				errs := []error{err}
+				errQuriesByName := map[string]error{
+					name: err,
+				}
+				return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+			}
+			data = append(data, rowList...)
+		}
+
+		// append a filter to the params
+		if len(data) > 0 {
+			params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key:      "id",
+					IsColumn: true,
+					DataType: "string",
+				},
+				Operator: v3.FilterOperatorLessThan,
+				Value:    data[len(data)-1].Data["id"],
+			})
+		}
+
+		if uint64(len(data)) >= pageSize {
+			fmt.Println(len(data), pageSize)
+			break
+		}
+	}
+	res = append(res, &v3.Result{
+		QueryName: qName,
+		List:      data,
+	})
+	return res, nil, nil
+}
+
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
+
+	// Note: as of now only supporting one list query
+	if params.CompositeQuery != nil {
+		if len(params.CompositeQuery.BuilderQueries) == 1 {
+			for _, v := range params.CompositeQuery.BuilderQueries {
+				// only allow of logs queries with timestamp ordering desc
+				if v.DataSource == v3.DataSourceLogs && len(v.OrderBy) == 1 && v.OrderBy[0].ColumnName == "timestamp" && v.OrderBy[0].Order == "desc" {
+					startEndArr := getTsStartEndArray(params.Start, params.End)
+					if len(startEndArr) > 0 {
+						return q.runLogsListQuery(ctx, params, keys, startEndArr)
+					}
+				}
+			}
+		}
+	}
 
 	queries, err := q.builder.PrepareQueries(params, keys)
 
