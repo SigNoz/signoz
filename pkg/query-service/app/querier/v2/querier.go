@@ -458,6 +458,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 		return nil, nil, err
 	}
 
+	// change for list is need here for faster listing for logs
 	ch := make(chan channelResult, len(queries))
 	var wg sync.WaitGroup
 

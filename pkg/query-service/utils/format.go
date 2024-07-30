@@ -14,6 +14,9 @@ import (
 
 // ValidateAndCastValue validates and casts the value of a key to the corresponding data type of the key
 func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (interface{}, error) {
+	// if it's pointer convert it to a value
+	v = getPointerValue(v)
+
 	switch dataType {
 	case v3.AttributeKeyDataTypeString:
 		switch x := v.(type) {
