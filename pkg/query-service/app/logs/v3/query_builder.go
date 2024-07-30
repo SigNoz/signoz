@@ -180,6 +180,16 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 				continue
 			}
 
+			// check if the user is searching for all attributes
+			if item.Key.Key == "__attrs" {
+				if (item.Operator != v3.FilterOperatorEqual && item.Operator != v3.FilterOperatorContains) || item.Key.DataType != v3.AttributeKeyDataTypeString {
+					return "", fmt.Errorf("only = operator and string data type is supported for __attrs")
+				}
+				val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+				conditions = append(conditions, fmt.Sprintf("has(mapValues(attributes_string), '%v')", val))
+				continue
+			}
+
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
 
 			var value interface{}

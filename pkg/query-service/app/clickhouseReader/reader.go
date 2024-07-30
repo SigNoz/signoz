@@ -4277,7 +4277,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	}
 
 	// ignore autocomplete request for body
-	if req.FilterAttributeKey == "body" {
+	if req.FilterAttributeKey == "body" || req.FilterAttributeKey == "__attrs" {
 		return &v3.FilterAttributeValueResponse{}, nil
 	}
 

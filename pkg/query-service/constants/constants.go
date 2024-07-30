@@ -372,6 +372,12 @@ var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
 		Type:     v3.AttributeKeyTypeUnspecified,
 		IsColumn: true,
 	},
+	"__attrs": {
+		Key:      "__attrs",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
 }
 
 const SigNozOrderByValue = "#SIGNOZ_VALUE"
