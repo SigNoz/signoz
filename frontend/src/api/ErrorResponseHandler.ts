@@ -9,9 +9,9 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 		// making the error status code as standard Error Status Code
 		const statusCode = response.status as ErrorStatusCode;
 
-		if (statusCode >= 400 && statusCode < 500) {
-			const { data } = response as AxiosResponse;
+		const { data } = response as AxiosResponse;
 
+		if (statusCode >= 400 && statusCode < 500) {
 			if (statusCode === 404) {
 				return {
 					statusCode,
@@ -35,11 +35,13 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 			};
 		}
 
+		console.log(data?.error);
+
 		return {
 			statusCode,
 			payload: null,
 			error: 'Something went wrong',
-			message: null,
+			message: data?.error,
 		};
 	}
 	if (request) {
