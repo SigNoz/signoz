@@ -8,7 +8,10 @@ import {
 import { Option } from 'container/QueryBuilder/type';
 import { parse } from 'papaparse';
 import { KeyboardEvent, useCallback, useState } from 'react';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
 import { useOptions, WHERE_CLAUSE_CUSTOM_SUFFIX } from './useOptions';
@@ -24,15 +27,19 @@ export type WhereClauseConfig = {
 export const useAutoComplete = (
 	query: IBuilderQuery,
 	whereClauseConfig?: WhereClauseConfig,
+	shouldUseSuggestions?: boolean,
 ): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [searchKey, setSearchKey] = useState<string>('');
 
-	const { keys, results, isFetching } = useFetchKeysAndValues(
+	const { keys, results, isFetching, exampleQueries } = useFetchKeysAndValues(
 		searchValue,
 		query,
 		searchKey,
+		shouldUseSuggestions,
 	);
+
+	console.log(keys);
 
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
 
@@ -144,6 +151,8 @@ export const useAutoComplete = (
 		isFetching,
 		setSearchKey,
 		searchKey,
+		key,
+		exampleQueries,
 	};
 };
 
@@ -161,4 +170,6 @@ interface IAutoComplete {
 	isFetching: boolean;
 	setSearchKey: (value: string) => void;
 	searchKey: string;
+	key: string;
+	exampleQueries: TagFilter[];
 }

@@ -1,5 +1,6 @@
 import { OPERATORS } from 'constants/queryBuilder';
 import { MetricsType } from 'container/MetricsApplication/constant';
+import { Option } from 'container/QueryBuilder/type';
 import { parse } from 'papaparse';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
@@ -7,6 +8,29 @@ import { orderByValueDelimiter } from '../OrderByFilter/utils';
 // eslint-disable-next-line no-useless-escape
 export const tagRegexp = /^\s*(.*?)\s*(\bIN\b|\bNOT_IN\b|\bLIKE\b|\bNOT_LIKE\b|\bREGEX\b|\bNOT_REGEX\b|=|!=|\bEXISTS\b|\bNOT_EXISTS\b|\bCONTAINS\b|\bNOT_CONTAINS\b|>=|>|<=|<|\bHAS\b|\bNHAS\b)\s*(.*)$/gi;
 
+enum OptionGroups {
+	SUGGESTED_FILTERS = 'Suggested Filters',
+	EXAMPLE_QUERIES = 'Example Queries',
+}
+
+export interface IOptionGroup {
+	label: OptionGroups;
+	title: string;
+	options: Option[];
+}
+
+const baseOptionGroups = [
+	{
+		label: OptionGroups.SUGGESTED_FILTERS,
+		title: 'Suggested Filters',
+		options: [],
+	},
+	{
+		label: OptionGroups.EXAMPLE_QUERIES,
+		title: 'Example Queries',
+		options: [],
+	},
+];
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
 }
@@ -161,4 +185,19 @@ export function getOptionType(label: string): MetricsType | undefined {
 	}
 
 	return optionType;
+}
+
+export function getOptionGroupsForLogsExplorer(
+	keys: Option[],
+	// exampleQueries: TagFilter[],
+): IOptionGroup[] {
+	return baseOptionGroups.map((optionGroup) => {
+		if (optionGroup.label === OptionGroups.SUGGESTED_FILTERS) {
+			return { ...optionGroup, options: keys };
+		}
+		// if (optionGroup.label === OptionGroups.EXAMPLE_QUERIES) {
+		// 	return { ...optionGroup, options: exampleQueries };
+		// }
+		return optionGroup;
+	});
 }

@@ -13,10 +13,14 @@ import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { useGetAggregateKeys } from './useGetAggregateKeys';
+import { useGetAttributeSuggestions } from './useGetAttributeSuggestions';
 
 type IuseFetchKeysAndValues = {
 	keys: BaseAutocompleteData[];
@@ -24,6 +28,7 @@ type IuseFetchKeysAndValues = {
 	isFetching: boolean;
 	sourceKeys: BaseAutocompleteData[];
 	handleRemoveSourceKey: (newSourceKey: string) => void;
+	exampleQueries: TagFilter[];
 };
 
 /**
@@ -37,8 +42,10 @@ export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQuery,
 	searchKey: string,
+	shouldUseSuggestions?: boolean,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
+	const [exampleQueries, setExampleQueries] = useState<TagFilter[]>([]);
 	const [sourceKeys, setSourceKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
 	const [isAggregateFetching, setAggregateFetching] = useState<boolean>(false);
@@ -59,6 +66,16 @@ export const useFetchKeysAndValues = (
 	);
 
 	const searchParams = useDebounceValue(memoizedSearchParams, DEBOUNCE_DELAY);
+
+	const memoizedSuggestionsParams = useMemo(
+		() => [searchKey, query.dataSource, query.filters],
+		[query.dataSource, query.filters, searchKey],
+	);
+
+	const suggestionsParams = useDebounceValue(
+		memoizedSuggestionsParams,
+		DEBOUNCE_DELAY,
+	);
 
 	const isQueryEnabled = useMemo(
 		() =>
@@ -82,7 +99,28 @@ export const useFetchKeysAndValues = (
 			aggregateAttribute: query.aggregateAttribute.key,
 			tagType: query.aggregateAttribute.type ?? null,
 		},
-		{ queryKey: [searchParams], enabled: isQueryEnabled },
+		{
+			queryKey: [searchParams],
+			enabled: isQueryEnabled && !shouldUseSuggestions,
+			keepPreviousData: true,
+		},
+	);
+
+	const {
+		data: suggestionsData,
+		isFetching: isFetchingSuggestions,
+		status: fetchingSuggestionsStatus,
+	} = useGetAttributeSuggestions(
+		{
+			searchText: searchKey,
+			dataSource: query.dataSource,
+			filters: query.filters,
+		},
+		{
+			queryKey: [suggestionsParams],
+			enabled: isQueryEnabled && shouldUseSuggestions,
+			keepPreviousData: true,
+		},
 	);
 
 	/**
@@ -150,6 +188,8 @@ export const useFetchKeysAndValues = (
 		keys,
 	]);
 
+	console.log(status, isFetching, data, shouldUseSuggestions);
+
 	// update the fetched keys when the fetch status changes
 	useEffect(() => {
 		if (status === 'success' && data?.payload?.attributeKeys) {
@@ -162,11 +202,41 @@ export const useFetchKeysAndValues = (
 		}
 	}, [data?.payload?.attributeKeys, status]);
 
+	useEffect(() => {
+		if (
+			fetchingSuggestionsStatus === 'success' &&
+			suggestionsData?.payload?.attributes
+		) {
+			setKeys(suggestionsData.payload.attributes);
+			setSourceKeys((prevState) =>
+				uniqWith(
+					[...(suggestionsData.payload.attributes ?? []), ...prevState],
+					isEqual,
+				),
+			);
+		} else {
+			setKeys([]);
+		}
+		if (
+			fetchingSuggestionsStatus === 'success' &&
+			suggestionsData?.payload?.example_queries
+		) {
+			setExampleQueries(suggestionsData.payload.example_queries);
+		} else {
+			setExampleQueries([]);
+		}
+	}, [
+		suggestionsData?.payload?.attributes,
+		fetchingSuggestionsStatus,
+		suggestionsData?.payload?.example_queries,
+	]);
+
 	return {
 		keys,
 		results,
-		isFetching: isFetching || isAggregateFetching,
+		isFetching: isFetching || isAggregateFetching || isFetchingSuggestions,
 		sourceKeys,
 		handleRemoveSourceKey,
+		exampleQueries,
 	};
 };

@@ -1,7 +1,9 @@
+/* eslint-disable react/no-unstable-nested-components */
 import './QueryBuilderSearch.styles.scss';
 
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { getDataTypes } from 'container/LogDetailedView/utils';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
@@ -23,6 +25,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -41,6 +44,7 @@ import OptionRenderer from './OptionRenderer';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	getOperatorValue,
+	getOptionGroupsForLogsExplorer,
 	getRemovePrefixFromKey,
 	getTagToken,
 	isExistsNotExistsOperator,
@@ -55,6 +59,12 @@ function QueryBuilderSearch({
 	placeholder,
 	suffixIcon,
 }: QueryBuilderSearchProps): JSX.Element {
+	const { pathname } = useLocation();
+	const isLogsExplorerPage = useMemo(
+		() =>
+			pathname === ROUTES.LOGS_EXPLORER || pathname === ROUTES.TRACES_EXPLORER,
+		[pathname],
+	);
 	const {
 		updateTag,
 		handleClearTag,
@@ -69,7 +79,11 @@ function QueryBuilderSearch({
 		isFetching,
 		setSearchKey,
 		searchKey,
-	} = useAutoComplete(query, whereClauseConfig);
+		key,
+		exampleQueries,
+	} = useAutoComplete(query, whereClauseConfig, isLogsExplorerPage);
+
+	console.log(key, isLogsExplorerPage, exampleQueries);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const selectRef = useRef<BaseSelectRef>(null);
@@ -229,6 +243,25 @@ function QueryBuilderSearch({
 			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
 	}, [deregisterShortcut, isLastQuery, registerShortcut]);
 
+	const optionGroups = getOptionGroupsForLogsExplorer(options);
+
+	console.log(options, optionGroups);
+
+	const customRendererForLogsExplorer = optionGroups.map((optionGroup) => (
+		<Select.OptGroup key={optionGroup.label} label={optionGroup.title}>
+			{optionGroup.options.map((option) => (
+				<Select.Option key={option.label} value={option.value}>
+					<OptionRenderer
+						label={option.label}
+						value={option.value}
+						dataType={option.dataType || ''}
+					/>
+					{option.selected && <StyledCheckOutlined />}
+				</Select.Option>
+			))}
+		</Select.OptGroup>
+	));
+
 	return (
 		<div
 			style={{
@@ -262,17 +295,25 @@ function QueryBuilderSearch({
 				suffixIcon={suffixIcon}
 				showAction={['focus']}
 				onBlur={handleOnBlur}
+				dropdownRender={(menu): ReactElement => (
+					<div>
+						{menu}
+						<div> All the keyboard shortcuts here</div>
+					</div>
+				)}
 			>
-				{options.map((option) => (
-					<Select.Option key={option.label} value={option.value}>
-						<OptionRenderer
-							label={option.label}
-							value={option.value}
-							dataType={option.dataType || ''}
-						/>
-						{option.selected && <StyledCheckOutlined />}
-					</Select.Option>
-				))}
+				{isLogsExplorerPage
+					? customRendererForLogsExplorer
+					: options.map((option) => (
+							<Select.Option key={option.label} value={option.value}>
+								<OptionRenderer
+									label={option.label}
+									value={option.value}
+									dataType={option.dataType || ''}
+								/>
+								{option.selected && <StyledCheckOutlined />}
+							</Select.Option>
+					  ))}
 			</Select>
 		</div>
 	);
