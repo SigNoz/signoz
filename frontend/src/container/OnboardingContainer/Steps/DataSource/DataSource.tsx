@@ -14,9 +14,10 @@ import {
 	hasFrameworks,
 } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check } from 'lucide-react';
+import { Blocks, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useHistory } from 'react-router-dom';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 export interface DataSourceType {
@@ -29,6 +30,7 @@ export interface DataSourceType {
 export default function DataSource(): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation(['common']);
+	const history = useHistory();
 
 	const {
 		serviceName,
@@ -127,6 +129,10 @@ export default function DataSource(): JSX.Element {
 		}
 	};
 
+	const goToIntegrationsPage = (): void => {
+		history.push('/integrations');
+	};
+
 	return (
 		<div className="module-container">
 			<Typography.Text className="data-source-title">
@@ -213,6 +219,20 @@ export default function DataSource(): JSX.Element {
 								)}
 							</>
 						)}
+
+						<div className="request-entity-container intgeration-page-container">
+							<Typography.Text className="intgeration-page-container-text">
+								Not able to find datasources you are looking for, check our Integrations
+								page which allows more sources of sending data
+							</Typography.Text>
+							<Button
+								onClick={goToIntegrationsPage}
+								icon={<Blocks size={14} />}
+								className="navigate-integrations-page-btn"
+							>
+								Go to integrations
+							</Button>
+						</div>
 
 						<div className="request-entity-container">
 							<Typography.Text>
