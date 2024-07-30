@@ -14,6 +14,7 @@ import {
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isEqual } from 'lodash-es';
+import { ArrowDown, ArrowUp, CornerDownLeft } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	KeyboardEvent,
@@ -41,6 +42,7 @@ import { v4 as uuid } from 'uuid';
 import { selectStyle } from './config';
 import { PLACEHOLDER } from './constant';
 import OptionRenderer from './OptionRenderer';
+import OptionRendererForLogs from './OptionRendererForLogs';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	getOperatorValue,
@@ -60,11 +62,9 @@ function QueryBuilderSearch({
 	suffixIcon,
 }: QueryBuilderSearchProps): JSX.Element {
 	const { pathname } = useLocation();
-	const isLogsExplorerPage = useMemo(
-		() =>
-			pathname === ROUTES.LOGS_EXPLORER || pathname === ROUTES.TRACES_EXPLORER,
-		[pathname],
-	);
+	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
+		pathname,
+	]);
 	const {
 		updateTag,
 		handleClearTag,
@@ -251,10 +251,11 @@ function QueryBuilderSearch({
 		<Select.OptGroup key={optionGroup.label} label={optionGroup.title}>
 			{optionGroup.options.map((option) => (
 				<Select.Option key={option.label} value={option.value}>
-					<OptionRenderer
+					<OptionRendererForLogs
 						label={option.label}
 						value={option.value}
 						dataType={option.dataType || ''}
+						isIndexed={option.isIndexed || false}
 					/>
 					{option.selected && <StyledCheckOutlined />}
 				</Select.Option>
@@ -295,10 +296,23 @@ function QueryBuilderSearch({
 				suffixIcon={suffixIcon}
 				showAction={['focus']}
 				onBlur={handleOnBlur}
+				popupClassName={isLogsExplorerPage ? 'logs-explorer-popup' : ''}
 				dropdownRender={(menu): ReactElement => (
 					<div>
 						{menu}
-						<div> All the keyboard shortcuts here</div>
+						{isLogsExplorerPage && (
+							<div className="keyboard-shortcuts">
+								<section className="navigate">
+									<ArrowDown size={10} className="icons" />
+									<ArrowUp size={10} className="icons" />
+									<span className="keyboard-text">to navigate</span>
+								</section>
+								<section className="update-query">
+									<CornerDownLeft size={10} className="icons" />
+									<span className="keyboard-text">to update query</span>
+								</section>
+							</div>
+						)}
 					</div>
 				)}
 			>
