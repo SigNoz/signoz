@@ -39,8 +39,6 @@ export const useAutoComplete = (
 		shouldUseSuggestions,
 	);
 
-	console.log(keys);
-
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
 
 	const handleSearch = (value: string): void => {

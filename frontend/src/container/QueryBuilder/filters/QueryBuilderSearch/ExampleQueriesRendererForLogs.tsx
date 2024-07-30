@@ -2,17 +2,18 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './QueryBuilderSearch.styles.scss';
 
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+
 function ExampleQueriesRendererForLogs({
 	label,
 	value,
+	handleAddTag,
 }: ExampleQueriesRendererForLogsProps): JSX.Element {
-	console.log(label, value);
 	return (
 		<span
 			className="example-query"
-			onClick={(e): void => {
-				e.preventDefault();
-				e.stopPropagation();
+			onClick={(): void => {
+				handleAddTag(value);
 			}}
 		>
 			{label}
@@ -22,7 +23,8 @@ function ExampleQueriesRendererForLogs({
 
 interface ExampleQueriesRendererForLogsProps {
 	label: string;
-	value: string;
+	value: TagFilter;
+	handleAddTag: (value: TagFilter) => void;
 }
 
 export default ExampleQueriesRendererForLogs;

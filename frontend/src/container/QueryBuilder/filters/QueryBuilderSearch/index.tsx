@@ -82,11 +82,9 @@ function QueryBuilderSearch({
 		isFetching,
 		setSearchKey,
 		searchKey,
-		key,
-		exampleQueries,
+		// key,
+		// exampleQueries,
 	} = useAutoComplete(query, whereClauseConfig, isLogsExplorerPage);
-
-	console.log(key, isLogsExplorerPage, exampleQueries);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [dynamicPlacholder, setDynamicPlaceholder] = useState<string>(
@@ -324,6 +322,7 @@ function QueryBuilderSearch({
 												key={query.label}
 												label={query.label}
 												value={query.value}
+												handleAddTag={onChange}
 											/>
 										))}
 									</div>

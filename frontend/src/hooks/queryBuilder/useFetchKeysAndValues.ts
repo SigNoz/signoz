@@ -188,8 +188,6 @@ export const useFetchKeysAndValues = (
 		keys,
 	]);
 
-	console.log(status, isFetching, data, shouldUseSuggestions);
-
 	// update the fetched keys when the fetch status changes
 	useEffect(() => {
 		if (status === 'success' && data?.payload?.attributeKeys) {

@@ -190,9 +190,9 @@ export function getOptionType(label: string): MetricsType | undefined {
  */
 export function convertExampleQueriesToOptions(
 	exampleQueries: TagFilter[],
-): Option[] {
+): { label: string; value: TagFilter }[] {
 	return exampleQueries.map((query) => ({
-		value: queryFilterTags(query).join(' , '),
+		value: query,
 		label: queryFilterTags(query).join(' , '),
 	}));
 }
