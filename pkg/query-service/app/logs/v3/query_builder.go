@@ -393,6 +393,18 @@ func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, ord
 	return conditionStr, nil
 }
 
+func filtersUseNewTable(filters *v3.FilterSet) bool {
+	if filters == nil {
+		return false
+	}
+	for _, item := range filters.Items {
+		if item.Key.Key != "id" {
+			return true
+		}
+	}
+	return false
+}
+
 func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, preferRPM bool) (string, error) {
 
 	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute)
@@ -421,7 +433,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	tableName := "distributed_logs"
 
 	// panel type filter is not added because user can choose table type and get the default count
-	if len(filterSubQuery) > 0 || len(mq.GroupBy) > 0 || len(resourceBucketFilters) > 0 {
+	if filtersUseNewTable(mq.Filters) || len(mq.GroupBy) > 0 || mq.AggregateAttribute.Key != "" || len(resourceBucketFilters) > 0 {
 		tableName = DISTRIBUTED_LOGS_V2
 
 		timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", bucketStart, bucketEnd)
@@ -540,7 +552,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	case v3.AggregateOperatorNoOp:
 		sqlSelect := constants.LogsSQLSelect
 		// with noop any filter or different order by other than ts will use new table
-		if len(filterSubQuery) > 0 || !isOrderByTs(mq.OrderBy) {
+		if filtersUseNewTable(mq.Filters) || !isOrderByTs(mq.OrderBy) {
 			sqlSelect = constants.LogsSQLSelectV2
 			tableName = DISTRIBUTED_LOGS_V2
 		}
