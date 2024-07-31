@@ -82,10 +82,8 @@ function QueryBuilderSearch({
 		isFetching,
 		setSearchKey,
 		searchKey,
-		// key,
 		// exampleQueries,
 	} = useAutoComplete(query, whereClauseConfig, isLogsExplorerPage);
-
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [dynamicPlacholder, setDynamicPlaceholder] = useState<string>(
 		placeholder || '',
@@ -312,21 +310,23 @@ function QueryBuilderSearch({
 						{menu}
 						{isLogsExplorerPage && (
 							<div>
-								<div className="example-queries">
-									<div className="heading"> Example Queries </div>
-									<div className="query-container">
-										{convertExampleQueriesToOptions(
-											sampleExampleQueries as TagFilter[],
-										).map((query) => (
-											<ExampleQueriesRendererForLogs
-												key={query.label}
-												label={query.label}
-												value={query.value}
-												handleAddTag={onChange}
-											/>
-										))}
+								{!searchKey && (
+									<div className="example-queries">
+										<div className="heading"> Example Queries </div>
+										<div className="query-container">
+											{convertExampleQueriesToOptions(
+												sampleExampleQueries as TagFilter[],
+											).map((query) => (
+												<ExampleQueriesRendererForLogs
+													key={query.label}
+													label={query.label}
+													value={query.value}
+													handleAddTag={onChange}
+												/>
+											))}
+										</div>
 									</div>
-								</div>
+								)}
 								<div className="keyboard-shortcuts">
 									<section className="navigate">
 										<ArrowDown size={10} className="icons" />
