@@ -44,8 +44,8 @@ describe('SaveView', () => {
 
 	it('explorer icon should take the user to the related explorer page', async () => {
 		render(
-			<MemoryRouter initialEntries={['/traces/saved-views']}>
-				<Route path="/traces/saved-views">
+			<MemoryRouter initialEntries={[ROUTES.TRACES_SAVE_VIEWS]}>
+				<Route path={ROUTES.TRACES_SAVE_VIEWS}>
 					<SaveView />
 				</Route>
 			</MemoryRouter>,
