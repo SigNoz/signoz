@@ -123,6 +123,7 @@ export function CollapseListContent({
 	updated_at,
 	updated_by_name,
 	alertOptions,
+	timezone,
 }: {
 	created_at?: string;
 	created_by_name?: string;
@@ -132,6 +133,7 @@ export function CollapseListContent({
 	updated_at?: string;
 	updated_by_name?: string;
 	alertOptions?: DefaultOptionType[];
+	timezone?: string;
 }): JSX.Element {
 	const renderItems = (title: string, value: ReactNode): JSX.Element => (
 		<div className="render-item-collapse-list">
@@ -181,6 +183,7 @@ export function CollapseListContent({
 					'-'
 				),
 			)}
+			{renderItems('Timezone', <Typography>{timezone || '-'}</Typography>)}
 			{renderItems('Repeats', <Typography>{recurrenceInfo(repeats)}</Typography>)}
 			{renderItems(
 				'Alerts silenced',
@@ -228,7 +231,7 @@ export function CustomCollapseList(
 	// Combine time and date
 	const formattedDateAndTime = `Start time ⎯ ${formatDateTime(
 		defaultTo(scheduleTime, ''),
-	)}`;
+	)} ${schedule?.timezone}`;
 	const endTime = getEndTime({ kind, schedule });
 
 	return (
@@ -266,6 +269,7 @@ export function CustomCollapseList(
 						updated_at={defaultTo(updatedAt, '')}
 						updated_by_name={defaultTo(updatedBy, '')}
 						alertOptions={alertOptions}
+						timezone={defaultTo(schedule?.timezone, '')}
 					/>
 				</Panel>
 			</Collapse>

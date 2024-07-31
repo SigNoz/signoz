@@ -1,3 +1,5 @@
+/* eslint-disable no-nested-ternary */
+/* eslint-disable sonarjs/no-identical-functions */
 import './PlannedDowntime.styles.scss';
 import 'dayjs/locale/en';
 
@@ -26,6 +28,8 @@ import {
 	ModalTitle,
 } from 'container/PipelinePage/PipelineListsView/styles';
 import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo, isEmpty } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -37,6 +41,7 @@ import {
 	getAlertOptionsFromIds,
 	getDurationInfo,
 	getEndTime,
+	handleTimeConvertion,
 	isScheduleRecurring,
 	recurrenceOptions,
 	recurrenceOptionWithSubmenu,
@@ -44,6 +49,9 @@ import {
 } from './PlannedDowntimeutils';
 
 dayjs.locale('en');
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 interface PlannedDowntimeFormData {
 	name: string;
 	startTime: dayjs.Dayjs | string;
@@ -102,6 +110,10 @@ export function PlannedDowntimeForm(
 			recurrenceOptions.doesNotRepeat.value,
 	);
 
+	const timezoneInitialValue = !isEmpty(initialValues.schedule?.timezone)
+		? (initialValues.schedule?.timezone as string)
+		: undefined;
+
 	const { notifications } = useNotifications();
 
 	const datePickerFooter = (mode: any): any =>
@@ -111,6 +123,7 @@ export function PlannedDowntimeForm(
 
 	const saveHanlder = useCallback(
 		async (values: PlannedDowntimeFormData) => {
+			const shouldKeepLocalTime = !isEditMode;
 			const createEditProps: DowntimeScheduleUpdatePayload = {
 				data: {
 					alertIds: values.alertRules
@@ -118,9 +131,21 @@ export function PlannedDowntimeForm(
 						.filter((alert) => alert !== undefined) as string[],
 					name: values.name,
 					schedule: {
-						startTime: values.startTime,
+						startTime: handleTimeConvertion(
+							values.startTime,
+							timezoneInitialValue,
+							values.timezone,
+							shouldKeepLocalTime,
+						),
 						timezone: values.timezone,
-						endTime: values.endTime,
+						endTime: values.endTime
+							? handleTimeConvertion(
+									values.endTime,
+									timezoneInitialValue,
+									values.timezone,
+									shouldKeepLocalTime,
+							  )
+							: undefined,
 						recurrence: values.recurrence as Recurrence,
 					},
 				},
@@ -153,7 +178,14 @@ export function PlannedDowntimeForm(
 			}
 			setSaveLoading(false);
 		},
-		[initialValues.id, isEditMode, notifications, refetchAllSchedules, setIsOpen],
+		[
+			initialValues.id,
+			isEditMode,
+			notifications,
+			refetchAllSchedules,
+			setIsOpen,
+			timezoneInitialValue,
+		],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
 		const recurrenceData: Recurrence | undefined =
@@ -164,9 +196,19 @@ export function PlannedDowntimeForm(
 							? `${values.recurrence?.duration}${durationUnit}`
 							: undefined,
 						endTime: !isEmpty(values.endTime)
-							? (values.endTime as string)
+							? handleTimeConvertion(
+									values.endTime,
+									timezoneInitialValue,
+									values.timezone,
+									!isEditMode,
+							  )
 							: undefined,
-						startTime: values.startTime as string,
+						startTime: handleTimeConvertion(
+							values.startTime,
+							timezoneInitialValue,
+							values.timezone,
+							!isEditMode,
+						),
 						repeatOn: !values.recurrence?.repeatOn?.length
 							? undefined
 							: values.recurrence?.repeatOn,
@@ -226,7 +268,7 @@ export function PlannedDowntimeForm(
 				initialValues.alertIds || [],
 				alertOptions,
 			),
-			endTime: getEndTime(initialValues),
+			endTime: getEndTime(initialValues) ? dayjs(getEndTime(initialValues)) : '',
 			startTime: initialValues.schedule?.startTime
 				? dayjs(initialValues.schedule?.startTime)
 				: '',
@@ -292,11 +334,17 @@ export function PlannedDowntimeForm(
 					name="startTime"
 					rules={formValidationRules}
 					className="formItemWithBullet"
+					getValueProps={(value): any => ({
+						value: value ? dayjs(value).tz(timezoneInitialValue) : undefined,
+					})}
 				>
 					<DatePicker
-						format={customFormat}
+						format={(date): string =>
+							dayjs(date).tz(timezoneInitialValue).format(customFormat)
+						}
 						showTime
 						renderExtraFooter={datePickerFooter}
+						showNow={false}
 						popupClassName="datePicker"
 					/>
 				</Form.Item>
@@ -364,10 +412,16 @@ export function PlannedDowntimeForm(
 						},
 					]}
 					className="formItemWithBullet"
+					getValueProps={(value): any => ({
+						value: value ? dayjs(value).tz(timezoneInitialValue) : undefined,
+					})}
 				>
 					<DatePicker
-						format={customFormat}
+						format={(date): string =>
+							dayjs(date).tz(timezoneInitialValue).format(customFormat)
+						}
 						showTime
+						showNow={false}
 						renderExtraFooter={datePickerFooter}
 						popupClassName="datePicker"
 					/>

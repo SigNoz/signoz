@@ -12,7 +12,7 @@ import updateDowntimeSchedule, {
 } from 'api/plannedDowntime/updateDowntimeSchedule';
 import { showErrorNotification } from 'components/ExplorerCard/utils';
 import dayjs from 'dayjs';
-import { isEmpty } from 'lodash-es';
+import { isEmpty, isEqual } from 'lodash-es';
 import { UseMutateAsyncFunction } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
@@ -43,7 +43,8 @@ export const formatDateTime = (dateTimeString?: string | null): string => {
 	if (!dateTimeString) {
 		return 'N/A';
 	}
-	return dayjs(dateTimeString).format('MMM DD, YYYY h:mm A');
+
+	return dayjs(dateTimeString.slice(0, 19)).format('MMM DD, YYYY h:mm A');
 };
 
 export const getAlertOptionsFromIds = (
@@ -228,12 +229,50 @@ export const getEndTime = ({
 	}
 >): string | dayjs.Dayjs => {
 	if (kind === 'fixed') {
-		return schedule?.endTime ? dayjs(schedule.endTime) : '';
+		return schedule?.endTime || '';
 	}
 
-	return schedule?.recurrence?.endTime ? dayjs(schedule.recurrence.endTime) : '';
+	return schedule?.recurrence?.endTime || '';
 };
 
 export const isScheduleRecurring = (
 	schedule?: DowntimeSchedules['schedule'],
 ): boolean => (schedule ? !isEmpty(schedule?.recurrence) : false);
+
+function convertUtcOffsetToTimezoneOffset(offsetMinutes: number): string {
+	const sign = offsetMinutes >= 0 ? '+' : '-';
+	const absOffset = Math.abs(offsetMinutes);
+	const hours = String(Math.floor(absOffset / 60)).padStart(2, '0');
+	const minutes = String(absOffset % 60).padStart(2, '0');
+	return `${sign}${hours}:${minutes}`;
+}
+
+export function formatWithTimezone(
+	dateValue?: string | dayjs.Dayjs,
+	timezone?: string,
+): string {
+	const parsedDate =
+		typeof dateValue === 'string' ? dateValue : dateValue?.format();
+	console.log('dateValue', parsedDate, 'timezone', timezone);
+	// Get the target timezone offset
+	const targetOffset = convertUtcOffsetToTimezoneOffset(
+		dayjs(dateValue).tz(timezone).utcOffset(),
+	);
+
+	return `${parsedDate?.substring(0, 19)}${targetOffset}`;
+}
+
+export function handleTimeConvertion(
+	dateValue: string | dayjs.Dayjs,
+	timezoneInit?: string,
+	timezone?: string,
+	shouldKeepLocalTime?: boolean,
+): string {
+	const timezoneChanged = !isEqual(timezoneInit, timezone);
+	const initialTime = dayjs(dateValue).tz(timezoneInit);
+
+	const formattedTime = formatWithTimezone(initialTime, timezone);
+	return timezoneChanged
+		? formattedTime
+		: dayjs(dateValue).tz(timezone, shouldKeepLocalTime).format();
+}
