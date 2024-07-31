@@ -103,6 +103,8 @@ type Reader interface {
 	CheckClickHouse(ctx context.Context) error
 
 	GetMetricMetadata(context.Context, string, string) (*v3.MetricMetadataResponse, error)
+
+	GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error)
 }
 
 type Querier interface {
