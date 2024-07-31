@@ -4,13 +4,12 @@ import (
 	"fmt"
 )
 
-func generateConsumerSQL(start, end int64, topic, partition, queueType string) string {
+func generateConsumerSQL(start, end int64, topic, partition, consumerGroup, queueType string) string {
 	query := fmt.Sprintf(`
 WITH 
 -- Sub query for p99 calculation
 p99_query AS (
     SELECT
-        stringTagMap['messaging.kafka.consumer.group'] as consumer_group,
         serviceName,
         quantile(0.99)(durationNano) / 1000000 as p99
     FROM signoz_traces.signoz_index_v2
@@ -21,13 +20,13 @@ p99_query AS (
       AND msgSystem = '%s' 
       AND stringTagMap['messaging.destination.name'] = '%s'
       AND stringTagMap['messaging.destination.partition.id'] = '%s'
-    GROUP BY consumer_group, serviceName
+	  AND stringTagMap['messaging.kafka.consumer.group'] = '%s'
+    GROUP BY serviceName
 ),
 
 -- Sub query for RPS calculation
 rps_query AS (
     SELECT
-        stringTagMap['messaging.kafka.consumer.group'] AS consumer_group,
         serviceName,
         count(*) / ((%d - %d) / 1000000000) AS rps  -- Convert nanoseconds to seconds
     FROM signoz_traces.signoz_index_v2
@@ -38,13 +37,13 @@ rps_query AS (
 		AND msgSystem = '%s' 
         AND stringTagMap['messaging.destination.name'] = '%s'
         AND stringTagMap['messaging.destination.partition.id'] = '%s'
-    GROUP BY consumer_group, serviceName
+		AND stringTagMap['messaging.kafka.consumer.group'] = '%s'
+    GROUP BY serviceName
 ),
 
 -- Sub query for error rate calculation
 error_rate_query AS (
     SELECT
-        stringTagMap['messaging.kafka.consumer.group'] AS consumer_group,
         serviceName,
         count(*) / ((%d - %d) / 1000000000) AS error_rate  -- Convert nanoseconds to seconds
     FROM signoz_traces.signoz_index_v2
@@ -56,13 +55,13 @@ error_rate_query AS (
         AND msgSystem = '%s' 
         AND stringTagMap['messaging.destination.name'] = '%s'
         AND stringTagMap['messaging.destination.partition.id'] = '%s'
-    GROUP BY consumer_group, serviceName
+		AND stringTagMap['messaging.kafka.consumer.group'] = '%s'
+    GROUP BY serviceName
 ),
 
 -- Sub query for average message size calculation
 avg_msg_size_query AS (
     SELECT
-        stringTagMap['messaging.kafka.consumer.group'] AS consumer_group,
         serviceName,
         avg(numberTagMap['messaging.message.body.size']) AS avg_msg_size
     FROM signoz_traces.signoz_index_v2
@@ -73,12 +72,12 @@ avg_msg_size_query AS (
         AND msgSystem = '%s' 
         AND stringTagMap['messaging.destination.name'] = '%s'
         AND stringTagMap['messaging.destination.partition.id'] = '%s'
-    GROUP BY consumer_group, serviceName
+		AND stringTagMap['messaging.kafka.consumer.group'] = '%s'
+    GROUP BY serviceName
 )
 
 -- Main query to combine all metrics
 SELECT
-    p99_query.consumer_group AS consumer_group,
     p99_query.serviceName AS service_name,
     p99_query.p99 AS p99,
     COALESCE(error_rate_query.error_rate, 0) AS error_rate,
@@ -86,15 +85,14 @@ SELECT
     COALESCE(avg_msg_size_query.avg_msg_size, 0) AS avg_msg_size
 FROM
     p99_query
-    LEFT JOIN rps_query ON p99_query.consumer_group = rps_query.consumer_group
-        AND p99_query.serviceName = rps_query.serviceName
-    LEFT JOIN error_rate_query ON p99_query.consumer_group = error_rate_query.consumer_group
-        AND p99_query.serviceName = error_rate_query.serviceName
-    LEFT JOIN avg_msg_size_query ON p99_query.consumer_group = avg_msg_size_query.consumer_group
-        AND p99_query.serviceName = avg_msg_size_query.serviceName
+    LEFT JOIN rps_query ON p99_query.serviceName = rps_query.serviceName
+    LEFT JOIN error_rate_query ON p99_query.serviceName = error_rate_query.serviceName
+    LEFT JOIN avg_msg_size_query ON p99_query.serviceName = avg_msg_size_query.serviceName
 ORDER BY
-    p99_query.consumer_group;
-`, start, end, queueType, topic, partition, end, start, start, end, queueType, topic, partition, end, start, start, end, queueType, topic, partition, end, start, queueType, topic, partition)
+    p99_query.serviceName;
+`, start, end, queueType, topic, partition, consumerGroup, end, start, start, end, queueType, topic,
+		partition, consumerGroup, end, start, start, end, queueType, topic, partition,
+		consumerGroup, end, start, queueType, topic, partition, consumerGroup)
 	return query
 }
 
@@ -167,6 +165,7 @@ FROM
 ORDER BY
     p99_query.serviceName;
 
-`, start, end, queueType, topic, partition, end, start, start, end, queueType, topic, partition, end, start, start, end, queueType, topic, partition)
+`, start, end, queueType, topic, partition, end, start, start, end, queueType, topic,
+		partition, end, start, start, end, queueType, topic, partition)
 	return query
 }

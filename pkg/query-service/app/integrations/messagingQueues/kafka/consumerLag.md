@@ -19,51 +19,13 @@ POST /api/v1/messaging-queues/kafka/consumer-lag/consumer-details
 	"end": 1721290096000000000,
 	"variables": {
         "partition": "0",
-		"topic": "topic1"
+		"topic": "topic1",
+        "consumer_group": "cg1"
 	}
 }
 ```
 
 response in query range format `series`
-```json
-{
-  "status": "success",
-  "data": {
-    "resultType": "",
-    "result": [
-      {
-        "queryName": "producer",
-        "series": [
-          {
-            "labels": {
-              "error_rate": "0",
-              "p99_query.p99": "150.08830908000002",
-              "rps": "0.00016534391534391533",
-              "service_name": "producer-svc"
-            },
-            "labelsArray": [
-              {
-                "service_name": "producer-svc"
-              },
-              {
-                "p99_query.p99": "150.08830908000002"
-              },
-              {
-                "error_rate": "0"
-              },
-              {
-                "rps": "0.00016534391534391533"
-              }
-            ],
-            "values": []
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-response in query range format `table`
 ```json
 {
     "status": "success",
@@ -73,11 +35,6 @@ response in query range format `table`
             {
                 "table": {
                     "columns": [
-                        {
-                            "name": "consumer_group",
-                            "queryName": "",
-                            "isValueColumn": false
-                        },
                         {
                             "name": "service_name",
                             "queryName": "",
@@ -108,19 +65,8 @@ response in query range format `table`
                         {
                             "data": {
                                 "avg_msg_size": "0",
-                                "consumer_group": "cg1",
                                 "error_rate": "0",
                                 "p99": "0.2942205100000016",
-                                "service_name": "consumer-svc",
-                                "throughput": "0.00016534391534391533"
-                            }
-                        },
-                        {
-                            "data": {
-                                "avg_msg_size": "0",
-                                "consumer_group": "cg3",
-                                "error_rate": "0",
-                                "p99": "0.216600410000002",
                                 "service_name": "consumer-svc",
                                 "throughput": "0.00016534391534391533"
                             }
@@ -145,12 +91,12 @@ POST /api/v1/messaging-queues/kafka/consumer-lag/consumer-details
 
 ```json
 {
-	"start": 1720685296000000000,
-	"end": 1721290096000000000,
-	"variables": {
-        "partition": "0",
-		"topic": "topic1"
-	}
+  "start": 1720685296000000000, 
+  "end": 1721290096000000000,
+  "variables": {
+    "partition": "0", 
+    "topic": "topic1"
+  }
 }
 ```
 
