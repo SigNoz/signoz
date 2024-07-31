@@ -234,9 +234,18 @@ function LogsExplorerViews({
 					start: timeRange.start,
 					end: timeRange.end,
 				}),
-			lastLogLineTimestamp,
+			lastLogLineTimestamp:
+				requestData?.builder?.queryData[0]?.orderBy?.[0]?.columnName ===
+					'timestamp' &&
+				requestData?.builder?.queryData[0]?.orderBy?.[0]?.order === 'desc'
+					? lastLogLineTimestamp
+					: undefined,
 		},
 	);
+
+	useEffect(() => {
+		setLastLogLineTimestamp(undefined);
+	}, [data]);
 
 	const getRequestData = useCallback(
 		(
