@@ -96,6 +96,10 @@ const interceptorRejected = async (
 	}
 };
 
+const interceptorRejectedBase = async (
+	value: AxiosResponse<any>,
+): Promise<AxiosResponse<any>> => Promise.reject(value);
+
 const instance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
 });
@@ -138,6 +142,18 @@ ApiV4Instance.interceptors.response.use(
 	interceptorRejected,
 );
 ApiV4Instance.interceptors.request.use(interceptorsRequestResponse);
+//
+
+// axios Base
+export const ApiBaseInstance = axios.create({
+	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
+});
+
+ApiBaseInstance.interceptors.response.use(
+	interceptorsResponse,
+	interceptorRejectedBase,
+);
+ApiBaseInstance.interceptors.request.use(interceptorsRequestResponse);
 //
 
 // gateway Api V1
