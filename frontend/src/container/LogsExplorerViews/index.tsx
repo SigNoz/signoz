@@ -116,6 +116,9 @@ function LogsExplorerViews({
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
+	const [lastLogLineTimestamp, setLastLogLineTimestamp] = useState<
+		string | number
+	>();
 
 	const handleAxisError = useAxiosError();
 
@@ -231,6 +234,7 @@ function LogsExplorerViews({
 					start: timeRange.start,
 					end: timeRange.end,
 				}),
+			lastLogLineTimestamp,
 		},
 	);
 
@@ -301,6 +305,8 @@ function LogsExplorerViews({
 				log: orderByTimestamp ? lastLog : null,
 				pageSize: nextPageSize,
 			});
+
+			setLastLogLineTimestamp(lastLog?.timestamp);
 
 			setPage((prevPage) => prevPage + 1);
 
