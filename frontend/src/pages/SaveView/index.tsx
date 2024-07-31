@@ -217,7 +217,7 @@ function SaveView(): JSX.Element {
 				if (extraData !== '') {
 					bgColor = extraData.color;
 				}
-				console.log(view, index);
+
 				const timeOptions: Intl.DateTimeFormatOptions = {
 					hour: '2-digit',
 					minute: '2-digit',
