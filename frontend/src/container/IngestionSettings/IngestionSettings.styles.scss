@@ -940,3 +940,50 @@
 		border-color: var(--bg-vanilla-300) !important;
 	}
 }
+
+.mt-8 {
+	margin-top: 8px;
+}
+
+.mt-12 {
+	margin-top: 12px;
+}
+
+.mt-24 {
+	margin-top: 24px;
+}
+
+.mb-24 {
+	margin-bottom: 24px;
+}
+
+.ingestion-setup-details-links {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 24px;
+	padding: 12px;
+	border-radius: 4px;
+	background: rgba(113, 144, 249, 0.1);
+	color: var(--bg-robin-300, #95acfb);
+
+	.learn-more {
+		display: inline-flex;
+		justify-content: center;
+		align-items: center;
+		text-decoration: underline;
+
+		color: var(--bg-robin-300, #95acfb);
+	}
+}
+
+.lightMode {
+	.ingestion-setup-details-links {
+		background: rgba(113, 144, 249, 0.1);
+		color: var(--bg-robin-500);
+
+		.learn-more {
+			color: var(--bg-robin-500);
+		}
+	}
+}

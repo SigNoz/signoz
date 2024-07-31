@@ -423,9 +423,9 @@ function AllErrors(): JSX.Element {
 			)?.tagValue;
 
 			logEvent('Exception: List page visited', {
-				numberOfExceptions: errorCountResponse.data?.payload,
+				numberOfExceptions: errorCountResponse?.data?.payload,
 				selectedEnvironments,
-				resourceAttributeUsed: !!queries.length,
+				resourceAttributeUsed: !!queries?.length,
 			});
 			logEventCalledRef.current = true;
 		}

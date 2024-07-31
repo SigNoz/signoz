@@ -1,6 +1,11 @@
 import { rest } from 'msw';
 
 import { billingSuccessResponse } from './__mockdata__/billing';
+import {
+	dashboardSuccessResponse,
+	getDashboardById,
+} from './__mockdata__/dashboards';
+import { explorerView } from './__mockdata__/explorer_views';
 import { inviteUser } from './__mockdata__/invite_user';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
 import { membersResponse } from './__mockdata__/members';
@@ -54,6 +59,51 @@ export const handlers = [
 			const metricName = req.url.searchParams.get('metricName');
 			const tagKey = req.url.searchParams.get('tagKey');
 
+			const attributeKey = req.url.searchParams.get('attributeKey');
+
+			if (attributeKey === 'serviceName') {
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							stringAttributeValues: [
+								'customer',
+								'demo-app',
+								'driver',
+								'frontend',
+								'mysql',
+								'redis',
+								'route',
+								'go-grpc-otel-server',
+								'test',
+							],
+							numberAttributeValues: null,
+							boolAttributeValues: null,
+						},
+					}),
+				);
+			}
+
+			if (attributeKey === 'name') {
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							stringAttributeValues: [
+								'HTTP GET',
+								'HTTP GET /customer',
+								'HTTP GET /dispatch',
+								'HTTP GET /route',
+							],
+							numberAttributeValues: null,
+							boolAttributeValues: null,
+						},
+					}),
+				);
+			}
+
 			if (
 				metricName === 'signoz_calls_total' &&
 				tagKey === 'resource_signoz_collector_id'
@@ -86,9 +136,16 @@ export const handlers = [
 		res(ctx.status(200), ctx.json(licensesSuccessResponse)),
 	),
 
-	// ?licenseKey=58707e3d-3bdb-44e7-8c89-a9be237939f4
 	rest.get('http://localhost/api/v1/billing', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(billingSuccessResponse)),
+	),
+
+	rest.get('http://localhost/api/v1/dashboards', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(dashboardSuccessResponse)),
+	),
+
+	rest.get('http://localhost/api/v1/dashboards/4', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(getDashboardById)),
 	),
 
 	rest.get('http://localhost/api/v1/invite', (_, res, ctx) =>
@@ -96,5 +153,32 @@ export const handlers = [
 	),
 	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(inviteUser)),
+	),
+
+	rest.get(
+		'http://localhost/api/v3/autocomplete/aggregate_attributes',
+		(req, res, ctx) =>
+			res(
+				ctx.status(200),
+				ctx.json({
+					status: 'success',
+					data: { attributeKeys: null },
+				}),
+			),
+	),
+
+	rest.get('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(explorerView)),
+	),
+
+	rest.post('http://localhost/api/v1/event', (req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				statusCode: 200,
+				error: null,
+				payload: 'Event Processed Successfully',
+			}),
+		),
 	),
 ];

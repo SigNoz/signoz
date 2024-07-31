@@ -224,13 +224,18 @@ export function Filter(props: FilterProps): JSX.Element {
 						<Button
 							onClick={(): void => handleRun({ resetAll: true })}
 							className="sync-icon"
+							data-testid="reset-filters"
 						>
 							<SyncOutlined />
 						</Button>
 					</Tooltip>
 				</Flex>
 				<Tooltip title="Collapse" placement="right">
-					<Button onClick={(): void => setOpen(false)} className="arrow-icon">
+					<Button
+						onClick={(): void => setOpen(false)}
+						className="arrow-icon"
+						data-testid="toggle-filter-panel"
+					>
 						<VerticalAlignTopOutlined rotate={270} />
 					</Button>
 				</Tooltip>
