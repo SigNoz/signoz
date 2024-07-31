@@ -3519,7 +3519,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 	colname := utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
 
 	dataType := strings.ToLower(field.DataType)
-	if field.DataType == "int64" || field.DataType == "float64" {
+	if dataType == "int64" || dataType == "float64" {
 		dataType = "number"
 	}
 	attrColName := fmt.Sprintf("%s_%s", field.Type, dataType)
