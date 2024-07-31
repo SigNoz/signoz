@@ -35,6 +35,7 @@ func TraceIdFilterUsedWithEqual(params *v3.QueryRangeParamsV3) (bool, []string) 
 					val := item.Value
 					val, err = utils.ValidateAndCastValue(val, item.Key.DataType)
 					if err != nil {
+						zap.L().Error("invalid value for key", zap.String("key", item.Key.Key), zap.Error(err))
 						return false, []string{}
 					}
 					if val != nil {
