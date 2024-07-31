@@ -15,6 +15,7 @@ Once you are done intrumenting your JavaScript application, you can run it using
 ```bash
 tail -f -n 50 otelcol-output.log
 ```
+&nbsp;
 
 #### (Optional Step): Stop `otelcol`
 ```bash

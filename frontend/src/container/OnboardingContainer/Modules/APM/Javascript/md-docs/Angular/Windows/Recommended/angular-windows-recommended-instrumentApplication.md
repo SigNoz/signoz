@@ -13,10 +13,11 @@ npm install --save @opentelemetry/resources@^1.21.0
 npm install --save @opentelemetry/propagator-b3@^1.21.0
 npm install --save @opentelemetry/semantic-conventions@^1.21.0
 ```
+&nbsp;
 
 **Step 2.** Create `instrument.ts` file<br></br>
 
-```ts
+```bash
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import {
   WebTracerProvider,
@@ -68,13 +69,14 @@ registerInstrumentations({
   ],
 });
 ```
+
+&nbsp;
+&nbsp;
+
 - `<service_name>` : Name of your service.
 
 **Step 3.** Add the below import to your `main.ts` file.
-{/* <Admonition type="info">
-The below import should be the first line in the main file of your application (Ex -> `main.ts`)
-</Admonition> */}
-    
-```jsx
+
+```bash
 import './app/instrument';
 ```

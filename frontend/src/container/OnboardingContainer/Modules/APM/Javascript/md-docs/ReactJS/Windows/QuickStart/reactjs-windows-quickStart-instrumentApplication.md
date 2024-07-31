@@ -63,9 +63,15 @@ registerInstrumentations({
     ],
 });
 ```
+
+&nbsp;
+
 ### Step 3: Import tracer in main file
 
 **Important Note**: The below import should be the first line in the main file of your application (Ex -> `index.js`)
+
+&nbsp;
+
 ```bash
 import './tracing.js'
 ```

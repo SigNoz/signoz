@@ -4,8 +4,11 @@
 ```bash
 wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
 ```
+&nbsp;
 
 **Step 2.** Edit your configuration file,i.e `standalone.conf` for JBoss with nano or notepad.
+&nbsp;
+&nbsp;
     
 **Step 3.** Update `JAVA_OPTS` environment variable
 
@@ -17,6 +20,8 @@ set JAVA_OPTS=%JAVA_OPTS% -Dotel.exporter.otlp.endpoint=https://ingest.{{REGION}
 set JAVA_OPTS=%JAVA_OPTS% -Dotel.exporter.otlp.headers="signoz-access-token={{SIGNOZ_INGESTION_KEY}}"
 set JAVA_OPTS=%JAVA_OPTS% -Dotel.resource.attributes="service.name={{MYAPP}}"
 ```
+&nbsp;
+&nbsp;
 You need to replace the following things based on your environment:<br></br>
 
 - `path` - Update it to the path of your downloaded Java JAR agent instead of `C:\path\to\opentelemetry-javaagent.jar`<br></br>

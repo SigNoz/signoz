@@ -8,6 +8,7 @@ setx OTEL_EXPORTER_OTLP_PROTOCOL=grpc
 
 opentelemetry-instrument <your_run_command>
 ```
+&nbsp;
 
 `<your_run_command>` can be `python3 app.py` or `gunicorn src.app -b 0.0.0.0:8001`
 

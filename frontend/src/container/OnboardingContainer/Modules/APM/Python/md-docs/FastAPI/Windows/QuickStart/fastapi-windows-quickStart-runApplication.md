@@ -8,6 +8,7 @@ setx OTEL_EXPORTER_OTLP_PROTOCOL=grpc
 
 opentelemetry-instrument <your_run_command>
 ```
+&nbsp;
 
 `<your_run_command>` can be something like `python3 app.py` or `uvicorn main:app --host localhost --port 5002`
 

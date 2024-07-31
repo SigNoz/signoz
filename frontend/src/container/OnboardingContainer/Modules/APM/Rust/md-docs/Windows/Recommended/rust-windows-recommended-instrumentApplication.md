@@ -1,6 +1,9 @@
 &nbsp;
 
 After setting up the Otel collector agent, follow the steps below to instrument your Rust Application
+
+&nbsp;
+
 **Step 1 : Instrument your application with OpenTelemetry**
 
 To configure our Rust application to send traces we need to initialize OpenTelemetry, Otel has already created some crates which you need to add into your `Cargo.toml` file, just below `[dependencies]` section.

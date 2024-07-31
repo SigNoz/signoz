@@ -6,6 +6,8 @@ Once you are done instrumenting your Angular application, you can run it using t
 ### Step 1: Run OTel Collector
  Run this command inside the `otelcol-contrib` directory that you created in the install Otel Collector step
 
+&nbsp;
+
 ```bash
 ./otelcol-contrib --config ./config.yaml &> otelcol-output.log & echo "$!" > otel-pid
 ```

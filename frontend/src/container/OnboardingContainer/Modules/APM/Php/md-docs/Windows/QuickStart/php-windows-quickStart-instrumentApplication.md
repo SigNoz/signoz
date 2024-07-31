@@ -4,15 +4,17 @@
 
 Initialize the application using
 
-```
+```bash
 composer init --no-interaction --stability beta --require slim/slim:"^4" --require slim/psr7:"^1"
 ```
 
 After successful run of prior command a file named `composer.json` will be generated if it does not exist. Next run the following command, make sure the version of `php` you are using is `7.4` or else you might encounter some issues running the following command.
 
-```
+```bash
 composer update
 ```
+
+&nbsp;
 
 **Step 2: Build the extension**
 
@@ -21,50 +23,57 @@ With our environment set up we can install the extension using [PECL](https://pe
 ```bash
 pecl install opentelemetry
 ```
+&nbsp;
 
 If gRPC is already downloaded and installed, skip the following step.
 
 ```bash
 pecl install grpc 
 ```
+&nbsp;
 
 After successfully installing the OpenTelemetry extension, add the extension to `php.ini` file of your project:
 
-```php
+```bash
 [opentelemetry]
 extension=opentelemetry.so
 ```
+&nbsp;
 
 Verify that the extension is enabled by running:
 
-```
+```bash
 php -m | grep opentelemetry
 ```
+&nbsp;
 
 This should output:
 
-```
+```bash
 opentelemetry
 ```
+&nbsp;
 
 **Step 3: Add the dependencies**
 
 Add dependencies required for OpenTelemetry SDK for PHP to perform automatic instrumentation using this command :
 
-```
+```bash
 composer config allow-plugins.php-http/discovery false
 ```
+&nbsp;
 
 ```
 composer require open-telemetry/sdk open-telemetry/exporter-otlp php-http/guzzle7-adapter open-telemetry/transport-grpc guzzlehttp/guzzle
 ```
+&nbsp;
 
 You can install the additional dependencies provided by OpenTelemetry for different PHP frameworks from [here](https://packagist.org/explore/?query=open-telemetry).
-
+&nbsp;
 
 **Step 4: Modify php code**
 
-```
+```bash
 <?php
 
 use OpenTelemetry\API\Common\Instrumentation\Globals;

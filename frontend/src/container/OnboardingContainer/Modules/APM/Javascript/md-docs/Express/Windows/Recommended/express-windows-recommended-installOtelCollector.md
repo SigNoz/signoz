@@ -7,6 +7,8 @@ You can find instructions to install OTel Collector binary [here](https://signoz
 While creating the `config.yaml` during the installation fo the OTel Collector Binary, you need to enable CORS under the receivers section of the config file. This is needed so that you don't get 
 CORS error which can hinder sending your Traces to SigNoz Cloud. See the code snippet below to understand how you can enable CORS in your config file:
 
+&nbsp;
+
 ```yml
       http:
 +        cors:

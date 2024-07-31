@@ -1,9 +1,10 @@
- Enable the instrumentation agent and run your application
+## Enable the instrumentation agent and run your application
 
 If you run your `.war` package by putting in `webapps` folder, just add `setenv.bat` in your Tomcat `bin` folder.
 
 This should set these environment variables and start sending telemetry data to SigNoz Cloud.
 
+&nbsp;
 
 ```bash
 set CATALINA_OPTS=%CATALINA_OPTS% -javaagent:C:\path\to\opentelemetry-javaagent.jar

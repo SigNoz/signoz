@@ -6,9 +6,15 @@ setx OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}"
 setx OTEL_EXPORTER_OTLP_ENDPOINT=https://ingest.{{REGION}}.signoz.cloud:443 
 ```
 
+&nbsp;
+&nbsp;
+
 ```bash
 java -javaagent:/opentelemetry-javaagent.jar -jar
 ```
+
+&nbsp;
+&nbsp;
 
 ```bash
 <my-app>.jar

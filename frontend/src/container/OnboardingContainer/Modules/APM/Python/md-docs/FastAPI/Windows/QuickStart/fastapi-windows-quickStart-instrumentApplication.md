@@ -9,6 +9,8 @@
 python3 -m venv .venv
 source .venv/bin/activate
 ```
+&nbsp;
+
 This will create and activate a virtual environment named `.venv`
 
 &nbsp;

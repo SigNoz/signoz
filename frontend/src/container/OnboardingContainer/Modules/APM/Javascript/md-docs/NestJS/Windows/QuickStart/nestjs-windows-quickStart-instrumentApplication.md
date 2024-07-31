@@ -10,7 +10,7 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 **Step 2.** Create `tracer.ts` file<br></br>
 You need to configure the endpoint for SigNoz cloud in this file.
 
-```ts
+```bash
 'use strict';
 
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
@@ -53,16 +53,20 @@ process.on('SIGTERM', () => {
 export default sdk;
 ```
 
+&nbsp;
+
 **Step 3.** On `main.ts` file or file where your app starts import tracer using below command.
       
-```jsx
+```bash
 const tracer = require('./tracer')
 ```
+
+&nbsp;
 
 **Step 4.** Start the tracer<br></br>
 In the `async function boostrap` section of the application code, initialize the tracer as follows: 
 
-```jsx
+```bash
 const tracer = require('./tracer')
 
 import { NestFactory } from '@nestjs/core';

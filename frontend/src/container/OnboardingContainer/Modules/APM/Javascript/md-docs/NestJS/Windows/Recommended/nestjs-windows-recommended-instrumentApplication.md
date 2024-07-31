@@ -15,6 +15,8 @@ npm install --save @opentelemetry/auto-instrumentations-node@^0.39.4
 npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 ```
 
+&nbsp;
+
 **Step 2.** Create `tracer.ts` file<br></br>
 
 ```ts
@@ -58,6 +60,10 @@ process.on('SIGTERM', () => {
 
 export default sdk;
 ```
+
+&nbsp;
+&nbsp;
+
 - `<service_name>` : Name of your service.
 
 **Step 3.** On `main.ts` file or file where your app starts import tracer using below command. 

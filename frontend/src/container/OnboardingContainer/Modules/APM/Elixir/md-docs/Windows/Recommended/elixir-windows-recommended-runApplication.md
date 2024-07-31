@@ -7,7 +7,7 @@ You can find instructions to install OTel Collector binary [here](https://signoz
 
 Install dependencies related to OpenTelemetry by adding them to `mix.exs` file
 
-```elixir
+```bash
     {:opentelemetry_exporter, "~> 1.6"},
     {:opentelemetry_api, "~> 1.2"},
     {:opentelemetry, "~> 1.3"},

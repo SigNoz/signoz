@@ -8,31 +8,37 @@ After setting up the Otel collector agent, follow the steps below to instrument 
 
 Install dependencies related to OpenTelemetry SDK and exporter using gem.
 
-```go
+```bash
 gem install opentelemetry-sdk
 gem install opentelemetry-exporter-otlp
 gem install opentelemetry-instrumentation-all
 ```
 
+&nbsp;
+
 Include the required packages into your gemfile.
 
-```go
+```bash
 gem 'opentelemetry-sdk'
 gem 'opentelemetry-exporter-otlp'
 gem 'opentelemetry-instrumentation-all'
 ```
 
+&nbsp;
+
 Run the bundle install command:
 
-```go
+```bash
 bundle install
 ```
+
+&nbsp;
 
 **Step 2. Initialize the OpenTelemetry SDK**
 
 Initialize the otel sdk by adding below lines to `config/initializers/opentelemetry.rb` of your Ruby on Rails application.
 
-```ruby
+```bash
 require 'opentelemetry/sdk'
 require 'opentelemetry/exporter/otlp'
 require 'opentelemetry/instrumentation/all'

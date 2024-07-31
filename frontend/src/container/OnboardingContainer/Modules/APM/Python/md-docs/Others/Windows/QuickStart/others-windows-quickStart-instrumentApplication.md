@@ -13,6 +13,8 @@ After setting up the Otel collector agent, follow the steps below to instrument 
 python3 -m venv .venv
 source .venv/bin/activate
 ```
+&nbsp;
+
 This will create and activate a virtual environment named `.venv`
 
 &nbsp;

@@ -1,4 +1,3 @@
-
 **Step 2: Setup Development Environment**
 
 To configure our PHP application to send data, you need to use OpenTelemetry PHP extension. Since the extension is built from the source, you need to have the build tools, which can be installed using the following command:
@@ -19,20 +18,20 @@ pecl install grpc
 
 After successfully installing the OpenTelemetry extension, add the extension to `php.ini` file of your project:
 
-```php
+```bash
 [opentelemetry]
 extension=opentelemetry.so
 ```
 
 Verify that the extension is enabled by running:
 
-```
+```bash
 php -m | grep opentelemetry
 ```
 
 This should output:
 
-```
+```bash
 opentelemetry
 ```
 
@@ -40,22 +39,24 @@ opentelemetry
 
 Add dependencies required for OpenTelemetry SDK for PHP to perform automatic instrumentation using this command :
 
-```
+```bash
 composer config allow-plugins.php-http/discovery false
 ```
 
-```
+&nbsp;
+
+```bash
 composer require  open-telemetry/sdk  open-telemetry/exporter-otlp php-http/guzzle7-adapter open-telemetry/transport-grpc guzzlehttp/guzzle
 ```
 
-<Admonition type="info">
+&nbsp;
+
 You can install the additional dependencies provided by OpenTelemetry for different PHP frameworks from [here](https://packagist.org/explore/?query=open-telemetry).
-</Admonition>
 
 
 **Step 5: Modify php code**
 
-```
+```bash
 <?php
 
 use OpenTelemetry\API\Common\Instrumentation\Globals;

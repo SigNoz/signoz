@@ -13,6 +13,7 @@ Once you are done intrumenting your python application, you can run it using the
 ```bash
 tail -f -n 50 otelcol-output.log
 ```
+&nbsp;
 
 #### (Optional Step): Stop `otelcol`
 ```bash

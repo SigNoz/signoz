@@ -11,11 +11,12 @@ npm install --save @opentelemetry/resources@^1.21.0
 npm install --save @opentelemetry/propagator-b3@^1.21.0
 npm install --save @opentelemetry/semantic-conventions@^1.21.0
 ```
+&nbsp;
 
 **Step 2.** Create `instrument.ts` file<br></br>
 You need to configure the endpoint for SigNoz cloud in this file.
 
-```ts
+```bash
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import {
   WebTracerProvider,
@@ -72,15 +73,14 @@ registerInstrumentations({
 
 ```
 
+&nbsp;
+&nbsp;
+
 OpenTelemetry Node SDK currently does not detect the headers from `.env` files as of today. That’s why we need to include the variables in the `instrument.ts` file itself.
 
 
 **Step 3.** Add the below import to your `main.ts` file.
 
-{/* <Admonition type="info">
-The below import should be the first line in the main file of your application (Ex -> `main.ts`)
-</Admonition>  */}
-
-```jsx
+```bash
 import './app/instrument';
 ```

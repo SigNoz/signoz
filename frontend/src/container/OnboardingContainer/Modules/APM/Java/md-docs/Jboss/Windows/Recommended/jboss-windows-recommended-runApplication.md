@@ -5,6 +5,7 @@ Update `JAVA_OPTS` environment variable with configurations required to send dat
 ```bash
 JAVA_OPTS="-javaagent:C:/path/to/opentelemetry-javaagent.jar"
 ```
+&nbsp;
 
 where,
 - `path` - Update it to the path of your downloaded Java JAR agent.<br></br>

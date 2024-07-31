@@ -2,6 +2,6 @@
 
 Run the application using the below:
 
-```jsx
+```bash
 rails server
 ```

@@ -12,6 +12,7 @@
       go.opentelemetry.io/otel/exporters/otlp/otlptrace \
       go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
     ```
+    &nbsp;
     
 2. **Declare environment variables for configuring OpenTelemetry**<br></br>
    Declare the following global variables in `main.go` which we will use to configure OpenTelemetry:
@@ -23,6 +24,7 @@
         insecure     = os.Getenv("INSECURE_MODE")
     )
     ```
+    &nbsp;
     
 3. **Instrument your Go application with OpenTelemetry**<br></br>
    To configure your application to send data we will need a function to initialize OpenTelemetry. Add the following snippet of code in your `main.go` file.
@@ -84,6 +86,9 @@
         )
         return exporter.Shutdown
     }
+    ```
+
+    &nbsp;
     
 4. **Initialize the tracer in main.go**<br></br>
    Modify the main function to initialise the tracer in `main.go`. Initiate the tracer at the very beginning of our main function.
@@ -96,6 +101,7 @@
         ......
     }
     ```
+    &nbsp;
     
 5. **Add the OpenTelemetry Gin middleware**<br></br>
    Configure Gin to use the middleware by adding the following lines in `main.go`.
