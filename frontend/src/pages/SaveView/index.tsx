@@ -211,13 +211,13 @@ function SaveView(): JSX.Element {
 		{
 			title: 'Save View',
 			key: 'view',
-			render: (view: ViewProps): JSX.Element => {
+			render: (view: ViewProps, _record, index): JSX.Element => {
 				const extraData = view.extraData !== '' ? JSON.parse(view.extraData) : '';
 				let bgColor = getRandomColor();
 				if (extraData !== '') {
 					bgColor = extraData.color;
 				}
-
+				console.log(view, index);
 				const timeOptions: Intl.DateTimeFormatOptions = {
 					hour: '2-digit',
 					minute: '2-digit',
@@ -256,7 +256,9 @@ function SaveView(): JSX.Element {
 										boxShadow: `0px 0px 6px 0px ${bgColor}`,
 									}}
 								/>{' '}
-								<Typography.Text>{view.name}</Typography.Text>
+								<Typography.Text data-testid={`${view.name}-${index}`}>
+									{view.name}
+								</Typography.Text>
 							</div>
 
 							<div className="action-btn">
@@ -265,11 +267,16 @@ function SaveView(): JSX.Element {
 									className={isEditDeleteSupported ? '' : 'hidden'}
 									onClick={(): void => handleEditModelOpen(view, bgColor)}
 								/>
-								<Compass size={14} onClick={(): void => handleRedirectQuery(view)} />
+								<Compass
+									size={14}
+									onClick={(): void => handleRedirectQuery(view)}
+									data-testid={`${view.name}-explorer-${index}`}
+								/>
 								<Trash2
 									size={14}
 									className={isEditDeleteSupported ? '' : 'hidden'}
 									color={Color.BG_CHERRY_500}
+									data-testid={`${view.name}-delete-${index}`}
 									onClick={(): void => handleDeleteModelOpen(view.uuid, view.name)}
 								/>
 							</div>
