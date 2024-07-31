@@ -837,6 +837,27 @@ func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequ
 	return &req, nil
 }
 
+func parseQBFilterSuggestionsRequest(r *http.Request) (*v3.QBFilterSuggestionsRequest, error) {
+	var req v3.QBFilterSuggestionsRequest
+
+	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	if err := dataSource.Validate(); err != nil {
+		return nil, err
+	}
+
+	req = v3.QBFilterSuggestionsRequest{
+		DataSource: dataSource,
+		Limit:      limit,
+		SearchText: r.URL.Query().Get("searchText"),
+	}
+	return &req, nil
+}
+
 func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequest, error) {
 	var req v3.FilterAttributeKeyRequest
 

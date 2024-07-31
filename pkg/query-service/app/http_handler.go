@@ -3046,6 +3046,31 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 	aH.Respond(w, response)
 }
 
+func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.Request) {
+	var response *v3.QBFilterSuggestionsResponse
+	req, err := parseQBFilterSuggestionsRequest(r)
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	switch req.DataSource {
+	case v3.DataSourceLogs:
+		response, err = aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
+	default:
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
+		return
+	}
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
 func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.Request) {
 	var response *v3.FilterAttributeKeyResponse
 	req, err := parseFilterAttributeKeyRequest(r)
