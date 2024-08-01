@@ -85,7 +85,15 @@ function Login({
 				setIsLoading(true);
 				await afterLogin(userId, jwt, refreshjwt);
 				setIsLoading(false);
-				history.push(ROUTES.APPLICATION);
+				if (history?.location?.state) {
+					const historyState = history?.location?.state as any;
+
+					if (historyState?.from) {
+						history.push(historyState?.from);
+					} else {
+						history.push(ROUTES.APPLICATION);
+					}
+				}
 			}
 		}
 		processJwt();
