@@ -638,6 +638,12 @@ type AlertsInfo struct {
 	LogsBasedAlerts   int `json:"logsBasedAlerts"`
 	MetricBasedAlerts int `json:"metricBasedAlerts"`
 	TracesBasedAlerts int `json:"tracesBasedAlerts"`
+	SlackChannels     int `json:"slackChannels"`
+	WebHookChannels   int `json:"webHookChannels"`
+	PagerDutyChannels int `json:"pagerDutyChannels"`
+	OpsGenieChannels  int `json:"opsGenieChannels"`
+	EmailChannels     int `json:"emailChannels"`
+	MSTeamsChannels   int `json:"microsoftTeamsChannels"`
 }
 
 type SavedViewsInfo struct {

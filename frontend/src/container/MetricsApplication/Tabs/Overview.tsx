@@ -91,7 +91,7 @@ function Application(): JSX.Element {
 
 			logEvent('APM: Service detail page visited', {
 				selectedEnvironments,
-				resourceAttributeUsed: !!queries.length,
+				resourceAttributeUsed: !!queries?.length,
 				section: 'overview',
 			});
 			logEventCalledRef.current = true;

@@ -370,8 +370,8 @@ function EditAlertChannels({
 			}
 			logEvent('Alert Channel: Save channel', {
 				type: value,
-				sendResolvedAlert: selectedConfig.send_resolved,
-				name: selectedConfig.name,
+				sendResolvedAlert: selectedConfig?.send_resolved,
+				name: selectedConfig?.name,
 				new: 'false',
 				status: result?.status,
 				statusMessage: result?.statusMessage,
@@ -441,8 +441,8 @@ function EditAlertChannels({
 				}
 				logEvent('Alert Channel: Test notification', {
 					type: channelType,
-					sendResolvedAlert: selectedConfig.send_resolved,
-					name: selectedConfig.name,
+					sendResolvedAlert: selectedConfig?.send_resolved,
+					name: selectedConfig?.name,
 					new: 'false',
 					status:
 						response && response.statusCode === 200 ? 'Test success' : 'Test failed',
