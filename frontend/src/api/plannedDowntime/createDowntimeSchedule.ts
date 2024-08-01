@@ -1,6 +1,7 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
+import { Dayjs } from 'dayjs';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 import { Recurrence } from './getAllDowntimeSchedules';
@@ -11,8 +12,8 @@ export interface DowntimeSchedulePayload {
 	alertIds: string[];
 	schedule: {
 		timezone?: string;
-		startTime?: string;
-		endTime?: string;
+		startTime?: string | Dayjs;
+		endTime?: string | Dayjs;
 		recurrence?: Recurrence;
 	};
 }
