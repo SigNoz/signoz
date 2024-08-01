@@ -204,8 +204,6 @@ function LogsPanelComponent({
 		return <div>{SOMETHING_WENT_WRONG}</div>;
 	}
 
-	console.log(widget?.selectedLogFields);
-
 	return (
 		<>
 			<div className="logs-table">

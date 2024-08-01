@@ -25,7 +25,6 @@ export default function LogsFormatOptionsMenu({
 	config,
 }: LogsFormatOptionsMenuProps): JSX.Element {
 	const { maxLines, format, addColumn } = config;
-	console.log(format, addColumn);
 	const [selectedItem, setSelectedItem] = useState(selectedOptionFormat);
 	const maxLinesNumber = (maxLines?.value as number) || 1;
 	const [maxLinesPerRow, setMaxLinesPerRow] = useState<number>(maxLinesNumber);
