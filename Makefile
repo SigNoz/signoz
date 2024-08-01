@@ -118,6 +118,18 @@ build-push-query-service: build-query-service-static-all
 	--push --platform linux/arm64,linux/amd64 \
 	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
+# Builds docker image of query service for development, set REPONAME to localhost:5000
+# Can be used for testing local changes on your branch
+build-push-query-service-dev:
+	@echo "------------------"
+	@echo "--> Building and pushing query-service docker image"
+	@echo "------------------"
+	@docker buildx build --file $(QUERY_SERVICE_DIRECTORY)/Dockerfiledev --progress plain \
+	--push --platform linux/arm64 \
+	--build-arg ENVIRONMENT=development \
+	--build-arg TARGETPLATFORM="linux/amd64" \
+	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
+
 # Step to build EE docker image of query service in amd64 (used in build pipeline)
 build-ee-query-service-amd64:
 	@echo "------------------"
