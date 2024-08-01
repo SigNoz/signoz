@@ -10,8 +10,8 @@ const getTopLevelOperations = async (
 	props: GetTopLevelOperationsProps,
 ): Promise<ServiceDataProps> => {
 	const response = await axios.post(`/service/top_level_operations`, {
-		start: `${props.start}`,
-		end: `${props.end}`,
+		start: props.start && `${props.start}`,
+		end: props.end && `${props.end}`,
 		service: props.service,
 	});
 	return response.data;
