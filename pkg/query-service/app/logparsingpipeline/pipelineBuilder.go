@@ -21,7 +21,9 @@ func CollectorConfProcessorName(p Pipeline) string {
 	return constants.LogsPPLPfx + p.Alias
 }
 
-func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []string, error) {
+// Old proc generation logic
+
+func PreparePipelineProcessorOld(pipelines []Pipeline) (map[string]interface{}, []string, error) {
 	processors := map[string]interface{}{}
 	names := []string{}
 	for pipelineIdx, v := range pipelines {
@@ -229,6 +231,8 @@ func cleanTraceParser(operator *PipelineOperator) {
 		operator.TraceFlags = nil
 	}
 }
+
+// End of old stuff
 
 // Generates an expression checking that `fieldPath` has a non-nil value in a log record.
 func fieldNotNilCheck(fieldPath string) (string, error) {

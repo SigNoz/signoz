@@ -27,10 +27,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 func TestLogPipelinesLifecycle(t *testing.T) {
@@ -628,10 +626,14 @@ func assertPipelinesRecommendedInRemoteConfig(
 		t.Fatalf("could not unmarshal config file sent to opamp client: %v", err)
 	}
 
-	// Each pipeline is expected to become its own processor
-	// in the logs service in otel collector config.
+	// Validate expected collector config processors for log pipelines
+	// are present in config recommended to opamp client
+
+	expectedProcessors, expectedProcNames, err := logparsingpipeline.PreparePipelineProcessor(pipelines)
+
 	collectorConfSvcs := collectorConfSentToClient["service"].(map[string]interface{})
 	collectorConfLogsSvc := collectorConfSvcs["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})
+
 	collectorConfLogsSvcProcessorNames := collectorConfLogsSvc["processors"].([]interface{})
 	collectorConfLogsPipelineProcNames := []string{}
 	for _, procNameVal := range collectorConfLogsSvcProcessorNames {
@@ -644,43 +646,28 @@ func assertPipelinesRecommendedInRemoteConfig(
 		}
 	}
 
-	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(pipelines)
+	_, expectedProcNames, err = logparsingpipeline.PreparePipelineProcessor(pipelines)
 	require.NoError(t, err)
+
 	require.Equal(
-		t, expectedLogProcessorNames, collectorConfLogsPipelineProcNames,
+		t, expectedProcNames, collectorConfLogsPipelineProcNames,
 		"config sent to opamp client doesn't contain expected log pipelines",
 	)
 
 	collectorConfProcessors := collectorConfSentToClient["processors"].(map[string]interface{})
-	for _, procName := range expectedLogProcessorNames {
+	for _, procName := range expectedProcNames {
 		pipelineProcessorInConf, procExists := collectorConfProcessors[procName]
 		require.True(t, procExists, fmt.Sprintf(
 			"%s processor not found in config sent to opamp client", procName,
 		))
 
-		// Validate that filter expr in collector conf is as expected.
-
-		// extract expr present in collector conf processor
-		pipelineProcOps := pipelineProcessorInConf.(map[string]interface{})["operators"].([]interface{})
-
-		routerOpIdx := slices.IndexFunc(
-			pipelineProcOps,
-			func(op interface{}) bool { return op.(map[string]interface{})["id"] == "router_signoz" },
-		)
-		require.GreaterOrEqual(t, routerOpIdx, 0)
-		routerOproutes := pipelineProcOps[routerOpIdx].(map[string]interface{})["routes"].([]interface{})
-		pipelineFilterExpr := routerOproutes[0].(map[string]interface{})["expr"].(string)
-
-		// find logparsingpipeline.Pipeline whose processor is being validated here
-		pipelineIdx := slices.IndexFunc(
-			pipelines, func(p logparsingpipeline.Pipeline) bool {
-				return logparsingpipeline.CollectorConfProcessorName(p) == procName
-			},
-		)
-		require.GreaterOrEqual(t, pipelineIdx, 0)
-		expectedExpr, err := queryBuilderToExpr.Parse(pipelines[pipelineIdx].Filter)
+		procInConfYaml, err := yaml.Parser().Marshal(pipelineProcessorInConf.(map[string]interface{}))
 		require.Nil(t, err)
-		require.Equal(t, expectedExpr, pipelineFilterExpr)
+
+		expectedProcYaml, err := yaml.Parser().Marshal(expectedProcessors[procName].(map[string]interface{}))
+		require.Nil(t, err)
+
+		require.Equal(t, procInConfYaml, expectedProcYaml)
 	}
 }
 

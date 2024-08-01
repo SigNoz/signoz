@@ -199,9 +199,10 @@ var prepareProcessorTestData = []struct {
 func TestPreparePipelineProcessor(t *testing.T) {
 	for _, test := range prepareProcessorTestData {
 		Convey(test.Name, t, func() {
-			res, err := getOperators(test.Operators)
-			So(err, ShouldBeNil)
-			So(res, ShouldResemble, test.Output)
+			require.NotNil(t, nil, "TODO(Raj): maybe use these tests in new config generation")
+			// res, err := getOperators(test.Operators)
+			// So(err, ShouldBeNil)
+			// So(res, ShouldResemble, test.Output)
 		})
 	}
 }
@@ -656,14 +657,24 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 				Name:    "move",
 				From:    `attributes["http.method"]`,
 				To:      `attributes["test.http.method"]`,
-			}, {
+			},
+			{
+				ID:        "json",
+				Type:      "json_parser",
+				Enabled:   true,
+				Name:      "json",
+				ParseFrom: `attributes["order.products"]`,
+				ParseTo:   `attributes["some"].missing.target`,
+			},
+			{
 				ID:        "json",
 				Type:      "json_parser",
 				Enabled:   true,
 				Name:      "json",
 				ParseFrom: `attributes["order.products"]`,
 				ParseTo:   `attributes["order.products"]`,
-			}, {
+			},
+			{
 				ID:      "move1",
 				Type:    "move",
 				Enabled: true,
@@ -678,6 +689,14 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 				From:    `attributes.test?.doesnt_exist`,
 				To:      `attributes["test.doesnt_exist"]`,
 			}, {
+				ID:      "addToMissingField",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add",
+				Field:   `attributes["another"].new.missing_field`,
+				Value:   `2`,
+			},
+			{
 				ID:      "add",
 				Type:    "add",
 				Enabled: true,
@@ -722,6 +741,7 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 	require.False(methodAttrExists)
 	require.Equal("GET", result[0].Attributes_string["test.http.method"])
 	require.Equal("pid0", result[0].Attributes_string["order.pids.pid0"])
+	require.Equal(`{"new":{"missing_field":"2"}}`, result[0].Attributes_string["another"])
 }
 
 func TestContainsFilterIsCaseInsensitive(t *testing.T) {
@@ -802,4 +822,70 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 
 	_, test2Exists := result[0].Attributes_string["test2"]
 	require.False(test2Exists)
+}
+
+func TestAllOpsAppliedEvenIfFirstOpAltersAttribsReferencedInPipelineFilter(t *testing.T) {
+	// If the first op in a pipeline alters the log record in such a way that
+	// it would not match the pipeline filter anymore, the rest of the ops
+	// should still be applied to the log record
+
+	require := require.New(t)
+
+	testLogs := []model.SignozLog{
+		makeTestSignozLog("test Ecom Log", map[string]interface{}{
+			"http.method": "GET",
+		}),
+	}
+
+	testPipelines := []Pipeline{{
+		OrderId: 1,
+		Name:    "pipeline1",
+		Alias:   "pipeline1",
+		Enabled: true,
+		Filter: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "http.method",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: "=",
+					Value:    "GET",
+				},
+			},
+		},
+		Config: []PipelineOperator{
+			{
+				ID:      "move",
+				Type:    "move",
+				Enabled: true,
+				Name:    "move",
+				From:    `attributes["http.method"]`,
+				To:      `attributes["test.http.method"]`,
+			},
+			{
+				ID:      "add",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add",
+				Field:   "attributes.test2",
+				Value:   "test2",
+			},
+		},
+	}}
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(), testPipelines, testLogs,
+	)
+	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+	require.Equal(1, len(result))
+
+	_, filterAttribExists := result[0].Attributes_string["http.method"]
+	require.False(filterAttribExists)
+
+	require.Equal(result[0].Attributes_string["test.http.method"], "GET")
+	require.Equal(result[0].Attributes_string["test2"], "test2")
 }
