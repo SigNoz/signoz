@@ -77,6 +77,8 @@ Come say Hi to us on [Slack](https://signoz.io/slack) 👋
 
 <br /><br />
 
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/SigNoz/signoz.svg?variant=adaptive)](https://starchart.cc/SigNoz/signoz)
 
 ## Features:
 
