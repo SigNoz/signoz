@@ -102,7 +102,6 @@ export const useFetchKeysAndValues = (
 		{
 			queryKey: [searchParams],
 			enabled: isQueryEnabled && !shouldUseSuggestions,
-			keepPreviousData: true,
 		},
 	);
 
@@ -119,7 +118,6 @@ export const useFetchKeysAndValues = (
 		{
 			queryKey: [suggestionsParams],
 			enabled: isQueryEnabled && shouldUseSuggestions,
-			keepPreviousData: true,
 		},
 	);
 

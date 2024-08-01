@@ -1,7 +1,8 @@
 /* eslint-disable react/no-unstable-nested-components */
 import './QueryBuilderSearch.styles.scss';
 
-import { Select, Spin, Tag, Tooltip } from 'antd';
+import { Button, Select, Spin, Tag, Tooltip, Typography } from 'antd';
+import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
@@ -14,7 +15,13 @@ import {
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isEqual } from 'lodash-es';
-import { ArrowDown, ArrowUp, CornerDownLeft } from 'lucide-react';
+import {
+	ArrowDown,
+	ArrowUp,
+	CornerDownLeft,
+	Filter,
+	Slash,
+} from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	KeyboardEvent,
@@ -81,9 +88,11 @@ function QueryBuilderSearch({
 		isFetching,
 		setSearchKey,
 		searchKey,
+		key,
 		// exampleQueries,
 	} = useAutoComplete(query, whereClauseConfig, isLogsExplorerPage);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
 	const [dynamicPlacholder, setDynamicPlaceholder] = useState<string>(
 		placeholder || '',
 	);
@@ -93,6 +102,8 @@ function QueryBuilderSearch({
 		query,
 		searchKey,
 	);
+
+	console.log(key, searchKey);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -273,7 +284,7 @@ function QueryBuilderSearch({
 			<Select
 				ref={selectRef}
 				getPopupContainer={popupContainer}
-				virtual
+				virtual={false}
 				showSearch
 				tagRender={onTagRender}
 				filterOption={false}
@@ -284,7 +295,11 @@ function QueryBuilderSearch({
 				placeholder={dynamicPlacholder}
 				value={queryTags}
 				searchValue={searchValue}
-				className={className}
+				className={cx(
+					className,
+					isLogsExplorerPage ? 'logs-popup' : '',
+					!showAllFilters ? 'hide-scroll' : '',
+				)}
 				rootClassName="query-builder-search"
 				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 				style={selectStyle}
@@ -300,7 +315,7 @@ function QueryBuilderSearch({
 				popupClassName={isLogsExplorerPage ? 'logs-explorer-popup' : ''}
 				dropdownRender={(menu): ReactElement => (
 					<div>
-						{!searchKey && (
+						{!searchKey && isLogsExplorerPage && (
 							<div className="ant-select-item-group ">Suggested Filters</div>
 						)}
 						{menu}
@@ -322,6 +337,27 @@ function QueryBuilderSearch({
 											))}
 										</div>
 									</div>
+								)}
+								{!key && !isFetching && !showAllFilters && (
+									<Button
+										type="text"
+										className="show-all-filter-props"
+										onClick={(): void => {
+											setShowAllFilters(true);
+										}}
+									>
+										<div className="content">
+											<section className="left-section">
+												<Filter size={14} />
+												<Typography.Text className="text">
+													Show all filters properties
+												</Typography.Text>
+											</section>
+											<section className="right-section">
+												<Slash size={14} className="keyboard-shortcut-slash" />
+											</section>
+										</div>
+									</Button>
 								)}
 								<div className="keyboard-shortcuts">
 									<section className="navigate">
