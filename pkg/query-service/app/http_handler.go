@@ -301,6 +301,8 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/query_range/format", am.ViewAccess(aH.QueryRangeV3Format)).Methods(http.MethodPost)
 
+	subRouter.HandleFunc("/filter_suggestions", am.ViewAccess(aH.getQueryBuilderSuggestions)).Methods(http.MethodGet)
+
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
 }
@@ -3051,7 +3053,7 @@ func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.
 	req, err := parseQBFilterSuggestionsRequest(r)
 
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, err, nil)
 		return
 	}
 
@@ -3059,12 +3061,12 @@ func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
 	default:
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
+		RespondError(w, model.BadRequest(fmt.Errorf("invalid data source")), nil)
 		return
 	}
 
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, err, nil)
 		return
 	}
 

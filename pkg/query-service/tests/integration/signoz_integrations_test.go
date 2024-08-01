@@ -501,7 +501,7 @@ func (tb *IntegrationsTestBed) RequestQS(
 	path string,
 	postData interface{},
 ) *app.ApiResponse {
-	req, err := NewAuthenticatedTestRequest(
+	req, err := AuthenticatedRequestForTest(
 		tb.testUser, path, postData,
 	)
 	if err != nil {

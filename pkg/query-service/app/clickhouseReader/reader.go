@@ -4252,6 +4252,14 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	return &response, nil
 }
 
+func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
+	ctx context.Context,
+	req *v3.QBFilterSuggestionsRequest,
+) (*v3.QBFilterSuggestionsResponse, *model.ApiError) {
+
+	return &v3.QBFilterSuggestionsResponse{}, nil
+}
+
 func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	var err error
 	var filterValueColumn string

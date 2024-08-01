@@ -96,7 +96,7 @@ type Reader interface {
 	GetQBFilterSuggestionsForLogs(
 		ctx context.Context,
 		req *v3.QBFilterSuggestionsRequest,
-	) (*v3.QBFilterSuggestionsResponse, error)
+	) (*v3.QBFilterSuggestionsResponse, *model.ApiError)
 
 	// Connection needed for rules, not ideal but required
 	GetConn() clickhouse.Conn

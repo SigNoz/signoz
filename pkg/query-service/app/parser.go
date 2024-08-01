@@ -837,7 +837,7 @@ func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequ
 	return &req, nil
 }
 
-func parseQBFilterSuggestionsRequest(r *http.Request) (*v3.QBFilterSuggestionsRequest, error) {
+func parseQBFilterSuggestionsRequest(r *http.Request) (*v3.QBFilterSuggestionsRequest, *model.ApiError) {
 	var req v3.QBFilterSuggestionsRequest
 
 	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
@@ -847,7 +847,7 @@ func parseQBFilterSuggestionsRequest(r *http.Request) (*v3.QBFilterSuggestionsRe
 	}
 
 	if err := dataSource.Validate(); err != nil {
-		return nil, err
+		return nil, model.BadRequest(err)
 	}
 
 	req = v3.QBFilterSuggestionsRequest{
