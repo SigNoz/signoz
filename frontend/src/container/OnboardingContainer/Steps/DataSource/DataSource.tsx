@@ -6,6 +6,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Input, Select, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
+import ROUTES from 'constants/routes';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
 import {
@@ -130,7 +131,7 @@ export default function DataSource(): JSX.Element {
 	};
 
 	const goToIntegrationsPage = (): void => {
-		history.push('/integrations');
+		history.push(ROUTES.INTEGRATIONS);
 	};
 
 	return (
