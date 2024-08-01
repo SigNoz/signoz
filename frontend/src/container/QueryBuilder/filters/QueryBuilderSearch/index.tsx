@@ -48,7 +48,6 @@ import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	convertExampleQueriesToOptions,
 	getOperatorValue,
-	getOptionGroupsForLogsExplorer,
 	getRemovePrefixFromKey,
 	getTagToken,
 	isExistsNotExistsOperator,
@@ -251,24 +250,18 @@ function QueryBuilderSearch({
 		}
 	}, [isOpen, placeholder]);
 
-	const optionGroups = getOptionGroupsForLogsExplorer(options);
-
 	// conditional changes here to use a seperate component to render the example queries based on the option group label
-	const customRendererForLogsExplorer = optionGroups.map((optionGroup) => (
-		<Select.OptGroup key={optionGroup.label} label={optionGroup.title}>
-			{optionGroup.options.map((option) => (
-				<Select.Option key={option.label} value={option.value}>
-					<OptionRendererForLogs
-						label={option.label}
-						value={option.value}
-						dataType={option.dataType || ''}
-						isIndexed={option.isIndexed || false}
-						setDynamicPlaceholder={setDynamicPlaceholder}
-					/>
-					{option.selected && <StyledCheckOutlined />}
-				</Select.Option>
-			))}
-		</Select.OptGroup>
+	const customRendererForLogsExplorer = options.map((option) => (
+		<Select.Option key={option.label} value={option.value}>
+			<OptionRendererForLogs
+				label={option.label}
+				value={option.value}
+				dataType={option.dataType || ''}
+				isIndexed={option.isIndexed || false}
+				setDynamicPlaceholder={setDynamicPlaceholder}
+			/>
+			{option.selected && <StyledCheckOutlined />}
+		</Select.Option>
 	));
 
 	return (
@@ -307,6 +300,9 @@ function QueryBuilderSearch({
 				popupClassName={isLogsExplorerPage ? 'logs-explorer-popup' : ''}
 				dropdownRender={(menu): ReactElement => (
 					<div>
+						{!searchKey && (
+							<div className="ant-select-item-group ">Suggested Filters</div>
+						)}
 						{menu}
 						{isLogsExplorerPage && (
 							<div>
