@@ -18,6 +18,10 @@ export interface WebhookChannel extends Channel {
 	password?: string;
 }
 
+export interface GoogleChatChannel extends Channel {
+	api_url?: string;
+}
+
 // PagerChannel configures alert manager to send
 // events to pagerduty
 export interface PagerChannel extends Channel {
@@ -101,6 +105,7 @@ export enum ChannelType {
 	Slack = 'slack',
 	Email = 'email',
 	Webhook = 'webhook',
+	GoogleChat = 'Google Chat',
 	Pagerduty = 'pagerduty',
 	Opsgenie = 'opsgenie',
 	MsTeams = 'msteams',

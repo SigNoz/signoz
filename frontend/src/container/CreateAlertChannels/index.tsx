@@ -1,11 +1,13 @@
 import { Form } from 'antd';
 import createEmail from 'api/channels/createEmail';
+import createGoogleChatApi from 'api/channels/createGoogleChat';
 import createMsTeamsApi from 'api/channels/createMsTeams';
 import createOpsgenie from 'api/channels/createOpsgenie';
 import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
 import testEmail from 'api/channels/testEmail';
+import testGoogleChatApi from 'api/channels/testGoogleChat';
 import testMsTeamsApi from 'api/channels/testMsTeams';
 import testOpsGenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
@@ -22,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import {
 	ChannelType,
 	EmailChannel,
+	GoogleChatChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -52,6 +55,7 @@ function CreateAlertChannels({
 		Partial<
 			SlackChannel &
 				WebhookChannel &
+				GoogleChatChannel &
 				PagerChannel &
 				MsTeamsChannel &
 				OpsgenieChannel &
@@ -431,11 +435,75 @@ function CreateAlertChannels({
 		}
 	}, [prepareMsTeamsRequest, t, notifications]);
 
+	const prepareGoogleChatRequest = useCallback(() => {
+		// initial api request without auth params
+		let request: GoogleChatChannel = {
+			api_url: selectedConfig?.api_url || '',
+			name: selectedConfig?.name || '',
+			send_resolved: selectedConfig?.send_resolved || false,
+		};
+
+		if (selectedConfig?.username !== '' || selectedConfig?.password !== '') {
+			if (selectedConfig?.username !== '') {
+				// if username is not null then password must be passed
+				if (selectedConfig?.password !== '') {
+					request = {
+						...request,
+					};
+				} else {
+					notifications.error({
+						message: 'Error',
+						description: t('username_no_password'),
+					});
+				}
+			} else if (selectedConfig?.password !== '') {
+				// only password entered, set bearer token
+				request = {
+					...request,
+				};
+			}
+		}
+		return request;
+	}, [notifications, t, selectedConfig]);
+
+	const onGoogleChatHandler = useCallback(async () => {
+		setSavingState(true);
+		try {
+			const request = prepareGoogleChatRequest();
+			const response = await createGoogleChatApi(request);
+			if (response.statusCode === 200) {
+				notifications.success({
+					message: 'Success',
+					description: t('channel_creation_done'),
+				});
+				history.replace(ROUTES.ALL_CHANNELS);
+				return { status: 'success', statusMessage: t('channel_creation_done') };
+			}
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_creation_failed'),
+			});
+			return {
+				status: 'failed',
+				statusMessage: response.error || t('channel_creation_failed'),
+			};
+		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description: t('channel_creation_failed'),
+			});
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [prepareGoogleChatRequest, t, notifications]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			const functionMapper = {
 				[ChannelType.Slack]: onSlackHandler,
 				[ChannelType.Webhook]: onWebhookHandler,
+				[ChannelType.GoogleChat]: onGoogleChatHandler,
 				[ChannelType.Pagerduty]: onPagerHandler,
 				[ChannelType.Opsgenie]: onOpsgenieHandler,
 				[ChannelType.MsTeams]: onMsTeamsHandler,
@@ -467,6 +535,7 @@ function CreateAlertChannels({
 		[
 			onSlackHandler,
 			onWebhookHandler,
+			onGoogleChatHandler,
 			onPagerHandler,
 			onOpsgenieHandler,
 			onMsTeamsHandler,
@@ -486,6 +555,10 @@ function CreateAlertChannels({
 					case ChannelType.Webhook:
 						request = prepareWebhookRequest();
 						response = await testWebhookApi(request);
+						break;
+					case ChannelType.GoogleChat:
+						request = prepareGoogleChatRequest();
+						response = await testGoogleChatApi(request);
 						break;
 					case ChannelType.Slack:
 						request = prepareSlackRequest();
