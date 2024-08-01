@@ -1,4 +1,5 @@
 import axios from 'api';
+import { isNil } from 'lodash-es';
 
 interface GetTopLevelOperationsProps {
 	service?: string;
@@ -10,8 +11,8 @@ const getTopLevelOperations = async (
 	props: GetTopLevelOperationsProps,
 ): Promise<ServiceDataProps> => {
 	const response = await axios.post(`/service/top_level_operations`, {
-		start: props.start && `${props.start}`,
-		end: props.end && `${props.end}`,
+		start: !isNil(props.start) ? `${props.start}` : undefined,
+		end: !isNil(props.end) ? `${props.end}` : undefined,
 		service: props.service,
 	});
 	return response.data;
