@@ -185,13 +185,6 @@ export function Filter(props: FilterProps): JSX.Element {
 					...currentQuery.builder,
 					queryData: currentQuery.builder.queryData.map((item) => ({
 						...item,
-						// on creating alert from Traces page and coming back to Traces, the count aggregateOperator causes an error, therefore, changing it back to noop
-						// on navigating to create alert, we change noop to count (ref: ExplorerOptions -> onCreateAlertsHandler), as noop is not supported in create alert
-						aggregateOperator:
-							currentQuery.builder.queryData.length === 1 &&
-							item.aggregateOperator === 'count'
-								? 'noop'
-								: item.aggregateOperator,
 						filters: {
 							...item.filters,
 							items: props?.resetAll
