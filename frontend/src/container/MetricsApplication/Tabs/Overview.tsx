@@ -20,12 +20,14 @@ import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
+import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { GraphTitle, SERVICE_CHART_ID } from '../constant';
@@ -52,6 +54,11 @@ import {
 function Application(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
+
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { search, pathname } = useLocation();
 	const { queries } = useResourceAttribute();
@@ -105,8 +112,13 @@ function Application(): JSX.Element {
 		isLoading: topLevelOperationsIsLoading,
 		isError: topLevelOperationsIsError,
 	} = useQuery<ServiceDataProps>({
-		queryKey: [servicename],
-		queryFn: getTopLevelOperations,
+		queryKey: [servicename, minTime, maxTime],
+		queryFn: (): Promise<ServiceDataProps> =>
+			getTopLevelOperations({
+				service: servicename || '',
+				start: minTime,
+				end: maxTime,
+			}),
 	});
 
 	const selectedTraceTags: string = JSON.stringify(
