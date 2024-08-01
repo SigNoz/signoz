@@ -51,6 +51,45 @@
 	background-color: var(--bg-robin-600);
 }
 
+.right-actions {
+	display: flex;
+	align-items: center;
+}
+
+.loading-container {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+
+	.loading-btn {
+		display: flex;
+		width: 32px;
+		height: 33px;
+		padding: 4px 10px;
+		justify-content: center;
+		align-items: center;
+		gap: 6px;
+		flex-shrink: 0;
+		border-radius: 2px;
+		background: var(--Slate-300, #242834);
+		box-shadow: none;
+		border-color: none;
+	}
+
+	.cancel-run {
+		display: flex;
+		height: 33px;
+		padding: 4px 10px;
+		justify-content: center;
+		align-items: center;
+		gap: 6px;
+		flex: 1 0 0;
+		border-radius: 2px;
+		background: var(--Cherry-500, #e5484d);
+		border-color: none;
+	}
+}
+
 .lightMode {
 	.left-toolbar {
 		.left-toolbar-query-actions {
