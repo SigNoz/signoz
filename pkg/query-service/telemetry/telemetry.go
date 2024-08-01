@@ -293,6 +293,22 @@ func createTelemetry() {
 			if err == nil {
 				channels, err := telemetry.reader.GetChannels()
 				if err == nil {
+					for _, channel := range *channels {
+						switch channel.Type {
+						case "slack":
+							alertsInfo.SlackChannels++
+						case "webhook":
+							alertsInfo.WebHookChannels++
+						case "pagerduty":
+							alertsInfo.PagerDutyChannels++
+						case "opsgenie":
+							alertsInfo.OpsGenieChannels++
+						case "email":
+							alertsInfo.EmailChannels++
+						case "msteams":
+							alertsInfo.MSTeamsChannels++
+						}
+					}
 					savedViewsInfo, err := telemetry.reader.GetSavedViewsInfo(ctx)
 					if err == nil {
 						dashboardsAlertsData := map[string]interface{}{
@@ -309,6 +325,12 @@ func createTelemetry() {
 							"totalSavedViews":                 savedViewsInfo.TotalSavedViews,
 							"logsSavedViews":                  savedViewsInfo.LogsSavedViews,
 							"tracesSavedViews":                savedViewsInfo.TracesSavedViews,
+							"slackChannels":                   alertsInfo.SlackChannels,
+							"webHookChannels":                 alertsInfo.WebHookChannels,
+							"pagerDutyChannels":               alertsInfo.PagerDutyChannels,
+							"opsGenieChannels":                alertsInfo.OpsGenieChannels,
+							"emailChannels":                   alertsInfo.EmailChannels,
+							"msteamsChannels":                 alertsInfo.MSTeamsChannels,
 						}
 						// send event only if there are dashboards or alerts or channels
 						if (dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0) && apiErr == nil {
