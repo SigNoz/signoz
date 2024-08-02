@@ -4371,9 +4371,32 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf("couldn't get attribute keys: %w", err))
 	}
+	attribKeys := attribKeysResp.AttributeKeys
+
+	exampleQueries := []v3.FilterSet{}
+
+	// Default example queries.
+	if len(exampleQueries) < 1 {
+		exampleQueries = append(exampleQueries, v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "body",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeUnspecified,
+						IsColumn: true,
+					},
+					Operator: "contains",
+					Value:    "error",
+				},
+			},
+		})
+	}
 
 	return &v3.QBFilterSuggestionsResponse{
-		AttributeKeys: attribKeysResp.AttributeKeys,
+		AttributeKeys:  attribKeys,
+		ExampleQueries: exampleQueries,
 	}, nil
 }
 

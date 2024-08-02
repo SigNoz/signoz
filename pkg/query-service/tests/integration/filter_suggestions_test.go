@@ -19,7 +19,30 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"k8s.io/utils/strings/slices"
 )
+
+// Filter suggestions should contain standard fields and static
+// examples based on them if no data has been received yet
+func TestDefaultLogsFilterSuggestions(t *testing.T) {
+	require := require.New(t)
+
+	tb := NewFilterSuggestionsTestBed(t)
+
+	addAttribsQueryExpectation(tb.mockClickhouse, []v3.AttributeKey{})
+
+	queryParams := map[string]any{}
+	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(queryParams)
+
+	require.Greater(len(suggestionsResp.AttributeKeys), 0)
+	suggestedKeys := []string{}
+	for _, a := range suggestionsResp.AttributeKeys {
+		suggestedKeys = append(suggestedKeys, a.Key)
+	}
+	require.True(slices.Contains(suggestedKeys, "body"))
+
+	require.Greater(len(suggestionsResp.ExampleQueries), 0)
+}
 
 func TestLogsFilterSuggestions(t *testing.T) {
 	require := require.New(t)
