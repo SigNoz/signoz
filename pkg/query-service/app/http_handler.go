@@ -3217,7 +3217,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
 		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
-		if isUsed == true && len(traceIDs) > 0 {
+		if isUsed && len(traceIDs) > 0 {
 			zap.L().Debug("traceID used as filter in traces query")
 			// query signoz_spans table with traceID to get min and max timestamp
 			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
@@ -3232,7 +3232,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
@@ -3502,7 +3502,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
 		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
-		if isUsed == true && len(traceIDs) > 0 {
+		if isUsed && len(traceIDs) > 0 {
 			zap.L().Debug("traceID used as filter in traces query")
 			// query signoz_spans table with traceID to get min and max timestamp
 			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
@@ -3517,7 +3517,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
