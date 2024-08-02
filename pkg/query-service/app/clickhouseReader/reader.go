@@ -61,8 +61,8 @@ const (
 	primaryNamespace           = "clickhouse"
 	archiveNamespace           = "clickhouse-archive"
 	signozTraceDBName          = "signoz_traces"
-	signozHistoryDBName        = "signoz_history"
-	ruleStateHistoryTableName  = "rule_state_history"
+	signozHistoryDBName        = "signoz_analytics"
+	ruleStateHistoryTableName  = "distributed_rule_state_history"
 	signozDurationMVTable      = "distributed_durationSort"
 	signozUsageExplorerTable   = "distributed_usage_explorer"
 	signozSpansTable           = "distributed_signoz_spans"
@@ -5012,7 +5012,7 @@ func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHis
 	var statement driver.Batch
 	var err error
 
-	statement, err = r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO %s.%s (rule_id, rule_name, state, unix_milli, labels, fingerprint, value) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+	statement, err = r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO %s.%s (rule_id, rule_name, overall_state, overall_state_changed, state, state_changed, unix_milli, labels, fingerprint, value) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
 		signozHistoryDBName, ruleStateHistoryTableName))
 
 	defer func() {
@@ -5025,7 +5025,7 @@ func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHis
 	}
 
 	for _, history := range ruleStateHistory {
-		err = statement.Append(history.RuleID, history.RuleName, history.State, history.UnixMilli, history.Labels, history.Fingerprint, history.Value)
+		err = statement.Append(history.RuleID, history.RuleName, history.OverallState, history.OverallStateChanged, history.State, history.StateChanged, history.UnixMilli, history.Labels, history.Fingerprint, history.Value)
 		if err != nil {
 			return err
 		}

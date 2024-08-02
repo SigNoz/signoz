@@ -279,8 +279,6 @@ func (r *ThresholdRule) GetEvaluationTimestamp() time.Time {
 // StateFiring > StatePending > StateInactive
 func (r *ThresholdRule) State() AlertState {
 
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
 	maxState := StateInactive
 	for _, a := range r.active {
 		if a.State > maxState {
@@ -863,6 +861,8 @@ func normalizeLabelName(name string) string {
 
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
+	prevState := r.State()
+
 	valueFormatter := formatter.FromUnit(r.Unit())
 	res, err := r.buildAndRunQuery(ctx, ts, queriers.Ch)
 
@@ -992,6 +992,8 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 	}
 
+	itemsToAdd := []v3.RuleStateHistory{}
+
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.active {
 		labelsJSON, err := json.Marshal(a.Labels)
@@ -1007,15 +1009,14 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			if a.State != StateInactive {
 				a.State = StateInactive
 				a.ResolvedAt = ts
-				r.reader.AddRuleStateHistory(ctx, []v3.RuleStateHistory{
-					{
-						RuleID:      r.ID(),
-						RuleName:    r.Name(),
-						State:       "resolved",
-						UnixMilli:   ts.UnixMilli(),
-						Labels:      string(labelsJSON),
-						Fingerprint: a.Labels.Hash(),
-					},
+				itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
+					RuleID:       r.ID(),
+					RuleName:     r.Name(),
+					State:        "normal",
+					StateChanged: true,
+					UnixMilli:    ts.UnixMilli(),
+					Labels:       string(labelsJSON),
+					Fingerprint:  a.Labels.Hash(),
 				})
 			}
 			continue
@@ -1028,19 +1029,47 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			if a.Missing {
 				state = "no_data"
 			}
-			r.reader.AddRuleStateHistory(ctx, []v3.RuleStateHistory{
-				{
-					RuleID:      r.ID(),
-					RuleName:    r.Name(),
-					State:       state,
-					UnixMilli:   ts.UnixMilli(),
-					Labels:      string(labelsJSON),
-					Fingerprint: a.Labels.Hash(),
-					Value:       a.Value,
-				},
+			itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
+				RuleID:       r.ID(),
+				RuleName:     r.Name(),
+				State:        state,
+				StateChanged: true,
+				UnixMilli:    ts.UnixMilli(),
+				Labels:       string(labelsJSON),
+				Fingerprint:  a.Labels.Hash(),
+				Value:        a.Value,
 			})
 		}
+	}
 
+	zap.L().Info("prevState", zap.String("prevState", prevState.String()))
+
+	currentState := r.State()
+
+	zap.L().Info("currentState", zap.String("currentState", currentState.String()))
+
+	if currentState != prevState {
+		for idx := range itemsToAdd {
+			if currentState == StateInactive {
+				itemsToAdd[idx].OverallState = "normal"
+			} else {
+				itemsToAdd[idx].OverallState = currentState.String()
+			}
+			zap.L().Info("itemsToAdd[idx].OverallState", zap.String("itemsToAdd[idx].OverallState", itemsToAdd[idx].OverallState), zap.String("currentState", currentState.String()))
+			itemsToAdd[idx].OverallStateChanged = true
+		}
+	} else {
+		for idx := range itemsToAdd {
+			itemsToAdd[idx].OverallState = currentState.String()
+			itemsToAdd[idx].OverallStateChanged = false
+		}
+	}
+
+	if len(itemsToAdd) > 0 && r.reader != nil {
+		err := r.reader.AddRuleStateHistory(ctx, itemsToAdd)
+		if err != nil {
+			zap.L().Error("error adding to itemsToAdd", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
+		}
 	}
 	r.health = HealthGood
 	r.lastError = err

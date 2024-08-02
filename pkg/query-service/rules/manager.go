@@ -549,6 +549,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 			r,
 			log.With(m.logger, "alert", r.AlertName),
 			PromRuleOpts{},
+			m.reader,
 		)
 
 		if err != nil {
@@ -908,6 +909,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 			PromRuleOpts{
 				SendAlways: true,
 			},
+			m.reader,
 		)
 
 		if err != nil {

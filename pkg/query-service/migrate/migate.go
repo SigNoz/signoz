@@ -83,13 +83,16 @@ func Migrate(dsn string) error {
 
 func ClickHouseMigrate(conn driver.Conn, cluster string) error {
 
-	database := "CREATE DATABASE IF NOT EXISTS signoz_history"
+	database := "CREATE DATABASE IF NOT EXISTS signoz_analytics ON CLUSTER %s"
 
-	localTable := `CREATE TABLE IF NOT EXISTS signoz_history.rule_state_history ON CLUSTER %s
+	localTable := `CREATE TABLE IF NOT EXISTS signoz_analytics.rule_state_history ON CLUSTER %s
 (
     rule_id LowCardinality(String),
     rule_name LowCardinality(String),
+    overall_state LowCardinality(String),
+    overall_state_changed Bool,
     state LowCardinality(String),
+    state_changed Bool,
     unix_milli Int64 CODEC(Delta(8), ZSTD(1)),
     fingerprint UInt64 CODEC(ZSTD(1)),
     value Float64 CODEC(Gorilla, ZSTD(1)),
@@ -101,19 +104,22 @@ ORDER BY (rule_id, unix_milli)
 TTL toDateTime(unix_milli / 1000) + toIntervalSecond(15552000)
 SETTINGS ttl_only_drop_parts = 1, index_granularity = 8192`
 
-	distributedTable := `CREATE TABLE IF NOT EXISTS signoz_history.distributed_rule_state_history ON CLUSTER %s
+	distributedTable := `CREATE TABLE IF NOT EXISTS signoz_analytics.distributed_rule_state_history ON CLUSTER %s
 (
     rule_id LowCardinality(String),
     rule_name LowCardinality(String),
+    overall_state LowCardinality(String),
+    overall_state_changed Bool,
     state LowCardinality(String),
+    state_changed Bool,
     unix_milli Int64 CODEC(Delta(8), ZSTD(1)),
     fingerprint UInt64 CODEC(ZSTD(1)),
     value Float64 CODEC(Gorilla, ZSTD(1)),
     labels String CODEC(ZSTD(5)),
 )
-ENGINE = Distributed(%s, signoz_history, rule_state_history, cityHash64(rule_id, rule_name, fingerprint))`
+ENGINE = Distributed(%s, signoz_analytics, rule_state_history, cityHash64(rule_id, rule_name, fingerprint))`
 
-	err := conn.Exec(context.Background(), database)
+	err := conn.Exec(context.Background(), fmt.Sprintf(database, cluster))
 	if err != nil {
 		return err
 	}
