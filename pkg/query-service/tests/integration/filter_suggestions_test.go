@@ -26,10 +26,52 @@ func TestLogsFilterSuggestions(t *testing.T) {
 
 	tb := NewFilterSuggestionsTestBed(t)
 
+	addAttribsQueryExpectation(tb.mockClickhouse, []v3.AttributeKey{
+		{
+			Key:      "container_id",
+			Type:     "resource",
+			DataType: "string",
+			IsColumn: false,
+		},
+	})
 	queryParams := map[string]any{}
 	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(queryParams)
 
 	require.Greater(len(suggestionsResp.AttributeKeys), 0)
+}
+
+func addAttribsQueryExpectation(
+	mockClickhouse mockhouse.ClickConnMockCommon,
+	attribsToReturn []v3.AttributeKey,
+) {
+
+	// Add expectation for querying distributed_tag_attributes table
+	cols := []mockhouse.ColumnType{}
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "tagKey"})
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "tagType"})
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "tagDataType"})
+
+	values := [][]any{}
+	for _, a := range attribsToReturn {
+		rowValues := []any{}
+		rowValues = append(rowValues, a.Key)
+		rowValues = append(rowValues, string(a.Type))
+		rowValues = append(rowValues, string(a.DataType))
+		values = append(values, rowValues)
+	}
+
+	mockClickhouse.ExpectQuery(
+		"select.*from.*signoz_logs.distributed_tag_attributes.*",
+	).WithArgs(100000).WillReturnRows(mockhouse.NewRows(cols, values))
+
+	// Add expectation for the create table query used to determine
+	// if an attribute is a column
+	cols = []mockhouse.ColumnType{{Type: "String", Name: "statement"}}
+	values = [][]any{{"CREATE TABLE signoz_logs.distributed_logs"}}
+	mockClickhouse.ExpectSelect(
+		"SHOW CREATE TABLE.*",
+	).WillReturnRows(mockhouse.NewRows(cols, values))
+
 }
 
 type FilterSuggestionsTestBed struct {

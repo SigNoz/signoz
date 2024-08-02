@@ -4252,14 +4252,6 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	return &response, nil
 }
 
-func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
-	ctx context.Context,
-	req *v3.QBFilterSuggestionsRequest,
-) (*v3.QBFilterSuggestionsResponse, *model.ApiError) {
-
-	return &v3.QBFilterSuggestionsResponse{}, nil
-}
-
 func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	var err error
 	var filterValueColumn string
@@ -4363,6 +4355,26 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 	return &attributeValues, nil
 
+}
+
+func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
+	ctx context.Context,
+	req *v3.QBFilterSuggestionsRequest,
+) (*v3.QBFilterSuggestionsResponse, *model.ApiError) {
+
+	attribKeysRequest := &v3.FilterAttributeKeyRequest{
+		SearchText: req.SearchText,
+		DataSource: v3.DataSourceLogs,
+		Limit:      100000,
+	}
+	attribKeysResp, err := r.GetLogAttributeKeys(ctx, attribKeysRequest)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("couldn't get attribute keys: %w", err))
+	}
+
+	return &v3.QBFilterSuggestionsResponse{
+		AttributeKeys: attribKeysResp.AttributeKeys,
+	}, nil
 }
 
 func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([]string, map[string]string, []map[string]string, *v3.Point) {
