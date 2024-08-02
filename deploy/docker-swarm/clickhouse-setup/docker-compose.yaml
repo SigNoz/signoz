@@ -46,10 +46,10 @@ services:
     image: bitnami/zookeeper:3.7.1
     hostname: zookeeper-1
     user: root
-    ports:
-      - "2181:2181"
-      - "2888:2888"
-      - "3888:3888"
+    # ports:
+    #   - "2181:2181"
+    #   - "2888:2888"
+    #   - "3888:3888"
     volumes:
       - ./data/zookeeper-1:/bitnami/zookeeper
     environment:
