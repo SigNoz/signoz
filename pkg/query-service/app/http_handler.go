@@ -3189,7 +3189,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 	var result []*v3.Result
 	var err error
-	var errQuriesByName map[string]error
+	var errQuriesByName map[string]string
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
@@ -3474,7 +3474,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 
 	var result []*v3.Result
 	var err error
-	var errQuriesByName map[string]error
+	var errQuriesByName map[string]string
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them

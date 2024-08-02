@@ -779,7 +779,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	}
 
 	var results []*v3.Result
-	var errQuriesByName map[string]error
+	var errQuriesByName map[string]string
 
 	if r.version == "v4" {
 		results, errQuriesByName, err = r.querierV2.QueryRange(ctx, params, map[string]v3.AttributeKey{})

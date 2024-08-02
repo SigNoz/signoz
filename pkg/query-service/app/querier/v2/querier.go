@@ -468,7 +468,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 			rowList, err := q.reader.GetListResultV3(ctx, query)
 
 			if err != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+				ch <- channelResult{Err: err, Name: name, Query: query}
 				return
 			}
 			ch <- channelResult{List: rowList, Name: name, Query: query}
@@ -499,7 +499,11 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 	return res, nil, nil
 }
 
-func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
+func (q *querier) QueryRange(
+	ctx context.Context,
+	params *v3.QueryRangeParamsV3,
+	keys map[string]v3.AttributeKey,
+) ([]*v3.Result, map[string]string, error) {
 	var results []*v3.Result
 	var err error
 	var errQueriesByName map[string]error
@@ -536,7 +540,12 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 		}
 	}
 
-	return results, errQueriesByName, err
+	queryErrors := make(map[string]string)
+	for name, err := range errQueriesByName {
+		queryErrors[fmt.Sprintf("Query-%s", name)] = err.Error()
+	}
+
+	return results, queryErrors, err
 }
 
 func (q *querier) QueriesExecuted() []string {
