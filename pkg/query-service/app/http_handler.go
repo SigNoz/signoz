@@ -29,12 +29,14 @@ import (
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
@@ -397,6 +399,22 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/nextPrevErrorIDs", am.ViewAccess(aH.getNextPrevErrorIDs)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
+
+	// === Preference APIs ===
+
+	// user actions
+	router.HandleFunc("/api/v1/user/preferences", am.ViewAccess(aH.getAllUserPreferences)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.getUserPreference)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.updateUserPreference)).Methods(http.MethodPut)
+
+	// org actions
+	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.getAllOrgPreferences)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.getOrgPreference)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.updateOrgPreference)).Methods(http.MethodPut)
 
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
@@ -1329,8 +1347,44 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
 
 	var start, end time.Time
+	var services []string
 
-	result, _, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end)
+	type topLevelOpsParams struct {
+		Service string `json:"service"`
+		Start   string `json:"start"`
+		End     string `json:"end"`
+	}
+
+	var params topLevelOpsParams
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		zap.L().Error("Error in getting req body for get top operations API", zap.Error(err))
+	}
+
+	if params.Service != "" {
+		services = []string{params.Service}
+	}
+
+	startEpoch := params.Start
+	if startEpoch != "" {
+		startEpochInt, err := strconv.ParseInt(startEpoch, 10, 64)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading start time")
+			return
+		}
+		start = time.Unix(0, startEpochInt)
+	}
+	endEpoch := params.End
+	if endEpoch != "" {
+		endEpochInt, err := strconv.ParseInt(endEpoch, 10, 64)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading end time")
+			return
+		}
+		end = time.Unix(0, endEpochInt)
+	}
+
+	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end, services)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -2192,6 +2246,115 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	w.Write(resp)
 }
 
+// Preferences
+
+func (ah *APIHandler) getUserPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
+
+	preference, apiErr := preferences.GetUserPreference(
+		r.Context(), preferenceId, user.User.OrgId, user.User.Id,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
+func (ah *APIHandler) updateUserPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
+	req := preferences.UpdatePreference{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.Id)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
+func (ah *APIHandler) getAllUserPreferences(
+	w http.ResponseWriter, r *http.Request,
+) {
+	user := common.GetUserFromContext(r.Context())
+	preference, apiErr := preferences.GetAllUserPreferences(
+		r.Context(), user.User.OrgId, user.User.Id,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
+func (ah *APIHandler) getOrgPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
+	preference, apiErr := preferences.GetOrgPreference(
+		r.Context(), preferenceId, user.User.OrgId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
+func (ah *APIHandler) updateOrgPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	req := preferences.UpdatePreference{}
+	user := common.GetUserFromContext(r.Context())
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.OrgId)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
+func (ah *APIHandler) getAllOrgPreferences(
+	w http.ResponseWriter, r *http.Request,
+) {
+	user := common.GetUserFromContext(r.Context())
+	preference, apiErr := preferences.GetAllOrgPreferences(
+		r.Context(), user.User.OrgId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, preference)
+}
+
 // Integrations
 func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()
@@ -3050,6 +3213,22 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
+	// WARN: Only works for AND operator in traces query
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
+		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
+		if isUsed == true && len(traceIDs) > 0 {
+			zap.L().Debug("traceID used as filter in traces query")
+			// query signoz_spans table with traceID to get min and max timestamp
+			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
+			if err == nil {
+				// add timestamp filter to queryRange params
+				tracesV3.AddTimestampFilters(min, max, queryRangeParams)
+				zap.L().Debug("post adding timestamp filter in traces query", zap.Any("queryRangeParams", queryRangeParams))
+			}
+		}
+	}
+
 	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
@@ -3316,6 +3495,22 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
+		}
+	}
+
+	// WARN: Only works for AND operator in traces query
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
+		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
+		if isUsed == true && len(traceIDs) > 0 {
+			zap.L().Debug("traceID used as filter in traces query")
+			// query signoz_spans table with traceID to get min and max timestamp
+			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
+			if err == nil {
+				// add timestamp filter to queryRange params
+				tracesV3.AddTimestampFilters(min, max, queryRangeParams)
+				zap.L().Debug("post adding timestamp filter in traces query", zap.Any("queryRangeParams", queryRangeParams))
+			}
 		}
 	}
 

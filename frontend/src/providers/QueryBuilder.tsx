@@ -27,7 +27,7 @@ import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
-import { get, merge, set } from 'lodash-es';
+import { cloneDeep, get, merge, set } from 'lodash-es';
 import {
 	createContext,
 	PropsWithChildren,
@@ -532,7 +532,7 @@ export function QueryBuilderProvider({
 					if (!panelType) {
 						return newQueryItem;
 					}
-					const queryItem = item as IBuilderQuery;
+					const queryItem = cloneDeep(item) as IBuilderQuery;
 					const propsRequired =
 						panelTypeDataSourceFormValuesMap[panelType as keyof PartialPanelTypes]?.[
 							queryItem.dataSource
@@ -829,7 +829,7 @@ export function QueryBuilderProvider({
 				unit,
 			}));
 		},
-		[setCurrentQuery],
+		[setCurrentQuery, setSupersetQuery],
 	);
 
 	const query: Query = useMemo(

@@ -1,6 +1,7 @@
 import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import logEvent from 'api/common/logEvent';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
@@ -48,7 +49,7 @@ function App(): JSX.Element {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const { trackPageView, trackEvent } = useAnalytics();
+	const { trackPageView } = useAnalytics();
 
 	const { hostname, pathname } = window.location;
 
@@ -199,7 +200,7 @@ function App(): JSX.Element {
 					LOCALSTORAGE.THEME_ANALYTICS_V1,
 				);
 				if (!isThemeAnalyticsSent) {
-					trackEvent('Theme Analytics', {
+					logEvent('Theme Analytics', {
 						theme: isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT,
 						user: pick(user, ['email', 'userId', 'name']),
 						org,
