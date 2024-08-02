@@ -503,7 +503,7 @@ func (q *querier) QueryRange(
 	ctx context.Context,
 	params *v3.QueryRangeParamsV3,
 	keys map[string]v3.AttributeKey,
-) ([]*v3.Result, map[string]string, error) {
+) ([]*v3.Result, map[string]error, error) {
 	var results []*v3.Result
 	var err error
 	var errQueriesByName map[string]error
@@ -540,12 +540,7 @@ func (q *querier) QueryRange(
 		}
 	}
 
-	queryErrors := make(map[string]string)
-	for name, err := range errQueriesByName {
-		queryErrors[fmt.Sprintf("Query-%s", name)] = err.Error()
-	}
-
-	return results, queryErrors, err
+	return results, errQueriesByName, err
 }
 
 func (q *querier) QueriesExecuted() []string {
