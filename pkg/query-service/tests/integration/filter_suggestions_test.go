@@ -38,6 +38,7 @@ func TestLogsFilterSuggestions(t *testing.T) {
 	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(queryParams)
 
 	require.Greater(len(suggestionsResp.AttributeKeys), 0)
+	require.Greater(len(suggestionsResp.ExampleQueries), 0)
 }
 
 func addAttribsQueryExpectation(
