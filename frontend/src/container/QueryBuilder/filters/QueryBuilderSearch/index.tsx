@@ -284,6 +284,8 @@ function QueryBuilderSearch({
 			<Select
 				ref={selectRef}
 				getPopupContainer={popupContainer}
+				transitionName=""
+				choiceTransitionName=""
 				virtual={false}
 				showSearch
 				tagRender={onTagRender}
