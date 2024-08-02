@@ -16,6 +16,7 @@ export interface FacingIssueBtnProps {
 	buttonText?: string;
 	className?: string;
 	onHoverText?: string;
+	intercomMessageDisabled?: boolean;
 }
 
 function FacingIssueBtn({
@@ -25,11 +26,12 @@ function FacingIssueBtn({
 	buttonText = '',
 	className = '',
 	onHoverText = '',
+	intercomMessageDisabled = false,
 }: FacingIssueBtnProps): JSX.Element | null {
 	const handleFacingIssuesClick = (): void => {
 		logEvent(eventName, attributes);
 
-		if (window.Intercom) {
+		if (window.Intercom && !intercomMessageDisabled) {
 			window.Intercom('showNewMessage', defaultTo(message, ''));
 		}
 	};
@@ -62,6 +64,7 @@ FacingIssueBtn.defaultProps = {
 	buttonText: '',
 	className: '',
 	onHoverText: '',
+	intercomMessageDisabled: false,
 };
 
 export default FacingIssueBtn;
