@@ -1,4 +1,5 @@
 import {
+	getLabel,
 	getOperatorFromValue,
 	getTagToken,
 	isExistsNotExistsOperator,
@@ -19,17 +20,21 @@ import { WhereClauseConfig } from './useAutoComplete';
  * @param {TagFilter} filters - query filter object to be converted
  * @returns {string[]} An array of formatted conditions. Eg: `["service = web", "severity_text = INFO"]`)
  */
-export function queryFilterTags(filter: TagFilter): string[] {
+export function queryFilterTags(
+	filter: TagFilter,
+	getLabelValue = false,
+): string[] {
 	return (filter?.items || []).map((ele) => {
+		const key = getLabelValue && ele.key ? getLabel(ele.key) : ele.key?.key;
 		if (isInNInOperator(getOperatorFromValue(ele.op))) {
 			try {
 				const csvString = unparse([ele.value]);
-				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
+				return `${key} ${getOperatorFromValue(ele.op)} ${csvString}`;
 			} catch {
-				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+				return `${key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
 			}
 		}
-		return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+		return `${key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
 	});
 }
 
@@ -55,7 +60,7 @@ export const useTag = (
 	setSearchKey: (value: string) => void,
 	whereClauseConfig?: WhereClauseConfig,
 ): IUseTag => {
-	const initTagsData = useMemo(() => queryFilterTags(query?.filters), [
+	const initTagsData = useMemo(() => queryFilterTags(query?.filters, true), [
 		query?.filters,
 	]);
 
@@ -73,6 +78,7 @@ export const useTag = (
 
 	const handleAddTag = useCallback(
 		(value: string): void => {
+			console.log(value, 'tag');
 			const { tagKey } = getTagToken(value);
 			const parts = tagKey.split('-');
 			// this is done to ensure that `hello-world` also gets converted to `body CONTAINS hello-world`
@@ -96,6 +102,7 @@ export const useTag = (
 			}
 
 			if ((value && key && isValidTag) || isExistsNotExistsOperator(value)) {
+				console.log('here in last if tag');
 				setTags((prevTags) => [...prevTags, value]);
 				handleSearch('');
 				setSearchKey('');
@@ -113,6 +120,7 @@ export const useTag = (
 	}, []);
 
 	useEffect(() => {
+		console.log(initTagsData);
 		setTags(initTagsData);
 	}, [initTagsData]);
 

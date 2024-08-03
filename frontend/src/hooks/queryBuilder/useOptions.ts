@@ -43,7 +43,7 @@ export const useOptions = (
 		(items: BaseAutocompleteData[]): Option[] =>
 			items?.map((item) => ({
 				label: `${getLabel(item)}`,
-				value: item.key,
+				value: `${getLabel(item)}`,
 				dataType: item.dataType,
 			})),
 		[getLabel],

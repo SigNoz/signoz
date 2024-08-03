@@ -1,6 +1,9 @@
 import { OPERATORS } from 'constants/queryBuilder';
 import { MetricsType } from 'container/MetricsApplication/constant';
+import { Option } from 'container/QueryBuilder/type';
+import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { parse } from 'papaparse';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
@@ -161,4 +164,11 @@ export function getOptionType(label: string): MetricsType | undefined {
 	}
 
 	return optionType;
+}
+export function getLabel(data: BaseAutocompleteData): Option['label'] {
+	return transformStringWithPrefix({
+		str: data?.key,
+		prefix: data?.type || '',
+		condition: !data?.isColumn,
+	});
 }

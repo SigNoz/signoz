@@ -81,6 +81,7 @@ function LogExplorerQuerySection({
 
 	const handleChangeTagFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
+			console.log(value);
 			handleChangeQueryData('filters', value);
 		},
 		[handleChangeQueryData],
