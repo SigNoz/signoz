@@ -1015,7 +1015,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 					State:        "normal",
 					StateChanged: true,
 					UnixMilli:    ts.UnixMilli(),
-					Labels:       string(labelsJSON),
+					Labels:       v3.LabelsString(labelsJSON),
 					Fingerprint:  a.Labels.Hash(),
 				})
 			}
@@ -1035,18 +1035,14 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 				State:        state,
 				StateChanged: true,
 				UnixMilli:    ts.UnixMilli(),
-				Labels:       string(labelsJSON),
+				Labels:       v3.LabelsString(labelsJSON),
 				Fingerprint:  a.Labels.Hash(),
 				Value:        a.Value,
 			})
 		}
 	}
 
-	zap.L().Info("prevState", zap.String("prevState", prevState.String()))
-
 	currentState := r.State()
-
-	zap.L().Info("currentState", zap.String("currentState", currentState.String()))
 
 	if currentState != prevState {
 		for idx := range itemsToAdd {
@@ -1055,7 +1051,6 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			} else {
 				itemsToAdd[idx].OverallState = currentState.String()
 			}
-			zap.L().Info("itemsToAdd[idx].OverallState", zap.String("itemsToAdd[idx].OverallState", itemsToAdd[idx].OverallState), zap.String("currentState", currentState.String()))
 			itemsToAdd[idx].OverallStateChanged = true
 		}
 	} else {

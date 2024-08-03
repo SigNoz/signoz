@@ -488,7 +488,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 					State:        "normal",
 					StateChanged: true,
 					UnixMilli:    ts.UnixMilli(),
-					Labels:       string(labelsJSON),
+					Labels:       v3.LabelsString(labelsJSON),
 					Fingerprint:  a.Labels.Hash(),
 				})
 			}
@@ -508,7 +508,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 				State:        state,
 				StateChanged: true,
 				UnixMilli:    ts.UnixMilli(),
-				Labels:       string(labelsJSON),
+				Labels:       v3.LabelsString(labelsJSON),
 				Fingerprint:  a.Labels.Hash(),
 				Value:        a.Value,
 			})
@@ -518,11 +518,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 	r.health = HealthGood
 	r.lastError = err
 
-	zap.L().Info("prevState", zap.String("prevState", prevState.String()))
-
 	currentState := r.State()
-
-	zap.L().Info("currentState", zap.String("currentState", currentState.String()))
 
 	if currentState != prevState {
 		for idx := range itemsToAdd {
@@ -531,7 +527,6 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			} else {
 				itemsToAdd[idx].OverallState = currentState.String()
 			}
-			zap.L().Info("itemsToAdd[idx].OverallState", zap.String("itemsToAdd[idx].OverallState", itemsToAdd[idx].OverallState), zap.String("currentState", currentState.String()))
 			itemsToAdd[idx].OverallStateChanged = true
 		}
 	}

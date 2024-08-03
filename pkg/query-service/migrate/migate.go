@@ -119,19 +119,49 @@ SETTINGS ttl_only_drop_parts = 1, index_granularity = 8192`
 )
 ENGINE = Distributed(%s, signoz_analytics, rule_state_history, cityHash64(rule_id, rule_name, fingerprint))`
 
-	err := conn.Exec(context.Background(), fmt.Sprintf(database, cluster))
+	// check if db exists
+	dbExists := `SELECT count(*) FROM system.databases WHERE name = 'signoz_analytics'`
+	var count int
+	err := conn.QueryRow(context.Background(), dbExists).Scan(&count)
 	if err != nil {
 		return err
 	}
 
-	err = conn.Exec(context.Background(), fmt.Sprintf(localTable, cluster))
+	if count == 0 {
+		err = conn.Exec(context.Background(), fmt.Sprintf(database, cluster))
+		if err != nil {
+			return err
+		}
+	}
+
+	// check if table exists
+	tableExists := `SELECT count(*) FROM system.tables WHERE name = 'rule_state_history' AND database = 'signoz_analytics'`
+	var tableCount int
+	err = conn.QueryRow(context.Background(), tableExists).Scan(&tableCount)
 	if err != nil {
 		return err
 	}
 
-	err = conn.Exec(context.Background(), fmt.Sprintf(distributedTable, cluster, cluster))
+	if tableCount == 0 {
+		err = conn.Exec(context.Background(), fmt.Sprintf(localTable, cluster))
+		if err != nil {
+			return err
+		}
+	}
+
+	// check if distributed table exists
+	distributedTableExists := `SELECT count(*) FROM system.tables WHERE name = 'distributed_rule_state_history' AND database = 'signoz_analytics'`
+	var distributedTableCount int
+	err = conn.QueryRow(context.Background(), distributedTableExists).Scan(&distributedTableCount)
 	if err != nil {
 		return err
+	}
+
+	if distributedTableCount == 0 {
+		err = conn.Exec(context.Background(), fmt.Sprintf(distributedTable, cluster, cluster))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
