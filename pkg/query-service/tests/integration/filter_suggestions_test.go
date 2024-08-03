@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"testing"
 
@@ -19,52 +20,73 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
-	"k8s.io/utils/strings/slices"
 )
 
 // Filter suggestions should contain standard fields and static
 // examples based on them if no data has been received yet
 func TestDefaultLogsFilterSuggestions(t *testing.T) {
 	require := require.New(t)
-
 	tb := NewFilterSuggestionsTestBed(t)
 
-	addAttribsQueryExpectation(tb.mockClickhouse, []v3.AttributeKey{})
-
+	expectAttribKeysQuery(tb.mockClickhouse, []v3.AttributeKey{})
 	queryParams := map[string]any{}
 	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(queryParams)
 
 	require.Greater(len(suggestionsResp.AttributeKeys), 0)
-	suggestedKeys := []string{}
-	for _, a := range suggestionsResp.AttributeKeys {
-		suggestedKeys = append(suggestedKeys, a.Key)
-	}
-	require.True(slices.Contains(suggestedKeys, "body"))
-
-	require.Greater(len(suggestionsResp.ExampleQueries), 0)
-}
-
-func TestLogsFilterSuggestions(t *testing.T) {
-	require := require.New(t)
-
-	tb := NewFilterSuggestionsTestBed(t)
-
-	addAttribsQueryExpectation(tb.mockClickhouse, []v3.AttributeKey{
-		{
-			Key:      "container_id",
-			Type:     "resource",
-			DataType: "string",
-			IsColumn: false,
+	require.True(slices.ContainsFunc(
+		suggestionsResp.AttributeKeys, func(a v3.AttributeKey) bool {
+			return a.Key == "body"
 		},
+	))
+
+	require.Greater(len(suggestionsResp.ExampleQueries), 0)
+}
+
+func TestLogsFilterSuggestionsWithoutExistingFilter(t *testing.T) {
+	require := require.New(t)
+	tb := NewFilterSuggestionsTestBed(t)
+
+	testAttribKey := v3.AttributeKey{
+		Key:      "container_id",
+		Type:     v3.AttributeKeyTypeResource,
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: false,
+	}
+
+	expectAttribKeysQuery(tb.mockClickhouse, []v3.AttributeKey{
+		testAttribKey,
 	})
+	expectAttribValuesQuery(
+		tb.mockClickhouse, testAttribKey, []string{"test-container"},
+	)
 	queryParams := map[string]any{}
 	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(queryParams)
 
 	require.Greater(len(suggestionsResp.AttributeKeys), 0)
+	require.True(slices.ContainsFunc(
+		suggestionsResp.AttributeKeys, func(a v3.AttributeKey) bool {
+			return a.Key == "container_id" && a.Type == v3.AttributeKeyTypeResource
+		},
+	))
+
 	require.Greater(len(suggestionsResp.ExampleQueries), 0)
+
+	require.True(slices.ContainsFunc(
+		suggestionsResp.ExampleQueries, func(q v3.FilterSet) bool {
+			return slices.ContainsFunc(q.Items, func(i v3.FilterItem) bool {
+				return i.Key.Key == "container_id" && i.Value == "test-container"
+			})
+		},
+	))
 }
 
-func addAttribsQueryExpectation(
+func TestLogsFilterSuggestionsWithExistingFilter(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(nil)
+
+}
+
+func expectAttribKeysQuery(
 	mockClickhouse mockhouse.ClickConnMockCommon,
 	attribsToReturn []v3.AttributeKey,
 ) {
@@ -96,6 +118,26 @@ func addAttribsQueryExpectation(
 		"SHOW CREATE TABLE.*",
 	).WillReturnRows(mockhouse.NewRows(cols, values))
 
+}
+
+func expectAttribValuesQuery(
+	mockClickhouse mockhouse.ClickConnMockCommon,
+	expectedAttrib v3.AttributeKey,
+	stringValuesToReturn []string,
+) {
+	cols := []mockhouse.ColumnType{}
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "stringTagValue"})
+
+	values := [][]any{}
+	for _, v := range stringValuesToReturn {
+		rowValues := []any{}
+		rowValues = append(rowValues, v)
+		values = append(values, rowValues)
+	}
+
+	mockClickhouse.ExpectQuery(
+		"select distinct.*stringTagValue.*from.*signoz_logs.distributed_tag_attributes.*",
+	).WithArgs(string(expectedAttrib.Key), v3.TagType(expectedAttrib.Type), 100000).WillReturnRows(mockhouse.NewRows(cols, values))
 }
 
 type FilterSuggestionsTestBed struct {

@@ -13,6 +13,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -4373,7 +4374,63 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 	}
 	attribKeys := attribKeysResp.AttributeKeys
 
+	slices.SortFunc(attribKeys, func(a v3.AttributeKey, b v3.AttributeKey) int {
+		// Higher score => higher rank
+		attribKeyScore := func(a v3.AttributeKey) int {
+			if a.Type == v3.AttributeKeyTypeResource {
+				return 2
+			}
+			if a.Type == v3.AttributeKeyTypeTag {
+				return 1
+			}
+			return 0
+		}
+
+		// To sort in descending order the return value must
+		// be negative when a > b
+		return attribKeyScore(b) - attribKeyScore(a)
+	})
+
 	exampleQueries := []v3.FilterSet{}
+
+	// TODO(Raj): create example queries for top 2 attributes
+	// using a batch version of GetLogAttributeValues
+	if len(attribKeys) > 0 {
+		exampleKey := attribKeys[0]
+		attribValuesRequest := &v3.FilterAttributeValueRequest{
+			DataSource:                 v3.DataSourceLogs,
+			FilterAttributeKey:         exampleKey.Key,
+			FilterAttributeKeyDataType: exampleKey.DataType,
+			TagType:                    v3.TagType(exampleKey.Type),
+			Limit:                      100000,
+		}
+		resp, err := r.GetLogAttributeValues(ctx, attribValuesRequest)
+		if err != nil {
+			// Do not fail the entire request if only example query generation fails
+			zap.L().Error("could not find attribute values for creating example query", zap.Error(err))
+		} else {
+			addExampleQuery := func(value any) {
+				exampleQueries = append(exampleQueries, v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key:      exampleKey,
+							Operator: "=",
+							Value:    value,
+						},
+					},
+				})
+			}
+
+			if len(resp.StringAttributeValues) > 0 {
+				addExampleQuery(resp.StringAttributeValues[0])
+			} else if len(resp.NumberAttributeValues) > 0 {
+				addExampleQuery(resp.NumberAttributeValues[0])
+			} else if len(resp.BoolAttributeValues) > 0 {
+				addExampleQuery(resp.BoolAttributeValues[0])
+			}
+		}
+	}
 
 	// Default example queries.
 	if len(exampleQueries) < 1 {
