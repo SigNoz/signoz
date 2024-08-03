@@ -1,3 +1,4 @@
+import ROUTES from 'constants/routes';
 import {
 	checkCommaInValue,
 	getTagToken,
@@ -6,6 +7,7 @@ import { Option } from 'container/QueryBuilder/type';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { isEmpty } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { WhereClauseConfig } from './useAutoComplete';
@@ -29,14 +31,21 @@ export const useOptions = (
 	const [options, setOptions] = useState<Option[]>([]);
 	const operators = useOperators(key, keys);
 
+	const { pathname } = useLocation();
+
+	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
+		pathname,
+	]);
+
 	const getLabel = useCallback(
 		(data: BaseAutocompleteData): Option['label'] =>
 			transformStringWithPrefix({
 				str: data?.key,
 				prefix: data?.type || '',
 				condition: !data?.isColumn,
+				isLogsExplorerPage,
 			}),
-		[],
+		[isLogsExplorerPage],
 	);
 
 	const getOptionsFromKeys = useCallback(

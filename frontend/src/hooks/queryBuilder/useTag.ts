@@ -1,3 +1,4 @@
+import ROUTES from 'constants/routes';
 import {
 	getLabel,
 	getOperatorFromValue,
@@ -8,6 +9,7 @@ import {
 import { unparse } from 'papaparse';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -23,9 +25,13 @@ import { WhereClauseConfig } from './useAutoComplete';
 export function queryFilterTags(
 	filter: TagFilter,
 	getLabelValue = false,
+	isLogsExplorerPage = false,
 ): string[] {
 	return (filter?.items || []).map((ele) => {
-		const key = getLabelValue && ele.key ? getLabel(ele.key) : ele.key?.key;
+		const key =
+			getLabelValue && ele.key
+				? getLabel(ele.key, isLogsExplorerPage)
+				: ele.key?.key;
 		if (isInNInOperator(getOperatorFromValue(ele.op))) {
 			try {
 				const csvString = unparse([ele.value]);
@@ -60,9 +66,15 @@ export const useTag = (
 	setSearchKey: (value: string) => void,
 	whereClauseConfig?: WhereClauseConfig,
 ): IUseTag => {
-	const initTagsData = useMemo(() => queryFilterTags(query?.filters, true), [
-		query?.filters,
+	const { pathname } = useLocation();
+
+	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
+		pathname,
 	]);
+	const initTagsData = useMemo(
+		() => queryFilterTags(query?.filters, true, isLogsExplorerPage),
+		[isLogsExplorerPage, query?.filters],
+	);
 
 	const [tags, setTags] = useState<string[]>(initTagsData);
 

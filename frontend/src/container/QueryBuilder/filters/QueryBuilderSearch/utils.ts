@@ -165,10 +165,14 @@ export function getOptionType(label: string): MetricsType | undefined {
 
 	return optionType;
 }
-export function getLabel(data: BaseAutocompleteData): Option['label'] {
+export function getLabel(
+	data: BaseAutocompleteData,
+	isLogsExplorerPage = false,
+): Option['label'] {
 	return transformStringWithPrefix({
 		str: data?.key,
 		prefix: data?.type || '',
 		condition: !data?.isColumn,
+		isLogsExplorerPage,
 	});
 }
