@@ -48,6 +48,12 @@ export function QueryTable({
 
 	const tableColumns = modifyColumns ? modifyColumns(newColumns) : newColumns;
 
+	const paginationConfig = {
+		pageSize: 10,
+		showSizeChanger: false,
+		hideOnSinglePage: true,
+	};
+
 	return (
 		<div className="query-table">
 			{isDownloadEnabled && (
@@ -64,6 +70,7 @@ export function QueryTable({
 				tableLayout="fixed"
 				dataSource={newDataSource}
 				scroll={{ x: true }}
+				pagination={paginationConfig}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}
 			/>
