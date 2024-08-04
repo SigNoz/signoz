@@ -4405,7 +4405,7 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 
 	exampleQueries := []v3.FilterSet{}
 
-	// TODO(Raj): create example queries for top 2 attributes
+	// TODO(Raj): create multiple example queries from top attributes
 	// using a batch version of GetLogAttributeValues
 	if len(attribKeys) > 0 {
 		exampleKey := attribKeys[0]
@@ -4422,16 +4422,21 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 			zap.L().Error("could not find attribute values for creating example query", zap.Error(err))
 		} else {
 			addExampleQuery := func(value any) {
-				exampleQueries = append(exampleQueries, v3.FilterSet{
+				exampleQuery := v3.FilterSet{
 					Operator: "AND",
-					Items: []v3.FilterItem{
-						{
-							Key:      exampleKey,
-							Operator: "=",
-							Value:    value,
-						},
-					},
+					Items:    []v3.FilterItem{},
+				}
+				if req.ExistingFilter != nil {
+					exampleQuery = *req.ExistingFilter
+				}
+
+				exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
+					Key:      exampleKey,
+					Operator: "=",
+					Value:    value,
 				})
+
+				exampleQueries = append(exampleQueries, exampleQuery)
 			}
 
 			if len(resp.StringAttributeValues) > 0 {
