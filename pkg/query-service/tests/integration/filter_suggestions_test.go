@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -46,18 +47,19 @@ func TestLogsFilterSuggestionsWithoutExistingFilter(t *testing.T) {
 	require := require.New(t)
 	tb := NewFilterSuggestionsTestBed(t)
 
-	testAttribKey := v3.AttributeKey{
+	testAttrib := v3.AttributeKey{
 		Key:      "container_id",
 		Type:     v3.AttributeKeyTypeResource,
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: false,
 	}
+	testAttribValue := "test-container"
 
 	expectAttribKeysQuery(tb.mockClickhouse, []v3.AttributeKey{
-		testAttribKey,
+		testAttrib,
 	})
 	expectAttribValuesQuery(
-		tb.mockClickhouse, testAttribKey, []string{"test-container"},
+		tb.mockClickhouse, testAttrib, []string{testAttribValue},
 	)
 	queryParams := map[string]any{}
 	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(queryParams)
@@ -65,7 +67,7 @@ func TestLogsFilterSuggestionsWithoutExistingFilter(t *testing.T) {
 	require.Greater(len(suggestionsResp.AttributeKeys), 0)
 	require.True(slices.ContainsFunc(
 		suggestionsResp.AttributeKeys, func(a v3.AttributeKey) bool {
-			return a.Key == "container_id" && a.Type == v3.AttributeKeyTypeResource
+			return a.Key == "container_id" && a.Type == testAttrib.Type
 		},
 	))
 
@@ -74,7 +76,7 @@ func TestLogsFilterSuggestionsWithoutExistingFilter(t *testing.T) {
 	require.True(slices.ContainsFunc(
 		suggestionsResp.ExampleQueries, func(q v3.FilterSet) bool {
 			return slices.ContainsFunc(q.Items, func(i v3.FilterItem) bool {
-				return i.Key.Key == "container_id" && i.Value == "test-container"
+				return i.Key.Key == testAttrib.Key && i.Value == testAttribValue
 			})
 		},
 	))
@@ -82,8 +84,94 @@ func TestLogsFilterSuggestionsWithoutExistingFilter(t *testing.T) {
 
 func TestLogsFilterSuggestionsWithExistingFilter(t *testing.T) {
 	require := require.New(t)
-	require.NotNil(nil)
+	tb := NewFilterSuggestionsTestBed(t)
 
+	testAttrib := v3.AttributeKey{
+		Key:      "container_id",
+		Type:     v3.AttributeKeyTypeResource,
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: false,
+	}
+	testAttribValue := "test-container"
+
+	testFilterAttrib := v3.AttributeKey{
+		Key:      "tenant_id",
+		Type:     v3.AttributeKeyTypeTag,
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: false,
+	}
+	testFilterAttribValue := "test-tenant"
+	testFilter := v3.FilterSet{
+		Operator: "AND",
+		Items: []v3.FilterItem{
+			{
+				Key:      testFilterAttrib,
+				Operator: "=",
+				Value:    testFilterAttribValue,
+			},
+		},
+	}
+
+	// Should recommend both attributes without an existing filter.
+
+	expectAttribKeysQuery(tb.mockClickhouse, []v3.AttributeKey{
+		testAttrib, testFilterAttrib,
+	})
+	expectAttribValuesQuery(
+		tb.mockClickhouse, testAttrib, []string{testAttribValue},
+	)
+
+	queryParams := map[string]any{}
+	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(queryParams)
+
+	require.Greater(len(suggestionsResp.AttributeKeys), 0)
+	require.True(slices.ContainsFunc(
+		suggestionsResp.AttributeKeys, func(a v3.AttributeKey) bool {
+			return a.Key == testFilter.Items[0].Key.Key && a.Type == testFilter.Items[0].Key.Type
+		},
+	))
+	require.True(slices.ContainsFunc(
+		suggestionsResp.AttributeKeys, func(a v3.AttributeKey) bool {
+			return a.Key == testAttrib.Key && a.Type == testAttrib.Type
+		},
+	))
+
+	require.Greater(len(suggestionsResp.ExampleQueries), 0)
+
+	// Should not recommend attrib already in existing filter
+
+	expectAttribKeysQuery(tb.mockClickhouse, []v3.AttributeKey{
+		testAttrib, testFilterAttrib,
+	})
+	expectAttribValuesQuery(
+		tb.mockClickhouse, testAttrib, []string{testAttribValue},
+	)
+
+	// TODO(Raj): Validate RawURLEncoding maps to what the browser does
+	testFilterJson, err := json.Marshal(testFilter)
+	require.Nil(err, "couldn't serialize existing filter to JSON")
+	queryParams = map[string]any{
+		"existingFilter": base64.RawURLEncoding.EncodeToString(testFilterJson),
+	}
+	suggestionsResp = tb.GetQBFilterSuggestionsForLogs(queryParams)
+
+	require.Greater(len(suggestionsResp.AttributeKeys), 0)
+	require.False(slices.ContainsFunc(
+		suggestionsResp.AttributeKeys, func(a v3.AttributeKey) bool {
+			return a.Key == testFilter.Items[0].Key.Key && a.Type == testFilter.Items[0].Key.Type
+		},
+	))
+	require.True(slices.ContainsFunc(
+		suggestionsResp.AttributeKeys, func(a v3.AttributeKey) bool {
+			return a.Key == testAttrib.Key && a.Type == testAttrib.Type
+		},
+	))
+
+	// All example queries should contain the existing query as a prefix
+	require.Greater(len(suggestionsResp.ExampleQueries), 0)
+	for _, q := range suggestionsResp.ExampleQueries {
+		require.Equal(q.Items[0], testFilter.Items[0])
+	}
 }
 
 func expectAttribKeysQuery(
