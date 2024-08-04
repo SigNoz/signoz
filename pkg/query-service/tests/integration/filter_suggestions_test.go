@@ -30,7 +30,7 @@ func TestDefaultLogsFilterSuggestions(t *testing.T) {
 	tb := NewFilterSuggestionsTestBed(t)
 
 	expectAttribKeysQuery(tb.mockClickhouse, []v3.AttributeKey{})
-	queryParams := map[string]any{}
+	queryParams := map[string]string{}
 	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(queryParams)
 
 	require.Greater(len(suggestionsResp.AttributeKeys), 0)
@@ -61,7 +61,7 @@ func TestLogsFilterSuggestionsWithoutExistingFilter(t *testing.T) {
 	expectAttribValuesQuery(
 		tb.mockClickhouse, testAttrib, []string{testAttribValue},
 	)
-	queryParams := map[string]any{}
+	queryParams := map[string]string{}
 	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(queryParams)
 
 	require.Greater(len(suggestionsResp.AttributeKeys), 0)
@@ -121,7 +121,7 @@ func TestLogsFilterSuggestionsWithExistingFilter(t *testing.T) {
 		tb.mockClickhouse, testAttrib, []string{testAttribValue},
 	)
 
-	queryParams := map[string]any{}
+	queryParams := map[string]string{}
 	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(queryParams)
 
 	require.Greater(len(suggestionsResp.AttributeKeys), 0)
@@ -150,7 +150,7 @@ func TestLogsFilterSuggestionsWithExistingFilter(t *testing.T) {
 	// TODO(Raj): Validate RawURLEncoding maps to what the browser does
 	testFilterJson, err := json.Marshal(testFilter)
 	require.Nil(err, "couldn't serialize existing filter to JSON")
-	queryParams = map[string]any{
+	queryParams = map[string]string{
 		"existingFilter": base64.RawURLEncoding.EncodeToString(testFilterJson),
 	}
 	suggestionsResp = tb.GetQBFilterSuggestionsForLogs(queryParams)
@@ -236,11 +236,14 @@ type FilterSuggestionsTestBed struct {
 }
 
 func (tb *FilterSuggestionsTestBed) GetQBFilterSuggestionsForLogs(
-	queryParams map[string]any,
+	queryParams map[string]string,
 ) *v3.QBFilterSuggestionsResponse {
-	result := tb.QSGetRequest("/api/v3/filter_suggestions", map[string]string{
-		"dataSource": "logs",
-	})
+
+	_, dsQPExists := queryParams["dataSource"]
+	require.False(tb.t, dsQPExists)
+	queryParams["dataSource"] = "logs"
+
+	result := tb.QSGetRequest("/api/v3/filter_suggestions", queryParams)
 
 	dataJson, err := json.Marshal(result.Data)
 	if err != nil {

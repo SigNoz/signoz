@@ -4372,7 +4372,19 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf("couldn't get attribute keys: %w", err))
 	}
-	attribKeys := attribKeysResp.AttributeKeys
+
+	attribKeys := []v3.AttributeKey{}
+	for _, k := range attribKeysResp.AttributeKeys {
+		isInExistingFilter := req.ExistingFilter != nil && slices.ContainsFunc(
+			req.ExistingFilter.Items, func(i v3.FilterItem) bool {
+				return i.Key == k
+			},
+		)
+
+		if !isInExistingFilter {
+			attribKeys = append(attribKeys, k)
+		}
+	}
 
 	slices.SortFunc(attribKeys, func(a v3.AttributeKey, b v3.AttributeKey) int {
 		// Higher score => higher rank

@@ -253,9 +253,10 @@ type FilterAttributeKeyRequest struct {
 }
 
 type QBFilterSuggestionsRequest struct {
-	DataSource DataSource `json:"dataSource"`
-	SearchText string     `json:"searchText"`
-	Limit      int        `json:"limit"`
+	DataSource     DataSource `json:"dataSource"`
+	SearchText     string     `json:"searchText"`
+	Limit          int        `json:"limit"`
+	ExistingFilter *FilterSet `json:"existing_filter"`
 }
 
 type QBFilterSuggestionsResponse struct {
