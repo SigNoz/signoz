@@ -331,6 +331,10 @@ func createTelemetry() {
 							"opsGenieChannels":                alertsInfo.OpsGenieChannels,
 							"emailChannels":                   alertsInfo.EmailChannels,
 							"msteamsChannels":                 alertsInfo.MSTeamsChannels,
+							"metricsBuilderQueries":           alertsInfo.MetricsBuilderQueries,
+							"metricsClickHouseQueries":        alertsInfo.MetricsClickHouseQueries,
+							"metricsPrometheusQueries":        alertsInfo.MetricsPrometheusQueries,
+							"spanMetricsPrometheusQueries":    alertsInfo.SpanMetricsPrometheusQueries,
 						}
 						// send event only if there are dashboards or alerts or channels
 						if (dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0) && apiErr == nil {

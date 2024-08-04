@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
 
@@ -322,6 +324,20 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
 		} else if rule.AlertType == "METRIC_BASED_ALERT" {
 			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
+			if rule.RuleCondition != nil && rule.RuleCondition.CompositeQuery != nil {
+				if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+					alertsInfo.MetricsBuilderQueries = alertsInfo.MetricsBuilderQueries + 1
+				} else if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+					alertsInfo.MetricsClickHouseQueries = alertsInfo.MetricsClickHouseQueries + 1
+				} else if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
+					alertsInfo.MetricsPrometheusQueries = alertsInfo.MetricsPrometheusQueries + 1
+					for _, query := range rule.RuleCondition.CompositeQuery.PromQueries {
+						if strings.Contains(query.Query, "signoz_") {
+							alertsInfo.SpanMetricsPrometheusQueries = alertsInfo.SpanMetricsPrometheusQueries + 1
+						}
+					}
+				}
+			}
 		} else if rule.AlertType == "TRACES_BASED_ALERT" {
 			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
 		}
