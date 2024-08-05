@@ -4430,11 +4430,11 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 		}
 	}
 
-	// Suggest example query for top suggested attribute
-	// using existing autocomplete logic for recommending attrib values
+	// Suggest example query for top suggested attribute using existing
+	// autocomplete logic for recommending attrib values
 	//
-	// TODO(Raj): create example queries from multiple top attributes using
-	// a batch version of GetLogAttributeValues
+	// Example queries for multiple top attributes using a batch version of
+	// GetLogAttributeValues is expected to come in a follow up change
 	if len(suggestions.AttributeKeys) > 0 {
 		topAttrib := suggestions.AttributeKeys[0]
 
