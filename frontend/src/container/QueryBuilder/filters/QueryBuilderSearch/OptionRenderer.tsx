@@ -3,7 +3,7 @@ import './QueryBuilderSearch.styles.scss';
 import { Tooltip } from 'antd';
 
 import { TagContainer, TagLabel, TagValue } from './style';
-import { getOptionType } from './utils';
+import { getOptionType, getRemovePrefixFromKey } from './utils';
 
 function OptionRenderer({
 	label,
@@ -15,9 +15,9 @@ function OptionRenderer({
 	return (
 		<span className="option">
 			{optionType ? (
-				<Tooltip title={`${value}`} placement="topLeft">
+				<Tooltip title={`${getRemovePrefixFromKey(value)}`} placement="topLeft">
 					<div className="selectOptionContainer">
-						<div className="option-value">{value}</div>
+						<div className="option-value">{getRemovePrefixFromKey(value)}</div>
 						<div className="option-meta-data-container">
 							<TagContainer>
 								<TagLabel>Type: </TagLabel>

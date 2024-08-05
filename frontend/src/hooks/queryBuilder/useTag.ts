@@ -1,4 +1,6 @@
+import ROUTES from 'constants/routes';
 import {
+	getLabel,
 	getOperatorFromValue,
 	getTagToken,
 	isExistsNotExistsOperator,
@@ -7,6 +9,7 @@ import {
 import { unparse } from 'papaparse';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -19,17 +22,25 @@ import { WhereClauseConfig } from './useAutoComplete';
  * @param {TagFilter} filters - query filter object to be converted
  * @returns {string[]} An array of formatted conditions. Eg: `["service = web", "severity_text = INFO"]`)
  */
-export function queryFilterTags(filter: TagFilter): string[] {
+export function queryFilterTags(
+	filter: TagFilter,
+	getLabelValue = false,
+	isLogsExplorerPage = false,
+): string[] {
 	return (filter?.items || []).map((ele) => {
+		const key =
+			getLabelValue && ele.key
+				? getLabel(ele.key, isLogsExplorerPage)
+				: ele.key?.key;
 		if (isInNInOperator(getOperatorFromValue(ele.op))) {
 			try {
 				const csvString = unparse([ele.value]);
-				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
+				return `${key} ${getOperatorFromValue(ele.op)} ${csvString}`;
 			} catch {
-				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+				return `${key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
 			}
 		}
-		return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+		return `${key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
 	});
 }
 
@@ -55,9 +66,15 @@ export const useTag = (
 	setSearchKey: (value: string) => void,
 	whereClauseConfig?: WhereClauseConfig,
 ): IUseTag => {
-	const initTagsData = useMemo(() => queryFilterTags(query?.filters), [
-		query?.filters,
+	const { pathname } = useLocation();
+
+	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
+		pathname,
 	]);
+	const initTagsData = useMemo(
+		() => queryFilterTags(query?.filters, true, isLogsExplorerPage),
+		[isLogsExplorerPage, query?.filters],
+	);
 
 	const [tags, setTags] = useState<string[]>(initTagsData);
 
@@ -73,6 +90,7 @@ export const useTag = (
 
 	const handleAddTag = useCallback(
 		(value: string): void => {
+			console.log(value, 'tag');
 			const { tagKey } = getTagToken(value);
 			const parts = tagKey.split('-');
 			// this is done to ensure that `hello-world` also gets converted to `body CONTAINS hello-world`
@@ -96,6 +114,7 @@ export const useTag = (
 			}
 
 			if ((value && key && isValidTag) || isExistsNotExistsOperator(value)) {
+				console.log('here in last if tag');
 				setTags((prevTags) => [...prevTags, value]);
 				handleSearch('');
 				setSearchKey('');
@@ -113,6 +132,7 @@ export const useTag = (
 	}, []);
 
 	useEffect(() => {
+		console.log(initTagsData);
 		setTags(initTagsData);
 	}, [initTagsData]);
 

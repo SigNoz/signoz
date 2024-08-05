@@ -41,6 +41,7 @@ import OptionRenderer from './OptionRenderer';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	getOperatorValue,
+	getOptionType,
 	getRemovePrefixFromKey,
 	getTagToken,
 	isExistsNotExistsOperator,
@@ -78,6 +79,8 @@ function QueryBuilderSearch({
 		query,
 		searchKey,
 	);
+
+	console.log(tags);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -179,8 +182,12 @@ function QueryBuilderSearch({
 
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
 
+			console.log(tagKey);
+
 			const filterAttribute = [...initialSourceKeys, ...sourceKeys].find(
-				(key) => key?.key === getRemovePrefixFromKey(tagKey),
+				(key) =>
+					key?.key === getRemovePrefixFromKey(tagKey) &&
+					key?.type === getOptionType(tagKey),
 			);
 
 			const computedTagValue =

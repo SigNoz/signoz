@@ -1,6 +1,7 @@
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
+	getOptionType,
 	getRemovePrefixFromKey,
 	getTagToken,
 	isInNInOperator,
@@ -100,7 +101,9 @@ export const useFetchKeysAndValues = (
 		}
 		const { tagKey, tagOperator, tagValue } = getTagToken(value);
 		const filterAttributeKey = keys.find(
-			(item) => item.key === getRemovePrefixFromKey(tagKey),
+			(item) =>
+				item.key === getRemovePrefixFromKey(tagKey) &&
+				item.type === getOptionType(tagKey),
 		);
 		setResults([]);
 
