@@ -86,7 +86,7 @@ response in query range format `series`
 API endpoint:
 
 ```
-POST /api/v1/messaging-queues/kafka/consumer-lag/consumer-details
+POST /api/v1/messaging-queues/kafka/consumer-lag/producer-details
 ```
 
 ```json
