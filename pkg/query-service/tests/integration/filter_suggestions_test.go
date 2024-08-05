@@ -196,7 +196,7 @@ func expectAttribKeysQuery(
 
 	mockClickhouse.ExpectQuery(
 		"select.*from.*signoz_logs.distributed_tag_attributes.*",
-	).WithArgs(100000).WillReturnRows(mockhouse.NewRows(cols, values))
+	).WithArgs(50).WillReturnRows(mockhouse.NewRows(cols, values))
 
 	// Add expectation for the create table query used to determine
 	// if an attribute is a column
@@ -225,7 +225,7 @@ func expectAttribValuesQuery(
 
 	mockClickhouse.ExpectQuery(
 		"select distinct.*stringTagValue.*from.*signoz_logs.distributed_tag_attributes.*",
-	).WithArgs(string(expectedAttrib.Key), v3.TagType(expectedAttrib.Type), 100000).WillReturnRows(mockhouse.NewRows(cols, values))
+	).WithArgs(string(expectedAttrib.Key), v3.TagType(expectedAttrib.Type), 1).WillReturnRows(mockhouse.NewRows(cols, values))
 }
 
 type FilterSuggestionsTestBed struct {

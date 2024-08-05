@@ -4362,116 +4362,136 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 	ctx context.Context,
 	req *v3.QBFilterSuggestionsRequest,
 ) (*v3.QBFilterSuggestionsResponse, *model.ApiError) {
-
-	attribKeysRequest := &v3.FilterAttributeKeyRequest{
-		SearchText: req.SearchText,
-		DataSource: v3.DataSourceLogs,
-		Limit:      100000,
+	suggestions := v3.QBFilterSuggestionsResponse{
+		AttributeKeys:  []v3.AttributeKey{},
+		ExampleQueries: []v3.FilterSet{},
 	}
-	attribKeysResp, err := r.GetLogAttributeKeys(ctx, attribKeysRequest)
+
+	// Use existing autocomplete logic for generating attribute suggestions
+	attribKeysResp, err := r.GetLogAttributeKeys(
+		ctx, &v3.FilterAttributeKeyRequest{
+			SearchText: req.SearchText,
+			DataSource: v3.DataSourceLogs,
+			Limit:      req.Limit,
+		})
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf("couldn't get attribute keys: %w", err))
 	}
 
-	attribKeys := []v3.AttributeKey{}
-	for _, k := range attribKeysResp.AttributeKeys {
-		isInExistingFilter := req.ExistingFilter != nil && slices.ContainsFunc(
-			req.ExistingFilter.Items, func(i v3.FilterItem) bool {
-				return i.Key == k
-			},
-		)
-
-		if !isInExistingFilter {
-			attribKeys = append(attribKeys, k)
+	// Don't suggest attributes that have already been used in the filter.
+	if req.ExistingFilter != nil {
+		for _, k := range attribKeysResp.AttributeKeys {
+			isInExistingFilter := slices.ContainsFunc(
+				req.ExistingFilter.Items, func(i v3.FilterItem) bool {
+					return i.Key == k
+				},
+			)
+			if !isInExistingFilter {
+				suggestions.AttributeKeys = append(suggestions.AttributeKeys, k)
+			}
 		}
+	} else {
+		suggestions.AttributeKeys = attribKeysResp.AttributeKeys
 	}
 
-	slices.SortFunc(attribKeys, func(a v3.AttributeKey, b v3.AttributeKey) int {
+	// Rank suggested attributes
+	slices.SortFunc(suggestions.AttributeKeys, func(a v3.AttributeKey, b v3.AttributeKey) int {
+
 		// Higher score => higher rank
 		attribKeyScore := func(a v3.AttributeKey) int {
+
+			// Scoring criteria is expected to get more sophisticated in follow up changes
 			if a.Type == v3.AttributeKeyTypeResource {
 				return 2
 			}
+
 			if a.Type == v3.AttributeKeyTypeTag {
 				return 1
 			}
+
 			return 0
 		}
 
-		// To sort in descending order the return value must
-		// be negative when a > b
+		// To sort in descending order of score the return value must be negative when a > b
 		return attribKeyScore(b) - attribKeyScore(a)
 	})
 
-	exampleQueries := []v3.FilterSet{}
+	// Put together suggested example queries.
 
-	// TODO(Raj): create multiple example queries from top attributes
-	// using a batch version of GetLogAttributeValues
-	if len(attribKeys) > 0 {
-		exampleKey := attribKeys[0]
-		attribValuesRequest := &v3.FilterAttributeValueRequest{
-			DataSource:                 v3.DataSourceLogs,
-			FilterAttributeKey:         exampleKey.Key,
-			FilterAttributeKeyDataType: exampleKey.DataType,
-			TagType:                    v3.TagType(exampleKey.Type),
-			Limit:                      100000,
+	newExampleQuery := func() v3.FilterSet {
+		// Include existing filter in example query if specified.
+		if req.ExistingFilter != nil {
+			return *req.ExistingFilter
 		}
-		resp, err := r.GetLogAttributeValues(ctx, attribValuesRequest)
+
+		return v3.FilterSet{
+			Operator: "AND",
+			Items:    []v3.FilterItem{},
+		}
+	}
+
+	// Suggest example query for top suggested attribute
+	// using existing autocomplete logic for recommending attrib values
+	//
+	// TODO(Raj): create example queries from multiple top attributes using
+	// a batch version of GetLogAttributeValues
+	if len(suggestions.AttributeKeys) > 0 {
+		topAttrib := suggestions.AttributeKeys[0]
+
+		resp, err := r.GetLogAttributeValues(ctx, &v3.FilterAttributeValueRequest{
+			DataSource:                 v3.DataSourceLogs,
+			FilterAttributeKey:         topAttrib.Key,
+			FilterAttributeKeyDataType: topAttrib.DataType,
+			TagType:                    v3.TagType(topAttrib.Type),
+			Limit:                      1,
+		})
+
 		if err != nil {
 			// Do not fail the entire request if only example query generation fails
 			zap.L().Error("could not find attribute values for creating example query", zap.Error(err))
+
 		} else {
-			addExampleQuery := func(value any) {
-				exampleQuery := v3.FilterSet{
-					Operator: "AND",
-					Items:    []v3.FilterItem{},
-				}
-				if req.ExistingFilter != nil {
-					exampleQuery = *req.ExistingFilter
-				}
+			addExampleQuerySuggestion := func(value any) {
+				exampleQuery := newExampleQuery()
 
 				exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
-					Key:      exampleKey,
+					Key:      topAttrib,
 					Operator: "=",
 					Value:    value,
 				})
 
-				exampleQueries = append(exampleQueries, exampleQuery)
+				suggestions.ExampleQueries = append(
+					suggestions.ExampleQueries, exampleQuery,
+				)
 			}
 
 			if len(resp.StringAttributeValues) > 0 {
-				addExampleQuery(resp.StringAttributeValues[0])
+				addExampleQuerySuggestion(resp.StringAttributeValues[0])
 			} else if len(resp.NumberAttributeValues) > 0 {
-				addExampleQuery(resp.NumberAttributeValues[0])
+				addExampleQuerySuggestion(resp.NumberAttributeValues[0])
 			} else if len(resp.BoolAttributeValues) > 0 {
-				addExampleQuery(resp.BoolAttributeValues[0])
+				addExampleQuerySuggestion(resp.BoolAttributeValues[0])
 			}
 		}
 	}
 
-	// Default example queries.
-	if len(exampleQueries) < 1 {
-		exampleQueries = append(exampleQueries, v3.FilterSet{
-			Operator: "AND",
-			Items: []v3.FilterItem{
-				{
-					Key: v3.AttributeKey{
-						Key:      "body",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeUnspecified,
-						IsColumn: true,
-					},
-					Operator: "contains",
-					Value:    "error",
-				},
+	// Suggest static example queries for standard log attributes if needed.
+	if len(suggestions.ExampleQueries) < req.Limit {
+		exampleQuery := newExampleQuery()
+		exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeUnspecified,
+				IsColumn: true,
 			},
+			Operator: "contains",
+			Value:    "error",
 		})
+		suggestions.ExampleQueries = append(suggestions.ExampleQueries, exampleQuery)
 	}
 
-	return &v3.QBFilterSuggestionsResponse{
-		AttributeKeys:  attribKeys,
-		ExampleQueries: exampleQueries,
-	}, nil
+	return &suggestions, nil
 }
 
 func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([]string, map[string]string, []map[string]string, *v3.Point) {
