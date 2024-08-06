@@ -24,6 +24,8 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
+import { useOptionsMenu } from 'container/OptionsMenu';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
@@ -34,7 +36,7 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isEqual } from 'lodash-es';
 import {
 	Check,
 	ConciergeBell,
@@ -59,6 +61,7 @@ import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
@@ -252,6 +255,48 @@ function ExplorerOptions({
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
+	const { options, handleOptionsChange } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
+		dataSource: DataSource.TRACES,
+		aggregateOperator: StringOperators.NOOP,
+	});
+
+	const updateOrRestoreSelectColumns = (
+		key: string,
+		allViewsData: ViewProps[] | undefined,
+		options: OptionsQuery,
+		handleOptionsChange: (newQueryData: OptionsQuery) => void,
+	): void => {
+		const currentViewDetails = getViewDetailsUsingViewKey(key, allViewsData);
+		if (!currentViewDetails) {
+			return;
+		}
+
+		const extraData = JSON.parse(currentViewDetails?.extraData ?? '{}');
+
+		if (extraData?.selectColumns) {
+			localStorage.setItem(
+				LOCALSTORAGE.OLD_SELECT_COLUMNS,
+				JSON.stringify(options.selectColumns),
+			);
+
+			handleOptionsChange({
+				...options,
+				selectColumns: extraData.selectColumns,
+			});
+		} else {
+			const oldSelectColumns = JSON.parse(
+				localStorage.getItem(LOCALSTORAGE.OLD_SELECT_COLUMNS) ?? '{}',
+			);
+			if (!isEqual(oldSelectColumns, options.selectColumns)) {
+				handleOptionsChange({
+					...options,
+					selectColumns: oldSelectColumns,
+				});
+			}
+		}
+	};
+
 	const onMenuItemSelectHandler = useCallback(
 		({ key }: { key: string }): void => {
 			const currentViewDetails = getViewDetailsUsingViewKey(
@@ -321,6 +366,13 @@ function ExplorerOptions({
 
 		updatePreservedViewInLocalStorage(option);
 
+		updateOrRestoreSelectColumns(
+			option.key,
+			viewsData?.data?.data,
+			options,
+			handleOptionsChange,
+		);
+
 		if (ref.current) {
 			ref.current.blur();
 		}
@@ -360,14 +412,20 @@ function ExplorerOptions({
 		viewName: newViewName || '',
 		compositeQuery,
 		sourcePage: sourcepage,
-		extraData: JSON.stringify({ color }),
+		extraData: JSON.stringify({
+			color,
+			selectColumns: options.selectColumns,
+		}),
 	});
 
 	const onSaveHandler = (): void => {
 		saveNewViewHandler({
 			compositeQuery,
 			handlePopOverClose: hideSaveViewModal,
-			extraData: JSON.stringify({ color }),
+			extraData: JSON.stringify({
+				color,
+				selectColumns: options.selectColumns,
+			}),
 			notifications,
 			panelType: panelType || PANEL_TYPES.LIST,
 			redirectWithQueryBuilderData,
