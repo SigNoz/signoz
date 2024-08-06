@@ -277,7 +277,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "john", Operator: "="},
 			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "my_service", Operator: "!="},
 		}},
-		ExpectedFilter: "attributes_string['user_name'] = 'john'",
+		ExpectedFilter: "attributes_string['user_name'] = 'john' AND mapContains(attributes_string, 'user_name')",
 	},
 	{
 		Name: "Test attribute and resource attribute with different case",
@@ -285,7 +285,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "%JoHn%", Operator: "like"},
 			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "%MyService%", Operator: "nlike"},
 		}},
-		ExpectedFilter: "attributes_string['user_name'] LIKE '%JoHn%'",
+		ExpectedFilter: "attributes_string['user_name'] LIKE '%JoHn%' AND mapContains(attributes_string, 'user_name')",
 	},
 	{
 		Name: "Test materialized column",
@@ -300,28 +300,28 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.%", Operator: "like"},
 		}},
-		ExpectedFilter: "attributes_string['host'] LIKE '102.%'",
+		ExpectedFilter: "attributes_string['host'] LIKE '102.%' AND mapContains(attributes_string, 'host')",
 	},
 	{
 		Name: "Test IN",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{1, 2, 3, 4}, Operator: "in"},
 		}},
-		ExpectedFilter: "attributes_number['bytes'] IN [1,2,3,4]",
+		ExpectedFilter: "attributes_number['bytes'] IN [1,2,3,4] AND mapContains(attributes_number, 'bytes')",
 	},
 	{
 		Name: "Test DataType int64",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: ">"},
 		}},
-		ExpectedFilter: "attributes_number['bytes'] > 10",
+		ExpectedFilter: "attributes_number['bytes'] > 10 AND mapContains(attributes_number, 'bytes')",
 	},
 	{
 		Name: "Test NOT IN",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"john", "bunny"}, Operator: "nin"},
 		}},
-		ExpectedFilter: "attributes_string['name'] NOT IN ['john','bunny']",
+		ExpectedFilter: "attributes_string['name'] NOT IN ['john','bunny'] AND mapContains(attributes_string, 'name')",
 	},
 	{
 		Name: "Test exists",
@@ -342,21 +342,21 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "contains"},
 		}},
-		ExpectedFilter: "attributes_string['host'] LIKE '%102.%'",
+		ExpectedFilter: "attributes_string['host'] LIKE '%102.%' AND mapContains(attributes_string, 'host')",
 	},
 	{
 		Name: "Test contains with single quotes",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "hello 'world'", Operator: "contains"},
 		}},
-		ExpectedFilter: "attributes_string['message'] LIKE '%hello \\'world\\'%'",
+		ExpectedFilter: "attributes_string['message'] LIKE '%hello \\'world\\'%' AND mapContains(attributes_string, 'message')",
 	},
 	{
 		Name: "Test not contains",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
-		ExpectedFilter: "attributes_string['host'] NOT LIKE '%102.%'",
+		ExpectedFilter: "attributes_string['host'] NOT LIKE '%102.%' AND mapContains(attributes_string, 'host')",
 	},
 	{
 		Name: "Test regex",
@@ -370,7 +370,7 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "nregex"},
 		}},
-		ExpectedFilter: "NOT match(attributes_string['host'], '102.')",
+		ExpectedFilter: "NOT match(attributes_string['host'], '102.') AND mapContains(attributes_string, 'host')",
 	},
 	{
 		Name: "Test groupBy",
@@ -378,7 +378,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
 		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-		ExpectedFilter: "attributes_string['host'] NOT LIKE '%102.%' AND mapContains(attributes_string, 'host')",
+		ExpectedFilter: "attributes_string['host'] NOT LIKE '%102.%' AND mapContains(attributes_string, 'host') AND mapContains(attributes_string, 'host')",
 	},
 	{
 		Name: "Test groupBy isColumn",
@@ -386,7 +386,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
 		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
-		ExpectedFilter: "attributes_string['host'] NOT LIKE '%102.%' AND `attribute_string_host_exists`=true",
+		ExpectedFilter: "attributes_string['host'] NOT LIKE '%102.%' AND mapContains(attributes_string, 'host') AND `attribute_string_host_exists`=true",
 	},
 	{
 		Name: "Wrong data",
@@ -400,7 +400,7 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "%test%", Operator: "like"},
 		}},
-		ExpectedFilter: "attributes_string['body'] LIKE '%test%'",
+		ExpectedFilter: "attributes_string['body'] LIKE '%test%' AND mapContains(attributes_string, 'body')",
 	},
 	{
 		Name: "Test exists on top level field",
@@ -543,7 +543,7 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value " +
 			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND " +
 			"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND " +
-			"attributes_number['bytes'] > 100.000000 AND mapContains(attributes_string, 'user_name') " +
+			"attributes_number['bytes'] > 100.000000 AND mapContains(attributes_number, 'bytes') AND mapContains(attributes_string, 'user_name') " +
 			"group by ts order by value DESC",
 	},
 	{
@@ -669,7 +669,7 @@ var testBuildLogsQueryData = []struct {
 			" attributes_string['method'] as `method`, " +
 			"toFloat64(count(distinct(`attribute_string_name`))) as value from signoz_logs.distributed_logs_v2 " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND attributes_string['method'] = 'GET' " +
+			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') " +
 			"AND mapContains(attributes_string, 'method') AND `attribute_string_name_exists`=true " +
 			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
 			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(lower(labels), 'x') != 'abc' " +
@@ -701,7 +701,7 @@ var testBuildLogsQueryData = []struct {
 			"resources_string['x'] as `x`, " +
 			"toFloat64(count(distinct(`attribute_string_name`))) as value from signoz_logs.distributed_logs_v2 " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND attributes_string['method'] = 'GET' " +
+			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') " +
 			"AND mapContains(attributes_string, 'method') AND `attribute_string_name_exists`=true " +
 			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
 			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(lower(labels), 'x') != 'abc' " +
@@ -731,7 +731,7 @@ var testBuildLogsQueryData = []struct {
 			"avg(attributes_number['bytes']) as value " +
 			"from signoz_logs.distributed_logs_v2 " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND attributes_string['method'] = 'GET' " +
+			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') " +
 			"AND mapContains(attributes_string, 'method') " +
 			"AND mapContains(attributes_number, 'bytes') " +
 			"group by `method`,ts " +
@@ -761,7 +761,7 @@ var testBuildLogsQueryData = []struct {
 			"sum(`attribute_number_bytes`) as value " +
 			"from signoz_logs.distributed_logs_v2 " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND attributes_string['method'] = 'GET' " +
+			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') " +
 			"AND mapContains(attributes_string, 'method') " +
 			"AND `attribute_number_bytes_exists`=true " +
 			"group by `method`,ts " +
@@ -791,7 +791,7 @@ var testBuildLogsQueryData = []struct {
 			"min(`attribute_number_bytes`) as value " +
 			"from signoz_logs.distributed_logs_v2 " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND attributes_string['method'] = 'GET' " +
+			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') " +
 			"AND mapContains(attributes_string, 'method') " +
 			"AND `attribute_number_bytes_exists`=true " +
 			"group by `method`,ts " +
@@ -821,7 +821,7 @@ var testBuildLogsQueryData = []struct {
 			"max(`attribute_number_bytes`) as value " +
 			"from signoz_logs.distributed_logs_v2 " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND attributes_string['method'] = 'GET' " +
+			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') " +
 			"AND mapContains(attributes_string, 'method') " +
 			"AND `attribute_number_bytes_exists`=true " +
 			"group by `method`,ts " +
@@ -1034,7 +1034,7 @@ var testBuildLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string['name']))) as value " +
 			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'name') group by ts having value > 10 order by value DESC",
+			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'name') group by ts having value > 10 order by value DESC",
 	},
 	{
 		Name:      "Test top level key",
@@ -1090,7 +1090,7 @@ var testBuildLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string['name']))) as value " +
 			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND attributes_string['body'] LIKE '%test%' AND mapContains(attributes_string, 'name') group by ts having value > 10 order by value DESC",
+			"AND attributes_string['body'] LIKE '%test%' AND mapContains(attributes_string, 'body') AND mapContains(attributes_string, 'name') group by ts having value > 10 order by value DESC",
 	},
 
 	// Tests for table panel type
@@ -1421,7 +1421,7 @@ var testPrepLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT `method` from (SELECT attributes_string['method'] as `method`, toFloat64(count(distinct(attributes_string['name']))) " +
 			"as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'name') group by `method` order by value DESC) LIMIT 10",
+			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'name') group by `method` order by value DESC) LIMIT 10",
 		Options: Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 	},
 	{
@@ -1446,7 +1446,7 @@ var testPrepLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT `method` from (SELECT attributes_string['method'] as `method`, toFloat64(count(distinct(attributes_string['name']))) " +
 			"as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'name') group by `method` order by value ASC) LIMIT 10",
+			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'name') group by `method` order by value ASC) LIMIT 10",
 		Options: Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 	},
 	{
@@ -1471,7 +1471,7 @@ var testPrepLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT `method` from (SELECT attributes_string['method'] as `method`, toFloat64(count(distinct(attributes_string['name']))) " +
 			"as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'name') group by `method` order by `method` ASC) LIMIT 10",
+			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'name') group by `method` order by `method` ASC) LIMIT 10",
 		Options: Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 	},
 	{
@@ -1495,7 +1495,7 @@ var testPrepLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string['method'] as `method`, " +
 			"toFloat64(count(distinct(attributes_string['name']))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) " +
-			"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') " +
+			"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'method') " +
 			"AND mapContains(attributes_string, 'name') AND (`method`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `method`,ts order by value DESC",
 		Options: Options{GraphLimitQtype: constants.SecondQueryGraphLimit},
 	},
@@ -1521,7 +1521,7 @@ var testPrepLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string['method'] as `method`, " +
 			"toFloat64(count(distinct(attributes_string['name']))) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) " +
-			"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') " +
+			"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'method') " +
 			"AND mapContains(attributes_string, 'name') AND (`method`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `method`,ts order by `method` ASC",
 		Options: Options{GraphLimitQtype: constants.SecondQueryGraphLimit},
 	},
@@ -1543,7 +1543,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName: "logs",
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string " +
-			"from signoz_logs.distributed_logs where attributes_string['method'] = 'GET' AND ",
+			"from signoz_logs.distributed_logs where attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND ",
 		Options: Options{IsLivetailQuery: true},
 	},
 	{
@@ -1563,7 +1563,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName: "logs",
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string " +
-			"from signoz_logs.distributed_logs where attributes_string['method'] LIKE '%GET%' AND ",
+			"from signoz_logs.distributed_logs where attributes_string['method'] LIKE '%GET%' AND mapContains(attributes_string, 'method') AND ",
 		Options: Options{IsLivetailQuery: true},
 	},
 	{
@@ -1674,7 +1674,7 @@ var testPrepLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string " +
 			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND " +
-			"ts_bucket_start <= 1680066458) AND attributes_string['method'] = 'GET' order by resources_string['mycolumn'] DESC LIMIT 100 OFFSET 100",
+			"ts_bucket_start <= 1680066458) AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') order by resources_string['mycolumn'] DESC LIMIT 100 OFFSET 100",
 	},
 }
 

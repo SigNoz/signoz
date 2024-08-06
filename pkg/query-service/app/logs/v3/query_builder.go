@@ -233,6 +233,13 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 			} else {
 				return "", fmt.Errorf("unsupported operator: %s", op)
 			}
+
+			// add extra condition for map contains
+			// by default clickhouse is not able to utilize indexes for keys with all operators.
+			// mapContains forces the use of index.
+			if item.Key.IsColumn == false && op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
+				conditions = append(conditions, GetExistsNexistsFilter(v3.FilterOperatorExists, item))
+			}
 		}
 	}
 
