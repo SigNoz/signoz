@@ -3049,22 +3049,21 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 }
 
 func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.Request) {
-	var response *v3.QBFilterSuggestionsResponse
 	req, err := parseQBFilterSuggestionsRequest(r)
-
 	if err != nil {
 		RespondError(w, err, nil)
 		return
 	}
 
-	switch req.DataSource {
-	case v3.DataSourceLogs:
-		response, err = aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
-	default:
-		RespondError(w, model.BadRequest(fmt.Errorf("invalid data source")), nil)
+	if req.DataSource != v3.DataSourceLogs {
+		// Support for traces and metrics might come later
+		RespondError(w, model.BadRequest(
+			fmt.Errorf("suggestions not supported for %s", req.DataSource),
+		), nil)
 		return
 	}
 
+	response, err := aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
 	if err != nil {
 		RespondError(w, err, nil)
 		return

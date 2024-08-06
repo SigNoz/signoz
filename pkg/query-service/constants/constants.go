@@ -407,3 +407,5 @@ var TracesListViewDefaultSelectedColumns = []v3.AttributeKey{
 		IsColumn: true,
 	},
 }
+
+const DefaultFilterSuggestionsLimit = 100

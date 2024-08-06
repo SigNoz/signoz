@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -185,7 +186,11 @@ func (tb *FilterSuggestionsTestBed) mockAttribKeysQueryResponse(
 
 	tb.mockClickhouse.ExpectQuery(
 		"select.*from.*signoz_logs.distributed_tag_attributes.*",
-	).WithArgs(50).WillReturnRows(mockhouse.NewRows(cols, values))
+	).WithArgs(
+		constants.DefaultFilterSuggestionsLimit,
+	).WillReturnRows(
+		mockhouse.NewRows(cols, values),
+	)
 
 	// Add expectation for the create table query used to determine
 	// if an attribute is a column
