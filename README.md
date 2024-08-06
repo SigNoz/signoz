@@ -47,11 +47,11 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 ### Distributed Tracing
 ![ditributed-tracing-02](https://github.com/user-attachments/assets/e1a00fe4-e471-4320-8075-f314a787c376)
 
-![distributed-tracing-03](https://github.com/user-attachments/assets/67e9d988-9f55-4c23-8ad6-bec7dffc1354)
+![distributed-tracing-03](https://github.com/user-attachments/assets/f4be7c88-19c1-41f7-8df2-0380c2b93151)
 
 ### Logs Management
 
-![logs-management](https://github.com/user-attachments/assets/09beaaf1-2d93-4e75-a8bb-5e6a07d74746)
+![logs-management](https://github.com/user-attachments/assets/4b44f386-c981-491f-8d1b-1d9cb149b95a)
 
 ### Infrastructure Monitoring
 
