@@ -274,7 +274,7 @@ function ExplorerOptions({
 
 		const extraData = JSON.parse(currentViewDetails?.extraData ?? '{}');
 
-		if (extraData?.selectColumns) {
+		if (!!extraData && extraData?.selectColumns) {
 			localStorage.setItem(
 				LOCALSTORAGE.OLD_SELECT_COLUMNS,
 				JSON.stringify(options.selectColumns),
@@ -288,7 +288,10 @@ function ExplorerOptions({
 			const oldSelectColumns = JSON.parse(
 				localStorage.getItem(LOCALSTORAGE.OLD_SELECT_COLUMNS) ?? '{}',
 			);
-			if (!isEqual(oldSelectColumns, options.selectColumns)) {
+			if (
+				Object.keys(oldSelectColumns).length &&
+				!isEqual(oldSelectColumns, options.selectColumns)
+			) {
 				handleOptionsChange({
 					...options,
 					selectColumns: oldSelectColumns,
