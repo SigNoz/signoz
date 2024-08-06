@@ -34,9 +34,6 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 				body: JSON.stringify((response.data as any).data),
 			};
 		}
-
-		console.log(data?.error);
-
 		return {
 			statusCode,
 			payload: null,
