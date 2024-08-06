@@ -322,11 +322,6 @@ func isLogExpression(expression *govaluate.EvaluableExpression, params *v3.Query
 func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[string]string {
 	keys := make(map[string]string)
 
-	// For non-graph panels, we don't support caching
-	if params.CompositeQuery.PanelType != v3.PanelTypeGraph {
-		return keys
-	}
-
 	// Use query as the cache key for PromQL queries
 	if params.CompositeQuery.QueryType == v3.QueryTypePromQL {
 		for name, query := range params.CompositeQuery.PromQueries {
@@ -338,6 +333,11 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 	// Build keys for each builder query
 	for queryName, query := range params.CompositeQuery.BuilderQueries {
 		if query.Expression == queryName && query.DataSource == v3.DataSourceLogs {
+
+			if params.CompositeQuery.PanelType != v3.PanelTypeGraph {
+				continue
+			}
+
 			var parts []string
 
 			// We need to build uniqe cache query for BuilderQuery
@@ -382,6 +382,10 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 			keys[queryName] = key
 		} else if query.Expression == queryName && query.DataSource == v3.DataSourceMetrics {
 			var parts []string
+
+			if params.Version != "v4" && params.CompositeQuery.PanelType != v3.PanelTypeGraph {
+				continue
+			}
 
 			// We need to build uniqe cache query for BuilderQuery
 
