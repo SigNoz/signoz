@@ -163,8 +163,15 @@ function Login({
 					response.payload.accessJwt,
 					response.payload.refreshJwt,
 				);
+				if (history?.location?.state) {
+					const historyState = history?.location?.state as any;
 
-				history.push(ROUTES.APPLICATION);
+					if (historyState?.from) {
+						history.push(historyState?.from);
+					} else {
+						history.push(ROUTES.APPLICATION);
+					}
+				}
 			} else {
 				notifications.error({
 					message: response.error || t('unexpected_error'),

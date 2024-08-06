@@ -655,8 +655,9 @@ function DashboardsList(): JSX.Element {
 							}}
 							eventName="Dashboard: Facing Issues in dashboard"
 							message={dashboardListMessage}
-							buttonText="Facing issues with dashboards?"
+							buttonText="Need help with dashboards?"
 							onHoverText="Click here to get help with dashboards"
+							intercomMessageDisabled
 						/>
 					</Flex>
 				</div>

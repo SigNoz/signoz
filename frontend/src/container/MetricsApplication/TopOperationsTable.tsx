@@ -164,6 +164,12 @@ function TopOperationsTable({
 
 	const downloadableData = convertedTracesToDownloadData(data);
 
+	const paginationConfig = {
+		pageSize: 10,
+		showSizeChanger: false,
+		hideOnSinglePage: true,
+	};
+
 	return (
 		<div className="top-operation">
 			<div className="top-operation--download">
@@ -181,6 +187,7 @@ function TopOperationsTable({
 				tableLayout="fixed"
 				dataSource={data}
 				rowKey="name"
+				pagination={paginationConfig}
 			/>
 		</div>
 	);
