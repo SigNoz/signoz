@@ -99,6 +99,10 @@ const GetMinMax = (
 		// six week = one day * 42
 		const minTimeAgo = getMinAgo({ minutes: 24 * 60 * 42 }).getTime();
 		minTime = minTimeAgo;
+	} else if (interval === '1month') {
+		// one month = one day * 30
+		const minTimeAgo = getMinAgo({ minutes: 24 * 60 * 30 }).getTime();
+		minTime = minTimeAgo;
 	} else if (interval === '2months') {
 		// two months = one day * 60
 		const minTimeAgo = getMinAgo({ minutes: 24 * 60 * 60 }).getTime();

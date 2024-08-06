@@ -5001,3 +5001,27 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 		}
 	}
 }
+
+func (r *ClickHouseReader) GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error) {
+	var minTime, maxTime time.Time
+
+	query := fmt.Sprintf("SELECT min(timestamp), max(timestamp) FROM %s.%s WHERE traceID IN ('%s')",
+		r.TraceDB, r.SpansTable, strings.Join(traceID, "','"))
+
+	zap.L().Debug("GetMinAndMaxTimestampForTraceID", zap.String("query", query))
+
+	err := r.db.QueryRow(ctx, query).Scan(&minTime, &maxTime)
+	if err != nil {
+		zap.L().Error("Error while executing query", zap.Error(err))
+		return 0, 0, err
+	}
+
+	if minTime.IsZero() || maxTime.IsZero() {
+		zap.L().Debug("minTime or maxTime is zero")
+		return 0, 0, nil
+	}
+
+	zap.L().Debug("GetMinAndMaxTimestampForTraceID", zap.Any("minTime", minTime), zap.Any("maxTime", maxTime))
+
+	return minTime.UnixNano(), maxTime.UnixNano(), nil
+}

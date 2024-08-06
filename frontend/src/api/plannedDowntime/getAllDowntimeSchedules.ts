@@ -1,6 +1,6 @@
 import axios from 'api';
 import { AxiosError, AxiosResponse } from 'axios';
-import { Option } from 'container/PlannedDowntime/DropdownWithSubMenu/DropdownWithSubMenu';
+import { Option } from 'container/PlannedDowntime/PlannedDowntimeutils';
 import { useQuery, UseQueryResult } from 'react-query';
 
 export type Recurrence = {
@@ -28,6 +28,7 @@ export interface DowntimeSchedules {
 	createdBy: string | null;
 	updatedAt: string | null;
 	updatedBy: string | null;
+	kind: string | null;
 }
 export type PayloadProps = { data: DowntimeSchedules[] };
 
