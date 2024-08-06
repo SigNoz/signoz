@@ -4378,21 +4378,7 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 		return nil, model.InternalError(fmt.Errorf("couldn't get attribute keys: %w", err))
 	}
 
-	// Don't suggest attributes that have already been used in the filter.
-	if req.ExistingFilter != nil {
-		for _, k := range attribKeysResp.AttributeKeys {
-			isInExistingFilter := slices.ContainsFunc(
-				req.ExistingFilter.Items, func(i v3.FilterItem) bool {
-					return i.Key == k
-				},
-			)
-			if !isInExistingFilter {
-				suggestions.AttributeKeys = append(suggestions.AttributeKeys, k)
-			}
-		}
-	} else {
-		suggestions.AttributeKeys = attribKeysResp.AttributeKeys
-	}
+	suggestions.AttributeKeys = attribKeysResp.AttributeKeys
 
 	// Rank suggested attributes
 	slices.SortFunc(suggestions.AttributeKeys, func(a v3.AttributeKey, b v3.AttributeKey) int {

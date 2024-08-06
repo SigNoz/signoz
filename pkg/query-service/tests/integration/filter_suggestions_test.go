@@ -80,8 +80,8 @@ func TestLogsFilterSuggestionsWithoutExistingFilter(t *testing.T) {
 	))
 }
 
-// If a filter already exists, should not suggest a used attribute
-// and suggested example queries should contain existing filter
+// If a filter already exists, suggested example queries should
+// contain existing filter
 func TestLogsFilterSuggestionsWithExistingFilter(t *testing.T) {
 	require := require.New(t)
 	tb := NewFilterSuggestionsTestBed(t)
@@ -112,52 +112,17 @@ func TestLogsFilterSuggestionsWithExistingFilter(t *testing.T) {
 		},
 	}
 
-	// If suggestions request doesn't specify an existing filter,
-	// both attributes should get recommended.
-	tb.mockAttribKeysQueryResponse([]v3.AttributeKey{testAttrib, testFilterAttrib})
-	tb.mockAttribValuesQueryResponse(testAttrib, []string{testAttribValue})
-
-	suggestionsQueryParams := map[string]string{}
-	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(suggestionsQueryParams)
-
-	require.Greater(len(suggestionsResp.AttributeKeys), 0)
-	require.True(slices.ContainsFunc(
-		suggestionsResp.AttributeKeys, func(a v3.AttributeKey) bool {
-			return a.Key == testFilter.Items[0].Key.Key && a.Type == testFilter.Items[0].Key.Type
-		},
-	))
-	require.True(slices.ContainsFunc(
-		suggestionsResp.AttributeKeys, func(a v3.AttributeKey) bool {
-			return a.Key == testAttrib.Key && a.Type == testAttrib.Type
-		},
-	))
-
-	require.Greater(len(suggestionsResp.ExampleQueries), 0)
-
-	// If suggestions request specifies an existing filter, only the unused
-	// attribute should get recommended and example query should contain existing filter
 	tb.mockAttribKeysQueryResponse([]v3.AttributeKey{testAttrib, testFilterAttrib})
 	tb.mockAttribValuesQueryResponse(testAttrib, []string{testAttribValue})
 
 	testFilterJson, err := json.Marshal(testFilter)
 	require.Nil(err, "couldn't serialize existing filter to JSON")
-	suggestionsQueryParams = map[string]string{
+	suggestionsQueryParams := map[string]string{
 		"existingFilter": base64.RawURLEncoding.EncodeToString(testFilterJson),
 	}
-	suggestionsResp = tb.GetQBFilterSuggestionsForLogs(suggestionsQueryParams)
+	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(suggestionsQueryParams)
 
 	require.Greater(len(suggestionsResp.AttributeKeys), 0)
-	// Attribute already used in filter should not get recommended.
-	require.False(slices.ContainsFunc(
-		suggestionsResp.AttributeKeys, func(a v3.AttributeKey) bool {
-			return a.Key == testFilter.Items[0].Key.Key && a.Type == testFilter.Items[0].Key.Type
-		},
-	))
-	require.True(slices.ContainsFunc(
-		suggestionsResp.AttributeKeys, func(a v3.AttributeKey) bool {
-			return a.Key == testAttrib.Key && a.Type == testAttrib.Type
-		},
-	))
 
 	// All example queries should contain the existing filter as a prefix
 	require.Greater(len(suggestionsResp.ExampleQueries), 0)
