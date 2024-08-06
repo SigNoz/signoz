@@ -163,7 +163,7 @@ export default function DataSource(): JSX.Element {
 						</div>
 
 						<div>
-							<Typography.Text className="serviceName">
+							<Typography.Text className="dataSourceName">
 								{dataSource.name}
 							</Typography.Text>
 						</div>
