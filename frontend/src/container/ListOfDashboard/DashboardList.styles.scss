@@ -44,7 +44,7 @@
 				cursor: pointer;
 
 				.dashboard-title {
-					color: var(--Vanilla-100)
+					color: var(--bg-vanilla-100);
 				}
 
 				.title-with-action {
@@ -1051,6 +1051,10 @@
 				.dashboard-list-item {
 					border: 1px solid var(--bg-vanilla-200);
 					background: var(--bg-vanilla-100);
+
+					.dashboard-title {
+						color: var(--bg-slate-300);
+					}
 
 					.title-with-action {
 						.dashboard-title {
