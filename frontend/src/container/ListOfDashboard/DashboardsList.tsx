@@ -66,7 +66,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { generatePath } from 'react-router-dom';
+import { generatePath, Link } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
@@ -455,7 +455,9 @@ function DashboardsList(): JSX.Element {
 									alt="dashboard-image"
 								/>
 								<Typography.Text data-testid={`dashboard-title-${index}`}>
-									{dashboard.name}
+									<Link to={getLink()} className="dashboard-title">
+										{dashboard.name}
+									</Link>
 								</Typography.Text>
 							</div>
 
