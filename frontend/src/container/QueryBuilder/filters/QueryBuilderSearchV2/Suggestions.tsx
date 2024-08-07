@@ -21,11 +21,13 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 		currentState,
 	} = props;
 	// on the select from the dropdown the tokenisation should happen automatically
+
 	return (
 		<div className="suggestions-dropdown">
 			{options.map((option) => (
 				<Button
-					key={option.label}
+					// this is done to remove the keys with same names
+					key={JSON.stringify(option.value)}
 					onClick={(): void => {
 						onChange(option.value);
 					}}

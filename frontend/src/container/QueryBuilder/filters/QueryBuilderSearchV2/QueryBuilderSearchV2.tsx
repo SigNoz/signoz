@@ -1,11 +1,16 @@
 import './QueryBuilderSearchV2.styles.scss';
 
 import { Input, Popover, Typography } from 'antd';
+import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
 import useDebounceValue from 'hooks/useDebounce';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -82,7 +87,30 @@ function QueryBuilderSearchV2(
 		],
 	);
 
+	const memoizedValueParams = useMemo(
+		() => [
+			query.aggregateOperator,
+			query.dataSource,
+			query.aggregateAttribute.key,
+			currentFilterItem?.key.key || '',
+			currentFilterItem?.key.dataType,
+			currentFilterItem?.key?.type ?? '',
+			searchValue,
+		],
+		[
+			query.aggregateOperator,
+			query.dataSource,
+			query.aggregateAttribute.key,
+			currentFilterItem?.key.key,
+			currentFilterItem?.key.dataType,
+			currentFilterItem?.key?.type,
+			searchValue,
+		],
+	);
+
 	const searchParams = useDebounceValue(memoizedSearchParams, DEBOUNCE_DELAY);
+
+	const valueParams = useDebounceValue(memoizedValueParams, DEBOUNCE_DELAY);
 
 	const isQueryEnabled = useMemo(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
@@ -115,10 +143,67 @@ function QueryBuilderSearchV2(
 		},
 	);
 
-	const handleDropdownSelect = useCallback((value: Option['value']) => {
-		console.log(value);
-		// update the current running filter item based on the current state of the dropdown and update that as well to next
-	}, []);
+	const {
+		data: attributeValues,
+		isFetching: isFetchingAttributeValues,
+	} = useGetAggregateValues(
+		{
+			aggregateOperator: query.aggregateOperator,
+			dataSource: query.dataSource,
+			aggregateAttribute: query.aggregateAttribute.key,
+			attributeKey: currentFilterItem?.key.key || '',
+			filterAttributeKeyDataType:
+				currentFilterItem?.key.dataType ?? DataTypes.EMPTY,
+			tagType: currentFilterItem?.key?.type ?? '',
+			searchText: searchValue,
+		},
+		{
+			enabled: currentState === DropdownState.ATTRIBUTE_VALUE,
+			queryKey: [valueParams],
+		},
+	);
+
+	const handleDropdownSelect = useCallback(
+		(value: Option['value']) => {
+			if (currentState === DropdownState.ATTRIBUTE_KEY) {
+				setCurrentFilterItem((prev) => ({
+					...prev,
+					key: value as BaseAutocompleteData,
+					operator: '',
+					value: '',
+				}));
+				setCurrentState(DropdownState.OPERATOR);
+			}
+
+			if (currentState === DropdownState.OPERATOR) {
+				setCurrentFilterItem((prev) => ({
+					key: prev?.key as BaseAutocompleteData,
+					operator: value as string,
+					value: '',
+				}));
+				setCurrentState(DropdownState.ATTRIBUTE_VALUE);
+			}
+
+			if (currentState === DropdownState.ATTRIBUTE_VALUE) {
+				setCurrentFilterItem((prev) => ({
+					key: prev?.key as BaseAutocompleteData,
+					operator: prev?.operator as string,
+					value: value as string,
+				}));
+
+				setTags((prev) => [
+					...prev,
+					{
+						key: currentFilterItem?.key,
+						operator: currentFilterItem?.operator,
+						value,
+					} as Tag,
+				]);
+			}
+			// update the current running filter item based on the current state of the dropdown and update that as well to next
+		},
+		[currentFilterItem, currentState],
+	);
 
 	// the aim of this use effect is to do the tokenisation once the search value has been updated
 	useEffect(() => {
@@ -135,13 +220,55 @@ function QueryBuilderSearchV2(
 				})) || [],
 			);
 		}
-	}, [currentState, data?.payload?.attributeKeys]);
+		if (currentState === DropdownState.OPERATOR) {
+			if (currentFilterItem?.key.dataType) {
+				setDropdownOptions(
+					QUERY_BUILDER_OPERATORS_BY_TYPES[
+						currentFilterItem.key
+							.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
+					].map((operator) => ({
+						label: operator,
+						value: operator,
+					})),
+				);
+			} else {
+				setDropdownOptions(
+					QUERY_BUILDER_OPERATORS_BY_TYPES.universal.map((operator) => ({
+						label: operator,
+						value: operator,
+					})),
+				);
+			}
+		}
+
+		if (currentState === DropdownState.ATTRIBUTE_VALUE) {
+			const values: string[] =
+				Object.values(attributeValues?.payload || {}).find((el) => !!el) || [];
+
+			setDropdownOptions(
+				values.map((val) => ({
+					label: val,
+					value: val,
+				})),
+			);
+		}
+	}, [
+		attributeValues?.payload,
+		currentFilterItem?.key.dataType,
+		currentState,
+		data?.payload?.attributeKeys,
+	]);
+
+	console.log(dropdownOptions);
 
 	useEffect(() => {
 		// handle the on change for query here
 	}, [tags]);
 
-	const loading = useMemo(() => isFetching, [isFetching]);
+	const loading = useMemo(() => isFetching || isFetchingAttributeValues, [
+		isFetching,
+		isFetchingAttributeValues,
+	]);
 
 	return (
 		<div className="query-builder-search-v2">
