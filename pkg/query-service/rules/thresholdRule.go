@@ -441,6 +441,8 @@ func (r *ThresholdRule) Unit() string {
 
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 
+	zap.L().Info("prepareQueryRange", zap.Int64("ts", ts.UnixMilli()), zap.Int64("evalWindow", r.evalWindow.Milliseconds()), zap.Int64("evalDelay", r.evalDelay.Milliseconds()))
+
 	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli()
 	end := ts.UnixMilli()
 	if r.evalDelay > 0 {
