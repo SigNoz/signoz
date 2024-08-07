@@ -121,7 +121,7 @@ ENGINE = Distributed(%s, signoz_analytics, rule_state_history, cityHash64(rule_i
 
 	// check if db exists
 	dbExists := `SELECT count(*) FROM system.databases WHERE name = 'signoz_analytics'`
-	var count int
+	var count uint64
 	err := conn.QueryRow(context.Background(), dbExists).Scan(&count)
 	if err != nil {
 		return err
@@ -136,7 +136,7 @@ ENGINE = Distributed(%s, signoz_analytics, rule_state_history, cityHash64(rule_i
 
 	// check if table exists
 	tableExists := `SELECT count(*) FROM system.tables WHERE name = 'rule_state_history' AND database = 'signoz_analytics'`
-	var tableCount int
+	var tableCount uint64
 	err = conn.QueryRow(context.Background(), tableExists).Scan(&tableCount)
 	if err != nil {
 		return err
@@ -151,7 +151,7 @@ ENGINE = Distributed(%s, signoz_analytics, rule_state_history, cityHash64(rule_i
 
 	// check if distributed table exists
 	distributedTableExists := `SELECT count(*) FROM system.tables WHERE name = 'distributed_rule_state_history' AND database = 'signoz_analytics'`
-	var distributedTableCount int
+	var distributedTableCount uint64
 	err = conn.QueryRow(context.Background(), distributedTableExists).Scan(&distributedTableCount)
 	if err != nil {
 		return err
