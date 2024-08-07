@@ -4,13 +4,14 @@ import { Input, Popover, Typography } from 'antd';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import useDebounceValue from 'hooks/useDebounce';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import Suggestions from './Suggestions';
 
@@ -23,6 +24,17 @@ export interface Tag {
 interface QueryBuilderSearchV2Props {
 	query: IBuilderQuery;
 	onChange: (value: TagFilter) => void;
+}
+
+export interface Option {
+	label: string;
+	value: BaseAutocompleteData | string;
+}
+
+export enum DropdownState {
+	ATTRIBUTE_KEY = 'ATTRIBUTE_KEY',
+	OPERATOR = 'OPERATOR',
+	ATTRIBUTE_VALUE = 'ATTRIBUTE_VALUE',
 }
 
 function getInitTags(query: IBuilderQuery): Tag[] {
@@ -45,8 +57,14 @@ function QueryBuilderSearchV2(
 	// this will maintain the current state of in process filter item
 	const [currentFilterItem, setCurrentFilterItem] = useState<Tag | undefined>();
 
+	const [currentState, setCurrentState] = useState<DropdownState>(
+		DropdownState.ATTRIBUTE_KEY,
+	);
+
 	// to maintain the current running state until the tokenization happens
 	const [searchValue, setSearchValue] = useState<string>('');
+
+	const [dropdownOptions, setDropdownOptions] = useState<Option[]>([]);
 
 	const memoizedSearchParams = useMemo(
 		() => [
@@ -66,21 +84,23 @@ function QueryBuilderSearchV2(
 
 	const searchParams = useDebounceValue(memoizedSearchParams, DEBOUNCE_DELAY);
 
-	const isQueryEnabled = useMemo(
-		() =>
-			query.dataSource === DataSource.METRICS
+	const isQueryEnabled = useMemo(() => {
+		if (currentState === DropdownState.ATTRIBUTE_KEY) {
+			return query.dataSource === DataSource.METRICS
 				? !!query.aggregateOperator &&
-				  !!query.dataSource &&
-				  !!query.aggregateAttribute.dataType
-				: true,
-		[
-			query.aggregateAttribute.dataType,
-			query.aggregateOperator,
-			query.dataSource,
-		],
-	);
+						!!query.dataSource &&
+						!!query.aggregateAttribute.dataType
+				: true;
+		}
+		return false;
+	}, [
+		currentState,
+		query.aggregateAttribute.dataType,
+		query.aggregateOperator,
+		query.dataSource,
+	]);
 
-	const { data, isFetching, status } = useGetAggregateKeys(
+	const { data, isFetching } = useGetAggregateKeys(
 		{
 			// TODO : this should be dependent on what is the current running state for the filter
 			searchText: searchValue,
@@ -95,10 +115,33 @@ function QueryBuilderSearchV2(
 		},
 	);
 
+	const handleDropdownSelect = useCallback((value: Option['value']) => {
+		console.log(value);
+		// update the current running filter item based on the current state of the dropdown and update that as well to next
+	}, []);
+
 	// the aim of this use effect is to do the tokenisation once the search value has been updated
 	useEffect(() => {
 		// all the tokenisation logic goes here based on the keys fetched above
 	}, [searchValue]);
+
+	useEffect(() => {
+		// all the logic for setting the options based on tokenisation goes here
+		if (currentState === DropdownState.ATTRIBUTE_KEY) {
+			setDropdownOptions(
+				data?.payload?.attributeKeys?.map((key) => ({
+					label: key.key,
+					value: key,
+				})) || [],
+			);
+		}
+	}, [currentState, data?.payload?.attributeKeys]);
+
+	useEffect(() => {
+		// handle the on change for query here
+	}, [tags]);
+
+	const loading = useMemo(() => isFetching, [isFetching]);
 
 	return (
 		<div className="query-builder-search-v2">
@@ -111,14 +154,22 @@ function QueryBuilderSearchV2(
 			</section>
 			<section className="search-bar">
 				<Popover
-					trigger="focus"
+					trigger="click"
 					arrow={false}
+					getPopupContainer={popupContainer}
 					placement="bottom"
 					content={
-						<Suggestions
-							searchValue={searchValue}
-							currentFilterItem={currentFilterItem}
-						/>
+						loading ? (
+							<Typography.Text>Loading please wait!!</Typography.Text>
+						) : (
+							<Suggestions
+								searchValue={searchValue}
+								currentFilterItem={currentFilterItem}
+								currentState={currentState}
+								options={dropdownOptions}
+								onChange={handleDropdownSelect}
+							/>
+						)
 					}
 				>
 					<Input
