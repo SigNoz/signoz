@@ -180,10 +180,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
-	if err != nil {
-		zap.L().Error("error creating history table", zap.Error(err))
-	}
+	go func() {
+		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
+		if err != nil {
+			zap.L().Error("error creating history table", zap.Error(err))
+		}
+	}()
 
 	// initiate opamp
 	_, err = opAmpModel.InitDB(localDB)
