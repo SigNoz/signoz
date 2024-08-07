@@ -1,5 +1,11 @@
+import TabsAndFilters from 'components/TabsAndFilters/TabsAndFilters';
+
 function AlertHistory(): JSX.Element {
-	return <div>Alert History</div>;
+	return (
+		<div>
+			<TabsAndFilters />
+		</div>
+	);
 }
 
 export default AlertHistory;
