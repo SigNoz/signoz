@@ -306,7 +306,7 @@ func (q *querier) runBuilderQuery(
 	}
 
 	// response doesn't need everything
-	filterCachedPoints(mergedSeries, params.Start, params.End)
+	filterCachedPoints(mergedSeries, start, end)
 
 	ch <- channelResult{
 		Err:    nil,
