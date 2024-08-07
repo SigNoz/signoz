@@ -74,3 +74,67 @@ ORDER BY
 `, start, end, queueType, topic, partition, timeRange)
 	return query
 }
+
+func generateNetworkLatencyThroughputSQL(start, end int64, consumerGroup, queueType string) string {
+	query := fmt.Sprintf(`
+--- Subquery for RPS calculation, desc sorted by rps
+SELECT
+    stringTagMap['messaging.client_id'] AS consumer_id,
+	stringTagMap['service.instance.id'] AS instance_id,
+    serviceName,
+    count(*) / ((%d - %d) / 1000000000) AS rps  -- Convert nanoseconds to seconds
+FROM signoz_traces.signoz_index_v2
+WHERE
+    timestamp >= '%d'
+    AND timestamp <= '%d'
+    AND kind = 5
+    AND msgSystem = '%s' 
+    AND stringTagMap['messaging.kafka.consumer.group'] = '%s'
+GROUP BY serviceName, consumer_id, instance_id
+ORDER BY rps DESC
+`, end, start, start, end, queueType, consumerGroup)
+	return query
+}
+
+func generateNetworkLatencyFetchSQL(step, start, end int64, clientId, serviceName string) string {
+	query := fmt.Sprintf(`
+--- metrics aggregation, desc sorted by value
+WITH filtered_time_series AS (
+    SELECT DISTINCT
+        JSONExtractString(labels, 'service_instance_id') as service_instance_id,
+        JSONExtractString(labels, 'service_name') as service_name,
+        fingerprint
+    FROM signoz_metrics.time_series_v4_1day
+    WHERE metric_name = 'kafka_consumer_fetch_latency_avg'
+        AND temporality = 'Unspecified'
+        AND unix_milli >= '%d'
+        AND unix_milli < '%d'
+        AND JSONExtractString(labels, 'service_name') = '%s'
+        AND JSONExtractString(labels, 'client_id') = '%s'
+),
+aggregated_data AS (
+    SELECT
+        fingerprint,
+        any(service_instance_id) as service_instance_id,
+        any(service_name) as service_name,
+        toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL '%d' SECOND) as ts,
+        avg(value) as per_series_value
+    FROM signoz_metrics.distributed_samples_v4
+    INNER JOIN filtered_time_series USING fingerprint
+    WHERE metric_name = 'kafka_consumer_fetch_latency_avg'
+        AND unix_milli >= '%d'
+        AND unix_milli < '%d'
+    GROUP BY fingerprint, ts
+    ORDER BY fingerprint, ts
+)
+SELECT
+    service_name,
+    service_instance_id,
+    avg(per_series_value) as value
+FROM aggregated_data
+WHERE isNaN(per_series_value) = 0
+GROUP BY service_name, service_instance_id
+ORDER BY value DESC
+`, start, end, serviceName, clientId, step, start, end)
+	return query
+}
