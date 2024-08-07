@@ -6,6 +6,7 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	EmailChannel,
+	GoogleChatChannel,
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
@@ -18,6 +19,7 @@ import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import EmailSettings from './Settings/Email';
+import GoogleChatSettings from './Settings/GoogleChat';
 import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
@@ -65,6 +67,8 @@ function FormAlertChannels({
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Webhook:
 				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.GoogleChat:
+				return <GoogleChatSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Pagerduty:
 				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.MsTeams:
@@ -118,6 +122,9 @@ function FormAlertChannels({
 						</Select.Option>
 						<Select.Option value="webhook" key="webhook">
 							Webhook
+						</Select.Option>
+						<Select.Option value="Google Chat" key="googlechat">
+							Google Chat (uncomplete yet)
 						</Select.Option>
 						<Select.Option value="pagerduty" key="pagerduty">
 							Pagerduty
@@ -177,6 +184,7 @@ interface FormAlertChannelsProps {
 			Partial<
 				SlackChannel &
 					WebhookChannel &
+					GoogleChatChannel &
 					PagerChannel &
 					OpsgenieChannel &
 					EmailChannel
