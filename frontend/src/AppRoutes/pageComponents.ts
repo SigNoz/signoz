@@ -93,7 +93,11 @@ export const CreateNewAlerts = Loadable(
 );
 
 export const AlertHistory = Loadable(
-	() => import(/* webpackChunkName: "Alert History" */ 'pages/AlertHistory'),
+	() => import(/* webpackChunkName: "Alert History" */ 'pages/AlertDetails'),
+);
+
+export const AlertOverview = Loadable(
+	() => import(/* webpackChunkName: "Alert Overview" */ 'pages/AlertDetails'),
 );
 
 export const CreateAlertChannelAlerts = Loadable(

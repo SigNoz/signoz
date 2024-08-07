@@ -3,6 +3,7 @@ import { RouteProps } from 'react-router-dom';
 
 import {
 	AlertHistory,
+	AlertOverview,
 	AllAlertChannels,
 	AllErrors,
 	APIKeys,
@@ -176,6 +177,13 @@ const routes: AppRoutes[] = [
 		component: AlertHistory,
 		isPrivate: true,
 		key: 'ALERT_HISTORY',
+	},
+	{
+		path: ROUTES.ALERT_OVERVIEW,
+		exact: true,
+		component: AlertOverview,
+		isPrivate: true,
+		key: 'ALERT_OVERVIEW',
 	},
 	{
 		path: ROUTES.TRACE,

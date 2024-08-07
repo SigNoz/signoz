@@ -1,3 +1,5 @@
+import './filters.styles.scss';
+
 import { Button } from 'antd';
 import { QueryParams } from 'constants/query';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
