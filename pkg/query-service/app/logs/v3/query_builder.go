@@ -437,14 +437,8 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		return "", err
 	}
 
-	tableName := "distributed_logs"
-
-	// panel type filter is not added because user can choose table type and get the default count
-	if filtersUseNewTable(mq.Filters) || len(mq.GroupBy) > 0 || mq.AggregateAttribute.Key != "" || len(resourceBucketFilters) > 0 {
-		tableName = DISTRIBUTED_LOGS_V2
-
-		timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", bucketStart, bucketEnd)
-	}
+	tableName := DISTRIBUTED_LOGS_V2
+	timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", bucketStart, bucketEnd)
 
 	if len(resourceBucketFilters) > 0 {
 		filter := " AND (resource_fingerprint GLOBAL IN (" +
@@ -557,12 +551,10 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
-		sqlSelect := constants.LogsSQLSelect
+		// sqlSelect := constants.LogsSQLSelect
 		// with noop any filter or different order by other than ts will use new table
-		if filtersUseNewTable(mq.Filters) || !isOrderByTs(mq.OrderBy) {
-			sqlSelect = constants.LogsSQLSelectV2
-			tableName = DISTRIBUTED_LOGS_V2
-		}
+		sqlSelect := constants.LogsSQLSelectV2
+		tableName = DISTRIBUTED_LOGS_V2
 		queryTmpl := sqlSelect + "from signoz_logs.%s where %s%s order by %s"
 		query := fmt.Sprintf(queryTmpl, tableName, timeFilter, filterSubQuery, orderBy)
 		return query, nil
@@ -579,14 +571,12 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorNoOp:
-		if len(filterSubQuery) > 0 {
-			query := constants.LogsSQLSelectV2 + "from signoz_logs.distributed_logs where "
-			query += filterSubQuery + " AND "
-			return query, nil
-		}
-
-		query := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where "
+		query := constants.LogsSQLSelectV2 + "from signoz_logs.distributed_logs where "
+		query += filterSubQuery + " AND "
 		return query, nil
+
+		// query := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where "
+		// return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator in live tail")
 	}
