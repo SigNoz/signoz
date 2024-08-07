@@ -571,12 +571,12 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorNoOp:
-		query := constants.LogsSQLSelectV2 + "from signoz_logs.distributed_logs where "
-		query += filterSubQuery + " AND "
-		return query, nil
+		query := constants.LogsSQLSelectV2 + "from signoz_logs." + DISTRIBUTED_LOGS_V2 + " where "
+		if len(filterSubQuery) > 0 {
+			query = query + filterSubQuery + " AND "
+		}
 
-		// query := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where "
-		// return query, nil
+		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator in live tail")
 	}

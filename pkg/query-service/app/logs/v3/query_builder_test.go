@@ -504,7 +504,7 @@ var testBuildLogsQueryData = []struct {
 		},
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value " +
-			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 			"group by ts order by value DESC",
 	},
 	{
@@ -944,11 +944,9 @@ var testBuildLogsQueryData = []struct {
 				v3.OrderBy{ColumnName: "timestamp", Order: "DESC"},
 			},
 		},
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
-			"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
-			"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool," +
-			"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string " +
-			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) order by timestamp DESC",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
+			"order by timestamp DESC",
 	},
 	{
 		Name:      "Test Noop order by custom",
@@ -964,7 +962,7 @@ var testBuildLogsQueryData = []struct {
 			OrderBy:           []v3.OrderBy{{ColumnName: "method", DataType: v3.AttributeKeyDataTypeString, Order: "ASC", IsColumn: true}},
 		},
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string " +
-			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) order by `method` ASC",
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) order by `method` ASC",
 	},
 	{
 		Name:      "Test Noop with filter",
@@ -1105,8 +1103,9 @@ var testBuildLogsQueryData = []struct {
 			AggregateOperator: v3.AggregateOperatorCount,
 			Expression:        "A",
 		},
-		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) order by value DESC",
+		TableName: "logs",
+		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
+			"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) order by value DESC",
 	},
 	{
 		Name:      "TABLE: Test count with groupBy",
@@ -1543,7 +1542,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName: "logs",
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string " +
-			"from signoz_logs.distributed_logs where attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND ",
+			"from signoz_logs.distributed_logs_v2 where attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND ",
 		Options: Options{IsLivetailQuery: true},
 	},
 	{
@@ -1563,7 +1562,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName: "logs",
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string " +
-			"from signoz_logs.distributed_logs where attributes_string['method'] LIKE '%GET%' AND mapContains(attributes_string, 'method') AND ",
+			"from signoz_logs.distributed_logs_v2 where attributes_string['method'] LIKE '%GET%' AND mapContains(attributes_string, 'method') AND ",
 		Options: Options{IsLivetailQuery: true},
 	},
 	{
@@ -1579,10 +1578,8 @@ var testPrepLogsQueryData = []struct {
 			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
 		},
 		TableName: "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  " +
-			"attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  " +
-			"attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as " +
-			"resources_string from signoz_logs.distributed_logs where ",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string " +
+			"from signoz_logs.distributed_logs_v2 where ",
 		Options: Options{IsLivetailQuery: true},
 	},
 	{
@@ -1598,7 +1595,7 @@ var testPrepLogsQueryData = []struct {
 			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) order by value DESC",
+		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) order by value DESC",
 		Options:       Options{},
 	},
 	{
@@ -1615,7 +1612,7 @@ var testPrepLogsQueryData = []struct {
 			Limit:             10,
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) order by value DESC LIMIT 10",
+		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) order by value DESC LIMIT 10",
 		Options:       Options{},
 	},
 	{
@@ -1642,10 +1639,8 @@ var testPrepLogsQueryData = []struct {
 			PageSize: 100,
 		},
 		TableName: "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  " +
-			"attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  " +
-			"attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as " +
-			"resources_string from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) " +
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 			"AND id < 'logid' order by timestamp DESC LIMIT 100",
 	},
 	{
@@ -1719,10 +1714,9 @@ var testPrepLogsQueryLimitOffsetData = []struct {
 			PageSize:          5,
 		},
 		TableName: "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
-			"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  " +
-			"attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string " +
-			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) order by `timestamp` desc LIMIT 1",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string from " +
+			"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
+			"order by `timestamp` desc LIMIT 1",
 	},
 	{
 		Name:      "Test limit greater than pageSize - order by ts",
@@ -1743,10 +1737,8 @@ var testPrepLogsQueryLimitOffsetData = []struct {
 			PageSize: 10,
 		},
 		TableName: "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  " +
-			"attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') " +
-			"as  attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as " +
-			"resources_string from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) " +
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string from " +
+			"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 			"AND id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by `timestamp` desc LIMIT 10",
 	},
 	{
@@ -1766,8 +1758,9 @@ var testPrepLogsQueryLimitOffsetData = []struct {
 			PageSize:          5,
 		},
 		TableName: "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string " +
-			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) order by attributes_string['method'] desc LIMIT 1 OFFSET 0",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string from " +
+			"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
+			"order by attributes_string['method'] desc LIMIT 1 OFFSET 0",
 	},
 	{
 		Name:      "Test limit greater than pageSize - order by custom",
@@ -1789,7 +1782,7 @@ var testPrepLogsQueryLimitOffsetData = []struct {
 		},
 		TableName: "logs",
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,attributes_string,attributes_number,attributes_bool,resources_string from " +
-			"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND " +
+			"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND " +
 			"id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by attributes_string['method'] desc LIMIT 50 OFFSET 50",
 	},
 }
