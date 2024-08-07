@@ -324,6 +324,10 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 
 	// Use query as the cache key for PromQL queries
 	if params.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		if params.CompositeQuery.PanelType != v3.PanelTypeGraph {
+			return keys
+		}
+
 		for name, query := range params.CompositeQuery.PromQueries {
 			keys[name] = query.Query
 		}

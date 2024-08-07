@@ -414,9 +414,10 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 func TestV2QueryRangePanelGraph(t *testing.T) {
 	params := []*v3.QueryRangeParamsV3{
 		{
-			Start: 1675115596722,               // 31st Jan, 03:23:16
-			End:   1675115596722 + 120*60*1000, // 31st Jan, 05:23:16
-			Step:  60,
+			Start:   1675115596722,               // 31st Jan, 03:23:16
+			End:     1675115596722 + 120*60*1000, // 31st Jan, 05:23:16
+			Step:    60,
+			Version: "v4",
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeGraph,
@@ -604,9 +605,10 @@ func TestV2QueryRangePanelGraph(t *testing.T) {
 func TestV2QueryRangeValueType(t *testing.T) {
 	params := []*v3.QueryRangeParamsV3{
 		{
-			Start: 1675115596722,               // 31st Jan, 03:23:16
-			End:   1675115596722 + 120*60*1000, // 31st Jan, 05:23:16
-			Step:  5 * time.Minute.Milliseconds(),
+			Start:   1675115596722,               // 31st Jan, 03:23:16
+			End:     1675115596722 + 120*60*1000, // 31st Jan, 05:23:16
+			Step:    5 * time.Minute.Milliseconds(),
+			Version: "v4",
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeValue,
@@ -636,9 +638,10 @@ func TestV2QueryRangeValueType(t *testing.T) {
 			},
 		},
 		{
-			Start: 1675115596722 + 60*60*1000,  // 31st Jan, 04:23:16
-			End:   1675115596722 + 180*60*1000, // 31st Jan, 06:23:16
-			Step:  60,
+			Start:   1675115596722 + 60*60*1000,  // 31st Jan, 04:23:16
+			End:     1675115596722 + 180*60*1000, // 31st Jan, 06:23:16
+			Step:    60,
+			Version: "v4",
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeValue,
@@ -668,9 +671,10 @@ func TestV2QueryRangeValueType(t *testing.T) {
 			},
 		},
 		{
-			Start: 1675115596722 + 60*60*1000,  // 31st Jan, 04:23:16
-			End:   1675115596722 + 180*60*1000, // 31st Jan, 06:23:16
-			Step:  5 * time.Minute.Milliseconds(),
+			Start:   1675115596722 + 60*60*1000,  // 31st Jan, 04:23:16
+			End:     1675115596722 + 180*60*1000, // 31st Jan, 06:23:16
+			Step:    5 * time.Minute.Milliseconds(),
+			Version: "v4",
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeValue,
@@ -747,9 +751,10 @@ func TestV2QueryRangeValueType(t *testing.T) {
 func TestV2QueryRangeTimeShift(t *testing.T) {
 	params := []*v3.QueryRangeParamsV3{
 		{
-			Start: 1675115596722,               //31, 3:23
-			End:   1675115596722 + 120*60*1000, //31, 5:23
-			Step:  5 * time.Minute.Milliseconds(),
+			Start:   1675115596722,               //31, 3:23
+			End:     1675115596722 + 120*60*1000, //31, 5:23
+			Step:    5 * time.Minute.Milliseconds(),
+			Version: "v4",
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeGraph,
@@ -799,9 +804,10 @@ func TestV2QueryRangeTimeShift(t *testing.T) {
 func TestV2QueryRangeTimeShiftWithCache(t *testing.T) {
 	params := []*v3.QueryRangeParamsV3{
 		{
-			Start: 1675115596722 + 60*60*1000 - 86400*1000,  //30th Jan, 4:23
-			End:   1675115596722 + 120*60*1000 - 86400*1000, //30th Jan, 5:23
-			Step:  5 * time.Minute.Milliseconds(),
+			Start:   1675115596722 + 60*60*1000 - 86400*1000,  //30th Jan, 4:23
+			End:     1675115596722 + 120*60*1000 - 86400*1000, //30th Jan, 5:23
+			Step:    5 * time.Minute.Milliseconds(),
+			Version: "v4",
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeGraph,
@@ -826,9 +832,10 @@ func TestV2QueryRangeTimeShiftWithCache(t *testing.T) {
 			},
 		},
 		{
-			Start: 1675115596722,               //31st Jan, 3:23
-			End:   1675115596722 + 120*60*1000, //31st Jan, 5:23
-			Step:  5 * time.Minute.Milliseconds(),
+			Start:   1675115596722,               //31st Jan, 3:23
+			End:     1675115596722 + 120*60*1000, //31st Jan, 5:23
+			Step:    5 * time.Minute.Milliseconds(),
+			Version: "v4",
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeGraph,
@@ -897,9 +904,10 @@ func TestV2QueryRangeTimeShiftWithCache(t *testing.T) {
 func TestV2QueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 	params := []*v3.QueryRangeParamsV3{
 		{
-			Start: 1675115596722 + 60*60*1000 - 86400*1000,  //30th Jan, 4:23
-			End:   1675115596722 + 120*60*1000 - 86400*1000, //30th, 5:23
-			Step:  5 * time.Minute.Milliseconds(),
+			Start:   1675115596722 + 60*60*1000 - 86400*1000,  //30th Jan, 4:23
+			End:     1675115596722 + 120*60*1000 - 86400*1000, //30th, 5:23
+			Step:    5 * time.Minute.Milliseconds(),
+			Version: "v4",
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeGraph,
@@ -925,9 +933,10 @@ func TestV2QueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 			},
 		},
 		{
-			Start: 1675115596722,               //31st Jan, 3:23
-			End:   1675115596722 + 120*60*1000, //31st Jan, 5:23
-			Step:  5 * time.Minute.Milliseconds(),
+			Start:   1675115596722,               //31st Jan, 3:23
+			End:     1675115596722 + 120*60*1000, //31st Jan, 5:23
+			Step:    5 * time.Minute.Milliseconds(),
+			Version: "v4",
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeGraph,
@@ -997,9 +1006,10 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 	// There shouldn't be any caching for value panel type
 	params := []*v3.QueryRangeParamsV3{
 		{
-			Start: 1675115596722,
-			End:   1675115596722 + 120*60*1000,
-			Step:  5 * time.Minute.Milliseconds(),
+			Start:   1675115596722,
+			End:     1675115596722 + 120*60*1000,
+			Step:    5 * time.Minute.Milliseconds(),
+			Version: "v4",
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypePromQL,
 				PanelType: v3.PanelTypeValue,
@@ -1011,9 +1021,10 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 			},
 		},
 		{
-			Start: 1675115596722 + 60*60*1000,
-			End:   1675115596722 + 180*60*1000,
-			Step:  5 * time.Minute.Milliseconds(),
+			Start:   1675115596722 + 60*60*1000,
+			End:     1675115596722 + 180*60*1000,
+			Step:    5 * time.Minute.Milliseconds(),
+			Version: "v4",
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypePromQL,
 				PanelType: v3.PanelTypeValue,
