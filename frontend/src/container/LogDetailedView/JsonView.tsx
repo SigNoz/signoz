@@ -28,7 +28,7 @@ function JSONView({ logData }: JSONViewProps): JSX.Element {
 		},
 		fontWeight: 400,
 		// fontFamily: 'SF Mono',
-		fontFamily: 'Space Mono',
+		fontFamily: 'Geist Mono',
 		fontSize: 13,
 		lineHeight: '18px',
 		colorDecorators: true,

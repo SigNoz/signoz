@@ -29,18 +29,21 @@ import (
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 
 	"go.uber.org/zap"
 
+	mq "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -83,6 +86,7 @@ type APIHandler struct {
 	// querying the v4 table on low cardinal temporality column
 	// should be fast but we can still avoid the query if we have the data in memory
 	temporalityMap map[string]map[v3.Temporality]bool
+	temporalityMux sync.Mutex
 
 	maxIdleConns int
 	maxOpenConns int
@@ -298,6 +302,8 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/query_range/format", am.ViewAccess(aH.QueryRangeV3Format)).Methods(http.MethodPost)
 
+	subRouter.HandleFunc("/filter_suggestions", am.ViewAccess(aH.getQueryBuilderSuggestions)).Methods(http.MethodGet)
+
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
 }
@@ -397,6 +403,22 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
+	// === Preference APIs ===
+
+	// user actions
+	router.HandleFunc("/api/v1/user/preferences", am.ViewAccess(aH.getAllUserPreferences)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.getUserPreference)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.updateUserPreference)).Methods(http.MethodPut)
+
+	// org actions
+	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.getAllOrgPreferences)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.getOrgPreference)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.updateOrgPreference)).Methods(http.MethodPut)
+
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.getInvite)).Methods(http.MethodGet)
@@ -454,6 +476,9 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 
 // populateTemporality adds the temporality to the query if it is not present
 func (aH *APIHandler) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+
+	aH.temporalityMux.Lock()
+	defer aH.temporalityMux.Unlock()
 
 	missingTemporality := make([]string, 0)
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
@@ -1325,8 +1350,44 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
 
 	var start, end time.Time
+	var services []string
 
-	result, _, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end)
+	type topLevelOpsParams struct {
+		Service string `json:"service"`
+		Start   string `json:"start"`
+		End     string `json:"end"`
+	}
+
+	var params topLevelOpsParams
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		zap.L().Error("Error in getting req body for get top operations API", zap.Error(err))
+	}
+
+	if params.Service != "" {
+		services = []string{params.Service}
+	}
+
+	startEpoch := params.Start
+	if startEpoch != "" {
+		startEpochInt, err := strconv.ParseInt(startEpoch, 10, 64)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading start time")
+			return
+		}
+		start = time.Unix(0, startEpochInt)
+	}
+	endEpoch := params.End
+	if endEpoch != "" {
+		endEpochInt, err := strconv.ParseInt(endEpoch, 10, 64)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading end time")
+			return
+		}
+		end = time.Unix(0, endEpochInt)
+	}
+
+	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end, services)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -2188,33 +2249,245 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	w.Write(resp)
 }
 
-// Integrations
-func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
+// RegisterMessagingQueuesRoutes adds messaging-queues routes
+func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *AuthMiddleware) {
+	// SubRouter for kafka
+	kafkaSubRouter := router.PathPrefix("/api/v1/messaging-queues/kafka/consumer-lag").Subrouter()
+
+	kafkaSubRouter.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerData)).Methods(http.MethodPost)
+	kafkaSubRouter.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerData)).Methods(http.MethodPost)
+
+	// for other messaging queues, add SubRouters here
+}
+
+func (aH *APIHandler) getProducerData(
+	w http.ResponseWriter, r *http.Request,
+) {
+	// parse the query params to retrieve the messaging queue struct
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams, nil)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) getConsumerData(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "consumer")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams, nil)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// ParseMessagingQueueBody parse for messaging queue params
+func ParseMessagingQueueBody(r *http.Request) (*mq.MessagingQueue, *model.ApiError) {
+	messagingQueue := new(mq.MessagingQueue)
+	if err := json.NewDecoder(r.Body).Decode(messagingQueue); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	return messagingQueue, nil
+}
+
+// Preferences
+
+func (aH *APIHandler) getUserPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
+
+	preference, apiErr := preferences.GetUserPreference(
+		r.Context(), preferenceId, user.User.OrgId, user.User.Id,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (aH *APIHandler) updateUserPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
+	req := preferences.UpdatePreference{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.Id)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (aH *APIHandler) getAllUserPreferences(
+	w http.ResponseWriter, r *http.Request,
+) {
+	user := common.GetUserFromContext(r.Context())
+	preference, apiErr := preferences.GetAllUserPreferences(
+		r.Context(), user.User.OrgId, user.User.Id,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (aH *APIHandler) getOrgPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
+	preference, apiErr := preferences.GetOrgPreference(
+		r.Context(), preferenceId, user.User.OrgId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (aH *APIHandler) updateOrgPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	req := preferences.UpdatePreference{}
+	user := common.GetUserFromContext(r.Context())
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.OrgId)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (aH *APIHandler) getAllOrgPreferences(
+	w http.ResponseWriter, r *http.Request,
+) {
+	user := common.GetUserFromContext(r.Context())
+	preference, apiErr := preferences.GetAllOrgPreferences(
+		r.Context(), user.User.OrgId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+// RegisterIntegrationRoutes Registers all Integrations
+func (aH *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()
 
 	subRouter.HandleFunc(
-		"/install", am.ViewAccess(ah.InstallIntegration),
+		"/install", am.ViewAccess(aH.InstallIntegration),
 	).Methods(http.MethodPost)
 
 	subRouter.HandleFunc(
-		"/uninstall", am.ViewAccess(ah.UninstallIntegration),
+		"/uninstall", am.ViewAccess(aH.UninstallIntegration),
 	).Methods(http.MethodPost)
 
 	// Used for polling for status in v0
 	subRouter.HandleFunc(
-		"/{integrationId}/connection_status", am.ViewAccess(ah.GetIntegrationConnectionStatus),
+		"/{integrationId}/connection_status", am.ViewAccess(aH.GetIntegrationConnectionStatus),
 	).Methods(http.MethodGet)
 
 	subRouter.HandleFunc(
-		"/{integrationId}", am.ViewAccess(ah.GetIntegration),
+		"/{integrationId}", am.ViewAccess(aH.GetIntegration),
 	).Methods(http.MethodGet)
 
 	subRouter.HandleFunc(
-		"", am.ViewAccess(ah.ListIntegrations),
+		"", am.ViewAccess(aH.ListIntegrations),
 	).Methods(http.MethodGet)
 }
 
-func (ah *APIHandler) ListIntegrations(
+func (aH *APIHandler) ListIntegrations(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	params := map[string]string{}
@@ -2222,21 +2495,21 @@ func (ah *APIHandler) ListIntegrations(
 		params[k] = values[0]
 	}
 
-	resp, apiErr := ah.IntegrationsController.ListIntegrations(
+	resp, apiErr := aH.IntegrationsController.ListIntegrations(
 		r.Context(), params,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch integrations")
 		return
 	}
-	ah.Respond(w, resp)
+	aH.Respond(w, resp)
 }
 
-func (ah *APIHandler) GetIntegration(
+func (aH *APIHandler) GetIntegration(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
-	integration, apiErr := ah.IntegrationsController.GetIntegration(
+	integration, apiErr := aH.IntegrationsController.GetIntegration(
 		r.Context(), integrationId,
 	)
 	if apiErr != nil {
@@ -2244,14 +2517,14 @@ func (ah *APIHandler) GetIntegration(
 		return
 	}
 
-	ah.Respond(w, integration)
+	aH.Respond(w, integration)
 }
 
-func (ah *APIHandler) GetIntegrationConnectionStatus(
+func (aH *APIHandler) GetIntegrationConnectionStatus(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
-	isInstalled, apiErr := ah.IntegrationsController.IsIntegrationInstalled(
+	isInstalled, apiErr := aH.IntegrationsController.IsIntegrationInstalled(
 		r.Context(), integrationId,
 	)
 	if apiErr != nil {
@@ -2261,11 +2534,11 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 
 	// Do not spend resources calculating connection status unless installed.
 	if !isInstalled {
-		ah.Respond(w, &integrations.IntegrationConnectionStatus{})
+		aH.Respond(w, &integrations.IntegrationConnectionStatus{})
 		return
 	}
 
-	connectionTests, apiErr := ah.IntegrationsController.GetIntegrationConnectionTests(
+	connectionTests, apiErr := aH.IntegrationsController.GetIntegrationConnectionTests(
 		r.Context(), integrationId,
 	)
 	if apiErr != nil {
@@ -2279,7 +2552,7 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 		lookbackSeconds = 15 * 60
 	}
 
-	connectionStatus, apiErr := ah.calculateConnectionStatus(
+	connectionStatus, apiErr := aH.calculateConnectionStatus(
 		r.Context(), connectionTests, lookbackSeconds,
 	)
 	if apiErr != nil {
@@ -2287,10 +2560,10 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 		return
 	}
 
-	ah.Respond(w, connectionStatus)
+	aH.Respond(w, connectionStatus)
 }
 
-func (ah *APIHandler) calculateConnectionStatus(
+func (aH *APIHandler) calculateConnectionStatus(
 	ctx context.Context,
 	connectionTests *integrations.IntegrationConnectionTests,
 	lookbackSeconds int64,
@@ -2308,7 +2581,7 @@ func (ah *APIHandler) calculateConnectionStatus(
 	go func() {
 		defer wg.Done()
 
-		logsConnStatus, apiErr := ah.calculateLogsConnectionStatus(
+		logsConnStatus, apiErr := aH.calculateLogsConnectionStatus(
 			ctx, connectionTests.Logs, lookbackSeconds,
 		)
 
@@ -2331,7 +2604,7 @@ func (ah *APIHandler) calculateConnectionStatus(
 			return
 		}
 
-		statusForLastReceivedMetric, apiErr := ah.reader.GetLatestReceivedMetric(
+		statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
 			ctx, connectionTests.Metrics,
 		)
 
@@ -2375,7 +2648,7 @@ func (ah *APIHandler) calculateConnectionStatus(
 	return result, nil
 }
 
-func (ah *APIHandler) calculateLogsConnectionStatus(
+func (aH *APIHandler) calculateLogsConnectionStatus(
 	ctx context.Context,
 	logsConnectionTest *integrations.LogsConnectionTest,
 	lookbackSeconds int64,
@@ -2417,7 +2690,7 @@ func (ah *APIHandler) calculateLogsConnectionStatus(
 			},
 		},
 	}
-	queryRes, _, err := ah.querier.QueryRange(
+	queryRes, _, err := aH.querier.QueryRange(
 		ctx, qrParams, map[string]v3.AttributeKey{},
 	)
 	if err != nil {
@@ -2454,7 +2727,7 @@ func (ah *APIHandler) calculateLogsConnectionStatus(
 	return nil, nil
 }
 
-func (ah *APIHandler) InstallIntegration(
+func (aH *APIHandler) InstallIntegration(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	req := integrations.InstallIntegrationRequest{}
@@ -2465,7 +2738,7 @@ func (ah *APIHandler) InstallIntegration(
 		return
 	}
 
-	integration, apiErr := ah.IntegrationsController.Install(
+	integration, apiErr := aH.IntegrationsController.Install(
 		r.Context(), &req,
 	)
 	if apiErr != nil {
@@ -2473,10 +2746,10 @@ func (ah *APIHandler) InstallIntegration(
 		return
 	}
 
-	ah.Respond(w, integration)
+	aH.Respond(w, integration)
 }
 
-func (ah *APIHandler) UninstallIntegration(
+func (aH *APIHandler) UninstallIntegration(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	req := integrations.UninstallIntegrationRequest{}
@@ -2487,13 +2760,13 @@ func (ah *APIHandler) UninstallIntegration(
 		return
 	}
 
-	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
+	apiErr := aH.IntegrationsController.Uninstall(r.Context(), &req)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	ah.Respond(w, map[string]interface{}{})
+	aH.Respond(w, map[string]interface{}{})
 }
 
 // logs
@@ -2640,7 +2913,7 @@ func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	return int(version64), nil
 }
 
-func (ah *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
 	req := logparsingpipeline.PipelinesPreviewRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -2648,7 +2921,7 @@ func (ah *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	resultLogs, apiErr := ah.LogsParsingPipelineController.PreviewLogsPipelines(
+	resultLogs, apiErr := aH.LogsParsingPipelineController.PreviewLogsPipelines(
 		r.Context(), &req,
 	)
 
@@ -2657,10 +2930,10 @@ func (ah *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	ah.Respond(w, resultLogs)
+	aH.Respond(w, resultLogs)
 }
 
-func (ah *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
@@ -2672,20 +2945,20 @@ func (ah *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 	var apierr *model.ApiError
 
 	if version != -1 {
-		payload, apierr = ah.listLogsPipelinesByVersion(context.Background(), version)
+		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), version)
 	} else {
-		payload, apierr = ah.listLogsPipelines(context.Background())
+		payload, apierr = aH.listLogsPipelines(context.Background())
 	}
 
 	if apierr != nil {
 		RespondError(w, apierr, payload)
 		return
 	}
-	ah.Respond(w, payload)
+	aH.Respond(w, payload)
 }
 
 // listLogsPipelines lists logs piplines for latest version
-func (ah *APIHandler) listLogsPipelines(ctx context.Context) (
+func (aH *APIHandler) listLogsPipelines(ctx context.Context) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	// get lateset agent config
@@ -2699,7 +2972,7 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (
 		latestVersion = lastestConfig.Version
 	}
 
-	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, latestVersion)
+	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, latestVersion)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get pipelines")
 	}
@@ -2715,10 +2988,10 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (
 }
 
 // listLogsPipelinesByVersion lists pipelines along with config version history
-func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (
+func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
-	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
+	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get pipelines by version")
 	}
@@ -2734,7 +3007,7 @@ func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version in
 	return payload, nil
 }
 
-func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request) {
 
 	req := logparsingpipeline.PostablePipelines{}
 
@@ -2757,7 +3030,7 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 			}
 		}
 
-		return ah.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
+		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
 	}
 
 	res, err := createPipeline(r.Context(), req.Pipelines)
@@ -2766,7 +3039,7 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ah.Respond(w, res)
+	aH.Respond(w, res)
 }
 
 func (aH *APIHandler) getSavedViews(w http.ResponseWriter, r *http.Request) {
@@ -2873,6 +3146,30 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
+func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.Request) {
+	req, err := parseQBFilterSuggestionsRequest(r)
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	if req.DataSource != v3.DataSourceLogs {
+		// Support for traces and metrics might come later
+		RespondError(w, model.BadRequest(
+			fmt.Errorf("suggestions not supported for %s", req.DataSource),
+		), nil)
+		return
+	}
+
+	response, err := aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
+	if err != nil {
+		RespondError(w, err, nil)
 		return
 	}
 
@@ -3043,6 +3340,22 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
+		}
+	}
+
+	// WARN: Only works for AND operator in traces query
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
+		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
+		if isUsed == true && len(traceIDs) > 0 {
+			zap.L().Debug("traceID used as filter in traces query")
+			// query signoz_spans table with traceID to get min and max timestamp
+			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
+			if err == nil {
+				// add timestamp filter to queryRange params
+				tracesV3.AddTimestampFilters(min, max, queryRangeParams)
+				zap.L().Debug("post adding timestamp filter in traces query", zap.Any("queryRangeParams", queryRangeParams))
+			}
 		}
 	}
 
@@ -3312,6 +3625,22 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
+		}
+	}
+
+	// WARN: Only works for AND operator in traces query
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
+		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
+		if isUsed == true && len(traceIDs) > 0 {
+			zap.L().Debug("traceID used as filter in traces query")
+			// query signoz_spans table with traceID to get min and max timestamp
+			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
+			if err == nil {
+				// add timestamp filter to queryRange params
+				tracesV3.AddTimestampFilters(min, max, queryRangeParams)
+				zap.L().Debug("post adding timestamp filter in traces query", zap.Any("queryRangeParams", queryRangeParams))
+			}
 		}
 	}
 

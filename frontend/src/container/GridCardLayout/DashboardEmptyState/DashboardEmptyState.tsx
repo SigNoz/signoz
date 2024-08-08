@@ -3,6 +3,7 @@ import './DashboardEmptyState.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import SettingsDrawer from 'container/NewDashboard/DashboardDescription/SettingsDrawer';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -36,6 +37,12 @@ export default function DashboardEmptyState(): JSX.Element {
 
 	const onEmptyWidgetHandler = useCallback(() => {
 		handleToggleDashboardSlider(true);
+		logEvent('Dashboard Detail: Add new panel clicked', {
+			dashboardId: selectedDashboard?.uuid,
+			dashboardName: selectedDashboard?.data.title,
+			numberOfPanels: selectedDashboard?.data.widgets?.length,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [handleToggleDashboardSlider]);
 	return (
 		<section className="dashboard-empty-state">

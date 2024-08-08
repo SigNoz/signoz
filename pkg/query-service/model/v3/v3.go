@@ -252,6 +252,18 @@ type FilterAttributeKeyRequest struct {
 	Limit              int               `json:"limit"`
 }
 
+type QBFilterSuggestionsRequest struct {
+	DataSource     DataSource `json:"dataSource"`
+	SearchText     string     `json:"searchText"`
+	Limit          int        `json:"limit"`
+	ExistingFilter *FilterSet `json:"existing_filter"`
+}
+
+type QBFilterSuggestionsResponse struct {
+	AttributeKeys  []AttributeKey `json:"attributes"`
+	ExampleQueries []FilterSet    `json:"example_queries"`
+}
+
 type AttributeKeyDataType string
 
 const (
@@ -907,7 +919,8 @@ const (
 	FilterOperatorNotContains     FilterOperator = "ncontains"
 	FilterOperatorRegex           FilterOperator = "regex"
 	FilterOperatorNotRegex        FilterOperator = "nregex"
-	// (I)LIKE is faster than REGEX and supports index
+	// (I)LIKE is faster than REGEX
+	// ilike doesn't support index so internally we use lower(body) like for query
 	FilterOperatorLike    FilterOperator = "like"
 	FilterOperatorNotLike FilterOperator = "nlike"
 

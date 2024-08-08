@@ -1,8 +1,10 @@
+import logEvent from 'api/common/logEvent';
 import { getQueryRangeFormat } from 'api/dashboard/queryRangeFormat';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload';
@@ -17,7 +19,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 
-const useCreateAlerts = (widget?: Widgets): VoidFunction => {
+const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 	const queryRangeMutation = useMutation(getQueryRangeFormat);
 
 	const { selectedTime: globalSelectedInterval } = useSelector<
@@ -32,6 +34,24 @@ const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 	return useCallback(() => {
 		if (!widget) return;
 
+		if (caller === 'panelView') {
+			logEvent('Panel Edit: Create alert', {
+				panelType: widget.panelTypes,
+				dashboardName: selectedDashboard?.data?.title,
+				dashboardId: selectedDashboard?.uuid,
+				widgetId: widget.id,
+				queryType: widget.query.queryType,
+			});
+		} else if (caller === 'dashboardView') {
+			logEvent('Dashboard Detail: Panel action', {
+				action: MenuItemKeys.CreateAlerts,
+				panelType: widget.panelTypes,
+				dashboardName: selectedDashboard?.data?.title,
+				dashboardId: selectedDashboard?.uuid,
+				widgetId: widget.id,
+				queryType: widget.query.queryType,
+			});
+		}
 		const { queryPayload } = prepareQueryRangePayload({
 			query: widget.query,
 			globalSelectedInterval,
@@ -41,7 +61,10 @@ const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 		});
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
-				const updatedQuery = mapQueryDataFromApi(data.compositeQuery);
+				const updatedQuery = mapQueryDataFromApi(
+					data.compositeQuery,
+					widget?.query,
+				);
 
 				history.push(
 					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
@@ -57,6 +80,7 @@ const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 				});
 			},
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		globalSelectedInterval,
 		notifications,

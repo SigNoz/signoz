@@ -18,7 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func prepareLogsQuery(ctx context.Context,
+func prepareLogsQuery(_ context.Context,
 	start,
 	end int64,
 	builderQuery *v3.BuilderQuery,
@@ -306,7 +306,7 @@ func (q *querier) runBuilderQuery(
 	}
 
 	// response doesn't need everything
-	filterCachedPoints(mergedSeries, params.Start, params.End)
+	filterCachedPoints(mergedSeries, start, end)
 
 	ch <- channelResult{
 		Err:    nil,
