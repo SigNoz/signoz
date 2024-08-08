@@ -21,6 +21,7 @@ export interface BaseAutocompleteData {
 	key: string;
 	type: AutocompleteType | string | null;
 	isJSON?: boolean;
+	isIndexed?: boolean;
 }
 
 export interface IQueryAutocompleteResponse {
