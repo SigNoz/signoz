@@ -302,6 +302,8 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/query_range/format", am.ViewAccess(aH.QueryRangeV3Format)).Methods(http.MethodPost)
 
+	subRouter.HandleFunc("/filter_suggestions", am.ViewAccess(aH.getQueryBuilderSuggestions)).Methods(http.MethodGet)
+
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
 }
@@ -3144,6 +3146,30 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
+func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.Request) {
+	req, err := parseQBFilterSuggestionsRequest(r)
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	if req.DataSource != v3.DataSourceLogs {
+		// Support for traces and metrics might come later
+		RespondError(w, model.BadRequest(
+			fmt.Errorf("suggestions not supported for %s", req.DataSource),
+		), nil)
+		return
+	}
+
+	response, err := aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
+	if err != nil {
+		RespondError(w, err, nil)
 		return
 	}
 

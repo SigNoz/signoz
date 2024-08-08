@@ -13,6 +13,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -4355,6 +4356,128 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 	return &attributeValues, nil
 
+}
+
+func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
+	ctx context.Context,
+	req *v3.QBFilterSuggestionsRequest,
+) (*v3.QBFilterSuggestionsResponse, *model.ApiError) {
+	suggestions := v3.QBFilterSuggestionsResponse{
+		AttributeKeys:  []v3.AttributeKey{},
+		ExampleQueries: []v3.FilterSet{},
+	}
+
+	// Use existing autocomplete logic for generating attribute suggestions
+	attribKeysResp, err := r.GetLogAttributeKeys(
+		ctx, &v3.FilterAttributeKeyRequest{
+			SearchText: req.SearchText,
+			DataSource: v3.DataSourceLogs,
+			Limit:      req.Limit,
+		})
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("couldn't get attribute keys: %w", err))
+	}
+
+	suggestions.AttributeKeys = attribKeysResp.AttributeKeys
+
+	// Rank suggested attributes
+	slices.SortFunc(suggestions.AttributeKeys, func(a v3.AttributeKey, b v3.AttributeKey) int {
+
+		// Higher score => higher rank
+		attribKeyScore := func(a v3.AttributeKey) int {
+
+			// Scoring criteria is expected to get more sophisticated in follow up changes
+			if a.Type == v3.AttributeKeyTypeResource {
+				return 2
+			}
+
+			if a.Type == v3.AttributeKeyTypeTag {
+				return 1
+			}
+
+			return 0
+		}
+
+		// To sort in descending order of score the return value must be negative when a > b
+		return attribKeyScore(b) - attribKeyScore(a)
+	})
+
+	// Put together suggested example queries.
+
+	newExampleQuery := func() v3.FilterSet {
+		// Include existing filter in example query if specified.
+		if req.ExistingFilter != nil {
+			return *req.ExistingFilter
+		}
+
+		return v3.FilterSet{
+			Operator: "AND",
+			Items:    []v3.FilterItem{},
+		}
+	}
+
+	// Suggest example query for top suggested attribute using existing
+	// autocomplete logic for recommending attrib values
+	//
+	// Example queries for multiple top attributes using a batch version of
+	// GetLogAttributeValues is expected to come in a follow up change
+	if len(suggestions.AttributeKeys) > 0 {
+		topAttrib := suggestions.AttributeKeys[0]
+
+		resp, err := r.GetLogAttributeValues(ctx, &v3.FilterAttributeValueRequest{
+			DataSource:                 v3.DataSourceLogs,
+			FilterAttributeKey:         topAttrib.Key,
+			FilterAttributeKeyDataType: topAttrib.DataType,
+			TagType:                    v3.TagType(topAttrib.Type),
+			Limit:                      1,
+		})
+
+		if err != nil {
+			// Do not fail the entire request if only example query generation fails
+			zap.L().Error("could not find attribute values for creating example query", zap.Error(err))
+
+		} else {
+			addExampleQuerySuggestion := func(value any) {
+				exampleQuery := newExampleQuery()
+
+				exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
+					Key:      topAttrib,
+					Operator: "=",
+					Value:    value,
+				})
+
+				suggestions.ExampleQueries = append(
+					suggestions.ExampleQueries, exampleQuery,
+				)
+			}
+
+			if len(resp.StringAttributeValues) > 0 {
+				addExampleQuerySuggestion(resp.StringAttributeValues[0])
+			} else if len(resp.NumberAttributeValues) > 0 {
+				addExampleQuerySuggestion(resp.NumberAttributeValues[0])
+			} else if len(resp.BoolAttributeValues) > 0 {
+				addExampleQuerySuggestion(resp.BoolAttributeValues[0])
+			}
+		}
+	}
+
+	// Suggest static example queries for standard log attributes if needed.
+	if len(suggestions.ExampleQueries) < req.Limit {
+		exampleQuery := newExampleQuery()
+		exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeUnspecified,
+				IsColumn: true,
+			},
+			Operator: "contains",
+			Value:    "error",
+		})
+		suggestions.ExampleQueries = append(suggestions.ExampleQueries, exampleQuery)
+	}
+
+	return &suggestions, nil
 }
 
 func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([]string, map[string]string, []map[string]string, *v3.Point) {
