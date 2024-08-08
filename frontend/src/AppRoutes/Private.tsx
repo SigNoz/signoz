@@ -79,6 +79,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		});
 		if (!isLoggedIn) {
 			setLocalStorageKey(LOCALSTORAGE.REDIRECT_URL, pathname);
+			console.log(pathname);
 			history.push(ROUTES.LOGIN, { from: pathname });
 		}
 	};
@@ -185,12 +186,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 						// no need to fetch the user and make user fetching false
 
 						if (getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true') {
-							console.log('coming here');
-							if (getLocalStorageApi(LOCALSTORAGE.REDIRECT_URL)) {
-								history.push(`/${LOCALSTORAGE.REDIRECT_URL}`);
-							} else {
-								history.push(ROUTES.APPLICATION);
-							}
+							history.push(ROUTES.APPLICATION);
 						}
 						dispatch({
 							type: UPDATE_USER_IS_FETCH,
@@ -202,7 +198,14 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				} else if (pathname === ROUTES.HOME_PAGE) {
 					// routing to application page over root page
 					if (isLoggedInState) {
-						history.push(ROUTES.APPLICATION);
+						console.log('coming here');
+						const redirectUrl = getLocalStorageApi(LOCALSTORAGE.REDIRECT_URL);
+						if (redirectUrl) {
+							console.log('coming here redirect');
+							history.push(redirectUrl);
+						} else {
+							history.push(ROUTES.APPLICATION);
+						}
 					} else {
 						navigateToLoginIfNotLoggedIn();
 					}
