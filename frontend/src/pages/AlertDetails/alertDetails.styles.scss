@@ -5,11 +5,14 @@
 }
 
 .tabs-and-filters {
-	margin-top: 1rem;
-	margin-bottom: 1rem;
-	.ant-tabs-nav::before {
-		border-bottom: none !important;
+	margin: 1rem 0;
+
+	& .ant-tabs-nav {
+		&::before {
+			border-bottom: none !important;
+		}
 	}
+
 	.tab-item {
 		display: flex;
 		justify-content: center;
@@ -24,18 +27,23 @@
 		}
 	}
 	// customize ant tabs
-	.ant-tabs-nav-list {
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-400);
-		border-radius: 2px;
-		.ant-tabs-tab {
+	.ant-tabs {
+		&-nav-list {
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-400);
+			border-radius: 2px;
+		}
+
+		&-tab {
 			padding: 0;
-		}
-		.ant-tabs-tab-btn {
-			padding: 6px 17px;
-		}
-		.ant-tabs-tab-active {
-			background: var(--bg-slate-400, #1d212d);
+
+			&-btn {
+				padding: 6px 17px;
+			}
+
+			&-active {
+				background: var(--bg-slate-400, #1d212d);
+			}
 		}
 	}
 }
