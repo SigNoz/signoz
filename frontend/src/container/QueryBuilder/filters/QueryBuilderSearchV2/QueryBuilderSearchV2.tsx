@@ -18,6 +18,7 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import { getTagToken } from '../QueryBuilderSearch/utils';
 import Suggestions from './Suggestions';
 
 export interface Tag {
@@ -95,7 +96,7 @@ function QueryBuilderSearchV2(
 			currentFilterItem?.key.key || '',
 			currentFilterItem?.key.dataType,
 			currentFilterItem?.key?.type ?? '',
-			searchValue,
+			currentFilterItem?.value,
 		],
 		[
 			query.aggregateOperator,
@@ -104,7 +105,7 @@ function QueryBuilderSearchV2(
 			currentFilterItem?.key.key,
 			currentFilterItem?.key.dataType,
 			currentFilterItem?.key?.type,
-			searchValue,
+			currentFilterItem?.value,
 		],
 	);
 
@@ -155,7 +156,7 @@ function QueryBuilderSearchV2(
 			filterAttributeKeyDataType:
 				currentFilterItem?.key.dataType ?? DataTypes.EMPTY,
 			tagType: currentFilterItem?.key?.type ?? '',
-			searchText: searchValue,
+			searchText: currentFilterItem?.value || '',
 		},
 		{
 			enabled: currentState === DropdownState.ATTRIBUTE_VALUE,
@@ -199,6 +200,8 @@ function QueryBuilderSearchV2(
 						value,
 					} as Tag,
 				]);
+
+				setCurrentState(DropdownState.ATTRIBUTE_KEY);
 			}
 			// update the current running filter item based on the current state of the dropdown and update that as well to next
 		},
@@ -206,9 +209,70 @@ function QueryBuilderSearchV2(
 	);
 
 	// the aim of this use effect is to do the tokenisation once the search value has been updated
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+
+	// TODO pending changes for space back
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
-		// all the tokenisation logic goes here based on the keys fetched above
-	}, [searchValue]);
+		if (currentState === DropdownState.ATTRIBUTE_KEY) {
+			let currentRunningAttributeKey;
+			const isSuggestedKeyInAutocomplete = data?.payload?.attributeKeys?.some(
+				(value) => value.key === searchValue,
+			);
+
+			if (isSuggestedKeyInAutocomplete) {
+				const allAttributesMatchingTheKey =
+					data?.payload?.attributeKeys?.filter(
+						(value) => value.key === searchValue,
+					) || [];
+
+				if (allAttributesMatchingTheKey?.length === 1) {
+					[currentRunningAttributeKey] = allAttributesMatchingTheKey;
+				}
+				if (allAttributesMatchingTheKey?.length > 1) {
+					[currentRunningAttributeKey] = allAttributesMatchingTheKey;
+				}
+
+				if (currentRunningAttributeKey) {
+					setCurrentFilterItem({
+						key: currentRunningAttributeKey,
+						operator: '',
+						value: '',
+					});
+
+					setCurrentState(DropdownState.OPERATOR);
+				}
+			}
+			if (data?.payload?.attributeKeys?.length === 0) {
+				setCurrentFilterItem({
+					key: {
+						key: searchValue,
+						// update this for has and nhas operator
+						dataType: DataTypes.EMPTY,
+						type: '',
+						isColumn: false,
+						isJSON: false,
+					},
+					operator: '',
+					value: '',
+				});
+				setCurrentState(DropdownState.OPERATOR);
+			}
+		}
+		if (currentState === DropdownState.OPERATOR) {
+			const { tagOperator } = getTagToken(searchValue);
+
+			if (tagOperator) {
+				setCurrentFilterItem((prev) => ({
+					key: prev?.key as BaseAutocompleteData,
+					operator: tagOperator,
+					value: '',
+				}));
+
+				setCurrentState(DropdownState.ATTRIBUTE_VALUE);
+			}
+		}
+	}, [currentState, data?.payload?.attributeKeys, searchValue]);
 
 	useEffect(() => {
 		// all the logic for setting the options based on tokenisation goes here
@@ -221,23 +285,41 @@ function QueryBuilderSearchV2(
 			);
 		}
 		if (currentState === DropdownState.OPERATOR) {
+			// the filtering of operators based on current typed value also occurs here
+
+			const keyOperator = searchValue.split(' ');
+			const partialOperator = keyOperator?.[1];
+
+			let operatorOptions;
 			if (currentFilterItem?.key.dataType) {
-				setDropdownOptions(
-					QUERY_BUILDER_OPERATORS_BY_TYPES[
-						currentFilterItem.key
-							.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
-					].map((operator) => ({
-						label: operator,
-						value: operator,
-					})),
-				);
+				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES[
+					currentFilterItem.key
+						.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
+				].map((operator) => ({
+					label: operator,
+					value: operator,
+				}));
+
+				if (partialOperator) {
+					operatorOptions = operatorOptions.filter((op) =>
+						op.label.startsWith(partialOperator.toLocaleUpperCase()),
+					);
+				}
+				setDropdownOptions(operatorOptions);
 			} else {
-				setDropdownOptions(
-					QUERY_BUILDER_OPERATORS_BY_TYPES.universal.map((operator) => ({
+				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES.universal.map(
+					(operator) => ({
 						label: operator,
 						value: operator,
-					})),
+					}),
 				);
+
+				if (partialOperator) {
+					operatorOptions = operatorOptions.filter((op) =>
+						op.label.startsWith(partialOperator.toLocaleUpperCase()),
+					);
+				}
+				setDropdownOptions(operatorOptions);
 			}
 		}
 
@@ -257,6 +339,7 @@ function QueryBuilderSearchV2(
 		currentFilterItem?.key.dataType,
 		currentState,
 		data?.payload?.attributeKeys,
+		searchValue,
 	]);
 
 	console.log(dropdownOptions);
