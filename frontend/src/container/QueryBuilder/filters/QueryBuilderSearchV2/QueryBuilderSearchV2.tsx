@@ -1,12 +1,13 @@
 import './QueryBuilderSearchV2.styles.scss';
 
-import { Input, Popover, Typography } from 'antd';
+import { Select, Spin, Tag, Tooltip } from 'antd';
 import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
 import useDebounceValue from 'hooks/useDebounce';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { BaseSelectRef } from 'rc-select';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -18,18 +19,31 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { getTagToken } from '../QueryBuilderSearch/utils';
-import Suggestions from './Suggestions';
+import { selectStyle } from '../QueryBuilderSearch/config';
+import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
+import { TypographyText } from '../QueryBuilderSearch/style';
+import { getTagToken, isInNInOperator } from '../QueryBuilderSearch/utils';
 
-export interface Tag {
+export interface ITag {
 	key: BaseAutocompleteData;
 	operator: string;
 	value: string;
 }
 
+interface CustomTagProps {
+	label: React.ReactNode;
+	value: string;
+	disabled: boolean;
+	onClose: () => void;
+	closable: boolean;
+}
+
 interface QueryBuilderSearchV2Props {
 	query: IBuilderQuery;
 	onChange: (value: TagFilter) => void;
+	placeholder?: string;
+	className?: string;
+	suffixIcon?: React.ReactNode;
 }
 
 export interface Option {
@@ -43,7 +57,7 @@ export enum DropdownState {
 	ATTRIBUTE_VALUE = 'ATTRIBUTE_VALUE',
 }
 
-function getInitTags(query: IBuilderQuery): Tag[] {
+function getInitTags(query: IBuilderQuery): ITag[] {
 	return query.filters.items.map((item) => ({
 		// TODO check why this is optional
 		key: item.key as BaseAutocompleteData,
@@ -55,13 +69,17 @@ function getInitTags(query: IBuilderQuery): Tag[] {
 function QueryBuilderSearchV2(
 	props: QueryBuilderSearchV2Props,
 ): React.ReactElement {
-	const { query, onChange } = props;
+	const { query, onChange, placeholder, className, suffixIcon } = props;
+
+	const selectRef = useRef<BaseSelectRef>(null);
+
+	const [isOpen, setIsOpen] = useState<boolean>(false);
 
 	// create the tags from the initial query here, this should only be computed on the first load as post that tags and query will be always in sync.
-	const [tags, setTags] = useState<Tag[]>(() => getInitTags(query));
+	const [tags, setTags] = useState<ITag[]>(() => getInitTags(query));
 
 	// this will maintain the current state of in process filter item
-	const [currentFilterItem, setCurrentFilterItem] = useState<Tag | undefined>();
+	const [currentFilterItem, setCurrentFilterItem] = useState<ITag | undefined>();
 
 	const [currentState, setCurrentState] = useState<DropdownState>(
 		DropdownState.ATTRIBUTE_KEY,
@@ -96,6 +114,7 @@ function QueryBuilderSearchV2(
 			currentFilterItem?.key.key || '',
 			currentFilterItem?.key.dataType,
 			currentFilterItem?.key?.type ?? '',
+			// correct this
 			currentFilterItem?.value,
 		],
 		[
@@ -131,7 +150,6 @@ function QueryBuilderSearchV2(
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
-			// TODO : this should be dependent on what is the current running state for the filter
 			searchText: searchValue,
 			dataSource: query.dataSource,
 			aggregateOperator: query.aggregateOperator,
@@ -198,20 +216,29 @@ function QueryBuilderSearchV2(
 						key: currentFilterItem?.key,
 						operator: currentFilterItem?.operator,
 						value,
-					} as Tag,
+					} as ITag,
 				]);
 
 				setCurrentState(DropdownState.ATTRIBUTE_KEY);
 			}
-			// update the current running filter item based on the current state of the dropdown and update that as well to next
 		},
 		[currentFilterItem, currentState],
 	);
 
-	// the aim of this use effect is to do the tokenisation once the search value has been updated
-	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const handleSearch = useCallback((value: string) => {
+		setSearchValue(value);
+	}, []);
 
-	// TODO pending changes for space back
+	const onChangeHandler = useCallback((value: string[]): void => {
+		console.log(value);
+	}, []);
+
+	const onInputKeyDownHandler = useCallback((): void => {}, []);
+
+	const handleDeselect = useCallback((): void => {}, []);
+
+	const handleOnBlur = useCallback((): void => {}, []);
+
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
@@ -275,7 +302,6 @@ function QueryBuilderSearchV2(
 	}, [currentState, data?.payload?.attributeKeys, searchValue]);
 
 	useEffect(() => {
-		// all the logic for setting the options based on tokenisation goes here
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
 			setDropdownOptions(
 				data?.payload?.attributeKeys?.map((key) => ({
@@ -285,8 +311,6 @@ function QueryBuilderSearchV2(
 			);
 		}
 		if (currentState === DropdownState.OPERATOR) {
-			// the filtering of operators based on current typed value also occurs here
-
 			const keyOperator = searchValue.split(' ');
 			const partialOperator = keyOperator?.[1];
 
@@ -342,57 +366,117 @@ function QueryBuilderSearchV2(
 		searchValue,
 	]);
 
-	console.log(dropdownOptions);
-
-	useEffect(() => {
-		// handle the on change for query here
-	}, [tags]);
+	// useEffect(() => {
+	// 	// TODO update this
+	// 	onChange((tags as unknown) as TagFilter);
+	// }, [onChange, tags]);
 
 	const loading = useMemo(() => isFetching || isFetchingAttributeValues, [
 		isFetching,
 		isFetchingAttributeValues,
 	]);
 
+	const isMetricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
+	// TODO do the processing here if required for has / nhas / in / nin
+	const queryTags = useMemo(
+		() => tags.map((tag) => `${tag.key.key} ${tag.operator} ${tag.value}`),
+		[tags],
+	);
+
+	const onTagRender = ({
+		value,
+		closable,
+		onClose,
+	}: CustomTagProps): React.ReactElement => {
+		const { tagOperator } = getTagToken(value);
+		const isInNin = isInNInOperator(tagOperator);
+		const chipValue = isInNin
+			? value?.trim()?.replace(/,\s*$/, '')
+			: value?.trim();
+
+		const onCloseHandler = (): void => {
+			onClose();
+			// TODO's to check what needs to be done here
+			// setSearchValue('');
+		};
+
+		const tagEditHandler = (value: string): void => {
+			console.log(value);
+			// TODO's to check what needs to be done here
+			// updateTag(value);
+			// handleSearch(value);
+		};
+
+		const isDisabled = !!searchValue;
+
+		return (
+			<Tag closable={!searchValue && closable} onClose={onCloseHandler}>
+				<Tooltip title={chipValue}>
+					<TypographyText
+						ellipsis
+						$isInNin={isInNin}
+						disabled={isDisabled}
+						$isEnabled={!!searchValue}
+						onClick={(): void => {
+							if (!isDisabled) tagEditHandler(value);
+						}}
+					>
+						{chipValue}
+					</TypographyText>
+				</Tooltip>
+			</Tag>
+		);
+	};
+
 	return (
 		<div className="query-builder-search-v2">
-			<section className="tags">
-				{tags?.map((tag) => (
-					<div className="tag" key={tag.key.id}>
-						<Typography.Text>{`${tag.key.key} ${tag.operator} ${tag.value}`}</Typography.Text>
-					</div>
+			<Select
+				ref={selectRef}
+				getPopupContainer={popupContainer}
+				virtual
+				showSearch
+				tagRender={onTagRender}
+				filterOption={false}
+				open={isOpen}
+				onDropdownVisibleChange={setIsOpen}
+				autoClearSearchValue={false}
+				mode="multiple"
+				placeholder={placeholder}
+				value={queryTags}
+				searchValue={searchValue}
+				className={className}
+				rootClassName="query-builder-search"
+				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				style={selectStyle}
+				onSearch={handleSearch}
+				onChange={onChangeHandler}
+				onSelect={handleDropdownSelect}
+				onDeselect={handleDeselect}
+				onInputKeyDown={onInputKeyDownHandler}
+				notFoundContent={loading ? <Spin size="small" /> : null}
+				suffixIcon={suffixIcon}
+				showAction={['focus']}
+				onBlur={handleOnBlur}
+			>
+				{dropdownOptions.map((option) => (
+					// check why the select component is not being rendered with the value being objects
+					<Select.Option key={option.label} value={option.label}>
+						<div>{option.label}</div>
+					</Select.Option>
 				))}
-			</section>
-			<section className="search-bar">
-				<Popover
-					trigger="click"
-					arrow={false}
-					getPopupContainer={popupContainer}
-					placement="bottom"
-					content={
-						loading ? (
-							<Typography.Text>Loading please wait!!</Typography.Text>
-						) : (
-							<Suggestions
-								searchValue={searchValue}
-								currentFilterItem={currentFilterItem}
-								currentState={currentState}
-								options={dropdownOptions}
-								onChange={handleDropdownSelect}
-							/>
-						)
-					}
-				>
-					<Input
-						placeholder='Search Filter : select options from suggested values, for IN/NOT IN operators - press "Enter" after selecting options'
-						value={searchValue}
-						onChange={(event): void => {
-							setSearchValue(event.target.value);
-						}}
-					/>
-				</Popover>
-			</section>
+			</Select>
 		</div>
 	);
 }
+
+QueryBuilderSearchV2.defaultProps = {
+	placeholder: PLACEHOLDER,
+	className: '',
+	suffixIcon: null,
+};
 
 export default QueryBuilderSearchV2;
