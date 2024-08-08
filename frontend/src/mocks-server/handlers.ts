@@ -155,6 +155,24 @@ export const handlers = [
 	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(inviteUser)),
 	),
+	rest.put('http://localhost/api/v1/user/:id', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				data: 'user updated successfully',
+			}),
+		),
+	),
+	rest.post('http://localhost/api/v1/changePassword', (_, res, ctx) =>
+		res(
+			ctx.status(403),
+			ctx.json({
+				status: 'error',
+				errorType: 'forbidden',
+				error: 'invalid credentials',
+			}),
+		),
+	),
 
 	rest.get(
 		'http://localhost/api/v3/autocomplete/aggregate_attributes',
