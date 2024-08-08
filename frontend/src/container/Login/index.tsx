@@ -85,14 +85,15 @@ function Login({
 				setIsLoading(true);
 				await afterLogin(userId, jwt, refreshjwt);
 				setIsLoading(false);
+				console.log(history);
 				if (history?.location?.state) {
 					const historyState = history?.location?.state as any;
 
 					if (historyState?.from) {
 						history.push(historyState?.from);
-					} else {
-						history.push(ROUTES.APPLICATION);
 					}
+				} else {
+					history.push(ROUTES.APPLICATION);
 				}
 			}
 		}
