@@ -1,8 +1,10 @@
 import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
+import getLocalStorageApi from 'api/browser/localstorage/get';
 import getUserVersion from 'api/user/getVersion';
 import loginApi from 'api/user/login';
 import loginPrecheckApi from 'api/user/loginPrecheck';
 import afterLogin from 'AppRoutes/utils';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -86,12 +88,10 @@ function Login({
 				await afterLogin(userId, jwt, refreshjwt);
 				setIsLoading(false);
 				console.log(history);
-				if (history?.location?.state) {
-					const historyState = history?.location?.state as any;
-
-					if (historyState?.from) {
-						history.push(historyState?.from);
-					}
+				const redirectUrl = getLocalStorageApi(LOCALSTORAGE.REDIRECT_URL);
+				if (redirectUrl) {
+					console.log('coming here redirect');
+					history.push(redirectUrl);
 				} else {
 					history.push(ROUTES.APPLICATION);
 				}
