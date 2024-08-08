@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import loginApi from 'api/user/login';
 import { Logout } from 'api/utils';
 import Spinner from 'components/Spinner';
@@ -77,6 +78,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			},
 		});
 		if (!isLoggedIn) {
+			setLocalStorageKey(LOCALSTORAGE.REDIRECT_URL, pathname);
 			history.push(ROUTES.LOGIN, { from: pathname });
 		}
 	};
@@ -183,7 +185,12 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 						// no need to fetch the user and make user fetching false
 
 						if (getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true') {
-							history.push(ROUTES.APPLICATION);
+							console.log('coming here');
+							if (getLocalStorageApi(LOCALSTORAGE.REDIRECT_URL)) {
+								history.push(`/${LOCALSTORAGE.REDIRECT_URL}`);
+							} else {
+								history.push(ROUTES.APPLICATION);
+							}
 						}
 						dispatch({
 							type: UPDATE_USER_IS_FETCH,
