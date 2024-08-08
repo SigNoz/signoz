@@ -1,0 +1,49 @@
+@mixin flex-center {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.tabs-and-filters {
+	margin: 1rem 0;
+
+	& .ant-tabs-nav {
+		&::before {
+			border-bottom: none !important;
+		}
+	}
+
+	.tab-item {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 8px;
+	}
+	.filters {
+		@include flex-center;
+		gap: 16px;
+		.reset-button {
+			@include flex-center;
+		}
+	}
+	// customize ant tabs
+	.ant-tabs {
+		&-nav-list {
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-400);
+			border-radius: 2px;
+		}
+
+		&-tab {
+			padding: 0;
+
+			&-btn {
+				padding: 6px 17px;
+			}
+
+			&-active {
+				background: var(--bg-slate-400, #1d212d);
+			}
+		}
+	}
+}
