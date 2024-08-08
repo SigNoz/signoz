@@ -228,6 +228,7 @@ function Login({
 						<Input
 							type="email"
 							id="loginEmail"
+							data-testid="email"
 							required
 							placeholder={t('placeholder_email')}
 							autoFocus
@@ -239,7 +240,12 @@ function Login({
 					<ParentContainer>
 						<Label htmlFor="Password">{t('label_password')}</Label>
 						<FormContainer.Item name="password">
-							<Input.Password required id="currentPassword" disabled={isLoading} />
+							<Input.Password
+								required
+								id="currentPassword"
+								data-testid="password"
+								disabled={isLoading}
+							/>
 						</FormContainer.Item>
 						<Tooltip title={t('prompt_forgot_password')}>
 							<Typography.Link>{t('forgot_password')}</Typography.Link>
@@ -258,6 +264,7 @@ function Login({
 							loading={precheckInProcess}
 							type="primary"
 							onClick={onNextHandler}
+							data-testid="initiate_login"
 						>
 							{t('button_initiate_login')}
 						</Button>

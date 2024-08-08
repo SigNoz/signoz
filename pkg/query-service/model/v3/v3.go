@@ -252,6 +252,18 @@ type FilterAttributeKeyRequest struct {
 	Limit              int               `json:"limit"`
 }
 
+type QBFilterSuggestionsRequest struct {
+	DataSource     DataSource `json:"dataSource"`
+	SearchText     string     `json:"searchText"`
+	Limit          int        `json:"limit"`
+	ExistingFilter *FilterSet `json:"existing_filter"`
+}
+
+type QBFilterSuggestionsResponse struct {
+	AttributeKeys  []AttributeKey `json:"attributes"`
+	ExampleQueries []FilterSet    `json:"example_queries"`
+}
+
 type AttributeKeyDataType string
 
 const (

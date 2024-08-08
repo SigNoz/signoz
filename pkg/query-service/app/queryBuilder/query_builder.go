@@ -346,6 +346,10 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 			parts = append(parts, fmt.Sprintf("aggregate=%s", query.AggregateOperator))
 			parts = append(parts, fmt.Sprintf("limit=%d", query.Limit))
 
+			if query.ShiftBy != 0 {
+				parts = append(parts, fmt.Sprintf("shiftBy=%d", query.ShiftBy))
+			}
+
 			if query.AggregateAttribute.Key != "" {
 				parts = append(parts, fmt.Sprintf("aggregateAttribute=%s", query.AggregateAttribute.CacheKey()))
 			}
@@ -386,6 +390,10 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 			parts = append(parts, fmt.Sprintf("aggregate=%s", query.AggregateOperator))
 			parts = append(parts, fmt.Sprintf("timeAggregation=%s", query.TimeAggregation))
 			parts = append(parts, fmt.Sprintf("spaceAggregation=%s", query.SpaceAggregation))
+
+			if query.ShiftBy != 0 {
+				parts = append(parts, fmt.Sprintf("shiftBy=%d", query.ShiftBy))
+			}
 
 			if query.AggregateAttribute.Key != "" {
 				parts = append(parts, fmt.Sprintf("aggregateAttribute=%s", query.AggregateAttribute.CacheKey()))
