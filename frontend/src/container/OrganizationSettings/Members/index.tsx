@@ -179,6 +179,7 @@ function UserFunction({
 			</Space>
 			<Modal
 				title="Edit member details"
+				data-testid="edit-member-modal"
 				open={isModalVisible}
 				onOk={(): void => onModalToggleHandler(setIsModalVisible, false)}
 				onCancel={(): void => onModalToggleHandler(setIsModalVisible, false)}
@@ -216,7 +217,8 @@ function UserFunction({
 				/>
 			</Modal>
 			<Modal
-				title="Edit member details"
+				title="Delete member"
+				data-testid="delete-member-modal"
 				open={isDeleteModalVisible}
 				onOk={onDeleteHandler}
 				onCancel={(): void => onModalToggleHandler(setIsDeleteModalVisible, false)}
@@ -307,7 +309,7 @@ function Members(): JSX.Element {
 	];
 
 	return (
-		<Space direction="vertical" size="middle">
+		<Space direction="vertical" size="middle" data-testid="members-section">
 			<Typography.Title level={3}>
 				Members{' '}
 				{!isLoading && dataSource && (

@@ -71,6 +71,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 			<Modal
 				centered
 				title="Add Domain"
+				data-testid="add-domain-modal"
 				footer={null}
 				open={isAddDomains}
 				destroyOnClose

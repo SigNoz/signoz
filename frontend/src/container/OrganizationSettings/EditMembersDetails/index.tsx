@@ -153,9 +153,11 @@ function EditMembersDetails({
 						onChange={onPasswordChangeHandler}
 						value={passwordLink}
 						disabled={isLoading}
+						data-testid="reset-password-link"
 					/>
 					<Tooltip title="COPY LINK">
 						<Button
+							data-testid="reset-password-link-copy-button"
 							icon={<CopyOutlined />}
 							onClick={(): void => copyToClipboard(passwordLink)}
 						/>

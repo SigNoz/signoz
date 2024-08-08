@@ -254,39 +254,41 @@ function AuthDomains(): JSX.Element {
 
 	if (!isLoading && data?.payload?.length === 0) {
 		return (
-			<Space direction="vertical" size="middle">
-				<AddDomain refetch={refetch} />
+			<div data-testid="authenticated-domains-section">
+				<Space direction="vertical" size="middle">
+					<AddDomain refetch={refetch} />
 
-				<Modal
-					centered
-					title="Configure Authentication Method"
-					onCancel={onCloseHandler(setIsSettingsOpen)}
-					destroyOnClose
-					open={isSettingsOpen}
-					footer={null}
-				>
-					<Create
-						ssoMethod={currentDomain?.ssoType as AuthDomain['ssoType']}
-						assignSsoMethod={assignSsoMethod}
-						setIsEditModalOpen={setIsEditModalOpen}
-						setIsSettingsOpen={setIsSettingsOpen}
+					<Modal
+						centered
+						title="Configure Authentication Method"
+						onCancel={onCloseHandler(setIsSettingsOpen)}
+						destroyOnClose
+						open={isSettingsOpen}
+						footer={null}
+					>
+						<Create
+							ssoMethod={currentDomain?.ssoType as AuthDomain['ssoType']}
+							assignSsoMethod={assignSsoMethod}
+							setIsEditModalOpen={setIsEditModalOpen}
+							setIsSettingsOpen={setIsSettingsOpen}
+						/>
+					</Modal>
+					<ResizeTable
+						columns={columns}
+						rowKey={(record: AuthDomain): string => record.name + v4()}
+						dataSource={!SSOFlag ? notEntripriseData : []}
+						tableLayout="fixed"
+						bordered
 					/>
-				</Modal>
-				<ResizeTable
-					columns={columns}
-					rowKey={(record: AuthDomain): string => record.name + v4()}
-					dataSource={!SSOFlag ? notEntripriseData : []}
-					tableLayout="fixed"
-					bordered
-				/>
-			</Space>
+				</Space>
+			</div>
 		);
 	}
 
 	const tableData = SSOFlag ? data?.payload || [] : notEntripriseData;
 
 	return (
-		<>
+		<div data-testid="authenticated-domains-section">
 			<Modal
 				centered
 				title="Configure Authentication Method"
@@ -331,7 +333,7 @@ function AuthDomains(): JSX.Element {
 					bordered
 				/>
 			</Space>
-		</>
+		</div>
 	);
 }
 

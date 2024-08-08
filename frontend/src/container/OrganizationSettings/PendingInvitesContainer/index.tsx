@@ -199,7 +199,7 @@ function PendingInvitesContainer(): JSX.Element {
 				shouldCallApi
 			/>
 
-			<Space direction="vertical" size="middle">
+			<Space direction="vertical" size="middle" data-testid="invites-section">
 				<TitleWrapper>
 					<Typography.Title level={3}>
 						{t('pending_invites')}
