@@ -132,6 +132,26 @@ export const handlers = [
 			return res(ctx.status(500));
 		},
 	),
+	rest.get('http://localhost/api/v1/loginPrecheck', (req, res, ctx) => {
+		const email = req.url.searchParams.get('email');
+		if (email === 'failEmail@signoz.io') {
+			return res(ctx.status(500));
+		}
+
+		return res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: {
+					sso: true,
+					ssoUrl: '',
+					canSelfRegister: false,
+					isUser: true,
+					ssoError: '',
+				},
+			}),
+		);
+	}),
 
 	rest.get('http://localhost/api/v2/licenses', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(licensesSuccessResponse)),
