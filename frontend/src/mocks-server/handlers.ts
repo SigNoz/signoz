@@ -1,5 +1,6 @@
 import { rest } from 'msw';
 
+import { allAlertChannels } from './__mockdata__/alerts';
 import { billingSuccessResponse } from './__mockdata__/billing';
 import {
 	dashboardSuccessResponse,
@@ -178,6 +179,18 @@ export const handlers = [
 				statusCode: 200,
 				error: null,
 				payload: 'Event Processed Successfully',
+			}),
+		),
+	),
+	rest.post('http://localhost/api/v1//channels', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(allAlertChannels)),
+	),
+	rest.delete('http://localhost/api/v1/channels/:id', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: 'notification channel successfully deleted',
 			}),
 		),
 	),
