@@ -79,7 +79,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		});
 		if (!isLoggedIn) {
 			setLocalStorageKey(LOCALSTORAGE.REDIRECT_URL, pathname);
-			console.log(pathname);
 			history.push(ROUTES.LOGIN, { from: pathname });
 		}
 	};
@@ -198,14 +197,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				} else if (pathname === ROUTES.HOME_PAGE) {
 					// routing to application page over root page
 					if (isLoggedInState) {
-						console.log('coming here');
-						const redirectUrl = getLocalStorageApi(LOCALSTORAGE.REDIRECT_URL);
-						if (redirectUrl) {
-							console.log('coming here redirect');
-							history.push(redirectUrl);
-						} else {
-							history.push(ROUTES.APPLICATION);
-						}
+						history.push(ROUTES.APPLICATION);
 					} else {
 						navigateToLoginIfNotLoggedIn();
 					}

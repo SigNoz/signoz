@@ -1,5 +1,6 @@
 import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
+import deleteLocalStorageKey from 'api/browser/localstorage/remove';
 import getUserVersion from 'api/user/getVersion';
 import loginApi from 'api/user/login';
 import loginPrecheckApi from 'api/user/loginPrecheck';
@@ -87,10 +88,9 @@ function Login({
 				setIsLoading(true);
 				await afterLogin(userId, jwt, refreshjwt);
 				setIsLoading(false);
-				console.log(history);
 				const redirectUrl = getLocalStorageApi(LOCALSTORAGE.REDIRECT_URL);
 				if (redirectUrl) {
-					console.log('coming here redirect');
+					deleteLocalStorageKey(LOCALSTORAGE.REDIRECT_URL);
 					history.push(redirectUrl);
 				} else {
 					history.push(ROUTES.APPLICATION);
