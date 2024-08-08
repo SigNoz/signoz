@@ -5139,9 +5139,10 @@ func (r *ClickHouseReader) GetMinAndMaxTimestampForTraceID(ctx context.Context, 
 		return 0, 0, err
 	}
 
+	// return current time if traceID not found
 	if minTime.IsZero() || maxTime.IsZero() {
-		zap.L().Debug("minTime or maxTime is zero")
-		return 0, 0, nil
+		zap.L().Debug("minTime or maxTime is zero, traceID not found")
+		return time.Now().UnixNano(), time.Now().UnixNano(), nil
 	}
 
 	zap.L().Debug("GetMinAndMaxTimestampForTraceID", zap.Any("minTime", minTime), zap.Any("maxTime", maxTime))
