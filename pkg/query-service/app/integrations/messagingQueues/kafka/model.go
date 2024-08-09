@@ -7,3 +7,8 @@ type MessagingQueue struct {
 	End       int64             `json:"end"`
 	Variables map[string]string `json:"variables,omitempty"`
 }
+
+type Clients struct {
+	ConsumerId  string
+	ServiceName string
+}
