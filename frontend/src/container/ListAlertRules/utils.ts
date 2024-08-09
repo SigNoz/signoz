@@ -49,9 +49,9 @@ export const alertActionLogEvent = (
 			break;
 	}
 	logEvent('Alert: Action', {
-		ruleId: record.id,
+		ruleId: record?.id,
 		dataSource: ALERTS_DATA_SOURCE_MAP[record.alertType as AlertTypes],
-		name: record.alert,
+		name: record?.alert,
 		action: actionValue,
 	});
 };

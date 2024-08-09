@@ -51,6 +51,8 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotExists:       "not has(%s_%s_key, '%s')",
 }
 
+const BODY = "body"
+
 func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
 	if columnType == v3.AttributeKeyTypeTag {
 		return "attributes"
@@ -193,10 +195,24 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					columnName := getClickhouseColumnName(item.Key)
 					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
-					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
+					if columnName == BODY {
+						logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
+						conditions = append(conditions, fmt.Sprintf("lower(%s) %s lower('%%%s%%')", columnName, logsOp, val))
+					} else {
+						conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
+					}
 				default:
 					columnName := getClickhouseColumnName(item.Key)
 					fmtVal := utils.ClickHouseFormattedValue(value)
+
+					// for use lower for like and ilike
+					if op == v3.FilterOperatorLike || op == v3.FilterOperatorNotLike {
+						if columnName == BODY {
+							logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
+							columnName = fmt.Sprintf("lower(%s)", columnName)
+							fmtVal = fmt.Sprintf("lower(%s)", fmtVal)
+						}
+					}
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 				}
 			} else {
@@ -477,7 +493,7 @@ type Options struct {
 }
 
 func isOrderByTs(orderBy []v3.OrderBy) bool {
-	if len(orderBy) == 1 && orderBy[0].Key == constants.TIMESTAMP {
+	if len(orderBy) == 1 && (orderBy[0].Key == constants.TIMESTAMP || orderBy[0].ColumnName == constants.TIMESTAMP) {
 		return true
 	}
 	return false

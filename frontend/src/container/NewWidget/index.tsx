@@ -3,8 +3,8 @@ import './NewWidget.styles.scss';
 
 import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
-import { chartHelpMessage } from 'components/facingIssueBtn/util';
+import logEvent from 'api/common/logEvent';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -30,7 +30,7 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, useParams } from 'react-router-dom';
@@ -77,6 +77,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		stagedQuery,
 		redirectWithQueryBuilderData,
 		supersetQuery,
+		setSupersetQuery,
 	} = useQueryBuilder();
 
 	const isQueryModified = useMemo(
@@ -100,12 +101,26 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const [isNewDashboard, setIsNewDashboard] = useState<boolean>(false);
 
+	const logEventCalledRef = useRef(false);
+
 	useEffect(() => {
 		const widgetId = query.get('widgetId');
 		const selectedWidget = widgets?.find((e) => e.id === widgetId);
 		const isWidgetNotPresent = isUndefined(selectedWidget);
 		if (isWidgetNotPresent) {
 			setIsNewDashboard(true);
+		}
+
+		if (!logEventCalledRef.current) {
+			logEvent('Panel Edit: Page visited', {
+				panelType: selectedWidget?.panelTypes,
+				dashboardId: selectedDashboard?.uuid,
+				widgetId: selectedWidget?.id,
+				dashboardName: selectedDashboard?.data.title,
+				isNewPanel: !!isWidgetNotPresent,
+				dataSource: currentQuery.builder.queryData?.[0]?.dataSource,
+			});
+			logEventCalledRef.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -481,7 +496,20 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	};
 
 	const onSaveDashboard = useCallback((): void => {
+		const widgetId = query.get('widgetId');
+		const selectWidget = widgets?.find((e) => e.id === widgetId);
+
+		logEvent('Panel Edit: Save changes', {
+			panelType: selectedWidget.panelTypes,
+			dashboardId: selectedDashboard?.uuid,
+			widgetId: selectedWidget.id,
+			dashboardName: selectedDashboard?.data.title,
+			queryType: currentQuery.queryType,
+			isNewPanel: isUndefined(selectWidget),
+			dataSource: currentQuery.builder.queryData?.[0]?.dataSource,
+		});
 		setSaveModal(true);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const isQueryBuilderActive = useIsFeatureDisabled(
@@ -520,6 +548,17 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	]);
 
 	useEffect(() => {
+		/**
+		 * we need this extra handling for superset query because we cannot keep this in sync with current query
+		 * always.we do not sync superset query in the initQueryBuilderData because that function is called on all stage and run
+		 * actions. we do not want that as we loose out on superset functionalities if we do the same. hence initialising the superset query
+		 * on mount here with the currentQuery in the begining itself
+		 */
+		setSupersetQuery(currentQuery);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	useEffect(() => {
 		registerShortcut(DashboardShortcuts.SaveChanges, onSaveDashboard);
 		registerShortcut(DashboardShortcuts.DiscardChanges, onClickDiscardHandler);
 
@@ -530,29 +569,43 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [onSaveDashboard]);
 
+	useEffect(() => {
+		if (selectedGraph === PANEL_TYPES.LIST) {
+			const initialDataSource = currentQuery.builder.queryData[0].dataSource;
+			if (initialDataSource === DataSource.LOGS) {
+				// we do not need selected log columns in the request data as the entire response contains all the necessary data
+				setRequestData((prev) => ({
+					...prev,
+					tableParams: {
+						...prev.tableParams,
+					},
+				}));
+			} else if (initialDataSource === DataSource.TRACES) {
+				setRequestData((prev) => ({
+					...prev,
+					tableParams: {
+						...prev.tableParams,
+						selectColumns: selectedTracesFields,
+					},
+				}));
+			}
+		}
+	}, [selectedLogFields, selectedTracesFields, currentQuery, selectedGraph]);
+
 	return (
 		<Container>
 			<div className="edit-header">
 				<div className="left-header">
-					<X size={14} onClick={onClickDiscardHandler} className="discard-icon" />
+					<X
+						size={14}
+						onClick={onClickDiscardHandler}
+						className="discard-icon"
+						data-testid="discard-button"
+					/>
 					<Flex align="center" gap={24}>
 						<Typography.Text className="configure-panel">
 							Configure panel
 						</Typography.Text>
-						<FacingIssueBtn
-							attributes={{
-								uuid: selectedDashboard?.uuid,
-								title: selectedDashboard?.data.title,
-								screen: 'Dashboard widget',
-								panelType: graphType,
-								widgetId: query.get('widgetId'),
-								queryType: currentQuery.queryType,
-							}}
-							eventName="Dashboard: Facing Issues in dashboard"
-							message={chartHelpMessage(selectedDashboard, graphType)}
-							buttonText="Facing issues with dashboards?"
-							onHoverText="Click here to get help with dashboard widget"
-						/>
 					</Flex>
 				</div>
 				{isSaveDisabled && (
@@ -586,60 +639,64 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 			<PanelContainer>
 				<LeftContainerWrapper isDarkMode={useIsDarkMode()}>
-					{selectedWidget && (
-						<LeftContainer
-							selectedGraph={graphType}
-							selectedLogFields={selectedLogFields}
-							setSelectedLogFields={setSelectedLogFields}
-							selectedTracesFields={selectedTracesFields}
-							setSelectedTracesFields={setSelectedTracesFields}
-							selectedWidget={selectedWidget}
-							selectedTime={selectedTime}
-							requestData={requestData}
-							setRequestData={setRequestData}
-							isLoadingPanelData={isLoadingPanelData}
-						/>
-					)}
+					<OverlayScrollbar>
+						{selectedWidget && (
+							<LeftContainer
+								selectedGraph={graphType}
+								selectedLogFields={selectedLogFields}
+								setSelectedLogFields={setSelectedLogFields}
+								selectedTracesFields={selectedTracesFields}
+								setSelectedTracesFields={setSelectedTracesFields}
+								selectedWidget={selectedWidget}
+								selectedTime={selectedTime}
+								requestData={requestData}
+								setRequestData={setRequestData}
+								isLoadingPanelData={isLoadingPanelData}
+							/>
+						)}
+					</OverlayScrollbar>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper>
-					<RightContainer
-						setGraphHandler={setGraphHandler}
-						title={title}
-						setTitle={setTitle}
-						description={description}
-						setDescription={setDescription}
-						stacked={stacked}
-						setStacked={setStacked}
-						stackedBarChart={stackedBarChart}
-						setStackedBarChart={setStackedBarChart}
-						opacity={opacity}
-						yAxisUnit={yAxisUnit}
-						columnUnits={columnUnits}
-						setColumnUnits={setColumnUnits}
-						bucketCount={bucketCount}
-						bucketWidth={bucketWidth}
-						combineHistogram={combineHistogram}
-						setCombineHistogram={setCombineHistogram}
-						setBucketWidth={setBucketWidth}
-						setBucketCount={setBucketCount}
-						setOpacity={setOpacity}
-						selectedNullZeroValue={selectedNullZeroValue}
-						setSelectedNullZeroValue={setSelectedNullZeroValue}
-						selectedGraph={graphType}
-						setSelectedTime={setSelectedTime}
-						selectedTime={selectedTime}
-						setYAxisUnit={setYAxisUnit}
-						thresholds={thresholds}
-						setThresholds={setThresholds}
-						selectedWidget={selectedWidget}
-						isFillSpans={isFillSpans}
-						setIsFillSpans={setIsFillSpans}
-						softMin={softMin}
-						setSoftMin={setSoftMin}
-						softMax={softMax}
-						setSoftMax={setSoftMax}
-					/>
+					<OverlayScrollbar>
+						<RightContainer
+							setGraphHandler={setGraphHandler}
+							title={title}
+							setTitle={setTitle}
+							description={description}
+							setDescription={setDescription}
+							stacked={stacked}
+							setStacked={setStacked}
+							stackedBarChart={stackedBarChart}
+							setStackedBarChart={setStackedBarChart}
+							opacity={opacity}
+							yAxisUnit={yAxisUnit}
+							columnUnits={columnUnits}
+							setColumnUnits={setColumnUnits}
+							bucketCount={bucketCount}
+							bucketWidth={bucketWidth}
+							combineHistogram={combineHistogram}
+							setCombineHistogram={setCombineHistogram}
+							setBucketWidth={setBucketWidth}
+							setBucketCount={setBucketCount}
+							setOpacity={setOpacity}
+							selectedNullZeroValue={selectedNullZeroValue}
+							setSelectedNullZeroValue={setSelectedNullZeroValue}
+							selectedGraph={graphType}
+							setSelectedTime={setSelectedTime}
+							selectedTime={selectedTime}
+							setYAxisUnit={setYAxisUnit}
+							thresholds={thresholds}
+							setThresholds={setThresholds}
+							selectedWidget={selectedWidget}
+							isFillSpans={isFillSpans}
+							setIsFillSpans={setIsFillSpans}
+							softMin={softMin}
+							setSoftMin={setSoftMin}
+							softMax={softMax}
+							setSoftMax={setSoftMax}
+						/>
+					</OverlayScrollbar>
 				</RightContainerWrapper>
 			</PanelContainer>
 			<Modal

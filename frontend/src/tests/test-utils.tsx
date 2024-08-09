@@ -42,6 +42,16 @@ const mockStored = (role?: string): any =>
 				accessJwt: '',
 				refreshJwt: '',
 			},
+			isLoggedIn: true,
+			org: [
+				{
+					createdAt: 0,
+					hasOptedUpdates: false,
+					id: 'xyz',
+					isAnonymous: false,
+					name: 'Test Inc. - India',
+				},
+			],
 		},
 	});
 
