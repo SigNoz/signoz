@@ -1,5 +1,9 @@
 import { rest } from 'msw';
 
+import {
+	createAPIKeyResponse,
+	getAPIKeysResponse,
+} from './__mockdata__/apiKeys';
 import { allAlertChannels } from './__mockdata__/alerts';
 import { billingSuccessResponse } from './__mockdata__/billing';
 import {
@@ -219,6 +223,12 @@ export const handlers = [
 				payload: 'Event Processed Successfully',
 			}),
 		),
+	),
+	rest.get('http://localhost/api/v1/pats', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(getAPIKeysResponse)),
+	),
+	rest.post('http://localhost/api/v1/pats', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(createAPIKeyResponse)),
 	),
 	rest.post('http://localhost/api/v1//channels', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(allAlertChannels)),
