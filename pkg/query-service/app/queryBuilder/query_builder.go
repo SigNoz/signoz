@@ -387,6 +387,18 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 		} else if query.Expression == queryName && query.DataSource == v3.DataSourceMetrics {
 			var parts []string
 
+			// what is this condition checking?
+			// there are two version of the metric query builder, v3 and v4
+			// the way query is built is different for each version
+			// only time series panel type returns a "time series" data
+			// every other panel type returns just a single value
+			// this means that we can't use the previous results for caching
+			// however, in v4, the result of every panel type is a time series data
+			// that gets aggregated in the query service and then converted to a single value
+			// so we can use the previous results for caching
+
+			// if version is not v4 (it can be empty or v3) and panel type is not graph
+			// then we can't use the previous results for caching
 			if params.Version != "v4" && params.CompositeQuery.PanelType != v3.PanelTypeGraph {
 				continue
 			}
