@@ -19,6 +19,7 @@ import axios from 'axios';
 import cx from 'classnames';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -47,6 +48,7 @@ import {
 	Dispatch,
 	SetStateAction,
 	useCallback,
+	useEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -89,6 +91,11 @@ function ExplorerOptions({
 	const history = useHistory();
 	const ref = useRef<RefSelectProps>(null);
 	const isDarkMode = useIsDarkMode();
+	const isLogsExplorer = sourcepage === DataSource.LOGS;
+
+	const PRESERVED_VIEW_LOCAL_STORAGE_KEY = isLogsExplorer
+		? LOCALSTORAGE.LAST_USED_SAVED_LOGS_VIEW
+		: LOCALSTORAGE.LAST_USED_SAVED_TRACES_VIEW;
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
@@ -106,7 +113,7 @@ function ExplorerOptions({
 			logEvent('Traces Explorer: Save view clicked', {
 				panelType,
 			});
-		} else if (sourcepage === DataSource.LOGS) {
+		} else if (isLogsExplorer) {
 			logEvent('Logs Explorer: Save view clicked', {
 				panelType,
 			});
@@ -125,7 +132,7 @@ function ExplorerOptions({
 			logEvent('Traces Explorer: Create alert', {
 				panelType,
 			});
-		} else if (sourcepage === DataSource.LOGS) {
+		} else if (isLogsExplorer) {
 			logEvent('Logs Explorer: Create alert', {
 				panelType,
 			});
@@ -147,7 +154,7 @@ function ExplorerOptions({
 			logEvent('Traces Explorer: Add to dashboard clicked', {
 				panelType,
 			});
-		} else if (sourcepage === DataSource.LOGS) {
+		} else if (isLogsExplorer) {
 			logEvent('Logs Explorer: Add to dashboard clicked', {
 				panelType,
 			});
@@ -258,18 +265,30 @@ function ExplorerOptions({
 				panelType,
 				viewName: option?.value,
 			});
-		} else if (sourcepage === DataSource.LOGS) {
+		} else if (isLogsExplorer) {
 			logEvent('Logs Explorer: Select view', {
 				panelType,
 				viewName: option?.value,
 			});
 		}
+
+		localStorage.setItem(
+			PRESERVED_VIEW_LOCAL_STORAGE_KEY,
+			JSON.stringify({
+				key: option.key,
+				value: option.value,
+			}),
+		);
 		if (ref.current) {
 			ref.current.blur();
 		}
 	};
 
 	const handleClearSelect = (): void => {
+		if (localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY)) {
+			localStorage.removeItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
+		}
+
 		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
 	};
 
@@ -304,7 +323,7 @@ function ExplorerOptions({
 				panelType,
 				viewName: newViewName,
 			});
-		} else if (sourcepage === DataSource.LOGS) {
+		} else if (isLogsExplorer) {
 			logEvent('Logs Explorer: Save view successful', {
 				panelType,
 				viewName: newViewName,
@@ -338,6 +357,39 @@ function ExplorerOptions({
 	};
 
 	const isEditDeleteSupported = allowedRoles.includes(role as string);
+
+	const [
+		isRecentlyUsedSavedViewSelected,
+		setIsRecentlyUsedSavedViewSelected,
+	] = useState(false);
+
+	useEffect(() => {
+		const value = localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
+		const preservedView = JSON.parse(value || '{}');
+		let timeoutId: string | number | NodeJS.Timeout | undefined;
+
+		if (
+			!!preservedView?.key &&
+			viewsData?.data?.data &&
+			!(!!viewName || !!viewKey) &&
+			!isRecentlyUsedSavedViewSelected
+		) {
+			// prevent the race condition with useShareBuilderUrl
+			timeoutId = setTimeout(() => {
+				onMenuItemSelectHandler({ key: preservedView.key });
+			}, 0);
+			setIsRecentlyUsedSavedViewSelected(false);
+		}
+
+		return (): void => clearTimeout(timeoutId);
+	}, [
+		PRESERVED_VIEW_LOCAL_STORAGE_KEY,
+		isRecentlyUsedSavedViewSelected,
+		onMenuItemSelectHandler,
+		viewKey,
+		viewName,
+		viewsData?.data?.data,
+	]);
 
 	return (
 		<div className="explorer-options-container">
@@ -457,12 +509,12 @@ function ExplorerOptions({
 						<Tooltip
 							title={
 								<div>
-									{sourcepage === DataSource.LOGS
+									{isLogsExplorer
 										? 'Learn more about Logs explorer '
 										: 'Learn more about Traces explorer '}
 									<Typography.Link
 										href={
-											sourcepage === DataSource.LOGS
+											isLogsExplorer
 												? 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar'
 												: 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar'
 										}
