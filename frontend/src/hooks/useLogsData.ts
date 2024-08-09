@@ -7,6 +7,8 @@ import {
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { ILog } from 'types/api/logs/log';
 import {
 	IBuilderQuery,
@@ -15,6 +17,7 @@ import {
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { LogTimeRange } from './logs/types';
 import { useCopyLogLink } from './logs/useCopyLogLink';
@@ -38,6 +41,10 @@ export const useLogsData = ({
 	const [page, setPage] = useState<number>(1);
 	const [requestData, setRequestData] = useState<Query | null>(null);
 	const [shouldLoadMoreLogs, setShouldLoadMoreLogs] = useState<boolean>(false);
+
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
@@ -122,7 +129,7 @@ export const useLogsData = ({
 		return data;
 	};
 
-	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
+	const { activeLogId, onTimeRangeChange } = useCopyLogLink();
 
 	const { data, isFetching } = useGetExplorerQueryRange(
 		requestData,
@@ -133,11 +140,10 @@ export const useLogsData = ({
 			enabled: !isLimit && !!requestData,
 		},
 		{
-			...(timeRange &&
-				activeLogId &&
+			...(activeLogId &&
 				!logs.length && {
-					start: timeRange.start,
-					end: timeRange.end,
+					start: minTime,
+					end: maxTime,
 				}),
 		},
 		shouldLoadMoreLogs,
@@ -156,7 +162,7 @@ export const useLogsData = ({
 			setLogs(newLogs);
 			onTimeRangeChange({
 				start: currentParams?.start,
-				end: timeRange?.end || currentParams?.end,
+				end: currentParams?.end,
 				pageSize: newLogs.length,
 			});
 		}
