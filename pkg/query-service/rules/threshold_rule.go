@@ -44,14 +44,25 @@ type ThresholdRule struct {
 	name          string
 	source        string
 	ruleCondition *RuleCondition
-	evalWindow    time.Duration
-	holdDuration  time.Duration
-	labels        labels.Labels
-	annotations   labels.Labels
+	// evalWindow is the time window used for evaluating the rule
+	// i.e each time we lookback from the current time, we look at data for the last
+	// evalWindow duration
+	evalWindow time.Duration
+	// holdDuration is the duration for which the alert waits before firing
+	holdDuration time.Duration
+	// holds the static set of labels and annotations for the rule
+	// these are the same for all alerts created for this rule
+	labels      labels.Labels
+	annotations labels.Labels
 
-	preferredChannels   []string
-	mtx                 sync.Mutex
-	evaluationDuration  time.Duration
+	// preferredChannels is the list of channels to send the alert to
+	// if the rule is triggered
+	preferredChannels []string
+	mtx               sync.Mutex
+
+	// the time it took to evaluate the rule
+	evaluationDuration time.Duration
+	// the timestamp of the last evaluation
 	evaluationTimestamp time.Time
 
 	health RuleHealth
@@ -61,6 +72,10 @@ type ThresholdRule struct {
 	// map of active alerts
 	active map[uint64]*Alert
 
+	// Ever since we introduced the new metrics query builder, the version is "v4"
+	// for all the rules
+	// if the version is "v3", then we use the old querier
+	// if the version is "v4", then we use the new querierV2
 	version string
 	// temporalityMap is a map of metric name to temporality
 	// to avoid fetching temporality for the same metric multiple times
@@ -70,10 +85,18 @@ type ThresholdRule struct {
 
 	opts ThresholdRuleOpts
 
+	// lastTimestampWithDatapoints is the timestamp of the last datapoint we observed
+	// for this rule
+	// this is used for missing data alerts
 	lastTimestampWithDatapoints time.Time
-	typ                         string
 
-	querier   interfaces.Querier
+	// Type of the rule
+	// One of ["LOGS_BASED_ALERT", "TRACES_BASED_ALERT", "METRIC_BASED_ALERT", "EXCEPTIONS_BASED_ALERT"]
+	typ string
+
+	// querier is used for alerts created before the introduction of new metrics query builder
+	querier interfaces.Querier
+	// querierV2 is used for alerts created after the introduction of new metrics query builder
 	querierV2 interfaces.Querier
 
 	reader    interfaces.Reader
@@ -942,12 +965,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
-			if smpl.IsMissing {
-				if a.Name == labels.AlertDescriptionLabel || a.Name == labels.AlertSummaryLabel {
-					a.Value = labels.AlertMissingData
-				}
-			}
 			annotations = append(annotations, labels.Label{Name: normalizeLabelName(a.Name), Value: expand(a.Value)})
+		}
+		if smpl.IsMissing {
+			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
 		}
 
 		// Links with timestamps should go in annotations since labels
