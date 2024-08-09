@@ -15,4 +15,4 @@ COPY build /usr/share/nginx/html
 
 EXPOSE 3301
 
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["nginx", "-g", "daemon off; error_log /dev/stdout info;"]
