@@ -627,21 +627,22 @@ func GetPercentileFromOperator(operator SpaceAggregation) float64 {
 type FunctionName string
 
 const (
-	FunctionNameCutOffMin FunctionName = "cutOffMin"
-	FunctionNameCutOffMax FunctionName = "cutOffMax"
-	FunctionNameClampMin  FunctionName = "clampMin"
-	FunctionNameClampMax  FunctionName = "clampMax"
-	FunctionNameAbsolute  FunctionName = "absolute"
-	FunctionNameLog2      FunctionName = "log2"
-	FunctionNameLog10     FunctionName = "log10"
-	FunctionNameCumSum    FunctionName = "cumSum"
-	FunctionNameEWMA3     FunctionName = "ewma3"
-	FunctionNameEWMA5     FunctionName = "ewma5"
-	FunctionNameEWMA7     FunctionName = "ewma7"
-	FunctionNameMedian3   FunctionName = "median3"
-	FunctionNameMedian5   FunctionName = "median5"
-	FunctionNameMedian7   FunctionName = "median7"
-	FunctionNameTimeShift FunctionName = "timeShift"
+	FunctionNameCutOffMin   FunctionName = "cutOffMin"
+	FunctionNameCutOffMax   FunctionName = "cutOffMax"
+	FunctionNameClampMin    FunctionName = "clampMin"
+	FunctionNameClampMax    FunctionName = "clampMax"
+	FunctionNameAbsolute    FunctionName = "absolute"
+	FunctionNameRunningDiff FunctionName = "runningDiff"
+	FunctionNameLog2        FunctionName = "log2"
+	FunctionNameLog10       FunctionName = "log10"
+	FunctionNameCumSum      FunctionName = "cumSum"
+	FunctionNameEWMA3       FunctionName = "ewma3"
+	FunctionNameEWMA5       FunctionName = "ewma5"
+	FunctionNameEWMA7       FunctionName = "ewma7"
+	FunctionNameMedian3     FunctionName = "median3"
+	FunctionNameMedian5     FunctionName = "median5"
+	FunctionNameMedian7     FunctionName = "median7"
+	FunctionNameTimeShift   FunctionName = "timeShift"
 )
 
 func (f FunctionName) Validate() error {
@@ -651,6 +652,7 @@ func (f FunctionName) Validate() error {
 		FunctionNameClampMin,
 		FunctionNameClampMax,
 		FunctionNameAbsolute,
+		FunctionNameRunningDiff,
 		FunctionNameLog2,
 		FunctionNameLog10,
 		FunctionNameCumSum,
