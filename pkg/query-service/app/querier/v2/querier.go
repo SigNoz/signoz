@@ -260,7 +260,7 @@ func filterCachedPoints(cachedSeries []*v3.Series, start, end int64) {
 	for _, c := range cachedSeries {
 		points := []v3.Point{}
 		for _, p := range c.Points {
-			if p.Timestamp < start || p.Timestamp > end {
+			if (p.Timestamp < start || p.Timestamp > end) && p.Timestamp != 0 {
 				continue
 			}
 			points = append(points, p)

@@ -376,9 +376,14 @@ func (r *ThresholdRule) populateTemporality(ctx context.Context, qp *v3.QueryRan
 		}
 	}
 
-	nameToTemporality, err := r.FetchTemporality(ctx, missingTemporality, ch)
-	if err != nil {
-		return err
+	var nameToTemporality map[string]map[v3.Temporality]bool
+	var err error
+
+	if len(missingTemporality) > 0 {
+		nameToTemporality, err = r.FetchTemporality(ctx, missingTemporality, ch)
+		if err != nil {
+			return err
+		}
 	}
 
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
