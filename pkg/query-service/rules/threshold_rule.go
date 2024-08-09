@@ -968,7 +968,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			annotations = append(annotations, labels.Label{Name: normalizeLabelName(a.Name), Value: expand(a.Value)})
 		}
 		if smpl.IsMissing {
-			annotations = append(annotations, labels.Label{Name: labels.AlertMissingDataLabel, Value: "true"})
+			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
 		}
 
 		// Links with timestamps should go in annotations since labels
