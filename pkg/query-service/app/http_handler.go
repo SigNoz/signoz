@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"regexp"
 	"slices"
@@ -343,6 +344,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
 	router.HandleFunc("/api/v1/testRule", am.EditAccess(aH.testRule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/history/stats", am.ViewAccess(aH.getRuleStats)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/history/timeline", am.ViewAccess(aH.getRuleStateHistory)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/history/top_contributors", am.ViewAccess(aH.getRuleStateHistoryTopContributors)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/history/overall_status", am.ViewAccess(aH.getOverallStateTransitions)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/downtime_schedules", am.OpenAccess(aH.listDowntimeSchedules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.OpenAccess(aH.getDowntimeSchedule)).Methods(http.MethodGet)
@@ -623,6 +628,159 @@ func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := v3.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	totalCurrentTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	currentTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	currentAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	currentAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	if params.End-params.Start >= 86400000 {
+		days := int64(math.Ceil(float64(params.End-params.Start) / 86400000))
+		params.Start -= days * 86400000
+		params.End -= days * 86400000
+	} else {
+		params.Start -= 86400000
+		params.End -= 86400000
+	}
+
+	totalPastTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	pastTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	pastAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	pastAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	stats := v3.Stats{
+		TotalCurrentTriggers:           totalCurrentTriggers,
+		TotalPastTriggers:              totalPastTriggers,
+		CurrentTriggersSeries:          currentTriggersSeries,
+		PastTriggersSeries:             pastTriggersSeries,
+		CurrentAvgResolutionTime:       strconv.FormatFloat(currentAvgResolutionTime, 'f', -1, 64),
+		PastAvgResolutionTime:          strconv.FormatFloat(pastAvgResolutionTime, 'f', -1, 64),
+		CurrentAvgResolutionTimeSeries: currentAvgResolutionTimeSeries,
+		PastAvgResolutionTimeSeries:    pastAvgResolutionTimeSeries,
+	}
+
+	aH.Respond(w, stats)
+}
+
+func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := v3.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	stateItems := []v3.ReleStateItem{}
+
+	for idx, item := range res {
+		start := item.FiringTime
+		end := item.ResolutionTime
+		stateItems = append(stateItems, v3.ReleStateItem{
+			State: item.State,
+			Start: start,
+			End:   end,
+		})
+		if idx < len(res)-1 {
+			nextStart := res[idx+1].FiringTime
+			if nextStart > end {
+				stateItems = append(stateItems, v3.ReleStateItem{
+					State: "normal",
+					Start: end,
+					End:   nextStart,
+				})
+			}
+		}
+	}
+
+	aH.Respond(w, stateItems)
+}
+
+func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := v3.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := params.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, res)
+}
+
+func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := v3.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, res)
 }
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {

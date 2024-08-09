@@ -76,6 +76,7 @@ type ThresholdRule struct {
 	querier   interfaces.Querier
 	querierV2 interfaces.Querier
 
+	reader    interfaces.Reader
 	evalDelay time.Duration
 }
 
@@ -150,6 +151,7 @@ func NewThresholdRule(
 
 	t.querier = querier.NewQuerier(querierOption)
 	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
+	t.reader = reader
 
 	zap.L().Info("creating new ThresholdRule", zap.String("name", t.name), zap.String("id", t.id))
 
@@ -287,8 +289,6 @@ func (r *ThresholdRule) GetEvaluationTimestamp() time.Time {
 // StateFiring > StatePending > StateInactive
 func (r *ThresholdRule) State() AlertState {
 
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
 	maxState := StateInactive
 	for _, a := range r.active {
 		if a.State > maxState {
@@ -873,6 +873,8 @@ func normalizeLabelName(name string) string {
 
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
+	prevState := r.State()
+
 	valueFormatter := formatter.FromUnit(r.Unit())
 	res, err := r.buildAndRunQuery(ctx, ts, queriers.Ch)
 
@@ -980,6 +982,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			Value:        smpl.V,
 			GeneratorURL: r.GeneratorURL(),
 			Receivers:    r.preferredChannels,
+			Missing:      smpl.IsMissing,
 		}
 	}
 
@@ -1001,8 +1004,14 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 	}
 
+	itemsToAdd := []v3.RuleStateHistory{}
+
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.active {
+		labelsJSON, err := json.Marshal(a.Labels)
+		if err != nil {
+			zap.L().Error("error marshaling labels", zap.Error(err), zap.Any("labels", a.Labels))
+		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
@@ -1012,6 +1021,15 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			if a.State != StateInactive {
 				a.State = StateInactive
 				a.ResolvedAt = ts
+				itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
+					RuleID:       r.ID(),
+					RuleName:     r.Name(),
+					State:        "normal",
+					StateChanged: true,
+					UnixMilli:    ts.UnixMilli(),
+					Labels:       v3.LabelsString(labelsJSON),
+					Fingerprint:  a.Labels.Hash(),
+				})
 			}
 			continue
 		}
@@ -1019,8 +1037,46 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		if a.State == StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
 			a.State = StateFiring
 			a.FiredAt = ts
+			state := "firing"
+			if a.Missing {
+				state = "no_data"
+			}
+			itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
+				RuleID:       r.ID(),
+				RuleName:     r.Name(),
+				State:        state,
+				StateChanged: true,
+				UnixMilli:    ts.UnixMilli(),
+				Labels:       v3.LabelsString(labelsJSON),
+				Fingerprint:  a.Labels.Hash(),
+				Value:        a.Value,
+			})
 		}
+	}
 
+	currentState := r.State()
+
+	if currentState != prevState {
+		for idx := range itemsToAdd {
+			if currentState == StateInactive {
+				itemsToAdd[idx].OverallState = "normal"
+			} else {
+				itemsToAdd[idx].OverallState = currentState.String()
+			}
+			itemsToAdd[idx].OverallStateChanged = true
+		}
+	} else {
+		for idx := range itemsToAdd {
+			itemsToAdd[idx].OverallState = currentState.String()
+			itemsToAdd[idx].OverallStateChanged = false
+		}
+	}
+
+	if len(itemsToAdd) > 0 && r.reader != nil {
+		err := r.reader.AddRuleStateHistory(ctx, itemsToAdd)
+		if err != nil {
+			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
+		}
 	}
 	r.health = HealthGood
 	r.lastError = err

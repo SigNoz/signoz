@@ -28,6 +28,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
@@ -178,6 +179,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	go func() {
+		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
+		if err != nil {
+			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
+		}
+	}()
 
 	// initiate opamp
 	_, err = opAmpModel.InitDB(localDB)

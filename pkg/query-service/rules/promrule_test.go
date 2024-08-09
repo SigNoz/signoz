@@ -611,7 +611,7 @@ func TestPromRuleShouldAlert(t *testing.T) {
 		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewPromRule("69", &postableRule, testLogger{t}, PromRuleOpts{})
+		rule, err := NewPromRule("69", &postableRule, testLogger{t}, PromRuleOpts{}, nil)
 		if err != nil {
 			assert.NoError(t, err)
 		}

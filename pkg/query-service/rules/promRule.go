@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"sync"
@@ -15,6 +16,7 @@ import (
 	pql "github.com/prometheus/prometheus/promql"
 	"go.signoz.io/signoz/pkg/query-service/converter"
 	"go.signoz.io/signoz/pkg/query-service/formatter"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
@@ -54,6 +56,8 @@ type PromRule struct {
 
 	logger log.Logger
 	opts   PromRuleOpts
+
+	reader interfaces.Reader
 }
 
 func NewPromRule(
@@ -61,6 +65,7 @@ func NewPromRule(
 	postableRule *PostableRule,
 	logger log.Logger,
 	opts PromRuleOpts,
+	reader interfaces.Reader,
 ) (*PromRule, error) {
 
 	if postableRule.RuleCondition == nil {
@@ -83,6 +88,7 @@ func NewPromRule(
 		logger:            logger,
 		opts:              opts,
 	}
+	p.reader = reader
 
 	if int64(p.evalWindow) == 0 {
 		p.evalWindow = 5 * time.Minute
@@ -215,8 +221,6 @@ func (r *PromRule) GetEvaluationTimestamp() time.Time {
 // State returns the maximum state of alert instances for this rule.
 // StateFiring > StatePending > StateInactive
 func (r *PromRule) State() AlertState {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
 
 	maxState := StateInactive
 	for _, a := range r.active {
@@ -337,6 +341,8 @@ func (r *PromRule) compareOp() CompareOp {
 }
 
 func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
+
+	prevState := r.State()
 
 	start := ts.Add(-r.evalWindow)
 	end := ts
@@ -459,8 +465,14 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 
 	}
 
+	itemsToAdd := []v3.RuleStateHistory{}
+
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.active {
+		labelsJSON, err := json.Marshal(a.Labels)
+		if err != nil {
+			zap.L().Error("error marshaling labels", zap.Error(err), zap.String("name", r.Name()))
+		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
@@ -470,6 +482,15 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			if a.State != StateInactive {
 				a.State = StateInactive
 				a.ResolvedAt = ts
+				itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
+					RuleID:       r.ID(),
+					RuleName:     r.Name(),
+					State:        "normal",
+					StateChanged: true,
+					UnixMilli:    ts.UnixMilli(),
+					Labels:       v3.LabelsString(labelsJSON),
+					Fingerprint:  a.Labels.Hash(),
+				})
 			}
 			continue
 		}
@@ -477,11 +498,45 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		if a.State == StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
 			a.State = StateFiring
 			a.FiredAt = ts
+			state := "firing"
+			if a.Missing {
+				state = "no_data"
+			}
+			itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
+				RuleID:       r.ID(),
+				RuleName:     r.Name(),
+				State:        state,
+				StateChanged: true,
+				UnixMilli:    ts.UnixMilli(),
+				Labels:       v3.LabelsString(labelsJSON),
+				Fingerprint:  a.Labels.Hash(),
+				Value:        a.Value,
+			})
 		}
 
 	}
 	r.health = HealthGood
 	r.lastError = err
+
+	currentState := r.State()
+
+	if currentState != prevState {
+		for idx := range itemsToAdd {
+			if currentState == StateInactive {
+				itemsToAdd[idx].OverallState = "normal"
+			} else {
+				itemsToAdd[idx].OverallState = currentState.String()
+			}
+			itemsToAdd[idx].OverallStateChanged = true
+		}
+	}
+
+	if len(itemsToAdd) > 0 && r.reader != nil {
+		err := r.reader.AddRuleStateHistory(ctx, itemsToAdd)
+		if err != nil {
+			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
+		}
+	}
 
 	return len(r.active), nil
 }
