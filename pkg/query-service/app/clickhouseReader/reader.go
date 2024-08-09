@@ -4710,7 +4710,7 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 
 	if err != nil {
 		zap.L().Error("error while reading time series result", zap.Error(err))
-		return nil, err
+		return nil, errors.New(err.Error())
 	}
 	defer rows.Close()
 
@@ -4757,7 +4757,7 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 
 	if err != nil {
 		zap.L().Error("error while reading time series result", zap.Error(err))
-		return nil, err
+		return nil, errors.New(err.Error())
 	}
 	defer rows.Close()
 
