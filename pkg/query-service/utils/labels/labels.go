@@ -27,7 +27,6 @@ const (
 	RuleThresholdLabel    = "threshold"
 	AlertSummaryLabel     = "summary"
 	AlertDescriptionLabel = "description"
-	AlertMissingDataLabel = "missingData"
 )
 
 // Label is a key/value pair of strings.
