@@ -1003,7 +1003,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			expectAlerts: 0,
 			compareOp:    "1", // Above
 			matchType:    "1", // Once
-			target:       1,
+			target:       1,   // 1 second
 		},
 		{
 			targetUnit: "ms",
@@ -1018,7 +1018,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			expectAlerts: 4,
 			compareOp:    "1", // Above
 			matchType:    "1", // Once
-			target:       200,
+			target:       200, // 200 ms
 			summaryAny: []string{
 				"observed metric value is 299 ms",
 				"the observed metric value is 573 ms",
@@ -1039,7 +1039,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			expectAlerts: 0,
 			compareOp:    "1", // Above
 			matchType:    "1", // Once
-			target:       200,
+			target:       200, // 200 GB
 		},
 	}
 
