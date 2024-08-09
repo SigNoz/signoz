@@ -2810,7 +2810,7 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 
 	apiErr := aH.reader.UpdateLogField(r.Context(), &field)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to update filed in the DB")
+		RespondError(w, apiErr, "Failed to update field in the DB")
 		return
 	}
 	aH.WriteJSON(w, r, field)
