@@ -1,6 +1,8 @@
 package clickhouseReader
 
 import (
+	"fmt"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
@@ -49,11 +51,16 @@ func (tracker *InMemoryQueryProgressTracker) ReportQueryStarted(
 func (tracker *InMemoryQueryProgressTracker) ReportQueryProgress(
 	queryId string, chProgress *clickhouse.Progress,
 ) *model.ApiError {
-	return nil
+	return model.NotFoundError(fmt.Errorf(
+		"query %s doesn't exist", queryId,
+	))
 }
 
 func (tracker *InMemoryQueryProgressTracker) SubscribeToQueryProgress(
 	queryId string,
 ) (<-chan QueryProgress, *model.ApiError) {
-	return make(<-chan QueryProgress), nil
+	return nil, model.NotFoundError(fmt.Errorf(
+		"query %s doesn't exist", queryId,
+	))
+
 }
