@@ -98,6 +98,9 @@ type ThresholdRule struct {
 	querier interfaces.Querier
 	// querierV2 is used for alerts created after the introduction of new metrics query builder
 	querierV2 interfaces.Querier
+
+	reader    interfaces.Reader
+	evalDelay time.Duration
 }
 
 type ThresholdRuleOpts struct {
@@ -109,6 +112,12 @@ type ThresholdRuleOpts struct {
 	// sendAlways will send alert irresepective of resendDelay
 	// or other params
 	SendAlways bool
+
+	// EvalDelay is the time to wait for data to be available
+	// before evaluating the rule. This is useful in scenarios
+	// where data might not be available in the system immediately
+	// after the timestamp.
+	EvalDelay time.Duration
 }
 
 func NewThresholdRule(
@@ -118,6 +127,8 @@ func NewThresholdRule(
 	featureFlags interfaces.FeatureLookup,
 	reader interfaces.Reader,
 ) (*ThresholdRule, error) {
+
+	zap.L().Info("creating new ThresholdRule", zap.String("id", id), zap.Any("opts", opts))
 
 	if p.RuleCondition == nil {
 		return nil, fmt.Errorf("no rule condition")
@@ -140,6 +151,7 @@ func NewThresholdRule(
 		typ:               p.AlertType,
 		version:           p.Version,
 		temporalityMap:    make(map[string]map[v3.Temporality]bool),
+		evalDelay:         opts.EvalDelay,
 	}
 
 	if int64(t.evalWindow) == 0 {
@@ -162,6 +174,7 @@ func NewThresholdRule(
 
 	t.querier = querier.NewQuerier(querierOption)
 	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
+	t.reader = reader
 
 	zap.L().Info("creating new ThresholdRule", zap.String("name", t.name), zap.String("id", t.id))
 
@@ -188,13 +201,22 @@ func (r *ThresholdRule) PreferredChannels() []string {
 	return r.preferredChannels
 }
 
+// targetVal returns the target value for the rule condition
+// when the y-axis and target units are non-empty, it
+// converts the target value to the y-axis unit
 func (r *ThresholdRule) targetVal() float64 {
 	if r.ruleCondition == nil || r.ruleCondition.Target == nil {
 		return 0
 	}
 
+	// get the converter for the target unit
 	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
-	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
+	// convert the target value to the y-axis unit
+	value := unitConverter.Convert(converter.Value{
+		F: *r.ruleCondition.Target,
+		U: converter.Unit(r.ruleCondition.TargetUnit),
+	}, converter.Unit(r.Unit()))
+
 	return value.F
 }
 
@@ -290,8 +312,6 @@ func (r *ThresholdRule) GetEvaluationTimestamp() time.Time {
 // StateFiring > StatePending > StateInactive
 func (r *ThresholdRule) State() AlertState {
 
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
 	maxState := StateInactive
 	for _, a := range r.active {
 		if a.State > maxState {
@@ -379,9 +399,14 @@ func (r *ThresholdRule) populateTemporality(ctx context.Context, qp *v3.QueryRan
 		}
 	}
 
-	nameToTemporality, err := r.FetchTemporality(ctx, missingTemporality, ch)
-	if err != nil {
-		return err
+	var nameToTemporality map[string]map[v3.Temporality]bool
+	var err error
+
+	if len(missingTemporality) > 0 {
+		nameToTemporality, err = r.FetchTemporality(ctx, missingTemporality, ch)
+		if err != nil {
+			return err
+		}
 	}
 
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
@@ -444,11 +469,14 @@ func (r *ThresholdRule) Unit() string {
 
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 
-	// todo(srikanthccv): make this configurable
-	// 2 minutes is reasonable time to wait for data to be available
-	// 60 seconds (SDK) + 10 seconds (batch) + rest for n/w + serialization + write to disk etc..
-	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 2*60*1000
-	end := ts.UnixMilli() - 2*60*1000
+	zap.L().Info("prepareQueryRange", zap.Int64("ts", ts.UnixMilli()), zap.Int64("evalWindow", r.evalWindow.Milliseconds()), zap.Int64("evalDelay", r.evalDelay.Milliseconds()))
+
+	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli()
+	end := ts.UnixMilli()
+	if r.evalDelay > 0 {
+		start = start - int64(r.evalDelay.Milliseconds())
+		end = end - int64(r.evalDelay.Milliseconds())
+	}
 	// round to minute otherwise we could potentially miss data
 	start = start - (start % (60 * 1000))
 	end = end - (end % (60 * 1000))
@@ -873,6 +901,8 @@ func normalizeLabelName(name string) string {
 
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
+	prevState := r.State()
+
 	valueFormatter := formatter.FromUnit(r.Unit())
 	res, err := r.buildAndRunQuery(ctx, ts, queriers.Ch)
 
@@ -896,8 +926,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
-		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
-		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
+		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
 		zap.L().Debug("Alert template data for rule", zap.String("name", r.Name()), zap.String("formatter", valueFormatter.Name()), zap.String("value", value), zap.String("threshold", threshold))
 
 		tmplData := AlertTemplateData(l, value, threshold)
@@ -979,6 +1008,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			Value:        smpl.V,
 			GeneratorURL: r.GeneratorURL(),
 			Receivers:    r.preferredChannels,
+			Missing:      smpl.IsMissing,
 		}
 	}
 
@@ -1000,8 +1030,14 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 	}
 
+	itemsToAdd := []v3.RuleStateHistory{}
+
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.active {
+		labelsJSON, err := json.Marshal(a.Labels)
+		if err != nil {
+			zap.L().Error("error marshaling labels", zap.Error(err), zap.Any("labels", a.Labels))
+		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
@@ -1011,6 +1047,15 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			if a.State != StateInactive {
 				a.State = StateInactive
 				a.ResolvedAt = ts
+				itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
+					RuleID:       r.ID(),
+					RuleName:     r.Name(),
+					State:        "normal",
+					StateChanged: true,
+					UnixMilli:    ts.UnixMilli(),
+					Labels:       v3.LabelsString(labelsJSON),
+					Fingerprint:  a.Labels.Hash(),
+				})
 			}
 			continue
 		}
@@ -1018,8 +1063,46 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		if a.State == StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
 			a.State = StateFiring
 			a.FiredAt = ts
+			state := "firing"
+			if a.Missing {
+				state = "no_data"
+			}
+			itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
+				RuleID:       r.ID(),
+				RuleName:     r.Name(),
+				State:        state,
+				StateChanged: true,
+				UnixMilli:    ts.UnixMilli(),
+				Labels:       v3.LabelsString(labelsJSON),
+				Fingerprint:  a.Labels.Hash(),
+				Value:        a.Value,
+			})
 		}
+	}
 
+	currentState := r.State()
+
+	if currentState != prevState {
+		for idx := range itemsToAdd {
+			if currentState == StateInactive {
+				itemsToAdd[idx].OverallState = "normal"
+			} else {
+				itemsToAdd[idx].OverallState = currentState.String()
+			}
+			itemsToAdd[idx].OverallStateChanged = true
+		}
+	} else {
+		for idx := range itemsToAdd {
+			itemsToAdd[idx].OverallState = currentState.String()
+			itemsToAdd[idx].OverallStateChanged = false
+		}
+	}
+
+	if len(itemsToAdd) > 0 && r.reader != nil {
+		err := r.reader.AddRuleStateHistory(ctx, itemsToAdd)
+		if err != nil {
+			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
+		}
 	}
 	r.health = HealthGood
 	r.lastError = err

@@ -10,6 +10,7 @@ import {
 	TableProps,
 	Typography,
 } from 'antd';
+import logEvent from 'api/common/logEvent';
 import {
 	getViewDetailsUsingViewKey,
 	showErrorNotification,
@@ -30,7 +31,7 @@ import {
 	Trash2,
 	X,
 } from 'lucide-react';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -143,6 +144,22 @@ function SaveView(): JSX.Element {
 		viewName: newViewName,
 	});
 
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isLoading) {
+			if (sourcepage === DataSource.TRACES) {
+				logEvent('Traces Views: Views visited', {
+					number: viewsData?.data?.data?.length,
+				});
+			} else if (sourcepage === DataSource.LOGS) {
+				logEvent('Logs Views: Views visited', {
+					number: viewsData?.data?.data?.length,
+				});
+			}
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [viewsData?.data.data, isLoading]);
 	const onUpdateQueryHandler = (): void => {
 		updateViewAsync(
 			{
@@ -277,6 +294,8 @@ function SaveView(): JSX.Element {
 		},
 	];
 
+	const paginationConfig = { pageSize: 5, hideOnSinglePage: true };
+
 	return (
 		<div className="save-view-container">
 			<div className="save-view-content">
@@ -303,7 +322,7 @@ function SaveView(): JSX.Element {
 					dataSource={dataSource}
 					loading={isLoading || isRefetching}
 					showHeader={false}
-					pagination={{ pageSize: 5 }}
+					pagination={paginationConfig}
 				/>
 			</div>
 

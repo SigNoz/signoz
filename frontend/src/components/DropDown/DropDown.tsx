@@ -5,7 +5,13 @@ import { Button, Dropdown, MenuProps } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useState } from 'react';
 
-function DropDown({ element }: { element: JSX.Element[] }): JSX.Element {
+function DropDown({
+	element,
+	onDropDownItemClick,
+}: {
+	element: JSX.Element[];
+	onDropDownItemClick?: MenuProps['onClick'];
+}): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const items: MenuProps['items'] = element.map(
@@ -23,6 +29,7 @@ function DropDown({ element }: { element: JSX.Element[] }): JSX.Element {
 				items,
 				onMouseEnter: (): void => setDdOpen(true),
 				onMouseLeave: (): void => setDdOpen(false),
+				onClick: (item): void => onDropDownItemClick?.(item),
 			}}
 			open={isDdOpen}
 		>
@@ -39,5 +46,9 @@ function DropDown({ element }: { element: JSX.Element[] }): JSX.Element {
 		</Dropdown>
 	);
 }
+
+DropDown.defaultProps = {
+	onDropDownItemClick: (): void => {},
+};
 
 export default DropDown;

@@ -55,6 +55,10 @@ func GetAlertManagerApiPrefix() string {
 	return "http://alertmanager:9093/api/"
 }
 
+var TELEMETRY_HEART_BEAT_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_HEART_BEAT_DURATION_MINUTES", 720)
+
+var TELEMETRY_ACTIVE_USER_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_ACTIVE_USER_DURATION_MINUTES", 360)
+
 var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email_template.html")
 
 // Alert manager channel subpath
@@ -148,6 +152,15 @@ func GetContextTimeoutMaxAllowed() time.Duration {
 	return contextTimeoutDuration
 }
 
+func GetEvalDelay() time.Duration {
+	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
+	evalDelayDuration, err := time.ParseDuration(evalDelayStr)
+	if err != nil {
+		return 0
+	}
+	return evalDelayDuration
+}
+
 var ContextTimeoutMaxAllowed = GetContextTimeoutMaxAllowed()
 
 const (
@@ -230,6 +243,18 @@ func GetOrDefaultEnv(key string, fallback string) string {
 		return fallback
 	}
 	return v
+}
+
+func GetOrDefaultEnvInt(key string, fallback int) int {
+	v := os.Getenv(key)
+	if len(v) == 0 {
+		return fallback
+	}
+	intVal, err := strconv.Atoi(v)
+	if err != nil {
+		return fallback
+	}
+	return intVal
 }
 
 const (
@@ -391,3 +416,5 @@ var TracesListViewDefaultSelectedColumns = []v3.AttributeKey{
 		IsColumn: true,
 	},
 }
+
+const DefaultFilterSuggestionsLimit = 100

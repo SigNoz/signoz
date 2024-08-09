@@ -25,6 +25,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
@@ -62,6 +63,8 @@ type ManagerOptions struct {
 	DisableRules bool
 	FeatureFlags interfaces.FeatureLookup
 	Reader       interfaces.Reader
+
+	EvalDelay time.Duration
 }
 
 // The Manager manages recording and alerting rules.
@@ -111,6 +114,8 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 	}
 
 	db := NewRuleDB(o.DBConn)
+
+	telemetry.GetInstance().SetAlertsInfoCallback(db.GetAlertsInfo)
 
 	m := &Manager{
 		tasks:        map[string]Task{},
@@ -521,7 +526,9 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		tr, err := NewThresholdRule(
 			ruleId,
 			r,
-			ThresholdRuleOpts{},
+			ThresholdRuleOpts{
+				EvalDelay: m.opts.EvalDelay,
+			},
 			m.featureFlags,
 			m.reader,
 		)
@@ -546,6 +553,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 			r,
 			log.With(m.logger, "alert", r.AlertName),
 			PromRuleOpts{},
+			m.reader,
 		)
 
 		if err != nil {
@@ -905,6 +913,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 			PromRuleOpts{
 				SendAlways: true,
 			},
+			m.reader,
 		)
 
 		if err != nil {

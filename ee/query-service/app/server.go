@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	_ "net/http/pprof" // http profiler
 	"os"
 	"regexp"
@@ -28,6 +28,8 @@ import (
 	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/migrate"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
@@ -41,6 +43,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
@@ -64,7 +67,6 @@ type ServerOptions struct {
 	// alert specific params
 	DisableRules      bool
 	RuleRepoURL       string
-	PreferDelta       bool
 	PreferSpanMetrics bool
 	MaxIdleConns      int
 	MaxOpenConns      int
@@ -111,6 +113,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	baseexplorer.InitWithDSN(baseconst.RELATIONAL_DATASOURCE_PATH)
 
+	if err := preferences.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH); err != nil {
+		return nil, err
+	}
+
 	localDB, err := dashboards.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
 
 	if err != nil {
@@ -119,33 +125,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	localDB.SetMaxOpenConns(10)
 
-	gatewayFeature := basemodel.Feature{
-		Name:       "GATEWAY",
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	}
-
-	//Activate this feature if the url is not empty
-	var gatewayProxy *httputil.ReverseProxy
-	if serverOptions.GatewayUrl == "" {
-		gatewayFeature.Active = false
-		gatewayProxy, err = gateway.NewNoopProxy()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		zap.L().Info("Enabling gateway feature flag ...")
-		gatewayFeature.Active = true
-		gatewayProxy, err = gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
-		if err != nil {
-			return nil, err
-		}
+	gatewayProxy, err := gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
+	if err != nil {
+		return nil, err
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", localDB, gatewayFeature)
+	lm, err := licensepkg.StartManager("sqlite", localDB)
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +179,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	go func() {
+		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
+		if err != nil {
+			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
+		}
+	}()
 
 	// initiate opamp
 	_, err = opAmpModel.InitDB(localDB)
@@ -256,7 +249,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:                 reader,
 		SkipConfig:                    skipConfig,
-		PreferDelta:                   serverOptions.PreferDelta,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
 		MaxIdleConns:                  serverOptions.MaxIdleConns,
 		MaxOpenConns:                  serverOptions.MaxOpenConns,
@@ -342,7 +334,17 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 
 	// add auth middleware
 	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
-		return auth.GetUserFromRequest(r, apiHandler)
+		user, err := auth.GetUserFromRequest(r, apiHandler)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if user.User.OrgId == "" {
+			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
+		}
+
+		return user, nil
 	}
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
@@ -734,6 +736,7 @@ func makeRulesManager(
 		DisableRules: disableRules,
 		FeatureFlags: fm,
 		Reader:       ch,
+		EvalDelay:    baseconst.GetEvalDelay(),
 	}
 
 	// create Manager

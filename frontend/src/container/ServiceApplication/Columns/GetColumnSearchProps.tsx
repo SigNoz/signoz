@@ -33,10 +33,12 @@ export const getColumnSearchProps = (
 		record: ServicesList,
 	): boolean => {
 		if (record[dataIndex]) {
-			record[dataIndex]
-				?.toString()
-				.toLowerCase()
-				.includes(value.toString().toLowerCase());
+			return (
+				record[dataIndex]
+					?.toString()
+					.toLowerCase()
+					.includes(value.toString().toLowerCase()) || false
+			);
 		}
 
 		return false;
