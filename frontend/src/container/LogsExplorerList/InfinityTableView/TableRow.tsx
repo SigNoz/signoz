@@ -73,6 +73,22 @@ export default function TableRow({
 				const children = elementWithChildren.children as ReactElement;
 				const props = elementWithChildren.props as Record<string, unknown>;
 
+				const isBody = column.key === 'body';
+				const isTimestamp = column.key === 'timestamp';
+
+				if (isTimestamp || isBody) {
+					return (
+						<td
+							key={column.key}
+							className={`${isTimestamp ? 'log-timestamp' : 'log-body'}`}
+						>
+							{cloneElement(children, props)}
+						</td>
+					);
+				}
+
+				// Setting the width of body column to 500px to maintain the consistency and reduce layout shift due to body content change
+
 				return (
 					<TableCellStyled
 						$isDragColumn={false}
@@ -84,11 +100,13 @@ export default function TableRow({
 				);
 			})}
 			{hasActions && isLogsExplorerPage && (
-				<LogLinesActionButtons
-					handleShowContext={handleShowContext}
-					onLogCopy={onLogCopy}
-					customClassName="table-view-log-actions"
-				/>
+				<div className="log-actions">
+					<LogLinesActionButtons
+						handleShowContext={handleShowContext}
+						onLogCopy={onLogCopy}
+						customClassName="table-view-log-actions"
+					/>
+				</div>
 			)}
 		</>
 	);
