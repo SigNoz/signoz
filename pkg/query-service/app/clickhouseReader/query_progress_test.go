@@ -2,6 +2,7 @@ package clickhouseReader
 
 import (
 	"testing"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/stretchr/testify/require"
@@ -26,9 +27,16 @@ func TestQueryProgress(t *testing.T) {
 	require.Nil(ch)
 
 	postQueryCleanup, err := tracker.ReportQueryStarted(testQueryId)
-	require.NotNil(err, "should be able to report start of a query to be tracked")
+	require.Nil(err, "should be able to report start of a query to be tracked")
 
-	// should be able to report progress after query has started
+	testProgress1 := &clickhouse.Progress{
+		Rows:      10,
+		Bytes:     20,
+		TotalRows: 100,
+		Elapsed:   20 * time.Millisecond,
+	}
+	err = tracker.ReportQueryProgress(testQueryId, testProgress1)
+	require.Nil(err, "should be able to report progress after query has started")
 
 	// should be able to subscribe to query progress updates
 
