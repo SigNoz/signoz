@@ -87,6 +87,7 @@ func ClickHouseMigrate(conn driver.Conn, cluster string) error {
 
 	localTable := `CREATE TABLE IF NOT EXISTS signoz_analytics.rule_state_history ON CLUSTER %s
 (
+	_retention_days UInt32 DEFAULT 180,
     rule_id LowCardinality(String),
     rule_name LowCardinality(String),
     overall_state LowCardinality(String),
@@ -101,7 +102,7 @@ func ClickHouseMigrate(conn driver.Conn, cluster string) error {
 ENGINE = MergeTree
 PARTITION BY toDate(unix_milli / 1000)
 ORDER BY (rule_id, unix_milli)
-TTL toDateTime(unix_milli / 1000) + toIntervalSecond(15552000)
+TTL toDateTime(unix_milli / 1000) + toIntervalDay(_retention_days)
 SETTINGS ttl_only_drop_parts = 1, index_granularity = 8192`
 
 	distributedTable := `CREATE TABLE IF NOT EXISTS signoz_analytics.distributed_rule_state_history ON CLUSTER %s

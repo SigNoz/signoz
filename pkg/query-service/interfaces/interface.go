@@ -93,6 +93,10 @@ type Reader interface {
 	GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error)
 	GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error)
 	GetUsers(ctx context.Context) ([]model.UserPayload, error)
+	GetQBFilterSuggestionsForLogs(
+		ctx context.Context,
+		req *v3.QBFilterSuggestionsRequest,
+	) (*v3.QBFilterSuggestionsResponse, *model.ApiError)
 
 	// Connection needed for rules, not ideal but required
 	GetConn() clickhouse.Conn

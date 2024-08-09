@@ -534,7 +534,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 	if len(itemsToAdd) > 0 && r.reader != nil {
 		err := r.reader.AddRuleStateHistory(ctx, itemsToAdd)
 		if err != nil {
-			zap.L().Error("error adding to itemsToAdd", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
+			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
 		}
 	}
 

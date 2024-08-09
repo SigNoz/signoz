@@ -76,7 +76,8 @@ type ThresholdRule struct {
 	querier   interfaces.Querier
 	querierV2 interfaces.Querier
 
-	reader interfaces.Reader
+	reader    interfaces.Reader
+	evalDelay time.Duration
 }
 
 type ThresholdRuleOpts struct {
@@ -88,6 +89,12 @@ type ThresholdRuleOpts struct {
 	// sendAlways will send alert irresepective of resendDelay
 	// or other params
 	SendAlways bool
+
+	// EvalDelay is the time to wait for data to be available
+	// before evaluating the rule. This is useful in scenarios
+	// where data might not be available in the system immediately
+	// after the timestamp.
+	EvalDelay time.Duration
 }
 
 func NewThresholdRule(
@@ -97,6 +104,8 @@ func NewThresholdRule(
 	featureFlags interfaces.FeatureLookup,
 	reader interfaces.Reader,
 ) (*ThresholdRule, error) {
+
+	zap.L().Info("creating new ThresholdRule", zap.String("id", id), zap.Any("opts", opts))
 
 	if p.RuleCondition == nil {
 		return nil, fmt.Errorf("no rule condition")
@@ -119,6 +128,7 @@ func NewThresholdRule(
 		typ:               p.AlertType,
 		version:           p.Version,
 		temporalityMap:    make(map[string]map[v3.Temporality]bool),
+		evalDelay:         opts.EvalDelay,
 	}
 
 	if int64(t.evalWindow) == 0 {
@@ -403,7 +413,6 @@ func (r *ThresholdRule) ForEachActiveAlert(f func(*Alert)) {
 }
 
 func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
-	zap.L().Info("sending alerts", zap.String("rule", r.Name()))
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
 		if r.opts.SendAlways || alert.needsSending(ts, resendDelay) {
@@ -432,11 +441,14 @@ func (r *ThresholdRule) Unit() string {
 
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 
-	// todo(srikanthccv): make this configurable
-	// 2 minutes is reasonable time to wait for data to be available
-	// 60 seconds (SDK) + 10 seconds (batch) + rest for n/w + serialization + write to disk etc..
-	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 2*60*1000
-	end := ts.UnixMilli() - 2*60*1000
+	zap.L().Info("prepareQueryRange", zap.Int64("ts", ts.UnixMilli()), zap.Int64("evalWindow", r.evalWindow.Milliseconds()), zap.Int64("evalDelay", r.evalDelay.Milliseconds()))
+
+	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli()
+	end := ts.UnixMilli()
+	if r.evalDelay > 0 {
+		start = start - int64(r.evalDelay.Milliseconds())
+		end = end - int64(r.evalDelay.Milliseconds())
+	}
 	// round to minute otherwise we could potentially miss data
 	start = start - (start % (60 * 1000))
 	end = end - (end % (60 * 1000))
@@ -1063,7 +1075,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 	if len(itemsToAdd) > 0 && r.reader != nil {
 		err := r.reader.AddRuleStateHistory(ctx, itemsToAdd)
 		if err != nil {
-			zap.L().Error("error adding to itemsToAdd", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
+			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
 		}
 	}
 	r.health = HealthGood

@@ -183,7 +183,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	go func() {
 		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
 		if err != nil {
-			zap.L().Error("error creating history table", zap.Error(err))
+			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
 		}
 	}()
 
@@ -736,6 +736,7 @@ func makeRulesManager(
 		DisableRules: disableRules,
 		FeatureFlags: fm,
 		Reader:       ch,
+		EvalDelay:    baseconst.GetEvalDelay(),
 	}
 
 	// create Manager
