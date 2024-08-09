@@ -33,6 +33,7 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
+import { cloneDeep } from 'lodash-es';
 import {
 	Check,
 	ConciergeBell,
@@ -56,7 +57,7 @@ import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
@@ -120,6 +121,21 @@ function ExplorerOptions({
 
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
+	const handleConditionalQueryModification = useCallback((): string => {
+		if (
+			query?.builder?.queryData?.[0]?.aggregateOperator !== StringOperators.NOOP
+		) {
+			return JSON.stringify(query);
+		}
+
+		// Modify aggregateOperator to count, as noop is not supported in alerts
+		const modifiedQuery = cloneDeep(query);
+
+		modifiedQuery.builder.queryData[0].aggregateOperator = StringOperators.COUNT;
+
+		return JSON.stringify(modifiedQuery);
+	}, [query]);
+
 	const onCreateAlertsHandler = useCallback(() => {
 		if (sourcepage === DataSource.TRACES) {
 			logEvent('Traces Explorer: Create alert', {
@@ -130,13 +146,16 @@ function ExplorerOptions({
 				panelType,
 			});
 		}
+
+		const stringifiedQuery = handleConditionalQueryModification();
+
 		history.push(
 			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-				JSON.stringify(query),
+				stringifiedQuery,
 			)}`,
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [history, query]);
+	}, [handleConditionalQueryModification, history]);
 
 	const onCancel = (value: boolean) => (): void => {
 		onModalToggle(value);
