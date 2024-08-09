@@ -3,7 +3,7 @@ module go.signoz.io/signoz
 go 1.21.3
 
 require (
-	github.com/ClickHouse/clickhouse-go/v2 v2.20.0
+	github.com/ClickHouse/clickhouse-go/v2 v2.23.2
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
 	github.com/SigNoz/signoz-otel-collector v0.102.2
@@ -46,7 +46,7 @@ require (
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/soheilhy/cmux v0.1.5
-	github.com/srikanthccv/ClickHouse-go-mock v0.7.0
+	github.com/srikanthccv/ClickHouse-go-mock v0.8.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector/component v0.102.1
 	go.opentelemetry.io/collector/confmap v0.102.1
@@ -83,7 +83,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.6.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.8.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
-	github.com/ClickHouse/ch-go v0.61.3 // indirect
+	github.com/ClickHouse/ch-go v0.61.5 // indirect
 	github.com/alecthomas/units v0.0.0-20231202071711-9a357b53e9c9 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/aws/aws-sdk-go v1.53.16 // indirect
@@ -156,7 +156,7 @@ require (
 	github.com/segmentio/backo-go v1.0.1 // indirect
 	github.com/shirou/gopsutil/v3 v3.24.4 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
-	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/smarty/assertions v1.15.0 // indirect
 	github.com/spf13/cobra v1.8.0 // indirect

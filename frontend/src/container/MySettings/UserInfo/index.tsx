@@ -86,8 +86,11 @@ function UserInfo(): JSX.Element {
 
 				<Flex gap={16}>
 					<Space>
-						<Typography className="userInfo-label">Name</Typography>
+						<Typography className="userInfo-label" data-testid="name-label">
+							Name
+						</Typography>
 						<NameInput
+							data-testid="name-textbox"
 							placeholder="Your Name"
 							onChange={(event): void => {
 								setChangedName(event.target.value);
@@ -102,6 +105,7 @@ function UserInfo(): JSX.Element {
 						loading={loading}
 						disabled={loading}
 						onClick={onClickUpdateHandler}
+						data-testid="update-name-button"
 						type="primary"
 					>
 						<PencilIcon size={12} /> Update
@@ -109,13 +113,29 @@ function UserInfo(): JSX.Element {
 				</Flex>
 
 				<Space>
-					<Typography className="userInfo-label"> Email </Typography>
-					<Input className="userInfo-value" value={user.email} disabled />
+					<Typography className="userInfo-label" data-testid="email-label">
+						{' '}
+						Email{' '}
+					</Typography>
+					<Input
+						className="userInfo-value"
+						data-testid="email-textbox"
+						value={user.email}
+						disabled
+					/>
 				</Space>
 
 				<Space>
-					<Typography className="userInfo-label"> Role </Typography>
-					<Input className="userInfo-value" value={role || ''} disabled />
+					<Typography className="userInfo-label" data-testid="role-label">
+						{' '}
+						Role{' '}
+					</Typography>
+					<Input
+						className="userInfo-value"
+						value={role || ''}
+						disabled
+						data-testid="role-textbox"
+					/>
 				</Space>
 			</Space>
 		</Card>

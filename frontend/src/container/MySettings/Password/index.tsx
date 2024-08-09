@@ -90,18 +90,23 @@ function PasswordContainer(): JSX.Element {
 	return (
 		<Card>
 			<Space direction="vertical" size="small">
-				<Typography.Title level={4} style={{ marginTop: 0 }}>
+				<Typography.Title
+					level={4}
+					style={{ marginTop: 0 }}
+					data-testid="change-password-header"
+				>
 					{t('change_password', {
 						ns: 'settings',
 					})}
 				</Typography.Title>
 				<Space direction="vertical">
-					<Typography>
+					<Typography data-testid="current-password-label">
 						{t('current_password', {
 							ns: 'settings',
 						})}
 					</Typography>
 					<Password
+						data-testid="current-password-textbox"
 						disabled={isLoading}
 						placeholder={defaultPlaceHolder}
 						onChange={(event): void => {
@@ -111,12 +116,13 @@ function PasswordContainer(): JSX.Element {
 					/>
 				</Space>
 				<Space direction="vertical">
-					<Typography>
+					<Typography data-testid="new-password-label">
 						{t('new_password', {
 							ns: 'settings',
 						})}
 					</Typography>
 					<Password
+						data-testid="new-password-textbox"
 						disabled={isLoading}
 						placeholder={defaultPlaceHolder}
 						onChange={(event): void => {
@@ -129,6 +135,7 @@ function PasswordContainer(): JSX.Element {
 				<Space>
 					{isPasswordPolicyError && (
 						<Typography.Paragraph
+							data-testid="validation-message"
 							style={{
 								color: '#D89614',
 								marginTop: '0.50rem',
@@ -143,8 +150,13 @@ function PasswordContainer(): JSX.Element {
 					loading={isLoading}
 					onClick={onChangePasswordClickHandler}
 					type="primary"
+					data-testid="update-password-button"
 				>
-					<Save size={12} style={{ marginRight: '8px' }} />{' '}
+					<Save
+						size={12}
+						style={{ marginRight: '8px' }}
+						data-testid="update-password-icon"
+					/>{' '}
 					{t('change_password', {
 						ns: 'settings',
 					})}

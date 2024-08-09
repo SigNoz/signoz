@@ -63,6 +63,8 @@ type ManagerOptions struct {
 	DisableRules bool
 	FeatureFlags interfaces.FeatureLookup
 	Reader       interfaces.Reader
+
+	EvalDelay time.Duration
 }
 
 // The Manager manages recording and alerting rules.
@@ -524,7 +526,9 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		tr, err := NewThresholdRule(
 			ruleId,
 			r,
-			ThresholdRuleOpts{},
+			ThresholdRuleOpts{
+				EvalDelay: m.opts.EvalDelay,
+			},
 			m.featureFlags,
 			m.reader,
 		)

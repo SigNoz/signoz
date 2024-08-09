@@ -611,7 +611,7 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
+		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -697,7 +697,7 @@ func TestPrepareLinksToLogs(t *testing.T) {
 	}
 	fm := featureManager.StartManager()
 
-	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
+	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -739,7 +739,7 @@ func TestPrepareLinksToTraces(t *testing.T) {
 	}
 	fm := featureManager.StartManager()
 
-	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
+	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -815,7 +815,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
+		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -831,6 +831,55 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 		}
 
 		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
+	}
+}
+
+func TestThresholdRuleEvalDelay(t *testing.T) {
+	postableRule := PostableRule{
+		AlertName:  "Test Eval Delay",
+		AlertType:  "METRIC_BASED_ALERT",
+		RuleType:   RuleTypeThreshold,
+		EvalWindow: Duration(5 * time.Minute),
+		Frequency:  Duration(1 * time.Minute),
+		RuleCondition: &RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeClickHouseSQL,
+				ClickHouseQueries: map[string]*v3.ClickHouseQuery{
+					"A": {
+						Query: "SELECT 1 >= {{.start_timestamp_ms}} AND 1 <= {{.end_timestamp_ms}}",
+					},
+				},
+			},
+		},
+	}
+
+	// 01:39:47
+	ts := time.Unix(1717205987, 0)
+
+	cases := []struct {
+		expectedQuery string
+	}{
+		// Test cases for Equals Always
+		{
+			// 01:34:00 - 01:39:00
+			expectedQuery: "SELECT 1 >= 1717205640000 AND 1 <= 1717205940000",
+		},
+	}
+
+	fm := featureManager.StartManager()
+	for idx, c := range cases {
+		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil) // no eval delay
+		if err != nil {
+			assert.NoError(t, err)
+		}
+
+		params := rule.prepareQueryRange(ts)
+
+		assert.Equal(t, c.expectedQuery, params.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
+
+		secondTimeParams := rule.prepareQueryRange(ts)
+
+		assert.Equal(t, c.expectedQuery, secondTimeParams.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
 	}
 }
 
@@ -868,7 +917,7 @@ func TestThresholdRuleClickHouseTmpl(t *testing.T) {
 
 	fm := featureManager.StartManager()
 	for idx, c := range cases {
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
+		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
 		if err != nil {
 			assert.NoError(t, err)
 		}

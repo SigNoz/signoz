@@ -714,6 +714,7 @@ func makeRulesManager(
 		DisableRules: disableRules,
 		FeatureFlags: fm,
 		Reader:       ch,
+		EvalDelay:    constants.GetEvalDelay(),
 	}
 
 	// create Manager

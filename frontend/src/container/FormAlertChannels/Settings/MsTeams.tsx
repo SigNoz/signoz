@@ -17,6 +17,7 @@ function MsTeams({ setSelectedConfig }: MsTeamsProps): JSX.Element {
 							webhook_url: event.target.value,
 						}));
 					}}
+					data-testid="webhook-url-textbox"
 				/>
 			</Form.Item>
 
@@ -30,6 +31,7 @@ function MsTeams({ setSelectedConfig }: MsTeamsProps): JSX.Element {
 							title: event.target.value,
 						}))
 					}
+					data-testid="title-textarea"
 				/>
 			</Form.Item>
 
@@ -41,6 +43,7 @@ function MsTeams({ setSelectedConfig }: MsTeamsProps): JSX.Element {
 							text: event.target.value,
 						}))
 					}
+					data-testid="description-textarea"
 					placeholder={t('placeholder_slack_description')}
 				/>
 			</Form.Item>

@@ -127,7 +127,7 @@ func AddTimestampFilters(minTime int64, maxTime int64, params *v3.QueryRangePara
 	if compositeQuery == nil {
 		return
 	}
-	// Build queries for each builder query
+	// Build queries for each builder query and apply timestamp filter only if TraceID is present
 	for queryName, query := range compositeQuery.BuilderQueries {
 		if query.Expression != queryName && query.DataSource != v3.DataSourceTraces {
 			continue
