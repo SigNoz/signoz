@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './QueryBuilderSearchV2.styles.scss';
 
 import { Select, Spin, Tag, Tooltip } from 'antd';
@@ -6,6 +7,7 @@ import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
 import useDebounceValue from 'hooks/useDebounce';
+import { isEmpty, isUndefined } from 'lodash-es';
 import type { BaseSelectRef } from 'rc-select';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -70,6 +72,8 @@ function QueryBuilderSearchV2(
 	props: QueryBuilderSearchV2Props,
 ): React.ReactElement {
 	const { query, onChange, placeholder, className, suffixIcon } = props;
+
+	console.log(onChange);
 
 	const selectRef = useRef<BaseSelectRef>(null);
 
@@ -192,6 +196,7 @@ function QueryBuilderSearchV2(
 					value: '',
 				}));
 				setCurrentState(DropdownState.OPERATOR);
+				setSearchValue((value as BaseAutocompleteData).key);
 			}
 
 			if (currentState === DropdownState.OPERATOR) {
@@ -201,6 +206,7 @@ function QueryBuilderSearchV2(
 					value: '',
 				}));
 				setCurrentState(DropdownState.ATTRIBUTE_VALUE);
+				setSearchValue((prev) => prev + value);
 			}
 
 			if (currentState === DropdownState.ATTRIBUTE_VALUE) {
@@ -218,8 +224,9 @@ function QueryBuilderSearchV2(
 						value,
 					} as ITag,
 				]);
-
+				// handle the multi tag thing here while adding the values or creating the tag
 				setCurrentState(DropdownState.ATTRIBUTE_KEY);
+				setSearchValue('');
 			}
 		},
 		[currentFilterItem, currentState],
@@ -239,9 +246,12 @@ function QueryBuilderSearchV2(
 
 	const handleOnBlur = useCallback((): void => {}, []);
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
+	// this useEffect takes care of tokenisation based on the search state
 	useEffect(() => {
-		if (currentState === DropdownState.ATTRIBUTE_KEY) {
+		const { tagKey, tagOperator } = getTagToken(searchValue);
+
+		console.log(tagKey, tagOperator, searchValue, currentFilterItem);
+		if (tagKey && isUndefined(currentFilterItem?.key)) {
 			let currentRunningAttributeKey;
 			const isSuggestedKeyInAutocomplete = data?.payload?.attributeKeys?.some(
 				(value) => value.key === searchValue,
@@ -286,21 +296,27 @@ function QueryBuilderSearchV2(
 				setCurrentState(DropdownState.OPERATOR);
 			}
 		}
-		if (currentState === DropdownState.OPERATOR) {
-			const { tagOperator } = getTagToken(searchValue);
 
-			if (tagOperator) {
-				setCurrentFilterItem((prev) => ({
-					key: prev?.key as BaseAutocompleteData,
-					operator: tagOperator,
-					value: '',
-				}));
+		if (tagOperator && isEmpty(currentFilterItem?.operator)) {
+			setCurrentFilterItem((prev) => ({
+				key: prev?.key as BaseAutocompleteData,
+				operator: tagOperator,
+				value: '',
+			}));
 
-				setCurrentState(DropdownState.ATTRIBUTE_VALUE);
-			}
+			setCurrentState(DropdownState.ATTRIBUTE_VALUE);
 		}
-	}, [currentState, data?.payload?.attributeKeys, searchValue]);
 
+		// handle value changes here
+	}, [
+		currentFilterItem,
+		currentFilterItem?.key,
+		currentFilterItem?.operator,
+		data?.payload?.attributeKeys,
+		searchValue,
+	]);
+
+	// the useEffect takes care of setting the dropdown values correctly on change of the current state
 	useEffect(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
 			setDropdownOptions(
@@ -367,7 +383,7 @@ function QueryBuilderSearchV2(
 	]);
 
 	// useEffect(() => {
-	// 	// TODO update this
+	// 	// TODO handle the query update from the tags state here
 	// 	onChange((tags as unknown) as TagFilter);
 	// }, [onChange, tags]);
 
