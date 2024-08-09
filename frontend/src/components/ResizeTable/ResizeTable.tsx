@@ -65,6 +65,7 @@ function ResizeTable({
 			...restProps,
 			components: { header: { cell: ResizableHeader } },
 			columns: mergedColumns,
+			sticky: true,
 		};
 
 		set(

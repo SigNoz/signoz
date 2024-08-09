@@ -70,20 +70,13 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                 class="ant-table-container"
               >
                 <div
-                  class="ant-table-content"
-                  style="overflow-x: auto; overflow-y: hidden;"
+                  class="ant-table-header ant-table-sticky-holder"
+                  style="overflow: hidden; top: 0px;"
                 >
                   <table
-                    style="width: auto; min-width: 100%; table-layout: fixed;"
+                    style="table-layout: fixed; visibility: hidden;"
                   >
-                    <colgroup>
-                      <col
-                        style="width: 145px;"
-                      />
-                      <col
-                        style="width: 145px;"
-                      />
-                    </colgroup>
+                    <colgroup />
                     <thead
                       class="ant-table-thead"
                     >
@@ -222,6 +215,23 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         </th>
                       </tr>
                     </thead>
+                  </table>
+                </div>
+                <div
+                  class="ant-table-body"
+                  style="overflow-x: auto; overflow-y: hidden;"
+                >
+                  <table
+                    style="width: auto; min-width: 100%; table-layout: fixed;"
+                  >
+                    <colgroup>
+                      <col
+                        style="width: 145px;"
+                      />
+                      <col
+                        style="width: 145px;"
+                      />
+                    </colgroup>
                     <tbody
                       class="ant-table-tbody"
                     >

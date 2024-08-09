@@ -38,9 +38,9 @@ describe('ServicesTraces', () => {
 		const secondServiceName = await screen.findByText(/TestCustomerService/i);
 		expect(secondServiceName).toBeInTheDocument();
 		const allRow = screen.getAllByRole('row');
-		expect(allRow).toHaveLength(3);
-		expect(allRow[1].innerHTML).toContain('TestService');
-		expect(allRow[2].innerHTML).toContain('TestCustomerService');
+		expect(allRow).toHaveLength(2);
+		expect(allRow[0].innerHTML).toContain('TestService');
+		expect(allRow[1].innerHTML).toContain('TestCustomerService');
 
 		const tableHeader = await screen.findAllByRole('columnheader');
 		expect(tableHeader).toHaveLength(4);
@@ -48,12 +48,12 @@ describe('ServicesTraces', () => {
 		fireEvent.click(tableHeader[1]);
 
 		const allSortedRowAsc = screen.getAllByRole('row');
-		expect(allSortedRowAsc).toHaveLength(3);
-		expect(allSortedRowAsc[1].innerHTML).toContain('TestService');
+		expect(allSortedRowAsc).toHaveLength(2);
+		expect(allSortedRowAsc[0].innerHTML).toContain('TestService');
 
 		fireEvent.click(tableHeader[1]);
 		const allSortedRowDsc = screen.getAllByRole('row');
-		expect(allSortedRowDsc).toHaveLength(3);
-		expect(allSortedRowDsc[1].innerHTML).toContain('TestCustomerService');
+		expect(allSortedRowDsc).toHaveLength(2);
+		expect(allSortedRowDsc[0].innerHTML).toContain('TestCustomerService');
 	});
 });
