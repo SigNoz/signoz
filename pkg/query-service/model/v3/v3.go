@@ -1040,8 +1040,8 @@ type LogsLiveTailClient struct {
 }
 
 type Series struct {
-	Labels      map[string]string   `json:"labels,omitempty"`
-	LabelsArray []map[string]string `json:"labelsArray,omitempty"`
+	Labels      map[string]string   `json:"labels"`
+	LabelsArray []map[string]string `json:"labelsArray"`
 	Points      []Point             `json:"values"`
 }
 
