@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import loginApi from 'api/user/login';
 import { Logout } from 'api/utils';
 import Spinner from 'components/Spinner';
@@ -77,6 +78,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			},
 		});
 		if (!isLoggedIn) {
+			setLocalStorageKey(LOCALSTORAGE.REDIRECT_URL, pathname);
 			history.push(ROUTES.LOGIN, { from: pathname });
 		}
 	};
