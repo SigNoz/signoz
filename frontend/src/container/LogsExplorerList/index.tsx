@@ -40,6 +40,7 @@ function LogsExplorerList({
 	onEndReached,
 	isError,
 	isFilterApplied,
+	errorData,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 	const { initialDataSource } = useQueryBuilder();
@@ -176,7 +177,7 @@ function LogsExplorerList({
 					<EmptyLogsSearch dataSource={DataSource.LOGS} panelType="LIST" />
 				)}
 
-			{isError && !isLoading && !isFetching && <LogsError />}
+			{isError && !isLoading && !isFetching && <LogsError errorData={errorData} />}
 
 			{!isLoading && !isError && logs.length > 0 && (
 				<>

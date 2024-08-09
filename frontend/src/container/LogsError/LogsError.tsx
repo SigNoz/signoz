@@ -7,7 +7,15 @@ import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
 import { isCloudUser } from 'utils/app';
 
-export default function LogsError(): JSX.Element {
+export interface QueryRangeErrorCauseType {
+	error: string;
+}
+
+export default function LogsError({
+	errorData,
+}: {
+	errorData?: Error | null;
+}): JSX.Element {
 	const handleContactSupport = (): void => {
 		if (isCloudUser()) {
 			history.push('/support');
@@ -15,6 +23,13 @@ export default function LogsError(): JSX.Element {
 			window.open('https://signoz.io/slack', '_blank');
 		}
 	};
+
+	let serverErrorMessage = null;
+
+	if (errorData && errorData.cause) {
+		serverErrorMessage = (errorData.cause as QueryRangeErrorCauseType).error;
+	}
+
 	return (
 		<div className="logs-error-container">
 			<div className="logs-error-content">
@@ -24,8 +39,14 @@ export default function LogsError(): JSX.Element {
 					className="error-state-svg"
 				/>
 				<Typography.Text>
-					<span className="aww-snap">Aw snap :/ </span> Something went wrong. Please
-					try again or contact support.
+					{serverErrorMessage ? (
+						<span className="server-error-message"> {serverErrorMessage}</span>
+					) : (
+						<>
+							<span className="aww-snap">Aw snap :/ </span> Something went wrong.
+							Please try again or contact support.
+						</>
+					)}
 				</Typography.Text>
 
 				<div className="contact-support" onClick={handleContactSupport}>
@@ -37,3 +58,7 @@ export default function LogsError(): JSX.Element {
 		</div>
 	);
 }
+
+LogsError.defaultProps = {
+	errorData: null,
+};
