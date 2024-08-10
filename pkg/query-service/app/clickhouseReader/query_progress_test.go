@@ -46,6 +46,7 @@ func TestQueryProgressTracking(t *testing.T) {
 
 	expectedProgress := QueryProgress{}
 	expectedProgress.update(testProgress1)
+	require.Equal(expectedProgress.ReadRows, testProgress1.Rows)
 	select {
 	case qp := <-ch:
 		require.Equal(qp, expectedProgress)
@@ -67,7 +68,7 @@ func TestQueryProgressTracking(t *testing.T) {
 	err = tracker.ReportQueryProgress(testQueryId, testProgress2)
 	require.Nil(err, "should be able to report progress multiple times while query is in progress")
 
-	expectedProgress.update(testProgress1)
+	expectedProgress.update(testProgress2)
 	select {
 	case qp := <-ch:
 		require.Equal(qp, expectedProgress)
