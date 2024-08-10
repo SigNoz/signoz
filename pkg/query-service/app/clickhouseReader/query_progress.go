@@ -66,7 +66,9 @@ func (tracker *InMemoryQueryProgressTracker) ReportQueryStarted(
 
 	tracker.queries[queryId] = NewQueryTracker()
 
-	return func() {}, nil
+	return func() {
+		tracker.onQueryFinished(queryId)
+	}, nil
 }
 
 func (tracker *InMemoryQueryProgressTracker) ReportQueryProgress(
@@ -113,6 +115,21 @@ func (tracker *InMemoryQueryProgressTracker) getQueryTracker(
 	return queryTracker, nil
 }
 
+func (tracker *InMemoryQueryProgressTracker) onQueryFinished(
+	queryId string,
+) {
+	queryTracker, err := tracker.getQueryTracker(queryId)
+	if err != nil {
+		zap.L().Error("onQueryFinished", zap.Error(err))
+	}
+
+	queryTracker.onFinished()
+
+	tracker.lock.Lock()
+	delete(tracker.queries, queryId)
+	tracker.lock.Unlock()
+}
+
 // Tracks progress and manages subscription for a single query
 type QueryTracker struct {
 	progress  QueryProgressState
@@ -123,6 +140,10 @@ func NewQueryTracker() *QueryTracker {
 	return &QueryTracker{
 		publisher: NewQueryProgressPublisher(),
 	}
+}
+
+func (qt *QueryTracker) onFinished() {
+	qt.publisher.onFinished()
 }
 
 // Concurrency safe QueryProgress state
@@ -152,13 +173,13 @@ func (qps *QueryProgressState) get() *QueryProgress {
 }
 
 type QueryProgressPublisher struct {
-	subscriptions map[string]chan QueryProgress
+	subscriptions map[string]*QueryProgressChannel
 	lock          sync.RWMutex
 }
 
 func NewQueryProgressPublisher() *QueryProgressPublisher {
 	return &QueryProgressPublisher{
-		subscriptions: map[string]chan QueryProgress{},
+		subscriptions: map[string]*QueryProgressChannel{},
 	}
 }
 
@@ -168,16 +189,15 @@ func (pub *QueryProgressPublisher) subscribe(latestProgress *QueryProgress) (
 	pub.lock.Lock()
 	defer pub.lock.Unlock()
 
-	ch := make(chan QueryProgress, 1000)
-
 	subscriberId := uuid.NewString()
+	ch := NewQueryProgressChannel()
 	pub.subscriptions[subscriberId] = ch
 
 	if latestProgress != nil {
-		pub.publishProgress(ch, *latestProgress)
+		ch.send(*latestProgress)
 	}
 
-	return ch, func() {
+	return ch.ch, func() {
 		pub.unsubscribe(subscriberId)
 	}
 }
@@ -188,7 +208,7 @@ func (pub *QueryProgressPublisher) unsubscribe(subscriberId string) {
 
 	ch := pub.subscriptions[subscriberId]
 	if ch != nil {
-		close(ch)
+		ch.close()
 		delete(pub.subscriptions, subscriberId)
 	}
 }
@@ -198,31 +218,67 @@ func (pub *QueryProgressPublisher) broadcast(qp *QueryProgress) {
 		return
 	}
 
-	for _, ch := range pub.subscriptionChannels() {
-		pub.publishProgress(ch, *qp)
-	}
-}
-
-func (pub *QueryProgressPublisher) subscriptionChannels() []chan<- QueryProgress {
 	pub.lock.RLock()
-	defer pub.lock.RUnlock()
+	channels := maps.Values(pub.subscriptions)
+	pub.lock.RUnlock()
 
-	channels := []chan<- QueryProgress{}
-	for _, ch := range maps.Values(pub.subscriptions) {
-		channels = append(channels, ch)
+	for _, ch := range channels {
+		ch.send(*qp)
 	}
-	return channels
 }
 
-// Must not block
-func (pub *QueryProgressPublisher) publishProgress(ch chan<- QueryProgress, progress QueryProgress) {
+func (pub *QueryProgressPublisher) onFinished() {
+	pub.lock.RLock()
+	channels := maps.Values(pub.subscriptions)
+	pub.lock.RUnlock()
+
+	for _, ch := range channels {
+		ch.close()
+	}
+
+}
+
+type QueryProgressChannel struct {
+	ch chan QueryProgress
+
+	isClosed bool
+	lock     sync.Mutex
+}
+
+func NewQueryProgressChannel() *QueryProgressChannel {
+	ch := make(chan QueryProgress, 1000)
+	return &QueryProgressChannel{
+		ch: ch,
+	}
+}
+
+// Must not block or panic in any scenario
+func (ch *QueryProgressChannel) send(progress QueryProgress) {
+	ch.lock.Lock()
+	defer ch.lock.Unlock()
+
+	if ch.isClosed {
+		zap.L().Error("can't send query progress: channel already closed.", zap.Any("progress", progress))
+		return
+	}
+
 	// subscription channels are expected to have big enough buffers to ensure
 	// blocking while sending doesn't happen in the happy path
 	select {
-	case ch <- progress:
+	case ch.ch <- progress:
 		zap.L().Debug("published query progess", zap.Any("progress", progress))
 	default:
 		zap.L().Error("couldn't publish query progess. dropping update.", zap.Any("progress", progress))
+	}
+}
+
+func (ch *QueryProgressChannel) close() {
+	ch.lock.Lock()
+	defer ch.lock.Unlock()
+
+	if !ch.isClosed {
+		close(ch.ch)
+		ch.isClosed = true
 	}
 }
 
