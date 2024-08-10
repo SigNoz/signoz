@@ -304,7 +304,7 @@ function QueryBuilderSearch({
 				className={cx(
 					className,
 					isLogsExplorerPage ? 'logs-popup' : '',
-					!showAllFilters && options.length > 3 ? 'hide-scroll' : '',
+					!showAllFilters && options.length > 3 && !key ? 'hide-scroll' : '',
 				)}
 				rootClassName="query-builder-search"
 				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
