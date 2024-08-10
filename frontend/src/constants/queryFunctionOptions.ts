@@ -24,6 +24,10 @@ export const metricQueryFunctionOptions: SelectOption<string, string>[] = [
 		label: 'Absolute',
 	},
 	{
+		value: QueryFunctionsTypes.RUNNING_DIFF,
+		label: 'Running Diff',
+	},
+	{
 		value: QueryFunctionsTypes.LOG_2,
 		label: 'Log2',
 	},
@@ -101,6 +105,9 @@ export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
 		placeholder: 'Threshold',
 	},
 	absolute: {
+		showInput: false,
+	},
+	runningDiff: {
 		showInput: false,
 	},
 	log2: {

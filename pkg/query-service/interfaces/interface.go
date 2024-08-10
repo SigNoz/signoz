@@ -93,6 +93,10 @@ type Reader interface {
 	GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error)
 	GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error)
 	GetUsers(ctx context.Context) ([]model.UserPayload, error)
+	GetQBFilterSuggestionsForLogs(
+		ctx context.Context,
+		req *v3.QBFilterSuggestionsRequest,
+	) (*v3.QBFilterSuggestionsResponse, *model.ApiError)
 
 	// Connection needed for rules, not ideal but required
 	GetConn() clickhouse.Conn
@@ -104,6 +108,14 @@ type Reader interface {
 
 	GetMetricMetadata(context.Context, string, string) (*v3.MetricMetadataResponse, error)
 
+	AddRuleStateHistory(ctx context.Context, ruleStateHistory []v3.RuleStateHistory) error
+	GetOverallStateTransitions(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateTransition, error)
+	ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistory, error)
+	GetTotalTriggers(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (uint64, error)
+	GetTriggersByInterval(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (*v3.Series, error)
+	GetAvgResolutionTime(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (float64, error)
+	GetAvgResolutionTimeByInterval(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (*v3.Series, error)
+	ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistoryContributor, error)
 	GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error)
 }
 

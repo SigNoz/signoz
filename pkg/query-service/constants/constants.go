@@ -152,6 +152,15 @@ func GetContextTimeoutMaxAllowed() time.Duration {
 	return contextTimeoutDuration
 }
 
+func GetEvalDelay() time.Duration {
+	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
+	evalDelayDuration, err := time.ParseDuration(evalDelayStr)
+	if err != nil {
+		return 0
+	}
+	return evalDelayDuration
+}
+
 var ContextTimeoutMaxAllowed = GetContextTimeoutMaxAllowed()
 
 const (
@@ -407,3 +416,5 @@ var TracesListViewDefaultSelectedColumns = []v3.AttributeKey{
 		IsColumn: true,
 	},
 }
+
+const DefaultFilterSuggestionsLimit = 100

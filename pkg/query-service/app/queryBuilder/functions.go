@@ -70,6 +70,22 @@ func funcAbsolute(result *v3.Result) *v3.Result {
 	return result
 }
 
+// funcRunningDiff returns the running difference of each point
+func funcRunningDiff(result *v3.Result) *v3.Result {
+	for _, series := range result.Series {
+		// iterate over the point in reverse order
+		for idx := len(series.Points) - 1; idx >= 0; idx-- {
+			if idx > 0 {
+				series.Points[idx].Value = series.Points[idx].Value - series.Points[idx-1].Value
+			}
+		}
+		// remove the first point
+		// the timerange is already adjusted in the query range
+		series.Points = series.Points[1:]
+	}
+	return result
+}
+
 // funcLog2 returns the log2 of each point
 func funcLog2(result *v3.Result) *v3.Result {
 	for _, series := range result.Series {
@@ -256,6 +272,8 @@ func ApplyFunction(fn v3.Function, result *v3.Result) *v3.Result {
 		}
 	case v3.FunctionNameAbsolute:
 		return funcAbsolute(result)
+	case v3.FunctionNameRunningDiff:
+		return funcRunningDiff(result)
 	case v3.FunctionNameLog2:
 		return funcLog2(result)
 	case v3.FunctionNameLog10:
