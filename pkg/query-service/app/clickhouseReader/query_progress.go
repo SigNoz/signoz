@@ -7,6 +7,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/google/uuid"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.uber.org/zap"
 )
 
 type QueryProgress struct {
@@ -70,14 +71,9 @@ func (tracker *InMemoryQueryProgressTracker) ReportQueryStarted(
 func (tracker *InMemoryQueryProgressTracker) ReportQueryProgress(
 	queryId string, chProgress *clickhouse.Progress,
 ) *model.ApiError {
-	tracker.lock.RLock()
-	defer tracker.lock.RUnlock()
-
-	queryTracker := tracker.queries[queryId]
-	if queryTracker == nil {
-		return model.NotFoundError(fmt.Errorf(
-			"query %s doesn't exist", queryId,
-		))
+	queryTracker, err := tracker.getQueryTracker(queryId)
+	if err != nil {
+		return err
 	}
 
 	queryTracker.progress.update(chProgress)
@@ -87,18 +83,31 @@ func (tracker *InMemoryQueryProgressTracker) ReportQueryProgress(
 func (tracker *InMemoryQueryProgressTracker) SubscribeToQueryProgress(
 	queryId string,
 ) (<-chan QueryProgress, func(), *model.ApiError) {
+	queryTracker, err := tracker.getQueryTracker(queryId)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	latestProgress := queryTracker.progress.get()
+	ch, unsubscribe := queryTracker.publisher.Subscribe(latestProgress)
+
+	return ch, unsubscribe, nil
+}
+
+func (tracker *InMemoryQueryProgressTracker) getQueryTracker(
+	queryId string,
+) (*QueryTracker, *model.ApiError) {
 	tracker.lock.RLock()
 	defer tracker.lock.RUnlock()
 
 	queryTracker := tracker.queries[queryId]
 	if queryTracker == nil {
-		return nil, nil, model.NotFoundError(fmt.Errorf(
+		return nil, model.NotFoundError(fmt.Errorf(
 			"query %s doesn't exist", queryId,
 		))
 	}
 
-	ch, unsubscribe := queryTracker.publisher.Subscribe()
-	return ch, unsubscribe, nil
+	return queryTracker, nil
 }
 
 // Tracks progress and manages subscription for a single query
@@ -115,7 +124,7 @@ func NewQueryTracker() *QueryTracker {
 
 // Concurrency safe QueryProgress state
 type QueryProgressState struct {
-	progress QueryProgress
+	progress *QueryProgress
 	lock     sync.RWMutex
 }
 
@@ -123,10 +132,16 @@ func (qps *QueryProgressState) update(chProgress *clickhouse.Progress) {
 	qps.lock.Lock()
 	defer qps.lock.Unlock()
 
+	if qps.progress == nil {
+		// This is the first update
+		qps.progress = &QueryProgress{}
+	}
+
 	qps.progress.update(chProgress)
 }
 
-func (qps *QueryProgressState) get() QueryProgress {
+// query progress will be nil before the 1st call to update
+func (qps *QueryProgressState) get() *QueryProgress {
 	qps.lock.RLock()
 	defer qps.lock.RUnlock()
 
@@ -144,7 +159,7 @@ func NewQueryProgressPublisher() *QueryProgressPublisher {
 	}
 }
 
-func (pub *QueryProgressPublisher) Subscribe() (
+func (pub *QueryProgressPublisher) Subscribe(latestProgress *QueryProgress) (
 	<-chan QueryProgress, func(),
 ) {
 	pub.lock.Lock()
@@ -154,6 +169,10 @@ func (pub *QueryProgressPublisher) Subscribe() (
 
 	subscriberId := uuid.NewString()
 	pub.subscriptions[subscriberId] = ch
+
+	if latestProgress != nil {
+		pub.publishProgress(ch, *latestProgress)
+	}
 
 	return ch, func() {
 		pub.Unsubscribe(subscriberId)
@@ -168,6 +187,18 @@ func (pub *QueryProgressPublisher) Unsubscribe(subscriberId string) {
 	if ch != nil {
 		close(ch)
 		delete(pub.subscriptions, subscriberId)
+	}
+}
+
+// Must not block
+func (pub *QueryProgressPublisher) publishProgress(ch chan QueryProgress, progress QueryProgress) {
+	// subscription channels are expected to have big enough buffers to ensure
+	// blocking while sending doesn't happen in the happy path
+	select {
+	case ch <- progress:
+		zap.L().Debug("published query progess", zap.Any("progress", progress))
+	default:
+		zap.L().Error("couldn't publish query progess. dropping update.", zap.Any("progress", progress))
 	}
 }
 
