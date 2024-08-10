@@ -322,7 +322,7 @@ function QueryBuilderSearch({
 				dropdownRender={(menu): ReactElement => (
 					<div>
 						{!searchKey && isLogsExplorerPage && (
-							<div className="ant-select-item-group ">Suggested Filters</div>
+							<div className="ant-select-item-group">Suggested Filters</div>
 						)}
 						{menu}
 						{isLogsExplorerPage && (

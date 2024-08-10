@@ -2,7 +2,7 @@ import './QueryBuilderSearch.styles.scss';
 
 import { Typography } from 'antd';
 import cx from 'classnames';
-import { Dot, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 
 import { getOptionType } from './utils';
 
@@ -25,13 +25,13 @@ function OptionRendererForLogs({
 				// <Tooltip title={`${value}`} placement="topLeft">
 				<div className="logs-options-select">
 					<section className="left-section">
-						{isIndexed ? <Zap size={12} /> : <Dot size={12} />}
+						{isIndexed ? <Zap size={12} /> : <div className="dot" />}
 						<Typography.Text className="text value">{value}</Typography.Text>
 					</section>
 					<section className="right-section">
 						<div className="text tags data-type-tag">{dataType}</div>
 						<div className={cx('text tags option-type-tag', optionType)}>
-							<Dot size={12} />
+							<div className="dot" />
 							{optionType}
 						</div>
 					</section>
@@ -39,10 +39,10 @@ function OptionRendererForLogs({
 			) : (
 				// </Tooltip>
 				// <Tooltip title={label} placement="topLeft">
-				<>
-					<Dot size={12} />
+				<div className="without-option-type">
+					<div className="dot" />
 					<span className="text">{label}</span>
-				</>
+				</div>
 				// </Tooltip>
 			)}
 		</span>
