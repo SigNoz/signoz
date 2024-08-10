@@ -634,16 +634,20 @@ type TagsInfo struct {
 }
 
 type AlertsInfo struct {
-	TotalAlerts       int `json:"totalAlerts"`
-	LogsBasedAlerts   int `json:"logsBasedAlerts"`
-	MetricBasedAlerts int `json:"metricBasedAlerts"`
-	TracesBasedAlerts int `json:"tracesBasedAlerts"`
-	SlackChannels     int `json:"slackChannels"`
-	WebHookChannels   int `json:"webHookChannels"`
-	PagerDutyChannels int `json:"pagerDutyChannels"`
-	OpsGenieChannels  int `json:"opsGenieChannels"`
-	EmailChannels     int `json:"emailChannels"`
-	MSTeamsChannels   int `json:"microsoftTeamsChannels"`
+	TotalAlerts                  int `json:"totalAlerts"`
+	LogsBasedAlerts              int `json:"logsBasedAlerts"`
+	MetricBasedAlerts            int `json:"metricBasedAlerts"`
+	TracesBasedAlerts            int `json:"tracesBasedAlerts"`
+	SlackChannels                int `json:"slackChannels"`
+	WebHookChannels              int `json:"webHookChannels"`
+	PagerDutyChannels            int `json:"pagerDutyChannels"`
+	OpsGenieChannels             int `json:"opsGenieChannels"`
+	EmailChannels                int `json:"emailChannels"`
+	MSTeamsChannels              int `json:"microsoftTeamsChannels"`
+	MetricsBuilderQueries        int `json:"metricsBuilderQueries"`
+	MetricsClickHouseQueries     int `json:"metricsClickHouseQueries"`
+	MetricsPrometheusQueries     int `json:"metricsPrometheusQueries"`
+	SpanMetricsPrometheusQueries int `json:"spanMetricsPrometheusQueries"`
 }
 
 type SavedViewsInfo struct {

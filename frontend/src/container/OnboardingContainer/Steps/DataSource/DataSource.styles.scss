@@ -41,3 +41,37 @@ div[class*='-setup-instructions-container'] {
 .service-name-container {
 	width: 100%;
 }
+
+.intgeration-page-container {
+	background-color: var(--bg-ink-400);
+	border-color: var(--bg-slate-500);
+}
+
+.intgeration-page-container-text {
+	color: var(--bg-vanilla-400);
+}
+
+.navigate-integrations-page-btn {
+	display: flex;
+	align-items: center;
+	color: var(--bg-vanilla-100);
+	background-color: var(--bg-slate-300);
+	box-shadow: none;
+	border: none;
+}
+
+.dataSourceName {
+	color: var(--bg-vanilla-100);
+	font-weight: 600;
+	cursor: pointer;
+
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.lightMode {
+	.dataSourceName {
+		color: var(--bg-slate-500);
+	}
+}
