@@ -284,5 +284,15 @@ func (ch *QueryProgressChannel) close() {
 
 // Helper for QueryProgress
 func (qp *QueryProgress) update(chProgress *clickhouse.Progress) {
+	qp.ReadRows += chProgress.Rows
+	qp.ReadBytes += chProgress.Bytes
+	qp.ElapsedMs += uint64(chProgress.Elapsed.Milliseconds())
 
+	if qp.TotalRowsToRead != chProgress.TotalRows {
+		qp.TotalRowsToRead = max(
+			chProgress.TotalRows,
+			qp.TotalRowsToRead,
+			qp.ReadRows,
+		)
+	}
 }
