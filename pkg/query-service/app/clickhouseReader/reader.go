@@ -122,6 +122,7 @@ type ClickHouseReader struct {
 	queryEngine             *promql.Engine
 	remoteStorage           *remote.Storage
 	fanoutStorage           *storage.Storage
+	progressTracker         *QueryProgressTracker
 
 	promConfigFile string
 	promConfig     *config.Config
