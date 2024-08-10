@@ -59,7 +59,6 @@ import {
 	getTagToken,
 	isExistsNotExistsOperator,
 	isInNInOperator,
-	sampleExampleQueries,
 } from './utils';
 
 function QueryBuilderSearch({
@@ -89,7 +88,7 @@ function QueryBuilderSearch({
 		setSearchKey,
 		searchKey,
 		key,
-		// exampleQueries,
+		exampleQueries,
 	} = useAutoComplete(query, whereClauseConfig, isLogsExplorerPage);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
@@ -101,9 +100,8 @@ function QueryBuilderSearch({
 		searchValue,
 		query,
 		searchKey,
+		isLogsExplorerPage,
 	);
-
-	console.log(key, searchKey);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -327,9 +325,7 @@ function QueryBuilderSearch({
 									<div className="example-queries">
 										<div className="heading"> Example Queries </div>
 										<div className="query-container">
-											{convertExampleQueriesToOptions(
-												sampleExampleQueries as TagFilter[],
-											).map((query) => (
+											{convertExampleQueriesToOptions(exampleQueries).map((query) => (
 												<ExampleQueriesRendererForLogs
 													key={query.label}
 													label={query.label}

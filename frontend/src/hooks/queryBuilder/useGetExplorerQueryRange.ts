@@ -42,6 +42,7 @@ export const useGetExplorerQueryRange = (
 	}, [options, isEnabledQuery, isDependentOnQB]);
 
 	if (keyRef) {
+		// eslint-disable-next-line no-param-reassign
 		keyRef.current = [key, globalSelectedInterval, requestData, minTime, maxTime];
 	}
 

@@ -24,7 +24,7 @@ export const getAttributeSuggestions = async ({
 		const response: AxiosResponse<{
 			data: IGetAttributeSuggestionsSuccessResponse;
 		}> = await ApiV3Instance.get(
-			`/suggestions?${createQueryParams({
+			`/filter_suggestions?${createQueryParams({
 				searchText,
 				dataSource,
 				filters: base64EncodedFiltersString,

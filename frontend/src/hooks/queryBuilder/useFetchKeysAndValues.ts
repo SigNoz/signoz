@@ -6,7 +6,7 @@ import {
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import useDebounceValue from 'hooks/useDebounce';
-import { isEqual, uniqWith } from 'lodash-es';
+import { cloneDeep, isEqual, uniqWith, unset } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 import {
@@ -67,9 +67,21 @@ export const useFetchKeysAndValues = (
 
 	const searchParams = useDebounceValue(memoizedSearchParams, DEBOUNCE_DELAY);
 
+	const queryFiltersWithoutId = useMemo(
+		() => ({
+			...query.filters,
+			items: query.filters.items.map((item) => {
+				const filterWithoutId = cloneDeep(item);
+				unset(filterWithoutId, 'id');
+				return filterWithoutId;
+			}),
+		}),
+		[query.filters],
+	);
+
 	const memoizedSuggestionsParams = useMemo(
-		() => [searchKey, query.dataSource, query.filters],
-		[query.dataSource, query.filters, searchKey],
+		() => [searchKey, query.dataSource, queryFiltersWithoutId],
+		[query.dataSource, queryFiltersWithoutId, searchKey],
 	);
 
 	const suggestionsParams = useDebounceValue(
