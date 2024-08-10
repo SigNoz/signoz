@@ -20,14 +20,20 @@ export const getAttributeSuggestions = async ({
 	SuccessResponse<IGetAttributeSuggestionsSuccessResponse> | ErrorResponse
 > => {
 	try {
-		const base64EncodedFiltersString = encode(JSON.stringify(filters));
+		let base64EncodedFiltersString;
+		try {
+			base64EncodedFiltersString = encode(JSON.stringify(filters));
+		} catch {
+			// default base64 encoded string for empty filters object
+			base64EncodedFiltersString = 'eyJpdGVtcyI6W10sIm9wIjoiQU5EIn0=';
+		}
 		const response: AxiosResponse<{
 			data: IGetAttributeSuggestionsSuccessResponse;
 		}> = await ApiV3Instance.get(
 			`/filter_suggestions?${createQueryParams({
 				searchText,
 				dataSource,
-				filters: base64EncodedFiltersString,
+				existingFilter: base64EncodedFiltersString,
 			})}`,
 		);
 
