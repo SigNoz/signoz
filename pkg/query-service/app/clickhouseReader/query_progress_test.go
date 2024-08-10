@@ -9,7 +9,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
-func TestQueryProgress(t *testing.T) {
+func TestQueryProgressTracking(t *testing.T) {
 	require := require.New(t)
 
 	tracker := NewQueryProgressTracker()
