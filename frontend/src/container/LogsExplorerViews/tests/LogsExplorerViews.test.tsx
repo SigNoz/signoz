@@ -79,6 +79,9 @@ const renderer = (): RenderResult =>
 								<LogsExplorerViews
 									selectedView={SELECTED_VIEWS.SEARCH}
 									showFrequencyChart
+									setIsLoadingQueries={(): void => {}}
+									listQueryKeyRef={{ current: {} }}
+									chartQueryKeyRef={{ current: {} }}
 								/>
 							</VirtuosoMockContext.Provider>
 						</QueryBuilderProvider>

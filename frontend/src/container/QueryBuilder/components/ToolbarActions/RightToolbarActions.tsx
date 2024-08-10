@@ -10,8 +10,8 @@ import { useQueryClient } from 'react-query';
 interface RightToolbarActionsProps {
 	onStageRunQuery: () => void;
 	isLoadingQueries?: boolean;
-	listQueryKeyRef: MutableRefObject<any>;
-	chartQueryKeyRef: MutableRefObject<any>;
+	listQueryKeyRef?: MutableRefObject<any>;
+	chartQueryKeyRef?: MutableRefObject<any>;
 }
 
 export default function RightToolbarActions({
@@ -41,8 +41,12 @@ export default function RightToolbarActions({
 						icon={<X size={14} />}
 						className="cancel-run"
 						onClick={(): void => {
-							queryClient.cancelQueries(listQueryKeyRef.current);
-							queryClient.cancelQueries(chartQueryKeyRef.current);
+							if (listQueryKeyRef?.current) {
+								queryClient.cancelQueries(listQueryKeyRef.current);
+							}
+							if (chartQueryKeyRef?.current) {
+								queryClient.cancelQueries(chartQueryKeyRef.current);
+							}
 						}}
 					>
 						Cancel Run
@@ -65,4 +69,6 @@ export default function RightToolbarActions({
 
 RightToolbarActions.defaultProps = {
 	isLoadingQueries: false,
+	listQueryKeyRef: null,
+	chartQueryKeyRef: null,
 };
