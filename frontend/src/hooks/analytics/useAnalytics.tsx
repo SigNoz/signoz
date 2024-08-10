@@ -32,16 +32,6 @@ const useAnalytics = (): any => {
 		}
 	};
 
-	// useEffect(() => {
-	// 	// Perform any setup or cleanup related to the analytics library
-	// 	// For example, initialize analytics library here
-
-	// 	// Clean-up function (optional)
-	// 	return () => {
-	// 		// Perform cleanup if needed
-	// 	};
-	// }, []); // The empty dependency array ensures that this effect runs only once when the component mounts
-
 	return { trackPageView, trackEvent };
 };
 

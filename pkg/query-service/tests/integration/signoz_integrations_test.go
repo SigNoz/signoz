@@ -3,10 +3,7 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"net/http/httptest"
-	"runtime/debug"
 	"slices"
 	"testing"
 	"time"
@@ -501,38 +498,18 @@ func (tb *IntegrationsTestBed) RequestQS(
 	path string,
 	postData interface{},
 ) *app.ApiResponse {
-	req, err := NewAuthenticatedTestRequest(
+	req, err := AuthenticatedRequestForTest(
 		tb.testUser, path, postData,
 	)
 	if err != nil {
 		tb.t.Fatalf("couldn't create authenticated test request: %v", err)
 	}
 
-	respWriter := httptest.NewRecorder()
-	tb.qsHttpHandler.ServeHTTP(respWriter, req)
-	response := respWriter.Result()
-	responseBody, err := io.ReadAll(response.Body)
+	result, err := HandleTestRequest(tb.qsHttpHandler, req, 200)
 	if err != nil {
-		tb.t.Fatalf("couldn't read response body received from QS: %v", err)
+		tb.t.Fatalf("test request failed: %v", err)
 	}
-
-	if response.StatusCode != 200 {
-		tb.t.Fatalf(
-			"unexpected response status from query service for path %s. status: %d, body: %v\n%v",
-			path, response.StatusCode, string(responseBody), string(debug.Stack()),
-		)
-	}
-
-	var result app.ApiResponse
-	err = json.Unmarshal(responseBody, &result)
-	if err != nil {
-		tb.t.Fatalf(
-			"Could not unmarshal QS response into an ApiResponse.\nResponse body: %s",
-			string(responseBody),
-		)
-	}
-
-	return &result
+	return result
 }
 
 func (tb *IntegrationsTestBed) mockLogQueryResponse(logsInResponse []model.SignozLog) {

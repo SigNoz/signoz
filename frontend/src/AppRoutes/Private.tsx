@@ -76,9 +76,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				isUserFetching: false,
 			},
 		});
-
 		if (!isLoggedIn) {
-			history.push(ROUTES.LOGIN);
+			history.push(ROUTES.LOGIN, { from: pathname });
 		}
 	};
 
