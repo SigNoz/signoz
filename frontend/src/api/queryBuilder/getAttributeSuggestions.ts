@@ -22,10 +22,13 @@ export const getAttributeSuggestions = async ({
 	try {
 		let base64EncodedFiltersString;
 		try {
-			base64EncodedFiltersString = encode(JSON.stringify(filters));
+			base64EncodedFiltersString = encode(JSON.stringify(filters)).replace(
+				/=+$/,
+				'',
+			);
 		} catch {
 			// default base64 encoded string for empty filters object
-			base64EncodedFiltersString = 'eyJpdGVtcyI6W10sIm9wIjoiQU5EIn0=';
+			base64EncodedFiltersString = 'eyJpdGVtcyI6W10sIm9wIjoiQU5EIn0';
 		}
 		const response: AxiosResponse<{
 			data: IGetAttributeSuggestionsSuccessResponse;
