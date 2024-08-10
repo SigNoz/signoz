@@ -21,12 +21,13 @@ func TestQueryProgress(t *testing.T) {
 	require.NotNil(err, "shouldn't be able to report query progress before query has been started")
 	require.Equal(err.Type(), model.ErrorNotFound)
 
-	ch, err := tracker.SubscribeToQueryProgress(testQueryId)
+	ch, unsubscribe, err := tracker.SubscribeToQueryProgress(testQueryId)
 	require.NotNil(err, "shouldn't be able to subscribe for progress updates before query has been started")
 	require.Equal(err.Type(), model.ErrorNotFound)
 	require.Nil(ch)
+	require.Nil(unsubscribe)
 
-	postQueryCleanup, err := tracker.ReportQueryStarted(testQueryId)
+	reportQueryFinished, err := tracker.ReportQueryStarted(testQueryId)
 	require.Nil(err, "should be able to report start of a query to be tracked")
 
 	testProgress1 := &clickhouse.Progress{
@@ -38,21 +39,64 @@ func TestQueryProgress(t *testing.T) {
 	err = tracker.ReportQueryProgress(testQueryId, testProgress1)
 	require.Nil(err, "should be able to report progress after query has started")
 
-	// should be able to subscribe to query progress updates
+	ch, unsubscribe, err = tracker.SubscribeToQueryProgress(testQueryId)
+	require.Nil(err, "should be able to subscribe to query progress updates after query started")
+	require.NotNil(ch)
+	require.NotNil(unsubscribe)
 
-	// should receive latest state immediately after subscription
+	expectedProgress := QueryProgress{}
+	expectedProgress.update(testProgress1)
+	select {
+	case qp := <-ch:
+		require.Equal(qp, expectedProgress)
+	default:
+		require.Fail("should receive latest query progress state immediately after subscription")
+	}
+	select {
+	case _ = <-ch:
+		require.Fail("should have had only one pending update at this point")
+	default:
+	}
 
-	// should receive updates whenever new progress updates get reported to tracker
+	testProgress2 := &clickhouse.Progress{
+		Rows:      20,
+		Bytes:     40,
+		TotalRows: 100,
+		Elapsed:   40 * time.Millisecond,
+	}
+	err = tracker.ReportQueryProgress(testQueryId, testProgress2)
+	require.Nil(err, "should be able to report progress multiple times while query is in progress")
 
-	// subscription channels should get closed after query finishes
-	postQueryCleanup()
+	expectedProgress.update(testProgress1)
+	select {
+	case qp := <-ch:
+		require.Equal(qp, expectedProgress)
+	default:
+		require.Fail("should receive updates whenever new progress updates get reported to tracker")
+	}
+	select {
+	case _ = <-ch:
+		require.Fail("should have had only one pending update at this point")
+	default:
+	}
+
+	reportQueryFinished()
+	select {
+	case _, isSubscriptionChannelOpen := <-ch:
+		require.False(isSubscriptionChannelOpen, "subscription channels should get closed after query finishes")
+	default:
+		require.Fail("subscription channels should get closed after query finishes")
+	}
 
 	err = tracker.ReportQueryProgress(testQueryId, testProgress)
 	require.NotNil(err, "shouldn't be able to report query progress after query has finished")
 	require.Equal(err.Type(), model.ErrorNotFound)
 
-	ch, err = tracker.SubscribeToQueryProgress(testQueryId)
+	ch, unsubscribe, err = tracker.SubscribeToQueryProgress(testQueryId)
 	require.NotNil(err, "shouldn't be able to subscribe for progress updates after query has finished")
 	require.Equal(err.Type(), model.ErrorNotFound)
 	require.Nil(ch)
+	require.Nil(unsubscribe)
+
+	// TODO(Raj): Test unsubscription too
 }
