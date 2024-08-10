@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
+	"golang.org/x/exp/maps"
 )
 
 type QueryProgress struct {
@@ -77,6 +78,8 @@ func (tracker *InMemoryQueryProgressTracker) ReportQueryProgress(
 	}
 
 	queryTracker.progress.update(chProgress)
+	latestState := queryTracker.progress.get()
+	queryTracker.publisher.broadcast(latestState)
 	return nil
 }
 
@@ -89,7 +92,7 @@ func (tracker *InMemoryQueryProgressTracker) SubscribeToQueryProgress(
 	}
 
 	latestProgress := queryTracker.progress.get()
-	ch, unsubscribe := queryTracker.publisher.Subscribe(latestProgress)
+	ch, unsubscribe := queryTracker.publisher.subscribe(latestProgress)
 
 	return ch, unsubscribe, nil
 }
@@ -159,7 +162,7 @@ func NewQueryProgressPublisher() *QueryProgressPublisher {
 	}
 }
 
-func (pub *QueryProgressPublisher) Subscribe(latestProgress *QueryProgress) (
+func (pub *QueryProgressPublisher) subscribe(latestProgress *QueryProgress) (
 	<-chan QueryProgress, func(),
 ) {
 	pub.lock.Lock()
@@ -175,11 +178,11 @@ func (pub *QueryProgressPublisher) Subscribe(latestProgress *QueryProgress) (
 	}
 
 	return ch, func() {
-		pub.Unsubscribe(subscriberId)
+		pub.unsubscribe(subscriberId)
 	}
 }
 
-func (pub *QueryProgressPublisher) Unsubscribe(subscriberId string) {
+func (pub *QueryProgressPublisher) unsubscribe(subscriberId string) {
 	pub.lock.Lock()
 	defer pub.lock.Unlock()
 
@@ -190,8 +193,29 @@ func (pub *QueryProgressPublisher) Unsubscribe(subscriberId string) {
 	}
 }
 
+func (pub *QueryProgressPublisher) broadcast(qp *QueryProgress) {
+	if qp == nil {
+		return
+	}
+
+	for _, ch := range pub.subscriptionChannels() {
+		pub.publishProgress(ch, *qp)
+	}
+}
+
+func (pub *QueryProgressPublisher) subscriptionChannels() []chan<- QueryProgress {
+	pub.lock.RLock()
+	defer pub.lock.RUnlock()
+
+	channels := []chan<- QueryProgress{}
+	for _, ch := range maps.Values(pub.subscriptions) {
+		channels = append(channels, ch)
+	}
+	return channels
+}
+
 // Must not block
-func (pub *QueryProgressPublisher) publishProgress(ch chan QueryProgress, progress QueryProgress) {
+func (pub *QueryProgressPublisher) publishProgress(ch chan<- QueryProgress, progress QueryProgress) {
 	// subscription channels are expected to have big enough buffers to ensure
 	// blocking while sending doesn't happen in the happy path
 	select {
