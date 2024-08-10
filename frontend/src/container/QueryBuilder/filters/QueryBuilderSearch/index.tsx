@@ -304,7 +304,7 @@ function QueryBuilderSearch({
 				className={cx(
 					className,
 					isLogsExplorerPage ? 'logs-popup' : '',
-					!showAllFilters ? 'hide-scroll' : '',
+					!showAllFilters && options.length > 3 ? 'hide-scroll' : '',
 				)}
 				rootClassName="query-builder-search"
 				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
@@ -322,7 +322,7 @@ function QueryBuilderSearch({
 				dropdownRender={(menu): ReactElement => (
 					<div>
 						{!searchKey && isLogsExplorerPage && (
-							<div className="ant-select-item-group">Suggested Filters</div>
+							<div className="ant-select-item-group ">Suggested Filters</div>
 						)}
 						{menu}
 						{isLogsExplorerPage && (
@@ -342,7 +342,7 @@ function QueryBuilderSearch({
 										</div>
 									</div>
 								)}
-								{!key && !isFetching && !showAllFilters && (
+								{!key && !isFetching && !showAllFilters && options.length > 3 && (
 									<Button
 										type="text"
 										className="show-all-filter-props"

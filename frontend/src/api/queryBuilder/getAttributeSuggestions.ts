@@ -22,6 +22,8 @@ export const getAttributeSuggestions = async ({
 	try {
 		let base64EncodedFiltersString;
 		try {
+			// the replace function is to remove the padding at the end of base64 encoded string which is auto added to make it a multiple of 4
+			// why ? because the current working of qs doesn't work well with padding
 			base64EncodedFiltersString = encode(JSON.stringify(filters)).replace(
 				/=+$/,
 				'',

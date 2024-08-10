@@ -1,6 +1,6 @@
 import './QueryBuilderSearch.styles.scss';
 
-import { Typography } from 'antd';
+import { Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { Zap } from 'lucide-react';
 
@@ -22,28 +22,28 @@ function OptionRendererForLogs({
 			onFocus={(): void => setDynamicPlaceholder(value)}
 		>
 			{optionType ? (
-				// <Tooltip title={`${value}`} placement="topLeft">
-				<div className="logs-options-select">
-					<section className="left-section">
-						{isIndexed ? <Zap size={12} /> : <div className="dot" />}
-						<Typography.Text className="text value">{value}</Typography.Text>
-					</section>
-					<section className="right-section">
-						<div className="text tags data-type-tag">{dataType}</div>
-						<div className={cx('text tags option-type-tag', optionType)}>
-							<div className="dot" />
-							{optionType}
-						</div>
-					</section>
-				</div>
+				<Tooltip title={`${value}`} placement="topLeft">
+					<div className="logs-options-select">
+						<section className="left-section">
+							{isIndexed ? <Zap size={12} /> : <div className="dot" />}
+							<Typography.Text className="text value">{value}</Typography.Text>
+						</section>
+						<section className="right-section">
+							<div className="text tags data-type-tag">{dataType}</div>
+							<div className={cx('text tags option-type-tag', optionType)}>
+								<div className="dot" />
+								{optionType}
+							</div>
+						</section>
+					</div>
+				</Tooltip>
 			) : (
-				// </Tooltip>
-				// <Tooltip title={label} placement="topLeft">
-				<div className="without-option-type">
-					<div className="dot" />
-					<span className="text">{label}</span>
-				</div>
-				// </Tooltip>
+				<Tooltip title={label} placement="topLeft">
+					<div className="without-option-type">
+						<div className="dot" />
+						<span className="text">{label}</span>
+					</div>
+				</Tooltip>
 			)}
 		</span>
 	);
