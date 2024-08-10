@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/google/uuid"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -61,7 +62,7 @@ func (tracker *InMemoryQueryProgressTracker) ReportQueryStarted(
 		))
 	}
 
-	tracker.queries[queryId] = &QueryTracker{}
+	tracker.queries[queryId] = NewQueryTracker()
 
 	return func() {}, nil
 }
@@ -79,7 +80,7 @@ func (tracker *InMemoryQueryProgressTracker) ReportQueryProgress(
 		))
 	}
 
-	queryTracker.ReportProgress(chProgress)
+	queryTracker.progress.update(chProgress)
 	return nil
 }
 
@@ -96,23 +97,20 @@ func (tracker *InMemoryQueryProgressTracker) SubscribeToQueryProgress(
 		))
 	}
 
-	return queryTracker.Subscribe()
+	ch, unsubscribe := queryTracker.publisher.Subscribe()
+	return ch, unsubscribe, nil
 }
 
 // Tracks progress and manages subscription for a single query
 type QueryTracker struct {
-	progress QueryProgressState
+	progress  QueryProgressState
+	publisher *QueryProgressPublisher
 }
 
-func (qt *QueryTracker) ReportProgress(chProgress *clickhouse.Progress) {
-	qt.progress.update(chProgress)
-}
-
-func (qt *QueryTracker) Subscribe() (
-	<-chan QueryProgress, func(), *model.ApiError,
-) {
-
-	return nil, nil, model.InternalError(fmt.Errorf("not implemented yet"))
+func NewQueryTracker() *QueryTracker {
+	return &QueryTracker{
+		publisher: NewQueryProgressPublisher(),
+	}
 }
 
 // Concurrency safe QueryProgress state
@@ -126,6 +124,51 @@ func (qps *QueryProgressState) update(chProgress *clickhouse.Progress) {
 	defer qps.lock.Unlock()
 
 	qps.progress.update(chProgress)
+}
+
+func (qps *QueryProgressState) get() QueryProgress {
+	qps.lock.RLock()
+	defer qps.lock.RUnlock()
+
+	return qps.progress
+}
+
+type QueryProgressPublisher struct {
+	subscriptions map[string]chan QueryProgress
+	lock          sync.RWMutex
+}
+
+func NewQueryProgressPublisher() *QueryProgressPublisher {
+	return &QueryProgressPublisher{
+		subscriptions: map[string]chan QueryProgress{},
+	}
+}
+
+func (pub *QueryProgressPublisher) Subscribe() (
+	<-chan QueryProgress, func(),
+) {
+	pub.lock.Lock()
+	defer pub.lock.Unlock()
+
+	ch := make(chan QueryProgress, 1000)
+
+	subscriberId := uuid.NewString()
+	pub.subscriptions[subscriberId] = ch
+
+	return ch, func() {
+		pub.Unsubscribe(subscriberId)
+	}
+}
+
+func (pub *QueryProgressPublisher) Unsubscribe(subscriberId string) {
+	pub.lock.Lock()
+	defer pub.lock.Unlock()
+
+	ch := pub.subscriptions[subscriberId]
+	if ch != nil {
+		close(ch)
+		delete(pub.subscriptions, subscriberId)
+	}
 }
 
 // Helper for QueryProgress
