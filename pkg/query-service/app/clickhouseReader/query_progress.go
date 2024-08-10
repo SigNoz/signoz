@@ -41,17 +41,17 @@ type QueryProgressTracker interface {
 func NewQueryProgressTracker() QueryProgressTracker {
 	// InMemory tracker is useful only for single replica query service setups.
 	// Multi replica setups must use a centralized store for tracking and subscribing to query progress
-	return &InMemoryQueryProgressTracker{
-		queries: map[string]*QueryTracker{},
+	return &inMemoryQueryProgressTracker{
+		queries: map[string]*queryTracker{},
 	}
 }
 
-type InMemoryQueryProgressTracker struct {
-	queries map[string]*QueryTracker
+type inMemoryQueryProgressTracker struct {
+	queries map[string]*queryTracker
 	lock    sync.RWMutex
 }
 
-func (tracker *InMemoryQueryProgressTracker) ReportQueryStarted(
+func (tracker *inMemoryQueryProgressTracker) ReportQueryStarted(
 	queryId string,
 ) (postQueryCleanup func(), err *model.ApiError) {
 	tracker.lock.Lock()
@@ -64,14 +64,14 @@ func (tracker *InMemoryQueryProgressTracker) ReportQueryStarted(
 		))
 	}
 
-	tracker.queries[queryId] = NewQueryTracker()
+	tracker.queries[queryId] = newQueryTracker()
 
 	return func() {
 		tracker.onQueryFinished(queryId)
 	}, nil
 }
 
-func (tracker *InMemoryQueryProgressTracker) ReportQueryProgress(
+func (tracker *inMemoryQueryProgressTracker) ReportQueryProgress(
 	queryId string, chProgress *clickhouse.Progress,
 ) *model.ApiError {
 	queryTracker, err := tracker.getQueryTracker(queryId)
@@ -85,7 +85,7 @@ func (tracker *InMemoryQueryProgressTracker) ReportQueryProgress(
 	return nil
 }
 
-func (tracker *InMemoryQueryProgressTracker) SubscribeToQueryProgress(
+func (tracker *inMemoryQueryProgressTracker) SubscribeToQueryProgress(
 	queryId string,
 ) (<-chan QueryProgress, func(), *model.ApiError) {
 	queryTracker, err := tracker.getQueryTracker(queryId)
@@ -99,9 +99,9 @@ func (tracker *InMemoryQueryProgressTracker) SubscribeToQueryProgress(
 	return ch, unsubscribe, nil
 }
 
-func (tracker *InMemoryQueryProgressTracker) getQueryTracker(
+func (tracker *inMemoryQueryProgressTracker) getQueryTracker(
 	queryId string,
-) (*QueryTracker, *model.ApiError) {
+) (*queryTracker, *model.ApiError) {
 	tracker.lock.RLock()
 	defer tracker.lock.RUnlock()
 
@@ -115,7 +115,7 @@ func (tracker *InMemoryQueryProgressTracker) getQueryTracker(
 	return queryTracker, nil
 }
 
-func (tracker *InMemoryQueryProgressTracker) onQueryFinished(
+func (tracker *inMemoryQueryProgressTracker) onQueryFinished(
 	queryId string,
 ) {
 	queryTracker, err := tracker.getQueryTracker(queryId)
@@ -131,28 +131,28 @@ func (tracker *InMemoryQueryProgressTracker) onQueryFinished(
 }
 
 // Tracks progress and manages subscription for a single query
-type QueryTracker struct {
-	progress  QueryProgressState
-	publisher *QueryProgressPublisher
+type queryTracker struct {
+	progress  queryProgressState
+	publisher *queryProgressPublisher
 }
 
-func NewQueryTracker() *QueryTracker {
-	return &QueryTracker{
-		publisher: NewQueryProgressPublisher(),
+func newQueryTracker() *queryTracker {
+	return &queryTracker{
+		publisher: newQueryProgressPublisher(),
 	}
 }
 
-func (qt *QueryTracker) onFinished() {
+func (qt *queryTracker) onFinished() {
 	qt.publisher.onFinished()
 }
 
 // Concurrency safe QueryProgress state
-type QueryProgressState struct {
+type queryProgressState struct {
 	progress *QueryProgress
 	lock     sync.RWMutex
 }
 
-func (qps *QueryProgressState) update(chProgress *clickhouse.Progress) {
+func (qps *queryProgressState) update(chProgress *clickhouse.Progress) {
 	qps.lock.Lock()
 	defer qps.lock.Unlock()
 
@@ -165,32 +165,32 @@ func (qps *QueryProgressState) update(chProgress *clickhouse.Progress) {
 }
 
 // query progress will be nil before the 1st call to update
-func (qps *QueryProgressState) get() *QueryProgress {
+func (qps *queryProgressState) get() *QueryProgress {
 	qps.lock.RLock()
 	defer qps.lock.RUnlock()
 
 	return qps.progress
 }
 
-type QueryProgressPublisher struct {
-	subscriptions map[string]*QueryProgressChannel
+type queryProgressPublisher struct {
+	subscriptions map[string]*queryProgressChannel
 	lock          sync.RWMutex
 }
 
-func NewQueryProgressPublisher() *QueryProgressPublisher {
-	return &QueryProgressPublisher{
-		subscriptions: map[string]*QueryProgressChannel{},
+func newQueryProgressPublisher() *queryProgressPublisher {
+	return &queryProgressPublisher{
+		subscriptions: map[string]*queryProgressChannel{},
 	}
 }
 
-func (pub *QueryProgressPublisher) subscribe(latestProgress *QueryProgress) (
+func (pub *queryProgressPublisher) subscribe(latestProgress *QueryProgress) (
 	<-chan QueryProgress, func(),
 ) {
 	pub.lock.Lock()
 	defer pub.lock.Unlock()
 
 	subscriberId := uuid.NewString()
-	ch := NewQueryProgressChannel()
+	ch := newQueryProgressChannel()
 	pub.subscriptions[subscriberId] = ch
 
 	if latestProgress != nil {
@@ -202,7 +202,7 @@ func (pub *QueryProgressPublisher) subscribe(latestProgress *QueryProgress) (
 	}
 }
 
-func (pub *QueryProgressPublisher) unsubscribe(subscriberId string) {
+func (pub *queryProgressPublisher) unsubscribe(subscriberId string) {
 	pub.lock.Lock()
 	defer pub.lock.Unlock()
 
@@ -213,7 +213,7 @@ func (pub *QueryProgressPublisher) unsubscribe(subscriberId string) {
 	}
 }
 
-func (pub *QueryProgressPublisher) broadcast(qp *QueryProgress) {
+func (pub *queryProgressPublisher) broadcast(qp *QueryProgress) {
 	if qp == nil {
 		return
 	}
@@ -227,7 +227,7 @@ func (pub *QueryProgressPublisher) broadcast(qp *QueryProgress) {
 	}
 }
 
-func (pub *QueryProgressPublisher) onFinished() {
+func (pub *queryProgressPublisher) onFinished() {
 	pub.lock.RLock()
 	channels := maps.Values(pub.subscriptions)
 	pub.lock.RUnlock()
@@ -238,22 +238,22 @@ func (pub *QueryProgressPublisher) onFinished() {
 
 }
 
-type QueryProgressChannel struct {
+type queryProgressChannel struct {
 	ch chan QueryProgress
 
 	isClosed bool
 	lock     sync.Mutex
 }
 
-func NewQueryProgressChannel() *QueryProgressChannel {
+func newQueryProgressChannel() *queryProgressChannel {
 	ch := make(chan QueryProgress, 1000)
-	return &QueryProgressChannel{
+	return &queryProgressChannel{
 		ch: ch,
 	}
 }
 
 // Must not block or panic in any scenario
-func (ch *QueryProgressChannel) send(progress QueryProgress) {
+func (ch *queryProgressChannel) send(progress QueryProgress) {
 	ch.lock.Lock()
 	defer ch.lock.Unlock()
 
@@ -272,7 +272,7 @@ func (ch *QueryProgressChannel) send(progress QueryProgress) {
 	}
 }
 
-func (ch *QueryProgressChannel) close() {
+func (ch *queryProgressChannel) close() {
 	ch.lock.Lock()
 	defer ch.lock.Unlock()
 
