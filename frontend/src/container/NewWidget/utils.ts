@@ -445,6 +445,9 @@ export function handleQueryChange(
 					set(tempQuery, 'offset', 0);
 					set(tempQuery, 'pageSize', 10);
 				} else if (tempQuery.aggregateOperator === 'noop') {
+					// this condition takes care of the part where we start with the list panel type and then shift to other panels
+					// because in other cases we never set list operator and other fields in superset query rather just update in the current / staged query
+					set(tempQuery, 'aggregateOperator', 'count');
 					unset(tempQuery, 'offset');
 					unset(tempQuery, 'pageSize');
 				}
