@@ -5,8 +5,8 @@
 	.left-toolbar-query-actions {
 		display: flex;
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-400, #1d212d);
-		background: var(--bg-ink-300, #16181d);
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
 		flex-direction: row;
 
 		.prom-ql-icon {
@@ -24,7 +24,7 @@
 			border-radius: 0;
 
 			&.active-tab {
-				background-color: #1d212d;
+				background-color: var(--bg-slate-400);
 			}
 
 			&:disabled {
@@ -33,7 +33,7 @@
 			}
 		}
 		.action-btn + .action-btn {
-			border-left: 1px solid var(--bg-slate-400, #1d212d);
+			border-left: 1px solid var(--bg-slate-400);
 		}
 	}
 
@@ -71,9 +71,9 @@
 		gap: 6px;
 		flex-shrink: 0;
 		border-radius: 2px;
-		background: var(--Slate-300, #242834);
+		background: var(--bg-slate-300);
 		box-shadow: none;
-		border-color: none;
+		border: none;
 	}
 
 	.cancel-run {
@@ -85,8 +85,13 @@
 		gap: 6px;
 		flex: 1 0 0;
 		border-radius: 2px;
-		background: var(--Cherry-500, #e5484d);
+		background: var(--bg-cherry-500);
 		border-color: none;
+	}
+	.cancel-run:hover {
+		background-color: #ff7875 !important;
+		color: var(--bg-vanilla-100) !important;
+		border: none;
 	}
 }
 
@@ -105,6 +110,19 @@
 					background-color: var(--bg-robin-100);
 				}
 			}
+		}
+	}
+	.loading-container {
+		.loading-btn {
+			background: var(--bg-vanilla-300);
+		}
+
+		.cancel-run {
+			color: var(--bg-vanilla-100);
+		}
+
+		.cancel-run:hover {
+			background-color: #ff7875;
 		}
 	}
 }
