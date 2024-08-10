@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -835,6 +836,50 @@ func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequ
 		DataSource: dataSource,
 	}
 	return &req, nil
+}
+
+func parseQBFilterSuggestionsRequest(r *http.Request) (
+	*v3.QBFilterSuggestionsRequest, *model.ApiError,
+) {
+	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
+	if err := dataSource.Validate(); err != nil {
+		return nil, model.BadRequest(err)
+	}
+
+	limit := baseconstants.DefaultFilterSuggestionsLimit
+	limitStr := r.URL.Query().Get("limit")
+	if len(limitStr) > 0 {
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil || limit < 1 {
+			return nil, model.BadRequest(fmt.Errorf(
+				"invalid limit: %s", limitStr,
+			))
+		}
+	}
+
+	var existingFilter *v3.FilterSet
+	existingFilterB64 := r.URL.Query().Get("existingFilter")
+	if len(existingFilterB64) > 0 {
+		decodedFilterJson, err := base64.RawURLEncoding.DecodeString(existingFilterB64)
+		if err != nil {
+			return nil, model.BadRequest(fmt.Errorf("couldn't base64 decode existingFilter: %w", err))
+		}
+
+		existingFilter = &v3.FilterSet{}
+		err = json.Unmarshal(decodedFilterJson, existingFilter)
+		if err != nil {
+			return nil, model.BadRequest(fmt.Errorf("couldn't JSON decode existingFilter: %w", err))
+		}
+	}
+
+	searchText := r.URL.Query().Get("searchText")
+
+	return &v3.QBFilterSuggestionsRequest{
+		DataSource:     dataSource,
+		Limit:          limit,
+		SearchText:     searchText,
+		ExistingFilter: existingFilter,
+	}, nil
 }
 
 func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequest, error) {

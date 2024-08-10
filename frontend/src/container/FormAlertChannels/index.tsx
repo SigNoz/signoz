@@ -85,6 +85,7 @@ function FormAlertChannels({
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
 				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
 					<Input
+						data-testid="channel-name-textbox"
 						disabled={editing}
 						onChange={(event): void => {
 							setSelectedConfig((state) => ({
@@ -102,6 +103,7 @@ function FormAlertChannels({
 				>
 					<Switch
 						defaultChecked={initialValue?.send_resolved}
+						data-testid="field-send-resolved-checkbox"
 						onChange={(value): void => {
 							setSelectedConfig((state) => ({
 								...state,
@@ -112,24 +114,37 @@ function FormAlertChannels({
 				</Form.Item>
 
 				<Form.Item label={t('field_channel_type')} labelAlign="left" name="type">
-					<Select disabled={editing} onChange={onTypeChangeHandler} value={type}>
-						<Select.Option value="slack" key="slack">
+					<Select
+						disabled={editing}
+						onChange={onTypeChangeHandler}
+						value={type}
+						data-testid="channel-type-select"
+					>
+						<Select.Option value="slack" key="slack" data-testid="select-option">
 							Slack
 						</Select.Option>
-						<Select.Option value="webhook" key="webhook">
+						<Select.Option value="webhook" key="webhook" data-testid="select-option">
 							Webhook
 						</Select.Option>
-						<Select.Option value="pagerduty" key="pagerduty">
+						<Select.Option
+							value="pagerduty"
+							key="pagerduty"
+							data-testid="select-option"
+						>
 							Pagerduty
 						</Select.Option>
-						<Select.Option value="opsgenie" key="opsgenie">
+						<Select.Option
+							value="opsgenie"
+							key="opsgenie"
+							data-testid="select-option"
+						>
 							Opsgenie
 						</Select.Option>
-						<Select.Option value="email" key="email">
+						<Select.Option value="email" key="email" data-testid="select-option">
 							Email
 						</Select.Option>
 						{!isOssFeature?.active && (
-							<Select.Option value="msteams" key="msteams">
+							<Select.Option value="msteams" key="msteams" data-testid="select-option">
 								<div>
 									Microsoft Teams {!isUserOnEEPlan && '(Supported in Paid Plans Only)'}{' '}
 								</div>
