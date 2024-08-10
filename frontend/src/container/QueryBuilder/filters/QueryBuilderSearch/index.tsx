@@ -164,6 +164,12 @@ function QueryBuilderSearch({
 			handleRunQuery();
 			setIsOpen(false);
 		}
+
+		if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+			event.preventDefault();
+			event.stopPropagation();
+			setShowAllFilters((prev) => !prev);
+		}
 	};
 
 	const handleDeselect = useCallback(
@@ -321,7 +327,7 @@ function QueryBuilderSearch({
 						{menu}
 						{isLogsExplorerPage && (
 							<div>
-								{!searchKey && (
+								{!searchKey && tags.length === 0 && (
 									<div className="example-queries">
 										<div className="heading"> Example Queries </div>
 										<div className="query-container">
