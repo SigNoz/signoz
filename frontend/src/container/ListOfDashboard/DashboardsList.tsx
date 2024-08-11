@@ -449,79 +449,94 @@ function DashboardsList(): JSX.Element {
 					<div className="dashboard-list-item" onClick={onClickHandler}>
 						<div className="title-with-action">
 							<div className="dashboard-title">
-								<img
-									src={dashboard?.image || Base64Icons[0]}
-									style={{ height: '14px', width: '14px' }}
-									alt="dashboard-image"
-								/>
-								<Typography.Text data-testid={`dashboard-title-${index}`}>
-									<Link to={getLink()} className="dashboard-title">
-										{dashboard.name}
-									</Link>
-								</Typography.Text>
+								<Tooltip
+									title={dashboard?.name?.length > 50 ? dashboard?.name : ''}
+									placement="left"
+									overlayClassName="title-toolip"
+								>
+									<Typography.Text data-testid={`dashboard-title-${index}`}>
+										<Link to={getLink()} className="title">
+											<img
+												src={dashboard?.image || Base64Icons[0]}
+												style={{ height: '14px', width: '14px' }}
+												alt="dashboard-image"
+												className="dashboard-icon"
+											/>
+											{dashboard.name}
+										</Link>
+									</Typography.Text>
+								</Tooltip>
 							</div>
 
 							<div className="tags-with-actions">
 								{dashboard?.tags && dashboard.tags.length > 0 && (
 									<div className="dashboard-tags">
-										{dashboard.tags.map((tag) => (
+										{dashboard.tags.slice(0, 3).map((tag) => (
 											<Tag className="tag" key={tag}>
 												{tag}
 											</Tag>
 										))}
+
+										{dashboard.tags.length > 3 && (
+											<Tag className="tag" key={dashboard.tags[3]}>
+												+ <span> {dashboard.tags.length - 3} </span>
+											</Tag>
+										)}
 									</div>
 								)}
-								{action && (
-									<Popover
-										trigger="click"
-										content={
-											<div className="dashboard-action-content">
-												<section className="section-1">
-													<Button
-														type="text"
-														className="action-btn"
-														icon={<Expand size={14} />}
-														onClick={onClickHandler}
-													>
-														View
-													</Button>
-													<Button
-														type="text"
-														className="action-btn"
-														icon={<Link2 size={14} />}
-														onClick={(e): void => {
-															e.stopPropagation();
-															e.preventDefault();
-															setCopy(`${window.location.origin}${getLink()}`);
-														}}
-													>
-														Copy Link
-													</Button>
-												</section>
-												<section className="section-2">
-													<DeleteButton
-														name={dashboard.name}
-														id={dashboard.id}
-														isLocked={dashboard.isLocked}
-														createdBy={dashboard.createdBy}
-													/>
-												</section>
-											</div>
-										}
-										placement="bottomRight"
-										arrow={false}
-										rootClassName="dashboard-actions"
-									>
-										<EllipsisVertical
-											size={14}
-											onClick={(e): void => {
-												e.stopPropagation();
-												e.preventDefault();
-											}}
-										/>
-									</Popover>
-								)}
 							</div>
+
+							{action && (
+								<Popover
+									trigger="click"
+									content={
+										<div className="dashboard-action-content">
+											<section className="section-1">
+												<Button
+													type="text"
+													className="action-btn"
+													icon={<Expand size={12} />}
+													onClick={onClickHandler}
+												>
+													View
+												</Button>
+												<Button
+													type="text"
+													className="action-btn"
+													icon={<Link2 size={12} />}
+													onClick={(e): void => {
+														e.stopPropagation();
+														e.preventDefault();
+														setCopy(`${window.location.origin}${getLink()}`);
+													}}
+												>
+													Copy Link
+												</Button>
+											</section>
+											<section className="section-2">
+												<DeleteButton
+													name={dashboard.name}
+													id={dashboard.id}
+													isLocked={dashboard.isLocked}
+													createdBy={dashboard.createdBy}
+												/>
+											</section>
+										</div>
+									}
+									placement="bottomRight"
+									arrow={false}
+									rootClassName="dashboard-actions"
+								>
+									<EllipsisVertical
+										className="dashboard-action-icon"
+										size={14}
+										onClick={(e): void => {
+											e.stopPropagation();
+											e.preventDefault();
+										}}
+									/>
+								</Popover>
+							)}
 						</div>
 						<div className="dashboard-details">
 							<div className="dashboard-created-at">
