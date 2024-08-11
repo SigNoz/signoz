@@ -62,9 +62,11 @@ function App(): JSX.Element {
 			allFlags.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
 			false;
 
-		const isChatSupportEnabled =
+		const isChatSupportFFEnabled =
 			allFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)?.active ||
 			false;
+
+		const isChatSupportEnabled = isChatSupportFFEnabled;
 
 		dispatch({
 			type: UPDATE_FEATURE_FLAG_RESPONSE,
