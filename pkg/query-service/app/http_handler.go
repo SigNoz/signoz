@@ -9,6 +9,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"net/url"
 	"regexp"
 	"slices"
 	"strconv"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
@@ -101,6 +103,9 @@ type APIHandler struct {
 	// at the moment, we mark the app ready when the first user
 	// is registers.
 	SetupCompleted bool
+
+	// Websocket connection upgrader
+	Upgrader *websocket.Upgrader
 }
 
 type APIHandlerOpts struct {
@@ -207,6 +212,29 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		// to signup signoz through invite link only.
 		aH.SetupCompleted = true
 	}
+
+	aH.Upgrader = &websocket.Upgrader{
+		// Same-origin check is the server's responsibility in websocket spec.
+		CheckOrigin: func(r *http.Request) bool {
+			// Based on the default CheckOrigin implementation in websocket package.
+			originHeader := r.Header.Get("Origin")
+			if len(originHeader) == 0 {
+				return true
+			}
+			origin, err := url.Parse(originHeader)
+			if err != nil {
+				return false
+			}
+
+			// Allow cross origin websocket connections on localhost
+			if strings.HasPrefix(origin.Host, "localhost") {
+				return true
+			}
+
+			return origin.Host == r.Host
+		},
+	}
+
 	return aH, nil
 }
 
@@ -304,6 +332,9 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/query_range/format", am.ViewAccess(aH.QueryRangeV3Format)).Methods(http.MethodPost)
 
 	subRouter.HandleFunc("/filter_suggestions", am.ViewAccess(aH.getQueryBuilderSuggestions)).Methods(http.MethodGet)
+
+	// websocket handler for query progress
+	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.ListenToQueryStats)).Methods(http.MethodGet)
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
@@ -3679,6 +3710,64 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
+}
+
+func (aH *APIHandler) ListenToQueryStats(w http.ResponseWriter, r *http.Request) {
+	queryId := r.URL.Query().Get("q")
+
+	progressCh, unsubscribe, apiErr := aH.reader.SubscribeToQueryProgress(queryId)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+	defer func() { go unsubscribe() }()
+
+	upgradeHeaders := http.Header{}
+
+	// Send back requested protocol value for sec-websocket-protocol
+	// Since js websocket API doesn't allow setting headers, this header
+	// is often used for passing auth token.
+	// For a connection to succeed, requested protocol must be sent back
+	// in the upgrade response headers.
+	requestedProtocol := r.Header.Get("Sec-WebSocket-Protocol")
+	if len(requestedProtocol) > 0 {
+		upgradeHeaders.Add("Sec-WebSocket-Protocol", requestedProtocol)
+	}
+
+	c, err := aH.Upgrader.Upgrade(w, r, upgradeHeaders)
+
+	if err != nil {
+		RespondError(w, model.InternalError(fmt.Errorf(
+			"couldn't upgrade connection", err,
+		)), nil)
+		return
+	}
+	defer c.Close()
+
+	for p := range progressCh {
+		msg, err := json.Marshal(p)
+		if err != nil {
+			zap.L().Error(
+				"failed to serialize progress message",
+				zap.String("queryId", queryId), zap.Any("progress", p), zap.Error(err),
+			)
+			continue
+		}
+
+		err = c.WriteMessage(websocket.TextMessage, msg)
+		if err != nil {
+			zap.L().Error(
+				"failed to write progress msg to websocket",
+				zap.String("queryId", queryId), zap.String("msg", string(msg)), zap.Error(err),
+			)
+			break
+		} else {
+			zap.L().Debug(
+				"wrote progress msg to websocket",
+				zap.String("queryId", queryId), zap.String("msg", string(msg)), zap.Error(err),
+			)
+		}
+	}
 }
 
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {

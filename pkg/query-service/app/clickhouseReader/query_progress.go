@@ -7,17 +7,10 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/google/uuid"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 )
-
-type QueryProgress struct {
-	ReadRows uint64 `json:"read_rows"`
-
-	ReadBytes uint64 `json:"read_bytes"`
-
-	ElapsedMs uint64 `json:"elapsed_ms"`
-}
 
 type QueryProgressTracker interface {
 	// Tells the tracker that query with id `queryId` has started.
@@ -32,7 +25,7 @@ type QueryProgressTracker interface {
 	// The returned channel will produce `QueryProgress` instances representing
 	// the latest state of query progress stats.
 	// Also returns a function that can be called to unsubscribe before query finished if needed.
-	SubscribeToQueryProgress(queryId string) (ch <-chan QueryProgress, unsubscribe func(), err *model.ApiError)
+	SubscribeToQueryProgress(queryId string) (ch <-chan v3.QueryProgress, unsubscribe func(), err *model.ApiError)
 }
 
 func NewQueryProgressTracker() QueryProgressTracker {
@@ -84,12 +77,14 @@ func (tracker *inMemoryQueryProgressTracker) ReportQueryProgress(
 
 func (tracker *inMemoryQueryProgressTracker) SubscribeToQueryProgress(
 	queryId string,
-) (<-chan QueryProgress, func(), *model.ApiError) {
+) (<-chan v3.QueryProgress, func(), *model.ApiError) {
 	queryTracker, err := tracker.getQueryTracker(queryId)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	// TODO(Raj): Check if publisher already closed because
+	// of query finished at this point.
 	latestProgress := queryTracker.progress.get()
 	ch, unsubscribe := queryTracker.publisher.subscribe(latestProgress)
 
@@ -145,7 +140,7 @@ func (qt *queryTracker) onFinished() {
 
 // Concurrency safe QueryProgress state
 type queryProgressState struct {
-	progress *QueryProgress
+	progress *v3.QueryProgress
 	lock     sync.RWMutex
 }
 
@@ -155,14 +150,14 @@ func (qps *queryProgressState) update(chProgress *clickhouse.Progress) {
 
 	if qps.progress == nil {
 		// This is the first update
-		qps.progress = &QueryProgress{}
+		qps.progress = &v3.QueryProgress{}
 	}
 
-	qps.progress.update(chProgress)
+	qps.progress.Update(chProgress)
 }
 
 // query progress will be nil before the 1st call to update
-func (qps *queryProgressState) get() *QueryProgress {
+func (qps *queryProgressState) get() *v3.QueryProgress {
 	qps.lock.RLock()
 	defer qps.lock.RUnlock()
 
@@ -180,9 +175,9 @@ func newQueryProgressPublisher() *queryProgressPublisher {
 	}
 }
 
-func (pub *queryProgressPublisher) subscribe(latestProgress *QueryProgress) (
-	<-chan QueryProgress, func(),
-) {
+func (pub *queryProgressPublisher) subscribe(
+	latestProgress *v3.QueryProgress,
+) (<-chan v3.QueryProgress, func()) {
 	pub.lock.Lock()
 	defer pub.lock.Unlock()
 
@@ -210,7 +205,7 @@ func (pub *queryProgressPublisher) unsubscribe(subscriberId string) {
 	}
 }
 
-func (pub *queryProgressPublisher) broadcast(qp *QueryProgress) {
+func (pub *queryProgressPublisher) broadcast(qp *v3.QueryProgress) {
 	if qp == nil {
 		return
 	}
@@ -236,21 +231,21 @@ func (pub *queryProgressPublisher) onFinished() {
 }
 
 type queryProgressChannel struct {
-	ch chan QueryProgress
+	ch chan v3.QueryProgress
 
 	isClosed bool
 	lock     sync.Mutex
 }
 
 func newQueryProgressChannel() *queryProgressChannel {
-	ch := make(chan QueryProgress, 1000)
+	ch := make(chan v3.QueryProgress, 1000)
 	return &queryProgressChannel{
 		ch: ch,
 	}
 }
 
 // Must not block or panic in any scenario
-func (ch *queryProgressChannel) send(progress QueryProgress) {
+func (ch *queryProgressChannel) send(progress v3.QueryProgress) {
 	ch.lock.Lock()
 	defer ch.lock.Unlock()
 
@@ -277,11 +272,4 @@ func (ch *queryProgressChannel) close() {
 		close(ch.ch)
 		ch.isClosed = true
 	}
-}
-
-// Helper for QueryProgress
-func (qp *QueryProgress) update(chProgress *clickhouse.Progress) {
-	qp.ReadRows += chProgress.Rows
-	qp.ReadBytes += chProgress.Bytes
-	qp.ElapsedMs += uint64(chProgress.Elapsed.Milliseconds())
 }

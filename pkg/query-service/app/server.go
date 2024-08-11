@@ -262,7 +262,7 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 		// ip here for alert manager
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
 	})
 
 	handler := c.Handler(r)
@@ -308,7 +308,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
 	})
 
 	handler := c.Handler(r)

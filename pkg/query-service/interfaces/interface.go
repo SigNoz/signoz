@@ -118,8 +118,9 @@ type Reader interface {
 	ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistoryContributor, error)
 	GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error)
 
-	// Query Progress tracking helper.
+	// Query Progress tracking helpers.
 	ReportQueryStartForProgressTracking(queryId string) (reportQueryFinished func(), err *model.ApiError)
+	SubscribeToQueryProgress(queryId string) (<-chan v3.QueryProgress, func(), *model.ApiError)
 }
 
 type Querier interface {

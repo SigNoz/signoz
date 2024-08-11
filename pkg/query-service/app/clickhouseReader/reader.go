@@ -5493,3 +5493,9 @@ func (r *ClickHouseReader) ReportQueryStartForProgressTracking(
 ) (func(), *model.ApiError) {
 	return r.queryProgressTracker.ReportQueryStarted(queryId)
 }
+
+func (r *ClickHouseReader) SubscribeToQueryProgress(
+	queryId string,
+) (<-chan v3.QueryProgress, func(), *model.ApiError) {
+	return r.queryProgressTracker.SubscribeToQueryProgress(queryId)
+}

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -1246,4 +1247,19 @@ type Stats struct {
 	PastAvgResolutionTime          string  `json:"pastAvgResolutionTime"`
 	CurrentAvgResolutionTimeSeries *Series `json:"currentAvgResolutionTimeSeries"`
 	PastAvgResolutionTimeSeries    *Series `json:"pastAvgResolutionTimeSeries"`
+}
+
+type QueryProgress struct {
+	ReadRows uint64 `json:"read_rows"`
+
+	ReadBytes uint64 `json:"read_bytes"`
+
+	ElapsedMs uint64 `json:"elapsed_ms"`
+}
+
+// Helper for QueryProgress
+func (qp *QueryProgress) Update(chProgress *clickhouse.Progress) {
+	qp.ReadRows += chProgress.Rows
+	qp.ReadBytes += chProgress.Bytes
+	qp.ElapsedMs += uint64(chProgress.Elapsed.Milliseconds())
 }
