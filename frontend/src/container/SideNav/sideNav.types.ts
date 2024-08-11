@@ -12,6 +12,7 @@ export interface SidebarItem {
 	text?: ReactNode;
 	key: string | number;
 	label?: ReactNode;
+	isBeta?: boolean;
 }
 
 export enum SecondaryMenuItemKey {
