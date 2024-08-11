@@ -1,0 +1,32 @@
+.alert-action-buttons {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	color: var(--bg-slate-400);
+}
+.dropdown-menu {
+	border-radius: 4px;
+	box-shadow: none;
+	background: linear-gradient(
+		138.7deg,
+		rgba(18, 19, 23, 0.8) 0%,
+		rgba(18, 19, 23, 0.9) 98.68%
+	);
+
+	.delete-button {
+		border: none;
+		display: flex;
+		align-items: center;
+		width: 100%;
+
+		&,
+		& span {
+			&:hover {
+				background: #1d212d;
+				color: var(--bg-cherry-400);
+			}
+			color: var(--bg-cherry-400);
+			font-size: 14px;
+		}
+	}
+}
