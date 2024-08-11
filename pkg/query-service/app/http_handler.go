@@ -3715,13 +3715,6 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) ListenToQueryStats(w http.ResponseWriter, r *http.Request) {
 	queryId := r.URL.Query().Get("q")
 
-	progressCh, unsubscribe, apiErr := aH.reader.SubscribeToQueryProgress(queryId)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-	defer func() { go unsubscribe() }()
-
 	upgradeHeaders := http.Header{}
 
 	// Send back requested protocol value for sec-websocket-protocol
@@ -3743,6 +3736,16 @@ func (aH *APIHandler) ListenToQueryStats(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	defer c.Close()
+
+	progressCh, unsubscribe, apiErr := aH.reader.SubscribeToQueryProgress(queryId)
+	if apiErr != nil {
+		zap.L().Warn(
+			"couldn't subscribe to query progress",
+			zap.String("queryId", queryId), zap.Error(err),
+		)
+		return
+	}
+	defer func() { go unsubscribe() }()
 
 	for p := range progressCh {
 		msg, err := json.Marshal(p)
