@@ -143,7 +143,7 @@ func NewReader(
 	cluster string,
 ) *ClickHouseReader {
 
-	datasource := os.Getenv("ClickHouseUrl")
+	datasource := constants.ClickHouseUrl
 	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
 	db, err := initialize(options)
 
@@ -169,7 +169,7 @@ func NewReaderFromClickhouseConnection(
 		os.Exit(1)
 	}
 
-	regex := os.Getenv("ClickHouseOptimizeReadInOrderRegex")
+	regex := constants.ClickHouseOptimizeReadInOrderRegex
 	var regexCompiled *regexp.Regexp
 	if regex != "" {
 		regexCompiled, err = regexp.Compile(regex)
@@ -182,10 +182,10 @@ func NewReaderFromClickhouseConnection(
 	wrap := clickhouseConnWrapper{
 		conn: db,
 		settings: ClickhouseQuerySettings{
-			MaxExecutionTimeLeaf:                os.Getenv("ClickHouseMaxExecutionTimeLeaf"),
-			TimeoutBeforeCheckingExecutionSpeed: os.Getenv("ClickHouseTimeoutBeforeCheckingExecutionSpeed"),
-			MaxBytesToRead:                      os.Getenv("ClickHouseMaxBytesToRead"),
-			OptimizeReadInOrderRegex:            os.Getenv("ClickHouseOptimizeReadInOrderRegex"),
+			MaxExecutionTimeLeaf:                constants.ClickHouseMaxExecutionTimeLeaf,
+			TimeoutBeforeCheckingExecutionSpeed: constants.ClickHouseTimeoutBeforeCheckingExecutionSpeed,
+			MaxBytesToRead:                      constants.ClickHouseMaxBytesToRead,
+			OptimizeReadInOrderRegex:            constants.ClickHouseOptimizeReadInOrderRegex,
 			OptimizeReadInOrderRegexCompiled:    regexCompiled,
 		},
 	}

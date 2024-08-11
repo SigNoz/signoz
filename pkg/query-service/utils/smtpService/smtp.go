@@ -2,9 +2,10 @@ package smtpservice
 
 import (
 	"net/smtp"
-	"os"
 	"strings"
 	"sync"
+
+	"go.signoz.io/signoz/pkg/query-service/constants"
 )
 
 type SMTP struct {
@@ -20,11 +21,11 @@ var once sync.Once
 
 func New() *SMTP {
 	return &SMTP{
-		Host:     os.Getenv("SMTP_HOST"),
-		Port:     os.Getenv("SMTP_PORT"),
-		Username: os.Getenv("SMTP_USERNAME"),
-		Password: os.Getenv("SMTP_PASSWORD"),
-		From:     os.Getenv("SMTP_FROM"),
+		Host:     constants.SmtpHost,
+		Port:     constants.SmtpPort,
+		Username: constants.SmtpUsername,
+		Password: constants.SmtpPassword,
+		From:     constants.SmtpFrom,
 	}
 }
 

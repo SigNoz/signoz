@@ -11,7 +11,6 @@ import (
 	"net/http"
 	_ "net/http/pprof" // http profiler
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -116,7 +115,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	readerReady := make(chan bool)
 
 	var reader interfaces.Reader
-	storage := os.Getenv("STORAGE")
+	storage := constants.StorageType
 	if storage == "clickhouse" {
 		zap.L().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(

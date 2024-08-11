@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"text/template"
 	"time"
 
@@ -97,7 +96,7 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 	}, au.Email, true, false)
 
 	// send email if SMTP is enabled
-	if os.Getenv("SMTP_ENABLED") == "true" && req.FrontendBaseUrl != "" {
+	if constants.SmtpEnabled == "true" && req.FrontendBaseUrl != "" {
 		inviteEmail(req, au, token)
 	}
 

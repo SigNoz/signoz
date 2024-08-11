@@ -5,7 +5,6 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -637,7 +636,7 @@ func GetInstance() *Telemetry {
 }
 
 func getDeploymentType() string {
-	deploymentType := os.Getenv("DEPLOYMENT_TYPE")
+	deploymentType := constants.DeploymentType
 	if deploymentType == "" {
 		return "unknown"
 	}

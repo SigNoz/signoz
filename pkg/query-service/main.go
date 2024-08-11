@@ -82,7 +82,7 @@ func main() {
 	}
 
 	// Read the jwt secret key
-	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
+	auth.JwtSecret = constants.SignozJwtSecret
 
 	if len(auth.JwtSecret) == 0 {
 		zap.L().Warn("No JWT secret key is specified.")

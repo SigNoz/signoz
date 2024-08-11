@@ -10,7 +10,6 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
-	"os"
 	"regexp"
 	"time"
 
@@ -141,7 +140,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	readerReady := make(chan bool)
 
 	var reader interfaces.DataConnector
-	storage := os.Getenv("STORAGE")
+	storage := baseconst.StorageType
 	if storage == "clickhouse" {
 		zap.L().Info("Using ClickHouse as datastore ...")
 		qb := db.NewDataConnector(
