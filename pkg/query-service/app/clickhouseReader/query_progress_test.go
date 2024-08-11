@@ -7,6 +7,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 func TestQueryProgressTracking(t *testing.T) {
@@ -44,8 +45,8 @@ func TestQueryProgressTracking(t *testing.T) {
 	require.NotNil(ch)
 	require.NotNil(unsubscribe)
 
-	expectedProgress := QueryProgress{}
-	expectedProgress.update(testProgress1)
+	expectedProgress := v3.QueryProgress{}
+	expectedProgress.Update(testProgress1)
 	require.Equal(expectedProgress.ReadRows, testProgress1.Rows)
 	select {
 	case qp := <-ch:
@@ -68,7 +69,7 @@ func TestQueryProgressTracking(t *testing.T) {
 	err = tracker.ReportQueryProgress(testQueryId, testProgress2)
 	require.Nil(err, "should be able to report progress multiple times while query is in progress")
 
-	expectedProgress.update(testProgress2)
+	expectedProgress.Update(testProgress2)
 	select {
 	case qp := <-ch:
 		require.Equal(qp, expectedProgress)

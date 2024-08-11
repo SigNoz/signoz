@@ -3776,7 +3776,6 @@ func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Req
 				zap.String("queryId", queryId), zap.String("msg", string(msg)), zap.Error(err),
 			)
 			break
-
 		} else {
 			zap.L().Debug(
 				"wrote progress msg to websocket",
