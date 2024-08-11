@@ -12,10 +12,7 @@ import (
 )
 
 type QueryProgress struct {
-	// Number of rows read till now.
 	ReadRows uint64 `json:"read_rows"`
-
-	TotalRowsToRead uint64 `json:"total_rows_to_read"`
 
 	ReadBytes uint64 `json:"read_bytes"`
 
@@ -287,12 +284,4 @@ func (qp *QueryProgress) update(chProgress *clickhouse.Progress) {
 	qp.ReadRows += chProgress.Rows
 	qp.ReadBytes += chProgress.Bytes
 	qp.ElapsedMs += uint64(chProgress.Elapsed.Milliseconds())
-
-	if qp.TotalRowsToRead != chProgress.TotalRows {
-		qp.TotalRowsToRead = max(
-			chProgress.TotalRows,
-			qp.TotalRowsToRead,
-			qp.ReadRows,
-		)
-	}
 }

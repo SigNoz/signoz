@@ -3517,6 +3517,21 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
+	// Hook up query progress tracking if requested
+	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
+	if len(queryIdHeader) > 0 {
+		ctx = context.WithValue(ctx, "queryId", queryIdHeader)
+
+		onFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
+		if err != nil {
+			zap.L().Error("couldn't report query start for progress tracking", zap.String("queryId", queryIdHeader), zap.Error(err))
+		} else {
+			defer func() {
+				go onFinished()
+			}()
+		}
+	}
+
 	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {

@@ -117,6 +117,9 @@ type Reader interface {
 	GetAvgResolutionTimeByInterval(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (*v3.Series, error)
 	ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistoryContributor, error)
 	GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error)
+
+	// Query Progress tracking helper.
+	ReportQueryStartForProgressTracking(queryId string) (reportQueryFinished func(), err *model.ApiError)
 }
 
 type Querier interface {

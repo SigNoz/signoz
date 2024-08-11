@@ -122,7 +122,7 @@ type ClickHouseReader struct {
 	queryEngine             *promql.Engine
 	remoteStorage           *remote.Storage
 	fanoutStorage           *storage.Storage
-	progressTracker         *QueryProgressTracker
+	queryProgressTracker    QueryProgressTracker
 
 	promConfigFile string
 	promConfig     *config.Config
@@ -216,6 +216,7 @@ func NewReaderFromClickhouseConnection(
 		promConfigFile:          configFile,
 		featureFlags:            featureFlag,
 		cluster:                 cluster,
+		queryProgressTracker:    NewQueryProgressTracker(),
 	}
 }
 
@@ -4707,6 +4708,27 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 
 	defer utils.Elapsed("GetTimeSeriesResultV3", ctxArgs)()
 
+	// Hook up query progress reporting if requested.
+	queryId := ctx.Value("queryId")
+	if queryId != nil {
+		qid, ok := queryId.(string)
+		if !ok {
+			zap.L().Error("GetTimeSeriesResultV3: queryId in ctx not a string as expected", zap.Any("queryId", queryId))
+
+		} else {
+			ctx = clickhouse.Context(
+				ctx, clickhouse.WithProgress(func(p *clickhouse.Progress) {
+					go func() {
+						err := r.queryProgressTracker.ReportQueryProgress(qid, p)
+						if err != nil {
+							zap.L().Error("Couldn't report query progress", zap.String("queryId", qid), zap.Error(err))
+						}
+					}()
+				}),
+			)
+		}
+	}
+
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
@@ -5464,4 +5486,10 @@ func (r *ClickHouseReader) GetMinAndMaxTimestampForTraceID(ctx context.Context, 
 	zap.L().Debug("GetMinAndMaxTimestampForTraceID", zap.Any("minTime", minTime), zap.Any("maxTime", maxTime))
 
 	return minTime.UnixNano(), maxTime.UnixNano(), nil
+}
+
+func (r *ClickHouseReader) ReportQueryStartForProgressTracking(
+	queryId string,
+) (func(), *model.ApiError) {
+	return r.queryProgressTracker.ReportQueryStarted(queryId)
 }
