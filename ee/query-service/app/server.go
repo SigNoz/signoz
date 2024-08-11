@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -416,6 +417,14 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 // Flush implements the http.Flush interface.
 func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
+}
+
+func (lrw *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := lrw.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("hijack not supported")
+	}
+	return h.Hijack()
 }
 
 func extractQueryRangeData(path string, r *http.Request) (map[string]interface{}, bool) {
