@@ -28,8 +28,6 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 
 	tableName := helpers.WhichSamplesTableToUse(start, end, mq)
 
-	fmt.Println("tableName", tableName)
-
 	// Select the aggregate value for interval
 	queryTmpl :=
 		"SELECT fingerprint, %s" +
@@ -88,7 +86,6 @@ func prepareQueryOptimized(start, end, step int64, mq *v3.BuilderQuery) (string,
 	samplesTableFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli < %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	tableName := helpers.WhichSamplesTableToUse(start, end, mq)
-	fmt.Println("tableName", tableName)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
