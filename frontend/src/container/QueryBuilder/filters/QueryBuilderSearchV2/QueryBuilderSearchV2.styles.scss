@@ -6,4 +6,13 @@
 	.search-bar {
 		width: 100%;
 	}
+
+	.ant-tag {
+		&.resource {
+			border-color: var(--bg-sakura-600);
+		}
+		&.tag {
+			border-color: var(--bg-seinna-600);
+		}
+	}
 }

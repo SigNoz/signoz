@@ -19,7 +19,7 @@ function Suggestions(props: Option): React.ReactElement {
 	return (
 		<span className="option">
 			{!isEmpty(optionType) && isObject(value) ? (
-				<Tooltip title={`${value}`} placement="topLeft">
+				<Tooltip title={`${value.key}`} placement="topLeft">
 					<div className="selectOptionContainer">
 						<div className="option-value">{label}</div>
 						<div className="option-meta-data-container">
