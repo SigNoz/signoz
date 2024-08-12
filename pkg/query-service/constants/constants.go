@@ -217,8 +217,8 @@ var GroupByColMap = map[string]struct{}{
 const (
 	SIGNOZ_METRIC_DBNAME                       = "signoz_metrics"
 	SIGNOZ_SAMPLES_V4_TABLENAME                = "distributed_samples_v4"
-	SIGNOZ_SAMPLES_V4_AGG_5MIN_TABLENAME       = "distributed_samples_v4_agg_5min"
-	SIGNOZ_SAMPLES_V4_AGG_30MIN_TABLENAME      = "distributed_samples_v4_agg_30min"
+	SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME         = "distributed_samples_v4_agg_5m"
+	SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME        = "distributed_samples_v4_agg_30m"
 	SIGNOZ_EXP_HISTOGRAM_TABLENAME             = "distributed_exp_hist"
 	SIGNOZ_TRACE_DBNAME                        = "signoz_traces"
 	SIGNOZ_SPAN_INDEX_TABLENAME                = "distributed_signoz_index_v2"

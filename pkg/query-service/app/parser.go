@@ -1073,9 +1073,9 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				// if the time range is greater than 1 week, set the step interval to be multiple of 30 mins
 				start, end := queryRangeParams.Start, queryRangeParams.End
 				if end-start >= 24*time.Hour.Milliseconds() && end-start < 7*24*time.Hour.Milliseconds() {
-					query.StepInterval = int64(math.Round(float64(query.StepInterval)/5)) * 5
+					query.StepInterval = int64(math.Round(float64(query.StepInterval)/300)) * 300
 				} else if end-start >= 7*24*time.Hour.Milliseconds() {
-					query.StepInterval = int64(math.Round(float64(query.StepInterval)/30)) * 30
+					query.StepInterval = int64(math.Round(float64(query.StepInterval)/1800)) * 1800
 				}
 			}
 

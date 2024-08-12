@@ -20,7 +20,8 @@ var (
 func whichTSTableToUse(start, end int64) (int64, int64, string) {
 	// If time range is less than 6 hours, we need to use the `time_series_v4` table
 	// else if time range is less than 1 day and greater than 6 hours, we need to use the `time_series_v4_6hrs` table
-	// else we need to use the `time_series_v4_1day` table
+	// else if time range is less than 1 week and greater than 1 day, we need to use the `time_series_v4_1day` table
+	// else we need to use the `time_series_v4_1week` table
 	var tableName string
 	if end-start < sixHoursInMilliseconds {
 		// adjust the start time to nearest 1 hour
@@ -46,16 +47,18 @@ func whichTSTableToUse(start, end int64) (int64, int64, string) {
 // start and end are in milliseconds
 // we have three tables for samples
 // 1. distributed_samples_v4
-// 2. distributed_samples_v4_agg_5min - for queries with time range above or equal to 1 day and less than 1 week
-// 3. distributed_samples_v4_agg_30min - for queries with time range above or equal to 1 week
+// 2. distributed_samples_v4_agg_5m - for queries with time range above or equal to 1 day and less than 1 week
+// 3. distributed_samples_v4_agg_30m - for queries with time range above or equal to 1 week
 // if the `timeAggregation` is `count_distinct` we can't use the aggregated tables because they don't support it
 func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
 
-	// we don't have any aggregated table for sketches
+	// we don't have any aggregated table for sketches (yet)
 	if mq.AggregateAttribute.Type == v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
 		return constants.SIGNOZ_EXP_HISTOGRAM_TABLENAME
 	}
 
+	// if the time aggregation is count_distinct, we need to use the distributed_samples_v4 table
+	// because the aggregated tables don't support count_distinct
 	if mq.TimeAggregation == v3.TimeAggregationCountDistinct {
 		return constants.SIGNOZ_SAMPLES_V4_TABLENAME
 	}
@@ -63,9 +66,9 @@ func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
 	if end-start < oneDayInMilliseconds {
 		return constants.SIGNOZ_SAMPLES_V4_TABLENAME
 	} else if end-start < oneWeekInMilliseconds {
-		return constants.SIGNOZ_SAMPLES_V4_AGG_5MIN_TABLENAME
+		return constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME
 	} else {
-		return constants.SIGNOZ_SAMPLES_V4_AGG_30MIN_TABLENAME
+		return constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME
 	}
 }
 
@@ -74,17 +77,20 @@ func AggregationColumnForSamplesTable(start, end int64, mq *v3.BuilderQuery) str
 	var aggregationColumn string
 	switch mq.Temporality {
 	case v3.Delta:
+		// for delta metrics, we only support `RATE`/`INCREASE` both of which are sum
 		switch tableName {
 		case constants.SIGNOZ_SAMPLES_V4_TABLENAME:
 			aggregationColumn = "sum(value)"
-		case constants.SIGNOZ_SAMPLES_V4_AGG_5MIN_TABLENAME, constants.SIGNOZ_SAMPLES_V4_AGG_30MIN_TABLENAME:
+		case constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME, constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME:
 			aggregationColumn = "sum(sum)"
 		}
 	case v3.Cumulative:
+		// for cumulative metrics, we only support `RATE`/`INCREASE`. The max value in window is
+		// used to calculate the sum which is then divided by the window size to get the rate
 		switch tableName {
 		case constants.SIGNOZ_SAMPLES_V4_TABLENAME:
 			aggregationColumn = "max(value)"
-		case constants.SIGNOZ_SAMPLES_V4_AGG_5MIN_TABLENAME, constants.SIGNOZ_SAMPLES_V4_AGG_30MIN_TABLENAME:
+		case constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME, constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME:
 			aggregationColumn = "max(max)"
 		}
 	case v3.Unspecified:
@@ -105,8 +111,10 @@ func AggregationColumnForSamplesTable(start, end int64, mq *v3.BuilderQuery) str
 				aggregationColumn = "count(value)"
 			case v3.TimeAggregationCountDistinct:
 				aggregationColumn = "countDistinct(value)"
+			case v3.TimeAggregationRate, v3.TimeAggregationIncrease: // ideally, this should never happen
+				aggregationColumn = "sum(value)"
 			}
-		case constants.SIGNOZ_SAMPLES_V4_AGG_5MIN_TABLENAME, constants.SIGNOZ_SAMPLES_V4_AGG_30MIN_TABLENAME:
+		case constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME, constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME:
 			switch mq.TimeAggregation {
 			case v3.TimeAggregationAnyLast:
 				aggregationColumn = "anyLast(last)"
@@ -120,6 +128,8 @@ func AggregationColumnForSamplesTable(start, end int64, mq *v3.BuilderQuery) str
 				aggregationColumn = "max(max)"
 			case v3.TimeAggregationCount:
 				aggregationColumn = "sum(count)"
+			case v3.TimeAggregationRate, v3.TimeAggregationIncrease: // ideally, this should never happen
+				aggregationColumn = "sum(sum)"
 			}
 		}
 	}
