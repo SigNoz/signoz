@@ -202,7 +202,7 @@ function QueryBuilderSearchV2(
 				currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
 			tagType: currentFilterItem?.key?.type ?? '',
 			searchText: isArray(currentFilterItem?.value)
-				? currentFilterItem?.value?.[currentFilterItem.value.length - 1]
+				? currentFilterItem?.value?.[currentFilterItem.value.length - 1] || ''
 				: currentFilterItem?.value?.toString() || '',
 		},
 		{
@@ -213,7 +213,7 @@ function QueryBuilderSearchV2(
 
 	const handleDropdownSelect = useCallback(
 		(value: string) => {
-			let parsedValue;
+			let parsedValue: BaseAutocompleteData | string;
 
 			try {
 				parsedValue = JSON.parse(value);
@@ -335,7 +335,9 @@ function QueryBuilderSearchV2(
 				setCurrentState(DropdownState.ATTRIBUTE_KEY);
 			} else if (
 				validationMapper[operatorType]?.(
-					isArray(currentFilterItem?.value) ? currentFilterItem?.value.length : 1,
+					isArray(currentFilterItem?.value)
+						? currentFilterItem?.value.length || 0
+						: 1,
 				)
 			) {
 				setTags((prev) => [
@@ -511,10 +513,9 @@ function QueryBuilderSearchV2(
 
 			if (values.length === 0) {
 				if (isArray(tagValue)) {
-					values.push(tagValue[tagValue.length - 1]);
-				} else {
-					values.push(tagValue);
-				}
+					if (!isEmpty(tagValue[tagValue.length - 1]))
+						values.push(tagValue[tagValue.length - 1]);
+				} else if (!isEmpty(tagValue)) values.push(tagValue);
 			}
 
 			setDropdownOptions(
@@ -562,7 +563,6 @@ function QueryBuilderSearchV2(
 		[query.dataSource],
 	);
 
-	// TODO do the processing here if required for has / nhas / in / nin
 	const queryTags = useMemo(
 		() => tags.map((tag) => `${tag.key.key} ${tag.operator} ${tag.value}`),
 		[tags],
