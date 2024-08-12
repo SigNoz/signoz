@@ -105,6 +105,7 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.SERVICE_MAP,
 		label: 'Service Map',
 		icon: <Route size={16} />,
+		isBeta: true,
 	},
 	{
 		key: ROUTES.USAGE_EXPLORER,
