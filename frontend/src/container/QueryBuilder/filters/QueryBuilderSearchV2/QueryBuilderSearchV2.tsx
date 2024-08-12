@@ -16,7 +16,14 @@ import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import useDebounceValue from 'hooks/useDebounce';
 import { isArray, isEmpty, isEqual, isObject, isUndefined } from 'lodash-es';
 import type { BaseSelectRef } from 'rc-select';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	KeyboardEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -240,7 +247,12 @@ function QueryBuilderSearchV2(
 				const isMulti = operatorType === QUERY_BUILDER_SEARCH_VALUES.MULTIPLY;
 
 				if (isMulti) {
-					setSearchValue((prev) => `${prev} ${value},`);
+					const { tagKey, tagOperator, tagValue } = getTagToken(searchValue);
+					const newSearch = [...tagValue];
+					newSearch[newSearch.length === 0 ? 0 : newSearch.length - 1] = value;
+					console.log(tagValue, newSearch, newSearch.length - 1, value);
+					const newSearchValue = newSearch.join(',');
+					setSearchValue(`${tagKey} ${tagOperator} ${newSearchValue},`);
 				} else {
 					setTags((prev) => [
 						...prev,
@@ -256,14 +268,27 @@ function QueryBuilderSearchV2(
 				}
 			}
 		},
-		[currentFilterItem, currentState],
+		[
+			currentFilterItem?.key,
+			currentFilterItem?.operator,
+			currentState,
+			searchValue,
+		],
 	);
 
 	const handleSearch = useCallback((value: string) => {
 		setSearchValue(value);
 	}, []);
 
-	const onInputKeyDownHandler = useCallback((): void => {}, []);
+	const onInputKeyDownHandler = useCallback(
+		(event: KeyboardEvent<Element>): void => {
+			if (event.key === 'Backspace' && !searchValue) {
+				event.stopPropagation();
+				setTags((prev) => prev.slice(0, -1));
+			}
+		},
+		[searchValue],
+	);
 
 	const handleOnBlur = useCallback((): void => {
 		if (searchValue) {
@@ -421,6 +446,7 @@ function QueryBuilderSearchV2(
 					value: tagValue,
 				}));
 			}
+			setCurrentState(DropdownState.ATTRIBUTE_VALUE);
 		}
 	}, [
 		currentFilterItem,
@@ -480,6 +506,16 @@ function QueryBuilderSearchV2(
 		if (currentState === DropdownState.ATTRIBUTE_VALUE) {
 			const values: string[] =
 				Object.values(attributeValues?.payload || {}).find((el) => !!el) || [];
+
+			const { tagValue } = getTagToken(searchValue);
+
+			if (values.length === 0) {
+				if (isArray(tagValue)) {
+					values.push(tagValue[tagValue.length - 1]);
+				} else {
+					values.push(tagValue);
+				}
+			}
 
 			setDropdownOptions(
 				values.map((val) => ({
