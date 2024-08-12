@@ -270,8 +270,6 @@ function QueryBuilderSearchV2(
 
 	const onInputKeyDownHandler = useCallback((): void => {}, []);
 
-	const handleDeselect = useCallback((): void => {}, []);
-
 	const handleOnBlur = useCallback((): void => {
 		if (searchValue) {
 			const operatorType =
@@ -495,6 +493,7 @@ function QueryBuilderSearchV2(
 	]);
 
 	useEffect(() => {
+		console.log(tags, 'tags');
 		const filterTags: IBuilderQuery['filters'] = {
 			op: 'AND',
 			items: [],
@@ -508,7 +507,8 @@ function QueryBuilderSearchV2(
 			});
 		});
 
-		if (!isEqual(filterTags.items, tags)) onChange(filterTags);
+		// check how can we reduce the re-renders here
+		onChange(filterTags);
 	}, [onChange, tags]);
 
 	const loading = useMemo(() => isFetching || isFetchingAttributeValues, [
@@ -538,13 +538,14 @@ function QueryBuilderSearchV2(
 			? value?.trim()?.replace(/,\s*$/, '')
 			: value?.trim();
 
+		const indexInQueryTags = queryTags.findIndex((qTag) => isEqual(qTag, value));
+		const tagDetails = tags[indexInQueryTags];
+
 		const onCloseHandler = (): void => {
 			onClose();
 			setSearchValue('');
+			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
 		};
-
-		const indexInQueryTags = queryTags.findIndex((qTag) => isEqual(qTag, value));
-		const tagDetails = tags[indexInQueryTags];
 
 		const tagEditHandler = (value: string): void => {
 			setCurrentFilterItem(tagDetails);
@@ -599,7 +600,6 @@ function QueryBuilderSearchV2(
 				style={selectStyle}
 				onSearch={handleSearch}
 				onSelect={handleDropdownSelect}
-				onDeselect={handleDeselect}
 				onInputKeyDown={onInputKeyDownHandler}
 				notFoundContent={loading ? <Spin size="small" /> : null}
 				suffixIcon={suffixIcon}
