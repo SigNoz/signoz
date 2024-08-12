@@ -112,7 +112,6 @@ function QueryBuilderSearchV2(
 
 	const memoizedSearchParams = useMemo(
 		() => [
-			// TODO update the search value here as well based on the running state of the filter
 			searchValue,
 			query.dataSource,
 			query.aggregateOperator,
@@ -134,8 +133,9 @@ function QueryBuilderSearchV2(
 			currentFilterItem?.key?.key || '',
 			currentFilterItem?.key?.dataType,
 			currentFilterItem?.key?.type ?? '',
-			// correct this
-			currentFilterItem?.value,
+			isArray(currentFilterItem?.value)
+				? currentFilterItem?.value?.[currentFilterItem.value.length - 1]
+				: currentFilterItem?.value,
 		],
 		[
 			query.aggregateOperator,
@@ -194,10 +194,9 @@ function QueryBuilderSearchV2(
 			filterAttributeKeyDataType:
 				currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
 			tagType: currentFilterItem?.key?.type ?? '',
-			searchText:
-				isArray(currentFilterItem?.value) && currentFilterItem?.value?.length
-					? currentFilterItem?.value?.[currentFilterItem.value.length - 1]
-					: currentFilterItem?.value?.toString() || '',
+			searchText: isArray(currentFilterItem?.value)
+				? currentFilterItem?.value?.[currentFilterItem.value.length - 1]
+				: currentFilterItem?.value?.toString() || '',
 		},
 		{
 			enabled: currentState === DropdownState.ATTRIBUTE_VALUE,
@@ -241,11 +240,7 @@ function QueryBuilderSearchV2(
 				const isMulti = operatorType === QUERY_BUILDER_SEARCH_VALUES.MULTIPLY;
 
 				if (isMulti) {
-					setCurrentFilterItem((prev) => ({
-						key: prev?.key as BaseAutocompleteData,
-						operator: prev?.operator as string,
-						value: [value],
-					}));
+					setSearchValue((prev) => `${prev} ${value},`);
 				} else {
 					setTags((prev) => [
 						...prev,
@@ -342,7 +337,7 @@ function QueryBuilderSearchV2(
 
 	// this useEffect takes care of tokenisation based on the search state
 	useEffect(() => {
-		const { tagKey, tagOperator } = getTagToken(searchValue);
+		const { tagKey, tagOperator, tagValue } = getTagToken(searchValue);
 
 		if (tagKey && isUndefined(currentFilterItem?.key)) {
 			let currentRunningAttributeKey;
@@ -360,6 +355,7 @@ function QueryBuilderSearchV2(
 					[currentRunningAttributeKey] = allAttributesMatchingTheKey;
 				}
 				if (allAttributesMatchingTheKey?.length > 1) {
+					// the priority logic goes here
 					[currentRunningAttributeKey] = allAttributesMatchingTheKey;
 				}
 
@@ -377,7 +373,7 @@ function QueryBuilderSearchV2(
 				setCurrentFilterItem({
 					key: {
 						key: searchValue,
-						// update this for has and nhas operator
+						// update this for has and nhas operator , check the useEffect of source keys in older component for details
 						dataType: DataTypes.EMPTY,
 						type: '',
 						isColumn: false,
@@ -388,16 +384,13 @@ function QueryBuilderSearchV2(
 				});
 				setCurrentState(DropdownState.OPERATOR);
 			}
-		}
-		if (
+		} else if (
 			currentFilterItem?.key &&
 			currentFilterItem?.key?.key !== tagKey.split(' ')[0]
 		) {
 			setCurrentFilterItem(undefined);
 			setCurrentState(DropdownState.ATTRIBUTE_KEY);
-		}
-
-		if (tagOperator && isEmpty(currentFilterItem?.operator)) {
+		} else if (tagOperator && isEmpty(currentFilterItem?.operator)) {
 			setCurrentFilterItem((prev) => ({
 				key: prev?.key as BaseAutocompleteData,
 				operator: tagOperator,
@@ -405,9 +398,7 @@ function QueryBuilderSearchV2(
 			}));
 
 			setCurrentState(DropdownState.ATTRIBUTE_VALUE);
-		}
-
-		if (
+		} else if (
 			!isEmpty(currentFilterItem?.operator) &&
 			tagOperator !== currentFilterItem?.operator
 		) {
@@ -417,6 +408,19 @@ function QueryBuilderSearchV2(
 				value: '',
 			}));
 			setCurrentState(DropdownState.OPERATOR);
+		} else if (!isEmpty(tagValue)) {
+			const currentValue = {
+				key: currentFilterItem?.key as BaseAutocompleteData,
+				operator: currentFilterItem?.operator as string,
+				value: tagValue,
+			};
+			if (!isEqual(currentValue, currentFilterItem)) {
+				setCurrentFilterItem((prev) => ({
+					key: prev?.key as BaseAutocompleteData,
+					operator: prev?.operator as string,
+					value: tagValue,
+				}));
+			}
 		}
 	}, [
 		currentFilterItem,
@@ -493,7 +497,6 @@ function QueryBuilderSearchV2(
 	]);
 
 	useEffect(() => {
-		console.log(tags, 'tags');
 		const filterTags: IBuilderQuery['filters'] = {
 			op: 'AND',
 			items: [],
@@ -507,8 +510,10 @@ function QueryBuilderSearchV2(
 			});
 		});
 
-		// check how can we reduce the re-renders here
-		onChange(filterTags);
+		if (!isEqual(tags, filterTags.items)) {
+			// check the id re-render here
+			onChange(filterTags);
+		}
 	}, [onChange, tags]);
 
 	const loading = useMemo(() => isFetching || isFetchingAttributeValues, [
@@ -586,6 +591,8 @@ function QueryBuilderSearchV2(
 				virtual
 				showSearch
 				tagRender={onTagRender}
+				transitionName=""
+				choiceTransitionName=""
 				filterOption={false}
 				open={isOpen}
 				onDropdownVisibleChange={setIsOpen}
