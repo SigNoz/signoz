@@ -3347,11 +3347,22 @@ func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.Dashbo
 		if isDashboardWithPanelAndName(dashboard.Data) {
 			totalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName + 1
 		}
+		if isDashboardWithTSV2(dashboard.Data) {
+			dashboardsInfo.QueriesWithTSV2 = dashboardsInfo.QueriesWithTSV2 + 1
+		}
 		dashboardsInfo = countPanelsInDashboard(dashboard.Data)
 	}
 	dashboardsInfo.TotalDashboards = len(dashboardsData)
 	dashboardsInfo.TotalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName
 	return &dashboardsInfo, nil
+}
+
+func isDashboardWithTSV2(data map[string]interface{}) bool {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(jsonData), "time_series_v2")
 }
 
 func isDashboardWithPanelAndName(data map[string]interface{}) bool {

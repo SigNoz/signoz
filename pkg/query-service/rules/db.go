@@ -315,6 +315,9 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 	}
 	for _, alert := range alertsData {
 		var rule GettableRule
+		if strings.Contains(alert, "time_series_v2") {
+			alertsInfo.AlertsWithTSV2 = alertsInfo.AlertsWithTSV2 + 1
+		}
 		err = json.Unmarshal([]byte(alert), &rule)
 		if err != nil {
 			zap.L().Error("invalid rule data", zap.Error(err))
