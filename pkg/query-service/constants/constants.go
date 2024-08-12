@@ -215,14 +215,18 @@ var GroupByColMap = map[string]struct{}{
 }
 
 const (
-	SIGNOZ_METRIC_DBNAME                      = "signoz_metrics"
-	SIGNOZ_SAMPLES_V4_TABLENAME               = "distributed_samples_v4"
-	SIGNOZ_TRACE_DBNAME                       = "signoz_traces"
-	SIGNOZ_SPAN_INDEX_TABLENAME               = "distributed_signoz_index_v2"
-	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME      = "time_series_v4"
-	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME = "time_series_v4_6hrs"
-	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME = "time_series_v4_1day"
-	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME       = "distributed_time_series_v4_1day"
+	SIGNOZ_METRIC_DBNAME                       = "signoz_metrics"
+	SIGNOZ_SAMPLES_V4_TABLENAME                = "distributed_samples_v4"
+	SIGNOZ_SAMPLES_V4_AGG_5MIN_TABLENAME       = "distributed_samples_v4_agg_5min"
+	SIGNOZ_SAMPLES_V4_AGG_30MIN_TABLENAME      = "distributed_samples_v4_agg_30min"
+	SIGNOZ_EXP_HISTOGRAM_TABLENAME             = "distributed_exp_hist"
+	SIGNOZ_TRACE_DBNAME                        = "signoz_traces"
+	SIGNOZ_SPAN_INDEX_TABLENAME                = "distributed_signoz_index_v2"
+	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME       = "time_series_v4"
+	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME  = "time_series_v4_6hrs"
+	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME  = "time_series_v4_1day"
+	SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME = "time_series_v4_1week"
+	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME        = "distributed_time_series_v4_1day"
 )
 
 var TimeoutExcludedRoutes = map[string]bool{

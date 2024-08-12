@@ -114,12 +114,14 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 
 	samplesTableFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli < %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
+	tableName := helpers.WhichSamplesTableToUse(start, end, mq)
+
 	// Select the aggregate value for interval
 	queryTmpl :=
 		"SELECT fingerprint, %s" +
 			" toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as per_series_value" +
-			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_V4_TABLENAME +
+			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + tableName +
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
@@ -130,37 +132,30 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 	selectLabelsAny := helpers.SelectLabelsAny(mq.GroupBy)
 	selectLabels := helpers.SelectLabels(mq.GroupBy)
 
+	op := helpers.AggregationColumnForSamplesTable(start, end, mq)
+
 	switch mq.TimeAggregation {
 	case v3.TimeAggregationAvg:
-		op := "avg(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationSum:
-		op := "sum(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationMin:
-		op := "min(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationMax:
-		op := "max(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationCount:
-		op := "count(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationCountDistinct:
-		op := "count(distinct(value))"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationAnyLast:
-		op := "anyLast(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationRate:
-		op := "max(value)"
 		innerSubQuery := fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 		rateQueryTmpl :=
 			"SELECT %s ts, " + rateWithoutNegative +
 				" as per_series_value FROM (%s) WINDOW rate_window as (PARTITION BY fingerprint ORDER BY fingerprint, ts)"
 		subQuery = fmt.Sprintf(rateQueryTmpl, selectLabels, innerSubQuery)
 	case v3.TimeAggregationIncrease:
-		op := "max(value)"
 		innerSubQuery := fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 		rateQueryTmpl :=
 			"SELECT %s ts, " + increaseWithoutNegative +
