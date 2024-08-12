@@ -1,4 +1,10 @@
-.suggestions-dropdown {
-	display: flex;
-	flex-direction: column;
+.option {
+	.selectOptionContainer {
+		.option-value {
+		}
+		.option-meta-data-container {
+			display: flex;
+			gap: 8px;
+		}
+	}
 }

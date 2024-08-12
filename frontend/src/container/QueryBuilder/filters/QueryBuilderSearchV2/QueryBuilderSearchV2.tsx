@@ -25,6 +25,7 @@ import { selectStyle } from '../QueryBuilderSearch/config';
 import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
 import { TypographyText } from '../QueryBuilderSearch/style';
 import { getTagToken, isInNInOperator } from '../QueryBuilderSearch/utils';
+import Suggestions from './Suggestions';
 
 export interface ITag {
 	key: BaseAutocompleteData;
@@ -73,8 +74,6 @@ function QueryBuilderSearchV2(
 ): React.ReactElement {
 	const { query, onChange, placeholder, className, suffixIcon } = props;
 
-	console.log(onChange);
-
 	const selectRef = useRef<BaseSelectRef>(null);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -89,7 +88,7 @@ function QueryBuilderSearchV2(
 		DropdownState.ATTRIBUTE_KEY,
 	);
 
-	// to maintain the current running state until the tokenization happens
+	// to maintain the current running state until the tokenization happens for the tag
 	const [searchValue, setSearchValue] = useState<string>('');
 
 	const [dropdownOptions, setDropdownOptions] = useState<Option[]>([]);
@@ -115,8 +114,8 @@ function QueryBuilderSearchV2(
 			query.aggregateOperator,
 			query.dataSource,
 			query.aggregateAttribute.key,
-			currentFilterItem?.key.key || '',
-			currentFilterItem?.key.dataType,
+			currentFilterItem?.key?.key || '',
+			currentFilterItem?.key?.dataType,
 			currentFilterItem?.key?.type ?? '',
 			// correct this
 			currentFilterItem?.value,
@@ -125,8 +124,8 @@ function QueryBuilderSearchV2(
 			query.aggregateOperator,
 			query.dataSource,
 			query.aggregateAttribute.key,
-			currentFilterItem?.key.key,
-			currentFilterItem?.key.dataType,
+			currentFilterItem?.key?.key,
+			currentFilterItem?.key?.dataType,
 			currentFilterItem?.key?.type,
 			currentFilterItem?.value,
 		],
@@ -174,9 +173,9 @@ function QueryBuilderSearchV2(
 			aggregateOperator: query.aggregateOperator,
 			dataSource: query.dataSource,
 			aggregateAttribute: query.aggregateAttribute.key,
-			attributeKey: currentFilterItem?.key.key || '',
+			attributeKey: currentFilterItem?.key?.key || '',
 			filterAttributeKeyDataType:
-				currentFilterItem?.key.dataType ?? DataTypes.EMPTY,
+				currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
 			tagType: currentFilterItem?.key?.type ?? '',
 			searchText: currentFilterItem?.value || '',
 		},
@@ -196,7 +195,7 @@ function QueryBuilderSearchV2(
 					value: '',
 				}));
 				setCurrentState(DropdownState.OPERATOR);
-				setSearchValue((value as BaseAutocompleteData).key);
+				setSearchValue(value);
 			}
 
 			if (currentState === DropdownState.OPERATOR) {
@@ -206,7 +205,7 @@ function QueryBuilderSearchV2(
 					value: '',
 				}));
 				setCurrentState(DropdownState.ATTRIBUTE_VALUE);
-				setSearchValue((prev) => prev + value);
+				setSearchValue((prev) => `${prev} ${value}`);
 			}
 
 			if (currentState === DropdownState.ATTRIBUTE_VALUE) {
@@ -225,8 +224,8 @@ function QueryBuilderSearchV2(
 					} as ITag,
 				]);
 				// handle the multi tag thing here while adding the values or creating the tag
-				setCurrentState(DropdownState.ATTRIBUTE_KEY);
-				setSearchValue('');
+				// setCurrentState(DropdownState.ATTRIBUTE_KEY);
+				// setSearchValue('');
 			}
 		},
 		[currentFilterItem, currentState],
@@ -250,7 +249,7 @@ function QueryBuilderSearchV2(
 	useEffect(() => {
 		const { tagKey, tagOperator } = getTagToken(searchValue);
 
-		console.log(tagKey, tagOperator, searchValue, currentFilterItem);
+		console.log('tagKey', tagKey);
 		if (tagKey && isUndefined(currentFilterItem?.key)) {
 			let currentRunningAttributeKey;
 			const isSuggestedKeyInAutocomplete = data?.payload?.attributeKeys?.some(
@@ -271,6 +270,7 @@ function QueryBuilderSearchV2(
 				}
 
 				if (currentRunningAttributeKey) {
+					console.log('setting here', currentRunningAttributeKey);
 					setCurrentFilterItem({
 						key: currentRunningAttributeKey,
 						operator: '',
@@ -281,6 +281,7 @@ function QueryBuilderSearchV2(
 				}
 			}
 			if (data?.payload?.attributeKeys?.length === 0) {
+				console.log('or setting here', searchValue);
 				setCurrentFilterItem({
 					key: {
 						key: searchValue,
@@ -296,6 +297,14 @@ function QueryBuilderSearchV2(
 				setCurrentState(DropdownState.OPERATOR);
 			}
 		}
+		if (
+			currentFilterItem?.key &&
+			currentFilterItem?.key?.key !== tagKey.split(' ')[0]
+		) {
+			console.log('orrrr setting here', currentFilterItem?.key.key, tagKey);
+			setCurrentFilterItem(undefined);
+			setCurrentState(DropdownState.ATTRIBUTE_KEY);
+		}
 
 		if (tagOperator && isEmpty(currentFilterItem?.operator)) {
 			setCurrentFilterItem((prev) => ({
@@ -307,6 +316,18 @@ function QueryBuilderSearchV2(
 			setCurrentState(DropdownState.ATTRIBUTE_VALUE);
 		}
 
+		if (
+			!isEmpty(currentFilterItem?.operator) &&
+			tagOperator !== currentFilterItem?.operator
+		) {
+			setCurrentFilterItem((prev) => ({
+				key: prev?.key as BaseAutocompleteData,
+				operator: '',
+				value: '',
+			}));
+			setCurrentState(DropdownState.OPERATOR);
+		}
+
 		// handle value changes here
 	}, [
 		currentFilterItem,
@@ -315,6 +336,8 @@ function QueryBuilderSearchV2(
 		data?.payload?.attributeKeys,
 		searchValue,
 	]);
+
+	console.log(currentFilterItem);
 
 	// the useEffect takes care of setting the dropdown values correctly on change of the current state
 	useEffect(() => {
@@ -331,7 +354,7 @@ function QueryBuilderSearchV2(
 			const partialOperator = keyOperator?.[1];
 
 			let operatorOptions;
-			if (currentFilterItem?.key.dataType) {
+			if (currentFilterItem?.key?.dataType) {
 				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES[
 					currentFilterItem.key
 						.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
@@ -376,7 +399,7 @@ function QueryBuilderSearchV2(
 		}
 	}, [
 		attributeValues?.payload,
-		currentFilterItem?.key.dataType,
+		currentFilterItem?.key?.dataType,
 		currentState,
 		data?.payload?.attributeKeys,
 		searchValue,
@@ -481,7 +504,7 @@ function QueryBuilderSearchV2(
 				{dropdownOptions.map((option) => (
 					// check why the select component is not being rendered with the value being objects
 					<Select.Option key={option.label} value={option.label}>
-						<div>{option.label}</div>
+						<Suggestions label={option.label} value={option.value} />
 					</Select.Option>
 				))}
 			</Select>

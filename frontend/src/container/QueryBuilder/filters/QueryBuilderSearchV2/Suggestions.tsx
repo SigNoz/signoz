@@ -1,46 +1,40 @@
 import './Suggestions.styles.scss';
 
-import { Button } from 'antd';
+import { Tooltip, Typography } from 'antd';
+import { isEmpty, isObject } from 'lodash-es';
+import { useMemo } from 'react';
 
-import { DropdownState, Option, Tag } from './QueryBuilderSearchV2';
+import { Option } from './QueryBuilderSearchV2';
 
-interface ISuggestionsProps {
-	searchValue: string;
-	options: Option[];
-	onChange: (value: Option['value']) => void;
-	currentState: DropdownState;
-	currentFilterItem?: Tag;
-}
+function Suggestions(props: Option): React.ReactElement {
+	const { label, value } = props;
 
-function Suggestions(props: ISuggestionsProps): React.ReactElement {
-	const {
-		searchValue,
-		currentFilterItem,
-		options,
-		onChange,
-		currentState,
-	} = props;
-	// on the select from the dropdown the tokenisation should happen automatically
+	const optionType = useMemo(() => {
+		if (isObject(value)) {
+			return value.type;
+		}
+		return '';
+	}, [value]);
 
 	return (
-		<div className="suggestions-dropdown">
-			{options.map((option) => (
-				<Button
-					// this is done to remove the keys with same names
-					key={JSON.stringify(option.value)}
-					onClick={(): void => {
-						onChange(option.value);
-					}}
-				>
-					{option.label}{' '}
-				</Button>
-			))}
-		</div>
+		<span className="option">
+			{!isEmpty(optionType) && isObject(value) ? (
+				<Tooltip title={`${value}`} placement="topLeft">
+					<div className="selectOptionContainer">
+						<div className="option-value">{label}</div>
+						<div className="option-meta-data-container">
+							<Typography.Text>{value.dataType}</Typography.Text>
+							<Typography.Text>{value.type}</Typography.Text>
+						</div>
+					</div>
+				</Tooltip>
+			) : (
+				<Tooltip title={label} placement="topLeft">
+					<span>{label}</span>
+				</Tooltip>
+			)}
+		</span>
 	);
 }
-
-Suggestions.defaultProps = {
-	currentFilterItem: undefined,
-};
 
 export default Suggestions;
