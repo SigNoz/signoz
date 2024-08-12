@@ -91,7 +91,11 @@ function LogExplorerQuerySection({
 		<>
 			{selectedView === SELECTED_VIEWS.SEARCH && (
 				<div className="qb-search-view-container">
-					<QueryBuilderSearchV2 query={query} onChange={handleChangeTagFilters} />
+					<QueryBuilderSearchV2
+						query={query}
+						onChange={handleChangeTagFilters}
+						whereClauseConfig={filterConfigs?.filters}
+					/>
 				</div>
 			)}
 

@@ -3,12 +3,15 @@ import './QueryBuilderSearchV2.styles.scss';
 
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import {
+	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 	QUERY_BUILDER_SEARCH_VALUES,
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
+import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
+import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import useDebounceValue from 'hooks/useDebounce';
 import { isArray, isEmpty, isEqual, isObject, isUndefined } from 'lodash-es';
@@ -50,6 +53,7 @@ interface CustomTagProps {
 interface QueryBuilderSearchV2Props {
 	query: IBuilderQuery;
 	onChange: (value: TagFilter) => void;
+	whereClauseConfig?: WhereClauseConfig;
 	placeholder?: string;
 	className?: string;
 	suffixIcon?: React.ReactNode;
@@ -78,7 +82,14 @@ function getInitTags(query: IBuilderQuery): ITag[] {
 function QueryBuilderSearchV2(
 	props: QueryBuilderSearchV2Props,
 ): React.ReactElement {
-	const { query, onChange, placeholder, className, suffixIcon } = props;
+	const {
+		query,
+		onChange,
+		placeholder,
+		className,
+		suffixIcon,
+		whereClauseConfig,
+	} = props;
 
 	const selectRef = useRef<BaseSelectRef>(null);
 
@@ -261,7 +272,75 @@ function QueryBuilderSearchV2(
 
 	const handleDeselect = useCallback((): void => {}, []);
 
-	const handleOnBlur = useCallback((): void => {}, []);
+	const handleOnBlur = useCallback((): void => {
+		if (searchValue) {
+			const operatorType =
+				operatorTypeMapper[currentFilterItem?.operator || ''] || 'NOT_VALID';
+			if (
+				currentFilterItem?.key &&
+				isEmpty(currentFilterItem?.operator) &&
+				whereClauseConfig?.customKey === 'body' &&
+				whereClauseConfig?.customOp === OPERATORS.CONTAINS
+			) {
+				setTags((prev) => [
+					...prev,
+					{
+						key: {
+							key: 'body',
+							dataType: DataTypes.String,
+							type: '',
+							isColumn: true,
+							isJSON: false,
+							id: 'body--string----true',
+						},
+						operator: OPERATORS.CONTAINS,
+						value: currentFilterItem?.key?.key,
+					},
+				]);
+				setCurrentFilterItem(undefined);
+				setSearchValue('');
+				setCurrentState(DropdownState.ATTRIBUTE_KEY);
+			} else if (
+				currentFilterItem?.operator === OPERATORS.EXISTS ||
+				currentFilterItem?.operator === OPERATORS.NOT_EXISTS
+			) {
+				setTags((prev) => [
+					...prev,
+					{
+						key: currentFilterItem?.key,
+						operator: currentFilterItem?.operator,
+						value: '',
+					},
+				]);
+				setCurrentFilterItem(undefined);
+				setSearchValue('');
+				setCurrentState(DropdownState.ATTRIBUTE_KEY);
+			} else if (
+				validationMapper[operatorType]?.(
+					isArray(currentFilterItem?.value) ? currentFilterItem?.value.length : 1,
+				)
+			) {
+				setTags((prev) => [
+					...prev,
+					{
+						key: currentFilterItem?.key as BaseAutocompleteData,
+						operator: currentFilterItem?.operator as string,
+						value: currentFilterItem?.value || '',
+					},
+				]);
+				setCurrentFilterItem(undefined);
+				setSearchValue('');
+				setCurrentState(DropdownState.ATTRIBUTE_KEY);
+			}
+		}
+	}, [
+		currentFilterItem?.key,
+		currentFilterItem?.operator,
+		currentFilterItem?.value,
+		searchValue,
+		whereClauseConfig?.customKey,
+		whereClauseConfig?.customOp,
+	]);
 
 	// this useEffect takes care of tokenisation based on the search state
 	useEffect(() => {
@@ -546,6 +625,7 @@ QueryBuilderSearchV2.defaultProps = {
 	placeholder: PLACEHOLDER,
 	className: '',
 	suffixIcon: null,
+	whereClauseConfig: {},
 };
 
 export default QueryBuilderSearchV2;
