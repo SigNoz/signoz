@@ -446,13 +446,15 @@ func (c *CompositeQuery) EnabledQueries() int {
 }
 
 func (c *CompositeQuery) Sanitize() {
+	if c == nil {
+		return
+	}
 	// remove groupBy for queries with list panel type
 	for _, query := range c.BuilderQueries {
 		if len(query.GroupBy) > 0 && c.PanelType == PanelTypeList {
 			query.GroupBy = []AttributeKey{}
 		}
 	}
-
 }
 
 func (c *CompositeQuery) Validate() error {
