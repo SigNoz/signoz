@@ -1,9 +1,12 @@
 import './alertHeader.styles.scss';
 
+import dayjs from 'dayjs';
+
 import AlertActionButtons from './ActionButtons';
 import AlertIcon from './AlertIcon/AlertIcon';
 import AlertLabels from './AlertLabels/AlertLabels';
 import AlertSeverity from './AlertSeverity/AlertSeverity';
+import AlertStatus from './AlertStatus/AlertStatus';
 
 type AlertHeaderProps = {
 	alertDetails: {
@@ -30,10 +33,10 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 				<AlertSeverity severity={labels.severity} />
 
 				{/* // TODO(shaheer): Get actual data when we are able to get alert status from API */}
-				{/* <AlertStatus
+				<AlertStatus
 					status="firing"
 					timestamp={dayjs().subtract(1, 'd').valueOf()}
-				/> */}
+				/>
 				<AlertLabels labels={labels} />
 			</div>
 		</div>
