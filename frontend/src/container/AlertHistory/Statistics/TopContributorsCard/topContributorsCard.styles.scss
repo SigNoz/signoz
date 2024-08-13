@@ -1,0 +1,63 @@
+.top-contributors-card {
+	width: 56.6%;
+	&__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 8px 12px;
+
+		border-bottom: 1px solid var(--bg-slate-500);
+		.title {
+			color: var(--text-vanilla-400);
+			font-size: 13px;
+			font-weight: 500;
+			line-height: 22px;
+			letter-spacing: 0.52px;
+			text-transform: uppercase;
+		}
+		.view-all {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+
+			.label {
+				color: var(--text-vanilla-400);
+				font-size: 14px;
+				line-height: 20px;
+				letter-spacing: -0.07px;
+			}
+			.icon {
+				display: flex;
+			}
+		}
+	}
+	&__content {
+		.contributors-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 16px 12px;
+			&:not(:last-of-type) {
+				border-bottom: 1px solid var(--bg-slate-500);
+			}
+
+			.labels-wrapper {
+				width: 50%;
+			}
+			.contribution-progress-bar {
+				width: 40%;
+			}
+			.total-contribution {
+				color: var(--text-robin-500);
+				font-family: 'Geist Mono';
+				font-size: 12px;
+				font-weight: 500;
+				letter-spacing: -0.06px;
+				padding: 4px 8px;
+				background: rgba(78, 116, 248, 0.1);
+				border-radius: 50px;
+				width: max-content;
+			}
+		}
+	}
+}

@@ -3,7 +3,8 @@ import './alertLabels.styles.scss';
 import KeyValueLabel from 'periscope/components/KeyValueLabel/KeyValueLabel';
 import SeeMore from 'periscope/components/SeeMore/SeeMore';
 
-type AlertLabelsProps = { labels: Record<string, string> };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AlertLabelsProps = { labels: Record<string, any> };
 
 function AlertLabels({ labels }: AlertLabelsProps): JSX.Element {
 	return (

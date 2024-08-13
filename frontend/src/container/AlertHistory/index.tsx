@@ -1,7 +1,9 @@
+import Statistics from './Statistics/Statistics';
+
 function AlertHistory(): JSX.Element {
 	return (
 		<div>
-			<h1>Alert History</h1>
+			<Statistics />
 		</div>
 	);
 }
