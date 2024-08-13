@@ -153,7 +153,13 @@ func (qps *queryProgressState) update(chProgress *clickhouse.Progress) {
 		qps.progress = &v3.QueryProgress{}
 	}
 
-	qps.progress.Update(chProgress)
+	updateQueryProgress(qps.progress, chProgress)
+}
+
+func updateQueryProgress(qp *v3.QueryProgress, chProgress *clickhouse.Progress) {
+	qp.ReadRows += chProgress.Rows
+	qp.ReadBytes += chProgress.Bytes
+	qp.ElapsedMs += uint64(chProgress.Elapsed.Milliseconds())
 }
 
 // query progress will be nil before the 1st call to update
