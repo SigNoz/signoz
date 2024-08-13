@@ -1,0 +1,52 @@
+@mixin cell-width($index, $width) {
+	&-cell:nth-last-of-type(#{$index}) {
+		width: $width;
+	}
+}
+
+.timeline-table {
+	.ant-table {
+		background: var(--bg-ink-500);
+		&-thead > tr > th {
+			border: none;
+			background: var(--bg-ink-500);
+			&:last-of-type,
+			&:nth-last-of-type(2) {
+				text-align: right;
+			}
+		}
+		&-tbody > tr > td {
+			border: none;
+			&:last-of-type,
+			&:nth-last-of-type(2) {
+				text-align: right;
+			}
+		}
+		&-cell::before {
+			display: none;
+		}
+
+		@include cell-width(1, 17%);
+		@include cell-width(2, 6%);
+		@include cell-width(3, 67%);
+		@include cell-width(4, 10%);
+	}
+	.ant-pagination-total-text {
+		margin-right: auto;
+	}
+	.alert-rule {
+		&-value,
+		&-created-at {
+			font-size: 14px;
+			color: var(--text-Vanilla-400);
+		}
+		&-value {
+			font-weight: 500;
+			line-height: 20px;
+		}
+		&-created-at {
+			line-height: 18px;
+			letter-spacing: -0.07px;
+		}
+	}
+}

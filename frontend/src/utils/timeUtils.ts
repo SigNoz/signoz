@@ -57,3 +57,31 @@ export const getDurationFromNow = (epochTimestamp: number): string => {
 
 	return result.trim();
 };
+
+/**
+ * Formats an epoch timestamp into a human-readable date and time string.
+ *
+ * @param {number} epoch - The epoch timestamp to format.
+ * @returns {string} - The formatted date and time string in the format "MMM D, YYYY ⎯ HH:MM:SS".
+ */
+export function formatEpochTimestamp(epoch: number): string {
+	const date = new Date(epoch * 1000);
+
+	const optionsDate: Intl.DateTimeFormatOptions = {
+		month: 'short',
+		day: 'numeric',
+		year: 'numeric',
+	};
+
+	const optionsTime: Intl.DateTimeFormatOptions = {
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+		hour12: false,
+	};
+
+	const formattedDate = date.toLocaleDateString('en-US', optionsDate);
+	const formattedTime = date.toLocaleTimeString('en-US', optionsTime);
+
+	return `${formattedDate} ⎯ ${formattedTime}`;
+}
