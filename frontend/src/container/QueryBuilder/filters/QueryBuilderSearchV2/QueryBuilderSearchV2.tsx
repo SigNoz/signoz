@@ -232,13 +232,27 @@ function QueryBuilderSearchV2(
 			}
 
 			if (currentState === DropdownState.OPERATOR) {
-				setCurrentFilterItem((prev) => ({
-					key: prev?.key as BaseAutocompleteData,
-					op: value as string,
-					value: '',
-				}));
-				setCurrentState(DropdownState.ATTRIBUTE_VALUE);
-				setSearchValue((prev) => `${prev} ${value}`);
+				if (value === OPERATORS.EXISTS || value === OPERATORS.NOT_EXISTS) {
+					setTags((prev) => [
+						...prev,
+						{
+							key: currentFilterItem?.key,
+							op: value,
+							value: '',
+						} as ITag,
+					]);
+					setCurrentFilterItem(undefined);
+					setSearchValue('');
+					setCurrentState(DropdownState.ATTRIBUTE_KEY);
+				} else {
+					setCurrentFilterItem((prev) => ({
+						key: prev?.key as BaseAutocompleteData,
+						op: value as string,
+						value: '',
+					}));
+					setCurrentState(DropdownState.ATTRIBUTE_VALUE);
+					setSearchValue((prev) => `${prev} ${value}`);
+				}
 			}
 
 			if (currentState === DropdownState.ATTRIBUTE_VALUE) {
@@ -412,13 +426,30 @@ function QueryBuilderSearchV2(
 			setCurrentFilterItem(undefined);
 			setCurrentState(DropdownState.ATTRIBUTE_KEY);
 		} else if (tagOperator && isEmpty(currentFilterItem?.op)) {
-			setCurrentFilterItem((prev) => ({
-				key: prev?.key as BaseAutocompleteData,
-				op: tagOperator,
-				value: '',
-			}));
+			if (
+				tagOperator === OPERATORS.EXISTS ||
+				tagOperator === OPERATORS.NOT_EXISTS
+			) {
+				setTags((prev) => [
+					...prev,
+					{
+						key: currentFilterItem?.key,
+						op: tagOperator,
+						value: '',
+					} as ITag,
+				]);
+				setCurrentFilterItem(undefined);
+				setSearchValue('');
+				setCurrentState(DropdownState.ATTRIBUTE_KEY);
+			} else {
+				setCurrentFilterItem((prev) => ({
+					key: prev?.key as BaseAutocompleteData,
+					op: tagOperator,
+					value: '',
+				}));
 
-			setCurrentState(DropdownState.ATTRIBUTE_VALUE);
+				setCurrentState(DropdownState.ATTRIBUTE_VALUE);
+			}
 		} else if (
 			!isEmpty(currentFilterItem?.op) &&
 			tagOperator !== currentFilterItem?.op
