@@ -496,6 +496,7 @@ function QueryBuilderSearchV2(
 		if (currentState === DropdownState.OPERATOR) {
 			const keyOperator = searchValue.split(' ');
 			const partialOperator = keyOperator?.[1];
+			const strippedKey = keyOperator?.[0];
 
 			let operatorOptions;
 			if (currentFilterItem?.key?.dataType) {
@@ -512,6 +513,12 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
+				setDropdownOptions(operatorOptions);
+			} else if (strippedKey.endsWith('[*]') && strippedKey.startsWith('body.')) {
+				operatorOptions = [OPERATORS.HAS, OPERATORS.NHAS].map((operator) => ({
+					label: operator,
+					value: operator,
+				}));
 				setDropdownOptions(operatorOptions);
 			} else {
 				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES.universal.map(
