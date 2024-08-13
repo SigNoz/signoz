@@ -180,18 +180,34 @@ func (qt *queryTracker) unsubscribe(subscriberId string) {
 }
 
 func (qt *queryTracker) handleProgressUpdate(p *clickhouse.Progress) {
-	qt.progress.update(p)
-	latestState := qt.progress.get()
-	qt.publisher.broadcast(latestState)
+	qt.lock.Lock()
+	defer qt.lock.Unlock()
+
+	if qt.isFinished {
+		zap.L().Warn(
+			"received clickhouse progress update for finished query",
+			zap.String("queryId", qt.queryId), zap.Any("progress", p),
+		)
+		return
+	}
+
+	if qt.progress == nil {
+		// This is the first update
+		qt.progress = &v3.QueryProgress{}
+	}
+	updateQueryProgress(qt.progress, p)
+
+	// broadcast latest state to all subscribers.
+	for _, ch := range maps.Values(qt.subscriptions) {
+		ch.send(*qt.progress)
+	}
 }
 
 func (qt *queryTracker) subscribe() (
 	<-chan v3.QueryProgress, func(), *model.ApiError,
 ) {
-	latestProgress := qt.progress.get()
-	ch, unsubscribe := qt.publisher.subscribe(latestProgress)
-	return ch, unsubscribe, nil
-}
+	qt.lock.Lock()
+	defer qt.lock.Unlock()
 
 func (qt *queryTracker) onFinished() {
 	qt.lock.Lock()
