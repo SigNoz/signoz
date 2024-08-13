@@ -41,6 +41,7 @@ import (
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
 
+	queryprogress "go.signoz.io/signoz/pkg/query-service/app/clickhouseReader/query_progress"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
@@ -122,7 +123,7 @@ type ClickHouseReader struct {
 	queryEngine             *promql.Engine
 	remoteStorage           *remote.Storage
 	fanoutStorage           *storage.Storage
-	queryProgressTracker    QueryProgressTracker
+	queryProgressTracker    queryprogress.QueryProgressTracker
 
 	promConfigFile string
 	promConfig     *config.Config
@@ -216,7 +217,7 @@ func NewReaderFromClickhouseConnection(
 		promConfigFile:          configFile,
 		featureFlags:            featureFlag,
 		cluster:                 cluster,
-		queryProgressTracker:    NewQueryProgressTracker(),
+		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
 	}
 }
 

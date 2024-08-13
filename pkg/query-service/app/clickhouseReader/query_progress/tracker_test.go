@@ -1,4 +1,4 @@
-package clickhouseReader
+package queryprogress
 
 import (
 	"testing"
@@ -99,6 +99,4 @@ func TestQueryProgressTracking(t *testing.T) {
 	require.Equal(err.Type(), model.ErrorNotFound)
 	require.Nil(ch)
 	require.Nil(unsubscribe)
-
-	// TODO(Raj): Test unsubscription too
 }

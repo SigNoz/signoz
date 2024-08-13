@@ -1,4 +1,4 @@
-package clickhouseReader
+package queryprogress
 
 import (
 	"fmt"
