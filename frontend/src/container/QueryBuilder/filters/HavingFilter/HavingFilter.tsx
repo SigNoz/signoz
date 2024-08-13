@@ -198,6 +198,18 @@ export function HavingFilter({
 		resetChanges();
 	};
 
+	const handleBlur = useCallback((): void => {
+		if (searchText) {
+			const isValidSearch = isValidHavingValue(searchText);
+			if (isValidSearch) {
+				const updatedLocalValues = [...localValues, searchText];
+				setLocalValues(updatedLocalValues);
+				onChange(updatedLocalValues.map(transformFromStringToHaving));
+				setSearchText('');
+			}
+		}
+	}, [searchText, localValues, onChange]);
+
 	useEffect(() => {
 		parseSearchText(searchText);
 	}, [searchText, parseSearchText]);
@@ -225,6 +237,7 @@ export function HavingFilter({
 			onDeselect={handleDeselect}
 			onChange={handleChange}
 			onSelect={handleSelect}
+			onBlur={handleBlur}
 		>
 			{options.map((opt) => (
 				<Select.Option key={opt.value} value={opt.value} title="havingOption">
