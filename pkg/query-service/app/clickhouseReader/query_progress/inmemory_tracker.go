@@ -12,6 +12,7 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+// tracks progress and manages subscriptions for all queries
 type inMemoryQueryProgressTracker struct {
 	queries map[string]*queryTracker
 	lock    sync.RWMutex
@@ -45,9 +46,7 @@ func (tracker *inMemoryQueryProgressTracker) ReportQueryProgress(
 		return err
 	}
 
-	queryTracker.progress.update(chProgress)
-	latestState := queryTracker.progress.get()
-	queryTracker.publisher.broadcast(latestState)
+	queryTracker.handleProgressUpdate(chProgress)
 	return nil
 }
 
@@ -59,12 +58,22 @@ func (tracker *inMemoryQueryProgressTracker) SubscribeToQueryProgress(
 		return nil, nil, err
 	}
 
-	// TODO(Raj): Check if publisher already closed because
-	// of query finished at this point.
-	latestProgress := queryTracker.progress.get()
-	ch, unsubscribe := queryTracker.publisher.subscribe(latestProgress)
+	return queryTracker.subscribe()
+}
 
-	return ch, unsubscribe, nil
+func (tracker *inMemoryQueryProgressTracker) onQueryFinished(
+	queryId string,
+) {
+	tracker.lock.Lock()
+	queryTracker := tracker.queries[queryId]
+	if queryTracker != nil {
+		delete(tracker.queries, queryId)
+	}
+	tracker.lock.Unlock()
+
+	if queryTracker != nil {
+		queryTracker.onFinished()
+	}
 }
 
 func (tracker *inMemoryQueryProgressTracker) getQueryTracker(
@@ -83,22 +92,7 @@ func (tracker *inMemoryQueryProgressTracker) getQueryTracker(
 	return queryTracker, nil
 }
 
-func (tracker *inMemoryQueryProgressTracker) onQueryFinished(
-	queryId string,
-) {
-	queryTracker, err := tracker.getQueryTracker(queryId)
-	if err != nil {
-		zap.L().Error("onQueryFinished", zap.Error(err))
-	}
-
-	queryTracker.onFinished()
-
-	tracker.lock.Lock()
-	delete(tracker.queries, queryId)
-	tracker.lock.Unlock()
-}
-
-// Tracks progress and manages subscription for a single query
+// Tracks progress and manages subscriptions for a single query
 type queryTracker struct {
 	progress  queryProgressState
 	publisher *queryProgressPublisher
@@ -108,6 +102,20 @@ func newQueryTracker() *queryTracker {
 	return &queryTracker{
 		publisher: newQueryProgressPublisher(),
 	}
+}
+
+func (qt *queryTracker) handleProgressUpdate(p *clickhouse.Progress) {
+	qt.progress.update(p)
+	latestState := qt.progress.get()
+	qt.publisher.broadcast(latestState)
+}
+
+func (qt *queryTracker) subscribe() (
+	<-chan v3.QueryProgress, func(), *model.ApiError,
+) {
+	latestProgress := qt.progress.get()
+	ch, unsubscribe := qt.publisher.subscribe(latestProgress)
+	return ch, unsubscribe, nil
 }
 
 func (qt *queryTracker) onFinished() {
