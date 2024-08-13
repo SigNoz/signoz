@@ -419,6 +419,7 @@ func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
 }
 
+// Support websockets
 func (lrw *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	h, ok := lrw.ResponseWriter.(http.Hijacker)
 	if !ok {

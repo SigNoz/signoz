@@ -218,8 +218,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		CheckOrigin: func(r *http.Request) bool {
 			// Based on the default CheckOrigin implementation in websocket package.
 			originHeader := r.Header.Get("Origin")
-			if len(originHeader) == 0 {
-				return true
+			if len(originHeader) < 1 {
+				return false
 			}
 			origin, err := url.Parse(originHeader)
 			if err != nil {
@@ -334,7 +334,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/filter_suggestions", am.ViewAccess(aH.getQueryBuilderSuggestions)).Methods(http.MethodGet)
 
 	// websocket handler for query progress
-	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.ListenToQueryStats)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
@@ -3553,12 +3553,15 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	if len(queryIdHeader) > 0 {
 		ctx = context.WithValue(ctx, "queryId", queryIdHeader)
 
-		onFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
+		onQueryFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
 		if err != nil {
-			zap.L().Error("couldn't report query start for progress tracking", zap.String("queryId", queryIdHeader), zap.Error(err))
+			zap.L().Error(
+				"couldn't report query start for progress tracking",
+				zap.String("queryId", queryIdHeader), zap.Error(err),
+			)
 		} else {
 			defer func() {
-				go onFinished()
+				go onQueryFinished()
 			}()
 		}
 	}
@@ -3712,30 +3715,38 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
 }
 
-func (aH *APIHandler) ListenToQueryStats(w http.ResponseWriter, r *http.Request) {
-	queryId := r.URL.Query().Get("q")
-
-	upgradeHeaders := http.Header{}
-
-	// Send back requested protocol value for sec-websocket-protocol
-	// Since js websocket API doesn't allow setting headers, this header
-	// is often used for passing auth token.
-	// For a connection to succeed, requested protocol must be sent back
-	// in the upgrade response headers.
+func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Request) {
+	// Upgrade connection to websocket, sending back the requested protocol
+	// value for sec-websocket-protocol
+	//
+	// Since js websocket API doesn't allow setting headers, this header is often
+	// used for passing auth tokens. As per websocket spec the connection will only
+	// succeed if the requested `Sec-Websocket-Protocol` is sent back as a header
+	// in the upgrade response (signifying that the protocol is supported by the server).
+	upgradeResponseHeaders := http.Header{}
 	requestedProtocol := r.Header.Get("Sec-WebSocket-Protocol")
 	if len(requestedProtocol) > 0 {
-		upgradeHeaders.Add("Sec-WebSocket-Protocol", requestedProtocol)
+		upgradeResponseHeaders.Add("Sec-WebSocket-Protocol", requestedProtocol)
 	}
 
-	c, err := aH.Upgrader.Upgrade(w, r, upgradeHeaders)
-
+	c, err := aH.Upgrader.Upgrade(w, r, upgradeResponseHeaders)
 	if err != nil {
 		RespondError(w, model.InternalError(fmt.Errorf(
-			"couldn't upgrade connection", err,
+			"couldn't upgrade connection: %w", err,
 		)), nil)
 		return
 	}
 	defer c.Close()
+
+	// Websocket upgrade complete. Subscribe to query progress and send updates to client
+	//
+	// Note: we handle any subscription problems (queryId query param missing or query already complete etc)
+	// after the websocket connection upgrade by closing the channel.
+	// The other option would be to handle the errors before websocket upgrade by sending an
+	// error response instead of the upgrade response, but that leads to a generic websocket
+	// connection failure on the client.
+
+	queryId := r.URL.Query().Get("q")
 
 	progressCh, unsubscribe, apiErr := aH.reader.SubscribeToQueryProgress(queryId)
 	if apiErr != nil {
@@ -3747,12 +3758,12 @@ func (aH *APIHandler) ListenToQueryStats(w http.ResponseWriter, r *http.Request)
 	}
 	defer func() { go unsubscribe() }()
 
-	for p := range progressCh {
-		msg, err := json.Marshal(p)
+	for queryProgress := range progressCh {
+		msg, err := json.Marshal(queryProgress)
 		if err != nil {
 			zap.L().Error(
 				"failed to serialize progress message",
-				zap.String("queryId", queryId), zap.Any("progress", p), zap.Error(err),
+				zap.String("queryId", queryId), zap.Any("progress", queryProgress), zap.Error(err),
 			)
 			continue
 		}
@@ -3764,6 +3775,7 @@ func (aH *APIHandler) ListenToQueryStats(w http.ResponseWriter, r *http.Request)
 				zap.String("queryId", queryId), zap.String("msg", string(msg)), zap.Error(err),
 			)
 			break
+
 		} else {
 			zap.L().Debug(
 				"wrote progress msg to websocket",

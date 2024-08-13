@@ -4716,16 +4716,19 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 			zap.L().Error("GetTimeSeriesResultV3: queryId in ctx not a string as expected", zap.Any("queryId", queryId))
 
 		} else {
-			ctx = clickhouse.Context(
-				ctx, clickhouse.WithProgress(func(p *clickhouse.Progress) {
+			ctx = clickhouse.Context(ctx, clickhouse.WithProgress(
+				func(p *clickhouse.Progress) {
 					go func() {
 						err := r.queryProgressTracker.ReportQueryProgress(qid, p)
 						if err != nil {
-							zap.L().Error("Couldn't report query progress", zap.String("queryId", qid), zap.Error(err))
+							zap.L().Error(
+								"Couldn't report query progress",
+								zap.String("queryId", qid), zap.Error(err),
+							)
 						}
 					}()
-				}),
-			)
+				},
+			))
 		}
 	}
 

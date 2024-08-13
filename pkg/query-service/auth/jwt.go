@@ -92,11 +92,11 @@ func ExtractJwtFromRequest(r *http.Request) (string, error) {
 		return authHeaderJwt, nil
 	}
 
-	// Websocket connections are expected to send auth JWT
-	// in the Sec-Websocket-Protocol header.
+	// We expect websocket connections to send auth JWT in the
+	// `Sec-Websocket-Protocol` header.
 	//
 	// The standard js websocket API doesn't allow setting headers
-	// other than the Sec-WebSocket-Protocol header, which is often
+	// other than the `Sec-WebSocket-Protocol` header, which is often
 	// used for auth purposes as a result.
 	return r.Header.Get("Sec-WebSocket-Protocol"), nil
 }
