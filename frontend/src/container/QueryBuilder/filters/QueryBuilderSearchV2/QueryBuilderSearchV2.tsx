@@ -651,7 +651,7 @@ function QueryBuilderSearchV2(
 			>
 				{dropdownOptions.map((option) => (
 					<Select.Option
-						key={option.label}
+						key={isObject(option.value) ? JSON.stringify(option.value) : option.value}
 						value={
 							isObject(option.value) ? JSON.stringify(option.value) : option.value
 						}
