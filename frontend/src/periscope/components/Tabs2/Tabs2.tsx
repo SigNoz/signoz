@@ -37,11 +37,11 @@ function Tabs2({
 
 	return (
 		<div className="tabs-wrapper">
-			{hasResetButton && initialSelectedTab && (
+			{hasResetButton && selectedTab !== initialSelectedTab && (
 				<Button
 					value="Reset"
 					className="tab"
-					onClick={(): void => handleTabClick(initialSelectedTab)}
+					onClick={(): void => handleTabClick(initialSelectedTab || tabs[0].value)}
 					icon={<Undo size={14} color="var(--text-vanilla-400)" />}
 				>
 					Reset
