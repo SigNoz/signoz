@@ -45,7 +45,7 @@ import Suggestions from './Suggestions';
 export interface ITag {
 	id?: string;
 	key: BaseAutocompleteData;
-	operator: string;
+	op: string;
 	value: string[] | string | number | boolean;
 }
 
@@ -81,7 +81,7 @@ function getInitTags(query: IBuilderQuery): ITag[] {
 	return query.filters.items.map((item) => ({
 		id: item.id,
 		key: item.key as BaseAutocompleteData,
-		operator: item.op,
+		op: item.op,
 		value: `${item.value}`,
 	}));
 }
@@ -224,7 +224,7 @@ function QueryBuilderSearchV2(
 				setCurrentFilterItem((prev) => ({
 					...prev,
 					key: parsedValue as BaseAutocompleteData,
-					operator: '',
+					op: '',
 					value: '',
 				}));
 				setCurrentState(DropdownState.OPERATOR);
@@ -234,7 +234,7 @@ function QueryBuilderSearchV2(
 			if (currentState === DropdownState.OPERATOR) {
 				setCurrentFilterItem((prev) => ({
 					key: prev?.key as BaseAutocompleteData,
-					operator: value as string,
+					op: value as string,
 					value: '',
 				}));
 				setCurrentState(DropdownState.ATTRIBUTE_VALUE);
@@ -243,14 +243,13 @@ function QueryBuilderSearchV2(
 
 			if (currentState === DropdownState.ATTRIBUTE_VALUE) {
 				const operatorType =
-					operatorTypeMapper[currentFilterItem?.operator || ''] || 'NOT_VALID';
+					operatorTypeMapper[currentFilterItem?.op || ''] || 'NOT_VALID';
 				const isMulti = operatorType === QUERY_BUILDER_SEARCH_VALUES.MULTIPLY;
 
 				if (isMulti) {
 					const { tagKey, tagOperator, tagValue } = getTagToken(searchValue);
 					const newSearch = [...tagValue];
 					newSearch[newSearch.length === 0 ? 0 : newSearch.length - 1] = value;
-					console.log(tagValue, newSearch, newSearch.length - 1, value);
 					const newSearchValue = newSearch.join(',');
 					setSearchValue(`${tagKey} ${tagOperator} ${newSearchValue},`);
 				} else {
@@ -258,7 +257,7 @@ function QueryBuilderSearchV2(
 						...prev,
 						{
 							key: currentFilterItem?.key,
-							operator: currentFilterItem?.operator,
+							op: currentFilterItem?.op,
 							value,
 						} as ITag,
 					]);
@@ -268,12 +267,7 @@ function QueryBuilderSearchV2(
 				}
 			}
 		},
-		[
-			currentFilterItem?.key,
-			currentFilterItem?.operator,
-			currentState,
-			searchValue,
-		],
+		[currentFilterItem?.key, currentFilterItem?.op, currentState, searchValue],
 	);
 
 	const handleSearch = useCallback((value: string) => {
@@ -293,10 +287,10 @@ function QueryBuilderSearchV2(
 	const handleOnBlur = useCallback((): void => {
 		if (searchValue) {
 			const operatorType =
-				operatorTypeMapper[currentFilterItem?.operator || ''] || 'NOT_VALID';
+				operatorTypeMapper[currentFilterItem?.op || ''] || 'NOT_VALID';
 			if (
 				currentFilterItem?.key &&
-				isEmpty(currentFilterItem?.operator) &&
+				isEmpty(currentFilterItem?.op) &&
 				whereClauseConfig?.customKey === 'body' &&
 				whereClauseConfig?.customOp === OPERATORS.CONTAINS
 			) {
@@ -311,7 +305,7 @@ function QueryBuilderSearchV2(
 							isJSON: false,
 							id: 'body--string----true',
 						},
-						operator: OPERATORS.CONTAINS,
+						op: OPERATORS.CONTAINS,
 						value: currentFilterItem?.key?.key,
 					},
 				]);
@@ -319,14 +313,14 @@ function QueryBuilderSearchV2(
 				setSearchValue('');
 				setCurrentState(DropdownState.ATTRIBUTE_KEY);
 			} else if (
-				currentFilterItem?.operator === OPERATORS.EXISTS ||
-				currentFilterItem?.operator === OPERATORS.NOT_EXISTS
+				currentFilterItem?.op === OPERATORS.EXISTS ||
+				currentFilterItem?.op === OPERATORS.NOT_EXISTS
 			) {
 				setTags((prev) => [
 					...prev,
 					{
 						key: currentFilterItem?.key,
-						operator: currentFilterItem?.operator,
+						op: currentFilterItem?.op,
 						value: '',
 					},
 				]);
@@ -344,7 +338,7 @@ function QueryBuilderSearchV2(
 					...prev,
 					{
 						key: currentFilterItem?.key as BaseAutocompleteData,
-						operator: currentFilterItem?.operator as string,
+						op: currentFilterItem?.op as string,
 						value: currentFilterItem?.value || '',
 					},
 				]);
@@ -355,7 +349,7 @@ function QueryBuilderSearchV2(
 		}
 	}, [
 		currentFilterItem?.key,
-		currentFilterItem?.operator,
+		currentFilterItem?.op,
 		currentFilterItem?.value,
 		searchValue,
 		whereClauseConfig?.customKey,
@@ -389,7 +383,7 @@ function QueryBuilderSearchV2(
 				if (currentRunningAttributeKey) {
 					setCurrentFilterItem({
 						key: currentRunningAttributeKey,
-						operator: '',
+						op: '',
 						value: '',
 					});
 
@@ -406,7 +400,7 @@ function QueryBuilderSearchV2(
 						isColumn: false,
 						isJSON: false,
 					},
-					operator: '',
+					op: '',
 					value: '',
 				});
 				setCurrentState(DropdownState.OPERATOR);
@@ -417,34 +411,34 @@ function QueryBuilderSearchV2(
 		) {
 			setCurrentFilterItem(undefined);
 			setCurrentState(DropdownState.ATTRIBUTE_KEY);
-		} else if (tagOperator && isEmpty(currentFilterItem?.operator)) {
+		} else if (tagOperator && isEmpty(currentFilterItem?.op)) {
 			setCurrentFilterItem((prev) => ({
 				key: prev?.key as BaseAutocompleteData,
-				operator: tagOperator,
+				op: tagOperator,
 				value: '',
 			}));
 
 			setCurrentState(DropdownState.ATTRIBUTE_VALUE);
 		} else if (
-			!isEmpty(currentFilterItem?.operator) &&
-			tagOperator !== currentFilterItem?.operator
+			!isEmpty(currentFilterItem?.op) &&
+			tagOperator !== currentFilterItem?.op
 		) {
 			setCurrentFilterItem((prev) => ({
 				key: prev?.key as BaseAutocompleteData,
-				operator: '',
+				op: '',
 				value: '',
 			}));
 			setCurrentState(DropdownState.OPERATOR);
 		} else if (!isEmpty(tagValue)) {
 			const currentValue = {
 				key: currentFilterItem?.key as BaseAutocompleteData,
-				operator: currentFilterItem?.operator as string,
+				operator: currentFilterItem?.op as string,
 				value: tagValue,
 			};
 			if (!isEqual(currentValue, currentFilterItem)) {
 				setCurrentFilterItem((prev) => ({
 					key: prev?.key as BaseAutocompleteData,
-					operator: prev?.operator as string,
+					op: prev?.op as string,
 					value: tagValue,
 				}));
 			}
@@ -453,7 +447,7 @@ function QueryBuilderSearchV2(
 	}, [
 		currentFilterItem,
 		currentFilterItem?.key,
-		currentFilterItem?.operator,
+		currentFilterItem?.op,
 		data?.payload?.attributeKeys,
 		searchValue,
 	]);
@@ -542,16 +536,16 @@ function QueryBuilderSearchV2(
 			filterTags.items.push({
 				id: tag.id || uuid().slice(0, 8),
 				key: tag.key,
-				op: tag.operator,
+				op: tag.op,
 				value: tag.value,
 			});
 		});
 
-		if (!isEqual(tags, filterTags.items)) {
-			// check the id re-render here
+		if (!isEqual(query.filters, filterTags.items)) {
 			onChange(filterTags);
+			setTags(filterTags.items as ITag[]);
 		}
-	}, [onChange, tags]);
+	}, [onChange, query.filters, tags]);
 
 	const loading = useMemo(() => isFetching || isFetchingAttributeValues, [
 		isFetching,
@@ -564,7 +558,7 @@ function QueryBuilderSearchV2(
 	);
 
 	const queryTags = useMemo(
-		() => tags.map((tag) => `${tag.key.key} ${tag.operator} ${tag.value}`),
+		() => tags.map((tag) => `${tag.key.key} ${tag.op} ${tag.value}`),
 		[tags],
 	);
 
