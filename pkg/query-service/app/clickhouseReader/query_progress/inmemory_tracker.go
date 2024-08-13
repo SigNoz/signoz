@@ -179,6 +179,20 @@ func (qt *queryTracker) unsubscribe(subscriberId string) {
 	}
 }
 
+func (qt *queryTracker) handleProgressUpdate(p *clickhouse.Progress) {
+	qt.progress.update(p)
+	latestState := qt.progress.get()
+	qt.publisher.broadcast(latestState)
+}
+
+func (qt *queryTracker) subscribe() (
+	<-chan v3.QueryProgress, func(), *model.ApiError,
+) {
+	latestProgress := qt.progress.get()
+	ch, unsubscribe := qt.publisher.subscribe(latestProgress)
+	return ch, unsubscribe, nil
+}
+
 func (qt *queryTracker) onFinished() {
 	qt.lock.Lock()
 	defer qt.lock.Unlock()
