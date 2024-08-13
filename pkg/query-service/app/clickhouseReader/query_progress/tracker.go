@@ -17,8 +17,8 @@ type QueryProgressTracker interface {
 
 	// Subscribe to progress updates for `queryId`
 	// The returned channel will produce `QueryProgress` instances representing
-	// the latest state of query progress stats.
-	// Also returns a function that can be called to unsubscribe before query finished if needed.
+	// the latest state of query progress stats. Also returns a function that
+	// can be called to unsubscribe before the query finishes, if needed.
 	SubscribeToQueryProgress(queryId string) (ch <-chan v3.QueryProgress, unsubscribe func(), err *model.ApiError)
 }
 

@@ -129,8 +129,8 @@ func (qt *queryTracker) handleProgressUpdate(p *clickhouse.Progress) {
 	updateQueryProgress(qt.progress, p)
 
 	// broadcast latest state to all subscribers.
-	for _, ch := range maps.Values(qt.subscriptions) {
-		ch.send(*qt.progress)
+	for _, sub := range maps.Values(qt.subscriptions) {
+		sub.send(*qt.progress)
 	}
 }
 
@@ -164,7 +164,7 @@ func (qt *queryTracker) unsubscribe(subscriberId string) {
 	defer qt.lock.Unlock()
 
 	if qt.isFinished {
-		zap.L().Warn(
+		zap.L().Debug(
 			"received unsubscribe request after query finished",
 			zap.String("subscriber", subscriberId),
 			zap.String("queryId", qt.queryId),
@@ -191,8 +191,9 @@ func (qt *queryTracker) onFinished() {
 		return
 	}
 
-	for _, sub := range qt.subscriptions {
+	for subId, sub := range qt.subscriptions {
 		sub.close()
+		delete(qt.subscriptions, subId)
 	}
 
 	qt.isFinished = true
@@ -217,7 +218,10 @@ func (ch *queryProgressSubscription) send(progress v3.QueryProgress) {
 	defer ch.lock.Unlock()
 
 	if ch.isClosed {
-		zap.L().Error("can't send query progress: channel already closed.", zap.Any("progress", progress))
+		zap.L().Error(
+			"can't send query progress: channel already closed.",
+			zap.Any("progress", progress),
+		)
 		return
 	}
 
@@ -225,9 +229,12 @@ func (ch *queryProgressSubscription) send(progress v3.QueryProgress) {
 	// blocking while sending doesn't happen in the happy path
 	select {
 	case ch.ch <- progress:
-		zap.L().Debug("published query progess", zap.Any("progress", progress))
+		zap.L().Debug("published query progress", zap.Any("progress", progress))
 	default:
-		zap.L().Error("couldn't publish query progess. dropping update.", zap.Any("progress", progress))
+		zap.L().Error(
+			"couldn't publish query progress. dropping update.",
+			zap.Any("progress", progress),
+		)
 	}
 }
 
