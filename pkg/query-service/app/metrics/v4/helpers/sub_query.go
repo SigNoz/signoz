@@ -36,9 +36,15 @@ func whichTSTableToUse(start, end int64) (int64, int64, string) {
 		start = start - (start % (time.Hour.Milliseconds() * 24))
 		tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
 	} else {
-		// adjust the start time to nearest 1 week
-		start = start - (start % (time.Hour.Milliseconds() * 24 * 7))
-		tableName = constants.SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME
+		if constants.UseMetricsPreAggregation() {
+			// adjust the start time to nearest 1 week
+			start = start - (start % (time.Hour.Milliseconds() * 24 * 7))
+			tableName = constants.SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME
+		} else {
+			// continue to use the 1 day table
+			start = start - (start % (time.Hour.Milliseconds() * 24))
+			tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
+		}
 	}
 
 	return start, end, tableName
@@ -57,6 +63,11 @@ func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
 		return constants.SIGNOZ_EXP_HISTOGRAM_TABLENAME
 	}
 
+	// continue to use the old table if pre-aggregation is disabled
+	if !constants.UseMetricsPreAggregation() {
+		return constants.SIGNOZ_SAMPLES_V4_TABLENAME
+	}
+
 	// if the time aggregation is count_distinct, we need to use the distributed_samples_v4 table
 	// because the aggregated tables don't support count_distinct
 	if mq.TimeAggregation == v3.TimeAggregationCountDistinct {
@@ -64,6 +75,11 @@ func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
 	}
 
 	if end-start < oneDayInMilliseconds {
+		if mq.Temporality == v3.Delta && mq.TimeAggregation == v3.TimeAggregationIncrease && mq.StepInterval >= 300 && mq.StepInterval < 1800 {
+			return constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME
+		} else if mq.Temporality == v3.Delta && mq.TimeAggregation == v3.TimeAggregationIncrease && mq.StepInterval >= 1800 {
+			return constants.SIGNOZ_SAMPLES_V4_TABLENAME
+		}
 		return constants.SIGNOZ_SAMPLES_V4_TABLENAME
 	} else if end-start < oneWeekInMilliseconds {
 		return constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME
@@ -78,20 +94,88 @@ func AggregationColumnForSamplesTable(start, end int64, mq *v3.BuilderQuery) str
 	switch mq.Temporality {
 	case v3.Delta:
 		// for delta metrics, we only support `RATE`/`INCREASE` both of which are sum
+		// although it doesn't make sense to use anyLast, avg, min, max, count on delta metrics,
+		// we are keeping it here to make sure that query will not be invalid
 		switch tableName {
 		case constants.SIGNOZ_SAMPLES_V4_TABLENAME:
-			aggregationColumn = "sum(value)"
+			switch mq.TimeAggregation {
+			case v3.TimeAggregationAnyLast:
+				aggregationColumn = "anyLast(value)"
+			case v3.TimeAggregationSum:
+				aggregationColumn = "sum(value)"
+			case v3.TimeAggregationAvg:
+				aggregationColumn = "avg(value)"
+			case v3.TimeAggregationMin:
+				aggregationColumn = "min(value)"
+			case v3.TimeAggregationMax:
+				aggregationColumn = "max(value)"
+			case v3.TimeAggregationCount:
+				aggregationColumn = "count(value)"
+			case v3.TimeAggregationCountDistinct:
+				aggregationColumn = "countDistinct(value)"
+			case v3.TimeAggregationRate, v3.TimeAggregationIncrease: // only these two options give meaningful results
+				aggregationColumn = "sum(value)"
+			}
 		case constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME, constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME:
-			aggregationColumn = "sum(sum)"
+			switch mq.TimeAggregation {
+			case v3.TimeAggregationAnyLast:
+				aggregationColumn = "anyLast(last)"
+			case v3.TimeAggregationSum:
+				aggregationColumn = "sum(sum)"
+			case v3.TimeAggregationAvg:
+				aggregationColumn = "sum(sum) / sum(count)"
+			case v3.TimeAggregationMin:
+				aggregationColumn = "min(min)"
+			case v3.TimeAggregationMax:
+				aggregationColumn = "max(max)"
+			case v3.TimeAggregationCount:
+				aggregationColumn = "sum(count)"
+			// count_distinct is not supported in aggregated tables
+			case v3.TimeAggregationRate, v3.TimeAggregationIncrease: // only these two options give meaningful results
+				aggregationColumn = "sum(sum)"
+			}
 		}
 	case v3.Cumulative:
 		// for cumulative metrics, we only support `RATE`/`INCREASE`. The max value in window is
 		// used to calculate the sum which is then divided by the window size to get the rate
 		switch tableName {
 		case constants.SIGNOZ_SAMPLES_V4_TABLENAME:
-			aggregationColumn = "max(value)"
+			switch mq.TimeAggregation {
+			case v3.TimeAggregationAnyLast:
+				aggregationColumn = "anyLast(value)"
+			case v3.TimeAggregationSum:
+				aggregationColumn = "sum(value)"
+			case v3.TimeAggregationAvg:
+				aggregationColumn = "avg(value)"
+			case v3.TimeAggregationMin:
+				aggregationColumn = "min(value)"
+			case v3.TimeAggregationMax:
+				aggregationColumn = "max(value)"
+			case v3.TimeAggregationCount:
+				aggregationColumn = "count(value)"
+			case v3.TimeAggregationCountDistinct:
+				aggregationColumn = "countDistinct(value)"
+			case v3.TimeAggregationRate, v3.TimeAggregationIncrease: // only these two options give meaningful results
+				aggregationColumn = "max(value)"
+			}
 		case constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME, constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME:
-			aggregationColumn = "max(max)"
+			switch mq.TimeAggregation {
+			case v3.TimeAggregationAnyLast:
+				aggregationColumn = "anyLast(last)"
+			case v3.TimeAggregationSum:
+				aggregationColumn = "sum(sum)"
+			case v3.TimeAggregationAvg:
+				aggregationColumn = "sum(sum) / sum(count)"
+			case v3.TimeAggregationMin:
+				aggregationColumn = "min(min)"
+			case v3.TimeAggregationMax:
+				aggregationColumn = "max(max)"
+			case v3.TimeAggregationCount:
+				aggregationColumn = "sum(count)"
+			// count_distinct is not supported in aggregated tables
+			case v3.TimeAggregationRate, v3.TimeAggregationIncrease: // only these two options give meaningful results
+				aggregationColumn = "max(max)"
+			}
 		}
 	case v3.Unspecified:
 		switch tableName {
@@ -128,6 +212,7 @@ func AggregationColumnForSamplesTable(start, end int64, mq *v3.BuilderQuery) str
 				aggregationColumn = "max(max)"
 			case v3.TimeAggregationCount:
 				aggregationColumn = "sum(count)"
+			// count_distinct is not supported in aggregated tables
 			case v3.TimeAggregationRate, v3.TimeAggregationIncrease: // ideally, this should never happen
 				aggregationColumn = "sum(sum)"
 			}

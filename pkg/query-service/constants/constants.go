@@ -75,6 +75,11 @@ var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
 
 var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
 
+// TODO(srikanthccv): remove after backfilling is done
+func UseMetricsPreAggregation() bool {
+	return GetOrDefaultEnv("USE_METRICS_PRE_AGGREGATION", "false") == "true"
+}
+
 func IsDurationSortFeatureEnabled() bool {
 	isDurationSortFeatureEnabledStr := DurationSortFeature
 	isDurationSortFeatureEnabledBool, err := strconv.ParseBool(isDurationSortFeatureEnabledStr)
