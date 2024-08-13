@@ -1,7 +1,18 @@
+import './alertIcon.styles.scss';
+
 import { BellOff, CircleCheck, CircleOff, Flame } from 'lucide-react';
 
-export default function AlertIcon({ state }: { state: string }): JSX.Element {
+type AlertIconProps = {
+	state: string;
+	showLabel?: boolean;
+};
+// TODO(shaheer): rename this component to AlertState
+export default function AlertIcon({
+	state,
+	showLabel,
+}: AlertIconProps): JSX.Element {
 	let icon;
+	let label;
 	// TODO(shaheer): implement the states UI based on updated designs after the designs are updated
 
 	switch (state) {
@@ -14,6 +25,7 @@ export default function AlertIcon({ state }: { state: string }): JSX.Element {
 					color="var(--bg-sienna-400)"
 				/>
 			);
+			label = <span style={{ color: 'var(--bg-sienna-400)' }}>No Data</span>;
 			break;
 		case 'muted':
 		case 'disabled':
@@ -25,11 +37,13 @@ export default function AlertIcon({ state }: { state: string }): JSX.Element {
 					color="var(--bg-vanilla-400)"
 				/>
 			);
+			label = <span style={{ color: 'var(--bg-vanilla-400)' }}>Muted</span>;
 			break;
 		case 'firing':
 			icon = (
 				<Flame size={18} fill="var(--bg-cherry-500)" color="var(--bg-cherry-500)" />
 			);
+			label = <span style={{ color: 'var(--bg-cherry-500)' }}>Firing</span>;
 			break;
 		case 'resolved':
 			icon = (
@@ -39,11 +53,20 @@ export default function AlertIcon({ state }: { state: string }): JSX.Element {
 					color="var(--bg-ink-400)"
 				/>
 			);
+			label = <span style={{ color: 'var(--bg-forest-500)' }}>Resolved</span>;
 			break;
 
 		default:
 			icon = <div />;
 	}
 
-	return <div className="alert-icon">{icon}</div>;
+	return (
+		<div className="alert-state">
+			{icon} {showLabel && <div className="alert-state__label">{label}</div>}
+		</div>
+	);
 }
+
+AlertIcon.defaultProps = {
+	showLabel: false,
+};

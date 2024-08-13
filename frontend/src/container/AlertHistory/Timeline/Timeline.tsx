@@ -1,6 +1,7 @@
 import './timeline.styles.scss';
 
 import Graph from './Graph/Graph';
+import TimelineTable from './Table/Table';
 import TabsAndFilters from './TabsAndFilters/TabsAndFilters';
 
 function Timeline(): JSX.Element {
@@ -12,6 +13,9 @@ function Timeline(): JSX.Element {
 			</div>
 			<div className="timeline__graph">
 				<Graph />
+			</div>
+			<div className="timeline__table">
+				<TimelineTable />
 			</div>
 		</div>
 	);

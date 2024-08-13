@@ -74,3 +74,55 @@ export const topContributorsData = {
 		},
 	],
 };
+function getRandomInt(min: number, max: number): number {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getRandomState(): string {
+	const states = ['firing', 'resolved', 'pending'];
+	return states[getRandomInt(0, states.length - 1)];
+}
+
+function getRandomOperation(): string {
+	const operations = [
+		'GET /financial-module/account-statement',
+		'POST /user/login',
+		'DELETE /user/logout',
+		'PUT /order/update',
+		'PATCH /product/modify',
+	];
+	return operations[getRandomInt(0, operations.length - 1)];
+}
+
+function getRandomServiceName(): string {
+	const services = [
+		'catalog-manager-001',
+		'user-service-002',
+		'order-service-003',
+		'payment-gateway-004',
+		'inventory-service-005',
+	];
+	return services[getRandomInt(0, services.length - 1)];
+}
+
+function getRandomK3(): string {
+	const k3Versions = ['v1', 'v2', 'v3', 'v4', 'v5'];
+	return k3Versions[getRandomInt(0, k3Versions.length - 1)];
+}
+
+function getRandomUnixMilli(): string {
+	const start = new Date(2021, 0, 1).getTime();
+	const end = new Date(2022, 0, 1).getTime();
+	return (getRandomInt(start, end) / 1000).toString();
+}
+
+export const timelineData = Array.from({ length: 500 }, () => ({
+	unixMilli: getRandomUnixMilli(),
+	state: getRandomState(),
+	labels: {
+		operation: getRandomOperation(),
+		service_name: getRandomServiceName(),
+		k3: getRandomK3(),
+	},
+	value: getRandomInt(0, 100),
+}));
