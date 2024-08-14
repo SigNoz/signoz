@@ -20,6 +20,7 @@ export const useGetExplorerQueryRange = (
 	params?: Record<string, unknown>,
 	isDependentOnQB = true,
 	keyRef?: MutableRefObject<any>,
+	headers?: Record<string, string>,
 ): UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error> => {
 	const { isEnabledQuery } = useQueryBuilder();
 	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
@@ -61,5 +62,6 @@ export const useGetExplorerQueryRange = (
 			queryKey: [key, globalSelectedInterval, requestData, minTime, maxTime],
 			enabled: isEnabled,
 		},
+		headers,
 	);
 };

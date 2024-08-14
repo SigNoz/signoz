@@ -80,6 +80,35 @@
 					position: relative;
 				}
 			}
+			.query-stats {
+				display: flex;
+				gap: 12px;
+				.rows {
+					color: var(--bg-vanilla-400);
+					font-family: 'Geist Mono';
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 18px; /* 150% */
+					letter-spacing: 0.36px;
+				}
+
+				.divider {
+					width: 1px;
+					height: 14px;
+					background: #242834;
+				}
+
+				.time {
+					color: var(--bg-vanilla-400);
+					font-family: 'Geist Mono';
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 18px; /* 150% */
+					letter-spacing: 0.36px;
+				}
+			}
 		}
 
 		.logs-actions-container {
