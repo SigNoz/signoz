@@ -14,7 +14,7 @@ var SaasSegmentKey = GetOrDefaultEnv("SIGNOZ_SAAS_SEGMENT_KEY", "")
 var SpanRenderLimitStr = GetOrDefaultEnv("SPAN_RENDER_LIMIT", "2500")
 var MaxSpansInTraceStr = GetOrDefaultEnv("MAX_SPANS_IN_TRACE", "250000")
 var FetchFeatures = GetOrDefaultEnv("FETCH_FEATURES", "false")
-var ZeusFeaturesURL = GetOrDefaultEnv("ZEUS_FEATURES_URL", "https://test.signoz.io/zeusFeatures")
+var ZeusFeaturesURL = GetOrDefaultEnv("ZEUS_FEATURES_URL", "ZeusFeaturesURL")
 
 func GetOrDefaultEnv(key string, fallback string) string {
 	v := os.Getenv(key)

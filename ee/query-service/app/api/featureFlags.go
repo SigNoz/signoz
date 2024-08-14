@@ -14,20 +14,35 @@ import (
 )
 
 func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	featureSet, err := ah.FF().GetFeatureFlags()
 	if err != nil {
 		ah.HandleError(w, err, http.StatusInternalServerError)
 		return
 	}
+
 	if constants.FetchFeatures == "true" {
-		zeusFeatures, err := fetchZeusFeatures(constants.ZeusFeaturesURL)
-		if err == nil {
-			// merge featureSet and zeusFeatures in featureSet with higher priority to zeusFeatures
-			featureSet = MergeFeatureSets(zeusFeatures, featureSet)
+		zap.L().Debug("fetching license")
+		license, err := ah.LM().GetRepo().GetActiveLicense(ctx)
+		if err != nil {
+			zap.L().Error("failed to fetch license", zap.Error(err))
+		} else if license == nil {
+			zap.L().Debug("no active license found")
 		} else {
-			zap.L().Error("failed to fetch zeus features", zap.Error(err))
+			licenseKey := license.Key
+
+			zap.L().Debug("fetching zeus features")
+			zeusFeatures, err := fetchZeusFeatures(constants.ZeusFeaturesURL, licenseKey)
+			if err == nil {
+				zap.L().Debug("fetched zeus features", zap.Any("features", zeusFeatures))
+				// merge featureSet and zeusFeatures in featureSet with higher priority to zeusFeatures
+				featureSet = MergeFeatureSets(zeusFeatures, featureSet)
+			} else {
+				zap.L().Error("failed to fetch zeus features", zap.Error(err))
+			}
 		}
 	}
+
 	if ah.opts.PreferSpanMetrics {
 		for idx := range featureSet {
 			feature := &featureSet[idx]
@@ -36,23 +51,46 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
 	ah.Respond(w, featureSet)
 }
 
 // fetchZeusFeatures makes an HTTP GET request to the /zeusFeatures endpoint
 // and returns the FeatureSet.
-func fetchZeusFeatures(url string) (basemodel.FeatureSet, error) {
+func fetchZeusFeatures(url, licenseKey string) (basemodel.FeatureSet, error) {
+	// Check if the URL is empty
+	if url == "" {
+		return nil, fmt.Errorf("url is empty")
+	}
+
+	// Check if the licenseKey is empty
+	if licenseKey == "" {
+		return nil, fmt.Errorf("licenseKey is empty")
+	}
+
 	// Creating an HTTP client with a timeout for better control
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
+	// Creating a new GET request
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Setting the custom header
+	req.Header.Set("X-Signoz-Cloud-Api-Key", licenseKey)
 
 	// Making the GET request
-	resp, err := client.Get(url)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make GET request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if resp != nil {
+			resp.Body.Close()
+		}
+	}()
 
 	// Check for non-OK status code
 	if resp.StatusCode != http.StatusOK {
@@ -65,12 +103,21 @@ func fetchZeusFeatures(url string) (basemodel.FeatureSet, error) {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	var features basemodel.FeatureSet
-	if err := json.Unmarshal(body, &features); err != nil {
+	var zeusResponse ZeusFeaturesResponse
+	if err := json.Unmarshal(body, &zeusResponse); err != nil {
 		return nil, fmt.Errorf("%w: %v", errors.New("failed to decode response body"), err)
 	}
 
-	return features, nil
+	if zeusResponse.Status != "success" {
+		return nil, fmt.Errorf("%w: %s", errors.New("failed to fetch zeus features"), zeusResponse.Status)
+	}
+
+	return zeusResponse.Data, nil
+}
+
+type ZeusFeaturesResponse struct {
+	Status string               `json:"status"`
+	Data   basemodel.FeatureSet `json:"data"`
 }
 
 // MergeFeatureSets merges two FeatureSet arrays with precedence to zeusFeatures.
