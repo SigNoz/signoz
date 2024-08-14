@@ -56,8 +56,6 @@ function Tabs2({
 						onClick={(): void => handleTabClick(tab.value)}
 						disabled={tab.disabled}
 						icon={tab.icon}
-
-						// {...(tab.icon !== null ? { icon: tab.icon } : {})}
 					>
 						{tab.label}
 					</Button>
