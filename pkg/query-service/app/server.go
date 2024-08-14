@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -27,7 +28,9 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/migrate"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
@@ -94,6 +97,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	if err := preferences.InitDB(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+		return nil, err
+	}
+
 	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
 	explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
 
@@ -140,6 +147,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	go func() {
+		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
+		if err != nil {
+			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
+		}
+	}()
 
 	var c cache.Cache
 	if serverOptions.CacheConfigPath != "" {
@@ -268,13 +282,28 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	am := NewAuthMiddleware(auth.GetUserFromRequest)
+	// add auth middleware
+	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
+		user, err := auth.GetUserFromRequest(r)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if user.User.OrgId == "" {
+			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
+		}
+
+		return user, nil
+	}
+	am := NewAuthMiddleware(getUserFromRequest)
 
 	api.RegisterRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterIntegrationRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
 	api.RegisterQueryRangeV4Routes(r, am)
+	api.RegisterMessagingQueuesRoutes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -693,6 +722,7 @@ func makeRulesManager(
 		DisableRules: disableRules,
 		FeatureFlags: fm,
 		Reader:       ch,
+		EvalDelay:    constants.GetEvalDelay(),
 	}
 
 	// create Manager

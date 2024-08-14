@@ -20,7 +20,9 @@ export function ColumnUnitSelector(
 
 	function getAggregateColumnsNamesAndLabels(): string[] {
 		if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
-			return currentQuery.builder.queryData.map((q) => q.queryName);
+			const queries = currentQuery.builder.queryData.map((q) => q.queryName);
+			const formulas = currentQuery.builder.queryFormulas.map((q) => q.queryName);
+			return [...queries, ...formulas];
 		}
 		if (currentQuery.queryType === EQueryType.CLICKHOUSE) {
 			return currentQuery.clickhouse_sql.map((q) => q.name);

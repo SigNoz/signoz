@@ -602,3 +602,70 @@ func TestFuncMedian5(t *testing.T) {
 		}
 	}
 }
+
+func TestFuncRunningDiff(t *testing.T) {
+	type args struct {
+		result *v3.Result
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want *v3.Result
+	}{
+		{
+			name: "test funcRunningDiff",
+			args: args{
+				result: &v3.Result{
+					Series: []*v3.Series{
+						{
+							Points: []v3.Point{{Timestamp: 1, Value: 1}, {Timestamp: 2, Value: 2}, {Timestamp: 3, Value: 3}},
+						},
+					},
+				},
+			},
+			want: &v3.Result{
+				Series: []*v3.Series{
+					{
+						Points: []v3.Point{{Timestamp: 2, Value: 1}, {Timestamp: 3, Value: 1}},
+					},
+				},
+			},
+		},
+		{
+			name: "test funcRunningDiff with start number as 8",
+			args: args{
+				result: &v3.Result{
+					Series: []*v3.Series{
+						{
+							Points: []v3.Point{{Timestamp: 1, Value: 8}, {Timestamp: 2, Value: 8}, {Timestamp: 3, Value: 8}},
+						},
+					},
+				},
+			},
+			want: &v3.Result{
+				Series: []*v3.Series{
+					{
+						Points: []v3.Point{{Timestamp: 2, Value: 0}, {Timestamp: 3, Value: 0}},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := funcRunningDiff(tt.args.result)
+			for j, series := range got.Series {
+				if len(series.Points) != len(tt.want.Series[j].Points) {
+					t.Errorf("funcRunningDiff() = len(series.Points) %v, len(tt.want.Series[j].Points) %v", len(series.Points), len(tt.want.Series[j].Points))
+				}
+				for k, point := range series.Points {
+					if point.Value != tt.want.Series[j].Points[k].Value {
+						t.Errorf("funcRunningDiff() = %v, want %v", point.Value, tt.want.Series[j].Points[k].Value)
+					}
+				}
+			}
+		})
+	}
+}

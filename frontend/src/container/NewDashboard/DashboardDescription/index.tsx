@@ -1,7 +1,16 @@
 import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
+import {
+	Button,
+	Card,
+	Input,
+	Modal,
+	Popover,
+	Tag,
+	Tooltip,
+	Typography,
+} from 'antd';
 import logEvent from 'api/common/logEvent';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
@@ -285,44 +294,46 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					>
 						Dashboard /
 					</Button>
-					<Button
-						type="text"
-						className="id-btn"
-						icon={
-							// eslint-disable-next-line jsx-a11y/img-redundant-alt
-							<img
-								src={image}
-								alt="dashboard-image"
-								style={{ height: '14px', width: '14px' }}
-							/>
-						}
-					>
+					<Button type="text" className="id-btn dashboard-name-btn">
+						<img
+							src={image}
+							alt="dashboard-icon"
+							style={{ height: '14px', width: '14px' }}
+						/>
 						{title}
 					</Button>
 				</section>
-				<FacingIssueBtn
-					attributes={{
-						uuid: selectedDashboard?.uuid,
-						title: updatedTitle,
-						screen: 'Dashboard Details',
-					}}
-					eventName="Dashboard: Facing Issues in dashboard"
-					message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
-					buttonText="Facing issues with dashboards?"
-					onHoverText="Click here to get help with dashboard details"
-				/>
 			</div>
-			<section className="dashbord-details">
+			<section className="dashboard-details">
 				<div className="left-section">
-					<img
-						src={image}
-						alt="dashboard-img"
-						style={{ width: '16px', height: '16px' }}
-					/>
-					<Typography.Text className="dashboard-title">{title}</Typography.Text>
+					<Tooltip title={title.length > 30 ? title : ''}>
+						<Typography.Text
+							className="dashboard-title"
+							data-testid="dashboard-title"
+						>
+							<img
+								src={image}
+								alt="dashboard-img"
+								style={{ width: '16px', height: '16px' }}
+							/>{' '}
+							{title}
+						</Typography.Text>
+					</Tooltip>
 					{isDashboardLocked && <LockKeyhole size={14} />}
 				</div>
 				<div className="right-section">
+					<FacingIssueBtn
+						attributes={{
+							uuid: selectedDashboard?.uuid,
+							title: updatedTitle,
+							screen: 'Dashboard Details',
+						}}
+						eventName="Dashboard: Facing Issues in dashboard"
+						message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
+						buttonText="Need help with this dashboard?"
+						onHoverText="Click here to get help with dashboard"
+						intercomMessageDisabled
+					/>
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					<Popover
 						open={isDashboardSettingsOpen}
@@ -333,13 +344,22 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							<div className="menu-content">
 								<section className="section-1">
 									{(isAuthor || role === USER_ROLES.ADMIN) && (
-										<Button
-											type="text"
-											icon={<LockKeyhole size={14} />}
-											onClick={handleLockDashboardToggle}
+										<Tooltip
+											title={
+												selectedDashboard?.created_by === 'integration' &&
+												'Dashboards created by integrations cannot be unlocked'
+											}
 										>
-											{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
-										</Button>
+											<Button
+												type="text"
+												icon={<LockKeyhole size={14} />}
+												disabled={selectedDashboard?.created_by === 'integration'}
+												onClick={handleLockDashboardToggle}
+												data-testid="lock-unlock-dashboard"
+											>
+												{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
+											</Button>
+										</Tooltip>
 									)}
 
 									{!isDashboardLocked && editDashboard && (
