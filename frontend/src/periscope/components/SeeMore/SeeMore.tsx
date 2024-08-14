@@ -1,6 +1,6 @@
 import './seeMore.styles.scss';
 
-import { useState } from 'react';
+import { Popover } from 'antd';
 
 type SeeMoreProps = {
 	children: JSX.Element[];
@@ -13,24 +13,26 @@ function SeeMore({
 	initialCount,
 	moreLabel,
 }: SeeMoreProps): JSX.Element {
-	const [showAll, setShowAll] = useState(false);
-
-	const handleToggle = (): void => {
-		setShowAll(!showAll);
-	};
-
-	const itemsToShow = showAll ? children : children.slice(0, initialCount);
 	const remainingCount = children.length - initialCount;
 
 	return (
 		<>
-			{itemsToShow}
-			{!showAll && remainingCount > 0 && (
-				<button
-					type="button"
-					className="see-more-button"
-					onClick={handleToggle}
-				>{`+${remainingCount} ${moreLabel}`}</button>
+			{children.slice(0, initialCount)}
+			{remainingCount > 0 && (
+				<Popover
+					color="var(--bg-ink-400)"
+					destroyTooltipOnHide
+					content={
+						<div className="see-more-popover-content">
+							{children.slice(initialCount)}
+						</div>
+					}
+				>
+					<button
+						type="button"
+						className="see-more-button"
+					>{`+${remainingCount} ${moreLabel}`}</button>
+				</Popover>
 			)}
 		</>
 	);

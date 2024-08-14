@@ -65,7 +65,8 @@
 		}
 	}
 }
-.ant-popover-inner {
+
+.ant-popover-inner:has(.contributor-row-popover-buttons) {
 	padding: 0 !important;
 }
 .contributor-row-popover-buttons {

@@ -8,3 +8,10 @@
 	border: none;
 	cursor: pointer;
 }
+
+.see-more-popover-content {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+	width: 300px;
+}
