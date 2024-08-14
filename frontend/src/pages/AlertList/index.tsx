@@ -1,5 +1,6 @@
 import { Tabs } from 'antd';
 import { TabsProps } from 'antd/lib';
+import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
 import ROUTES from 'constants/routes';
 import AllAlertRules from 'container/ListAlertRules';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
@@ -37,14 +38,16 @@ function AllAlertList(): JSX.Element {
 				</div>
 			),
 			key: 'AlertRules',
-			children: (
-				<div>
-					{isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />}
-				</div>
-			),
+			children:
+				isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />,
 		},
 		{
-			label: <div>Configuration</div>,
+			label: (
+				<div className="periscope-tab">
+					<ConfigureIcon />
+					Configuration
+				</div>
+			),
 			key: 'Configuration',
 			children: <PlannedDowntime />,
 		},
