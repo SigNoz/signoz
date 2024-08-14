@@ -25,8 +25,8 @@ import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
-import { dashboardListMessage } from 'components/facingIssueBtn/util';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { dashboardListMessage } from 'components/LaunchChatSupport/util';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
@@ -664,7 +664,7 @@ function DashboardsList(): JSX.Element {
 						<Typography.Text className="subtitle">
 							Create and manage dashboards for your workspace.
 						</Typography.Text>
-						<FacingIssueBtn
+						<LaunchChatSupport
 							attributes={{
 								screen: 'Dashboard list page',
 							}}
