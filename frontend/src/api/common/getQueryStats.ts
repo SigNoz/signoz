@@ -1,4 +1,5 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
+import { ENVIRONMENT } from 'constants/env';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
 export interface WsDataEvent {
@@ -16,7 +17,7 @@ export function getQueryStats(props: GetQueryStatsProps): void {
 
 	const token = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) || '';
 	const socket = new WebSocket(
-		`ws://localhost:8080/api/v3/query_progress?q=${queryId}`,
+		`${ENVIRONMENT.wsURL}api/v3/query_progress?q=${queryId}`,
 		token,
 	);
 
