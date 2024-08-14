@@ -37,6 +37,10 @@
 			justify-content: space-between;
 			align-items: center;
 			padding: 16px 12px;
+			&:hover {
+				background: rgba(171, 189, 255, 0.04);
+			}
+			cursor: pointer;
 			&:not(:last-of-type) {
 				border-bottom: 1px solid var(--bg-slate-500);
 			}
@@ -58,6 +62,34 @@
 				border-radius: 50px;
 				width: max-content;
 			}
+		}
+	}
+}
+.ant-popover-inner {
+	padding: 0 !important;
+}
+.contributor-row-popover-buttons {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--bg-slate-400);
+
+	&__button {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 12px 15px;
+		color: var(--text-vanilla-400);
+		font-size: 14px;
+		letter-spacing: 0.14px;
+		width: 160px;
+		cursor: pointer;
+
+		&:hover {
+			background: var(--bg-slate-400);
+		}
+
+		.icon {
+			display: flex;
 		}
 	}
 }

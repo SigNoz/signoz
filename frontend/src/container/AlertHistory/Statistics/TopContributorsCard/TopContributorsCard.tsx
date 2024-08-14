@@ -1,6 +1,7 @@
 import './topContributorsCard.styles.scss';
 
 import { Progress } from 'antd';
+import AlertPopover from 'container/AlertHistory/AlertPopover/AlertPopover';
 import { ArrowRight } from 'lucide-react';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 
@@ -20,23 +21,26 @@ function TopContributorsCard(): JSX.Element {
 			</div>
 			<div className="top-contributors-card__content">
 				{topContributorsData.contributors.slice(0, 3).map((contributor, index) => (
-					// eslint-disable-next-line react/no-array-index-key
-					<div className="contributors-row" key={`contributor-${index}`}>
-						<div className="labels-wrapper">
-							<AlertLabels labels={contributor.labels} />
+					<AlertPopover // eslint-disable-next-line react/no-array-index-key
+						key={`contributor-${index}`}
+					>
+						<div className="contributors-row">
+							<div className="labels-wrapper">
+								<AlertLabels labels={contributor.labels} />
+							</div>
+							<div className="contribution-progress-bar">
+								<Progress
+									percent={(contributor.count / statsData.totalCurrentTriggers) * 100}
+									showInfo={false}
+									trailColor="rgba(255, 255, 255, 0)"
+									strokeColor="var(--bg-robin-500)"
+								/>
+							</div>
+							<div className="total-contribution">
+								{contributor.count}/{statsData.totalCurrentTriggers}
+							</div>
 						</div>
-						<div className="contribution-progress-bar">
-							<Progress
-								percent={(contributor.count / statsData.totalCurrentTriggers) * 100}
-								showInfo={false}
-								trailColor="rgba(255, 255, 255, 0)"
-								strokeColor="var(--bg-robin-500)"
-							/>
-						</div>
-						<div className="total-contribution">
-							{contributor.count}/{statsData.totalCurrentTriggers}
-						</div>
-					</div>
+					</AlertPopover>
 				))}
 			</div>
 		</div>
