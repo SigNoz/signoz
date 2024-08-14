@@ -37,7 +37,6 @@ import useClickOutside from 'hooks/useClickOutside';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { encode } from 'js-base64';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import {
@@ -134,7 +133,9 @@ function LogsExplorerViews({
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
-	const [queryId, setQueryId] = useState<string>('');
+	const [queryId, setQueryId] = useState<string>(
+		Math.random().toString(36).slice(2),
+	);
 	const [queryStats, setQueryStats] = useState<WsDataEvent>();
 
 	const handleAxisError = useAxiosError();
@@ -353,21 +354,12 @@ function LogsExplorerViews({
 	);
 
 	useEffect(() => {
-		if (requestData) {
-			let queryId = '';
-			try {
-				queryId = encode(JSON.stringify(requestData));
-			} catch {
-				queryId = '';
-			}
-
-			setQueryId(queryId);
-			setQueryStats(undefined);
-		}
-	}, [requestData]);
+		setQueryId(Math.random().toString(36).slice(2));
+	}, [isError, isSuccess]);
 
 	useEffect(() => {
 		if (!isEmpty(queryId) && (isLoading || isFetching)) {
+			setQueryStats(undefined);
 			setTimeout(() => {
 				getQueryStats({ queryId, setData: setQueryStats });
 			}, 500);
