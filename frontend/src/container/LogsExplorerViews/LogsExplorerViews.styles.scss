@@ -82,6 +82,7 @@
 			}
 			.query-stats {
 				display: flex;
+				align-items: center;
 				gap: 12px;
 				.rows {
 					color: var(--bg-vanilla-400);
@@ -176,6 +177,15 @@
 
 				.selected_view::before {
 					background: var(--bg-robin-400);
+				}
+			}
+			.query-stats {
+				.rows {
+					color: var(--bg-ink-400);
+				}
+
+				.time {
+					color: var(--bg-ink-400);
 				}
 			}
 		}
