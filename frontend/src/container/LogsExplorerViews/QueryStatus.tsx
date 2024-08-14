@@ -2,7 +2,8 @@ import './QueryStatus.styles.scss';
 
 import { LoadingOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { CircleCheck, CircleX } from 'lucide-react';
+import { Spin } from 'antd';
+import { CircleCheck } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 interface IQueryStatusProps {
@@ -18,10 +19,17 @@ export default function QueryStatus(
 
 	const content = useMemo((): React.ReactElement => {
 		if (loading) {
-			return <LoadingOutlined className="loading" />;
+			return <Spin spinning size="small" indicator={<LoadingOutlined spin />} />;
 		}
 		if (error) {
-			return <CircleX className="error" size={14} fill={Color.BG_CHERRY_500} />;
+			return (
+				<img
+					src="/Icons/solid-x-circle.svg"
+					alt="header"
+					className="error"
+					style={{ height: '14px', width: '14px' }}
+				/>
+			);
 		}
 		if (success) {
 			return (
