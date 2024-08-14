@@ -1,16 +1,16 @@
-import './alertIcon.styles.scss';
+import './alertState.styles.scss';
 
 import { BellOff, CircleCheck, CircleOff, Flame } from 'lucide-react';
 
-type AlertIconProps = {
+type AlertStateProps = {
 	state: string;
 	showLabel?: boolean;
 };
-// TODO(shaheer): rename this component to AlertState
-export default function AlertIcon({
+
+export default function AlertState({
 	state,
 	showLabel,
-}: AlertIconProps): JSX.Element {
+}: AlertStateProps): JSX.Element {
 	let icon;
 	let label;
 	// TODO(shaheer): implement the states UI based on updated designs after the designs are updated
@@ -67,6 +67,6 @@ export default function AlertIcon({
 	);
 }
 
-AlertIcon.defaultProps = {
+AlertState.defaultProps = {
 	showLabel: false,
 };

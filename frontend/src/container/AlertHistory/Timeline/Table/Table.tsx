@@ -4,8 +4,8 @@ import { Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import AlertPopover from 'container/AlertHistory/AlertPopover/AlertPopover';
 import { timelineData } from 'container/AlertHistory/Statistics/mocks';
-import AlertIcon from 'pages/AlertDetails/AlertHeader/AlertIcon/AlertIcon';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
+import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
 interface DataType {
@@ -23,7 +23,7 @@ const columns: ColumnsType<DataType> = [
 		render: (value): JSX.Element => (
 			<AlertPopover>
 				<div className="alert-rule-state">
-					<AlertIcon state={value} showLabel />
+					<AlertState state={value} showLabel />
 				</div>
 			</AlertPopover>
 		),
