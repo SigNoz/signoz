@@ -22,8 +22,7 @@ services:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
       - ./data/signoz/:/var/lib/signoz/
-    command:
-      [
+    command: [
         "-config=/root/config/prometheus.yml",
         # "--prefer-delta=true"
       ]
@@ -32,14 +31,7 @@ services:
       - "8080:8080"
     restart: on-failure
     healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--spider",
-          "-q",
-          "localhost:8080/api/v1/health"
-        ]
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -57,6 +49,7 @@ services:
     container_name: signoz-frontend
     environment:
       - FRONTEND_API_ENDPOINT=http://query-service:8080
+      - WEBSOCKET_API_ENDPOINT=ws://localhost:8080/
     restart: on-failure
     depends_on:
       - alertmanager
