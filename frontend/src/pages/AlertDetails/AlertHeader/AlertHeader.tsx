@@ -3,9 +3,9 @@ import './alertHeader.styles.scss';
 import dayjs from 'dayjs';
 
 import AlertActionButtons from './ActionButtons';
-import AlertIcon from './AlertIcon/AlertIcon';
 import AlertLabels from './AlertLabels/AlertLabels';
 import AlertSeverity from './AlertSeverity/AlertSeverity';
+import AlertState from './AlertState/AlertState';
 import AlertStatus from './AlertStatus/AlertStatus';
 
 type AlertHeaderProps = {
@@ -23,7 +23,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 		<div className="alert-info">
 			<div className="alert-info__top-section">
 				<div className="alert-title-wrapper">
-					<AlertIcon state={state} />
+					<AlertState state={state} />
 					<div className="alert-title">{alert}</div>
 					<div className="alert-id">{id}</div>
 				</div>
