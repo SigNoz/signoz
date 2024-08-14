@@ -358,15 +358,17 @@ function LogsExplorerViews({
 	}, [isError, isSuccess]);
 
 	useEffect(() => {
-		if (!isEmpty(queryId) && (isLoading || isFetching)) {
+		if (
+			!isEmpty(queryId) &&
+			(isLoading || isFetching) &&
+			selectedPanelType !== PANEL_TYPES.LIST
+		) {
 			setQueryStats(undefined);
 			setTimeout(() => {
 				getQueryStats({ queryId, setData: setQueryStats });
 			}, 500);
 		}
-	}, [queryId, isLoading, isFetching]);
-
-	console.log(queryStats, queryStats?.read_rows);
+	}, [queryId, isLoading, isFetching, selectedPanelType]);
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
