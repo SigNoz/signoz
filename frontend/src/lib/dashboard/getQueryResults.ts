@@ -23,6 +23,7 @@ export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
 	version: string,
 	signal?: AbortSignal,
+	headers?: Record<string, string>,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
 
@@ -30,6 +31,7 @@ export async function GetMetricQueryRange(
 		queryPayload,
 		version || 'v3',
 		signal,
+		headers,
 	);
 
 	if (response.statusCode >= 400) {
