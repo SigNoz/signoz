@@ -71,6 +71,7 @@ func TestLogsFilterSuggestionsWithoutExistingFilter(t *testing.T) {
 	))
 
 	require.Greater(len(suggestionsResp.ExampleQueries), 0)
+	fmt.Println(suggestionsResp)
 	require.True(slices.ContainsFunc(
 		suggestionsResp.ExampleQueries, func(q v3.FilterSet) bool {
 			return slices.ContainsFunc(q.Items, func(i v3.FilterItem) bool {

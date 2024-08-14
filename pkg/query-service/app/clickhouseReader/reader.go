@@ -4464,44 +4464,84 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 	// Example queries for multiple top attributes using a batch version of
 	// GetLogAttributeValues is expected to come in a follow up change
 	if len(suggestions.AttributeKeys) > 0 {
-		topAttrib := suggestions.AttributeKeys[0]
+		// suggest 2 examples for top 2 attribs
+		topAttribs := suggestions.AttributeKeys[:1]
+		if len(suggestions.AttributeKeys) > 1 {
+			topAttribs = suggestions.AttributeKeys[:2]
+		}
 
-		resp, err := r.GetLogAttributeValues(ctx, &v3.FilterAttributeValueRequest{
-			DataSource:                 v3.DataSourceLogs,
-			FilterAttributeKey:         topAttrib.Key,
-			FilterAttributeKeyDataType: topAttrib.DataType,
-			TagType:                    v3.TagType(topAttrib.Type),
-			Limit:                      1,
-		})
+		topAttribValues, err := r.getValuesForLogAttributes(
+			ctx, topAttribs, 2,
+		)
+
+		fmt.Printf("\n\nDEBUG: err: %v; %v\n\n", err, topAttribValues)
 
 		if err != nil {
 			// Do not fail the entire request if only example query generation fails
 			zap.L().Error("could not find attribute values for creating example query", zap.Error(err))
 
 		} else {
-			addExampleQuerySuggestion := func(value any) {
-				exampleQuery := newExampleQuery()
 
-				exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
-					Key:      topAttrib,
-					Operator: "=",
-					Value:    value,
-				})
+			for valueIdx := 0; valueIdx < 2; valueIdx++ {
+				for attrIdx, topAttr := range topAttribs {
+					attrValues := topAttribValues[attrIdx]
 
-				suggestions.ExampleQueries = append(
-					suggestions.ExampleQueries, exampleQuery,
-				)
-			}
+					if valueIdx < len(attrValues) {
+						exampleQuery := newExampleQuery()
+						exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
+							Key:      topAttr,
+							Operator: "=",
+							Value:    attrValues[valueIdx],
+						})
 
-			if len(resp.StringAttributeValues) > 0 {
-				addExampleQuerySuggestion(resp.StringAttributeValues[0])
-			} else if len(resp.NumberAttributeValues) > 0 {
-				addExampleQuerySuggestion(resp.NumberAttributeValues[0])
-			} else if len(resp.BoolAttributeValues) > 0 {
-				addExampleQuerySuggestion(resp.BoolAttributeValues[0])
+						suggestions.ExampleQueries = append(
+							suggestions.ExampleQueries, exampleQuery,
+						)
+					}
+				}
 			}
 		}
 	}
+
+	// if len(suggestions.AttributeKeys) > 0 {
+	// 	topAttrib := suggestions.AttributeKeys[0]
+
+	// 	resp, err := r.GetLogAttributeValues(ctx, &v3.FilterAttributeValueRequest{
+	// 		DataSource:                 v3.DataSourceLogs,
+	// 		FilterAttributeKey:         topAttrib.Key,
+	// 		FilterAttributeKeyDataType: topAttrib.DataType,
+	// 		TagType:                    v3.TagType(topAttrib.Type),
+	// 		Limit:                      1,
+	// 	})
+
+	// 	if err != nil {
+	// 		// Do not fail the entire request if only example query generation fails
+	// 		zap.L().Error("could not find attribute values for creating example query", zap.Error(err))
+
+	// 	} else {
+	// 		addExampleQuerySuggestion := func(value any) {
+	// 			exampleQuery := newExampleQuery()
+
+	// 			exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
+	// 				Key:      topAttrib,
+	// 				Operator: "=",
+	// 				Value:    value,
+	// 			})
+
+	// 			suggestions.ExampleQueries = append(
+	// 				suggestions.ExampleQueries, exampleQuery,
+	// 			)
+	// 		}
+
+	// 		if len(resp.StringAttributeValues) > 0 {
+	// 			addExampleQuerySuggestion(resp.StringAttributeValues[0])
+	// 		} else if len(resp.NumberAttributeValues) > 0 {
+	// 			addExampleQuerySuggestion(resp.NumberAttributeValues[0])
+	// 		} else if len(resp.BoolAttributeValues) > 0 {
+	// 			addExampleQuerySuggestion(resp.BoolAttributeValues[0])
+	// 		}
+	// 	}
+	// }
 
 	// Suggest static example queries for standard log attributes if needed.
 	if len(suggestions.ExampleQueries) < req.Limit {
@@ -4523,7 +4563,7 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 }
 
 func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attributes []v3.AttributeKey, limit uint64) (
-	[]v3.FilterAttributeValueResponse, *model.ApiError,
+	[][]any, *model.ApiError,
 ) {
 	query := fmt.Sprintf(
 		`select tagKey, stringTagValue, int64TagValue, float64TagValue
@@ -4556,10 +4596,10 @@ func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attrib
 	}
 	defer rows.Close()
 
-	result := make([]v3.FilterAttributeValueResponse, len(attributes))
+	result := make([][]any, len(attributes))
 
 	// Helper for getting hold of the result to populate for each scanned row
-	resultForAttrib := func(key string, dataType v3.AttributeKeyDataType) *v3.FilterAttributeValueResponse {
+	resultForAttrib := func(key string, dataType v3.AttributeKeyDataType) []any {
 		resultIdx := slices.IndexFunc(attributes, func(attrib v3.AttributeKey) bool {
 			return attrib.Key == key && attrib.DataType == dataType
 		})
@@ -4567,7 +4607,7 @@ func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attrib
 		if resultIdx < 0 {
 			return nil
 		} else {
-			return &result[resultIdx]
+			return result[resultIdx]
 		}
 	}
 
@@ -4588,17 +4628,17 @@ func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attrib
 		if len(stringValue) > 0 {
 			result := resultForAttrib(tagKey, v3.AttributeKeyDataTypeString)
 			if result != nil {
-				result.StringAttributeValues = append(result.StringAttributeValues, stringValue)
+				result = append(result, stringValue)
 			}
 		} else if int64Value.Valid {
 			result := resultForAttrib(tagKey, v3.AttributeKeyDataTypeInt64)
 			if result != nil {
-				result.NumberAttributeValues = append(result.NumberAttributeValues, int64Value.Int64)
+				result = append(result, int64Value.Int64)
 			}
 		} else if float64Value.Valid {
 			result := resultForAttrib(tagKey, v3.AttributeKeyDataTypeFloat64)
 			if result != nil {
-				result.NumberAttributeValues = append(result.NumberAttributeValues, float64Value.Float64)
+				result = append(result, float64Value.Float64)
 			}
 		}
 	}
