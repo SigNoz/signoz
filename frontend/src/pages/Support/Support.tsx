@@ -180,6 +180,11 @@ export default function Support(): JSX.Element {
 	);
 
 	const handleAddCreditCard = (): void => {
+		logEvent('Add Credit card modal: Clicked', {
+			source: `chat`,
+			page: 'support',
+		});
+
 		updateCreditCard({
 			licenseKey: activeLicense?.key || '',
 			successURL: window.location.href,

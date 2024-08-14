@@ -1,5 +1,6 @@
 import { Button, Modal, Typography } from 'antd';
 import updateCreditCardApi from 'api/billing/checkout';
+import logEvent from 'api/common/logEvent';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
@@ -58,6 +59,11 @@ export default function ChatSupportGateway(): JSX.Element {
 	);
 
 	const handleAddCreditCard = (): void => {
+		logEvent('Add Credit card modal: Clicked', {
+			source: `intercom icon`,
+			page: '',
+		});
+
 		updateCreditCard({
 			licenseKey: activeLicense?.key || '',
 			successURL: window.location.href,
@@ -70,7 +76,14 @@ export default function ChatSupportGateway(): JSX.Element {
 			<div className="chat-support-gateway">
 				<Button
 					className="chat-support-gateway-btn"
-					onClick={(): void => setIsAddCreditCardModalOpen(true)}
+					onClick={(): void => {
+						logEvent('Disabled Chat Support: Clicked', {
+							source: `intercom icon`,
+							page: '',
+						});
+
+						setIsAddCreditCardModalOpen(true);
+					}}
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

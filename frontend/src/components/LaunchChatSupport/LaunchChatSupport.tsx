@@ -103,6 +103,12 @@ function LaunchChatSupport({
 	);
 
 	const handleAddCreditCard = (): void => {
+		logEvent('Add Credit card modal: Clicked', {
+			source: `facing issues button`,
+			page: '',
+			...attributes,
+		});
+
 		updateCreditCard({
 			licenseKey: activeLicense?.key || '',
 			successURL: window.location.href,
