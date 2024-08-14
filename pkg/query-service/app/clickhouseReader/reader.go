@@ -4522,6 +4522,96 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 	return &suggestions, nil
 }
 
+func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attributes []v3.AttributeKey, limit uint64) (
+	[]v3.FilterAttributeValueResponse, *model.ApiError,
+) {
+	query := fmt.Sprintf(
+		`select tagKey, stringTagValue, int64TagValue, float64TagValue
+		 from (
+				select
+					tagKey,
+					stringTagValue,
+					int64TagValue,
+					float64TagValue,
+					row_number() over (partition by tagKey order by timestamp desc) as rank
+				from %s.%s
+				where tagKey in $1
+			)
+			where rank <= %d
+		`,
+		r.logsDB, r.logsTagAttributeTable, limit,
+	)
+	// query = fmt.Sprintf("select distinct %s from  %s.%s where tagKey=$1 and tagType=$2 limit $3",
+	// filterValueColumn, r.logsDB, r.logsTagAttributeTable)
+	attribNames := []string{}
+	for _, attrib := range attributes {
+		attribNames = append(attribNames, attrib.Key)
+	}
+	rows, err := r.db.Query(ctx, query, attribNames)
+	if err != nil {
+		zap.L().Error("couldn't query attrib values for suggestions", zap.Error(err))
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't query attrib values for suggestions: %w", err,
+		))
+	}
+	defer rows.Close()
+
+	result := make([]v3.FilterAttributeValueResponse, len(attributes))
+
+	// Helper for getting hold of the result to populate for each scanned row
+	resultForAttrib := func(key string, dataType v3.AttributeKeyDataType) *v3.FilterAttributeValueResponse {
+		resultIdx := slices.IndexFunc(attributes, func(attrib v3.AttributeKey) bool {
+			return attrib.Key == key && attrib.DataType == dataType
+		})
+
+		if resultIdx < 0 {
+			return nil
+		} else {
+			return &result[resultIdx]
+		}
+	}
+
+	var tagKey string
+	var stringValue string
+	var float64Value sql.NullFloat64
+	var int64Value sql.NullInt64
+	for rows.Next() {
+		err := rows.Scan(
+			&tagKey, &stringValue, &int64Value, &float64Value,
+		)
+		if err != nil {
+			return nil, model.InternalError(fmt.Errorf(
+				"couldn't scan attrib value rows: %w", err,
+			))
+		}
+
+		if len(stringValue) > 0 {
+			result := resultForAttrib(tagKey, v3.AttributeKeyDataTypeString)
+			if result != nil {
+				result.StringAttributeValues = append(result.StringAttributeValues, stringValue)
+			}
+		} else if int64Value.Valid {
+			result := resultForAttrib(tagKey, v3.AttributeKeyDataTypeInt64)
+			if result != nil {
+				result.NumberAttributeValues = append(result.NumberAttributeValues, int64Value.Int64)
+			}
+		} else if float64Value.Valid {
+			result := resultForAttrib(tagKey, v3.AttributeKeyDataTypeFloat64)
+			if result != nil {
+				result.NumberAttributeValues = append(result.NumberAttributeValues, float64Value.Float64)
+			}
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't scan attrib value rows: %w", err,
+		))
+	}
+
+	return result, nil
+}
+
 func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([]string, map[string]string, []map[string]string, *v3.Point) {
 	// Each row will have a value and a timestamp, and an optional list of label values
 	// example: {Timestamp: ..., Value: ...}
