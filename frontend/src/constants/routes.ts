@@ -54,6 +54,7 @@ const ROUTES = {
 	WORKSPACE_LOCKED: '/workspace-locked',
 	SHORTCUTS: '/shortcuts',
 	INTEGRATIONS: '/integrations',
+	MESSAGING_QUEUES: '/messaging-queues',
 } as const;
 
 export default ROUTES;
