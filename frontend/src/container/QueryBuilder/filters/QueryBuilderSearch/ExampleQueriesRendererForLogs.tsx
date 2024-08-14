@@ -10,14 +10,14 @@ function ExampleQueriesRendererForLogs({
 	handleAddTag,
 }: ExampleQueriesRendererForLogsProps): JSX.Element {
 	return (
-		<span
-			className="example-query"
+		<div
+			className="container"
 			onClick={(): void => {
 				handleAddTag(value);
 			}}
 		>
-			{label}
-		</span>
+			<span className="example-query">{label}</span>
+		</div>
 	);
 }
 

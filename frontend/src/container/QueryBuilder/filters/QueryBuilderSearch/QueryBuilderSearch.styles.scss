@@ -226,18 +226,21 @@
 			height: 5px;
 			width: 5px;
 			border-radius: 50%;
+			flex-shrink: 0;
 		}
 
 		.left-section {
 			display: flex;
 			align-items: center;
 			gap: 4px;
+			width: 90%;
 
 			.dot {
 				background-color: var(--bg-slate-300);
 			}
 
 			.value {
+				width: 100%;
 			}
 		}
 
@@ -339,13 +342,15 @@
 			}
 
 			.query-container {
-				.example-query {
-					background: var(--bg-vanilla-200);
-					color: var(--bg-ink-400);
-				}
+				.container {
+					.example-query {
+						background: var(--bg-vanilla-200);
+						color: var(--bg-ink-400);
+					}
 
-				.example-query:hover {
-					color: var(--bg-ink-400);
+					.example-query:hover {
+						color: var(--bg-ink-400);
+					}
 				}
 			}
 		}

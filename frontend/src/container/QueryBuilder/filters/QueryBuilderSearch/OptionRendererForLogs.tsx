@@ -1,8 +1,10 @@
 import './QueryBuilderSearch.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { Zap } from 'lucide-react';
+import { useState } from 'react';
 
 import { getOptionType } from './utils';
 
@@ -13,6 +15,7 @@ function OptionRendererForLogs({
 	isIndexed,
 	setDynamicPlaceholder,
 }: OptionRendererProps): JSX.Element {
+	const [truncated, setTruncated] = useState<boolean>(false);
 	const optionType = getOptionType(label);
 
 	return (
@@ -22,11 +25,20 @@ function OptionRendererForLogs({
 			onFocus={(): void => setDynamicPlaceholder(value)}
 		>
 			{optionType ? (
-				<Tooltip title={`${value}`} placement="topLeft">
+				<Tooltip title={truncated ? `${value}` : ''} placement="topLeft">
 					<div className="logs-options-select">
 						<section className="left-section">
-							{isIndexed ? <Zap size={12} /> : <div className="dot" />}
-							<Typography.Text className="text value">{value}</Typography.Text>
+							{isIndexed ? (
+								<Zap size={12} fill={Color.BG_AMBER_500} />
+							) : (
+								<div className="dot" />
+							)}
+							<Typography.Text
+								className="text value"
+								ellipsis={{ onEllipsis: (ellipsis): void => setTruncated(ellipsis) }}
+							>
+								{value}
+							</Typography.Text>
 						</section>
 						<section className="right-section">
 							<div className="text tags data-type-tag">{dataType}</div>
