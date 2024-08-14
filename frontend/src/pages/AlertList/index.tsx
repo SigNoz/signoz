@@ -1,10 +1,13 @@
 import { Tabs } from 'antd';
 import { TabsProps } from 'antd/lib';
+import ROUTES from 'constants/routes';
 import AllAlertRules from 'container/ListAlertRules';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
+import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
+import AlertDetails from 'pages/AlertDetails';
 import { useLocation } from 'react-router-dom';
 
 function AllAlertList(): JSX.Element {
@@ -12,15 +15,36 @@ function AllAlertList(): JSX.Element {
 	const location = useLocation();
 
 	const tab = urlQuery.get('tab');
+	const isAlertHistory = location.pathname === ROUTES.ALERT_HISTORY;
+	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
+
 	const items: TabsProps['items'] = [
-		{ label: 'Alert Rules', key: 'AlertRules', children: <AllAlertRules /> },
 		{
-			label: 'Triggered Alerts',
+			label: (
+				<div className="periscope-tab">
+					<GalleryVerticalEnd size={14} />
+					Triggered Alerts
+				</div>
+			),
 			key: 'TriggeredAlerts',
 			children: <TriggeredAlerts />,
 		},
 		{
-			label: 'Configuration',
+			label: (
+				<div className="periscope-tab">
+					<Pyramid size={14} />
+					Alert Rules
+				</div>
+			),
+			key: 'AlertRules',
+			children: (
+				<div>
+					{isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />}
+				</div>
+			),
+		},
+		{
+			label: <div>Configuration</div>,
 			key: 'Configuration',
 			children: <PlannedDowntime />,
 		},
@@ -33,8 +57,11 @@ function AllAlertList(): JSX.Element {
 			activeKey={tab || 'AlertRules'}
 			onChange={(tab): void => {
 				urlQuery.set('tab', tab);
-				history.replace(`${location.pathname}?${urlQuery.toString()}`);
+				history.replace(`/alerts?${urlQuery.toString()}`);
 			}}
+			className={`${
+				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''
+			}`}
 		/>
 	);
 }

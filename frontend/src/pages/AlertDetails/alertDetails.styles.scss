@@ -53,3 +53,10 @@
 		}
 	}
 }
+
+.alert-details-tabs .ant-tabs-nav {
+	margin-bottom: 0 !important;
+	&::before {
+		border-bottom: 1px solid var(--bg-slate-400) !important;
+	}
+}
