@@ -51,7 +51,7 @@
 		"ansi-to-html": "0.7.2",
 		"antd": "5.11.0",
 		"antd-table-saveas-excel": "2.2.1",
-		"axios": "1.6.4",
+		"axios": "1.7.4",
 		"babel-eslint": "^10.1.0",
 		"babel-jest": "^29.6.4",
 		"babel-loader": "9.1.3",
