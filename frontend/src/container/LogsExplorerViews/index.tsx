@@ -4,6 +4,7 @@ import './LogsExplorerViews.styles.scss';
 import { Button, Typography } from 'antd';
 import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
 import logEvent from 'api/common/logEvent';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -746,14 +747,15 @@ function LogsExplorerViews({
 								/>
 								{queryStats?.read_rows && (
 									<Typography.Text className="rows">
-										{queryStats.read_rows / 1000}k rows
+										{getYAxisFormattedValue(queryStats.read_rows?.toString(), 'short')}{' '}
+										rows
 									</Typography.Text>
 								)}
 								{queryStats?.elapsed_ms && (
 									<>
 										<div className="divider" />
 										<Typography.Text className="time">
-											{queryStats?.elapsed_ms} ms
+											{getYAxisFormattedValue(queryStats?.elapsed_ms?.toString(), 'ms')}
 										</Typography.Text>
 									</>
 								)}
