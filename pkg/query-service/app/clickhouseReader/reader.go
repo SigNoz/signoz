@@ -4474,29 +4474,29 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 			ctx, topAttribs, 2,
 		)
 
-		fmt.Printf("\n\nDEBUG: err: %v; %v\n\n", err, topAttribValues)
-
 		if err != nil {
 			// Do not fail the entire request if only example query generation fails
 			zap.L().Error("could not find attribute values for creating example query", zap.Error(err))
 
 		} else {
 
+			// TODO(Raj): Clean this up
 			for valueIdx := 0; valueIdx < 2; valueIdx++ {
 				for attrIdx, topAttr := range topAttribs {
-					attrValues := topAttribValues[attrIdx]
+					if len(suggestions.ExampleQueries) < req.ExamplesLimit {
+						attrValues := topAttribValues[attrIdx]
+						if valueIdx < len(attrValues) {
+							exampleQuery := newExampleQuery()
+							exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
+								Key:      topAttr,
+								Operator: "=",
+								Value:    attrValues[valueIdx],
+							})
 
-					if valueIdx < len(attrValues) {
-						exampleQuery := newExampleQuery()
-						exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
-							Key:      topAttr,
-							Operator: "=",
-							Value:    attrValues[valueIdx],
-						})
-
-						suggestions.ExampleQueries = append(
-							suggestions.ExampleQueries, exampleQuery,
-						)
+							suggestions.ExampleQueries = append(
+								suggestions.ExampleQueries, exampleQuery,
+							)
+						}
 					}
 				}
 			}
@@ -4544,7 +4544,7 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 	// }
 
 	// Suggest static example queries for standard log attributes if needed.
-	if len(suggestions.ExampleQueries) < req.Limit {
+	if len(suggestions.ExampleQueries) < req.ExamplesLimit {
 		exampleQuery := newExampleQuery()
 		exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
 			Key: v3.AttributeKey{
@@ -4566,18 +4566,28 @@ func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attrib
 	[][]any, *model.ApiError,
 ) {
 	query := fmt.Sprintf(
-		`select tagKey, stringTagValue, int64TagValue, float64TagValue
-		 from (
+		`
+		select tagKey, stringTagValue, int64TagValue, float64TagValue
+		from (
+			select
+				tagKey,
+				stringTagValue,
+				int64TagValue,
+				float64TagValue,
+				row_number() over (partition by tagKey order by ts desc) as rank
+			from (
 				select
 					tagKey,
 					stringTagValue,
 					int64TagValue,
 					float64TagValue,
-					row_number() over (partition by tagKey order by timestamp desc) as rank
+					max(timestamp) as ts
 				from %s.%s
 				where tagKey in $1
+				group by (tagKey, stringTagValue, int64TagValue, float64TagValue)
 			)
-			where rank <= %d
+		)
+		where rank <= %d
 		`,
 		r.logsDB, r.logsTagAttributeTable, limit,
 	)
@@ -4587,6 +4597,7 @@ func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attrib
 	for _, attrib := range attributes {
 		attribNames = append(attribNames, attrib.Key)
 	}
+
 	rows, err := r.db.Query(ctx, query, attribNames)
 	if err != nil {
 		zap.L().Error("couldn't query attrib values for suggestions", zap.Error(err))
@@ -4599,16 +4610,11 @@ func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attrib
 	result := make([][]any, len(attributes))
 
 	// Helper for getting hold of the result to populate for each scanned row
-	resultForAttrib := func(key string, dataType v3.AttributeKeyDataType) []any {
-		resultIdx := slices.IndexFunc(attributes, func(attrib v3.AttributeKey) bool {
+
+	resultIdxForAttrib := func(key string, dataType v3.AttributeKeyDataType) int {
+		return slices.IndexFunc(attributes, func(attrib v3.AttributeKey) bool {
 			return attrib.Key == key && attrib.DataType == dataType
 		})
-
-		if resultIdx < 0 {
-			return nil
-		} else {
-			return result[resultIdx]
-		}
 	}
 
 	var tagKey string
@@ -4626,19 +4632,20 @@ func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attrib
 		}
 
 		if len(stringValue) > 0 {
-			result := resultForAttrib(tagKey, v3.AttributeKeyDataTypeString)
-			if result != nil {
-				result = append(result, stringValue)
+
+			attrResultIdx := resultIdxForAttrib(tagKey, v3.AttributeKeyDataTypeString)
+			if attrResultIdx >= 0 {
+				result[attrResultIdx] = append(result[attrResultIdx], stringValue)
 			}
 		} else if int64Value.Valid {
-			result := resultForAttrib(tagKey, v3.AttributeKeyDataTypeInt64)
-			if result != nil {
-				result = append(result, int64Value.Int64)
+			attrResultIdx := resultIdxForAttrib(tagKey, v3.AttributeKeyDataTypeInt64)
+			if attrResultIdx >= 0 {
+				result[attrResultIdx] = append(result[attrResultIdx], int64Value.Int64)
 			}
 		} else if float64Value.Valid {
-			result := resultForAttrib(tagKey, v3.AttributeKeyDataTypeFloat64)
-			if result != nil {
-				result = append(result, float64Value.Float64)
+			attrResultIdx := resultIdxForAttrib(tagKey, v3.AttributeKeyDataTypeFloat64)
+			if attrResultIdx >= 0 {
+				result[attrResultIdx] = append(result[attrResultIdx], float64Value.Float64)
 			}
 		}
 	}

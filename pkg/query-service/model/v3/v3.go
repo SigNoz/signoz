@@ -256,7 +256,8 @@ type QBFilterSuggestionsRequest struct {
 	DataSource     DataSource `json:"dataSource"`
 	SearchText     string     `json:"searchText"`
 	Limit          int        `json:"limit"`
-	ExistingFilter *FilterSet `json:"existing_filter"`
+	ExamplesLimit  int        `json:"examplesLimit"`
+	ExistingFilter *FilterSet `json:"existingFilter"`
 }
 
 type QBFilterSuggestionsResponse struct {

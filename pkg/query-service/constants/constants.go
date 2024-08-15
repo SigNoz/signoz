@@ -418,3 +418,4 @@ var TracesListViewDefaultSelectedColumns = []v3.AttributeKey{
 }
 
 const DefaultFilterSuggestionsLimit = 100
+const DefaultFilterSuggestionsExamplesLimit = 2

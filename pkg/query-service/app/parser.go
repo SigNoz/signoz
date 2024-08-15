@@ -857,6 +857,17 @@ func parseQBFilterSuggestionsRequest(r *http.Request) (
 		}
 	}
 
+	examplesLimit := baseconstants.DefaultFilterSuggestionsExamplesLimit
+	examplesLimitStr := r.URL.Query().Get("exampleLimit")
+	if len(examplesLimitStr) > 0 {
+		examplesLimit, err := strconv.Atoi(examplesLimitStr)
+		if err != nil || examplesLimit < 1 {
+			return nil, model.BadRequest(fmt.Errorf(
+				"invalid examples limit: %s", limitStr,
+			))
+		}
+	}
+
 	var existingFilter *v3.FilterSet
 	existingFilterB64 := r.URL.Query().Get("existingFilter")
 	if len(existingFilterB64) > 0 {
@@ -878,6 +889,7 @@ func parseQBFilterSuggestionsRequest(r *http.Request) (
 		DataSource:     dataSource,
 		Limit:          limit,
 		SearchText:     searchText,
+		ExamplesLimit:  examplesLimit,
 		ExistingFilter: existingFilter,
 	}, nil
 }
