@@ -4503,46 +4503,6 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 		}
 	}
 
-	// if len(suggestions.AttributeKeys) > 0 {
-	// 	topAttrib := suggestions.AttributeKeys[0]
-
-	// 	resp, err := r.GetLogAttributeValues(ctx, &v3.FilterAttributeValueRequest{
-	// 		DataSource:                 v3.DataSourceLogs,
-	// 		FilterAttributeKey:         topAttrib.Key,
-	// 		FilterAttributeKeyDataType: topAttrib.DataType,
-	// 		TagType:                    v3.TagType(topAttrib.Type),
-	// 		Limit:                      1,
-	// 	})
-
-	// 	if err != nil {
-	// 		// Do not fail the entire request if only example query generation fails
-	// 		zap.L().Error("could not find attribute values for creating example query", zap.Error(err))
-
-	// 	} else {
-	// 		addExampleQuerySuggestion := func(value any) {
-	// 			exampleQuery := newExampleQuery()
-
-	// 			exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
-	// 				Key:      topAttrib,
-	// 				Operator: "=",
-	// 				Value:    value,
-	// 			})
-
-	// 			suggestions.ExampleQueries = append(
-	// 				suggestions.ExampleQueries, exampleQuery,
-	// 			)
-	// 		}
-
-	// 		if len(resp.StringAttributeValues) > 0 {
-	// 			addExampleQuerySuggestion(resp.StringAttributeValues[0])
-	// 		} else if len(resp.NumberAttributeValues) > 0 {
-	// 			addExampleQuerySuggestion(resp.NumberAttributeValues[0])
-	// 		} else if len(resp.BoolAttributeValues) > 0 {
-	// 			addExampleQuerySuggestion(resp.BoolAttributeValues[0])
-	// 		}
-	// 	}
-	// }
-
 	// Suggest static example queries for standard log attributes if needed.
 	if len(suggestions.ExampleQueries) < req.ExamplesLimit {
 		exampleQuery := newExampleQuery()

@@ -59,7 +59,9 @@ func TestLogsFilterSuggestionsWithoutExistingFilter(t *testing.T) {
 	testAttribValue := "test-container"
 
 	tb.mockAttribKeysQueryResponse([]v3.AttributeKey{testAttrib})
-	tb.mockAttribValuesQueryResponse(testAttrib, []string{testAttribValue})
+	tb.mockAttribValuesQueryResponse(
+		[]v3.AttributeKey{testAttrib}, [][]string{[]string{testAttribValue}},
+	)
 	suggestionsQueryParams := map[string]string{}
 	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(suggestionsQueryParams)
 
@@ -114,7 +116,9 @@ func TestLogsFilterSuggestionsWithExistingFilter(t *testing.T) {
 	}
 
 	tb.mockAttribKeysQueryResponse([]v3.AttributeKey{testAttrib, testFilterAttrib})
-	tb.mockAttribValuesQueryResponse(testAttrib, []string{testAttribValue})
+	tb.mockAttribValuesQueryResponse(
+		[]v3.AttributeKey{testAttrib}, [][]string{[]string{testAttribValue}},
+	)
 
 	testFilterJson, err := json.Marshal(testFilter)
 	require.Nil(err, "couldn't serialize existing filter to JSON")
@@ -170,22 +174,29 @@ func (tb *FilterSuggestionsTestBed) mockAttribKeysQueryResponse(
 
 // Mocks response for CH queries made by reader.GetLogAttributeValues
 func (tb *FilterSuggestionsTestBed) mockAttribValuesQueryResponse(
-	expectedAttrib v3.AttributeKey,
-	stringValuesToReturn []string,
+	expectedAttribs []v3.AttributeKey,
+	expectedStringValues [][]string,
 ) {
 	cols := []mockhouse.ColumnType{}
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "tagKey"})
 	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "stringTagValue"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Nullable(Int64)", Name: "int64TagValue"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Nullable(Float64)", Name: "float64TagValue"})
 
+	expectedAttribKeys := []string{}
 	values := [][]any{}
-	for _, v := range stringValuesToReturn {
-		rowValues := []any{}
-		rowValues = append(rowValues, v)
-		values = append(values, rowValues)
+	for idx, attrib := range expectedAttribs {
+		expectedAttribKeys = append(expectedAttribKeys, attrib.Key)
+		for _, val := range expectedStringValues[idx] {
+			rowValues := []any{}
+			rowValues = append(rowValues, attrib.Key, val, nil, nil)
+			values = append(values, rowValues)
+		}
 	}
 
 	tb.mockClickhouse.ExpectQuery(
-		"select distinct.*stringTagValue.*from.*signoz_logs.distributed_tag_attributes.*",
-	).WithArgs(string(expectedAttrib.Key), v3.TagType(expectedAttrib.Type), 1).WillReturnRows(mockhouse.NewRows(cols, values))
+		"select.*tagKey.*stringTagValue.*int64TagValue.*float64TagValue.*distributed_tag_attributes.*tagKey.*IN.*",
+	).WithArgs(expectedAttribKeys).WillReturnRows(mockhouse.NewRows(cols, values))
 }
 
 type FilterSuggestionsTestBed struct {
