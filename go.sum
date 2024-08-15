@@ -64,8 +64,8 @@ github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd h1:Bk43AsDYe0fhkb
 github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd/go.mod h1:nxRcH/OEdM8QxzH37xkGzomr1O0JpYBRS6pwjsWW6Pc=
 github.com/SigNoz/prometheus v1.11.1 h1:roM8ugYf4UxaeKKujEeBvoX7ybq3IrS+TB26KiRtIJg=
 github.com/SigNoz/prometheus v1.11.1/go.mod h1:uv4mQwZQtx7y4GQ6EdHOi8Wsk07uHNn2XHd1zM85m6I=
-github.com/SigNoz/signoz-otel-collector v0.102.3 h1:q6iS5kqqwopwC2pS2UvYL3IiJMP75UdyK6d+rculXn4=
-github.com/SigNoz/signoz-otel-collector v0.102.3/go.mod h1:61WqwhnrtFjwj1FyfDYMXjxFx8gWgKok1Xy1C6LbjWo=
+github.com/SigNoz/signoz-otel-collector v0.102.4 h1:098regGkGcrv0eSGElD4uEyuChxLM9VUoeWMW6KrUTI=
+github.com/SigNoz/signoz-otel-collector v0.102.4/go.mod h1:3s9cSL8yexkBBMfK9mC3WWrAPm8oMtlZhvBxvt+Ziag=
 github.com/SigNoz/zap_otlp v0.1.0 h1:T7rRcFN87GavY8lDGZj0Z3Xv6OhJA6Pj3I9dNPmqvRc=
 github.com/SigNoz/zap_otlp v0.1.0/go.mod h1:lcHvbDbRgvDnPxo9lDlaL1JK2PyOyouP/C3ynnYIvyo=
 github.com/SigNoz/zap_otlp/zap_otlp_encoder v0.0.0-20230822164844-1b861a431974 h1:PKVgdf83Yw+lZJbFtNGBgqXiXNf3+kOXW2qZ7Ms7OaY=
