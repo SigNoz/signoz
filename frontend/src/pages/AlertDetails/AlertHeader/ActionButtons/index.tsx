@@ -1,6 +1,6 @@
 import './actionButtons.styles.scss';
 
-import { Button, Divider, Dropdown, MenuProps, Tooltip } from 'antd';
+import { Button, Divider, Dropdown, MenuProps, Switch, Tooltip } from 'antd';
 import { Copy, Ellipsis, PenLine, Trash2 } from 'lucide-react';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import React from 'react';
@@ -29,6 +29,8 @@ const menuStyle: React.CSSProperties = {
 function AlertActionButtons(): JSX.Element {
 	return (
 		<div className="alert-action-buttons">
+			{/* TODO(shaheer): handle submitting data */}
+			<Switch size="small" />
 			<CopyToClipboard textToCopy={window.location.href} />
 
 			<Divider type="vertical" />
