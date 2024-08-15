@@ -10,6 +10,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/config"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
@@ -81,8 +82,11 @@ func main() {
 		Cluster:           cluster,
 	}
 
+	//loading the env variable
+	config.LoadConfig()
+
 	// Read the jwt secret key
-	auth.JwtSecret = constants.SignozJwtSecret
+	auth.JwtSecret = config.AppConfig.SignozJwtSecret
 
 	if len(auth.JwtSecret) == 0 {
 		zap.L().Warn("No JWT secret key is specified.")

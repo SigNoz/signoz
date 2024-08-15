@@ -14,6 +14,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.signoz.io/signoz/ee/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/config"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
@@ -136,8 +137,11 @@ func main() {
 		GatewayUrl:        gatewayUrl,
 	}
 
+	//loading the env variable
+	config.LoadConfig()
+
 	// Read the jwt secret key
-	auth.JwtSecret = baseconst.SignozJwtSecret
+	auth.JwtSecret = config.AppConfig.SignozJwtSecret
 
 	if len(auth.JwtSecret) == 0 {
 		zap.L().Warn("No JWT secret key is specified.")

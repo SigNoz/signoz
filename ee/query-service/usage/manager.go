@@ -19,7 +19,7 @@ import (
 	licenseserver "go.signoz.io/signoz/ee/query-service/integrations/signozio"
 	"go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/model"
-	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/config"
 	"go.signoz.io/signoz/pkg/query-service/utils/encryption"
 )
 
@@ -47,8 +47,12 @@ type Manager struct {
 }
 
 func New(dbType string, modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn) (*Manager, error) {
+
+	if len(config.AppConfig.ClickHouseUrl) == 0 {
+		zap.L().Warn("No ClickHouseUrl env is specified.")
+	}
 	hostNameRegex := regexp.MustCompile(`tcp://(?P<hostname>.*):`)
-	hostNameRegexMatches := hostNameRegex.FindStringSubmatch(baseconst.ClickHouseUrl)
+	hostNameRegexMatches := hostNameRegex.FindStringSubmatch(config.AppConfig.ClickHouseUrl)
 
 	tenantID := ""
 	if len(hostNameRegexMatches) == 2 {

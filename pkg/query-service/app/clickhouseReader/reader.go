@@ -47,6 +47,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	queryServiceConfig "go.signoz.io/signoz/pkg/query-service/config"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
@@ -143,7 +144,10 @@ func NewReader(
 	cluster string,
 ) *ClickHouseReader {
 
-	datasource := constants.ClickHouseUrl
+	if len(queryServiceConfig.AppConfig.ClickHouseUrl) == 0 {
+		zap.L().Warn("No ClickHouseUrl env is specified.")
+	}
+	datasource := queryServiceConfig.AppConfig.ClickHouseUrl
 	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
 	db, err := initialize(options)
 
@@ -168,8 +172,10 @@ func NewReaderFromClickhouseConnection(
 		zap.L().Error("check if the alert manager URL is correctly set and valid")
 		os.Exit(1)
 	}
-
-	regex := constants.ClickHouseOptimizeReadInOrderRegex
+	if len(queryServiceConfig.AppConfig.ClickHouseOptimizeReadInOrderRegex) == 0 {
+		zap.L().Warn("No ClickHouseOptimizeReadInOrderRegex env is specified.")
+	}
+	regex := queryServiceConfig.AppConfig.ClickHouseOptimizeReadInOrderRegex
 	var regexCompiled *regexp.Regexp
 	if regex != "" {
 		regexCompiled, err = regexp.Compile(regex)
@@ -178,14 +184,23 @@ func NewReaderFromClickhouseConnection(
 			os.Exit(1)
 		}
 	}
+	if len(queryServiceConfig.AppConfig.ClickHouseMaxExecutionTimeLeaf) == 0 {
+		zap.L().Warn("No ClickHouseMaxExecutionTimeLeaf env is specified.")
+	}
+	if len(queryServiceConfig.AppConfig.ClickHouseTimeoutBeforeCheckingExecutionSpeed) == 0 {
+		zap.L().Warn("No ClickHouseTimeoutBeforeCheckingExecutionSpeed env is specified.")
+	}
+	if len(queryServiceConfig.AppConfig.ClickHouseMaxBytesToRead) == 0 {
+		zap.L().Warn("No ClickHouseMaxBytesToRead env is specified.")
+	}
 
 	wrap := clickhouseConnWrapper{
 		conn: db,
 		settings: ClickhouseQuerySettings{
-			MaxExecutionTimeLeaf:                constants.ClickHouseMaxExecutionTimeLeaf,
-			TimeoutBeforeCheckingExecutionSpeed: constants.ClickHouseTimeoutBeforeCheckingExecutionSpeed,
-			MaxBytesToRead:                      constants.ClickHouseMaxBytesToRead,
-			OptimizeReadInOrderRegex:            constants.ClickHouseOptimizeReadInOrderRegex,
+			MaxExecutionTimeLeaf:                queryServiceConfig.AppConfig.ClickHouseMaxExecutionTimeLeaf,
+			TimeoutBeforeCheckingExecutionSpeed: queryServiceConfig.AppConfig.ClickHouseTimeoutBeforeCheckingExecutionSpeed,
+			MaxBytesToRead:                      queryServiceConfig.AppConfig.ClickHouseMaxBytesToRead,
+			OptimizeReadInOrderRegex:            queryServiceConfig.AppConfig.ClickHouseOptimizeReadInOrderRegex,
 			OptimizeReadInOrderRegexCompiled:    regexCompiled,
 		},
 	}

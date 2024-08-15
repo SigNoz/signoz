@@ -11,8 +11,10 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron"
+	"go.uber.org/zap"
 	"gopkg.in/segmentio/analytics-go.v3"
 
+	"go.signoz.io/signoz/pkg/query-service/config"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -636,7 +638,10 @@ func GetInstance() *Telemetry {
 }
 
 func getDeploymentType() string {
-	deploymentType := constants.DeploymentType
+	if len(config.AppConfig.DeploymentType) == 0 {
+		zap.L().Warn("No DeploymentType env is specified.")
+	}
+	deploymentType := config.AppConfig.DeploymentType
 	if deploymentType == "" {
 		return "unknown"
 	}

@@ -17,23 +17,6 @@ const (
 	OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket
 )
 
-var (
-	SignozJwtSecret                               = os.Getenv("SIGNOZ_JWT_SECRET")
-	StorageType                                   = os.Getenv("STORAGE")
-	ClickHouseUrl                                 = os.Getenv("ClickHouseUrl")
-	ClickHouseOptimizeReadInOrderRegex            = os.Getenv("ClickHouseOptimizeReadInOrderRegex")
-	ClickHouseMaxExecutionTimeLeaf                = os.Getenv("ClickHouseMaxExecutionTimeLeaf")
-	ClickHouseTimeoutBeforeCheckingExecutionSpeed = os.Getenv("ClickHouseTimeoutBeforeCheckingExecutionSpeed")
-	ClickHouseMaxBytesToRead                      = os.Getenv("ClickHouseMaxBytesToRead")
-	SmtpEnabled                                   = os.Getenv("SMTP_ENABLED")
-	DeploymentType                                = os.Getenv("DEPLOYMENT_TYPE")
-	SmtpHost                                      = os.Getenv("SMTP_HOST")
-	SmtpPort                                      = os.Getenv("SMTP_PORT")
-	SmtpUsername                                  = os.Getenv("SMTP_USERNAME")
-	SmtpPassword                                  = os.Getenv("SMTP_PASSWORD")
-	SmtpFrom                                      = os.Getenv("SMTP_FROM")
-)
-
 type ContextKey string
 
 const ContextUserKey ContextKey = "user"

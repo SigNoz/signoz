@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"go.signoz.io/signoz/pkg/query-service/config"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -95,8 +96,11 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		"invited user email": req.Email,
 	}, au.Email, true, false)
 
+	if len(config.AppConfig.SmtpEnabled) == 0 {
+		zap.L().Warn("No SmtpEnabled env is specified.")
+	}
 	// send email if SMTP is enabled
-	if constants.SmtpEnabled == "true" && req.FrontendBaseUrl != "" {
+	if config.AppConfig.SmtpEnabled == "true" && req.FrontendBaseUrl != "" {
 		inviteEmail(req, au, token)
 	}
 

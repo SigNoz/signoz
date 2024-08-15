@@ -5,7 +5,8 @@ import (
 	"strings"
 	"sync"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/config"
+	"go.uber.org/zap"
 )
 
 type SMTP struct {
@@ -20,12 +21,27 @@ var smtpInstance *SMTP
 var once sync.Once
 
 func New() *SMTP {
+	if len(config.AppConfig.SmtpHost) == 0 {
+		zap.L().Warn("No SmtpHost env is specified.")
+	}
+	if len(config.AppConfig.SmtpPort) == 0 {
+		zap.L().Warn("No SmtpPort env is specified.")
+	}
+	if len(config.AppConfig.SmtpUsername) == 0 {
+		zap.L().Warn("No SmtpUsername env is specified.")
+	}
+	if len(config.AppConfig.SmtpPassword) == 0 {
+		zap.L().Warn("No SmtpPassword env is specified.")
+	}
+	if len(config.AppConfig.SmtpFrom) == 0 {
+		zap.L().Warn("No SmtpFrom env is specified.")
+	}
 	return &SMTP{
-		Host:     constants.SmtpHost,
-		Port:     constants.SmtpPort,
-		Username: constants.SmtpUsername,
-		Password: constants.SmtpPassword,
-		From:     constants.SmtpFrom,
+		Host:     config.AppConfig.SmtpHost,
+		Port:     config.AppConfig.SmtpPort,
+		Username: config.AppConfig.SmtpUsername,
+		Password: config.AppConfig.SmtpPassword,
+		From:     config.AppConfig.SmtpFrom,
 	}
 }
 
