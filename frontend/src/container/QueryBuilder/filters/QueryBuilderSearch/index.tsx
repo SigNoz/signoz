@@ -14,10 +14,11 @@ import {
 } from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isEqual } from 'lodash-es';
+import { isEqual, isUndefined } from 'lodash-es';
 import {
 	ArrowDown,
 	ArrowUp,
+	ChevronDown,
 	ChevronUp,
 	Command,
 	CornerDownLeft,
@@ -320,7 +321,16 @@ function QueryBuilderSearch({
 				onDeselect={handleDeselect}
 				onInputKeyDown={onInputKeyDownHandler}
 				notFoundContent={isFetching ? <Spin size="small" /> : null}
-				suffixIcon={suffixIcon}
+				suffixIcon={
+					// eslint-disable-next-line no-nested-ternary
+					!isUndefined(suffixIcon) ? (
+						suffixIcon
+					) : isOpen ? (
+						<ChevronUp size={14} />
+					) : (
+						<ChevronDown size={14} />
+					)
+				}
 				showAction={['focus']}
 				onBlur={handleOnBlur}
 				popupClassName={isLogsExplorerPage ? 'logs-explorer-popup' : ''}
