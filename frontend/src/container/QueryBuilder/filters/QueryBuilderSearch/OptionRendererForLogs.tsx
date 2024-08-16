@@ -50,10 +50,15 @@ function OptionRendererForLogs({
 					</div>
 				</Tooltip>
 			) : (
-				<Tooltip title={label} placement="topLeft">
+				<Tooltip title={truncated ? `${label}` : ''} placement="topLeft">
 					<div className="without-option-type">
 						<div className="dot" />
-						<span className="text">{label}</span>
+						<Typography.Text
+							className="text"
+							ellipsis={{ onEllipsis: (ellipsis): void => setTruncated(ellipsis) }}
+						>
+							{label}
+						</Typography.Text>
 					</div>
 				</Tooltip>
 			)}
