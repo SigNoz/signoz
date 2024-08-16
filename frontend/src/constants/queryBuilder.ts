@@ -52,7 +52,7 @@ export const selectValueDivider = '__';
 
 export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 	BaseAutocompleteData,
-	'id' | 'isJSON'
+	'id' | 'isJSON' | 'isIndexed'
 >)[] = ['key', 'dataType', 'type', 'isColumn'];
 
 export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
@@ -71,6 +71,7 @@ export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
 export enum QueryBuilderKeys {
 	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
 	GET_AGGREGATE_KEYS = 'GET_AGGREGATE_KEYS',
+	GET_ATTRIBUTE_SUGGESTIONS = 'GET_ATTRIBUTE_SUGGESTIONS',
 }
 
 export const mapOfOperators = {

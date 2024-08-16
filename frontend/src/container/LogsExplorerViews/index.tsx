@@ -48,7 +48,15 @@ import {
 } from 'lodash-es';
 import { Sliders } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	memo,
+	MutableRefObject,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -72,9 +80,15 @@ import { v4 } from 'uuid';
 function LogsExplorerViews({
 	selectedView,
 	showFrequencyChart,
+	setIsLoadingQueries,
+	listQueryKeyRef,
+	chartQueryKeyRef,
 }: {
 	selectedView: SELECTED_VIEWS;
 	showFrequencyChart: boolean;
+	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
+	listQueryKeyRef: MutableRefObject<any>;
+	chartQueryKeyRef: MutableRefObject<any>;
 }): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
@@ -214,6 +228,9 @@ function LogsExplorerViews({
 		{
 			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
 		},
+		{},
+		undefined,
+		chartQueryKeyRef,
 	);
 
 	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
@@ -232,6 +249,8 @@ function LogsExplorerViews({
 					end: timeRange.end,
 				}),
 		},
+		undefined,
+		listQueryKeyRef,
 	);
 
 	const getRequestData = useCallback(
@@ -568,6 +587,25 @@ function LogsExplorerViews({
 			}
 		},
 	});
+
+	useEffect(() => {
+		if (
+			isLoading ||
+			isFetching ||
+			isLoadingListChartData ||
+			isFetchingListChartData
+		) {
+			setIsLoadingQueries(true);
+		} else {
+			setIsLoadingQueries(false);
+		}
+	}, [
+		isLoading,
+		isFetching,
+		isFetchingListChartData,
+		isLoadingListChartData,
+		setIsLoadingQueries,
+	]);
 
 	const flattenLogData = useMemo(
 		() =>

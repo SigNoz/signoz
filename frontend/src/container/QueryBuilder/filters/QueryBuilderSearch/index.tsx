@@ -1,7 +1,10 @@
+/* eslint-disable react/no-unstable-nested-components */
 import './QueryBuilderSearch.styles.scss';
 
-import { Select, Spin, Tag, Tooltip } from 'antd';
+import { Button, Select, Spin, Tag, Tooltip, Typography } from 'antd';
+import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { getDataTypes } from 'container/LogDetailedView/utils';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
@@ -11,7 +14,17 @@ import {
 } from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isEqual } from 'lodash-es';
+import { isEqual, isUndefined } from 'lodash-es';
+import {
+	ArrowDown,
+	ArrowUp,
+	ChevronDown,
+	ChevronUp,
+	Command,
+	CornerDownLeft,
+	Filter,
+	Slash,
+} from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	KeyboardEvent,
@@ -23,6 +36,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -32,14 +46,18 @@ import {
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
 import { PLACEHOLDER } from './constant';
+import ExampleQueriesRendererForLogs from './ExampleQueriesRendererForLogs';
 import OptionRenderer from './OptionRenderer';
+import OptionRendererForLogs from './OptionRendererForLogs';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
+	convertExampleQueriesToOptions,
 	getOperatorValue,
 	getRemovePrefixFromKey,
 	getTagToken,
@@ -55,6 +73,10 @@ function QueryBuilderSearch({
 	placeholder,
 	suffixIcon,
 }: QueryBuilderSearchProps): JSX.Element {
+	const { pathname } = useLocation();
+	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
+		pathname,
+	]);
 	const {
 		updateTag,
 		handleClearTag,
@@ -69,14 +91,20 @@ function QueryBuilderSearch({
 		isFetching,
 		setSearchKey,
 		searchKey,
-	} = useAutoComplete(query, whereClauseConfig);
-
+		key,
+		exampleQueries,
+	} = useAutoComplete(query, whereClauseConfig, isLogsExplorerPage);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
+	const [dynamicPlacholder, setDynamicPlaceholder] = useState<string>(
+		placeholder || '',
+	);
 	const selectRef = useRef<BaseSelectRef>(null);
 	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
 		searchValue,
 		query,
 		searchKey,
+		isLogsExplorerPage,
 	);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -139,6 +167,12 @@ function QueryBuilderSearch({
 			event.stopPropagation();
 			handleRunQuery();
 			setIsOpen(false);
+		}
+
+		if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+			event.preventDefault();
+			event.stopPropagation();
+			setShowAllFilters((prev) => !prev);
 		}
 	};
 
@@ -229,6 +263,28 @@ function QueryBuilderSearch({
 			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
 	}, [deregisterShortcut, isLastQuery, registerShortcut]);
 
+	useEffect(() => {
+		if (!isOpen) {
+			setDynamicPlaceholder(placeholder || '');
+		}
+	}, [isOpen, placeholder]);
+
+	const userOs = getUserOperatingSystem();
+
+	// conditional changes here to use a seperate component to render the example queries based on the option group label
+	const customRendererForLogsExplorer = options.map((option) => (
+		<Select.Option key={option.label} value={option.value}>
+			<OptionRendererForLogs
+				label={option.label}
+				value={option.value}
+				dataType={option.dataType || ''}
+				isIndexed={option.isIndexed || false}
+				setDynamicPlaceholder={setDynamicPlaceholder}
+			/>
+			{option.selected && <StyledCheckOutlined />}
+		</Select.Option>
+	));
+
 	return (
 		<div
 			style={{
@@ -238,7 +294,9 @@ function QueryBuilderSearch({
 			<Select
 				ref={selectRef}
 				getPopupContainer={popupContainer}
-				virtual
+				transitionName=""
+				choiceTransitionName=""
+				virtual={false}
 				showSearch
 				tagRender={onTagRender}
 				filterOption={false}
@@ -246,10 +304,14 @@ function QueryBuilderSearch({
 				onDropdownVisibleChange={setIsOpen}
 				autoClearSearchValue={false}
 				mode="multiple"
-				placeholder={placeholder}
+				placeholder={dynamicPlacholder}
 				value={queryTags}
 				searchValue={searchValue}
-				className={className}
+				className={cx(
+					className,
+					isLogsExplorerPage ? 'logs-popup' : '',
+					!showAllFilters && options.length > 3 && !key ? 'hide-scroll' : '',
+				)}
 				rootClassName="query-builder-search"
 				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 				style={selectStyle}
@@ -259,20 +321,99 @@ function QueryBuilderSearch({
 				onDeselect={handleDeselect}
 				onInputKeyDown={onInputKeyDownHandler}
 				notFoundContent={isFetching ? <Spin size="small" /> : null}
-				suffixIcon={suffixIcon}
+				suffixIcon={
+					// eslint-disable-next-line no-nested-ternary
+					!isUndefined(suffixIcon) ? (
+						suffixIcon
+					) : isOpen ? (
+						<ChevronUp size={14} />
+					) : (
+						<ChevronDown size={14} />
+					)
+				}
 				showAction={['focus']}
 				onBlur={handleOnBlur}
+				popupClassName={isLogsExplorerPage ? 'logs-explorer-popup' : ''}
+				dropdownRender={(menu): ReactElement => (
+					<div>
+						{!searchKey && isLogsExplorerPage && (
+							<div className="ant-select-item-group ">Suggested Filters</div>
+						)}
+						{menu}
+						{isLogsExplorerPage && (
+							<div>
+								{!searchKey && tags.length === 0 && (
+									<div className="example-queries">
+										<div className="heading"> Example Queries </div>
+										<div className="query-container">
+											{convertExampleQueriesToOptions(exampleQueries).map((query) => (
+												<ExampleQueriesRendererForLogs
+													key={query.label}
+													label={query.label}
+													value={query.value}
+													handleAddTag={onChange}
+												/>
+											))}
+										</div>
+									</div>
+								)}
+								{!key && !isFetching && !showAllFilters && options.length > 3 && (
+									<Button
+										type="text"
+										className="show-all-filter-props"
+										onClick={(): void => {
+											setShowAllFilters(true);
+											// when clicking on the button the search bar looses the focus
+											selectRef?.current?.focus();
+										}}
+									>
+										<div className="content">
+											<section className="left-section">
+												<Filter size={14} />
+												<Typography.Text className="text">
+													Show all filters properties
+												</Typography.Text>
+											</section>
+											<section className="right-section">
+												{userOs === UserOperatingSystem.MACOS ? (
+													<Command size={14} className="keyboard-shortcut-slash" />
+												) : (
+													<ChevronUp size={14} className="keyboard-shortcut-slash" />
+												)}
+												+
+												<Slash size={14} className="keyboard-shortcut-slash" />
+											</section>
+										</div>
+									</Button>
+								)}
+								<div className="keyboard-shortcuts">
+									<section className="navigate">
+										<ArrowDown size={10} className="icons" />
+										<ArrowUp size={10} className="icons" />
+										<span className="keyboard-text">to navigate</span>
+									</section>
+									<section className="update-query">
+										<CornerDownLeft size={10} className="icons" />
+										<span className="keyboard-text">to update query</span>
+									</section>
+								</div>
+							</div>
+						)}
+					</div>
+				)}
 			>
-				{options.map((option) => (
-					<Select.Option key={option.label} value={option.value}>
-						<OptionRenderer
-							label={option.label}
-							value={option.value}
-							dataType={option.dataType || ''}
-						/>
-						{option.selected && <StyledCheckOutlined />}
-					</Select.Option>
-				))}
+				{isLogsExplorerPage
+					? customRendererForLogsExplorer
+					: options.map((option) => (
+							<Select.Option key={option.label} value={option.value}>
+								<OptionRenderer
+									label={option.label}
+									value={option.value}
+									dataType={option.dataType || ''}
+								/>
+								{option.selected && <StyledCheckOutlined />}
+							</Select.Option>
+					  ))}
 			</Select>
 		</div>
 	);
