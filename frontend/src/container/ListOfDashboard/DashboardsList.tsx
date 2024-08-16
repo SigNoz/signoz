@@ -607,12 +607,21 @@ function DashboardsList(): JSX.Element {
 			{
 				label: (
 					<a
-						className="create-dashboard-menu-item"
 						href="https://github.com/SigNoz/dashboards"
 						target="_blank"
 						rel="noopener noreferrer"
 					>
-						<Github size={14} /> View templates <ExternalLink size={14} />
+						<Flex
+							justify="space-between"
+							align="center"
+							style={{ width: '100%' }}
+							gap="small"
+						>
+							<div className="create-dashboard-menu-item">
+								<Github size={14} /> View templates
+							</div>
+							<ExternalLink size={14} />
+						</Flex>
 					</a>
 				),
 				key: '2',
