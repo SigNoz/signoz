@@ -314,6 +314,8 @@ func createTelemetry() {
 						dashboardsAlertsData := map[string]interface{}{
 							"totalDashboards":                 dashboardsInfo.TotalDashboards,
 							"totalDashboardsWithPanelAndName": dashboardsInfo.TotalDashboardsWithPanelAndName,
+							"dashboardNames":                  dashboardsInfo.DashboardNames,
+							"alertNames":                      alertsInfo.AlertNames,
 							"logsBasedPanels":                 dashboardsInfo.LogsBasedPanels,
 							"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
 							"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
