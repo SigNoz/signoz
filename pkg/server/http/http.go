@@ -1,4 +1,4 @@
-package server
+package http
 
 import (
 	"context"
@@ -14,23 +14,13 @@ type Server struct {
 	srv     *http.Server
 	logger  log.Logger
 	handler http.Handler
-	opts    options
+	cfg     Config
 }
 
 // Creates a new http server, implements the registry.Service interface.
-func New(logger log.Logger, handler http.Handler, opts ...Option) registry.Service {
-	//Set default values
-	serverOpts := options{
-		listen: "0.0.0.0:8000",
-	}
-
-	// Merge default and input values
-	for _, opt := range opts {
-		opt(&serverOpts)
-	}
-
+func New(logger log.Logger, handler http.Handler, cfg Config) registry.Service {
 	srv := &http.Server{
-		Addr:           serverOpts.listen,
+		Addr:           cfg.Listen,
 		Handler:        handler,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
@@ -41,7 +31,7 @@ func New(logger log.Logger, handler http.Handler, opts ...Option) registry.Servi
 		srv:     srv,
 		logger:  logger,
 		handler: handler,
-		opts:    serverOpts,
+		cfg:     cfg,
 	}
 }
 

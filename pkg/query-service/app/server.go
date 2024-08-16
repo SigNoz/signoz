@@ -1,7 +1,6 @@
 package app
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -48,6 +47,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	httprouter "go.signoz.io/signoz/pkg/router/http"
 	"go.uber.org/zap"
 )
 
@@ -403,36 +403,6 @@ func loggingMiddlewarePrivate(next http.Handler) http.Handler {
 	})
 }
 
-type loggingResponseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func NewLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
-	// WriteHeader(int) is not called if our response implicitly returns 200 OK, so
-	// we default to that status code.
-	return &loggingResponseWriter{w, http.StatusOK}
-}
-
-func (lrw *loggingResponseWriter) WriteHeader(code int) {
-	lrw.statusCode = code
-	lrw.ResponseWriter.WriteHeader(code)
-}
-
-// Flush implements the http.Flush interface.
-func (lrw *loggingResponseWriter) Flush() {
-	lrw.ResponseWriter.(http.Flusher).Flush()
-}
-
-// Support websockets
-func (lrw *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	h, ok := lrw.ResponseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, errors.New("hijack not supported")
-	}
-	return h.Hijack()
-}
-
 func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface{}, bool) {
 	pathToExtractBodyFrom := "/api/v3/query_range"
 
@@ -515,10 +485,10 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		queryRangeV3data, metadataExists := extractQueryRangeV3Data(path, r)
 		getActiveLogs(path, r)
 
-		lrw := NewLoggingResponseWriter(w)
+		lrw := httprouter.NewWriter(w)
 		next.ServeHTTP(lrw, r)
 
-		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
+		data := map[string]interface{}{"path": path, "statusCode": lrw.Status()}
 		if metadataExists {
 			for key, value := range queryRangeV3data {
 				data[key] = value

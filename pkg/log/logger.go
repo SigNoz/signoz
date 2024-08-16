@@ -2,8 +2,6 @@ package log
 
 import (
 	"context"
-
-	"go.uber.org/zap"
 )
 
 type Logger interface {
@@ -21,5 +19,4 @@ type Logger interface {
 	Panic(string, ...interface{})
 	Fatal(string, ...interface{})
 	Flush() error
-	Getl() *zap.Logger
 }

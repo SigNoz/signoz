@@ -21,11 +21,11 @@ type zapLogger struct {
 	l *zap.SugaredLogger
 }
 
-func NewLogger(level string) log.Logger {
+func NewLogger(level string) (log.Logger, error) {
 	// Get atomic level from string level
 	parsedLevel, err := zap.ParseAtomicLevel(level)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	cfg := zap.NewProductionConfig()
@@ -35,7 +35,7 @@ func NewLogger(level string) log.Logger {
 
 	return &zapLogger{
 		l: zap.Must(cfg.Build()).Sugar(),
-	}
+	}, nil
 }
 
 func (l *zapLogger) With(fields ...interface{}) log.Logger {
