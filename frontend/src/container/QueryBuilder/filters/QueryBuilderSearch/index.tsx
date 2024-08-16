@@ -18,6 +18,8 @@ import { isEqual } from 'lodash-es';
 import {
 	ArrowDown,
 	ArrowUp,
+	ChevronUp,
+	Command,
 	CornerDownLeft,
 	Filter,
 	Slash,
@@ -43,6 +45,7 @@ import {
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
@@ -265,6 +268,8 @@ function QueryBuilderSearch({
 		}
 	}, [isOpen, placeholder]);
 
+	const userOs = getUserOperatingSystem();
+
 	// conditional changes here to use a seperate component to render the example queries based on the option group label
 	const customRendererForLogsExplorer = options.map((option) => (
 		<Select.Option key={option.label} value={option.value}>
@@ -358,6 +363,12 @@ function QueryBuilderSearch({
 												</Typography.Text>
 											</section>
 											<section className="right-section">
+												{userOs === UserOperatingSystem.MACOS ? (
+													<Command size={14} className="keyboard-shortcut-slash" />
+												) : (
+													<ChevronUp size={14} className="keyboard-shortcut-slash" />
+												)}
+												+
 												<Slash size={14} className="keyboard-shortcut-slash" />
 											</section>
 										</div>
