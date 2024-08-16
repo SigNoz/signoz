@@ -1,6 +1,8 @@
 import { OPERATORS } from 'constants/queryBuilder';
 import { MetricsType } from 'container/MetricsApplication/constant';
+import { queryFilterTags } from 'hooks/queryBuilder/useTag';
 import { parse } from 'papaparse';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
@@ -161,4 +163,18 @@ export function getOptionType(label: string): MetricsType | undefined {
 	}
 
 	return optionType;
+}
+
+/**
+ *
+ * @param exampleQueries the example queries based on recommendation engine
+ * @returns the data formatted to the Option[]
+ */
+export function convertExampleQueriesToOptions(
+	exampleQueries: TagFilter[],
+): { label: string; value: TagFilter }[] {
+	return exampleQueries.map((query) => ({
+		value: query,
+		label: queryFilterTags(query).join(' , '),
+	}));
 }
