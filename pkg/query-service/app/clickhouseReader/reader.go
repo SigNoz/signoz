@@ -3346,16 +3346,26 @@ func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.Dashbo
 		return &dashboardsInfo, err
 	}
 	totalDashboardsWithPanelAndName := 0
+	var dashboardNames []string
 	count := 0
 	for _, dashboard := range dashboardsData {
 		if isDashboardWithPanelAndName(dashboard.Data) {
 			totalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName + 1
 		}
-		dashboardsInfo = countPanelsInDashboard(dashboard.Data)
+		dashboardName := extractDashboardName(dashboard.Data)
+		if dashboardName != "" {
+			dashboardNames = append(dashboardNames, dashboardName)
+		}
+		dashboardInfo := countPanelsInDashboard(dashboard.Data)
+		dashboardsInfo.LogsBasedPanels += dashboardInfo.LogsBasedPanels
+		dashboardsInfo.TracesBasedPanels += dashboardInfo.TracesBasedPanels
+		dashboardsInfo.MetricBasedPanels += dashboardsInfo.MetricBasedPanels
 		if isDashboardWithTSV2(dashboard.Data) {
 			count = count + 1
 		}
 	}
+
+	dashboardsInfo.DashboardNames = dashboardNames
 	dashboardsInfo.TotalDashboards = len(dashboardsData)
 	dashboardsInfo.TotalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName
 	dashboardsInfo.QueriesWithTSV2 = count
@@ -3389,6 +3399,19 @@ func isDashboardWithPanelAndName(data map[string]interface{}) bool {
 
 	return isDashboardWithPanelAndName
 }
+
+func extractDashboardName(data map[string]interface{}) string {
+
+	if data != nil && data["title"] != nil {
+		title, ok := data["title"].(string)
+		if ok {
+			return title
+		}
+	}
+
+	return ""
+}
+
 func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
 	var logsPanelCount, tracesPanelCount, metricsPanelCount int
 	// totalPanels := 0
