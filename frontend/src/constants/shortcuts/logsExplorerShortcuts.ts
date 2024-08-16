@@ -18,5 +18,5 @@ export const LogsExplorerShortcutsName = {
 export const LogsExplorerShortcutsDescription = {
 	StageAndRunQuery: 'Stage and Run the current query',
 	FocusTheSearchBar: 'Shift the focus to the last query filter bar',
-	ShowAllFilters: 'Toggle the all filters in the filters dropdown',
+	ShowAllFilters: 'Toggle all filters in the filters dropdown',
 };

@@ -11,7 +11,7 @@ function ExampleQueriesRendererForLogs({
 }: ExampleQueriesRendererForLogsProps): JSX.Element {
 	return (
 		<div
-			className="container"
+			className="example-query-container"
 			onClick={(): void => {
 				handleAddTag(value);
 			}}
