@@ -308,6 +308,7 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 	// fetch alerts from rules db
 	query := "SELECT data FROM rules"
 	var alertsData []string
+	var alertNames []string
 	err := r.Select(&alertsData, query)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
@@ -323,6 +324,7 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 			zap.L().Error("invalid rule data", zap.Error(err))
 			continue
 		}
+		alertNames = append(alertNames, rule.AlertName)
 		if rule.AlertType == "LOGS_BASED_ALERT" {
 			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
 		} else if rule.AlertType == "METRIC_BASED_ALERT" {
@@ -346,6 +348,6 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 		}
 		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1
 	}
-
+	alertsInfo.AlertNames = alertNames
 	return &alertsInfo, nil
 }
