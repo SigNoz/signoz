@@ -49,7 +49,6 @@ services:
     container_name: signoz-frontend
     environment:
       - FRONTEND_API_ENDPOINT=http://query-service:8080
-      - WEBSOCKET_API_ENDPOINT=ws://localhost:8080/
     restart: on-failure
     depends_on:
       - alertmanager
