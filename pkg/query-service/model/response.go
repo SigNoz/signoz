@@ -648,6 +648,7 @@ type AlertsInfo struct {
 	MetricsClickHouseQueries     int `json:"metricsClickHouseQueries"`
 	MetricsPrometheusQueries     int `json:"metricsPrometheusQueries"`
 	SpanMetricsPrometheusQueries int `json:"spanMetricsPrometheusQueries"`
+	AlertsWithTSV2               int `json:"alertsWithTSv2"`
 }
 
 type SavedViewsInfo struct {
@@ -661,6 +662,7 @@ type DashboardsInfo struct {
 	TotalDashboardsWithPanelAndName int `json:"totalDashboardsWithPanelAndName"` // dashboards with panel and name without sample title
 	LogsBasedPanels                 int `json:"logsBasedPanels"`
 	MetricBasedPanels               int `json:"metricBasedPanels"`
+	QueriesWithTSV2                 int `json:"queriesWithTSV2"`
 	TracesBasedPanels               int `json:"tracesBasedPanels"`
 }
 
