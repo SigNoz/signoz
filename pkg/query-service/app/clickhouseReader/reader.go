@@ -3356,7 +3356,10 @@ func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.Dashbo
 		if dashboardName != "" {
 			dashboardNames = append(dashboardNames, dashboardName)
 		}
-		dashboardsInfo = countPanelsInDashboard(dashboard.Data)
+		dashboardInfo := countPanelsInDashboard(dashboard.Data)
+		dashboardsInfo.LogsBasedPanels += dashboardInfo.LogsBasedPanels
+		dashboardsInfo.TracesBasedPanels += dashboardInfo.TracesBasedPanels
+		dashboardsInfo.MetricBasedPanels += dashboardsInfo.MetricBasedPanels
 		if isDashboardWithTSV2(dashboard.Data) {
 			count = count + 1
 		}
