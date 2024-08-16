@@ -634,21 +634,22 @@ type TagsInfo struct {
 }
 
 type AlertsInfo struct {
-	TotalAlerts                  int `json:"totalAlerts"`
-	LogsBasedAlerts              int `json:"logsBasedAlerts"`
-	MetricBasedAlerts            int `json:"metricBasedAlerts"`
-	TracesBasedAlerts            int `json:"tracesBasedAlerts"`
-	SlackChannels                int `json:"slackChannels"`
-	WebHookChannels              int `json:"webHookChannels"`
-	PagerDutyChannels            int `json:"pagerDutyChannels"`
-	OpsGenieChannels             int `json:"opsGenieChannels"`
-	EmailChannels                int `json:"emailChannels"`
-	MSTeamsChannels              int `json:"microsoftTeamsChannels"`
-	MetricsBuilderQueries        int `json:"metricsBuilderQueries"`
-	MetricsClickHouseQueries     int `json:"metricsClickHouseQueries"`
-	MetricsPrometheusQueries     int `json:"metricsPrometheusQueries"`
-	SpanMetricsPrometheusQueries int `json:"spanMetricsPrometheusQueries"`
-	AlertsWithTSV2               int `json:"alertsWithTSv2"`
+	TotalAlerts                  int      `json:"totalAlerts"`
+	LogsBasedAlerts              int      `json:"logsBasedAlerts"`
+	MetricBasedAlerts            int      `json:"metricBasedAlerts"`
+	TracesBasedAlerts            int      `json:"tracesBasedAlerts"`
+	SlackChannels                int      `json:"slackChannels"`
+	WebHookChannels              int      `json:"webHookChannels"`
+	PagerDutyChannels            int      `json:"pagerDutyChannels"`
+	OpsGenieChannels             int      `json:"opsGenieChannels"`
+	EmailChannels                int      `json:"emailChannels"`
+	MSTeamsChannels              int      `json:"microsoftTeamsChannels"`
+	MetricsBuilderQueries        int      `json:"metricsBuilderQueries"`
+	MetricsClickHouseQueries     int      `json:"metricsClickHouseQueries"`
+	MetricsPrometheusQueries     int      `json:"metricsPrometheusQueries"`
+	SpanMetricsPrometheusQueries int      `json:"spanMetricsPrometheusQueries"`
+	AlertNames                   []string `json:"alertNames"`
+	AlertsWithTSV2               int      `json:"alertsWithTSv2"`
 }
 
 type SavedViewsInfo struct {
@@ -658,12 +659,13 @@ type SavedViewsInfo struct {
 }
 
 type DashboardsInfo struct {
-	TotalDashboards                 int `json:"totalDashboards"`
-	TotalDashboardsWithPanelAndName int `json:"totalDashboardsWithPanelAndName"` // dashboards with panel and name without sample title
-	LogsBasedPanels                 int `json:"logsBasedPanels"`
-	MetricBasedPanels               int `json:"metricBasedPanels"`
-	QueriesWithTSV2                 int `json:"queriesWithTSV2"`
-	TracesBasedPanels               int `json:"tracesBasedPanels"`
+	TotalDashboards                 int      `json:"totalDashboards"`
+	TotalDashboardsWithPanelAndName int      `json:"totalDashboardsWithPanelAndName"` // dashboards with panel and name without sample title
+	LogsBasedPanels                 int      `json:"logsBasedPanels"`
+	MetricBasedPanels               int      `json:"metricBasedPanels"`
+	TracesBasedPanels               int      `json:"tracesBasedPanels"`
+	DashboardNames                  []string `json:"dashboardNames"`
+	QueriesWithTSV2                 int      `json:"queriesWithTSV2"`
 }
 
 type TagTelemetryData struct {
