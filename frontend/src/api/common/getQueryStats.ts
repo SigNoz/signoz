@@ -17,7 +17,7 @@ export function getQueryStats(props: GetQueryStatsProps): void {
 
 	const token = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) || '';
 	const socket = new WebSocket(
-		`${ENVIRONMENT.wsURL}api/v3/query_progress?q=${queryId}`,
+		`${ENVIRONMENT.wsURL}/api/v3/query_progress?q=${queryId}`,
 		token,
 	);
 
