@@ -134,9 +134,7 @@ function LogsExplorerViews({
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
-	const [queryId, setQueryId] = useState<string>(
-		Math.random().toString(36).slice(2),
-	);
+	const [queryId, setQueryId] = useState<string>(v4());
 	const [queryStats, setQueryStats] = useState<WsDataEvent>();
 
 	const handleAxisError = useAxiosError();
@@ -355,7 +353,7 @@ function LogsExplorerViews({
 	);
 
 	useEffect(() => {
-		setQueryId(Math.random().toString(36).slice(2));
+		setQueryId(v4());
 	}, [isError, isSuccess]);
 
 	useEffect(() => {
