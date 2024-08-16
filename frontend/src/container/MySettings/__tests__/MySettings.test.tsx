@@ -27,7 +27,7 @@ jest.mock('hooks/useNotifications', () => ({
 
 enum ThemeOptions {
 	Dark = 'Dark',
-	Light = 'Light',
+	Light = 'Light Beta',
 }
 
 describe('MySettings Flows', () => {

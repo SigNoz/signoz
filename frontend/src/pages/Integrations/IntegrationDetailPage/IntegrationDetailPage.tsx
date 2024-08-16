@@ -5,8 +5,8 @@ import './IntegrationDetailPage.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Skeleton, Typography } from 'antd';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
-import { integrationDetailMessage } from 'components/facingIssueBtn/util';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { integrationDetailMessage } from 'components/LaunchChatSupport/util';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
 import { defaultTo } from 'lodash-es';
@@ -77,7 +77,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 				>
 					All Integrations
 				</Button>
-				<FacingIssueBtn
+				<LaunchChatSupport
 					attributes={{
 						screen: 'Integrations detail page',
 						activeTab: activeDetailTab,
