@@ -353,6 +353,8 @@ function QueryBuilderSearch({
 										className="show-all-filter-props"
 										onClick={(): void => {
 											setShowAllFilters(true);
+											// when clicking on the button the search bar looses the focus
+											selectRef?.current?.focus();
 										}}
 									>
 										<div className="content">
