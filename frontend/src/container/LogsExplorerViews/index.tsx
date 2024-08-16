@@ -1,8 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './LogsExplorerViews.styles.scss';
 
-import { Button } from 'antd';
+import { Button, Typography } from 'antd';
+import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
 import logEvent from 'api/common/logEvent';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -77,6 +79,8 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
+import QueryStatus from './QueryStatus';
+
 function LogsExplorerViews({
 	selectedView,
 	showFrequencyChart,
@@ -130,6 +134,8 @@ function LogsExplorerViews({
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
+	const [queryId, setQueryId] = useState<string>(v4());
+	const [queryStats, setQueryStats] = useState<WsDataEvent>();
 
 	const handleAxisError = useAxiosError();
 
@@ -233,7 +239,13 @@ function LogsExplorerViews({
 		chartQueryKeyRef,
 	);
 
-	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
+	const {
+		data,
+		isLoading,
+		isFetching,
+		isError,
+		isSuccess,
+	} = useGetExplorerQueryRange(
 		requestData,
 		panelType,
 		DEFAULT_ENTITY_VERSION,
@@ -251,6 +263,9 @@ function LogsExplorerViews({
 		},
 		undefined,
 		listQueryKeyRef,
+		{
+			...(!isEmpty(queryId) && { 'X-SIGNOZ-QUERY-ID': queryId }),
+		},
 	);
 
 	const getRequestData = useCallback(
@@ -336,6 +351,23 @@ function LogsExplorerViews({
 			orderByTimestamp,
 		],
 	);
+
+	useEffect(() => {
+		setQueryId(v4());
+	}, [isError, isSuccess]);
+
+	useEffect(() => {
+		if (
+			!isEmpty(queryId) &&
+			(isLoading || isFetching) &&
+			selectedPanelType !== PANEL_TYPES.LIST
+		) {
+			setQueryStats(undefined);
+			setTimeout(() => {
+				getQueryStats({ queryId, setData: setQueryStats });
+			}, 500);
+		}
+	}, [queryId, isLoading, isFetching, selectedPanelType]);
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
@@ -701,6 +733,30 @@ function LogsExplorerViews({
 										/>
 									)}
 								</div>
+							</div>
+						)}
+						{(selectedPanelType === PANEL_TYPES.TIME_SERIES ||
+							selectedPanelType === PANEL_TYPES.TABLE) && (
+							<div className="query-stats">
+								<QueryStatus
+									loading={isLoading || isFetching}
+									error={isError}
+									success={isSuccess}
+								/>
+								{queryStats?.read_rows && (
+									<Typography.Text className="rows">
+										{getYAxisFormattedValue(queryStats.read_rows?.toString(), 'short')}{' '}
+										rows
+									</Typography.Text>
+								)}
+								{queryStats?.elapsed_ms && (
+									<>
+										<div className="divider" />
+										<Typography.Text className="time">
+											{getYAxisFormattedValue(queryStats?.elapsed_ms?.toString(), 'ms')}
+										</Typography.Text>
+									</>
+								)}
 							</div>
 						)}
 					</div>
