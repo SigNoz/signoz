@@ -23,10 +23,10 @@ export function getQueryStats(props: GetQueryStatsProps): void {
 
 	socket.addEventListener('message', (event) => {
 		try {
-			const parsedData = JSON.parse(event.data);
+			const parsedData = JSON.parse(event?.data);
 			setData(parsedData);
 		} catch {
-			setData(event.data);
+			setData(event?.data);
 		}
 	});
 }
