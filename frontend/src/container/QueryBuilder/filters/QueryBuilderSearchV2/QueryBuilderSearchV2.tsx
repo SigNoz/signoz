@@ -267,6 +267,9 @@ function QueryBuilderSearchV2(
 					const newSearchValue = newSearch.join(',');
 					setSearchValue(`${tagKey} ${tagOperator} ${newSearchValue},`);
 				} else {
+					setSearchValue('');
+					setCurrentState(DropdownState.ATTRIBUTE_KEY);
+					setCurrentFilterItem(undefined);
 					setTags((prev) => [
 						...prev,
 						{
@@ -275,9 +278,6 @@ function QueryBuilderSearchV2(
 							value,
 						} as ITag,
 					]);
-					setCurrentFilterItem(undefined);
-					setSearchValue('');
-					setCurrentState(DropdownState.ATTRIBUTE_KEY);
 				}
 			}
 		},
@@ -372,6 +372,9 @@ function QueryBuilderSearchV2(
 
 	// this useEffect takes care of tokenisation based on the search state
 	useEffect(() => {
+		if (!searchValue) {
+			return;
+		}
 		const { tagKey, tagOperator, tagValue } = getTagToken(searchValue);
 
 		if (tagKey && isUndefined(currentFilterItem?.key)) {
@@ -407,7 +410,7 @@ function QueryBuilderSearchV2(
 			if (data?.payload?.attributeKeys?.length === 0) {
 				setCurrentFilterItem({
 					key: {
-						key: searchValue,
+						key: tagKey.split(' ')[0],
 						// update this for has and nhas operator , check the useEffect of source keys in older component for details
 						dataType: DataTypes.EMPTY,
 						type: '',
@@ -473,7 +476,6 @@ function QueryBuilderSearchV2(
 					value: tagValue,
 				}));
 			}
-			setCurrentState(DropdownState.ATTRIBUTE_VALUE);
 		}
 	}, [
 		currentFilterItem,
@@ -579,7 +581,7 @@ function QueryBuilderSearchV2(
 			});
 		});
 
-		if (!isEqual(query.filters, filterTags.items)) {
+		if (!isEqual(query.filters, filterTags)) {
 			onChange(filterTags);
 			setTags(filterTags.items as ITag[]);
 		}
