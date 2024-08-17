@@ -8,8 +8,7 @@ import {
 import ExplorerOrderBy from 'container/ExplorerOrderBy';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
-// import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
-import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
+import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -91,7 +90,7 @@ function LogExplorerQuerySection({
 		<>
 			{selectedView === SELECTED_VIEWS.SEARCH && (
 				<div className="qb-search-view-container">
-					<QueryBuilderSearchV2
+					<QueryBuilderSearch
 						query={query}
 						onChange={handleChangeTagFilters}
 						whereClauseConfig={filterConfigs?.filters}
