@@ -245,7 +245,7 @@ function QueryBuilderSearchV2(
 		isFetching: isFetchingSuggestions,
 	} = useGetAttributeSuggestions(
 		{
-			searchText: searchValue,
+			searchText: searchValue.split(' ')[0],
 			dataSource: query.dataSource,
 			filters: query.filters,
 		},
@@ -449,6 +449,9 @@ function QueryBuilderSearchV2(
 
 	// this useEffect takes care of tokenisation based on the search state
 	useEffect(() => {
+		if (isFetchingSuggestions) {
+			return;
+		}
 		if (!searchValue) {
 			setCurrentFilterItem(undefined);
 			setCurrentState(DropdownState.ATTRIBUTE_KEY);
@@ -458,13 +461,13 @@ function QueryBuilderSearchV2(
 		if (tagKey && isUndefined(currentFilterItem?.key)) {
 			let currentRunningAttributeKey;
 			const isSuggestedKeyInAutocomplete = suggestionsData?.payload?.attributes?.some(
-				(value) => value.key === searchValue,
+				(value) => value.key === tagKey.split(' ')[0],
 			);
 
 			if (isSuggestedKeyInAutocomplete) {
 				const allAttributesMatchingTheKey =
 					suggestionsData?.payload?.attributes?.filter(
-						(value) => value.key === searchValue,
+						(value) => value.key === tagKey.split(' ')[0],
 					) || [];
 
 				if (allAttributesMatchingTheKey?.length === 1) {
@@ -561,6 +564,7 @@ function QueryBuilderSearchV2(
 		currentFilterItem?.op,
 		suggestionsData?.payload?.attributes,
 		searchValue,
+		isFetchingSuggestions,
 	]);
 
 	// the useEffect takes care of setting the dropdown values correctly on change of the current state
@@ -737,6 +741,7 @@ function QueryBuilderSearchV2(
 		const tagEditHandler = (value: string): void => {
 			setCurrentFilterItem(tagDetails);
 			setSearchValue(value);
+			setCurrentState(DropdownState.ATTRIBUTE_VALUE);
 			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
 		};
 
