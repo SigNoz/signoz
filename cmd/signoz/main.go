@@ -12,16 +12,31 @@ import (
 	"go.signoz.io/signoz/pkg/log"
 	"go.signoz.io/signoz/pkg/log/zap"
 	"go.signoz.io/signoz/pkg/otel"
+	"go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
+	"go.signoz.io/signoz/pkg/query-service/app/opamp"
+	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/registry"
+	"go.signoz.io/signoz/pkg/router/web"
 	"go.signoz.io/signoz/pkg/server/http"
+	sdkzap "go.uber.org/zap"
 )
 
 func main() {
 	var logConfig log.Config
+	var appConfig app.Config
 	var httpConfig http.Config
+	var webConfig web.Config
+	var dbConfig dao.Config
+	var storageConfig clickhouseReader.Config
 
 	var logger log.Logger
 	otelShutdowns := make([]otel.Shutdown, 2)
+
+	mlogger, err := zap.NewLogger("info")
+	if err != nil {
+		panic(err)
+	}
 
 	app := &cobra.Command{
 		Use:          "signoz",
@@ -30,6 +45,7 @@ func main() {
 			cfg.Set(cmd, "signoz")
 			return nil
 		},
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
@@ -64,7 +80,7 @@ func main() {
 			otelShutdowns = append(otelShutdowns, shutdownMeter)
 			logger.Debugctx(ctx, "initialized meter")
 
-			return run(ctx, logger, httpConfig)
+			return run(ctx, logger, appConfig, httpConfig, webConfig, dbConfig, storageConfig)
 		},
 		PostRunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -84,10 +100,15 @@ func main() {
 	}
 
 	// register a list of flags for the application
+	appConfig.RegisterFlags(app.Flags())
 	logConfig.RegisterFlags(app.Flags())
 	httpConfig.RegisterFlags(app.Flags())
+	webConfig.RegisterFlags(app.Flags())
+	dbConfig.RegisterFlags(app.Flags())
+	storageConfig.RegisterFlags(app.Flags())
 
 	if err := app.Execute(); err != nil {
+		mlogger.Error("failed to run signoz", err)
 		os.Exit(1)
 	}
 }
@@ -95,9 +116,50 @@ func main() {
 func run(
 	ctx context.Context,
 	logger log.Logger,
+	appConfig app.Config,
 	httpConfig http.Config,
+	webConfig web.Config,
+	dbConfig dao.Config,
+	storageConfig clickhouseReader.Config,
 ) error {
 	var services []registry.Service
+	// Initialize the global logger
+	sdkzap.ReplaceGlobals(logger.Getl())
+
+	// Initialize the web router
+	webRouter, err := web.NewRouter(webConfig)
+	if err != nil {
+		return err
+	}
+
+	// Initialize the ApiHandler which has a set of dependencies needed by all services
+	// It all creates the rulesmanager service.
+	apiHandler, db, rulesManager, err := app.NewApiHandlerAndDBAndRulesManager(appConfig, dbConfig, storageConfig)
+	if err != nil {
+		return err
+	}
+	services = append(services, rulesManager)
+
+	// Create http server
+	httpServer, err := app.NewHttpServer(logger, httpConfig, webRouter, apiHandler)
+	if err != nil {
+		return err
+	}
+	services = append(services, httpServer)
+
+	// Create private http server
+	httpPrivateServer, err := app.NewHttpPrivateServer(logger, http.Config{ListenAddress: "0.0.0.0:8085"}, apiHandler)
+	if err != nil {
+		return err
+	}
+	services = append(services, httpPrivateServer)
+
+	// Create opamp server
+	opampServer, err := app.NewOpampServer(logger, opamp.Config{ListenAddress: "0.0.0.0:4320"}, db, apiHandler)
+	if err != nil {
+		return err
+	}
+	services = append(services, opampServer)
 
 	registry, err := registry.NewRegistry(services...)
 	if err != nil {

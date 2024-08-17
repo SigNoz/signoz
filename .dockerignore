@@ -4,3 +4,9 @@
 README.md
 deploy
 sample-apps
+frontend/node_modules
+tmp/
+deploy/
+.dev
+.env
+**/.env

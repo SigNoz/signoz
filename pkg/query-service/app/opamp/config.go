@@ -1,4 +1,4 @@
-package http
+package opamp
 
 import "github.com/spf13/pflag"
 
@@ -7,5 +7,5 @@ type Config struct {
 }
 
 func (cfg *Config) RegisterFlags(pf *pflag.FlagSet) {
-	pf.StringVar(&cfg.ListenAddress, "http.listen-address", "0.0.0.0:8080", "Listen address of the http server.")
+	pf.StringVar(&cfg.ListenAddress, "opamp.listen-address", "0.0.0.0:4320", "Listen address of the opamp server.")
 }

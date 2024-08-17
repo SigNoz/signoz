@@ -14,7 +14,7 @@ func Set(cmd *cobra.Command, prefix string) {
 	v := viper.New()
 
 	v.SetEnvPrefix(strings.TrimSpace(prefix))
-	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_"))
 	v.AutomaticEnv()
 
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {

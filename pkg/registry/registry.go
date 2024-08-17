@@ -1,6 +1,8 @@
 package registry
 
-import "context"
+import (
+	"context"
+)
 
 type Registry struct {
 	services []Service
@@ -9,7 +11,9 @@ type Registry struct {
 // NewRegistry creates a new registry of services. It needs at least one service as input.
 // It
 func NewRegistry(services ...Service) (*Registry, error) {
-	return nil, nil
+	return &Registry{
+		services: services,
+	}, nil
 }
 
 // Starts all services in the registry. It returns an error
@@ -24,7 +28,7 @@ func (r *Registry) Start(ctx context.Context) error {
 		}(s)
 	}
 
-	for range errCh {
+	for i := 0; i < len(r.services); i++ {
 		err := <-errCh
 		if err != nil {
 			return err

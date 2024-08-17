@@ -1,6 +1,7 @@
 package opamp
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -151,7 +152,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	)
 
 	require.Equal(1, len(tb.testConfigProvider.ConfigUpdateSubscribers))
-	tb.opampServer.Stop()
+	tb.opampServer.Stop(context.Background())
 	require.Equal(
 		0, len(tb.testConfigProvider.ConfigUpdateSubscribers),
 		"Opamp server should have unsubscribed to config provider updates after shutdown",
@@ -172,7 +173,8 @@ func newTestbed(t *testing.T) *testbed {
 	}
 
 	testConfigProvider := NewMockAgentConfigProvider()
-	opampServer := InitializeServer(nil, testConfigProvider)
+	testListenPath := GetAvailableLocalAddress()
+	opampServer := New(nil, testConfigProvider, Config{ListenAddress: testListenPath})
 
 	return &testbed{
 		testConfigProvider: testConfigProvider,
@@ -182,8 +184,7 @@ func newTestbed(t *testing.T) *testbed {
 }
 
 func (tb *testbed) StartServer() {
-	testListenPath := GetAvailableLocalAddress()
-	err := tb.opampServer.Start(testListenPath)
+	err := tb.opampServer.Start(context.Background())
 	require.Nil(tb.t, err, "should be able to start opamp server")
 }
 

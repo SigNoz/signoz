@@ -1,0 +1,100 @@
+version: '3.9'
+
+networks:
+  signoz:
+    external: false
+
+x-commons: &commons
+  logging:
+    driver: "json-file"
+    options:
+      max-size: 10m
+      max-file: "3"
+  networks:
+    - signoz
+
+x-signoz-env: &signoz-env
+  SIGNOZ_WEB_DIR: /etc/signoz/web
+  SIGNOZ_LOG_LEVEL: debug
+  SIGNOZ_STORAGE_PROMETHEUS_CONFIG_PATH: /etc/signoz/config/prometheus.yml
+  SIGNOZ_STORAGE_DSN: tcp://clickhouse:9000
+  SIGNOZ_DB_ENGINE: sqlite
+  SIGNOZ_DB_PATH: /etc/signoz/data/signoz.db
+  ALERTMANAGER_API_PREFIX: http://alertmanager:9093/api/
+
+services:
+  sqlite:
+    <<: *commons
+    image: alpine:latest
+    container_name: sqlite
+    volumes:
+      - ./data/sqlite:/data
+    command: sh -c "apk --no-cache add sqlite && sqlite3 /data/signoz.db \"VACUUM\" && tail -f /dev/null"
+    working_dir: /data
+  clickhouse:
+    <<: *commons
+    image: 'clickhouse/clickhouse-server:23.4'
+    user: '101:101'
+    container_name: clickhouse
+    hostname: clickhouse
+    volumes:
+      - ./fs/volumes/clickhouse/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml
+      - ./fs/volumes/clickhouse/etc/clickhouse-server/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml
+    ports:
+      - '8123:8123'
+      - '9000:9000'
+    depends_on:
+      - clickhouse-keeper
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "0.0.0.0:8123/ping"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  clickhouse-keeper:
+    <<: *commons
+    image: 'clickhouse/clickhouse-keeper:23.4'
+    user: '101:101'
+    container_name: clickhouse-keeper
+    hostname: clickhouse-keeper
+    volumes:
+      - ./fs/volumes/clickhouse-keeper/etc/clickhouse-keeper/keeper_config.xml:/etc/clickhouse-keeper/keeper_config.xml
+    ports:
+      - '127.0.0.1:9181:9181'
+  signoz:
+    <<: *commons
+    image: signoz
+    build:
+      context: "../"
+      dockerfile: ".dev/Dockerfile"
+    container_name: signoz
+    environment:
+      <<: *signoz-env
+      OTEL_SERVICE_NAME: signoz
+    volumes:
+      - ./data/sqlite/signoz.db:/etc/signoz/data/signoz.db
+    ports:
+      - '127.0.0.1:8080:8080'
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "0.0.0.0:8080/api/v1/health"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      sqlite:
+        condition: service_started
+      clickhouse:
+        condition: service_healthy

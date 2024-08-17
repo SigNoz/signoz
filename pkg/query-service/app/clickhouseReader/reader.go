@@ -135,34 +135,23 @@ type ClickHouseReader struct {
 }
 
 // NewTraceReader returns a TraceReader for the database
-func NewReader(
-	localDB *sqlx.DB,
-	configFile string,
-	featureFlag interfaces.FeatureLookup,
-	maxIdleConns int,
-	maxOpenConns int,
-	dialTimeout time.Duration,
-	cluster string,
-) *ClickHouseReader {
+func NewReader(cfg Config, localDB *sqlx.DB, featureFlag interfaces.FeatureLookup) *ClickHouseReader {
+	options := NewOptions(cfg.DSN, cfg.MaxIdleConns, cfg.MaxOpenConns, cfg.DialTimeout, primaryNamespace, archiveNamespace)
 
-	datasource := os.Getenv("ClickHouseUrl")
-	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
 	db, err := initialize(options)
-
 	if err != nil {
 		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
 	}
 
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster)
+	return NewReaderFromClickhouseConnection(cfg, db, options, localDB, featureFlag)
 }
 
 func NewReaderFromClickhouseConnection(
+	cfg Config,
 	db driver.Conn,
 	options *Options,
 	localDB *sqlx.DB,
-	configFile string,
 	featureFlag interfaces.FeatureLookup,
-	cluster string,
 ) *ClickHouseReader {
 	alertManager, err := am.New("")
 	if err != nil {
@@ -171,7 +160,7 @@ func NewReaderFromClickhouseConnection(
 		os.Exit(1)
 	}
 
-	regex := os.Getenv("ClickHouseOptimizeReadInOrderRegex")
+	regex := cfg.OptimizeReadInOrderRegex
 	var regexCompiled *regexp.Regexp
 	if regex != "" {
 		regexCompiled, err = regexp.Compile(regex)
@@ -184,10 +173,10 @@ func NewReaderFromClickhouseConnection(
 	wrap := clickhouseConnWrapper{
 		conn: db,
 		settings: ClickhouseQuerySettings{
-			MaxExecutionTimeLeaf:                os.Getenv("ClickHouseMaxExecutionTimeLeaf"),
-			TimeoutBeforeCheckingExecutionSpeed: os.Getenv("ClickHouseTimeoutBeforeCheckingExecutionSpeed"),
-			MaxBytesToRead:                      os.Getenv("ClickHouseMaxBytesToRead"),
-			OptimizeReadInOrderRegex:            os.Getenv("ClickHouseOptimizeReadInOrderRegex"),
+			MaxExecutionTimeLeaf:                cfg.MaxExecutionTimeLeaf,
+			TimeoutBeforeCheckingExecutionSpeed: cfg.TimeoutBeforeCheckingExecutionSpeed,
+			MaxBytesToRead:                      cfg.MaxBytesToRead,
+			OptimizeReadInOrderRegex:            cfg.OptimizeReadInOrderRegex,
 			OptimizeReadInOrderRegexCompiled:    regexCompiled,
 		},
 	}
@@ -214,9 +203,9 @@ func NewReaderFromClickhouseConnection(
 		logsResourceKeys:        options.primary.LogsResourceKeysTable,
 		logsTagAttributeTable:   options.primary.LogsTagAttributeTable,
 		liveTailRefreshSeconds:  options.primary.LiveTailRefreshSeconds,
-		promConfigFile:          configFile,
+		promConfigFile:          cfg.PrometheusConfigPath,
 		featureFlags:            featureFlag,
-		cluster:                 cluster,
+		cluster:                 cfg.Cluster,
 		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
 	}
 }

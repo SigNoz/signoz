@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -482,12 +483,13 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 func NewLogPipelinesTestBed(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed {
 	testbed := NewTestbedWithoutOpamp(t, testDB)
 
-	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
-	err := opampServer.Start(opamp.GetAvailableLocalAddress())
+	address := opamp.GetAvailableLocalAddress()
+	opampServer := opamp.New(nil, testbed.agentConfMgr, opamp.Config{ListenAddress: address})
+	err := opampServer.Start(context.Background())
 	require.Nil(t, err, "failed to start opamp server")
 
 	t.Cleanup(func() {
-		opampServer.Stop()
+		opampServer.Stop(context.Background())
 	})
 
 	opampClientConnection := &opamp.MockOpAmpConnection{}

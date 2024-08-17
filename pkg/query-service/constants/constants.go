@@ -11,10 +11,7 @@ import (
 )
 
 const (
-	HTTPHostPort    = "0.0.0.0:8080" // Address to serve http (query service)
-	PrivateHostPort = "0.0.0.0:8085" // Address to server internal services like alert manager
-	DebugHttpPort   = "0.0.0.0:6060" // Address to serve http (pprof)
-	OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket
+	DebugHttpPort = "0.0.0.0:6060" // Address to serve http (pprof)
 )
 
 type ContextKey string
@@ -66,8 +63,6 @@ var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/rout
 
 var OTLPTarget = GetOrDefaultEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "")
 var LogExportBatchSize = GetOrDefaultEnv("OTEL_BLRP_MAX_EXPORT_BATCH_SIZE", "512")
-
-var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
 var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
 

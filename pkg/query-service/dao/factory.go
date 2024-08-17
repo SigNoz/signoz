@@ -9,17 +9,17 @@ import (
 
 var db ModelDao
 
-func InitDao(engine, path string) error {
+func InitDao(cfg Config) error {
 	var err error
 
-	switch engine {
+	switch cfg.Engine {
 	case "sqlite":
-		db, err = sqlite.InitDB(path)
+		db, err = sqlite.InitDB(cfg.Path)
 		if err != nil {
 			return errors.Wrap(err, "failed to initialize DB")
 		}
 	default:
-		return fmt.Errorf("RelationalDB type: %s is not supported in query service", engine)
+		return fmt.Errorf("RelationalDB type: %s is not supported in query service", cfg.Engine)
 	}
 	return nil
 }

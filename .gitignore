@@ -67,3 +67,15 @@ e2e/.auth
 # go
 vendor/
 **/main/**
+
+# binary
+signoz
+
+# pidfiles
+*.pid
+
+# active queries
+**/queries.active/**
+queries.active
+!.dev/.env
+**/data/**

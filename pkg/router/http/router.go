@@ -10,20 +10,35 @@ import (
 	"go.signoz.io/signoz/pkg/log"
 )
 
-type Handler struct {
-	router *mux.Router
+type Router struct {
+	r   *mux.Router
+	sub *mux.Router
 }
 
-func NewHandler(logger log.Logger) *Handler {
-	router := mux.NewRouter().UseEncodedPath()
+func NewRouter(logger log.Logger) *Router {
+	router := mux.NewRouter()
+	sub := router.PathPrefix("/").Subrouter().UseEncodedPath()
 
-	router.Use(
+	sub.Use(
 		logRequest(logger),
 	)
 
-	return &Handler{
-		router: mux.NewRouter().UseEncodedPath(),
+	return &Router{
+		r:   router,
+		sub: sub,
 	}
+}
+
+func (router *Router) Handler() http.Handler {
+	return router.r
+}
+
+func (router *Router) Mux() *mux.Router {
+	return router.r
+}
+
+func (router *Router) Sub() *mux.Router {
+	return router.sub
 }
 
 func logRequest(logger log.Logger) mux.MiddlewareFunc {
@@ -32,7 +47,10 @@ func logRequest(logger log.Logger) mux.MiddlewareFunc {
 			ctx := req.Context()
 			start := time.Now()
 			host, port, _ := net.SplitHostPort(req.Host)
-			path, _ := mux.CurrentRoute(req).GetPathTemplate()
+			path, err := mux.CurrentRoute(req).GetPathTemplate()
+			if err != nil {
+				path = req.URL.Path
+			}
 
 			fields := []any{
 				string(semconv.ClientAddressKey), req.RemoteAddr,

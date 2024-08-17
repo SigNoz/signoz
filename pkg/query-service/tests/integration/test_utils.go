@@ -38,14 +38,7 @@ func NewMockClickhouseReader(
 	mockDB, err := mockhouse.NewClickHouseWithQueryMatcher(nil, sqlmock.QueryMatcherRegexp)
 
 	require.Nil(t, err, "could not init mock clickhouse")
-	reader := clickhouseReader.NewReaderFromClickhouseConnection(
-		mockDB,
-		clickhouseReader.NewOptions("", 10, 10, 10*time.Second, ""),
-		testDB,
-		"",
-		featureFlags,
-		"",
-	)
+	reader := clickhouseReader.NewReaderFromClickhouseConnection(clickhouseReader.Config{}, mockDB, clickhouseReader.NewOptions("", 10, 10, 10*time.Second, ""), testDB, featureFlags)
 
 	return reader, mockDB
 }

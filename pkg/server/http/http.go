@@ -20,7 +20,7 @@ type Server struct {
 // Creates a new http server, implements the registry.Service interface.
 func New(logger log.Logger, handler http.Handler, cfg Config) registry.Service {
 	srv := &http.Server{
-		Addr:           cfg.Listen,
+		Addr:           cfg.ListenAddress,
 		Handler:        handler,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,

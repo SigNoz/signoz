@@ -189,3 +189,19 @@ test:
 	go test ./pkg/query-service/rules/...
 	go test ./pkg/query-service/collectorsimulator/...
 	go test ./pkg/query-service/postprocess/...
+
+run-dev:
+	@echo ">> Starting dev"
+	@docker compose -f .dev/compose.yaml up --detach --build --wait --force-recreate
+
+stop-dev:
+	@echo ">> Stopping dev"
+	@docker compose -f .dev/compose.yaml down
+
+run-%:
+	@echo ">> Starting $*"
+	@docker compose -f .dev/compose.yaml up --detach --build --wait --force-recreate $*
+
+stop-%:
+	@echo ">> Stopping $*"
+	@docker compose -f .dev/compose.yaml down $*

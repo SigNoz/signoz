@@ -1063,7 +1063,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "")
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(clickhouseReader.Config{}, mock, options, nil, fm)
 
 		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, reader)
 		rule.temporalityMap = map[string]map[v3.Temporality]bool{
@@ -1166,7 +1166,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "")
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(clickhouseReader.Config{}, mock, options, nil, fm)
 
 		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, reader)
 		rule.temporalityMap = map[string]map[v3.Temporality]bool{

@@ -21,15 +21,15 @@ type Server struct {
 
 	// cleanups to be run when stopping the server
 	cleanups []func()
+
+	cfg Config
 }
 
 const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffectiveConfig |
 	protobufs.ServerCapabilities_ServerCapabilities_OffersRemoteConfig |
 	protobufs.ServerCapabilities_ServerCapabilities_AcceptsStatus
 
-func InitializeServer(
-	agents *model.Agents, agentConfigProvider AgentConfigProvider,
-) *Server {
+func New(agents *model.Agents, agentConfigProvider AgentConfigProvider, cfg Config) *Server {
 	if agents == nil {
 		agents = &model.AllAgents
 	}
@@ -37,12 +37,13 @@ func InitializeServer(
 	opAmpServer = &Server{
 		agents:              agents,
 		agentConfigProvider: agentConfigProvider,
+		cfg:                 cfg,
 	}
 	opAmpServer.server = server.New(zap.L().Sugar())
 	return opAmpServer
 }
 
-func (srv *Server) Start(listener string) error {
+func (srv *Server) Start(ctx context.Context) error {
 	settings := server.StartSettings{
 		Settings: server.Settings{
 			Callbacks: server.CallbacksStruct{
@@ -50,7 +51,7 @@ func (srv *Server) Start(listener string) error {
 				OnConnectionCloseFunc: srv.onDisconnect,
 			},
 		},
-		ListenEndpoint: listener,
+		ListenEndpoint: srv.cfg.ListenAddress,
 	}
 
 	unsubscribe := srv.agentConfigProvider.SubscribeToConfigUpdates(func() {
@@ -66,12 +67,12 @@ func (srv *Server) Start(listener string) error {
 	return srv.server.Start(settings)
 }
 
-func (srv *Server) Stop() {
+func (srv *Server) Stop(ctx context.Context) error {
 	for _, cleanup := range srv.cleanups {
 		defer cleanup()
 	}
 
-	srv.server.Stop(context.Background())
+	return srv.server.Stop(ctx)
 }
 
 func (srv *Server) onDisconnect(conn types.Connection) {

@@ -131,11 +131,13 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 	return m, nil
 }
 
-func (m *Manager) Start() {
+func (m *Manager) Start(ctx context.Context) error {
 	if err := m.initiate(); err != nil {
 		zap.L().Error("failed to initialize alerting rules manager", zap.Error(err))
+		return err
 	}
 	m.run()
+	return nil
 }
 
 func (m *Manager) RuleDB() RuleDB {
@@ -221,7 +223,7 @@ func (m *Manager) run() {
 }
 
 // Stop the rule manager's rule evaluation cycles.
-func (m *Manager) Stop() {
+func (m *Manager) Stop(ctx context.Context) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -232,6 +234,7 @@ func (m *Manager) Stop() {
 	}
 
 	zap.L().Info("Rule manager stopped")
+	return nil
 }
 
 // EditRuleDefinition writes the rule definition to the
