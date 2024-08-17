@@ -6,11 +6,18 @@ import cx from 'classnames';
 import { isEmpty, isObject } from 'lodash-es';
 import { Zap } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { Option } from './QueryBuilderSearchV2';
+import { DropdownState } from './QueryBuilderSearchV2';
 
-function Suggestions(props: Option): React.ReactElement {
-	const { label, value } = props;
+interface ISuggestionsProps {
+	label: string;
+	value: BaseAutocompleteData | string;
+	option: DropdownState;
+}
+
+function Suggestions(props: ISuggestionsProps): React.ReactElement {
+	const { label, value, option } = props;
 
 	const optionType = useMemo(() => {
 		if (isObject(value)) {
@@ -53,7 +60,7 @@ function Suggestions(props: Option): React.ReactElement {
 					<div className="container-without-tag">
 						<div className="dot" />
 						<Typography.Text
-							className="text value"
+							className={cx('text value', option)}
 							ellipsis={{ onEllipsis: (ellipsis): void => setTruncated(ellipsis) }}
 						>
 							{label}

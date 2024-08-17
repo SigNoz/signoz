@@ -445,13 +445,13 @@ function QueryBuilderSearchV2(
 
 		if (tagKey && isUndefined(currentFilterItem?.key)) {
 			let currentRunningAttributeKey;
-			const isSuggestedKeyInAutocomplete = data?.payload?.attributeKeys?.some(
+			const isSuggestedKeyInAutocomplete = suggestionsData?.payload?.attributes?.some(
 				(value) => value.key === searchValue,
 			);
 
 			if (isSuggestedKeyInAutocomplete) {
 				const allAttributesMatchingTheKey =
-					data?.payload?.attributeKeys?.filter(
+					suggestionsData?.payload?.attributes?.filter(
 						(value) => value.key === searchValue,
 					) || [];
 
@@ -473,7 +473,7 @@ function QueryBuilderSearchV2(
 					setCurrentState(DropdownState.OPERATOR);
 				}
 			}
-			if (data?.payload?.attributeKeys?.length === 0) {
+			if (suggestionsData?.payload?.attributes?.length === 0) {
 				setCurrentFilterItem({
 					key: {
 						key: tagKey.split(' ')[0],
@@ -547,7 +547,7 @@ function QueryBuilderSearchV2(
 		currentFilterItem,
 		currentFilterItem?.key,
 		currentFilterItem?.op,
-		data?.payload?.attributeKeys,
+		suggestionsData?.payload?.attributes,
 		searchValue,
 	]);
 
@@ -759,7 +759,9 @@ function QueryBuilderSearchV2(
 				value={queryTags}
 				searchValue={searchValue}
 				className={cx(
-					!showAllFilters && dropdownOptions.length > 3 ? 'show-all-filters' : '',
+					!currentFilterItem?.key && !showAllFilters && dropdownOptions.length > 3
+						? 'show-all-filters'
+						: '',
 					className,
 				)}
 				rootClassName="query-builder-search"
@@ -793,7 +795,11 @@ function QueryBuilderSearchV2(
 							isObject(option.value) ? JSON.stringify(option.value) : option.value
 						}
 					>
-						<Suggestions label={option.label} value={option.value} />
+						<Suggestions
+							label={option.label}
+							value={option.value}
+							option={currentState}
+						/>
 					</Select.Option>
 				))}
 			</Select>

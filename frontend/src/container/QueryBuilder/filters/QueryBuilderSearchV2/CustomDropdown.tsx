@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import { Button, Typography } from 'antd';
 import {
 	ArrowDown,
@@ -47,8 +48,26 @@ export default function CustomDropdown(
 	return (
 		<div>
 			<div className="content">
-				{!currentFilterItem?.key && (
+				{!currentFilterItem?.key ? (
 					<div className="suggested-filters">Suggested Filters</div>
+				) : !currentFilterItem?.op ? (
+					<div className="operator-for">
+						<Typography.Text className="operator-for-text">
+							Operator for{' '}
+						</Typography.Text>
+						<Typography.Text className="operator-for-value">
+							{currentFilterItem?.key?.key}
+						</Typography.Text>
+					</div>
+				) : (
+					<div className="value-for">
+						<Typography.Text className="value-for-text">
+							Value(s) for{' '}
+						</Typography.Text>
+						<Typography.Text className="value-for-value">
+							{currentFilterItem?.key?.key} {currentFilterItem?.op}
+						</Typography.Text>
+					</div>
 				)}
 				{menu}
 				{!searchValue && tags.length === 0 && (
