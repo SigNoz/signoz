@@ -10,12 +10,15 @@ import {
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import ROUTES from 'constants/routes';
+import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
 import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSuggestions';
 import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebounceValue from 'hooks/useDebounce';
 import {
 	cloneDeep,
@@ -112,6 +115,10 @@ function QueryBuilderSearchV2(
 		suffixIcon,
 		whereClauseConfig,
 	} = props;
+
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+
+	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
 	const selectRef = useRef<BaseSelectRef>(null);
 
@@ -356,11 +363,16 @@ function QueryBuilderSearchV2(
 			if ((event.ctrlKey || event.metaKey) && event.key === '/') {
 				event.preventDefault();
 				event.stopPropagation();
-				console.log('here');
 				setShowAllFilters((prev) => !prev);
 			}
+			if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+				event.preventDefault();
+				event.stopPropagation();
+				handleRunQuery();
+				setIsOpen(false);
+			}
 		},
-		[searchValue],
+		[handleRunQuery, searchValue],
 	);
 
 	const handleOnBlur = useCallback((): void => {
@@ -663,6 +675,29 @@ function QueryBuilderSearchV2(
 			setTags(filterTags.items as ITag[]);
 		}
 	}, [onChange, query.filters, tags]);
+
+	const isLastQuery = useMemo(
+		() =>
+			isEqual(
+				currentQuery.builder.queryData[currentQuery.builder.queryData.length - 1],
+				query,
+			),
+		[currentQuery, query],
+	);
+
+	useEffect(() => {
+		if (isLastQuery) {
+			registerShortcut(LogsExplorerShortcuts.FocusTheSearchBar, () => {
+				// set timeout is needed here else the select treats the hotkey as input value
+				setTimeout(() => {
+					selectRef.current?.focus();
+				}, 0);
+			});
+		}
+
+		return (): void =>
+			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
+	}, [deregisterShortcut, isLastQuery, registerShortcut]);
 
 	const loading = useMemo(
 		() => isFetching || isFetchingAttributeValues || isFetchingSuggestions,
