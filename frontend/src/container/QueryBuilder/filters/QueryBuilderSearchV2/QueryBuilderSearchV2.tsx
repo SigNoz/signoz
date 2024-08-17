@@ -2,28 +2,45 @@
 import './QueryBuilderSearchV2.styles.scss';
 
 import { Select, Spin, Tag, Tooltip } from 'antd';
+import cx from 'classnames';
 import {
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 	QUERY_BUILDER_SEARCH_VALUES,
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
+import ROUTES from 'constants/routes';
+import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
+import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSuggestions';
 import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebounceValue from 'hooks/useDebounce';
-import { isArray, isEmpty, isEqual, isObject, isUndefined } from 'lodash-es';
+import {
+	cloneDeep,
+	isArray,
+	isEmpty,
+	isEqual,
+	isObject,
+	isUndefined,
+	unset,
+} from 'lodash-es';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	KeyboardEvent,
+	ReactElement,
 	useCallback,
 	useEffect,
 	useMemo,
 	useRef,
 	useState,
 } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -40,6 +57,7 @@ import { selectStyle } from '../QueryBuilderSearch/config';
 import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
 import { TypographyText } from '../QueryBuilderSearch/style';
 import { getTagToken, isInNInOperator } from '../QueryBuilderSearch/utils';
+import CustomDropdown from './CustomDropdown';
 import Suggestions from './Suggestions';
 
 export interface ITag {
@@ -98,6 +116,10 @@ function QueryBuilderSearchV2(
 		whereClauseConfig,
 	} = props;
 
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+
+	const { handleRunQuery, currentQuery } = useQueryBuilder();
+
 	const selectRef = useRef<BaseSelectRef>(null);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -117,6 +139,13 @@ function QueryBuilderSearchV2(
 
 	const [dropdownOptions, setDropdownOptions] = useState<Option[]>([]);
 
+	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
+
+	const { pathname } = useLocation();
+	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
+		pathname,
+	]);
+
 	const memoizedSearchParams = useMemo(
 		() => [
 			searchValue,
@@ -130,6 +159,23 @@ function QueryBuilderSearchV2(
 			query.aggregateOperator,
 			query.aggregateAttribute.key,
 		],
+	);
+
+	const queryFiltersWithoutId = useMemo(
+		() => ({
+			...query.filters,
+			items: query.filters.items.map((item) => {
+				const filterWithoutId = cloneDeep(item);
+				unset(filterWithoutId, 'id');
+				return filterWithoutId;
+			}),
+		}),
+		[query.filters],
+	);
+
+	const memoizedSuggestionsParams = useMemo(
+		() => [searchValue, query.dataSource, queryFiltersWithoutId],
+		[query.dataSource, queryFiltersWithoutId, searchValue],
 	);
 
 	const memoizedValueParams = useMemo(
@@ -159,6 +205,11 @@ function QueryBuilderSearchV2(
 
 	const valueParams = useDebounceValue(memoizedValueParams, DEBOUNCE_DELAY);
 
+	const suggestionsParams = useDebounceValue(
+		memoizedSuggestionsParams,
+		DEBOUNCE_DELAY,
+	);
+
 	const isQueryEnabled = useMemo(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
 			return query.dataSource === DataSource.METRICS
@@ -185,7 +236,22 @@ function QueryBuilderSearchV2(
 		},
 		{
 			queryKey: [searchParams],
-			enabled: isQueryEnabled,
+			enabled: isQueryEnabled && !isLogsExplorerPage,
+		},
+	);
+
+	const {
+		data: suggestionsData,
+		isFetching: isFetchingSuggestions,
+	} = useGetAttributeSuggestions(
+		{
+			searchText: searchValue.split(' ')[0],
+			dataSource: query.dataSource,
+			filters: query.filters,
+		},
+		{
+			queryKey: [suggestionsParams],
+			enabled: isQueryEnabled && isLogsExplorerPage,
 		},
 	);
 
@@ -294,8 +360,19 @@ function QueryBuilderSearchV2(
 				event.stopPropagation();
 				setTags((prev) => prev.slice(0, -1));
 			}
+			if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+				event.preventDefault();
+				event.stopPropagation();
+				setShowAllFilters((prev) => !prev);
+			}
+			if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+				event.preventDefault();
+				event.stopPropagation();
+				handleRunQuery();
+				setIsOpen(false);
+			}
 		},
-		[searchValue],
+		[handleRunQuery, searchValue],
 	);
 
 	const handleOnBlur = useCallback((): void => {
@@ -372,21 +449,25 @@ function QueryBuilderSearchV2(
 
 	// this useEffect takes care of tokenisation based on the search state
 	useEffect(() => {
-		if (!searchValue) {
+		if (isFetchingSuggestions) {
 			return;
+		}
+		if (!searchValue) {
+			setCurrentFilterItem(undefined);
+			setCurrentState(DropdownState.ATTRIBUTE_KEY);
 		}
 		const { tagKey, tagOperator, tagValue } = getTagToken(searchValue);
 
 		if (tagKey && isUndefined(currentFilterItem?.key)) {
 			let currentRunningAttributeKey;
-			const isSuggestedKeyInAutocomplete = data?.payload?.attributeKeys?.some(
-				(value) => value.key === searchValue,
+			const isSuggestedKeyInAutocomplete = suggestionsData?.payload?.attributes?.some(
+				(value) => value.key === tagKey.split(' ')[0],
 			);
 
 			if (isSuggestedKeyInAutocomplete) {
 				const allAttributesMatchingTheKey =
-					data?.payload?.attributeKeys?.filter(
-						(value) => value.key === searchValue,
+					suggestionsData?.payload?.attributes?.filter(
+						(value) => value.key === tagKey.split(' ')[0],
 					) || [];
 
 				if (allAttributesMatchingTheKey?.length === 1) {
@@ -407,7 +488,7 @@ function QueryBuilderSearchV2(
 					setCurrentState(DropdownState.OPERATOR);
 				}
 			}
-			if (data?.payload?.attributeKeys?.length === 0) {
+			if (suggestionsData?.payload?.attributes?.length === 0) {
 				setCurrentFilterItem({
 					key: {
 						key: tagKey.split(' ')[0],
@@ -481,19 +562,29 @@ function QueryBuilderSearchV2(
 		currentFilterItem,
 		currentFilterItem?.key,
 		currentFilterItem?.op,
-		data?.payload?.attributeKeys,
+		suggestionsData?.payload?.attributes,
 		searchValue,
+		isFetchingSuggestions,
 	]);
 
 	// the useEffect takes care of setting the dropdown values correctly on change of the current state
 	useEffect(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
-			setDropdownOptions(
-				data?.payload?.attributeKeys?.map((key) => ({
-					label: key.key,
-					value: key,
-				})) || [],
-			);
+			if (isLogsExplorerPage) {
+				setDropdownOptions(
+					suggestionsData?.payload?.attributes?.map((key) => ({
+						label: key.key,
+						value: key,
+					})) || [],
+				);
+			} else {
+				setDropdownOptions(
+					data?.payload?.attributeKeys?.map((key) => ({
+						label: key.key,
+						value: key,
+					})) || [],
+				);
+			}
 		}
 		if (currentState === DropdownState.OPERATOR) {
 			const keyOperator = searchValue.split(' ');
@@ -561,10 +652,12 @@ function QueryBuilderSearchV2(
 		}
 	}, [
 		attributeValues?.payload,
-		currentFilterItem?.key?.dataType,
+		currentFilterItem?.key.dataType,
 		currentState,
 		data?.payload?.attributeKeys,
+		isLogsExplorerPage,
 		searchValue,
+		suggestionsData?.payload?.attributes,
 	]);
 
 	useEffect(() => {
@@ -587,10 +680,33 @@ function QueryBuilderSearchV2(
 		}
 	}, [onChange, query.filters, tags]);
 
-	const loading = useMemo(() => isFetching || isFetchingAttributeValues, [
-		isFetching,
-		isFetchingAttributeValues,
-	]);
+	const isLastQuery = useMemo(
+		() =>
+			isEqual(
+				currentQuery.builder.queryData[currentQuery.builder.queryData.length - 1],
+				query,
+			),
+		[currentQuery, query],
+	);
+
+	useEffect(() => {
+		if (isLastQuery) {
+			registerShortcut(LogsExplorerShortcuts.FocusTheSearchBar, () => {
+				// set timeout is needed here else the select treats the hotkey as input value
+				setTimeout(() => {
+					selectRef.current?.focus();
+				}, 0);
+			});
+		}
+
+		return (): void =>
+			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
+	}, [deregisterShortcut, isLastQuery, registerShortcut]);
+
+	const loading = useMemo(
+		() => isFetching || isFetchingAttributeValues || isFetchingSuggestions,
+		[isFetching, isFetchingAttributeValues, isFetchingSuggestions],
+	);
 
 	const isMetricsDataSource = useMemo(
 		() => query.dataSource === DataSource.METRICS,
@@ -625,6 +741,7 @@ function QueryBuilderSearchV2(
 		const tagEditHandler = (value: string): void => {
 			setCurrentFilterItem(tagDetails);
 			setSearchValue(value);
+			setCurrentState(DropdownState.ATTRIBUTE_VALUE);
 			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
 		};
 
@@ -658,20 +775,35 @@ function QueryBuilderSearchV2(
 			<Select
 				ref={selectRef}
 				getPopupContainer={popupContainer}
-				virtual
+				virtual={false}
 				showSearch
 				tagRender={onTagRender}
 				transitionName=""
 				choiceTransitionName=""
 				filterOption={false}
 				open={isOpen}
+				suffixIcon={
+					// eslint-disable-next-line no-nested-ternary
+					!isUndefined(suffixIcon) ? (
+						suffixIcon
+					) : isOpen ? (
+						<ChevronUp size={14} />
+					) : (
+						<ChevronDown size={14} />
+					)
+				}
 				onDropdownVisibleChange={setIsOpen}
 				autoClearSearchValue={false}
 				mode="multiple"
 				placeholder={placeholder}
 				value={queryTags}
 				searchValue={searchValue}
-				className={className}
+				className={cx(
+					!currentFilterItem?.key && !showAllFilters && dropdownOptions.length > 3
+						? 'show-all-filters'
+						: '',
+					className,
+				)}
 				rootClassName="query-builder-search"
 				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 				style={selectStyle}
@@ -679,9 +811,22 @@ function QueryBuilderSearchV2(
 				onSelect={handleDropdownSelect}
 				onInputKeyDown={onInputKeyDownHandler}
 				notFoundContent={loading ? <Spin size="small" /> : null}
-				suffixIcon={suffixIcon}
 				showAction={['focus']}
 				onBlur={handleOnBlur}
+				// eslint-disable-next-line react/no-unstable-nested-components
+				dropdownRender={(menu): ReactElement => (
+					<CustomDropdown
+						menu={menu}
+						selectRef={selectRef}
+						options={dropdownOptions}
+						onChange={onChange}
+						searchValue={searchValue}
+						exampleQueries={suggestionsData?.payload?.example_queries || []}
+						tags={tags}
+						setShowAllFilters={setShowAllFilters}
+						currentFilterItem={currentFilterItem}
+					/>
+				)}
 			>
 				{dropdownOptions.map((option) => (
 					<Select.Option
@@ -690,7 +835,11 @@ function QueryBuilderSearchV2(
 							isObject(option.value) ? JSON.stringify(option.value) : option.value
 						}
 					>
-						<Suggestions label={option.label} value={option.value} />
+						<Suggestions
+							label={option.label}
+							value={option.value}
+							option={currentState}
+						/>
 					</Select.Option>
 				))}
 			</Select>
