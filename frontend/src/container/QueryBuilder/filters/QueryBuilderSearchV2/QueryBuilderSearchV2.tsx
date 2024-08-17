@@ -15,9 +15,11 @@ import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import useDebounceValue from 'hooks/useDebounce';
 import { isArray, isEmpty, isEqual, isObject, isUndefined } from 'lodash-es';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	KeyboardEvent,
+	ReactElement,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -40,6 +42,7 @@ import { selectStyle } from '../QueryBuilderSearch/config';
 import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
 import { TypographyText } from '../QueryBuilderSearch/style';
 import { getTagToken, isInNInOperator } from '../QueryBuilderSearch/utils';
+import CustomDropdown from './CustomDropdown';
 import Suggestions from './Suggestions';
 
 export interface ITag {
@@ -116,6 +119,8 @@ function QueryBuilderSearchV2(
 	const [searchValue, setSearchValue] = useState<string>('');
 
 	const [dropdownOptions, setDropdownOptions] = useState<Option[]>([]);
+
+	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
 
 	const memoizedSearchParams = useMemo(
 		() => [
@@ -373,7 +378,8 @@ function QueryBuilderSearchV2(
 	// this useEffect takes care of tokenisation based on the search state
 	useEffect(() => {
 		if (!searchValue) {
-			return;
+			setCurrentFilterItem(undefined);
+			setCurrentState(DropdownState.ATTRIBUTE_KEY);
 		}
 		const { tagKey, tagOperator, tagValue } = getTagToken(searchValue);
 
@@ -658,13 +664,23 @@ function QueryBuilderSearchV2(
 			<Select
 				ref={selectRef}
 				getPopupContainer={popupContainer}
-				virtual
+				virtual={false}
 				showSearch
 				tagRender={onTagRender}
 				transitionName=""
 				choiceTransitionName=""
 				filterOption={false}
 				open={isOpen}
+				suffixIcon={
+					// eslint-disable-next-line no-nested-ternary
+					!isUndefined(suffixIcon) ? (
+						suffixIcon
+					) : isOpen ? (
+						<ChevronUp size={14} />
+					) : (
+						<ChevronDown size={14} />
+					)
+				}
 				onDropdownVisibleChange={setIsOpen}
 				autoClearSearchValue={false}
 				mode="multiple"
@@ -679,9 +695,21 @@ function QueryBuilderSearchV2(
 				onSelect={handleDropdownSelect}
 				onInputKeyDown={onInputKeyDownHandler}
 				notFoundContent={loading ? <Spin size="small" /> : null}
-				suffixIcon={suffixIcon}
 				showAction={['focus']}
 				onBlur={handleOnBlur}
+				// eslint-disable-next-line react/no-unstable-nested-components
+				dropdownRender={(menu): ReactElement => (
+					<CustomDropdown
+						menu={menu}
+						selectRef={selectRef}
+						onChange={onChange}
+						searchValue={searchValue}
+						exampleQueries={[]}
+						tags={tags}
+						setShowAllFilters={setShowAllFilters}
+						currentFilterItem={currentFilterItem}
+					/>
+				)}
 			>
 				{dropdownOptions.map((option) => (
 					<Select.Option
