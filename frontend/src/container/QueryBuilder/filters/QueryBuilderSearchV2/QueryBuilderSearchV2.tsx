@@ -2,19 +2,30 @@
 import './QueryBuilderSearchV2.styles.scss';
 
 import { Select, Spin, Tag, Tooltip } from 'antd';
+import cx from 'classnames';
 import {
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 	QUERY_BUILDER_SEARCH_VALUES,
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
+import ROUTES from 'constants/routes';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
+import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSuggestions';
 import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import useDebounceValue from 'hooks/useDebounce';
-import { isArray, isEmpty, isEqual, isObject, isUndefined } from 'lodash-es';
+import {
+	cloneDeep,
+	isArray,
+	isEmpty,
+	isEqual,
+	isObject,
+	isUndefined,
+	unset,
+} from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import {
@@ -26,6 +37,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -122,6 +134,11 @@ function QueryBuilderSearchV2(
 
 	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
 
+	const { pathname } = useLocation();
+	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
+		pathname,
+	]);
+
 	const memoizedSearchParams = useMemo(
 		() => [
 			searchValue,
@@ -135,6 +152,23 @@ function QueryBuilderSearchV2(
 			query.aggregateOperator,
 			query.aggregateAttribute.key,
 		],
+	);
+
+	const queryFiltersWithoutId = useMemo(
+		() => ({
+			...query.filters,
+			items: query.filters.items.map((item) => {
+				const filterWithoutId = cloneDeep(item);
+				unset(filterWithoutId, 'id');
+				return filterWithoutId;
+			}),
+		}),
+		[query.filters],
+	);
+
+	const memoizedSuggestionsParams = useMemo(
+		() => [searchValue, query.dataSource, queryFiltersWithoutId],
+		[query.dataSource, queryFiltersWithoutId, searchValue],
 	);
 
 	const memoizedValueParams = useMemo(
@@ -164,6 +198,11 @@ function QueryBuilderSearchV2(
 
 	const valueParams = useDebounceValue(memoizedValueParams, DEBOUNCE_DELAY);
 
+	const suggestionsParams = useDebounceValue(
+		memoizedSuggestionsParams,
+		DEBOUNCE_DELAY,
+	);
+
 	const isQueryEnabled = useMemo(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
 			return query.dataSource === DataSource.METRICS
@@ -190,7 +229,22 @@ function QueryBuilderSearchV2(
 		},
 		{
 			queryKey: [searchParams],
-			enabled: isQueryEnabled,
+			enabled: isQueryEnabled && !isLogsExplorerPage,
+		},
+	);
+
+	const {
+		data: suggestionsData,
+		isFetching: isFetchingSuggestions,
+	} = useGetAttributeSuggestions(
+		{
+			searchText: searchValue,
+			dataSource: query.dataSource,
+			filters: query.filters,
+		},
+		{
+			queryKey: [suggestionsParams],
+			enabled: isQueryEnabled && isLogsExplorerPage,
 		},
 	);
 
@@ -298,6 +352,12 @@ function QueryBuilderSearchV2(
 			if (event.key === 'Backspace' && !searchValue) {
 				event.stopPropagation();
 				setTags((prev) => prev.slice(0, -1));
+			}
+			if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+				event.preventDefault();
+				event.stopPropagation();
+				console.log('here');
+				setShowAllFilters((prev) => !prev);
 			}
 		},
 		[searchValue],
@@ -494,12 +554,21 @@ function QueryBuilderSearchV2(
 	// the useEffect takes care of setting the dropdown values correctly on change of the current state
 	useEffect(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
-			setDropdownOptions(
-				data?.payload?.attributeKeys?.map((key) => ({
-					label: key.key,
-					value: key,
-				})) || [],
-			);
+			if (isLogsExplorerPage) {
+				setDropdownOptions(
+					suggestionsData?.payload?.attributes?.map((key) => ({
+						label: key.key,
+						value: key,
+					})) || [],
+				);
+			} else {
+				setDropdownOptions(
+					data?.payload?.attributeKeys?.map((key) => ({
+						label: key.key,
+						value: key,
+					})) || [],
+				);
+			}
 		}
 		if (currentState === DropdownState.OPERATOR) {
 			const keyOperator = searchValue.split(' ');
@@ -567,10 +636,12 @@ function QueryBuilderSearchV2(
 		}
 	}, [
 		attributeValues?.payload,
-		currentFilterItem?.key?.dataType,
+		currentFilterItem?.key.dataType,
 		currentState,
 		data?.payload?.attributeKeys,
+		isLogsExplorerPage,
 		searchValue,
+		suggestionsData?.payload?.attributes,
 	]);
 
 	useEffect(() => {
@@ -593,10 +664,10 @@ function QueryBuilderSearchV2(
 		}
 	}, [onChange, query.filters, tags]);
 
-	const loading = useMemo(() => isFetching || isFetchingAttributeValues, [
-		isFetching,
-		isFetchingAttributeValues,
-	]);
+	const loading = useMemo(
+		() => isFetching || isFetchingAttributeValues || isFetchingSuggestions,
+		[isFetching, isFetchingAttributeValues, isFetchingSuggestions],
+	);
 
 	const isMetricsDataSource = useMemo(
 		() => query.dataSource === DataSource.METRICS,
@@ -687,7 +758,10 @@ function QueryBuilderSearchV2(
 				placeholder={placeholder}
 				value={queryTags}
 				searchValue={searchValue}
-				className={className}
+				className={cx(
+					!showAllFilters && dropdownOptions.length > 3 ? 'show-all-filters' : '',
+					className,
+				)}
 				rootClassName="query-builder-search"
 				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 				style={selectStyle}
@@ -702,9 +776,10 @@ function QueryBuilderSearchV2(
 					<CustomDropdown
 						menu={menu}
 						selectRef={selectRef}
+						options={dropdownOptions}
 						onChange={onChange}
 						searchValue={searchValue}
-						exampleQueries={[]}
+						exampleQueries={suggestionsData?.payload?.example_queries || []}
 						tags={tags}
 						setShowAllFilters={setShowAllFilters}
 						currentFilterItem={currentFilterItem}

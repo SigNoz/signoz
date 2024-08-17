@@ -2,6 +2,14 @@
 	display: flex;
 	gap: 4px;
 
+	.show-all-filters {
+		.content {
+			.rc-virtual-list-holder {
+				height: 100px;
+			}
+		}
+	}
+
 	.content {
 		.suggested-filters {
 			color: var(--bg-slate-50);
@@ -14,21 +22,48 @@
 			text-transform: uppercase;
 			padding: 12px 0px 8px 14px;
 		}
-
 		.example-queries {
+			cursor: default;
 			.heading {
+				padding: 12px 14px 8px 14px;
 				color: var(--bg-slate-50);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
-				font-weight: 600;
-				line-height: 18px;
+				font-weight: 500;
+				line-height: 18px; /* 163.636% */
 				letter-spacing: 0.88px;
 				text-transform: uppercase;
-				padding: 12px 0px 8px 14px;
 			}
 
 			.query-container {
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+				padding: 0px 12px 12px 12px;
+				cursor: pointer;
+
+				.example-query {
+					display: flex;
+					padding: 4px 8px;
+					justify-content: center;
+					align-items: center;
+					gap: 10px;
+					border-radius: 2px;
+					background: var(--bg-ink-200);
+					color: var(--bg-vanilla-400);
+					font-family: Inter;
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: normal;
+					letter-spacing: -0.07px;
+					width: fit-content;
+				}
+
+				.example-query:hover {
+					color: var(--bg-vanilla-100);
+				}
 			}
 		}
 	}
@@ -87,6 +122,7 @@
 		background: var(--bg-ink-300);
 		padding: 11px 16px;
 		cursor: default;
+		margin-top: 20px;
 
 		.icons {
 			width: 16px;

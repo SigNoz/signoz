@@ -15,13 +15,14 @@ import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 import ExampleQueriesRendererForLogs from '../QueryBuilderSearch/ExampleQueriesRendererForLogs';
 import { convertExampleQueriesToOptions } from '../QueryBuilderSearch/utils';
-import { ITag } from './QueryBuilderSearchV2';
+import { ITag, Option } from './QueryBuilderSearchV2';
 
 interface ICustomDropdownProps {
 	menu: React.ReactElement;
 	searchValue: string;
 	tags: ITag[];
 	selectRef: RefObject<BaseSelectRef>;
+	options: Option[];
 	exampleQueries: TagFilter[];
 	onChange: (value: TagFilter) => void;
 	setShowAllFilters: (val: boolean) => void;
@@ -39,6 +40,7 @@ export default function CustomDropdown(
 		tags,
 		exampleQueries,
 		selectRef,
+		options,
 		onChange,
 	} = props;
 	const userOs = getUserOperatingSystem();
@@ -65,33 +67,35 @@ export default function CustomDropdown(
 					</div>
 				)}
 			</div>
-			<Button
-				type="text"
-				className="show-all-filter-props"
-				onClick={(): void => {
-					setShowAllFilters(true);
-					// when clicking on the button the search bar looses the focus
-					selectRef?.current?.focus();
-				}}
-			>
-				<div className="filter">
-					<section className="left-section">
-						<Filter size={14} />
-						<Typography.Text className="text">
-							Show all filters properties
-						</Typography.Text>
-					</section>
-					<section className="right-section">
-						{userOs === UserOperatingSystem.MACOS ? (
-							<Command size={14} className="keyboard-shortcut-slash" />
-						) : (
-							<ChevronUp size={14} className="keyboard-shortcut-slash" />
-						)}
-						+
-						<Slash size={14} className="keyboard-shortcut-slash" />
-					</section>
-				</div>
-			</Button>
+			{!currentFilterItem?.key && options.length > 3 && (
+				<Button
+					type="text"
+					className="show-all-filter-props"
+					onClick={(): void => {
+						setShowAllFilters(true);
+						// when clicking on the button the search bar looses the focus
+						selectRef?.current?.focus();
+					}}
+				>
+					<div className="filter">
+						<section className="left-section">
+							<Filter size={14} />
+							<Typography.Text className="text">
+								Show all filters properties
+							</Typography.Text>
+						</section>
+						<section className="right-section">
+							{userOs === UserOperatingSystem.MACOS ? (
+								<Command size={14} className="keyboard-shortcut-slash" />
+							) : (
+								<ChevronUp size={14} className="keyboard-shortcut-slash" />
+							)}
+							+
+							<Slash size={14} className="keyboard-shortcut-slash" />
+						</section>
+					</div>
+				</Button>
+			)}
 
 			<div className="keyboard-shortcuts">
 				<section className="navigate">
