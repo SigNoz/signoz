@@ -42,3 +42,29 @@ export interface RuleCondition {
 export interface Labels {
 	[key: string]: string;
 }
+
+export interface AlertRuleStats {
+	totalCurrentTriggers: number;
+	totalPastTriggers: number;
+	currentTriggersSeries: CurrentTriggersSeries | null;
+	pastTriggersSeries: any | null;
+	currentAvgResolutionTime: number;
+	pastAvgResolutionTime: number;
+	currentAvgResolutionTimeSeries: any | null;
+	pastAvgResolutionTimeSeries: any | null;
+}
+
+interface CurrentTriggersSeries {
+	labels: Labels;
+	labelsArray: any | null;
+	values: Value[];
+}
+
+interface Value {
+	timestamp: number;
+	value: string;
+}
+
+export type AlertRuleStatsPayloadProps = {
+	data: AlertRuleStats;
+};

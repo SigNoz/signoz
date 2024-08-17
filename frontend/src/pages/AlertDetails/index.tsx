@@ -76,6 +76,7 @@ function AlertDetails(): JSX.Element {
 					]}
 				/>
 				<Divider className="divider" />
+				{/* TODO(shaheer): use DataStateRenderer component instead */}
 				<AlertDetailsStatusRenderer
 					{...{ isLoading, isError, isRefetching, data }}
 				/>

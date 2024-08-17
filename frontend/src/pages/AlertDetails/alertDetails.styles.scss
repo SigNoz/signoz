@@ -13,6 +13,9 @@
 		margin: 1rem 0;
 
 		& .ant-tabs-nav {
+			&-wrap {
+				margin-bottom: 16px;
+			}
 			&::before {
 				border-bottom: none !important;
 			}

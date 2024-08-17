@@ -53,10 +53,6 @@ function StatsCard({
 
 	const relativeTime = urlQuery.get('relativeTime');
 
-	if (!totalCurrentCount || !totalPastCount) {
-		return <div />;
-	}
-
 	const { changePercentage, changeDirection } = calculateChange(
 		totalCurrentCount,
 		totalPastCount,

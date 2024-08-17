@@ -1,4 +1,5 @@
 import get from 'api/alerts/get';
+import ruleStats from 'api/alerts/ruleStats';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import AlertHistory from 'container/AlertHistory';
@@ -8,6 +9,8 @@ import { History, Table } from 'lucide-react';
 import EditRules from 'pages/EditRules';
 import { useQuery, UseQueryResult } from 'react-query';
 import { generatePath, useLocation } from 'react-router-dom';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { AlertRuleStatsPayloadProps } from 'types/api/alerts/def';
 
 export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 	const urlQuery = useUrlQuery();
@@ -84,4 +87,44 @@ export const useGetAlertRuleDetails = (): {
 	});
 
 	return { ruleId, data };
+};
+
+type GetAlertRuleDetailsStatsProps = {
+	isLoading: boolean;
+	isRefetching: boolean;
+	isError: boolean;
+	data:
+		| SuccessResponse<AlertRuleStatsPayloadProps, unknown>
+		| ErrorResponse
+		| undefined;
+	isValidRuleId: boolean;
+	ruleId: string | null;
+};
+
+export const useGetAlertRuleDetailsStats = (): GetAlertRuleDetailsStatsProps => {
+	const { search } = useLocation();
+	const params = new URLSearchParams(search);
+
+	const ruleId = params.get('ruleId');
+	const startTime = params.get('startTime');
+	const endTime = params.get('endTime');
+
+	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+
+	const { isLoading, isRefetching, isError, data } = useQuery(
+		['ruleIdStats', ruleId, startTime, endTime],
+		{
+			queryFn: () =>
+				ruleStats({
+					id: parseInt(ruleId || '', 10),
+					start: parseInt(startTime || '', 10),
+					end: parseInt(endTime || '', 10),
+				}),
+			enabled: isValidRuleId,
+			refetchOnMount: false,
+			refetchOnWindowFocus: false,
+		},
+	);
+
+	return { isLoading, isRefetching, isError, data, isValidRuleId, ruleId };
 };
