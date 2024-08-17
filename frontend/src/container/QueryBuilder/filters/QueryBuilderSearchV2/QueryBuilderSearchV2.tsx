@@ -317,7 +317,7 @@ function QueryBuilderSearchV2(
 						value: '',
 					}));
 					setCurrentState(DropdownState.ATTRIBUTE_VALUE);
-					setSearchValue((prev) => `${prev} ${value}`);
+					setSearchValue(`${currentFilterItem?.key?.key} ${value}`);
 				}
 			}
 
