@@ -819,7 +819,9 @@ function QueryBuilderSearchV2(
 						menu={menu}
 						selectRef={selectRef}
 						options={dropdownOptions}
-						onChange={onChange}
+						onChange={(val: TagFilter): void => {
+							setTags((prev) => [...prev, ...(val.items as ITag[])]);
+						}}
 						searchValue={searchValue}
 						exampleQueries={suggestionsData?.payload?.example_queries || []}
 						tags={tags}
