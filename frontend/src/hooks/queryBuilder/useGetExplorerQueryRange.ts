@@ -1,6 +1,6 @@
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useMemo } from 'react';
+import { MutableRefObject, useMemo } from 'react';
 import { UseQueryOptions, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -19,6 +19,8 @@ export const useGetExplorerQueryRange = (
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
 	params?: Record<string, unknown>,
 	isDependentOnQB = true,
+	keyRef?: MutableRefObject<any>,
+	headers?: Record<string, string>,
 ): UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error> => {
 	const { isEnabledQuery } = useQueryBuilder();
 	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
@@ -40,6 +42,11 @@ export const useGetExplorerQueryRange = (
 		return isEnabledQuery;
 	}, [options, isEnabledQuery, isDependentOnQB]);
 
+	if (keyRef) {
+		// eslint-disable-next-line no-param-reassign
+		keyRef.current = [key, globalSelectedInterval, requestData, minTime, maxTime];
+	}
+
 	return useGetQueryRange(
 		{
 			graphType: panelType || PANEL_TYPES.LIST,
@@ -55,5 +62,6 @@ export const useGetExplorerQueryRange = (
 			queryKey: [key, globalSelectedInterval, requestData, minTime, maxTime],
 			enabled: isEnabled,
 		},
+		headers,
 	);
 };

@@ -1,17 +1,29 @@
 import './Support.styles.scss';
 
-import { Button, Card, Typography } from 'antd';
+import { Button, Card, Modal, Typography } from 'antd';
+import updateCreditCardApi from 'api/billing/checkout';
 import logEvent from 'api/common/logEvent';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { FeatureKeys } from 'constants/features';
+import useFeatureFlags from 'hooks/useFeatureFlag';
+import useLicense from 'hooks/useLicense';
+import { useNotifications } from 'hooks/useNotifications';
 import {
 	Book,
 	Cable,
 	Calendar,
+	CreditCard,
 	Github,
 	MessageSquare,
 	Slack,
+	X,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useMutation } from 'react-query';
 import { useHistory } from 'react-router-dom';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
+import { License } from 'types/api/licenses/def';
 
 const { Title, Text } = Typography;
 
@@ -86,6 +98,12 @@ const supportChannels = [
 
 export default function Support(): JSX.Element {
 	const history = useHistory();
+	const { notifications } = useNotifications();
+	const { data: licenseData, isFetching } = useLicense();
+	const [activeLicense, setActiveLicense] = useState<License | null>(null);
+	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
+		false,
+	);
 
 	const handleChannelWithRedirects = (url: string): void => {
 		window.open(url, '_blank');
@@ -117,10 +135,67 @@ export default function Support(): JSX.Element {
 		window.location.href = mailtoLink;
 	};
 
+	const isPremiumChatSupportEnabled =
+		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
+
+	const showAddCreditCardModal =
+		!isPremiumChatSupportEnabled &&
+		!licenseData?.payload?.trialConvertedToSubscription;
+
+	useEffect(() => {
+		const activeValidLicense =
+			licenseData?.payload?.licenses?.find(
+				(license) => license.isCurrent === true,
+			) || null;
+
+		setActiveLicense(activeValidLicense);
+	}, [licenseData, isFetching]);
+
+	const handleBillingOnSuccess = (
+		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
+	): void => {
+		if (data?.payload?.redirectURL) {
+			const newTab = document.createElement('a');
+			newTab.href = data.payload.redirectURL;
+			newTab.target = '_blank';
+			newTab.rel = 'noopener noreferrer';
+			newTab.click();
+		}
+	};
+
+	const handleBillingOnError = (): void => {
+		notifications.error({
+			message: SOMETHING_WENT_WRONG,
+		});
+	};
+
+	const { mutate: updateCreditCard, isLoading: isLoadingBilling } = useMutation(
+		updateCreditCardApi,
+		{
+			onSuccess: (data) => {
+				handleBillingOnSuccess(data);
+			},
+			onError: handleBillingOnError,
+		},
+	);
+
+	const handleAddCreditCard = (): void => {
+		logEvent('Add Credit card modal: Clicked', {
+			source: `chat`,
+			page: 'support',
+		});
+
+		updateCreditCard({
+			licenseKey: activeLicense?.key || '',
+			successURL: window.location.href,
+			cancelURL: window.location.href,
+		});
+	};
+
 	const handleChat = (): void => {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		if (window.Intercom) {
+		if (showAddCreditCardModal) {
+			setIsAddCreditCardModalOpen(true);
+		} else if (window.Intercom) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			window.Intercom('show');
@@ -183,6 +258,43 @@ export default function Support(): JSX.Element {
 					),
 				)}
 			</div>
+
+			{/* Add Credit Card Modal */}
+			<Modal
+				className="add-credit-card-modal"
+				title={<span className="title">Add Credit Card for Chat Support</span>}
+				open={isAddCreditCardModalOpen}
+				closable
+				onCancel={(): void => setIsAddCreditCardModalOpen(false)}
+				destroyOnClose
+				footer={[
+					<Button
+						key="cancel"
+						onClick={(): void => setIsAddCreditCardModalOpen(false)}
+						className="cancel-btn"
+						icon={<X size={16} />}
+					>
+						Cancel
+					</Button>,
+					<Button
+						key="submit"
+						type="primary"
+						icon={<CreditCard size={16} />}
+						size="middle"
+						loading={isLoadingBilling}
+						disabled={isLoadingBilling}
+						onClick={handleAddCreditCard}
+						className="add-credit-card-btn"
+					>
+						Add Credit Card
+					</Button>,
+				]}
+			>
+				<Typography.Text className="add-credit-card-text">
+					You&apos;re currently on <span className="highlight-text">Trial plan</span>
+					. Add a credit card to access SigNoz chat support to your workspace.
+				</Typography.Text>
+			</Modal>
 		</div>
 	);
 }

@@ -9,7 +9,7 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WrapperStyled } from './styles';
@@ -22,6 +22,12 @@ function LogsExplorer(): JSX.Element {
 	);
 
 	const { handleRunQuery, currentQuery } = useQueryBuilder();
+
+	const listQueryKeyRef = useRef<any>();
+
+	const chartQueryKeyRef = useRef<any>();
+
+	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
 
 	const handleToggleShowFrequencyChart = (): void => {
 		setShowFrequencyChart(!showFrequencyChart);
@@ -82,7 +88,14 @@ function LogsExplorer(): JSX.Element {
 						showFrequencyChart={showFrequencyChart}
 					/>
 				}
-				rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
+				rightActions={
+					<RightToolbarActions
+						onStageRunQuery={handleRunQuery}
+						listQueryKeyRef={listQueryKeyRef}
+						chartQueryKeyRef={chartQueryKeyRef}
+						isLoadingQueries={isLoadingQueries}
+					/>
+				}
 				showOldCTA
 			/>
 
@@ -97,6 +110,9 @@ function LogsExplorer(): JSX.Element {
 						<LogsExplorerViews
 							selectedView={selectedView}
 							showFrequencyChart={showFrequencyChart}
+							listQueryKeyRef={listQueryKeyRef}
+							chartQueryKeyRef={chartQueryKeyRef}
+							setIsLoadingQueries={setIsLoadingQueries}
 						/>
 					</div>
 				</div>
