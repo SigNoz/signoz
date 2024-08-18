@@ -9,7 +9,7 @@ import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
-import { AlertDetailsTab } from 'container/AlertHistory/types';
+import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
 import { urlKey } from 'container/AllError/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
@@ -206,20 +206,40 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 	const ruleId = params.get('ruleId');
 	const startTime = params.get('startTime');
 	const endTime = params.get('endTime');
+	const timelineFilter = params.get('timelineFilter');
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
 	const { isLoading, isRefetching, isError, data } = useQuery(
-		['ruleIdTimelineTable', ruleId, startTime, endTime],
+		['ruleIdTimelineTable', ruleId, startTime, endTime, timelineFilter],
 		{
 			queryFn: () =>
 				timelineTable({
 					id: parseInt(ruleId || '', 10),
 					start: parseInt(startTime || '', 10),
 					end: parseInt(endTime || '', 10),
-					limit: 20,
+					limit: TIMELINE_TABLE_PAGE_SIZE,
 					order: updatedOrder,
 					offset: parseInt(getUpdatedOffset, 10),
+
+					// TODO(shaheer): ask Srikanth about why it doesn't work
+					// filters: {
+					// 	items: [
+					// 		{
+					// 			key: { key: 'label' },
+					// 			value: 'value',
+					// 			op: '=',
+					// 		},
+					// 	],
+					// },
+					...(timelineFilter && timelineFilter !== TimelineFilter.ALL
+						? {
+								filters: {
+									// TODO(shaheer): confirm whether the TimelineFilter.RESOLVED and TimelineFilter.FIRED are valid states
+									items: [{ key: { key: 'state' }, value: 'firing', op: '=' }],
+								},
+						  }
+						: {}),
 				}),
 			enabled: isValidRuleId,
 			refetchOnMount: false,

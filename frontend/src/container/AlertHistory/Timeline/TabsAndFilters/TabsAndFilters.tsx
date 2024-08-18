@@ -1,8 +1,11 @@
 import './tabsAndFilters.styles.scss';
 
 import { TimelineFilter, TimelineTab } from 'container/AlertHistory/types';
+import history from 'lib/history';
 import { Info } from 'lucide-react';
 import Tabs2 from 'periscope/components/Tabs2/Tabs2';
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 
 function ComingSoon(): JSX.Element {
 	return (
@@ -36,6 +39,19 @@ function TimelineTabs(): JSX.Element {
 }
 
 function TimelineFilters(): JSX.Element {
+	const { search } = useLocation();
+	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
+
+	const initialSelectedTab = useMemo(
+		() => searchParams.get('timelineFilter') ?? TimelineFilter.ALL,
+		[searchParams],
+	);
+
+	const handleFilter = (value: TimelineFilter): void => {
+		searchParams.set('timelineFilter', value);
+		history.push({ search: searchParams.toString() });
+	};
+
 	const tabs = [
 		{
 			value: TimelineFilter.ALL,
@@ -52,7 +68,12 @@ function TimelineFilters(): JSX.Element {
 	];
 
 	return (
-		<Tabs2 tabs={tabs} initialSelectedTab={TimelineFilter.ALL} hasResetButton />
+		<Tabs2
+			tabs={tabs}
+			initialSelectedTab={initialSelectedTab}
+			onSelectTab={handleFilter}
+			hasResetButton
+		/>
 	);
 }
 
