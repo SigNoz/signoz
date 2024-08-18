@@ -65,6 +65,6 @@ interface Value {
 	value: string;
 }
 
-export type AlertRuleStatsPayloadProps = {
+export type AlertRuleStatsPayload = {
 	data: AlertRuleStats;
 };

@@ -10,7 +10,7 @@ import EditRules from 'pages/EditRules';
 import { useQuery, UseQueryResult } from 'react-query';
 import { generatePath, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { AlertRuleStatsPayloadProps } from 'types/api/alerts/def';
+import { AlertRuleStatsPayload } from 'types/api/alerts/def';
 
 export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 	const urlQuery = useUrlQuery();
@@ -89,16 +89,19 @@ export const useGetAlertRuleDetails = (): {
 	return { ruleId, data };
 };
 
-type GetAlertRuleDetailsStatsProps = {
+type GetAlertRuleDetailsApiProps = {
 	isLoading: boolean;
 	isRefetching: boolean;
 	isError: boolean;
-	data:
-		| SuccessResponse<AlertRuleStatsPayloadProps, unknown>
-		| ErrorResponse
-		| undefined;
 	isValidRuleId: boolean;
 	ruleId: string | null;
+};
+
+type GetAlertRuleDetailsStatsProps = GetAlertRuleDetailsApiProps & {
+	data:
+		| SuccessResponse<AlertRuleStatsPayload, unknown>
+		| ErrorResponse
+		| undefined;
 };
 
 export const useGetAlertRuleDetailsStats = (): GetAlertRuleDetailsStatsProps => {

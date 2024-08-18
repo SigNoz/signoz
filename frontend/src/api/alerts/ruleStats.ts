@@ -2,12 +2,12 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { AlertRuleStatsPayloadProps } from 'types/api/alerts/def';
+import { AlertRuleStatsPayload } from 'types/api/alerts/def';
 import { RuleStatsProps } from 'types/api/alerts/ruleStats';
 
 const ruleStats = async (
 	props: RuleStatsProps,
-): Promise<SuccessResponse<AlertRuleStatsPayloadProps> | ErrorResponse> => {
+): Promise<SuccessResponse<AlertRuleStatsPayload> | ErrorResponse> => {
 	try {
 		const response = await axios.post(`/rules/${props.id}/history/stats`, {
 			start: props.start,
