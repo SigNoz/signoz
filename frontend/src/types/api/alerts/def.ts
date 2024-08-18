@@ -68,3 +68,12 @@ interface Value {
 export type AlertRuleStatsPayload = {
 	data: AlertRuleStats;
 };
+
+export interface AlertRuleTopContributors {
+	fingerprint: number;
+	labels: Labels;
+	count: number;
+}
+export type AlertRuleTopContributorsPayload = {
+	data: AlertRuleTopContributors[];
+};

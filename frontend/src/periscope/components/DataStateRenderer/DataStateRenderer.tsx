@@ -11,6 +11,11 @@ interface DataStateRendererProps<T> {
 	children: (data: T) => React.ReactNode;
 }
 
+/**
+ *  TODO(shaheer): add empty state and optionally accept empty state custom component
+ *  TODO(shaheer): optionally accept custom error state component
+ *  TODO(shaheer): optionally accept custom loading state component
+ */
 function DataStateRenderer<T>({
 	isLoading,
 	isRefetching,

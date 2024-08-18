@@ -4,10 +4,18 @@ import { Progress } from 'antd';
 import AlertPopover from 'container/AlertHistory/AlertPopover/AlertPopover';
 import { ArrowRight } from 'lucide-react';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
+import { AlertRuleStats, AlertRuleTopContributors } from 'types/api/alerts/def';
 
-import { statsData, topContributorsData } from '../mocks';
+import { statsData } from '../mocks';
 
-function TopContributorsCard(): JSX.Element {
+type TopContributorsCardProps = {
+	topContributorsData: AlertRuleTopContributors[];
+	totalCurrentTriggers: AlertRuleStats['totalCurrentTriggers'];
+};
+function TopContributorsCard({
+	topContributorsData,
+	totalCurrentTriggers,
+}: TopContributorsCardProps): JSX.Element {
 	return (
 		<div className="top-contributors-card">
 			<div className="top-contributors-card__header">
@@ -20,7 +28,7 @@ function TopContributorsCard(): JSX.Element {
 				</div>
 			</div>
 			<div className="top-contributors-card__content">
-				{topContributorsData.contributors.slice(0, 3).map((contributor, index) => (
+				{topContributorsData.slice(0, 3).map((contributor, index) => (
 					<AlertPopover // eslint-disable-next-line react/no-array-index-key
 						key={`contributor-${index}`}
 					>
@@ -37,7 +45,7 @@ function TopContributorsCard(): JSX.Element {
 								/>
 							</div>
 							<div className="total-contribution">
-								{contributor.count}/{statsData.totalCurrentTriggers}
+								{contributor.count}/{totalCurrentTriggers}
 							</div>
 						</div>
 					</AlertPopover>
