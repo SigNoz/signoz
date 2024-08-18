@@ -1,7 +1,15 @@
 export function calculateChange(
-	totalCurrentTriggers: number,
-	totalPastTriggers: number,
+	totalCurrentTriggers: number | undefined,
+	totalPastTriggers: number | undefined,
 ): { changePercentage: number; changeDirection: number } {
+	if (
+		totalCurrentTriggers === undefined ||
+		totalPastTriggers === undefined ||
+		totalPastTriggers === 0
+	) {
+		return { changePercentage: 0, changeDirection: 0 };
+	}
+
 	let changePercentage =
 		((totalCurrentTriggers - totalPastTriggers) / totalPastTriggers) * 100;
 

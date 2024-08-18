@@ -39,15 +39,19 @@ function ChangePercentage({
 }
 
 type StatsCardProps = {
-	totalCurrentCount: number;
-	totalPastCount: number;
+	totalCurrentCount?: number;
+	totalPastCount?: number;
 	title: string;
+	isEmpty?: boolean;
+	emptyMessage?: string;
 };
 
 function StatsCard({
 	totalCurrentCount,
 	totalPastCount,
 	title,
+	isEmpty,
+	emptyMessage,
 }: StatsCardProps): JSX.Element {
 	const urlQuery = useUrlQuery();
 
@@ -59,7 +63,7 @@ function StatsCard({
 	);
 
 	return (
-		<div className="stats-card">
+		<div className={`stats-card ${isEmpty ? 'stats-card--empty' : ''}`}>
 			<div className="stats-card__title-wrapper">
 				<div className="title">{title}</div>
 				<div className="duration-indicator">
@@ -69,8 +73,11 @@ function StatsCard({
 					<div className="text">{relativeTime}</div>
 				</div>
 			</div>
+
 			<div className="stats-card__stats">
-				<div className="count-label">{totalCurrentCount}</div>
+				<div className="count-label">
+					{isEmpty ? emptyMessage : totalCurrentCount}
+				</div>
 
 				<ChangePercentage
 					direction={changeDirection}
@@ -78,13 +85,23 @@ function StatsCard({
 					duration={relativeTime}
 				/>
 			</div>
-			<div className="stats-card__graph">
-				<div className="graph">
-					<DotChartOutlined className="graph-icon" />
+
+			{!isEmpty && (
+				<div className="stats-card__graph">
+					<div className="graph">
+						<DotChartOutlined className="graph-icon" />
+					</div>
 				</div>
-			</div>
+			)}
 		</div>
 	);
 }
+
+StatsCard.defaultProps = {
+	totalCurrentCount: 0,
+	totalPastCount: 0,
+	isEmpty: false,
+	emptyMessage: 'No Data',
+};
 
 export default StatsCard;

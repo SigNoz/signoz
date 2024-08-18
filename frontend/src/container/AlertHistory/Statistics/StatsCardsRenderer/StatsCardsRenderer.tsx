@@ -2,6 +2,7 @@ import { useGetAlertRuleDetailsStats } from 'pages/AlertDetails/hooks';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
 
 import AverageResolutionCard from '../AverageResolutionCard/AverageResolutionCard';
+import StatsCard from '../StatsCard/StatsCard';
 import TotalTriggeredCard from '../TotalTriggeredCard/TotalTriggeredCard';
 
 const isTypeNotNan = (value: unknown): boolean => value !== 'NaN';
@@ -57,10 +58,16 @@ function StatsCardsRenderer({
 				return (
 					<>
 						{/* TODO(shaheer): get hasTotalTriggeredStats when it's available in the API */}
-						{hasTotalTriggeredStats(totalCurrentTriggers, totalPastTriggers) && (
+						{hasTotalTriggeredStats(totalCurrentTriggers, totalPastTriggers) ? (
 							<TotalTriggeredCard
 								totalCurrentTriggers={totalCurrentTriggers}
 								totalPastTriggers={totalPastTriggers}
+							/>
+						) : (
+							<StatsCard
+								title="Total Triggered"
+								isEmpty
+								emptyMessage="None Triggered."
 							/>
 						)}
 
@@ -68,10 +75,16 @@ function StatsCardsRenderer({
 						{hasAvgResolutionTimeStats(
 							currentAvgResolutionTime,
 							pastAvgResolutionTime,
-						) && (
+						) ? (
 							<AverageResolutionCard
 								currentAvgResolutionTime={currentAvgResolutionTime}
 								pastAvgResolutionTime={pastAvgResolutionTime}
+							/>
+						) : (
+							<StatsCard
+								title="Avg. Resolution Time"
+								isEmpty
+								emptyMessage="No Resolutions."
 							/>
 						)}
 					</>

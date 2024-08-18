@@ -1,10 +1,15 @@
 .stats-card {
+	width: 21.7%;
 	height: 100%;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
 	border-right: 1px solid var(--bg-slate-500);
 	padding: 9px 12px;
+
+	&--empty {
+		justify-content: normal;
+	}
 
 	&__title-wrapper {
 		display: flex;
