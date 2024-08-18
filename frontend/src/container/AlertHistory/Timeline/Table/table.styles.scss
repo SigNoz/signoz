@@ -5,10 +5,14 @@
 }
 
 .timeline-table {
+	border: 1px solid var(--text-slate-500);
+	border-radius: 6px;
+	overflow: hidden;
+
 	.ant-table {
 		background: var(--bg-ink-500);
 		&-thead > tr > th {
-			border: none;
+			border-color: var(--bg-slate-500);
 			background: var(--bg-ink-500);
 			&:last-of-type,
 			&:nth-last-of-type(2) {
@@ -23,8 +27,12 @@
 				text-align: right;
 			}
 		}
-		&-cell::before {
-			display: none;
+		&-cell {
+			padding: 16px !important;
+
+			&::before {
+				display: none;
+			}
 		}
 
 		@include cell-width(1, 17%);

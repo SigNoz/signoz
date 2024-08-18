@@ -4,6 +4,8 @@
 	gap: 24px;
 	background: var(--bg-ink-400);
 	padding: 12px;
+	border-radius: 4px;
+	border: 1px solid var(--bg-slate-500);
 
 	&__title {
 		width: max-content;
