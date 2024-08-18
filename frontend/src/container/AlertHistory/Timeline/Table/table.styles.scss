@@ -14,6 +14,8 @@
 		&-thead > tr > th {
 			border-color: var(--bg-slate-500);
 			background: var(--bg-ink-500);
+			font-size: 12px;
+			font-weight: 500;
 			&:last-of-type,
 			&:nth-last-of-type(2) {
 				text-align: right;
@@ -42,6 +44,19 @@
 	}
 	.ant-pagination-total-text {
 		margin-right: auto;
+	}
+	.label-filter {
+		padding: 6px 8px;
+		border-radius: 4px;
+		background: var(--text-ink-400);
+		border-width: 0;
+		& ::placeholder {
+			color: var(--text-vanilla-400);
+			font-size: 12px;
+			letter-spacing: 0.6px;
+			text-transform: uppercase;
+			font-weight: 500;
+		}
 	}
 	.alert-rule {
 		&-value,
