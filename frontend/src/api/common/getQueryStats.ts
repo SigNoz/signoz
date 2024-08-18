@@ -16,10 +16,16 @@ export function getQueryStats(props: GetQueryStatsProps): void {
 	const { queryId, setData } = props;
 
 	const token = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) || '';
-	const socket = new WebSocket(
-		`${ENVIRONMENT.wsURL}/api/v3/query_progress?q=${queryId}`,
-		token,
+
+	// https://github.com/whatwg/websockets/issues/20 reason for not using the relative URLs
+	const url = new URL(
+		`/api/v3/query_progress?q=${queryId}`,
+		ENVIRONMENT.wsURL ? ENVIRONMENT.wsURL : window.location.href,
 	);
+
+	url.protocol = 'wss';
+
+	const socket = new WebSocket(url, token);
 
 	socket.addEventListener('message', (event) => {
 		try {
