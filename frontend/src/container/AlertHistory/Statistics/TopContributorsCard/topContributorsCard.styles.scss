@@ -64,6 +64,45 @@
 			}
 		}
 	}
+	.empty-content {
+		margin: 16px 12px;
+		padding: 40px 45px;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		border: 1px dashed var(--bg-slate-500);
+		border-radius: 6px;
+
+		&__icon {
+			font-family: Inter;
+			font-size: 20px;
+			line-height: 26px;
+			letter-spacing: -0.103px;
+		}
+		&__text {
+			color: var(--text-Vanilla-400);
+			line-height: 18px;
+			.bold-text {
+				color: var(--text-vanilla-100);
+				font-weight: 500;
+			}
+		}
+		&__button-wrapper {
+			margin-top: 12px;
+			.configure-alert-rule-button {
+				padding: 8px 16px;
+				border-radius: 2px;
+				background: var(--bg-slate-400);
+				border-width: 0;
+				color: var(--text-vanilla-100);
+				line-height: 24px;
+				font-size: 12px;
+				font-weight: 500;
+				display: flex;
+				align-items: center;
+			}
+		}
+	}
 }
 
 .ant-popover-inner:has(.contributor-row-popover-buttons) {
