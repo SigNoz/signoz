@@ -16,16 +16,16 @@ function ChangePercentage({
 	duration,
 }: ChangePercentageProps): JSX.Element {
 	if (!percentage || !duration) {
-		return <div />;
+		return <div className="change-percentage" />;
 	}
 	return (
 		<div
 			className={`change-percentage ${
-				direction ? 'change-percentage--success' : 'change-percentage--error'
+				direction > 0 ? 'change-percentage--success' : 'change-percentage--error'
 			}`}
 		>
 			<div className="change-percentage__icon">
-				{direction ? (
+				{direction > 0 ? (
 					<ArrowDownLeft size={14} color="var(--bg-forest-500)" />
 				) : (
 					<ArrowUpRight size={14} color="var(--bg-cherry-500)" />

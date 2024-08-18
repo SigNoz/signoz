@@ -74,16 +74,17 @@
 
 	&--success {
 		background: rgba(37, 225, 146, 0.1);
+		color: var(--bg-forest-500);
 	}
 	&--error {
 		background: rgba(229, 72, 77, 0.1);
+		color: var(--bg-cherry-500);
 	}
 	&__icon {
 		display: flex;
 		align-self: center;
 	}
 	&__label {
-		color: var(--bg-forest-500);
 		font-size: 12px;
 		font-weight: 500;
 		line-height: 16px;
