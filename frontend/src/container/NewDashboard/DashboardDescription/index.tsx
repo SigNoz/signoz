@@ -12,8 +12,8 @@ import {
 	Typography,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
-import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { dashboardHelpMessage } from 'components/LaunchChatSupport/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -322,7 +322,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					{isDashboardLocked && <LockKeyhole size={14} />}
 				</div>
 				<div className="right-section">
-					<FacingIssueBtn
+					<LaunchChatSupport
 						attributes={{
 							uuid: selectedDashboard?.uuid,
 							title: updatedTitle,

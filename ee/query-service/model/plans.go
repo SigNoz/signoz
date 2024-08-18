@@ -12,6 +12,7 @@ const DisableUpsell = "DISABLE_UPSELL"
 const Onboarding = "ONBOARDING"
 const ChatSupport = "CHAT_SUPPORT"
 const Gateway = "GATEWAY"
+const PremiumSupport = "PREMIUM_SUPPORT"
 
 var BasicPlan = basemodel.FeatureSet{
 	basemodel.Feature{
@@ -119,6 +120,13 @@ var BasicPlan = basemodel.FeatureSet{
 		UsageLimit: -1,
 		Route:      "",
 	},
+	basemodel.Feature{
+		Name:       PremiumSupport,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
 }
 
 var ProPlan = basemodel.FeatureSet{
@@ -215,6 +223,13 @@ var ProPlan = basemodel.FeatureSet{
 	},
 	basemodel.Feature{
 		Name:       Gateway,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
+		Name:       PremiumSupport,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
@@ -330,6 +345,13 @@ var EnterprisePlan = basemodel.FeatureSet{
 	},
 	basemodel.Feature{
 		Name:       Gateway,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
+		Name:       PremiumSupport,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
