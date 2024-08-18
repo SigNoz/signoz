@@ -77,3 +77,19 @@ export interface AlertRuleTopContributors {
 export type AlertRuleTopContributorsPayload = {
 	data: AlertRuleTopContributors[];
 };
+
+export interface AlertRuleTimelineTableResponse {
+	ruleID: string;
+	ruleName: string;
+	overallState: string;
+	overallStateChanged: boolean;
+	state: string;
+	stateChanged: boolean;
+	unixMilli: number;
+	labels: Labels;
+	fingerprint: number;
+	value: number;
+}
+export type AlertRuleTimelineTableResponsePayload = {
+	data: AlertRuleTimelineTableResponse[];
+};

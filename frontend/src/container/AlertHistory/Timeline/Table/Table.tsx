@@ -1,22 +1,15 @@
 import './table.styles.scss';
 
-import { Table, Typography } from 'antd';
+import { Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import AlertPopover from 'container/AlertHistory/AlertPopover/AlertPopover';
-import { timelineData } from 'container/AlertHistory/Statistics/mocks';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
+import { useTimelineTable } from 'pages/AlertDetails/hooks';
+import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
-interface DataType {
-	state: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	labels: Record<string, any>;
-	value: number;
-	unixMilli: string;
-}
-
-const columns: ColumnsType<DataType> = [
+const columns: ColumnsType<AlertRuleTimelineTableResponse> = [
 	{
 		title: 'STATE',
 		dataIndex: 'state',
@@ -59,22 +52,12 @@ const columns: ColumnsType<DataType> = [
 	},
 ];
 
-const showPaginationItem = (total: number, range: number[]): JSX.Element => (
-	<>
-		<Typography.Text className="numbers">
-			{range[0]} &#8212; {range[1]}
-		</Typography.Text>
-		<Typography.Text className="total"> of {total}</Typography.Text>
-	</>
-);
+type TimelineTableProps = {
+	timelineData: AlertRuleTimelineTableResponse[];
+};
 
-function TimelineTable(): JSX.Element {
-	const paginationConfig = timelineData.length > 20 && {
-		pageSize: 20,
-		showTotal: showPaginationItem,
-		showSizeChanger: false,
-		hideOnSinglePage: true,
-	};
+function TimelineTable({ timelineData }: TimelineTableProps): JSX.Element {
+	const { paginationConfig, onChangeHandler } = useTimelineTable();
 	return (
 		<div className="timeline-table">
 			<Table
@@ -82,6 +65,8 @@ function TimelineTable(): JSX.Element {
 				dataSource={timelineData}
 				pagination={paginationConfig}
 				size="middle"
+				onChange={onChangeHandler}
+				// TODO(shaheer): get total entries when we get an API for it
 			/>
 		</div>
 	);

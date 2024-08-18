@@ -65,7 +65,7 @@ export const getDurationFromNow = (epochTimestamp: number): string => {
  * @returns {string} - The formatted date and time string in the format "MMM D, YYYY ⎯ HH:MM:SS".
  */
 export function formatEpochTimestamp(epoch: number): string {
-	const date = new Date(epoch * 1000);
+	const date = new Date(epoch);
 
 	const optionsDate: Intl.DateTimeFormatOptions = {
 		month: 'short',
