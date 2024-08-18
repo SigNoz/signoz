@@ -1,4 +1,4 @@
-package alertManager
+package alertmanager
 
 import (
 	"bytes"

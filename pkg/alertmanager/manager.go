@@ -1,4 +1,4 @@
-package alertManager
+package alertmanager
 
 // Wrapper to connect and process alert manager functions
 import (

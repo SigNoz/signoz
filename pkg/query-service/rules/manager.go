@@ -21,7 +21,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	// opentracing "github.com/opentracing/opentracing-go"
-	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	am "go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
