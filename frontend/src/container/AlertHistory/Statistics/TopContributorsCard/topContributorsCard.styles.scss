@@ -47,7 +47,11 @@
 		}
 		.contributors-row {
 			background: var(--bg-ink-500);
+
 			td {
+				border: none !important;
+			}
+			&:not(:last-of-type) td {
 				border-bottom: 1px solid var(--bg-slate-500) !important;
 			}
 		}
