@@ -5,7 +5,14 @@ function PaginationInfoText(
 	[start, end]: number[],
 ): JSX.Element {
 	return (
-		<span style={{ position: 'absolute', left: 0, width: 'max-content' }}>
+		<span
+			style={{
+				position: 'absolute',
+				left: 0,
+				width: 'max-content',
+				marginLeft: '16px',
+			}}
+		>
 			<Typography.Text className="numbers">
 				{start} &#8212; {end}
 			</Typography.Text>

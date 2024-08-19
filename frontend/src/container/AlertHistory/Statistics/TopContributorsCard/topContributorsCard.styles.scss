@@ -1,5 +1,9 @@
 .top-contributors-card {
 	width: 56.6%;
+
+	&--view-all {
+		width: auto;
+	}
 	&__header {
 		display: flex;
 		align-items: center;
@@ -19,6 +23,7 @@
 			display: flex;
 			align-items: center;
 			gap: 4px;
+			cursor: pointer;
 
 			.label {
 				color: var(--text-vanilla-400);
@@ -32,36 +37,30 @@
 		}
 	}
 	&__content {
+		.ant-table {
+			&-row {
+				cursor: pointer;
+			}
+			&-cell {
+				padding: 12px !important;
+			}
+		}
 		.contributors-row {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			padding: 16px 12px;
-			&:hover {
-				background: rgba(171, 189, 255, 0.04);
+			background: var(--bg-ink-500);
+			td {
+				border-bottom: 1px solid var(--bg-slate-500) !important;
 			}
-			cursor: pointer;
-			&:not(:last-of-type) {
-				border-bottom: 1px solid var(--bg-slate-500);
-			}
-
-			.labels-wrapper {
-				width: 50%;
-			}
-			.contribution-progress-bar {
-				width: 40%;
-			}
-			.total-contribution {
-				color: var(--text-robin-500);
-				font-family: 'Geist Mono';
-				font-size: 12px;
-				font-weight: 500;
-				letter-spacing: -0.06px;
-				padding: 4px 8px;
-				background: rgba(78, 116, 248, 0.1);
-				border-radius: 50px;
-				width: max-content;
-			}
+		}
+		.total-contribution {
+			color: var(--text-robin-500);
+			font-family: 'Geist Mono';
+			font-size: 12px;
+			font-weight: 500;
+			letter-spacing: -0.06px;
+			padding: 4px 8px;
+			background: rgba(78, 116, 248, 0.1);
+			border-radius: 50px;
+			width: max-content;
 		}
 	}
 	.empty-content {
@@ -132,4 +131,8 @@
 			display: flex;
 		}
 	}
+}
+
+.view-all-drawer {
+	border-radius: 4px;
 }
