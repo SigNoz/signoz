@@ -1,4 +1,5 @@
 import { AlertRuleStats } from 'types/api/alerts/def';
+import { formatTime } from 'utils/timeUtils';
 
 import StatsCard from '../StatsCard/StatsCard';
 
@@ -13,6 +14,7 @@ function AverageResolutionCard({
 }: TotalTriggeredCardProps): JSX.Element {
 	return (
 		<StatsCard
+			displayValue={formatTime(currentAvgResolutionTime)}
 			totalCurrentCount={currentAvgResolutionTime}
 			totalPastCount={pastAvgResolutionTime}
 			title="Avg. Resolution Time"

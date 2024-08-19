@@ -44,9 +44,11 @@ type StatsCardProps = {
 	title: string;
 	isEmpty?: boolean;
 	emptyMessage?: string;
+	displayValue?: string | number;
 };
 
 function StatsCard({
+	displayValue,
 	totalCurrentCount,
 	totalPastCount,
 	title,
@@ -76,7 +78,7 @@ function StatsCard({
 
 			<div className="stats-card__stats">
 				<div className="count-label">
-					{isEmpty ? emptyMessage : totalCurrentCount}
+					{isEmpty ? emptyMessage : displayValue ?? totalCurrentCount}
 				</div>
 
 				<ChangePercentage
@@ -102,6 +104,7 @@ StatsCard.defaultProps = {
 	totalPastCount: 0,
 	isEmpty: false,
 	emptyMessage: 'No Data',
+	displayValue: '',
 };
 
 export default StatsCard;
