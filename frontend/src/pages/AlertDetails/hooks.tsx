@@ -1,4 +1,3 @@
-import { Typography } from 'antd';
 import { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { TablePaginationConfig, TableProps } from 'antd/lib';
 import get from 'api/alerts/get';
@@ -17,6 +16,7 @@ import history from 'lib/history';
 import { History, Table } from 'lucide-react';
 import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
+import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
 import { useCallback, useMemo } from 'react';
 import { useQuery, UseQueryResult } from 'react-query';
 import { generatePath, useLocation } from 'react-router-dom';
@@ -257,15 +257,6 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 	return { isLoading, isRefetching, isError, data, isValidRuleId, ruleId };
 };
 
-const showPaginationItem = (total: number, range: number[]): JSX.Element => (
-	<>
-		<Typography.Text className="numbers">
-			{range[0]} &#8212; {range[1]}
-		</Typography.Text>
-		<Typography.Text className="total"> of {total}</Typography.Text>
-	</>
-);
-
 export const useTimelineTable = (): {
 	paginationConfig: TablePaginationConfig;
 	onChangeHandler: (
@@ -313,7 +304,7 @@ export const useTimelineTable = (): {
 
 	const paginationConfig = {
 		pageSize: TIMELINE_TABLE_PAGE_SIZE,
-		showTotal: showPaginationItem,
+		showTotal: PaginationInfoText,
 		current: parseInt(updatedOffset, 10) / TIMELINE_TABLE_PAGE_SIZE + 1,
 		showSizeChanger: false,
 		hideOnSinglePage: true,
