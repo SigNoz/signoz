@@ -211,7 +211,14 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
 	const { isLoading, isRefetching, isError, data } = useQuery(
-		['ruleIdTimelineTable', ruleId, startTime, endTime, timelineFilter],
+		[
+			'ruleIdTimelineTable',
+			ruleId,
+			startTime,
+			endTime,
+			timelineFilter,
+			updatedOrder,
+		],
 		{
 			queryFn: () =>
 				timelineTable({

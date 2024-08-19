@@ -36,6 +36,7 @@ export const timelineTableColumns = (
 	{
 		title: 'STATE',
 		dataIndex: 'state',
+		sorter: true,
 		render: (value): JSX.Element => (
 			<AlertPopover>
 				<div className="alert-rule-state">
