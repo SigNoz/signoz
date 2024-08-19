@@ -78,7 +78,7 @@ function StatsCard({
 
 			<div className="stats-card__stats">
 				<div className="count-label">
-					{isEmpty ? emptyMessage : displayValue ?? totalCurrentCount}
+					{isEmpty ? emptyMessage : displayValue || totalCurrentCount}
 				</div>
 
 				<ChangePercentage

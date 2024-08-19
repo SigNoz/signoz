@@ -111,3 +111,6 @@ export function formatTime(seconds: number): string {
 
 	return `${seconds.toFixed(1)}s`;
 }
+
+export const nanoToMilli = (nanoseconds: number): number =>
+	nanoseconds / 1_000_000;

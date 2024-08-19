@@ -5,6 +5,7 @@ import ruleStats from 'api/alerts/ruleStats';
 import timelineTable from 'api/alerts/timelineTable';
 import topContributors from 'api/alerts/topContributors';
 import { TabRoutes } from 'components/RouteTab/types';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
@@ -12,12 +13,13 @@ import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
 import { urlKey } from 'container/AllError/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
+import GetMinMax from 'lib/getMinMax';
 import history from 'lib/history';
 import { History, Table } from 'lucide-react';
 import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery, UseQueryResult } from 'react-query';
 import { generatePath, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -27,6 +29,7 @@ import {
 	AlertRuleTimelineTableResponsePayload,
 	AlertRuleTopContributorsPayload,
 } from 'types/api/alerts/def';
+import { nanoToMilli } from 'utils/timeUtils';
 
 export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 	const urlQuery = useUrlQuery();
@@ -311,4 +314,30 @@ export const useTimelineTable = (): {
 	};
 
 	return { paginationConfig, onChangeHandler };
+};
+
+export const useSetStartAndEndTimeFromRelativeTime = (): void => {
+	const { pathname, search } = useLocation();
+	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
+
+	const relativeTime = useMemo(
+		() => searchParams.get(QueryParams.relativeTime),
+		[searchParams],
+	);
+
+	useEffect(() => {
+		if (!relativeTime || pathname !== ROUTES.ALERT_HISTORY) {
+			return;
+		}
+
+		console.log('it works', pathname, ROUTES.ALERT_HISTORY);
+
+		const { minTime, maxTime } = GetMinMax(relativeTime);
+
+		searchParams.set(QueryParams.startTime, nanoToMilli(minTime).toString());
+		searchParams.set(QueryParams.endTime, nanoToMilli(maxTime).toString());
+
+		history.push({ search: searchParams.toString() });
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [relativeTime]);
 };
