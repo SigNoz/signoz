@@ -4,13 +4,13 @@ import { Popover } from 'antd';
 
 type SeeMoreProps = {
 	children: JSX.Element[];
-	initialCount: number;
+	initialCount?: number;
 	moreLabel: string;
 };
 
 function SeeMore({
 	children,
-	initialCount,
+	initialCount = 2,
 	moreLabel,
 }: SeeMoreProps): JSX.Element {
 	const remainingCount = children.length - initialCount;
@@ -37,5 +37,9 @@ function SeeMore({
 		</>
 	);
 }
+
+SeeMore.defaultProps = {
+	initialCount: 2,
+};
 
 export default SeeMore;
