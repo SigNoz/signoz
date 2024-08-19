@@ -46,6 +46,7 @@ export default function AlertState({
 			label = <span style={{ color: 'var(--bg-cherry-500)' }}>Firing</span>;
 			break;
 		case 'resolved':
+		case 'normal':
 			icon = (
 				<CircleCheck
 					size={18}
