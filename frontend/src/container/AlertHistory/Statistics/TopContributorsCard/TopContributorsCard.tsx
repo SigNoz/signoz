@@ -1,8 +1,10 @@
 import './topContributorsCard.styles.scss';
 
 import { Button } from 'antd';
+import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import TopContributorsContent from './TopContributorsContent';
 import { TopContributorsCardProps } from './types';
@@ -12,9 +14,32 @@ function TopContributorsCard({
 	topContributorsData,
 	totalCurrentTriggers,
 }: TopContributorsCardProps): JSX.Element {
-	const [isViewAllVisible, setIsViewAllVisible] = useState(false);
+	const { search } = useLocation();
+	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
+
+	const viewAllTopContributorsParam = searchParams.get('viewAllTopContributors');
+
+	const [isViewAllVisible, setIsViewAllVisible] = useState(
+		!!viewAllTopContributorsParam ?? false,
+	);
+
+	const toggleViewAllParam = (isOpen: boolean): void => {
+		if (isOpen) {
+			searchParams.set('viewAllTopContributors', 'true');
+		} else {
+			searchParams.delete('viewAllTopContributors');
+		}
+	};
+
 	const toggleViewAllDrawer = (): void => {
-		setIsViewAllVisible((prev) => !prev);
+		setIsViewAllVisible((prev) => {
+			const newState = !prev;
+
+			toggleViewAllParam(newState);
+
+			return newState;
+		});
+		history.push({ search: searchParams.toString() });
 	};
 
 	return (
