@@ -212,6 +212,7 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 	const timelineFilter = params.get('timelineFilter');
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+	const hasStartAndEnd = startTime !== null && endTime !== null;
 
 	const { isLoading, isRefetching, isError, data } = useQuery(
 		[
@@ -251,7 +252,7 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 						  }
 						: {}),
 				}),
-			enabled: isValidRuleId,
+			enabled: isValidRuleId && hasStartAndEnd,
 			refetchOnMount: false,
 			refetchOnWindowFocus: false,
 		},
@@ -329,8 +330,6 @@ export const useSetStartAndEndTimeFromRelativeTime = (): void => {
 		if (!relativeTime || pathname !== ROUTES.ALERT_HISTORY) {
 			return;
 		}
-
-		console.log('it works', pathname, ROUTES.ALERT_HISTORY);
 
 		const { minTime, maxTime } = GetMinMax(relativeTime);
 
