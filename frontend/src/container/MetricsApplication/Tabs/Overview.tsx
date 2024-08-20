@@ -185,7 +185,7 @@ function Application(): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
+			history.push(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
