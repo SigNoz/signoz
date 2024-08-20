@@ -46,6 +46,9 @@ export function getQueryStats(props: GetQueryStatsProps): void {
 			setData(event?.data);
 		}
 	});
+	socket.onerror = (event): void => {
+		console.log('form', event);
+	};
 	socket.addEventListener('error', (event) => {
 		console.error(event);
 	});

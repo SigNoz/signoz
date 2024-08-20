@@ -9,7 +9,6 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"net/url"
 	"regexp"
 	"slices"
 	"strconv"
@@ -216,22 +215,24 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	aH.Upgrader = &websocket.Upgrader{
 		// Same-origin check is the server's responsibility in websocket spec.
 		CheckOrigin: func(r *http.Request) bool {
-			// Based on the default CheckOrigin implementation in websocket package.
-			originHeader := r.Header.Get("Origin")
-			if len(originHeader) < 1 {
-				return false
-			}
-			origin, err := url.Parse(originHeader)
-			if err != nil {
-				return false
-			}
 
-			// Allow cross origin websocket connections on localhost
-			if strings.HasPrefix(origin.Host, "localhost") {
-				return true
-			}
+			return true
+			// // Based on the default CheckOrigin implementation in websocket package.
+			// originHeader := r.Header.Get("Origin")
+			// if len(originHeader) < 1 {
+			// 	return false
+			// }
+			// origin, err := url.Parse(originHeader)
+			// if err != nil {
+			// 	return false
+			// }
 
-			return origin.Host == r.Host
+			// // Allow cross origin websocket connections on localhost
+			// if strings.HasPrefix(origin.Host, "localhost") {
+			// 	return true
+			// }
+
+			// return origin.Host == r.Host
 		},
 	}
 
