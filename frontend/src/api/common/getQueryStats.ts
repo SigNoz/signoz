@@ -46,12 +46,11 @@ export function getQueryStats(props: GetQueryStatsProps): void {
 			setData(event?.data);
 		}
 	});
-	socket.onerror = (event): void => {
-		console.log('form', event);
-	};
+
 	socket.addEventListener('error', (event) => {
 		console.error(event);
 	});
+
 	socket.addEventListener('close', (event) => {
 		// 1000 is a normal closure status code
 		if (event.code !== 1000) {
