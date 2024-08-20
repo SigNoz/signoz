@@ -71,9 +71,9 @@
 		}
 	}
 
-	.messaging-queue-content {
+	.messaging-queue-main-graph {
 		display: flex;
-		margin: 24px 16px 10px 16px;
+		padding: 24px 16px;
 		flex-direction: column;
 		gap: 16px;
 
@@ -99,6 +99,38 @@
 		.mq-graph {
 			height: 420px;
 			padding: 24px 24px 0 24px;
+		}
+
+		border-bottom: 1px solid var(--bg-slate-500);
+	}
+
+	.messaging-queue-details {
+		display: flex;
+		padding: 16px;
+
+		.mq-details-options {
+			letter-spacing: -0.06px;
+			.ant-radio-button-wrapper {
+				border-color: var(--bg-slate-400);
+				color: var(--bg-vanilla-400);
+			}
+			.ant-radio-button-wrapper-checked {
+				background: var(--bg-slate-400);
+				color: var(--bg-vanilla-100);
+			}
+			.ant-radio-button-wrapper-disabled {
+				background: var(--bg-ink-400);
+				color: var(--bg-slate-200);
+			}
+			.ant-radio-button-wrapper::before {
+				width: 0px;
+			}
+
+			.disabled-option {
+				.coming-soon {
+					margin-left: 8px;
+				}
+			}
 		}
 	}
 }

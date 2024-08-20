@@ -1,0 +1,31 @@
+.mq-tables-container {
+	.mq-table-title {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding-bottom: 16px;
+
+		color: var(--bg-vanilla-100);
+		font-family: Inter;
+		font-size: 18px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 28px;
+		letter-spacing: -0.09px;
+
+		.mq-table-subtitle {
+			color: var(--bg-vanilla-400);
+			font-size: 14px;
+		}
+	}
+
+	.mq-table {
+		width: 100%;
+
+		.ant-table-tbody {
+			.ant-table-cell {
+				max-width: 250px;
+			}
+		}
+	}
+}

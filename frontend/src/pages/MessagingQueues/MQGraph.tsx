@@ -125,7 +125,7 @@ const currentWidget = {
 	softMin: 0,
 	thresholds: [],
 	timePreferance: 'GLOBAL_TIME',
-	title: 'Title-dashboard',
+	title: 'Consumer Lag',
 	yAxisUnit: 'none',
 };
 

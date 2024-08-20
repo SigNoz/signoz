@@ -5,6 +5,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { ListMinus, Undo } from 'lucide-react';
 
 import MessagingQueuesConfigOptions from './MQConfigOptions';
+import MessagingQueuesDetails from './MQDetails/MQDetails';
 import MessagingQueuesGraph from './MQGraph';
 
 function MessagingQueues(): JSX.Element {
@@ -34,9 +35,12 @@ function MessagingQueues(): JSX.Element {
 					</Button>
 				</div>
 			</div>
-			<div className="messaging-queue-content">
+			<div className="messaging-queue-main-graph">
 				<MessagingQueuesConfigOptions />
 				<MessagingQueuesGraph />
+			</div>
+			<div className="messaging-queue-details">
+				<MessagingQueuesDetails />
 			</div>
 		</div>
 	);
