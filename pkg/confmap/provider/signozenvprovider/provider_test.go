@@ -19,11 +19,13 @@ func TestValidateProviderScheme(t *testing.T) {
 }
 
 func TestRetrieve(t *testing.T) {
-	t.Setenv("SIGNOZ_STORAGE_DSN", "localhost:9000")
-	t.Setenv("SIGNOZ_SIGNOZ_ENABLED", "true")
+	t.Setenv("SIGNOZ__STORAGE__DSN", "localhost:9000")
+	t.Setenv("SIGNOZ__SIGNOZ_ENABLED", "true")
+	t.Setenv("SIGNOZ__INSTRUMENTATION__LOGS__ENABLED", "true")
 	expected := confmap.NewFromStringMap(map[string]any{
-		"storage::dsn":    "localhost:9000",
-		"signoz::enabled": "true",
+		"storage::dsn":                   "localhost:9000",
+		"signoz_enabled":                 "true",
+		"instrumentation::logs::enabled": "true",
 	})
 
 	signoz := createProvider()

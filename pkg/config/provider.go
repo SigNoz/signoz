@@ -26,8 +26,8 @@ type ProviderSettings struct {
 // NewProvider returns a new Provider that provides the entire configuration.
 // See https://github.com/open-telemetry/opentelemetry-collector/blob/main/otelcol/configprovider.go for
 // more details
-func NewProvider(set ProviderSettings) (Provider, error) {
-	resolver, err := confmap.NewResolver(set.ResolverSettings)
+func NewProvider(settings ProviderSettings) (Provider, error) {
+	resolver, err := confmap.NewResolver(settings.ResolverSettings)
 	if err != nil {
 		return nil, err
 	}
@@ -40,12 +40,12 @@ func NewProvider(set ProviderSettings) (Provider, error) {
 func (provider *provider) Get(ctx context.Context) (*Config, error) {
 	conf, err := provider.resolver.Resolve(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("cannot resolve the configuration: %w", err)
+		return nil, fmt.Errorf("cannot resolve configuration: %w", err)
 	}
 
 	config, err := unmarshal(conf)
 	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal the configuration: %w", err)
+		return nil, fmt.Errorf("cannot unmarshal configuration: %w", err)
 	}
 
 	return config, nil

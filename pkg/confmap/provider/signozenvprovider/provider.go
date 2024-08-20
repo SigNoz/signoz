@@ -14,9 +14,11 @@ import (
 )
 
 const (
-	schemeName     string = "signozenv"
-	envPrefix      string = "signoz"
-	envRegexString string = `^[a-zA-Z][a-zA-Z0-9_]*$`
+	schemeName                string = "signozenv"
+	envPrefix                 string = "signoz"
+	separator                 string = "__"
+	envPrefixWithOneSeparator string = "signoz_"
+	envRegexString            string = `^[a-zA-Z][a-zA-Z0-9_]*$`
 )
 
 var (
@@ -28,7 +30,8 @@ type provider struct {
 }
 
 // NewFactory returns a factory for a confmap.Provider that reads the configuration from the environment.
-// All variables starting with `SIGNOZ_` are read from the environment.
+// All variables starting with `SIGNOZ__` are read from the environment.
+// The separator is `__` (2 underscores) in order to incorporate env variables having keys with a single `_`
 func NewFactory() confmap.ProviderFactory {
 	return confmap.NewProviderFactory(newProvider)
 }
@@ -58,9 +61,9 @@ func (provider *provider) Retrieve(_ context.Context, uri string, _ confmap.Watc
 		key := strings.ToLower(parts[0])
 		val := parts[1]
 
-		if strings.HasPrefix(key, envPrefix) {
+		if strings.HasPrefix(key, envPrefixWithOneSeparator) {
 			// Remove the envPrefix from the key
-			key = strings.Replace(key, envPrefix+"_", "", 1)
+			key = strings.Replace(key, envPrefix+separator, "", 1)
 
 			// Check whether the resulting key matches with the regex
 			if !envRegex.MatchString(key) {
@@ -69,7 +72,7 @@ func (provider *provider) Retrieve(_ context.Context, uri string, _ confmap.Watc
 			}
 
 			// Convert key into yaml format
-			key = strings.ToLower(strings.ReplaceAll(key, "_", "::"))
+			key = strings.ToLower(strings.ReplaceAll(key, separator, confmap.KeyDelimiter))
 			m[key] = val
 		}
 	}
