@@ -240,8 +240,8 @@ github.com/go-sql-driver/mysql v1.8.1/go.mod h1:wEBSXgmK//2ZFJyE+qWnIsVGmvmEKlqw
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
 github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0/go.mod h1:fyg7847qk6SyHyPtNmDHnmrv/HOrqktSC+C9fM+CJOE=
 github.com/go-test/deep v1.0.2-0.20181118220953-042da051cf31/go.mod h1:wGDj63lr65AM2AQyKZd/NYHGb0R+1RLqB8NKt3aSFNA=
-github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1 h1:TQcrn6Wq+sKGkpyPvppOz99zsMBaUOKXq6HSv655U1c=
-github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1/go.mod h1:oJDH3BJKyqBA2TXFhDsKDGDTlndYOZ6rGS0BRZIxGhM=
+github.com/go-viper/mapstructure/v2 v2.0.0 h1:dhn8MZ1gZ0mzeodTG3jt5Vj/o87xZKuNAprG2mQfMfc=
+github.com/go-viper/mapstructure/v2 v2.0.0/go.mod h1:oJDH3BJKyqBA2TXFhDsKDGDTlndYOZ6rGS0BRZIxGhM=
 github.com/go-zookeeper/zk v1.0.3 h1:7M2kwOsc//9VeeFiPtf+uSJlVpU66x9Ba5+8XK7/TDg=
 github.com/go-zookeeper/zk v1.0.3/go.mod h1:nOB03cncLtlp4t+UAkGSV+9beXP/akpekBwL+UX1Qcw=
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
@@ -782,8 +782,8 @@ go.opentelemetry.io/collector/config/confignet v0.102.1 h1:nSiAFQMzNCO4sDBztUxY7
 go.opentelemetry.io/collector/config/confignet v0.102.1/go.mod h1:pfOrCTfSZEB6H2rKtx41/3RN4dKs+X2EKQbw3MGRh0E=
 go.opentelemetry.io/collector/config/configtelemetry v0.102.1 h1:f/CYcrOkaHd+COIJ2lWnEgBCHfhEycpbow4ZhrGwAlA=
 go.opentelemetry.io/collector/config/configtelemetry v0.102.1/go.mod h1:WxWKNVAQJg/Io1nA3xLgn/DWLE/W1QOB2+/Js3ACi40=
-go.opentelemetry.io/collector/confmap v0.102.1 h1:wZuH+d/P11Suz8wbp+xQCJ0BPE9m5pybtUe74c+rU7E=
-go.opentelemetry.io/collector/confmap v0.102.1/go.mod h1:KgpS7UxH5rkd69CzAzlY2I1heH8Z7eNCZlHmwQBMxNg=
+go.opentelemetry.io/collector/confmap v0.107.0 h1:M2o7jvQM9bnMU3pE2N6BK4KHYtSnvsSZkegUD89y8BU=
+go.opentelemetry.io/collector/confmap v0.107.0/go.mod h1:9Fs/ZEIeiMa38VqkqIpn+JKQkcPf/lhAKA9fHu6c9GY=
 go.opentelemetry.io/collector/confmap/converter/expandconverter v0.102.0 h1:8Ne/oL6M4kMWK0P3FKV9EduQa+1UOGyVAnFHfSo4c1A=
 go.opentelemetry.io/collector/confmap/converter/expandconverter v0.102.0/go.mod h1:Xj4Ld/RriP/Bj+5oPpaYJsLNs2wWRDN2TvzX3Lbi6+M=
 go.opentelemetry.io/collector/confmap/provider/envprovider v0.102.0 h1:o1iKqN+oM+TZqHoGdnKw1Am2BQlIGCYbxCRzU8T3jbM=
@@ -806,8 +806,10 @@ go.opentelemetry.io/collector/extension v0.102.1 h1:gAvE3w15q+Vv0Tj100jzcDpeMTyc
 go.opentelemetry.io/collector/extension v0.102.1/go.mod h1:XBxUOXjZpwYLZYOK5u3GWlbBTOKmzStY5eU1R/aXkIo=
 go.opentelemetry.io/collector/extension/zpagesextension v0.102.0 h1:BPq98py8nwzaV7KAsxt4ZZAF9LiSRu7ZjHNGavFNyKo=
 go.opentelemetry.io/collector/extension/zpagesextension v0.102.0/go.mod h1:P86HW3x3epDS5F4yP0gAvsZiw4xxP1OupTEx2o6UqjY=
-go.opentelemetry.io/collector/featuregate v1.9.0 h1:mC4/HnR5cx/kkG1RKOQAvHxxg5Ktmd9gpFdttPEXQtA=
-go.opentelemetry.io/collector/featuregate v1.9.0/go.mod h1:PsOINaGgTiFc+Tzu2K/X2jP+Ngmlp7YKGV1XrnBkH7U=
+go.opentelemetry.io/collector/featuregate v1.13.0 h1:rc84eCf5hesXQ8/bP6Zc15wqthbomfLBHmox5tT7AwM=
+go.opentelemetry.io/collector/featuregate v1.13.0/go.mod h1:PsOINaGgTiFc+Tzu2K/X2jP+Ngmlp7YKGV1XrnBkH7U=
+go.opentelemetry.io/collector/internal/globalgates v0.107.0 h1:PaD6WgQg80YTVxg8OF+YEqgI7WRd13wMu/R6GIG7uNU=
+go.opentelemetry.io/collector/internal/globalgates v0.107.0/go.mod h1:hca7Tpzu6JmBrAOgmlyp/ZM6kxprPRMKqSYoq/Tdzjw=
 go.opentelemetry.io/collector/otelcol v0.102.0 h1:HuE+ok4iUjOrmYhQBSWpG5kBTVhcA24ljPL4pBERZ5E=
 go.opentelemetry.io/collector/otelcol v0.102.0/go.mod h1:w8pCRu2nM/jAkLlEAS6ccKtJv5ylUQe6Ugl98zzTfyE=
 go.opentelemetry.io/collector/pdata v1.9.0 h1:qyXe3HEVYYxerIYu0rzgo1Tx2d1Zs6iF+TCckbHLFOw=
