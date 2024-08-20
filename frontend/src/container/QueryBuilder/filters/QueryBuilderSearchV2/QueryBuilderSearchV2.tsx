@@ -57,7 +57,7 @@ import { selectStyle } from '../QueryBuilderSearch/config';
 import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
 import { TypographyText } from '../QueryBuilderSearch/style';
 import { getTagToken, isInNInOperator } from '../QueryBuilderSearch/utils';
-import CustomDropdown from './CustomDropdown';
+import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
 import Suggestions from './Suggestions';
 
 export interface ITag {
@@ -295,9 +295,7 @@ function QueryBuilderSearchV2(
 				}));
 				setCurrentState(DropdownState.OPERATOR);
 				setSearchValue((parsedValue as BaseAutocompleteData)?.key);
-			}
-
-			if (currentState === DropdownState.OPERATOR) {
+			} else if (currentState === DropdownState.OPERATOR) {
 				if (value === OPERATORS.EXISTS || value === OPERATORS.NOT_EXISTS) {
 					setTags((prev) => [
 						...prev,
@@ -319,9 +317,7 @@ function QueryBuilderSearchV2(
 					setCurrentState(DropdownState.ATTRIBUTE_VALUE);
 					setSearchValue(`${currentFilterItem?.key?.key} ${value}`);
 				}
-			}
-
-			if (currentState === DropdownState.ATTRIBUTE_VALUE) {
+			} else if (currentState === DropdownState.ATTRIBUTE_VALUE) {
 				const operatorType =
 					operatorTypeMapper[currentFilterItem?.op || ''] || 'NOT_VALID';
 				const isMulti = operatorType === QUERY_BUILDER_SEARCH_VALUES.MULTIPLY;
@@ -748,25 +744,27 @@ function QueryBuilderSearchV2(
 		const isDisabled = !!searchValue;
 
 		return (
-			<Tag
-				closable={!searchValue && closable}
-				onClose={onCloseHandler}
-				className={tagDetails?.key?.type || ''}
-			>
-				<Tooltip title={chipValue}>
-					<TypographyText
-						ellipsis
-						$isInNin={isInNin}
-						disabled={isDisabled}
-						$isEnabled={!!searchValue}
-						onClick={(): void => {
-							if (!isDisabled) tagEditHandler(value);
-						}}
-					>
-						{chipValue}
-					</TypographyText>
-				</Tooltip>
-			</Tag>
+			<span className="qb-search-bar-tokenised-tags">
+				<Tag
+					closable={!searchValue && closable}
+					onClose={onCloseHandler}
+					className={tagDetails?.key?.type || ''}
+				>
+					<Tooltip title={chipValue}>
+						<TypographyText
+							ellipsis
+							$isInNin={isInNin}
+							disabled={isDisabled}
+							$isEnabled={!!searchValue}
+							onClick={(): void => {
+								if (!isDisabled) tagEditHandler(value);
+							}}
+						>
+							{chipValue}
+						</TypographyText>
+					</Tooltip>
+				</Tag>
+			</span>
 		);
 	};
 
@@ -815,7 +813,7 @@ function QueryBuilderSearchV2(
 				onBlur={handleOnBlur}
 				// eslint-disable-next-line react/no-unstable-nested-components
 				dropdownRender={(menu): ReactElement => (
-					<CustomDropdown
+					<QueryBuilderSearchDropdown
 						menu={menu}
 						options={dropdownOptions}
 						onChange={(val: TagFilter): void => {
@@ -828,20 +826,27 @@ function QueryBuilderSearchV2(
 					/>
 				)}
 			>
-				{dropdownOptions.map((option) => (
-					<Select.Option
-						key={isObject(option.value) ? JSON.stringify(option.value) : option.value}
-						value={
-							isObject(option.value) ? JSON.stringify(option.value) : option.value
+				{dropdownOptions.map((option) => {
+					let val = option.value;
+					try {
+						if (isObject(option.value)) {
+							val = JSON.stringify(option.value);
+						} else {
+							val = option.value;
 						}
-					>
-						<Suggestions
-							label={option.label}
-							value={option.value}
-							option={currentState}
-						/>
-					</Select.Option>
-				))}
+					} catch {
+						val = option.value;
+					}
+					return (
+						<Select.Option key={isObject(val) ? `select-option` : val} value={val}>
+							<Suggestions
+								label={option.label}
+								value={option.value}
+								option={currentState}
+							/>
+						</Select.Option>
+					);
+				})}
 			</Select>
 		</div>
 	);

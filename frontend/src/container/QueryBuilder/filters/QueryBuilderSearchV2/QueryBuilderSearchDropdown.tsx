@@ -25,7 +25,7 @@ interface ICustomDropdownProps {
 	currentFilterItem?: ITag;
 }
 
-export default function CustomDropdown(
+export default function QueryBuilderSearchDropdown(
 	props: ICustomDropdownProps,
 ): React.ReactElement {
 	const {
@@ -39,7 +39,7 @@ export default function CustomDropdown(
 	} = props;
 	const userOs = getUserOperatingSystem();
 	return (
-		<div>
+		<>
 			<div className="content">
 				{!currentFilterItem?.key ? (
 					<div className="suggested-filters">Suggested Filters</div>
@@ -103,10 +103,10 @@ export default function CustomDropdown(
 					</section>
 				)}
 			</div>
-		</div>
+		</>
 	);
 }
 
-CustomDropdown.defaultProps = {
+QueryBuilderSearchDropdown.defaultProps = {
 	currentFilterItem: undefined,
 };
