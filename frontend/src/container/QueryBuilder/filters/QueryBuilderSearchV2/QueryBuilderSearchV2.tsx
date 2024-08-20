@@ -56,7 +56,11 @@ import { v4 as uuid } from 'uuid';
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
 import { TypographyText } from '../QueryBuilderSearch/style';
-import { getTagToken, isInNInOperator } from '../QueryBuilderSearch/utils';
+import {
+	checkCommaInValue,
+	getTagToken,
+	isInNInOperator,
+} from '../QueryBuilderSearch/utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
 import Suggestions from './Suggestions';
 
@@ -324,6 +328,21 @@ function QueryBuilderSearchV2(
 
 				if (isMulti) {
 					const { tagKey, tagOperator, tagValue } = getTagToken(searchValue);
+					console.log(tagValue, value);
+					if (tagValue.includes(String(value))) {
+						setSearchValue('');
+						setCurrentState(DropdownState.ATTRIBUTE_KEY);
+						setCurrentFilterItem(undefined);
+						setTags((prev) => [
+							...prev,
+							{
+								key: currentFilterItem?.key,
+								op: currentFilterItem?.op,
+								value: tagValue.join(','),
+							} as ITag,
+						]);
+						return;
+					}
 					const newSearch = [...tagValue];
 					newSearch[newSearch.length === 0 ? 0 : newSearch.length - 1] = value;
 					const newSearchValue = newSearch.join(',');
@@ -356,6 +375,7 @@ function QueryBuilderSearchV2(
 				event.stopPropagation();
 				setTags((prev) => prev.slice(0, -1));
 			}
+
 			if ((event.ctrlKey || event.metaKey) && event.key === '/') {
 				event.preventDefault();
 				event.stopPropagation();
@@ -543,7 +563,7 @@ function QueryBuilderSearchV2(
 		} else if (!isEmpty(tagValue)) {
 			const currentValue = {
 				key: currentFilterItem?.key as BaseAutocompleteData,
-				operator: currentFilterItem?.op as string,
+				op: currentFilterItem?.op as string,
 				value: tagValue,
 			};
 			if (!isEqual(currentValue, currentFilterItem)) {
@@ -641,14 +661,14 @@ function QueryBuilderSearchV2(
 
 			setDropdownOptions(
 				values.map((val) => ({
-					label: val,
+					label: checkCommaInValue(String(val)),
 					value: val,
 				})),
 			);
 		}
 	}, [
 		attributeValues?.payload,
-		currentFilterItem?.key.dataType,
+		currentFilterItem?.key?.dataType,
 		currentState,
 		data?.payload?.attributeKeys,
 		isLogsExplorerPage,
@@ -843,6 +863,7 @@ function QueryBuilderSearchV2(
 								label={option.label}
 								value={option.value}
 								option={currentState}
+								searchValue={searchValue}
 							/>
 						</Select.Option>
 					);
