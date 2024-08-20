@@ -13,11 +13,8 @@ export default function AlertState({
 }: AlertStateProps): JSX.Element {
 	let icon;
 	let label;
-	// TODO(shaheer): implement the states UI based on updated designs after the designs are updated
-
 	switch (state) {
 		case 'no-data':
-		case 'pending':
 			icon = (
 				<CircleOff
 					size={18}
@@ -27,9 +24,8 @@ export default function AlertState({
 			);
 			label = <span style={{ color: 'var(--bg-sienna-400)' }}>No Data</span>;
 			break;
-		case 'muted':
+
 		case 'disabled':
-		case 'inactive':
 			icon = (
 				<BellOff
 					size={18}
@@ -45,7 +41,7 @@ export default function AlertState({
 			);
 			label = <span style={{ color: 'var(--bg-cherry-500)' }}>Firing</span>;
 			break;
-		case 'resolved':
+
 		case 'normal':
 			icon = (
 				<CircleCheck

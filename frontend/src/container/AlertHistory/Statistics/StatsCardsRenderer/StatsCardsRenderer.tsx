@@ -12,13 +12,16 @@ const hasTotalTriggeredStats = (
 	totalCurrentTriggers: unknown,
 	totalPastTriggers: unknown,
 ): boolean =>
-	isTypeNotNan(totalCurrentTriggers) || isTypeNotNan(totalPastTriggers);
+	(isTypeNotNan(totalCurrentTriggers) && isTypeNotNan(totalPastTriggers)) ||
+	isTypeNotNan(totalCurrentTriggers);
 
 const hasAvgResolutionTimeStats = (
 	currentAvgResolutionTime: unknown,
 	pastAvgResolutionTime: unknown,
 ): boolean =>
-	isTypeNotNan(currentAvgResolutionTime) || isTypeNotNan(pastAvgResolutionTime);
+	(isTypeNotNan(currentAvgResolutionTime) &&
+		isTypeNotNan(pastAvgResolutionTime)) ||
+	isTypeNotNan(currentAvgResolutionTime);
 
 type StatsCardsRendererProps = {
 	setTotalCurrentTriggers: (value: number) => void;
