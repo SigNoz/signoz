@@ -188,6 +188,7 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 		attributes: {},
 		resources: {},
 		severity_text: logData.severity_text,
+		severity_number: logData.severity_number,
 	};
 
 	Object.keys(logData).forEach((key) => {
@@ -265,4 +266,28 @@ export const removeEscapeCharacters = (str: string): string =>
 
 export function removeExtraSpaces(input: string): string {
 	return input.replace(/\s+/g, ' ').trim();
+}
+
+export function findKeyPath(
+	obj: AnyObject,
+	targetKey: string,
+	currentPath = '',
+): string | null {
+	let finalPath = null;
+	Object.keys(obj).forEach((key) => {
+		const value = obj[key];
+		const newPath = currentPath ? `${currentPath}.${key}` : key;
+
+		if (key === targetKey) {
+			finalPath = newPath;
+		}
+
+		if (typeof value === 'object' && value !== null) {
+			const result = findKeyPath(value, targetKey, newPath);
+			if (result) {
+				finalPath = result;
+			}
+		}
+	});
+	return finalPath;
 }
