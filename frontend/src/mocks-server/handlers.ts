@@ -225,7 +225,7 @@ export const handlers = [
 	rest.get(
 		'http://localhost/api/v1/traces/000000000000000071dc9b0a338729b4',
 		(req, res, ctx) => res(ctx.status(200), ctx.json(traceDetailResponse)),
-  )
+	),
 
 	rest.post('http://localhost/api/v1//channels', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(allAlertChannels)),
