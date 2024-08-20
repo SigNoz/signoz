@@ -400,3 +400,49 @@ export const useAlertRuleStatusToggle = ({
 
 	return { handleAlertStateToggle, isAlertRuleEnabled };
 };
+
+export const useAlertRuleStatusToggle = ({
+	state,
+	ruleId,
+}: {
+	state: string;
+	ruleId: string;
+}): {
+	handleAlertStateToggle: (state: boolean) => void;
+	isAlertRuleEnabled: boolean;
+} => {
+	const { notifications } = useNotifications();
+	const defaultErrorMessage = 'Something went wrong';
+	const isAlertRuleInitiallyEnabled = state !== 'disabled';
+	const [isAlertRuleEnabled, setIsAlertRuleEnabled] = useState(
+		isAlertRuleInitiallyEnabled,
+	);
+
+	const { mutate: toggleAlertState } = useMutation(
+		['toggle-alert-state', ruleId],
+		patchAlert,
+		{
+			onMutate: () => {
+				setIsAlertRuleEnabled((prev) => !prev);
+			},
+			onSuccess: () => {
+				notifications.success({
+					message: 'Success',
+				});
+			},
+			onError: () => {
+				setIsAlertRuleEnabled(isAlertRuleInitiallyEnabled);
+				notifications.error({
+					message: defaultErrorMessage,
+				});
+			},
+		},
+	);
+
+	const handleAlertStateToggle = (state: boolean): void => {
+		const args = { id: parseInt(ruleId, 10), data: { disabled: !state } };
+		toggleAlertState(args);
+	};
+
+	return { handleAlertStateToggle, isAlertRuleEnabled };
+};
