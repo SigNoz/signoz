@@ -131,6 +131,11 @@ export default function DataSource(): JSX.Element {
 	};
 
 	const goToIntegrationsPage = (): void => {
+		logEvent('Onboarding V2: Go to integrations', {
+			module: selectedModule?.id,
+			dataSource: selectedDataSource?.name,
+			framework: selectedFramework,
+		});
 		history.push(ROUTES.INTEGRATIONS);
 	};
 
