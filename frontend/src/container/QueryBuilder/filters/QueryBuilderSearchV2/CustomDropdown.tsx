@@ -1,16 +1,13 @@
 /* eslint-disable no-nested-ternary */
-import { Button, Typography } from 'antd';
+import { Typography } from 'antd';
 import {
 	ArrowDown,
 	ArrowUp,
 	ChevronUp,
 	Command,
 	CornerDownLeft,
-	Filter,
 	Slash,
 } from 'lucide-react';
-import type { BaseSelectRef } from 'rc-select';
-import React, { RefObject } from 'react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
@@ -22,11 +19,9 @@ interface ICustomDropdownProps {
 	menu: React.ReactElement;
 	searchValue: string;
 	tags: ITag[];
-	selectRef: RefObject<BaseSelectRef>;
 	options: Option[];
 	exampleQueries: TagFilter[];
 	onChange: (value: TagFilter) => void;
-	setShowAllFilters: (val: boolean) => void;
 	currentFilterItem?: ITag;
 }
 
@@ -35,12 +30,10 @@ export default function CustomDropdown(
 ): React.ReactElement {
 	const {
 		menu,
-		setShowAllFilters,
 		currentFilterItem,
 		searchValue,
 		tags,
 		exampleQueries,
-		selectRef,
 		options,
 		onChange,
 	} = props;
@@ -86,35 +79,6 @@ export default function CustomDropdown(
 					</div>
 				)}
 			</div>
-			{!currentFilterItem?.key && options.length > 3 && (
-				<Button
-					type="text"
-					className="show-all-filter-props"
-					onClick={(): void => {
-						setShowAllFilters(true);
-						// when clicking on the button the search bar looses the focus
-						selectRef?.current?.focus();
-					}}
-				>
-					<div className="filter">
-						<section className="left-section">
-							<Filter size={14} />
-							<Typography.Text className="text">
-								Show all filters properties
-							</Typography.Text>
-						</section>
-						<section className="right-section">
-							{userOs === UserOperatingSystem.MACOS ? (
-								<Command size={14} className="keyboard-shortcut-slash" />
-							) : (
-								<ChevronUp size={14} className="keyboard-shortcut-slash" />
-							)}
-							+
-							<Slash size={14} className="keyboard-shortcut-slash" />
-						</section>
-					</div>
-				</Button>
-			)}
 
 			<div className="keyboard-shortcuts">
 				<section className="navigate">
@@ -126,6 +90,18 @@ export default function CustomDropdown(
 					<CornerDownLeft size={10} className="icons" />
 					<span className="keyboard-text">to update query</span>
 				</section>
+				{!currentFilterItem?.key && options.length > 3 && (
+					<section className="show-all-filter-items">
+						{userOs === UserOperatingSystem.MACOS ? (
+							<Command size={14} className="icons" />
+						) : (
+							<ChevronUp size={14} className="icons" />
+						)}
+						+
+						<Slash size={14} className="icons" />
+						<span className="keyboard-text">Show all filter items</span>
+					</section>
+				)}
 			</div>
 		</div>
 	);

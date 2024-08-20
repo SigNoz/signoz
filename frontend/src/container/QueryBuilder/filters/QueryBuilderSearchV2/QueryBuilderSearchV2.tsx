@@ -817,7 +817,6 @@ function QueryBuilderSearchV2(
 				dropdownRender={(menu): ReactElement => (
 					<CustomDropdown
 						menu={menu}
-						selectRef={selectRef}
 						options={dropdownOptions}
 						onChange={(val: TagFilter): void => {
 							setTags((prev) => [...prev, ...(val.items as ITag[])]);
@@ -825,7 +824,6 @@ function QueryBuilderSearchV2(
 						searchValue={searchValue}
 						exampleQueries={suggestionsData?.payload?.example_queries || []}
 						tags={tags}
-						setShowAllFilters={setShowAllFilters}
 						currentFilterItem={currentFilterItem}
 					/>
 				)}

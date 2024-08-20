@@ -50,7 +50,7 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 							<Typography.Text className="data-type">{value.dataType}</Typography.Text>
 							<section className={cx('type-tag', value.type)}>
 								<div className="dot" />
-								{value.type}
+								<Typography.Text className="text">{value.type}</Typography.Text>
 							</section>
 						</section>
 					</div>

@@ -64,6 +64,15 @@
 					.dot {
 						background-color: var(--bg-sienna-400);
 					}
+					.text {
+						color: var(--bg-sienna-400);
+						font-family: Inter;
+						font-size: 12px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: 18px; /* 150% */
+						letter-spacing: -0.06px;
+					}
 				}
 
 				&.resource {
@@ -73,6 +82,15 @@
 
 					.dot {
 						background-color: var(--bg-sakura-400);
+					}
+					.text {
+						color: var(--bg-sakura-400);
+						font-family: Inter;
+						font-size: 12px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: 18px; /* 150% */
+						letter-spacing: -0.06px;
 					}
 				}
 			}
