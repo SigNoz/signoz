@@ -23,6 +23,7 @@ function TimelineTable({ timelineData }: TimelineTableProps): JSX.Element {
 	return (
 		<div className="timeline-table">
 			<Table
+				rowKey={(row): string => `${row.fingerprint}-${row.value}`}
 				columns={timelineTableColumns(setSearchText)}
 				dataSource={visibleTimelineData}
 				pagination={paginationConfig}

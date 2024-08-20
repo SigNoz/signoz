@@ -60,6 +60,7 @@ function TopContributorsRows({
 	return (
 		<Table
 			rowClassName="contributors-row"
+			rowKey={(row): string => `top-contributor-${row.fingerprint}`}
 			columns={columns}
 			showHeader={false}
 			dataSource={topContributors}

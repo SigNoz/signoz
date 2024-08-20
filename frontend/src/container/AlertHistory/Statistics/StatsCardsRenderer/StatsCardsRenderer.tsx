@@ -1,5 +1,6 @@
 import { useGetAlertRuleDetailsStats } from 'pages/AlertDetails/hooks';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
+import { useEffect } from 'react';
 
 import AverageResolutionCard from '../AverageResolutionCard/AverageResolutionCard';
 import StatsCard from '../StatsCard/StatsCard';
@@ -36,6 +37,12 @@ function StatsCardsRenderer({
 		ruleId,
 	} = useGetAlertRuleDetailsStats();
 
+	useEffect(() => {
+		if (data?.payload?.data?.totalCurrentTriggers !== undefined) {
+			setTotalCurrentTriggers(data.payload.data.totalCurrentTriggers);
+		}
+	}, [data, setTotalCurrentTriggers]);
+
 	return (
 		<DataStateRenderer
 			isLoading={isLoading}
@@ -50,10 +57,6 @@ function StatsCardsRenderer({
 					totalCurrentTriggers,
 					totalPastTriggers,
 				} = data;
-
-				if (setTotalCurrentTriggers) {
-					setTotalCurrentTriggers(totalCurrentTriggers);
-				}
 
 				return (
 					<>
