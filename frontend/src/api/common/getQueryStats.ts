@@ -15,12 +15,9 @@ interface GetQueryStatsProps {
 
 function getURL(baseURL: string, queryId: string): URL | string {
 	if (baseURL && !isEmpty(baseURL)) {
-		return `${baseURL}/api/v3/query_progress?q=${queryId}`;
+		return `${baseURL}/ws/query_progress?q=${queryId}`;
 	}
-	const url = new URL(
-		`/api/v3/query_progress?q=${queryId}`,
-		window.location.href,
-	);
+	const url = new URL(`/ws/query_progress?q=${queryId}`, window.location.href);
 	url.protocol = 'wss';
 	return url;
 }
