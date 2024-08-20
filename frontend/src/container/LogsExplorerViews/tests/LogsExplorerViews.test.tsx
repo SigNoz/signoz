@@ -46,6 +46,10 @@ jest.mock(
 		},
 );
 
+jest.mock('api/common/getQueryStats', () => ({
+	getQueryStats: jest.fn(),
+}));
+
 jest.mock('constants/panelTypes', () => ({
 	AVAILABLE_EXPORT_PANEL_TYPES: ['graph', 'table'],
 }));
@@ -79,6 +83,9 @@ const renderer = (): RenderResult =>
 								<LogsExplorerViews
 									selectedView={SELECTED_VIEWS.SEARCH}
 									showFrequencyChart
+									setIsLoadingQueries={(): void => {}}
+									listQueryKeyRef={{ current: {} }}
+									chartQueryKeyRef={{ current: {} }}
 								/>
 							</VirtuosoMockContext.Provider>
 						</QueryBuilderProvider>

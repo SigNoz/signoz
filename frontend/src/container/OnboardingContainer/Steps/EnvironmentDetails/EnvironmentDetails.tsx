@@ -39,6 +39,10 @@ const supportedEnvironments: SupportedEnvironmentsProps[] = [
 		name: 'Docker',
 		id: 'docker',
 	},
+	{
+		name: 'Windows',
+		id: 'windows',
+	},
 ];
 
 export default function EnvironmentDetails(): JSX.Element {
@@ -129,6 +133,12 @@ export default function EnvironmentDetails(): JSX.Element {
 					if (
 						selectedModule?.id !== useCases.APM.id &&
 						environment.id === 'docker'
+					) {
+						return null;
+					}
+					if (
+						selectedModule?.id !== useCases.APM.id &&
+						environment.id === 'windows'
 					) {
 						return null;
 					}

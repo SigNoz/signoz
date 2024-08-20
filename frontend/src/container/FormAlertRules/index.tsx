@@ -13,8 +13,8 @@ import {
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import logEvent from 'api/common/logEvent';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
-import { alertHelpMessage } from 'components/facingIssueBtn/util';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { alertHelpMessage } from 'components/LaunchChatSupport/util';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -712,7 +712,7 @@ function FormAlertRules({
 						>
 							Check an example alert
 						</Button>
-						<FacingIssueBtn
+						<LaunchChatSupport
 							attributes={{
 								alert: alertDef?.alert,
 								alertType: alertDef?.alertType,

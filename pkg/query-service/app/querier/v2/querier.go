@@ -89,9 +89,11 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 	}
 }
 
+// execClickHouseQuery executes the clickhouse query and returns the series list
+// if testing mode is enabled, it returns the mocked series list
 func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.Series, error) {
-	q.queriesExecuted = append(q.queriesExecuted, query)
 	if q.testingMode && q.reader == nil {
+		q.queriesExecuted = append(q.queriesExecuted, query)
 		return q.returnedSeries, q.returnedErr
 	}
 	result, err := q.reader.GetTimeSeriesResultV3(ctx, query)
@@ -116,9 +118,11 @@ func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.
 	return result, err
 }
 
+// execPromQuery executes the prom query and returns the series list
+// if testing mode is enabled, it returns the mocked series list
 func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangeParams) ([]*v3.Series, error) {
-	q.queriesExecuted = append(q.queriesExecuted, params.Query)
 	if q.testingMode && q.reader == nil {
+		q.queriesExecuted = append(q.queriesExecuted, params.Query)
 		q.timeRanges = append(q.timeRanges, []int{int(params.Start.UnixMilli()), int(params.End.UnixMilli())})
 		return q.returnedSeries, q.returnedErr
 	}
@@ -226,6 +230,9 @@ func (q *querier) findMissingTimeRanges(start, end, step int64, cachedData []byt
 	return findMissingTimeRanges(start, end, step, cachedSeriesList, q.fluxInterval)
 }
 
+// labelsToString converts the labels map to a string
+// sorted by key so that the string is consistent
+// across different runs
 func labelsToString(labels map[string]string) string {
 	type label struct {
 		Key   string
@@ -245,11 +252,15 @@ func labelsToString(labels map[string]string) string {
 	return fmt.Sprintf("{%s}", strings.Join(labelKVs, ","))
 }
 
+// filterCachedPoints filters the points in the series list
+// that are outside the start and end time range
+// and returns the filtered series list
+// TODO(srikanthccv): is this really needed?
 func filterCachedPoints(cachedSeries []*v3.Series, start, end int64) {
 	for _, c := range cachedSeries {
 		points := []v3.Point{}
 		for _, p := range c.Points {
-			if p.Timestamp < start || p.Timestamp > end {
+			if (p.Timestamp < start || p.Timestamp > end) && p.Timestamp != 0 {
 				continue
 			}
 			points = append(points, p)
@@ -258,6 +269,8 @@ func filterCachedPoints(cachedSeries []*v3.Series, start, end int64) {
 	}
 }
 
+// mergeSerieses merges the cached series and the missed series
+// and returns the merged series list
 func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 	// Merge the missed series with the cached series by timestamp
 	mergedSeries := make([]*v3.Series, 0)
@@ -275,7 +288,9 @@ func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 		}
 		seriesesByLabels[labelsToString(series.Labels)].Points = append(seriesesByLabels[labelsToString(series.Labels)].Points, series.Points...)
 	}
+
 	// Sort the points in each series by timestamp
+	// and remove duplicate points
 	for idx := range seriesesByLabels {
 		series := seriesesByLabels[idx]
 		series.SortPoints()
@@ -499,6 +514,8 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 	return res, nil, nil
 }
 
+// QueryRange is the main function that runs the queries
+// and returns the results
 func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
 	var results []*v3.Result
 	var err error
@@ -539,10 +556,16 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 	return results, errQueriesByName, err
 }
 
+// QueriesExecuted returns the list of queries executed
+// in the last query range call
+// used for testing
 func (q *querier) QueriesExecuted() []string {
 	return q.queriesExecuted
 }
 
+// TimeRanges returns the list of time ranges
+// that were used to fetch the data
+// used for testing
 func (q *querier) TimeRanges() [][]int {
 	return q.timeRanges
 }
