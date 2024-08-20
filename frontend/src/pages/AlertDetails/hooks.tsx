@@ -40,15 +40,17 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 	const getRouteUrl = (tab: AlertDetailsTab): string => {
 		let route = '';
 		let params = urlQuery.toString();
+		const ruleIdKey = QueryParams.ruleId;
+		const relativeTimeKey = QueryParams.relativeTime;
 
 		switch (tab) {
 			case AlertDetailsTab.OVERVIEW:
 				route = ROUTES.ALERT_OVERVIEW;
 				break;
 			case AlertDetailsTab.HISTORY:
-				params = `ruleId=${urlQuery.get('ruleId')}&relativeTime=${urlQuery.get(
-					'relativeTime',
-				)}`;
+				params = `${ruleIdKey}=${urlQuery.get(
+					ruleIdKey,
+				)}&${relativeTimeKey}=${urlQuery.get(relativeTimeKey)}`;
 				route = ROUTES.ALERT_HISTORY;
 				break;
 			default:
@@ -94,7 +96,7 @@ export const useGetAlertRuleDetails = (): {
 
 	const params = new URLSearchParams(search);
 
-	const ruleId = params.get('ruleId');
+	const ruleId = params.get(QueryParams.ruleId);
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
@@ -130,14 +132,14 @@ export const useGetAlertRuleDetailsStats = (): GetAlertRuleDetailsStatsProps => 
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 
-	const ruleId = params.get('ruleId');
-	const startTime = params.get('startTime');
-	const endTime = params.get('endTime');
+	const ruleId = params.get(QueryParams.ruleId);
+	const startTime = params.get(QueryParams.startTime);
+	const endTime = params.get(QueryParams.endTime);
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
 	const { isLoading, isRefetching, isError, data } = useQuery(
-		['ruleIdStats', ruleId, startTime, endTime],
+		[REACT_QUERY_KEY.ALERT_RULE_STATS, ruleId, startTime, endTime],
 		{
 			queryFn: () =>
 				ruleStats({
@@ -165,14 +167,14 @@ export const useGetAlertRuleDetailsTopContributors = (): GetAlertRuleDetailsTopC
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 
-	const ruleId = params.get('ruleId');
-	const startTime = params.get('startTime');
-	const endTime = params.get('endTime');
+	const ruleId = params.get(QueryParams.ruleId);
+	const startTime = params.get(QueryParams.startTime);
+	const endTime = params.get(QueryParams.endTime);
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
 	const { isLoading, isRefetching, isError, data } = useQuery(
-		['ruleIdTopContributors', ruleId, startTime, endTime],
+		[REACT_QUERY_KEY.ALERT_RULE_TOP_CONTRIBUTORS, ruleId, startTime, endTime],
 		{
 			queryFn: () =>
 				topContributors({
@@ -209,9 +211,9 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 		[params],
 	);
 
-	const ruleId = params.get('ruleId');
-	const startTime = params.get('startTime');
-	const endTime = params.get('endTime');
+	const ruleId = params.get(QueryParams.ruleId);
+	const startTime = params.get(QueryParams.startTime);
+	const endTime = params.get(QueryParams.endTime);
 	const timelineFilter = params.get('timelineFilter');
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
@@ -219,7 +221,7 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 
 	const { isLoading, isRefetching, isError, data } = useQuery(
 		[
-			'ruleIdTimelineTable',
+			REACT_QUERY_KEY.ALERT_RULE_TIMELINE_TABLE,
 			ruleId,
 			startTime,
 			endTime,
