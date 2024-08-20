@@ -18,7 +18,13 @@ function getURL(baseURL: string, queryId: string): URL | string {
 		return `${baseURL}/ws/query_progress?q=${queryId}`;
 	}
 	const url = new URL(`/ws/query_progress?q=${queryId}`, window.location.href);
-	url.protocol = 'wss';
+
+	if (window.location.protocol === 'http:') {
+		url.protocol = 'ws';
+	} else {
+		url.protocol = 'wss';
+	}
+
 	return url;
 }
 
