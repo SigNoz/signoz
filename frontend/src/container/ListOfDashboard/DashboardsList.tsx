@@ -25,8 +25,8 @@ import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
-import { dashboardListMessage } from 'components/facingIssueBtn/util';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { dashboardListMessage } from 'components/LaunchChatSupport/util';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
@@ -66,7 +66,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { generatePath } from 'react-router-dom';
+import { generatePath, Link } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
@@ -449,77 +449,94 @@ function DashboardsList(): JSX.Element {
 					<div className="dashboard-list-item" onClick={onClickHandler}>
 						<div className="title-with-action">
 							<div className="dashboard-title">
-								<img
-									src={dashboard?.image || Base64Icons[0]}
-									style={{ height: '14px', width: '14px' }}
-									alt="dashboard-image"
-								/>
-								<Typography.Text data-testid={`dashboard-title-${index}`}>
-									{dashboard.name}
-								</Typography.Text>
+								<Tooltip
+									title={dashboard?.name?.length > 50 ? dashboard?.name : ''}
+									placement="left"
+									overlayClassName="title-toolip"
+								>
+									<Typography.Text data-testid={`dashboard-title-${index}`}>
+										<Link to={getLink()} className="title">
+											<img
+												src={dashboard?.image || Base64Icons[0]}
+												style={{ height: '14px', width: '14px' }}
+												alt="dashboard-image"
+												className="dashboard-icon"
+											/>
+											{dashboard.name}
+										</Link>
+									</Typography.Text>
+								</Tooltip>
 							</div>
 
 							<div className="tags-with-actions">
 								{dashboard?.tags && dashboard.tags.length > 0 && (
 									<div className="dashboard-tags">
-										{dashboard.tags.map((tag) => (
+										{dashboard.tags.slice(0, 3).map((tag) => (
 											<Tag className="tag" key={tag}>
 												{tag}
 											</Tag>
 										))}
+
+										{dashboard.tags.length > 3 && (
+											<Tag className="tag" key={dashboard.tags[3]}>
+												+ <span> {dashboard.tags.length - 3} </span>
+											</Tag>
+										)}
 									</div>
 								)}
-								{action && (
-									<Popover
-										trigger="click"
-										content={
-											<div className="dashboard-action-content">
-												<section className="section-1">
-													<Button
-														type="text"
-														className="action-btn"
-														icon={<Expand size={14} />}
-														onClick={onClickHandler}
-													>
-														View
-													</Button>
-													<Button
-														type="text"
-														className="action-btn"
-														icon={<Link2 size={14} />}
-														onClick={(e): void => {
-															e.stopPropagation();
-															e.preventDefault();
-															setCopy(`${window.location.origin}${getLink()}`);
-														}}
-													>
-														Copy Link
-													</Button>
-												</section>
-												<section className="section-2">
-													<DeleteButton
-														name={dashboard.name}
-														id={dashboard.id}
-														isLocked={dashboard.isLocked}
-														createdBy={dashboard.createdBy}
-													/>
-												</section>
-											</div>
-										}
-										placement="bottomRight"
-										arrow={false}
-										rootClassName="dashboard-actions"
-									>
-										<EllipsisVertical
-											size={14}
-											onClick={(e): void => {
-												e.stopPropagation();
-												e.preventDefault();
-											}}
-										/>
-									</Popover>
-								)}
 							</div>
+
+							{action && (
+								<Popover
+									trigger="click"
+									content={
+										<div className="dashboard-action-content">
+											<section className="section-1">
+												<Button
+													type="text"
+													className="action-btn"
+													icon={<Expand size={12} />}
+													onClick={onClickHandler}
+												>
+													View
+												</Button>
+												<Button
+													type="text"
+													className="action-btn"
+													icon={<Link2 size={12} />}
+													onClick={(e): void => {
+														e.stopPropagation();
+														e.preventDefault();
+														setCopy(`${window.location.origin}${getLink()}`);
+													}}
+												>
+													Copy Link
+												</Button>
+											</section>
+											<section className="section-2">
+												<DeleteButton
+													name={dashboard.name}
+													id={dashboard.id}
+													isLocked={dashboard.isLocked}
+													createdBy={dashboard.createdBy}
+												/>
+											</section>
+										</div>
+									}
+									placement="bottomRight"
+									arrow={false}
+									rootClassName="dashboard-actions"
+								>
+									<EllipsisVertical
+										className="dashboard-action-icon"
+										size={14}
+										onClick={(e): void => {
+											e.stopPropagation();
+											e.preventDefault();
+										}}
+									/>
+								</Popover>
+							)}
 						</div>
 						<div className="dashboard-details">
 							<div className="dashboard-created-at">
@@ -647,7 +664,7 @@ function DashboardsList(): JSX.Element {
 						<Typography.Text className="subtitle">
 							Create and manage dashboards for your workspace.
 						</Typography.Text>
-						<FacingIssueBtn
+						<LaunchChatSupport
 							attributes={{
 								screen: 'Dashboard list page',
 							}}

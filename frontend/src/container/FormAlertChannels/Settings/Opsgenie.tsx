@@ -20,7 +20,10 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 	return (
 		<>
 			<Form.Item name="api_key" label={t('field_opsgenie_api_key')} required>
-				<Input onChange={handleInputChange('api_key')} />
+				<Input
+					onChange={handleInputChange('api_key')}
+					data-testid="opsgenie-api-key-textbox"
+				/>
 			</Form.Item>
 
 			<Form.Item
@@ -33,6 +36,7 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 					rows={4}
 					onChange={handleInputChange('message')}
 					placeholder={t('placeholder_opsgenie_message')}
+					data-testid="opsgenie-message-textarea"
 				/>
 			</Form.Item>
 
@@ -46,6 +50,7 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 					rows={4}
 					onChange={handleInputChange('description')}
 					placeholder={t('placeholder_opsgenie_description')}
+					data-testid="opsgenie-description-textarea"
 				/>
 			</Form.Item>
 
@@ -59,6 +64,7 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 					rows={4}
 					onChange={handleInputChange('priority')}
 					placeholder={t('placeholder_opsgenie_priority')}
+					data-testid="opsgenie-priority-textarea"
 				/>
 			</Form.Item>
 		</>

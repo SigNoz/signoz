@@ -18,6 +18,7 @@ export const defaultTraceSelectedColumns = [
 		isColumn: true,
 		isJSON: false,
 		id: 'serviceName--string--tag--true',
+		isIndexed: false,
 	},
 	{
 		key: 'name',
@@ -26,6 +27,7 @@ export const defaultTraceSelectedColumns = [
 		isColumn: true,
 		isJSON: false,
 		id: 'name--string--tag--true',
+		isIndexed: false,
 	},
 	{
 		key: 'durationNano',
@@ -34,6 +36,7 @@ export const defaultTraceSelectedColumns = [
 		isColumn: true,
 		isJSON: false,
 		id: 'durationNano--float64--tag--true',
+		isIndexed: false,
 	},
 	{
 		key: 'httpMethod',
@@ -42,6 +45,7 @@ export const defaultTraceSelectedColumns = [
 		isColumn: true,
 		isJSON: false,
 		id: 'httpMethod--string--tag--true',
+		isIndexed: false,
 	},
 	{
 		key: 'responseStatusCode',
@@ -50,5 +54,6 @@ export const defaultTraceSelectedColumns = [
 		isColumn: true,
 		isJSON: false,
 		id: 'responseStatusCode--string--tag--true',
+		isIndexed: false,
 	},
 ];

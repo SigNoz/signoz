@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
@@ -46,6 +47,8 @@ export const useContextLogData = ({
 } => {
 	const [logs, setLogs] = useState<ILog[]>([]);
 
+	const [lastLog, setLastLog] = useState<ILog>(log);
+
 	const orderByTimestamp = useMemo(() => getOrderByTimestamp(order), [order]);
 
 	const logsMorePageSize = useMemo(() => (page - 1) * LOGS_MORE_PAGE_SIZE, [
@@ -71,11 +74,11 @@ export const useContextLogData = ({
 			getRequestData({
 				stagedQueryData: currentStagedQueryData,
 				query,
-				log,
+				log: lastLog,
 				orderByTimestamp,
 				page,
 			}),
-		[currentStagedQueryData, page, log, query, orderByTimestamp],
+		[currentStagedQueryData, query, lastLog, orderByTimestamp, page],
 	);
 
 	const [requestData, setRequestData] = useState<Query | null>(
@@ -95,8 +98,10 @@ export const useContextLogData = ({
 				if (order === ORDERBY_FILTERS.ASC) {
 					const reversedCurrentLogs = currentLogs.reverse();
 					setLogs([...reversedCurrentLogs]);
+					setLastLog(reversedCurrentLogs[0]);
 				} else {
 					setLogs([...currentLogs]);
+					setLastLog(currentLogs[currentLogs.length - 1]);
 				}
 			}
 		},
@@ -118,7 +123,7 @@ export const useContextLogData = ({
 		const newRequestData = getRequestData({
 			stagedQueryData: currentStagedQueryData,
 			query,
-			log,
+			log: lastLog,
 			orderByTimestamp,
 			page: page + 1,
 			pageSize: LOGS_MORE_PAGE_SIZE,
@@ -131,6 +136,7 @@ export const useContextLogData = ({
 		query,
 		page,
 		order,
+		lastLog,
 		currentStagedQueryData,
 		isDisabledFetch,
 		orderByTimestamp,
@@ -142,7 +148,7 @@ export const useContextLogData = ({
 		const newRequestData = getRequestData({
 			stagedQueryData: currentStagedQueryData,
 			query,
-			log,
+			log: lastLog,
 			orderByTimestamp,
 			page: 1,
 		});
