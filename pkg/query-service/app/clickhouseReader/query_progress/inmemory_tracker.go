@@ -3,6 +3,7 @@ package queryprogress
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/google/uuid"
@@ -64,6 +65,7 @@ func (tracker *inMemoryQueryProgressTracker) SubscribeToQueryProgress(
 func (tracker *inMemoryQueryProgressTracker) onQueryFinished(
 	queryId string,
 ) {
+	time.Sleep(1 * time.Second)
 	tracker.lock.Lock()
 	queryTracker := tracker.queries[queryId]
 	if queryTracker != nil {
