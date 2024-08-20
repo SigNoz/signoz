@@ -63,7 +63,7 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 							className={cx('text value', option)}
 							ellipsis={{ onEllipsis: (ellipsis): void => setTruncated(ellipsis) }}
 						>
-							{label}
+							{`${label}`}
 						</Typography.Text>
 					</div>
 				</Tooltip>
