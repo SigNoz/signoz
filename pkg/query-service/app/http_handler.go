@@ -3759,7 +3759,7 @@ func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Req
 		// Shouldn't happen unless query progress requested after query finished
 		zap.L().Warn(
 			"couldn't subscribe to query progress",
-			zap.String("queryId", queryId), zap.Any("error", err),
+			zap.String("queryId", queryId), zap.Any("error", apiErr),
 		)
 		return
 	}
