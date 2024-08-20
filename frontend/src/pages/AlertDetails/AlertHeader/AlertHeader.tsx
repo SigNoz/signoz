@@ -27,7 +27,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 					<div className="alert-title">{alert}</div>
 					<div className="alert-id">{id}</div>
 				</div>
-				<AlertActionButtons />
+				<AlertActionButtons ruleId={alertDetails.id} state={state} />
 			</div>
 			<div className="alert-info__bottom-section">
 				<AlertSeverity severity="warning" />

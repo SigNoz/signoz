@@ -1,16 +1,19 @@
 import { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { TablePaginationConfig, TableProps } from 'antd/lib';
 import get from 'api/alerts/get';
+import patchAlert from 'api/alerts/patch';
 import ruleStats from 'api/alerts/ruleStats';
 import timelineTable from 'api/alerts/timelineTable';
 import topContributors from 'api/alerts/topContributors';
 import { TabRoutes } from 'components/RouteTab/types';
 import { QueryParams } from 'constants/query';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
 import { urlKey } from 'container/AllError/utils';
+import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import GetMinMax from 'lib/getMinMax';
@@ -19,8 +22,8 @@ import { History, Table } from 'lucide-react';
 import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
-import { useCallback, useEffect, useMemo } from 'react';
-import { useQuery, UseQueryResult } from 'react-query';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery, UseQueryResult } from 'react-query';
 import { generatePath, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
@@ -95,7 +98,7 @@ export const useGetAlertRuleDetails = (): {
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
-	const data = useQuery(['ruleId', ruleId], {
+	const data = useQuery([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId], {
 		queryFn: () =>
 			get({
 				id: parseInt(ruleId || '', 10),
@@ -339,4 +342,50 @@ export const useSetStartAndEndTimeFromRelativeTime = (): void => {
 		history.push({ search: searchParams.toString() });
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [relativeTime]);
+};
+
+export const useAlertRuleStatusToggle = ({
+	state,
+	ruleId,
+}: {
+	state: string;
+	ruleId: string;
+}): {
+	handleAlertStateToggle: (state: boolean) => void;
+	isAlertRuleEnabled: boolean;
+} => {
+	const { notifications } = useNotifications();
+	const defaultErrorMessage = 'Something went wrong';
+	const isAlertRuleInitiallyEnabled = state !== 'disabled';
+	const [isAlertRuleEnabled, setIsAlertRuleEnabled] = useState(
+		isAlertRuleInitiallyEnabled,
+	);
+
+	const { mutate: toggleAlertState } = useMutation(
+		['toggle-alert-state', ruleId],
+		patchAlert,
+		{
+			onMutate: () => {
+				setIsAlertRuleEnabled((prev) => !prev);
+			},
+			onSuccess: () => {
+				notifications.success({
+					message: 'Success',
+				});
+			},
+			onError: () => {
+				setIsAlertRuleEnabled(isAlertRuleInitiallyEnabled);
+				notifications.error({
+					message: defaultErrorMessage,
+				});
+			},
+		},
+	);
+
+	const handleAlertStateToggle = (state: boolean): void => {
+		const args = { id: parseInt(ruleId, 10), data: { disabled: !state } };
+		toggleAlertState(args);
+	};
+
+	return { handleAlertStateToggle, isAlertRuleEnabled };
 };

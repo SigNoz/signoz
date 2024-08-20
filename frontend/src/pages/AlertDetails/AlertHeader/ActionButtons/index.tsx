@@ -2,6 +2,7 @@ import './actionButtons.styles.scss';
 
 import { Button, Divider, Dropdown, MenuProps, Switch, Tooltip } from 'antd';
 import { Copy, Ellipsis, PenLine, Trash2 } from 'lucide-react';
+import { useAlertRuleStatusToggle } from 'pages/AlertDetails/hooks';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import React from 'react';
 
@@ -26,11 +27,25 @@ const menuStyle: React.CSSProperties = {
 	fontSize: 14,
 };
 
-function AlertActionButtons(): JSX.Element {
+function AlertActionButtons({
+	ruleId,
+	state,
+}: {
+	ruleId: string;
+	state: string;
+}): JSX.Element {
+	const {
+		handleAlertStateToggle,
+		isAlertRuleEnabled,
+	} = useAlertRuleStatusToggle({ ruleId, state });
+
 	return (
 		<div className="alert-action-buttons">
-			{/* TODO(shaheer): handle submitting data */}
-			<Switch size="small" />
+			<Switch
+				size="small"
+				onChange={handleAlertStateToggle}
+				checked={isAlertRuleEnabled}
+			/>
 			<CopyToClipboard textToCopy={window.location.href} />
 
 			<Divider type="vertical" />
