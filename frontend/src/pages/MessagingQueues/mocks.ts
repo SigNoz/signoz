@@ -323,3 +323,30 @@ export const networLatencyResponse = {
 		],
 	},
 };
+
+export const consumerGrpOptionsPayload = {
+	status: 'success',
+	data: {
+		stringAttributeValues: ['cg4', 'cg1', 'cg2', 'cg3'],
+		numberAttributeValues: null,
+		boolAttributeValues: null,
+	},
+};
+
+export const topicsOptionsPayload = {
+	status: 'success',
+	data: {
+		stringAttributeValues: ['topic2', 'topic1', 'topic3', 'topic4'],
+		numberAttributeValues: null,
+		boolAttributeValues: null,
+	},
+};
+
+export const partitionsOptionsPayload = {
+	status: 'success',
+	data: {
+		stringAttributeValues: ['1', '2'],
+		numberAttributeValues: null,
+		boolAttributeValues: null,
+	},
+};

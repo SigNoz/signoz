@@ -1,3 +1,4 @@
+/* eslint-disable react/destructuring-assignment */
 import './MQCommon.styles.scss';
 
 import { Tooltip } from 'antd';
@@ -16,6 +17,14 @@ export function ComingSoon(): JSX.Element {
 					<Info size={10} color="var(--bg-sienna-400)" />
 				</div>
 			</div>
+		</Tooltip>
+	);
+}
+
+export function SelectMaxTagPlaceholder(omittedValues: any[]): JSX.Element {
+	return (
+		<Tooltip title={omittedValues.map(({ value }) => value).join(', ')}>
+			<span>+ {omittedValues.length} </span>
 		</Tooltip>
 	);
 }

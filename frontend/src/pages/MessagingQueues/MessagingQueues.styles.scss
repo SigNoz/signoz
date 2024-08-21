@@ -82,17 +82,18 @@
 			align-items: center;
 			gap: 8px;
 
-			.ant-select-selector {
-				display: flex;
-				height: 32px;
-				padding: 6px 6px 6px 8px;
-				align-items: center;
-				gap: 4px;
-				width: 164px;
+			.config-select-option {
+				.ant-select-selector {
+					display: flex;
+					min-height: 32px;
+					align-items: center;
+					gap: 16px;
+					min-width: 164px;
 
-				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
+					border-radius: 2px;
+					border: 1px solid var(--bg-slate-400);
+					background: var(--bg-ink-300);
+				}
 			}
 		}
 

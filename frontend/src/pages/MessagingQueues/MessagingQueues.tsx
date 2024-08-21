@@ -4,9 +4,9 @@ import { Button, Select } from 'antd';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { ListMinus, Undo } from 'lucide-react';
 
-import MessagingQueuesConfigOptions from './MQConfigOptions';
 import MessagingQueuesDetails from './MQDetails/MQDetails';
-import MessagingQueuesGraph from './MQGraph';
+import MessagingQueuesConfigOptions from './MQGraph/MQConfigOptions';
+import MessagingQueuesGraph from './MQGraph/MQGraph';
 
 function MessagingQueues(): JSX.Element {
 	return (
