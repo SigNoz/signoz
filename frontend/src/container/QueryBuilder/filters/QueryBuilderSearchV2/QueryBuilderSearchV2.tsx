@@ -508,7 +508,6 @@ function QueryBuilderSearchV2(
 				setCurrentFilterItem({
 					key: {
 						key: tagKey.split(' ')[0],
-						// update this for has and nhas operator , check the useEffect of source keys in older component for details
 						dataType: DataTypes.EMPTY,
 						type: '',
 						isColumn: false,

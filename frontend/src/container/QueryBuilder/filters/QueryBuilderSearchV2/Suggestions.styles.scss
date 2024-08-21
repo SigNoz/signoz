@@ -108,6 +108,10 @@
 		justify-content: space-between;
 
 		.left {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
 			.OPERATOR {
 				color: var(--bg-vanilla-400);
 				font-family: 'Space Mono';
