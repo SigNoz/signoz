@@ -1,7 +1,6 @@
 package postprocess
 
 import (
-	"math"
 	"reflect"
 	"testing"
 
@@ -892,10 +891,6 @@ func TestFormula(t *testing.T) {
 								Timestamp: 5,
 								Value:     1,
 							},
-							{
-								Timestamp: 7,
-								Value:     math.Inf(1),
-							},
 						},
 					},
 					{
@@ -911,10 +906,6 @@ func TestFormula(t *testing.T) {
 							{
 								Timestamp: 2,
 								Value:     0.6923076923076923,
-							},
-							{
-								Timestamp: 3,
-								Value:     math.Inf(1),
 							},
 							{
 								Timestamp: 4,
@@ -1054,62 +1045,6 @@ func TestFormula(t *testing.T) {
 			},
 			want: &v3.Result{
 				Series: []*v3.Series{
-					{
-						Labels: map[string]string{
-							"host_name": "ip-10-420-69-1",
-							"state":     "running",
-						},
-						Points: []v3.Point{
-							{
-								Timestamp: 1,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 2,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 4,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 5,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 7,
-								Value:     math.Inf(0),
-							},
-						},
-					},
-					{
-						Labels: map[string]string{
-							"host_name": "ip-10-420-69-2",
-							"state":     "idle",
-						},
-						Points: []v3.Point{
-							{
-								Timestamp: 1,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 2,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 3,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 4,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 5,
-								Value:     math.Inf(0),
-							},
-						},
-					},
 					{
 						Labels: map[string]string{
 							"host_name": "ip-10-420-69-1",
@@ -1318,39 +1253,6 @@ func TestFormula(t *testing.T) {
 							{
 								Timestamp: 5,
 								Value:     1,
-							},
-							{
-								Timestamp: 7,
-								Value:     math.Inf(1),
-							},
-						},
-					},
-					{
-						Labels: map[string]string{
-							"host_name": "ip-10-420-69-2",
-							"state":     "idle",
-							"os.type":   "linux",
-						},
-						Points: []v3.Point{
-							{
-								Timestamp: 1,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 2,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 3,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 4,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 5,
-								Value:     math.Inf(0),
 							},
 						},
 					},
@@ -1594,10 +1496,6 @@ func TestFormula(t *testing.T) {
 								Timestamp: 5,
 								Value:     51,
 							},
-							{
-								Timestamp: 7,
-								Value:     math.Inf(1),
-							},
 						},
 					},
 					{
@@ -1614,10 +1512,6 @@ func TestFormula(t *testing.T) {
 							{
 								Timestamp: 2,
 								Value:     45.6923076923076923,
-							},
-							{
-								Timestamp: 3,
-								Value:     math.Inf(1),
 							},
 							{
 								Timestamp: 4,
