@@ -146,6 +146,10 @@ func joinAndCalculate(
 			return nil, fmt.Errorf("expected float64, got %T", newValue)
 		}
 
+		if math.IsNaN(val) || math.IsInf(val, 0) {
+			continue
+		}
+
 		resultSeries.Points = append(resultSeries.Points, v3.Point{
 			Timestamp: timestamp,
 			Value:     val,
