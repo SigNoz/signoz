@@ -1181,6 +1181,11 @@ func (l LabelsString) String() string {
 	return string(l)
 }
 
+type RuleStateTimeline struct {
+	Items []RuleStateHistory `json:"items"`
+	Total uint64             `json:"total"`
+}
+
 type RuleStateHistory struct {
 	RuleID   string `json:"ruleID" ch:"rule_id"`
 	RuleName string `json:"ruleName" ch:"rule_name"`
@@ -1194,11 +1199,15 @@ type RuleStateHistory struct {
 	Labels       LabelsString `json:"labels" ch:"labels"`
 	Fingerprint  uint64       `json:"fingerprint" ch:"fingerprint"`
 	Value        float64      `json:"value" ch:"value"`
+
+	RelatedTracesLink string `json:"relatedTracesLink" ch:"related_traces_link"`
+	RelatedLogsLink   string `json:"relatedLogsLink" ch:"related_logs_link"`
 }
 
 type QueryRuleStateHistory struct {
 	Start   int64      `json:"start"`
 	End     int64      `json:"end"`
+	State   string     `json:"state"`
 	Filters *FilterSet `json:"filters"`
 	Offset  int64      `json:"offset"`
 	Limit   int64      `json:"limit"`
@@ -1254,4 +1263,26 @@ type QueryProgress struct {
 	ReadBytes uint64 `json:"read_bytes"`
 
 	ElapsedMs uint64 `json:"elapsed_ms"`
+}
+
+type URLShareableTimeRange struct {
+	Start    int64 `json:"start"`
+	End      int64 `json:"end"`
+	PageSize int64 `json:"pageSize"`
+}
+
+type URLShareableBuilderQuery struct {
+	QueryData     []BuilderQuery `json:"queryData"`
+	QueryFormulas []string       `json:"queryFormulas"`
+}
+
+type URLShareableCompositeQuery struct {
+	QueryType string                   `json:"queryType"`
+	Builder   URLShareableBuilderQuery `json:"builder"`
+}
+
+type URLShareableOptions struct {
+	MaxLines      int            `json:"maxLines"`
+	Format        string         `json:"format"`
+	SelectColumns []AttributeKey `json:"selectColumns"`
 }
