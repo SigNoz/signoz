@@ -204,9 +204,10 @@ func TestFindUniqueLabelSets(t *testing.T) {
 
 func TestProcessResults(t *testing.T) {
 	tests := []struct {
-		name    string
-		results []*v3.Result
-		want    *v3.Result
+		name       string
+		results    []*v3.Result
+		want       *v3.Result
+		expression string
 	}{
 		{
 			name: "test1",
@@ -288,12 +289,68 @@ func TestProcessResults(t *testing.T) {
 					},
 				},
 			},
+			expression: "A + B",
+		},
+		{
+			name: "test2",
+			results: []*v3.Result{
+				{
+					QueryName: "A",
+					Series: []*v3.Series{
+						{
+							Labels: map[string]string{},
+							Points: []v3.Point{
+								{
+									Timestamp: 1,
+									Value:     10,
+								},
+								{
+									Timestamp: 2,
+									Value:     0,
+								},
+							},
+						},
+					},
+				},
+				{
+					QueryName: "B",
+					Series: []*v3.Series{
+						{
+							Labels: map[string]string{},
+							Points: []v3.Point{
+								{
+									Timestamp: 1,
+									Value:     0,
+								},
+								{
+									Timestamp: 3,
+									Value:     10,
+								},
+							},
+						},
+					},
+				},
+			},
+			want: &v3.Result{
+				Series: []*v3.Series{
+					{
+						Labels: map[string]string{},
+						Points: []v3.Point{
+							{
+								Timestamp: 3,
+								Value:     0,
+							},
+						},
+					},
+				},
+			},
+			expression: "A/B",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			expression, err := govaluate.NewEvaluableExpression("A + B")
+			expression, err := govaluate.NewEvaluableExpression(tt.expression)
 			if err != nil {
 				t.Errorf("Error parsing expression: %v", err)
 			}
