@@ -1,12 +1,17 @@
 import './statistics.styles.scss';
 
-import { useState } from 'react';
+import { AlertRuleStats } from 'types/api/alerts/def';
 
 import StatsCardsRenderer from './StatsCardsRenderer/StatsCardsRenderer';
 import TopContributorsRenderer from './TopContributorsRenderer/TopContributorsRenderer';
 
-function Statistics(): JSX.Element {
-	const [totalCurrentTriggers, setTotalCurrentTriggers] = useState(0);
+function Statistics({
+	setTotalCurrentTriggers,
+	totalCurrentTriggers,
+}: {
+	setTotalCurrentTriggers: (value: number) => void;
+	totalCurrentTriggers: AlertRuleStats['totalCurrentTriggers'];
+}): JSX.Element {
 	return (
 		<div className="statistics">
 			<StatsCardsRenderer setTotalCurrentTriggers={setTotalCurrentTriggers} />

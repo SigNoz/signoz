@@ -31,7 +31,11 @@ function TimelineTableRenderer(): JSX.Element {
 	);
 }
 
-function Timeline(): JSX.Element {
+function Timeline({
+	totalCurrentTriggers,
+}: {
+	totalCurrentTriggers: number;
+}): JSX.Element {
 	return (
 		<div className="timeline">
 			<div className="timeline__title">Timeline</div>
@@ -39,7 +43,7 @@ function Timeline(): JSX.Element {
 				<TabsAndFilters />
 			</div>
 			<div className="timeline__graph">
-				<Graph />
+				<Graph totalCurrentTriggers={totalCurrentTriggers} />
 			</div>
 			<div className="timeline__table">
 				<TimelineTableRenderer />
