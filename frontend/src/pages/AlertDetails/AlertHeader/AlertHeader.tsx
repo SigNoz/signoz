@@ -30,7 +30,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 				<AlertActionButtons />
 			</div>
 			<div className="alert-info__bottom-section">
-				<AlertSeverity severity={labels.severity} />
+				<AlertSeverity severity="warning" />
 
 				{/* // TODO(shaheer): Get actual data when we are able to get alert status from API */}
 				<AlertStatus

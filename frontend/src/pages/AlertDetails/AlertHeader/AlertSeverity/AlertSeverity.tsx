@@ -1,9 +1,9 @@
 import './alertSeverity.styles.scss';
 
-import SeverityCritical from 'assets/AlertHistory/SeverityCritical';
-import SeverityError from 'assets/AlertHistory/SeverityError';
-import SeverityInfo from 'assets/AlertHistory/SeverityInfo';
-import SeverityWarning from 'assets/AlertHistory/SeverityWarning';
+import SeverityCriticalIcon from 'assets/AlertHistory/SeverityCriticalIcon';
+import SeverityErrorIcon from 'assets/AlertHistory/SeverityErrorIcon';
+import SeverityInfoIcon from 'assets/AlertHistory/SeverityInfoIcon';
+import SeverityWarningIcon from 'assets/AlertHistory/SeverityWarningIcon';
 
 export default function AlertSeverity({
 	severity,
@@ -14,22 +14,22 @@ export default function AlertSeverity({
 		critical: {
 			text: 'Critical',
 			className: 'alert-severity--critical',
-			icon: <SeverityCritical />,
+			icon: <SeverityCriticalIcon />,
 		},
 		error: {
 			text: 'Error',
 			className: 'alert-severity--error',
-			icon: <SeverityError />,
+			icon: <SeverityErrorIcon />,
 		},
 		warning: {
 			text: 'Warning',
 			className: 'alert-severity--warning',
-			icon: <SeverityWarning />,
+			icon: <SeverityWarningIcon />,
 		},
 		info: {
 			text: 'Info',
 			className: 'alert-severity--info',
-			icon: <SeverityInfo />,
+			icon: <SeverityInfoIcon />,
 		},
 	};
 	const severityDetails = severityConfig[severity];
