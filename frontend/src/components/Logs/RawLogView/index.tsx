@@ -39,6 +39,7 @@ function RawLogView({
 	linesPerRow,
 	isTextOverflowEllipsisDisabled,
 	selectedFields = [],
+	fontSize,
 }: RawLogViewProps): JSX.Element {
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
@@ -168,6 +169,7 @@ function RawLogView({
 					activeContextLog?.id === data.id ||
 					isActiveLog
 				}
+				fontSize={fontSize}
 			/>
 
 			<RawLogContent
@@ -176,6 +178,7 @@ function RawLogView({
 				$isDarkMode={isDarkMode}
 				$isTextOverflowEllipsisDisabled={isTextOverflowEllipsisDisabled}
 				linesPerRow={linesPerRow}
+				fontSize={fontSize}
 				dangerouslySetInnerHTML={html}
 			/>
 

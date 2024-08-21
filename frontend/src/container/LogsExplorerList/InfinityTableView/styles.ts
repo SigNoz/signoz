@@ -1,5 +1,7 @@
+/* eslint-disable no-nested-ternary */
 import { Color } from '@signozhq/design-tokens';
 import { themeColors } from 'constants/theme';
+import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';
 import { getActiveLogBackground } from 'utils/logs';
 
@@ -7,6 +9,7 @@ interface TableHeaderCellStyledProps {
 	$isDragColumn: boolean;
 	$isDarkMode: boolean;
 	$isTimestamp?: boolean;
+	fontSize?: FontSize;
 }
 
 export const TableStyled = styled.table`
@@ -69,6 +72,14 @@ export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 	${({ $isTimestamp }): string => ($isTimestamp ? 'padding-left: 24px;' : '')}
 	${({ $isDragColumn }): string => ($isDragColumn ? 'cursor: col-resize;' : '')}
 
+	${({ fontSize }): string =>
+		fontSize === FontSize.SMALL
+			? `font-size:11px; line-height:16px;`
+			: fontSize === FontSize.MEDIUM
+			? `font-size:13px; line-height:20px;`
+			: fontSize === FontSize.LARGE
+			? `font-size:14px; line-height:24px;`
+			: ``}
 	color: ${(props): string =>
 		props.$isDarkMode ? 'var(--bg-vanilla-100, #fff)' : themeColors.bckgGrey};
 `;

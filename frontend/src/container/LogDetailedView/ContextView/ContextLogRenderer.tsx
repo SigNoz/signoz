@@ -4,6 +4,7 @@ import { Skeleton } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import ShowButton from 'container/LogsContextList/ShowButton';
+import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useCallback, useEffect, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
@@ -74,6 +75,7 @@ function ContextLogRenderer({
 				key={logTorender.id}
 				data={logTorender}
 				linesPerRow={1}
+				fontSize={FontSize.MEDIUM}
 			/>
 		),
 		[log.id],

@@ -112,6 +112,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 								$isDarkMode={isDarkMode}
 								$isDragColumn={isDragColumn}
 								key={column.key}
+								fontSize={tableViewProps?.fontSize}
 								// eslint-disable-next-line react/jsx-props-no-spreading
 								{...(isDragColumn && { className: 'dragHandler' })}
 							>
@@ -121,7 +122,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					})}
 				</tr>
 			),
-			[tableColumns, isDarkMode],
+			[tableColumns, isDarkMode, tableViewProps?.fontSize],
 		);
 
 		const handleClickExpand = (index: number): void => {

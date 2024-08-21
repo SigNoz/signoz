@@ -79,6 +79,7 @@ function LogsExplorerList({
 						data={log}
 						linesPerRow={options.maxLines}
 						selectedFields={selectedFields}
+						fontSize={options.fontSize}
 					/>
 				);
 			}
@@ -91,6 +92,7 @@ function LogsExplorerList({
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
 					activeLog={activeLog}
+					fontSize={options.fontSize}
 					linesPerRow={options.maxLines}
 				/>
 			);
@@ -99,6 +101,7 @@ function LogsExplorerList({
 			activeLog,
 			onAddToQuery,
 			onSetActiveLog,
+			options.fontSize,
 			options.format,
 			options.maxLines,
 			selectedFields,
@@ -121,6 +124,7 @@ function LogsExplorerList({
 						logs,
 						fields: selectedFields,
 						linesPerRow: options.maxLines,
+						fontSize: options.fontSize,
 						appendTo: 'end',
 						activeLogIndex,
 					}}
@@ -151,6 +155,7 @@ function LogsExplorerList({
 		isLoading,
 		options.format,
 		options.maxLines,
+		options.fontSize,
 		activeLogIndex,
 		logs,
 		onEndReached,

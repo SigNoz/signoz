@@ -1,9 +1,15 @@
+/* eslint-disable no-nested-ternary */
 import { Color } from '@signozhq/design-tokens';
 import { Card, Typography } from 'antd';
+import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';
 
 interface LogTextProps {
 	linesPerRow?: number;
+}
+
+interface LogContainerProps {
+	fontSize: FontSize;
 }
 
 export const Container = styled(Card)<{
@@ -38,11 +44,17 @@ export const TextContainer = styled.div`
 	width: 100%;
 `;
 
-export const LogContainer = styled.div`
+export const LogContainer = styled.div<LogContainerProps>`
 	margin-left: 0.5rem;
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
+	${({ fontSize }): string =>
+		fontSize === FontSize.SMALL
+			? `gap: 2px;`
+			: fontSize === FontSize.MEDIUM
+			? ` gap:4px;`
+			: `gap:6px;`}
 `;
 
 export const LogText = styled.div<LogTextProps>`
