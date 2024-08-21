@@ -14,6 +14,7 @@ import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { FontSize } from 'container/OptionsMenu/types';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -133,9 +134,22 @@ function LogsExplorerList({
 			);
 		}
 
+		function getMarginTop(): string {
+			switch (options.fontSize) {
+				case FontSize.SMALL:
+					return '10px';
+				case FontSize.MEDIUM:
+					return '12px';
+				case FontSize.LARGE:
+					return '15px';
+				default:
+					return '15px';
+			}
+		}
+
 		return (
 			<Card
-				style={{ width: '100%', marginTop: '20px' }}
+				style={{ width: '100%', marginTop: getMarginTop() }}
 				bodyStyle={CARD_BODY_STYLE}
 			>
 				<OverlayScrollbar isVirtuoso>

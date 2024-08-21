@@ -15,7 +15,7 @@ import {
 } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 
-import { infinityDefaultStyles } from './config';
+import { getInfinityDefaultStyles } from './config';
 import { LogsCustomTable } from './LogsCustomTable';
 import { TableHeaderCellStyled, TableRowStyled } from './styles';
 import TableRow from './TableRow';
@@ -95,9 +95,15 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					handleSetActiveContextLog={handleSetActiveContextLog}
 					logs={tableViewProps.logs}
 					hasActions
+					fontSize={tableViewProps.fontSize}
 				/>
 			),
-			[handleSetActiveContextLog, tableColumns, tableViewProps.logs],
+			[
+				handleSetActiveContextLog,
+				tableColumns,
+				tableViewProps.fontSize,
+				tableViewProps.logs,
+			],
 		);
 
 		const tableHeader = useCallback(
@@ -138,7 +144,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					initialTopMostItemIndex={
 						tableViewProps.activeLogIndex !== -1 ? tableViewProps.activeLogIndex : 0
 					}
-					style={infinityDefaultStyles}
+					style={getInfinityDefaultStyles(tableViewProps.fontSize)}
 					data={dataSource}
 					components={{
 						// eslint-disable-next-line react/jsx-props-no-spreading

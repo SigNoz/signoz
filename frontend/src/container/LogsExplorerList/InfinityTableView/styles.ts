@@ -18,6 +18,14 @@ export const TableStyled = styled.table`
 
 export const TableCellStyled = styled.td<TableHeaderCellStyledProps>`
 	padding: 0.5rem;
+	${({ fontSize }): string =>
+		fontSize === FontSize.SMALL
+			? `padding:0.3rem;`
+			: fontSize === FontSize.MEDIUM
+			? `padding:0.4rem;`
+			: fontSize === FontSize.LARGE
+			? `padding:0.5rem;`
+			: ``}
 	background-color: ${(props): string =>
 		props.$isDarkMode ? 'inherit' : themeColors.whiteCream};
 
@@ -36,7 +44,7 @@ export const TableRowStyled = styled.tr<{
 				? `background-color: ${
 						$isDarkMode ? Color.BG_SLATE_500 : Color.BG_VANILLA_300
 				  } !important`
-				: ''}
+				: ''};
 	}
 
 	cursor: pointer;
@@ -69,17 +77,17 @@ export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 	line-height: 18px;
 	letter-spacing: -0.07px;
 	background: ${(props): string => (props.$isDarkMode ? '#0b0c0d' : '#fdfdfd')};
-	${({ $isTimestamp }): string => ($isTimestamp ? 'padding-left: 24px;' : '')}
 	${({ $isDragColumn }): string => ($isDragColumn ? 'cursor: col-resize;' : '')}
 
 	${({ fontSize }): string =>
 		fontSize === FontSize.SMALL
-			? `font-size:11px; line-height:16px;`
+			? `font-size:11px; line-height:16px; padding: 0.1rem;`
 			: fontSize === FontSize.MEDIUM
-			? `font-size:13px; line-height:20px;`
+			? `font-size:13px; line-height:20px; padding:0.3rem;`
 			: fontSize === FontSize.LARGE
-			? `font-size:14px; line-height:24px;`
-			: ``}
+			? `font-size:14px; line-height:24px; padding: 0.5rem;`
+			: ``};
+	${({ $isTimestamp }): string => ($isTimestamp ? 'padding-left: 24px;' : '')}
 	color: ${(props): string =>
 		props.$isDarkMode ? 'var(--bg-vanilla-100, #fff)' : themeColors.bckgGrey};
 `;

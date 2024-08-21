@@ -198,6 +198,7 @@ function ListLogView({
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 				onClick={handleDetailedView}
+				fontSize={fontSize}
 			>
 				<div className="log-line">
 					<LogStateIndicator
