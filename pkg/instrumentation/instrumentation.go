@@ -10,6 +10,7 @@ import (
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	sdktrace "go.opentelemetry.io/otel/trace"
+	"go.signoz.io/signoz/pkg/version"
 	"go.uber.org/zap"
 )
 
@@ -23,7 +24,7 @@ type Instrumentation struct {
 
 // New creates a new Instrumentation instance with configured providers.
 // It sets up logging, tracing, and metrics based on the provided configuration.
-func New(ctx context.Context, build Build, cfg Config) (*Instrumentation, error) {
+func New(ctx context.Context, build version.Build, cfg Config) (*Instrumentation, error) {
 	// Set default resource attributes if not provided
 	if cfg.Resource.Attributes == nil {
 		cfg.Resource.Attributes = map[string]any{
@@ -39,8 +40,6 @@ func New(ctx context.Context, build Build, cfg Config) (*Instrumentation, error)
 		ctx,
 		sdkresource.WithContainer(),
 		sdkresource.WithFromEnv(),
-		sdkresource.WithProcess(),
-		sdkresource.WithTelemetrySDK(),
 		sdkresource.WithHost(),
 	)
 	if err != nil {

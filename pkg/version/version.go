@@ -1,4 +1,4 @@
-package instrumentation
+package version
 
 // Build contains information about the build environment.
 type Build struct {
