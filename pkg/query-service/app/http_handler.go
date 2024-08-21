@@ -226,14 +226,14 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 				return false
 			}
 
-			fmt.Println("print origin and request",origin.Host,r.Host,origin,r.Host)
+			fmt.Println("print origin and request",origin.Host,r.Host,r.URL.Host,origin,r.Host)
 			
 			// Allow cross origin websocket connections on localhost
 			if strings.HasPrefix(origin.Host, "localhost") {
 				return true
 			}
 
-			return origin.Host == r.Host
+			return origin.Host == r.URL.Host
 		},
 	}
 
@@ -3349,6 +3349,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 }
 
 func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.URL.Host,r.Host,"this is host")
 	req, err := parseQBFilterSuggestionsRequest(r)
 	if err != nil {
 		RespondError(w, err, nil)
