@@ -6,11 +6,13 @@ import StatsCard from '../StatsCard/StatsCard';
 type TotalTriggeredCardProps = {
 	currentAvgResolutionTime: AlertRuleStats['currentAvgResolutionTime'];
 	pastAvgResolutionTime: AlertRuleStats['pastAvgResolutionTime'];
+	timeSeries: AlertRuleStats['currentAvgResolutionTimeSeries']['values'];
 };
 
 function AverageResolutionCard({
 	currentAvgResolutionTime,
 	pastAvgResolutionTime,
+	timeSeries,
 }: TotalTriggeredCardProps): JSX.Element {
 	return (
 		<StatsCard
@@ -18,6 +20,7 @@ function AverageResolutionCard({
 			totalCurrentCount={currentAvgResolutionTime}
 			totalPastCount={pastAvgResolutionTime}
 			title="Avg. Resolution Time"
+			timeSeries={timeSeries}
 		/>
 	);
 }

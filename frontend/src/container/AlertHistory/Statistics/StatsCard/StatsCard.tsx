@@ -1,9 +1,11 @@
 import './statsCard.styles.scss';
 
-import { DotChartOutlined } from '@ant-design/icons';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ArrowDownLeft, ArrowUpRight, Calendar } from 'lucide-react';
+import { AlertRuleStats } from 'types/api/alerts/def';
 import { calculateChange } from 'utils/calculateChange';
+
+import StatsGraph from './StatsGraph/StatsGraph';
 
 type ChangePercentageProps = {
 	percentage: number;
@@ -45,6 +47,7 @@ type StatsCardProps = {
 	isEmpty?: boolean;
 	emptyMessage?: string;
 	displayValue?: string | number;
+	timeSeries?: AlertRuleStats['currentTriggersSeries']['values'];
 };
 
 function StatsCard({
@@ -54,6 +57,7 @@ function StatsCard({
 	title,
 	isEmpty,
 	emptyMessage,
+	timeSeries = [],
 }: StatsCardProps): JSX.Element {
 	const urlQuery = useUrlQuery();
 
@@ -88,13 +92,13 @@ function StatsCard({
 				/>
 			</div>
 
-			{!isEmpty && (
-				<div className="stats-card__graph">
-					<div className="graph">
-						<DotChartOutlined className="graph-icon" />
-					</div>
+			<div className="stats-card__graph">
+				<div className="graph">
+					{!isEmpty && !!timeSeries.length && (
+						<StatsGraph timeSeries={timeSeries} changeDirection={changeDirection} />
+					)}
 				</div>
-			)}
+			</div>
 		</div>
 	);
 }
@@ -105,6 +109,7 @@ StatsCard.defaultProps = {
 	isEmpty: false,
 	emptyMessage: 'No Data',
 	displayValue: '',
+	timeSeries: [],
 };
 
 export default StatsCard;

@@ -38,7 +38,6 @@ export interface RuleCondition {
 	alertOnAbsent?: boolean | undefined;
 	absentFor?: number | undefined;
 }
-
 export interface Labels {
 	[key: string]: string;
 }
@@ -46,21 +45,21 @@ export interface Labels {
 export interface AlertRuleStats {
 	totalCurrentTriggers: number;
 	totalPastTriggers: number;
-	currentTriggersSeries: CurrentTriggersSeries | null;
-	pastTriggersSeries: any | null;
+	currentTriggersSeries: CurrentTriggersSeries;
+	pastTriggersSeries: CurrentTriggersSeries | null;
 	currentAvgResolutionTime: number;
 	pastAvgResolutionTime: number;
-	currentAvgResolutionTimeSeries: any | null;
+	currentAvgResolutionTimeSeries: CurrentTriggersSeries;
 	pastAvgResolutionTimeSeries: any | null;
 }
 
 interface CurrentTriggersSeries {
 	labels: Labels;
 	labelsArray: any | null;
-	values: Value[];
+	values: StatsTimeSeriesItem[];
 }
 
-interface Value {
+export interface StatsTimeSeriesItem {
 	timestamp: number;
 	value: string;
 }

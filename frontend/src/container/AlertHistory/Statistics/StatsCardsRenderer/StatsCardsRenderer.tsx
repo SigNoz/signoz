@@ -59,6 +59,8 @@ function StatsCardsRenderer({
 					pastAvgResolutionTime,
 					totalCurrentTriggers,
 					totalPastTriggers,
+					currentAvgResolutionTimeSeries,
+					currentTriggersSeries,
 				} = data;
 
 				return (
@@ -68,6 +70,7 @@ function StatsCardsRenderer({
 							<TotalTriggeredCard
 								totalCurrentTriggers={totalCurrentTriggers}
 								totalPastTriggers={totalPastTriggers}
+								timeSeries={currentTriggersSeries?.values}
 							/>
 						) : (
 							<StatsCard
@@ -85,6 +88,7 @@ function StatsCardsRenderer({
 							<AverageResolutionCard
 								currentAvgResolutionTime={currentAvgResolutionTime}
 								pastAvgResolutionTime={pastAvgResolutionTime}
+								timeSeries={currentAvgResolutionTimeSeries?.values}
 							/>
 						) : (
 							<StatsCard
