@@ -147,7 +147,7 @@ export const useGetAlertRuleDetailsStats = (): GetAlertRuleDetailsStatsProps => 
 					start: parseInt(startTime || '', 10),
 					end: parseInt(endTime || '', 10),
 				}),
-			enabled: isValidRuleId,
+			enabled: isValidRuleId && !!startTime && !!endTime,
 			refetchOnMount: false,
 			refetchOnWindowFocus: false,
 		},
@@ -326,13 +326,22 @@ export const useSetStartAndEndTimeFromRelativeTime = (): void => {
 	const { pathname, search } = useLocation();
 	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
 
-	const relativeTime = useMemo(
-		() => searchParams.get(QueryParams.relativeTime),
+	const { relativeTime, startTime, endTime } = useMemo(
+		() => ({
+			relativeTime: searchParams.get(QueryParams.relativeTime),
+			startTime: searchParams.get(QueryParams.startTime),
+			endTime: searchParams.get(QueryParams.endTime),
+		}),
 		[searchParams],
 	);
 
 	useEffect(() => {
-		if (!relativeTime || pathname !== ROUTES.ALERT_HISTORY) {
+		if (
+			!relativeTime ||
+			pathname !== ROUTES.ALERT_HISTORY ||
+			startTime ||
+			endTime
+		) {
 			return;
 		}
 
@@ -343,7 +352,7 @@ export const useSetStartAndEndTimeFromRelativeTime = (): void => {
 
 		history.push({ search: searchParams.toString() });
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [relativeTime]);
+	}, [relativeTime, startTime, endTime]);
 };
 
 export const useAlertRuleStatusToggle = ({
