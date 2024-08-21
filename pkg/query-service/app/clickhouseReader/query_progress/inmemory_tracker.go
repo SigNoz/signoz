@@ -35,6 +35,7 @@ func (tracker *inMemoryQueryProgressTracker) ReportQueryStarted(
 	tracker.queries[queryId] = newQueryTracker(queryId)
 
 	return func() {
+		time.Sleep(1 * time.Second)
 		tracker.onQueryFinished(queryId)
 	}, nil
 }
@@ -65,7 +66,6 @@ func (tracker *inMemoryQueryProgressTracker) SubscribeToQueryProgress(
 func (tracker *inMemoryQueryProgressTracker) onQueryFinished(
 	queryId string,
 ) {
-	time.Sleep(1 * time.Second)
 	tracker.lock.Lock()
 	queryTracker := tracker.queries[queryId]
 	if queryTracker != nil {
