@@ -34,7 +34,7 @@ func TestValidate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			factory := NewFactory()
 			cfg := factory.CreateDefaultConfig()
-			err := component.UnmarshalConfig(tt.rawConf, cfg)
+			err := tt.rawConf.Unmarshal(cfg)
 			require.NoError(t, err, "could not UnmarshalConfig")
 
 			err = component.ValidateConfig(cfg)
