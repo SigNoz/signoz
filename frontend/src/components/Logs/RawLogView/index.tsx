@@ -162,6 +162,7 @@ function RawLogView({
 			$isActiveLog={isActiveLog}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
+			fontSize={fontSize}
 		>
 			<LogStateIndicator
 				type={logType}

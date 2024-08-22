@@ -13,6 +13,7 @@ export const RawLogViewContainer = styled(Row)<{
 	$isReadOnly?: boolean;
 	$isActiveLog?: boolean;
 	$isHightlightedLog: boolean;
+	fontSize: FontSize;
 }>`
 	position: relative;
 	width: 100%;
@@ -24,6 +25,13 @@ export const RawLogViewContainer = styled(Row)<{
 
 	.log-state-indicator {
 		margin: 4px 0;
+
+		${({ fontSize }): string =>
+			fontSize === FontSize.SMALL
+				? `margin: 1px 0;`
+				: fontSize === FontSize.MEDIUM
+				? `margin: 1px 0;`
+				: `margin: 2px 0;`}
 	}
 
 	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
@@ -50,13 +58,8 @@ export const ExpandIconWrapper = styled(Col)`
 
 export const RawLogContent = styled.div<RawLogContentProps>`
 	margin-bottom: 0;
-	display: flex !important;
-	align-items: center;
 	font-family: 'SF Mono', monospace;
 	font-family: 'Geist Mono';
-	font-size: 13px;
-	font-weight: 400;
-	line-height: 24px;
 	letter-spacing: -0.07px;
 	padding: 4px;
 	text-align: left;
@@ -73,6 +76,9 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 		line-clamp: ${linesPerRow}; 
 		-webkit-box-orient: vertical;`};
 
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 24px;
 	${({ fontSize }): string =>
 		fontSize === FontSize.SMALL
 			? `font-size:11px; line-height:16px; padding:1px;`
