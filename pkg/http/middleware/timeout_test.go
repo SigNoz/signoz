@@ -15,7 +15,8 @@ func TestTimeout(t *testing.T) {
 
 	writeTimeout := 6 * time.Second
 	defaultTimeout := 2 * time.Second
-	m := NewTimeout(zap.NewNop(), map[string]struct{}{"/excluded": {}}, defaultTimeout)
+	maxTimeout := 4 * time.Second
+	m := NewTimeout(zap.NewNop(), map[string]struct{}{"/excluded": {}}, defaultTimeout, maxTimeout)
 
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)
@@ -45,14 +46,20 @@ func TestTimeout(t *testing.T) {
 		{
 			name:   "WaitTillNoTimeoutForExcludedPath",
 			wait:   1 * time.Nanosecond,
-			header: "4s",
+			header: "4",
 			path:   "excluded",
 		},
 		{
 			name:   "WaitTillHeaderTimeout",
-			wait:   4 * time.Second,
-			header: "4s",
+			wait:   3 * time.Second,
+			header: "3",
 			path:   "header-timeout",
+		},
+		{
+			name:   "WaitTillMaxTimeout",
+			wait:   4 * time.Second,
+			header: "5",
+			path:   "max-timeout",
 		},
 	}
 

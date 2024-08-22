@@ -65,7 +65,7 @@ func (writer *nonFlushingBadResponseLoggingWriter) Header() http.Header {
 // WriteHeader writes the HTTP response header.
 func (writer *nonFlushingBadResponseLoggingWriter) WriteHeader(statusCode int) {
 	writer.statusCode = statusCode
-	if statusCode >= 500 {
+	if statusCode >= 500 || statusCode == 400 {
 		writer.logBody = true
 	}
 	writer.rw.WriteHeader(statusCode)

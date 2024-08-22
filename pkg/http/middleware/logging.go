@@ -61,12 +61,12 @@ func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 		if err != nil {
 			fields = append(fields, zap.Error(err))
 			middleware.logger.Error(logMessage, fields...)
-		}
+		} else {
+			if buf.Len() != 0 {
+				fields = append(fields, zap.String("response.body", buf.String()))
+			}
 
-		if buf.Len() != 0 {
-			fields = append(fields, zap.String("response.body", buf.String()))
+			middleware.logger.Info(logMessage, fields...)
 		}
-
-		middleware.logger.Info(logMessage, fields...)
 	})
 }

@@ -3,14 +3,14 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
 )
 
 const (
-	maxTimeout time.Duration = 600 * time.Second
-	headerName string        = "timeout"
+	headerName string = "timeout"
 )
 
 type Timeout struct {
@@ -18,9 +18,11 @@ type Timeout struct {
 	excluded map[string]struct{}
 	// The default timeout
 	defaultTimeout time.Duration
+	// The max allowed timeout
+	maxTimeout time.Duration
 }
 
-func NewTimeout(logger *zap.Logger, excluded map[string]struct{}, defaultTimeout time.Duration) *Timeout {
+func NewTimeout(logger *zap.Logger, excluded map[string]struct{}, defaultTimeout time.Duration, maxTimeout time.Duration) *Timeout {
 	if logger == nil {
 		panic("cannot build timeout, logger is empty")
 	}
@@ -33,9 +35,15 @@ func NewTimeout(logger *zap.Logger, excluded map[string]struct{}, defaultTimeout
 		defaultTimeout = 60 * time.Second
 	}
 
+	if maxTimeout == 0 {
+		maxTimeout = 600 * time.Second
+	}
+
 	return &Timeout{
-		logger:   logger.Named(pkgname),
-		excluded: excluded,
+		logger:         logger.Named(pkgname),
+		excluded:       excluded,
+		defaultTimeout: defaultTimeout,
+		maxTimeout:     maxTimeout,
 	}
 }
 
@@ -45,12 +53,12 @@ func (middleware *Timeout) Wrap(next http.Handler) http.Handler {
 			actual := middleware.defaultTimeout
 			incoming := req.Header.Get(headerName)
 			if incoming != "" {
-				parsed, err := time.ParseDuration(incoming)
+				parsed, err := time.ParseDuration(strings.TrimSpace(incoming) + "s")
 				if err != nil {
 					middleware.logger.Warn("cannot parse timeout in header, using default timeout", zap.String("timeout", incoming), zap.Error(err), zap.Any("context", req.Context()))
 				} else {
-					if parsed > maxTimeout {
-						actual = maxTimeout
+					if parsed > middleware.maxTimeout {
+						actual = middleware.maxTimeout
 					} else {
 						actual = parsed
 					}
