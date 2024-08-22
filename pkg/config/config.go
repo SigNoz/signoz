@@ -5,6 +5,7 @@ import (
 
 	signozconfmap "go.signoz.io/signoz/pkg/confmap"
 	"go.signoz.io/signoz/pkg/instrumentation"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/version"
 	"go.signoz.io/signoz/pkg/web"
 )
@@ -15,6 +16,7 @@ var (
 		"version":         &version.Config{},
 		"instrumentation": &instrumentation.Config{},
 		"web":             &web.Config{},
+		"cache":           &cache.Config{},
 	}
 )
 
@@ -23,6 +25,7 @@ type Config struct {
 	Version         version.Config         `mapstructure:"version"`
 	Instrumentation instrumentation.Config `mapstructure:"instrumentation"`
 	Web             web.Config             `mapstructure:"web"`
+	Cache           cache.Config           `mapstructure:"cache"`
 }
 
 func New(ctx context.Context, settings ProviderSettings) (*Config, error) {

@@ -57,4 +57,18 @@ web:
   prefix: /
   # The directory containing the static build files.
   directory: /etc/signoz/web
+#----------------------------------------------
+# Cache
+#----------------------------------------------
+cache:
+  # Memory provider
+  provider: memory
+  ttl: -1
+  cleanup_interval: 60
 
+  # Options for redis
+  # provider: redis
+  # host: localhost
+  # port: 6379
+  # password: password
+  # db: 0
