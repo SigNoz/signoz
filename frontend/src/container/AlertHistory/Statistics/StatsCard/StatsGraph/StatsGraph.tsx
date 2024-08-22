@@ -14,8 +14,8 @@ const getStyle = (
 ): { stroke: string; fill: string } => {
 	if (changeDirection === 0) {
 		return {
-			stroke: 'black',
-			fill: 'grey',
+			stroke: Color.BG_VANILLA_400,
+			fill: 'rgba(255, 255, 255, 0.20)',
 		};
 	}
 	if (changeDirection > 0) {
@@ -31,12 +31,11 @@ const getStyle = (
 };
 
 function StatsGraph({ timeSeries, changeDirection }: Props): JSX.Element {
-	const transformedDataX = useMemo(
-		() => timeSeries.map((item) => item.timestamp),
-		[timeSeries],
-	);
-	const transformedDataY = useMemo(
-		() => timeSeries.map((item) => Number(item.value)),
+	const { xData, yData } = useMemo(
+		() => ({
+			xData: timeSeries.map((item) => item.timestamp),
+			yData: timeSeries.map((item) => Number(item.value)),
+		}),
 		[timeSeries],
 	);
 
@@ -47,7 +46,7 @@ function StatsGraph({ timeSeries, changeDirection }: Props): JSX.Element {
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			<Uplot
-				data={[transformedDataX, transformedDataY]}
+				data={[xData, yData]}
 				options={{
 					width: containerDimensions.width,
 					height: containerDimensions.height,
