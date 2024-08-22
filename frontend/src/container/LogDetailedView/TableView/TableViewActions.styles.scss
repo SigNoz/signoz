@@ -1,3 +1,16 @@
+.open-popover {
+	&.value-field {
+		.action-btn {
+			display: flex !important;
+			position: absolute !important;
+			top: 50% !important;
+			right: 16px !important;
+			transform: translateY(-50%) !important;
+			gap: 4px !important;
+		}
+	}
+}
+
 .table-view-actions-content {
 	.ant-popover-inner {
 		border-radius: 4px;
@@ -22,10 +35,27 @@
 			line-height: normal;
 			letter-spacing: 0.14px;
 			padding: 12px 18px 12px 14px;
+
+			.ant-btn-icon {
+				margin-inline-end: 0px;
+			}
 		}
 
 		.group-by-clause:hover {
 			background-color: unset !important;
+		}
+	}
+}
+
+.lightMode {
+	.table-view-actions-content {
+		.ant-popover-inner {
+			border: 1px solid var(--bg-vanilla-400);
+			background: var(--bg-vanilla-100) !important;
+
+			.group-by-clause {
+				color: var(--bg-ink-400);
+			}
 		}
 	}
 }

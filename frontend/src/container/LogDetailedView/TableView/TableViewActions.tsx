@@ -2,11 +2,13 @@ import './TableViewActions.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover, Spin, Tooltip, Tree } from 'antd';
+import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
+import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { isEmpty } from 'lodash-es';
-import { ArrowDownToDot, ArrowUpFromDot, Ellipsis, Frame } from 'lucide-react';
+import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -73,7 +75,7 @@ export function TableViewActions(
 	const fieldFilterKey = filterKeyForField(fieldData.field);
 
 	return (
-		<div className="value-field">
+		<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
 			<CopyClipboardHOC textToCopy={textToCopy}>
 				<span
 					style={{
@@ -124,7 +126,7 @@ export function TableViewActions(
 									<Button
 										className="group-by-clause"
 										type="text"
-										icon={<Frame size={14} />}
+										icon={<GroupByIcon />}
 										onClick={(): Promise<void> | void =>
 											onGroupByAttribute?.(fieldFilterKey)
 										}
@@ -134,7 +136,7 @@ export function TableViewActions(
 								</div>
 							}
 							rootClassName="table-view-actions-content"
-							trigger="click"
+							trigger="hover"
 							placement="bottomLeft"
 						>
 							<Button
