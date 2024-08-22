@@ -1,0 +1,15 @@
+##################### SigNoz Configuration Defaults #####################
+#
+# Do not modify this file in signoz installs
+#
+#################################### Version ###############################
+version:
+  banner:
+    # Whether to show the banner on startup
+    enabled: true
+#################################### Instrumentation ###############################
+instrumentation:
+  logs:
+    # Whether to enable log exports to an otlp compatible backend
+    enabled: true
+    level: debug
