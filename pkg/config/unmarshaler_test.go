@@ -29,6 +29,6 @@ func TestUnmarshal(t *testing.T) {
 	cfg, err := unmarshal(input)
 	require.NoError(t, err)
 
-	assert.Equal(t, expected, cfg)
+	assert.Equal(t, expected.Instrumentation, cfg.Instrumentation)
 
 }

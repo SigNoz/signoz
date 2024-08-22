@@ -10,6 +10,7 @@ import (
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
 	"go.signoz.io/signoz/pkg/confmap/provider/signozenvprovider"
 	"go.signoz.io/signoz/pkg/instrumentation"
+	"go.signoz.io/signoz/pkg/version"
 	"go.signoz.io/signoz/pkg/web"
 )
 
@@ -32,6 +33,11 @@ func TestNewWithSignozEnvProvider(t *testing.T) {
 
 	i := 10
 	expected := &Config{
+		Version: version.Config{
+			Banner: version.Banner{
+				Enabled: true,
+			},
+		},
 		Instrumentation: instrumentation.Config{
 			Logs: instrumentation.LogsConfig{
 				Enabled: true,
