@@ -1,15 +1,60 @@
 ##################### SigNoz Configuration Defaults #####################
-#
 # Do not modify this file in signoz installs
-#
-#################################### Version ###############################
+#----------------------------------------------
+# Version
+#----------------------------------------------
 version:
   banner:
     # Whether to show the banner on startup
     enabled: true
-#################################### Instrumentation ###############################
+#----------------------------------------------
+# Instrumentation
+#----------------------------------------------
 instrumentation:
   logs:
     # Whether to enable log exports to an otlp compatible backend
+    enabled: false
+    # the level of the logger
+    level: error
+    processors:
+      - batch:
+          exporter:
+            otlp:
+              # the otlp endpoint
+              endpoint:
+              # the otlp protocol
+              protocol:
+  traces:
+    # Whether to enable trace exports to an otlp compatible backend
+    enabled: false
+    processors:
+      - batch:
+          exporter:
+            otlp:
+              # the otlp endpoint
+              endpoint:
+              # the otlp protocol
+              protocol:
+  metrics:
+    # Whether to enable metric exports to an otlp compatible backend or in prometheus format
     enabled: true
-    level: debug
+    readers:
+      - periodic:
+          exporter:
+            otlp:
+              # the otlp endpoint
+              endpoint:
+              # the otlp protocol
+              protocol:
+            prometheus:
+              host: 0.0.0.0
+              port: 9090
+#----------------------------------------------
+# Web
+#----------------------------------------------
+web:
+  # The prefix to serve web on
+  prefix: /
+  # The directory containing the static build files.
+  directory: /etc/signoz/web
+
