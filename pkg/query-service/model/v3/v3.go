@@ -1200,8 +1200,8 @@ type RuleStateHistory struct {
 	Fingerprint  uint64       `json:"fingerprint" ch:"fingerprint"`
 	Value        float64      `json:"value" ch:"value"`
 
-	RelatedTracesLink string `json:"relatedTracesLink" ch:"related_traces_link"`
-	RelatedLogsLink   string `json:"relatedLogsLink" ch:"related_logs_link"`
+	RelatedTracesLink string `json:"relatedTracesLink"`
+	RelatedLogsLink   string `json:"relatedLogsLink"`
 }
 
 type QueryRuleStateHistory struct {
@@ -1228,9 +1228,11 @@ func (r *QueryRuleStateHistory) Validate() error {
 }
 
 type RuleStateHistoryContributor struct {
-	Fingerprint uint64       `json:"fingerprint" ch:"fingerprint"`
-	Labels      LabelsString `json:"labels" ch:"labels"`
-	Count       uint64       `json:"count" ch:"count"`
+	Fingerprint       uint64       `json:"fingerprint" ch:"fingerprint"`
+	Labels            LabelsString `json:"labels" ch:"labels"`
+	Count             uint64       `json:"count" ch:"count"`
+	RelatedTracesLink string       `json:"relatedTracesLink"`
+	RelatedLogsLink   string       `json:"relatedLogsLink"`
 }
 
 type RuleStateTransition struct {
