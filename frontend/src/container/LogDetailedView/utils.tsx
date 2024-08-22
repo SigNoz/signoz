@@ -252,8 +252,8 @@ export const getDataTypes = (value: unknown): DataTypes => {
 
 export const removeEscapeCharacters = (str: string): string =>
 	str
-		.replace(/\\x1b\[[0-9;]*m/g, '')
-		.replace(/\\u001b[[0-9;]*m/g, '')
+		.replace(/\\x1[bB][[0-9;]*m/g, '')
+		.replace(/\\u001[bB][[0-9;]*m/g, '')
 		.replace(/\\x[0-9A-Fa-f]{2}/g, '')
 		.replace(/\\u[0-9A-Fa-f]{4}/g, '')
 		.replace(/\\[btnfrv0'"\\]/g, '');
