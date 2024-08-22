@@ -38,6 +38,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 		activeLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 		onSetActiveLog,
 	} = useActiveLog();
 
@@ -151,6 +152,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 				log={activeLog}
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}
+				onGroupByAttribute={onGroupByAttribute}
 				onClickActionItem={onAddToQuery}
 			/>
 		</>

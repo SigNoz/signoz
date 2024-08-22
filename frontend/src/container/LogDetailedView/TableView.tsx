@@ -4,13 +4,12 @@ import './TableView.styles.scss';
 
 import { LinkOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Space, Spin, Tooltip, Tree, Typography } from 'antd';
+import { Button, Space, Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import cx from 'classnames';
 import AddToQueryHOC, {
 	AddToQueryHOCProps,
 } from 'components/Logs/AddToQueryHOC';
-import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -19,8 +18,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
-import { isEmpty } from 'lodash-es';
-import { ArrowDownToDot, ArrowUpFromDot, Pin } from 'lucide-react';
+import { Pin } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
@@ -29,17 +27,12 @@ import AppActions from 'types/actions';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
-import {
-	filterKeyForField,
-	findKeyPath,
-	flattenObject,
-	jsonToDataNodes,
-	recursiveParseJSON,
-	removeEscapeCharacters,
-} from './utils';
+import { TableViewActions } from './TableView/TableViewActions';
+import { filterKeyForField, findKeyPath, flattenObject } from './utils';
 
 // Fields which should be restricted from adding it to query
 const RESTRICTED_FIELDS = ['timestamp'];
@@ -50,6 +43,11 @@ interface TableViewProps {
 	selectedOptions: OptionsQuery;
 	isListViewPanel?: boolean;
 	listViewPanelSelectedFields?: IField[] | null;
+	onGroupByAttribute?: (
+		fieldKey: string,
+		isJSON?: boolean,
+		dataType?: DataTypes,
+	) => Promise<void>;
 }
 
 type Props = TableViewProps &
@@ -63,6 +61,7 @@ function TableView({
 	onClickActionItem,
 	isListViewPanel = false,
 	selectedOptions,
+	onGroupByAttribute,
 	listViewPanelSelectedFields,
 }: Props): JSX.Element | null {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -271,75 +270,17 @@ function TableView({
 			width: 70,
 			ellipsis: false,
 			className: 'value-field-container attribute-value',
-			render: (fieldData: Record<string, string>, record): JSX.Element => {
-				const textToCopy = fieldData.value.slice(1, -1);
-
-				if (record.field === 'body') {
-					const parsedBody = recursiveParseJSON(fieldData.value);
-					if (!isEmpty(parsedBody)) {
-						return (
-							<Tree defaultExpandAll showLine treeData={jsonToDataNodes(parsedBody)} />
-						);
-					}
-				}
-
-				const fieldFilterKey = filterKeyForField(fieldData.field);
-
-				return (
-					<div className="value-field">
-						<CopyClipboardHOC textToCopy={textToCopy}>
-							<span
-								style={{
-									color: Color.BG_SIENNA_400,
-									whiteSpace: 'pre-wrap',
-									tabSize: 4,
-								}}
-							>
-								{removeEscapeCharacters(fieldData.value)}
-							</span>
-						</CopyClipboardHOC>
-
-						{!isListViewPanel && (
-							<span className="action-btn">
-								<Tooltip title="Filter for value">
-									<Button
-										className="filter-btn periscope-btn"
-										icon={
-											isfilterInLoading ? (
-												<Spin size="small" />
-											) : (
-												<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
-											)
-										}
-										onClick={onClickHandler(
-											OPERATORS.IN,
-											fieldFilterKey,
-											fieldData.value,
-										)}
-									/>
-								</Tooltip>
-								<Tooltip title="Filter out value">
-									<Button
-										className="filter-btn periscope-btn"
-										icon={
-											isfilterOutLoading ? (
-												<Spin size="small" />
-											) : (
-												<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
-											)
-										}
-										onClick={onClickHandler(
-											OPERATORS.NIN,
-											fieldFilterKey,
-											fieldData.value,
-										)}
-									/>
-								</Tooltip>
-							</span>
-						)}
-					</div>
-				);
-			},
+			render: (fieldData: Record<string, string>, record): JSX.Element => (
+				<TableViewActions
+					fieldData={fieldData}
+					record={record}
+					isListViewPanel={isListViewPanel}
+					isfilterInLoading={isfilterInLoading}
+					isfilterOutLoading={isfilterOutLoading}
+					onClickHandler={onClickHandler}
+					onGroupByAttribute={onGroupByAttribute}
+				/>
+			),
 		},
 	];
 	function sortPinnedAttributes(
@@ -380,9 +321,10 @@ function TableView({
 TableView.defaultProps = {
 	isListViewPanel: false,
 	listViewPanelSelectedFields: null,
+	onGroupByAttribute: undefined,
 };
 
-interface DataType {
+export interface DataType {
 	key: string;
 	field: string;
 	value: string;

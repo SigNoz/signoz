@@ -141,6 +141,7 @@ function ListLogView({
 		onAddToQuery: handleAddToQuery,
 		onSetActiveLog: handleSetActiveContextLog,
 		onClearActiveLog: handleClearActiveContextLog,
+		onGroupByAttribute,
 	} = useActiveLog();
 
 	const isDarkMode = useIsDarkMode();
@@ -257,6 +258,7 @@ function ListLogView({
 					onAddToQuery={handleAddToQuery}
 					selectedTab={VIEW_TYPES.CONTEXT}
 					onClose={handlerClearActiveContextLog}
+					onGroupByAttribute={onGroupByAttribute}
 				/>
 			)}
 		</>

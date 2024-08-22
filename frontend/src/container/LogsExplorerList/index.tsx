@@ -51,6 +51,7 @@ function LogsExplorerList({
 		activeLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 		onSetActiveLog,
 	} = useActiveLog();
 
@@ -208,6 +209,7 @@ function LogsExplorerList({
 						log={activeLog}
 						onClose={onClearActiveLog}
 						onAddToQuery={onAddToQuery}
+						onGroupByAttribute={onGroupByAttribute}
 						onClickActionItem={onAddToQuery}
 					/>
 				</>

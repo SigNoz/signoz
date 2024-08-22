@@ -36,6 +36,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		activeLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 		onSetActiveLog,
 	} = useActiveLog();
 
@@ -130,6 +131,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 				selectedTab={VIEW_TYPES.OVERVIEW}
 				log={activeLog}
 				onClose={onClearActiveLog}
+				onGroupByAttribute={onGroupByAttribute}
 				onAddToQuery={onAddToQuery}
 				onClickActionItem={onAddToQuery}
 			/>
