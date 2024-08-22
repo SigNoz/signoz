@@ -87,3 +87,18 @@ database:
   provider: sqlite
   # Path to the sqlite database
   path: /var/lib/signoz
+#----------------------------------------------
+# Storage
+#----------------------------------------------
+storage:
+  provider: clickhouse
+  dsn: tcp://localhost:9000
+  cluster: cluster
+  prometheus_config_path: /etc/signoz/config/prometheus.yml
+  max_idle_connections:
+  max_open_connections:
+  dial_timeout:
+  optimize_read_in_order_regex:
+  max_execution_time_leaf:
+  timeout_before_checking_execution_speed:
+  max_bytes_to_read:
