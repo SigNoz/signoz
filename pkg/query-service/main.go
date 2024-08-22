@@ -82,6 +82,7 @@ func main() {
 	}
 
 	// Read the jwt secret key
+	// todo(remove): read from config
 	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
 
 	if len(auth.JwtSecret) == 0 {

@@ -117,6 +117,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	readerReady := make(chan bool)
 
 	var reader interfaces.Reader
+	// todo(remove): read from config
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.L().Info("Using ClickHouse as datastore ...")

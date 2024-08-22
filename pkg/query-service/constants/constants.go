@@ -64,9 +64,13 @@ var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templa
 // Alert manager channel subpath
 var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
 
+// todo(remove): read from config
 var OTLPTarget = GetOrDefaultEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "")
+
+// todo(remove): read from config
 var LogExportBatchSize = GetOrDefaultEnv("OTEL_BLRP_MAX_EXPORT_BATCH_SIZE", "512")
 
+// todo(remove): read from config
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
 var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
@@ -132,6 +136,7 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 	},
 }
 
+// todo(remove): read from config
 func GetContextTimeout() time.Duration {
 	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT", "60")
 	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
@@ -141,8 +146,10 @@ func GetContextTimeout() time.Duration {
 	return contextTimeoutDuration
 }
 
+// todo(remove): read from config
 var ContextTimeout = GetContextTimeout()
 
+// todo(remove): read from config
 func GetContextTimeoutMaxAllowed() time.Duration {
 	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT_MAX_ALLOWED", "600")
 	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
@@ -161,6 +168,7 @@ func GetEvalDelay() time.Duration {
 	return evalDelayDuration
 }
 
+// todo(remove): read from config
 var ContextTimeoutMaxAllowed = GetContextTimeoutMaxAllowed()
 
 const (
