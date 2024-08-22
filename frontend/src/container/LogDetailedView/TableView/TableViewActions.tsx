@@ -4,9 +4,11 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Popover, Spin, Tooltip, Tree } from 'antd';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { OPERATORS } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import { isEmpty } from 'lodash-es';
 import { ArrowDownToDot, ArrowUpFromDot, Ellipsis, Frame } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { DataType } from '../TableView';
@@ -48,7 +50,13 @@ export function TableViewActions(
 		onGroupByAttribute,
 	} = props;
 
-	console.log(onGroupByAttribute);
+	const { pathname } = useLocation();
+
+	// there is no option for where clause in old logs explorer and live logs page
+	const isOldLogsExplorerOrLiveLogsPage = useMemo(
+		() => pathname === ROUTES.OLD_LOGS_EXPLORER || pathname === ROUTES.LIVE_LOGS,
+		[pathname],
+	);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const textToCopy = fieldData.value.slice(1, -1);
@@ -106,33 +114,35 @@ export function TableViewActions(
 							onClick={onClickHandler(OPERATORS.NIN, fieldFilterKey, fieldData.value)}
 						/>
 					</Tooltip>
-					<Popover
-						open={isOpen}
-						onOpenChange={setIsOpen}
-						arrow={false}
-						content={
-							<div>
-								<Button
-									className="group-by-clause"
-									type="text"
-									icon={<Frame size={14} />}
-									onClick={(): Promise<void> | void =>
-										onGroupByAttribute?.(fieldFilterKey)
-									}
-								>
-									Group By Attribute
-								</Button>
-							</div>
-						}
-						rootClassName="table-view-actions-content"
-						trigger="click"
-						placement="bottomLeft"
-					>
-						<Button
-							icon={<Ellipsis size={14} />}
-							className="filter-btn periscope-btn"
-						/>
-					</Popover>
+					{!isOldLogsExplorerOrLiveLogsPage && (
+						<Popover
+							open={isOpen}
+							onOpenChange={setIsOpen}
+							arrow={false}
+							content={
+								<div>
+									<Button
+										className="group-by-clause"
+										type="text"
+										icon={<Frame size={14} />}
+										onClick={(): Promise<void> | void =>
+											onGroupByAttribute?.(fieldFilterKey)
+										}
+									>
+										Group By Attribute
+									</Button>
+								</div>
+							}
+							rootClassName="table-view-actions-content"
+							trigger="click"
+							placement="bottomLeft"
+						>
+							<Button
+								icon={<Ellipsis size={14} />}
+								className="filter-btn periscope-btn"
+							/>
+						</Popover>
+					)}
 				</span>
 			)}
 		</div>
