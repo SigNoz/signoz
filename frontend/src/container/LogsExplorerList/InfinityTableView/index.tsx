@@ -59,6 +59,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			onSetActiveLog,
 			onClearActiveLog,
 			onAddToQuery,
+			onGroupByAttribute,
 		} = useActiveLog();
 
 		const { dataSource, columns } = useTableView({
@@ -165,6 +166,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						onClose={handleClearActiveContextLog}
 						onAddToQuery={handleAddToQuery}
 						selectedTab={VIEW_TYPES.CONTEXT}
+						onGroupByAttribute={onGroupByAttribute}
 					/>
 				)}
 				<LogDetail
@@ -173,6 +175,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					onClose={onClearActiveLog}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
+					onGroupByAttribute={onGroupByAttribute}
 				/>
 			</>
 		);

@@ -54,6 +54,7 @@ function RawLogView({
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 	} = useActiveLog();
 
 	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
@@ -199,6 +200,7 @@ function RawLogView({
 					onClose={handleCloseLogDetail}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
+					onGroupByAttribute={onGroupByAttribute}
 				/>
 			)}
 		</RawLogViewContainer>
