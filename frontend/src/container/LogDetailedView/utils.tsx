@@ -250,6 +250,8 @@ export const getDataTypes = (value: unknown): DataTypes => {
 	return determineType(value);
 };
 
+// now we do not want to render colors everywhere like in tooltip and monaco editor hence we remove such codes to make
+// the log line readable
 export const removeEscapeCharacters = (str: string): string =>
 	str
 		.replace(/\\x1[bB][[0-9;]*m/g, '')
@@ -258,6 +260,10 @@ export const removeEscapeCharacters = (str: string): string =>
 		.replace(/\\u[0-9A-Fa-f]{4}/g, '')
 		.replace(/\\[btnfrv0'"\\]/g, '');
 
+// we need to remove the escape from the escaped characters as some recievers like file log escape the unicode escape characters.
+// example: Log [\u001B[32;1mThis is bright green\u001B[0m] is being sent as [\\u001B[32;1mThis is bright green\\u001B[0m]
+//
+// so we need to remove this escapes to render the color properly
 export const unescapeString = (str: string): string =>
 	str
 		.replace(/\\n/g, '\n') // Replaces escaped newlines
