@@ -446,13 +446,15 @@ func (c *CompositeQuery) EnabledQueries() int {
 }
 
 func (c *CompositeQuery) Sanitize() {
+	if c == nil {
+		return
+	}
 	// remove groupBy for queries with list panel type
 	for _, query := range c.BuilderQueries {
 		if len(query.GroupBy) > 0 && c.PanelType == PanelTypeList {
 			query.GroupBy = []AttributeKey{}
 		}
 	}
-
 }
 
 func (c *CompositeQuery) Validate() error {
@@ -1244,4 +1246,12 @@ type Stats struct {
 	PastAvgResolutionTime          string  `json:"pastAvgResolutionTime"`
 	CurrentAvgResolutionTimeSeries *Series `json:"currentAvgResolutionTimeSeries"`
 	PastAvgResolutionTimeSeries    *Series `json:"pastAvgResolutionTimeSeries"`
+}
+
+type QueryProgress struct {
+	ReadRows uint64 `json:"read_rows"`
+
+	ReadBytes uint64 `json:"read_bytes"`
+
+	ElapsedMs uint64 `json:"elapsed_ms"`
 }

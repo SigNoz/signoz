@@ -147,7 +147,7 @@ func (lm *Manager) GetLicenses(ctx context.Context) (response []model.License, a
 	for _, l := range licenses {
 		l.ParsePlan()
 
-		if l.Key == lm.activeLicense.Key {
+		if lm.activeLicense != nil && l.Key == lm.activeLicense.Key {
 			l.IsCurrent = true
 		}
 

@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/consumer/consumertest"
@@ -58,9 +57,8 @@ func makeTestLogReceiver(receiverId string) (receiver.Logs, error) {
 	factory := NewFactory()
 
 	cfg := factory.CreateDefaultConfig()
-	component.UnmarshalConfig(confmap.NewFromStringMap(
-		map[string]interface{}{"id": receiverId}), cfg,
-	)
+
+	confmap.NewFromStringMap(map[string]any{"id": receiverId}).Unmarshal(&cfg)
 
 	return factory.CreateLogsReceiver(
 		context.Background(), receiver.CreateSettings{}, cfg, consumertest.NewNop(),

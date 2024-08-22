@@ -3,6 +3,7 @@ declare global {
 	namespace NodeJS {
 		interface ProcessEnv {
 			FRONTEND_API_ENDPOINT: string | undefined;
+			WEBSOCKET_API_ENDPOINT: string | undefined;
 		}
 	}
 }
