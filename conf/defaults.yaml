@@ -72,3 +72,10 @@ cache:
   # port: 6379
   # password: password
   # db: 0
+#----------------------------------------------
+# Auth
+#----------------------------------------------
+jwt:
+  auth:
+    # The JWT secret for authentication
+    secret: secret

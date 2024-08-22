@@ -11,6 +11,7 @@ import (
 	signozconfig "go.signoz.io/signoz/pkg/config"
 	"go.signoz.io/signoz/pkg/confmap/provider/signozenvprovider"
 	"go.signoz.io/signoz/pkg/instrumentation"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/version"
 	"go.signoz.io/signoz/pkg/web"
 	"go.uber.org/zap"
@@ -86,6 +87,11 @@ func run(
 	_, err = web.New(instr.Logger, config.Web)
 	if err != nil {
 		return err
+	}
+
+	auth.JwtSecret = config.Auth.Jwt.Secret
+	if len(auth.JwtSecret) == 0 {
+		instr.Logger.Warn("no jwt secret key is specified", zap.Any("context", ctx))
 	}
 
 	return nil
