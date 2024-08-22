@@ -38,7 +38,7 @@ function LogContext({
 				isTextOverflowEllipsisDisabled={false}
 				data={log}
 				linesPerRow={1}
-				fontSize={FontSize.MEDIUM}
+				fontSize={FontSize.SMALL}
 			/>
 			<LogsContextList
 				order={ORDERBY_FILTERS.DESC}

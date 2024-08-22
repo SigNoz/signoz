@@ -256,7 +256,7 @@ function TableView({
 							fieldKey={fieldFilterKey}
 							fieldValue={flattenLogData[field]}
 							onAddToQuery={onAddToQuery}
-							fontSize={FontSize.MEDIUM}
+							fontSize={FontSize.SMALL}
 						>
 							{renderedField}
 						</AddToQueryHOC>

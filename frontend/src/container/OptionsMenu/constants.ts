@@ -8,7 +8,7 @@ export const defaultOptionsQuery: OptionsQuery = {
 	selectColumns: [],
 	maxLines: 2,
 	format: 'list',
-	fontSize: FontSize.MEDIUM,
+	fontSize: FontSize.SMALL,
 };
 
 export const defaultTraceSelectedColumns = [

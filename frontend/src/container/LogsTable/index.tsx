@@ -67,7 +67,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 						data={log}
 						linesPerRow={linesPerRow}
 						selectedFields={selected}
-						fontSize={FontSize.MEDIUM}
+						fontSize={FontSize.SMALL}
 					/>
 				);
 			}
@@ -80,7 +80,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 					linesPerRow={linesPerRow}
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
-					fontSize={FontSize.MEDIUM}
+					fontSize={FontSize.SMALL}
 				/>
 			);
 		},
@@ -95,7 +95,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 					logs={logs}
 					fields={selected}
 					linesPerRow={linesPerRow}
-					fontSize={FontSize.MEDIUM}
+					fontSize={FontSize.SMALL}
 				/>
 			);
 		}

@@ -29,7 +29,7 @@ export default function LogsFormatOptionsMenu({
 	const maxLinesNumber = (maxLines?.value as number) || 1;
 	const [maxLinesPerRow, setMaxLinesPerRow] = useState<number>(maxLinesNumber);
 	const [fontSizeValue, setFontSizeValue] = useState<FontSize>(
-		fontSize?.value || FontSize.MEDIUM,
+		fontSize?.value || FontSize.SMALL,
 	);
 	const [isFontSizeOptionsOpen, setIsFontSizeOptionsOpen] = useState<boolean>(
 		false,

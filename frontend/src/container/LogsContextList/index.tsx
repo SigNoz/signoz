@@ -168,7 +168,7 @@ function LogsContextList({
 				key={log.id}
 				data={log}
 				linesPerRow={1}
-				fontSize={FontSize.MEDIUM}
+				fontSize={FontSize.SMALL}
 			/>
 		),
 		[],
