@@ -251,18 +251,28 @@ export const getDataTypes = (value: unknown): DataTypes => {
 };
 
 export const removeEscapeCharacters = (str: string): string =>
-	str.replace(/\\([ntfr'"\\])/g, (_: string, char: string) => {
-		const escapeMap: Record<string, string> = {
-			n: '\n',
-			t: '\t',
-			f: '\f',
-			r: '\r',
-			"'": "'",
-			'"': '"',
-			'\\': '\\',
-		};
-		return escapeMap[char as keyof typeof escapeMap];
-	});
+	str
+		.replace(/\\[btnfrv0'"\\]/g, '')
+		.replace(/\\x[0-9A-Fa-f]{2}/g, '')
+		.replace(/\\u[0-9A-Fa-f]{4}/g, '');
+
+export const unescapeString = (str: string): string =>
+	str
+		.replace(/\\n/g, '\n') // Replaces escaped newlines
+		.replace(/\\r/g, '\r') // Replaces escaped carriage returns
+		.replace(/\\t/g, '\t') // Replaces escaped tabs
+		.replace(/\\b/g, '\b') // Replaces escaped backspaces
+		.replace(/\\f/g, '\f') // Replaces escaped form feeds
+		.replace(/\\v/g, '\v') // Replaces escaped vertical tabs
+		.replace(/\\'/g, "'") // Replaces escaped single quotes
+		.replace(/\\"/g, '"') // Replaces escaped double quotes
+		.replace(/\\\\/g, '\\') // Replaces escaped backslashes
+		.replace(/\\x([0-9A-Fa-f]{2})/g, (_, hex) =>
+			String.fromCharCode(parseInt(hex, 16)),
+		) // Replaces hexadecimal escape sequences
+		.replace(/\\u([0-9A-Fa-f]{4})/g, (_, hex) =>
+			String.fromCharCode(parseInt(hex, 16)),
+		); // Replaces Unicode escape sequences
 
 export function removeExtraSpaces(input: string): string {
 	return input.replace(/\s+/g, ' ').trim();
