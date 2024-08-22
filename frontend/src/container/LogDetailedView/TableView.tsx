@@ -14,7 +14,7 @@ import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { OptionsQuery } from 'container/OptionsMenu/types';
+import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
@@ -256,6 +256,7 @@ function TableView({
 							fieldKey={fieldFilterKey}
 							fieldValue={flattenLogData[field]}
 							onAddToQuery={onAddToQuery}
+							fontSize={FontSize.SMALL}
 						>
 							{renderedField}
 						</AddToQueryHOC>

@@ -63,6 +63,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 						data={log}
 						linesPerRow={options.maxLines}
 						selectedFields={selectedFields}
+						fontSize={options.fontSize}
 					/>
 				);
 			}
@@ -75,12 +76,14 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 					linesPerRow={options.maxLines}
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
+					fontSize={options.fontSize}
 				/>
 			);
 		},
 		[
 			onAddToQuery,
 			onSetActiveLog,
+			options.fontSize,
 			options.format,
 			options.maxLines,
 			selectedFields,
@@ -123,6 +126,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 								logs,
 								fields: selectedFields,
 								linesPerRow: options.maxLines,
+								fontSize: options.fontSize,
 								appendTo: 'end',
 								activeLogIndex,
 							}}

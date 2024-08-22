@@ -1,6 +1,8 @@
+/* eslint-disable no-nested-ternary */
 import { blue } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
 import { Col, Row, Space } from 'antd';
+import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';
 import { getActiveLogBackground, getDefaultLogBackground } from 'utils/logs';
 
@@ -48,10 +50,15 @@ export const ExpandIconWrapper = styled(Col)`
 
 export const RawLogContent = styled.div<RawLogContentProps>`
 	margin-bottom: 0;
+	display: flex !important;
+	align-items: center;
 	font-family: 'SF Mono', monospace;
 	font-family: 'Geist Mono';
 	font-size: 13px;
 	font-weight: 400;
+	line-height: 24px;
+	letter-spacing: -0.07px;
+	padding: 4px;
 	text-align: left;
 	color: ${({ $isDarkMode }): string =>
 		$isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400};
@@ -66,9 +73,12 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 		line-clamp: ${linesPerRow}; 
 		-webkit-box-orient: vertical;`};
 
-	line-height: 24px;
-	letter-spacing: -0.07px;
-	padding: 4px;
+	${({ fontSize }): string =>
+		fontSize === FontSize.SMALL
+			? `font-size:11px; line-height:16px; padding:1px;`
+			: fontSize === FontSize.MEDIUM
+			? `font-size:13px; line-height:20px; padding:1px;`
+			: `font-size:14px; line-height:24px; padding:2px;`}
 
 	cursor: ${({ $isActiveLog, $isReadOnly }): string =>
 		$isActiveLog || $isReadOnly ? 'initial' : 'pointer'};
