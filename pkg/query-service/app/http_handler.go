@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
+	"net/url"
 	"regexp"
 	"slices"
 	"strconv"
@@ -17,6 +19,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
@@ -100,6 +103,9 @@ type APIHandler struct {
 	// at the moment, we mark the app ready when the first user
 	// is registers.
 	SetupCompleted bool
+
+	// Websocket connection upgrader
+	Upgrader *websocket.Upgrader
 }
 
 type APIHandlerOpts struct {
@@ -206,6 +212,29 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		// to signup signoz through invite link only.
 		aH.SetupCompleted = true
 	}
+
+	aH.Upgrader = &websocket.Upgrader{
+		// Same-origin check is the server's responsibility in websocket spec.
+		CheckOrigin: func(r *http.Request) bool {
+			// Based on the default CheckOrigin implementation in websocket package.
+			originHeader := r.Header.Get("Origin")
+			if len(originHeader) < 1 {
+				return false
+			}
+			origin, err := url.Parse(originHeader)
+			if err != nil {
+				return false
+			}
+
+			// Allow cross origin websocket connections on localhost
+			if strings.HasPrefix(origin.Host, "localhost") {
+				return true
+			}
+
+			return origin.Host == r.Host
+		},
+	}
+
 	return aH, nil
 }
 
@@ -302,8 +331,18 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/query_range/format", am.ViewAccess(aH.QueryRangeV3Format)).Methods(http.MethodPost)
 
+	subRouter.HandleFunc("/filter_suggestions", am.ViewAccess(aH.getQueryBuilderSuggestions)).Methods(http.MethodGet)
+
+	// TODO(Raj): Remove this handler after /ws based path has been completely rolled out.
+	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
+
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/ws").Subrouter()
+	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMiddleware) {
@@ -341,6 +380,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
 	router.HandleFunc("/api/v1/testRule", am.EditAccess(aH.testRule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/history/stats", am.ViewAccess(aH.getRuleStats)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/history/timeline", am.ViewAccess(aH.getRuleStateHistory)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/history/top_contributors", am.ViewAccess(aH.getRuleStateHistoryTopContributors)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/history/overall_status", am.ViewAccess(aH.getOverallStateTransitions)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/downtime_schedules", am.OpenAccess(aH.listDowntimeSchedules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.OpenAccess(aH.getDowntimeSchedule)).Methods(http.MethodGet)
@@ -621,6 +664,159 @@ func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := v3.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	totalCurrentTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	currentTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	currentAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	currentAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	if params.End-params.Start >= 86400000 {
+		days := int64(math.Ceil(float64(params.End-params.Start) / 86400000))
+		params.Start -= days * 86400000
+		params.End -= days * 86400000
+	} else {
+		params.Start -= 86400000
+		params.End -= 86400000
+	}
+
+	totalPastTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	pastTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	pastAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	pastAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	stats := v3.Stats{
+		TotalCurrentTriggers:           totalCurrentTriggers,
+		TotalPastTriggers:              totalPastTriggers,
+		CurrentTriggersSeries:          currentTriggersSeries,
+		PastTriggersSeries:             pastTriggersSeries,
+		CurrentAvgResolutionTime:       strconv.FormatFloat(currentAvgResolutionTime, 'f', -1, 64),
+		PastAvgResolutionTime:          strconv.FormatFloat(pastAvgResolutionTime, 'f', -1, 64),
+		CurrentAvgResolutionTimeSeries: currentAvgResolutionTimeSeries,
+		PastAvgResolutionTimeSeries:    pastAvgResolutionTimeSeries,
+	}
+
+	aH.Respond(w, stats)
+}
+
+func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := v3.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	stateItems := []v3.ReleStateItem{}
+
+	for idx, item := range res {
+		start := item.FiringTime
+		end := item.ResolutionTime
+		stateItems = append(stateItems, v3.ReleStateItem{
+			State: item.State,
+			Start: start,
+			End:   end,
+		})
+		if idx < len(res)-1 {
+			nextStart := res[idx+1].FiringTime
+			if nextStart > end {
+				stateItems = append(stateItems, v3.ReleStateItem{
+					State: "normal",
+					Start: end,
+					End:   nextStart,
+				})
+			}
+		}
+	}
+
+	aH.Respond(w, stateItems)
+}
+
+func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := v3.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := params.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, res)
+}
+
+func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := v3.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, res)
 }
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
@@ -2808,7 +3004,7 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 
 	apiErr := aH.reader.UpdateLogField(r.Context(), &field)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to update filed in the DB")
+		RespondError(w, apiErr, "Failed to update field in the DB")
 		return
 	}
 	aH.WriteJSON(w, r, field)
@@ -3150,6 +3346,30 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 	aH.Respond(w, response)
 }
 
+func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.Request) {
+	req, err := parseQBFilterSuggestionsRequest(r)
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	if req.DataSource != v3.DataSourceLogs {
+		// Support for traces and metrics might come later
+		RespondError(w, model.BadRequest(
+			fmt.Errorf("suggestions not supported for %s", req.DataSource),
+		), nil)
+		return
+	}
+
+	response, err := aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
 func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.Request) {
 	var response *v3.FilterAttributeKeyResponse
 	req, err := parseFilterAttributeKeyRequest(r)
@@ -3333,6 +3553,24 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
+	// Hook up query progress tracking if requested
+	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
+	if len(queryIdHeader) > 0 {
+		ctx = context.WithValue(ctx, "queryId", queryIdHeader)
+
+		onQueryFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
+		if err != nil {
+			zap.L().Error(
+				"couldn't report query start for progress tracking",
+				zap.String("queryId", queryIdHeader), zap.Error(err),
+			)
+		} else {
+			defer func() {
+				go onQueryFinished()
+			}()
+		}
+	}
+
 	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
@@ -3480,6 +3718,77 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
+}
+
+func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Request) {
+	// Upgrade connection to websocket, sending back the requested protocol
+	// value for sec-websocket-protocol
+	//
+	// Since js websocket API doesn't allow setting headers, this header is often
+	// used for passing auth tokens. As per websocket spec the connection will only
+	// succeed if the requested `Sec-Websocket-Protocol` is sent back as a header
+	// in the upgrade response (signifying that the protocol is supported by the server).
+	upgradeResponseHeaders := http.Header{}
+	requestedProtocol := r.Header.Get("Sec-WebSocket-Protocol")
+	if len(requestedProtocol) > 0 {
+		upgradeResponseHeaders.Add("Sec-WebSocket-Protocol", requestedProtocol)
+	}
+
+	c, err := aH.Upgrader.Upgrade(w, r, upgradeResponseHeaders)
+	if err != nil {
+		RespondError(w, model.InternalError(fmt.Errorf(
+			"couldn't upgrade connection: %w", err,
+		)), nil)
+		return
+	}
+	defer c.Close()
+
+	// Websocket upgrade complete. Subscribe to query progress and send updates to client
+	//
+	// Note: we handle any subscription problems (queryId query param missing or query already complete etc)
+	// after the websocket connection upgrade by closing the channel.
+	// The other option would be to handle the errors before websocket upgrade by sending an
+	// error response instead of the upgrade response, but that leads to a generic websocket
+	// connection failure on the client.
+
+	queryId := r.URL.Query().Get("q")
+
+	progressCh, unsubscribe, apiErr := aH.reader.SubscribeToQueryProgress(queryId)
+	if apiErr != nil {
+		// Shouldn't happen unless query progress requested after query finished
+		zap.L().Warn(
+			"couldn't subscribe to query progress",
+			zap.String("queryId", queryId), zap.Any("error", err),
+		)
+		return
+	}
+	defer func() { go unsubscribe() }()
+
+	for queryProgress := range progressCh {
+		msg, err := json.Marshal(queryProgress)
+		if err != nil {
+			zap.L().Error(
+				"failed to serialize progress message",
+				zap.String("queryId", queryId), zap.Any("progress", queryProgress), zap.Error(err),
+			)
+			continue
+		}
+
+		err = c.WriteMessage(websocket.TextMessage, msg)
+		if err != nil {
+			zap.L().Error(
+				"failed to write progress msg to websocket",
+				zap.String("queryId", queryId), zap.String("msg", string(msg)), zap.Error(err),
+			)
+			break
+
+		} else {
+			zap.L().Debug(
+				"wrote progress msg to websocket",
+				zap.String("queryId", queryId), zap.String("msg", string(msg)), zap.Error(err),
+			)
+		}
+	}
 }
 
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {

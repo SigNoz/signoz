@@ -66,6 +66,14 @@ function App(): JSX.Element {
 			allFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)?.active ||
 			false;
 
+		const isPremiumSupportEnabled =
+			allFlags.find((flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT)?.active ||
+			false;
+
+		const showAddCreditCardModal =
+			!isPremiumSupportEnabled &&
+			!licenseData?.payload?.trialConvertedToSubscription;
+
 		dispatch({
 			type: UPDATE_FEATURE_FLAG_RESPONSE,
 			payload: {
@@ -82,7 +90,7 @@ function App(): JSX.Element {
 			setRoutes(newRoutes);
 		}
 
-		if (isLoggedInState && isChatSupportEnabled) {
+		if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			window.Intercom('boot', {

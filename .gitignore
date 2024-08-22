@@ -67,3 +67,6 @@ e2e/.auth
 # go
 vendor/
 **/main/**
+
+# git-town
+.git-branches.toml

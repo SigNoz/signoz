@@ -1,5 +1,6 @@
 import { rest } from 'msw';
 
+import { allAlertChannels } from './__mockdata__/alerts';
 import { billingSuccessResponse } from './__mockdata__/billing';
 import {
 	dashboardSuccessResponse,
@@ -131,6 +132,26 @@ export const handlers = [
 			return res(ctx.status(500));
 		},
 	),
+	rest.get('http://localhost/api/v1/loginPrecheck', (req, res, ctx) => {
+		const email = req.url.searchParams.get('email');
+		if (email === 'failEmail@signoz.io') {
+			return res(ctx.status(500));
+		}
+
+		return res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: {
+					sso: true,
+					ssoUrl: '',
+					canSelfRegister: false,
+					isUser: true,
+					ssoError: '',
+				},
+			}),
+		);
+	}),
 
 	rest.get('http://localhost/api/v2/licenses', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(licensesSuccessResponse)),
@@ -154,6 +175,24 @@ export const handlers = [
 	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(inviteUser)),
 	),
+	rest.put('http://localhost/api/v1/user/:id', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				data: 'user updated successfully',
+			}),
+		),
+	),
+	rest.post('http://localhost/api/v1/changePassword', (_, res, ctx) =>
+		res(
+			ctx.status(403),
+			ctx.json({
+				status: 'error',
+				errorType: 'forbidden',
+				error: 'invalid credentials',
+			}),
+		),
+	),
 
 	rest.get(
 		'http://localhost/api/v3/autocomplete/aggregate_attributes',
@@ -171,6 +210,16 @@ export const handlers = [
 		res(ctx.status(200), ctx.json(explorerView)),
 	),
 
+	rest.post('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: '7731ece1-3fa3-4ed4-8b1c-58b4c28723b2',
+			}),
+		),
+	),
+
 	rest.post('http://localhost/api/v1/event', (req, res, ctx) =>
 		res(
 			ctx.status(200),
@@ -178,6 +227,18 @@ export const handlers = [
 				statusCode: 200,
 				error: null,
 				payload: 'Event Processed Successfully',
+			}),
+		),
+	),
+	rest.post('http://localhost/api/v1//channels', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(allAlertChannels)),
+	),
+	rest.delete('http://localhost/api/v1/channels/:id', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: 'notification channel successfully deleted',
 			}),
 		),
 	),

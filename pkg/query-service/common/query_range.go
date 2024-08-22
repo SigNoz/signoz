@@ -13,8 +13,18 @@ func AdjustedMetricTimeRange(start, end, step int64, mq v3.BuilderQuery) (int64,
 	start = start - (start % (step * 1000))
 	// if the query is a rate query, we adjust the start time by one more step
 	// so that we can calculate the rate for the first data point
+	hasRunningDiff := false
+	for _, fn := range mq.Functions {
+		if fn.Name == v3.FunctionNameRunningDiff {
+			hasRunningDiff = true
+			break
+		}
+	}
 	if (mq.AggregateOperator.IsRateOperator() || mq.TimeAggregation.IsRateOperator()) &&
 		mq.Temporality != v3.Delta {
+		start -= step * 1000
+	}
+	if hasRunningDiff {
 		start -= step * 1000
 	}
 	// align the end to the nearest minute

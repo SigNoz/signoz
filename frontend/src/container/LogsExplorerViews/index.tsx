@@ -1,8 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './LogsExplorerViews.styles.scss';
 
-import { Button } from 'antd';
+import { Button, Typography } from 'antd';
+import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
 import logEvent from 'api/common/logEvent';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -48,7 +50,15 @@ import {
 } from 'lodash-es';
 import { Sliders } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	memo,
+	MutableRefObject,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -69,12 +79,20 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
+import QueryStatus from './QueryStatus';
+
 function LogsExplorerViews({
 	selectedView,
 	showFrequencyChart,
+	setIsLoadingQueries,
+	listQueryKeyRef,
+	chartQueryKeyRef,
 }: {
 	selectedView: SELECTED_VIEWS;
 	showFrequencyChart: boolean;
+	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
+	listQueryKeyRef: MutableRefObject<any>;
+	chartQueryKeyRef: MutableRefObject<any>;
 }): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
@@ -119,6 +137,8 @@ function LogsExplorerViews({
 	const [lastLogLineTimestamp, setLastLogLineTimestamp] = useState<
 		string | number
 	>();
+	const [queryId, setQueryId] = useState<string>(v4());
+	const [queryStats, setQueryStats] = useState<WsDataEvent>();
 
 	const handleAxisError = useAxiosError();
 
@@ -217,9 +237,18 @@ function LogsExplorerViews({
 		{
 			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
 		},
+		{},
+		undefined,
+		chartQueryKeyRef,
 	);
 
-	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
+	const {
+		data,
+		isLoading,
+		isFetching,
+		isError,
+		isSuccess,
+	} = useGetExplorerQueryRange(
 		requestData,
 		panelType,
 		DEFAULT_ENTITY_VERSION,
@@ -240,6 +269,12 @@ function LogsExplorerViews({
 				requestData?.builder?.queryData[0]?.orderBy?.[0]?.order === 'desc'
 					? lastLogLineTimestamp
 					: undefined,
+		},
+		undefined,
+		listQueryKeyRef,
+		{
+			...(!isEmpty(queryId) &&
+				selectedPanelType !== PANEL_TYPES.LIST && { 'X-SIGNOZ-QUERY-ID': queryId }),
 		},
 	);
 
@@ -332,6 +367,23 @@ function LogsExplorerViews({
 			orderByTimestamp,
 		],
 	);
+
+	useEffect(() => {
+		setQueryId(v4());
+	}, [isError, isSuccess]);
+
+	useEffect(() => {
+		if (
+			!isEmpty(queryId) &&
+			(isLoading || isFetching) &&
+			selectedPanelType !== PANEL_TYPES.LIST
+		) {
+			setQueryStats(undefined);
+			setTimeout(() => {
+				getQueryStats({ queryId, setData: setQueryStats });
+			}, 500);
+		}
+	}, [queryId, isLoading, isFetching, selectedPanelType]);
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
@@ -584,6 +636,25 @@ function LogsExplorerViews({
 		},
 	});
 
+	useEffect(() => {
+		if (
+			isLoading ||
+			isFetching ||
+			isLoadingListChartData ||
+			isFetchingListChartData
+		) {
+			setIsLoadingQueries(true);
+		} else {
+			setIsLoadingQueries(false);
+		}
+	}, [
+		isLoading,
+		isFetching,
+		isFetchingListChartData,
+		isLoadingListChartData,
+		setIsLoadingQueries,
+	]);
+
 	const flattenLogData = useMemo(
 		() =>
 			logs.map((log) => {
@@ -678,6 +749,30 @@ function LogsExplorerViews({
 										/>
 									)}
 								</div>
+							</div>
+						)}
+						{(selectedPanelType === PANEL_TYPES.TIME_SERIES ||
+							selectedPanelType === PANEL_TYPES.TABLE) && (
+							<div className="query-stats">
+								<QueryStatus
+									loading={isLoading || isFetching}
+									error={isError}
+									success={isSuccess}
+								/>
+								{queryStats?.read_rows && (
+									<Typography.Text className="rows">
+										{getYAxisFormattedValue(queryStats.read_rows?.toString(), 'short')}{' '}
+										rows
+									</Typography.Text>
+								)}
+								{queryStats?.elapsed_ms && (
+									<>
+										<div className="divider" />
+										<Typography.Text className="time">
+											{getYAxisFormattedValue(queryStats?.elapsed_ms?.toString(), 'ms')}
+										</Typography.Text>
+									</>
+								)}
 							</div>
 						)}
 					</div>

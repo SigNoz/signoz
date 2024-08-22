@@ -245,6 +245,7 @@ function LogsPanelComponent({
 				onAddToQuery={onAddToQuery}
 				onClickActionItem={onAddToQuery}
 				isListViewPanel
+				listViewPanelSelectedFields={widget?.selectedLogFields}
 			/>
 		</>
 	);
