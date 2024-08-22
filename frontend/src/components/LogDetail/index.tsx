@@ -13,6 +13,7 @@ import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
 import {
 	aggregateAttributesResourcesToString,
+	removeEscapeCharacters,
 	unescapeString,
 } from 'container/LogDetailedView/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
@@ -146,7 +147,7 @@ function LogDetail({
 		>
 			<div className="log-detail-drawer__log">
 				<Divider type="vertical" className={cx('log-type-indicator', logType)} />
-				<Tooltip title={log?.body} placement="left">
+				<Tooltip title={removeEscapeCharacters(log?.body)} placement="left">
 					<div className="log-body" dangerouslySetInnerHTML={htmlBody} />
 				</Tooltip>
 
