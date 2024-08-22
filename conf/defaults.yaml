@@ -79,3 +79,11 @@ jwt:
   auth:
     # The JWT secret for authentication
     secret: secret
+#----------------------------------------------
+# Database
+#----------------------------------------------
+database:
+  # Supported options are sqlite
+  provider: sqlite
+  # Path to the sqlite database
+  path: /var/lib/signoz

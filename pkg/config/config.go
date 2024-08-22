@@ -7,6 +7,7 @@ import (
 	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
+	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/version"
 	"go.signoz.io/signoz/pkg/web"
 )
@@ -19,6 +20,7 @@ var (
 		"web":             &web.Config{},
 		"cache":           &cache.Config{},
 		"auth":            &auth.Config{},
+		"database":        &dao.Config{},
 	}
 )
 
@@ -29,6 +31,7 @@ type Config struct {
 	Web             web.Config             `mapstructure:"web"`
 	Cache           cache.Config           `mapstructure:"cache"`
 	Auth            auth.Config            `mapstructure:"auth"`
+	Database        dao.Config             `mapstructure:"database"`
 }
 
 func New(ctx context.Context, settings ProviderSettings) (*Config, error) {
