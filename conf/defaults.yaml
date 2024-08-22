@@ -102,3 +102,8 @@ storage:
   max_execution_time_leaf:
   timeout_before_checking_execution_speed:
   max_bytes_to_read:
+#----------------------------------------------
+# Storage
+#----------------------------------------------
+opamp:
+  address: 0.0.0.0:4320

@@ -6,6 +6,7 @@ import (
 	signozconfmap "go.signoz.io/signoz/pkg/confmap"
 	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
+	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/dao"
@@ -23,6 +24,7 @@ var (
 		"auth":            &auth.Config{},
 		"database":        &dao.Config{},
 		"storage":         &clickhouseReader.Config{},
+		"opamp":           &opamp.Config{},
 	}
 )
 
@@ -35,6 +37,7 @@ type Config struct {
 	Auth            auth.Config             `mapstructure:"auth"`
 	Database        dao.Config              `mapstructure:"database"`
 	Storage         clickhouseReader.Config `mapstructure:"storage"`
+	Opamp           opamp.Config            `mapstructure:"opamp"`
 }
 
 func New(ctx context.Context, settings ProviderSettings) (*Config, error) {

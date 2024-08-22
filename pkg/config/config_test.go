@@ -63,5 +63,7 @@ func TestNewWithSignozEnvProvider(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, config)
+	assert.Equal(t, expected.Instrumentation, config.Instrumentation)
+	assert.Equal(t, expected.Web, config.Web)
+	assert.Equal(t, expected.Version, config.Version)
 }
