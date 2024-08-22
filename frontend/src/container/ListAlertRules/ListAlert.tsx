@@ -5,7 +5,7 @@ import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
 import DropDown from 'components/DropDown/DropDown';
-import { listAlertMessage } from 'components/facingIssueBtn/util';
+import { listAlertMessage } from 'components/LaunchChatSupport/util';
 import {
 	DynamicColumnsKey,
 	TableDataSource,
