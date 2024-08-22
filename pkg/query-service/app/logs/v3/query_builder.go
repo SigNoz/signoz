@@ -52,9 +52,9 @@ var logOperators = map[v3.FilterOperator]string{
 }
 
 const (
-	BODY                                = "body"
-	DISTRIBUTED_LOGS_V2                 = "distributed_logs_v2"
-	DISTRIBUTED_LOGS_V2_RESOURCE_BUCKET = "distributed_logs_v2_resource_bucket"
+	BODY                         = "body"
+	DISTRIBUTED_LOGS_V2          = "distributed_logs_v2"
+	DISTRIBUTED_LOGS_V2_RESOURCE = "distributed_logs_v2_resource"
 )
 
 func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
@@ -444,7 +444,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		filter := " AND (resource_fingerprint GLOBAL IN (" +
 			"SELECT fingerprint FROM signoz_logs.%s " +
 			"WHERE (seen_at_ts_bucket_start >= %d) AND (seen_at_ts_bucket_start <= %d) AND "
-		filter = fmt.Sprintf(filter, DISTRIBUTED_LOGS_V2_RESOURCE_BUCKET, bucketStart, bucketEnd)
+		filter = fmt.Sprintf(filter, DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd)
 
 		filterSubQuery = filterSubQuery + filter + resourceBucketFilters + "))"
 	}

@@ -565,7 +565,7 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value " +
 			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND " +
 			"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND " +
-			"mapContains(attributes_string, 'user_name') AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
+			"mapContains(attributes_string, 'user_name') AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource " +
 			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(lower(labels), 'bytes') > 100.000000" +
 			" AND lower(labels) like '%bytes%')) group by ts order by value DESC",
 	},
@@ -671,7 +671,7 @@ var testBuildLogsQueryData = []struct {
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') " +
 			"AND mapContains(attributes_string, 'method') AND `attribute_string_name_exists`=true " +
-			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
+			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource " +
 			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(lower(labels), 'x') != 'abc' " +
 			"AND lower(labels) not like '%x%abc%')) group by `method`,ts " +
 			"order by `method` ASC",
@@ -703,7 +703,7 @@ var testBuildLogsQueryData = []struct {
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 			"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') " +
 			"AND mapContains(attributes_string, 'method') AND `attribute_string_name_exists`=true " +
-			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource_bucket " +
+			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource " +
 			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(lower(labels), 'x') != 'abc' " +
 			"AND lower(labels) not like '%x%abc%' AND ( (simpleJSONHas(labels, 'x') AND lower(labels) like '%x%') ))) group by `method`,`x`,ts order by `method` ASC,`x` ASC",
 	},
