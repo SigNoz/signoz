@@ -1,4 +1,6 @@
 receivers:
+  kafka:
+    --
   tcplog/docker:
     listen_address: "0.0.0.0:2255"
     operators:
