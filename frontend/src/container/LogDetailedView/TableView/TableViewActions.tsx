@@ -93,14 +93,16 @@ export function TableViewActions(
 	return (
 		<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
 			{record.field === 'body' ? (
-				<span
-					style={{
-						color: Color.BG_SIENNA_400,
-						whiteSpace: 'pre-wrap',
-						tabSize: 4,
-					}}
-					dangerouslySetInnerHTML={bodyHtml}
-				/>
+				<CopyClipboardHOC textToCopy={textToCopy}>
+					<span
+						style={{
+							color: Color.BG_SIENNA_400,
+							whiteSpace: 'pre-wrap',
+							tabSize: 4,
+						}}
+						dangerouslySetInnerHTML={bodyHtml}
+					/>
+				</CopyClipboardHOC>
 			) : (
 				<CopyClipboardHOC textToCopy={textToCopy}>
 					<span
