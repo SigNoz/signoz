@@ -70,6 +70,7 @@ services:
     container_name: otel-migrator
     command:
       - "--dsn=tcp://clickhouse:9000"
+      - "--replication=true"
     depends_on:
       clickhouse:
         condition: service_healthy
