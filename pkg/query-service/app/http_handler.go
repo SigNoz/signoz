@@ -716,6 +716,13 @@ func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
+	if math.IsNaN(currentAvgResolutionTime) || math.IsInf(currentAvgResolutionTime, 0) {
+		currentAvgResolutionTime = 0
+	}
+	if math.IsNaN(pastAvgResolutionTime) || math.IsInf(pastAvgResolutionTime, 0) {
+		pastAvgResolutionTime = 0
+	}
+
 	stats := v3.Stats{
 		TotalCurrentTriggers:           totalCurrentTriggers,
 		TotalPastTriggers:              totalPastTriggers,
@@ -788,6 +795,37 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
+
+	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	if err == nil {
+		for idx := range res.Items {
+			lbls := make(map[string]string)
+			err := json.Unmarshal([]byte(res.Items[idx].Labels), &lbls)
+			if err != nil {
+				continue
+			}
+			filterItems := []v3.FilterItem{}
+			if rule.AlertType == "LOGS_BASED_ALERT" || rule.AlertType == "TRACES_BASED_ALERT" {
+				if rule.RuleCondition.CompositeQuery != nil {
+					if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
+						for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+							if query.Filters != nil && len(query.Filters.Items) > 0 {
+								filterItems = append(filterItems, query.Filters.Items...)
+							}
+						}
+					}
+				}
+			}
+			newFilters := common.PrepareFilters(lbls, filterItems)
+			ts := time.Unix(res.Items[idx].UnixMilli/1000, 0)
+			if rule.AlertType == "LOGS_BASED_ALERT" {
+				res.Items[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, newFilters)
+			} else if rule.AlertType == "TRACES_BASED_ALERT" {
+				res.Items[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, newFilters)
+			}
+		}
+	}
+
 	aH.Respond(w, res)
 }
 
@@ -805,6 +843,25 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
+
+	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	if err == nil {
+		for idx := range res {
+			lbls := make(map[string]string)
+			err := json.Unmarshal([]byte(res[idx].Labels), &lbls)
+			if err != nil {
+				continue
+			}
+			ts := time.Unix(params.End/1000, 0)
+			filters := common.PrepareFilters(lbls, nil)
+			if rule.AlertType == "LOGS_BASED_ALERT" {
+				res[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, filters)
+			} else if rule.AlertType == "TRACES_BASED_ALERT" {
+				res[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, filters)
+			}
+		}
+	}
+
 	aH.Respond(w, res)
 }
 

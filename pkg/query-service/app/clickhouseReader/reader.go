@@ -5223,13 +5223,17 @@ func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHis
 }
 
 func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
-	ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistory, error) {
+	ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (*v3.RuleStateTimeline, error) {
 
 	var conditions []string
 
 	conditions = append(conditions, fmt.Sprintf("rule_id = '%s'", ruleID))
 
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", params.Start, params.End))
+
+	if params.State != "" {
+		conditions = append(conditions, fmt.Sprintf("state = '%s'", params.State))
+	}
 
 	if params.Filters != nil && len(params.Filters.Items) != 0 {
 		for _, item := range params.Filters.Items {
@@ -5289,7 +5293,19 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 		return nil, err
 	}
 
-	return history, nil
+	var total uint64
+	err = r.db.QueryRow(ctx, fmt.Sprintf("SELECT count(*) FROM %s.%s WHERE %s",
+		signozHistoryDBName, ruleStateHistoryTableName, whereClause)).Scan(&total)
+	if err != nil {
+		return nil, err
+	}
+
+	timeline := &v3.RuleStateTimeline{
+		Items: history,
+		Total: total,
+	}
+
+	return timeline, nil
 }
 
 func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
