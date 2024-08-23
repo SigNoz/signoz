@@ -77,6 +77,11 @@
 		background: rgba(229, 72, 77, 0.1);
 		color: var(--bg-cherry-500);
 	}
+	&--no-previous-data {
+		color: var(--text-robin-500);
+		background: rgba(78, 116, 248, 0.1);
+		padding: 4px 16px;
+	}
 	&__icon {
 		display: flex;
 		align-self: center;

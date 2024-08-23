@@ -14,8 +14,8 @@ const getStyle = (
 ): { stroke: string; fill: string } => {
 	if (changeDirection === 0) {
 		return {
-			stroke: Color.BG_VANILLA_400,
-			fill: 'rgba(255, 255, 255, 0.20)',
+			stroke: Color.BG_ROBIN_500,
+			fill: 'rgba(78, 116, 248, 0.20)',
 		};
 	}
 	if (changeDirection > 0) {
