@@ -3,6 +3,7 @@ import './useTableView.styles.scss';
 import Convert from 'ansi-to-html';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import cx from 'classnames';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -31,6 +32,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		logs,
 		fields,
 		linesPerRow,
+		fontSize,
 		appendTo = 'center',
 		activeContextLog,
 		activeLog,
@@ -57,7 +59,10 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 							: getDefaultCellStyle(isDarkMode),
 					},
 					children: (
-						<Typography.Paragraph ellipsis={{ rows: linesPerRow }}>
+						<Typography.Paragraph
+							ellipsis={{ rows: linesPerRow }}
+							className={cx('paragraph', fontSize)}
+						>
 							{field}
 						</Typography.Paragraph>
 					),
@@ -87,8 +92,9 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 									isActive={
 										activeLog?.id === item.id || activeContextLog?.id === item.id
 									}
+									fontSize={fontSize}
 								/>
-								<Typography.Paragraph ellipsis className="text">
+								<Typography.Paragraph ellipsis className={cx('text', fontSize)}>
 									{date}
 								</Typography.Paragraph>
 							</div>
@@ -114,6 +120,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 									}),
 								),
 							}}
+							fontSize={fontSize}
 							linesPerRow={linesPerRow}
 							isDarkMode={isDarkMode}
 						/>
@@ -130,6 +137,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		linesPerRow,
 		activeLog?.id,
 		activeContextLog?.id,
+		fontSize,
 	]);
 
 	return { columns, dataSource: flattenLogData };
