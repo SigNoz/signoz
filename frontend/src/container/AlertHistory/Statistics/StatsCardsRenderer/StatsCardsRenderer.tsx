@@ -6,22 +6,19 @@ import AverageResolutionCard from '../AverageResolutionCard/AverageResolutionCar
 import StatsCard from '../StatsCard/StatsCard';
 import TotalTriggeredCard from '../TotalTriggeredCard/TotalTriggeredCard';
 
-const isTypeNotNan = (value: unknown): boolean => value !== 'NaN';
-
 const hasTotalTriggeredStats = (
-	totalCurrentTriggers: unknown,
-	totalPastTriggers: unknown,
+	totalCurrentTriggers: number | string,
+	totalPastTriggers: number | string,
 ): boolean =>
-	(isTypeNotNan(totalCurrentTriggers) && isTypeNotNan(totalPastTriggers)) ||
-	isTypeNotNan(totalCurrentTriggers);
+	(Number(totalCurrentTriggers) > 0 && Number(totalPastTriggers) > 0) ||
+	Number(totalCurrentTriggers) > 0;
 
 const hasAvgResolutionTimeStats = (
-	currentAvgResolutionTime: unknown,
-	pastAvgResolutionTime: unknown,
+	currentAvgResolutionTime: number | string,
+	pastAvgResolutionTime: number | string,
 ): boolean =>
-	(isTypeNotNan(currentAvgResolutionTime) &&
-		isTypeNotNan(pastAvgResolutionTime)) ||
-	isTypeNotNan(currentAvgResolutionTime);
+	(Number(currentAvgResolutionTime) > 0 && Number(pastAvgResolutionTime) > 0) ||
+	Number(currentAvgResolutionTime) > 0;
 
 type StatsCardsRendererProps = {
 	setTotalCurrentTriggers: (value: number) => void;
@@ -65,7 +62,6 @@ function StatsCardsRenderer({
 
 				return (
 					<>
-						{/* TODO(shaheer): get hasTotalTriggeredStats when it's available in the API */}
 						{hasTotalTriggeredStats(totalCurrentTriggers, totalPastTriggers) ? (
 							<TotalTriggeredCard
 								totalCurrentTriggers={totalCurrentTriggers}
@@ -80,7 +76,6 @@ function StatsCardsRenderer({
 							/>
 						)}
 
-						{/* TODO(shaheer): get hasAvgResolutionTimeStats when it's available in the API */}
 						{hasAvgResolutionTimeStats(
 							currentAvgResolutionTime,
 							pastAvgResolutionTime,
