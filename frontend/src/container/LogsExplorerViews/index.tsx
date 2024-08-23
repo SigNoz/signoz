@@ -355,7 +355,7 @@ function LogsExplorerViews({
 
 	useEffect(() => {
 		setQueryId(v4());
-	}, [isError, isSuccess]);
+	}, [data]);
 
 	useEffect(() => {
 		if (

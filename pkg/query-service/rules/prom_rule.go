@@ -411,6 +411,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		}
 
 		lb := plabels.NewBuilder(alertSmpl.Metric).Del(plabels.MetricName)
+		resultLabels := plabels.NewBuilder(alertSmpl.Metric).Del(plabels.MetricName).Labels()
 
 		for _, l := range r.labels {
 			lb.Set(l.Name, expand(l.Value))
@@ -439,13 +440,14 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		}
 
 		alerts[h] = &Alert{
-			Labels:       lbs,
-			Annotations:  annotations,
-			ActiveAt:     ts,
-			State:        StatePending,
-			Value:        alertSmpl.F,
-			GeneratorURL: r.GeneratorURL(),
-			Receivers:    r.preferredChannels,
+			Labels:            lbs,
+			QueryResultLables: resultLabels,
+			Annotations:       annotations,
+			ActiveAt:          ts,
+			State:             StatePending,
+			Value:             alertSmpl.F,
+			GeneratorURL:      r.GeneratorURL(),
+			Receivers:         r.preferredChannels,
 		}
 	}
 
@@ -489,7 +491,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 					StateChanged: true,
 					UnixMilli:    ts.UnixMilli(),
 					Labels:       v3.LabelsString(labelsJSON),
-					Fingerprint:  a.Labels.Hash(),
+					Fingerprint:  a.QueryResultLables.Hash(),
 				})
 			}
 			continue
@@ -509,7 +511,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 				StateChanged: true,
 				UnixMilli:    ts.UnixMilli(),
 				Labels:       v3.LabelsString(labelsJSON),
-				Fingerprint:  a.Labels.Hash(),
+				Fingerprint:  a.QueryResultLables.Hash(),
 				Value:        a.Value,
 			})
 		}

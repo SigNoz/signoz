@@ -28,4 +28,9 @@ export type UseActiveLog = {
 		isJSON?: boolean,
 		dataType?: DataTypes,
 	) => void;
+	onGroupByAttribute: (
+		fieldKey: string,
+		isJSON?: boolean,
+		dataType?: DataTypes,
+	) => Promise<void>;
 };

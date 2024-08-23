@@ -9,7 +9,6 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"net/url"
 	"regexp"
 	"slices"
 	"strconv"
@@ -214,30 +213,15 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	aH.Upgrader = &websocket.Upgrader{
-		// Same-origin check is the server's responsibility in websocket spec.
 		CheckOrigin: func(r *http.Request) bool {
-			// Based on the default CheckOrigin implementation in websocket package.
-			originHeader := r.Header.Get("Origin")
-			if len(originHeader) < 1 {
-				return false
-			}
-			origin, err := url.Parse(originHeader)
-			if err != nil {
-				return false
-			}
-
-			// Allow cross origin websocket connections on localhost
-			if strings.HasPrefix(origin.Host, "localhost") {
-				return true
-			}
-
-			return origin.Host == r.Host
+			return true
 		},
 	}
 
 	return aH, nil
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 type structuredResponse struct {
 	Data   interface{}       `json:"data"`
 	Total  int               `json:"total"`
@@ -246,11 +230,13 @@ type structuredResponse struct {
 	Errors []structuredError `json:"errors"`
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 type structuredError struct {
 	Code int    `json:"code,omitempty"`
 	Msg  string `json:"msg"`
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 type ApiResponse struct {
 	Status    status          `json:"status"`
 	Data      interface{}     `json:"data,omitempty"`
@@ -258,6 +244,7 @@ type ApiResponse struct {
 	Error     string          `json:"error,omitempty"`
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -301,6 +288,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 	}
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -351,6 +339,7 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }
@@ -727,6 +716,13 @@ func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
+	if math.IsNaN(currentAvgResolutionTime) || math.IsInf(currentAvgResolutionTime, 0) {
+		currentAvgResolutionTime = 0
+	}
+	if math.IsNaN(pastAvgResolutionTime) || math.IsInf(pastAvgResolutionTime, 0) {
+		pastAvgResolutionTime = 0
+	}
+
 	stats := v3.Stats{
 		TotalCurrentTriggers:           totalCurrentTriggers,
 		TotalPastTriggers:              totalPastTriggers,
@@ -799,6 +795,37 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
+
+	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	if err == nil {
+		for idx := range res.Items {
+			lbls := make(map[string]string)
+			err := json.Unmarshal([]byte(res.Items[idx].Labels), &lbls)
+			if err != nil {
+				continue
+			}
+			filterItems := []v3.FilterItem{}
+			if rule.AlertType == "LOGS_BASED_ALERT" || rule.AlertType == "TRACES_BASED_ALERT" {
+				if rule.RuleCondition.CompositeQuery != nil {
+					if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
+						for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+							if query.Filters != nil && len(query.Filters.Items) > 0 {
+								filterItems = append(filterItems, query.Filters.Items...)
+							}
+						}
+					}
+				}
+			}
+			newFilters := common.PrepareFilters(lbls, filterItems)
+			ts := time.Unix(res.Items[idx].UnixMilli/1000, 0)
+			if rule.AlertType == "LOGS_BASED_ALERT" {
+				res.Items[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, newFilters)
+			} else if rule.AlertType == "TRACES_BASED_ALERT" {
+				res.Items[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, newFilters)
+			}
+		}
+	}
+
 	aH.Respond(w, res)
 }
 
@@ -816,6 +843,25 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
+
+	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	if err == nil {
+		for idx := range res {
+			lbls := make(map[string]string)
+			err := json.Unmarshal([]byte(res[idx].Labels), &lbls)
+			if err != nil {
+				continue
+			}
+			ts := time.Unix(params.End/1000, 0)
+			filters := common.PrepareFilters(lbls, nil)
+			if rule.AlertType == "LOGS_BASED_ALERT" {
+				res[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, filters)
+			} else if rule.AlertType == "TRACES_BASED_ALERT" {
+				res[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, filters)
+			}
+		}
+	}
+
 	aH.Respond(w, res)
 }
 
@@ -3758,7 +3804,7 @@ func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Req
 		// Shouldn't happen unless query progress requested after query finished
 		zap.L().Warn(
 			"couldn't subscribe to query progress",
-			zap.String("queryId", queryId), zap.Any("error", err),
+			zap.String("queryId", queryId), zap.Any("error", apiErr),
 		)
 		return
 	}

@@ -42,13 +42,26 @@ function LogsExplorer(): JSX.Element {
 		if (currentQuery.builder.queryData.length > 1) {
 			handleChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER);
 		}
-	}, [currentQuery.builder.queryData.length]);
+		if (
+			currentQuery.builder.queryData.length === 1 &&
+			currentQuery.builder.queryData[0].groupBy.length > 0
+		) {
+			handleChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER);
+		}
+	}, [currentQuery.builder.queryData, currentQuery.builder.queryData.length]);
 
 	const isMultipleQueries = useMemo(
 		() =>
-			currentQuery.builder.queryData.length > 1 ||
-			currentQuery.builder.queryFormulas.length > 0,
+			currentQuery.builder.queryData?.length > 1 ||
+			currentQuery.builder.queryFormulas?.length > 0,
 		[currentQuery],
+	);
+
+	const isGroupByPresent = useMemo(
+		() =>
+			currentQuery.builder.queryData?.length === 1 &&
+			currentQuery.builder.queryData?.[0]?.groupBy?.length > 0,
+		[currentQuery.builder.queryData],
 	);
 
 	const toolbarViews = useMemo(
@@ -56,7 +69,7 @@ function LogsExplorer(): JSX.Element {
 			search: {
 				name: 'search',
 				label: 'Search',
-				disabled: isMultipleQueries,
+				disabled: isMultipleQueries || isGroupByPresent,
 				show: true,
 			},
 			queryBuilder: {
@@ -72,7 +85,7 @@ function LogsExplorer(): JSX.Element {
 				show: false,
 			},
 		}),
-		[isMultipleQueries],
+		[isGroupByPresent, isMultipleQueries],
 	);
 
 	return (

@@ -4,9 +4,11 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	getOrderByTimestamp,
 	INITIAL_PAGE_SIZE,
+	INITIAL_PAGE_SIZE_SMALL_FONT,
 	LOGS_MORE_PAGE_SIZE,
 } from 'container/LogsContextList/configs';
 import { getRequestData } from 'container/LogsContextList/utils';
+import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import {
@@ -30,6 +32,7 @@ export const useContextLogData = ({
 	filters,
 	page,
 	setPage,
+	fontSize,
 }: {
 	log: ILog;
 	query: Query;
@@ -38,6 +41,7 @@ export const useContextLogData = ({
 	filters: TagFilter | null;
 	page: number;
 	setPage: Dispatch<SetStateAction<number>>;
+	fontSize?: FontSize;
 }): {
 	logs: ILog[];
 	handleShowNextLines: () => void;
@@ -54,9 +58,14 @@ export const useContextLogData = ({
 	const logsMorePageSize = useMemo(() => (page - 1) * LOGS_MORE_PAGE_SIZE, [
 		page,
 	]);
+
+	const initialPageSize =
+		fontSize && fontSize === FontSize.SMALL
+			? INITIAL_PAGE_SIZE_SMALL_FONT
+			: INITIAL_PAGE_SIZE;
 	const pageSize = useMemo(
-		() => (page <= 1 ? INITIAL_PAGE_SIZE : logsMorePageSize + INITIAL_PAGE_SIZE),
-		[page, logsMorePageSize],
+		() => (page <= 1 ? initialPageSize : logsMorePageSize + initialPageSize),
+		[page, initialPageSize, logsMorePageSize],
 	);
 	const isDisabledFetch = useMemo(() => logs.length < pageSize, [
 		logs.length,
@@ -77,8 +86,16 @@ export const useContextLogData = ({
 				log: lastLog,
 				orderByTimestamp,
 				page,
+				pageSize: initialPageSize,
 			}),
-		[currentStagedQueryData, query, lastLog, orderByTimestamp, page],
+		[
+			currentStagedQueryData,
+			query,
+			lastLog,
+			orderByTimestamp,
+			page,
+			initialPageSize,
+		],
 	);
 
 	const [requestData, setRequestData] = useState<Query | null>(

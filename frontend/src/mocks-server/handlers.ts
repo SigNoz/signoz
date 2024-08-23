@@ -210,6 +210,16 @@ export const handlers = [
 		res(ctx.status(200), ctx.json(explorerView)),
 	),
 
+	rest.post('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: '7731ece1-3fa3-4ed4-8b1c-58b4c28723b2',
+			}),
+		),
+	),
+
 	rest.post('http://localhost/api/v1/event', (req, res, ctx) =>
 		res(
 			ctx.status(200),
