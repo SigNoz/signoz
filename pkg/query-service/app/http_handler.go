@@ -9,7 +9,6 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"net/url"
 	"regexp"
 	"slices"
 	"strconv"
@@ -214,24 +213,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	aH.Upgrader = &websocket.Upgrader{
-		// Same-origin check is the server's responsibility in websocket spec.
 		CheckOrigin: func(r *http.Request) bool {
-			// Based on the default CheckOrigin implementation in websocket package.
-			originHeader := r.Header.Get("Origin")
-			if len(originHeader) < 1 {
-				return false
-			}
-			origin, err := url.Parse(originHeader)
-			if err != nil {
-				return false
-			}
-
-			// Allow cross origin websocket connections on localhost
-			if strings.HasPrefix(origin.Host, "localhost") {
-				return true
-			}
-
-			return origin.Host == r.Host
+			return true
 		},
 	}
 
@@ -3764,7 +3747,7 @@ func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Req
 		// Shouldn't happen unless query progress requested after query finished
 		zap.L().Warn(
 			"couldn't subscribe to query progress",
-			zap.String("queryId", queryId), zap.Any("error", err),
+			zap.String("queryId", queryId), zap.Any("error", apiErr),
 		)
 		return
 	}
