@@ -1,6 +1,6 @@
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { OptionsQuery } from './types';
+import { FontSize, OptionsQuery } from './types';
 
 export const URL_OPTIONS = 'options';
 
@@ -8,6 +8,7 @@ export const defaultOptionsQuery: OptionsQuery = {
 	selectColumns: [],
 	maxLines: 2,
 	format: 'list',
+	fontSize: FontSize.SMALL,
 };
 
 export const defaultTraceSelectedColumns = [

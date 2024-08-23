@@ -263,10 +263,7 @@ function LogsExplorerViews({
 		},
 		undefined,
 		listQueryKeyRef,
-		{
-			...(!isEmpty(queryId) &&
-				selectedPanelType !== PANEL_TYPES.LIST && { 'X-SIGNOZ-QUERY-ID': queryId }),
-		},
+		{},
 	);
 
 	const getRequestData = useCallback(
