@@ -382,7 +382,7 @@ export const useAlertRuleStatusToggle = ({
 			},
 			onSuccess: () => {
 				notifications.success({
-					message: 'Success',
+					message: `Alert has been turned ${!isAlertRuleEnabled ? 'on' : 'off'}.`,
 				});
 			},
 			onError: () => {
