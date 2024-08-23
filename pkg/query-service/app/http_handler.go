@@ -9,7 +9,6 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"net/url"
 	"regexp"
 	"slices"
 	"strconv"
@@ -214,30 +213,15 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	aH.Upgrader = &websocket.Upgrader{
-		// Same-origin check is the server's responsibility in websocket spec.
 		CheckOrigin: func(r *http.Request) bool {
-			// Based on the default CheckOrigin implementation in websocket package.
-			originHeader := r.Header.Get("Origin")
-			if len(originHeader) < 1 {
-				return false
-			}
-			origin, err := url.Parse(originHeader)
-			if err != nil {
-				return false
-			}
-
-			// Allow cross origin websocket connections on localhost
-			if strings.HasPrefix(origin.Host, "localhost") {
-				return true
-			}
-
-			return origin.Host == r.Host
+			return true
 		},
 	}
 
 	return aH, nil
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 type structuredResponse struct {
 	Data   interface{}       `json:"data"`
 	Total  int               `json:"total"`
@@ -246,11 +230,13 @@ type structuredResponse struct {
 	Errors []structuredError `json:"errors"`
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 type structuredError struct {
 	Code int    `json:"code,omitempty"`
 	Msg  string `json:"msg"`
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 type ApiResponse struct {
 	Status    status          `json:"status"`
 	Data      interface{}     `json:"data,omitempty"`
@@ -258,6 +244,7 @@ type ApiResponse struct {
 	Error     string          `json:"error,omitempty"`
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -301,6 +288,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 	}
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -333,11 +321,16 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 
 	subRouter.HandleFunc("/filter_suggestions", am.ViewAccess(aH.getQueryBuilderSuggestions)).Methods(http.MethodGet)
 
-	// websocket handler for query progress
+	// TODO(Raj): Remove this handler after /ws based path has been completely rolled out.
 	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/ws").Subrouter()
+	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMiddleware) {
@@ -346,6 +339,7 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }
@@ -3753,7 +3747,7 @@ func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Req
 		// Shouldn't happen unless query progress requested after query finished
 		zap.L().Warn(
 			"couldn't subscribe to query progress",
-			zap.String("queryId", queryId), zap.Any("error", err),
+			zap.String("queryId", queryId), zap.Any("error", apiErr),
 		)
 		return
 	}

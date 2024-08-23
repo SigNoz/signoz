@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { License } from 'types/api/licenses/def';
@@ -105,6 +105,7 @@ export default function Support(): JSX.Element {
 		false,
 	);
 
+	const { pathname } = useLocation();
 	const handleChannelWithRedirects = (url: string): void => {
 		window.open(url, '_blank');
 	};
@@ -181,8 +182,8 @@ export default function Support(): JSX.Element {
 
 	const handleAddCreditCard = (): void => {
 		logEvent('Add Credit card modal: Clicked', {
-			source: `chat`,
-			page: 'support',
+			source: `help & support`,
+			page: pathname,
 		});
 
 		updateCreditCard({
@@ -194,6 +195,10 @@ export default function Support(): JSX.Element {
 
 	const handleChat = (): void => {
 		if (showAddCreditCardModal) {
+			logEvent('Disabled Chat Support: Clicked', {
+				source: `help & support`,
+				page: pathname,
+			});
 			setIsAddCreditCardModalOpen(true);
 		} else if (window.Intercom) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment

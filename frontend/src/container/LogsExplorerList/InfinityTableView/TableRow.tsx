@@ -3,6 +3,7 @@ import './TableRow.styles.scss';
 import { ColumnsType } from 'antd/es/table';
 import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
+import { FontSize } from 'container/OptionsMenu/types';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
@@ -24,6 +25,7 @@ interface TableRowProps {
 	handleSetActiveContextLog: (log: ILog) => void;
 	logs: ILog[];
 	hasActions: boolean;
+	fontSize: FontSize;
 }
 
 export default function TableRow({
@@ -33,6 +35,7 @@ export default function TableRow({
 	handleSetActiveContextLog,
 	logs,
 	hasActions,
+	fontSize,
 }: TableRowProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
@@ -78,6 +81,7 @@ export default function TableRow({
 						$isDragColumn={false}
 						$isDarkMode={isDarkMode}
 						key={column.key}
+						fontSize={fontSize}
 					>
 						{cloneElement(children, props)}
 					</TableCellStyled>
