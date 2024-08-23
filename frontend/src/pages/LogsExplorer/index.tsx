@@ -52,15 +52,15 @@ function LogsExplorer(): JSX.Element {
 
 	const isMultipleQueries = useMemo(
 		() =>
-			currentQuery.builder.queryData.length > 1 ||
-			currentQuery.builder.queryFormulas.length > 0,
+			currentQuery.builder.queryData?.length > 1 ||
+			currentQuery.builder.queryFormulas?.length > 0,
 		[currentQuery],
 	);
 
 	const isGroupByPresent = useMemo(
 		() =>
-			currentQuery.builder.queryData.length === 1 &&
-			currentQuery.builder.queryData[0].groupBy.length > 0,
+			currentQuery.builder.queryData?.length === 1 &&
+			currentQuery.builder.queryData?.[0]?.groupBy?.length > 0,
 		[currentQuery.builder.queryData],
 	);
 
