@@ -91,6 +91,7 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 export const useGetAlertRuleDetails = (): {
 	ruleId: string | null;
 	data: UseQueryResult;
+	isValidRuleId: boolean;
 } => {
 	const { search } = useLocation();
 
@@ -110,7 +111,7 @@ export const useGetAlertRuleDetails = (): {
 		refetchOnWindowFocus: false,
 	});
 
-	return { ruleId, data };
+	return { ruleId, data, isValidRuleId };
 };
 
 type GetAlertRuleDetailsApiProps = {

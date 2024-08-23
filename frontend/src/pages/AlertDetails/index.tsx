@@ -2,6 +2,7 @@ import './alertDetails.styles.scss';
 
 import { Breadcrumb, ConfigProvider, Divider } from 'antd';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
+import NotFound from 'components/NotFound';
 import RouteTab from 'components/RouteTab';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
@@ -46,7 +47,12 @@ function AlertDetails(): JSX.Element {
 	const {
 		data: { isLoading, data, isRefetching, isError },
 		ruleId,
+		isValidRuleId,
 	} = useGetAlertRuleDetails();
+
+	if (isError || !isValidRuleId) {
+		return <NotFound />;
+	}
 
 	return (
 		<ConfigProvider
