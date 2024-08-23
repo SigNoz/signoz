@@ -60,15 +60,15 @@ export default function WorkspaceBlocked(): JSX.Element {
 	}, [dispatch]);
 
 	useEffect(() => {
-		if (!isFetchingLicenseData && licensesData) {
-			const shouldBlockWorkspace = licensesData.payload?.workSpaceBlock;
+		if (!isFetchingLicenseData) {
+			const shouldBlockWorkspace = licensesData?.payload?.workSpaceBlock;
 
 			if (!shouldBlockWorkspace) {
 				history.push(ROUTES.APPLICATION);
 			}
 
 			const activeValidLicense =
-				licensesData.payload?.licenses?.find(
+				licensesData?.payload?.licenses?.find(
 					(license) => license.isCurrent === true,
 				) || null;
 
