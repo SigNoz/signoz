@@ -10,12 +10,15 @@ import (
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
 	"go.signoz.io/signoz/pkg/confmap/provider/signozenvprovider"
 	"go.signoz.io/signoz/pkg/instrumentation"
+	"go.signoz.io/signoz/pkg/web"
 )
 
 func TestNewWithSignozEnvProvider(t *testing.T) {
 	t.Setenv("SIGNOZ__INSTRUMENTATION__LOGS__ENABLED", "true")
 	t.Setenv("SIGNOZ__INSTRUMENTATION__LOGS__PROCESSORS__BATCH__EXPORTER__OTLP__ENDPOINT", "0.0.0.0:4317")
 	t.Setenv("SIGNOZ__INSTRUMENTATION__LOGS__PROCESSORS__BATCH__EXPORT_TIMEOUT", "10")
+	t.Setenv("SIGNOZ__WEB__PREFIX", "/web")
+	t.Setenv("SIGNOZ__WEB__DIRECTORY", "/build")
 
 	config, err := New(context.Background(), ProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
@@ -34,7 +37,7 @@ func TestNewWithSignozEnvProvider(t *testing.T) {
 				Enabled: true,
 				LoggerProvider: contribsdkconfig.LoggerProvider{
 					Processors: []contribsdkconfig.LogRecordProcessor{
-						contribsdkconfig.LogRecordProcessor{
+						{
 							Batch: &contribsdkconfig.BatchLogRecordProcessor{
 								ExportTimeout: &i,
 								Exporter: contribsdkconfig.LogRecordExporter{
@@ -47,6 +50,10 @@ func TestNewWithSignozEnvProvider(t *testing.T) {
 					},
 				},
 			},
+		},
+		Web: web.Config{
+			Prefix:    "/web",
+			Directory: "/build",
 		},
 	}
 

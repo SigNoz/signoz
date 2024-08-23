@@ -1,7 +1,10 @@
+/* eslint-disable no-nested-ternary */
+import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';
 
 interface TableBodyContentProps {
 	linesPerRow: number;
+	fontSize: FontSize;
 	isDarkMode?: boolean;
 }
 
@@ -20,4 +23,10 @@ export const TableBodyContent = styled.div<TableBodyContentProps>`
 	-webkit-line-clamp: ${(props): number => props.linesPerRow};
 	line-clamp: ${(props): number => props.linesPerRow};
 	-webkit-box-orient: vertical;
+	${({ fontSize }): string =>
+		fontSize === FontSize.SMALL
+			? `font-size:11px; line-height:16px;`
+			: fontSize === FontSize.MEDIUM
+			? `font-size:13px; line-height:20px;`
+			: `font-size:14px; line-height:24px;`}
 `;

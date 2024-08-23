@@ -21,7 +21,12 @@ import {
 	defaultTraceSelectedColumns,
 	URL_OPTIONS,
 } from './constants';
-import { InitialOptions, OptionsMenuConfig, OptionsQuery } from './types';
+import {
+	FontSize,
+	InitialOptions,
+	OptionsMenuConfig,
+	OptionsQuery,
+} from './types';
 import { getOptionsFromKeys } from './utils';
 
 interface UseOptionsMenuProps {
@@ -248,6 +253,17 @@ const useOptionsMenu = ({
 		},
 		[handleRedirectWithOptionsData, optionsQueryData],
 	);
+	const handleFontSizeChange = useCallback(
+		(value: FontSize) => {
+			const optionsData: OptionsQuery = {
+				...optionsQueryData,
+				fontSize: value,
+			};
+
+			handleRedirectWithOptionsData(optionsData);
+		},
+		[handleRedirectWithOptionsData, optionsQueryData],
+	);
 
 	const handleSearchAttribute = useCallback((value: string) => {
 		setSearchText(value);
@@ -282,18 +298,24 @@ const useOptionsMenu = ({
 				value: optionsQueryData.maxLines || defaultOptionsQuery.maxLines,
 				onChange: handleMaxLinesChange,
 			},
+			fontSize: {
+				value: optionsQueryData?.fontSize || defaultOptionsQuery.fontSize,
+				onChange: handleFontSizeChange,
+			},
 		}),
 		[
-			optionsFromAttributeKeys,
-			optionsQueryData?.maxLines,
-			optionsQueryData?.format,
-			optionsQueryData?.selectColumns,
 			isSearchedAttributesFetching,
-			handleSearchAttribute,
+			optionsQueryData?.selectColumns,
+			optionsQueryData.format,
+			optionsQueryData.maxLines,
+			optionsQueryData?.fontSize,
+			optionsFromAttributeKeys,
 			handleSelectColumns,
 			handleRemoveSelectedColumn,
+			handleSearchAttribute,
 			handleFormatChange,
 			handleMaxLinesChange,
+			handleFontSizeChange,
 		],
 	);
 
