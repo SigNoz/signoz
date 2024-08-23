@@ -24,7 +24,7 @@ import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { CircleArrowRight } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { sideBarCollapse } from 'store/actions/app/sideBarCollapse';
@@ -55,7 +55,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 		data: licensesData,
 	} = useLicense();
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		dispatch(sideBarCollapse(false));
 	}, [dispatch]);
 
@@ -303,7 +303,12 @@ export default function WorkspaceBlocked(): JSX.Element {
 								</Col>
 							</Row>
 							{!isAdmin && (
-								<Row justify="center">
+								<Row
+									justify="center"
+									align="middle"
+									className="workspace-locked__modal__cta"
+									gutter={[16, 16]}
+								>
 									<Col>
 										<Alert
 											message="Contact your admin to proceed with the upgrade."
