@@ -123,11 +123,13 @@ const useOptionsMenu = ({
 						);
 
 						return {
+							...metaData,
 							key: metaData?.key,
 							dataType: metaData?.dataType,
 							type: metaData?.type,
 							isColumn: metaData?.isColumn,
 							isJSON: metaData?.isJSON,
+							id: metaData?.id,
 						};
 					}
 					return col;
