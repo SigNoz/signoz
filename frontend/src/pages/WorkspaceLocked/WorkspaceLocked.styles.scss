@@ -48,6 +48,17 @@ $ant-list-override: 'ant-list';
 	}
 
 	&__modal {
+		&__header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+
+			&__actions {
+				display: flex;
+				align-items: center;
+				gap: 16px;
+			}
+		}
 		.#{$ant-modal-override}-content {
 			border-radius: 4px;
 			border: 1px solid var(--bg-slate-400);
@@ -99,7 +110,7 @@ $ant-list-override: 'ant-list';
 			}
 		}
 		&__cta {
-			margin-top: 68px;
+			margin-top: 54px;
 		}
 	}
 	&__container {
@@ -143,6 +154,7 @@ $ant-list-override: 'ant-list';
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
 		animation: gradientFlow 24s ease infinite;
+		margin-bottom: 18px;
 	}
 }
 

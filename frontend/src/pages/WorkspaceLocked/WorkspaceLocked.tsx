@@ -254,7 +254,22 @@ export default function WorkspaceBlocked(): JSX.Element {
 			<Modal
 				className="workspace-locked__modal"
 				title={
-					<span className="workspace-locked__modal__title">Trial Plan Expired</span>
+					<div className="workspace-locked__modal__header">
+						<span className="workspace-locked__modal__title">Trial Plan Expired</span>
+						<span className="workspace-locked__modal__header__actions">
+							<Typography.Text className="workspace-locked__modal__title">
+								Got Questions?
+							</Typography.Text>
+							<Button
+								type="default"
+								shape="round"
+								size="middle"
+								href="mailto:cloud-support@signoz.io"
+							>
+								Contact Us
+							</Button>
+						</span>
+					</div>
 				}
 				open
 				closable={false}
@@ -328,14 +343,6 @@ export default function WorkspaceBlocked(): JSX.Element {
 								</Row>
 							)}
 
-							<Row justify="center" align="middle">
-								<Col className="contact-us">
-									Got Questions?
-									<span>
-										<a href="mailto:cloud-support@signoz.io"> Contact Us </a>
-									</span>
-								</Col>
-							</Row>
 							<Flex justify="center" className="workspace-locked__tabs">
 								<Tabs items={tabItems} defaultActiveKey="2" />
 							</Flex>
