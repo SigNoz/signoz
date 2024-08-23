@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO(remove): Implemented at pkg/http/middleware/timeout_test.go
 func TestGetRouteContextTimeout(t *testing.T) {
 	var testGetRouteContextTimeoutData = []struct {
 		Name          string

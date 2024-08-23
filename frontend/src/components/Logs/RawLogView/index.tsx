@@ -39,6 +39,7 @@ function RawLogView({
 	linesPerRow,
 	isTextOverflowEllipsisDisabled,
 	selectedFields = [],
+	fontSize,
 }: RawLogViewProps): JSX.Element {
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
@@ -54,6 +55,7 @@ function RawLogView({
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 	} = useActiveLog();
 
 	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
@@ -160,6 +162,7 @@ function RawLogView({
 			$isActiveLog={isActiveLog}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
+			fontSize={fontSize}
 		>
 			<LogStateIndicator
 				type={logType}
@@ -168,6 +171,7 @@ function RawLogView({
 					activeContextLog?.id === data.id ||
 					isActiveLog
 				}
+				fontSize={fontSize}
 			/>
 
 			<RawLogContent
@@ -176,6 +180,7 @@ function RawLogView({
 				$isDarkMode={isDarkMode}
 				$isTextOverflowEllipsisDisabled={isTextOverflowEllipsisDisabled}
 				linesPerRow={linesPerRow}
+				fontSize={fontSize}
 				dangerouslySetInnerHTML={html}
 			/>
 
@@ -199,6 +204,7 @@ function RawLogView({
 					onClose={handleCloseLogDetail}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
+					onGroupByAttribute={onGroupByAttribute}
 				/>
 			)}
 		</RawLogViewContainer>
