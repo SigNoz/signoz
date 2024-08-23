@@ -16,7 +16,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
-	"go.signoz.io/signoz/pkg/query-service/version"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -116,8 +115,6 @@ func main() {
 
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
-
-	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
 		HTTPHostPort:      baseconst.HTTPHostPort,

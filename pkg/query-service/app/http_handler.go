@@ -43,6 +43,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"go.signoz.io/signoz/pkg/version"
 
 	"go.uber.org/zap"
 
@@ -55,7 +56,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/query-service/version"
 )
 
 type status string
@@ -1865,9 +1865,8 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
-	version := version.GetVersion()
 	versionResponse := model.GetVersionResponse{
-		Version:        version,
+		Version:        version.Info.Version,
 		EE:             "Y",
 		SetupCompleted: aH.SetupCompleted,
 	}

@@ -18,7 +18,7 @@ import (
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/version"
+	"go.signoz.io/signoz/pkg/version"
 )
 
 type APIHandlerOptions struct {
@@ -183,9 +183,8 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 }
 
 func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
-	version := version.GetVersion()
 	versionResponse := basemodel.GetVersionResponse{
-		Version:        version,
+		Version:        version.Info.Version,
 		EE:             "Y",
 		SetupCompleted: ah.SetupCompleted,
 	}

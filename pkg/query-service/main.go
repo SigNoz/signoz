@@ -12,7 +12,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
-	"go.signoz.io/signoz/pkg/query-service/version"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -63,7 +62,6 @@ func main() {
 	defer loggerMgr.Sync() // flushes buffer, if any
 
 	logger := loggerMgr.Sugar()
-	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
 		HTTPHostPort:      constants.HTTPHostPort,
