@@ -1,5 +1,9 @@
-import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
+import {
+	AlertRuleTimelineTableResponse,
+	// AlertRuleTimelineTableResponsePayload,
+} from 'types/api/alerts/def';
 
 export type TimelineTableProps = {
 	timelineData: AlertRuleTimelineTableResponse[];
+	// totalItems: AlertRuleTimelineTableResponsePayload['data']['total'];
 };

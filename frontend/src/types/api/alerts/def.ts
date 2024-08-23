@@ -90,5 +90,5 @@ export interface AlertRuleTimelineTableResponse {
 	value: number;
 }
 export type AlertRuleTimelineTableResponsePayload = {
-	data: AlertRuleTimelineTableResponse[];
+	data: { items: AlertRuleTimelineTableResponse[]; total: number };
 };

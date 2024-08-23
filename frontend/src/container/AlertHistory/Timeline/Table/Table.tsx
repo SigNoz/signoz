@@ -7,7 +7,10 @@ import { useMemo, useState } from 'react';
 import { TimelineTableProps } from './types';
 import { timelineTableColumns } from './useTimelineTable';
 
-function TimelineTable({ timelineData }: TimelineTableProps): JSX.Element {
+function TimelineTable({
+	timelineData,
+}: // totalItems,
+TimelineTableProps): JSX.Element {
 	const [searchText, setSearchText] = useState('');
 	const { paginationConfig, onChangeHandler } = useTimelineTable();
 
