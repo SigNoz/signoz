@@ -3336,7 +3336,6 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 }
 
 func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.URL.Host, r.Host, "this is host")
 	req, err := parseQBFilterSuggestionsRequest(r)
 	if err != nil {
 		RespondError(w, err, nil)
