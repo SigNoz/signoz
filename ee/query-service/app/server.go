@@ -47,7 +47,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
@@ -95,13 +94,6 @@ type Server struct {
 	usageManager *usage.Manager
 
 	opampServer *opamp.Server
-
-	unavailableChannel chan healthcheck.Status
-}
-
-// HealthCheckStatus returns health check status channel a client can subscribe to
-func (s Server) HealthCheckStatus() chan healthcheck.Status {
-	return s.unavailableChannel
 }
 
 // NewServer creates and initializes Server
@@ -275,10 +267,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	s := &Server{
 		// logger: logger,
 		// tracer: tracer,
-		ruleManager:        rm,
-		serverOptions:      serverOptions,
-		unavailableChannel: make(chan healthcheck.Status),
-		usageManager:       usageManager,
+		ruleManager:   rm,
+		serverOptions: serverOptions,
+		usageManager:  usageManager,
 	}
 
 	httpServer, err := s.createPublicServer(apiHandler)
@@ -651,7 +642,6 @@ func (s *Server) Start() error {
 		default:
 			zap.L().Error("Could not start HTTP server", zap.Error(err))
 		}
-		s.unavailableChannel <- healthcheck.Unavailable
 	}()
 
 	go func() {
@@ -679,8 +669,6 @@ func (s *Server) Start() error {
 			zap.L().Error("Could not start private HTTP server", zap.Error(err))
 		}
 
-		s.unavailableChannel <- healthcheck.Unavailable
-
 	}()
 
 	go func() {
@@ -688,7 +676,6 @@ func (s *Server) Start() error {
 		err := s.opampServer.Start(baseconst.OpAmpWsEndpoint)
 		if err != nil {
 			zap.L().Error("opamp ws server failed to start", zap.Error(err))
-			s.unavailableChannel <- healthcheck.Unavailable
 		}
 	}()
 

@@ -166,8 +166,6 @@ func main() {
 
 	for {
 		select {
-		case status := <-server.HealthCheckStatus():
-			zap.L().Info("Received HealthCheck status: ", zap.Int("status", int(status)))
 		case <-signalsChannel:
 			zap.L().Fatal("Received OS Interrupt Signal ... ")
 			server.Stop()
