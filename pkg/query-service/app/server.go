@@ -322,6 +322,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	}, nil
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 // loggingMiddleware is used for logging public api calls
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -392,6 +393,7 @@ func LogCommentEnricher(next http.Handler) http.Handler {
 	})
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 // loggingMiddlewarePrivate is used for logging private api calls
 // from internal services like alert manager
 func loggingMiddlewarePrivate(next http.Handler) http.Handler {
@@ -404,27 +406,32 @@ func loggingMiddlewarePrivate(next http.Handler) http.Handler {
 	})
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 type loggingResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 func NewLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
 	// WriteHeader(int) is not called if our response implicitly returns 200 OK, so
 	// we default to that status code.
 	return &loggingResponseWriter{w, http.StatusOK}
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 func (lrw *loggingResponseWriter) WriteHeader(code int) {
 	lrw.statusCode = code
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 // Flush implements the http.Flush interface.
 func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 // Support websockets
 func (lrw *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	h, ok := lrw.ResponseWriter.(http.Hijacker)
@@ -538,6 +545,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/timeout.go
 func getRouteContextTimeout(overrideTimeout string) time.Duration {
 	var timeout time.Duration
 	var err error
@@ -554,6 +562,7 @@ func getRouteContextTimeout(overrideTimeout string) time.Duration {
 	return constants.ContextTimeout
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/timeout.go
 func setTimeoutMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
