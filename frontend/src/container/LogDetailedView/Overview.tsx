@@ -18,6 +18,7 @@ import { ChevronDown, ChevronRight, Search } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from './ActionItem';
 import TableView from './TableView';
@@ -27,6 +28,11 @@ interface OverviewProps {
 	isListViewPanel?: boolean;
 	selectedOptions: OptionsQuery;
 	listViewPanelSelectedFields?: IField[] | null;
+	onGroupByAttribute?: (
+		fieldKey: string,
+		isJSON?: boolean,
+		dataType?: DataTypes,
+	) => Promise<void>;
 }
 
 type Props = OverviewProps &
@@ -39,6 +45,7 @@ function Overview({
 	onClickActionItem,
 	isListViewPanel = false,
 	selectedOptions,
+	onGroupByAttribute,
 	listViewPanelSelectedFields,
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
@@ -204,6 +211,7 @@ function Overview({
 									logData={logData}
 									onAddToQuery={onAddToQuery}
 									fieldSearchInput={fieldSearchInput}
+									onGroupByAttribute={onGroupByAttribute}
 									onClickActionItem={onClickActionItem}
 									isListViewPanel={isListViewPanel}
 									selectedOptions={selectedOptions}
@@ -222,6 +230,7 @@ function Overview({
 Overview.defaultProps = {
 	isListViewPanel: false,
 	listViewPanelSelectedFields: null,
+	onGroupByAttribute: undefined,
 };
 
 export default Overview;

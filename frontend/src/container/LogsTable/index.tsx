@@ -10,6 +10,7 @@ import LogsTableView from 'components/Logs/TableView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
+import { FontSize } from 'container/OptionsMenu/types';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -35,6 +36,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		activeLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 		onSetActiveLog,
 	} = useActiveLog();
 
@@ -66,6 +68,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 						data={log}
 						linesPerRow={linesPerRow}
 						selectedFields={selected}
+						fontSize={FontSize.SMALL}
 					/>
 				);
 			}
@@ -78,6 +81,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 					linesPerRow={linesPerRow}
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
+					fontSize={FontSize.SMALL}
 				/>
 			);
 		},
@@ -92,6 +96,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 					logs={logs}
 					fields={selected}
 					linesPerRow={linesPerRow}
+					fontSize={FontSize.SMALL}
 				/>
 			);
 		}
@@ -126,6 +131,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 				selectedTab={VIEW_TYPES.OVERVIEW}
 				log={activeLog}
 				onClose={onClearActiveLog}
+				onGroupByAttribute={onGroupByAttribute}
 				onAddToQuery={onAddToQuery}
 				onClickActionItem={onAddToQuery}
 			/>

@@ -37,6 +37,7 @@ function LogDetail({
 	log,
 	onClose,
 	onAddToQuery,
+	onGroupByAttribute,
 	onClickActionItem,
 	selectedTab,
 	isListViewPanel = false,
@@ -209,6 +210,7 @@ function LogDetail({
 					logData={log}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onClickActionItem}
+					onGroupByAttribute={onGroupByAttribute}
 					isListViewPanel={isListViewPanel}
 					selectedOptions={options}
 					listViewPanelSelectedFields={listViewPanelSelectedFields}

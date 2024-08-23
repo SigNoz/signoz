@@ -9,11 +9,24 @@
 		border-radius: 50px;
 		background-color: transparent;
 
+		&.small {
+			min-height: 16px;
+		}
+
+		&.medium {
+			min-height: 20px;
+		}
+
+		&.large {
+			min-height: 24px;
+		}
+
 		&.INFO {
 			background-color: var(--bg-slate-400);
 		}
 
-		&.WARNING, &.WARN {
+		&.WARNING,
+		&.WARN {
 			background-color: var(--bg-amber-500);
 		}
 

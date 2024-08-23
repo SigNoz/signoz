@@ -4,6 +4,10 @@ import (
 	"fmt"
 )
 
+const (
+	codeUnknown string = "unknown"
+)
+
 // base is the fundamental struct that implements the error interface.
 // The order of the struct is 'TCMEUA'.
 type base struct {
@@ -100,7 +104,7 @@ func Unwrapb(cause error) (typ, string, string, error, string, []string) {
 		return base.t, base.c, base.m, base.e, base.u, base.a
 	}
 
-	return TypeInternal, "", cause.Error(), cause, "", []string{}
+	return TypeInternal, codeUnknown, cause.Error(), cause, "", []string{}
 }
 
 // Ast checks if the provided error matches the specified custom error type.
