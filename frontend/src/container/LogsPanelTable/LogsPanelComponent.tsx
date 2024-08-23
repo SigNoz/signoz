@@ -108,6 +108,7 @@ function LogsPanelComponent({
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 	} = useActiveLog();
 
 	const handleRow = useCallback(
@@ -244,6 +245,7 @@ function LogsPanelComponent({
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}
 				onClickActionItem={onAddToQuery}
+				onGroupByAttribute={onGroupByAttribute}
 				isListViewPanel
 				listViewPanelSelectedFields={widget?.selectedLogFields}
 			/>

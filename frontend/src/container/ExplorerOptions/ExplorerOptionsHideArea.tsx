@@ -65,6 +65,7 @@ function ExplorerOptionsHideArea({
 						// style={{ alignSelf: 'center', marginRight: 'calc(10% - 20px)' }}
 						className="explorer-show-btn"
 						onClick={handleShowExplorerOption}
+						data-testid="show-explorer-option"
 					>
 						<div className="menu-bar" />
 					</Button>

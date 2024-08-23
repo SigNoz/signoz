@@ -501,6 +501,7 @@ function ExplorerOptions({
 								shape="circle"
 								onClick={hideToolbar}
 								icon={<PanelBottomClose size={16} />}
+								data-testid="hide-toolbar"
 							/>
 						</Tooltip>
 					</div>
@@ -530,6 +531,7 @@ function ExplorerOptions({
 						icon={<Check size={16} />}
 						onClick={onSaveHandler}
 						disabled={isSaveViewLoading}
+						data-testid="save-view-btn"
 					>
 						Save this view
 					</Button>,
