@@ -3,6 +3,7 @@ import './MQTables.styles.scss';
 import { Table, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useNotifications } from 'hooks/useNotifications';
+import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import {
 	ConsumerLagDetailTitle,
 	ConsumerLagDetailType,
@@ -81,10 +82,15 @@ function MessagingQueuesTable({
 		[tableData],
 	);
 
+	const { start, end } = getStartEndRangeTime({
+		type: 'GLOBAL_TIME',
+		// interval: globalSelectedInterval,
+	});
+
 	const props: ConsumerLagPayload = useMemo(
 		() => ({
-			start: '1720685296000000000',
-			end: '1721290096000000000',
+			start: parseInt(start, 10) * 1e3,
+			end: parseInt(end, 10) * 1e3,
 			variables: {
 				partition: '0',
 				topic: 'topic1',
@@ -92,7 +98,7 @@ function MessagingQueuesTable({
 			},
 			detailType: currentTab,
 		}),
-		[currentTab],
+		[currentTab, end, start],
 	);
 
 	const handleConsumerDetailsOnError = (): void => {

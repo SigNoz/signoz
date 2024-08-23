@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { Select, Spin } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useState } from 'react';
@@ -74,6 +74,16 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 				onSearch={handleConsumerGrpSearch}
 				maxTagCount={4}
 				maxTagPlaceholder={SelectMaxTagPlaceholder}
+				notFoundContent={
+					isFetchingConsumerGrp ? (
+						<span>
+							<Spin size="small" /> Loading...
+						</span>
+					) : (
+						<span>No Consumer Groups found</span>
+					)
+				}
+				onChange={(): void => handleConsumerGrpSearch('')}
 			/>
 			<Select
 				placeholder={getPlaceholder('topic')}
@@ -85,6 +95,16 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 				className="config-select-option"
 				maxTagCount={4}
 				maxTagPlaceholder={SelectMaxTagPlaceholder}
+				notFoundContent={
+					isFetchingTopic ? (
+						<span>
+							<Spin size="small" /> Loading...
+						</span>
+					) : (
+						<span>No Topics found</span>
+					)
+				}
+				onChange={(): void => handleTopicSearch('')}
 			/>
 			<Select
 				placeholder={getPlaceholder('partition')}
@@ -96,6 +116,16 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 				onSearch={handlePartitionSearch}
 				maxTagCount={4}
 				maxTagPlaceholder={SelectMaxTagPlaceholder}
+				notFoundContent={
+					isFetchingPartition ? (
+						<span>
+							<Spin size="small" /> Loading...
+						</span>
+					) : (
+						<span>No Partitions found</span>
+					)
+				}
+				onChange={(): void => handlePartitionSearch('')}
 			/>
 		</div>
 	);

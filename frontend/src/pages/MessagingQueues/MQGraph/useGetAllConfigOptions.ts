@@ -1,15 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { DefaultOptionType } from 'antd/es/select';
-// import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
+import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { useEffect, useState } from 'react';
-
-// import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-// import { DataSource } from 'types/common/queryBuilder';
-import {
-	consumerGrpOptionsPayload,
-	partitionsOptionsPayload,
-	topicsOptionsPayload,
-} from '../mocks';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataSource } from 'types/common/queryBuilder';
 
 export interface ConfigOptions {
 	attributeKey: string;
@@ -31,26 +25,20 @@ export function useGetAllConfigOptions(
 	const getValues = async (): Promise<void> => {
 		try {
 			setResults([]);
-			// const { payload } = await getAttributesValues({
-			// 	aggregateOperator: 'avg',
-			// 	dataSource: DataSource.METRICS,
-			// 	aggregateAttribute: 'kafka_consumer_group_lag',
-			// 	attributeKey,
-			// 	searchText: searchText ?? '',
-			// 	filterAttributeKeyDataType: DataTypes.String,
-			// 	tagType: 'tag',
-			// });
-
-			let payload = consumerGrpOptionsPayload.data;
-			if (attributeKey === 'topic') {
-				payload = topicsOptionsPayload.data;
-			} else if (attributeKey === 'partition') {
-				payload = partitionsOptionsPayload.data;
-			}
+			setFetching(true);
+			const { payload } = await getAttributesValues({
+				aggregateOperator: 'avg',
+				dataSource: DataSource.METRICS,
+				aggregateAttribute: 'kafka_consumer_group_lag',
+				attributeKey,
+				searchText: searchText ?? '',
+				filterAttributeKeyDataType: DataTypes.String,
+				tagType: 'tag',
+			});
 
 			if (payload) {
 				const values = Object.values(payload).find((el) => !!el) || [];
-				const options: DefaultOptionType[] = values.map((val) => ({
+				const options: DefaultOptionType[] = values.map((val: string) => ({
 					label: val,
 					value: val,
 				}));

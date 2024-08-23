@@ -18,8 +18,8 @@ import {
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 export interface ConsumerLagPayload {
-	start: string;
-	end: string;
+	start: number;
+	end: number;
 	variables: {
 		partition: string;
 		topic: string;
