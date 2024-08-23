@@ -63,13 +63,15 @@ function AlertDetails(): JSX.Element {
 					Breadcrumb: {
 						itemColor: 'var(--text-vanilla-400)',
 						fontSize: 14,
-						lastItemColor: 'var(--text-vanilla-100)',
+						lastItemColor: 'var(--text-vanilla-500)',
+						separatorMargin: 8,
 					},
 				},
 			}}
 		>
 			<div className="alert-details">
 				<Breadcrumb
+					className="alert-details__breadcrumb"
 					items={[
 						{
 							title: 'Alert Rules',
@@ -80,8 +82,8 @@ function AlertDetails(): JSX.Element {
 						},
 					]}
 				/>
-				<Divider className="divider" />
-				{/* TODO(shaheer): use DataStateRenderer component instead */}
+				<Divider className="divider breadcrumb-divider" />
+
 				<AlertDetailsStatusRenderer
 					{...{ isLoading, isError, isRefetching, data }}
 				/>

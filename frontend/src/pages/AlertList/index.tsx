@@ -22,8 +22,8 @@ function AllAlertList(): JSX.Element {
 	const items: TabsProps['items'] = [
 		{
 			label: (
-				<div className="periscope-tab">
-					<GalleryVerticalEnd size={14} />
+				<div className="periscope-tab top-level-tab">
+					<GalleryVerticalEnd size={16} />
 					Triggered Alerts
 				</div>
 			),
@@ -32,8 +32,8 @@ function AllAlertList(): JSX.Element {
 		},
 		{
 			label: (
-				<div className="periscope-tab">
-					<Pyramid size={14} />
+				<div className="periscope-tab top-level-tab">
+					<Pyramid size={16} />
 					Alert Rules
 				</div>
 			),
@@ -43,7 +43,7 @@ function AllAlertList(): JSX.Element {
 		},
 		{
 			label: (
-				<div className="periscope-tab">
+				<div className="periscope-tab top-level-tab">
 					<ConfigureIcon />
 					Configuration
 				</div>

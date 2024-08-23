@@ -3,18 +3,37 @@
 	justify-content: space-between;
 	align-items: center;
 }
+
 .alert-details {
-	margin-top: 16px;
+	margin-top: 10px;
 	.divider {
-		border-color: var(--bg-slate-400);
+		border-color: var(--bg-slate-500);
 		margin: 16px 0;
+	}
+	.breadcrumb-divider {
+		margin-top: 10px;
+	}
+	&__breadcrumb {
+		margin-left: 16px;
+		.ant-breadcrumb-link {
+			color: var(--text-vanilla-400);
+			font-size: 14px;
+			line-height: 20px;
+			letter-spacing: 0.25px;
+		}
+
+		.ant-breadcrumb-separator,
+		span.ant-breadcrumb-link {
+			color: var(--var-vanilla-500);
+			font-family: 'Geist Mono';
+		}
 	}
 	.tabs-and-filters {
 		margin: 1rem 0;
 
 		& .ant-tabs-nav {
 			&-wrap {
-				margin-bottom: 16px;
+				margin: 0 16px 16px 16px;
 			}
 			&::before {
 				border-bottom: none !important;
@@ -57,9 +76,34 @@
 	}
 }
 
-.alert-details-tabs .ant-tabs-nav {
-	margin-bottom: 0 !important;
-	&::before {
-		border-bottom: 1px solid var(--bg-slate-400) !important;
+.alert-details-tabs {
+	.top-level-tab.periscope-tab {
+		padding: 2px 0;
+	}
+	.ant-tabs-nav {
+		margin-bottom: 0 !important;
+		&::before {
+			border-bottom: 1px solid var(--bg-slate-500) !important;
+		}
+	}
+	.ant-tabs-tab {
+		&[data-node-key='TriggeredAlerts'] {
+			margin-left: 16px;
+		}
+		&:not(:first-of-type) {
+			margin-left: 24px !important;
+		}
+		.periscope-tab {
+			font-size: 14px;
+			color: var(--text-vanilla-100);
+			line-height: 20px;
+			letter-spacing: -0.07px;
+			gap: 10px;
+		}
+		[aria-selected='false'] {
+			.periscope-tab {
+				color: var(--text-vanilla-400);
+			}
+		}
 	}
 }

@@ -2,6 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+	margin-left: 16px;
 
 	&__top-section {
 		display: flex;
@@ -13,13 +14,17 @@
 			gap: 8px;
 			.alert-title {
 				font-size: 16px;
-				font-weight: var(--font-weight-medium);
+				font-weight: 500;
 				color: var(--text-vanilla-100);
 				line-height: 24px;
+				letter-spacing: -0.08px;
 			}
 			.alert-id {
 				// color: var(--text-slate-50);
 				color: #62687c;
+				font-size: 15px;
+				line-height: 20px;
+				letter-spacing: -0.075px;
 			}
 		}
 	}
