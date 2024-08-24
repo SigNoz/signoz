@@ -18,13 +18,13 @@ import {
 } from 'antd';
 import updateCreditCardApi from 'api/billing/checkout';
 import logEvent from 'api/common/logEvent';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { CircleArrowRight } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { sideBarCollapse } from 'store/actions/app/sideBarCollapse';
@@ -50,6 +50,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	const { notifications } = useNotifications();
 	const [collapsed] = useState<boolean>(false);
 
+	const { t } = useTranslation(['workspaceLocked']);
 	const {
 		isFetching: isFetchingLicenseData,
 		isLoading: isLoadingLicenseData,
@@ -91,7 +92,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 			},
 			onError: () =>
 				notifications.error({
-					message: SOMETHING_WENT_WRONG,
+					message: t('somethingWentWrong'),
 				}),
 		},
 	);
@@ -111,15 +112,13 @@ export default function WorkspaceBlocked(): JSX.Element {
 		logEvent('Workspace Blocked: User Clicked Extend Trial', {});
 
 		notifications.info({
-			message: 'Extend Trial',
+			message: t('extendTrial'),
 			duration: 0,
 			description: (
 				<Typography>
-					If you have a specific reason why you were not able to finish your PoC in
-					the trial period, please write to us on
-					<a href="mailto:cloud-support@signoz.io"> cloud-support@signoz.io </a>
-					with the reason. Sometimes we can extend trial by a few days on a case by
-					case basis
+					{t('extendTrialMsgPart1')}{' '}
+					<a href="mailto:cloud-support@signoz.io">cloud-support@signoz.io</a>{' '}
+					{t('extendTrialMsgPart2')}
 				</Typography>
 			),
 		});
@@ -144,7 +143,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	const tabItems: TabsProps['items'] = [
 		{
 			key: '1',
-			label: 'Why choose Signoz',
+			label: t('whyChooseSignoz'),
 			children: (
 				<Row align="middle" justify="center">
 					<Col span={12}>
@@ -156,12 +155,9 @@ export default function WorkspaceBlocked(): JSX.Element {
 								<Space size="large" direction="vertical">
 									<Flex vertical>
 										<Typography.Title level={3}>
-											Enterprise-grade Observability
+											{t('enterpriseGradeObservability')}
 										</Typography.Title>
-										<Typography>
-											Get access to observability at any scale with advanced security and
-											compliance.
-										</Typography>
+										<Typography>{t('observabilityDescription')}</Typography>
 									</Flex>
 									<List
 										itemLayout="horizontal"
@@ -183,7 +179,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 										loading={isLoading}
 										onClick={handleUpdateCreditCard}
 									>
-										Continue to Upgrade
+										{t('continueToUpgrade')}
 									</Button>
 								</Col>
 							)}
@@ -194,7 +190,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 		},
 		{
 			key: '2',
-			label: 'Your are in good company',
+			label: t('youAreInGoodCompany'),
 			children: (
 				<Row gutter={[24, 16]} justify="center">
 					{/* #FIXME: please suggest if there is any better way to loop in different columns to get the masonry layout */}
@@ -210,7 +206,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 									loading={isLoading}
 									onClick={handleUpdateCreditCard}
 								>
-									Continue to Upgrade
+									{t('continueToUpgrade')}
 								</Button>
 							</Flex>
 						</Col>
@@ -226,7 +222,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 		// },
 		{
 			key: '4',
-			label: 'FAQs',
+			label: t('faqs'),
 			children: (
 				<Row align="middle" justify="center">
 					<Col span={18}>
@@ -240,7 +236,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 									loading={isLoading}
 									onClick={handleUpdateCreditCard}
 								>
-									Continue to Upgrade
+									{t('continueToUpgrade')}
 								</Button>
 							)}
 						</Space>
@@ -256,10 +252,12 @@ export default function WorkspaceBlocked(): JSX.Element {
 				className="workspace-locked__modal"
 				title={
 					<div className="workspace-locked__modal__header">
-						<span className="workspace-locked__modal__title">Trial Plan Expired</span>
+						<span className="workspace-locked__modal__title">
+							{t('trialPlanExpired')}
+						</span>
 						<span className="workspace-locked__modal__header__actions">
 							<Typography.Text className="workspace-locked__modal__title">
-								Got Questions?
+								{t('gotQuestions')}
 							</Typography.Text>
 							<Button
 								type="default"
@@ -267,7 +265,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 								size="middle"
 								href="mailto:cloud-support@signoz.io"
 							>
-								Contact Us
+								{t('contactUs')}
 							</Button>
 						</span>
 					</div>
@@ -286,19 +284,20 @@ export default function WorkspaceBlocked(): JSX.Element {
 								<Col>
 									<Space direction="vertical" align="center">
 										<Typography.Title level={2}>
-											<div className="workspace-locked__title">Upgrade to Continue</div>
+											<div className="workspace-locked__title">
+												{t('upgradeToContinue')}
+											</div>
 										</Typography.Title>
 										<Typography.Paragraph className="workspace-locked__details">
-											Upgrade now to keep enjoying all the great features you’ve been
-											using.
+											{t('upgradeNow')}
 											<br />
-											Your data is safe with us until{' '}
+											{t('yourDataIsSafe')}{' '}
 											<span className="workspace-locked__details__highlight">
 												{getFormattedDate(
 													licensesData.payload?.gracePeriodEnd || Date.now(),
 												)}
 											</span>{' '}
-											Act now to avoid any disruptions and continue where you left off.
+											{t('actNow')}
 										</Typography.Paragraph>
 									</Space>
 								</Col>
@@ -311,10 +310,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 									gutter={[16, 16]}
 								>
 									<Col>
-										<Alert
-											message="Contact your admin to proceed with the upgrade."
-											type="info"
-										/>
+										<Alert message={t('contactAdmin')} type="info" />
 									</Col>
 								</Row>
 							)}
@@ -333,7 +329,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 											loading={isLoading}
 											onClick={handleUpdateCreditCard}
 										>
-											Continue My Journey
+											{t('continueMyJourney')}
 										</Button>
 									</Col>
 									<Col>
@@ -343,7 +339,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 											size="middle"
 											onClick={handleExtendTrial}
 										>
-											Need More Time?
+											{t('needMoreTime')}
 										</Button>
 									</Col>
 								</Row>
