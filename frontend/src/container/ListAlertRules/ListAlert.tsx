@@ -139,7 +139,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				params.set(QueryParams.ruleId, record.id.toString());
 
 				setEditLoader(false);
-				history.push(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
+				history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 			})
 			.catch(handleError)
 			.finally(() => setEditLoader(false));
