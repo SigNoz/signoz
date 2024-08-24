@@ -20,7 +20,7 @@ describe('WorkspaceLocked', () => {
 		});
 
 		const workspaceLocked = await screen.findByRole('heading', {
-			name: /workspace locked/i,
+			name: /upgrade to continue/i,
 		});
 		expect(workspaceLocked).toBeInTheDocument();
 
@@ -42,11 +42,11 @@ describe('WorkspaceLocked', () => {
 
 		render(<WorkspaceLocked />);
 		const contactAdminMessage = await screen.queryByText(
-			/please contact your administrator for further help/i,
+			/contact your admin to proceed with the upgrade./i,
 		);
 		expect(contactAdminMessage).not.toBeInTheDocument();
 		const updateCreditCardBtn = await screen.findByRole('button', {
-			name: /update credit card/i,
+			name: /continue my journey/i,
 		});
 		expect(updateCreditCardBtn).toBeInTheDocument();
 	});
@@ -65,7 +65,7 @@ describe('WorkspaceLocked', () => {
 		expect(updateCreditCardBtn).not.toBeInTheDocument();
 
 		const contactAdminMessage = await screen.findByText(
-			/please contact your administrator for further help/i,
+			/contact your admin to proceed with the upgrade./i,
 		);
 		expect(contactAdminMessage).toBeInTheDocument();
 	});
