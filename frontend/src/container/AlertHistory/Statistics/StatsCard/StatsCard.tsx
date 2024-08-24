@@ -103,7 +103,7 @@ function StatsCard({
 
 			<div className="stats-card__graph">
 				<div className="graph">
-					{!isEmpty && !!timeSeries.length && (
+					{!isEmpty && timeSeries.length > 1 && (
 						<StatsGraph timeSeries={timeSeries} changeDirection={changeDirection} />
 					)}
 				</div>
