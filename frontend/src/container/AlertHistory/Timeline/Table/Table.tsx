@@ -42,10 +42,9 @@ function TimelineTable({
 		]) as {
 			payload: PayloadProps;
 		};
-		const { targetUnit } = alertDetailsQuery.payload.data.condition;
-		const {
-			unit: currentUnit,
-		} = alertDetailsQuery.payload.data.condition.compositeQuery;
+		const condition = alertDetailsQuery?.payload?.data?.condition;
+		const { targetUnit } = condition ?? {};
+		const { unit: currentUnit } = condition?.compositeQuery ?? {};
 
 		return { currentUnit, targetUnit };
 	}, [queryClient, ruleId]);
