@@ -1,33 +1,9 @@
 import { Progress, Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import AlertPopover from 'container/AlertHistory/AlertPopover/AlertPopover';
+import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
-import React from 'react';
 import { AlertRuleStats, AlertRuleTopContributors } from 'types/api/alerts/def';
-
-type ConditionalAlertPopoverProps = {
-	relatedTracesLink: string;
-	relatedLogsLink: string;
-	children: React.ReactNode;
-};
-function ConditionalAlertPopover({
-	children,
-	relatedTracesLink,
-	relatedLogsLink,
-}: ConditionalAlertPopoverProps): JSX.Element {
-	if (relatedTracesLink && relatedLogsLink) {
-		return (
-			<AlertPopover
-				relatedTracesLink={relatedTracesLink}
-				relatedLogsLink={relatedLogsLink}
-			>
-				{children}
-			</AlertPopover>
-		);
-	}
-	return <div>{children}</div>;
-}
 
 function TopContributorsRows({
 	topContributors,

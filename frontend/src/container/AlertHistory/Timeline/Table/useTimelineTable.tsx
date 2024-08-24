@@ -1,6 +1,6 @@
 import { Input } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import AlertPopover from 'container/AlertHistory/AlertPopover/AlertPopover';
+import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
 import { convertValue } from 'lib/getConvertedValue';
 import { debounce } from 'lodash-es';
 import { Search } from 'lucide-react';
@@ -41,35 +41,35 @@ export const timelineTableColumns = (
 		dataIndex: 'state',
 		sorter: true,
 		render: (value, record): JSX.Element => (
-			<AlertPopover
+			<ConditionalAlertPopover
 				relatedTracesLink={record.relatedTracesLink}
 				relatedLogsLink={record.relatedLogsLink}
 			>
 				<div className="alert-rule-state">
 					<AlertState state={value} showLabel />
 				</div>
-			</AlertPopover>
+			</ConditionalAlertPopover>
 		),
 	},
 	{
 		title: <LabelFilter setSearchText={setSearchText} />,
 		dataIndex: 'labels',
 		render: (labels, record): JSX.Element => (
-			<AlertPopover
+			<ConditionalAlertPopover
 				relatedTracesLink={record.relatedTracesLink}
 				relatedLogsLink={record.relatedLogsLink}
 			>
 				<div className="alert-rule-labels">
 					<AlertLabels labels={labels} />
 				</div>
-			</AlertPopover>
+			</ConditionalAlertPopover>
 		),
 	},
 	{
 		title: 'VALUE',
 		dataIndex: 'value',
 		render: (value, record): JSX.Element => (
-			<AlertPopover
+			<ConditionalAlertPopover
 				relatedTracesLink={record.relatedTracesLink}
 				relatedLogsLink={record.relatedLogsLink}
 			>
@@ -77,19 +77,19 @@ export const timelineTableColumns = (
 					{/* convert the value based on y axis and target unit */}
 					{convertValue(value, currentUnit, targetUnit)}
 				</div>
-			</AlertPopover>
+			</ConditionalAlertPopover>
 		),
 	},
 	{
 		title: 'CREATED AT',
 		dataIndex: 'unixMilli',
 		render: (value, record): JSX.Element => (
-			<AlertPopover
+			<ConditionalAlertPopover
 				relatedTracesLink={record.relatedTracesLink}
 				relatedLogsLink={record.relatedLogsLink}
 			>
 				<div className="alert-rule-created-at">{formatEpochTimestamp(value)}</div>
-			</AlertPopover>
+			</ConditionalAlertPopover>
 		),
 	},
 ];

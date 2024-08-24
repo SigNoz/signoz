@@ -1,3 +1,5 @@
+import './AlertPopover.styles.scss';
+
 import { Popover } from 'antd';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import ROUTES from 'constants/routes';
@@ -22,7 +24,7 @@ function PopoverContent({
 		<div className="contributor-row-popover-buttons">
 			{!!relatedTracesLink && (
 				<Link
-					to={`${ROUTES.LOGS_EXPLORER}/${relatedTracesLink}`}
+					to={`${ROUTES.LOGS_EXPLORER}?${relatedTracesLink}`}
 					className="contributor-row-popover-buttons__button"
 				>
 					<div className="icon">
@@ -33,7 +35,7 @@ function PopoverContent({
 			)}
 			{!!relatedLogsLink && (
 				<Link
-					to={`${ROUTES.TRACES_EXPLORER}/${relatedLogsLink}`}
+					to={`${ROUTES.TRACES_EXPLORER}?${relatedLogsLink}`}
 					className="contributor-row-popover-buttons__button"
 				>
 					<div className="icon">
@@ -80,4 +82,27 @@ AlertPopover.defaultProps = {
 	relatedTracesLink: '',
 	relatedLogsLink: '',
 };
+
+type ConditionalAlertPopoverProps = {
+	relatedTracesLink: string;
+	relatedLogsLink: string;
+	children: React.ReactNode;
+};
+export function ConditionalAlertPopover({
+	children,
+	relatedTracesLink,
+	relatedLogsLink,
+}: ConditionalAlertPopoverProps): JSX.Element {
+	if (relatedTracesLink || relatedLogsLink) {
+		return (
+			<AlertPopover
+				relatedTracesLink={relatedTracesLink}
+				relatedLogsLink={relatedLogsLink}
+			>
+				{children}
+			</AlertPopover>
+		);
+	}
+	return <div>{children}</div>;
+}
 export default AlertPopover;
