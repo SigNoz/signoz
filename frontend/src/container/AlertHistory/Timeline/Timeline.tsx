@@ -27,7 +27,7 @@ function TimelineTableRenderer(): JSX.Element {
 			{(timelineData): JSX.Element => (
 				<TimelineTable
 					timelineData={timelineData.items}
-					// totalItems={timelineData.total}
+					totalItems={timelineData.total}
 				/>
 			)}
 		</DataStateRenderer>

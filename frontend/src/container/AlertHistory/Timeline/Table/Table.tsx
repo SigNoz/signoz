@@ -9,10 +9,10 @@ import { timelineTableColumns } from './useTimelineTable';
 
 function TimelineTable({
 	timelineData,
-}: // totalItems,
-TimelineTableProps): JSX.Element {
+	totalItems,
+}: TimelineTableProps): JSX.Element {
 	const [searchText, setSearchText] = useState('');
-	const { paginationConfig, onChangeHandler } = useTimelineTable();
+	const { paginationConfig, onChangeHandler } = useTimelineTable({ totalItems });
 
 	const visibleTimelineData = useMemo(() => {
 		if (searchText === '') {
@@ -32,7 +32,6 @@ TimelineTableProps): JSX.Element {
 				pagination={paginationConfig}
 				size="middle"
 				onChange={onChangeHandler}
-				// TODO(shaheer): get total entries when we get an API for it
 			/>
 		</div>
 	);
