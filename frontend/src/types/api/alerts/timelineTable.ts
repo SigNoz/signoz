@@ -12,4 +12,5 @@ export interface GetTimelineTableRequestProps {
 	limit: number;
 	order: string;
 	filters?: Filters;
+	state?: string;
 }

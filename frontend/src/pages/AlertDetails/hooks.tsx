@@ -250,12 +250,10 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 					// 		},
 					// 	],
 					// },
+
 					...(timelineFilter && timelineFilter !== TimelineFilter.ALL
 						? {
-								filters: {
-									// TODO(shaheer): confirm whether the TimelineFilter.RESOLVED and TimelineFilter.FIRED are valid states
-									items: [{ key: { key: 'state' }, value: 'firing', op: '=' }],
-								},
+								state: timelineFilter === TimelineFilter.FIRED ? 'firing' : 'normal',
 						  }
 						: {}),
 				}),
