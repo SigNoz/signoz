@@ -48,6 +48,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	const [activeLicense, setActiveLicense] = useState<License | null>(null);
 	const dispatch = useDispatch();
 	const { notifications } = useNotifications();
+	const [collapsed] = useState<boolean>(false);
 
 	const {
 		isFetching: isFetchingLicenseData,
@@ -56,8 +57,8 @@ export default function WorkspaceBlocked(): JSX.Element {
 	} = useLicense();
 
 	useLayoutEffect(() => {
-		dispatch(sideBarCollapse(false));
-	}, [dispatch]);
+		dispatch(sideBarCollapse(collapsed));
+	}, [collapsed, dispatch]);
 
 	useEffect(() => {
 		if (!isFetchingLicenseData) {
