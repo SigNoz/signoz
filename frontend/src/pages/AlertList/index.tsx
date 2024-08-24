@@ -19,6 +19,8 @@ function AllAlertList(): JSX.Element {
 	const isAlertHistory = location.pathname === ROUTES.ALERT_HISTORY;
 	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
 
+	const search = urlQuery.get('search');
+
 	const items: TabsProps['items'] = [
 		{
 			label: (
@@ -60,7 +62,12 @@ function AllAlertList(): JSX.Element {
 			activeKey={tab || 'AlertRules'}
 			onChange={(tab): void => {
 				urlQuery.set('tab', tab);
-				history.replace(`/alerts?${urlQuery.toString()}`);
+				let params = `tab=${tab}`;
+
+				if (search) {
+					params += `&search=${search}`;
+				}
+				history.replace(`/alerts?${params}`);
 			}}
 			className={`${
 				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''
