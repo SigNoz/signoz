@@ -37,8 +37,11 @@ export const timelineTableColumns = (
 		title: 'STATE',
 		dataIndex: 'state',
 		sorter: true,
-		render: (value): JSX.Element => (
-			<AlertPopover>
+		render: (value, record): JSX.Element => (
+			<AlertPopover
+				relatedTracesLink={record.relatedTracesLink}
+				relatedLogsLink={record.relatedLogsLink}
+			>
 				<div className="alert-rule-state">
 					<AlertState state={value} showLabel />
 				</div>
@@ -48,8 +51,11 @@ export const timelineTableColumns = (
 	{
 		title: <LabelFilter setSearchText={setSearchText} />,
 		dataIndex: 'labels',
-		render: (labels): JSX.Element => (
-			<AlertPopover>
+		render: (labels, record): JSX.Element => (
+			<AlertPopover
+				relatedTracesLink={record.relatedTracesLink}
+				relatedLogsLink={record.relatedLogsLink}
+			>
 				<div className="alert-rule-labels">
 					<AlertLabels labels={labels} />
 				</div>
@@ -59,8 +65,11 @@ export const timelineTableColumns = (
 	{
 		title: 'VALUE',
 		dataIndex: 'value',
-		render: (value): JSX.Element => (
-			<AlertPopover>
+		render: (value, record): JSX.Element => (
+			<AlertPopover
+				relatedTracesLink={record.relatedTracesLink}
+				relatedLogsLink={record.relatedLogsLink}
+			>
 				<div className="alert-rule-value">{value}</div>
 			</AlertPopover>
 		),
@@ -68,8 +77,11 @@ export const timelineTableColumns = (
 	{
 		title: 'CREATED AT',
 		dataIndex: 'unixMilli',
-		render: (value): JSX.Element => (
-			<AlertPopover>
+		render: (value, record): JSX.Element => (
+			<AlertPopover
+				relatedTracesLink={record.relatedTracesLink}
+				relatedLogsLink={record.relatedLogsLink}
+			>
 				<div className="alert-rule-created-at">{formatEpochTimestamp(value)}</div>
 			</AlertPopover>
 		),

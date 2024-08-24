@@ -72,6 +72,8 @@ export interface AlertRuleTopContributors {
 	fingerprint: number;
 	labels: Labels;
 	count: number;
+	relatedLogsLink: string;
+	relatedTracesLink: string;
 }
 export type AlertRuleTopContributorsPayload = {
 	data: AlertRuleTopContributors[];
@@ -88,6 +90,8 @@ export interface AlertRuleTimelineTableResponse {
 	labels: Labels;
 	fingerprint: number;
 	value: number;
+	relatedTracesLink: string;
+	relatedLogsLink: string;
 }
 export type AlertRuleTimelineTableResponsePayload = {
 	data: { items: AlertRuleTimelineTableResponse[]; total: number };
