@@ -5,7 +5,7 @@ export function calculateChange(
 	if (
 		totalCurrentTriggers === undefined ||
 		totalPastTriggers === undefined ||
-		totalPastTriggers === 0
+		[0, '0'].includes(totalPastTriggers)
 	) {
 		return { changePercentage: 0, changeDirection: 0 };
 	}
