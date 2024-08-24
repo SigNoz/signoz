@@ -16,6 +16,13 @@
 			letter-spacing: -0.07px;
 			padding: 6px 24px;
 			border-color: var(--bg-slate-400);
+			justify-content: center;
+		}
+		&.reset-button {
+			.ant-btn-icon {
+				margin: 0;
+			}
+			padding: 6px 12px;
 		}
 		&.selected {
 			color: var(--text-vanilla-100);

@@ -24,6 +24,11 @@
 			align-items: center;
 			gap: 4px;
 			cursor: pointer;
+			padding: 0;
+			height: 20px;
+			&:hover {
+				background-color: transparent !important;
+			}
 
 			.label {
 				color: var(--text-vanilla-400);

@@ -43,34 +43,46 @@ function StatsGraph({ timeSeries, changeDirection }: Props): JSX.Element {
 
 	const containerDimensions = useResizeObserver(graphRef);
 
-	return (
-		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
-			<Uplot
-				data={[xData, yData]}
-				options={{
-					width: containerDimensions.width,
-					height: containerDimensions.height,
+	const options: uPlot.Options = useMemo(
+		() => ({
+			width: containerDimensions.width,
+			height: containerDimensions.height,
 
-					legend: {
+			legend: {
+				show: false,
+			},
+			cursor: {
+				x: false,
+				y: false,
+				drag: {
+					x: false,
+					y: false,
+				},
+			},
+			padding: [0, 0, 2, 0],
+			series: [
+				{},
+				{
+					...getStyle(changeDirection),
+					points: {
 						show: false,
 					},
-					cursor: {
-						x: false,
-						y: false,
-						drag: {
-							x: false,
-							y: false,
-						},
-					},
-					series: [{}, getStyle(changeDirection)],
-					axes: [
-						{ show: false },
-						{
-							show: false,
-						},
-					],
-				}}
-			/>
+					width: 1.4,
+				},
+			],
+			axes: [
+				{ show: false },
+				{
+					show: false,
+				},
+			],
+		}),
+		[changeDirection, containerDimensions.height, containerDimensions.width],
+	);
+
+	return (
+		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
+			<Uplot data={[xData, yData]} options={options} />
 		</div>
 	);
 }

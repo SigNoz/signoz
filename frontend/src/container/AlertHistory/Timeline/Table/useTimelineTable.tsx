@@ -40,6 +40,7 @@ export const timelineTableColumns = (
 		title: 'STATE',
 		dataIndex: 'state',
 		sorter: true,
+		width: '12.5%',
 		render: (value, record): JSX.Element => (
 			<ConditionalAlertPopover
 				relatedTracesLink={record.relatedTracesLink}
@@ -54,6 +55,7 @@ export const timelineTableColumns = (
 	{
 		title: <LabelFilter setSearchText={setSearchText} />,
 		dataIndex: 'labels',
+		width: '54.5%',
 		render: (labels, record): JSX.Element => (
 			<ConditionalAlertPopover
 				relatedTracesLink={record.relatedTracesLink}
@@ -68,6 +70,7 @@ export const timelineTableColumns = (
 	{
 		title: 'VALUE',
 		dataIndex: 'value',
+		width: '14%',
 		render: (value, record): JSX.Element => (
 			<ConditionalAlertPopover
 				relatedTracesLink={record.relatedTracesLink}
@@ -83,6 +86,7 @@ export const timelineTableColumns = (
 	{
 		title: 'CREATED AT',
 		dataIndex: 'unixMilli',
+		width: '32.5%',
 		render: (value, record): JSX.Element => (
 			<ConditionalAlertPopover
 				relatedTracesLink={record.relatedTracesLink}

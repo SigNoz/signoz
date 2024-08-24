@@ -1,6 +1,6 @@
 import './alertDetails.styles.scss';
 
-import { Breadcrumb, ConfigProvider, Divider } from 'antd';
+import { Breadcrumb, Divider } from 'antd';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
 import NotFound from 'components/NotFound';
 import RouteTab from 'components/RouteTab';
@@ -55,55 +55,34 @@ function AlertDetails(): JSX.Element {
 	}
 
 	return (
-		<ConfigProvider
-			theme={{
-				components: {
-					Tabs: {
-						titleFontSize: 14,
-						inkBarColor: 'none',
-						itemColor: 'var(--bg-vanilla-400)',
-						itemSelectedColor: 'var(--bg-vanilla-100)',
-						itemHoverColor: 'var(--bg-vanilla-100)',
-						horizontalItemGutter: 0,
+		<div className="alert-details">
+			<Breadcrumb
+				className="alert-details__breadcrumb"
+				items={[
+					{
+						title: 'Alert Rules',
+						href: ROUTES.LIST_ALL_ALERT,
 					},
-					Breadcrumb: {
-						itemColor: 'var(--text-vanilla-400)',
-						fontSize: 14,
-						lastItemColor: 'var(--text-vanilla-500)',
-						separatorMargin: 8,
+					{
+						title: ruleId,
 					},
-				},
-			}}
-		>
-			<div className="alert-details">
-				<Breadcrumb
-					className="alert-details__breadcrumb"
-					items={[
-						{
-							title: 'Alert Rules',
-							href: ROUTES.LIST_ALL_ALERT,
-						},
-						{
-							title: ruleId,
-						},
-					]}
-				/>
-				<Divider className="divider breadcrumb-divider" />
+				]}
+			/>
+			<Divider className="divider breadcrumb-divider" />
 
-				<AlertDetailsStatusRenderer
-					{...{ isLoading, isError, isRefetching, data }}
+			<AlertDetailsStatusRenderer
+				{...{ isLoading, isError, isRefetching, data }}
+			/>
+			<Divider className="divider" />
+			<div className="tabs-and-filters">
+				<RouteTab
+					routes={routes}
+					activeKey={pathname}
+					history={history}
+					tabBarExtraContent={<Filters />}
 				/>
-				<Divider className="divider" />
-				<div className="tabs-and-filters">
-					<RouteTab
-						routes={routes}
-						activeKey={pathname}
-						history={history}
-						tabBarExtraContent={<Filters />}
-					/>
-				</div>
 			</div>
-		</ConfigProvider>
+		</div>
 	);
 }
 

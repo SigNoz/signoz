@@ -71,7 +71,12 @@ function AlertActionButtons({
 				)}
 			>
 				<Tooltip title="More options">
-					<Ellipsis size={16} color="var(--bg-vanilla-400)" cursor="pointer" />
+					<Ellipsis
+						size={16}
+						color="var(--bg-vanilla-400)"
+						cursor="pointer"
+						className="dropdown-icon"
+					/>
 				</Tooltip>
 			</Dropdown>
 		</div>

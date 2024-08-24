@@ -17,7 +17,7 @@ function TopContributorsRows({
 			title: 'labels',
 			dataIndex: 'labels',
 			key: 'labels',
-			width: '50%',
+			width: '51%',
 			render: (
 				labels: AlertRuleTopContributors['labels'],
 				record,
@@ -36,7 +36,7 @@ function TopContributorsRows({
 			title: 'progressBar',
 			dataIndex: 'count',
 			key: 'progressBar',
-			width: '40%',
+			width: '39%',
 			render: (count: AlertRuleTopContributors['count'], record): JSX.Element => (
 				<ConditionalAlertPopover
 					relatedTracesLink={record.relatedTracesLink}
