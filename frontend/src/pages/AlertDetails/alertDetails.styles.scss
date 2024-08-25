@@ -8,29 +8,31 @@
 	.top-level-tab.periscope-tab {
 		padding: 2px 0;
 	}
-	.ant-tabs-nav {
-		margin-bottom: 0 !important;
-		&::before {
-			border-bottom: 1px solid var(--bg-slate-500) !important;
+	.ant-tabs {
+		&-nav {
+			margin-bottom: 0 !important;
+			&::before {
+				border-bottom: 1px solid var(--bg-slate-500) !important;
+			}
 		}
-	}
-	.ant-tabs-tab {
-		&[data-node-key='TriggeredAlerts'] {
-			margin-left: 16px;
-		}
-		&:not(:first-of-type) {
-			margin-left: 24px !important;
-		}
-		.periscope-tab {
-			font-size: 14px;
-			color: var(--text-vanilla-100);
-			line-height: 20px;
-			letter-spacing: -0.07px;
-			gap: 10px;
-		}
-		[aria-selected='false'] {
+		&-tab {
+			&[data-node-key='TriggeredAlerts'] {
+				margin-left: 16px;
+			}
+			&:not(:first-of-type) {
+				margin-left: 24px !important;
+			}
 			.periscope-tab {
-				color: var(--text-vanilla-400);
+				font-size: 14px;
+				color: var(--text-vanilla-100);
+				line-height: 20px;
+				letter-spacing: -0.07px;
+				gap: 10px;
+			}
+			[aria-selected='false'] {
+				.periscope-tab {
+					color: var(--text-vanilla-400);
+				}
 			}
 		}
 	}
@@ -71,22 +73,35 @@
 				&-wrap {
 					padding: 0 16px 16px 16px;
 				}
-
 				&::before {
 					border-bottom: none !important;
 				}
 			}
 			&-tab {
 				margin-left: 0 !important;
+				padding: 0;
 
 				&-btn {
-					&[aria-selected='true'] {
-						color: var(--text-vanilla-100) !important;
-					}
+					padding: 6px 17px;
 					color: var(--text-vanilla-400) !important;
 					letter-spacing: -0.07px;
 					font-size: 14px;
+
+					&[aria-selected='true'] {
+						color: var(--text-vanilla-100) !important;
+					}
 				}
+				&-active {
+					background: var(--bg-slate-400, #1d212d);
+				}
+			}
+			&-extra-content {
+				padding: 0 16px 16px;
+			}
+			&-nav-list {
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-400);
+				border-radius: 2px;
 			}
 		}
 
@@ -101,29 +116,6 @@
 			gap: 16px;
 			.reset-button {
 				@include flex-center;
-			}
-		}
-		// customize ant tabs
-		.ant-tabs {
-			&-extra-content {
-				padding: 0 16px 16px;
-			}
-			&-nav-list {
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-400);
-				border-radius: 2px;
-			}
-
-			&-tab {
-				padding: 0;
-
-				&-btn {
-					padding: 6px 17px;
-				}
-
-				&-active {
-					background: var(--bg-slate-400, #1d212d);
-				}
 			}
 		}
 	}
@@ -166,7 +158,6 @@
 				}
 			}
 		}
-
 		.divider {
 			border-color: var(--bg-vanilla-300);
 		}

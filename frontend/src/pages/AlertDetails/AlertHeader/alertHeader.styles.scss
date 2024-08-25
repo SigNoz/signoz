@@ -3,12 +3,12 @@
 	justify-content: space-between;
 	align-items: baseline;
 	padding: 0 16px;
-	height: 54px;
 
 	&__info-wrapper {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
+		height: 54px;
 
 		.top-section {
 			display: flex;
