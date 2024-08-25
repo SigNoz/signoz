@@ -1,6 +1,7 @@
 import './topContributorsCard.styles.scss';
 
 import { Button } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -22,6 +23,8 @@ function TopContributorsCard({
 	const [isViewAllVisible, setIsViewAllVisible] = useState(
 		!!viewAllTopContributorsParam ?? false,
 	);
+
+	const isDarkMode = useIsDarkMode();
 
 	const toggleViewAllParam = (isOpen: boolean): void => {
 		if (isOpen) {
@@ -47,14 +50,16 @@ function TopContributorsCard({
 			<div className="top-contributors-card">
 				<div className="top-contributors-card__header">
 					<div className="title">top contributors</div>
-					{topContributorsData.length > 3 && (
-						<Button type="text" className="view-all" onClick={toggleViewAllDrawer}>
-							<div className="label">View all</div>
-							<div className="icon">
-								<ArrowRight size={14} color="var(--bg-vanilla-400)" />
-							</div>
-						</Button>
-					)}
+
+					<Button type="text" className="view-all" onClick={toggleViewAllDrawer}>
+						<div className="label">View all</div>
+						<div className="icon">
+							<ArrowRight
+								size={14}
+								color={isDarkMode ? 'var(--bg-vanilla-400)' : 'var(--bg-ink-400)'}
+							/>
+						</div>
+					</Button>
 				</div>
 
 				<TopContributorsContent

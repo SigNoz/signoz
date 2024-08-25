@@ -1,6 +1,7 @@
 import './actionButtons.styles.scss';
 
 import { Button, Divider, Dropdown, MenuProps, Switch, Tooltip } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Copy, Ellipsis, PenLine, Trash2 } from 'lucide-react';
 import { useAlertRuleStatusToggle } from 'pages/AlertDetails/hooks';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
@@ -38,7 +39,7 @@ function AlertActionButtons({
 		handleAlertStateToggle,
 		isAlertRuleEnabled,
 	} = useAlertRuleStatusToggle({ ruleId, state });
-
+	const isDarkMode = useIsDarkMode();
 	return (
 		<div className="alert-action-buttons">
 			<Switch
@@ -73,7 +74,7 @@ function AlertActionButtons({
 				<Tooltip title="More options">
 					<Ellipsis
 						size={16}
-						color="var(--bg-vanilla-400)"
+						color={isDarkMode ? 'var(--bg-vanilla-400)' : 'var(--text-ink-400'}
 						cursor="pointer"
 						className="dropdown-icon"
 					/>

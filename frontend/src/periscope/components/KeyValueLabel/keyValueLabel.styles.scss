@@ -22,3 +22,16 @@
 	}
 	color: var(--text-vanilla-400);
 }
+
+.lightMode {
+	.key-value-label {
+		border-color: var(--bg-vanilla-400);
+		color: var(--text-ink-400);
+		&__key {
+			background: var(--bg-vanilla-300);
+		}
+		&__value {
+			background: var(--bg-vanilla-200);
+		}
+	}
+}

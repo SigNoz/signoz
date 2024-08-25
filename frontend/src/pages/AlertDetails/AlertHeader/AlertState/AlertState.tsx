@@ -1,5 +1,6 @@
 import './alertState.styles.scss';
 
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { BellOff, CircleCheck, CircleOff, Flame } from 'lucide-react';
 
 type AlertStateProps = {
@@ -13,6 +14,7 @@ export default function AlertState({
 }: AlertStateProps): JSX.Element {
 	let icon;
 	let label;
+	const isDarkMode = useIsDarkMode();
 	switch (state) {
 		case 'no-data':
 			icon = (
@@ -47,7 +49,7 @@ export default function AlertState({
 				<CircleCheck
 					size={18}
 					fill="var(--bg-forest-500)"
-					color="var(--bg-ink-400)"
+					color={isDarkMode ? 'var(--bg-ink-400)' : 'var(--bg-vanilla-100)'}
 				/>
 			);
 			label = <span style={{ color: 'var(--bg-forest-500)' }}>Resolved</span>;

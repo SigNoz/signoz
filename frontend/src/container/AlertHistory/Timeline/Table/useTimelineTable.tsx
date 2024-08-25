@@ -1,6 +1,7 @@
 import { Input } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { convertValue } from 'lib/getConvertedValue';
 import { debounce } from 'lodash-es';
 import { Search } from 'lucide-react';
@@ -20,13 +21,19 @@ function LabelFilter({
 	};
 
 	const handleDebouncedSearch = debounce(handleSearch, 300);
+	const isDarkMode = useIsDarkMode();
 
 	return (
 		<Input
 			className="label-filter"
 			placeholder="labels"
 			onChange={handleDebouncedSearch}
-			suffix={<Search size={14} color="var(--text-vanilla-100)" />}
+			suffix={
+				<Search
+					size={14}
+					color={isDarkMode ? 'var(--text-vanilla-100)' : 'var(--text-ink-100)'}
+				/>
+			}
 		/>
 	);
 }

@@ -7,6 +7,7 @@ import Timeline from './Timeline/Timeline';
 
 function AlertHistory(): JSX.Element {
 	const [totalCurrentTriggers, setTotalCurrentTriggers] = useState(0);
+
 	return (
 		<div className="alert-history">
 			<Statistics

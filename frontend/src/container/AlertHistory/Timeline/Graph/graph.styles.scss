@@ -33,3 +33,20 @@
 		}
 	}
 }
+
+.lightMode {
+	.timeline-graph {
+		background: var(--bg-vanilla-200);
+		border-color: var(--bg-vanilla-300);
+		&__title {
+			background: rgba(255, 255, 255, 0.5);
+			color: var(--text-ink-400);
+			border-color: var(--bg-vanilla-300);
+		}
+		&__chart {
+			.chart-placeholder {
+				background: rgba(255, 255, 255, 0.5);
+			}
+		}
+	}
+}

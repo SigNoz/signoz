@@ -3,6 +3,7 @@ import './AlertPopover.styles.scss';
 import { Popover } from 'antd';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import ROUTES from 'constants/routes';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { DraftingCompass } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -20,6 +21,7 @@ function PopoverContent({
 	relatedTracesLink?: Props['relatedTracesLink'];
 	relatedLogsLink?: Props['relatedLogsLink'];
 }): JSX.Element {
+	const isDarkMode = useIsDarkMode();
 	return (
 		<div className="contributor-row-popover-buttons">
 			{!!relatedTracesLink && (
@@ -39,7 +41,10 @@ function PopoverContent({
 					className="contributor-row-popover-buttons__button"
 				>
 					<div className="icon">
-						<DraftingCompass size={14} color="var(--text-vanilla-400)" />
+						<DraftingCompass
+							size={14}
+							color={isDarkMode ? 'var(--bg-vanilla-400)' : 'var(--text-ink-400'}
+						/>
 					</div>
 					<div className="text">View Traces</div>
 				</Link>

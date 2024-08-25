@@ -89,3 +89,24 @@
 		line-height: 16px;
 	}
 }
+
+.lightMode {
+	.stats-card {
+		border-color: var(--bg-vanilla-300);
+		&__title-wrapper {
+			.title {
+				color: var(--text-ink-400);
+			}
+			.duration-indicator {
+				.text {
+					color: var(--text-ink-200);
+				}
+			}
+		}
+		&__stats {
+			.count-label {
+				color: var(--text-ink-100);
+			}
+		}
+	}
+}

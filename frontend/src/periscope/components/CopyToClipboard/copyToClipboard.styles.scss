@@ -27,3 +27,13 @@
 		}
 	}
 }
+
+.lightMode {
+	.copy-to-clipboard {
+		&:not(&--success) {
+			& > * {
+				color: var(--text-ink-400);
+			}
+		}
+	}
+}

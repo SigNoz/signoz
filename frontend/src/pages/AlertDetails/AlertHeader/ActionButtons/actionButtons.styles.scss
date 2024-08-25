@@ -38,3 +38,22 @@
 		}
 	}
 }
+
+.lightMode {
+	.alert-action-buttons {
+		.ant-divider-vertical {
+			border-color: var(--bg-vanilla-300);
+		}
+	}
+	.dropdown-menu {
+		background: inherit;
+		.delete-button {
+			&,
+			&span {
+				&:hover {
+					background: var(--bg-vanilla-300);
+				}
+			}
+		}
+	}
+}

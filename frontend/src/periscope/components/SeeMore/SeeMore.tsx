@@ -1,6 +1,7 @@
 import './seeMore.styles.scss';
 
 import { Popover } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 
 type SeeMoreProps = {
 	children: JSX.Element[];
@@ -14,13 +15,14 @@ function SeeMore({
 	moreLabel,
 }: SeeMoreProps): JSX.Element {
 	const remainingCount = children.length - initialCount;
+	const isDarkMode = useIsDarkMode();
 
 	return (
 		<>
 			{children.slice(0, initialCount)}
 			{remainingCount > 0 && (
 				<Popover
-					color="var(--bg-ink-400)"
+					color={isDarkMode ? 'var(--bg-ink-400)' : 'var(--bg-vanilla-100)'}
 					destroyTooltipOnHide
 					content={
 						<div className="see-more-popover-content">

@@ -30,3 +30,19 @@
 		}
 	}
 }
+
+.lightMode {
+	.tabs-wrapper {
+		.tab {
+			&.ant-btn-default {
+				color: var(--text-ink-400);
+				background: var(--bg-vanilla-300);
+				border-color: var(--bg-vanilla-300);
+			}
+			&.selected {
+				color: var(--text-robin-500);
+				background: var(--bg-vanilla-100);
+			}
+		}
+	}
+}
