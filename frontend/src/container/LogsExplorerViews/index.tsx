@@ -64,6 +64,7 @@ import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	OrderByPayload,
@@ -188,6 +189,16 @@ function LogsExplorerViews({
 		const modifiedQueryData: IBuilderQuery = {
 			...listQuery,
 			aggregateOperator: LogsAggregatorOperator.COUNT,
+			groupBy: [
+				{
+					key: 'severity_text',
+					dataType: DataTypes.String,
+					type: '',
+					isColumn: true,
+					isJSON: false,
+					id: 'severity_text--string----true',
+				},
+			],
 		};
 
 		const modifiedQuery: Query = {
@@ -232,7 +243,7 @@ function LogsExplorerViews({
 		PANEL_TYPES.TIME_SERIES,
 		DEFAULT_ENTITY_VERSION,
 		{
-			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
+			enabled: !!listChartQuery,
 		},
 		{},
 		undefined,
@@ -564,27 +575,27 @@ function LogsExplorerViews({
 	const chartData = useMemo(() => {
 		if (!stagedQuery) return [];
 
-		if (panelType === PANEL_TYPES.LIST) {
-			if (listChartData && listChartData.payload.data.result.length > 0) {
-				return listChartData.payload.data.result;
-			}
-			return [];
+		// if (panelType === PANEL_TYPES.LIST) {
+		if (listChartData && listChartData.payload.data.result.length > 0) {
+			return listChartData.payload.data.result;
 		}
+		return [];
+		// }
 
-		if (!data || data.payload.data.result.length === 0) return [];
+		// if (!data || data.payload.data.result.length === 0) return [];
 
-		const isGroupByExist = stagedQuery.builder.queryData.some(
-			(queryData) => queryData.groupBy.length > 0,
-		);
+		// const isGroupByExist = stagedQuery.builder.queryData.some(
+		// 	(queryData) => queryData.groupBy.length > 0,
+		// );
 
-		const firstPayloadQuery = data.payload.data.result.find(
-			(item) => item.queryName === listQuery?.queryName,
-		);
+		// const firstPayloadQuery = data.payload.data.result.find(
+		// 	(item) => item.queryName === listQuery?.queryName,
+		// );
 
-		const firstPayloadQueryArray = firstPayloadQuery ? [firstPayloadQuery] : [];
+		// const firstPayloadQueryArray = firstPayloadQuery ? [firstPayloadQuery] : [];
 
-		return isGroupByExist ? data.payload.data.result : firstPayloadQueryArray;
-	}, [stagedQuery, panelType, data, listChartData, listQuery]);
+		// return isGroupByExist ? data.payload.data.result : firstPayloadQueryArray;
+	}, [stagedQuery, listChartData]);
 
 	const formatItems = [
 		{
@@ -664,6 +675,7 @@ function LogsExplorerViews({
 					className="logs-histogram"
 					isLoading={isFetchingListChartData || isLoadingListChartData}
 					data={chartData}
+					isLogsExplorerViews
 				/>
 			)}
 

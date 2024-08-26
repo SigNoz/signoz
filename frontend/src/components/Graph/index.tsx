@@ -177,7 +177,7 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 		return (
 			<div style={{ height: containerHeight }}>
 				<canvas ref={chartRef} />
-				<LegendsContainer id={name} />
+				{!isStacked && <LegendsContainer id={name} />}
 			</div>
 		);
 	},
