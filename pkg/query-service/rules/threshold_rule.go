@@ -625,13 +625,13 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 
 	q := r.prepareQueryRange(ts)
 	// Logs list view expects time in milliseconds
-	tr := timeRange{
+	tr := v3.URLShareableTimeRange{
 		Start:    q.Start,
 		End:      q.End,
 		PageSize: 100,
 	}
 
-	options := Options{
+	options := v3.URLShareableOptions{
 		MaxLines:      2,
 		Format:        "list",
 		SelectColumns: []v3.AttributeKey{},
@@ -641,9 +641,9 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 	urlEncodedTimeRange := url.QueryEscape(string(period))
 
 	filterItems := r.fetchFilters(selectedQuery, lbls)
-	urlData := urlShareableCompositeQuery{
+	urlData := v3.URLShareableCompositeQuery{
 		QueryType: string(v3.QueryTypeBuilder),
-		Builder: builderQuery{
+		Builder: v3.URLShareableBuilderQuery{
 			QueryData: []v3.BuilderQuery{
 				{
 					DataSource:         v3.DataSourceLogs,
@@ -689,13 +689,13 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 
 	q := r.prepareQueryRange(ts)
 	// Traces list view expects time in nanoseconds
-	tr := timeRange{
+	tr := v3.URLShareableTimeRange{
 		Start:    q.Start * time.Second.Microseconds(),
 		End:      q.End * time.Second.Microseconds(),
 		PageSize: 100,
 	}
 
-	options := Options{
+	options := v3.URLShareableOptions{
 		MaxLines:      2,
 		Format:        "list",
 		SelectColumns: constants.TracesListViewDefaultSelectedColumns,
@@ -705,9 +705,9 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	urlEncodedTimeRange := url.QueryEscape(string(period))
 
 	filterItems := r.fetchFilters(selectedQuery, lbls)
-	urlData := urlShareableCompositeQuery{
+	urlData := v3.URLShareableCompositeQuery{
 		QueryType: string(v3.QueryTypeBuilder),
-		Builder: builderQuery{
+		Builder: v3.URLShareableBuilderQuery{
 			QueryData: []v3.BuilderQuery{
 				{
 					DataSource:         v3.DataSourceTraces,
@@ -954,6 +954,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 
 		lb := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel)
+		resultLabels := labels.NewBuilder(smpl.MetricOrig).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel).Labels()
 
 		for _, l := range r.labels {
 			lb.Set(l.Name, expand(l.Value))
@@ -1001,14 +1002,15 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 
 		alerts[h] = &Alert{
-			Labels:       lbs,
-			Annotations:  annotations,
-			ActiveAt:     ts,
-			State:        StatePending,
-			Value:        smpl.V,
-			GeneratorURL: r.GeneratorURL(),
-			Receivers:    r.preferredChannels,
-			Missing:      smpl.IsMissing,
+			Labels:            lbs,
+			QueryResultLables: resultLabels,
+			Annotations:       annotations,
+			ActiveAt:          ts,
+			State:             StatePending,
+			Value:             smpl.V,
+			GeneratorURL:      r.GeneratorURL(),
+			Receivers:         r.preferredChannels,
+			Missing:           smpl.IsMissing,
 		}
 	}
 
@@ -1034,7 +1036,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.active {
-		labelsJSON, err := json.Marshal(a.Labels)
+		labelsJSON, err := json.Marshal(a.QueryResultLables)
 		if err != nil {
 			zap.L().Error("error marshaling labels", zap.Error(err), zap.Any("labels", a.Labels))
 		}
@@ -1054,7 +1056,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 					StateChanged: true,
 					UnixMilli:    ts.UnixMilli(),
 					Labels:       v3.LabelsString(labelsJSON),
-					Fingerprint:  a.Labels.Hash(),
+					Fingerprint:  a.QueryResultLables.Hash(),
 				})
 			}
 			continue
@@ -1074,7 +1076,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 				StateChanged: true,
 				UnixMilli:    ts.UnixMilli(),
 				Labels:       v3.LabelsString(labelsJSON),
-				Fingerprint:  a.Labels.Hash(),
+				Fingerprint:  a.QueryResultLables.Hash(),
 				Value:        a.Value,
 			})
 		}

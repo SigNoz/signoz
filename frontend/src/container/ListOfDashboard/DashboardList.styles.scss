@@ -590,6 +590,8 @@
 }
 
 .new-dashboard-menu {
+	width: 200px;
+
 	.create-dashboard-menu-item {
 		display: flex;
 		align-items: center;
@@ -1067,7 +1069,7 @@
 				color: var(--bg-ink-500);
 			}
 			.subtitle {
-				color: var(--bg-vanilla-400);
+				color: var(--bg-ink-300);
 			}
 
 			.ant-table-row {
@@ -1087,6 +1089,10 @@
 
 					.dashboard-title {
 						color: var(--bg-slate-300);
+
+						.title {
+							color: var(--bg-ink-500);
+						}
 					}
 
 					.title-with-action {

@@ -67,6 +67,8 @@ type Alert struct {
 	Labels      labels.BaseLabels
 	Annotations labels.BaseLabels
 
+	QueryResultLables labels.BaseLabels
+
 	GeneratorURL string
 
 	// list of preferred receivers, e.g. slack
