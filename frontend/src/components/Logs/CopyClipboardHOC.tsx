@@ -4,6 +4,7 @@ import { ReactNode, useCallback, useEffect } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
 function CopyClipboardHOC({
+	entityKey,
 	textToCopy,
 	children,
 }: CopyClipboardHOCProps): JSX.Element {
@@ -11,11 +12,15 @@ function CopyClipboardHOC({
 	const { notifications } = useNotifications();
 	useEffect(() => {
 		if (value.value) {
+			const key = entityKey || '';
+
+			const notificationMessage = `${key} copied to clipboard`;
+
 			notifications.success({
-				message: 'Copied to clipboard',
+				message: notificationMessage,
 			});
 		}
-	}, [value, notifications]);
+	}, [value, notifications, entityKey]);
 
 	const onClick = useCallback((): void => {
 		setCopy(textToCopy);
@@ -34,6 +39,7 @@ function CopyClipboardHOC({
 }
 
 interface CopyClipboardHOCProps {
+	entityKey: string | undefined;
 	textToCopy: string;
 	children: ReactNode;
 }
