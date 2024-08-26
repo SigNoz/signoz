@@ -27,15 +27,9 @@ function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
 	const minTimeScale = (parseInt(start, 10) * 1e3) / 1000;
 	const maxTimeScale = (parseInt(end, 10) * 1e3) / 1000;
 
-	const clusterName =
-		(logData.resources_string?.['k8s.cluster.name'] as
-			| string
-			| undefined)?.replace(/-/g, '_') ?? '';
-	const podName =
-		(logData.resources_string?.['k8s.pod.name'] as string | undefined)?.replace(
-			/-/g,
-			'_',
-		) ?? '';
+	const clusterName = logData.resources_string?.['k8s.cluster.name'] as string;
+	const podName = logData.resources_string?.['k8s.pod.name'] as string;
+
 	const queries = useQueries(
 		getQueryPayload(clusterName, podName).map((payload) => ({
 			queryKey: ['metrics', payload, ENTITY_VERSION_V4],
@@ -66,7 +60,7 @@ function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
 					maxTimeScale,
 					softMax: null,
 					softMin: null,
-					yAxisUnit: idx === 2 || idx === 3 ? 'bytes' : '',
+					yAxisUnit: idx === 1 || idx === 2 || idx === 3 ? 'bytes' : '',
 				}),
 			),
 		[queries, isDarkMode, dimensions, minTimeScale, maxTimeScale],
