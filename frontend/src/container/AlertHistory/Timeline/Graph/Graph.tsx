@@ -40,12 +40,7 @@ function HorizontalTimelineGraph({
 		() => ({
 			width,
 			height: 85,
-			cursor: {
-				drag: {
-					x: false,
-					y: false,
-				},
-			},
+			cursor: { show: false },
 
 			axes: [
 				{
