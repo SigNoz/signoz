@@ -171,5 +171,20 @@
 				}
 			}
 		}
+		.empty-content {
+			border-color: var(--bg-vanilla-300);
+			&__text {
+				color: var(--text-ink-400);
+				.bold-text {
+					color: var(--text-ink-500);
+				}
+			}
+			&__button-wrapper {
+				.configure-alert-rule-button {
+					background: var(--bg-vanilla-300);
+					color: var(--text-ink-500);
+				}
+			}
+		}
 	}
 }
