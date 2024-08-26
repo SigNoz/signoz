@@ -9,6 +9,7 @@ type MessagingQueue struct {
 }
 
 type Clients struct {
-	ConsumerId  string
-	ServiceName string
+	ClientID          string
+	ServiceInstanceID string
+	ServiceName       string
 }

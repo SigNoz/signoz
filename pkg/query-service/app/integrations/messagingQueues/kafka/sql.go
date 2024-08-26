@@ -79,9 +79,9 @@ func generateNetworkLatencyThroughputSQL(start, end int64, consumerGroup, queueT
 	query := fmt.Sprintf(`
 --- Subquery for RPS calculation, desc sorted by rps
 SELECT
-    stringTagMap['messaging.client_id'] AS consumer_id,
-	stringTagMap['service.instance.id'] AS instance_id,
-    serviceName,
+    stringTagMap['messaging.client_id'] AS client_id,
+	stringTagMap['service.instance.id'] AS service_instance_id,
+    serviceName AS service_name,
     count(*) / ((%d - %d) / 1000000000) AS rps  -- Convert nanoseconds to seconds
 FROM signoz_traces.signoz_index_v2
 WHERE
@@ -90,7 +90,7 @@ WHERE
     AND kind = 5
     AND msgSystem = '%s' 
     AND stringTagMap['messaging.kafka.consumer.group'] = '%s'
-GROUP BY serviceName, consumer_id, instance_id
+GROUP BY service_name, client_id, service_instance_id
 ORDER BY rps DESC
 `, end, start, start, end, queueType, consumerGroup)
 	return query

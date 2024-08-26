@@ -2540,10 +2540,11 @@ func (aH *APIHandler) getNetworkData(
 	for _, res := range result {
 		table := res.Table
 		for _, row := range table.Rows {
-			if row.Data["consumer_id"] != nil && row.Data["serviceName"] != nil {
-				consumerId := row.Data["consumer_id"].(string)
-				serviceName := row.Data["serviceName"].(string)
-				attributeCache = append(attributeCache, mq.Clients{ConsumerId: consumerId, ServiceName: serviceName})
+			if row.Data["client_id"] != nil && row.Data["service_instance_id"] != nil && row.Data["service_name"] != nil {
+				clientID := row.Data["client_id"].(string)
+				serviceInstanceId := row.Data["service_instance_id"].(string)
+				ServiceName := row.Data["service_name"].(string)
+				attributeCache = append(attributeCache, mq.Clients{ClientID: clientID, ServiceInstanceID: serviceInstanceId, ServiceName: ServiceName})
 			}
 		}
 	}

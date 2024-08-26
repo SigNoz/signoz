@@ -225,7 +225,7 @@ response in query range format `series`
         "table": {
           "columns": [
             {
-              "name": "consumer_id",
+              "name": "client_id",
               "queryName": "",
               "isValueColumn": false
             },
@@ -248,7 +248,7 @@ response in query range format `series`
           "rows": [
             {
               "data": {
-                "consumer_id": "consumer-cg1-1",
+                "client_id": "consumer-cg1-1",
                 "instance_id": "e33ffd7c-827a-427a-828e-547e00cb80d8",
                 "serviceName": "consumer-svc",
                 "throughput": 0.00035
@@ -256,7 +256,7 @@ response in query range format `series`
             },
             {
               "data": {
-                "consumer_id": "consumer-cg1-1",
+                "client_id": "consumer-cg1-1",
                 "instance_id": "a96ff029-6f14-435a-a3d4-ab4742b4347f",
                 "serviceName": "consumer-svc",
                 "throughput": 0.00027
@@ -264,7 +264,7 @@ response in query range format `series`
             },
             {
               "data": {
-                "consumer_id": "consumer-cg1-1",
+                "client_id": "consumer-cg1-1",
                 "instance_id": "ac4833a8-fbe1-4592-a0ff-241f46a0851d",
                 "serviceName": "consumer-svc-2",
                 "throughput": 0.00019
@@ -272,7 +272,7 @@ response in query range format `series`
             },
             {
               "data": {
-                "consumer_id": "consumer-cg1-1",
+                "client_id": "consumer-cg1-1",
                 "instance_id": "9e87227f-a564-4b55-bf7c-fb00365d9400",
                 "serviceName": "consumer-svc",
                 "throughput": 0.00008
