@@ -1,7 +1,11 @@
 import { Select, Spin } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
+import { QueryParams } from 'constants/query';
+import { History, Location } from 'history';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { useState } from 'react';
+import { useHistory, useLocation } from 'react-router-dom';
 
 import { SelectMaxTagPlaceholder } from '../MQCommon/MQCommon';
 import { useGetAllConfigOptions } from './useGetAllConfigOptions';
@@ -45,7 +49,31 @@ const useConfigOptions = (
 	return { searchText, handleSearch, isFetching, options };
 };
 
+function setQueryParamsForConfigOptions(
+	value: string[],
+	urlQuery: URLSearchParams,
+	history: History<unknown>,
+	location: Location<unknown>,
+	queryParams: QueryParams,
+): void {
+	urlQuery.set(queryParams, value.join(','));
+	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+	history.replace(generatedUrl);
+}
+
+function getConfigValuesFromQueryParams(
+	queryParams: QueryParams,
+	urlQuery: URLSearchParams,
+): string[] {
+	const value = urlQuery.get(queryParams);
+	return value ? value.split(',') : [];
+}
+
 function MessagingQueuesConfigOptions(): JSX.Element {
+	const urlQuery = useUrlQuery();
+	const location = useLocation();
+	const history = useHistory();
+
 	const {
 		handleSearch: handleConsumerGrpSearch,
 		isFetching: isFetchingConsumerGrp,
@@ -74,6 +102,9 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 				onSearch={handleConsumerGrpSearch}
 				maxTagCount={4}
 				maxTagPlaceholder={SelectMaxTagPlaceholder}
+				value={
+					getConfigValuesFromQueryParams(QueryParams.consumerGrp, urlQuery) || []
+				}
 				notFoundContent={
 					isFetchingConsumerGrp ? (
 						<span>
@@ -83,7 +114,16 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 						<span>No Consumer Groups found</span>
 					)
 				}
-				onChange={(): void => handleConsumerGrpSearch('')}
+				onChange={(value): void => {
+					handleConsumerGrpSearch('');
+					setQueryParamsForConfigOptions(
+						value,
+						urlQuery,
+						history,
+						location,
+						QueryParams.consumerGrp,
+					);
+				}}
 			/>
 			<Select
 				placeholder={getPlaceholder('topic')}
@@ -94,6 +134,7 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 				onSearch={handleTopicSearch}
 				className="config-select-option"
 				maxTagCount={4}
+				value={getConfigValuesFromQueryParams(QueryParams.topic, urlQuery) || []}
 				maxTagPlaceholder={SelectMaxTagPlaceholder}
 				notFoundContent={
 					isFetchingTopic ? (
@@ -104,7 +145,16 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 						<span>No Topics found</span>
 					)
 				}
-				onChange={(): void => handleTopicSearch('')}
+				onChange={(value): void => {
+					handleTopicSearch('');
+					setQueryParamsForConfigOptions(
+						value,
+						urlQuery,
+						history,
+						location,
+						QueryParams.topic,
+					);
+				}}
 			/>
 			<Select
 				placeholder={getPlaceholder('partition')}
@@ -115,6 +165,9 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 				className="config-select-option"
 				onSearch={handlePartitionSearch}
 				maxTagCount={4}
+				value={
+					getConfigValuesFromQueryParams(QueryParams.partition, urlQuery) || []
+				}
 				maxTagPlaceholder={SelectMaxTagPlaceholder}
 				notFoundContent={
 					isFetchingPartition ? (
@@ -125,7 +178,16 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 						<span>No Partitions found</span>
 					)
 				}
-				onChange={(): void => handlePartitionSearch('')}
+				onChange={(value): void => {
+					handlePartitionSearch('');
+					setQueryParamsForConfigOptions(
+						value,
+						urlQuery,
+						history,
+						location,
+						QueryParams.partition,
+					);
+				}}
 			/>
 		</div>
 	);

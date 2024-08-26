@@ -1,3 +1,12 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
+import { isEmpty } from 'lodash-es';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
+import { v4 as uuid } from 'uuid';
+
 export function convertToTitleCase(text: string): string {
 	return text
 		.split('_')
@@ -23,3 +32,125 @@ export const ConsumerLagDetailTitle: Record<ConsumerLagDetailType, string> = {
 	'network-latency': 'Network Latency',
 	'partition-host-metric': 'Partition Host Metrics',
 };
+
+export function createWidgetFilterItem(
+	key: string,
+	value: string,
+): TagFilterItem {
+	const id = `${key}--string--tag--false`;
+
+	return {
+		id: uuid(),
+		key: {
+			key,
+			dataType: DataTypes.String,
+			type: 'tag',
+			isColumn: false,
+			isJSON: false,
+			id,
+		},
+		op: '=',
+		value,
+	};
+}
+
+export function getFiltersFromConfigOptions(
+	consumerGrp?: string,
+	topic?: string,
+	partition?: string,
+): TagFilterItem[] {
+	const configOptions = [
+		{ key: 'group', values: consumerGrp?.split(',') },
+		{ key: 'topic', values: topic?.split(',') },
+		{ key: 'partition', values: partition?.split(',') },
+	];
+	return configOptions.reduce<TagFilterItem[]>(
+		(accumulator, { key, values }) => {
+			if (values && !isEmpty(values.filter((item) => item !== ''))) {
+				accumulator.push(
+					...values.map((value) => createWidgetFilterItem(key, value)),
+				);
+			}
+			return accumulator;
+		},
+		[],
+	);
+}
+
+export function getWidgetQuery({
+	filterItems,
+}: {
+	filterItems: TagFilterItem[];
+}): GetWidgetQueryBuilderProps {
+	return {
+		title: 'Consumer Lag',
+		panelTypes: PANEL_TYPES.TIME_SERIES,
+		fillSpans: false,
+		yAxisUnit: 'none',
+		query: {
+			queryType: EQueryType.QUERY_BUILDER,
+			promql: [],
+			builder: {
+				queryData: [
+					{
+						aggregateAttribute: {
+							dataType: DataTypes.Float64,
+							id: 'kafka_consumer_group_lag--float64--Gauge--true',
+							isColumn: true,
+							isJSON: false,
+							key: 'kafka_consumer_group_lag',
+							type: 'Gauge',
+						},
+						aggregateOperator: 'max',
+						dataSource: DataSource.METRICS,
+						disabled: false,
+						expression: 'A',
+						filters: {
+							items: filterItems || [],
+							op: 'AND',
+						},
+						functions: [],
+						groupBy: [
+							{
+								dataType: DataTypes.String,
+								id: 'group--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'group',
+								type: 'tag',
+							},
+							{
+								dataType: DataTypes.String,
+								id: 'topic--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'topic',
+								type: 'tag',
+							},
+							{
+								dataType: DataTypes.String,
+								id: 'partition--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'partition',
+								type: 'tag',
+							},
+						],
+						having: [],
+						legend: '{{group}}-{{topic}}-{{partition}}',
+						limit: null,
+						orderBy: [],
+						queryName: 'A',
+						reduceTo: 'avg',
+						spaceAggregation: 'avg',
+						stepInterval: 60,
+						timeAggregation: 'max',
+					},
+				],
+				queryFormulas: [],
+			},
+			clickhouse_sql: [],
+			id: uuid(),
+		},
+	};
+}

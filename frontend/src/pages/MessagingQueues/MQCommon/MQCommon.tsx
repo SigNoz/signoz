@@ -28,3 +28,15 @@ export function SelectMaxTagPlaceholder(omittedValues: any[]): JSX.Element {
 		</Tooltip>
 	);
 }
+
+export function SelectLabelWithComingSoon({
+	label,
+}: {
+	label: string;
+}): JSX.Element {
+	return (
+		<div className="select-label-with-coming-soon">
+			{label} <ComingSoon />
+		</div>
+	);
+}

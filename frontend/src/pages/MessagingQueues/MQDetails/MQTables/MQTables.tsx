@@ -1,6 +1,7 @@
 import './MQTables.styles.scss';
 
 import { Table, Typography } from 'antd';
+import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useNotifications } from 'hooks/useNotifications';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
@@ -27,13 +28,12 @@ export function getColumns(data: any): any[] {
 		title: string;
 		dataIndex: string;
 		key: string;
-	}[] = data?.data.result?.[0]?.table?.columns.map((clm: any) => ({
+	}[] = data?.data?.result?.[0]?.table?.columns.map((clm: any) => ({
 		title: convertToTitleCase(clm.name),
 		dataIndex: clm.name,
 		key: clm.name,
 	}));
 
-	console.log(columns);
 	return columns;
 }
 
@@ -42,14 +42,13 @@ export function getTableData(data: any): any[] {
 		return [];
 	}
 
-	const tableData: RowData[] = data?.data.result?.[0]?.table?.rows.map(
+	const tableData: RowData[] = data?.data?.result?.[0]?.table?.rows.map(
 		(row: any, index: number): RowData => ({
 			key: index,
 			...row.data,
 		}),
 	);
 
-	console.log(tableData);
 	return tableData;
 }
 
@@ -101,9 +100,9 @@ function MessagingQueuesTable({
 		[currentTab, end, start],
 	);
 
-	const handleConsumerDetailsOnError = (): void => {
+	const handleConsumerDetailsOnError = (error: Error): void => {
 		notifications.error({
-			message: SOMETHING_WENT_WRONG,
+			message: axios.isAxiosError(error) ? error?.message : SOMETHING_WENT_WRONG,
 		});
 	};
 
