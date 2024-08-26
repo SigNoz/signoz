@@ -9,12 +9,15 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import cx from 'classnames';
+import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useFeatureFlags from 'hooks/useFeatureFlag';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -49,6 +52,7 @@ import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
 import { getRouteKey } from './utils';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn, user, role } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -58,9 +62,18 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
 
+	const { notifications } = useNotifications();
+
 	const isDarkMode = useIsDarkMode();
 
 	const { data: licenseData, isFetching } = useLicense();
+
+	const isPremiumChatSupportEnabled =
+		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
+
+	const showAddCreditCardModal =
+		!isPremiumChatSupportEnabled &&
+		!licenseData?.payload?.trialConvertedToSubscription;
 
 	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
@@ -94,8 +107,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const latestCurrentCounter = useRef(0);
 	const latestVersionCounter = useRef(0);
-
-	const { notifications } = useNotifications();
 
 	const onCollapse = useCallback(() => {
 		setCollapsed((collapsed) => !collapsed);
@@ -331,6 +342,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					</Sentry.ErrorBoundary>
 				</div>
 			</Flex>
+
+			{showAddCreditCardModal && <ChatSupportGateway />}
 		</Layout>
 	);
 }

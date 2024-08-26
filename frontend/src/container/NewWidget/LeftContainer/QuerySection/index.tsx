@@ -4,7 +4,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
@@ -237,7 +237,7 @@ function QuerySection({
 				onChange={handleQueryCategoryChange}
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-						<FacingIssueBtn
+						<LaunchChatSupport
 							attributes={{
 								uuid: selectedDashboard?.uuid,
 								title: selectedDashboard?.data.title,
