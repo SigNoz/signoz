@@ -272,7 +272,10 @@ function LogsExplorerViews({
 		},
 		undefined,
 		listQueryKeyRef,
-		{},
+		{
+			...(!isEmpty(queryId) &&
+				selectedPanelType !== PANEL_TYPES.LIST && { 'X-SIGNOZ-QUERY-ID': queryId }),
+		},
 	);
 
 	useEffect(() => {
@@ -367,7 +370,7 @@ function LogsExplorerViews({
 
 	useEffect(() => {
 		setQueryId(v4());
-	}, [isError, isSuccess]);
+	}, [data]);
 
 	useEffect(() => {
 		if (
