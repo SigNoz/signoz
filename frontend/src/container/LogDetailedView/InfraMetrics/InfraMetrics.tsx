@@ -57,7 +57,7 @@ function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
 
 	const options = useMemo(
 		() =>
-			queries.map(({ data }) =>
+			queries.map(({ data }, idx) =>
 				getUPlotChartOptions({
 					apiResponse: data?.payload,
 					isDarkMode,
@@ -66,6 +66,7 @@ function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
 					maxTimeScale,
 					softMax: null,
 					softMin: null,
+					yAxisUnit: idx === 2 || idx === 3 ? 'bytes' : '',
 				}),
 			),
 		[queries, isDarkMode, dimensions, minTimeScale, maxTimeScale],
