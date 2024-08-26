@@ -1,0 +1,19 @@
+.infra-metrics-card {
+    margin: 1rem 0;
+    height: 400px;
+    padding: 10px;
+
+    .ant-card-body {
+        padding: 0;
+    }
+
+    .chart-container {
+        overflow: hidden;
+        width: 100%;
+         height: 100%;
+    }
+}
+
+.no-data {
+    height: 100px;
+}

@@ -9,6 +9,7 @@ import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ContextView from 'container/LogDetailedView/ContextView/ContextView';
+import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
 import {
@@ -22,6 +23,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import {
+	Activity,
 	Braces,
 	Copy,
 	Filter,
@@ -192,6 +194,17 @@ function LogDetail({
 							Context
 						</div>
 					</Radio.Button>
+					<Radio.Button
+						className={
+							selectedView === VIEW_TYPES.INFRAMETRICS ? 'selected_view tab' : 'tab'
+						}
+						value={VIEW_TYPES.INFRAMETRICS}
+					>
+						<div className="view-title">
+							<Activity size={14} />
+							InfraMetrics
+						</div>
+					</Radio.Button>
 				</Radio.Group>
 
 				{selectedView === VIEW_TYPES.JSON && (
@@ -246,6 +259,7 @@ function LogDetail({
 					isEdit={isEdit}
 				/>
 			)}
+			{selectedView === VIEW_TYPES.INFRAMETRICS && <InfraMetrics logData={log} />}
 		</Drawer>
 	);
 }
