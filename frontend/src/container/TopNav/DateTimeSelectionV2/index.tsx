@@ -468,7 +468,6 @@ function DateTimeSelection({
 		if (updatedTime !== 'custom') {
 			urlQuery.delete('startTime');
 			urlQuery.delete('endTime');
-
 			urlQuery.set(QueryParams.relativeTime, updatedTime);
 		} else {
 			const startTime = preStartTime.toString();
@@ -476,6 +475,7 @@ function DateTimeSelection({
 
 			urlQuery.set(QueryParams.startTime, startTime);
 			urlQuery.set(QueryParams.endTime, endTime);
+			urlQuery.delete(QueryParams.relativeTime);
 		}
 
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
