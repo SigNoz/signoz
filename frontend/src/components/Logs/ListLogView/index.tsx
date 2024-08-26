@@ -6,6 +6,7 @@ import { Typography } from 'antd';
 import cx from 'classnames';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
+import { unescapeString } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
@@ -56,7 +57,7 @@ function LogGeneralField({
 	const html = useMemo(
 		() => ({
 			__html: convert.toHtml(
-				dompurify.sanitize(fieldValue, {
+				dompurify.sanitize(unescapeString(fieldValue), {
 					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 				}),
 			),
