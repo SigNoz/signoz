@@ -41,6 +41,9 @@
 			}
 		}
 	}
+	.contributors-row {
+		height: 80px;
+	}
 	&__content {
 		.ant-table {
 			&-cell {
@@ -48,7 +51,6 @@
 			}
 		}
 		.contributors-row {
-			height: 80px;
 			background: var(--bg-ink-500);
 
 			td {

@@ -50,16 +50,17 @@ function TopContributorsCard({
 			<div className="top-contributors-card">
 				<div className="top-contributors-card__header">
 					<div className="title">top contributors</div>
-
-					<Button type="text" className="view-all" onClick={toggleViewAllDrawer}>
-						<div className="label">View all</div>
-						<div className="icon">
-							<ArrowRight
-								size={14}
-								color={isDarkMode ? 'var(--bg-vanilla-400)' : 'var(--bg-ink-400)'}
-							/>
-						</div>
-					</Button>
+					{topContributorsData.length > 3 && (
+						<Button type="text" className="view-all" onClick={toggleViewAllDrawer}>
+							<div className="label">View all</div>
+							<div className="icon">
+								<ArrowRight
+									size={14}
+									color={isDarkMode ? 'var(--bg-vanilla-400)' : 'var(--bg-ink-400)'}
+								/>
+							</div>
+						</Button>
+					)}
 				</div>
 
 				<TopContributorsContent

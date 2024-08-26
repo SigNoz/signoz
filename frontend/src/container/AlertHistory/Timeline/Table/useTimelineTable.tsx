@@ -85,7 +85,7 @@ export const timelineTableColumns = (
 			>
 				<div className="alert-rule-value">
 					{/* convert the value based on y axis and target unit */}
-					{convertValue(value, currentUnit, targetUnit)}
+					{convertValue(value.toFixed(2), currentUnit, targetUnit)}
 				</div>
 			</ConditionalAlertPopover>
 		),
