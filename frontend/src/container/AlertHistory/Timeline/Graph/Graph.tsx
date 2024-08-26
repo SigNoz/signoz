@@ -24,14 +24,14 @@ function HorizontalTimelineGraph({
 }): JSX.Element {
 	const transformedData: AlignedData = useMemo(
 		() =>
-			data.length
+			data?.length > 1
 				? [
 						data.map((item: AlertRuleTimelineGraphResponse) => item.start / 1000),
 						data.map(
 							(item: AlertRuleTimelineGraphResponse) => ALERT_STATUS[item.state],
 						),
 				  ]
-				: [],
+				: [[], []],
 
 		[data],
 	);
@@ -66,19 +66,22 @@ function HorizontalTimelineGraph({
 					label: 'States',
 				},
 			],
-			plugins: [
-				timelinePlugin({
-					count: transformedData.length - 1,
-					...TIMELINE_OPTIONS,
-				}),
-			],
+			plugins:
+				transformedData?.length > 1
+					? [
+							timelinePlugin({
+								count: transformedData.length - 1,
+								...TIMELINE_OPTIONS,
+							}),
+					  ]
+					: [],
 		}),
-		[width, isDarkMode, transformedData.length],
+		[width, isDarkMode, transformedData],
 	);
 	return <Uplot data={transformedData} options={options} />;
 }
 
-function Graph({ type, data }: Props): React.ReactNode {
+function Graph({ type, data }: Props): JSX.Element | null {
 	const graphRef = useRef<HTMLDivElement>(null);
 
 	const isDarkMode = useIsDarkMode();
