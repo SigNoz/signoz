@@ -1,8 +1,7 @@
 import './InfraMetrics.styles.scss';
 
-import { Card, Col, Row, Typography } from 'antd';
+import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
-import Spinner from 'components/Spinner';
 import Uplot from 'components/Uplot';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -27,9 +26,14 @@ function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
 	const minTimeScale = (parseInt(start, 10) * 1e3) / 1000;
 	const maxTimeScale = (parseInt(end, 10) * 1e3) / 1000;
 
-	const clusterName = logData.resources_string?.['k8s.cluster.name'] as string;
-	const podName = logData.resources_string?.['k8s.pod.name'] as string;
+	const clusterName = logData.resources_string?.['k8s.cluster.name']
+		? (logData.resources_string?.['k8s.cluster.name'] as string)
+		: '';
+	const podName = logData.resources_string?.['k8s.pod.name']
+		? (logData.resources_string?.['k8s.pod.name'] as string)
+		: '';
 
+	console.log(clusterName, podName);
 	const queries = useQueries(
 		getQueryPayload(clusterName, podName).map((payload) => ({
 			queryKey: ['metrics', payload, ENTITY_VERSION_V4],
@@ -37,7 +41,6 @@ function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 		})),
 	);
-	console.log(queries);
 
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
@@ -71,7 +74,7 @@ function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
 		idx: number,
 	): JSX.Element => {
 		if (query.isLoading) {
-			return <Spinner height="400px" />;
+			return <Skeleton />;
 		}
 
 		if (query.error) {
@@ -95,7 +98,8 @@ function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
 						<Card
 							bordered
 							className={cx('infra-metrics-card', {
-								'no-data': !query?.data?.payload?.data?.result?.length,
+								'no-data':
+									!query.isLoading && !query?.data?.payload?.data?.result?.length,
 							})}
 							ref={graphRef}
 						>
