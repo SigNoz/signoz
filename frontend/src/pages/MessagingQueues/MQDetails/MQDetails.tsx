@@ -19,7 +19,6 @@ function MessagingQueuesOptions({
 }): JSX.Element {
 	const [option, setOption] = useState<ConsumerLagDetailType>(currentTab);
 
-	console.log(currentTab, option);
 	return (
 		<Radio.Group
 			onChange={(value): void => {

@@ -7,10 +7,12 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useMemo } from 'react';
+import { useHistory, useLocation } from 'react-router-dom';
 
 import {
 	getFiltersFromConfigOptions,
 	getWidgetQuery,
+	setSelectedTimelineQuery,
 } from '../MessagingQueuesUtils';
 
 function MessagingQueuesGraph(): JSX.Element {
@@ -30,6 +32,8 @@ function MessagingQueuesGraph(): JSX.Element {
 		() => getWidgetQueryBuilder(getWidgetQuery({ filterItems })),
 		[filterItems],
 	);
+	const history = useHistory();
+	const location = useLocation();
 
 	return (
 		<Card
@@ -40,9 +44,9 @@ function MessagingQueuesGraph(): JSX.Element {
 			<GridCard
 				widget={widgetData}
 				headerMenuList={[...ViewMenuAction]}
-				onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
-					console.log(xValue, yValue, mouseX, mouseY, data)
-				}
+				onClickHandler={(xValue, _yValue, _mouseX, _mouseY, data): void => {
+					setSelectedTimelineQuery(urlQuery, xValue, location, history, data);
+				}}
 			/>
 		</Card>
 	);

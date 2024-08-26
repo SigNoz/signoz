@@ -1,5 +1,7 @@
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
+import { History, Location } from 'history';
 import { isEmpty } from 'lodash-es';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -153,4 +155,49 @@ export function getWidgetQuery({
 			id: uuid(),
 		},
 	};
+}
+
+export const convertToNanoseconds = (timestamp: number): bigint =>
+	BigInt((timestamp * 1e9).toFixed(0));
+
+export const getStartAndEndTimesInMilliseconds = (
+	timestamp: number,
+): { start: number; end: number } => {
+	const FIVE_MINUTES_IN_MILLISECONDS = 5 * 60 * 1000; // 5 minutes in milliseconds - check with Shivanshu once
+
+	const start = Math.floor(timestamp);
+	const end = Math.floor(start + FIVE_MINUTES_IN_MILLISECONDS);
+
+	return { start, end };
+};
+
+export interface SelectedTimelineQuery {
+	group?: string;
+	partition?: string;
+	topic?: string;
+	start?: number;
+	end?: number;
+}
+
+export function setSelectedTimelineQuery(
+	urlQuery: URLSearchParams,
+	timestamp: number,
+	location: Location<unknown>,
+	history: History<unknown>,
+	data?: {
+		[key: string]: string;
+	},
+): void {
+	const selectedTimelineQuery: SelectedTimelineQuery = {
+		group: data?.group,
+		partition: data?.partition,
+		topic: data?.topic,
+		...getStartAndEndTimesInMilliseconds(timestamp),
+	};
+	urlQuery.set(
+		QueryParams.selectedTimelineQuery,
+		JSON.stringify(selectedTimelineQuery),
+	);
+	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+	history.replace(generatedUrl);
 }

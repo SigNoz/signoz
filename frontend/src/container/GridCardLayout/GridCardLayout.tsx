@@ -516,7 +516,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 						);
 					}
 
-					console.log(currentWidget, widgetActions);
 					return (
 						<CardContainer
 							className={isDashboardLocked ? '' : 'enable-resize'}

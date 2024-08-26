@@ -18,10 +18,7 @@ function MessagingQueues(): JSX.Element {
 	const history = useHistory();
 
 	const onReset = (): void => {
-		urlQuery.delete(QueryParams.startTime);
-		urlQuery.delete(QueryParams.endTime);
 		urlQuery.set(QueryParams.relativeTime, '30m');
-		console.log('Reset');
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 		history.replace(generatedUrl);
 	};

@@ -45,4 +45,20 @@
 			}
 		}
 	}
+
+	.no-data-style {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 100%;
+		flex-direction: column;
+		gap: 24px;
+		padding: 24px;
+		border: 1px solid var(--bg-slate-500);
+		border-radius: 6px;
+
+		.ant-typography {
+			font-size: 14px;
+		}
+	}
 }

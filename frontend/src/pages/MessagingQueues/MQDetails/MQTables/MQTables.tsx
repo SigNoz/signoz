@@ -1,15 +1,18 @@
 import './MQTables.styles.scss';
 
-import { Table, Typography } from 'antd';
+import { Skeleton, Table, Typography } from 'antd';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { useNotifications } from 'hooks/useNotifications';
-import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { isEmpty } from 'lodash-es';
 import {
 	ConsumerLagDetailTitle,
 	ConsumerLagDetailType,
 	convertToTitleCase,
 	RowData,
+	SelectedTimelineQuery,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
@@ -20,7 +23,7 @@ import {
 } from './getConsumerLagDetails';
 
 export function getColumns(data: any): any[] {
-	if (data?.length === 0) {
+	if (data?.result?.length === 0) {
 		return [];
 	}
 
@@ -28,7 +31,7 @@ export function getColumns(data: any): any[] {
 		title: string;
 		dataIndex: string;
 		key: string;
-	}[] = data?.data?.result?.[0]?.table?.columns.map((clm: any) => ({
+	}[] = data?.result?.[0]?.table?.columns.map((clm: any) => ({
 		title: convertToTitleCase(clm.name),
 		dataIndex: clm.name,
 		key: clm.name,
@@ -38,11 +41,11 @@ export function getColumns(data: any): any[] {
 }
 
 export function getTableData(data: any): any[] {
-	if (data?.length === 0) {
+	if (data?.result?.length === 0) {
 		return [];
 	}
 
-	const tableData: RowData[] = data?.data?.result?.[0]?.table?.rows.map(
+	const tableData: RowData[] = data?.result?.[0]?.table?.rows.map(
 		(row: any, index: number): RowData => ({
 			key: index,
 			...row.data,
@@ -69,6 +72,12 @@ function MessagingQueuesTable({
 	const [columns, setColumns] = useState<any[]>([]);
 	const [tableData, setTableData] = useState<any[]>([]);
 	const { notifications } = useNotifications();
+	const urlQuery = useUrlQuery();
+	const timelineQuery = urlQuery.get(QueryParams.selectedTimelineQuery);
+	const timelineQueryData: SelectedTimelineQuery = useMemo(
+		() => (timelineQuery ? JSON.parse(timelineQuery) : {}),
+		[timelineQuery],
+	);
 
 	const paginationConfig = useMemo(
 		() =>
@@ -81,23 +90,18 @@ function MessagingQueuesTable({
 		[tableData],
 	);
 
-	const { start, end } = getStartEndRangeTime({
-		type: 'GLOBAL_TIME',
-		// interval: globalSelectedInterval,
-	});
-
 	const props: ConsumerLagPayload = useMemo(
 		() => ({
-			start: parseInt(start, 10) * 1e3,
-			end: parseInt(end, 10) * 1e3,
+			start: timelineQueryData?.start,
+			end: timelineQueryData?.end,
 			variables: {
-				partition: '0',
-				topic: 'topic1',
-				consumer_group: 'cg1',
+				partition: timelineQueryData?.partition,
+				topic: timelineQueryData?.topic,
+				consumer_group: timelineQueryData?.group,
 			},
 			detailType: currentTab,
 		}),
-		[currentTab, end, start],
+		[currentTab, timelineQueryData],
 	);
 
 	const handleConsumerDetailsOnError = (error: Error): void => {
@@ -106,35 +110,54 @@ function MessagingQueuesTable({
 		});
 	};
 
-	const { mutate: getConsumerDetails } = useMutation(getConsumerLagDetails, {
-		onSuccess: (data) => {
-			setColumns(getColumns(data?.payload));
-			setTableData(getTableData(data?.payload));
+	const { mutate: getConsumerDetails, isLoading } = useMutation(
+		getConsumerLagDetails,
+		{
+			onSuccess: (data) => {
+				setColumns(getColumns(data?.payload));
+				setTableData(getTableData(data?.payload));
+			},
+			onError: handleConsumerDetailsOnError,
 		},
-		onError: handleConsumerDetailsOnError,
-		// onSettled: (data, error) => {
-		// 	console.log(data, error);
-		// },
-	});
+	);
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => getConsumerDetails(props), [currentTab, props]);
 
+	const isEmptyDetails = (timelineQueryData: SelectedTimelineQuery): boolean =>
+		isEmpty(timelineQueryData) ||
+		(!timelineQueryData?.group &&
+			!timelineQueryData?.topic &&
+			!timelineQueryData?.partition);
+
 	return (
 		<div className="mq-tables-container">
-			<div className="mq-table-title">
-				{ConsumerLagDetailTitle[currentTab]}
-				<div className="mq-table-subtitle">Group B-Topic 2-Partition 1</div>
-				{/* Todo-sagar */}
-			</div>
-			<Table
-				className="mq-table"
-				pagination={paginationConfig}
-				size="middle"
-				columns={columns}
-				dataSource={tableData}
-				bordered={false}
-			/>
+			{isEmptyDetails(timelineQueryData) ? (
+				<div className="no-data-style">
+					<Typography.Text>
+						Click on a co-ordinate above to see the details
+					</Typography.Text>
+					<Skeleton />
+				</div>
+			) : (
+				<>
+					<div className="mq-table-title">
+						{ConsumerLagDetailTitle[currentTab]}
+						<div className="mq-table-subtitle">{`${timelineQueryData?.group || ''} ${
+							timelineQueryData?.topic || ''
+						} ${timelineQueryData?.partition || ''}`}</div>
+					</div>
+					<Table
+						className="mq-table"
+						pagination={paginationConfig}
+						size="middle"
+						columns={columns}
+						dataSource={tableData}
+						bordered={false}
+						loading={isLoading}
+					/>
+				</>
+			)}
 		</div>
 	);
 }

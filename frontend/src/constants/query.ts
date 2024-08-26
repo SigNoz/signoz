@@ -35,4 +35,5 @@ export enum QueryParams {
 	consumerGrp = 'consumerGrp',
 	topic = 'topic',
 	partition = 'partition',
+	selectedTimelineQuery = 'selectedTimelineQuery',
 }
