@@ -50,23 +50,6 @@ func buildClickHouseQueryNetwork(messagingQueue *MessagingQueue, queueType strin
 	}, nil
 }
 
-//func buildClickHouseQueriesNetwork(messagingQueue *MessagingQueue, attributeCache []Clients) (map[string]*v3.ClickHouseQuery, error) {
-//	cq := make(map[string]*v3.ClickHouseQuery)
-//	start := messagingQueue.Start
-//	end := messagingQueue.End
-//
-//	for i, clientInfo := range attributeCache {
-//		query := generateNetworkLatencyFetchSQL(defaultStepInterval, start/1000000, end/1000000, clientInfo.ConsumerId, clientInfo.ServiceName)
-//		chq := &v3.ClickHouseQuery{
-//			Query: query,
-//		}
-//		index := fmt.Sprintf("latency_%d", i)
-//		cq[index] = chq
-//	}
-//
-//	return cq, nil
-//}
-
 func buildBuilderQueriesNetwork(attributeCache []Clients) (map[string]*v3.BuilderQuery, error) {
 	bq := make(map[string]*v3.BuilderQuery)
 
