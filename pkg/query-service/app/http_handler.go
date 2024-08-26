@@ -2534,17 +2534,16 @@ func (aH *APIHandler) getNetworkData(
 		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
-	result = postprocess.TransformToTableForClickHouseQueries(result)
 
-	// iterate over the result and extract messaging.client_id
 	for _, res := range result {
-		table := res.Table
-		for _, row := range table.Rows {
-			if row.Data["client_id"] != nil && row.Data["service_instance_id"] != nil && row.Data["service_name"] != nil {
-				clientID := row.Data["client_id"].(string)
-				serviceInstanceId := row.Data["service_instance_id"].(string)
-				ServiceName := row.Data["service_name"].(string)
-				attributeCache = append(attributeCache, mq.Clients{ClientID: clientID, ServiceInstanceID: serviceInstanceId, ServiceName: ServiceName})
+		for _, series := range res.Series {
+			clientID, clientIDOk := series.Labels["client_id"]
+			serviceInstanceID, serviceInstanceIDOk := series.Labels["service_instance_id"]
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			if clientIDOk && serviceInstanceIDOk && serviceNameOk {
+				attributeCache = append(attributeCache, mq.Clients{ClientID: clientID,
+					ServiceInstanceID: serviceInstanceID,
+					ServiceName:       serviceName})
 			}
 		}
 	}
@@ -2567,12 +2566,21 @@ func (aH *APIHandler) getNetworkData(
 		RespondError(w, apiErrObj, errQuriesByNameFetchLatency)
 		return
 	}
-	resultFetchLatency = postprocess.TransformToTableForClickHouseQueries(resultFetchLatency)
 
-	result = append(result, resultFetchLatency...)
+	latencyColoumn := &v3.Result{QueryName: "latency"}
+	var latencySeries []*v3.Series
+	for _, res := range resultFetchLatency {
+		for _, series := range res.Series {
+			latencySeries = append(latencySeries, series)
+		}
+	}
+	latencyColoumn.Series = latencySeries
+	result = append(result, latencyColoumn)
+
+	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
 
 	resp := v3.QueryRangeResponse{
-		Result: result,
+		Result: resultFetchLatency,
 	}
 	aH.Respond(w, resp)
 }
