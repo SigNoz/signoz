@@ -147,6 +147,12 @@
 	}
 
 	.logs-histogram {
+		.ant-card-body {
+			height: 120px;
+			min-height: 120px;
+			padding: 0 16px 10px 16px;
+		}
+
 		margin-bottom: 0px;
 	}
 }
