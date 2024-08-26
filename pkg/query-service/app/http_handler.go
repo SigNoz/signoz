@@ -29,6 +29,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	logsv4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/preferences"
@@ -140,6 +141,9 @@ type APIHandlerOpts struct {
 
 	// Querier Influx Interval
 	FluxInterval time.Duration
+
+	// Force Logs New schema
+	ForceLogsNewSchema bool
 }
 
 // NewAPIHandler returns an APIHandler
@@ -187,11 +191,17 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		querierV2:                     querierv2,
 	}
 
+	logsQueryBuilder := logsv3.PrepareLogsQuery
+	if opts.ForceLogsNewSchema {
+		logsQueryBuilder = logsv4.PrepareLogsQuery
+	}
+
 	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
-		BuildLogQuery:    logsv3.PrepareLogsQuery,
+		BuildLogQuery:    logsQueryBuilder,
 	}
+
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
 
 	dashboards.LoadDashboardFiles(aH.featureFlags)

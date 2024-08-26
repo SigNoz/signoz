@@ -1,4 +1,4 @@
-package v3
+package v4
 
 import (
 	"fmt"
@@ -45,10 +45,10 @@ var jsonLogOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorLessThanOrEq:    "<=",
 	v3.FilterOperatorGreaterThan:     ">",
 	v3.FilterOperatorGreaterThanOrEq: ">=",
-	v3.FilterOperatorLike:            "ILIKE",
-	v3.FilterOperatorNotLike:         "NOT ILIKE",
-	v3.FilterOperatorContains:        "ILIKE",
-	v3.FilterOperatorNotContains:     "NOT ILIKE",
+	v3.FilterOperatorLike:            "LIKE",
+	v3.FilterOperatorNotLike:         "NOT LIKE",
+	v3.FilterOperatorContains:        "LIKE",
+	v3.FilterOperatorNotContains:     "NOT LIKE",
 	v3.FilterOperatorRegex:           "match(%s, %s)",
 	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorIn:              "IN",

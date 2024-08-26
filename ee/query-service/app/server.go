@@ -66,16 +66,17 @@ type ServerOptions struct {
 	HTTPHostPort      string
 	PrivateHostPort   string
 	// alert specific params
-	DisableRules      bool
-	RuleRepoURL       string
-	PreferSpanMetrics bool
-	MaxIdleConns      int
-	MaxOpenConns      int
-	DialTimeout       time.Duration
-	CacheConfigPath   string
-	FluxInterval      string
-	Cluster           string
-	GatewayUrl        string
+	DisableRules       bool
+	RuleRepoURL        string
+	PreferSpanMetrics  bool
+	MaxIdleConns       int
+	MaxOpenConns       int
+	DialTimeout        time.Duration
+	CacheConfigPath    string
+	FluxInterval       string
+	Cluster            string
+	GatewayUrl         string
+	ForceLogsNewSchema bool
 }
 
 // Server runs HTTP api service
@@ -264,6 +265,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
 		Gateway:                       gatewayProxy,
+		ForceLogsNewSchema:            serverOptions.ForceLogsNewSchema,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)

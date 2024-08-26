@@ -57,15 +57,16 @@ type ServerOptions struct {
 	HTTPHostPort      string
 	PrivateHostPort   string
 	// alert specific params
-	DisableRules      bool
-	RuleRepoURL       string
-	PreferSpanMetrics bool
-	MaxIdleConns      int
-	MaxOpenConns      int
-	DialTimeout       time.Duration
-	CacheConfigPath   string
-	FluxInterval      string
-	Cluster           string
+	DisableRules       bool
+	RuleRepoURL        string
+	PreferSpanMetrics  bool
+	MaxIdleConns       int
+	MaxOpenConns       int
+	DialTimeout        time.Duration
+	CacheConfigPath    string
+	FluxInterval       string
+	Cluster            string
+	ForceLogsNewSchema bool
 }
 
 // Server runs HTTP, Mux and a grpc server

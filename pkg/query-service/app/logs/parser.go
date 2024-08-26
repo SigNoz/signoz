@@ -310,7 +310,7 @@ func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]mode
 		} else {
 			field := selectedFieldsLookup[sqlColName]
 			if field.Type != constants.Static {
-				sqlColName = utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
+				sqlColName = utils.GetClickhouseColumnNameV2(field.Type, field.DataType, field.Name)
 			}
 		}
 	}

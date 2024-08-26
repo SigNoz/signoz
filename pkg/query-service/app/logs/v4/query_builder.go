@@ -1,4 +1,4 @@
-package v3
+package v4
 
 import (
 	"fmt"
@@ -39,19 +39,23 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorLessThanOrEq:    "<=",
 	v3.FilterOperatorGreaterThan:     ">",
 	v3.FilterOperatorGreaterThanOrEq: ">=",
-	v3.FilterOperatorLike:            "ILIKE",
-	v3.FilterOperatorNotLike:         "NOT ILIKE",
-	v3.FilterOperatorContains:        "ILIKE",
-	v3.FilterOperatorNotContains:     "NOT ILIKE",
+	v3.FilterOperatorLike:            "LIKE",
+	v3.FilterOperatorNotLike:         "NOT LIKE",
+	v3.FilterOperatorContains:        "LIKE",
+	v3.FilterOperatorNotContains:     "NOT LIKE",
 	v3.FilterOperatorRegex:           "match(%s, %s)",
 	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorIn:              "IN",
 	v3.FilterOperatorNotIn:           "NOT IN",
-	v3.FilterOperatorExists:          "has(%s_%s_key, '%s')",
-	v3.FilterOperatorNotExists:       "not has(%s_%s_key, '%s')",
+	v3.FilterOperatorExists:          "mapContains(%s_%s, '%s')",
+	v3.FilterOperatorNotExists:       "not mapContains(%s_%s, '%s')",
 }
 
-const BODY = "body"
+const (
+	BODY                         = "body"
+	DISTRIBUTED_LOGS_V2          = "distributed_logs_v2"
+	DISTRIBUTED_LOGS_V2_RESOURCE = "distributed_logs_v2_resource"
+)
 
 func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
 	if columnType == v3.AttributeKeyTypeTag {
@@ -61,11 +65,8 @@ func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
 }
 
 func getClickhouseLogsColumnDataType(columnDataType v3.AttributeKeyDataType) string {
-	if columnDataType == v3.AttributeKeyDataTypeFloat64 {
-		return "float64"
-	}
-	if columnDataType == v3.AttributeKeyDataTypeInt64 {
-		return "int64"
+	if columnDataType == v3.AttributeKeyDataTypeFloat64 || columnDataType == v3.AttributeKeyDataTypeInt64 {
+		return "number"
 	}
 	if columnDataType == v3.AttributeKeyDataTypeBool {
 		return "bool"
@@ -85,7 +86,7 @@ func getClickhouseColumnName(key v3.AttributeKey) string {
 	if !key.IsColumn {
 		columnType := getClickhouseLogsColumnType(key.Type)
 		columnDataType := getClickhouseLogsColumnDataType(key.DataType)
-		clickhouseColumn = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", columnType, columnDataType, columnType, columnDataType, key.Key)
+		clickhouseColumn = fmt.Sprintf("%s_%s['%s']", columnType, columnDataType, key.Key)
 		return clickhouseColumn
 	}
 
@@ -96,7 +97,7 @@ func getClickhouseColumnName(key v3.AttributeKey) string {
 	}
 
 	// materialized column created from query
-	clickhouseColumn = utils.GetClickhouseColumnName(string(key.Type), string(key.DataType), key.Key)
+	clickhouseColumn = utils.GetClickhouseColumnNameV2(string(key.Type), string(key.DataType), key.Key)
 	return clickhouseColumn
 }
 
@@ -164,12 +165,28 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
+
+			// skip if it's a resource attribute
+			if item.Key.Type == v3.AttributeKeyTypeResource {
+				continue
+			}
+
 			if item.Key.IsJSON {
 				filter, err := GetJSONFilter(item)
 				if err != nil {
 					return "", err
 				}
 				conditions = append(conditions, filter)
+				continue
+			}
+
+			// check if the user is searching for all attributes
+			if item.Key.Key == "__attrs" {
+				if (item.Operator != v3.FilterOperatorEqual && item.Operator != v3.FilterOperatorContains) || item.Key.DataType != v3.AttributeKeyDataTypeString {
+					return "", fmt.Errorf("only = operator and string data type is supported for __attrs")
+				}
+				val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+				conditions = append(conditions, fmt.Sprintf("has(mapValues(attributes_string), '%v')", val))
 				continue
 			}
 
@@ -196,7 +213,6 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					columnName := getClickhouseColumnName(item.Key)
 					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
 					if columnName == BODY {
-						logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
 						conditions = append(conditions, fmt.Sprintf("lower(%s) %s lower('%%%s%%')", columnName, logsOp, val))
 					} else {
 						conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
@@ -208,7 +224,6 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					// for use lower for like and ilike
 					if op == v3.FilterOperatorLike || op == v3.FilterOperatorNotLike {
 						if columnName == BODY {
-							logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
 							columnName = fmt.Sprintf("lower(%s)", columnName)
 							fmtVal = fmt.Sprintf("lower(%s)", fmtVal)
 						}
@@ -218,15 +233,27 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 			} else {
 				return "", fmt.Errorf("unsupported operator: %s", op)
 			}
+
+			// add extra condition for map contains
+			// by default clickhouse is not able to utilize indexes for keys with all operators.
+			// mapContains forces the use of index.
+			if item.Key.IsColumn == false && op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
+				conditions = append(conditions, GetExistsNexistsFilter(v3.FilterOperatorExists, item))
+			}
 		}
 	}
 
 	// add group by conditions to filter out log lines which doesn't have the key
 	for _, attr := range groupBy {
+		// skip if it's a resource attribute
+		if attr.Type == v3.AttributeKeyTypeResource {
+			continue
+		}
+
 		if !attr.IsColumn {
 			columnType := getClickhouseLogsColumnType(attr.Type)
 			columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
-			conditions = append(conditions, fmt.Sprintf("has(%s_%s_key, '%s')", columnType, columnDataType, attr.Key))
+			conditions = append(conditions, fmt.Sprintf("mapContains(%s_%s, '%s')", columnType, columnDataType, attr.Key))
 		} else if attr.Type != v3.AttributeKeyTypeUnspecified {
 			// for materialzied columns
 			conditions = append(conditions, fmt.Sprintf("%s_exists`=true", strings.TrimSuffix(getClickhouseColumnName(attr), "`")))
@@ -234,13 +261,155 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 	}
 
 	// add conditions for aggregate attribute
-	if aggregateAttribute.Key != "" {
+	if aggregateAttribute.Key != "" && aggregateAttribute.Type != v3.AttributeKeyTypeResource {
 		existsFilter := GetExistsNexistsFilter(v3.FilterOperatorExists, v3.FilterItem{Key: aggregateAttribute})
 		conditions = append(conditions, existsFilter)
 	}
 
 	queryString := strings.Join(conditions, " AND ")
 	return queryString, nil
+}
+
+func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, orderBy []v3.OrderBy, aggregateAttribute v3.AttributeKey) (string, error) {
+	var andConditions []string
+	var orConditions []string
+	// only add the resource attributes to the filters here
+	if fs != nil && len(fs.Items) != 0 {
+		for _, item := range fs.Items {
+			// skip anything other than resource attribute
+			if item.Key.Type != v3.AttributeKeyTypeResource {
+				continue
+			}
+
+			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
+			var value interface{}
+			var err error
+			if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
+				value, err = utils.ValidateAndCastValue(item.Value, item.Key.DataType)
+				if err != nil {
+					return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
+				}
+			}
+
+			columnName := fmt.Sprintf("simpleJSONExtractString(lower(labels), '%s')", item.Key.Key)
+
+			if logsOp, ok := logOperators[op]; ok {
+				switch op {
+				case v3.FilterOperatorExists:
+					andConditions = append(andConditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", item.Key.Key))
+				case v3.FilterOperatorNotExists:
+					andConditions = append(andConditions, fmt.Sprintf("not simpleJSONHas(labels, '%s')", item.Key.Key))
+				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
+					fmtVal := utils.ClickHouseFormattedValue(value)
+					// for regex don't lowercase it as it will result in something else
+					andConditions = append(andConditions, fmt.Sprintf(logsOp, columnName, fmtVal))
+				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
+					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					andConditions = append(andConditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, strings.ToLower(val)))
+				default:
+					fmtVal := utils.ClickHouseFormattedValue(value)
+					andConditions = append(andConditions, fmt.Sprintf("%s %s %s", columnName, logsOp, strings.ToLower(fmtVal)))
+				}
+
+				// add index filters
+				switch op {
+				case v3.FilterOperatorContains, v3.FilterOperatorEqual, v3.FilterOperatorLike:
+					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					andConditions = append(andConditions, fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", strings.ToLower(item.Key.Key), strings.ToLower(val)))
+				case v3.FilterOperatorNotContains, v3.FilterOperatorNotEqual, v3.FilterOperatorNotLike:
+					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					andConditions = append(andConditions, fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", strings.ToLower(item.Key.Key), strings.ToLower(val)))
+				case v3.FilterOperatorNotRegex:
+					andConditions = append(andConditions, fmt.Sprintf("lower(labels) not like '%%%s%%'", strings.ToLower(item.Key.Key)))
+				case v3.FilterOperatorIn, v3.FilterOperatorNotIn:
+
+					// for in operator value needs to used for indexing in a different way.
+					// eg1:= x in a,b,c = (labels like '%x%a%' or labels like '%"x":"b"%' or labels like '%"x"="c"%')
+					// eg1:= x nin a,b,c = (labels nlike '%x%a%' AND labels nlike '%"x"="b"' AND labels nlike '%"x"="c"%')
+					tCondition := []string{}
+
+					separator := " OR "
+					sqlOp := "like"
+					if op == v3.FilterOperatorNotIn {
+						separator = " AND "
+						sqlOp = "not like"
+					}
+
+					values := []string{}
+
+					switch item.Value.(type) {
+					case string:
+						values = append(values, item.Value.(string))
+					case []interface{}:
+						for _, v := range (item.Value).([]interface{}) {
+							// also resources attributes are always string values
+							strV, ok := v.(string)
+							if !ok {
+								continue
+							}
+							values = append(values, strV)
+						}
+					}
+
+					if len(values) > 0 {
+						for _, v := range values {
+							tCondition = append(tCondition, fmt.Sprintf("lower(labels) %s '%%\"%s\":\"%s\"%%'", sqlOp, strings.ToLower(item.Key.Key), strings.ToLower(v)))
+						}
+						andConditions = append(andConditions, "("+strings.Join(tCondition, separator)+")")
+					}
+
+				default:
+					andConditions = append(andConditions, fmt.Sprintf("lower(labels) like '%%%s%%'", strings.ToLower(item.Key.Key)))
+				}
+
+			} else {
+				return "", fmt.Errorf("unsupported operator: %s", op)
+			}
+
+		}
+	}
+
+	// for group by add exists check in resources
+	if aggregateAttribute.Key != "" && aggregateAttribute.Type == v3.AttributeKeyTypeResource {
+		andConditions = append(andConditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND lower(labels) like '%%%s%%')", aggregateAttribute.Key, strings.ToLower(aggregateAttribute.Key)))
+	}
+
+	// for aggregate attribute add exists check in resources
+	// we are using OR for groupBy and orderby as we just want to filter out the logs using fingerprint
+	for _, attr := range groupBy {
+		if attr.Type != v3.AttributeKeyTypeResource {
+			continue
+		}
+		orConditions = append(orConditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND lower(labels) like '%%%s%%')", attr.Key, strings.ToLower(attr.Key)))
+	}
+
+	// for orderBy it's not required as the keys will be already present in the group by
+	// so no point in adding them
+
+	if len(orConditions) > 0 {
+		// TODO: change OR to AND once we know how to solve for group by
+		orConditionStr := "( " + strings.Join(orConditions, " AND ") + " )"
+		andConditions = append(andConditions, orConditionStr)
+	}
+
+	if len(andConditions) == 0 {
+		return "", nil
+	}
+
+	conditionStr := strings.Join(andConditions, " AND ")
+	return conditionStr, nil
+}
+
+func filtersUseNewTable(filters *v3.FilterSet) bool {
+	if filters == nil {
+		return false
+	}
+	for _, item := range filters.Items {
+		if item.Key.Key != "id" {
+			return true
+		}
+	}
+	return false
 }
 
 func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, preferRPM bool) (string, error) {
@@ -254,7 +423,31 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	// timerange will be sent in epoch millisecond
-	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", utils.GetEpochNanoSecs(start), utils.GetEpochNanoSecs(end))
+	logsStart := utils.GetEpochNanoSecs(start)
+	logsEnd := utils.GetEpochNanoSecs(end)
+
+	// -1800 this is added so that the bucket start considers all the fingerprints.
+	bucketStart := logsStart/1000000000 - 1800
+	bucketEnd := logsEnd / 1000000000
+
+	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", logsStart, logsEnd)
+
+	resourceBucketFilters, err := buildResourceBucketFilters(mq.Filters, mq.GroupBy, mq.OrderBy, mq.AggregateAttribute)
+	if err != nil {
+		return "", err
+	}
+
+	tableName := DISTRIBUTED_LOGS_V2
+	timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", bucketStart, bucketEnd)
+
+	if len(resourceBucketFilters) > 0 {
+		filter := " AND (resource_fingerprint GLOBAL IN (" +
+			"SELECT fingerprint FROM signoz_logs.%s " +
+			"WHERE (seen_at_ts_bucket_start >= %d) AND (seen_at_ts_bucket_start <= %d) AND "
+		filter = fmt.Sprintf(filter, DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd)
+
+		filterSubQuery = filterSubQuery + filter + resourceBucketFilters + "))"
+	}
 
 	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
 
@@ -280,8 +473,8 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	queryTmpl =
 		queryTmpl + selectLabels +
 			" %s as value " +
-			"from signoz_logs.distributed_logs " +
-			"where " + timeFilter + "%s" +
+			"from signoz_logs." + tableName +
+			" where " + timeFilter + "%s" +
 			"%s%s" +
 			"%s"
 
@@ -358,8 +551,12 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
-		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s%s order by %s"
-		query := fmt.Sprintf(queryTmpl, timeFilter, filterSubQuery, orderBy)
+		// sqlSelect := constants.LogsSQLSelect
+		// with noop any filter or different order by other than ts will use new table
+		sqlSelect := constants.LogsSQLSelectV2
+		tableName = DISTRIBUTED_LOGS_V2
+		queryTmpl := sqlSelect + "from signoz_logs.%s where %s%s order by %s"
+		query := fmt.Sprintf(queryTmpl, tableName, timeFilter, filterSubQuery, orderBy)
 		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator")
@@ -374,7 +571,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorNoOp:
-		query := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where "
+		query := constants.LogsSQLSelectV2 + "from signoz_logs." + DISTRIBUTED_LOGS_V2 + " where "
 		if len(filterSubQuery) > 0 {
 			query = query + filterSubQuery + " AND "
 		}
