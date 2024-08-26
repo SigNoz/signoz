@@ -60,6 +60,7 @@ export interface GraphProps {
 	onDragSelect?: (start: number, end: number) => void;
 	dragSelectColor?: string;
 	ref?: ForwardedRef<ToggleGraphProps | undefined>;
+	showLegendsContainer?: boolean;
 }
 
 export interface IAxisTimeUintConfig {

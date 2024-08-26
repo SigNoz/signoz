@@ -31,14 +31,12 @@ function LogsExplorerChart({
 	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] = useCallback(
 		(element, index, allLabels) => ({
 			data: element,
-			backgroundColor:
-				isLabelEnabled && isLogsExplorerViews
-					? getColorsForSeverityLabels(allLabels[index])
-					: colors[index % colors.length] || themeColors.red,
-			borderColor:
-				isLabelEnabled && isLogsExplorerViews
-					? getColorsForSeverityLabels(allLabels[index])
-					: colors[index % colors.length] || themeColors.red,
+			backgroundColor: isLogsExplorerViews
+				? getColorsForSeverityLabels(allLabels[index])
+				: colors[index % colors.length] || themeColors.red,
+			borderColor: isLogsExplorerViews
+				? getColorsForSeverityLabels(allLabels[index])
+				: colors[index % colors.length] || themeColors.red,
 			...(isLabelEnabled
 				? {
 						label: allLabels[index],
@@ -112,8 +110,6 @@ function LogsExplorerChart({
 		[data, handleCreateDatasets],
 	);
 
-	console.log(graphData);
-
 	return (
 		<CardStyled className={className}>
 			{isLoading ? (
@@ -125,6 +121,7 @@ function LogsExplorerChart({
 					isStacked={isLogsExplorerViews}
 					type="bar"
 					animate
+					showLegendsContainer={!isLogsExplorerViews}
 					onDragSelect={onDragSelect}
 				/>
 			)}

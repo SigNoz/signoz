@@ -78,6 +78,7 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 			containerHeight,
 			onDragSelect,
 			dragSelectColor,
+			showLegendsContainer = true,
 		},
 		ref,
 	): JSX.Element => {
@@ -177,7 +178,7 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 		return (
 			<div style={{ height: containerHeight }}>
 				<canvas ref={chartRef} />
-				{!isStacked && <LegendsContainer id={name} />}
+				{showLegendsContainer && <LegendsContainer id={name} />}
 			</div>
 		);
 	},
