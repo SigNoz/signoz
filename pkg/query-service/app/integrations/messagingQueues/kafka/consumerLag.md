@@ -122,7 +122,7 @@ Response in query range `table` format
               "isValueColumn": false
             },
             {
-              "name": "rps",
+              "name": "throughput",
               "queryName": "",
               "isValueColumn": false
             }
@@ -132,7 +132,7 @@ Response in query range `table` format
               "data": {
                 "error_percentage": "0",
                 "p99": "5.51359028",
-                "rps": "39.86888888888889",
+                "throughput": "39.86888888888889",
                 "service_name": "producer-svc"
               }
             }
