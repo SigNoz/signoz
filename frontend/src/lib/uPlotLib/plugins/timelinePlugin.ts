@@ -461,11 +461,12 @@ function timelinePlugin(opts: any): any {
 				const textOffset = mode == 1 ? strokeWidth + 2 : 0;
 
 				const y = round(yOff + yMids[sidx - 1]);
-
-				for (let ix = 0; ix < dataY.length; ix++) {
-					if (dataY[ix] != null) {
-						const x = valToPosX(dataX[ix], scaleX, xDim, xOff) + textOffset;
-						u.ctx.fillText(String(dataY[ix]), x, y);
+				if (opts.displayTimelineValue) {
+					for (let ix = 0; ix < dataY.length; ix++) {
+						if (dataY[ix] != null) {
+							const x = valToPosX(dataX[ix], scaleX, xDim, xOff) + textOffset;
+							u.ctx.fillText(String(dataY[ix]), x, y);
+						}
 					}
 				}
 			},

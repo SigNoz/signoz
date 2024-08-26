@@ -13,25 +13,32 @@ import { ALERT_STATUS, TIMELINE_OPTIONS } from './constants';
 
 type Props = { type: string; data: AlertRuleTimelineGraphResponse[] };
 
-function Graph({ type, data }: Props): JSX.Element {
+function HorizontalTimelineGraph({
+	width,
+	isDarkMode,
+	data,
+}: {
+	width: number;
+	isDarkMode: boolean;
+	data: AlertRuleTimelineGraphResponse[];
+}): JSX.Element {
 	const transformedData: AlignedData = useMemo(
-		() => [
-			data.map((item: AlertRuleTimelineGraphResponse) => item.start / 1000),
-			data.map((item: AlertRuleTimelineGraphResponse) => ALERT_STATUS[item.state]),
-		],
+		() =>
+			data.length
+				? [
+						data.map((item: AlertRuleTimelineGraphResponse) => item.start / 1000),
+						data.map(
+							(item: AlertRuleTimelineGraphResponse) => ALERT_STATUS[item.state],
+						),
+				  ]
+				: [],
 
 		[data],
 	);
 
-	const graphRef = useRef<HTMLDivElement>(null);
-
-	const isDarkMode = useIsDarkMode();
-
-	const containerDimensions = useResizeObserver(graphRef);
-
 	const options: uPlot.Options = useMemo(
 		() => ({
-			width: containerDimensions.width,
+			width,
 			height: 85,
 			cursor: {
 				drag: {
@@ -66,18 +73,30 @@ function Graph({ type, data }: Props): JSX.Element {
 				}),
 			],
 		}),
-		[containerDimensions.width, isDarkMode, transformedData.length],
+		[width, isDarkMode, transformedData.length],
 	);
+	return <Uplot data={transformedData} options={options} />;
+}
 
-	if (type !== 'horizontal') {
-		return <h1>Hey</h1>;
+function Graph({ type, data }: Props): React.ReactNode {
+	const graphRef = useRef<HTMLDivElement>(null);
+
+	const isDarkMode = useIsDarkMode();
+
+	const containerDimensions = useResizeObserver(graphRef);
+
+	if (type === 'horizontal') {
+		return (
+			<div ref={graphRef}>
+				<HorizontalTimelineGraph
+					isDarkMode={isDarkMode}
+					width={containerDimensions.width}
+					data={data}
+				/>
+			</div>
+		);
 	}
-
-	return (
-		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
-			<Uplot data={transformedData} options={options} />
-		</div>
-	);
+	return null;
 }
 
 export default Graph;

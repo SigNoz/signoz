@@ -96,11 +96,12 @@ export interface AlertRuleTimelineTableResponse {
 export type AlertRuleTimelineTableResponsePayload = {
 	data: { items: AlertRuleTimelineTableResponse[]; total: number };
 };
+type AlertState = 'firing' | 'normal' | 'no-data' | 'muted';
 
 export interface AlertRuleTimelineGraphResponse {
 	start: number;
 	end: number;
-	state: string;
+	state: AlertState;
 }
 export type AlertRuleTimelineGraphResponsePayload = {
 	data: AlertRuleTimelineGraphResponse[];
