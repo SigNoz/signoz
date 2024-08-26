@@ -1,17 +1,20 @@
 import './TableViewActions.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
+import Convert from 'ansi-to-html';
 import { Button, Popover, Spin, Tooltip, Tree } from 'antd';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import dompurify from 'dompurify';
 import { isEmpty } from 'lodash-es';
 import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import { DataType } from '../TableView';
 import {
@@ -19,6 +22,7 @@ import {
 	jsonToDataNodes,
 	recursiveParseJSON,
 	removeEscapeCharacters,
+	unescapeString,
 } from '../utils';
 
 interface ITableViewActionsProps {
@@ -38,6 +42,8 @@ interface ITableViewActionsProps {
 		fieldValue: string,
 	) => () => void;
 }
+
+const convert = new Convert();
 
 export function TableViewActions(
 	props: ITableViewActionsProps,
@@ -71,22 +77,45 @@ export function TableViewActions(
 			);
 		}
 	}
+	const bodyHtml =
+		record.field === 'body'
+			? {
+					__html: convert.toHtml(
+						dompurify.sanitize(unescapeString(record.value), {
+							FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+						}),
+					),
+			  }
+			: { __html: '' };
 
 	const fieldFilterKey = filterKeyForField(fieldData.field);
 
 	return (
 		<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
-			<CopyClipboardHOC textToCopy={textToCopy}>
-				<span
-					style={{
-						color: Color.BG_SIENNA_400,
-						whiteSpace: 'pre-wrap',
-						tabSize: 4,
-					}}
-				>
-					{removeEscapeCharacters(fieldData.value)}
-				</span>
-			</CopyClipboardHOC>
+			{record.field === 'body' ? (
+				<CopyClipboardHOC textToCopy={textToCopy}>
+					<span
+						style={{
+							color: Color.BG_SIENNA_400,
+							whiteSpace: 'pre-wrap',
+							tabSize: 4,
+						}}
+						dangerouslySetInnerHTML={bodyHtml}
+					/>
+				</CopyClipboardHOC>
+			) : (
+				<CopyClipboardHOC textToCopy={textToCopy}>
+					<span
+						style={{
+							color: Color.BG_SIENNA_400,
+							whiteSpace: 'pre-wrap',
+							tabSize: 4,
+						}}
+					>
+						{removeEscapeCharacters(fieldData.value)}
+					</span>
+				</CopyClipboardHOC>
+			)}
 
 			{!isListViewPanel && (
 				<span className="action-btn">
