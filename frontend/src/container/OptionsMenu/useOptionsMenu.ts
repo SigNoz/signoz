@@ -7,6 +7,10 @@ import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import {
+	AllTraceFilterKeys,
+	AllTraceFilterKeyValue,
+} from 'pages/TracesExplorer/Filter/filterUtils';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -21,7 +25,12 @@ import {
 	defaultTraceSelectedColumns,
 	URL_OPTIONS,
 } from './constants';
-import { InitialOptions, OptionsMenuConfig, OptionsQuery } from './types';
+import {
+	FontSize,
+	InitialOptions,
+	OptionsMenuConfig,
+	OptionsQuery,
+} from './types';
 import { getOptionsFromKeys } from './utils';
 
 interface UseOptionsMenuProps {
@@ -106,15 +115,40 @@ const useOptionsMenu = ({
 			[] as BaseAutocompleteData[],
 		);
 
-		return (
-			(initialOptions.selectColumns
-				?.map((column) => attributesData.find(({ key }) => key === column))
-				.filter(Boolean) as BaseAutocompleteData[]) || []
-		);
+		let initialSelected = initialOptions.selectColumns
+			?.map((column) => attributesData.find(({ key }) => key === column))
+			.filter(Boolean) as BaseAutocompleteData[];
+
+		if (dataSource === DataSource.TRACES) {
+			initialSelected = initialSelected
+				?.map((col) => {
+					if (col && Object.keys(AllTraceFilterKeyValue).includes(col?.key)) {
+						const metaData = defaultTraceSelectedColumns.find(
+							(coln) => coln.key === (col.key as AllTraceFilterKeys),
+						);
+
+						return {
+							...metaData,
+							key: metaData?.key,
+							dataType: metaData?.dataType,
+							type: metaData?.type,
+							isColumn: metaData?.isColumn,
+							isJSON: metaData?.isJSON,
+							id: metaData?.id,
+						};
+					}
+					return col;
+				})
+				.filter(Boolean) as BaseAutocompleteData[];
+		}
+
+		return initialSelected || [];
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isFetchedInitialAttributes,
 		initialOptions?.selectColumns,
 		initialAttributesResult,
+		dataSource,
 	]);
 
 	const {
@@ -248,6 +282,17 @@ const useOptionsMenu = ({
 		},
 		[handleRedirectWithOptionsData, optionsQueryData],
 	);
+	const handleFontSizeChange = useCallback(
+		(value: FontSize) => {
+			const optionsData: OptionsQuery = {
+				...optionsQueryData,
+				fontSize: value,
+			};
+
+			handleRedirectWithOptionsData(optionsData);
+		},
+		[handleRedirectWithOptionsData, optionsQueryData],
+	);
 
 	const handleSearchAttribute = useCallback((value: string) => {
 		setSearchText(value);
@@ -282,18 +327,24 @@ const useOptionsMenu = ({
 				value: optionsQueryData.maxLines || defaultOptionsQuery.maxLines,
 				onChange: handleMaxLinesChange,
 			},
+			fontSize: {
+				value: optionsQueryData?.fontSize || defaultOptionsQuery.fontSize,
+				onChange: handleFontSizeChange,
+			},
 		}),
 		[
-			optionsFromAttributeKeys,
-			optionsQueryData?.maxLines,
-			optionsQueryData?.format,
-			optionsQueryData?.selectColumns,
 			isSearchedAttributesFetching,
-			handleSearchAttribute,
+			optionsQueryData?.selectColumns,
+			optionsQueryData.format,
+			optionsQueryData.maxLines,
+			optionsQueryData?.fontSize,
+			optionsFromAttributeKeys,
 			handleSelectColumns,
 			handleRemoveSelectedColumn,
+			handleSearchAttribute,
 			handleFormatChange,
 			handleMaxLinesChange,
+			handleFontSizeChange,
 		],
 	);
 
