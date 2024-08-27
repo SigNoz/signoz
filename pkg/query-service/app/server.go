@@ -129,6 +129,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.MaxOpenConns,
 			serverOptions.DialTimeout,
 			serverOptions.Cluster,
+			serverOptions.ForceLogsNewSchema,
 		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
@@ -145,7 +146,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	<-readerReady
-	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules, fm)
+	rm, err := makeRulesManager(
+		serverOptions.PromConfigPath,
+		constants.GetAlertManagerApiPrefix(),
+		serverOptions.RuleRepoURL,
+		localDB,
+		reader,
+		serverOptions.DisableRules,
+		fm,
+		serverOptions.ForceLogsNewSchema)
 	if err != nil {
 		return nil, err
 	}
@@ -198,6 +207,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
+		ForceLogsNewSchema:            serverOptions.ForceLogsNewSchema,
 	})
 	if err != nil {
 		return nil, err
@@ -714,7 +724,9 @@ func makeRulesManager(
 	db *sqlx.DB,
 	ch interfaces.Reader,
 	disableRules bool,
-	fm interfaces.FeatureLookup) (*rules.Manager, error) {
+	fm interfaces.FeatureLookup,
+	forceLogsNewSchema bool,
+) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromReader(ch)
@@ -736,14 +748,15 @@ func makeRulesManager(
 			PqlEngine: pqle,
 			Ch:        ch.GetConn(),
 		},
-		RepoURL:      ruleRepoURL,
-		DBConn:       db,
-		Context:      context.Background(),
-		Logger:       nil,
-		DisableRules: disableRules,
-		FeatureFlags: fm,
-		Reader:       ch,
-		EvalDelay:    constants.GetEvalDelay(),
+		RepoURL:            ruleRepoURL,
+		DBConn:             db,
+		Context:            context.Background(),
+		Logger:             nil,
+		DisableRules:       disableRules,
+		FeatureFlags:       fm,
+		Reader:             ch,
+		EvalDelay:          constants.GetEvalDelay(),
+		ForceLogsNewSchema: forceLogsNewSchema,
 	}
 
 	// create Manager

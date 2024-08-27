@@ -118,6 +118,8 @@ type ThresholdRuleOpts struct {
 	// where data might not be available in the system immediately
 	// after the timestamp.
 	EvalDelay time.Duration
+
+	ForceLogsNewSchema bool
 }
 
 func NewThresholdRule(
@@ -159,17 +161,19 @@ func NewThresholdRule(
 	}
 
 	querierOption := querier.QuerierOptions{
-		Reader:        reader,
-		Cache:         nil,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FeatureLookup: featureFlags,
+		Reader:             reader,
+		Cache:              nil,
+		KeyGenerator:       queryBuilder.NewKeyGenerator(),
+		FeatureLookup:      featureFlags,
+		ForceLogsNewSchema: opts.ForceLogsNewSchema,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:        reader,
-		Cache:         nil,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FeatureLookup: featureFlags,
+		Reader:             reader,
+		Cache:              nil,
+		KeyGenerator:       queryBuilder.NewKeyGenerator(),
+		FeatureLookup:      featureFlags,
+		ForceLogsNewSchema: opts.ForceLogsNewSchema,
 	}
 
 	t.querier = querier.NewQuerier(querierOption)

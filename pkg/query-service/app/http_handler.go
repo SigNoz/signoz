@@ -155,19 +155,21 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	querierOpts := querier.QuerierOptions{
-		Reader:        opts.Reader,
-		Cache:         opts.Cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  opts.FluxInterval,
-		FeatureLookup: opts.FeatureFlags,
+		Reader:             opts.Reader,
+		Cache:              opts.Cache,
+		KeyGenerator:       queryBuilder.NewKeyGenerator(),
+		FluxInterval:       opts.FluxInterval,
+		FeatureLookup:      opts.FeatureFlags,
+		ForceLogsNewSchema: opts.ForceLogsNewSchema,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:        opts.Reader,
-		Cache:         opts.Cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  opts.FluxInterval,
-		FeatureLookup: opts.FeatureFlags,
+		Reader:             opts.Reader,
+		Cache:              opts.Cache,
+		KeyGenerator:       queryBuilder.NewKeyGenerator(),
+		FluxInterval:       opts.FluxInterval,
+		FeatureLookup:      opts.FeatureFlags,
+		ForceLogsNewSchema: opts.ForceLogsNewSchema,
 	}
 
 	querier := querier.NewQuerier(querierOpts)

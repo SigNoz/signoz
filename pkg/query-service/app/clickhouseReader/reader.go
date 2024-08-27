@@ -134,6 +134,8 @@ type ClickHouseReader struct {
 
 	liveTailRefreshSeconds int
 	cluster                string
+
+	ForceLogsNewSchema bool
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -145,6 +147,7 @@ func NewReader(
 	maxOpenConns int,
 	dialTimeout time.Duration,
 	cluster string,
+	forceLogsNewSchema bool,
 ) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
@@ -155,7 +158,7 @@ func NewReader(
 		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
 	}
 
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster)
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, forceLogsNewSchema)
 }
 
 func NewReaderFromClickhouseConnection(
@@ -165,6 +168,7 @@ func NewReaderFromClickhouseConnection(
 	configFile string,
 	featureFlag interfaces.FeatureLookup,
 	cluster string,
+	forceLogsNewSchema bool,
 ) *ClickHouseReader {
 	alertManager, err := am.New("")
 	if err != nil {
@@ -223,6 +227,7 @@ func NewReaderFromClickhouseConnection(
 		featureFlags:            featureFlag,
 		cluster:                 cluster,
 		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
+		ForceLogsNewSchema:      forceLogsNewSchema,
 	}
 }
 
@@ -3517,7 +3522,11 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	resources = removeUnderscoreDuplicateFields(resources)
 
 	statements := []model.ShowCreateTableStatement{}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableV2)
+	table := r.logsLocalTable
+	if r.ForceLogsNewSchema {
+		table = r.logsLocalTableV2
+	}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, table)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
@@ -3555,68 +3564,130 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		return &model.ApiError{Err: err, Typ: model.ErrorBadData}
 	}
 
-	colname := utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
-
-	dataType := strings.ToLower(field.DataType)
-	if dataType == "int64" || dataType == "float64" {
-		dataType = "number"
-	}
-	attrColName := fmt.Sprintf("%s_%s", field.Type, dataType)
-
 	// if a field is selected it means that the field needs to be indexed
 	if field.Selected {
 		// create materialized column
+		if r.ForceLogsNewSchema {
+			colname := utils.GetClickhouseColumnNameV2(field.Type, field.DataType, field.Name)
 
-		for _, table := range []string{r.logsLocalTableV2, r.logsTableV2} {
-			q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s DEFAULT %s['%s'] CODEC(ZSTD(1))"
-			query := fmt.Sprintf(q,
-				r.logsDB, table,
+			dataType := strings.ToLower(field.DataType)
+			if dataType == "int64" || dataType == "float64" {
+				dataType = "number"
+			}
+			attrColName := fmt.Sprintf("%s_%s", field.Type, dataType)
+			for _, table := range []string{r.logsLocalTableV2, r.logsTableV2} {
+				q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s DEFAULT %s['%s'] CODEC(ZSTD(1))"
+				query := fmt.Sprintf(q,
+					r.logsDB, table,
+					r.cluster,
+					colname, field.DataType,
+					attrColName,
+					field.Name,
+				)
+				err := r.db.Exec(ctx, query)
+				if err != nil {
+					return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+				}
+
+				query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists` bool DEFAULT if(mapContains(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
+					r.logsDB, table,
+					r.cluster,
+					strings.TrimSuffix(colname, "`"),
+					attrColName,
+					field.Name,
+				)
+				err = r.db.Exec(ctx, query)
+				if err != nil {
+					return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+				}
+			}
+
+			// create the index
+			if strings.ToLower(field.DataType) == "bool" {
+				// there is no point in creating index for bool attributes as the cardinality is just 2
+				return nil
+			}
+
+			if field.IndexType == "" {
+				field.IndexType = constants.DefaultLogSkipIndexType
+			}
+			if field.IndexGranularity == 0 {
+				field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
+			}
+			query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx` (%s) TYPE %s  GRANULARITY %d",
+				r.logsDB, r.logsLocalTableV2,
 				r.cluster,
-				colname, field.DataType,
-				attrColName,
-				field.Name,
+				strings.TrimSuffix(colname, "`"),
+				colname,
+				field.IndexType,
+				field.IndexGranularity,
 			)
 			err := r.db.Exec(ctx, query)
 			if err != nil {
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 			}
+		} else {
+			// old schema mat columns
 
-			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists` bool DEFAULT if(mapContains(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
-				r.logsDB, table,
+			colname := utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
+
+			keyColName := fmt.Sprintf("%s_%s_key", field.Type, strings.ToLower(field.DataType))
+			valueColName := fmt.Sprintf("%s_%s_value", field.Type, strings.ToLower(field.DataType))
+
+			// create materialized column
+
+			for _, table := range []string{r.logsLocalTable, r.logsTable} {
+				q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s DEFAULT %s[indexOf(%s, '%s')] CODEC(ZSTD(1))"
+				query := fmt.Sprintf(q,
+					r.logsDB, table,
+					r.cluster,
+					colname, field.DataType,
+					valueColName,
+					keyColName,
+					field.Name,
+				)
+				err := r.db.Exec(ctx, query)
+				if err != nil {
+					return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+				}
+
+				query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists` bool DEFAULT if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
+					r.logsDB, table,
+					r.cluster,
+					strings.TrimSuffix(colname, "`"),
+					keyColName,
+					field.Name,
+				)
+				err = r.db.Exec(ctx, query)
+				if err != nil {
+					return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+				}
+			}
+
+			// create the index
+			if strings.ToLower(field.DataType) == "bool" {
+				// there is no point in creating index for bool attributes as the cardinality is just 2
+				return nil
+			}
+
+			if field.IndexType == "" {
+				field.IndexType = constants.DefaultLogSkipIndexType
+			}
+			if field.IndexGranularity == 0 {
+				field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
+			}
+			query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx` (%s) TYPE %s  GRANULARITY %d",
+				r.logsDB, r.logsLocalTable,
 				r.cluster,
 				strings.TrimSuffix(colname, "`"),
-				attrColName,
-				field.Name,
+				colname,
+				field.IndexType,
+				field.IndexGranularity,
 			)
-			err = r.db.Exec(ctx, query)
+			err := r.db.Exec(ctx, query)
 			if err != nil {
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 			}
-		}
-
-		// create the index
-		if strings.ToLower(field.DataType) == "bool" {
-			// there is no point in creating index for bool attributes as the cardinality is just 2
-			return nil
-		}
-
-		if field.IndexType == "" {
-			field.IndexType = constants.DefaultLogSkipIndexType
-		}
-		if field.IndexGranularity == 0 {
-			field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
-		}
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx` (%s) TYPE %s  GRANULARITY %d",
-			r.logsDB, r.logsLocalTableV2,
-			r.cluster,
-			strings.TrimSuffix(colname, "`"),
-			colname,
-			field.IndexType,
-			field.IndexGranularity,
-		)
-		err := r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
 	} else {
@@ -4151,10 +4222,14 @@ func (r *ClickHouseReader) GetLatestReceivedMetric(
 	return result, nil
 }
 
-func isColumn(tableStatement, attrType, field, datType string) bool {
+func isColumn(forceLogsNewSchema bool, tableStatement, attrType, field, datType string) bool {
 	// value of attrType will be `resource` or `tag`, if `tag` change it to `attribute`
-	name := utils.GetClickhouseColumnName(attrType, datType, field)
-
+	var name string
+	if forceLogsNewSchema {
+		name = utils.GetClickhouseColumnName(attrType, datType, field)
+	} else {
+		name = utils.GetClickhouseColumnName(attrType, datType, field)
+	}
 	return strings.Contains(tableStatement, fmt.Sprintf("%s ", name))
 }
 
@@ -4210,7 +4285,11 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	defer rows.Close()
 
 	statements := []model.ShowCreateTableStatement{}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableV2)
+	table := r.logsLocalTable
+	if r.ForceLogsNewSchema {
+		table = r.logsLocalTableV2
+	}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, table)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
@@ -4227,7 +4306,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
 			Type:     v3.AttributeKeyType(attType),
-			IsColumn: isColumn(statements[0].Statement, attType, tagKey, dataType),
+			IsColumn: isColumn(r.ForceLogsNewSchema, statements[0].Statement, attType, tagKey, dataType),
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -4264,7 +4343,11 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	defer rows.Close()
 
 	statements := []model.ShowCreateTableStatement{}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableV2)
+	table := r.logsLocalTable
+	if r.ForceLogsNewSchema {
+		table = r.logsLocalTableV2
+	}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, table)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
@@ -4282,7 +4365,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 			Key:      attributeKey,
 			DataType: v3.AttributeKeyDataType(attributeDataType),
 			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn(statements[0].Statement, tagType, attributeKey, attributeDataType),
+			IsColumn: isColumn(r.ForceLogsNewSchema, statements[0].Statement, tagType, attributeKey, attributeDataType),
 		}
 
 		response.AttributeKeys = append(response.AttributeKeys, key)
@@ -4338,6 +4421,10 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	}
 
 	searchText := fmt.Sprintf("%%%s%%", req.SearchText)
+	table := r.logsLocalTable
+	if r.ForceLogsNewSchema {
+		table = r.logsLocalTableV2
+	}
 
 	// check if the tagKey is a topLevelColumn
 	if _, ok := constants.StaticFieldsLogsV3[req.FilterAttributeKey]; ok {
@@ -4351,10 +4438,10 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 		// prepare the query and run
 		if len(req.SearchText) != 0 {
-			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) and %s ILIKE $1 limit $2", selectKey, r.logsDB, r.logsLocalTableV2, filterValueColumnWhere)
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) and %s ILIKE $1 limit $2", selectKey, r.logsDB, table, filterValueColumnWhere)
 			rows, err = r.db.Query(ctx, query, searchText, req.Limit)
 		} else {
-			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) limit $1", selectKey, r.logsDB, r.logsLocalTableV2)
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) limit $1", selectKey, r.logsDB, table)
 			rows, err = r.db.Query(ctx, query, req.Limit)
 		}
 	} else if len(req.SearchText) != 0 {

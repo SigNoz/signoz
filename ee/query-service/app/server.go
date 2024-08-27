@@ -154,6 +154,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.MaxOpenConns,
 			serverOptions.DialTimeout,
 			serverOptions.Cluster,
+			serverOptions.ForceLogsNewSchema,
 		)
 		go qb.Start(readerReady)
 		reader = qb
@@ -176,7 +177,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		localDB,
 		reader,
 		serverOptions.DisableRules,
-		lm)
+		lm,
+		serverOptions.ForceLogsNewSchema,
+	)
 
 	if err != nil {
 		return nil, err
@@ -729,7 +732,9 @@ func makeRulesManager(
 	db *sqlx.DB,
 	ch baseint.Reader,
 	disableRules bool,
-	fm baseint.FeatureLookup) (*rules.Manager, error) {
+	fm baseint.FeatureLookup,
+	forceLogsNewSchema bool,
+) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
@@ -751,14 +756,15 @@ func makeRulesManager(
 			PqlEngine: pqle,
 			Ch:        ch.GetConn(),
 		},
-		RepoURL:      ruleRepoURL,
-		DBConn:       db,
-		Context:      context.Background(),
-		Logger:       nil,
-		DisableRules: disableRules,
-		FeatureFlags: fm,
-		Reader:       ch,
-		EvalDelay:    baseconst.GetEvalDelay(),
+		RepoURL:            ruleRepoURL,
+		DBConn:             db,
+		Context:            context.Background(),
+		Logger:             nil,
+		DisableRules:       disableRules,
+		FeatureFlags:       fm,
+		Reader:             ch,
+		EvalDelay:          baseconst.GetEvalDelay(),
+		ForceLogsNewSchema: forceLogsNewSchema,
 	}
 
 	// create Manager
