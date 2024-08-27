@@ -136,6 +136,22 @@
 				width: 100%;
 			}
 		}
+
+		.right {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			.data-type {
+				display: flex;
+				height: 20px;
+				padding: 4px 8px;
+				justify-content: center;
+				align-items: center;
+				gap: 4px;
+				border-radius: 20px;
+				background: rgba(255, 255, 255, 0.08);
+			}
+		}
 	}
 }
 .option:hover {

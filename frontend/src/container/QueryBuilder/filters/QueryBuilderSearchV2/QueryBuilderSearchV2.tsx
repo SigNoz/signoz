@@ -328,7 +328,6 @@ function QueryBuilderSearchV2(
 
 				if (isMulti) {
 					const { tagKey, tagOperator, tagValue } = getTagToken(searchValue);
-					console.log(tagValue, value);
 					if (tagValue.includes(String(value))) {
 						setSearchValue('');
 						setCurrentState(DropdownState.ATTRIBUTE_KEY);
@@ -559,7 +558,7 @@ function QueryBuilderSearchV2(
 				value: '',
 			}));
 			setCurrentState(DropdownState.OPERATOR);
-		} else if (!isEmpty(tagValue)) {
+		} else if (currentState === DropdownState.ATTRIBUTE_VALUE) {
 			const currentValue = {
 				key: currentFilterItem?.key as BaseAutocompleteData,
 				op: currentFilterItem?.op as string,
@@ -580,6 +579,7 @@ function QueryBuilderSearchV2(
 		suggestionsData?.payload?.attributes,
 		searchValue,
 		isFetchingSuggestions,
+		currentState,
 	]);
 
 	// the useEffect takes care of setting the dropdown values correctly on change of the current state
@@ -693,7 +693,15 @@ function QueryBuilderSearchV2(
 			onChange(filterTags);
 			setTags(filterTags.items as ITag[]);
 		}
-	}, [onChange, query.filters, tags]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [tags]);
+
+	useEffect(() => {
+		if (!isEqual(query.filters.items, tags)) {
+			setTags(getInitTags(query));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [query]);
 
 	const isLastQuery = useMemo(
 		() =>

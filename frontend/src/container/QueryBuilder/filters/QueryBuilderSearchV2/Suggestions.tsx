@@ -28,6 +28,13 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 		return '';
 	}, [value]);
 
+	const dataType = useMemo(() => {
+		if (isObject(value)) {
+			return value.dataType;
+		}
+		return '';
+	}, [value]);
+
 	const { tagValue } = getTagToken(searchValue);
 
 	const [truncated, setTruncated] = useState<boolean>(false);
@@ -72,6 +79,9 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 							</Typography.Text>
 						</section>
 						<section className="right">
+							{dataType && (
+								<Typography.Text className="data-type">{dataType}</Typography.Text>
+							)}
 							{tagValue.includes(label) && <Check size={14} />}
 						</section>
 					</div>
