@@ -26,6 +26,8 @@ function EditRules(): JSX.Element {
 					id: parseInt(ruleId || '', 10),
 				}),
 			enabled: isValidRuleId,
+			refetchOnMount: false,
+			refetchOnWindowFocus: false,
 		},
 	);
 
