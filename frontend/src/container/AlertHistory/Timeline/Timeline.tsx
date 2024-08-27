@@ -1,37 +1,11 @@
 import './timeline.styles.scss';
 
-import { useGetAlertRuleDetailsTimelineTable } from 'pages/AlertDetails/hooks';
-import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
-
 import GraphWrapper from './GraphWrapper/GraphWrapper';
 import TimelineTable from './Table/Table';
 import TabsAndFilters from './TabsAndFilters/TabsAndFilters';
 
 function TimelineTableRenderer(): JSX.Element {
-	const {
-		isLoading,
-		isRefetching,
-		isError,
-		data,
-		isValidRuleId,
-		ruleId,
-	} = useGetAlertRuleDetailsTimelineTable();
-
-	return (
-		<DataStateRenderer
-			isLoading={isLoading}
-			isRefetching={isRefetching}
-			isError={isError || !isValidRuleId || !ruleId}
-			data={data?.payload?.data || null}
-		>
-			{(timelineData): JSX.Element => (
-				<TimelineTable
-					timelineData={timelineData.items}
-					totalItems={timelineData.total}
-				/>
-			)}
-		</DataStateRenderer>
-	);
+	return <TimelineTable />;
 }
 
 function Timeline({

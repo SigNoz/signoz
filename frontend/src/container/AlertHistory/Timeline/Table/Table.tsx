@@ -1,39 +1,51 @@
 import './table.styles.scss';
 
 import { Table } from 'antd';
-import { QueryParams } from 'constants/query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useTimelineTable } from 'pages/AlertDetails/hooks';
+import {
+	useGetAlertRuleDetailsTimelineTable,
+	useTimelineTable,
+} from 'pages/AlertDetails/hooks';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import { PayloadProps } from 'types/api/alerts/get';
 
-import { TimelineTableProps } from './types';
 import { timelineTableColumns } from './useTimelineTable';
 
-function TimelineTable({
-	timelineData,
-	totalItems,
-}: TimelineTableProps): JSX.Element {
+function TimelineTable(): JSX.Element {
+	const {
+		isLoading,
+		isRefetching,
+		isError,
+		data,
+		isValidRuleId,
+		ruleId,
+	} = useGetAlertRuleDetailsTimelineTable();
+
+	const { timelineData, totalItems } = useMemo(() => {
+		const response = data?.payload?.data;
+		return {
+			timelineData: response?.items,
+			totalItems: response?.total,
+		};
+	}, [data?.payload?.data]);
+
 	const [searchText, setSearchText] = useState('');
-	const { paginationConfig, onChangeHandler } = useTimelineTable({ totalItems });
+	const { paginationConfig, onChangeHandler } = useTimelineTable({
+		totalItems: totalItems ?? 0,
+	});
 
 	const visibleTimelineData = useMemo(() => {
 		if (searchText === '') {
 			return timelineData;
 		}
-		return timelineData.filter((data) =>
+		return timelineData?.filter((data) =>
 			JSON.stringify(data.labels).toLowerCase().includes(searchText.toLowerCase()),
 		);
 	}, [searchText, timelineData]);
 
 	const queryClient = useQueryClient();
-
-	const { search } = useLocation();
-	const params = new URLSearchParams(search);
-
-	const ruleId = params.get(QueryParams.ruleId);
 
 	const { currentUnit, targetUnit } = useMemo(() => {
 		const alertDetailsQuery = queryClient.getQueryData([
@@ -49,6 +61,12 @@ function TimelineTable({
 		return { currentUnit, targetUnit };
 	}, [queryClient, ruleId]);
 
+	const { t } = useTranslation('common');
+
+	if (isError || !isValidRuleId || !ruleId) {
+		return <div>{t('something_went_wrong')}</div>;
+	}
+
 	return (
 		<div className="timeline-table">
 			<Table
@@ -58,6 +76,7 @@ function TimelineTable({
 				pagination={paginationConfig}
 				size="middle"
 				onChange={onChangeHandler}
+				loading={isLoading || isRefetching}
 			/>
 		</div>
 	);
