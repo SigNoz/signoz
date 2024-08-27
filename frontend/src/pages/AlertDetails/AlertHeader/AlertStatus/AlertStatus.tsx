@@ -1,4 +1,4 @@
-import './alertStatus.styles.scss';
+import './AlertStatus.styles.scss';
 
 import { CircleCheck, Siren } from 'lucide-react';
 import { useMemo } from 'react';

@@ -1,4 +1,4 @@
-import './tabsAndFilters.styles.scss';
+import './TabsAndFilters.styles.scss';
 
 import { TimelineFilter, TimelineTab } from 'container/AlertHistory/types';
 import history from 'lib/history';

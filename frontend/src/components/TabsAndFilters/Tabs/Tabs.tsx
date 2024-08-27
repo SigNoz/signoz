@@ -1,4 +1,4 @@
-import './tabs.styles.scss';
+import './Tabs.styles.scss';
 
 import { Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';

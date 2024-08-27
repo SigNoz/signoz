@@ -1,4 +1,4 @@
-import './actionButtons.styles.scss';
+import './ActionButtons.styles.scss';
 
 import { Button, Divider, Dropdown, MenuProps, Switch, Tooltip } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';

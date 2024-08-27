@@ -1,4 +1,4 @@
-import './topContributorsCard.styles.scss';
+import './TopContributorsCard.styles.scss';
 
 import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';

@@ -1,4 +1,4 @@
-import './alertState.styles.scss';
+import './AlertState.styles.scss';
 
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { BellOff, CircleCheck, CircleOff, Flame } from 'lucide-react';

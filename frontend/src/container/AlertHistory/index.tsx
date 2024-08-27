@@ -1,4 +1,4 @@
-import './alertHistory.styles.scss';
+import './AlertHistory.styles.scss';
 
 import { useState } from 'react';
 

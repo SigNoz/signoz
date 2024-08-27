@@ -1,4 +1,4 @@
-import './statsCard.styles.scss';
+import './StatsCard.styles.scss';
 
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ArrowDownLeft, ArrowUpRight, Calendar } from 'lucide-react';

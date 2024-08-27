@@ -1,4 +1,4 @@
-import './tabs2.styles.scss';
+import './Tabs2.styles.scss';
 
 import { Button } from 'antd';
 import { TimelineFilter } from 'container/AlertHistory/types';

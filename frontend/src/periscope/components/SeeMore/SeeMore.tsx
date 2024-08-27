@@ -1,4 +1,4 @@
-import './seeMore.styles.scss';
+import './SeeMore.styles.scss';
 
 import { Popover } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';

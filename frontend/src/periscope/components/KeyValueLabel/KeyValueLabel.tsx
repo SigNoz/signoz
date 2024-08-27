@@ -1,4 +1,4 @@
-import './keyValueLabel.styles.scss';
+import './KeyValueLabel.styles.scss';
 
 type KeyValueLabelProps = { badgeKey: string; badgeValue: string };
 

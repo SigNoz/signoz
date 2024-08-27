@@ -1,4 +1,4 @@
-import './alertLabels.styles.scss';
+import './AlertLabels.styles.scss';
 
 import KeyValueLabel from 'periscope/components/KeyValueLabel/KeyValueLabel';
 import SeeMore from 'periscope/components/SeeMore/SeeMore';

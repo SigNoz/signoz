@@ -1,4 +1,4 @@
-import './alertDetails.styles.scss';
+import './AlertDetails.styles.scss';
 
 import { Breadcrumb, Button, Divider } from 'antd';
 import { Filters } from 'components/AlertDetailsFilters/Filters';

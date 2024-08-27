@@ -1,4 +1,4 @@
-import './alertHeader.styles.scss';
+import './AlertHeader.styles.scss';
 
 import AlertActionButtons from './ActionButtons';
 import AlertLabels from './AlertLabels/AlertLabels';

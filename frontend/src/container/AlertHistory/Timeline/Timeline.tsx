@@ -1,4 +1,4 @@
-import './timeline.styles.scss';
+import './Timeline.styles.scss';
 
 import GraphWrapper from './GraphWrapper/GraphWrapper';
 import TimelineTable from './Table/Table';

@@ -1,4 +1,4 @@
-import './copyToClipboard.styles.scss';
+import './CopyToClipboard.styles.scss';
 
 import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
