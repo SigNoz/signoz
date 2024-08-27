@@ -3,6 +3,7 @@ import { TablePaginationConfig, TableProps } from 'antd/lib';
 import get from 'api/alerts/get';
 import patchAlert from 'api/alerts/patch';
 import ruleStats from 'api/alerts/ruleStats';
+import timelineGraph from 'api/alerts/timelineGraph';
 import timelineTable from 'api/alerts/timelineTable';
 import topContributors from 'api/alerts/topContributors';
 import { TabRoutes } from 'components/RouteTab/types';
@@ -28,6 +29,7 @@ import { generatePath, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	AlertRuleStatsPayload,
+	AlertRuleTimelineGraphResponsePayload,
 	AlertRuleTimelineTableResponse,
 	AlertRuleTimelineTableResponsePayload,
 	AlertRuleTopContributorsPayload,
@@ -404,4 +406,41 @@ export const useAlertRuleStatusToggle = ({
 	};
 
 	return { handleAlertStateToggle, isAlertRuleEnabled };
+};
+
+type GetAlertRuleDetailsTimelineGraphProps = GetAlertRuleDetailsApiProps & {
+	data:
+		| SuccessResponse<AlertRuleTimelineGraphResponsePayload, unknown>
+		| ErrorResponse
+		| undefined;
+};
+
+export const useGetAlertRuleDetailsTimelineGraphData = (): GetAlertRuleDetailsTimelineGraphProps => {
+	const { search } = useLocation();
+
+	const params = useMemo(() => new URLSearchParams(search), [search]);
+
+	const ruleId = params.get(QueryParams.ruleId);
+	const startTime = params.get(QueryParams.startTime);
+	const endTime = params.get(QueryParams.endTime);
+
+	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+	const hasStartAndEnd = startTime !== null && endTime !== null;
+
+	const { isLoading, isRefetching, isError, data } = useQuery(
+		[REACT_QUERY_KEY.ALERT_RULE_TIMELINE_GRAPH, ruleId, startTime, endTime],
+		{
+			queryFn: () =>
+				timelineGraph({
+					id: parseInt(ruleId || '', 10),
+					start: parseInt(startTime || '', 10),
+					end: parseInt(endTime || '', 10),
+				}),
+			enabled: isValidRuleId && hasStartAndEnd,
+			refetchOnMount: false,
+			refetchOnWindowFocus: false,
+		},
+	);
+
+	return { isLoading, isRefetching, isError, data, isValidRuleId, ruleId };
 };
