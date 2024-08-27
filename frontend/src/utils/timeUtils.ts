@@ -1,7 +1,10 @@
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import duration from 'dayjs/plugin/duration';
 
 dayjs.extend(customParseFormat);
+
+dayjs.extend(duration);
 
 export function toUTCEpoch(time: number): number {
 	const x = new Date();
@@ -27,4 +30,30 @@ export const getRemainingDays = (billingEndDate: number): number => {
 	const timeDifference = endDate - startDate;
 
 	return Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+};
+
+/**
+ * Calculates the duration from the given epoch timestamp to the current time.
+ *
+ *
+ * @param {number} epochTimestamp
+ * @returns {string} - human readable string representing the duration from the given epoch timestamp to the current time e.g. "3d 14h"
+ */
+export const getDurationFromNow = (epochTimestamp: number): string => {
+	const now = dayjs();
+	const inputTime = dayjs(epochTimestamp);
+	const duration = dayjs.duration(now.diff(inputTime));
+
+	const days = duration.days();
+	const hours = duration.hours();
+	const minutes = duration.minutes();
+	const seconds = duration.seconds();
+
+	let result = '';
+	if (days > 0) result += `${days}d `;
+	if (hours > 0) result += `${hours}h `;
+	if (minutes > 0) result += `${minutes}m `;
+	if (seconds > 0) result += `${seconds}s`;
+
+	return result.trim();
 };

@@ -1,0 +1,14 @@
+.copy-to-clipboard {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 14px;
+	width: 120px;
+
+	&--success {
+		& span,
+		&:hover {
+			color: var(--bg-forest-400);
+		}
+	}
+}
