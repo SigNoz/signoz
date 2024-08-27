@@ -89,6 +89,6 @@ export function getColorsForSeverityLabels(label: string): string {
 		case '{severity_text="FATAL"}':
 			return Color.BG_SAKURA_500;
 		default:
-			return Color.BG_SLATE_400;
+			return Color.BG_SLATE_200;
 	}
 }
