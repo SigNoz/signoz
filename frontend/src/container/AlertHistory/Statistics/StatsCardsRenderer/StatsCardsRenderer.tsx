@@ -1,23 +1,24 @@
 import { useGetAlertRuleDetailsStats } from 'pages/AlertDetails/hooks';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
+import { useEffect } from 'react';
 
 import AverageResolutionCard from '../AverageResolutionCard/AverageResolutionCard';
 import StatsCard from '../StatsCard/StatsCard';
 import TotalTriggeredCard from '../TotalTriggeredCard/TotalTriggeredCard';
 
-const isTypeNotNan = (value: unknown): boolean => value !== 'NaN';
-
 const hasTotalTriggeredStats = (
-	totalCurrentTriggers: unknown,
-	totalPastTriggers: unknown,
+	totalCurrentTriggers: number | string,
+	totalPastTriggers: number | string,
 ): boolean =>
-	isTypeNotNan(totalCurrentTriggers) || isTypeNotNan(totalPastTriggers);
+	(Number(totalCurrentTriggers) > 0 && Number(totalPastTriggers) > 0) ||
+	Number(totalCurrentTriggers) > 0;
 
 const hasAvgResolutionTimeStats = (
-	currentAvgResolutionTime: unknown,
-	pastAvgResolutionTime: unknown,
+	currentAvgResolutionTime: number | string,
+	pastAvgResolutionTime: number | string,
 ): boolean =>
-	isTypeNotNan(currentAvgResolutionTime) || isTypeNotNan(pastAvgResolutionTime);
+	(Number(currentAvgResolutionTime) > 0 && Number(pastAvgResolutionTime) > 0) ||
+	Number(currentAvgResolutionTime) > 0;
 
 type StatsCardsRendererProps = {
 	setTotalCurrentTriggers: (value: number) => void;
@@ -36,6 +37,12 @@ function StatsCardsRenderer({
 		ruleId,
 	} = useGetAlertRuleDetailsStats();
 
+	useEffect(() => {
+		if (data?.payload?.data?.totalCurrentTriggers !== undefined) {
+			setTotalCurrentTriggers(data.payload.data.totalCurrentTriggers);
+		}
+	}, [data, setTotalCurrentTriggers]);
+
 	return (
 		<DataStateRenderer
 			isLoading={isLoading}
@@ -49,19 +56,17 @@ function StatsCardsRenderer({
 					pastAvgResolutionTime,
 					totalCurrentTriggers,
 					totalPastTriggers,
+					currentAvgResolutionTimeSeries,
+					currentTriggersSeries,
 				} = data;
-
-				if (setTotalCurrentTriggers) {
-					setTotalCurrentTriggers(totalCurrentTriggers);
-				}
 
 				return (
 					<>
-						{/* TODO(shaheer): get hasTotalTriggeredStats when it's available in the API */}
 						{hasTotalTriggeredStats(totalCurrentTriggers, totalPastTriggers) ? (
 							<TotalTriggeredCard
 								totalCurrentTriggers={totalCurrentTriggers}
 								totalPastTriggers={totalPastTriggers}
+								timeSeries={currentTriggersSeries?.values}
 							/>
 						) : (
 							<StatsCard
@@ -71,7 +76,6 @@ function StatsCardsRenderer({
 							/>
 						)}
 
-						{/* TODO(shaheer): get hasAvgResolutionTimeStats when it's available in the API */}
 						{hasAvgResolutionTimeStats(
 							currentAvgResolutionTime,
 							pastAvgResolutionTime,
@@ -79,6 +83,7 @@ function StatsCardsRenderer({
 							<AverageResolutionCard
 								currentAvgResolutionTime={currentAvgResolutionTime}
 								pastAvgResolutionTime={pastAvgResolutionTime}
+								timeSeries={currentAvgResolutionTimeSeries?.values}
 							/>
 						) : (
 							<StatsCard

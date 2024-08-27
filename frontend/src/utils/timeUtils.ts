@@ -85,3 +85,43 @@ export function formatEpochTimestamp(epoch: number): string {
 
 	return `${formattedDate} ⎯ ${formattedTime}`;
 }
+
+/**
+ * Converts a given number of seconds into a human-readable format.
+ * @param {number} seconds The number of seconds to convert.
+ * @returns  {string} The formatted time string, either in days (e.g., "1.2d"), hours (e.g., "1.2h"), minutes (e.g., "~7m"), or seconds (e.g., "~45s").
+ */
+
+export function formatTime(seconds: number): string {
+	const days = seconds / 86400;
+
+	if (days >= 1) {
+		return `${days.toFixed(1)}d`;
+	}
+
+	const hours = seconds / 3600;
+	if (hours >= 1) {
+		return `${hours.toFixed(1)}h`;
+	}
+
+	const minutes = seconds / 60;
+	if (minutes >= 1) {
+		return `${minutes.toFixed(1)}m`;
+	}
+
+	return `${seconds.toFixed(1)}s`;
+}
+
+export const nanoToMilli = (nanoseconds: number): number =>
+	nanoseconds / 1_000_000;
+
+export const epochToTimeString = (epochMs: number): string => {
+	console.log({ epochMs });
+	const date = new Date(epochMs);
+	const options: Intl.DateTimeFormatOptions = {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false,
+	};
+	return date.toLocaleTimeString('en-US', options);
+};

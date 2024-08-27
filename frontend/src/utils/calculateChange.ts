@@ -5,7 +5,7 @@ export function calculateChange(
 	if (
 		totalCurrentTriggers === undefined ||
 		totalPastTriggers === undefined ||
-		totalPastTriggers === 0
+		[0, '0'].includes(totalPastTriggers)
 	) {
 		return { changePercentage: 0, changeDirection: 0 };
 	}
@@ -13,7 +13,13 @@ export function calculateChange(
 	let changePercentage =
 		((totalCurrentTriggers - totalPastTriggers) / totalPastTriggers) * 100;
 
-	const changeDirection = changePercentage >= 0 ? 1 : -1;
+	let changeDirection = 0;
+
+	if (changePercentage < 0) {
+		changeDirection = -1;
+	} else if (changePercentage > 0) {
+		changeDirection = 1;
+	}
 
 	changePercentage = Math.abs(changePercentage);
 	changePercentage = Math.round(changePercentage);

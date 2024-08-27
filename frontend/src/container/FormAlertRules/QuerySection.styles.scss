@@ -57,5 +57,8 @@
 				background: var(--bg-vanilla-300) !important;
 			}
 		}
+		.ant-tabs-tab-btn {
+			padding: 0;
+		}
 	}
 }

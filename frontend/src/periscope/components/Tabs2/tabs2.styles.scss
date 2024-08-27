@@ -16,10 +16,33 @@
 			letter-spacing: -0.07px;
 			padding: 6px 24px;
 			border-color: var(--bg-slate-400);
+			justify-content: center;
+		}
+		&.reset-button {
+			.ant-btn-icon {
+				margin: 0;
+			}
+			padding: 6px 12px;
 		}
 		&.selected {
 			color: var(--text-vanilla-100);
 			background: var(--bg-slate-400);
+		}
+	}
+}
+
+.lightMode {
+	.tabs-wrapper {
+		.tab {
+			&.ant-btn-default {
+				color: var(--text-ink-400);
+				background: var(--bg-vanilla-300);
+				border-color: var(--bg-vanilla-300);
+			}
+			&.selected {
+				color: var(--text-robin-500);
+				background: var(--bg-vanilla-100);
+			}
 		}
 	}
 }

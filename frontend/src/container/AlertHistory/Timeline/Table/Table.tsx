@@ -1,15 +1,23 @@
 import './table.styles.scss';
 
 import { Table } from 'antd';
+import { QueryParams } from 'constants/query';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useTimelineTable } from 'pages/AlertDetails/hooks';
 import { useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
+import { useLocation } from 'react-router-dom';
+import { PayloadProps } from 'types/api/alerts/get';
 
 import { TimelineTableProps } from './types';
 import { timelineTableColumns } from './useTimelineTable';
 
-function TimelineTable({ timelineData }: TimelineTableProps): JSX.Element {
+function TimelineTable({
+	timelineData,
+	totalItems,
+}: TimelineTableProps): JSX.Element {
 	const [searchText, setSearchText] = useState('');
-	const { paginationConfig, onChangeHandler } = useTimelineTable();
+	const { paginationConfig, onChangeHandler } = useTimelineTable({ totalItems });
 
 	const visibleTimelineData = useMemo(() => {
 		if (searchText === '') {
@@ -20,15 +28,36 @@ function TimelineTable({ timelineData }: TimelineTableProps): JSX.Element {
 		);
 	}, [searchText, timelineData]);
 
+	const queryClient = useQueryClient();
+
+	const { search } = useLocation();
+	const params = new URLSearchParams(search);
+
+	const ruleId = params.get(QueryParams.ruleId);
+
+	const { currentUnit, targetUnit } = useMemo(() => {
+		const alertDetailsQuery = queryClient.getQueryData([
+			REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+			ruleId,
+		]) as {
+			payload: PayloadProps;
+		};
+		const condition = alertDetailsQuery?.payload?.data?.condition;
+		const { targetUnit } = condition ?? {};
+		const { unit: currentUnit } = condition?.compositeQuery ?? {};
+
+		return { currentUnit, targetUnit };
+	}, [queryClient, ruleId]);
+
 	return (
 		<div className="timeline-table">
 			<Table
-				columns={timelineTableColumns(setSearchText)}
+				rowKey={(row): string => `${row.fingerprint}-${row.value}`}
+				columns={timelineTableColumns(setSearchText, currentUnit, targetUnit)}
 				dataSource={visibleTimelineData}
 				pagination={paginationConfig}
 				size="middle"
 				onChange={onChangeHandler}
-				// TODO(shaheer): get total entries when we get an API for it
 			/>
 		</div>
 	);

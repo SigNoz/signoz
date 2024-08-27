@@ -1,6 +1,8 @@
 import { Input } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import AlertPopover from 'container/AlertHistory/AlertPopover/AlertPopover';
+import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { convertValue } from 'lib/getConvertedValue';
 import { debounce } from 'lodash-es';
 import { Search } from 'lucide-react';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
@@ -19,58 +21,86 @@ function LabelFilter({
 	};
 
 	const handleDebouncedSearch = debounce(handleSearch, 300);
+	const isDarkMode = useIsDarkMode();
 
 	return (
 		<Input
 			className="label-filter"
 			placeholder="labels"
 			onChange={handleDebouncedSearch}
-			suffix={<Search size={14} color="var(--text-vanilla-100)" />}
+			suffix={
+				<Search
+					size={14}
+					color={isDarkMode ? 'var(--text-vanilla-100)' : 'var(--text-ink-100)'}
+				/>
+			}
 		/>
 	);
 }
 
 export const timelineTableColumns = (
 	setSearchText: (text: string) => void,
+	currentUnit?: string,
+	targetUnit?: string,
 ): ColumnsType<AlertRuleTimelineTableResponse> => [
 	{
 		title: 'STATE',
 		dataIndex: 'state',
-		render: (value): JSX.Element => (
-			<AlertPopover>
+		sorter: true,
+		width: '12.5%',
+		render: (value, record): JSX.Element => (
+			<ConditionalAlertPopover
+				relatedTracesLink={record.relatedTracesLink}
+				relatedLogsLink={record.relatedLogsLink}
+			>
 				<div className="alert-rule-state">
 					<AlertState state={value} showLabel />
 				</div>
-			</AlertPopover>
+			</ConditionalAlertPopover>
 		),
 	},
 	{
 		title: <LabelFilter setSearchText={setSearchText} />,
 		dataIndex: 'labels',
-		render: (labels): JSX.Element => (
-			<AlertPopover>
+		width: '54.5%',
+		render: (labels, record): JSX.Element => (
+			<ConditionalAlertPopover
+				relatedTracesLink={record.relatedTracesLink}
+				relatedLogsLink={record.relatedLogsLink}
+			>
 				<div className="alert-rule-labels">
 					<AlertLabels labels={labels} />
 				</div>
-			</AlertPopover>
+			</ConditionalAlertPopover>
 		),
 	},
 	{
 		title: 'VALUE',
 		dataIndex: 'value',
-		render: (value): JSX.Element => (
-			<AlertPopover>
-				<div className="alert-rule-value">{value}</div>
-			</AlertPopover>
+		width: '14%',
+		render: (value, record): JSX.Element => (
+			<ConditionalAlertPopover
+				relatedTracesLink={record.relatedTracesLink}
+				relatedLogsLink={record.relatedLogsLink}
+			>
+				<div className="alert-rule-value">
+					{/* convert the value based on y axis and target unit */}
+					{convertValue(value.toFixed(2), currentUnit, targetUnit)}
+				</div>
+			</ConditionalAlertPopover>
 		),
 	},
 	{
 		title: 'CREATED AT',
 		dataIndex: 'unixMilli',
-		render: (value): JSX.Element => (
-			<AlertPopover>
+		width: '32.5%',
+		render: (value, record): JSX.Element => (
+			<ConditionalAlertPopover
+				relatedTracesLink={record.relatedTracesLink}
+				relatedLogsLink={record.relatedLogsLink}
+			>
 				<div className="alert-rule-created-at">{formatEpochTimestamp(value)}</div>
-			</AlertPopover>
+			</ConditionalAlertPopover>
 		),
 	},
 ];
