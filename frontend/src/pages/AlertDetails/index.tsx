@@ -41,16 +41,25 @@ function AlertDetailsStatusRenderer({
 
 function BreadCrumbItem({
 	title,
-	isLast = false,
+	isLast,
+	route,
 }: {
 	title: string | null;
 	isLast?: boolean;
+	route?: string;
 }): JSX.Element {
 	if (isLast) {
 		return <div className="breadcrumb-item breadcrumb-item--last">{title}</div>;
 	}
+	const handleNavigate = (): void => {
+		if (!route) {
+			return;
+		}
+		history.push(ROUTES.LIST_ALL_ALERT);
+	};
+
 	return (
-		<Button type="text" className="breadcrumb-item">
+		<Button type="text" className="breadcrumb-item" onClick={handleNavigate}>
 			{title}
 		</Button>
 	);
@@ -58,6 +67,7 @@ function BreadCrumbItem({
 
 BreadCrumbItem.defaultProps = {
 	isLast: false,
+	route: '',
 };
 
 function AlertDetails(): JSX.Element {
@@ -76,18 +86,15 @@ function AlertDetails(): JSX.Element {
 		return <NotFound />;
 	}
 
-	const handleBack = (): void => {
-		history.push(ROUTES.LIST_ALL_ALERT);
-	};
-
 	return (
 		<div className="alert-details">
 			<Breadcrumb
 				className="alert-details__breadcrumb"
 				items={[
 					{
-						title: <BreadCrumbItem title="Alert Rules" />,
-						onClick: handleBack,
+						title: (
+							<BreadCrumbItem title="Alert Rules" route={ROUTES.LIST_ALL_ALERT} />
+						),
 					},
 					{
 						title: <BreadCrumbItem title={ruleId} isLast />,
