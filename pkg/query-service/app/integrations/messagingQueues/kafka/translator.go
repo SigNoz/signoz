@@ -2,6 +2,8 @@ package kafka
 
 import (
 	"fmt"
+	"strings"
+
 	"go.signoz.io/signoz/pkg/query-service/common"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
@@ -43,87 +45,97 @@ func buildClickHouseQueryNetwork(messagingQueue *MessagingQueue, queueType strin
 		return nil, fmt.Errorf("consumer_group not found in the request")
 	}
 
-	query := generateNetworkLatencyThroughputSQL(start, end, consumerGroup, queueType)
+	partitionID, ok := messagingQueue.Variables["partition"]
+	if !ok {
+		return nil, fmt.Errorf("partition not found in the request")
+	}
+
+	query := generateNetworkLatencyThroughputSQL(start, end, consumerGroup, partitionID, queueType)
 
 	return &v3.ClickHouseQuery{
 		Query: query,
 	}, nil
 }
 
-func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCache []Clients) (map[string]*v3.BuilderQuery, error) {
-	bq := make(map[string]*v3.BuilderQuery)
+func formatstring(str []string) string {
+	joined := strings.Join(str, ", ")
+	if len(joined) <= 2 {
+		return ""
+	}
+	return joined[1 : len(joined)-1]
+}
 
-	for i, instanceInfo := range attributeCache {
-		queryName := fmt.Sprintf("latency_%d", i)
-		chq := &v3.BuilderQuery{
-			QueryName:    queryName,
-			StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
-			DataSource:   v3.DataSourceMetrics,
-			AggregateAttribute: v3.AttributeKey{
-				Key: "kafka_consumer_fetch_latency_avg",
-			},
-			AggregateOperator: v3.AggregateOperatorAvg,
-			Temporality:       v3.Unspecified,
-			TimeAggregation:   v3.TimeAggregationAvg,
-			SpaceAggregation:  v3.SpaceAggregationAvg,
-			Filters: &v3.FilterSet{
-				Operator: "AND",
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key:      "service_name",
-							Type:     v3.AttributeKeyTypeTag,
-							DataType: v3.AttributeKeyDataTypeString,
-						},
-						Operator: v3.FilterOperatorEqual,
-						Value:    instanceInfo.ServiceName,
+func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCache *Clients) (map[string]*v3.BuilderQuery, error) {
+	bq := make(map[string]*v3.BuilderQuery)
+	queryName := fmt.Sprintf("latency")
+
+	chq := &v3.BuilderQuery{
+		QueryName:    queryName,
+		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
+		DataSource:   v3.DataSourceMetrics,
+		AggregateAttribute: v3.AttributeKey{
+			Key: "kafka_consumer_fetch_latency_avg",
+		},
+		AggregateOperator: v3.AggregateOperatorAvg,
+		Temporality:       v3.Unspecified,
+		TimeAggregation:   v3.TimeAggregationAvg,
+		SpaceAggregation:  v3.SpaceAggregationAvg,
+		Filters: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "service_name",
+						Type:     v3.AttributeKeyTypeTag,
+						DataType: v3.AttributeKeyDataTypeString,
 					},
-					{
-						Key: v3.AttributeKey{
-							Key:      "client_id",
-							Type:     v3.AttributeKeyTypeTag,
-							DataType: v3.AttributeKeyDataTypeString,
-						},
-						Operator: v3.FilterOperatorEqual,
-						Value:    instanceInfo.ClientID,
+					Operator: v3.FilterOperatorIn,
+					Value:    attributeCache.ServiceName,
+				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "client_id",
+						Type:     v3.AttributeKeyTypeTag,
+						DataType: v3.AttributeKeyDataTypeString,
 					},
-					{
-						Key: v3.AttributeKey{
-							Key:      "service_instance_id",
-							Type:     v3.AttributeKeyTypeTag,
-							DataType: v3.AttributeKeyDataTypeString,
-						},
-						Operator: v3.FilterOperatorEqual,
-						Value:    instanceInfo.ServiceInstanceID,
+					Operator: v3.FilterOperatorIn,
+					Value:    attributeCache.ClientID,
+				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "service_instance_id",
+						Type:     v3.AttributeKeyTypeTag,
+						DataType: v3.AttributeKeyDataTypeString,
 					},
+					Operator: v3.FilterOperatorIn,
+					Value:    attributeCache.ServiceInstanceID,
 				},
 			},
-			Expression: queryName,
-			ReduceTo:   v3.ReduceToOperatorAvg,
-			GroupBy: []v3.AttributeKey{{
-				Key:      "service_name",
+		},
+		Expression: queryName,
+		ReduceTo:   v3.ReduceToOperatorAvg,
+		GroupBy: []v3.AttributeKey{{
+			Key:      "service_name",
+			DataType: v3.AttributeKeyDataTypeString,
+			Type:     v3.AttributeKeyTypeTag,
+		},
+			{
+				Key:      "client_id",
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
-				{
-					Key:      "client_id",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeTag,
-				},
-				{
-					Key:      "service_instance_id",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeTag,
-				},
+			{
+				Key:      "service_instance_id",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeTag,
 			},
-		}
-		bq[queryName] = chq
+		},
 	}
-
+	bq[queryName] = chq
 	return bq, nil
 }
 
-func BuildQRParamsNetwork(messagingQueue *MessagingQueue, queryContext string, attributeCache []Clients) (*v3.QueryRangeParamsV3, error) {
+func BuildQRParamsNetwork(messagingQueue *MessagingQueue, queryContext string, attributeCache *Clients) (*v3.QueryRangeParamsV3, error) {
 
 	queueType := kafkaQueue
 

@@ -74,14 +74,14 @@ ORDER BY
 	return query
 }
 
-func generateNetworkLatencyThroughputSQL(start, end int64, consumerGroup, queueType string) string {
+func generateNetworkLatencyThroughputSQL(start, end int64, consumerGroup, partitionID, queueType string) string {
 	timeRange := (end - start) / 1000000000
 	query := fmt.Sprintf(`
 SELECT
     stringTagMap['messaging.client_id'] AS client_id,
 	stringTagMap['service.instance.id'] AS service_instance_id,
     serviceName AS service_name,
-    count(*) / %d AS throughput  -- Convert nanoseconds to seconds
+    count(*) / %d AS throughput
 FROM signoz_traces.distributed_signoz_index_v2
 WHERE
     timestamp >= '%d'
@@ -89,8 +89,9 @@ WHERE
     AND kind = 5
     AND msgSystem = '%s' 
     AND stringTagMap['messaging.kafka.consumer.group'] = '%s'
+    AND stringTagMap['messaging.destination.partition.id'] = '%s'
 GROUP BY service_name, client_id, service_instance_id
 ORDER BY throughput DESC
-`, timeRange, start, end, queueType, consumerGroup)
+`, timeRange, start, end, queueType, consumerGroup, partitionID)
 	return query
 }
