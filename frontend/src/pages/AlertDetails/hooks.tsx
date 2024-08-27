@@ -1,3 +1,4 @@
+import get from 'api/alerts/get';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import AlertHistory from 'container/AlertHistory';
@@ -5,7 +6,8 @@ import { AlertDetailsTab } from 'container/AlertHistory/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { History, Table } from 'lucide-react';
 import EditRules from 'pages/EditRules';
-import { generatePath } from 'react-router-dom';
+import { useQuery, UseQueryResult } from 'react-query';
+import { generatePath, useLocation } from 'react-router-dom';
 
 export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 	const urlQuery = useUrlQuery();
@@ -19,7 +21,9 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 				route = ROUTES.ALERT_OVERVIEW;
 				break;
 			case AlertDetailsTab.HISTORY:
-				params = `ruleId=${urlQuery.get('ruleId') ?? ''}`;
+				params = `ruleId=${urlQuery.get('ruleId')}&relativeTime=${urlQuery.get(
+					'relativeTime',
+				)}`;
 				route = ROUTES.ALERT_HISTORY;
 				break;
 			default:
@@ -55,4 +59,29 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 	];
 
 	return { routes };
+};
+
+export const useGetAlertRuleDetails = (): {
+	ruleId: string | null;
+	data: UseQueryResult;
+} => {
+	const { search } = useLocation();
+
+	const params = new URLSearchParams(search);
+
+	const ruleId = params.get('ruleId');
+
+	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+
+	const data = useQuery(['ruleId', ruleId], {
+		queryFn: () =>
+			get({
+				id: parseInt(ruleId || '', 10),
+			}),
+		enabled: isValidRuleId,
+		refetchOnMount: false,
+		refetchOnWindowFocus: false,
+	});
+
+	return { ruleId, data };
 };
