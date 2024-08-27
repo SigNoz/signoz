@@ -242,6 +242,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
 	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
+	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
+	const isAlertOverview = (): boolean => routeKey === 'ALERT_OVERVIEW';
 	const isDashboardView = (): boolean => {
 		/**
 		 * need to match using regex here as the getRoute function will not work for
@@ -329,7 +331,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isTracesView() ||
 											isDashboardView() ||
 											isDashboardWidgetView() ||
-											isDashboardListView()
+											isDashboardListView() ||
+											isAlertHistory() ||
+											isAlertOverview()
 												? 0
 												: '0 1rem',
 									}}

@@ -5,3 +5,10 @@
 	background: var(--Ink-300, #16181d);
 	border: 1px solid var(--Slate-400, #1d212d);
 }
+
+.lightMode {
+	.reset-button {
+		background: var(--bg-vanilla-100);
+		border-color: var(--bg-vanilla-300);
+	}
+}

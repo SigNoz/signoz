@@ -1,7 +1,9 @@
 import './actionButtons.styles.scss';
 
-import { Button, Divider, Dropdown, MenuProps, Tooltip } from 'antd';
+import { Button, Divider, Dropdown, MenuProps, Switch, Tooltip } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Copy, Ellipsis, PenLine, Trash2 } from 'lucide-react';
+import { useAlertRuleStatusToggle } from 'pages/AlertDetails/hooks';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import React from 'react';
 
@@ -26,9 +28,25 @@ const menuStyle: React.CSSProperties = {
 	fontSize: 14,
 };
 
-function AlertActionButtons(): JSX.Element {
+function AlertActionButtons({
+	ruleId,
+	state,
+}: {
+	ruleId: string;
+	state: string;
+}): JSX.Element {
+	const {
+		handleAlertStateToggle,
+		isAlertRuleEnabled,
+	} = useAlertRuleStatusToggle({ ruleId, state });
+	const isDarkMode = useIsDarkMode();
 	return (
 		<div className="alert-action-buttons">
+			<Switch
+				size="small"
+				onChange={handleAlertStateToggle}
+				checked={isAlertRuleEnabled}
+			/>
 			<CopyToClipboard textToCopy={window.location.href} />
 
 			<Divider type="vertical" />
@@ -54,7 +72,12 @@ function AlertActionButtons(): JSX.Element {
 				)}
 			>
 				<Tooltip title="More options">
-					<Ellipsis size={16} color="var(--bg-vanilla-400)" cursor="pointer" />
+					<Ellipsis
+						size={16}
+						color={isDarkMode ? 'var(--bg-vanilla-400)' : 'var(--text-ink-400'}
+						cursor="pointer"
+						className="dropdown-icon"
+					/>
 				</Tooltip>
 			</Dropdown>
 		</div>

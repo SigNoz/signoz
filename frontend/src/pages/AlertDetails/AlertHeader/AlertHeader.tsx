@@ -3,9 +3,9 @@ import './alertHeader.styles.scss';
 import dayjs from 'dayjs';
 
 import AlertActionButtons from './ActionButtons';
-import AlertIcon from './AlertIcon/AlertIcon';
 import AlertLabels from './AlertLabels/AlertLabels';
 import AlertSeverity from './AlertSeverity/AlertSeverity';
+import AlertState from './AlertState/AlertState';
 import AlertStatus from './AlertStatus/AlertStatus';
 
 type AlertHeaderProps = {
@@ -21,23 +21,27 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 
 	return (
 		<div className="alert-info">
-			<div className="alert-info__top-section">
-				<div className="alert-title-wrapper">
-					<AlertIcon state={state} />
-					<div className="alert-title">{alert}</div>
-					<div className="alert-id">{id}</div>
+			<div className="alert-info__info-wrapper">
+				<div className="top-section">
+					<div className="alert-title-wrapper">
+						<AlertState state={state} />
+						<div className="alert-title">{alert}</div>
+						<div className="alert-id">{id}</div>
+					</div>
 				</div>
-				<AlertActionButtons />
-			</div>
-			<div className="alert-info__bottom-section">
-				<AlertSeverity severity="warning" />
+				<div className="bottom-section">
+					<AlertSeverity severity="warning" />
 
-				{/* // TODO(shaheer): Get actual data when we are able to get alert status from API */}
-				<AlertStatus
-					status="firing"
-					timestamp={dayjs().subtract(1, 'd').valueOf()}
-				/>
-				<AlertLabels labels={labels} />
+					{/* // TODO(shaheer): Get actual data when we are able to get alert status from API */}
+					<AlertStatus
+						status="firing"
+						timestamp={dayjs().subtract(1, 'd').valueOf()}
+					/>
+					<AlertLabels labels={labels} />
+				</div>
+			</div>
+			<div className="alert-info__action-buttons">
+				<AlertActionButtons ruleId={alertDetails.id} state={state} />
 			</div>
 		</div>
 	);
