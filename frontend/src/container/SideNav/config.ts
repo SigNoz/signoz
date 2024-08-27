@@ -49,4 +49,5 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.LOGS_PIPELINES]: [QueryParams.resourceAttributes],
 	[ROUTES.WORKSPACE_LOCKED]: [QueryParams.resourceAttributes],
 	[ROUTES.MESSAGING_QUEUES]: [QueryParams.resourceAttributes],
+	[ROUTES.MESSAGING_QUEUES_DETAIL]: [QueryParams.resourceAttributes],
 };

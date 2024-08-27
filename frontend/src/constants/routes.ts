@@ -55,6 +55,7 @@ const ROUTES = {
 	SHORTCUTS: '/shortcuts',
 	INTEGRATIONS: '/integrations',
 	MESSAGING_QUEUES: '/messaging-queues',
+	MESSAGING_QUEUES_DETAIL: '/messaging-queues/detail',
 } as const;
 
 export default ROUTES;

@@ -24,6 +24,7 @@ import {
 	LogsIndexToFields,
 	LogsSaveViews,
 	MessagingQueues,
+	MQDetailPage,
 	MySettings,
 	NewDashboardPage,
 	OldLogsExplorer,
@@ -357,6 +358,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: MessagingQueues,
 		key: 'MESSAGING_QUEUES',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES_DETAIL,
+		exact: true,
+		component: MQDetailPage,
+		key: 'MESSAGING_QUEUES_DETAIL',
 		isPrivate: true,
 	},
 ];
