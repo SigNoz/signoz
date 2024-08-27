@@ -1,0 +1,31 @@
+.alert-info {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	&__top-section {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		.alert-title-wrapper {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			.alert-title {
+				font-size: 16px;
+				font-weight: var(--font-weight-medium);
+				color: var(--text-vanilla-100);
+				line-height: 24px;
+			}
+			.alert-id {
+				// color: var(--text-slate-50);
+				color: #62687c;
+			}
+		}
+	}
+	&__bottom-section {
+		display: flex;
+		align-items: center;
+		gap: 24px;
+	}
+}

@@ -1,0 +1,22 @@
+.key-value-label {
+	display: flex;
+	align-items: center;
+	border: 1px solid var(--bg-slate-400);
+	border-radius: 2px;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 18px;
+	letter-spacing: -0.005em;
+
+	& > * {
+		padding: 2px 6px;
+	}
+	&__key {
+		background: var(--bg-ink-400);
+		border-radius: 2px 0 0 2px;
+	}
+	&__value {
+		background: var(--bg-slate-400);
+	}
+	color: var(--text-vanilla-400);
+}
