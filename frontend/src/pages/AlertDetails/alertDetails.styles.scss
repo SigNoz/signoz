@@ -48,16 +48,20 @@
 		margin-top: 10px;
 	}
 	&__breadcrumb {
+		ol {
+			align-items: center;
+		}
 		padding-left: 16px;
-		.ant-breadcrumb-link {
+		.breadcrumb-item {
 			color: var(--text-vanilla-400);
 			font-size: 14px;
 			line-height: 20px;
 			letter-spacing: 0.25px;
+			padding: 0;
 		}
 
 		.ant-breadcrumb-separator,
-		span.ant-breadcrumb-link {
+		.breadcrumb-item--last {
 			color: var(--var-vanilla-500);
 			font-family: 'Geist Mono';
 		}

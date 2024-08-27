@@ -1,6 +1,6 @@
 import './alertDetails.styles.scss';
 
-import { Breadcrumb, Divider } from 'antd';
+import { Breadcrumb, Button, Divider } from 'antd';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
 import NotFound from 'components/NotFound';
 import RouteTab from 'components/RouteTab';
@@ -38,6 +38,38 @@ function AlertDetailsStatusRenderer({
 
 	return <AlertHeader alertDetails={alertRuleDetails} />;
 }
+
+function BreadCrumbItem({
+	title,
+	isLast,
+	route,
+}: {
+	title: string | null;
+	isLast?: boolean;
+	route?: string;
+}): JSX.Element {
+	if (isLast) {
+		return <div className="breadcrumb-item breadcrumb-item--last">{title}</div>;
+	}
+	const handleNavigate = (): void => {
+		if (!route) {
+			return;
+		}
+		history.push(ROUTES.LIST_ALL_ALERT);
+	};
+
+	return (
+		<Button type="text" className="breadcrumb-item" onClick={handleNavigate}>
+			{title}
+		</Button>
+	);
+}
+
+BreadCrumbItem.defaultProps = {
+	isLast: false,
+	route: '',
+};
+
 function AlertDetails(): JSX.Element {
 	const { pathname } = useLocation();
 	const { routes } = useRouteTabUtils();
@@ -60,11 +92,12 @@ function AlertDetails(): JSX.Element {
 				className="alert-details__breadcrumb"
 				items={[
 					{
-						title: 'Alert Rules',
-						href: ROUTES.LIST_ALL_ALERT,
+						title: (
+							<BreadCrumbItem title="Alert Rules" route={ROUTES.LIST_ALL_ALERT} />
+						),
 					},
 					{
-						title: ruleId,
+						title: <BreadCrumbItem title={ruleId} isLast />,
 					},
 				]}
 			/>
