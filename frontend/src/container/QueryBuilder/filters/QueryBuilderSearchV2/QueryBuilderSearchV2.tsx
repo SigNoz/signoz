@@ -646,17 +646,16 @@ function QueryBuilderSearchV2(
 		}
 
 		if (currentState === DropdownState.ATTRIBUTE_VALUE) {
-			const values: string[] =
-				Object.values(attributeValues?.payload || {}).find((el) => !!el) || [];
-
+			const values: string[] = [];
 			const { tagValue } = getTagToken(searchValue);
+			if (isArray(tagValue)) {
+				if (!isEmpty(tagValue[tagValue.length - 1]))
+					values.push(tagValue[tagValue.length - 1]);
+			} else if (!isEmpty(tagValue)) values.push(tagValue);
 
-			if (values.length === 0) {
-				if (isArray(tagValue)) {
-					if (!isEmpty(tagValue[tagValue.length - 1]))
-						values.push(tagValue[tagValue.length - 1]);
-				} else if (!isEmpty(tagValue)) values.push(tagValue);
-			}
+			values.push(
+				...(Object.values(attributeValues?.payload || {}).find((el) => !!el) || []),
+			);
 
 			setDropdownOptions(
 				values.map((val) => ({
