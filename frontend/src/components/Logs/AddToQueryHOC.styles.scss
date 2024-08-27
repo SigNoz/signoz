@@ -3,14 +3,14 @@
 	display: flex;
 	align-items: center;
 	&.small {
-		height: 16px;
+		line-height: 16px;
 	}
 
 	&.medium {
-		height: 20px;
+		line-height: 20px;
 	}
 
 	&.large {
-		height: 24px;
+		line-height: 24px;
 	}
 }

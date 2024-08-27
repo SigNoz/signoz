@@ -48,15 +48,14 @@ func buildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 		return nil, fmt.Errorf("invalid type for Partition")
 	}
 
-	consumerGroup, ok := messagingQueue.Variables["consumer_group"]
-	if !ok {
-		return nil, fmt.Errorf("invalid type for consumer group")
-	}
-
 	var query string
 	if queryContext == "producer" {
 		query = generateProducerSQL(start, end, topic, partition, queueType)
 	} else if queryContext == "consumer" {
+		consumerGroup, ok := messagingQueue.Variables["consumer_group"]
+		if !ok {
+			return nil, fmt.Errorf("invalid type for consumer group")
+		}
 		query = generateConsumerSQL(start, end, topic, partition, consumerGroup, queueType)
 	}
 

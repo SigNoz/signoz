@@ -67,7 +67,7 @@ export function TableViewActions(
 	);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
-	const textToCopy = fieldData.value.slice(1, -1);
+	const textToCopy = fieldData.value;
 
 	if (record.field === 'body') {
 		const parsedBody = recursiveParseJSON(fieldData.value);
@@ -93,7 +93,7 @@ export function TableViewActions(
 	return (
 		<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
 			{record.field === 'body' ? (
-				<CopyClipboardHOC textToCopy={textToCopy}>
+				<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
 					<span
 						style={{
 							color: Color.BG_SIENNA_400,
@@ -104,7 +104,7 @@ export function TableViewActions(
 					/>
 				</CopyClipboardHOC>
 			) : (
-				<CopyClipboardHOC textToCopy={textToCopy}>
+				<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
 					<span
 						style={{
 							color: Color.BG_SIENNA_400,
