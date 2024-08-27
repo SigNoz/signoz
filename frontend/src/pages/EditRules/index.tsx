@@ -65,7 +65,7 @@ function EditRules(): JSX.Element {
 		(data?.payload?.data === undefined && !isLoading)
 	) {
 		return (
-			<div className="edit-rules-container">
+			<div className="edit-rules-container edit-rules-container--error">
 				<Card size="small" className="edit-rules-card">
 					<p className="content">
 						{data?.message === errorMessageReceivedFromBackend
@@ -87,10 +87,12 @@ function EditRules(): JSX.Element {
 	}
 
 	return (
-		<EditRulesContainer
-			ruleId={parseInt(ruleId, 10)}
-			initialValue={data.payload.data}
-		/>
+		<div className="edit-rules-container">
+			<EditRulesContainer
+				ruleId={parseInt(ruleId, 10)}
+				initialValue={data.payload.data}
+			/>
+		</div>
 	);
 }
 
