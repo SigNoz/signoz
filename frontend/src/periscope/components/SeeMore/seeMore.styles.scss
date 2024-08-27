@@ -15,3 +15,12 @@
 	flex-wrap: wrap;
 	width: 300px;
 }
+
+.lightMode {
+	.see-more-button {
+		color: var(--text-ink-400);
+	}
+	.see-more-popover-content {
+		background: var(--bg-vanilla-100);
+	}
+}

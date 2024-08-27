@@ -3,6 +3,7 @@ import { TablePaginationConfig, TableProps } from 'antd/lib';
 import get from 'api/alerts/get';
 import patchAlert from 'api/alerts/patch';
 import ruleStats from 'api/alerts/ruleStats';
+import timelineGraph from 'api/alerts/timelineGraph';
 import timelineTable from 'api/alerts/timelineTable';
 import topContributors from 'api/alerts/topContributors';
 import { TabRoutes } from 'components/RouteTab/types';
@@ -28,6 +29,7 @@ import { generatePath, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	AlertRuleStatsPayload,
+	AlertRuleTimelineGraphResponsePayload,
 	AlertRuleTimelineTableResponse,
 	AlertRuleTimelineTableResponsePayload,
 	AlertRuleTopContributorsPayload,
@@ -91,6 +93,7 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 export const useGetAlertRuleDetails = (): {
 	ruleId: string | null;
 	data: UseQueryResult;
+	isValidRuleId: boolean;
 } => {
 	const { search } = useLocation();
 
@@ -110,7 +113,7 @@ export const useGetAlertRuleDetails = (): {
 		refetchOnWindowFocus: false,
 	});
 
-	return { ruleId, data };
+	return { ruleId, data, isValidRuleId };
 };
 
 type GetAlertRuleDetailsApiProps = {
@@ -227,6 +230,7 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 			endTime,
 			timelineFilter,
 			updatedOrder,
+			getUpdatedOffset,
 		],
 		{
 			queryFn: () =>
@@ -248,12 +252,10 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 					// 		},
 					// 	],
 					// },
+
 					...(timelineFilter && timelineFilter !== TimelineFilter.ALL
 						? {
-								filters: {
-									// TODO(shaheer): confirm whether the TimelineFilter.RESOLVED and TimelineFilter.FIRED are valid states
-									items: [{ key: { key: 'state' }, value: 'firing', op: '=' }],
-								},
+								state: timelineFilter === TimelineFilter.FIRED ? 'firing' : 'normal',
 						  }
 						: {}),
 				}),
@@ -266,7 +268,11 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 	return { isLoading, isRefetching, isError, data, isValidRuleId, ruleId };
 };
 
-export const useTimelineTable = (): {
+export const useTimelineTable = ({
+	totalItems,
+}: {
+	totalItems: number;
+}): {
 	paginationConfig: TablePaginationConfig;
 	onChangeHandler: (
 		pagination: TablePaginationConfig,
@@ -285,14 +291,14 @@ export const useTimelineTable = (): {
 
 	const onChangeHandler: TableProps<AlertRuleTimelineTableResponse>['onChange'] = useCallback(
 		(
-			paginations: TablePaginationConfig,
+			pagination: TablePaginationConfig,
 			filters: Record<string, FilterValue | null>,
 			sorter:
 				| SorterResult<AlertRuleTimelineTableResponse>[]
 				| SorterResult<AlertRuleTimelineTableResponse>,
 		) => {
 			if (!Array.isArray(sorter)) {
-				const { pageSize = 0, current = 0 } = paginations;
+				const { pageSize = 0, current = 0 } = pagination;
 				const { columnKey = '', order } = sorter;
 				const updatedOrder = order === 'ascend' ? 'asc' : 'desc';
 				const params = new URLSearchParams(window.location.search);
@@ -301,7 +307,7 @@ export const useTimelineTable = (): {
 					`${pathname}?${createQueryParams({
 						...Object.fromEntries(params),
 						order: updatedOrder,
-						offset: (current - 1) * pageSize,
+						offset: current - 1,
 						orderParam: columnKey,
 						pageSize,
 					})}`,
@@ -311,12 +317,13 @@ export const useTimelineTable = (): {
 		[pathname],
 	);
 
-	const paginationConfig = {
+	const paginationConfig: TablePaginationConfig = {
 		pageSize: TIMELINE_TABLE_PAGE_SIZE,
 		showTotal: PaginationInfoText,
-		current: parseInt(updatedOffset, 10) / TIMELINE_TABLE_PAGE_SIZE + 1,
+		current: parseInt(updatedOffset, 10) + 1,
 		showSizeChanger: false,
 		hideOnSinglePage: true,
+		total: totalItems,
 	};
 
 	return { paginationConfig, onChangeHandler };
@@ -381,7 +388,7 @@ export const useAlertRuleStatusToggle = ({
 			},
 			onSuccess: () => {
 				notifications.success({
-					message: 'Success',
+					message: `Alert has been turned ${!isAlertRuleEnabled ? 'on' : 'off'}.`,
 				});
 			},
 			onError: () => {
@@ -399,4 +406,41 @@ export const useAlertRuleStatusToggle = ({
 	};
 
 	return { handleAlertStateToggle, isAlertRuleEnabled };
+};
+
+type GetAlertRuleDetailsTimelineGraphProps = GetAlertRuleDetailsApiProps & {
+	data:
+		| SuccessResponse<AlertRuleTimelineGraphResponsePayload, unknown>
+		| ErrorResponse
+		| undefined;
+};
+
+export const useGetAlertRuleDetailsTimelineGraphData = (): GetAlertRuleDetailsTimelineGraphProps => {
+	const { search } = useLocation();
+
+	const params = useMemo(() => new URLSearchParams(search), [search]);
+
+	const ruleId = params.get(QueryParams.ruleId);
+	const startTime = params.get(QueryParams.startTime);
+	const endTime = params.get(QueryParams.endTime);
+
+	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+	const hasStartAndEnd = startTime !== null && endTime !== null;
+
+	const { isLoading, isRefetching, isError, data } = useQuery(
+		[REACT_QUERY_KEY.ALERT_RULE_TIMELINE_GRAPH, ruleId, startTime, endTime],
+		{
+			queryFn: () =>
+				timelineGraph({
+					id: parseInt(ruleId || '', 10),
+					start: parseInt(startTime || '', 10),
+					end: parseInt(endTime || '', 10),
+				}),
+			enabled: isValidRuleId && hasStartAndEnd,
+			refetchOnMount: false,
+			refetchOnWindowFocus: false,
+		},
+	);
+
+	return { isLoading, isRefetching, isError, data, isValidRuleId, ruleId };
 };

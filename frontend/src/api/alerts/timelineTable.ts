@@ -17,6 +17,7 @@ const timelineTable = async (
 			offset: props.offset,
 			limit: props.limit,
 			order: props.order,
+			state: props.state,
 			// TODO(shaheer): implement filters
 			filters: props.filters,
 		});

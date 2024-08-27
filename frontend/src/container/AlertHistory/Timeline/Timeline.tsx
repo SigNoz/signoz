@@ -3,7 +3,7 @@ import './timeline.styles.scss';
 import { useGetAlertRuleDetailsTimelineTable } from 'pages/AlertDetails/hooks';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
 
-import Graph from './Graph/Graph';
+import GraphWrapper from './GraphWrapper/GraphWrapper';
 import TimelineTable from './Table/Table';
 import TabsAndFilters from './TabsAndFilters/TabsAndFilters';
 
@@ -25,7 +25,10 @@ function TimelineTableRenderer(): JSX.Element {
 			data={data?.payload?.data || null}
 		>
 			{(timelineData): JSX.Element => (
-				<TimelineTable timelineData={timelineData} />
+				<TimelineTable
+					timelineData={timelineData.items}
+					totalItems={timelineData.total}
+				/>
 			)}
 		</DataStateRenderer>
 	);
@@ -43,7 +46,7 @@ function Timeline({
 				<TabsAndFilters />
 			</div>
 			<div className="timeline__graph">
-				<Graph totalCurrentTriggers={totalCurrentTriggers} />
+				<GraphWrapper totalCurrentTriggers={totalCurrentTriggers} />
 			</div>
 			<div className="timeline__table">
 				<TimelineTableRenderer />

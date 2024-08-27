@@ -38,7 +38,6 @@ export interface RuleCondition {
 	alertOnAbsent?: boolean | undefined;
 	absentFor?: number | undefined;
 }
-
 export interface Labels {
 	[key: string]: string;
 }
@@ -46,21 +45,21 @@ export interface Labels {
 export interface AlertRuleStats {
 	totalCurrentTriggers: number;
 	totalPastTriggers: number;
-	currentTriggersSeries: CurrentTriggersSeries | null;
-	pastTriggersSeries: any | null;
+	currentTriggersSeries: CurrentTriggersSeries;
+	pastTriggersSeries: CurrentTriggersSeries | null;
 	currentAvgResolutionTime: number;
 	pastAvgResolutionTime: number;
-	currentAvgResolutionTimeSeries: any | null;
+	currentAvgResolutionTimeSeries: CurrentTriggersSeries;
 	pastAvgResolutionTimeSeries: any | null;
 }
 
 interface CurrentTriggersSeries {
 	labels: Labels;
 	labelsArray: any | null;
-	values: Value[];
+	values: StatsTimeSeriesItem[];
 }
 
-interface Value {
+export interface StatsTimeSeriesItem {
 	timestamp: number;
 	value: string;
 }
@@ -73,6 +72,8 @@ export interface AlertRuleTopContributors {
 	fingerprint: number;
 	labels: Labels;
 	count: number;
+	relatedLogsLink: string;
+	relatedTracesLink: string;
 }
 export type AlertRuleTopContributorsPayload = {
 	data: AlertRuleTopContributors[];
@@ -89,7 +90,19 @@ export interface AlertRuleTimelineTableResponse {
 	labels: Labels;
 	fingerprint: number;
 	value: number;
+	relatedTracesLink: string;
+	relatedLogsLink: string;
 }
 export type AlertRuleTimelineTableResponsePayload = {
-	data: AlertRuleTimelineTableResponse[];
+	data: { items: AlertRuleTimelineTableResponse[]; total: number };
+};
+type AlertState = 'firing' | 'normal' | 'no-data' | 'muted';
+
+export interface AlertRuleTimelineGraphResponse {
+	start: number;
+	end: number;
+	state: AlertState;
+}
+export type AlertRuleTimelineGraphResponsePayload = {
+	data: AlertRuleTimelineGraphResponse[];
 };

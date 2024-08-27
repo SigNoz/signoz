@@ -114,3 +114,14 @@ export function formatTime(seconds: number): string {
 
 export const nanoToMilli = (nanoseconds: number): number =>
 	nanoseconds / 1_000_000;
+
+export const epochToTimeString = (epochMs: number): string => {
+	console.log({ epochMs });
+	const date = new Date(epochMs);
+	const options: Intl.DateTimeFormatOptions = {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false,
+	};
+	return date.toLocaleTimeString('en-US', options);
+};

@@ -1,9 +1,11 @@
 import './statsCard.styles.scss';
 
-import { DotChartOutlined } from '@ant-design/icons';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ArrowDownLeft, ArrowUpRight, Calendar } from 'lucide-react';
+import { AlertRuleStats } from 'types/api/alerts/def';
 import { calculateChange } from 'utils/calculateChange';
+
+import StatsGraph from './StatsGraph/StatsGraph';
 
 type ChangePercentageProps = {
 	percentage: number;
@@ -15,25 +17,34 @@ function ChangePercentage({
 	direction,
 	duration,
 }: ChangePercentageProps): JSX.Element {
-	if (!percentage || !duration) {
-		return <div className="change-percentage" />;
-	}
-	return (
-		<div
-			className={`change-percentage ${
-				direction > 0 ? 'change-percentage--success' : 'change-percentage--error'
-			}`}
-		>
-			<div className="change-percentage__icon">
-				{direction > 0 ? (
+	if (direction > 0) {
+		return (
+			<div className="change-percentage change-percentage--success">
+				<div className="change-percentage__icon">
 					<ArrowDownLeft size={14} color="var(--bg-forest-500)" />
-				) : (
+				</div>
+				<div className="change-percentage__label">
+					{percentage}% vs Last {duration}
+				</div>
+			</div>
+		);
+	}
+	if (direction < 0) {
+		return (
+			<div className="change-percentage change-percentage--error">
+				<div className="change-percentage__icon">
 					<ArrowUpRight size={14} color="var(--bg-cherry-500)" />
-				)}
+				</div>
+				<div className="change-percentage__label">
+					{percentage}% vs Last {duration}
+				</div>
 			</div>
-			<div className="change-percentage__label">
-				{percentage}% vs Last {duration}
-			</div>
+		);
+	}
+
+	return (
+		<div className="change-percentage change-percentage--no-previous-data">
+			<div className="change-percentage__label">no previous data</div>
 		</div>
 	);
 }
@@ -45,6 +56,7 @@ type StatsCardProps = {
 	isEmpty?: boolean;
 	emptyMessage?: string;
 	displayValue?: string | number;
+	timeSeries?: AlertRuleStats['currentTriggersSeries']['values'];
 };
 
 function StatsCard({
@@ -54,6 +66,7 @@ function StatsCard({
 	title,
 	isEmpty,
 	emptyMessage,
+	timeSeries = [],
 }: StatsCardProps): JSX.Element {
 	const urlQuery = useUrlQuery();
 
@@ -88,13 +101,13 @@ function StatsCard({
 				/>
 			</div>
 
-			{!isEmpty && (
-				<div className="stats-card__graph">
-					<div className="graph">
-						<DotChartOutlined className="graph-icon" />
-					</div>
+			<div className="stats-card__graph">
+				<div className="graph">
+					{!isEmpty && timeSeries.length > 1 && (
+						<StatsGraph timeSeries={timeSeries} changeDirection={changeDirection} />
+					)}
 				</div>
-			)}
+			</div>
 		</div>
 	);
 }
@@ -105,6 +118,7 @@ StatsCard.defaultProps = {
 	isEmpty: false,
 	emptyMessage: 'No Data',
 	displayValue: '',
+	timeSeries: [],
 };
 
 export default StatsCard;
