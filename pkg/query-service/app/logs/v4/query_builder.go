@@ -55,6 +55,7 @@ const (
 	BODY                         = "body"
 	DISTRIBUTED_LOGS_V2          = "distributed_logs_v2"
 	DISTRIBUTED_LOGS_V2_RESOURCE = "distributed_logs_v2_resource"
+	NANOSECOND                   = 1000000000
 )
 
 func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
@@ -427,8 +428,8 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	logsEnd := utils.GetEpochNanoSecs(end)
 
 	// -1800 this is added so that the bucket start considers all the fingerprints.
-	bucketStart := logsStart/1000000000 - 1800
-	bucketEnd := logsEnd / 1000000000
+	bucketStart := logsStart/NANOSECOND - 1800
+	bucketEnd := logsEnd / NANOSECOND
 
 	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", logsStart, logsEnd)
 
@@ -463,7 +464,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		queryTmpl =
 			"SELECT now() as ts,"
 		// step or aggregate interval is whole time period in case of table panel
-		step = (utils.GetEpochNanoSecs(end) - utils.GetEpochNanoSecs(start)) / 1000000000
+		step = (utils.GetEpochNanoSecs(end) - utils.GetEpochNanoSecs(start)) / NANOSECOND
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmpl =

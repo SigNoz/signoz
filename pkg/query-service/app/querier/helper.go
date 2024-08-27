@@ -20,7 +20,7 @@ import (
 )
 
 func prepareLogsQuery(_ context.Context,
-	forceLogsNewSchema bool,
+	useLogsNewSchema bool,
 	start,
 	end int64,
 	builderQuery *v3.BuilderQuery,
@@ -30,7 +30,7 @@ func prepareLogsQuery(_ context.Context,
 	query := ""
 
 	logsQueryBuilder := logsV3.PrepareLogsQuery
-	if forceLogsNewSchema {
+	if useLogsNewSchema {
 		logsQueryBuilder = logsV4.PrepareLogsQuery
 	}
 
@@ -109,7 +109,7 @@ func (q *querier) runBuilderQuery(
 		var query string
 		var err error
 		if _, ok := cacheKeys[queryName]; !ok {
-			query, err = prepareLogsQuery(ctx, q.ForceLogsNewSchema, start, end, builderQuery, params, preferRPM)
+			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, start, end, builderQuery, params, preferRPM)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
@@ -133,7 +133,7 @@ func (q *querier) runBuilderQuery(
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
-			query, err = prepareLogsQuery(ctx, q.ForceLogsNewSchema, miss.start, miss.end, builderQuery, params, preferRPM)
+			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, miss.start, miss.end, builderQuery, params, preferRPM)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return

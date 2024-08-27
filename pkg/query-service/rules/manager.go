@@ -66,7 +66,7 @@ type ManagerOptions struct {
 
 	EvalDelay time.Duration
 
-	ForceLogsNewSchema bool
+	UseLogsNewSchema bool
 }
 
 // The Manager manages recording and alerting rules.
@@ -87,7 +87,7 @@ type Manager struct {
 	featureFlags interfaces.FeatureLookup
 	reader       interfaces.Reader
 
-	ForceLogsNewSchema bool
+	UseLogsNewSchema bool
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -122,16 +122,16 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 	telemetry.GetInstance().SetAlertsInfoCallback(db.GetAlertsInfo)
 
 	m := &Manager{
-		tasks:              map[string]Task{},
-		rules:              map[string]Rule{},
-		notifier:           notifier,
-		ruleDB:             db,
-		opts:               o,
-		block:              make(chan struct{}),
-		logger:             o.Logger,
-		featureFlags:       o.FeatureFlags,
-		reader:             o.Reader,
-		ForceLogsNewSchema: o.ForceLogsNewSchema,
+		tasks:            map[string]Task{},
+		rules:            map[string]Rule{},
+		notifier:         notifier,
+		ruleDB:           db,
+		opts:             o,
+		block:            make(chan struct{}),
+		logger:           o.Logger,
+		featureFlags:     o.FeatureFlags,
+		reader:           o.Reader,
+		UseLogsNewSchema: o.UseLogsNewSchema,
 	}
 	return m, nil
 }
@@ -532,8 +532,8 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 			ruleId,
 			r,
 			ThresholdRuleOpts{
-				EvalDelay:          m.opts.EvalDelay,
-				ForceLogsNewSchema: m.ForceLogsNewSchema,
+				EvalDelay:        m.opts.EvalDelay,
+				UseLogsNewSchema: m.UseLogsNewSchema,
 			},
 			m.featureFlags,
 			m.reader,
@@ -897,9 +897,9 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 			alertname,
 			parsedRule,
 			ThresholdRuleOpts{
-				SendUnmatched:      true,
-				SendAlways:         true,
-				ForceLogsNewSchema: m.ForceLogsNewSchema,
+				SendUnmatched:    true,
+				SendAlways:       true,
+				UseLogsNewSchema: m.UseLogsNewSchema,
 			},
 			m.featureFlags,
 			m.reader,

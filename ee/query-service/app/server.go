@@ -66,17 +66,17 @@ type ServerOptions struct {
 	HTTPHostPort      string
 	PrivateHostPort   string
 	// alert specific params
-	DisableRules       bool
-	RuleRepoURL        string
-	PreferSpanMetrics  bool
-	MaxIdleConns       int
-	MaxOpenConns       int
-	DialTimeout        time.Duration
-	CacheConfigPath    string
-	FluxInterval       string
-	Cluster            string
-	GatewayUrl         string
-	ForceLogsNewSchema bool
+	DisableRules      bool
+	RuleRepoURL       string
+	PreferSpanMetrics bool
+	MaxIdleConns      int
+	MaxOpenConns      int
+	DialTimeout       time.Duration
+	CacheConfigPath   string
+	FluxInterval      string
+	Cluster           string
+	GatewayUrl        string
+	UseLogsNewSchema  bool
 }
 
 // Server runs HTTP api service
@@ -154,7 +154,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.MaxOpenConns,
 			serverOptions.DialTimeout,
 			serverOptions.Cluster,
-			serverOptions.ForceLogsNewSchema,
+			serverOptions.UseLogsNewSchema,
 		)
 		go qb.Start(readerReady)
 		reader = qb
@@ -178,7 +178,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		reader,
 		serverOptions.DisableRules,
 		lm,
-		serverOptions.ForceLogsNewSchema,
+		serverOptions.UseLogsNewSchema,
 	)
 
 	if err != nil {
@@ -268,7 +268,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
 		Gateway:                       gatewayProxy,
-		ForceLogsNewSchema:            serverOptions.ForceLogsNewSchema,
+		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -733,7 +733,7 @@ func makeRulesManager(
 	ch baseint.Reader,
 	disableRules bool,
 	fm baseint.FeatureLookup,
-	forceLogsNewSchema bool,
+	useLogsNewSchema bool,
 ) (*rules.Manager, error) {
 
 	// create engine
@@ -756,15 +756,15 @@ func makeRulesManager(
 			PqlEngine: pqle,
 			Ch:        ch.GetConn(),
 		},
-		RepoURL:            ruleRepoURL,
-		DBConn:             db,
-		Context:            context.Background(),
-		Logger:             nil,
-		DisableRules:       disableRules,
-		FeatureFlags:       fm,
-		Reader:             ch,
-		EvalDelay:          baseconst.GetEvalDelay(),
-		ForceLogsNewSchema: forceLogsNewSchema,
+		RepoURL:          ruleRepoURL,
+		DBConn:           db,
+		Context:          context.Background(),
+		Logger:           nil,
+		DisableRules:     disableRules,
+		FeatureFlags:     fm,
+		Reader:           ch,
+		EvalDelay:        baseconst.GetEvalDelay(),
+		UseLogsNewSchema: useLogsNewSchema,
 	}
 
 	// create Manager

@@ -57,7 +57,7 @@ type querier struct {
 	returnedSeries []*v3.Series
 	returnedErr    error
 
-	ForceLogsNewSchema bool
+	UseLogsNewSchema bool
 }
 
 type QuerierOptions struct {
@@ -68,16 +68,16 @@ type QuerierOptions struct {
 	FeatureLookup interfaces.FeatureLookup
 
 	// used for testing
-	TestingMode        bool
-	ReturnedSeries     []*v3.Series
-	ReturnedErr        error
-	ForceLogsNewSchema bool
+	TestingMode      bool
+	ReturnedSeries   []*v3.Series
+	ReturnedErr      error
+	UseLogsNewSchema bool
 }
 
 func NewQuerier(opts QuerierOptions) interfaces.Querier {
 
 	logsQueryBuilder := logsV3.PrepareLogsQuery
-	if opts.ForceLogsNewSchema {
+	if opts.UseLogsNewSchema {
 		logsQueryBuilder = logsV4.PrepareLogsQuery
 	}
 
@@ -96,10 +96,10 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 		}, opts.FeatureLookup),
 		featureLookUp: opts.FeatureLookup,
 
-		testingMode:        opts.TestingMode,
-		returnedSeries:     opts.ReturnedSeries,
-		returnedErr:        opts.ReturnedErr,
-		ForceLogsNewSchema: opts.ForceLogsNewSchema,
+		testingMode:      opts.TestingMode,
+		returnedSeries:   opts.ReturnedSeries,
+		returnedErr:      opts.ReturnedErr,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 }
 

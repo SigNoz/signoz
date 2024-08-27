@@ -87,7 +87,7 @@ func main() {
 	var ruleRepoURL string
 	var cluster string
 
-	var forceLogsNewSchema bool
+	var useLogsNewSchema bool
 
 	var cacheConfigPath, fluxInterval string
 	var enableQueryServiceLogOTLPExport bool
@@ -98,7 +98,7 @@ func main() {
 	var dialTimeout time.Duration
 	var gatewayUrl string
 
-	flag.BoolVar(&forceLogsNewSchema, "force-logs-new-schema", false, "force logs_v2 schema for logs")
+	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "force logs_v2 schema for logs")
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
@@ -123,21 +123,21 @@ func main() {
 	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
-		HTTPHostPort:       baseconst.HTTPHostPort,
-		PromConfigPath:     promConfigPath,
-		SkipTopLvlOpsPath:  skipTopLvlOpsPath,
-		PreferSpanMetrics:  preferSpanMetrics,
-		PrivateHostPort:    baseconst.PrivateHostPort,
-		DisableRules:       disableRules,
-		RuleRepoURL:        ruleRepoURL,
-		MaxIdleConns:       maxIdleConns,
-		MaxOpenConns:       maxOpenConns,
-		DialTimeout:        dialTimeout,
-		CacheConfigPath:    cacheConfigPath,
-		FluxInterval:       fluxInterval,
-		Cluster:            cluster,
-		GatewayUrl:         gatewayUrl,
-		ForceLogsNewSchema: forceLogsNewSchema,
+		HTTPHostPort:      baseconst.HTTPHostPort,
+		PromConfigPath:    promConfigPath,
+		SkipTopLvlOpsPath: skipTopLvlOpsPath,
+		PreferSpanMetrics: preferSpanMetrics,
+		PrivateHostPort:   baseconst.PrivateHostPort,
+		DisableRules:      disableRules,
+		RuleRepoURL:       ruleRepoURL,
+		MaxIdleConns:      maxIdleConns,
+		MaxOpenConns:      maxOpenConns,
+		DialTimeout:       dialTimeout,
+		CacheConfigPath:   cacheConfigPath,
+		FluxInterval:      fluxInterval,
+		Cluster:           cluster,
+		GatewayUrl:        gatewayUrl,
+		UseLogsNewSchema:  useLogsNewSchema,
 	}
 
 	// Read the jwt secret key

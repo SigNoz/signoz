@@ -135,7 +135,7 @@ type ClickHouseReader struct {
 	liveTailRefreshSeconds int
 	cluster                string
 
-	ForceLogsNewSchema bool
+	UseLogsNewSchema bool
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -147,7 +147,7 @@ func NewReader(
 	maxOpenConns int,
 	dialTimeout time.Duration,
 	cluster string,
-	forceLogsNewSchema bool,
+	useLogsNewSchema bool,
 ) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
@@ -158,7 +158,7 @@ func NewReader(
 		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
 	}
 
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, forceLogsNewSchema)
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema)
 }
 
 func NewReaderFromClickhouseConnection(
@@ -168,7 +168,7 @@ func NewReaderFromClickhouseConnection(
 	configFile string,
 	featureFlag interfaces.FeatureLookup,
 	cluster string,
-	forceLogsNewSchema bool,
+	useLogsNewSchema bool,
 ) *ClickHouseReader {
 	alertManager, err := am.New("")
 	if err != nil {
@@ -227,7 +227,7 @@ func NewReaderFromClickhouseConnection(
 		featureFlags:            featureFlag,
 		cluster:                 cluster,
 		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
-		ForceLogsNewSchema:      forceLogsNewSchema,
+		UseLogsNewSchema:        useLogsNewSchema,
 	}
 }
 
@@ -3523,7 +3523,7 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 
 	statements := []model.ShowCreateTableStatement{}
 	table := r.logsLocalTable
-	if r.ForceLogsNewSchema {
+	if r.UseLogsNewSchema {
 		table = r.logsLocalTableV2
 	}
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, table)
@@ -3567,7 +3567,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 	// if a field is selected it means that the field needs to be indexed
 	if field.Selected {
 		// create materialized column
-		if r.ForceLogsNewSchema {
+		if r.UseLogsNewSchema {
 			colname := utils.GetClickhouseColumnNameV2(field.Type, field.DataType, field.Name)
 
 			dataType := strings.ToLower(field.DataType)
@@ -4222,10 +4222,10 @@ func (r *ClickHouseReader) GetLatestReceivedMetric(
 	return result, nil
 }
 
-func isColumn(forceLogsNewSchema bool, tableStatement, attrType, field, datType string) bool {
+func isColumn(useLogsNewSchema bool, tableStatement, attrType, field, datType string) bool {
 	// value of attrType will be `resource` or `tag`, if `tag` change it to `attribute`
 	var name string
-	if forceLogsNewSchema {
+	if useLogsNewSchema {
 		name = utils.GetClickhouseColumnName(attrType, datType, field)
 	} else {
 		name = utils.GetClickhouseColumnName(attrType, datType, field)
@@ -4286,7 +4286,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 
 	statements := []model.ShowCreateTableStatement{}
 	table := r.logsLocalTable
-	if r.ForceLogsNewSchema {
+	if r.UseLogsNewSchema {
 		table = r.logsLocalTableV2
 	}
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, table)
@@ -4306,7 +4306,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
 			Type:     v3.AttributeKeyType(attType),
-			IsColumn: isColumn(r.ForceLogsNewSchema, statements[0].Statement, attType, tagKey, dataType),
+			IsColumn: isColumn(r.UseLogsNewSchema, statements[0].Statement, attType, tagKey, dataType),
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -4344,7 +4344,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 
 	statements := []model.ShowCreateTableStatement{}
 	table := r.logsLocalTable
-	if r.ForceLogsNewSchema {
+	if r.UseLogsNewSchema {
 		table = r.logsLocalTableV2
 	}
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, table)
@@ -4365,7 +4365,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 			Key:      attributeKey,
 			DataType: v3.AttributeKeyDataType(attributeDataType),
 			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn(r.ForceLogsNewSchema, statements[0].Statement, tagType, attributeKey, attributeDataType),
+			IsColumn: isColumn(r.UseLogsNewSchema, statements[0].Statement, tagType, attributeKey, attributeDataType),
 		}
 
 		response.AttributeKeys = append(response.AttributeKeys, key)
@@ -4422,7 +4422,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 	searchText := fmt.Sprintf("%%%s%%", req.SearchText)
 	table := r.logsLocalTable
-	if r.ForceLogsNewSchema {
+	if r.UseLogsNewSchema {
 		table = r.logsLocalTableV2
 	}
 

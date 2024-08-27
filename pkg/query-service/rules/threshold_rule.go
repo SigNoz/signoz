@@ -119,7 +119,7 @@ type ThresholdRuleOpts struct {
 	// after the timestamp.
 	EvalDelay time.Duration
 
-	ForceLogsNewSchema bool
+	UseLogsNewSchema bool
 }
 
 func NewThresholdRule(
@@ -161,19 +161,19 @@ func NewThresholdRule(
 	}
 
 	querierOption := querier.QuerierOptions{
-		Reader:             reader,
-		Cache:              nil,
-		KeyGenerator:       queryBuilder.NewKeyGenerator(),
-		FeatureLookup:      featureFlags,
-		ForceLogsNewSchema: opts.ForceLogsNewSchema,
+		Reader:           reader,
+		Cache:            nil,
+		KeyGenerator:     queryBuilder.NewKeyGenerator(),
+		FeatureLookup:    featureFlags,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:             reader,
-		Cache:              nil,
-		KeyGenerator:       queryBuilder.NewKeyGenerator(),
-		FeatureLookup:      featureFlags,
-		ForceLogsNewSchema: opts.ForceLogsNewSchema,
+		Reader:           reader,
+		Cache:            nil,
+		KeyGenerator:     queryBuilder.NewKeyGenerator(),
+		FeatureLookup:    featureFlags,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 
 	t.querier = querier.NewQuerier(querierOption)

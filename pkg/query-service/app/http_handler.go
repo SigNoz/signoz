@@ -143,7 +143,7 @@ type APIHandlerOpts struct {
 	FluxInterval time.Duration
 
 	// Force Logs New schema
-	ForceLogsNewSchema bool
+	UseLogsNewSchema bool
 }
 
 // NewAPIHandler returns an APIHandler
@@ -155,21 +155,21 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	querierOpts := querier.QuerierOptions{
-		Reader:             opts.Reader,
-		Cache:              opts.Cache,
-		KeyGenerator:       queryBuilder.NewKeyGenerator(),
-		FluxInterval:       opts.FluxInterval,
-		FeatureLookup:      opts.FeatureFlags,
-		ForceLogsNewSchema: opts.ForceLogsNewSchema,
+		Reader:           opts.Reader,
+		Cache:            opts.Cache,
+		KeyGenerator:     queryBuilder.NewKeyGenerator(),
+		FluxInterval:     opts.FluxInterval,
+		FeatureLookup:    opts.FeatureFlags,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:             opts.Reader,
-		Cache:              opts.Cache,
-		KeyGenerator:       queryBuilder.NewKeyGenerator(),
-		FluxInterval:       opts.FluxInterval,
-		FeatureLookup:      opts.FeatureFlags,
-		ForceLogsNewSchema: opts.ForceLogsNewSchema,
+		Reader:           opts.Reader,
+		Cache:            opts.Cache,
+		KeyGenerator:     queryBuilder.NewKeyGenerator(),
+		FluxInterval:     opts.FluxInterval,
+		FeatureLookup:    opts.FeatureFlags,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
@@ -194,7 +194,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
-	if opts.ForceLogsNewSchema {
+	if opts.UseLogsNewSchema {
 		logsQueryBuilder = logsv4.PrepareLogsQuery
 	}
 
