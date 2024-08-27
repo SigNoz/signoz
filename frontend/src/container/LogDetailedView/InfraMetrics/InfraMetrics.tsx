@@ -15,10 +15,10 @@ import { useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
-import { JSONViewProps } from '../LogDetailedView.types';
+import { InfraMetricsSProps } from '../LogDetailedView.types';
 import { cardTitles, getQueryPayload } from './constants';
 
-function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
+function InfraMetrics({ logData }: InfraMetricsSProps): JSX.Element {
 	const { start, end } = getStartEndRangeTime({
 		type: 'GLOBAL_TIME',
 		interval: '3h',
@@ -33,7 +33,6 @@ function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
 		? (logData.resources_string?.['k8s.pod.name'] as string)
 		: '';
 
-	console.log(clusterName, podName);
 	const queries = useQueries(
 		getQueryPayload(clusterName, podName).map((payload) => ({
 			queryKey: ['metrics', payload, ENTITY_VERSION_V4],
@@ -52,6 +51,16 @@ function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
 		[queries],
 	);
 
+	const getYAxisUnit = (idx: number): string => {
+		if (idx === 1 || idx === 3) {
+			return 'bytes';
+		}
+		if (idx === 2) {
+			return 'binBps';
+		}
+		return '';
+	};
+
 	const options = useMemo(
 		() =>
 			queries.map(({ data }, idx) =>
@@ -63,7 +72,7 @@ function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
 					maxTimeScale,
 					softMax: null,
 					softMin: null,
-					yAxisUnit: idx === 1 || idx === 2 || idx === 3 ? 'bytes' : '',
+					yAxisUnit: getYAxisUnit(idx),
 				}),
 			),
 		[queries, isDarkMode, dimensions, minTimeScale, maxTimeScale],
@@ -98,7 +107,7 @@ function InfraMetrics({ logData }: JSONViewProps): JSX.Element {
 						<Card
 							bordered
 							className={cx('infra-metrics-card', {
-								'no-data':
+								'no-data-card':
 									!query.isLoading && !query?.data?.payload?.data?.result?.length,
 							})}
 							ref={graphRef}
