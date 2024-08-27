@@ -71,7 +71,15 @@ function MessagingQueues(): JSX.Element {
 							</p>
 						</div>
 						<div className="button-grp">
-							<Button type="default">Get Started</Button>
+							<Button
+								type="default"
+								onClick={(): void =>
+									history.push('/get-started/application-monitoring')
+								}
+								// todo-sagar check for cloud condition
+							>
+								Get Started
+							</Button>
 							<Button type="text">Docs</Button>
 						</div>
 					</div>
@@ -83,7 +91,14 @@ function MessagingQueues(): JSX.Element {
 							</p>
 						</div>
 						<div className="button-grp">
-							<Button type="default">Get Started</Button>
+							<Button
+								type="default"
+								onClick={(): void =>
+									history.push('/get-started/application-monitoring')
+								}
+							>
+								Get Started
+							</Button>
 							<Button type="text">Docs</Button>
 						</div>
 					</div>
@@ -95,7 +110,14 @@ function MessagingQueues(): JSX.Element {
 							</p>
 						</div>
 						<div className="button-grp">
-							<Button type="default">Get Started</Button>
+							<Button
+								type="default"
+								onClick={(): void =>
+									history.push('/get-started/infrastructure-monitoring')
+								}
+							>
+								Get Started
+							</Button>
 							<Button type="text">Docs</Button>
 						</div>
 					</div>
