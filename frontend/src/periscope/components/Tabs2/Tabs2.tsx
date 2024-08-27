@@ -1,6 +1,7 @@
 import './tabs2.styles.scss';
 
 import { Button } from 'antd';
+import { TimelineFilter } from 'container/AlertHistory/types';
 import { Undo } from 'lucide-react';
 import { useState } from 'react';
 
@@ -13,9 +14,10 @@ interface Tab {
 
 interface TimelineTabsProps {
 	tabs: Tab[];
-	onSelectTab?: (selectedTab: string) => void;
+	onSelectTab?: (selectedTab: TimelineFilter) => void;
 	initialSelectedTab?: string;
 	hasResetButton?: boolean;
+	buttonMinWidth?: string;
 }
 
 function Tabs2({
@@ -23,6 +25,7 @@ function Tabs2({
 	onSelectTab,
 	initialSelectedTab,
 	hasResetButton,
+	buttonMinWidth = '114px',
 }: TimelineTabsProps): JSX.Element {
 	const [selectedTab, setSelectedTab] = useState<string>(
 		initialSelectedTab || tabs[0].value,
@@ -31,17 +34,17 @@ function Tabs2({
 	const handleTabClick = (tabValue: string): void => {
 		setSelectedTab(tabValue);
 		if (onSelectTab) {
-			onSelectTab(tabValue);
+			onSelectTab(tabValue as TimelineFilter);
 		}
 	};
 
 	return (
 		<div className="tabs-wrapper">
-			{hasResetButton && selectedTab !== initialSelectedTab && (
+			{hasResetButton && selectedTab !== tabs[0].value && (
 				<Button
 					value="Reset"
-					className="tab"
-					onClick={(): void => handleTabClick(initialSelectedTab || tabs[0].value)}
+					className="tab reset-button"
+					onClick={(): void => handleTabClick(tabs[0].value)}
 					icon={<Undo size={14} color="var(--text-vanilla-400)" />}
 				>
 					Reset
@@ -56,6 +59,7 @@ function Tabs2({
 						onClick={(): void => handleTabClick(tab.value)}
 						disabled={tab.disabled}
 						icon={tab.icon}
+						style={{ minWidth: buttonMinWidth }}
 					>
 						{tab.label}
 					</Button>
@@ -69,6 +73,7 @@ Tabs2.defaultProps = {
 	initialSelectedTab: '',
 	onSelectTab: (): void => {},
 	hasResetButton: false,
+	buttonMinWidth: '114px',
 };
 
 export default Tabs2;

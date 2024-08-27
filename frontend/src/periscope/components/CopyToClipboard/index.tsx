@@ -1,6 +1,7 @@
 import './copyToClipboard.styles.scss';
 
 import { Button } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { CircleCheck, Link2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
@@ -8,6 +9,7 @@ import { useCopyToClipboard } from 'react-use';
 function CopyToClipboard({ textToCopy }: { textToCopy: string }): JSX.Element {
 	const [state, copyToClipboard] = useCopyToClipboard();
 	const [success, setSuccess] = useState(false);
+	const isDarkMode = useIsDarkMode();
 
 	useEffect(() => {
 		let timer: string | number | NodeJS.Timeout | undefined;
@@ -35,7 +37,12 @@ function CopyToClipboard({ textToCopy }: { textToCopy: string }): JSX.Element {
 		<Button
 			type="text"
 			// eslint-disable-next-line jsx-a11y/anchor-is-valid
-			icon={<Link2 size={16} color="var(--bg-vanilla-400)" />}
+			icon={
+				<Link2
+					size={16}
+					color={isDarkMode ? 'var(--bg-vanilla-400)' : 'var(--text-ink-400'}
+				/>
+			}
 			onClick={(): void => copyToClipboard(textToCopy)}
 			className="copy-to-clipboard"
 		>

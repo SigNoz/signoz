@@ -1,17 +1,25 @@
-import './totalTriggeredCard.styles.scss';
+import { AlertRuleStats } from 'types/api/alerts/def';
 
-import { statsData } from '../mocks';
 import StatsCard from '../StatsCard/StatsCard';
 
-function TotalTriggeredCard(): JSX.Element {
+type TotalTriggeredCardProps = {
+	totalCurrentTriggers: AlertRuleStats['totalCurrentTriggers'];
+	totalPastTriggers: AlertRuleStats['totalPastTriggers'];
+	timeSeries: AlertRuleStats['currentTriggersSeries']['values'];
+};
+
+function TotalTriggeredCard({
+	totalCurrentTriggers,
+	totalPastTriggers,
+	timeSeries,
+}: TotalTriggeredCardProps): JSX.Element {
 	return (
-		<div className="total-triggered-card">
-			<StatsCard
-				totalCurrentCount={statsData.currentAvgResolutionTime}
-				totalPastCount={statsData.pastAvgResolutionTime}
-				title="Total Triggered"
-			/>
-		</div>
+		<StatsCard
+			totalCurrentCount={totalCurrentTriggers}
+			totalPastCount={totalPastTriggers}
+			title="Total Triggered"
+			timeSeries={timeSeries}
+		/>
 	);
 }
 

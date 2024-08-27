@@ -1,10 +1,11 @@
 .stats-card {
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
+	width: 21.7%;
 	border-right: 1px solid var(--bg-slate-500);
-	padding: 9px 12px;
+	padding: 9px 12px 13px;
+
+	&--empty {
+		justify-content: normal;
+	}
 
 	&__title-wrapper {
 		display: flex;
@@ -53,13 +54,6 @@
 		.graph {
 			width: 100%;
 			height: 72px;
-			background: #ffffff1f;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			.graph-icon {
-				font-size: 2rem;
-			}
 		}
 	}
 }
@@ -74,18 +68,45 @@
 
 	&--success {
 		background: rgba(37, 225, 146, 0.1);
+		color: var(--bg-forest-500);
 	}
 	&--error {
 		background: rgba(229, 72, 77, 0.1);
+		color: var(--bg-cherry-500);
+	}
+	&--no-previous-data {
+		color: var(--text-robin-500);
+		background: rgba(78, 116, 248, 0.1);
+		padding: 4px 16px;
 	}
 	&__icon {
 		display: flex;
 		align-self: center;
 	}
 	&__label {
-		color: var(--bg-forest-500);
 		font-size: 12px;
 		font-weight: 500;
 		line-height: 16px;
+	}
+}
+
+.lightMode {
+	.stats-card {
+		border-color: var(--bg-vanilla-300);
+		&__title-wrapper {
+			.title {
+				color: var(--text-ink-400);
+			}
+			.duration-indicator {
+				.text {
+					color: var(--text-ink-200);
+				}
+			}
+		}
+		&__stats {
+			.count-label {
+				color: var(--text-ink-100);
+			}
+		}
 	}
 }

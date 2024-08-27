@@ -1,87 +1,63 @@
 import './table.styles.scss';
 
-import { Table, Typography } from 'antd';
-import { ColumnsType } from 'antd/es/table';
-import AlertPopover from 'container/AlertHistory/AlertPopover/AlertPopover';
-import { timelineData } from 'container/AlertHistory/Statistics/mocks';
-import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
-import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
-import { formatEpochTimestamp } from 'utils/timeUtils';
+import { Table } from 'antd';
+import { QueryParams } from 'constants/query';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { useTimelineTable } from 'pages/AlertDetails/hooks';
+import { useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
+import { useLocation } from 'react-router-dom';
+import { PayloadProps } from 'types/api/alerts/get';
 
-interface DataType {
-	state: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	labels: Record<string, any>;
-	value: number;
-	unixMilli: string;
-}
+import { TimelineTableProps } from './types';
+import { timelineTableColumns } from './useTimelineTable';
 
-const columns: ColumnsType<DataType> = [
-	{
-		title: 'STATE',
-		dataIndex: 'state',
-		render: (value): JSX.Element => (
-			<AlertPopover>
-				<div className="alert-rule-state">
-					<AlertState state={value} showLabel />
-				</div>
-			</AlertPopover>
-		),
-	},
-	{
-		title: 'LABELS',
-		dataIndex: 'labels',
-		render: (labels): JSX.Element => (
-			<AlertPopover>
-				<div className="alert-rule-labels">
-					<AlertLabels labels={labels} />
-				</div>
-			</AlertPopover>
-		),
-	},
-	{
-		title: 'VALUE',
-		dataIndex: 'value',
-		render: (value): JSX.Element => (
-			<AlertPopover>
-				<div className="alert-rule-value">{value}</div>
-			</AlertPopover>
-		),
-	},
-	{
-		title: 'CREATED AT',
-		dataIndex: 'unixMilli',
-		render: (value): JSX.Element => (
-			<AlertPopover>
-				<div className="alert-rule-created-at">{formatEpochTimestamp(value)}</div>
-			</AlertPopover>
-		),
-	},
-];
+function TimelineTable({
+	timelineData,
+	totalItems,
+}: TimelineTableProps): JSX.Element {
+	const [searchText, setSearchText] = useState('');
+	const { paginationConfig, onChangeHandler } = useTimelineTable({ totalItems });
 
-const showPaginationItem = (total: number, range: number[]): JSX.Element => (
-	<>
-		<Typography.Text className="numbers">
-			{range[0]} &#8212; {range[1]}
-		</Typography.Text>
-		<Typography.Text className="total"> of {total}</Typography.Text>
-	</>
-);
+	const visibleTimelineData = useMemo(() => {
+		if (searchText === '') {
+			return timelineData;
+		}
+		return timelineData.filter((data) =>
+			JSON.stringify(data.labels).toLowerCase().includes(searchText.toLowerCase()),
+		);
+	}, [searchText, timelineData]);
 
-function TimelineTable(): JSX.Element {
-	const paginationConfig = timelineData.length > 20 && {
-		pageSize: 20,
-		showTotal: showPaginationItem,
-		showSizeChanger: false,
-		hideOnSinglePage: true,
-	};
+	const queryClient = useQueryClient();
+
+	const { search } = useLocation();
+	const params = new URLSearchParams(search);
+
+	const ruleId = params.get(QueryParams.ruleId);
+
+	const { currentUnit, targetUnit } = useMemo(() => {
+		const alertDetailsQuery = queryClient.getQueryData([
+			REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+			ruleId,
+		]) as {
+			payload: PayloadProps;
+		};
+		const condition = alertDetailsQuery?.payload?.data?.condition;
+		const { targetUnit } = condition ?? {};
+		const { unit: currentUnit } = condition?.compositeQuery ?? {};
+
+		return { currentUnit, targetUnit };
+	}, [queryClient, ruleId]);
+
 	return (
 		<div className="timeline-table">
 			<Table
-				columns={columns}
-				dataSource={timelineData}
+				rowKey={(row): string => `${row.fingerprint}-${row.value}`}
+				columns={timelineTableColumns(setSearchText, currentUnit, targetUnit)}
+				dataSource={visibleTimelineData}
 				pagination={paginationConfig}
 				size="middle"
+				onChange={onChangeHandler}
 			/>
 		</div>
 	);

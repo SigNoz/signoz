@@ -1,5 +1,7 @@
 import get from 'api/alerts/get';
 import Spinner from 'components/Spinner';
+import { QueryParams } from 'constants/query';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import EditRulesContainer from 'container/EditRules';
 import { useNotifications } from 'hooks/useNotifications';
@@ -12,14 +14,14 @@ import { useLocation } from 'react-router-dom';
 function EditRules(): JSX.Element {
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
-	const ruleId = params.get('ruleId');
+	const ruleId = params.get(QueryParams.ruleId);
 
 	const { t } = useTranslation('common');
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
 	const { isLoading, data, isRefetching, isError } = useQuery(
-		['ruleId', ruleId],
+		[REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId],
 		{
 			queryFn: () =>
 				get({

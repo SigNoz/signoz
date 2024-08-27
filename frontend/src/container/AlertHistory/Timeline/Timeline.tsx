@@ -1,10 +1,44 @@
 import './timeline.styles.scss';
 
-import Graph from './Graph/Graph';
+import { useGetAlertRuleDetailsTimelineTable } from 'pages/AlertDetails/hooks';
+import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
+
+import GraphWrapper from './GraphWrapper/GraphWrapper';
 import TimelineTable from './Table/Table';
 import TabsAndFilters from './TabsAndFilters/TabsAndFilters';
 
-function Timeline(): JSX.Element {
+function TimelineTableRenderer(): JSX.Element {
+	const {
+		isLoading,
+		isRefetching,
+		isError,
+		data,
+		isValidRuleId,
+		ruleId,
+	} = useGetAlertRuleDetailsTimelineTable();
+
+	return (
+		<DataStateRenderer
+			isLoading={isLoading}
+			isRefetching={isRefetching}
+			isError={isError || !isValidRuleId || !ruleId}
+			data={data?.payload?.data || null}
+		>
+			{(timelineData): JSX.Element => (
+				<TimelineTable
+					timelineData={timelineData.items}
+					totalItems={timelineData.total}
+				/>
+			)}
+		</DataStateRenderer>
+	);
+}
+
+function Timeline({
+	totalCurrentTriggers,
+}: {
+	totalCurrentTriggers: number;
+}): JSX.Element {
 	return (
 		<div className="timeline">
 			<div className="timeline__title">Timeline</div>
@@ -12,10 +46,10 @@ function Timeline(): JSX.Element {
 				<TabsAndFilters />
 			</div>
 			<div className="timeline__graph">
-				<Graph />
+				<GraphWrapper totalCurrentTriggers={totalCurrentTriggers} />
 			</div>
 			<div className="timeline__table">
-				<TimelineTable />
+				<TimelineTableRenderer />
 			</div>
 		</div>
 	);

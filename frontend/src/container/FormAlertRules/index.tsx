@@ -19,6 +19,7 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
@@ -369,7 +370,7 @@ function FormAlertRules({
 				});
 
 				// invalidate rule in cache
-				ruleCache.invalidateQueries(['ruleId', ruleId]);
+				ruleCache.invalidateQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 
 				// eslint-disable-next-line sonarjs/no-identical-functions
 				setTimeout(() => {

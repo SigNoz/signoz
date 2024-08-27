@@ -1,17 +1,27 @@
-import './averageResolutionCard.styles.scss';
+import { AlertRuleStats } from 'types/api/alerts/def';
+import { formatTime } from 'utils/timeUtils';
 
-import { statsData } from '../mocks';
 import StatsCard from '../StatsCard/StatsCard';
 
-function AverageResolutionCard(): JSX.Element {
+type TotalTriggeredCardProps = {
+	currentAvgResolutionTime: AlertRuleStats['currentAvgResolutionTime'];
+	pastAvgResolutionTime: AlertRuleStats['pastAvgResolutionTime'];
+	timeSeries: AlertRuleStats['currentAvgResolutionTimeSeries']['values'];
+};
+
+function AverageResolutionCard({
+	currentAvgResolutionTime,
+	pastAvgResolutionTime,
+	timeSeries,
+}: TotalTriggeredCardProps): JSX.Element {
 	return (
-		<div className="average-resolution-card">
-			<StatsCard
-				totalCurrentCount={statsData.totalCurrentTriggers}
-				totalPastCount={statsData.totalPastTriggers}
-				title="Avg. Resolution Time"
-			/>
-		</div>
+		<StatsCard
+			displayValue={formatTime(currentAvgResolutionTime)}
+			totalCurrentCount={currentAvgResolutionTime}
+			totalPastCount={pastAvgResolutionTime}
+			title="Avg. Resolution Time"
+			timeSeries={timeSeries}
+		/>
 	);
 }
 
