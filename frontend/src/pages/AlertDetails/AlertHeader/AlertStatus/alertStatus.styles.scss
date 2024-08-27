@@ -14,3 +14,9 @@
 		gap: 3px;
 	}
 }
+
+.lightMode {
+	.alert-status-info {
+		color: var(--text-ink-400);
+	}
+}
