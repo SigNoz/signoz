@@ -188,6 +188,10 @@
 		display: none;
 	}
 
+	.nav-item-beta {
+		display: none;
+	}
+
 	&:hover {
 		flex: 0 0 240px;
 		max-width: 240px;
@@ -220,6 +224,10 @@
 		.nav-item-label {
 			display: block;
 		}
+
+		.nav-item-beta {
+			display: block;
+		}
 	}
 
 	&.docked {
@@ -247,6 +255,10 @@
 		}
 
 		.nav-item-label {
+			display: block;
+		}
+
+		.nav-item-beta {
 			display: block;
 		}
 	}

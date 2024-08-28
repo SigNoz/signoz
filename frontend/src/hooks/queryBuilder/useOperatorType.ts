@@ -6,7 +6,7 @@ export type OperatorType =
 	| 'NON_VALUE'
 	| 'NOT_VALID';
 
-const operatorTypeMapper: Record<string, OperatorType> = {
+export const operatorTypeMapper: Record<string, OperatorType> = {
 	[OPERATORS.IN]: 'MULTIPLY_VALUE',
 	[OPERATORS.NIN]: 'MULTIPLY_VALUE',
 	[OPERATORS.EXISTS]: 'NON_VALUE',

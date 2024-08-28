@@ -20,7 +20,7 @@ var (
 )
 
 func ParseJWT(jwtStr string) (jwt.MapClaims, error) {
-	// TODO[@vikrantgupta25] : to update this to the claims check function for better integrity of JWT 
+	// TODO[@vikrantgupta25] : to update this to the claims check function for better integrity of JWT
 	// reference - https://pkg.go.dev/github.com/golang-jwt/jwt/v5#Parser.ParseWithClaims
 	token, err := jwt.Parse(jwtStr, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -53,7 +53,7 @@ func validateUser(tok string) (*model.UserPayload, error) {
 
 	var orgId string
 	if claims["orgId"] != nil {
-		orgId = claims["orgId"].(string)		
+		orgId = claims["orgId"].(string)
 	}
 
 	return &model.UserPayload{
@@ -83,7 +83,22 @@ func ExtractJwtFromContext(ctx context.Context) (string, bool) {
 }
 
 func ExtractJwtFromRequest(r *http.Request) (string, error) {
-	return jwtmiddleware.FromAuthHeader(r)
+	authHeaderJwt, err := jwtmiddleware.FromAuthHeader(r)
+	if err != nil {
+		return "", err
+	}
+
+	if len(authHeaderJwt) > 0 {
+		return authHeaderJwt, nil
+	}
+
+	// We expect websocket connections to send auth JWT in the
+	// `Sec-Websocket-Protocol` header.
+	//
+	// The standard js websocket API doesn't allow setting headers
+	// other than the `Sec-WebSocket-Protocol` header, which is often
+	// used for auth purposes as a result.
+	return r.Header.Get("Sec-WebSocket-Protocol"), nil
 }
 
 func ExtractUserIdFromContext(ctx context.Context) (string, error) {

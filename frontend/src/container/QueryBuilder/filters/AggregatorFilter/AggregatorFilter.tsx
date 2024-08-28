@@ -62,7 +62,9 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				dataSource: query.dataSource,
 			}),
 		{
-			enabled: !!query.aggregateOperator && !!query.dataSource,
+			enabled:
+				query.dataSource === DataSource.METRICS ||
+				(!!query.aggregateOperator && !!query.dataSource),
 			onSuccess: (data) => {
 				const options: ExtendedSelectOption[] =
 					data?.payload?.attributeKeys?.map(({ id: _, ...item }) => ({
