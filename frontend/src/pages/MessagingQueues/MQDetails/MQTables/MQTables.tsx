@@ -24,10 +24,15 @@ import { useHistory } from 'react-router-dom';
 import {
 	ConsumerLagPayload,
 	getConsumerLagDetails,
+	MessagingQueuesPayloadProps,
 } from './getConsumerLagDetails';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-export function getColumns(data: any, history: History<unknown>): any[] {
+export function getColumns(
+	data: MessagingQueuesPayloadProps['payload'],
+	history: History<unknown>,
+): RowData[] {
+	console.log(data);
 	if (data?.result?.length === 0) {
 		return [];
 	}
@@ -36,29 +41,29 @@ export function getColumns(data: any, history: History<unknown>): any[] {
 		title: string;
 		dataIndex: string;
 		key: string;
-	}[] = data?.result?.[0]?.table?.columns.map((clm: any) => ({
-		title: convertToTitleCase(clm.name),
-		dataIndex: clm.name,
-		key: clm.name,
+	}[] = data?.result?.[0]?.table?.columns.map((column) => ({
+		title: convertToTitleCase(column.name),
+		dataIndex: column.name,
+		key: column.name,
 		render: [
 			'p99',
 			'error_rate',
 			'throughput',
 			'avg_msg_size',
 			'error_percentage',
-		].includes(clm.name)
+		].includes(column.name)
 			? (value: number | string): string => {
 					if (!isNumber(value)) return value.toString();
 					return (typeof value === 'string' ? parseFloat(value) : value).toFixed(3);
 			  }
 			: (text: string): ColumnTypeRender<Record<string, unknown>> => ({
 					children:
-						clm.name === 'service_name' ? (
+						column.name === 'service_name' ? (
 							<Typography.Link
 								onClick={(e): void => {
 									e.preventDefault();
 									e.stopPropagation();
-									history.push(`/services/${text}`);
+									history.push(`/services/${encodeURIComponent(text)}`);
 								}}
 							>
 								{text}
@@ -72,17 +77,20 @@ export function getColumns(data: any, history: History<unknown>): any[] {
 	return columns;
 }
 
-export function getTableData(data: any): any[] {
+export function getTableData(
+	data: MessagingQueuesPayloadProps['payload'],
+): RowData[] {
 	if (data?.result?.length === 0) {
 		return [];
 	}
 
-	const tableData: RowData[] = data?.result?.[0]?.table?.rows.map(
-		(row: any, index: number): RowData => ({
-			key: index,
-			...row.data,
-		}),
-	);
+	const tableData: RowData[] =
+		data?.result?.[0]?.table?.rows?.map(
+			(row, index: number): RowData => ({
+				...row.data,
+				key: index,
+			}),
+		) || [];
 
 	return tableData;
 }
@@ -127,8 +135,8 @@ function MessagingQueuesTable({
 
 	const props: ConsumerLagPayload = useMemo(
 		() => ({
-			start: timelineQueryData?.start,
-			end: timelineQueryData?.end,
+			start: (timelineQueryData?.start || 0) * 1e9,
+			end: (timelineQueryData?.end || 0) * 1e9,
 			variables: {
 				partition: timelineQueryData?.partition,
 				topic: timelineQueryData?.topic,
@@ -149,8 +157,10 @@ function MessagingQueuesTable({
 		getConsumerLagDetails,
 		{
 			onSuccess: (data) => {
-				setColumns(getColumns(data?.payload, history));
-				setTableData(getTableData(data?.payload));
+				if (data.payload) {
+					setColumns(getColumns(data?.payload, history));
+					setTableData(getTableData(data?.payload));
+				}
 			},
 			onError: handleConsumerDetailsOnError,
 		},

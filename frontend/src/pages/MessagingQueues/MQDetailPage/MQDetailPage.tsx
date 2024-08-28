@@ -1,6 +1,7 @@
 import '../MessagingQueues.styles.scss';
 
-import { Flex, Select } from 'antd';
+import { Select, Typography } from 'antd';
+import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { ListMinus } from 'lucide-react';
 import { useHistory } from 'react-router-dom';
@@ -21,14 +22,15 @@ function MQDetailPage(): JSX.Element {
 
 	return (
 		<div className="messaging-queue-container">
-			<Flex
-				className="messaging-breadcrumb"
-				onClick={(): void => history.push('/messaging-queues')}
-				style={{ cursor: 'pointer' }}
-			>
+			<div className="messaging-breadcrumb">
 				<ListMinus size={16} />
-				Messaging Queues
-			</Flex>
+				<Typography.Text
+					onClick={(): void => history.push(ROUTES.MESSAGING_QUEUES)}
+					className="message-queue-text"
+				>
+					Messaging Queues
+				</Typography.Text>
+			</div>
 			<div className="messaging-header">
 				<div className="header-config">
 					Kafka / views /

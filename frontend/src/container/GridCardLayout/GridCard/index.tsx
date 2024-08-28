@@ -33,7 +33,7 @@ function GridCardGraph({
 	version,
 	onClickHandler,
 	onDragSelect,
-	isMessagingQueueCustomTooltipText,
+	customTooltipElement,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -216,7 +216,7 @@ function GridCardGraph({
 					setRequestData={setRequestData}
 					onClickHandler={onClickHandler}
 					onDragSelect={onDragSelect}
-					isMessagingQueueCustomTooltipText={isMessagingQueueCustomTooltipText}
+					customTooltipElement={customTooltipElement}
 				/>
 			)}
 		</div>

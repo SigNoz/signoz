@@ -15,7 +15,7 @@ function PanelWrapper({
 	onDragSelect,
 	selectedGraph,
 	tableProcessedDataRef,
-	isMessagingQueueCustomTooltipText,
+	customTooltipElement,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		selectedGraph || widget.panelTypes
@@ -38,7 +38,7 @@ function PanelWrapper({
 			onDragSelect={onDragSelect}
 			selectedGraph={selectedGraph}
 			tableProcessedDataRef={tableProcessedDataRef}
-			isMessagingQueueCustomTooltipText={isMessagingQueueCustomTooltipText}
+			customTooltipElement={customTooltipElement}
 		/>
 	);
 }

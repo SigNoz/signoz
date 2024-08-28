@@ -35,6 +35,15 @@ function MessagingQueuesGraph(): JSX.Element {
 	const history = useHistory();
 	const location = useLocation();
 
+	const messagingQueueCustomTooltipText = (): HTMLDivElement => {
+		const customText = document.createElement('div');
+		customText.textContent = 'Click on co-ordinate to view details';
+		customText.style.paddingTop = '8px';
+		customText.style.paddingBottom = '2px';
+		customText.style.color = '#fff';
+		return customText;
+	};
+
 	return (
 		<Card
 			isDarkMode={isDarkMode}
@@ -47,7 +56,7 @@ function MessagingQueuesGraph(): JSX.Element {
 				onClickHandler={(xValue, _yValue, _mouseX, _mouseY, data): void => {
 					setSelectedTimelineQuery(urlQuery, xValue, location, history, data);
 				}}
-				isMessagingQueueCustomTooltipText
+				customTooltipElement={messagingQueueCustomTooltipText()}
 			/>
 		</Card>
 	);

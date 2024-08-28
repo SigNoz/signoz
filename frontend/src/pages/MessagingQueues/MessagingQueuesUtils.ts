@@ -17,7 +17,7 @@ export function convertToTitleCase(text: string): string {
 }
 
 export type RowData = {
-	key: string;
+	key: string | number;
 	[key: string]: string | number;
 };
 
