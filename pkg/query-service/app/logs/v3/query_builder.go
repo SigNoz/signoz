@@ -455,7 +455,7 @@ func having(items []v3.Having) string {
 	return strings.Join(having, " AND ")
 }
 
-func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v3.AggregateOperator) (string, error) {
+func reduceQuery(query string, reduceTo v3.ReduceToOperator, _ v3.AggregateOperator) (string, error) {
 	// the timestamp picked is not relevant here since the final value used is show the single
 	// chart with just the query value.
 	switch reduceTo {

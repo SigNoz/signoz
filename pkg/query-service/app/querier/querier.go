@@ -459,7 +459,15 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
 
-	queries, err := q.builder.PrepareQueries(params, keys)
+	queries := make(map[string]string)
+	var err error
+	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		queries, err = q.builder.PrepareQueries(params, keys)
+	} else if params.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+		for name, chQuery := range params.CompositeQuery.ClickHouseQueries {
+			queries[name] = chQuery.Query
+		}
+	}
 
 	if err != nil {
 		return nil, nil, err
@@ -528,7 +536,11 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 		case v3.QueryTypePromQL:
 			results, errQueriesByName, err = q.runPromQueries(ctx, params)
 		case v3.QueryTypeClickHouseSQL:
-			results, errQueriesByName, err = q.runClickHouseQueries(ctx, params)
+			if params.CompositeQuery.PanelType == v3.PanelTypeList || params.CompositeQuery.PanelType == v3.PanelTypeTrace {
+				results, errQueriesByName, err = q.runBuilderListQueries(ctx, params, keys)
+			} else {
+				results, errQueriesByName, err = q.runClickHouseQueries(ctx, params)
+			}
 		default:
 			err = fmt.Errorf("invalid query type")
 		}

@@ -7,6 +7,8 @@ var (
 	ErrResourceBytesLimitExceeded = NewResourceLimitError(errors.New("resource bytes limit exceeded, try applying filters such as service.name, etc. to reduce the data size"))
 	// ErrResourceTimeLimitExceeded is returned when the resource time limit is exceeded
 	ErrResourceTimeLimitExceeded = NewResourceLimitError(errors.New("resource time limit exceeded, try applying filters such as service.name, etc. to reduce the data size"))
+	// ErrResourceRowsLimitExceeded is returned when the resource rows limit is exceeded
+	ErrResourceRowsLimitExceeded = NewResourceLimitError(errors.New("resource rows limit exceeded, try applying filters such as serviceName='my-service', etc. to reduce the rows count or paginate the results"))
 )
 
 type ResourceLimitError struct {
