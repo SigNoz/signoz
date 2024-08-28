@@ -1,5 +1,6 @@
 import './StatsCard.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ArrowDownLeft, ArrowUpRight, Calendar } from 'lucide-react';
 import { AlertRuleStats } from 'types/api/alerts/def';
@@ -21,7 +22,7 @@ function ChangePercentage({
 		return (
 			<div className="change-percentage change-percentage--success">
 				<div className="change-percentage__icon">
-					<ArrowDownLeft size={14} color="var(--bg-forest-500)" />
+					<ArrowDownLeft size={14} color={Color.BG_FOREST_500} />
 				</div>
 				<div className="change-percentage__label">
 					{percentage}% vs Last {duration}
@@ -33,7 +34,7 @@ function ChangePercentage({
 		return (
 			<div className="change-percentage change-percentage--error">
 				<div className="change-percentage__icon">
-					<ArrowUpRight size={14} color="var(--bg-cherry-500)" />
+					<ArrowUpRight size={14} color={Color.BG_CHERRY_500} />
 				</div>
 				<div className="change-percentage__label">
 					{percentage}% vs Last {duration}
@@ -83,7 +84,7 @@ function StatsCard({
 				<div className="title">{title}</div>
 				<div className="duration-indicator">
 					<div className="icon">
-						<Calendar size={14} color="var(--bg-slate-200)" />
+						<Calendar size={14} color={Color.BG_SLATE_200} />
 					</div>
 					<div className="text">{relativeTime}</div>
 				</div>

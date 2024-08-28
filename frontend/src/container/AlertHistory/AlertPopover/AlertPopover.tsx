@@ -1,5 +1,6 @@
 import './AlertPopover.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Popover } from 'antd';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import ROUTES from 'constants/routes';
@@ -43,7 +44,7 @@ function PopoverContent({
 					<div className="icon">
 						<DraftingCompass
 							size={14}
-							color={isDarkMode ? 'var(--bg-vanilla-400)' : 'var(--text-ink-400'}
+							color={isDarkMode ? Color.BG_VANILLA_400 : Color.TEXT_INK_400}
 						/>
 					</div>
 					<div className="text">View Traces</div>

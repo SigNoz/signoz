@@ -1,5 +1,6 @@
 import './SeeMore.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Popover } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
@@ -22,7 +23,7 @@ function SeeMore({
 			{children.slice(0, initialCount)}
 			{remainingCount > 0 && (
 				<Popover
-					color={isDarkMode ? 'var(--bg-ink-400)' : 'var(--bg-vanilla-100)'}
+					color={isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100}
 					destroyTooltipOnHide
 					content={
 						<div className="see-more-popover-content">

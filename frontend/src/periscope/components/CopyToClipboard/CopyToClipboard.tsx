@@ -1,5 +1,6 @@
 import './CopyToClipboard.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { CircleCheck, Link2 } from 'lucide-react';
@@ -25,7 +26,7 @@ function CopyToClipboard({ textToCopy }: { textToCopy: string }): JSX.Element {
 		return (
 			<Button
 				type="text"
-				icon={<CircleCheck size={16} color="var(--bg-forest-400)" />}
+				icon={<CircleCheck size={16} color={Color.BG_FOREST_400} />}
 				className="copy-to-clipboard copy-to-clipboard--success"
 			>
 				Copied
@@ -36,11 +37,10 @@ function CopyToClipboard({ textToCopy }: { textToCopy: string }): JSX.Element {
 	return (
 		<Button
 			type="text"
-			// eslint-disable-next-line jsx-a11y/anchor-is-valid
 			icon={
 				<Link2
 					size={16}
-					color={isDarkMode ? 'var(--bg-vanilla-400)' : 'var(--text-ink-400'}
+					color={isDarkMode ? Color.BG_VANILLA_400 : Color.TEXT_INK_400}
 				/>
 			}
 			onClick={(): void => copyToClipboard(textToCopy)}

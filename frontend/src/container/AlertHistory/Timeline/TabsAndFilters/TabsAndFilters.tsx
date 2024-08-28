@@ -1,5 +1,6 @@
 import './TabsAndFilters.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { TimelineFilter, TimelineTab } from 'container/AlertHistory/types';
 import history from 'lib/history';
 import { Info } from 'lucide-react';
@@ -12,7 +13,7 @@ function ComingSoon(): JSX.Element {
 		<div className="coming-soon">
 			<div className="coming-soon__text">Coming Soon</div>
 			<div className="coming-soon__icon">
-				<Info size={10} color="var(--bg-sienna-400)" />
+				<Info size={10} color={Color.BG_SIENNA_400} />
 			</div>
 		</div>
 	);

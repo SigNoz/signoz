@@ -1,5 +1,6 @@
 import './Tabs2.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { TimelineFilter } from 'container/AlertHistory/types';
 import { Undo } from 'lucide-react';
@@ -45,7 +46,7 @@ function Tabs2({
 					value="Reset"
 					className="tab reset-button"
 					onClick={(): void => handleTabClick(tabs[0].value)}
-					icon={<Undo size={14} color="var(--text-vanilla-400)" />}
+					icon={<Undo size={14} color={Color.TEXT_VANILLA_400} />}
 				>
 					Reset
 				</Button>

@@ -1,5 +1,6 @@
 import './AlertStatus.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { CircleCheck, Siren } from 'lucide-react';
 import { useMemo } from 'react';
 import { getDurationFromNow } from 'utils/timeUtils';
@@ -13,7 +14,7 @@ export default function AlertStatus({
 	const statusConfig: StatusConfig = useMemo(
 		() => ({
 			firing: {
-				icon: <Siren size={14} color="var(--text-vanilla-400)" />,
+				icon: <Siren size={14} color={Color.TEXT_VANILLA_400} />,
 				text: 'Firing since',
 				extraInfo: timestamp ? (
 					<>
@@ -27,8 +28,8 @@ export default function AlertStatus({
 				icon: (
 					<CircleCheck
 						size={14}
-						fill="var(--bg-vanilla-400)"
-						color="var(--bg-ink-400)"
+						fill={Color.BG_VANILLA_400}
+						color={Color.BG_INK_400}
 					/>
 				),
 				text: 'Resolved',
