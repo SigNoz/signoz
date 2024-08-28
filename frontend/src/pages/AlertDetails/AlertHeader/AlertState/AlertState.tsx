@@ -57,7 +57,7 @@ export default function AlertState({
 			break;
 
 		default:
-			icon = <div />;
+			icon = null;
 	}
 
 	return (
