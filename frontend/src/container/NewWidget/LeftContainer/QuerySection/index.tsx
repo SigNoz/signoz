@@ -252,6 +252,10 @@ function QuerySection({
 							onHoverText="Click here to get help with this dashboard widget"
 							intercomMessageDisabled
 						/>
+						{currentQuery.queryType === EQueryType.CLICKHOUSE && (
+							<a href="https://localhost:3000"> Do you need help in queries? </a>
+						)}
+
 						<TextToolTip
 							text="This will temporarily save the current query and graph state. This will persist across tab change"
 							url="https://signoz.io/docs/userguide/query-builder?utm_source=product&utm_medium=query-builder"
