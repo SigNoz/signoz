@@ -18,6 +18,7 @@
 
 	.tags {
 		display: flex;
-		gap: 8;
+		flex-wrap: wrap;
+		gap: 8px;
 	}
 }
