@@ -31,7 +31,9 @@ export default function NavItem({
 
 				{isBeta && (
 					<div className="nav-item-beta">
-						<Tag color="magenta">Beta</Tag>
+						<Tag bordered={false} color="geekblue">
+							Beta
+						</Tag>
 					</div>
 				)}
 			</div>
