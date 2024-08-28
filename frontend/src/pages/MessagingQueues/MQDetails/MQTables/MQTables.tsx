@@ -2,8 +2,10 @@ import './MQTables.styles.scss';
 
 import { Skeleton, Table, Typography } from 'antd';
 import axios from 'axios';
+import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
+import { History } from 'history';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
@@ -16,13 +18,15 @@ import {
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
+import { useHistory } from 'react-router-dom';
 
 import {
 	ConsumerLagPayload,
 	getConsumerLagDetails,
 } from './getConsumerLagDetails';
 
-export function getColumns(data: any): any[] {
+// eslint-disable-next-line sonarjs/cognitive-complexity
+export function getColumns(data: any, history: History<unknown>): any[] {
 	if (data?.result?.length === 0) {
 		return [];
 	}
@@ -35,6 +39,30 @@ export function getColumns(data: any): any[] {
 		title: convertToTitleCase(clm.name),
 		dataIndex: clm.name,
 		key: clm.name,
+		render:
+			clm.name === 'p99'
+				? (value: number): string => {
+						if (Number.isNaN(value)) return '0.00';
+
+						const number = typeof value === 'string' ? parseFloat(value) : value;
+						return number.toFixed(3);
+				  }
+				: (text: string): ColumnTypeRender<Record<string, unknown>> => ({
+						children:
+							clm.name === 'service_name' ? (
+								<Typography.Link
+									onClick={(e): void => {
+										e.preventDefault();
+										e.stopPropagation();
+										history.push(`/services/${text}`);
+									}}
+								>
+									{text}
+								</Typography.Link>
+							) : (
+								<Typography.Text>{text}</Typography.Text>
+							),
+				  }),
 	}));
 
 	return columns;
@@ -73,6 +101,7 @@ function MessagingQueuesTable({
 	const [tableData, setTableData] = useState<any[]>([]);
 	const { notifications } = useNotifications();
 	const urlQuery = useUrlQuery();
+	const history = useHistory();
 	const timelineQuery = decodeURIComponent(
 		urlQuery.get(QueryParams.selectedTimelineQuery) || '',
 	);
@@ -116,7 +145,7 @@ function MessagingQueuesTable({
 		getConsumerLagDetails,
 		{
 			onSuccess: (data) => {
-				setColumns(getColumns(data?.payload));
+				setColumns(getColumns(data?.payload, history));
 				setTableData(getTableData(data?.payload));
 			},
 			onError: handleConsumerDetailsOnError,
