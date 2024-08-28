@@ -29,7 +29,7 @@ function AlertDetailsStatusRenderer({
 	const { t } = useTranslation('common');
 
 	if (isLoading || isRefetching) {
-		return <Spinner tip="Loading Rules Details..." />;
+		return <Spinner tip="Loading..." />;
 	}
 
 	if (isError) {
