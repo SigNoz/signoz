@@ -4,6 +4,7 @@ import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Modal } from 'antd';
 import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Calendar, ListMinus, Undo } from 'lucide-react';
@@ -31,7 +32,7 @@ function MessagingQueues(): JSX.Element {
 				'Before navigating to the details page, please make sure you have configured all the required setup to ensure correct data monitoring.',
 			className: 'overview-confirm-modal',
 			onOk() {
-				history.push('/messaging-queues/detail');
+				history.push(ROUTES.MESSAGING_QUEUES_DETAIL);
 			},
 			okText: 'Proceed',
 		});
@@ -74,7 +75,7 @@ function MessagingQueues(): JSX.Element {
 							<Button
 								type="default"
 								onClick={(): void =>
-									history.push('/get-started/application-monitoring')
+									history.push(ROUTES.GET_STARTED_APPLICATION_MONITORING)
 								}
 								// todo-sagar check for cloud condition
 							>
@@ -94,7 +95,7 @@ function MessagingQueues(): JSX.Element {
 							<Button
 								type="default"
 								onClick={(): void =>
-									history.push('/get-started/application-monitoring')
+									history.push(ROUTES.GET_STARTED_APPLICATION_MONITORING)
 								}
 							>
 								Get Started
@@ -113,7 +114,7 @@ function MessagingQueues(): JSX.Element {
 							<Button
 								type="default"
 								onClick={(): void =>
-									history.push('/get-started/infrastructure-monitoring')
+									history.push(ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING)
 								}
 							>
 								Get Started

@@ -12,6 +12,12 @@ import MessagingQueuesDetails from '../MQDetails/MQDetails';
 import MessagingQueuesConfigOptions from '../MQGraph/MQConfigOptions';
 import MessagingQueuesGraph from '../MQGraph/MQGraph';
 
+enum MessagingQueueViewType {
+	consumerLag = 'consumerLag',
+	avgPartitionLatency = 'avgPartitionLatency',
+	avgProducerLatency = 'avgProducerLatency',
+}
+
 function MQDetailPage(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
@@ -37,15 +43,18 @@ function MQDetailPage(): JSX.Element {
 						defaultValue="consumerLag"
 						popupClassName="messaging-queue-options-popup"
 						options={[
-							{ label: 'Consumer Lag view', value: 'consumerLag' },
+							{
+								label: 'Consumer Lag view',
+								value: MessagingQueueViewType.consumerLag,
+							},
 							{
 								label: <SelectLabelWithComingSoon label="Avg. Partition latency" />,
-								value: 'avgPartitionLatency',
+								value: MessagingQueueViewType.avgPartitionLatency,
 								disabled: true,
 							},
 							{
 								label: <SelectLabelWithComingSoon label="Avg. Producer latency" />,
-								value: 'avgProducerLatency',
+								value: MessagingQueueViewType.avgProducerLatency,
 								disabled: true,
 							},
 						]}
