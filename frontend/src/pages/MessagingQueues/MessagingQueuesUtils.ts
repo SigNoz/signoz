@@ -196,7 +196,7 @@ export function setSelectedTimelineQuery(
 	};
 	urlQuery.set(
 		QueryParams.selectedTimelineQuery,
-		JSON.stringify(selectedTimelineQuery),
+		encodeURIComponent(JSON.stringify(selectedTimelineQuery)),
 	);
 	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 	history.replace(generatedUrl);

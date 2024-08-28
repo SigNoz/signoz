@@ -73,7 +73,9 @@ function MessagingQueuesTable({
 	const [tableData, setTableData] = useState<any[]>([]);
 	const { notifications } = useNotifications();
 	const urlQuery = useUrlQuery();
-	const timelineQuery = urlQuery.get(QueryParams.selectedTimelineQuery);
+	const timelineQuery = decodeURIComponent(
+		urlQuery.get(QueryParams.selectedTimelineQuery) || '',
+	);
 	const timelineQueryData: SelectedTimelineQuery = useMemo(
 		() => (timelineQuery ? JSON.parse(timelineQuery) : {}),
 		[timelineQuery],

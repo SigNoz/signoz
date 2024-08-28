@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { DefaultOptionType } from 'antd/es/select';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
-import { useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -19,13 +19,10 @@ export function useGetAllConfigOptions(
 	props: ConfigOptions,
 ): GetAllConfigOptionsResponse {
 	const { attributeKey, searchText } = props;
-	const [isFetching, setFetching] = useState<boolean>(true);
-	const [results, setResults] = useState<DefaultOptionType[]>([]);
 
-	const getValues = async (): Promise<void> => {
-		try {
-			setResults([]);
-			setFetching(true);
+	const { data, isLoading } = useQuery(
+		['attributesValues', attributeKey, searchText],
+		async () => {
 			const { payload } = await getAttributesValues({
 				aggregateOperator: 'avg',
 				dataSource: DataSource.METRICS,
@@ -42,18 +39,11 @@ export function useGetAllConfigOptions(
 					label: val,
 					value: val,
 				}));
-				setResults(options);
+				return options;
 			}
-		} catch (e) {
-			console.error(e);
-		} finally {
-			setFetching(false);
-		}
-	};
+			return [];
+		},
+	);
 
-	useEffect(() => {
-		getValues();
-	}, [searchText]);
-
-	return { options: results, isFetching };
+	return { options: data ?? [], isFetching: isLoading };
 }
