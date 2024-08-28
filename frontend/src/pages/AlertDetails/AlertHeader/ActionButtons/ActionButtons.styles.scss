@@ -30,7 +30,7 @@
 		&,
 		& span {
 			&:hover {
-				background: #1d212d;
+				background: var(--bg-slate-400);
 				color: var(--bg-cherry-400);
 			}
 			color: var(--bg-cherry-400);
