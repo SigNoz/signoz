@@ -2,6 +2,7 @@ import './MQTables.styles.scss';
 
 import { Skeleton, Table, Typography } from 'antd';
 import axios from 'axios';
+import { isNumber } from 'chart.js/helpers';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -39,30 +40,33 @@ export function getColumns(data: any, history: History<unknown>): any[] {
 		title: convertToTitleCase(clm.name),
 		dataIndex: clm.name,
 		key: clm.name,
-		render:
-			clm.name === 'p99'
-				? (value: number): string => {
-						if (Number.isNaN(value)) return '0.00';
-
-						const number = typeof value === 'string' ? parseFloat(value) : value;
-						return number.toFixed(3);
-				  }
-				: (text: string): ColumnTypeRender<Record<string, unknown>> => ({
-						children:
-							clm.name === 'service_name' ? (
-								<Typography.Link
-									onClick={(e): void => {
-										e.preventDefault();
-										e.stopPropagation();
-										history.push(`/services/${text}`);
-									}}
-								>
-									{text}
-								</Typography.Link>
-							) : (
-								<Typography.Text>{text}</Typography.Text>
-							),
-				  }),
+		render: [
+			'p99',
+			'error_rate',
+			'throughput',
+			'avg_msg_size',
+			'error_percentage',
+		].includes(clm.name)
+			? (value: number | string): string => {
+					if (!isNumber(value)) return value.toString();
+					return (typeof value === 'string' ? parseFloat(value) : value).toFixed(3);
+			  }
+			: (text: string): ColumnTypeRender<Record<string, unknown>> => ({
+					children:
+						clm.name === 'service_name' ? (
+							<Typography.Link
+								onClick={(e): void => {
+									e.preventDefault();
+									e.stopPropagation();
+									history.push(`/services/${text}`);
+								}}
+							>
+								{text}
+							</Typography.Link>
+						) : (
+							<Typography.Text>{text}</Typography.Text>
+						),
+			  }),
 	}));
 
 	return columns;
