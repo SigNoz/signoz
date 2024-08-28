@@ -5,7 +5,6 @@ import './NavItem.styles.scss';
 import { Tag } from 'antd';
 import cx from 'classnames';
 
-// import { Color } from '@signozhq/design-tokens';
 import { SidebarItem } from '../sideNav.types';
 
 export default function NavItem({
@@ -32,21 +31,9 @@ export default function NavItem({
 
 				{isBeta && (
 					<div className="nav-item-beta">
-						{/* Ways of adding color beased on our design tokens.  Tried using custom color, but AntD tag component by default gives a background for custom color */}
-						{/* <Tag bordered={false} color={Color.TEXT_ROBIN_400}>Beta</Tag> */}
-
 						<Tag bordered={false} color="geekblue">
 							Beta
 						</Tag>
-						{/* <Tag 
-  							bordered={false} 
-							style={{ 
-								backgroundColor: 'rgba(0, 0, 0, 0.2)', 
-								color: Color.TEXT_ROBIN_400 
-							}}
-							>
-							Beta
-						</Tag> */}
 					</div>
 				)}
 			</div>
