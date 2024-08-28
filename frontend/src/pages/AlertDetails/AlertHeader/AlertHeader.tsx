@@ -1,6 +1,6 @@
 import './AlertHeader.styles.scss';
 
-import AlertActionButtons from './ActionButtons';
+import AlertActionButtons from './ActionButtons/ActionButtons';
 import AlertLabels from './AlertLabels/AlertLabels';
 import AlertSeverity from './AlertSeverity/AlertSeverity';
 import AlertState from './AlertState/AlertState';

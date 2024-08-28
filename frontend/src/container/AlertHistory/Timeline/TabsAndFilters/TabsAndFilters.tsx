@@ -3,7 +3,7 @@ import './TabsAndFilters.styles.scss';
 import { TimelineFilter, TimelineTab } from 'container/AlertHistory/types';
 import history from 'lib/history';
 import { Info } from 'lucide-react';
-import Tabs2 from 'periscope/components/Tabs2/Tabs2';
+import Tabs2 from 'periscope/components/Tabs2';
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
