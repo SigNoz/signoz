@@ -295,6 +295,7 @@
 .overview-confirm-modal {
 	background-color: var(--bg-ink-500);
 	padding: 0;
+	border-radius: 4px;
 
 	.ant-modal-content {
 		background-color: var(--bg-ink-300);
@@ -307,6 +308,129 @@
 			flex-direction: column;
 			height: 150px;
 			justify-content: space-between;
+		}
+	}
+}
+
+.lightMode {
+	.messaging-queue-container {
+		.messaging-breadcrumb {
+			color: var(--bg-ink-400);
+			border-bottom: 1px solid var(--bg-vanilla-300);
+		}
+		.messaging-header {
+			color: var(--bg-ink-400);
+			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.header-config {
+				.messaging-queue-options {
+					.ant-select-selector {
+						border: 1px solid var(--bg-vanilla-300);
+						background: var(--bg-vanilla-100);
+					}
+				}
+			}
+
+			.detail-page-timeselector {
+				.reset-btn {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-100);
+				}
+			}
+		}
+
+		.messaging-queue-main-graph {
+			.config-options {
+				.config-select-option {
+					.ant-select-selector {
+						border: 1px solid var(--bg-vanilla-300);
+						background: var(--bg-vanilla-100);
+					}
+				}
+			}
+
+			border-bottom: 1px solid var(--bg-vanilla-300);
+		}
+
+		.messaging-queue-details {
+			.mq-details-options {
+				.ant-radio-button-wrapper {
+					border-color: var(--bg-vanilla-300);
+					color: var(--bg-slate-200);
+				}
+				.ant-radio-button-wrapper-checked {
+					color: var(--bg-slate-200);
+					background: var(--bg-vanilla-300);
+				}
+				.ant-radio-button-wrapper-disabled {
+					background: var(--bg-vanilla-100);
+					color: var(--bg-vanilla-400);
+				}
+			}
+		}
+	}
+
+	.messaging-overview {
+		.overview-text {
+			color: var(--bg-slate-200);
+		}
+
+		.overview-subtext {
+			color: var(--bg-slate-300);
+		}
+
+		.overview-doc-area {
+			.overview-info-card {
+				border: 1px solid var(--bg-vanilla-300);
+
+				.card-title {
+					color: var(--bg-slate-200);
+				}
+
+				.card-info-text {
+					color: var(--bg-slate-300);
+				}
+
+				.button-grp {
+					.ant-btn-default {
+						background-color: var(--bg-vanilla-100);
+					}
+				}
+			}
+		}
+
+		.summary-section {
+			.summary-card {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+
+				.summary-title {
+					> p {
+						color: var(--bg-slate-200);
+					}
+
+					.time-value {
+						> p {
+							color: var(--bg-slate-200);
+						}
+					}
+				}
+			}
+		}
+
+		.coming-soon-card {
+			background: var(--bg-vanilla-200) !important;
+		}
+	}
+
+	.overview-confirm-modal {
+		background-color: var(--bg-vanilla-100);
+
+		.ant-modal-content {
+			background-color: var(--bg-vanilla-100);
+			.ant-modal-confirm-content {
+				color: var(--bg-slate-200);
+			}
 		}
 	}
 }
