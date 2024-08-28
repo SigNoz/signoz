@@ -31,6 +31,7 @@ export interface WidgetGraphComponentProps {
 	setRequestData?: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	onDragSelect: (start: number, end: number) => void;
+	isMessagingQueueCustomTooltipText?: boolean;
 }
 
 export interface GridCardGraphProps {
@@ -42,6 +43,7 @@ export interface GridCardGraphProps {
 	variables?: Dashboard['data']['variables'];
 	version?: string;
 	onDragSelect: (start: number, end: number) => void;
+	isMessagingQueueCustomTooltipText?: boolean;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

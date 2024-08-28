@@ -1,6 +1,6 @@
 import '../MessagingQueues.styles.scss';
 
-import { Button, Select } from 'antd';
+import { Button, Flex, Select } from 'antd';
 import { QueryParams } from 'constants/query';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -31,10 +31,14 @@ function MQDetailPage(): JSX.Element {
 
 	return (
 		<div className="messaging-queue-container">
-			<div className="messaging-breadcrumb">
+			<Flex
+				className="messaging-breadcrumb"
+				onClick={(): void => history.push('/messaging-queues')}
+				style={{ cursor: 'pointer' }}
+			>
 				<ListMinus size={16} />
 				Messaging Queues
-			</div>
+			</Flex>
 			<div className="messaging-header">
 				<div className="header-config">
 					Kafka / views /

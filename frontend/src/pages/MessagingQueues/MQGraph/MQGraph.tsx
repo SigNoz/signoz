@@ -47,6 +47,7 @@ function MessagingQueuesGraph(): JSX.Element {
 				onClickHandler={(xValue, _yValue, _mouseX, _mouseY, data): void => {
 					setSelectedTimelineQuery(urlQuery, xValue, location, history, data);
 				}}
+				isMessagingQueueCustomTooltipText
 			/>
 		</Card>
 	);

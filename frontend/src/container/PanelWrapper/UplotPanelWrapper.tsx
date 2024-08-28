@@ -30,6 +30,7 @@ function UplotPanelWrapper({
 	onClickHandler,
 	onDragSelect,
 	selectedGraph,
+	isMessagingQueueCustomTooltipText,
 }: PanelWrapperProps): JSX.Element {
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
@@ -126,6 +127,7 @@ function UplotPanelWrapper({
 				stackBarChart: widget?.stackedBarChart,
 				hiddenGraph,
 				setHiddenGraph,
+				isMessagingQueueCustomTooltipText,
 			}),
 		[
 			widget?.id,
@@ -147,6 +149,7 @@ function UplotPanelWrapper({
 			selectedGraph,
 			currentQuery,
 			hiddenGraph,
+			isMessagingQueueCustomTooltipText,
 		],
 	);
 

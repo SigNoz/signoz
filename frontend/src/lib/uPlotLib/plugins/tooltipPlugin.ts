@@ -222,6 +222,7 @@ type ToolTipPluginProps = {
 	isMergedSeries?: boolean;
 	stackBarChart?: boolean;
 	isDarkMode: boolean;
+	isMessagingQueueCustomTooltipText?: boolean;
 };
 
 const tooltipPlugin = ({
@@ -232,7 +233,9 @@ const tooltipPlugin = ({
 	isMergedSeries,
 	stackBarChart,
 	isDarkMode,
-}: ToolTipPluginProps): any => {
+	isMessagingQueueCustomTooltipText,
+}: // eslint-disable-next-line sonarjs/cognitive-complexity
+ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
 	let bLeft: any;
@@ -255,6 +258,15 @@ const tooltipPlugin = ({
 	}
 
 	const apiResult = apiResponse?.data?.result || [];
+
+	let customText: HTMLDivElement;
+	if (isMessagingQueueCustomTooltipText) {
+		customText = document.createElement('div');
+		customText.textContent = 'Click on co-ordinate to view details';
+		customText.style.paddingTop = '8px';
+		customText.style.paddingBottom = '2px';
+		customText.style.color = '#fff';
+	}
 
 	return {
 		hooks: {
@@ -298,6 +310,9 @@ const tooltipPlugin = ({
 							isMergedSeries,
 							stackBarChart,
 						);
+						if (isMessagingQueueCustomTooltipText) {
+							content.appendChild(customText);
+						}
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });
 					}
