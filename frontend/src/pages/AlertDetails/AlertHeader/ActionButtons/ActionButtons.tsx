@@ -28,6 +28,24 @@ const menuStyle: React.CSSProperties = {
 	fontSize: 14,
 };
 
+function DropdownMenuRenderer(menu: React.ReactNode): React.ReactNode {
+	return (
+		<div className="dropdown-menu">
+			{React.cloneElement(menu as React.ReactElement, {
+				style: menuStyle,
+			})}
+			<Divider className="dropdown-divider" />
+			<Button
+				type="default"
+				icon={<Trash2 size={16} color="var(--bg-cherry-400" />}
+				className="delete-button"
+			>
+				Delete
+			</Button>
+		</div>
+	);
+}
+
 function AlertActionButtons({
 	ruleId,
 	state,
@@ -54,22 +72,7 @@ function AlertActionButtons({
 			<Dropdown
 				trigger={['click']}
 				menu={{ items: menu }}
-				// eslint-disable-next-line react/no-unstable-nested-components
-				dropdownRender={(menu): JSX.Element => (
-					<div className="dropdown-menu">
-						{React.cloneElement(menu as React.ReactElement, {
-							style: menuStyle,
-						})}
-						<Divider style={{ margin: 0 }} />
-						<Button
-							type="default"
-							icon={<Trash2 size={16} color="var(--bg-cherry-400" />}
-							className="delete-button"
-						>
-							Delete
-						</Button>
-					</div>
-				)}
+				dropdownRender={DropdownMenuRenderer}
 			>
 				<Tooltip title="More options">
 					<Ellipsis
