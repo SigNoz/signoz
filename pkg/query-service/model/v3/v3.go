@@ -1288,3 +1288,9 @@ type URLShareableOptions struct {
 	Format        string         `json:"format"`
 	SelectColumns []AttributeKey `json:"selectColumns"`
 }
+
+type LogQBOptions struct {
+	GraphLimitQtype string
+	IsLivetailQuery bool
+	PreferRPM       bool
+}
