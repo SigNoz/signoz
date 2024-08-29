@@ -172,21 +172,23 @@ function Trace(props: TraceProps): JSX.Element {
 								</CardComponent>
 							)}
 						</Col>
-						<Col>
-							<Button
-								style={{
-									padding: '2px 4px',
-									display: 'flex',
-									alignItems: 'center',
-									justifyContent: 'center',
-									marginLeft: '5px',
-									height: '22px',
-									width: '22px',
-								}}
-								onClick={handleFilter}
-								icon={<ZoomIn size={10} />}
-							/>
-						</Col>
+						{totalSpans !== 1 && level !== 0 && (
+							<Col>
+								<Button
+									style={{
+										padding: '2px 4px',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										marginLeft: '5px',
+										height: '22px',
+										width: '22px',
+									}}
+									onClick={handleFilter}
+									icon={<ZoomIn size={10} />}
+								/>
+							</Col>
+						)}
 						<Col>
 							<SpanName name={name} serviceName={serviceName} />
 						</Col>
