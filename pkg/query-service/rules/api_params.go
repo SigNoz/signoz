@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.uber.org/multierr"
 
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
@@ -30,6 +31,12 @@ type RuleDataKind string
 const (
 	RuleDataKindJson RuleDataKind = "json"
 	RuleDataKindYaml RuleDataKind = "yaml"
+)
+
+var (
+	ErrFailedToParseJSON = errors.New("failed to parse json")
+	ErrFailedToParseYAML = errors.New("failed to parse yaml")
+	ErrInvalidDataType   = errors.New("invalid data type")
 )
 
 // this file contains api request and responses to be
@@ -72,31 +79,31 @@ type PostableRule struct {
 	OldYaml string `json:"yaml,omitempty"`
 }
 
-func ParsePostableRule(content []byte) (*PostableRule, []error) {
+func ParsePostableRule(content []byte) (*PostableRule, error) {
 	return parsePostableRule(content, "json")
 }
 
-func parsePostableRule(content []byte, kind string) (*PostableRule, []error) {
+func parsePostableRule(content []byte, kind RuleDataKind) (*PostableRule, error) {
 	return parseIntoRule(PostableRule{}, content, kind)
 }
 
 // parseIntoRule loads the content (data) into PostableRule and also
 // validates the end result
-func parseIntoRule(initRule PostableRule, content []byte, kind string) (*PostableRule, []error) {
+func parseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*PostableRule, error) {
 
 	rule := &initRule
 
 	var err error
-	if kind == "json" {
+	if kind == RuleDataKindJson {
 		if err = json.Unmarshal(content, rule); err != nil {
-			return nil, []error{fmt.Errorf("failed to load json")}
+			return nil, ErrFailedToParseJSON
 		}
-	} else if kind == "yaml" {
+	} else if kind == RuleDataKindYaml {
 		if err = yaml.Unmarshal(content, rule); err != nil {
-			return nil, []error{fmt.Errorf("failed to load yaml")}
+			return nil, ErrFailedToParseYAML
 		}
 	} else {
-		return nil, []error{fmt.Errorf("invalid data type")}
+		return nil, ErrInvalidDataType
 	}
 
 	if rule.RuleCondition == nil && rule.Expr != "" {
@@ -138,11 +145,11 @@ func parseIntoRule(initRule PostableRule, content []byte, kind string) (*Postabl
 		}
 	}
 
-	if errs := rule.Validate(); len(errs) > 0 {
-		return nil, errs
+	if err := rule.Validate(); err != nil {
+		return nil, err
 	}
 
-	return rule, []error{}
+	return rule, nil
 }
 
 func isValidLabelName(ln string) bool {
@@ -161,7 +168,9 @@ func isValidLabelValue(v string) bool {
 	return utf8.ValidString(v)
 }
 
-func (r *PostableRule) Validate() (errs []error) {
+func (r *PostableRule) Validate() error {
+
+	var errs []error
 
 	if r.RuleCondition == nil {
 		errs = append(errs, errors.Errorf("rule condition is required"))
@@ -200,7 +209,7 @@ func (r *PostableRule) Validate() (errs []error) {
 	}
 
 	errs = append(errs, testTemplateParsing(r)...)
-	return errs
+	return multierr.Combine(errs...)
 }
 
 func testTemplateParsing(rl *PostableRule) (errs []error) {
