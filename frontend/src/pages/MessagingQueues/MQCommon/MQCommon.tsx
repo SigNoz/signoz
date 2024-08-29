@@ -5,15 +5,23 @@ import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 import { Info } from 'lucide-react';
-import { isCloudUser } from 'utils/app';
 
 export function ComingSoon(): JSX.Element {
-	const isCloudUserVal = isCloudUser();
 	return (
 		<Tooltip
-			title={`Contact us at ${
-				isCloudUserVal ? 'cloud-support@signoz.io' : 'support@signoz.io'
-			} for more details.`}
+			title={
+				<div>
+					Join our Slack community for more details:{' '}
+					<a
+						href="https://signoz.io/slack"
+						rel="noopener noreferrer"
+						target="_blank"
+						onClick={(e): void => e.stopPropagation()}
+					>
+						SigNoz Community
+					</a>
+				</div>
+			}
 			placement="top"
 			overlayClassName="tooltip-overlay"
 		>
