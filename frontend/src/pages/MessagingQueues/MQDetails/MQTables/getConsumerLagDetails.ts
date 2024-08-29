@@ -16,9 +16,9 @@ export interface ConsumerLagPayload {
 	detailType: ConsumerLagDetailType;
 }
 
-export interface PayloadProps {
+export interface MessagingQueuesPayloadProps {
 	status: string;
-	data: {
+	payload: {
 		resultType: string;
 		result: {
 			table: {
@@ -37,7 +37,9 @@ export interface PayloadProps {
 
 export const getConsumerLagDetails = async (
 	props: ConsumerLagPayload,
-): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
+): Promise<
+	SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
+> => {
 	const { detailType, ...restProps } = props;
 	try {
 		const response = await axios.post(
