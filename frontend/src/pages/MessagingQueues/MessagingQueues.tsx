@@ -7,7 +7,9 @@ import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { Calendar, ListMinus } from 'lucide-react';
 import { useHistory } from 'react-router-dom';
+import { isCloudUser } from 'utils/app';
 
+import { KAFKA_SETUP_DOC_LINK } from './MessagingQueuesUtils';
 import { ComingSoon } from './MQCommon/MQCommon';
 
 function MessagingQueues(): JSX.Element {
@@ -26,6 +28,16 @@ function MessagingQueues(): JSX.Element {
 			},
 			okText: 'Proceed',
 		});
+	};
+
+	const isCloudUserVal = isCloudUser();
+
+	const getStartedRedirect = (link: string): void => {
+		if (isCloudUserVal) {
+			history.push(link);
+		} else {
+			window.open(KAFKA_SETUP_DOC_LINK, '_blank');
+		}
 	};
 
 	return (
@@ -55,12 +67,11 @@ function MessagingQueues(): JSX.Element {
 							<Button
 								type="default"
 								onClick={(): void =>
-									history.push(ROUTES.GET_STARTED_APPLICATION_MONITORING)
+									getStartedRedirect(ROUTES.GET_STARTED_APPLICATION_MONITORING)
 								}
 							>
 								Get Started
 							</Button>
-							{/* <Button type="text">Docs</Button> */}
 						</div>
 					</div>
 					<div className="overview-info-card middle-card">
@@ -74,12 +85,11 @@ function MessagingQueues(): JSX.Element {
 							<Button
 								type="default"
 								onClick={(): void =>
-									history.push(ROUTES.GET_STARTED_APPLICATION_MONITORING)
+									getStartedRedirect(ROUTES.GET_STARTED_APPLICATION_MONITORING)
 								}
 							>
 								Get Started
 							</Button>
-							{/* <Button type="text">Docs</Button> */}
 						</div>
 					</div>
 					<div className="overview-info-card">
@@ -93,12 +103,11 @@ function MessagingQueues(): JSX.Element {
 							<Button
 								type="default"
 								onClick={(): void =>
-									history.push(ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING)
+									getStartedRedirect(ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING)
 								}
 							>
 								Get Started
 							</Button>
-							{/* <Button type="text">Docs</Button> */}
 						</div>
 					</div>
 				</div>

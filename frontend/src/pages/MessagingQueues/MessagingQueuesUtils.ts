@@ -9,6 +9,9 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
+export const KAFKA_SETUP_DOC_LINK =
+	'https://github.com/shivanshuraj1333/kafka-opentelemetry-instrumentation/tree/master';
+
 export function convertToTitleCase(text: string): string {
 	return text
 		.split('_')
