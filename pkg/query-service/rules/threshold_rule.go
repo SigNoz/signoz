@@ -671,7 +671,7 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(string(data))
+	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
 
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
@@ -735,7 +735,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(string(data))
+	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
 
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
