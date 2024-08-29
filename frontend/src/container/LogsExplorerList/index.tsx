@@ -155,6 +155,7 @@ function LogsExplorerList({
 			>
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
+						key={activeLogIndex || 'logs-virtuoso'}
 						ref={ref}
 						initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
 						data={logs}

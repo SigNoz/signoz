@@ -4,6 +4,7 @@ import Convert from 'ansi-to-html';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import cx from 'classnames';
+import { unescapeString } from 'container/LogDetailedView/utils';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -115,7 +116,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 						<TableBodyContent
 							dangerouslySetInnerHTML={{
 								__html: convert.toHtml(
-									dompurify.sanitize(field, {
+									dompurify.sanitize(unescapeString(field), {
 										FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 									}),
 								),

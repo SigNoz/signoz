@@ -22,6 +22,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from './ActionItem';
 import TableView from './TableView';
+import { removeEscapeCharacters } from './utils';
 
 interface OverviewProps {
 	logData: ILog;
@@ -124,7 +125,7 @@ function Overview({
 						children: (
 							<div className="logs-body-content">
 								<MEditor
-									value={logData.body}
+									value={removeEscapeCharacters(logData.body)}
 									language="json"
 									options={options}
 									onChange={(): void => {}}
