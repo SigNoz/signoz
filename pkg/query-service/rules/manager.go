@@ -20,11 +20,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	// opentracing "github.com/opentracing/opentracing-go"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
@@ -240,20 +238,6 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error
 
 	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
 
-	currentRule, err := m.GetRule(ctx, id)
-	if err != nil {
-		zap.L().Error("failed to get the rule from rule db", zap.String("id", id), zap.Error(err))
-		return err
-	}
-
-	if !checkIfTraceOrLogQB(&currentRule.PostableRule) {
-		// check if the new rule uses any feature that is not enabled
-		err = m.checkFeatureUsage(parsedRule)
-		if err != nil {
-			return err
-		}
-	}
-
 	if len(errs) > 0 {
 		zap.L().Error("failed to parse rules", zap.Errors("errors", errs))
 		// just one rule is being parsed so expect just one error
@@ -269,20 +253,6 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error
 		err = m.syncRuleStateWithTask(taskName, parsedRule)
 		if err != nil {
 			return err
-		}
-	}
-
-	// update feature usage if the current rule is not a trace or log query builder
-	if !checkIfTraceOrLogQB(&currentRule.PostableRule) {
-		err = m.updateFeatureUsage(parsedRule, 1)
-		if err != nil {
-			zap.L().Error("error updating feature usage", zap.Error(err))
-		}
-		// update feature usage if the new rule is not a trace or log query builder and the current rule is
-	} else if !checkIfTraceOrLogQB(parsedRule) {
-		err = m.updateFeatureUsage(&currentRule.PostableRule, -1)
-		if err != nil {
-			zap.L().Error("error updating feature usage", zap.Error(err))
 		}
 	}
 
@@ -335,13 +305,6 @@ func (m *Manager) DeleteRule(ctx context.Context, id string) error {
 		return fmt.Errorf("delete rule received an rule id in invalid format, must be a number")
 	}
 
-	// update feature usage
-	rule, err := m.GetRule(ctx, id)
-	if err != nil {
-		zap.L().Error("failed to get the rule from rule db", zap.String("id", id), zap.Error(err))
-		return err
-	}
-
 	taskName := prepareTaskName(int64(idInt))
 	if !m.opts.DisableRules {
 		m.deleteTask(taskName)
@@ -350,11 +313,6 @@ func (m *Manager) DeleteRule(ctx context.Context, id string) error {
 	if _, _, err := m.ruleDB.DeleteRuleTx(ctx, id); err != nil {
 		zap.L().Error("failed to delete the rule from rule db", zap.String("id", id), zap.Error(err))
 		return err
-	}
-
-	err = m.updateFeatureUsage(&rule.PostableRule, -1)
-	if err != nil {
-		zap.L().Error("error updating feature usage", zap.Error(err))
 	}
 
 	return nil
@@ -381,12 +339,6 @@ func (m *Manager) deleteTask(taskName string) {
 func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule, error) {
 	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
 
-	// check if the rule uses any feature that is not enabled
-	err := m.checkFeatureUsage(parsedRule)
-	if err != nil {
-		return nil, err
-	}
-
 	if len(errs) > 0 {
 		zap.L().Error("failed to parse rules", zap.Errors("errors", errs))
 		// just one rule is being parsed so expect just one error
@@ -409,69 +361,11 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 		return nil, err
 	}
 
-	// update feature usage
-	err = m.updateFeatureUsage(parsedRule, 1)
-	if err != nil {
-		zap.L().Error("error updating feature usage", zap.Error(err))
-	}
 	gettableRule := &GettableRule{
 		Id:           fmt.Sprintf("%d", lastInsertId),
 		PostableRule: *parsedRule,
 	}
 	return gettableRule, nil
-}
-
-func (m *Manager) updateFeatureUsage(parsedRule *PostableRule, usage int64) error {
-	isTraceOrLogQB := checkIfTraceOrLogQB(parsedRule)
-	if isTraceOrLogQB {
-		feature, err := m.featureFlags.GetFeatureFlag(model.QueryBuilderAlerts)
-		if err != nil {
-			return err
-		}
-		feature.Usage += usage
-		if feature.Usage == feature.UsageLimit && feature.UsageLimit != -1 {
-			feature.Active = false
-		}
-		if feature.Usage < feature.UsageLimit || feature.UsageLimit == -1 {
-			feature.Active = true
-		}
-		err = m.featureFlags.UpdateFeatureFlag(feature)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (m *Manager) checkFeatureUsage(parsedRule *PostableRule) error {
-	isTraceOrLogQB := checkIfTraceOrLogQB(parsedRule)
-	if isTraceOrLogQB {
-		err := m.featureFlags.CheckFeature(model.QueryBuilderAlerts)
-		if err != nil {
-			switch err.(type) {
-			case model.ErrFeatureUnavailable:
-				zap.L().Error("feature unavailable", zap.String("featureKey", model.QueryBuilderAlerts), zap.Error(err))
-				return model.BadRequest(err)
-			default:
-				zap.L().Error("feature check failed", zap.String("featureKey", model.QueryBuilderAlerts), zap.Error(err))
-				return model.BadRequest(err)
-			}
-		}
-	}
-	return nil
-}
-
-func checkIfTraceOrLogQB(parsedRule *PostableRule) bool {
-	if parsedRule != nil {
-		if parsedRule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
-			for _, query := range parsedRule.RuleCondition.CompositeQuery.BuilderQueries {
-				if query.DataSource == v3.DataSourceTraces || query.DataSource == v3.DataSourceLogs {
-					return true
-				}
-			}
-		}
-	}
-	return false
 }
 
 func (m *Manager) addTask(rule *PostableRule, taskName string) error {
@@ -569,7 +463,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		m.rules[ruleId] = pr
 
 	} else {
-		return nil, fmt.Errorf(fmt.Sprintf("unsupported rule type. Supported types: %s, %s", RuleTypeProm, RuleTypeThreshold))
+		return nil, fmt.Errorf("unsupported rule type. Supported types: %s, %s", RuleTypeProm, RuleTypeThreshold)
 	}
 
 	return task, nil
