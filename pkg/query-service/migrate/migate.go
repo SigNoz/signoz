@@ -7,9 +7,6 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/jmoiron/sqlx"
-	alertstov4 "go.signoz.io/signoz/pkg/query-service/migrate/0_45_alerts_to_v4"
-	alertscustomstep "go.signoz.io/signoz/pkg/query-service/migrate/0_47_alerts_custom_step"
-	"go.uber.org/zap"
 )
 
 type DataMigration struct {
@@ -54,28 +51,6 @@ func Migrate(dsn string) error {
 	}
 	if err := initSchema(conn); err != nil {
 		return err
-	}
-
-	if m, err := getMigrationVersion(conn, "0.45_alerts_to_v4"); err == nil && m == nil {
-		if err := alertstov4.Migrate(conn); err != nil {
-			zap.L().Error("failed to migrate 0.45_alerts_to_v4", zap.Error(err))
-		} else {
-			_, err := conn.Exec("INSERT INTO data_migrations (version, succeeded) VALUES ('0.45_alerts_to_v4', true)")
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	if m, err := getMigrationVersion(conn, "0.47_alerts_custom_step"); err == nil && m == nil {
-		if err := alertscustomstep.Migrate(conn); err != nil {
-			zap.L().Error("failed to migrate 0.47_alerts_custom_step", zap.Error(err))
-		} else {
-			_, err := conn.Exec("INSERT INTO data_migrations (version, succeeded) VALUES ('0.47_alerts_custom_step', true)")
-			if err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil
