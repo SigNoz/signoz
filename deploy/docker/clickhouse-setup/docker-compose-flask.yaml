@@ -37,6 +37,6 @@ services:
       TASK_DELAY_FROM: 45
       TASK_DELAY_TO: 60
       QUIET_MODE: "${QUIET_MODE:-false}"
-      LOCUST_OPTS: "--headless -u 10 -r 10"
+      LOCUST_OPTS: "--headless -u 5 -r 5"
     volumes:
       - ../common/locust-flask:/locust
