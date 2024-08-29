@@ -111,6 +111,8 @@ function LogsExplorer(): JSX.Element {
 						showAutoRefresh={false}
 						leftActions={
 							<LeftToolbarActions
+								showFilter={showFilters}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								items={toolbarViews}
 								selectedView={selectedView}
 								onChangeSelectedView={handleChangeSelectedView}

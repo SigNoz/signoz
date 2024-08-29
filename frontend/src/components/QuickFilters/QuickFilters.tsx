@@ -35,14 +35,22 @@ interface IQuickFiltersProps {
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const { config, handleFilterVisibilityChange } = props;
+
+	// get the selected filters from the URL and pass it to the checkbox
+
+	// handle the URL update here
 	const handleFilterValueChange = (
 		attributeKey: BaseAutocompleteData,
 		value: string,
 		type: FiltersType,
+		selected: boolean,
 		minMax?: MinMax,
 	): void => {
-		console.log(attributeKey, value, type, minMax);
+		console.log(attributeKey, value, type, selected, minMax);
 	};
+
+	// clear all the filters here!
+	// const handleReset = (): void => {};
 	return (
 		<div className="quick-filters">
 			<section className="header">

@@ -21,6 +21,7 @@ interface ICheckboxProps {
 		attributeKey: BaseAutocompleteData,
 		value: string,
 		type: FiltersType,
+		selected: boolean,
 		minMax?: MinMax,
 	) => void;
 }
@@ -102,8 +103,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							{currentAttributeKeys.map((value: string) => (
 								<div key={value} className="value">
 									<Checkbox
-										onChange={(): void =>
-											onChange(filter.attributeKey, value, filter.type)
+										onChange={(e): void =>
+											onChange(filter.attributeKey, value, filter.type, e.target.checked)
 										}
 									/>
 									{filter.customRendererForValue ? (

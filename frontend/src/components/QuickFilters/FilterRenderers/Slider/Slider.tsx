@@ -13,6 +13,7 @@ interface ISliderProps {
 		attributeKey: BaseAutocompleteData,
 		value: string,
 		type: FiltersType,
+		selected: boolean,
 		minMax?: MinMax,
 	) => void;
 }
