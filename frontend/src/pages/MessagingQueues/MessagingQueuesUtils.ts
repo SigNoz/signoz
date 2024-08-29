@@ -204,3 +204,22 @@ export function setSelectedTimelineQuery(
 	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 	history.replace(generatedUrl);
 }
+
+export const MessagingQueuesViewType = {
+	consumerLag: {
+		label: 'Consumer Lag view',
+		value: 'consumerLag',
+	},
+	partitionLatency: {
+		label: 'Partition Latency view',
+		value: 'partitionLatency',
+	},
+	producerLatency: {
+		label: 'Producer Latency view',
+		value: 'producerLatency',
+	},
+	consumerLatency: {
+		label: 'Consumer latency view',
+		value: 'consumerLatency',
+	},
+};
