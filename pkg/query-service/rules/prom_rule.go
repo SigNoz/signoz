@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"go.uber.org/zap"
 
 	plabels "github.com/prometheus/prometheus/model/labels"
@@ -54,7 +52,7 @@ type PromRule struct {
 	// map of active alerts
 	active map[uint64]*Alert
 
-	logger log.Logger
+	logger *zap.Logger
 	opts   PromRuleOpts
 
 	reader interfaces.Reader
@@ -63,7 +61,7 @@ type PromRule struct {
 func NewPromRule(
 	id string,
 	postableRule *PostableRule,
-	logger log.Logger,
+	logger *zap.Logger,
 	opts PromRuleOpts,
 	reader interfaces.Reader,
 ) (*PromRule, error) {
@@ -405,7 +403,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				level.Warn(r.logger).Log("msg", "Expanding alert template failed", "err", err, "data", tmplData)
+				r.logger.Warn("Expanding alert template failed", zap.Error(err), zap.Any("data", tmplData))
 			}
 			return result
 		}
