@@ -140,7 +140,7 @@ function Trace(props: TraceProps): JSX.Element {
 		e.preventDefault();
 		e.stopPropagation();
 		onClick();
-		onFocusSelectedSpanHandler();
+		if (activeSelectedId) onFocusSelectedSpanHandler();
 	};
 	return (
 		<Wrapper
