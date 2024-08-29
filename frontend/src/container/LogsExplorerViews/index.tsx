@@ -100,14 +100,14 @@ function LogsExplorerViews({
 	// this is to respect the panel type present in the URL rather than defaulting it to list always.
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
-	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
+	const { activeLogId, onTimeRangeChange } = useCopyLogLink();
 
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
 	);
 
-	const { minTime } = useSelector<AppState, GlobalReducer>(
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
@@ -254,11 +254,10 @@ function LogsExplorerViews({
 			enabled: !isLimit && !!requestData,
 		},
 		{
-			...(timeRange &&
-				activeLogId &&
+			...(activeLogId &&
 				!logs.length && {
-					start: timeRange.start,
-					end: timeRange.end,
+					start: minTime,
+					end: maxTime,
 				}),
 		},
 		undefined,
@@ -521,7 +520,7 @@ function LogsExplorerViews({
 			setLogs(newLogs);
 			onTimeRangeChange({
 				start: currentParams?.start,
-				end: timeRange?.end || currentParams?.end,
+				end: currentParams?.end,
 				pageSize: newLogs.length,
 			});
 		}
@@ -538,8 +537,7 @@ function LogsExplorerViews({
 				filters: listQuery?.filters || initialFilters,
 				page: 1,
 				log: null,
-				pageSize:
-					timeRange?.pageSize && activeLogId ? timeRange?.pageSize : pageSize,
+				pageSize,
 			});
 
 			setLogs([]);
@@ -554,7 +552,6 @@ function LogsExplorerViews({
 		listQuery,
 		pageSize,
 		minTime,
-		timeRange,
 		activeLogId,
 		onTimeRangeChange,
 		panelType,
