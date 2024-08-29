@@ -40,7 +40,7 @@ type PromRuleTask struct {
 
 // newPromRuleTask holds rules that have promql condition
 // and evalutes the rule at a given frequency
-func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *PromRuleTask {
+func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *PromRuleTask {
 	zap.L().Info("Initiating a new rule group", zap.String("name", name), zap.Duration("frequency", frequency))
 
 	if time.Now() == time.Now().Add(frequency) {

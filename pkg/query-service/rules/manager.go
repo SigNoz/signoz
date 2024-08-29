@@ -38,7 +38,7 @@ type PrepareTaskOptions struct {
 
 const taskNamesuffix = "webAppEditor"
 
-func ruleIdFromTaskName(n string) string {
+func RuleIdFromTaskName(n string) string {
 	return strings.Split(n, "-groupname")[0]
 }
 
@@ -121,7 +121,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 	rules := make([]Rule, 0)
 	var task Task
 
-	ruleId := ruleIdFromTaskName(opts.TaskName)
+	ruleId := RuleIdFromTaskName(opts.TaskName)
 	if opts.Rule.RuleType == RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := NewThresholdRule(
@@ -400,7 +400,7 @@ func (m *Manager) deleteTask(taskName string) {
 	if ok {
 		oldg.Stop()
 		delete(m.tasks, taskName)
-		delete(m.rules, ruleIdFromTaskName(taskName))
+		delete(m.rules, RuleIdFromTaskName(taskName))
 		zap.L().Debug("rule task deleted", zap.String("name", taskName))
 	} else {
 		zap.L().Info("rule not found for deletion", zap.String("name", taskName))
