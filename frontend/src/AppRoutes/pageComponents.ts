@@ -204,3 +204,15 @@ export const InstalledIntegrations = Loadable(
 			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
 		),
 );
+
+export const MessagingQueues = Loadable(
+	() =>
+		import(/* webpackChunkName: "MessagingQueues" */ 'pages/MessagingQueues'),
+);
+
+export const MQDetailPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "MQDetailPage" */ 'pages/MessagingQueues/MQDetailPage'
+		),
+);
