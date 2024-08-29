@@ -3,25 +3,15 @@ import './MessagingQueues.styles.scss';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Modal } from 'antd';
-import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { Calendar, ListMinus, Undo } from 'lucide-react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { Calendar, ListMinus } from 'lucide-react';
+import { useHistory } from 'react-router-dom';
 
 import { ComingSoon } from './MQCommon/MQCommon';
 
 function MessagingQueues(): JSX.Element {
-	const urlQuery = useUrlQuery();
-	const location = useLocation();
 	const history = useHistory();
-
-	const onReset = (): void => {
-		urlQuery.set(QueryParams.relativeTime, '30m');
-		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-		history.replace(generatedUrl);
-	};
 
 	const { confirm } = Modal;
 
@@ -46,17 +36,7 @@ function MessagingQueues(): JSX.Element {
 			</div>
 			<div className="messaging-header">
 				<div className="header-config">Kafka / Overview</div>
-				<div className="detail-page-timeselector">
-					<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
-					<Button
-						type="text"
-						icon={<Undo size={14} />}
-						className="reset-btn"
-						onClick={onReset}
-					>
-						Reset
-					</Button>
-				</div>
+				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
 			<div className="messaging-overview">
 				<p className="overview-text">
