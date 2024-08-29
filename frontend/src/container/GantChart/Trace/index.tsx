@@ -158,7 +158,10 @@ function Trace(props: TraceProps): JSX.Element {
 			/>
 
 			<CardContainer isMissing={isMissing} onClick={onClick}>
-				<StyledCol flex={`${panelWidth}px`} styledclass={[styles.overFlowHidden]}>
+				<StyledCol
+					flex={`${panelWidth + 100}px`}
+					styledclass={[styles.overFlowHidden]}
+				>
 					<StyledRow styledclass={[styles.flexNoWrap]}>
 						<Col>
 							{totalSpans !== 1 && (
