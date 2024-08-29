@@ -47,6 +47,7 @@ function WidgetGraphComponent({
 	setRequestData,
 	onClickHandler,
 	onDragSelect,
+	customTooltipElement,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -335,6 +336,7 @@ function WidgetGraphComponent({
 						onClickHandler={onClickHandler}
 						onDragSelect={onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
+						customTooltipElement={customTooltipElement}
 					/>
 				</div>
 			)}
