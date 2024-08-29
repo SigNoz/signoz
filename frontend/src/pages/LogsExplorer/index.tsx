@@ -1,7 +1,9 @@
 import './LogsExplorer.styles.scss';
 
 import * as Sentry from '@sentry/react';
+import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
+import QuickFilters from 'components/QuickFilters/QuickFilters';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
@@ -13,13 +15,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WrapperStyled } from './styles';
-import { SELECTED_VIEWS } from './utils';
+import { LogsQuickFiltersConfig, SELECTED_VIEWS } from './utils';
 
 function LogsExplorer(): JSX.Element {
 	const [showFrequencyChart, setShowFrequencyChart] = useState(true);
 	const [selectedView, setSelectedView] = useState<SELECTED_VIEWS>(
 		SELECTED_VIEWS.SEARCH,
 	);
+	const [showFilters, setShowFilters] = useState<boolean>(true);
 
 	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
@@ -35,6 +38,10 @@ function LogsExplorer(): JSX.Element {
 
 	const handleChangeSelectedView = (view: SELECTED_VIEWS): void => {
 		setSelectedView(view);
+	};
+
+	const handleFilterVisibilityChange = (): void => {
+		setShowFilters((prev) => !prev);
 	};
 
 	// Switch to query builder view if there are more than 1 queries
@@ -90,46 +97,58 @@ function LogsExplorer(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<Toolbar
-				showAutoRefresh={false}
-				leftActions={
-					<LeftToolbarActions
-						items={toolbarViews}
-						selectedView={selectedView}
-						onChangeSelectedView={handleChangeSelectedView}
-						onToggleHistrogramVisibility={handleToggleShowFrequencyChart}
-						showFrequencyChart={showFrequencyChart}
-					/>
-				}
-				rightActions={
-					<RightToolbarActions
-						onStageRunQuery={handleRunQuery}
-						listQueryKeyRef={listQueryKeyRef}
-						chartQueryKeyRef={chartQueryKeyRef}
-						isLoadingQueries={isLoadingQueries}
-					/>
-				}
-				showOldCTA
-			/>
-
-			<WrapperStyled>
-				<div className="log-explorer-query-container">
-					<div>
-						<ExplorerCard sourcepage={DataSource.LOGS}>
-							<LogExplorerQuerySection selectedView={selectedView} />
-						</ExplorerCard>
-					</div>
-					<div className="logs-explorer-views">
-						<LogsExplorerViews
-							selectedView={selectedView}
-							showFrequencyChart={showFrequencyChart}
-							listQueryKeyRef={listQueryKeyRef}
-							chartQueryKeyRef={chartQueryKeyRef}
-							setIsLoadingQueries={setIsLoadingQueries}
+			<div className="logs-module-page">
+				{showFilters && (
+					<section className={cx('log-quick-filter-left-section')}>
+						<QuickFilters
+							config={LogsQuickFiltersConfig}
+							handleFilterVisibilityChange={handleFilterVisibilityChange}
 						/>
-					</div>
-				</div>
-			</WrapperStyled>
+					</section>
+				)}
+				<section className={cx('log-module-right-section')}>
+					<Toolbar
+						showAutoRefresh={false}
+						leftActions={
+							<LeftToolbarActions
+								items={toolbarViews}
+								selectedView={selectedView}
+								onChangeSelectedView={handleChangeSelectedView}
+								onToggleHistrogramVisibility={handleToggleShowFrequencyChart}
+								showFrequencyChart={showFrequencyChart}
+							/>
+						}
+						rightActions={
+							<RightToolbarActions
+								onStageRunQuery={handleRunQuery}
+								listQueryKeyRef={listQueryKeyRef}
+								chartQueryKeyRef={chartQueryKeyRef}
+								isLoadingQueries={isLoadingQueries}
+							/>
+						}
+						showOldCTA
+					/>
+
+					<WrapperStyled>
+						<div className="log-explorer-query-container">
+							<div>
+								<ExplorerCard sourcepage={DataSource.LOGS}>
+									<LogExplorerQuerySection selectedView={selectedView} />
+								</ExplorerCard>
+							</div>
+							<div className="logs-explorer-views">
+								<LogsExplorerViews
+									selectedView={selectedView}
+									showFrequencyChart={showFrequencyChart}
+									listQueryKeyRef={listQueryKeyRef}
+									chartQueryKeyRef={chartQueryKeyRef}
+									setIsLoadingQueries={setIsLoadingQueries}
+								/>
+							</div>
+						</div>
+					</WrapperStyled>
+				</section>
+			</div>
 		</Sentry.ErrorBoundary>
 	);
 }
