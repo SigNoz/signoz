@@ -1,11 +1,13 @@
 import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
-import { Col, Typography } from 'antd';
+import { Button, Col, Typography } from 'antd';
 import { StyledCol, StyledRow } from 'components/Styled';
 import { IIntervalUnit } from 'container/TraceDetail/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { ZoomIn } from 'lucide-react';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import {
 	Dispatch,
+	MouseEvent,
 	MouseEventHandler,
 	SetStateAction,
 	useEffect,
@@ -49,6 +51,7 @@ function Trace(props: TraceProps): JSX.Element {
 		intervalUnit,
 		children,
 		isMissing,
+		onFocusSelectedSpanHandler,
 	} = props;
 
 	const isDarkMode = useIsDarkMode();
@@ -133,6 +136,12 @@ function Trace(props: TraceProps): JSX.Element {
 		[isOpen, iconStyles],
 	);
 
+	const handleFilter = (e: MouseEvent<HTMLElement>): void => {
+		e.preventDefault();
+		e.stopPropagation();
+		onClick();
+		onFocusSelectedSpanHandler();
+	};
 	return (
 		<Wrapper
 			onMouseEnter={onMouseEnterHandler}
@@ -162,6 +171,21 @@ function Trace(props: TraceProps): JSX.Element {
 									<CaretContainer>{icon}</CaretContainer>
 								</CardComponent>
 							)}
+						</Col>
+						<Col>
+							<Button
+								style={{
+									padding: '2px 4px',
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									marginLeft: '5px',
+									height: '22px',
+									width: '22px',
+								}}
+								onClick={handleFilter}
+								icon={<ZoomIn size={10} />}
+							/>
 						</Col>
 						<Col>
 							<SpanName name={name} serviceName={serviceName} />
@@ -199,6 +223,7 @@ function Trace(props: TraceProps): JSX.Element {
 							isExpandAll={isExpandAll}
 							intervalUnit={intervalUnit}
 							isMissing={child.isMissing}
+							onFocusSelectedSpanHandler={onFocusSelectedSpanHandler}
 						/>
 					))}
 				</>
@@ -226,6 +251,7 @@ interface TraceProps extends ITraceTree, ITraceGlobal {
 	isExpandAll: boolean;
 	intervalUnit: IIntervalUnit;
 	isMissing?: boolean;
+	onFocusSelectedSpanHandler: () => void;
 }
 
 export default Trace;

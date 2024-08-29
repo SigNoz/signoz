@@ -241,6 +241,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 								setActiveSelectedId={setActiveSelectedId}
 								spanId={spanId || ''}
 								intervalUnit={intervalUnit}
+								onFocusSelectedSpanHandler={onFocusSelectedSpanHandler}
 							/>
 						))}
 					</GanttChartWrapper>
