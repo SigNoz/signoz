@@ -325,9 +325,9 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 			continue
 		}
 		alertNames = append(alertNames, rule.AlertName)
-		if rule.AlertType == "LOGS_BASED_ALERT" {
+		if rule.AlertType == AlertTypeLogs {
 			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
-		} else if rule.AlertType == "METRIC_BASED_ALERT" {
+		} else if rule.AlertType == AlertTypeMetric {
 			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
 			if rule.RuleCondition != nil && rule.RuleCondition.CompositeQuery != nil {
 				if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
@@ -343,7 +343,7 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 					}
 				}
 			}
-		} else if rule.AlertType == "TRACES_BASED_ALERT" {
+		} else if rule.AlertType == AlertTypeTraces {
 			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
 		}
 		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1

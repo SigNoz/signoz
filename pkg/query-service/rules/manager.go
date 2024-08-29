@@ -604,10 +604,10 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*GettableRules, error) {
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
-			ruleResponse.State = StateDisabled.String()
+			ruleResponse.State = StateDisabled
 			ruleResponse.Disabled = true
 		} else {
-			ruleResponse.State = rm.State().String()
+			ruleResponse.State = rm.State()
 		}
 		ruleResponse.CreatedAt = s.CreatedAt
 		ruleResponse.CreatedBy = s.CreatedBy
@@ -631,10 +631,10 @@ func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error)
 	r.Id = fmt.Sprintf("%d", s.Id)
 	// fetch state of rule from memory
 	if rm, ok := m.rules[r.Id]; !ok {
-		r.State = StateDisabled.String()
+		r.State = StateDisabled
 		r.Disabled = true
 	} else {
-		r.State = rm.State().String()
+		r.State = rm.State()
 	}
 	r.CreatedAt = s.CreatedAt
 	r.CreatedBy = s.CreatedBy
@@ -740,10 +740,10 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 
 	// fetch state of rule from memory
 	if rm, ok := m.rules[ruleId]; !ok {
-		response.State = StateDisabled.String()
+		response.State = StateDisabled
 		response.Disabled = true
 	} else {
-		response.State = rm.State().String()
+		response.State = rm.State()
 	}
 
 	return &response, nil
