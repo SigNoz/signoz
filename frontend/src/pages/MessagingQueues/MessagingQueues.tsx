@@ -57,11 +57,10 @@ function MessagingQueues(): JSX.Element {
 								onClick={(): void =>
 									history.push(ROUTES.GET_STARTED_APPLICATION_MONITORING)
 								}
-								// todo-sagar check for cloud condition
 							>
 								Get Started
 							</Button>
-							<Button type="text">Docs</Button>
+							{/* <Button type="text">Docs</Button> */}
 						</div>
 					</div>
 					<div className="overview-info-card middle-card">
@@ -80,7 +79,7 @@ function MessagingQueues(): JSX.Element {
 							>
 								Get Started
 							</Button>
-							<Button type="text">Docs</Button>
+							{/* <Button type="text">Docs</Button> */}
 						</div>
 					</div>
 					<div className="overview-info-card">
@@ -99,7 +98,7 @@ function MessagingQueues(): JSX.Element {
 							>
 								Get Started
 							</Button>
-							<Button type="text">Docs</Button>
+							{/* <Button type="text">Docs</Button> */}
 						</div>
 					</div>
 				</div>

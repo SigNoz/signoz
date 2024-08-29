@@ -6,8 +6,10 @@ import { Card } from 'container/GridCardLayout/styles';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
+import { UpdateTimeInterval } from 'store/actions';
 
 import {
 	getFiltersFromConfigOptions,
@@ -44,6 +46,26 @@ function MessagingQueuesGraph(): JSX.Element {
 		return customText;
 	};
 
+	const { pathname } = useLocation();
+	const dispatch = useDispatch();
+
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			history.push(generatedUrl);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch, history, pathname, urlQuery],
+	);
+
 	return (
 		<Card
 			isDarkMode={isDarkMode}
@@ -56,6 +78,7 @@ function MessagingQueuesGraph(): JSX.Element {
 				onClickHandler={(xValue, _yValue, _mouseX, _mouseY, data): void => {
 					setSelectedTimelineQuery(urlQuery, xValue, location, history, data);
 				}}
+				onDragSelect={onDragSelect}
 				customTooltipElement={messagingQueueCustomTooltipText()}
 			/>
 		</Card>
