@@ -13,6 +13,7 @@ import { membersResponse } from './__mockdata__/members';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
 import { serviceSuccessResponse } from './__mockdata__/services';
 import { topLevelOperationSuccessResponse } from './__mockdata__/top_level_operations';
+import { traceDetailResponse } from './__mockdata__/tracedetail';
 
 export const handlers = [
 	rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
@@ -230,6 +231,12 @@ export const handlers = [
 			}),
 		),
 	),
+
+	rest.get(
+		'http://localhost/api/v1/traces/000000000000000071dc9b0a338729b4',
+		(req, res, ctx) => res(ctx.status(200), ctx.json(traceDetailResponse)),
+	),
+
 	rest.post('http://localhost/api/v1//channels', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(allAlertChannels)),
 	),
