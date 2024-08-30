@@ -12,6 +12,185 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
+func TestMergeSerieses(t *testing.T) {
+	testCases := []struct {
+		name         string
+		cachedSeries []*v3.Series
+		missedSeries []*v3.Series
+		resultSeries []*v3.Series
+	}{
+		{
+			name: "merge two series",
+			cachedSeries: []*v3.Series{
+				{
+					Labels: map[string]string{
+						"__name__": "http_server_requests_seconds_count",
+					},
+					Points: []v3.Point{
+						{Timestamp: 1675115596722, Value: 1},
+						{Timestamp: 1675115596723, Value: 2},
+						{Timestamp: 1675115596724, Value: 3},
+					},
+				},
+			},
+			missedSeries: []*v3.Series{
+				{
+					Labels: map[string]string{
+						"__name__": "http_server_requests_seconds_count",
+					},
+					Points: []v3.Point{
+						{Timestamp: 1675115596724, Value: 3},
+						{Timestamp: 1675115596725, Value: 4},
+					},
+				},
+			},
+			resultSeries: []*v3.Series{
+				{
+					Labels: map[string]string{
+						"__name__": "http_server_requests_seconds_count",
+					},
+					Points: []v3.Point{
+						{Timestamp: 1675115596722, Value: 1},
+						{Timestamp: 1675115596723, Value: 2},
+						{Timestamp: 1675115596724, Value: 3},
+						{Timestamp: 1675115596725, Value: 4},
+					},
+				},
+			},
+		},
+		{
+			name: "dont merge if start of missed is after end of cached",
+			cachedSeries: []*v3.Series{
+				{
+					Labels: map[string]string{
+						"__name__": "http_server_requests_seconds_count",
+					},
+					Points: []v3.Point{
+						{Timestamp: 1675115596722, Value: 1},
+						{Timestamp: 1675115596723, Value: 2},
+						{Timestamp: 1675115596724, Value: 3},
+					},
+				},
+			},
+			missedSeries: []*v3.Series{
+				{
+					Labels: map[string]string{
+						"__name__": "http_server_requests_seconds_count",
+					},
+					Points: []v3.Point{
+						{Timestamp: 1675115596726, Value: 5},
+						{Timestamp: 1675115596727, Value: 6},
+					},
+				},
+			},
+			resultSeries: []*v3.Series{
+				{
+					Labels: map[string]string{
+						"__name__": "http_server_requests_seconds_count",
+					},
+					Points: []v3.Point{
+						{Timestamp: 1675115596722, Value: 1},
+						{Timestamp: 1675115596723, Value: 2},
+						{Timestamp: 1675115596724, Value: 3},
+					},
+				},
+			},
+		},
+		{
+			name: "dont merge if end of missed is before start of cached",
+			cachedSeries: []*v3.Series{
+				{
+					Labels: map[string]string{
+						"__name__": "http_server_requests_seconds_count",
+					},
+					Points: []v3.Point{
+						{Timestamp: 1675115596722, Value: 1},
+						{Timestamp: 1675115596723, Value: 2},
+						{Timestamp: 1675115596724, Value: 3},
+					},
+				},
+			},
+			missedSeries: []*v3.Series{
+				{
+					Labels: map[string]string{
+						"__name__": "http_server_requests_seconds_count",
+					},
+					Points: []v3.Point{
+						{Timestamp: 1675115596720, Value: 5},
+						{Timestamp: 1675115596721, Value: 6},
+					},
+				},
+			},
+			resultSeries: []*v3.Series{
+				{
+					Labels: map[string]string{
+						"__name__": "http_server_requests_seconds_count",
+					},
+					Points: []v3.Point{
+						{Timestamp: 1675115596722, Value: 1},
+						{Timestamp: 1675115596723, Value: 2},
+						{Timestamp: 1675115596724, Value: 3},
+					},
+				},
+			},
+		},
+		{
+			name: "replace if new series has more points than the old one",
+			cachedSeries: []*v3.Series{
+				{
+					Labels: map[string]string{
+						"__name__": "http_server_requests_seconds_count",
+					},
+					Points: []v3.Point{
+						{Timestamp: 1675115596720, Value: 5},
+						{Timestamp: 1675115596721, Value: 6},
+					},
+				},
+			},
+			missedSeries: []*v3.Series{
+				{
+					Labels: map[string]string{
+						"__name__": "http_server_requests_seconds_count",
+					},
+					Points: []v3.Point{
+						{Timestamp: 1675115596722, Value: 1},
+						{Timestamp: 1675115596723, Value: 2},
+						{Timestamp: 1675115596724, Value: 3},
+					},
+				},
+			},
+			resultSeries: []*v3.Series{
+				{
+					Labels: map[string]string{
+						"__name__": "http_server_requests_seconds_count",
+					},
+					Points: []v3.Point{
+						{Timestamp: 1675115596722, Value: 1},
+						{Timestamp: 1675115596723, Value: 2},
+						{Timestamp: 1675115596724, Value: 3},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := mergeSerieses(tc.cachedSeries, tc.missedSeries)
+			for sIdx, series := range tc.resultSeries {
+				if len(res[sIdx].Points) != len(series.Points) {
+					t.Errorf("expected %d, got %d", len(series.Points), len(res[sIdx].Points))
+				}
+				for pIdx, point := range series.Points {
+					if res[sIdx].Points[pIdx].Timestamp != point.Timestamp {
+						t.Errorf("expected %d, got %d", point.Timestamp, res[sIdx].Points[pIdx].Timestamp)
+					}
+				}
+			}
+		})
+	}
+}
+
 func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 	// There are five scenarios:
 	// 1. Cached time range is a subset of the requested time range
