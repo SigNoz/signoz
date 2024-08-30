@@ -284,7 +284,7 @@ func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 
 		// add to the series only if the missed series start or end lies in between the cached series
 		if (series.Points[0].Timestamp >= cachedPoints[0].Timestamp && series.Points[0].Timestamp <= cachedPoints[lc-1].Timestamp) ||
-			(series.Points[ls-1].Timestamp >= cachedPoints[0].Timestamp && series.Points[len(series.Points)-1].Timestamp <= cachedPoints[lc-1].Timestamp) {
+			(series.Points[ls-1].Timestamp >= cachedPoints[0].Timestamp && series.Points[ls-1].Timestamp <= cachedPoints[lc-1].Timestamp) {
 
 			seriesesByLabels[labelsToString(series.Labels)].Points = append(seriesesByLabels[labelsToString(series.Labels)].Points, series.Points...)
 		} else if ls > lc {
