@@ -32,7 +32,7 @@ func InitDB(db *sqlx.DB) error {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return fmt.Errorf("Error in creating licenses table: %s", err.Error())
+		return fmt.Errorf("error in creating licenses table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS feature_status (
@@ -45,7 +45,7 @@ func InitDB(db *sqlx.DB) error {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return fmt.Errorf("Error in creating feature_status table: %s", err.Error())
+		return fmt.Errorf("error in creating feature_status table: %s", err.Error())
 	}
 
 	return nil

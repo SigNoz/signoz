@@ -7,9 +7,11 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"go.signoz.io/signoz/pkg/query-service/common"
 )
 
 type ClickhouseQuerySettings struct {
+	MaxExecutionTime                    string
 	MaxExecutionTimeLeaf                string
 	TimeoutBeforeCheckingExecutionSpeed string
 	MaxBytesToRead                      string
@@ -46,6 +48,10 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 		settings["max_bytes_to_read"] = c.settings.MaxBytesToRead
 	}
 
+	if c.settings.MaxExecutionTime != "" {
+		settings["max_execution_time"] = c.settings.MaxExecutionTime
+	}
+
 	if c.settings.MaxExecutionTimeLeaf != "" {
 		settings["max_execution_time_leaf"] = c.settings.MaxExecutionTimeLeaf
 	}
@@ -65,7 +71,7 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 
 func (c clickhouseConnWrapper) getLogComment(ctx context.Context) string {
 	// Get the key-value pairs from context for log comment
-	kv := ctx.Value("log_comment")
+	kv := ctx.Value(common.LogCommentKey)
 	if kv == nil {
 		return ""
 	}

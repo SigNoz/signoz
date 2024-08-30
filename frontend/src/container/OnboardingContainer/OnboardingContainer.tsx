@@ -3,15 +3,18 @@
 import './Onboarding.styles.scss';
 
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Card, Typography } from 'antd';
+import { Button, Card, Form, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
-import useAnalytics from 'hooks/analytics/useAnalytics';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/InviteUserModal';
+import { InviteMemberFormValues } from 'container/OrganizationSettings/PendingInvitesContainer';
 import history from 'lib/history';
-import { useEffect, useState } from 'react';
+import { UserPlus } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
 
@@ -25,6 +28,7 @@ import { DataSourceType } from './Steps/DataSource/DataSource';
 import {
 	defaultApplicationDataSource,
 	defaultAwsServices,
+	defaultAzureServices,
 	defaultInfraMetricsType,
 	defaultLogsType,
 	moduleRouteMap,
@@ -32,6 +36,7 @@ import {
 import {
 	APM_STEPS,
 	AWS_MONITORING_STEPS,
+	AZURE_MONITORING_STEPS,
 	getSteps,
 	INFRASTRUCTURE_MONITORING_STEPS,
 	LOGS_MANAGEMENT_STEPS,
@@ -42,6 +47,7 @@ export enum ModulesMap {
 	LogsManagement = 'LogsManagement',
 	InfrastructureMonitoring = 'InfrastructureMonitoring',
 	AwsMonitoring = 'AwsMonitoring',
+	AzureMonitoring = 'AzureMonitoring',
 }
 
 export interface ModuleProps {
@@ -81,6 +87,12 @@ export const useCases = {
 		desc:
 			'Monitor your traces, logs and metrics for AWS services like EC2, ECS, EKS etc.',
 	},
+	AzureMonitoring: {
+		id: ModulesMap.AzureMonitoring,
+		title: 'Azure Monitoring',
+		desc:
+			'Monitor your traces, logs and metrics for Azure services like AKS, Container Apps, App Service etc.',
+	},
 };
 
 export default function Onboarding(): JSX.Element {
@@ -91,9 +103,8 @@ export default function Onboarding(): JSX.Element {
 	const [selectedModuleSteps, setSelectedModuleSteps] = useState(APM_STEPS);
 	const [activeStep, setActiveStep] = useState(1);
 	const [current, setCurrent] = useState(0);
-	const isDarkMode = useIsDarkMode();
-	const { trackEvent } = useAnalytics();
 	const { location } = history;
+	const { t } = useTranslation(['onboarding']);
 
 	const {
 		selectedDataSource,
@@ -107,7 +118,7 @@ export default function Onboarding(): JSX.Element {
 	} = useOnboardingContext();
 
 	useEffectOnce(() => {
-		trackEvent('Onboarding V2 Started');
+		logEvent('Onboarding V2 Started', {});
 	});
 
 	const { status, data: ingestionData } = useQuery({
@@ -172,6 +183,7 @@ export default function Onboarding(): JSX.Element {
 		setSelectedModuleSteps(APM_STEPS);
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		if (selectedModule?.id === ModulesMap.InfrastructureMonitoring) {
 			if (selectedDataSource) {
@@ -194,6 +206,13 @@ export default function Onboarding(): JSX.Element {
 				setSelectedModuleSteps(AWS_MONITORING_STEPS);
 				updateSelectedDataSource(defaultAwsServices);
 			}
+		} else if (selectedModule?.id === ModulesMap.AzureMonitoring) {
+			if (selectedDataSource) {
+				setModuleStepsBasedOnSelectedDataSource(selectedDataSource);
+			} else {
+				setSelectedModuleSteps(AZURE_MONITORING_STEPS);
+				updateSelectedDataSource(defaultAzureServices);
+			}
 		} else if (selectedModule?.id === ModulesMap.APM) {
 			handleAPMSteps();
 
@@ -210,7 +229,7 @@ export default function Onboarding(): JSX.Element {
 			const nextStep = activeStep + 1;
 
 			// on next
-			trackEvent('Onboarding V2: Get Started', {
+			logEvent('Onboarding V2: Get Started', {
 				selectedModule: selectedModule.id,
 				nextStepId: nextStep,
 			});
@@ -228,8 +247,7 @@ export default function Onboarding(): JSX.Element {
 
 	const handleNext = (): void => {
 		if (activeStep <= 3) {
-			handleNextStep();
-			history.replace(moduleRouteMap[selectedModule.id as ModulesMap]);
+			history.push(moduleRouteMap[selectedModule.id as ModulesMap]);
 		}
 	};
 
@@ -239,30 +257,70 @@ export default function Onboarding(): JSX.Element {
 		updateSelectedDataSource(null);
 	};
 
+	const handleBackNavigation = (): void => {
+		setCurrent(0);
+		setActiveStep(1);
+		setSelectedModule(useCases.APM);
+		resetProgress();
+	};
+
 	useEffect(() => {
-		if (location.pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING) {
+		const { pathname } = location;
+
+		if (pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING) {
 			handleModuleSelect(useCases.APM);
 			updateSelectedDataSource(defaultApplicationDataSource);
 			handleNextStep();
-		} else if (
-			location.pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING
-		) {
+		} else if (pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING) {
 			handleModuleSelect(useCases.InfrastructureMonitoring);
 			handleNextStep();
-		} else if (location.pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT) {
+		} else if (pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT) {
 			handleModuleSelect(useCases.LogsManagement);
 			handleNextStep();
+		} else if (pathname === ROUTES.GET_STARTED_AWS_MONITORING) {
+			handleModuleSelect(useCases.AwsMonitoring);
+			handleNextStep();
+		} else if (pathname === ROUTES.GET_STARTED_AZURE_MONITORING) {
+			handleModuleSelect(useCases.AzureMonitoring);
+			handleNextStep();
+		} else {
+			handleBackNavigation();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [location.pathname]);
+
+	const [form] = Form.useForm<InviteMemberFormValues>();
+	const [
+		isInviteTeamMemberModalOpen,
+		setIsInviteTeamMemberModalOpen,
+	] = useState<boolean>(false);
+
+	const toggleModal = useCallback(
+		(value: boolean): void => {
+			setIsInviteTeamMemberModalOpen(value);
+			if (!value) {
+				form.resetFields();
+			}
+		},
+		[form],
+	);
 
 	return (
-		<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
+		<div className="container">
 			{activeStep === 1 && (
-				<>
+				<div className="onboarding-page">
+					<div
+						onClick={(): void => {
+							logEvent('Onboarding V2: Skip Button Clicked', {});
+							history.push('/');
+						}}
+						className="skip-to-console"
+					>
+						{t('skip')}
+					</div>
 					<FullScreenHeader />
 					<div className="onboardingHeader">
-						<h1> Select a use-case to get started</h1>
+						<h1>{t('select_use_case')}</h1>
 					</div>
 					<div className="modulesContainer">
 						<div className="moduleContainerRowStyles">
@@ -275,26 +333,13 @@ export default function Onboarding(): JSX.Element {
 											'moduleStyles',
 											selectedModule.id === selectedUseCase.id ? 'selected' : '',
 										)}
-										style={{
-											backgroundColor: isDarkMode ? '#000' : '#FFF',
-										}}
 										key={selectedUseCase.id}
 										onClick={(): void => handleModuleSelect(selectedUseCase)}
 									>
-										<Typography.Title
-											className="moduleTitleStyle"
-											level={4}
-											style={{
-												borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #ddd',
-												backgroundColor: isDarkMode ? '#141414' : '#FFF',
-											}}
-										>
+										<Typography.Title className="moduleTitleStyle" level={4}>
 											{selectedUseCase.title}
 										</Typography.Title>
-										<Typography.Paragraph
-											className="moduleDesc"
-											style={{ backgroundColor: isDarkMode ? '#000' : '#FFF' }}
-										>
+										<Typography.Paragraph className="moduleDesc">
 											{selectedUseCase.desc}
 										</Typography.Paragraph>
 									</Card>
@@ -304,10 +349,31 @@ export default function Onboarding(): JSX.Element {
 					</div>
 					<div className="continue-to-next-step">
 						<Button type="primary" icon={<ArrowRightOutlined />} onClick={handleNext}>
-							Get Started
+							{t('get_started')}
 						</Button>
 					</div>
-				</>
+					<div className="invite-member-wrapper">
+						<Typography.Text className="helper-text">
+							{t('invite_user_helper_text')}
+						</Typography.Text>
+						<div className="invite-member">
+							<Typography.Text>{t('invite_user')}</Typography.Text>
+							<Button
+								onClick={(): void => {
+									logEvent('Onboarding V2: Invite Member', {
+										module: selectedModule?.id,
+										page: 'homepage',
+									});
+									setIsInviteTeamMemberModalOpen(true);
+								}}
+								icon={<UserPlus size={16} />}
+								type="primary"
+							>
+								{t('invite')}
+							</Button>
+						</div>
+					</div>
+				</div>
 			)}
 
 			{activeStep > 1 && (
@@ -322,9 +388,15 @@ export default function Onboarding(): JSX.Element {
 						}}
 						selectedModule={selectedModule}
 						selectedModuleSteps={selectedModuleSteps}
+						setIsInviteTeamMemberModalOpen={setIsInviteTeamMemberModalOpen}
 					/>
 				</div>
 			)}
+			<InviteUserModal
+				form={form}
+				isInviteTeamMemberModalOpen={isInviteTeamMemberModalOpen}
+				toggleModal={toggleModal}
+			/>
 		</div>
 	);
 }

@@ -18,7 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func prepareLogsQuery(ctx context.Context,
+func prepareLogsQuery(_ context.Context,
 	start,
 	end int64,
 	builderQuery *v3.BuilderQuery,
@@ -123,7 +123,7 @@ func (q *querier) runBuilderQuery(
 				cachedData = data
 			}
 		}
-		misses := q.findMissingTimeRanges(start, end, params.Step, cachedData)
+		misses := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
@@ -257,7 +257,7 @@ func (q *querier) runBuilderQuery(
 			cachedData = data
 		}
 	}
-	misses := q.findMissingTimeRanges(start, end, params.Step, cachedData)
+	misses := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
 	missedSeries := make([]*v3.Series, 0)
 	cachedSeries := make([]*v3.Series, 0)
 	for _, miss := range misses {
@@ -306,7 +306,7 @@ func (q *querier) runBuilderQuery(
 	}
 
 	// response doesn't need everything
-	filterCachedPoints(mergedSeries, params.Start, params.End)
+	filterCachedPoints(mergedSeries, start, end)
 
 	ch <- channelResult{
 		Err:    nil,
@@ -316,96 +316,6 @@ func (q *querier) runBuilderQuery(
 	// Cache the seriesList for future queries
 	if missedSeriesLen > 0 && !params.NoCache && q.cache != nil && marshallingErr == nil {
 		err := q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
-		if err != nil {
-			zap.L().Error("error storing merged series", zap.Error(err))
-			return
-		}
-	}
-}
-
-func (q *querier) runBuilderExpression(
-	ctx context.Context,
-	builderQuery *v3.BuilderQuery,
-	params *v3.QueryRangeParamsV3,
-	keys map[string]v3.AttributeKey,
-	cacheKeys map[string]string,
-	ch chan channelResult,
-	wg *sync.WaitGroup,
-) {
-	defer wg.Done()
-
-	queryName := builderQuery.QueryName
-
-	queries, err := q.builder.PrepareQueries(params, keys)
-	if err != nil {
-		ch <- channelResult{Err: err, Name: queryName, Query: "", Series: nil}
-		return
-	}
-
-	if _, ok := cacheKeys[queryName]; !ok {
-		query := queries[queryName]
-		series, err := q.execClickHouseQuery(ctx, query)
-		ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
-		return
-	}
-
-	cacheKey := cacheKeys[queryName]
-	var cachedData []byte
-	if !params.NoCache && q.cache != nil {
-		var retrieveStatus status.RetrieveStatus
-		data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
-		zap.L().Info("cache retrieve status", zap.String("status", retrieveStatus.String()))
-		if err == nil {
-			cachedData = data
-		}
-	}
-	misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
-	missedSeries := make([]*v3.Series, 0)
-	cachedSeries := make([]*v3.Series, 0)
-	for _, miss := range misses {
-		missQueries, _ := q.builder.PrepareQueries(&v3.QueryRangeParamsV3{
-			Start:          miss.start,
-			End:            miss.end,
-			Step:           params.Step,
-			NoCache:        params.NoCache,
-			CompositeQuery: params.CompositeQuery,
-			Variables:      params.Variables,
-		}, keys)
-		query := missQueries[queryName]
-		series, err := q.execClickHouseQuery(ctx, query)
-		if err != nil {
-			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
-			return
-		}
-		missedSeries = append(missedSeries, series...)
-	}
-	if err := json.Unmarshal(cachedData, &cachedSeries); err != nil && cachedData != nil {
-		zap.L().Error("error unmarshalling cached data", zap.Error(err))
-	}
-	mergedSeries := mergeSerieses(cachedSeries, missedSeries)
-
-	var mergedSeriesData []byte
-	missedSeriesLen := len(missedSeries)
-	var marshallingErr error
-	if missedSeriesLen > 0 && !params.NoCache && q.cache != nil {
-		// caching the data
-		mergedSeriesData, marshallingErr = json.Marshal(mergedSeries)
-		if marshallingErr != nil {
-			zap.S().Error("error marshalling merged series", zap.Error(marshallingErr))
-		}
-	}
-
-	// response doesn't need everything
-	filterCachedPoints(mergedSeries, params.Start, params.End)
-
-	ch <- channelResult{
-		Err:    nil,
-		Name:   queryName,
-		Series: mergedSeries,
-	}
-	// Cache the seriesList for future queries
-	if len(missedSeries) > 0 && !params.NoCache && q.cache != nil && marshallingErr == nil {
-		err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
 		if err != nil {
 			zap.L().Error("error storing merged series", zap.Error(err))
 			return

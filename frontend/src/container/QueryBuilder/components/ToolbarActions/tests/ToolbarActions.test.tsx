@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
+import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 
 import LeftToolbarActions from '../LeftToolbarActions';
 import RightToolbarActions from '../RightToolbarActions';
@@ -8,7 +9,7 @@ import RightToolbarActions from '../RightToolbarActions';
 describe('ToolbarActions', () => {
 	it('LeftToolbarActions - renders correctly with default props', async () => {
 		const handleChangeSelectedView = jest.fn();
-		const handleToggleShowHistogram = jest.fn();
+		const handleToggleShowFrequencyChart = jest.fn();
 		const { queryByTestId } = render(
 			<LeftToolbarActions
 				items={{
@@ -32,8 +33,8 @@ describe('ToolbarActions', () => {
 				}}
 				selectedView={SELECTED_VIEWS.SEARCH}
 				onChangeSelectedView={handleChangeSelectedView}
-				onToggleHistrogramVisibility={handleToggleShowHistogram}
-				showHistogram
+				onToggleHistrogramVisibility={handleToggleShowFrequencyChart}
+				showFrequencyChart
 			/>,
 		);
 		expect(screen.getByTestId('search-view')).toBeInTheDocument();
@@ -51,7 +52,7 @@ describe('ToolbarActions', () => {
 
 	it('renders - clickhouse view and test histogram toggle', async () => {
 		const handleChangeSelectedView = jest.fn();
-		const handleToggleShowHistogram = jest.fn();
+		const handleToggleShowFrequencyChart = jest.fn();
 		const { queryByTestId, getByRole } = render(
 			<LeftToolbarActions
 				items={{
@@ -76,8 +77,8 @@ describe('ToolbarActions', () => {
 				}}
 				selectedView={SELECTED_VIEWS.QUERY_BUILDER}
 				onChangeSelectedView={handleChangeSelectedView}
-				onToggleHistrogramVisibility={handleToggleShowHistogram}
-				showHistogram
+				onToggleHistrogramVisibility={handleToggleShowFrequencyChart}
+				showFrequencyChart
 			/>,
 		);
 
@@ -88,13 +89,15 @@ describe('ToolbarActions', () => {
 		expect(handleChangeSelectedView).toBeCalled();
 
 		await userEvent.click(getByRole('switch'));
-		expect(handleToggleShowHistogram).toBeCalled();
+		expect(handleToggleShowFrequencyChart).toBeCalled();
 	});
 
 	it('RightToolbarActions - render correctly with props', async () => {
 		const onStageRunQuery = jest.fn();
 		const { queryByText } = render(
-			<RightToolbarActions onStageRunQuery={onStageRunQuery} />,
+			<MockQueryClientProvider>
+				<RightToolbarActions onStageRunQuery={onStageRunQuery} />,
+			</MockQueryClientProvider>,
 		);
 
 		const stageNRunBtn = queryByText('Stage & Run Query');

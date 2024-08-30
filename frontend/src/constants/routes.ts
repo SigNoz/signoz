@@ -2,6 +2,7 @@ const ROUTES = {
 	SIGN_UP: '/signup',
 	LOGIN: '/login',
 	SERVICE_METRICS: '/services/:servicename',
+	SERVICE_TOP_LEVEL_OPERATIONS: '/services/:servicename/top-level-operations',
 	SERVICE_MAP: '/service-map',
 	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',
@@ -12,6 +13,7 @@ const ROUTES = {
 	GET_STARTED_INFRASTRUCTURE_MONITORING:
 		'/get-started/infrastructure-monitoring',
 	GET_STARTED_AWS_MONITORING: '/get-started/aws-monitoring',
+	GET_STARTED_AZURE_MONITORING: '/get-started/azure-monitoring',
 	USAGE_EXPLORER: '/usage-explorer',
 	APPLICATION: '/services',
 	ALL_DASHBOARD: '/dashboard',
@@ -52,6 +54,8 @@ const ROUTES = {
 	WORKSPACE_LOCKED: '/workspace-locked',
 	SHORTCUTS: '/shortcuts',
 	INTEGRATIONS: '/integrations',
+	MESSAGING_QUEUES: '/messaging-queues',
+	MESSAGING_QUEUES_DETAIL: '/messaging-queues/detail',
 } as const;
 
 export default ROUTES;

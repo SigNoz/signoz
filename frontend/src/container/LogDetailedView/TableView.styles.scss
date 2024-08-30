@@ -11,7 +11,7 @@
 						top: 50%;
 						right: 16px;
 						transform: translateY(-50%);
-						gap: 8px;
+						gap: 4px;
 					}
 				}
 			}
@@ -57,6 +57,8 @@
 			background: rgba(22, 25, 34, 0.4);
 
 			.value-field {
+				font-family: 'Geist Mono';
+
 				position: relative;
 			}
 
@@ -74,8 +76,10 @@
 					box-shadow: none;
 					border-radius: 2px;
 					background: var(--bg-slate-400);
-
-					height: 24px;
+					padding: 2px 3px;
+					gap: 3px;
+					height: 18px;
+					width: 20px;
 				}
 			}
 		}

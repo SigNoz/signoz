@@ -1,5 +1,11 @@
+import { UsageResponsePayloadProps } from 'api/billing/getUsage';
+import dayjs from 'dayjs';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty, isNull } from 'lodash-es';
+import { unparse } from 'papaparse';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+
+import generateCsvData, { QuantityData } from './generateCsvData';
 
 export const convertDataToMetricRangePayload = (
 	data: any,
@@ -58,10 +64,7 @@ export const convertDataToMetricRangePayload = (
 	};
 };
 
-export function fillMissingValuesForQuantities(
-	data: any,
-	timestampArray: number[],
-): MetricRangePayloadProps {
+export function quantityDataArr(data: any, timestampArray: number[]): any[] {
 	const { result } = data.data;
 
 	const transformedResultArr: any[] = [];
@@ -76,6 +79,14 @@ export function fillMissingValuesForQuantities(
 		);
 		transformedResultArr.push({ ...item, quantity: quantityArray });
 	});
+	return transformedResultArr;
+}
+
+export function fillMissingValuesForQuantities(
+	data: any,
+	timestampArray: number[],
+): MetricRangePayloadProps {
+	const transformedResultArr = quantityDataArr(data, timestampArray);
 
 	return {
 		data: {
@@ -83,5 +94,38 @@ export function fillMissingValuesForQuantities(
 			result: transformedResultArr,
 			resultType: '',
 		},
+	};
+}
+
+const formatDate = (timestamp: number): string =>
+	dayjs.unix(timestamp).format('MM/DD/YYYY');
+
+export function csvFileName(csvData: QuantityData[]): string {
+	if (!csvData.length) {
+		return `billing-usage.csv`;
+	}
+
+	const { values } = csvData[0];
+
+	const timestamps = values.map((item) => item[0]);
+	const startDate = formatDate(Math.min(...timestamps));
+	const endDate = formatDate(Math.max(...timestamps));
+
+	return `billing_usage_(${startDate}-${endDate}).csv`;
+}
+
+export function prepareCsvData(
+	data: Partial<UsageResponsePayloadProps>,
+): {
+	csvData: string;
+	fileName: string;
+} {
+	const graphCompatibleData = convertDataToMetricRangePayload(data);
+	const chartData = getUPlotChartData(graphCompatibleData);
+	const quantityMapArr = quantityDataArr(graphCompatibleData, chartData[0]);
+
+	return {
+		csvData: unparse(generateCsvData(quantityMapArr)),
+		fileName: csvFileName(quantityMapArr),
 	};
 }

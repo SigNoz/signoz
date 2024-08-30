@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"runtime/debug"
 	"testing"
 	"time"
 
@@ -16,6 +18,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
+	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -123,15 +126,15 @@ func makeTestSignozLog(
 	}
 
 	for k, v := range attributes {
-		switch v.(type) {
+		switch v := v.(type) {
 		case bool:
-			testLog.Attributes_bool[k] = v.(bool)
+			testLog.Attributes_bool[k] = v
 		case string:
-			testLog.Attributes_string[k] = v.(string)
+			testLog.Attributes_string[k] = v
 		case int:
-			testLog.Attributes_int64[k] = int64(v.(int))
+			testLog.Attributes_int64[k] = int64(v)
 		case float64:
-			testLog.Attributes_float64[k] = v.(float64)
+			testLog.Attributes_float64[k] = v
 		default:
 			panic(fmt.Sprintf("found attribute value of unsupported type %T in test log", v))
 		}
@@ -172,7 +175,7 @@ func createTestUser() (*model.User, *model.ApiError) {
 	)
 }
 
-func NewAuthenticatedTestRequest(
+func AuthenticatedRequestForTest(
 	user *model.User,
 	path string,
 	postData interface{},
@@ -197,4 +200,32 @@ func NewAuthenticatedTestRequest(
 
 	req.Header.Add("Authorization", "Bearer "+userJwt.AccessJwt)
 	return req, nil
+}
+
+func HandleTestRequest(handler http.Handler, req *http.Request, expectedStatus int) (*app.ApiResponse, error) {
+	respWriter := httptest.NewRecorder()
+	handler.ServeHTTP(respWriter, req)
+	response := respWriter.Result()
+	responseBody, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't read response body received from QS: %w", err)
+	}
+
+	if response.StatusCode != expectedStatus {
+		return nil, fmt.Errorf(
+			"unexpected response status from query service for path %s. status: %d, body: %v\n%v",
+			req.URL.Path, response.StatusCode, string(responseBody), string(debug.Stack()),
+		)
+	}
+
+	var result app.ApiResponse
+	err = json.Unmarshal(responseBody, &result)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"Could not unmarshal QS response into an ApiResponse.\nResponse body: %s",
+			string(responseBody),
+		)
+	}
+
+	return &result, nil
 }

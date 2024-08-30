@@ -166,6 +166,7 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 					),
 					yAxisUnit: '',
 					isBillingUsageGraphs: true,
+					isDarkMode,
 				}),
 			],
 		}),

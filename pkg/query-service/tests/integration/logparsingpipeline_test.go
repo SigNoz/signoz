@@ -512,7 +512,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 	postablePipelines logparsingpipeline.PostablePipelines,
 	expectedStatusCode int,
 ) *logparsingpipeline.PipelinesResponse {
-	req, err := NewAuthenticatedTestRequest(
+	req, err := AuthenticatedRequestForTest(
 		tb.testUser, "/api/v1/logs/pipelines", postablePipelines,
 	)
 	if err != nil {
@@ -562,7 +562,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQS(
 }
 
 func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.PipelinesResponse {
-	req, err := NewAuthenticatedTestRequest(
+	req, err := AuthenticatedRequestForTest(
 		tb.testUser, "/api/v1/logs/pipelines/latest", nil,
 	)
 	if err != nil {
@@ -645,6 +645,7 @@ func assertPipelinesRecommendedInRemoteConfig(
 	}
 
 	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(pipelines)
+	require.NoError(t, err)
 	require.Equal(
 		t, expectedLogProcessorNames, collectorConfLogsPipelineProcNames,
 		"config sent to opamp client doesn't contain expected log pipelines",

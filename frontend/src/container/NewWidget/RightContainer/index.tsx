@@ -29,6 +29,7 @@ import {
 	panelTypeVsFillSpan,
 	panelTypeVsPanelTimePreferences,
 	panelTypeVsSoftMinMax,
+	panelTypeVsStackingChartPreferences,
 	panelTypeVsThreshold,
 	panelTypeVsYAxisUnit,
 } from './constants';
@@ -48,6 +49,8 @@ function RightContainer({
 	selectedGraph,
 	bucketCount,
 	bucketWidth,
+	stackedBarChart,
+	setStackedBarChart,
 	setBucketCount,
 	setBucketWidth,
 	setSelectedTime,
@@ -79,7 +82,7 @@ function RightContainer({
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
 
-	const onCreateAlertsHandler = useCreateAlerts(selectedWidget);
+	const onCreateAlertsHandler = useCreateAlerts(selectedWidget, 'panelView');
 
 	const allowThreshold = panelTypeVsThreshold[selectedGraph];
 	const allowSoftMinMax = panelTypeVsSoftMinMax[selectedGraph];
@@ -87,6 +90,8 @@ function RightContainer({
 	const allowYAxisUnit = panelTypeVsYAxisUnit[selectedGraph];
 	const allowCreateAlerts = panelTypeVsCreateAlert[selectedGraph];
 	const allowBucketConfig = panelTypeVsBucketConfig[selectedGraph];
+	const allowStackingBarChart =
+		panelTypeVsStackingChartPreferences[selectedGraph];
 	const allowPanelTimePreference =
 		panelTypeVsPanelTimePreferences[selectedGraph];
 
@@ -158,6 +163,7 @@ function RightContainer({
 					value={selectedGraph}
 					style={{ width: '100%' }}
 					className="panel-type-select"
+					data-testid="panel-change-select"
 				>
 					{graphTypes.map((item) => (
 						<Option key={item.name} value={item.name}>
@@ -228,6 +234,17 @@ function RightContainer({
 								onChange={softMaxHandler}
 							/>
 						</section>
+					</section>
+				)}
+
+				{allowStackingBarChart && (
+					<section className="stack-chart">
+						<Typography.Text className="label">Stack series</Typography.Text>
+						<Switch
+							checked={stackedBarChart}
+							size="small"
+							onChange={(checked): void => setStackedBarChart(checked)}
+						/>
 					</section>
 				)}
 
@@ -312,6 +329,8 @@ interface RightContainerProps {
 	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 	yAxisUnit: string;
+	stackedBarChart: boolean;
+	setStackedBarChart: Dispatch<SetStateAction<boolean>>;
 	bucketWidth: number;
 	bucketCount: number;
 	combineHistogram: boolean;

@@ -7,6 +7,7 @@ import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
+import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
@@ -146,14 +147,17 @@ function TimeSeriesView({
 				style={{ height: '100%', width: '100%' }}
 				ref={graphRef}
 			>
-				{isLoading && <LogsLoading />}
+				{isLoading &&
+					(dataSource === DataSource.LOGS ? <LogsLoading /> : <TracesLoading />)}
 
 				{chartData &&
 					chartData[0] &&
 					chartData[0]?.length === 0 &&
 					!isLoading &&
 					!isError &&
-					isFilterApplied && <EmptyLogsSearch />}
+					isFilterApplied && (
+						<EmptyLogsSearch dataSource={dataSource} panelType="TIME_SERIES" />
+					)}
 
 				{chartData &&
 					chartData[0] &&

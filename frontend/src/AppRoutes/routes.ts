@@ -23,6 +23,8 @@ import {
 	LogsExplorer,
 	LogsIndexToFields,
 	LogsSaveViews,
+	MessagingQueues,
+	MQDetailPage,
 	MySettings,
 	NewDashboardPage,
 	OldLogsExplorer,
@@ -33,6 +35,7 @@ import {
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
+	ServiceTopLevelOperationsPage,
 	SettingsPage,
 	ShortcutsPage,
 	SignupPage,
@@ -83,6 +86,13 @@ const routes: AppRoutes[] = [
 		component: ServiceMetricsPage,
 		isPrivate: true,
 		key: 'SERVICE_METRICS',
+	},
+	{
+		path: ROUTES.SERVICE_TOP_LEVEL_OPERATIONS,
+		exact: true,
+		component: ServiceTopLevelOperationsPage,
+		isPrivate: true,
+		key: 'SERVICE_TOP_LEVEL_OPERATIONS',
 	},
 	{
 		path: ROUTES.SERVICE_MAP,
@@ -342,6 +352,20 @@ const routes: AppRoutes[] = [
 		component: InstalledIntegrations,
 		isPrivate: true,
 		key: 'INTEGRATIONS',
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES,
+		exact: true,
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES_DETAIL,
+		exact: true,
+		component: MQDetailPage,
+		key: 'MESSAGING_QUEUES_DETAIL',
+		isPrivate: true,
 	},
 ];
 

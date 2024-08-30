@@ -8,6 +8,7 @@ export enum ModulesMap {
 	LogsManagement = 'LogsManagement',
 	InfrastructureMonitoring = 'InfrastructureMonitoring',
 	AwsMonitoring = 'AwsMonitoring',
+	AzureMonitoring = 'AzureMonitoring',
 }
 
 export const frameworksMap = {
@@ -82,6 +83,7 @@ export const frameworksMap = {
 	LogsManagement: {},
 	InfrastructureMonitoring: {},
 	AwsMonitoring: {},
+	AzureMonitoring: {},
 };
 
 export const defaultApplicationDataSource = {
@@ -270,6 +272,50 @@ const supportedAwsServices = [
 	},
 ];
 
+export const defaultAzureServices = {
+	name: 'VM',
+	id: 'azureVm',
+	imgURL: `/Logos/azure-vm.svg`,
+};
+
+const supportedAzureServices = [
+	{
+		name: 'VM',
+		id: 'azureVm',
+		imgURL: `/Logos/azure-vm.svg`,
+	},
+	{
+		name: 'App Service',
+		id: 'azureAppService',
+		imgURL: `/Logos/azure-app-service.svg`,
+	},
+	{
+		name: 'AKS',
+		id: 'azureAks',
+		imgURL: `/Logos/azure-aks.svg`,
+	},
+	{
+		name: 'Azure Functions',
+		id: 'azureFunctions',
+		imgURL: `/Logos/azure-functions.svg`,
+	},
+	{
+		name: 'Azure Container Apps',
+		id: 'azureContainerApps',
+		imgURL: `/Logos/azure-container-apps.svg`,
+	},
+	{
+		name: 'SQL Database Metrics',
+		id: 'azureSQLDatabaseMetrics',
+		imgURL: `/Logos/azure-sql-database-metrics.svg`,
+	},
+	{
+		name: 'Azure Blob Storage',
+		id: 'azureBlobStorage',
+		imgURL: `/Logos/azure-blob-storage.svg`,
+	},
+];
+
 export const getDataSources = (module: ModuleProps): DataSourceType[] => {
 	if (module.id === ModulesMap.APM) {
 		return supportedLanguages;
@@ -283,7 +329,11 @@ export const getDataSources = (module: ModuleProps): DataSourceType[] => {
 		return supportedLogsTypes;
 	}
 
-	return supportedAwsServices;
+	if (module.id === ModulesMap.AwsMonitoring) {
+		return supportedAwsServices;
+	}
+
+	return supportedAzureServices;
 };
 
 export const getSupportedFrameworks = ({
@@ -347,4 +397,5 @@ export const moduleRouteMap = {
 	[ModulesMap.InfrastructureMonitoring]:
 		ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING,
 	[ModulesMap.AwsMonitoring]: ROUTES.GET_STARTED_AWS_MONITORING,
+	[ModulesMap.AzureMonitoring]: ROUTES.GET_STARTED_AZURE_MONITORING,
 };

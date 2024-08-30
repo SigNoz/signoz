@@ -8,6 +8,7 @@
 	"GET_STARTED_LOGS_MANAGEMENT": "SigNoz | Get Started | Logs",
 	"GET_STARTED_INFRASTRUCTURE_MONITORING": "SigNoz | Get Started | Infrastructure",
 	"GET_STARTED_AWS_MONITORING": "SigNoz | Get Started | AWS",
+	"GET_STARTED_AZURE_MONITORING": "SigNoz | Get Started | AZURE",
 	"TRACE": "SigNoz | Trace",
 	"TRACE_DETAIL": "SigNoz | Trace Detail",
 	"TRACES_EXPLORER": "SigNoz | Traces Explorer",
@@ -48,5 +49,6 @@
 	"TRACES_SAVE_VIEWS": "SigNoz | Traces Saved Views",
 	"DEFAULT": "Open source Observability Platform | SigNoz",
 	"SHORTCUTS": "SigNoz | Shortcuts",
-	"INTEGRATIONS": "SigNoz | Integrations"
+	"INTEGRATIONS": "SigNoz | Integrations",
+	"MESSAGING_QUEUES": "SigNoz | Messaging Queues"
 }

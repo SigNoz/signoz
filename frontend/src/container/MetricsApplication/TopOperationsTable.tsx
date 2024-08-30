@@ -12,9 +12,13 @@ import { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from './Tabs/types';
+import { useGetAPMToTracesQueries } from './Tabs/util';
 import {
 	convertedTracesToDownloadData,
 	getErrorRate,
@@ -38,11 +42,41 @@ function TopOperationsTable({
 		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
 
+	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
+
 	const params = useParams<{ servicename: string }>();
 
 	const handleOnClick = (operation: string): void => {
 		const { servicename: encodedServiceName } = params;
 		const servicename = decodeURIComponent(encodedServiceName);
+
+		const opFilter: TagFilterItem = {
+			id: uuid().slice(0, 8),
+			key: {
+				key: 'name',
+				dataType: DataTypes.String,
+				type: 'tag',
+				isColumn: true,
+				isJSON: false,
+				id: 'name--string--tag--true',
+			},
+			op: 'in',
+			value: [operation],
+		};
+
+		const preparedQuery: Query = {
+			...apmToTraceQuery,
+			builder: {
+				...apmToTraceQuery.builder,
+				queryData: apmToTraceQuery.builder.queryData?.map((item) => ({
+					...item,
+					filters: {
+						...item.filters,
+						items: [...item.filters.items, opFilter],
+					},
+				})),
+			},
+		};
 
 		navigateToTrace({
 			servicename,
@@ -50,6 +84,7 @@ function TopOperationsTable({
 			minTime,
 			maxTime,
 			selectedTraceTags,
+			apmToTraceQuery: preparedQuery,
 		});
 	};
 
@@ -129,6 +164,12 @@ function TopOperationsTable({
 
 	const downloadableData = convertedTracesToDownloadData(data);
 
+	const paginationConfig = {
+		pageSize: 10,
+		showSizeChanger: false,
+		hideOnSinglePage: true,
+	};
+
 	return (
 		<div className="top-operation">
 			<div className="top-operation--download">
@@ -146,6 +187,7 @@ function TopOperationsTable({
 				tableLayout="fixed"
 				dataSource={data}
 				rowKey="name"
+				pagination={paginationConfig}
 			/>
 		</div>
 	);

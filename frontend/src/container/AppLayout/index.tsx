@@ -3,17 +3,21 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import './AppLayout.styles.scss';
 
+import * as Sentry from '@sentry/react';
 import { Flex } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
-import getDynamicConfigs from 'api/dynamicConfigs/getDynamicConfigs';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import cx from 'classnames';
+import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useFeatureFlags from 'hooks/useFeatureFlag';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -27,7 +31,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
@@ -38,18 +41,19 @@ import { sideBarCollapse } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {
-	UPDATE_CONFIGS,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
+import { isCloudUser } from 'utils/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
 import { getRouteKey } from './utils';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn, user, role } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -59,18 +63,30 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
 
+	const { notifications } = useNotifications();
+
 	const isDarkMode = useIsDarkMode();
 
 	const { data: licenseData, isFetching } = useLicense();
 
+	const isPremiumChatSupportEnabled =
+		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
+
+	const isChatSupportEnabled =
+		useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active || false;
+
+	const isCloudUserVal = isCloudUser();
+
+	const showAddCreditCardModal =
+		isChatSupportEnabled &&
+		isCloudUserVal &&
+		!isPremiumChatSupportEnabled &&
+		!licenseData?.payload?.trialConvertedToSubscription;
+
 	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
 
-	const [
-		getUserVersionResponse,
-		getUserLatestVersionResponse,
-		getDynamicConfigsResponse,
-	] = useQueries([
+	const [getUserVersionResponse, getUserLatestVersionResponse] = useQueries([
 		{
 			queryFn: getUserVersion,
 			queryKey: ['getUserVersion', user?.accessJwt],
@@ -80,10 +96,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			queryFn: getUserLatestVersion,
 			queryKey: ['getUserLatestVersion', user?.accessJwt],
 			enabled: isLoggedIn,
-		},
-		{
-			queryFn: getDynamicConfigs,
-			queryKey: ['getDynamicConfigs', user?.accessJwt],
 		},
 	]);
 
@@ -95,15 +107,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (getUserVersionResponse.status === 'idle' && isLoggedIn) {
 			getUserVersionResponse.refetch();
 		}
-		if (getDynamicConfigsResponse.status === 'idle') {
-			getDynamicConfigsResponse.refetch();
-		}
-	}, [
-		getUserLatestVersionResponse,
-		getUserVersionResponse,
-		isLoggedIn,
-		getDynamicConfigsResponse,
-	]);
+	}, [getUserLatestVersionResponse, getUserVersionResponse, isLoggedIn]);
 
 	const { children } = props;
 
@@ -111,9 +115,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const latestCurrentCounter = useRef(0);
 	const latestVersionCounter = useRef(0);
-	const latestConfigCounter = useRef(0);
-
-	const { notifications } = useNotifications();
 
 	const onCollapse = useCallback(() => {
 		setCollapsed((collapsed) => !collapsed);
@@ -189,23 +190,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				},
 			});
 		}
-
-		if (
-			getDynamicConfigsResponse.isFetched &&
-			getDynamicConfigsResponse.isSuccess &&
-			getDynamicConfigsResponse.data &&
-			getDynamicConfigsResponse.data.payload &&
-			latestConfigCounter.current === 0
-		) {
-			latestConfigCounter.current = 1;
-
-			dispatch({
-				type: UPDATE_CONFIGS,
-				payload: {
-					configs: getDynamicConfigsResponse.data.payload,
-				},
-			});
-		}
 	}, [
 		dispatch,
 		isLoggedIn,
@@ -220,9 +204,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getUserLatestVersionResponse.isFetched,
 		getUserVersionResponse.isFetched,
 		getUserLatestVersionResponse.isSuccess,
-		getDynamicConfigsResponse.data,
-		getDynamicConfigsResponse.isFetched,
-		getDynamicConfigsResponse.isSuccess,
 		notifications,
 	]);
 
@@ -236,7 +217,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING ||
 		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
 		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
-		pathname === ROUTES.GET_STARTED_AWS_MONITORING;
+		pathname === ROUTES.GET_STARTED_AWS_MONITORING ||
+		pathname === ROUTES.GET_STARTED_AZURE_MONITORING;
 
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 
@@ -266,6 +248,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const isTracesView = (): boolean =>
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
+
+	const isMessagingQueues = (): boolean =>
+		routeKey === 'MESSAGING_QUEUES' || routeKey === 'MESSAGING_QUEUES_DETAIL';
 
 	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
 	const isDashboardView = (): boolean => {
@@ -341,28 +326,36 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						collapsed={collapsed}
 					/>
 				)}
-				<div className={cx('app-content', collapsed ? 'collapsed' : '')}>
-					<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-						<LayoutContent>
-							<ChildrenContainer
-								style={{
-									margin:
-										isLogsView() ||
-										isTracesView() ||
-										isDashboardView() ||
-										isDashboardWidgetView() ||
-										isDashboardListView()
-											? 0
-											: '0 1rem',
-								}}
-							>
-								{isToDisplayLayout && !renderFullScreen && <TopNav />}
-								{children}
-							</ChildrenContainer>
+				<div
+					className={cx('app-content', collapsed ? 'collapsed' : '')}
+					data-overlayscrollbars-initialize
+				>
+					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+						<LayoutContent data-overlayscrollbars-initialize>
+							<OverlayScrollbar>
+								<ChildrenContainer
+									style={{
+										margin:
+											isLogsView() ||
+											isTracesView() ||
+											isDashboardView() ||
+											isDashboardWidgetView() ||
+											isDashboardListView() ||
+											isMessagingQueues()
+												? 0
+												: '0 1rem',
+									}}
+								>
+									{isToDisplayLayout && !renderFullScreen && <TopNav />}
+									{children}
+								</ChildrenContainer>
+							</OverlayScrollbar>
 						</LayoutContent>
-					</ErrorBoundary>
+					</Sentry.ErrorBoundary>
 				</div>
 			</Flex>
+
+			{showAddCreditCardModal && <ChatSupportGateway />}
 		</Layout>
 	);
 }

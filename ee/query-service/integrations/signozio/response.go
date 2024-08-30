@@ -2,11 +2,6 @@ package signozio
 
 type status string
 
-const (
-	statusSuccess status = "success"
-	statusError   status = "error"
-)
-
 type ActivationResult struct {
 	Status    status              `json:"status"`
 	Data      *ActivationResponse `json:"data,omitempty"`

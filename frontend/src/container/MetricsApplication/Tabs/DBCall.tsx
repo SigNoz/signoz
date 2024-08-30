@@ -1,5 +1,7 @@
 import { Col } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import {
@@ -11,8 +13,12 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
-import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import useUrlQuery from 'hooks/useUrlQuery';
+import history from 'lib/history';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useLocation, useParams } from 'react-router-dom';
+import { UpdateTimeInterval } from 'store/actions';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
@@ -27,6 +33,7 @@ import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
+	useGetAPMToTracesQueries,
 } from './util';
 
 function DBCall(): JSX.Element {
@@ -35,6 +42,26 @@ function DBCall(): JSX.Element {
 	const servicename = decodeURIComponent(encodedServiceName);
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
+	const urlQuery = useUrlQuery();
+	const { pathname } = useLocation();
+	const dispatch = useDispatch();
+
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			history.push(generatedUrl);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch, pathname, urlQuery],
+	);
 
 	const tagFilterItems: TagFilterItem[] = useMemo(
 		() =>
@@ -96,6 +123,29 @@ function DBCall(): JSX.Element {
 		[servicename, tagFilterItems],
 	);
 
+	const logEventCalledRef = useRef(false);
+
+	useEffect(() => {
+		if (!logEventCalledRef.current) {
+			const selectedEnvironments = queries.find(
+				(val) => val.tagKey === 'resource_deployment_environment',
+			)?.tagValue;
+
+			logEvent('APM: Service detail page visited', {
+				selectedEnvironments,
+				resourceAttributeUsed: !!queries?.length,
+				section: 'dbMetrics',
+			});
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const apmToTraceQuery = useGetAPMToTracesQueries({
+		servicename,
+		isDBCall: true,
+	});
+
 	return (
 		<Row gutter={24}>
 			<Col span={12}>
@@ -107,6 +157,7 @@ function DBCall(): JSX.Element {
 						servicename,
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
+						apmToTraceQuery,
 					})}
 				>
 					View Traces
@@ -124,6 +175,7 @@ function DBCall(): JSX.Element {
 									'database_call_rps',
 								);
 							}}
+							onDragSelect={onDragSelect}
 							version={ENTITY_VERSION_V4}
 						/>
 					</GraphContainer>
@@ -139,6 +191,7 @@ function DBCall(): JSX.Element {
 						servicename,
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
+						apmToTraceQuery,
 					})}
 				>
 					View Traces
@@ -158,6 +211,7 @@ function DBCall(): JSX.Element {
 									'database_call_avg_duration',
 								);
 							}}
+							onDragSelect={onDragSelect}
 							version={ENTITY_VERSION_V4}
 						/>
 					</GraphContainer>

@@ -1,14 +1,15 @@
 package app
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	_ "net/http/pprof" // http profiler
 	"os"
 	"regexp"
@@ -28,7 +29,8 @@ import (
 	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
-	baseInterface "go.signoz.io/signoz/pkg/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/migrate"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
@@ -42,6 +44,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
@@ -65,7 +68,6 @@ type ServerOptions struct {
 	// alert specific params
 	DisableRules      bool
 	RuleRepoURL       string
-	PreferDelta       bool
 	PreferSpanMetrics bool
 	MaxIdleConns      int
 	MaxOpenConns      int
@@ -79,9 +81,7 @@ type ServerOptions struct {
 // Server runs HTTP api service
 type Server struct {
 	serverOptions *ServerOptions
-	conn          net.Listener
 	ruleManager   *rules.Manager
-	separatePorts bool
 
 	// public http router
 	httpConn   net.Listener
@@ -90,9 +90,6 @@ type Server struct {
 	// private http
 	privateConn net.Listener
 	privateHTTP *http.Server
-
-	// feature flags
-	featureLookup baseint.FeatureLookup
 
 	// Usage manager
 	usageManager *usage.Manager
@@ -117,6 +114,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	baseexplorer.InitWithDSN(baseconst.RELATIONAL_DATASOURCE_PATH)
 
+	if err := preferences.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH); err != nil {
+		return nil, err
+	}
+
 	localDB, err := dashboards.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
 
 	if err != nil {
@@ -125,33 +126,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	localDB.SetMaxOpenConns(10)
 
-	gatewayFeature := basemodel.Feature{
-		Name:       "GATEWAY",
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	}
-
-	//Activate this feature if the url is not empty
-	var gatewayProxy *httputil.ReverseProxy
-	if serverOptions.GatewayUrl == "" {
-		gatewayFeature.Active = false
-		gatewayProxy, err = gateway.NewNoopProxy()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		zap.L().Info("Enabling gateway feature flag ...")
-		gatewayFeature.Active = true
-		gatewayProxy, err = gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
-		if err != nil {
-			return nil, err
-		}
+	gatewayProxy, err := gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
+	if err != nil {
+		return nil, err
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", localDB, gatewayFeature)
+	lm, err := licensepkg.StartManager("sqlite", localDB)
 	if err != nil {
 		return nil, err
 	}
@@ -199,6 +180,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	go func() {
+		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
+		if err != nil {
+			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
+		}
+	}()
 
 	// initiate opamp
 	_, err = opAmpModel.InitDB(localDB)
@@ -262,7 +250,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:                 reader,
 		SkipConfig:                    skipConfig,
-		PreferDelta:                   serverOptions.PreferDelta,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
 		MaxIdleConns:                  serverOptions.MaxIdleConns,
 		MaxOpenConns:                  serverOptions.MaxOpenConns,
@@ -317,7 +304,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, error) {
 
-	r := mux.NewRouter()
+	r := baseapp.NewRouter()
 
 	r.Use(baseapp.LogCommentEnricher)
 	r.Use(setTimeoutMiddleware)
@@ -331,7 +318,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 		// ip here for alert manager
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "SIGNOZ-API-KEY"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "SIGNOZ-API-KEY", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
 	})
 
 	handler := c.Handler(r)
@@ -344,11 +331,21 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, error) {
 
-	r := mux.NewRouter()
+	r := baseapp.NewRouter()
 
 	// add auth middleware
 	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
-		return auth.GetUserFromRequest(r, apiHandler)
+		user, err := auth.GetUserFromRequest(r, apiHandler)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if user.User.OrgId == "" {
+			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
+		}
+
+		return user, nil
 	}
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
@@ -362,11 +359,13 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	apiHandler.RegisterIntegrationRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)
+	apiHandler.RegisterWebSocketPaths(r, am)
+	apiHandler.RegisterMessagingQueuesRoutes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
 	})
 
 	handler := c.Handler(r)
@@ -378,6 +377,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	}, nil
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 // loggingMiddleware is used for logging public api calls
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -385,10 +385,11 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.L().Info(path+"\ttimeTaken:"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path))
+		zap.L().Info(path, zap.Duration("timeTaken", time.Since(startTime)), zap.String("path", path))
 	})
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 // loggingMiddlewarePrivate is used for logging private api calls
 // from internal services like alert manager
 func loggingMiddlewarePrivate(next http.Handler) http.Handler {
@@ -397,29 +398,43 @@ func loggingMiddlewarePrivate(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.L().Info(path+"\tprivatePort: true \ttimeTaken"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
+		zap.L().Info(path, zap.Duration("timeTaken", time.Since(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
 	})
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 type loggingResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 func NewLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
 	// WriteHeader(int) is not called if our response implicitly returns 200 OK, so
 	// we default to that status code.
 	return &loggingResponseWriter{w, http.StatusOK}
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 func (lrw *loggingResponseWriter) WriteHeader(code int) {
 	lrw.statusCode = code
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 // Flush implements the http.Flush interface.
 func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
+}
+
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
+// Support websockets
+func (lrw *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := lrw.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("hijack not supported")
+	}
+	return h.Hijack()
 }
 
 func extractQueryRangeData(path string, r *http.Request) (map[string]interface{}, bool) {
@@ -558,6 +573,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/timeout.go
 func setTimeoutMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -711,7 +727,7 @@ func makeRulesManager(
 	db *sqlx.DB,
 	ch baseint.Reader,
 	disableRules bool,
-	fm baseInterface.FeatureLookup) (*rules.Manager, error) {
+	fm baseint.FeatureLookup) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
@@ -740,6 +756,7 @@ func makeRulesManager(
 		DisableRules: disableRules,
 		FeatureFlags: fm,
 		Reader:       ch,
+		EvalDelay:    baseconst.GetEvalDelay(),
 	}
 
 	// create Manager

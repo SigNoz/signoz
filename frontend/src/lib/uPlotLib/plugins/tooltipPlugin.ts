@@ -22,15 +22,30 @@ interface UplotTooltipDataProps {
 	queryName: string;
 }
 
+function getTooltipBaseValue(
+	data: any[],
+	index: number,
+	idx: number,
+	stackBarChart: boolean | undefined,
+): any {
+	if (stackBarChart && index + 1 < data.length) {
+		return data[index][idx] - data[index + 1][idx];
+	}
+
+	return data[index][idx];
+}
+
 const generateTooltipContent = (
 	seriesList: any[],
 	data: any[],
 	idx: number,
+	isDarkMode: boolean,
 	yAxisUnit?: string,
 	series?: uPlot.Options['series'],
 	isBillingUsageGraphs?: boolean,
 	isHistogramGraphs?: boolean,
 	isMergedSeries?: boolean,
+	stackBarChart?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -67,13 +82,17 @@ const generateTooltipContent = (
 					unit = '',
 				} = seriesList[index - 1] || {};
 
-				const value = data[index][idx];
+				const value = getTooltipBaseValue(data, index, idx, stackBarChart);
+
 				const dataIngested = quantity[idx];
 				const label = isMergedSeries
-					? 'merged_series'
+					? ''
 					: getLabelName(metric, queryName || '', legend || '');
 
-				let color = generateColor(label, themeColors.chartcolors);
+				let color = generateColor(
+					label,
+					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+				);
 
 				// in case of billing graph pick colors from the series options
 				if (isBillingUsageGraphs) {
@@ -201,6 +220,9 @@ type ToolTipPluginProps = {
 	isBillingUsageGraphs?: boolean;
 	isHistogramGraphs?: boolean;
 	isMergedSeries?: boolean;
+	stackBarChart?: boolean;
+	isDarkMode: boolean;
+	customTooltipElement?: HTMLDivElement;
 };
 
 const tooltipPlugin = ({
@@ -209,7 +231,11 @@ const tooltipPlugin = ({
 	isBillingUsageGraphs,
 	isHistogramGraphs,
 	isMergedSeries,
-}: ToolTipPluginProps): any => {
+	stackBarChart,
+	isDarkMode,
+	customTooltipElement,
+}: // eslint-disable-next-line sonarjs/cognitive-complexity
+ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
 	let bLeft: any;
@@ -267,12 +293,17 @@ const tooltipPlugin = ({
 							apiResult,
 							u.data,
 							idx,
+							isDarkMode,
 							yAxisUnit,
 							u.series,
 							isBillingUsageGraphs,
 							isHistogramGraphs,
 							isMergedSeries,
+							stackBarChart,
 						);
+						if (customTooltipElement) {
+							content.appendChild(customTooltipElement);
+						}
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });
 					}

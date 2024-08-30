@@ -10,7 +10,7 @@ import { JSONViewProps } from './LogDetailedView.types';
 import { aggregateAttributesResourcesToString } from './utils';
 
 function JSONView({ logData }: JSONViewProps): JSX.Element {
-	const [isWrapWord, setIsWrapWord] = useState<boolean>(false);
+	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 
 	const LogJsonData = useMemo(
 		() => aggregateAttributesResourcesToString(logData),
@@ -22,13 +22,13 @@ function JSONView({ logData }: JSONViewProps): JSX.Element {
 	const options: EditorProps['options'] = {
 		automaticLayout: true,
 		readOnly: true,
-		wordWrap: 'on',
+		wordWrap: isWrapWord ? 'on' : 'off',
 		minimap: {
 			enabled: false,
 		},
 		fontWeight: 400,
 		// fontFamily: 'SF Mono',
-		fontFamily: 'Space Mono',
+		fontFamily: 'Geist Mono',
 		fontSize: 13,
 		lineHeight: '18px',
 		colorDecorators: true,
@@ -68,7 +68,7 @@ function JSONView({ logData }: JSONViewProps): JSX.Element {
 	return (
 		<div className="json-view-container">
 			<MEditor
-				value={isWrapWord ? JSON.stringify(LogJsonData) : LogJsonData}
+				value={LogJsonData}
 				language="json"
 				options={options}
 				onChange={(): void => {}}

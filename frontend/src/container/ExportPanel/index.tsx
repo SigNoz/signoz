@@ -40,7 +40,7 @@ function ExportPanel({
 
 export interface ExportPanelProps {
 	isLoading?: boolean;
-	onExport: (dashboard: Dashboard | null) => void;
+	onExport: (dashboard: Dashboard | null, isNewDashboard?: boolean) => void;
 	query: Query | null;
 }
 

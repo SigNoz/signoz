@@ -12,7 +12,7 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
-import { isEmpty } from 'lodash-es';
+import { isEmpty, cloneDeep } from 'lodash-es';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -23,6 +23,7 @@ export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
 	version: string,
 	signal?: AbortSignal,
+	headers?: Record<string, string>,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
 
@@ -30,6 +31,7 @@ export async function GetMetricQueryRange(
 		queryPayload,
 		version || 'v3',
 		signal,
+		headers,
 	);
 
 	if (response.statusCode >= 400) {
@@ -38,6 +40,10 @@ export async function GetMetricQueryRange(
 			error = `${error}, errors: ${response.body}`;
 		}
 		throw new Error(error);
+	}
+
+	if (props.formatForWeb) {
+		return response;
 	}
 
 	if (response.payload?.data?.result) {
@@ -75,6 +81,8 @@ export interface GetQueryResultsProps {
 	globalSelectedInterval: Time | TimeV2 | CustomTimeType;
 	variables?: Record<string, unknown>;
 	params?: Record<string, unknown>;
+	fillGaps?: boolean;
+	formatForWeb?: boolean;
 	tableParams?: {
 		pagination?: Pagination;
 		selectColumns?: any;

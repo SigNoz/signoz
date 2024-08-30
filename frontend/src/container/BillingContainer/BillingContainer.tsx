@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
 import './BillingContainer.styles.scss';
 
-import { CheckCircleOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Alert,
@@ -19,10 +19,10 @@ import { ColumnsType } from 'antd/es/table';
 import updateCreditCardApi from 'api/billing/checkout';
 import getUsage, { UsageResponsePayloadProps } from 'api/billing/getUsage';
 import manageCreditCardApi from 'api/billing/manage';
+import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import useAxiosError from 'hooks/useAxiosError';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
@@ -40,6 +40,7 @@ import { isCloudUser } from 'utils/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
+import { prepareCsvData } from './BillingUsageGraph/utils';
 
 interface DataType {
 	key: string;
@@ -135,8 +136,6 @@ export default function BillingContainer(): JSX.Element {
 	const [apiResponse, setApiResponse] = useState<
 		Partial<UsageResponsePayloadProps>
 	>({});
-
-	const { trackEvent } = useAnalytics();
 
 	const { isFetching, data: licensesData, error: licenseError } = useLicense();
 
@@ -315,7 +314,7 @@ export default function BillingContainer(): JSX.Element {
 
 	const handleBilling = useCallback(async () => {
 		if (isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription) {
-			trackEvent('Billing : Upgrade Plan', {
+			logEvent('Billing : Upgrade Plan', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
@@ -326,7 +325,7 @@ export default function BillingContainer(): JSX.Element {
 				cancelURL: window.location.href,
 			});
 		} else {
-			trackEvent('Billing : Manage Billing', {
+			logEvent('Billing : Manage Billing', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
@@ -371,6 +370,37 @@ export default function BillingContainer(): JSX.Element {
 		</Typography>
 	);
 
+	const handleCsvDownload = useCallback((): void => {
+		try {
+			const csv = prepareCsvData(apiResponse);
+
+			if (!csv.csvData || !csv.fileName) {
+				throw new Error('Invalid CSV data or file name.');
+			}
+
+			const csvBlob = new Blob([csv.csvData], { type: 'text/csv;charset=utf-8;' });
+			const csvUrl = URL.createObjectURL(csvBlob);
+			const downloadLink = document.createElement('a');
+
+			downloadLink.href = csvUrl;
+			downloadLink.download = csv.fileName;
+			document.body.appendChild(downloadLink); // Required for Firefox
+			downloadLink.click();
+
+			// Clean up
+			downloadLink.remove();
+			URL.revokeObjectURL(csvUrl); // Release the memory associated with the object URL
+			notifications.success({
+				message: 'Download successful',
+			});
+		} catch (error) {
+			console.error('Error downloading the CSV file:', error);
+			notifications.error({
+				message: SOMETHING_WENT_WRONG,
+			});
+		}
+	}, [apiResponse, notifications]);
+
 	return (
 		<div className="billing-container">
 			<Flex vertical style={{ marginBottom: 16 }}>
@@ -399,17 +429,29 @@ export default function BillingContainer(): JSX.Element {
 							</Typography.Text>
 						) : null}
 					</Flex>
-					<Button
-						type="primary"
-						size="middle"
-						loading={isLoadingBilling || isLoadingManageBilling}
-						disabled={isLoading}
-						onClick={handleBilling}
-					>
-						{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription
-							? t('upgrade_plan')
-							: t('manage_billing')}
-					</Button>
+					<Flex gap={20}>
+						<Button
+							type="dashed"
+							size="middle"
+							loading={isLoadingBilling || isLoadingManageBilling}
+							disabled={isLoading || isFetchingBillingData}
+							onClick={handleCsvDownload}
+							icon={<CloudDownloadOutlined />}
+						>
+							Download CSV
+						</Button>
+						<Button
+							type="primary"
+							size="middle"
+							loading={isLoadingBilling || isLoadingManageBilling}
+							disabled={isLoading}
+							onClick={handleBilling}
+						>
+							{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription
+								? t('upgrade_plan')
+								: t('manage_billing')}
+						</Button>
+					</Flex>
 				</Flex>
 
 				{licensesData?.payload?.onTrial &&

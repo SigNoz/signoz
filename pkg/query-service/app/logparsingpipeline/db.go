@@ -177,7 +177,7 @@ func (r *Repo) GetPipeline(
 
 	if len(pipelines) == 0 {
 		zap.L().Warn("No row found for ingestion pipeline id", zap.String("id", id))
-		return nil, model.NotFoundError(fmt.Errorf("No row found for ingestion pipeline id %v", id))
+		return nil, model.NotFoundError(fmt.Errorf("no row found for ingestion pipeline id %v", id))
 	}
 
 	if len(pipelines) == 1 {

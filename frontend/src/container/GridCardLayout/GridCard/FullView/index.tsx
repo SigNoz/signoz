@@ -15,7 +15,6 @@ import {
 } from 'container/NewWidget/RightContainer/timeItems';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useChartMutable } from 'hooks/useChartMutable';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
@@ -71,7 +70,7 @@ function FullView({
 		enum: widget?.timePreferance || 'GLOBAL_TIME',
 	});
 
-	const updatedQuery = useStepInterval(widget?.query);
+	const updatedQuery = widget?.query;
 
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		if (widget.panelTypes !== PANEL_TYPES.LIST) {
@@ -81,6 +80,8 @@ function FullView({
 				query: updatedQuery,
 				globalSelectedInterval: globalSelectedTime,
 				variables: getDashboardVariables(selectedDashboard?.data.variables),
+				fillGaps: widget.fillSpans,
+				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
 			};
 		}
 		updatedQuery.builder.queryData[0].pageSize = 10;
@@ -204,7 +205,7 @@ function FullView({
 			<div
 				className={cx('graph-container', {
 					disabled: isDashboardLocked,
-					'height-widget': widget?.mergeAllActiveQueries,
+					'height-widget': widget?.mergeAllActiveQueries || widget?.stackedBarChart,
 					'list-graph-container': isListView,
 				})}
 				ref={fullViewRef}

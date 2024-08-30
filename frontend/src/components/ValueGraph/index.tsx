@@ -49,7 +49,10 @@ function ValueGraph({
 					}
 				>
 					<Tooltip title={t('this_value_satisfies_multiple_thresholds')}>
-						<ExclamationCircleFilled className="value-graph-icon" />
+						<ExclamationCircleFilled
+							className="value-graph-icon"
+							data-testid="conflicting-thresholds"
+						/>
 					</Tooltip>
 				</div>
 			)}

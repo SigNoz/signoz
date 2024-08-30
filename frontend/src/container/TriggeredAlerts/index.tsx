@@ -1,7 +1,10 @@
 import getTriggeredApi from 'api/alerts/getTriggered';
+import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAxiosError from 'hooks/useAxiosError';
+import { isUndefined } from 'lodash-es';
+import { useEffect, useRef } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -12,6 +15,8 @@ function TriggeredAlerts(): JSX.Element {
 	const userId = useSelector<AppState, string | undefined>(
 		(state) => state.app.user?.userId,
 	);
+
+	const hasLoggedEvent = useRef(false); // Track if logEvent has been called
 
 	const handleError = useAxiosError();
 
@@ -28,6 +33,15 @@ function TriggeredAlerts(): JSX.Element {
 			onError: handleError,
 		},
 	);
+
+	useEffect(() => {
+		if (!hasLoggedEvent.current && !isUndefined(alertsResponse.data?.payload)) {
+			logEvent('Alert: Triggered alert list page visited', {
+				number: alertsResponse.data?.payload?.length,
+			});
+			hasLoggedEvent.current = true;
+		}
+	}, [alertsResponse.data?.payload]);
 
 	if (alertsResponse.error) {
 		return <TriggerComponent allAlerts={[]} />;

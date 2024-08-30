@@ -15,6 +15,9 @@ export interface ServicesList {
 	callRate: number;
 	numErrors: number;
 	errorRate: number;
+	dataWarning?: {
+		topLevelOps?: string[];
+	};
 }
 
 export type PayloadProps = ServicesList[];
