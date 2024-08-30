@@ -160,32 +160,20 @@ func (m *Manager) initiate() error {
 
 	for _, rec := range storedRules {
 		taskName := fmt.Sprintf("%d-groupname", rec.Id)
-		parsedRule, errs := ParsePostableRule([]byte(rec.Data))
+		parsedRule, err := ParsePostableRule([]byte(rec.Data))
 
-		if len(errs) > 0 {
-			if errs[0].Error() == "failed to load json" {
+		if err != nil {
+			if errors.Is(err, ErrFailedToParseJSON) {
 				zap.L().Info("failed to load rule in json format, trying yaml now:", zap.String("name", taskName))
 
 				// see if rule is stored in yaml format
-				parsedRule, errs = parsePostableRule([]byte(rec.Data), "yaml")
+				parsedRule, err = parsePostableRule([]byte(rec.Data), RuleDataKindYaml)
 
-				if parsedRule == nil {
+				if err != nil {
 					zap.L().Error("failed to parse and initialize yaml rule", zap.String("name", taskName), zap.Error(err))
 					// just one rule is being parsed so expect just one error
-					loadErrors = append(loadErrors, errs[0])
+					loadErrors = append(loadErrors, err)
 					continue
-				} else {
-					// rule stored in yaml, so migrate it to json
-					zap.L().Info("migrating rule from JSON to yaml", zap.String("name", taskName))
-					ruleJSON, err := json.Marshal(parsedRule)
-					if err == nil {
-						taskName, _, err := m.ruleDB.EditRuleTx(context.Background(), string(ruleJSON), fmt.Sprintf("%d", rec.Id))
-						if err != nil {
-							zap.L().Error("failed to migrate rule", zap.String("name", taskName), zap.Error(err))
-						} else {
-							zap.L().Info("migrated rule from yaml to json", zap.String("name", taskName))
-						}
-					}
 				}
 			} else {
 				zap.L().Error("failed to parse and initialize rule", zap.String("name", taskName), zap.Error(err))
@@ -236,12 +224,10 @@ func (m *Manager) Stop() {
 // datastore and also updates the rule executor
 func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error {
 
-	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
+	parsedRule, err := ParsePostableRule([]byte(ruleStr))
 
-	if len(errs) > 0 {
-		zap.L().Error("failed to parse rules", zap.Errors("errors", errs))
-		// just one rule is being parsed so expect just one error
-		return errs[0]
+	if err != nil {
+		return err
 	}
 
 	taskName, _, err := m.ruleDB.EditRuleTx(ctx, ruleStr, id)
@@ -337,12 +323,10 @@ func (m *Manager) deleteTask(taskName string) {
 // CreateRule stores rule def into db and also
 // starts an executor for the rule
 func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule, error) {
-	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
+	parsedRule, err := ParsePostableRule([]byte(ruleStr))
 
-	if len(errs) > 0 {
-		zap.L().Error("failed to parse rules", zap.Errors("errors", errs))
-		// just one rule is being parsed so expect just one error
-		return nil, errs[0]
+	if err != nil {
+		return nil, err
 	}
 
 	lastInsertId, tx, err := m.ruleDB.CreateRuleTx(ctx, ruleStr)
@@ -701,11 +685,9 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 	}
 
 	// patchedRule is combo of stored rule and patch received in the request
-	patchedRule, errs := parseIntoRule(storedRule, []byte(ruleStr), "json")
-	if len(errs) > 0 {
-		zap.L().Error("failed to parse rules", zap.Errors("errors", errs))
-		// just one rule is being parsed so expect just one error
-		return nil, errs[0]
+	patchedRule, err := parseIntoRule(storedRule, []byte(ruleStr), "json")
+	if err != nil {
+		return nil, err
 	}
 
 	// deploy or un-deploy task according to patched (new) rule state
@@ -753,11 +735,10 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 // sends a test notification. returns alert count and error (if any)
 func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *model.ApiError) {
 
-	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
+	parsedRule, err := ParsePostableRule([]byte(ruleStr))
 
-	if len(errs) > 0 {
-		zap.L().Error("failed to parse rule from request", zap.Errors("errors", errs))
-		return 0, newApiErrorBadData(errs[0])
+	if err != nil {
+		return 0, newApiErrorBadData(err)
 	}
 
 	var alertname = parsedRule.AlertName
@@ -771,7 +752,6 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, TestAlertPostFix)
 
 	var rule Rule
-	var err error
 
 	if parsedRule.RuleType == RuleTypeThreshold {
 
