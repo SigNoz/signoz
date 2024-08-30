@@ -126,7 +126,7 @@ func PrepareLinksToTraces(ts time.Time, filterItems []v3.FilterItem) string {
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(string(data))
+	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
 
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
@@ -185,7 +185,7 @@ func PrepareLinksToLogs(ts time.Time, filterItems []v3.FilterItem) string {
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(string(data))
+	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
 
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))

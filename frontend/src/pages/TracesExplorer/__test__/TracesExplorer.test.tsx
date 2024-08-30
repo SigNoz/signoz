@@ -617,9 +617,7 @@ describe('TracesExplorer - ', () => {
 		const viewListOptions = await screen.findByRole('listbox');
 		expect(viewListOptions).toBeInTheDocument();
 
-		expect(
-			within(viewListOptions).getByText('success traces list view'),
-		).toBeInTheDocument();
+		expect(within(viewListOptions).getByText('R-test panel')).toBeInTheDocument();
 
 		expect(within(viewListOptions).getByText('Table View')).toBeInTheDocument();
 

@@ -53,6 +53,7 @@ export interface GetUPlotChartOptions {
 			[key: string]: boolean;
 		}>
 	>;
+	customTooltipElement?: HTMLDivElement;
 }
 
 /** the function converts series A , series B , series C to
@@ -154,6 +155,7 @@ export const getUPlotChartOptions = ({
 	stackBarChart: stackChart,
 	hiddenGraph,
 	setHiddenGraph,
+	customTooltipElement,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -209,9 +211,16 @@ export const getUPlotChartOptions = ({
 			},
 		},
 		plugins: [
-			tooltipPlugin({ apiResponse, yAxisUnit, stackBarChart, isDarkMode }),
+			tooltipPlugin({
+				apiResponse,
+				yAxisUnit,
+				stackBarChart,
+				isDarkMode,
+				customTooltipElement,
+			}),
 			onClickPlugin({
 				onClick: onClickHandler,
+				apiResponse,
 			}),
 		],
 		hooks: {
