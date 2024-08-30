@@ -16,6 +16,22 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+type AlertType string
+
+const (
+	AlertTypeMetric     AlertType = "METRIC_BASED_ALERT"
+	AlertTypeTraces     AlertType = "TRACES_BASED_ALERT"
+	AlertTypeLogs       AlertType = "LOGS_BASED_ALERT"
+	AlertTypeExceptions AlertType = "EXCEPTIONS_BASED_ALERT"
+)
+
+type RuleDataKind string
+
+const (
+	RuleDataKindJson RuleDataKind = "json"
+	RuleDataKindYaml RuleDataKind = "yaml"
+)
+
 // this file contains api request and responses to be
 // served over http
 
@@ -31,12 +47,12 @@ func newApiErrorBadData(err error) *model.ApiError {
 
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
-	AlertName   string   `yaml:"alert,omitempty" json:"alert,omitempty"`
-	AlertType   string   `yaml:"alertType,omitempty" json:"alertType,omitempty"`
-	Description string   `yaml:"description,omitempty" json:"description,omitempty"`
-	RuleType    RuleType `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
-	EvalWindow  Duration `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
-	Frequency   Duration `yaml:"frequency,omitempty" json:"frequency,omitempty"`
+	AlertName   string    `yaml:"alert,omitempty" json:"alert,omitempty"`
+	AlertType   AlertType `yaml:"alertType,omitempty" json:"alertType,omitempty"`
+	Description string    `yaml:"description,omitempty" json:"description,omitempty"`
+	RuleType    RuleType  `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
+	EvalWindow  Duration  `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
+	Frequency   Duration  `yaml:"frequency,omitempty" json:"frequency,omitempty"`
 
 	RuleCondition *RuleCondition    `yaml:"condition,omitempty" json:"condition,omitempty"`
 	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
@@ -234,8 +250,8 @@ type GettableRules struct {
 
 // GettableRule has info for an alerting rules.
 type GettableRule struct {
-	Id    string `json:"id"`
-	State string `json:"state"`
+	Id    string     `json:"id"`
+	State AlertState `json:"state"`
 	PostableRule
 	CreatedAt *time.Time `json:"createAt"`
 	CreatedBy *string    `json:"createBy"`

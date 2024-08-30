@@ -91,8 +91,7 @@ type ThresholdRule struct {
 	lastTimestampWithDatapoints time.Time
 
 	// Type of the rule
-	// One of ["LOGS_BASED_ALERT", "TRACES_BASED_ALERT", "METRIC_BASED_ALERT", "EXCEPTIONS_BASED_ALERT"]
-	typ string
+	typ AlertType
 
 	// querier is used for alerts created before the introduction of new metrics query builder
 	querier interfaces.Querier
@@ -975,12 +974,12 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		// Links with timestamps should go in annotations since labels
 		// is used alert grouping, and we want to group alerts with the same
 		// label set, but different timestamps, together.
-		if r.typ == "TRACES_BASED_ALERT" {
+		if r.typ == AlertTypeTraces {
 			link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
 			if link != "" && r.hostFromSource() != "" {
 				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
 			}
-		} else if r.typ == "LOGS_BASED_ALERT" {
+		} else if r.typ == AlertTypeLogs {
 			link := r.prepareLinksToLogs(ts, smpl.MetricOrig)
 			if link != "" && r.hostFromSource() != "" {
 				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})

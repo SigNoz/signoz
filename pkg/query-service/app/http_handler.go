@@ -805,7 +805,7 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 				continue
 			}
 			filterItems := []v3.FilterItem{}
-			if rule.AlertType == "LOGS_BASED_ALERT" || rule.AlertType == "TRACES_BASED_ALERT" {
+			if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
 				if rule.RuleCondition.CompositeQuery != nil {
 					if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
 						for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
@@ -818,9 +818,9 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			}
 			newFilters := common.PrepareFilters(lbls, filterItems)
 			ts := time.Unix(res.Items[idx].UnixMilli/1000, 0)
-			if rule.AlertType == "LOGS_BASED_ALERT" {
+			if rule.AlertType == rules.AlertTypeLogs {
 				res.Items[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, newFilters)
-			} else if rule.AlertType == "TRACES_BASED_ALERT" {
+			} else if rule.AlertType == rules.AlertTypeTraces {
 				res.Items[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, newFilters)
 			}
 		}
@@ -854,9 +854,9 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 			}
 			ts := time.Unix(params.End/1000, 0)
 			filters := common.PrepareFilters(lbls, nil)
-			if rule.AlertType == "LOGS_BASED_ALERT" {
+			if rule.AlertType == rules.AlertTypeLogs {
 				res[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, filters)
-			} else if rule.AlertType == "TRACES_BASED_ALERT" {
+			} else if rule.AlertType == rules.AlertTypeTraces {
 				res[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, filters)
 			}
 		}
