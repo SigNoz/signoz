@@ -13,6 +13,7 @@ import (
 )
 
 func TestMergeSerieses(t *testing.T) {
+
 	testCases := []struct {
 		name         string
 		cachedSeries []*v3.Series
@@ -89,9 +90,8 @@ func TestMergeSerieses(t *testing.T) {
 						"__name__": "http_server_requests_seconds_count",
 					},
 					Points: []v3.Point{
-						{Timestamp: 1675115596722, Value: 1},
-						{Timestamp: 1675115596723, Value: 2},
-						{Timestamp: 1675115596724, Value: 3},
+						{Timestamp: 1675115596726, Value: 5},
+						{Timestamp: 1675115596727, Value: 6},
 					},
 				},
 			},
@@ -104,9 +104,9 @@ func TestMergeSerieses(t *testing.T) {
 						"__name__": "http_server_requests_seconds_count",
 					},
 					Points: []v3.Point{
-						{Timestamp: 1675115596722, Value: 1},
-						{Timestamp: 1675115596723, Value: 2},
-						{Timestamp: 1675115596724, Value: 3},
+						{Timestamp: 1675115596722, Value: 8},
+						{Timestamp: 1675115596723, Value: 9},
+						{Timestamp: 1675115596724, Value: 10},
 					},
 				},
 			},
@@ -127,23 +127,23 @@ func TestMergeSerieses(t *testing.T) {
 						"__name__": "http_server_requests_seconds_count",
 					},
 					Points: []v3.Point{
-						{Timestamp: 1675115596722, Value: 1},
-						{Timestamp: 1675115596723, Value: 2},
-						{Timestamp: 1675115596724, Value: 3},
+						{Timestamp: 1675115596720, Value: 5},
+						{Timestamp: 1675115596721, Value: 6},
 					},
 				},
 			},
 		},
 		{
-			name: "replace if new series has more points than the old one",
+			name: "cache is a subset of missed series",
 			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
 						"__name__": "http_server_requests_seconds_count",
 					},
 					Points: []v3.Point{
-						{Timestamp: 1675115596720, Value: 5},
-						{Timestamp: 1675115596721, Value: 6},
+						{Timestamp: 1675115596723, Value: 3},
+						{Timestamp: 1675115596724, Value: 4},
+						{Timestamp: 1675115596725, Value: 5},
 					},
 				},
 			},
@@ -153,9 +153,11 @@ func TestMergeSerieses(t *testing.T) {
 						"__name__": "http_server_requests_seconds_count",
 					},
 					Points: []v3.Point{
-						{Timestamp: 1675115596722, Value: 1},
-						{Timestamp: 1675115596723, Value: 2},
-						{Timestamp: 1675115596724, Value: 3},
+						{Timestamp: 1675115596721, Value: 1},
+						{Timestamp: 1675115596722, Value: 2},
+						{Timestamp: 1675115596723, Value: 3},
+						{Timestamp: 1675115596725, Value: 5},
+						{Timestamp: 1675115596726, Value: 6},
 					},
 				},
 			},
@@ -165,9 +167,12 @@ func TestMergeSerieses(t *testing.T) {
 						"__name__": "http_server_requests_seconds_count",
 					},
 					Points: []v3.Point{
-						{Timestamp: 1675115596722, Value: 1},
-						{Timestamp: 1675115596723, Value: 2},
-						{Timestamp: 1675115596724, Value: 3},
+						{Timestamp: 1675115596721, Value: 1},
+						{Timestamp: 1675115596722, Value: 2},
+						{Timestamp: 1675115596723, Value: 3},
+						{Timestamp: 1675115596724, Value: 4},
+						{Timestamp: 1675115596725, Value: 5},
+						{Timestamp: 1675115596726, Value: 6},
 					},
 				},
 			},
