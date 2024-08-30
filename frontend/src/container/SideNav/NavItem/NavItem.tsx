@@ -24,7 +24,7 @@ export default function NavItem({
 			onClick={(event): void => onClick(event)}
 		>
 			<div className="nav-item-active-marker" />
-			<div className="nav-item-data">
+			<div className={cx('nav-item-data', isBeta ? 'beta-tag' : '')}>
 				<div className="nav-item-icon">{icon}</div>
 
 				<div className="nav-item-label">{label}</div>
