@@ -1,26 +1,55 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-await-in-loop */
 import userEvent from '@testing-library/user-event';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
+	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import * as compositeQueryHook from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import {
+	queryRangeForListView,
+	queryRangeForTableView,
+	queryRangeForTimeSeries,
+	queryRangeForTraceView,
+} from 'mocks-server/__mockdata__/query_range';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 import TracesExplorer from '..';
 import { Filter } from '../Filter/Filter';
 import { AllTraceFilterKeyValue } from '../Filter/filterUtils';
+import {
+	checkForSectionContent,
+	checkIfSectionIsNotOpen,
+	checkIfSectionIsOpen,
+	compositeQuery,
+	defaultClosedSections,
+	defaultOpenSections,
+	optionMenuReturn,
+	qbProviderValue,
+	redirectWithQueryBuilderData,
+} from './testUtils';
+
+const historyPush = jest.fn();
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/`,
+	}),
+	useHistory: (): any => ({
+		...jest.requireActual('react-router-dom').useHistory(),
+		push: historyPush,
 	}),
 }));
 
@@ -41,6 +70,25 @@ jest.mock('uplot', () => {
 });
 
 jest.mock(
+	'components/Uplot/Uplot',
+	() =>
+		function MockUplot(): JSX.Element {
+			return <div>MockUplot</div>;
+		},
+);
+
+const successNotification = jest.fn();
+jest.mock('hooks/useNotifications', () => ({
+	__esModule: true,
+	useNotifications: jest.fn(() => ({
+		notifications: {
+			success: successNotification,
+			error: jest.fn(),
+		},
+	})),
+}));
+
+jest.mock(
 	'container/TopNav/DateTimeSelectionV2/index.tsx',
 	() =>
 		function MockDateTimeSelection(): JSX.Element {
@@ -48,84 +96,12 @@ jest.mock(
 		},
 );
 
-function checkIfSectionIsOpen(
-	getByTestId: (testId: string) => HTMLElement,
-	panelName: string,
-): void {
-	const section = getByTestId(`collapse-${panelName}`);
-	expect(section.querySelector('.ant-collapse-item-active')).not.toBeNull();
-}
+jest.mock('container/OptionsMenu/useOptionsMenu', () => ({
+	__esModule: true,
+	default: (): any => optionMenuReturn,
+}));
 
-function checkIfSectionIsNotOpen(
-	getByTestId: (testId: string) => HTMLElement,
-	panelName: string,
-): void {
-	const section = getByTestId(`collapse-${panelName}`);
-	expect(section.querySelector('.ant-collapse-item-active')).toBeNull();
-}
-
-const defaultOpenSections = ['hasError', 'durationNano', 'serviceName'];
-
-const defaultClosedSections = Object.keys(AllTraceFilterKeyValue).filter(
-	(section) =>
-		![...defaultOpenSections, 'durationNanoMin', 'durationNanoMax'].includes(
-			section,
-		),
-);
-
-async function checkForSectionContent(values: string[]): Promise<void> {
-	for (const val of values) {
-		const sectionContent = await screen.findByText(val);
-		await waitFor(() => expect(sectionContent).toBeInTheDocument());
-	}
-}
-
-const redirectWithQueryBuilderData = jest.fn();
-
-const compositeQuery: Query = {
-	...initialQueriesMap.traces,
-	builder: {
-		...initialQueriesMap.traces.builder,
-		queryData: [
-			{
-				...initialQueryBuilderFormValues,
-				filters: {
-					items: [
-						{
-							id: '95564eb1',
-							key: {
-								key: 'name',
-								dataType: DataTypes.String,
-								type: 'tag',
-								isColumn: true,
-								isJSON: false,
-								id: 'name--string--tag--true',
-							},
-							op: 'in',
-							value: ['HTTP GET /customer'],
-						},
-						{
-							id: '3337951c',
-							key: {
-								key: 'serviceName',
-								dataType: DataTypes.String,
-								type: 'tag',
-								isColumn: true,
-								isJSON: false,
-								id: 'serviceName--string--tag--true',
-							},
-							op: 'in',
-							value: ['demo-app'],
-						},
-					],
-					op: 'AND',
-				},
-			},
-		],
-	},
-};
-
-describe('TracesExplorer - ', () => {
+describe('TracesExplorer - Filters', () => {
 	// Initial filter panel rendering
 	// Test the initial state like which filters section are opened, default state of duration slider, etc.
 	it('should render the Trace filter', async () => {
@@ -455,5 +431,255 @@ describe('TracesExplorer - ', () => {
 		expect(
 			await screen.findByTestId('filter-uncollapse-btn'),
 		).toBeInTheDocument();
+	});
+});
+
+const handleExplorerTabChangeTest = jest.fn();
+jest.mock('hooks/useHandleExplorerTabChange', () => ({
+	useHandleExplorerTabChange: jest.fn(() => ({
+		handleExplorerTabChange: handleExplorerTabChangeTest,
+	})),
+}));
+
+describe('TracesExplorer - ', () => {
+	it('should render the traces explorer page', async () => {
+		server.use(
+			rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
+				res(ctx.status(200), ctx.json(queryRangeForTimeSeries)),
+			),
+		);
+		const { findByText, getByText } = render(<TracesExplorer />);
+
+		// assert mocked date time selection
+		expect(await findByText('MockDateTimeSelection')).toBeInTheDocument();
+
+		// assert stage&Btn
+		expect(getByText('Stage & Run Query')).toBeInTheDocument();
+
+		// assert QB - will not write tests for QB as that would be covererd in QB tests separately
+		expect(
+			getByText(
+				'Search Filter : select options from suggested values, for IN/NOT IN operators - press "Enter" after selecting options',
+			),
+		).toBeInTheDocument();
+		expect(getByText('AGGREGATION INTERVAL')).toBeInTheDocument();
+		expect(getByText('Metrics name')).toBeInTheDocument();
+		expect(getByText('WHERE')).toBeInTheDocument();
+		expect(getByText('Legend Format')).toBeInTheDocument();
+
+		// assert timeseries chart mock
+		expect(await screen.findByText('MockUplot')).toBeInTheDocument();
+	});
+
+	it('check tab navigation', async () => {
+		const { getByText } = render(<TracesExplorer />);
+
+		// switch to list view
+		const listViewBtn = getByText('List View');
+		expect(listViewBtn).toBeInTheDocument();
+		fireEvent.click(listViewBtn);
+
+		expect(handleExplorerTabChangeTest).toBeCalledWith(PANEL_TYPES.LIST);
+
+		// switch to traces view
+		const tracesBtn = getByText('Traces');
+		expect(tracesBtn).toBeInTheDocument();
+		fireEvent.click(tracesBtn);
+
+		expect(handleExplorerTabChangeTest).toBeCalledWith(PANEL_TYPES.TRACE);
+
+		// switch to Table view
+		const TableBtn = getByText('Table View');
+		expect(TableBtn).toBeInTheDocument();
+		fireEvent.click(TableBtn);
+
+		expect(handleExplorerTabChangeTest).toBeCalledWith(PANEL_TYPES.TABLE);
+	});
+
+	it('trace explorer - list view', async () => {
+		server.use(
+			rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
+				res(ctx.status(200), ctx.json(queryRangeForListView)),
+			),
+		);
+
+		const { getByText } = render(
+			<QueryBuilderContext.Provider value={{ ...qbProviderValue }}>
+				<TracesExplorer />
+			</QueryBuilderContext.Provider>,
+		);
+
+		expect(await screen.findByText('Timestamp')).toBeInTheDocument();
+		expect(getByText('options_menu.options')).toBeInTheDocument();
+
+		// test if pagination is there
+		expect(getByText('Previous')).toBeInTheDocument();
+		expect(getByText('Next')).toBeInTheDocument();
+
+		// column interaction is covered in E2E tests as its a complex interaction
+	});
+
+	it('trace explorer - table view', async () => {
+		server.use(
+			rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
+				res(ctx.status(200), ctx.json(queryRangeForTableView)),
+			),
+		);
+		render(
+			<QueryBuilderContext.Provider
+				value={{ ...qbProviderValue, panelType: PANEL_TYPES.TABLE }}
+			>
+				<TracesExplorer />
+			</QueryBuilderContext.Provider>,
+		);
+
+		expect(await screen.findByText('count')).toBeInTheDocument();
+		expect(screen.getByText('87798.00')).toBeInTheDocument();
+	});
+
+	it('trace explorer - trace view', async () => {
+		server.use(
+			rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
+				res(ctx.status(200), ctx.json(queryRangeForTraceView)),
+			),
+		);
+		const { getByText, getAllByText } = render(
+			<QueryBuilderContext.Provider
+				value={{ ...qbProviderValue, panelType: PANEL_TYPES.TRACE }}
+			>
+				<TracesExplorer />
+			</QueryBuilderContext.Provider>,
+		);
+
+		expect(await screen.findByText('Root Service Name')).toBeInTheDocument();
+
+		// assert table headers
+		expect(getByText('Root Operation Name')).toBeInTheDocument();
+		expect(getByText('Root Duration (in ms)')).toBeInTheDocument();
+		expect(getByText('TraceID')).toBeInTheDocument();
+		expect(getByText('No of Spans')).toBeInTheDocument();
+
+		// assert row values
+		['demo-app', 'home', '8'].forEach((val) =>
+			expect(getAllByText(val)[0]).toBeInTheDocument(),
+		);
+		expect(getByText('7245.23ms')).toBeInTheDocument();
+
+		// assert traceId and redirection to trace details
+		const traceId = getByText('5765b60ba7cc4ddafe8bdaa9c1b4b246');
+		fireEvent.click(traceId);
+
+		// assert redirection - should go to /trace/:traceId
+		expect(window.location.href).toEqual(
+			'http://localhost/trace/5765b60ba7cc4ddafe8bdaa9c1b4b246',
+		);
+	});
+
+	it('test for explorer options', async () => {
+		const { getByText, getByTestId } = render(<TracesExplorer />);
+
+		// assert explorer options - action btns
+		[
+			'Save this view',
+			'Create an Alert',
+			'Add to Dashboard',
+			'Select a view',
+		].forEach((val) => expect(getByText(val)).toBeInTheDocument());
+
+		const hideExplorerOption = getByTestId('hide-toolbar');
+		expect(hideExplorerOption).toBeInTheDocument();
+		fireEvent.click(hideExplorerOption);
+
+		// explorer options should hide and show btn should be present
+		expect(await screen.findByTestId('show-explorer-option')).toBeInTheDocument();
+		expect(screen.queryByTestId('hide-toolbar')).toBeNull();
+
+		// show explorer options
+		const showExplorerOption = screen.getByTestId('show-explorer-option');
+		expect(showExplorerOption).toBeInTheDocument();
+		fireEvent.click(showExplorerOption);
+
+		// explorer options should show and hide btn should be present
+		expect(await screen.findByTestId('hide-toolbar')).toBeInTheDocument();
+	});
+
+	it('select a view options - assert and save this view', async () => {
+		const { container } = render(<TracesExplorer />);
+
+		await act(async () => {
+			fireEvent.mouseDown(
+				container.querySelector(
+					'.view-options .ant-select-selection-search-input',
+				) as HTMLElement,
+			);
+		});
+
+		const viewListOptions = await screen.findByRole('listbox');
+		expect(viewListOptions).toBeInTheDocument();
+
+		expect(within(viewListOptions).getByText('R-test panel')).toBeInTheDocument();
+
+		expect(within(viewListOptions).getByText('Table View')).toBeInTheDocument();
+
+		// save this view
+		fireEvent.click(screen.getByText('Save this view'));
+
+		const saveViewModalInput = await screen.findByPlaceholderText(
+			'e.g. External http method view',
+		);
+		expect(saveViewModalInput).toBeInTheDocument();
+
+		const saveViewModal = document.querySelector(
+			'.ant-modal-content',
+		) as HTMLElement;
+		expect(saveViewModal).toBeInTheDocument();
+
+		await act(async () =>
+			fireEvent.change(saveViewModalInput, { target: { value: 'test view' } }),
+		);
+
+		expect(saveViewModalInput).toHaveValue('test view');
+		await act(async () => {
+			fireEvent.click(within(saveViewModal).getByTestId('save-view-btn'));
+		});
+
+		expect(successNotification).toHaveBeenCalledWith({
+			message: 'View Saved Successfully',
+		});
+	});
+
+	it('create a dashboard btn assert', async () => {
+		const { getByText } = render(<TracesExplorer />);
+
+		const createDashboardBtn = getByText('Add to Dashboard');
+		expect(createDashboardBtn).toBeInTheDocument();
+		fireEvent.click(createDashboardBtn);
+
+		expect(await screen.findByText('Export Panel')).toBeInTheDocument();
+		const createDashboardModal = document.querySelector(
+			'.ant-modal-content',
+		) as HTMLElement;
+		expect(createDashboardModal).toBeInTheDocument();
+
+		// assert modal content
+		expect(
+			within(createDashboardModal).getByText('Select Dashboard'),
+		).toBeInTheDocument();
+
+		expect(
+			within(createDashboardModal).getByText('New Dashboard'),
+		).toBeInTheDocument();
+	});
+
+	it('create an alert btn assert', async () => {
+		const { getByText } = render(<TracesExplorer />);
+
+		const createAlertBtn = getByText('Create an Alert');
+		expect(createAlertBtn).toBeInTheDocument();
+		fireEvent.click(createAlertBtn);
+
+		expect(historyPush).toHaveBeenCalledWith(
+			expect.stringContaining(`${ROUTES.ALERTS_NEW}`),
+		);
 	});
 });

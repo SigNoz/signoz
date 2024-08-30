@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/exporter"
@@ -57,9 +56,7 @@ func makeTestExporter(exporterId string) (exporter.Logs, error) {
 	factory := NewFactory()
 
 	cfg := factory.CreateDefaultConfig()
-	component.UnmarshalConfig(confmap.NewFromStringMap(
-		map[string]interface{}{"id": exporterId}), cfg,
-	)
+	confmap.NewFromStringMap(map[string]any{"id": exporterId}).Unmarshal(&cfg)
 
 	return factory.CreateLogsExporter(
 		context.Background(), exporter.CreateSettings{}, cfg,

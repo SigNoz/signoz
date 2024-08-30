@@ -77,5 +77,67 @@ export const explorerView = {
 			},
 			extraData: '{"color":"#00ffd0"}',
 		},
+		{
+			uuid: '8c4bf492-d54d-4ab2-a8d6-9c1563f46e1f',
+			name: 'R-test panel',
+			category: '',
+			createdAt: '2024-07-01T13:45:57.924686766Z',
+			createdBy: 'test-user-test',
+			updatedAt: '2024-07-01T13:48:31.032106578Z',
+			updatedBy: 'test-user-test',
+			sourcePage: 'traces',
+			tags: [''],
+			compositeQuery: {
+				builderQueries: {
+					A: {
+						queryName: 'A',
+						stepInterval: 60,
+						dataSource: 'traces',
+						aggregateOperator: 'noop',
+						aggregateAttribute: {
+							key: '',
+							dataType: '',
+							type: '',
+							isColumn: false,
+							isJSON: false,
+						},
+						filters: {
+							op: 'AND',
+							items: [
+								{
+									key: {
+										key: 'httpMethod',
+										dataType: 'string',
+										type: 'tag',
+										isColumn: true,
+										isJSON: false,
+									},
+									value: 'GET',
+									op: '=',
+								},
+							],
+						},
+						expression: 'A',
+						disabled: false,
+						limit: 0,
+						offset: 0,
+						pageSize: 0,
+						orderBy: [
+							{
+								columnName: 'timestamp',
+								order: 'desc',
+							},
+						],
+						reduceTo: 'avg',
+						timeAggregation: 'rate',
+						spaceAggregation: 'sum',
+						ShiftBy: 0,
+					},
+				},
+				panelType: 'list',
+				queryType: 'builder',
+			},
+			extraData: '{"color":"#AD7F58"}',
+		},
 	],
 };

@@ -146,7 +146,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.52.0
+    image: signoz/query-service:0.53.0
     command:
       [
         "-config=/root/config/prometheus.yml",
@@ -186,7 +186,7 @@ services:
     <<: *db-depend
 
   frontend:
-    image: signoz/frontend:0.52.0
+    image: signoz/frontend:0.53.0
     deploy:
       restart_policy:
         condition: on-failure
@@ -199,7 +199,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.102.4
+    image: signoz/signoz-otel-collector:0.102.7
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
@@ -238,7 +238,7 @@ services:
       - query-service
 
   otel-collector-migrator:
-      image: signoz/signoz-schema-migrator:0.102.4
+      image: signoz/signoz-schema-migrator:0.102.7
       deploy:
         restart_policy:
           condition: on-failure
