@@ -1,3 +1,4 @@
+import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
@@ -34,8 +35,10 @@ function MessagingQueuesGraph(): JSX.Element {
 		() => getWidgetQueryBuilder(getWidgetQuery({ filterItems })),
 		[filterItems],
 	);
+
 	const history = useHistory();
 	const location = useLocation();
+	// const isLogEventCalled = useRef<boolean>(false);
 
 	const messagingQueueCustomTooltipText = (): HTMLDivElement => {
 		const customText = document.createElement('div');
@@ -66,6 +69,18 @@ function MessagingQueuesGraph(): JSX.Element {
 		[dispatch, history, pathname, urlQuery],
 	);
 
+	const checkIfDataExists = (isDataAvailable: boolean): void => {
+		// if (!isLogEventCalled.current) {
+		// 	isLogEventCalled.current = true;
+		// 	logEvent('Messaging Queues: Graph data fetched', {
+		// 		isDataAvailable,
+		// 	});
+		// }
+
+		logEvent('Messaging Queues: Graph data fetched', {
+			isDataAvailable,
+		});
+	};
 	return (
 		<Card
 			isDarkMode={isDarkMode}
@@ -80,6 +95,7 @@ function MessagingQueuesGraph(): JSX.Element {
 				}}
 				onDragSelect={onDragSelect}
 				customTooltipElement={messagingQueueCustomTooltipText()}
+				dataAvailable={checkIfDataExists}
 			/>
 		</Card>
 	);

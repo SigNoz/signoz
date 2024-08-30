@@ -44,6 +44,7 @@ export interface GridCardGraphProps {
 	version?: string;
 	onDragSelect: (start: number, end: number) => void;
 	customTooltipElement?: HTMLDivElement;
+	dataAvailable?: (isDataAvailable: boolean) => void;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {
