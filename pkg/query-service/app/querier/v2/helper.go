@@ -130,7 +130,7 @@ func (q *querier) runBuilderQuery(
 				cachedData = data
 			}
 		}
-		misses := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
+		misses, replaceCachedData := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
@@ -155,6 +155,9 @@ func (q *querier) runBuilderQuery(
 			zap.L().Error("error unmarshalling cached data", zap.Error(err))
 		}
 		mergedSeries := mergeSerieses(cachedSeries, missedSeries)
+		if replaceCachedData {
+			mergedSeries = missedSeries
+		}
 
 		var mergedSeriesData []byte
 		var marshallingErr error
@@ -264,7 +267,7 @@ func (q *querier) runBuilderQuery(
 			cachedData = data
 		}
 	}
-	misses := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
+	misses, replaceCachedData := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
 	missedSeries := make([]*v3.Series, 0)
 	cachedSeries := make([]*v3.Series, 0)
 	for _, miss := range misses {
@@ -301,6 +304,9 @@ func (q *querier) runBuilderQuery(
 		zap.L().Error("error unmarshalling cached data", zap.Error(err))
 	}
 	mergedSeries := mergeSerieses(cachedSeries, missedSeries)
+	if replaceCachedData {
+		mergedSeries = missedSeries
+	}
 	var mergedSeriesData []byte
 	var marshallingErr error
 	missedSeriesLen := len(missedSeries)
