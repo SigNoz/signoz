@@ -18,6 +18,7 @@ interface ISliderProps {
 	) => void;
 }
 
+// not needed for now build when required
 export default function Slider(props: ISliderProps): JSX.Element {
 	const { filter, onChange } = props;
 	console.log(filter, onChange);

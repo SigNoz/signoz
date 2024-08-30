@@ -10,6 +10,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import Slider from './FilterRenderers/Slider/Slider';
+// import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 export enum FiltersType {
 	SLIDER = 'SLIDER',
@@ -35,6 +36,17 @@ interface IQuickFiltersProps {
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const { config, handleFilterVisibilityChange } = props;
+
+	// const {stagedQuery} = useQueryBuilder()
+
+	// const selectedFiltersFromURL = useMemo(() => {
+	// 	const selectedFilters = {}
+	// 	stagedQuery?.builder.queryData.forEach((query) => {
+	// 		query.filters.items.forEach((filter) => {
+	// 			if(selectedFilters[])
+	// 		})
+	// 	})
+	// })
 
 	// get the selected filters from the URL and pass it to the checkbox
 
