@@ -229,7 +229,7 @@ func (q *querier) findMissingTimeRanges(start, end, step int64, cachedData []byt
 	var cachedSeriesList []*v3.Series
 	if err := json.Unmarshal(cachedData, &cachedSeriesList); err != nil {
 		// In case of error, we return the entire range as a miss
-		return []missInterval{{start: start, end: end}}, false
+		return []missInterval{{start: start, end: end}}, true
 	}
 	return findMissingTimeRanges(start, end, step, cachedSeriesList, q.fluxInterval)
 }
