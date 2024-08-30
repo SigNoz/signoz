@@ -1,9 +1,11 @@
 import '../MessagingQueues.styles.scss';
 
 import { Select, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { ListMinus } from 'lucide-react';
+import { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { MessagingQueuesViewType } from '../MessagingQueuesUtils';
@@ -14,6 +16,10 @@ import MessagingQueuesGraph from '../MQGraph/MQGraph';
 
 function MQDetailPage(): JSX.Element {
 	const history = useHistory();
+
+	useEffect(() => {
+		logEvent('Messaging Queues: Detail page visited', {});
+	}, []);
 
 	return (
 		<div className="messaging-queue-container">

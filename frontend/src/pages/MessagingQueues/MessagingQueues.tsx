@@ -3,9 +3,11 @@ import './MessagingQueues.styles.scss';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Modal } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { Calendar, ListMinus } from 'lucide-react';
+import { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { isCloudUser } from 'utils/app';
 
@@ -21,12 +23,20 @@ function MessagingQueues(): JSX.Element {
 	const { confirm } = Modal;
 
 	const showConfirm = (): void => {
+		logEvent('Messaging Queues: View details clicked', {
+			page: 'Messaging Queues Overview',
+			source: 'Consumer Latency view',
+		});
+
 		confirm({
 			icon: <ExclamationCircleFilled />,
 			content:
 				'Before navigating to the details page, please make sure you have configured all the required setup to ensure correct data monitoring.',
 			className: 'overview-confirm-modal',
 			onOk() {
+				logEvent('Messaging Queues: Proceed button clicked', {
+					page: 'Messaging Queues Overview',
+				});
 				history.push(ROUTES.MESSAGING_QUEUES_DETAIL);
 			},
 			okText: 'Proceed',
@@ -35,13 +45,21 @@ function MessagingQueues(): JSX.Element {
 
 	const isCloudUserVal = isCloudUser();
 
-	const getStartedRedirect = (link: string): void => {
+	const getStartedRedirect = (link: string, sourceCard: string): void => {
+		logEvent('Messaging Queues: Get started clicked', {
+			source: sourceCard,
+			link: isCloudUserVal ? link : KAFKA_SETUP_DOC_LINK,
+		});
 		if (isCloudUserVal) {
 			history.push(link);
 		} else {
 			window.open(KAFKA_SETUP_DOC_LINK, '_blank');
 		}
 	};
+
+	useEffect(() => {
+		logEvent('Messaging Queues: Overview page visited', {});
+	}, []);
 
 	return (
 		<div className="messaging-queue-container">
@@ -70,7 +88,10 @@ function MessagingQueues(): JSX.Element {
 							<Button
 								type="default"
 								onClick={(): void =>
-									getStartedRedirect(ROUTES.GET_STARTED_APPLICATION_MONITORING)
+									getStartedRedirect(
+										ROUTES.GET_STARTED_APPLICATION_MONITORING,
+										'Configure Consumer',
+									)
 								}
 							>
 								Get Started
@@ -88,7 +109,10 @@ function MessagingQueues(): JSX.Element {
 							<Button
 								type="default"
 								onClick={(): void =>
-									getStartedRedirect(ROUTES.GET_STARTED_APPLICATION_MONITORING)
+									getStartedRedirect(
+										ROUTES.GET_STARTED_APPLICATION_MONITORING,
+										'Configure Producer',
+									)
 								}
 							>
 								Get Started
@@ -106,7 +130,10 @@ function MessagingQueues(): JSX.Element {
 							<Button
 								type="default"
 								onClick={(): void =>
-									getStartedRedirect(ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING)
+									getStartedRedirect(
+										ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING,
+										'Monitor kafka',
+									)
 								}
 							>
 								Get Started
