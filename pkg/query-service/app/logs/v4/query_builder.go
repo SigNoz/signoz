@@ -419,15 +419,13 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	bucketStart := logsStart/NANOSECOND - 1800
 	bucketEnd := logsEnd / NANOSECOND
 
-	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", logsStart, logsEnd)
+	// bucket_start filter is added for primary key
+	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d) AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", logsStart, logsEnd, bucketStart, bucketEnd)
 
 	resourceBucketFilters, err := buildResourceBucketFilters(mq.Filters, mq.GroupBy, mq.OrderBy, mq.AggregateAttribute)
 	if err != nil {
 		return "", err
 	}
-
-	tableName := DISTRIBUTED_LOGS_V2
-	timeFilter = timeFilter + fmt.Sprintf(" AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", bucketStart, bucketEnd)
 
 	if len(resourceBucketFilters) > 0 {
 		filter := " AND (resource_fingerprint GLOBAL IN (" +
@@ -462,7 +460,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	queryTmpl =
 		queryTmpl + selectLabels +
 			" %s as value " +
-			"from signoz_logs." + tableName +
+			"from signoz_logs." + DISTRIBUTED_LOGS_V2 +
 			" where " + timeFilter + "%s" +
 			"%s%s" +
 			"%s"
@@ -543,9 +541,8 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		// sqlSelect := constants.LogsSQLSelect
 		// with noop any filter or different order by other than ts will use new table
 		sqlSelect := constants.LogsSQLSelectV2
-		tableName = DISTRIBUTED_LOGS_V2
 		queryTmpl := sqlSelect + "from signoz_logs.%s where %s%s order by %s"
-		query := fmt.Sprintf(queryTmpl, tableName, timeFilter, filterSubQuery, orderBy)
+		query := fmt.Sprintf(queryTmpl, DISTRIBUTED_LOGS_V2, timeFilter, filterSubQuery, orderBy)
 		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator")
