@@ -6,16 +6,11 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { ListMinus } from 'lucide-react';
 import { useHistory } from 'react-router-dom';
 
+import { MessagingQueuesViewType } from '../MessagingQueuesUtils';
 import { SelectLabelWithComingSoon } from '../MQCommon/MQCommon';
 import MessagingQueuesDetails from '../MQDetails/MQDetails';
 import MessagingQueuesConfigOptions from '../MQGraph/MQConfigOptions';
 import MessagingQueuesGraph from '../MQGraph/MQGraph';
-
-enum MessagingQueueViewType {
-	consumerLag = 'consumerLag',
-	avgPartitionLatency = 'avgPartitionLatency',
-	avgProducerLatency = 'avgProducerLatency',
-}
 
 function MQDetailPage(): JSX.Element {
 	const history = useHistory();
@@ -36,21 +31,38 @@ function MQDetailPage(): JSX.Element {
 					Kafka / views /
 					<Select
 						className="messaging-queue-options"
-						defaultValue="consumerLag"
+						defaultValue={MessagingQueuesViewType.consumerLag.value}
 						popupClassName="messaging-queue-options-popup"
 						options={[
 							{
-								label: 'Consumer Lag view',
-								value: MessagingQueueViewType.consumerLag,
+								label: MessagingQueuesViewType.consumerLag.label,
+								value: MessagingQueuesViewType.consumerLag.value,
 							},
 							{
-								label: <SelectLabelWithComingSoon label="Avg. Partition latency" />,
-								value: MessagingQueueViewType.avgPartitionLatency,
+								label: (
+									<SelectLabelWithComingSoon
+										label={MessagingQueuesViewType.partitionLatency.label}
+									/>
+								),
+								value: MessagingQueuesViewType.partitionLatency.value,
 								disabled: true,
 							},
 							{
-								label: <SelectLabelWithComingSoon label="Avg. Producer latency" />,
-								value: MessagingQueueViewType.avgProducerLatency,
+								label: (
+									<SelectLabelWithComingSoon
+										label={MessagingQueuesViewType.producerLatency.label}
+									/>
+								),
+								value: MessagingQueuesViewType.producerLatency.value,
+								disabled: true,
+							},
+							{
+								label: (
+									<SelectLabelWithComingSoon
+										label={MessagingQueuesViewType.consumerLatency.label}
+									/>
+								),
+								value: MessagingQueuesViewType.consumerLatency.value,
 								disabled: true,
 							},
 						]}

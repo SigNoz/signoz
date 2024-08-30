@@ -9,7 +9,19 @@ import { Info } from 'lucide-react';
 export function ComingSoon(): JSX.Element {
 	return (
 		<Tooltip
-			title="Contact us at cloud-support@signoz.io for more details."
+			title={
+				<div>
+					Join our Slack community for more details:{' '}
+					<a
+						href="https://signoz.io/slack"
+						rel="noopener noreferrer"
+						target="_blank"
+						onClick={(e): void => e.stopPropagation()}
+					>
+						SigNoz Community
+					</a>
+				</div>
+			}
 			placement="top"
 			overlayClassName="tooltip-overlay"
 		>

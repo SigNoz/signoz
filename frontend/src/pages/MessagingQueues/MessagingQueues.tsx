@@ -9,7 +9,10 @@ import { Calendar, ListMinus } from 'lucide-react';
 import { useHistory } from 'react-router-dom';
 import { isCloudUser } from 'utils/app';
 
-import { KAFKA_SETUP_DOC_LINK } from './MessagingQueuesUtils';
+import {
+	KAFKA_SETUP_DOC_LINK,
+	MessagingQueuesViewType,
+} from './MessagingQueuesUtils';
 import { ComingSoon } from './MQCommon/MQCommon';
 
 function MessagingQueues(): JSX.Element {
@@ -114,7 +117,7 @@ function MessagingQueues(): JSX.Element {
 				<div className="summary-section">
 					<div className="summary-card">
 						<div className="summary-title">
-							<p>Consumer Lag</p>
+							<p>{MessagingQueuesViewType.consumerLag.label}</p>
 							<div className="time-value">
 								<Calendar size={14} color={Color.BG_SLATE_200} />
 								<p className="time-value">1D</p>
@@ -128,7 +131,7 @@ function MessagingQueues(): JSX.Element {
 					</div>
 					<div className="summary-card coming-soon-card">
 						<div className="summary-title">
-							<p>Avg. Partition latency</p>
+							<p>{MessagingQueuesViewType.partitionLatency.label}</p>
 							<div className="time-value">
 								<Calendar size={14} color={Color.BG_SLATE_200} />
 								<p className="time-value">1D</p>
@@ -140,7 +143,7 @@ function MessagingQueues(): JSX.Element {
 					</div>
 					<div className="summary-card coming-soon-card">
 						<div className="summary-title">
-							<p>Avg. Partition latency</p>
+							<p>{MessagingQueuesViewType.producerLatency.label}</p>
 							<div className="time-value">
 								<Calendar size={14} color={Color.BG_SLATE_200} />
 								<p className="time-value">1D</p>
@@ -152,7 +155,7 @@ function MessagingQueues(): JSX.Element {
 					</div>
 					<div className="summary-card coming-soon-card">
 						<div className="summary-title">
-							<p>Avg. Partition latency</p>
+							<p>{MessagingQueuesViewType.consumerLatency.label}</p>
 							<div className="time-value">
 								<Calendar size={14} color={Color.BG_SLATE_200} />
 								<p className="time-value">1D</p>
