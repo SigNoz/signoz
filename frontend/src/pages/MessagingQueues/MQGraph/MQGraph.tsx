@@ -7,7 +7,7 @@ import { Card } from 'container/GridCardLayout/styles';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -38,7 +38,7 @@ function MessagingQueuesGraph(): JSX.Element {
 
 	const history = useHistory();
 	const location = useLocation();
-	// const isLogEventCalled = useRef<boolean>(false);
+	const isLogEventCalled = useRef<boolean>(false);
 
 	const messagingQueueCustomTooltipText = (): HTMLDivElement => {
 		const customText = document.createElement('div');
@@ -70,16 +70,12 @@ function MessagingQueuesGraph(): JSX.Element {
 	);
 
 	const checkIfDataExists = (isDataAvailable: boolean): void => {
-		// if (!isLogEventCalled.current) {
-		// 	isLogEventCalled.current = true;
-		// 	logEvent('Messaging Queues: Graph data fetched', {
-		// 		isDataAvailable,
-		// 	});
-		// }
-
-		logEvent('Messaging Queues: Graph data fetched', {
-			isDataAvailable,
-		});
+		if (!isLogEventCalled.current) {
+			isLogEventCalled.current = true;
+			logEvent('Messaging Queues: Graph data fetched', {
+				isDataAvailable,
+			});
+		}
 	};
 	return (
 		<Card
