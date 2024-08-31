@@ -1,10 +1,9 @@
 .timeline-table {
 	border-top: 1px solid var(--text-slate-500);
-
 	border-radius: 6px;
 	overflow: hidden;
 	margin-top: 4px;
-
+	min-height: 600px;
 	.ant-table {
 		background: var(--bg-ink-500);
 		&-cell {

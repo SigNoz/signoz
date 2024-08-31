@@ -1,6 +1,7 @@
 import './Table.styles.scss';
 
 import { Table } from 'antd';
+import { initialFilters } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	useGetAlertRuleDetailsTimelineTable,
@@ -10,10 +11,13 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import { PayloadProps } from 'types/api/alerts/get';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { timelineTableColumns } from './useTimelineTable';
 
 function TimelineTable(): JSX.Element {
+	const [filters, setFilters] = useState<TagFilter>(initialFilters);
+
 	const {
 		isLoading,
 		isRefetching,
@@ -21,7 +25,7 @@ function TimelineTable(): JSX.Element {
 		data,
 		isValidRuleId,
 		ruleId,
-	} = useGetAlertRuleDetailsTimelineTable();
+	} = useGetAlertRuleDetailsTimelineTable({ filters });
 
 	const { timelineData, totalItems } = useMemo(() => {
 		const response = data?.payload?.data;
@@ -31,19 +35,9 @@ function TimelineTable(): JSX.Element {
 		};
 	}, [data?.payload?.data]);
 
-	const [searchText, setSearchText] = useState('');
 	const { paginationConfig, onChangeHandler } = useTimelineTable({
 		totalItems: totalItems ?? 0,
 	});
-
-	const visibleTimelineData = useMemo(() => {
-		if (searchText === '') {
-			return timelineData;
-		}
-		return timelineData?.filter((data) =>
-			JSON.stringify(data.labels).toLowerCase().includes(searchText.toLowerCase()),
-		);
-	}, [searchText, timelineData]);
 
 	const queryClient = useQueryClient();
 
@@ -70,9 +64,9 @@ function TimelineTable(): JSX.Element {
 	return (
 		<div className="timeline-table">
 			<Table
-				rowKey={(row): string => `${row.fingerprint}-${row.value}`}
-				columns={timelineTableColumns(setSearchText, currentUnit, targetUnit)}
-				dataSource={visibleTimelineData}
+				rowKey={(row): string => `${row.fingerprint}-${row.value}-${row.unixMilli}`}
+				columns={timelineTableColumns(filters, setFilters, currentUnit, targetUnit)}
+				dataSource={timelineData}
 				pagination={paginationConfig}
 				size="middle"
 				onChange={onChangeHandler}

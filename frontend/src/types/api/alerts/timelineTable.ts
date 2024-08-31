@@ -1,8 +1,5 @@
+import { TagFilter } from '../queryBuilder/queryBuilderData';
 import { AlertDef } from './def';
-
-export interface Filters {
-	[k: string]: string | Record<string, unknown>[];
-}
 
 export interface GetTimelineTableRequestProps {
 	id: AlertDef['id'];
@@ -11,6 +8,6 @@ export interface GetTimelineTableRequestProps {
 	offset: number;
 	limit: number;
 	order: string;
-	filters?: Filters;
+	filters?: TagFilter;
 	state?: string;
 }

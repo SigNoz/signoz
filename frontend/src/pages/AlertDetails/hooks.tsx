@@ -34,6 +34,7 @@ import {
 	AlertRuleTimelineTableResponsePayload,
 	AlertRuleTopContributorsPayload,
 } from 'types/api/alerts/def';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { nanoToMilli } from 'utils/timeUtils';
 
 export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
@@ -201,7 +202,11 @@ type GetAlertRuleDetailsTimelineTableProps = GetAlertRuleDetailsApiProps & {
 		| undefined;
 };
 
-export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimelineTableProps => {
+export const useGetAlertRuleDetailsTimelineTable = ({
+	filters,
+}: {
+	filters: TagFilter;
+}): GetAlertRuleDetailsTimelineTableProps => {
 	const { search } = useLocation();
 
 	const params = useMemo(() => new URLSearchParams(search), [search]);
@@ -231,6 +236,7 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 			timelineFilter,
 			updatedOrder,
 			getUpdatedOffset,
+			JSON.stringify(filters.items),
 		],
 		{
 			queryFn: () =>
@@ -241,17 +247,7 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 					limit: TIMELINE_TABLE_PAGE_SIZE,
 					order: updatedOrder,
 					offset: parseInt(getUpdatedOffset, 10),
-
-					// TODO(shaheer): ask Srikanth about why it doesn't work
-					// filters: {
-					// 	items: [
-					// 		{
-					// 			key: { key: 'label' },
-					// 			value: 'value',
-					// 			op: '=',
-					// 		},
-					// 	],
-					// },
+					filters,
 
 					...(timelineFilter && timelineFilter !== TimelineFilter.ALL
 						? {

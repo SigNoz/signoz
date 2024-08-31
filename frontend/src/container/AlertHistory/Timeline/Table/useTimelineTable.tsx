@@ -1,35 +1,76 @@
 import { Color } from '@signozhq/design-tokens';
-import { Input } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import { QueryParams } from 'constants/query';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
+import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { convertValue } from 'lib/getConvertedValue';
-import { debounce } from 'lodash-es';
 import { Search } from 'lucide-react';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
-import { BaseSyntheticEvent } from 'react';
+import { useMemo } from 'react';
+import { useQueryClient } from 'react-query';
+import { SuccessResponse } from 'types/api';
 import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
+import { PayloadProps } from 'types/api/alerts/get';
+import {
+	IBuilderQuery,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
 function LabelFilter({
-	setSearchText,
+	filters,
+	setFilters,
 }: {
-	setSearchText: (text: string) => void;
-}): JSX.Element {
-	const handleSearch = (searchEv: BaseSyntheticEvent): void => {
-		setSearchText(searchEv?.target?.value || '');
-	};
-
-	const handleDebouncedSearch = debounce(handleSearch, 300);
+	setFilters: (text: TagFilter) => void;
+	filters: TagFilter;
+}): JSX.Element | null {
 	const isDarkMode = useIsDarkMode();
 
+	const queryClient = useQueryClient();
+	const urlQuery = useUrlQuery();
+	const ruleId = urlQuery.get(QueryParams.ruleId);
+
+	const data = queryClient.getQueryData<SuccessResponse<PayloadProps>>([
+		REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+		ruleId,
+	]);
+
+	const query = useMemo(() => {
+		const compositeQueries = data?.payload?.data?.condition.compositeQuery;
+		const query = compositeQueries?.builderQueries?.A;
+
+		return {
+			...query,
+			filters,
+		} as IBuilderQuery;
+	}, [data?.payload?.data?.condition.compositeQuery, filters]);
+
+	if (!data) {
+		return null;
+	}
+
+	const handleSearch = (tagFilters: TagFilter): void => {
+		const tagFiltersLength = tagFilters.items.length;
+
+		if (
+			(!tagFiltersLength && (!filters || !filters.items.length)) ||
+			tagFiltersLength === filters?.items.length
+		)
+			return;
+
+		setFilters(tagFilters);
+	};
+
 	return (
-		<Input
-			className="label-filter"
-			placeholder="labels"
-			onChange={handleDebouncedSearch}
-			suffix={
+		<QueryBuilderSearch
+			query={query}
+			onChange={handleSearch}
+			className="query-builder-search-wrapper"
+			suffixIcon={
 				<Search
 					size={14}
 					color={isDarkMode ? Color.TEXT_VANILLA_100 : Color.TEXT_INK_100}
@@ -40,7 +81,8 @@ function LabelFilter({
 }
 
 export const timelineTableColumns = (
-	setSearchText: (text: string) => void,
+	filters: TagFilter,
+	setFilters: (text: TagFilter) => void,
 	currentUnit?: string,
 	targetUnit?: string,
 ): ColumnsType<AlertRuleTimelineTableResponse> => [
@@ -61,7 +103,7 @@ export const timelineTableColumns = (
 		),
 	},
 	{
-		title: <LabelFilter setSearchText={setSearchText} />,
+		title: <LabelFilter setFilters={setFilters} filters={filters} />,
 		dataIndex: 'labels',
 		width: '54.5%',
 		render: (labels, record): JSX.Element => (
