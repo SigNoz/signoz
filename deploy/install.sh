@@ -512,15 +512,6 @@ wait_for_containers_start 60
 echo ""
 
 if [[ $status_code -ne 200 ]]; then
-    echo "+++++++++++ ERROR ++++++++++++++++++++++"
-    echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
-    echo ""
-
-    echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
-
-    echo "Please read our troubleshooting guide https://signoz.io/docs/install/troubleshooting/"
-    echo "or reach us on SigNoz for support https://signoz.io/slack"
-    echo "++++++++++++++++++++++++++++++++++++++++"
 
     send_event "installation_error_checks"
     exit 1
