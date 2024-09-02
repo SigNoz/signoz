@@ -1,5 +1,3 @@
-/* eslint-disable consistent-return */
-/* eslint-disable react/jsx-props-no-spreading */
 import { Color } from '@signozhq/design-tokens';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -97,7 +95,7 @@ for (let i = 0; i < 90; i++) {
 	const startOfDay = timestamp - (timestamp % oneDay);
 	datatest.push({
 		timestamp: startOfDay,
-		value: Math.floor(Math.random() * 60) + 1,
+		value: Math.floor(Math.random() * 30) + 1,
 	});
 }
 
