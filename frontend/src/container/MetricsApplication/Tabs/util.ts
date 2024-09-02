@@ -5,6 +5,7 @@ import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import history from 'lib/history';
+import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
 import { traceFilterKeys } from 'pages/TracesExplorer/Filter/filterUtils';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import {
@@ -31,12 +32,14 @@ interface OnViewTracePopupClickProps {
 	selectedTraceTags: string;
 	timestamp: number;
 	apmToTraceQuery: Query;
+	isViewLogsClicked?: boolean;
 }
 export function onViewTracePopupClick({
 	selectedTraceTags,
 	servicename,
 	timestamp,
 	apmToTraceQuery,
+	isViewLogsClicked,
 }: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
 		const currentTime = timestamp;
@@ -53,13 +56,14 @@ export function onViewTracePopupClick({
 			JSON.stringify(apmToTraceQuery),
 		);
 
-		const newTraceExplorerPath = `${
-			ROUTES.TRACES_EXPLORER
-		}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
+		const basePath = isViewLogsClicked
+			? ROUTES.LOGS_EXPLORER
+			: ROUTES.TRACES_EXPLORER;
+		const newPath = `${basePath}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
 			QueryParams.compositeQuery
 		}=${JSONCompositeQuery}&${queryString.join('&')}`;
 
-		history.push(newTraceExplorerPath);
+		history.push(newPath);
 	};
 }
 
@@ -79,7 +83,7 @@ export function onGraphClickHandler(
 
 		if (xValue) {
 			if (buttonElement) {
-				buttonElement.style.display = 'block';
+				buttonElement.style.display = 'flex';
 				buttonElement.style.left = `${mouseX}px`;
 				buttonElement.style.top = `${mouseY}px`;
 				setSelectedTimeStamp(xValue);
@@ -106,12 +110,13 @@ export function handleQueryChange(
 	attributeKeys: BaseAutocompleteData,
 	serviceAttribute: string,
 	filters?: TagFilterItem[],
+	logs?: boolean,
 ): Query {
 	const filterItem: TagFilterItem[] = [
 		{
 			id: uuid().slice(0, 8),
 			key: attributeKeys,
-			op: 'in',
+			op: logs ? '=' : 'in',
 			value: serviceAttribute,
 		},
 	];
@@ -128,6 +133,42 @@ export function handleQueryChange(
 			})),
 		},
 	};
+}
+
+export function useGetAPMToLogsQueries({
+	servicename,
+	filters,
+}: {
+	servicename: string;
+	filters?: TagFilterItem[];
+}): Query {
+	const finalFilters: TagFilterItem[] = [];
+	const { updateAllQueriesOperators } = useQueryBuilder();
+	let updatedQuery = updateAllQueriesOperators(
+		initialQueriesMap.logs,
+		PANEL_TYPES.LIST,
+		DataSource.LOGS,
+	);
+	const serviceName = {
+		id: 'service.name--string--resource--true',
+		dataType: DataTypes.String,
+		isColumn: true,
+		key: 'service.name',
+		type: 'resource',
+		isJSON: false,
+	};
+
+	if (filters?.length) {
+		finalFilters.push(...filters);
+	}
+	updatedQuery = prepareQueryWithDefaultTimestamp(updatedQuery);
+	return handleQueryChange(
+		updatedQuery,
+		serviceName,
+		servicename,
+		finalFilters,
+		true,
+	);
 }
 
 export function useGetAPMToTracesQueries({

@@ -38,6 +38,7 @@ import {
 } from '../MetricsPageQueries/OverviewQueries';
 import { Col, ColApDexContainer, ColErrorContainer, Row } from '../styles';
 import ApDex from './Overview/ApDex';
+import GraphControlsPanel from './Overview/GraphControlsPanel/GraphControlsPanel';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
@@ -48,6 +49,7 @@ import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
+	useGetAPMToLogsQueries,
 	useGetAPMToTracesQueries,
 } from './util';
 
@@ -194,33 +196,57 @@ function Application(): JSX.Element {
 		[dispatch, pathname, urlQuery],
 	);
 
-	const onErrorTrackHandler = (
-		timestamp: number,
-		apmToTraceQuery: Query,
-	): (() => void) => (): void => {
-		const currentTime = timestamp;
-		const tPlusOne = timestamp + 60 * 1000;
+	const onErrorTrackHandler = useCallback(
+		(
+			timestamp: number,
+			apmToTraceQuery: Query,
+			isViewLogsClicked?: boolean,
+		): (() => void) => (): void => {
+			const currentTime = timestamp;
+			const tPlusOne = timestamp + 60 * 1000;
 
-		const urlParams = new URLSearchParams(search);
-		urlParams.set(QueryParams.startTime, currentTime.toString());
-		urlParams.set(QueryParams.endTime, tPlusOne.toString());
+			const urlParams = new URLSearchParams(search);
+			urlParams.set(QueryParams.startTime, currentTime.toString());
+			urlParams.set(QueryParams.endTime, tPlusOne.toString());
 
-		const avialableParams = routeConfig[ROUTES.TRACE];
-		const queryString = getQueryString(avialableParams, urlParams);
+			const avialableParams = routeConfig[ROUTES.TRACE];
+			const queryString = getQueryString(avialableParams, urlParams);
 
-		const JSONCompositeQuery = encodeURIComponent(
-			JSON.stringify(apmToTraceQuery),
-		);
+			const JSONCompositeQuery = encodeURIComponent(
+				JSON.stringify(apmToTraceQuery),
+			);
 
-		const newTraceExplorerPath = `${
-			ROUTES.TRACES_EXPLORER
-		}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
-			QueryParams.compositeQuery
-		}=${JSONCompositeQuery}&${queryString.join('&')}`;
+			const basePath = isViewLogsClicked
+				? ROUTES.LOGS_EXPLORER
+				: ROUTES.TRACES_EXPLORER;
+			const newPath = `${basePath}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
+				QueryParams.compositeQuery
+			}=${JSONCompositeQuery}&${queryString.join('&')}`;
 
-		history.push(newTraceExplorerPath);
-	};
+			history.push(newPath);
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
+	);
 
+	const logErrorQuery = useGetAPMToLogsQueries({
+		servicename,
+		filters: [
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'hasError',
+					dataType: DataTypes.bool,
+					type: 'tag',
+					isColumn: true,
+					isJSON: false,
+					id: 'hasError--bool--tag--true',
+				},
+				op: '=',
+				value: ['true'],
+			},
+		],
+	});
 	const errorTrackQuery = useGetAPMToTracesQueries({
 		servicename,
 		filters: [
@@ -304,14 +330,18 @@ function Application(): JSX.Element {
 						/>
 					</ColApDexContainer>
 					<ColErrorContainer>
-						<Button
-							type="default"
-							size="small"
+						<GraphControlsPanel
 							id="Error_button"
-							onClick={onErrorTrackHandler(selectedTimeStamp, errorTrackQuery)}
-						>
-							View Traces
-						</Button>
+							onViewLogsClick={onErrorTrackHandler(
+								selectedTimeStamp,
+								logErrorQuery,
+								true,
+							)}
+							onViewTracesClick={onErrorTrackHandler(
+								selectedTimeStamp,
+								errorTrackQuery,
+							)}
+						/>
 
 						<TopLevelOperation
 							handleGraphClick={handleGraphClick}
