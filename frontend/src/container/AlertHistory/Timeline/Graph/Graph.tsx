@@ -87,16 +87,20 @@ const transformVerticalTimelineGraph = (data: any[]): any => [
 		return [...Array(count).fill(1), 2];
 	}),
 ];
-const datatest = [
-	{
-		timestamp: 1724941976.194,
-		value: 20,
-	},
-	{
-		timestamp: 1724855576.194,
-		value: 30,
-	},
-];
+
+const datatest: any[] = [];
+const now = Math.floor(Date.now() / 1000); // current timestamp in seconds
+const oneDay = 24 * 60 * 60; // one day in seconds
+
+for (let i = 0; i < 90; i++) {
+	const timestamp = now - i * oneDay;
+	const startOfDay = timestamp - (timestamp % oneDay);
+	datatest.push({
+		timestamp: startOfDay,
+		value: Math.floor(Math.random() * 60) + 1,
+	});
+}
+
 function VerticalTimelineGraph({
 	isDarkMode,
 	width,
