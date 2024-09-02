@@ -19,6 +19,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.uber.org/zap"
 )
 
 // If no data has been received yet, filter suggestions should contain
@@ -60,7 +61,7 @@ func TestLogsFilterSuggestionsWithoutExistingFilter(t *testing.T) {
 
 	tb.mockAttribKeysQueryResponse([]v3.AttributeKey{testAttrib})
 	tb.mockAttribValuesQueryResponse(
-		[]v3.AttributeKey{testAttrib}, [][]string{[]string{testAttribValue}},
+		[]v3.AttributeKey{testAttrib}, [][]string{{testAttribValue}},
 	)
 	suggestionsQueryParams := map[string]string{}
 	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(suggestionsQueryParams)
@@ -73,7 +74,7 @@ func TestLogsFilterSuggestionsWithoutExistingFilter(t *testing.T) {
 	))
 
 	require.Greater(len(suggestionsResp.ExampleQueries), 0)
-	fmt.Println(suggestionsResp)
+
 	require.True(slices.ContainsFunc(
 		suggestionsResp.ExampleQueries, func(q v3.FilterSet) bool {
 			return slices.ContainsFunc(q.Items, func(i v3.FilterItem) bool {
@@ -255,6 +256,13 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
+
+	logger := zap.NewExample()
+	originalLogger := zap.L()
+	zap.ReplaceGlobals(logger)
+	t.Cleanup(func() {
+		zap.ReplaceGlobals(originalLogger)
+	})
 
 	return &FilterSuggestionsTestBed{
 		t:              t,
