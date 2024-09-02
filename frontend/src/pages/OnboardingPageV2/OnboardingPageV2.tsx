@@ -11,4 +11,5 @@ function OnboardingPageV2(): JSX.Element {
 		</div>
 	);
 }
+
 export default OnboardingPageV2;
