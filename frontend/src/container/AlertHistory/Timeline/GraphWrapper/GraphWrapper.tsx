@@ -1,15 +1,7 @@
 import '../Graph/Graph.styles.scss';
 
-<<<<<<< HEAD
-=======
-import { DAYJS_MANIPULATE_TYPES } from 'constants/global';
-import dayjs from 'dayjs';
->>>>>>> 39f4a2198 (chore: calculate start and end times from relative time and remove query params)
 import useUrlQuery from 'hooks/useUrlQuery';
-import {
-	useAlertHistoryQueryParams,
-	useGetAlertRuleDetailsTimelineGraphData,
-} from 'pages/AlertDetails/hooks';
+import { useGetAlertRuleDetailsTimelineGraphData } from 'pages/AlertDetails/hooks';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
 
 import Graph from '../Graph/Graph';
@@ -32,12 +24,8 @@ function GraphWrapper({
 		ruleId,
 	} = useGetAlertRuleDetailsTimelineGraphData();
 
-<<<<<<< HEAD
 	// TODO(shaheer): uncomment when the API is ready for
 	// const { startTime } = useAlertHistoryQueryParams();
-=======
-	const { startTime } = useAlertHistoryQueryParams();
->>>>>>> 39f4a2198 (chore: calculate start and end times from relative time and remove query params)
 
 	// const [isVerticalGraph, setIsVerticalGraph] = useState(false);
 
