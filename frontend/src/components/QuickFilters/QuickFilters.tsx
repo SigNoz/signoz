@@ -24,6 +24,11 @@ export enum MinMax {
 	MAX = 'MAX',
 }
 
+export enum SpecficFilterOperations {
+	ALL = 'ALL',
+	ONLY = 'ONLY',
+}
+
 export interface IQuickFiltersConfig {
 	type: FiltersType;
 	attributeKey: BaseAutocompleteData;
@@ -44,19 +49,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		lastUsedQuery,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
-
-	// handle the URL update here
-	// also take care of only and all values here with IN / NIN / = / != operators on change
-	const handleFilterValueChange = (
-		attributeKey: BaseAutocompleteData,
-		value: string,
-		type: FiltersType,
-		selected: boolean,
-		isOnlyClicked?: boolean,
-		minMax?: MinMax,
-	): void => {
-		console.log(attributeKey, value, type, selected, minMax, isOnlyClicked);
-	};
 
 	// clear all the filters for the query which is in sync with filters
 	const handleReset = (): void => {
@@ -106,11 +98,11 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				{config.map((filter) => {
 					switch (filter.type) {
 						case FiltersType.CHECKBOX:
-							return <Checkbox filter={filter} onChange={handleFilterValueChange} />;
+							return <Checkbox filter={filter} />;
 						case FiltersType.SLIDER:
-							return <Slider filter={filter} onChange={handleFilterValueChange} />;
+							return <Slider filter={filter} />;
 						default:
-							return <Checkbox filter={filter} onChange={handleFilterValueChange} />;
+							return <Checkbox filter={filter} />;
 					}
 				})}
 			</section>
