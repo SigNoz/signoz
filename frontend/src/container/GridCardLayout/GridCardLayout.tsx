@@ -69,10 +69,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const { widgets, variables } = data || {};
 
-	const { featureResponse, role, user, isSideBarCollapsed } = useSelector<
-		AppState,
-		AppReducer
-	>((state) => state.app);
+	const { featureResponse, role, user } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 
 	const isDarkMode = useIsDarkMode();
 
@@ -269,11 +268,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			},
 		});
 	};
-
-	// trigger a resize event so that the grid layout is recalculated
-	useEffect(() => {
-		window.dispatchEvent(new Event('resize'));
-	}, [isSideBarCollapsed]);
 
 	useEffect(() => {
 		if (!currentSelectRowId) return;
