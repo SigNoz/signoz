@@ -40,7 +40,25 @@
 			align-items: center;
 		}
 	}
+}
 
-	.filters {
+.lightMode {
+	.quick-filters {
+		background-color: var(--bg-vanilla-100);
+		border-right: 1px solid var(--bg-vanilla-300);
+
+		.header {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.left-actions {
+				.text {
+					color: var(--bg-ink-400);
+				}
+
+				.sync-icon {
+					background-color: var(--bg-vanilla-100);
+				}
+			}
+		}
 	}
 }

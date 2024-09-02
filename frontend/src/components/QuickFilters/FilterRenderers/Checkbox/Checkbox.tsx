@@ -390,6 +390,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										onChange={(e): void => onChange(value, e.target.checked, false)}
 										checked={currentFilterState[value]}
 										disabled={isFilterDisabled}
+										rootClassName="check-box"
 									/>
 									{filter.customRendererForValue ? (
 										filter.customRendererForValue(value)
@@ -412,6 +413,9 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 														? 'All'
 														: 'Only'
 													: 'Only'}
+											</Button>
+											<Button type="text" className="toggle-btn">
+												Toggle
 											</Button>
 										</div>
 									)}
