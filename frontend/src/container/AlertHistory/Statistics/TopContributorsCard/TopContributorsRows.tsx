@@ -1,3 +1,4 @@
+import { Color } from '@signozhq/design-tokens';
 import { Progress, Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
@@ -46,7 +47,7 @@ function TopContributorsRows({
 						percent={(count / totalCurrentTriggers) * 100}
 						showInfo={false}
 						trailColor="rgba(255, 255, 255, 0)"
-						strokeColor="var(--bg-robin-500)"
+						strokeColor={Color.BG_ROBIN_500}
 					/>
 				</ConditionalAlertPopover>
 			),
