@@ -25,7 +25,6 @@ $ant-list-override: 'ant-list';
 .#{$workspaceLocked} {
 	&__tabs {
 		margin-top: 148px;
-		opacity: 0.5;
 
 		.#{$ant-tabs-override} {
 			&-nav {
@@ -40,10 +39,6 @@ $ant-list-override: 'ant-list';
 			&-nav-wrap {
 				justify-content: center;
 			}
-		}
-
-		&:hover {
-			opacity: 1;
 		}
 	}
 

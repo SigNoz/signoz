@@ -27,10 +27,10 @@ describe('WorkspaceLocked', () => {
 		const gotQuestionText = await screen.findByText(/got question?/i);
 		expect(gotQuestionText).toBeInTheDocument();
 
-		const contactUsLink = await screen.findByRole('link', {
-			name: /contact us/i,
+		const contactUsBtn = await screen.findByRole('button', {
+			name: /Contact Us/i,
 		});
-		expect(contactUsLink).toBeInTheDocument();
+		expect(contactUsBtn).toBeInTheDocument();
 	});
 
 	test('Render for Admin', async () => {
@@ -60,7 +60,7 @@ describe('WorkspaceLocked', () => {
 
 		render(<WorkspaceLocked />, {}, 'VIEWER');
 		const updateCreditCardBtn = await screen.queryByRole('button', {
-			name: /update credit card/i,
+			name: /Continue My Journey/i,
 		});
 		expect(updateCreditCardBtn).not.toBeInTheDocument();
 

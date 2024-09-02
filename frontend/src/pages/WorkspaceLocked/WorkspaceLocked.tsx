@@ -23,11 +23,10 @@ import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { CircleArrowRight } from 'lucide-react';
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { sideBarCollapse } from 'store/actions/app/sideBarCollapse';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
@@ -46,9 +45,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const isAdmin = role === 'ADMIN';
 	const [activeLicense, setActiveLicense] = useState<License | null>(null);
-	const dispatch = useDispatch();
 	const { notifications } = useNotifications();
-	const [collapsed] = useState<boolean>(false);
 
 	const { t } = useTranslation(['workspaceLocked']);
 	const {
@@ -56,10 +53,6 @@ export default function WorkspaceBlocked(): JSX.Element {
 		isLoading: isLoadingLicenseData,
 		data: licensesData,
 	} = useLicense();
-
-	useLayoutEffect(() => {
-		dispatch(sideBarCollapse(collapsed));
-	}, [collapsed, dispatch]);
 
 	useEffect(() => {
 		if (!isFetchingLicenseData) {
@@ -257,15 +250,16 @@ export default function WorkspaceBlocked(): JSX.Element {
 						</span>
 						<span className="workspace-locked__modal__header__actions">
 							<Typography.Text className="workspace-locked__modal__title">
-								{t('gotQuestions')}
+								Got Questions?
 							</Typography.Text>
 							<Button
 								type="default"
 								shape="round"
 								size="middle"
 								href="mailto:cloud-support@signoz.io"
+								role="button"
 							>
-								{t('contactUs')}
+								Contact Us
 							</Button>
 						</span>
 					</div>
@@ -284,9 +278,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 								<Col>
 									<Space direction="vertical" align="center">
 										<Typography.Title level={2}>
-											<div className="workspace-locked__title">
-												{t('upgradeToContinue')}
-											</div>
+											<div className="workspace-locked__title">Upgrade to Continue</div>
 										</Typography.Title>
 										<Typography.Paragraph className="workspace-locked__details">
 											{t('upgradeNow')}
@@ -310,7 +302,10 @@ export default function WorkspaceBlocked(): JSX.Element {
 									gutter={[16, 16]}
 								>
 									<Col>
-										<Alert message={t('contactAdmin')} type="info" />
+										<Alert
+											message="Contact your admin to proceed with the upgrade."
+											type="info"
+										/>
 									</Col>
 								</Row>
 							)}
@@ -329,7 +324,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 											loading={isLoading}
 											onClick={handleUpdateCreditCard}
 										>
-											{t('continueMyJourney')}
+											continue my journey
 										</Button>
 									</Col>
 									<Col>
