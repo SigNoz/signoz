@@ -62,7 +62,7 @@
 
 		.ant-breadcrumb-separator,
 		.breadcrumb-item--last {
-			color: var(--var-vanilla-500);
+			color: var(--text-vanilla-500);
 			font-family: 'Geist Mono';
 		}
 	}
@@ -140,7 +140,7 @@
 			}
 			.ant-breadcrumb-separator,
 			span.ant-breadcrumb-link {
-				color: var(--var-ink-500);
+				color: var(--text-ink-500);
 			}
 		}
 		.tabs-and-filters {

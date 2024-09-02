@@ -1,4 +1,4 @@
-import '../Graph/graph.styles.scss';
+import '../Graph/Graph.styles.scss';
 
 import { BarChartOutlined } from '@ant-design/icons';
 import { QueryParams } from 'constants/query';

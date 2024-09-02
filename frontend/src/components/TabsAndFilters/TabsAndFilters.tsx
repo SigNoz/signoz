@@ -1,6 +1,7 @@
-import './tabsAndFilters.styles.scss';
+import './TabsAndFilters.styles.scss';
 
-import { Filters } from './Filters/Filters';
+import { Filters } from 'components/AlertDetailsFilters/Filters';
+
 import { Tabs } from './Tabs/Tabs';
 
 function TabsAndFilters(): JSX.Element {

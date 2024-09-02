@@ -1,4 +1,4 @@
-import './filters.styles.scss';
+import './Filters.styles.scss';
 
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 

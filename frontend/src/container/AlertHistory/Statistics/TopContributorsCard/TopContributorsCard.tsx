@@ -1,5 +1,6 @@
-import './topContributorsCard.styles.scss';
+import './TopContributorsCard.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
@@ -56,7 +57,7 @@ function TopContributorsCard({
 							<div className="icon">
 								<ArrowRight
 									size={14}
-									color={isDarkMode ? 'var(--bg-vanilla-400)' : 'var(--bg-ink-400)'}
+									color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}
 								/>
 							</div>
 						</Button>
