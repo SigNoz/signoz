@@ -83,7 +83,7 @@ export function onGraphClickHandler(
 
 		if (xValue) {
 			if (buttonElement) {
-				buttonElement.style.display = 'flex';
+				buttonElement.style.display = 'block';
 				buttonElement.style.left = `${mouseX}px`;
 				buttonElement.style.top = `${mouseY}px`;
 				setSelectedTimeStamp(xValue);
