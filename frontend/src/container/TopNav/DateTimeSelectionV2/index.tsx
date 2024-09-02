@@ -598,7 +598,7 @@ function DateTimeSelection({
 
 	return (
 		<div className="date-time-selector">
-			{showResetButton && (
+			{showResetButton && selectedTime !== defaultRelativeTime && (
 				<FormItem>
 					<Button
 						type="default"
