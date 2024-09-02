@@ -170,7 +170,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 		if (isOnlyOrAllClicked && query.filters.items) {
 			const isOnlyOrAll = isSomeFilterPresentForCurrentAttribute
-				? currentFilterState[value] || isMultipleValuesTrueForTheKey
+				? currentFilterState[value] && !isMultipleValuesTrueForTheKey
 					? 'All'
 					: 'Only'
 				: 'Only';
@@ -408,7 +408,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 											</Typography.Text>
 											<Button type="text" className="only-btn">
 												{isSomeFilterPresentForCurrentAttribute
-													? currentFilterState[value] || isMultipleValuesTrueForTheKey
+													? currentFilterState[value] && !isMultipleValuesTrueForTheKey
 														? 'All'
 														: 'Only'
 													: 'Only'}
