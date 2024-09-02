@@ -4465,19 +4465,32 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 	// GetLogAttributeValues is expected to come in a follow up change
 	if len(suggestions.AttributeKeys) > 0 {
 		// suggest 2 examples for top 2 attribs
-		topAttribs := suggestions.AttributeKeys[:1]
-		if len(suggestions.AttributeKeys) > 1 {
-			topAttribs = suggestions.AttributeKeys[:2]
+		topAttribs := []v3.AttributeKey{}
+		for _, attrib := range suggestions.AttributeKeys {
+			if len(topAttribs) >= req.ExamplesLimit {
+				break
+			}
+
+			// only suggest examples for actual attributes
+			_, isTopLevelField := constants.StaticFieldsLogsV3[attrib.Key]
+			isNumOrStringType := slices.Contains([]v3.AttributeKeyDataType{
+				v3.AttributeKeyDataTypeInt64, v3.AttributeKeyDataTypeFloat64, v3.AttributeKeyDataTypeString,
+			}, attrib.DataType)
+
+			if !isTopLevelField && isNumOrStringType {
+				topAttribs = append(topAttribs, attrib)
+			}
 		}
 
+		numValuesPerAttrib := math.Ceil(float64(req.ExamplesLimit) / float64(len(topAttribs)))
+
 		topAttribValues, err := r.getValuesForLogAttributes(
-			ctx, topAttribs, 2,
+			ctx, topAttribs, uint64(numValuesPerAttrib),
 		)
 
 		if err != nil {
 			// Do not fail the entire request if only example query generation fails
 			zap.L().Error("could not find attribute values for creating example query", zap.Error(err))
-
 		} else {
 
 			// TODO(Raj): Clean this up
@@ -4551,8 +4564,7 @@ func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attrib
 		`,
 		r.logsDB, r.logsTagAttributeTable, limit,
 	)
-	// query = fmt.Sprintf("select distinct %s from  %s.%s where tagKey=$1 and tagType=$2 limit $3",
-	// filterValueColumn, r.logsDB, r.logsTagAttributeTable)
+
 	attribNames := []string{}
 	for _, attrib := range attributes {
 		attribNames = append(attribNames, attrib.Key)
