@@ -2,10 +2,11 @@ import './QuickFilters.styles.scss';
 
 import {
 	FilterOutlined,
+	InfoCircleOutlined,
 	SyncOutlined,
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
-import { Typography } from 'antd';
+import { Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -79,21 +80,32 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		};
 		redirectWithQueryBuilderData(preparedQuery);
 	};
+
+	const lastQueryName =
+		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
 	return (
 		<div className="quick-filters">
 			<section className="header">
 				<section className="left-actions">
 					<FilterOutlined />
 					<Typography.Text className="text">Filters</Typography.Text>
-					<SyncOutlined className="sync-icon" onClick={handleReset} />
+					<Tooltip title="Reset All">
+						<SyncOutlined className="sync-icon" onClick={handleReset} />
+					</Tooltip>
+					<Tooltip title={`Filter currently in sync with query : ${lastQueryName}`}>
+						<InfoCircleOutlined />
+					</Tooltip>
 				</section>
 				<section className="right-actions">
-					<VerticalAlignTopOutlined
-						rotate={270}
-						onClick={handleFilterVisibilityChange}
-					/>
+					<Tooltip title="Collapse Filters">
+						<VerticalAlignTopOutlined
+							rotate={270}
+							onClick={handleFilterVisibilityChange}
+						/>
+					</Tooltip>
 				</section>
 			</section>
+
 			<section className="filters">
 				{config.map((filter) => {
 					switch (filter.type) {
