@@ -1,5 +1,6 @@
 import '../Graph/Graph.styles.scss';
 
+import { DAYJS_MANIPULATE_TYPES } from 'constants/global';
 import { QueryParams } from 'constants/query';
 import dayjs from 'dayjs';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -38,7 +39,7 @@ function GraphWrapper({
 				const startTimeDate = dayjs(Number(startTime));
 				const twentyFourHoursAgo = dayjs().subtract(
 					HORIZONTAL_GRAPH_HOURS_THRESHOLD,
-					'hour',
+					DAYJS_MANIPULATE_TYPES.HOUR,
 				);
 
 				setIsVerticalGraph(startTimeDate.isBefore(twentyFourHoursAgo));
