@@ -228,23 +228,23 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										...currentFilter,
 										value: currentFilter.value.filter((val) => val !== value),
 									};
-									query.filters.items = query.filters.items.map((item) => {
-										if (isEqual(item.key, filter.attributeKey)) {
-											return newFilter;
-										}
-										return item;
-									});
+
+									if (newFilter.value.length === 0) {
+										query.filters.items = query.filters.items.filter(
+											(item) => !isEqual(item.key, filter.attributeKey),
+										);
+									} else {
+										query.filters.items = query.filters.items.map((item) => {
+											if (isEqual(item.key, filter.attributeKey)) {
+												return newFilter;
+											}
+											return item;
+										});
+									}
 								} else {
-									const newFilter = {
-										...currentFilter,
-										value: [],
-									};
-									query.filters.items = query.filters.items.map((item) => {
-										if (isEqual(item.key, filter.attributeKey)) {
-											return newFilter;
-										}
-										return item;
-									});
+									query.filters.items = query.filters.items.filter((item) =>
+										isEqual(item.key, filter.attributeKey),
+									);
 								}
 							}
 							break;
@@ -279,23 +279,23 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										...currentFilter,
 										value: currentFilter.value.filter((val) => val !== value),
 									};
-									query.filters.items = query.filters.items.map((item) => {
-										if (isEqual(item.key, filter.attributeKey)) {
-											return newFilter;
-										}
-										return item;
-									});
+
+									if (newFilter.value.length === 0) {
+										query.filters.items = query.filters.items.filter(
+											(item) => !isEqual(item.key, filter.attributeKey),
+										);
+									} else {
+										query.filters.items = query.filters.items.map((item) => {
+											if (isEqual(item.key, filter.attributeKey)) {
+												return newFilter;
+											}
+											return item;
+										});
+									}
 								} else {
-									const newFilter = {
-										...currentFilter,
-										value: [],
-									};
-									query.filters.items = query.filters.items.map((item) => {
-										if (isEqual(item.key, filter.attributeKey)) {
-											return newFilter;
-										}
-										return item;
-									});
+									query.filters.items = query.filters.items.filter((item) =>
+										isEqual(item.key, filter.attributeKey),
+									);
 								}
 							}
 							break;
