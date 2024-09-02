@@ -28,6 +28,7 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.HOME_PAGE]: [QueryParams.resourceAttributes],
 	[ROUTES.GET_STARTED]: [QueryParams.resourceAttributes],
 	[ROUTES.ONBOARDING]: [QueryParams.resourceAttributes],
+	[ROUTES.GET_STARTED_V2]: [QueryParams.resourceAttributes],
 	[ROUTES.LIST_ALL_ALERT]: [QueryParams.resourceAttributes],
 	[ROUTES.LIST_LICENSES]: [QueryParams.resourceAttributes],
 	[ROUTES.LOGIN]: [QueryParams.resourceAttributes],
