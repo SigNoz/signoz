@@ -29,6 +29,12 @@ export const getStartedMenuItem = {
 	icon: <RocketOutlined rotate={45} />,
 };
 
+export const getStartedV2MenuItem = {
+	key: ROUTES.GET_STARTED_V2,
+	label: 'Get Started V2',
+	icon: <RocketOutlined rotate={45} />,
+};
+
 export const inviteMemberMenuItem = {
 	key: `${ROUTES.ORG_SETTINGS}#invite-team-members`,
 	label: 'Invite Team Member',
@@ -66,6 +72,11 @@ export const trySignozCloudMenuItem: SidebarItem = {
 };
 
 const menuItems: SidebarItem[] = [
+	{
+		key: ROUTES.GET_STARTED_V2,
+		label: 'Get Started V2',
+		icon: <RocketOutlined size={16} />,
+	},
 	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',
