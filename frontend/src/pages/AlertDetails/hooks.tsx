@@ -366,7 +366,7 @@ export const useAlertRuleStatusToggle = ({
 	);
 
 	const { mutate: toggleAlertState } = useMutation(
-		['toggle-alert-state', ruleId],
+		[REACT_QUERY_KEY.TOGGLE_ALERT_STATE, ruleId],
 		patchAlert,
 		{
 			onMutate: () => {
@@ -405,12 +405,12 @@ export const useAlertRuleDuplicate = ({
 
 	const params = useUrlQuery();
 
-	const { refetch } = useQuery('allAlerts', {
+	const { refetch } = useQuery(REACT_QUERY_KEY.GET_ALL_ALLERTS, {
 		queryFn: getAll,
 		cacheTime: 0,
 	});
 	const { mutate: duplicateAlert } = useMutation(
-		['duplicate-alert-rule'],
+		[REACT_QUERY_KEY.DUPLICATE_ALERT_RULE],
 		save,
 		{
 			onSuccess: async () => {
@@ -459,7 +459,7 @@ export const useAlertRuleDelete = ({
 	const { notifications } = useNotifications();
 
 	const { mutate: deleteAlert } = useMutation(
-		['remove-alert-rule', ruleId],
+		[REACT_QUERY_KEY.REMOVE_ALERT_RULE, ruleId],
 		deleteAlerts,
 		{
 			onSuccess: async () => {
