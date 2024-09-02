@@ -66,6 +66,10 @@ export const Onboarding = Loadable(
 	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPage'),
 );
 
+export const OnboardingV2 = Loadable(
+	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPageV2'),
+);
+
 export const DashboardPage = Loadable(
 	() =>
 		import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardsListPage'),
