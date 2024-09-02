@@ -196,7 +196,7 @@ func (tb *FilterSuggestionsTestBed) mockAttribValuesQueryResponse(
 	}
 
 	tb.mockClickhouse.ExpectQuery(
-		"select.*tagKey.*stringTagValue.*int64TagValue.*float64TagValue.*distributed_tag_attributes.*tagKey.*IN.*",
+		"select.*tagKey.*stringTagValue.*int64TagValue.*float64TagValue.*distributed_tag_attributes.*tagKey.*in.*",
 	).WithArgs(expectedAttribKeys).WillReturnRows(mockhouse.NewRows(cols, values))
 }
 
