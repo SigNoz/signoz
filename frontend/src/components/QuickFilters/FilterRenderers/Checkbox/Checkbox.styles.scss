@@ -47,6 +47,34 @@
 			display: flex;
 			align-items: center;
 			gap: 8px;
+
+			.checkbox-value-section {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				width: 100%;
+				cursor: pointer;
+
+				.value-string {
+				}
+
+				.only-btn {
+					display: none;
+				}
+
+				.only-btn:hover {
+					background-color: unset;
+				}
+			}
+
+			.checkbox-value-section:hover {
+				.only-btn {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					height: 21px;
+				}
+			}
 		}
 	}
 

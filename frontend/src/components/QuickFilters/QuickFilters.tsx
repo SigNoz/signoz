@@ -6,11 +6,13 @@ import {
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
 import { Typography } from 'antd';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { cloneDeep } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import Slider from './FilterRenderers/Slider/Slider';
-// import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 export enum FiltersType {
 	SLIDER = 'SLIDER',
@@ -37,39 +39,61 @@ interface IQuickFiltersProps {
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const { config, handleFilterVisibilityChange } = props;
 
-	// const {stagedQuery} = useQueryBuilder()
-
-	// const selectedFiltersFromURL = useMemo(() => {
-	// 	const selectedFilters = {}
-	// 	stagedQuery?.builder.queryData.forEach((query) => {
-	// 		query.filters.items.forEach((filter) => {
-	// 			if(selectedFilters[])
-	// 		})
-	// 	})
-	// })
-
-	// get the selected filters from the URL and pass it to the checkbox
+	const {
+		currentQuery,
+		lastUsedQuery,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
 
 	// handle the URL update here
+	// also take care of only and all values here with IN / NIN / = / != operators on change
 	const handleFilterValueChange = (
 		attributeKey: BaseAutocompleteData,
 		value: string,
 		type: FiltersType,
 		selected: boolean,
+		isOnlyClicked?: boolean,
 		minMax?: MinMax,
 	): void => {
-		console.log(attributeKey, value, type, selected, minMax);
+		console.log(attributeKey, value, type, selected, minMax, isOnlyClicked);
 	};
 
-	// clear all the filters here!
-	// const handleReset = (): void => {};
+	// clear all the filters for the query which is in sync with filters
+	const handleReset = (): void => {
+		const updatedQuery = cloneDeep(
+			currentQuery?.builder.queryData?.[lastUsedQuery || 0],
+		);
+
+		if (!updatedQuery) {
+			return;
+		}
+
+		if (updatedQuery?.filters?.items) {
+			updatedQuery.filters.items = [];
+		}
+
+		const preparedQuery: Query = {
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: currentQuery.builder.queryData.map((item, idx) => ({
+					...item,
+					filters: {
+						...item.filters,
+						items: idx === lastUsedQuery ? [] : [...item.filters.items],
+					},
+				})),
+			},
+		};
+		redirectWithQueryBuilderData(preparedQuery);
+	};
 	return (
 		<div className="quick-filters">
 			<section className="header">
 				<section className="left-actions">
 					<FilterOutlined />
 					<Typography.Text className="text">Filters</Typography.Text>
-					<SyncOutlined className="sync-icon" />
+					<SyncOutlined className="sync-icon" onClick={handleReset} />
 				</section>
 				<section className="right-actions">
 					<VerticalAlignTopOutlined

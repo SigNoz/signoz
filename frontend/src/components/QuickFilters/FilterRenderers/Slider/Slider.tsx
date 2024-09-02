@@ -14,6 +14,7 @@ interface ISliderProps {
 		value: string,
 		type: FiltersType,
 		selected: boolean,
+		isOnlyClicked?: boolean,
 		minMax?: MinMax,
 	) => void;
 }

@@ -1,20 +1,39 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Checkbox.styles.scss';
 
-import { Checkbox, Input, Skeleton, Typography } from 'antd';
+import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
 import {
 	FiltersType,
 	IQuickFiltersConfig,
 	MinMax,
 } from 'components/QuickFilters/QuickFilters';
+import { OPERATORS } from 'constants/queryBuilder';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { isArray, isEqual } from 'lodash-es';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+const SELECTED_OPERATORS = [OPERATORS['='], OPERATORS.IN];
+const NON_SELECTED_OPERATORS = [OPERATORS['!='], OPERATORS.NIN];
+
+function setDefaultValues(
+	values: string[],
+	trueOrFalse: boolean,
+): Record<string, boolean> {
+	const defaultState: Record<string, boolean> = {};
+	values.forEach((val) => {
+		defaultState[val] = trueOrFalse;
+	});
+	return defaultState;
+}
 interface ICheckboxProps {
 	filter: IQuickFiltersConfig;
 	onChange: (
@@ -22,6 +41,7 @@ interface ICheckboxProps {
 		value: string,
 		type: FiltersType,
 		selected: boolean,
+		isOnlyClicked?: boolean,
 		minMax?: MinMax,
 	) => void;
 }
@@ -31,6 +51,13 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	const [searchText, setSearchText] = useState<string>('');
 	const [isOpen, setIsOpen] = useState<boolean>(filter.defaultOpen);
 	const [visibleItemsCount, setVisibleItemsCount] = useState<number>(10);
+
+	const {
+		stagedQuery,
+		lastUsedQuery,
+		currentQuery,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
 
 	const { data, isLoading } = useGetAggregateValues(
 		{
@@ -48,12 +75,97 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		},
 	);
 
-	const attributeKeys: string[] = useMemo(
+	const attributeValues: string[] = useMemo(
 		() =>
 			(Object.values(data?.payload || {}).find((el) => !!el) || []) as string[],
 		[data?.payload],
 	);
-	const currentAttributeKeys = attributeKeys.slice(0, visibleItemsCount);
+	const currentAttributeKeys = attributeValues.slice(0, visibleItemsCount);
+
+	// derive the state of each filter key here in the renderer itself and keep it in sync with staged query
+	// also we need to keep a note of last focussed query.
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const currentFilterState = useMemo(() => {
+		let filterState: Record<string, boolean> = setDefaultValues(
+			attributeValues,
+			false,
+		);
+		const filterSync = stagedQuery?.builder.queryData?.[
+			lastUsedQuery || 0
+		]?.filters?.items.find((item) => isEqual(item.key, filter.attributeKey));
+
+		if (filterSync) {
+			if (SELECTED_OPERATORS.includes(filterSync.op)) {
+				if (isArray(filterSync.value)) {
+					filterSync.value.forEach((val) => {
+						filterState[val] = true;
+					});
+				} else if (typeof filterSync.value === 'string') {
+					filterState[filterSync.value] = true;
+				} else if (typeof filterSync.value === 'boolean') {
+					filterState[String(filterSync.value)] = true;
+				} else if (typeof filterSync.value === 'number') {
+					filterState[String(filterSync.value)] = true;
+				}
+			} else if (NON_SELECTED_OPERATORS.includes(filterSync.op)) {
+				filterState = setDefaultValues(attributeValues, true);
+				if (isArray(filterSync.value)) {
+					filterSync.value.forEach((val) => {
+						filterState[val] = false;
+					});
+				} else if (typeof filterSync.value === 'string') {
+					filterState[filterSync.value] = false;
+				} else if (typeof filterSync.value === 'boolean') {
+					filterState[String(filterSync.value)] = false;
+				} else if (typeof filterSync.value === 'number') {
+					filterState[String(filterSync.value)] = false;
+				}
+			}
+		} else {
+			filterState = setDefaultValues(attributeValues, true);
+		}
+		return filterState;
+	}, [
+		attributeValues,
+		filter.attributeKey,
+		lastUsedQuery,
+		stagedQuery?.builder.queryData,
+	]);
+
+	const isFilterDisabled = useMemo(
+		() =>
+			(stagedQuery?.builder?.queryData?.[
+				lastUsedQuery || 0
+			]?.filters?.items?.filter((item) => isEqual(item.key, filter.attributeKey))
+				?.length || 0) > 1,
+
+		[stagedQuery?.builder?.queryData, lastUsedQuery, filter.attributeKey],
+	);
+
+	const isMultipleValuesTrueForTheKey =
+		Object.values(currentFilterState).filter((val) => val).length > 1;
+
+	const handleClearFilterAttribute = (): void => {
+		const preparedQuery: Query = {
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: currentQuery.builder.queryData.map((item, idx) => ({
+					...item,
+					filters: {
+						...item.filters,
+						items:
+							idx === lastUsedQuery
+								? item.filters.items.filter(
+										(fil) => !isEqual(fil.key, filter.attributeKey),
+								  )
+								: [...item.filters.items],
+					},
+				})),
+			},
+		};
+		redirectWithQueryBuilderData(preparedQuery);
+	};
 
 	return (
 		<div className="checkbox-filter">
@@ -81,11 +193,16 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				</section>
 				<section className="right-action">
 					{isOpen && (
-						<Typography.Text className="clear-all">Clear All</Typography.Text>
+						<Typography.Text
+							className="clear-all"
+							onClick={handleClearFilterAttribute}
+						>
+							Clear All
+						</Typography.Text>
 					)}
 				</section>
 			</section>
-			{isOpen && isLoading && !attributeKeys.length && (
+			{isOpen && isLoading && !attributeValues.length && (
 				<section className="loading">
 					<Skeleton paragraph={{ rows: 4 }} />
 				</section>
@@ -98,24 +215,50 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							onChange={(e): void => setSearchText(e.target.value)}
 						/>
 					</section>
-					{attributeKeys.length > 0 ? (
+					{attributeValues.length > 0 ? (
 						<section className="values">
 							{currentAttributeKeys.map((value: string) => (
 								<div key={value} className="value">
 									<Checkbox
 										onChange={(e): void =>
-											onChange(filter.attributeKey, value, filter.type, e.target.checked)
+											onChange(
+												filter.attributeKey,
+												value,
+												filter.type,
+												e.target.checked,
+												false,
+											)
 										}
+										checked={currentFilterState[value]}
+										disabled={isFilterDisabled}
 									/>
 									{filter.customRendererForValue ? (
 										filter.customRendererForValue(value)
 									) : (
-										<Typography.Text
-											className="value-string"
-											ellipsis={{ tooltip: { placement: 'right' } }}
+										<div
+											className="checkbox-value-section"
+											onClick={(): void =>
+												onChange(
+													filter.attributeKey,
+													value,
+													filter.type,
+													currentFilterState[value],
+													true,
+												)
+											}
 										>
-											{value}
-										</Typography.Text>
+											<Typography.Text
+												className="value-string"
+												ellipsis={{ tooltip: { placement: 'right' } }}
+											>
+												{value}
+											</Typography.Text>
+											<Button type="text" className="only-btn">
+												{currentFilterState[value] || isMultipleValuesTrueForTheKey
+													? 'All'
+													: 'Only'}
+											</Button>
+										</div>
 									)}
 								</div>
 							))}
@@ -125,7 +268,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							<Typography.Text>No values found</Typography.Text>{' '}
 						</section>
 					)}
-					{visibleItemsCount < attributeKeys?.length && (
+					{visibleItemsCount < attributeValues?.length && (
 						<section className="show-more">
 							<Typography.Text
 								className="show-more-text"

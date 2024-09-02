@@ -35,6 +35,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 		handleSetConfig,
 		panelType,
 		initialDataSource,
+		setLastUsedQuery,
 	} = useQueryBuilder();
 
 	const containerRef = useRef(null);
@@ -212,6 +213,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 									<Col
 										key={query.queryName}
 										span={24}
+										onClickCapture={(): void => setLastUsedQuery(index)}
 										className="query"
 										id={`qb-query-${query.queryName}`}
 									>
