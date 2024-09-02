@@ -7,6 +7,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { CreditCard, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
+import { useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { License } from 'types/api/licenses/def';
@@ -57,11 +58,11 @@ export default function ChatSupportGateway(): JSX.Element {
 			onError: handleBillingOnError,
 		},
 	);
-
+	const { pathname } = useLocation();
 	const handleAddCreditCard = (): void => {
 		logEvent('Add Credit card modal: Clicked', {
 			source: `intercom icon`,
-			page: '',
+			page: pathname,
 		});
 
 		updateCreditCard({
@@ -79,7 +80,7 @@ export default function ChatSupportGateway(): JSX.Element {
 					onClick={(): void => {
 						logEvent('Disabled Chat Support: Clicked', {
 							source: `intercom icon`,
-							page: '',
+							page: pathname,
 						});
 
 						setIsAddCreditCardModalOpen(true);

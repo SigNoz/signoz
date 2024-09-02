@@ -32,4 +32,8 @@ export enum QueryParams {
 	relativeTime = 'relativeTime',
 	alertType = 'alertType',
 	ruleId = 'ruleId',
+	consumerGrp = 'consumerGrp',
+	topic = 'topic',
+	partition = 'partition',
+	selectedTimelineQuery = 'selectedTimelineQuery',
 }

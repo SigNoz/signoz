@@ -9,7 +9,7 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WrapperStyled } from './styles';
@@ -22,6 +22,12 @@ function LogsExplorer(): JSX.Element {
 	);
 
 	const { handleRunQuery, currentQuery } = useQueryBuilder();
+
+	const listQueryKeyRef = useRef<any>();
+
+	const chartQueryKeyRef = useRef<any>();
+
+	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
 
 	const handleToggleShowFrequencyChart = (): void => {
 		setShowFrequencyChart(!showFrequencyChart);
@@ -36,13 +42,26 @@ function LogsExplorer(): JSX.Element {
 		if (currentQuery.builder.queryData.length > 1) {
 			handleChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER);
 		}
-	}, [currentQuery.builder.queryData.length]);
+		if (
+			currentQuery.builder.queryData.length === 1 &&
+			currentQuery.builder.queryData[0].groupBy.length > 0
+		) {
+			handleChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER);
+		}
+	}, [currentQuery.builder.queryData, currentQuery.builder.queryData.length]);
 
 	const isMultipleQueries = useMemo(
 		() =>
-			currentQuery.builder.queryData.length > 1 ||
-			currentQuery.builder.queryFormulas.length > 0,
+			currentQuery.builder.queryData?.length > 1 ||
+			currentQuery.builder.queryFormulas?.length > 0,
 		[currentQuery],
+	);
+
+	const isGroupByPresent = useMemo(
+		() =>
+			currentQuery.builder.queryData?.length === 1 &&
+			currentQuery.builder.queryData?.[0]?.groupBy?.length > 0,
+		[currentQuery.builder.queryData],
 	);
 
 	const toolbarViews = useMemo(
@@ -50,7 +69,7 @@ function LogsExplorer(): JSX.Element {
 			search: {
 				name: 'search',
 				label: 'Search',
-				disabled: isMultipleQueries,
+				disabled: isMultipleQueries || isGroupByPresent,
 				show: true,
 			},
 			queryBuilder: {
@@ -66,7 +85,7 @@ function LogsExplorer(): JSX.Element {
 				show: false,
 			},
 		}),
-		[isMultipleQueries],
+		[isGroupByPresent, isMultipleQueries],
 	);
 
 	return (
@@ -82,7 +101,14 @@ function LogsExplorer(): JSX.Element {
 						showFrequencyChart={showFrequencyChart}
 					/>
 				}
-				rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
+				rightActions={
+					<RightToolbarActions
+						onStageRunQuery={handleRunQuery}
+						listQueryKeyRef={listQueryKeyRef}
+						chartQueryKeyRef={chartQueryKeyRef}
+						isLoadingQueries={isLoadingQueries}
+					/>
+				}
 				showOldCTA
 			/>
 
@@ -97,6 +123,9 @@ function LogsExplorer(): JSX.Element {
 						<LogsExplorerViews
 							selectedView={selectedView}
 							showFrequencyChart={showFrequencyChart}
+							listQueryKeyRef={listQueryKeyRef}
+							chartQueryKeyRef={chartQueryKeyRef}
+							setIsLoadingQueries={setIsLoadingQueries}
 						/>
 					</div>
 				</div>
