@@ -21,6 +21,10 @@
 		rgba(18, 19, 23, 0.9) 98.68%
 	);
 
+	.dropdown-divider {
+		margin: 0;
+	}
+
 	.delete-button {
 		border: none;
 		display: flex;
@@ -30,7 +34,7 @@
 		&,
 		& span {
 			&:hover {
-				background: #1d212d;
+				background: var(--bg-slate-400);
 				color: var(--bg-cherry-400);
 			}
 			color: var(--bg-cherry-400);

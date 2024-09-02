@@ -1,5 +1,6 @@
-import './actionButtons.styles.scss';
+import './ActionButtons.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Button, Divider, Dropdown, MenuProps, Switch, Tooltip } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Copy, Ellipsis, PenLine, Trash2 } from 'lucide-react';
@@ -11,13 +12,13 @@ const menu: MenuProps['items'] = [
 	{
 		key: 'rename-rule',
 		label: 'Rename',
-		icon: <PenLine size={16} color="var(--bg-vanilla-400" />,
+		icon: <PenLine size={16} color={Color.BG_VANILLA_400} />,
 		onClick: (): void => {},
 	},
 	{
 		key: 'duplicate-rule',
 		label: 'Duplicate',
-		icon: <Copy size={16} color="var(--bg-vanilla-400" />,
+		icon: <Copy size={16} color={Color.BG_VANILLA_400} />,
 		onClick: (): void => {},
 	},
 ];
@@ -27,6 +28,24 @@ const menuStyle: React.CSSProperties = {
 	boxShadow: 'none',
 	fontSize: 14,
 };
+
+function DropdownMenuRenderer(menu: React.ReactNode): React.ReactNode {
+	return (
+		<div className="dropdown-menu">
+			{React.cloneElement(menu as React.ReactElement, {
+				style: menuStyle,
+			})}
+			<Divider className="dropdown-divider" />
+			<Button
+				type="default"
+				icon={<Trash2 size={16} color={Color.BG_CHERRY_400} />}
+				className="delete-button"
+			>
+				Delete
+			</Button>
+		</div>
+	);
+}
 
 function AlertActionButtons({
 	ruleId,
@@ -54,27 +73,12 @@ function AlertActionButtons({
 			<Dropdown
 				trigger={['click']}
 				menu={{ items: menu }}
-				// eslint-disable-next-line react/no-unstable-nested-components
-				dropdownRender={(menu): JSX.Element => (
-					<div className="dropdown-menu">
-						{React.cloneElement(menu as React.ReactElement, {
-							style: menuStyle,
-						})}
-						<Divider style={{ margin: 0 }} />
-						<Button
-							type="default"
-							icon={<Trash2 size={16} color="var(--bg-cherry-400" />}
-							className="delete-button"
-						>
-							Delete
-						</Button>
-					</div>
-				)}
+				dropdownRender={DropdownMenuRenderer}
 			>
 				<Tooltip title="More options">
 					<Ellipsis
 						size={16}
-						color={isDarkMode ? 'var(--bg-vanilla-400)' : 'var(--text-ink-400'}
+						color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}
 						cursor="pointer"
 						className="dropdown-icon"
 					/>

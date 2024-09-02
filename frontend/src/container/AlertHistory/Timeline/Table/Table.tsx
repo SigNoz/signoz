@@ -1,4 +1,4 @@
-import './table.styles.scss';
+import './Table.styles.scss';
 
 import { Table } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';

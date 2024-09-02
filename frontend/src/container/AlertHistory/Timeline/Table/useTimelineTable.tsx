@@ -1,3 +1,4 @@
+import { Color } from '@signozhq/design-tokens';
 import { Input } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
@@ -31,7 +32,7 @@ function LabelFilter({
 			suffix={
 				<Search
 					size={14}
-					color={isDarkMode ? 'var(--text-vanilla-100)' : 'var(--text-ink-100)'}
+					color={isDarkMode ? Color.TEXT_VANILLA_100 : Color.TEXT_INK_100}
 				/>
 			}
 		/>

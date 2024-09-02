@@ -1,4 +1,4 @@
-import './alertSeverity.styles.scss';
+import './AlertSeverity.styles.scss';
 
 import SeverityCriticalIcon from 'assets/AlertHistory/SeverityCriticalIcon';
 import SeverityErrorIcon from 'assets/AlertHistory/SeverityErrorIcon';

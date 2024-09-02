@@ -1,4 +1,4 @@
-import './statistics.styles.scss';
+import './Statistics.styles.scss';
 
 import { AlertRuleStats } from 'types/api/alerts/def';
 

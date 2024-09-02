@@ -1,5 +1,6 @@
-import './alertState.styles.scss';
+import './AlertState.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { BellOff, CircleCheck, CircleOff, Flame } from 'lucide-react';
 
@@ -20,43 +21,43 @@ export default function AlertState({
 			icon = (
 				<CircleOff
 					size={18}
-					fill="var(--bg-sienna-400)"
-					color="var(--bg-sienna-400)"
+					fill={Color.BG_SIENNA_400}
+					color={Color.BG_SIENNA_400}
 				/>
 			);
-			label = <span style={{ color: 'var(--bg-sienna-400)' }}>No Data</span>;
+			label = <span style={{ color: Color.BG_SIENNA_400 }}>No Data</span>;
 			break;
 
 		case 'disabled':
 			icon = (
 				<BellOff
 					size={18}
-					fill="var(--bg-vanilla-400)"
-					color="var(--bg-vanilla-400)"
+					fill={Color.BG_VANILLA_400}
+					color={Color.BG_VANILLA_400}
 				/>
 			);
-			label = <span style={{ color: 'var(--bg-vanilla-400)' }}>Muted</span>;
+			label = <span style={{ color: Color.BG_VANILLA_400 }}>Muted</span>;
 			break;
 		case 'firing':
 			icon = (
-				<Flame size={18} fill="var(--bg-cherry-500)" color="var(--bg-cherry-500)" />
+				<Flame size={18} fill={Color.BG_CHERRY_500} color={Color.BG_CHERRY_500} />
 			);
-			label = <span style={{ color: 'var(--bg-cherry-500)' }}>Firing</span>;
+			label = <span style={{ color: Color.BG_CHERRY_500 }}>Firing</span>;
 			break;
 
 		case 'normal':
 			icon = (
 				<CircleCheck
 					size={18}
-					fill="var(--bg-forest-500)"
-					color={isDarkMode ? 'var(--bg-ink-400)' : 'var(--bg-vanilla-100)'}
+					fill={Color.BG_FOREST_500}
+					color={isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100}
 				/>
 			);
-			label = <span style={{ color: 'var(--bg-forest-500)' }}>Resolved</span>;
+			label = <span style={{ color: Color.BG_FOREST_500 }}>Resolved</span>;
 			break;
 
 		default:
-			icon = <div />;
+			icon = null;
 	}
 
 	return (
