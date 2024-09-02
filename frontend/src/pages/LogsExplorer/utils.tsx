@@ -34,28 +34,18 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			isColumn: true,
 			isJSON: false,
 		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		attributeKey: {
+			key: 'container_name',
+			dataType: DataTypes.String,
+			id: 'container_name--string--tag--false',
+			type: 'tag',
+			isColumn: false,
+			isJSON: false,
+		},
 		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		attributeKey: {
-			key: 'host.name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: true,
-			isJSON: false,
-		},
-		defaultOpen: false,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		attributeKey: {
-			key: 'service.instance.id',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: true,
-			isJSON: false,
-		},
-		defaultOpen: false,
 	},
 ];

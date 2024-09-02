@@ -1,3 +1,5 @@
+/* eslint-disable no-nested-ternary */
+/* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Checkbox.styles.scss';
@@ -154,25 +156,160 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		redirectWithQueryBuilderData(preparedQuery);
 	};
 
+	const isSomeFilterPresentForCurrentAttribute = currentQuery.builder.queryData?.[
+		lastUsedQuery || 0
+	]?.filters?.items?.some((item) => isEqual(item.key, filter.attributeKey));
+
 	const onChange = (
 		value: string,
 		checked: boolean,
 		isOnlyOrAllClicked: boolean,
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): void => {
 		const query = cloneDeep(currentQuery.builder.queryData?.[lastUsedQuery || 0]);
 
-		if (query.filters.items) {
+		if (isOnlyOrAllClicked && query.filters.items) {
+			const isOnlyOrAll = isSomeFilterPresentForCurrentAttribute
+				? currentFilterState[value] || isMultipleValuesTrueForTheKey
+					? 'All'
+					: 'Only'
+				: 'Only';
+			query.filters.items = query.filters.items.filter(
+				(q) => !isEqual(q.key, filter.attributeKey),
+			);
+			if (isOnlyOrAll === 'Only') {
+				const newFilterItem: TagFilterItem = {
+					id: uuid(),
+					op: getOperatorValue(OPERATORS.IN),
+					key: filter.attributeKey,
+					value,
+				};
+				query.filters.items = [...query.filters.items, newFilterItem];
+			}
+		} else if (query.filters.items) {
 			if (
 				query.filters.items.some((item) => isEqual(item.key, filter.attributeKey))
 			) {
-				// const runningOperator = query.filters.op;
+				const currentFilter = query.filters.items.find((q) =>
+					isEqual(q.key, filter.attributeKey),
+				);
+				if (currentFilter) {
+					const runningOperator = currentFilter?.op;
+					switch (runningOperator) {
+						case 'in':
+							if (checked) {
+								if (isArray(currentFilter.value)) {
+									const newFilter = {
+										...currentFilter,
+										value: [...currentFilter.value, value],
+									};
+									query.filters.items = query.filters.items.map((item) => {
+										if (isEqual(item.key, filter.attributeKey)) {
+											return newFilter;
+										}
+										return item;
+									});
+								} else {
+									const newFilter = {
+										...currentFilter,
+										value: [currentFilter.value as string, value],
+									};
+									// eslint-disable-next-line sonarjs/no-identical-functions
+									query.filters.items = query.filters.items.map((item) => {
+										if (isEqual(item.key, filter.attributeKey)) {
+											return newFilter;
+										}
+										return item;
+									});
+								}
+							} else if (!checked) {
+								if (isArray(currentFilter.value)) {
+									const newFilter = {
+										...currentFilter,
+										value: currentFilter.value.filter((val) => val !== value),
+									};
+									query.filters.items = query.filters.items.map((item) => {
+										if (isEqual(item.key, filter.attributeKey)) {
+											return newFilter;
+										}
+										return item;
+									});
+								} else {
+									const newFilter = {
+										...currentFilter,
+										value: [],
+									};
+									query.filters.items = query.filters.items.map((item) => {
+										if (isEqual(item.key, filter.attributeKey)) {
+											return newFilter;
+										}
+										return item;
+									});
+								}
+							}
+							break;
+						case 'nin':
+							if (!checked) {
+								if (isArray(currentFilter.value)) {
+									const newFilter = {
+										...currentFilter,
+										value: [...currentFilter.value, value],
+									};
+									query.filters.items = query.filters.items.map((item) => {
+										if (isEqual(item.key, filter.attributeKey)) {
+											return newFilter;
+										}
+										return item;
+									});
+								} else {
+									const newFilter = {
+										...currentFilter,
+										value: [currentFilter.value as string, value],
+									};
+									query.filters.items = query.filters.items.map((item) => {
+										if (isEqual(item.key, filter.attributeKey)) {
+											return newFilter;
+										}
+										return item;
+									});
+								}
+							} else if (checked) {
+								if (isArray(currentFilter.value)) {
+									const newFilter = {
+										...currentFilter,
+										value: currentFilter.value.filter((val) => val !== value),
+									};
+									query.filters.items = query.filters.items.map((item) => {
+										if (isEqual(item.key, filter.attributeKey)) {
+											return newFilter;
+										}
+										return item;
+									});
+								} else {
+									const newFilter = {
+										...currentFilter,
+										value: [],
+									};
+									query.filters.items = query.filters.items.map((item) => {
+										if (isEqual(item.key, filter.attributeKey)) {
+											return newFilter;
+										}
+										return item;
+									});
+								}
+							}
+							break;
+						case '=':
+						case '!=':
+						default:
+							break;
+					}
+				}
 			} else {
 				// case  - when there is no filter for the current key that means all are selected right now.
 				const newFilterItem: TagFilterItem = {
 					id: uuid(),
-					op: isOnlyOrAllClicked
-						? getOperatorValue(OPERATORS.IN)
-						: getOperatorValue(OPERATORS.NIN),
+					op: getOperatorValue(OPERATORS.NIN),
 					key: filter.attributeKey,
 					value,
 				};
@@ -270,8 +407,10 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 												{value}
 											</Typography.Text>
 											<Button type="text" className="only-btn">
-												{currentFilterState[value] || isMultipleValuesTrueForTheKey
-													? 'All'
+												{isSomeFilterPresentForCurrentAttribute
+													? currentFilterState[value] || isMultipleValuesTrueForTheKey
+														? 'All'
+														: 'Only'
 													: 'Only'}
 											</Button>
 										</div>
