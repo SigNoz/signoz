@@ -26,6 +26,7 @@ export enum SELECTED_VIEWS {
 export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
+		title: 'Severity Text',
 		attributeKey: {
 			key: 'severity_text',
 			dataType: DataTypes.String,
@@ -38,6 +39,19 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 	{
 		type: FiltersType.CHECKBOX,
+		title: 'Environment',
+		attributeKey: {
+			key: 'deployment.environment',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Service Name',
 		attributeKey: {
 			key: 'service.name',
 			dataType: DataTypes.String,
@@ -50,6 +64,7 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 	{
 		type: FiltersType.CHECKBOX,
+		title: 'Hostname',
 		attributeKey: {
 			key: 'hostname',
 			dataType: DataTypes.String,
@@ -61,17 +76,7 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 	{
 		type: FiltersType.CHECKBOX,
-		attributeKey: {
-			key: 'hostname',
-			dataType: DataTypes.String,
-			type: 'tag',
-			isColumn: false,
-			isJSON: false,
-		},
-		defaultOpen: false,
-	},
-	{
-		type: FiltersType.CHECKBOX,
+		title: 'K8s Cluster Name',
 		attributeKey: {
 			key: 'k8s.cluster.name',
 			dataType: DataTypes.String,
@@ -83,6 +88,7 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 	{
 		type: FiltersType.CHECKBOX,
+		title: 'K8s Deployment Name',
 		attributeKey: {
 			key: 'k8s.deployment.name',
 			dataType: DataTypes.String,
@@ -94,6 +100,7 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 	{
 		type: FiltersType.CHECKBOX,
+		title: 'K8s Namespace Name',
 		attributeKey: {
 			key: 'k8s.namespace.name',
 			dataType: DataTypes.String,

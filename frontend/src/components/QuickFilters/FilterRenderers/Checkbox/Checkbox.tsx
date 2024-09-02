@@ -355,9 +355,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							cursor="pointer"
 						/>
 					)}
-					<Typography.Text className="title">
-						{filter.attributeKey.key?.split('.')?.join(' ')?.split('_')?.join(' ')}
-					</Typography.Text>
+					<Typography.Text className="title">{filter.title}</Typography.Text>
 				</section>
 				<section className="right-action">
 					{isOpen && (

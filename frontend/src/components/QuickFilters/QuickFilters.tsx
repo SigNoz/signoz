@@ -31,6 +31,7 @@ export enum SpecficFilterOperations {
 
 export interface IQuickFiltersConfig {
 	type: FiltersType;
+	title: string;
 	attributeKey: BaseAutocompleteData;
 	customRendererForValue?: (value: string) => JSX.Element;
 	defaultOpen: boolean;
