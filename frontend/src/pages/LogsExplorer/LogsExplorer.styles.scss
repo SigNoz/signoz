@@ -1,8 +1,7 @@
 .logs-module-page {
 	display: flex;
 	.log-quick-filter-left-section {
-		// check the best way to set this either in percentages or fixed values
-		width: 260px;
+		width: 0%;
 		flex-shrink: 0;
 	}
 
@@ -18,6 +17,16 @@
 				display: flex;
 				flex-direction: column;
 			}
+		}
+	}
+
+	&.filter-visible {
+		.log-quick-filter-left-section {
+			width: 20%;
+		}
+
+		.log-module-right-section {
+			width: 80%;
 		}
 	}
 }

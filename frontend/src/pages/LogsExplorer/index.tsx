@@ -97,7 +97,7 @@ function LogsExplorer(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div className="logs-module-page">
+			<div className={cx('logs-module-page', showFilters ? 'filter-visible' : '')}>
 				{showFilters && (
 					<section className={cx('log-quick-filter-left-section')}>
 						<QuickFilters
