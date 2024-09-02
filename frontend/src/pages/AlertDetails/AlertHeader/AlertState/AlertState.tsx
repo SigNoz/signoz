@@ -46,6 +46,7 @@ export default function AlertState({
 			break;
 
 		case 'normal':
+		case 'inactive':
 			icon = (
 				<CircleCheck
 					size={18}

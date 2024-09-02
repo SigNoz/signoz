@@ -12,11 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
 import AlertHeader from './AlertHeader/AlertHeader';
-import {
-	useGetAlertRuleDetails,
-	useRouteTabUtils,
-	useSetStartAndEndTimeFromRelativeTime,
-} from './hooks';
+import { useGetAlertRuleDetails, useRouteTabUtils } from './hooks';
 import { AlertDetailsStatusRendererProps } from './types';
 
 function AlertDetailsStatusRenderer({
@@ -73,8 +69,6 @@ BreadCrumbItem.defaultProps = {
 function AlertDetails(): JSX.Element {
 	const { pathname } = useLocation();
 	const { routes } = useRouteTabUtils();
-
-	useSetStartAndEndTimeFromRelativeTime();
 
 	const {
 		data: { isLoading, data, isRefetching, isError },
