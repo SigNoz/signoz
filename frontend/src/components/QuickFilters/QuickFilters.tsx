@@ -2,11 +2,10 @@ import './QuickFilters.styles.scss';
 
 import {
 	FilterOutlined,
-	InfoCircleOutlined,
 	SyncOutlined,
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
-import { Tooltip, Typography } from 'antd';
+import { Tag, Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -92,8 +91,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					<Tooltip title="Reset All">
 						<SyncOutlined className="sync-icon" onClick={handleReset} />
 					</Tooltip>
-					<Tooltip title={`Filter currently in sync with query : ${lastQueryName}`}>
-						<InfoCircleOutlined />
+					<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
+						<Tag color="blue">Sync : {lastQueryName}</Tag>
 					</Tooltip>
 				</section>
 				<section className="right-actions">
