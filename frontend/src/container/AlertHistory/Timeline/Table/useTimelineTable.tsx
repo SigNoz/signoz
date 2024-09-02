@@ -69,7 +69,7 @@ function LabelFilter({
 		<QueryBuilderSearch
 			query={query}
 			onChange={handleSearch}
-			className="query-builder-search-wrapper"
+			className="alert-history-label-search"
 			suffixIcon={
 				<Search
 					size={14}
