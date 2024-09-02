@@ -23,9 +23,11 @@ import { History, Table } from 'lucide-react';
 import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, UseQueryResult } from 'react-query';
+import { useSelector } from 'react-redux';
 import { generatePath, useLocation } from 'react-router-dom';
+import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	AlertRuleStatsPayload,
@@ -35,8 +37,44 @@ import {
 	AlertRuleTopContributorsPayload,
 } from 'types/api/alerts/def';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { nanoToMilli } from 'utils/timeUtils';
 
+export const useAlertHistoryQueryParams = (): {
+	ruleId: string | null;
+	startTime: number;
+	endTime: number;
+	hasStartAndEndParams: boolean;
+	params: URLSearchParams;
+} => {
+	const params = useUrlQuery();
+
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+	const startTime = params.get(QueryParams.startTime);
+	const endTime = params.get(QueryParams.endTime);
+
+	const intStartTime = parseInt(startTime || '0', 10);
+	const intEndTime = parseInt(endTime || '0', 10);
+	const hasStartAndEndParams = !!intStartTime && !!intEndTime;
+
+	const { maxTime, minTime } = useMemo(() => {
+		if (hasStartAndEndParams)
+			return GetMinMax('custom', [intStartTime, intEndTime]);
+		return GetMinMax(globalTime.selectedTime);
+	}, [hasStartAndEndParams, intStartTime, intEndTime, globalTime.selectedTime]);
+
+	const ruleId = params.get(QueryParams.ruleId);
+
+	return {
+		ruleId,
+		startTime: Math.floor(nanoToMilli(minTime)),
+		endTime: Math.floor(nanoToMilli(maxTime)),
+		hasStartAndEndParams,
+		params,
+	};
+};
 export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 	const urlQuery = useUrlQuery();
 
@@ -96,11 +134,7 @@ export const useGetAlertRuleDetails = (): {
 	data: UseQueryResult;
 	isValidRuleId: boolean;
 } => {
-	const { search } = useLocation();
-
-	const params = new URLSearchParams(search);
-
-	const ruleId = params.get(QueryParams.ruleId);
+	const { ruleId } = useAlertHistoryQueryParams();
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
@@ -133,12 +167,7 @@ type GetAlertRuleDetailsStatsProps = GetAlertRuleDetailsApiProps & {
 };
 
 export const useGetAlertRuleDetailsStats = (): GetAlertRuleDetailsStatsProps => {
-	const { search } = useLocation();
-	const params = new URLSearchParams(search);
-
-	const ruleId = params.get(QueryParams.ruleId);
-	const startTime = params.get(QueryParams.startTime);
-	const endTime = params.get(QueryParams.endTime);
+	const { ruleId, startTime, endTime } = useAlertHistoryQueryParams();
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
@@ -148,8 +177,8 @@ export const useGetAlertRuleDetailsStats = (): GetAlertRuleDetailsStatsProps => 
 			queryFn: () =>
 				ruleStats({
 					id: parseInt(ruleId || '', 10),
-					start: parseInt(startTime || '', 10),
-					end: parseInt(endTime || '', 10),
+					start: startTime,
+					end: endTime,
 				}),
 			enabled: isValidRuleId && !!startTime && !!endTime,
 			refetchOnMount: false,
@@ -168,12 +197,7 @@ type GetAlertRuleDetailsTopContributorsProps = GetAlertRuleDetailsApiProps & {
 };
 
 export const useGetAlertRuleDetailsTopContributors = (): GetAlertRuleDetailsTopContributorsProps => {
-	const { search } = useLocation();
-	const params = new URLSearchParams(search);
-
-	const ruleId = params.get(QueryParams.ruleId);
-	const startTime = params.get(QueryParams.startTime);
-	const endTime = params.get(QueryParams.endTime);
+	const { ruleId, startTime, endTime } = useAlertHistoryQueryParams();
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
@@ -183,8 +207,8 @@ export const useGetAlertRuleDetailsTopContributors = (): GetAlertRuleDetailsTopC
 			queryFn: () =>
 				topContributors({
 					id: parseInt(ruleId || '', 10),
-					start: parseInt(startTime || '', 10),
-					end: parseInt(endTime || '', 10),
+					start: startTime,
+					end: endTime,
 				}),
 			enabled: isValidRuleId,
 			refetchOnMount: false,
@@ -207,9 +231,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 }: {
 	filters: TagFilter;
 }): GetAlertRuleDetailsTimelineTableProps => {
-	const { search } = useLocation();
-
-	const params = useMemo(() => new URLSearchParams(search), [search]);
+	const { ruleId, startTime, endTime, params } = useAlertHistoryQueryParams();
 
 	const { updatedOrder, getUpdatedOffset } = useMemo(
 		() => ({
@@ -219,9 +241,6 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 		[params],
 	);
 
-	const ruleId = params.get(QueryParams.ruleId);
-	const startTime = params.get(QueryParams.startTime);
-	const endTime = params.get(QueryParams.endTime);
 	const timelineFilter = params.get('timelineFilter');
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
@@ -242,8 +261,8 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 			queryFn: () =>
 				timelineTable({
 					id: parseInt(ruleId || '', 10),
-					start: parseInt(startTime || '', 10),
-					end: parseInt(endTime || '', 10),
+					start: startTime,
+					end: endTime,
 					limit: TIMELINE_TABLE_PAGE_SIZE,
 					order: updatedOrder,
 					offset: parseInt(getUpdatedOffset, 10),
@@ -325,39 +344,6 @@ export const useTimelineTable = ({
 	return { paginationConfig, onChangeHandler };
 };
 
-export const useSetStartAndEndTimeFromRelativeTime = (): void => {
-	const { pathname, search } = useLocation();
-	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
-
-	const { relativeTime, startTime, endTime } = useMemo(
-		() => ({
-			relativeTime: searchParams.get(QueryParams.relativeTime),
-			startTime: searchParams.get(QueryParams.startTime),
-			endTime: searchParams.get(QueryParams.endTime),
-		}),
-		[searchParams],
-	);
-
-	useEffect(() => {
-		if (
-			!relativeTime ||
-			pathname !== ROUTES.ALERT_HISTORY ||
-			startTime ||
-			endTime
-		) {
-			return;
-		}
-
-		const { minTime, maxTime } = GetMinMax(relativeTime);
-
-		searchParams.set(QueryParams.startTime, nanoToMilli(minTime).toString());
-		searchParams.set(QueryParams.endTime, nanoToMilli(maxTime).toString());
-
-		history.push({ search: searchParams.toString() });
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [relativeTime, startTime, endTime]);
-};
-
 export const useAlertRuleStatusToggle = ({
 	state,
 	ruleId,
@@ -412,13 +398,7 @@ type GetAlertRuleDetailsTimelineGraphProps = GetAlertRuleDetailsApiProps & {
 };
 
 export const useGetAlertRuleDetailsTimelineGraphData = (): GetAlertRuleDetailsTimelineGraphProps => {
-	const { search } = useLocation();
-
-	const params = useMemo(() => new URLSearchParams(search), [search]);
-
-	const ruleId = params.get(QueryParams.ruleId);
-	const startTime = params.get(QueryParams.startTime);
-	const endTime = params.get(QueryParams.endTime);
+	const { ruleId, startTime, endTime } = useAlertHistoryQueryParams();
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 	const hasStartAndEnd = startTime !== null && endTime !== null;
@@ -429,8 +409,8 @@ export const useGetAlertRuleDetailsTimelineGraphData = (): GetAlertRuleDetailsTi
 			queryFn: () =>
 				timelineGraph({
 					id: parseInt(ruleId || '', 10),
-					start: parseInt(startTime || '', 10),
-					end: parseInt(endTime || '', 10),
+					start: startTime,
+					end: endTime,
 				}),
 			enabled: isValidRuleId && hasStartAndEnd,
 			refetchOnMount: false,
