@@ -1,15 +1,19 @@
 import './LogsExplorer.styles.scss';
 
 import * as Sentry from '@sentry/react';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
@@ -22,7 +26,15 @@ function LogsExplorer(): JSX.Element {
 	const [selectedView, setSelectedView] = useState<SELECTED_VIEWS>(
 		SELECTED_VIEWS.SEARCH,
 	);
-	const [showFilters, setShowFilters] = useState<boolean>(true);
+	const [showFilters, setShowFilters] = useState<boolean>(() => {
+		const localStorageValue = getLocalStorageKey(
+			LOCALSTORAGE.SHOW_LOGS_QUICK_FILTERS,
+		);
+		if (!isNull(localStorageValue)) {
+			return localStorageValue === 'true';
+		}
+		return true;
+	});
 
 	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
@@ -41,6 +53,10 @@ function LogsExplorer(): JSX.Element {
 	};
 
 	const handleFilterVisibilityChange = (): void => {
+		setLocalStorageApi(
+			LOCALSTORAGE.SHOW_LOGS_QUICK_FILTERS,
+			String(!showFilters),
+		);
 		setShowFilters((prev) => !prev);
 	};
 
