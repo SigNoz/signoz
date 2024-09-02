@@ -10,7 +10,7 @@ import { OPERATORS } from 'constants/queryBuilder';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep, isArray, isEqual } from 'lodash-es';
+import { cloneDeep, isArray, isEmpty, isEqual } from 'lodash-es';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -65,7 +65,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 	const attributeValues: string[] = useMemo(
 		() =>
-			(Object.values(data?.payload || {}).find((el) => !!el) || []) as string[],
+			((Object.values(data?.payload || {}).find((el) => !!el) ||
+				[]) as string[]).filter((val) => !isEmpty(val)),
 		[data?.payload],
 	);
 	const currentAttributeKeys = attributeValues.slice(0, visibleItemsCount);
@@ -355,7 +356,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 						/>
 					)}
 					<Typography.Text className="title">
-						{filter.attributeKey.key?.split('.')?.join(' ')}
+						{filter.attributeKey.key?.split('.')?.join(' ')?.split('_')?.join(' ')}
 					</Typography.Text>
 				</section>
 				<section className="right-action">
@@ -392,33 +393,32 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										disabled={isFilterDisabled}
 										rootClassName="check-box"
 									/>
-									{filter.customRendererForValue ? (
-										filter.customRendererForValue(value)
-									) : (
-										<div
-											className="checkbox-value-section"
-											onClick={(): void =>
-												onChange(value, currentFilterState[value], true)
-											}
-										>
+
+									<div
+										className="checkbox-value-section"
+										onClick={(): void => onChange(value, currentFilterState[value], true)}
+									>
+										{filter.customRendererForValue ? (
+											filter.customRendererForValue(value)
+										) : (
 											<Typography.Text
 												className="value-string"
 												ellipsis={{ tooltip: { placement: 'right' } }}
 											>
 												{value}
 											</Typography.Text>
-											<Button type="text" className="only-btn">
-												{isSomeFilterPresentForCurrentAttribute
-													? currentFilterState[value] && !isMultipleValuesTrueForTheKey
-														? 'All'
-														: 'Only'
-													: 'Only'}
-											</Button>
-											<Button type="text" className="toggle-btn">
-												Toggle
-											</Button>
-										</div>
-									)}
+										)}
+										<Button type="text" className="only-btn">
+											{isSomeFilterPresentForCurrentAttribute
+												? currentFilterState[value] && !isMultipleValuesTrueForTheKey
+													? 'All'
+													: 'Only'
+												: 'Only'}
+										</Button>
+										<Button type="text" className="toggle-btn">
+											Toggle
+										</Button>
+									</div>
 								</div>
 							))}
 						</section>

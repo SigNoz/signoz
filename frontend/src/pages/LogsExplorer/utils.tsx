@@ -27,11 +27,34 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
 		attributeKey: {
+			key: 'severity_text',
+			dataType: DataTypes.String,
+			type: '',
+			isColumn: true,
+			isJSON: false,
+			id: 'severity_text--string----true',
+		},
+		defaultOpen: true,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		attributeKey: {
 			key: 'service.name',
-			id: 'service.name--string--resource--true',
 			dataType: DataTypes.String,
 			type: 'resource',
 			isColumn: true,
+			isJSON: false,
+			id: 'service.name--string--resource--true',
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		attributeKey: {
+			key: 'hostname',
+			dataType: DataTypes.String,
+			type: 'tag',
+			isColumn: false,
 			isJSON: false,
 		},
 		defaultOpen: false,
@@ -39,13 +62,45 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
 		attributeKey: {
-			key: 'container_name',
+			key: 'hostname',
 			dataType: DataTypes.String,
-			id: 'container_name--string--tag--false',
 			type: 'tag',
 			isColumn: false,
 			isJSON: false,
 		},
-		defaultOpen: true,
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		attributeKey: {
+			key: 'k8s.cluster.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		attributeKey: {
+			key: 'k8s.deployment.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		attributeKey: {
+			key: 'k8s.namespace.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: true,
+			isJSON: false,
+		},
+		defaultOpen: false,
 	},
 ];
