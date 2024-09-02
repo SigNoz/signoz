@@ -19,6 +19,9 @@ const create = async (
 			payload: response.data.data,
 		};
 	} catch (error) {
+		if (window.location.href.includes('alerts/history')) {
+			throw error as AxiosError;
+		}
 		return ErrorResponseHandler(error as AxiosError);
 	}
 };

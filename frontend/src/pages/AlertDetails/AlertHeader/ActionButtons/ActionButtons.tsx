@@ -2,26 +2,22 @@ import './ActionButtons.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Divider, Dropdown, MenuProps, Switch, Tooltip } from 'antd';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useUrlQuery from 'hooks/useUrlQuery';
+import history from 'lib/history';
 import { Copy, Ellipsis, PenLine, Trash2 } from 'lucide-react';
-import { useAlertRuleStatusToggle } from 'pages/AlertDetails/hooks';
+import {
+	useAlertRuleDelete,
+	useAlertRuleDuplicate,
+	useAlertRuleStatusToggle,
+} from 'pages/AlertDetails/hooks';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import React from 'react';
+import { AlertDef } from 'types/api/alerts/def';
 
-const menu: MenuProps['items'] = [
-	{
-		key: 'rename-rule',
-		label: 'Rename',
-		icon: <PenLine size={16} color={Color.BG_VANILLA_400} />,
-		onClick: (): void => {},
-	},
-	{
-		key: 'duplicate-rule',
-		label: 'Duplicate',
-		icon: <Copy size={16} color={Color.BG_VANILLA_400} />,
-		onClick: (): void => {},
-	},
-];
+import { AlertHeaderProps } from '../AlertHeader';
 
 const menuStyle: React.CSSProperties = {
 	padding: 0,
@@ -29,7 +25,10 @@ const menuStyle: React.CSSProperties = {
 	fontSize: 14,
 };
 
-function DropdownMenuRenderer(menu: React.ReactNode): React.ReactNode {
+function DropdownMenuRenderer(
+	menu: React.ReactNode,
+	handleDelete: () => void,
+): React.ReactNode {
 	return (
 		<div className="dropdown-menu">
 			{React.cloneElement(menu as React.ReactElement, {
@@ -40,6 +39,7 @@ function DropdownMenuRenderer(menu: React.ReactNode): React.ReactNode {
 				type="default"
 				icon={<Trash2 size={16} color={Color.BG_CHERRY_400} />}
 				className="delete-button"
+				onClick={handleDelete}
 			>
 				Delete
 			</Button>
@@ -50,15 +50,47 @@ function DropdownMenuRenderer(menu: React.ReactNode): React.ReactNode {
 function AlertActionButtons({
 	ruleId,
 	state,
+	alertDetails,
 }: {
 	ruleId: string;
 	state: string;
+	alertDetails: AlertHeaderProps['alertDetails'];
 }): JSX.Element {
 	const {
 		handleAlertStateToggle,
 		isAlertRuleEnabled,
 	} = useAlertRuleStatusToggle({ ruleId, state });
+
+	const { handleAlertDuplicate } = useAlertRuleDuplicate({
+		alertDetails: (alertDetails as unknown) as AlertDef,
+	});
+	const { handleAlertDelete } = useAlertRuleDelete({ ruleId: Number(ruleId) });
+	const params = useUrlQuery();
+
+	const handleRename = React.useCallback(() => {
+		params.set(QueryParams.ruleId, String(ruleId));
+		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+	}, [params, ruleId]);
+
+	const menu: MenuProps['items'] = React.useMemo(
+		() => [
+			{
+				key: 'rename-rule',
+				label: 'Rename',
+				icon: <PenLine size={16} color={Color.BG_VANILLA_400} />,
+				onClick: (): void => handleRename(),
+			},
+			{
+				key: 'duplicate-rule',
+				label: 'Duplicate',
+				icon: <Copy size={16} color={Color.BG_VANILLA_400} />,
+				onClick: (): void => handleAlertDuplicate(),
+			},
+		],
+		[handleAlertDuplicate, handleRename],
+	);
 	const isDarkMode = useIsDarkMode();
+
 	return (
 		<div className="alert-action-buttons">
 			<Switch
@@ -73,7 +105,9 @@ function AlertActionButtons({
 			<Dropdown
 				trigger={['click']}
 				menu={{ items: menu }}
-				dropdownRender={DropdownMenuRenderer}
+				dropdownRender={(menu: React.ReactNode): React.ReactNode =>
+					DropdownMenuRenderer(menu, handleAlertDelete)
+				}
 			>
 				<Tooltip title="More options">
 					<Ellipsis

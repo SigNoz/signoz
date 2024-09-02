@@ -1,8 +1,11 @@
 import { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { TablePaginationConfig, TableProps } from 'antd/lib';
+import deleteAlerts from 'api/alerts/delete';
 import get from 'api/alerts/get';
+import getAll from 'api/alerts/getAll';
 import patchAlert from 'api/alerts/patch';
 import ruleStats from 'api/alerts/ruleStats';
+import save from 'api/alerts/save';
 import timelineGraph from 'api/alerts/timelineGraph';
 import timelineTable from 'api/alerts/timelineTable';
 import topContributors from 'api/alerts/topContributors';
@@ -30,6 +33,7 @@ import { generatePath, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
+	AlertDef,
 	AlertRuleStatsPayload,
 	AlertRuleTimelineGraphResponsePayload,
 	AlertRuleTimelineTableResponse,
@@ -40,6 +44,7 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { nanoToMilli } from 'utils/timeUtils';
 
+const defaultErrorMessage = 'Something went wrong';
 export const useAlertHistoryQueryParams = (): {
 	ruleId: string | null;
 	startTime: number;
@@ -355,7 +360,6 @@ export const useAlertRuleStatusToggle = ({
 	isAlertRuleEnabled: boolean;
 } => {
 	const { notifications } = useNotifications();
-	const defaultErrorMessage = 'Something went wrong';
 	const isAlertRuleInitiallyEnabled = state !== 'disabled';
 	const [isAlertRuleEnabled, setIsAlertRuleEnabled] = useState(
 		isAlertRuleInitiallyEnabled,
@@ -388,6 +392,98 @@ export const useAlertRuleStatusToggle = ({
 	};
 
 	return { handleAlertStateToggle, isAlertRuleEnabled };
+};
+
+export const useAlertRuleDuplicate = ({
+	alertDetails,
+}: {
+	alertDetails: AlertDef;
+}): {
+	handleAlertDuplicate: () => void;
+} => {
+	const { notifications } = useNotifications();
+
+	const params = useUrlQuery();
+
+	const { refetch } = useQuery('allAlerts', {
+		queryFn: getAll,
+		cacheTime: 0,
+	});
+	const { mutate: duplicateAlert } = useMutation(
+		['duplicate-alert-rule'],
+		save,
+		{
+			onSuccess: async () => {
+				notifications.success({
+					message: `Success`,
+				});
+
+				const { data: allAlertsData } = await refetch();
+
+				if (
+					allAlertsData &&
+					allAlertsData.payload &&
+					allAlertsData.payload.length > 0
+				) {
+					const clonedAlert =
+						allAlertsData.payload[allAlertsData.payload.length - 1];
+					params.set(QueryParams.ruleId, String(clonedAlert.id));
+					history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+				}
+			},
+			onError: () => {
+				notifications.error({
+					message: defaultErrorMessage,
+				});
+			},
+		},
+	);
+
+	const handleAlertDuplicate = (): void => {
+		const args = {
+			data: { ...alertDetails, alert: alertDetails.alert?.concat(' - Copy') },
+		};
+		duplicateAlert(args);
+	};
+
+	return { handleAlertDuplicate };
+};
+
+export const useAlertRuleDelete = ({
+	ruleId,
+}: {
+	ruleId: number;
+}): {
+	handleAlertDelete: () => void;
+} => {
+	const { notifications } = useNotifications();
+
+	const { mutate: deleteAlert } = useMutation(
+		['remove-alert-rule', ruleId],
+		deleteAlerts,
+		{
+			onSuccess: async () => {
+				notifications.success({
+					message: `Success`,
+				});
+
+				history.push(ROUTES.LIST_ALL_ALERT);
+			},
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			onError: () => {
+				notifications.error({
+					message: defaultErrorMessage,
+				});
+			},
+		},
+	);
+
+	const handleAlertDelete = (): void => {
+		const args = { id: ruleId };
+		deleteAlert(args);
+	};
+
+	return { handleAlertDelete };
 };
 
 type GetAlertRuleDetailsTimelineGraphProps = GetAlertRuleDetailsApiProps & {

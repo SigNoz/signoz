@@ -17,6 +17,9 @@ const deleteAlerts = async (
 			payload: response.data.data.rules,
 		};
 	} catch (error) {
+		if (window.location.href.includes('alerts/history')) {
+			throw error as AxiosError;
+		}
 		return ErrorResponseHandler(error as AxiosError);
 	}
 };
