@@ -33,22 +33,6 @@ function TimelineTable(): JSX.Element {
 		totalItems: totalItems ?? 0,
 	});
 
-	// const queryClient = useQueryClient();
-
-	// const { currentUnit, targetUnit } = useMemo(() => {
-	// 	const alertDetailsQuery = queryClient.getQueryData([
-	// 		REACT_QUERY_KEY.ALERT_RULE_DETAILS,
-	// 		ruleId,
-	// 	]) as {
-	// 		payload: PayloadProps;
-	// 	};
-	// 	const condition = alertDetailsQuery?.payload?.data?.condition;
-	// 	const { targetUnit } = condition ?? {};
-	// 	const { unit: currentUnit } = condition?.compositeQuery ?? {};
-
-	// 	return { currentUnit, targetUnit };
-	// }, [queryClient, ruleId]);
-
 	const { t } = useTranslation('common');
 
 	if (isError || !isValidRuleId || !ruleId) {
@@ -59,10 +43,7 @@ function TimelineTable(): JSX.Element {
 		<div className="timeline-table">
 			<Table
 				rowKey={(row): string => `${row.fingerprint}-${row.value}-${row.unixMilli}`}
-				columns={
-					timelineTableColumns()
-					// , currentUnit, targetUnit
-				}
+				columns={timelineTableColumns()}
 				dataSource={timelineData}
 				pagination={paginationConfig}
 				size="middle"

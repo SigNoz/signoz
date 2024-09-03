@@ -5,9 +5,7 @@ import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
 import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
-export const timelineTableColumns = (): // currentUnit?: string,
-// targetUnit?: string,
-ColumnsType<AlertRuleTimelineTableResponse> => [
+export const timelineTableColumns = (): ColumnsType<AlertRuleTimelineTableResponse> => [
 	{
 		title: 'STATE',
 		dataIndex: 'state',
@@ -39,23 +37,6 @@ ColumnsType<AlertRuleTimelineTableResponse> => [
 			</ConditionalAlertPopover>
 		),
 	},
-	// temporarily comment value column
-	// {
-	// 	title: 'VALUE',
-	// 	dataIndex: 'value',
-	// 	width: '14%',
-	// 	render: (value, record): JSX.Element => (
-	// 		<ConditionalAlertPopover
-	// 			relatedTracesLink={record.relatedTracesLink}
-	// 			relatedLogsLink={record.relatedLogsLink}
-	// 		>
-	// 			<div className="alert-rule-value">
-	// 				{/* convert the value based on y axis and target unit */}
-	// 				{convertValue(value.toFixed(2), currentUnit, targetUnit)}
-	// 			</div>
-	// 		</ConditionalAlertPopover>
-	// 	),
-	// },
 	{
 		title: 'CREATED AT',
 		dataIndex: 'unixMilli',

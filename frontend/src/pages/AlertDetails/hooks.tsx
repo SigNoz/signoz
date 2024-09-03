@@ -274,7 +274,6 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 			timelineFilter,
 			updatedOrder,
 			offset,
-			// JSON.stringify(filters.items),
 		],
 		{
 			queryFn: () =>
@@ -285,7 +284,6 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 					limit: TIMELINE_TABLE_PAGE_SIZE,
 					order: updatedOrder,
 					offset,
-					// filters,
 
 					...(timelineFilter && timelineFilter !== TimelineFilter.ALL
 						? {
