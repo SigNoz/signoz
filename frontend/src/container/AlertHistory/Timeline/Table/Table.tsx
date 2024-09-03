@@ -2,15 +2,12 @@ import './Table.styles.scss';
 
 import { Table } from 'antd';
 import { initialFilters } from 'constants/queryBuilder';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	useGetAlertRuleDetailsTimelineTable,
 	useTimelineTable,
 } from 'pages/AlertDetails/hooks';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQueryClient } from 'react-query';
-import { PayloadProps } from 'types/api/alerts/get';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { timelineTableColumns } from './useTimelineTable';
@@ -39,21 +36,21 @@ function TimelineTable(): JSX.Element {
 		totalItems: totalItems ?? 0,
 	});
 
-	const queryClient = useQueryClient();
+	// const queryClient = useQueryClient();
 
-	const { currentUnit, targetUnit } = useMemo(() => {
-		const alertDetailsQuery = queryClient.getQueryData([
-			REACT_QUERY_KEY.ALERT_RULE_DETAILS,
-			ruleId,
-		]) as {
-			payload: PayloadProps;
-		};
-		const condition = alertDetailsQuery?.payload?.data?.condition;
-		const { targetUnit } = condition ?? {};
-		const { unit: currentUnit } = condition?.compositeQuery ?? {};
+	// const { currentUnit, targetUnit } = useMemo(() => {
+	// 	const alertDetailsQuery = queryClient.getQueryData([
+	// 		REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+	// 		ruleId,
+	// 	]) as {
+	// 		payload: PayloadProps;
+	// 	};
+	// 	const condition = alertDetailsQuery?.payload?.data?.condition;
+	// 	const { targetUnit } = condition ?? {};
+	// 	const { unit: currentUnit } = condition?.compositeQuery ?? {};
 
-		return { currentUnit, targetUnit };
-	}, [queryClient, ruleId]);
+	// 	return { currentUnit, targetUnit };
+	// }, [queryClient, ruleId]);
 
 	const { t } = useTranslation('common');
 
@@ -65,7 +62,11 @@ function TimelineTable(): JSX.Element {
 		<div className="timeline-table">
 			<Table
 				rowKey={(row): string => `${row.fingerprint}-${row.value}-${row.unixMilli}`}
-				columns={timelineTableColumns(filters, setFilters, currentUnit, targetUnit)}
+				columns={timelineTableColumns(
+					filters,
+					setFilters,
+					// , currentUnit, targetUnit
+				)}
 				dataSource={timelineData}
 				pagination={paginationConfig}
 				size="middle"

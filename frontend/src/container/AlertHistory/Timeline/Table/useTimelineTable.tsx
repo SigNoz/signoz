@@ -6,7 +6,6 @@ import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/Ale
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { convertValue } from 'lib/getConvertedValue';
 import { Search } from 'lucide-react';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
@@ -83,8 +82,8 @@ function LabelFilter({
 export const timelineTableColumns = (
 	filters: TagFilter,
 	setFilters: (text: TagFilter) => void,
-	currentUnit?: string,
-	targetUnit?: string,
+	// currentUnit?: string,
+	// targetUnit?: string,
 ): ColumnsType<AlertRuleTimelineTableResponse> => [
 	{
 		title: 'STATE',
@@ -117,22 +116,23 @@ export const timelineTableColumns = (
 			</ConditionalAlertPopover>
 		),
 	},
-	{
-		title: 'VALUE',
-		dataIndex: 'value',
-		width: '14%',
-		render: (value, record): JSX.Element => (
-			<ConditionalAlertPopover
-				relatedTracesLink={record.relatedTracesLink}
-				relatedLogsLink={record.relatedLogsLink}
-			>
-				<div className="alert-rule-value">
-					{/* convert the value based on y axis and target unit */}
-					{convertValue(value.toFixed(2), currentUnit, targetUnit)}
-				</div>
-			</ConditionalAlertPopover>
-		),
-	},
+	// temporarily comment value column
+	// {
+	// 	title: 'VALUE',
+	// 	dataIndex: 'value',
+	// 	width: '14%',
+	// 	render: (value, record): JSX.Element => (
+	// 		<ConditionalAlertPopover
+	// 			relatedTracesLink={record.relatedTracesLink}
+	// 			relatedLogsLink={record.relatedLogsLink}
+	// 		>
+	// 			<div className="alert-rule-value">
+	// 				{/* convert the value based on y axis and target unit */}
+	// 				{convertValue(value.toFixed(2), currentUnit, targetUnit)}
+	// 			</div>
+	// 		</ConditionalAlertPopover>
+	// 	),
+	// },
 	{
 		title: 'CREATED AT',
 		dataIndex: 'unixMilli',
