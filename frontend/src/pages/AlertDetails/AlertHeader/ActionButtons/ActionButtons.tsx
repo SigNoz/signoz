@@ -101,11 +101,13 @@ function AlertActionButtons({
 
 	return (
 		<div className="alert-action-buttons">
-			<Switch
-				size="small"
-				onChange={handleAlertStateToggle}
-				checked={isAlertRuleEnabled}
-			/>
+			<Tooltip title={!isAlertRuleEnabled ? 'Enable alert' : 'Disable alert'}>
+				<Switch
+					size="small"
+					onChange={handleAlertStateToggle}
+					checked={isAlertRuleEnabled}
+				/>
+			</Tooltip>
 			<CopyToClipboard textToCopy={window.location.href} />
 
 			<Divider type="vertical" />
