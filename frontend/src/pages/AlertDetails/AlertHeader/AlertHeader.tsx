@@ -5,7 +5,7 @@ import AlertLabels from './AlertLabels/AlertLabels';
 import AlertSeverity from './AlertSeverity/AlertSeverity';
 import AlertState from './AlertState/AlertState';
 
-type AlertHeaderProps = {
+export type AlertHeaderProps = {
 	alertDetails: {
 		state: string;
 		alert: string;
@@ -38,7 +38,11 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 				</div>
 			</div>
 			<div className="alert-info__action-buttons">
-				<AlertActionButtons ruleId={alertDetails.id} state={state} />
+				<AlertActionButtons
+					alertDetails={alertDetails}
+					ruleId={alertDetails.id}
+					state={state}
+				/>
 			</div>
 		</div>
 	);
