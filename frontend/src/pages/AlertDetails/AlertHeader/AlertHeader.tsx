@@ -16,7 +16,7 @@ export type AlertHeaderProps = {
 	};
 };
 function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
-	const { state, alert, id, labels } = alertDetails;
+	const { state, alert, labels } = alertDetails;
 
 	const labelsWithoutSeverity = useMemo(
 		() =>
@@ -33,7 +33,6 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 					<div className="alert-title-wrapper">
 						<AlertState state={state} />
 						<div className="alert-title">{alert}</div>
-						<div className="alert-id">{id}</div>
 					</div>
 				</div>
 				<div className="bottom-section">
