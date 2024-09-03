@@ -27,7 +27,7 @@ function PopoverContent({
 		<div className="contributor-row-popover-buttons">
 			{!!relatedTracesLink && (
 				<Link
-					to={`${ROUTES.LOGS_EXPLORER}?${relatedTracesLink}`}
+					to={`${ROUTES.LOGS_EXPLORER}?${relatedLogsLink}`}
 					className="contributor-row-popover-buttons__button"
 				>
 					<div className="icon">
@@ -38,7 +38,7 @@ function PopoverContent({
 			)}
 			{!!relatedLogsLink && (
 				<Link
-					to={`${ROUTES.TRACES_EXPLORER}?${relatedLogsLink}`}
+					to={`${ROUTES.TRACES_EXPLORER}?${relatedTracesLink}`}
 					className="contributor-row-popover-buttons__button"
 				>
 					<div className="icon">
