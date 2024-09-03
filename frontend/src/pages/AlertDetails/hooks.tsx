@@ -321,7 +321,7 @@ export const useTimelineTable = ({
 
 	const params = useMemo(() => new URLSearchParams(search), [search]);
 
-	const offset = params.get('offset') ?? '1';
+	const offset = params.get('offset') ?? '0';
 
 	const onChangeHandler: TableProps<AlertRuleTimelineTableResponse>['onChange'] = useCallback(
 		(
@@ -350,10 +350,12 @@ export const useTimelineTable = ({
 		[pathname],
 	);
 
+	const offsetInt = parseInt(offset, 10);
+
 	const paginationConfig: TablePaginationConfig = {
 		pageSize: TIMELINE_TABLE_PAGE_SIZE,
 		showTotal: PaginationInfoText,
-		current: parseInt(offset, 10) / TIMELINE_TABLE_PAGE_SIZE + 1,
+		current: offsetInt / TIMELINE_TABLE_PAGE_SIZE + 1,
 		showSizeChanger: false,
 		hideOnSinglePage: true,
 		total: totalItems,
