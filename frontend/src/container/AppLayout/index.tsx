@@ -284,9 +284,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	 * so that the workspace locked page will have an expanded sidebar regardless of how users
 	 * have set it or what is stored in localStorage. This will not affect the localStorage config.
 	 */
-
-	const isWorkspaceLocked = (pathname: string): boolean =>
-		pathname === ROUTES.WORKSPACE_LOCKED;
+	const isWorkspaceLocked = (): boolean => pathname === ROUTES.WORKSPACE_LOCKED;
 
 	return (
 		<Layout
@@ -332,7 +330,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						licenseData={licenseData}
 						isFetching={isFetching}
 						onCollapse={onCollapse}
-						collapsed={isWorkspaceLocked(pathname) ? false : collapsed}
+						collapsed={isWorkspaceLocked() ? false : collapsed}
 					/>
 				)}
 				<div
