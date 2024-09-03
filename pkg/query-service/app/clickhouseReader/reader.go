@@ -64,7 +64,7 @@ const (
 	archiveNamespace           = "clickhouse-archive"
 	signozTraceDBName          = "signoz_traces"
 	signozHistoryDBName        = "signoz_analytics"
-	ruleStateHistoryTableName  = "distributed_rule_state_history"
+	ruleStateHistoryTableName  = "distributed_rule_state_history_v0"
 	signozDurationMVTable      = "distributed_durationSort"
 	signozUsageExplorerTable   = "distributed_usage_explorer"
 	signozSpansTable           = "distributed_signoz_spans"
