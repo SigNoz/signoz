@@ -58,6 +58,8 @@ import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
 import { TypographyText } from '../QueryBuilderSearch/style';
 import {
 	checkCommaInValue,
+	getOperatorFromValue,
+	getOperatorValue,
 	getTagToken,
 	isInNInOperator,
 } from '../QueryBuilderSearch/utils';
@@ -103,8 +105,8 @@ function getInitTags(query: IBuilderQuery): ITag[] {
 	return query.filters.items.map((item) => ({
 		id: item.id,
 		key: item.key as BaseAutocompleteData,
-		op: item.op,
-		value: `${item.value}`,
+		op: getOperatorFromValue(item.op),
+		value: item.value,
 	}));
 }
 
@@ -332,7 +334,7 @@ function QueryBuilderSearchV2(
 							{
 								key: currentFilterItem?.key,
 								op: currentFilterItem?.op,
-								value: tagValue.join(','),
+								value: tagValue,
 							} as ITag,
 						]);
 						return;
@@ -700,17 +702,28 @@ function QueryBuilderSearchV2(
 			items: [],
 		};
 		tags.forEach((tag) => {
+			const computedTagValue =
+				tag.value &&
+				Array.isArray(tag.value) &&
+				tag.value[tag.value.length - 1] === ''
+					? tag.value?.slice(0, -1)
+					: tag.value ?? '';
 			filterTags.items.push({
 				id: tag.id || uuid().slice(0, 8),
 				key: tag.key,
-				op: tag.op,
-				value: tag.value,
+				op: getOperatorValue(tag.op),
+				value: computedTagValue,
 			});
 		});
 
 		if (!isEqual(query.filters, filterTags)) {
 			onChange(filterTags);
-			setTags(filterTags.items as ITag[]);
+			setTags(
+				filterTags.items.map((tag) => ({
+					...tag,
+					op: getOperatorFromValue(tag.op),
+				})) as ITag[],
+			);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [tags]);
