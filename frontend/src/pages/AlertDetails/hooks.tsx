@@ -27,7 +27,8 @@ import { History, Table } from 'lucide-react';
 import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
-import { useCallback, useMemo, useState } from 'react';
+import { useAlertRule } from 'providers/Alert';
+import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { generatePath, useLocation } from 'react-router-dom';
@@ -363,20 +364,14 @@ export const useTimelineTable = ({
 };
 
 export const useAlertRuleStatusToggle = ({
-	state,
 	ruleId,
 }: {
-	state: string;
 	ruleId: string;
 }): {
 	handleAlertStateToggle: (state: boolean) => void;
-	isAlertRuleEnabled: boolean;
 } => {
+	const { isAlertRuleDisabled, setIsAlertRuleDisabled } = useAlertRule();
 	const { notifications } = useNotifications();
-	const isAlertRuleInitiallyEnabled = state !== 'disabled';
-	const [isAlertRuleEnabled, setIsAlertRuleEnabled] = useState(
-		isAlertRuleInitiallyEnabled,
-	);
 
 	const queryClient = useQueryClient();
 	const handleError = useAxiosError();
@@ -386,28 +381,29 @@ export const useAlertRuleStatusToggle = ({
 		patchAlert,
 		{
 			onMutate: () => {
-				setIsAlertRuleEnabled((prev) => !prev);
+				setIsAlertRuleDisabled((prev) => !prev);
 			},
 			onSuccess: () => {
 				notifications.success({
-					message: `Alert has been ${!isAlertRuleEnabled ? 'enabled' : 'disabled'}.`,
+					message: `Alert has been ${isAlertRuleDisabled ? 'enabled' : 'disabled'}.`,
 				});
-
-				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS]);
 			},
 			onError: (error) => {
-				setIsAlertRuleEnabled(isAlertRuleInitiallyEnabled);
+				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS]);
 				handleError(error);
 			},
 		},
 	);
 
-	const handleAlertStateToggle = (state: boolean): void => {
-		const args = { id: parseInt(ruleId, 10), data: { disabled: !state } };
+	const handleAlertStateToggle = (): void => {
+		const args = {
+			id: parseInt(ruleId, 10),
+			data: { disabled: !isAlertRuleDisabled },
+		};
 		toggleAlertState(args);
 	};
 
-	return { handleAlertStateToggle, isAlertRuleEnabled };
+	return { handleAlertStateToggle };
 };
 
 export const useAlertRuleDuplicate = ({

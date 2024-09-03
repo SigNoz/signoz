@@ -14,6 +14,7 @@ import {
 	useAlertRuleStatusToggle,
 } from 'pages/AlertDetails/hooks';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
+import { useAlertRule } from 'providers/Alert';
 import React, { useCallback, useState } from 'react';
 import { AlertDef } from 'types/api/alerts/def';
 
@@ -49,19 +50,14 @@ function DropdownMenuRenderer(
 
 function AlertActionButtons({
 	ruleId,
-	state,
 	alertDetails,
 }: {
 	ruleId: string;
-	state: string;
 	alertDetails: AlertHeaderProps['alertDetails'];
 }): JSX.Element {
 	const [dropdownOpen, setDropdownOpen] = useState(false);
-
-	const {
-		handleAlertStateToggle,
-		isAlertRuleEnabled,
-	} = useAlertRuleStatusToggle({ ruleId, state });
+	const { isAlertRuleDisabled } = useAlertRule();
+	const { handleAlertStateToggle } = useAlertRuleStatusToggle({ ruleId });
 
 	const { handleAlertDuplicate } = useAlertRuleDuplicate({
 		alertDetails: (alertDetails as unknown) as AlertDef,
@@ -101,12 +97,14 @@ function AlertActionButtons({
 
 	return (
 		<div className="alert-action-buttons">
-			<Tooltip title={!isAlertRuleEnabled ? 'Enable alert' : 'Disable alert'}>
-				<Switch
-					size="small"
-					onChange={handleAlertStateToggle}
-					checked={isAlertRuleEnabled}
-				/>
+			<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
+				{isAlertRuleDisabled !== undefined && (
+					<Switch
+						size="small"
+						onChange={handleAlertStateToggle}
+						checked={!isAlertRuleDisabled}
+					/>
+				)}
 			</Tooltip>
 			<CopyToClipboard textToCopy={window.location.href} />
 
