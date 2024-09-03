@@ -4414,7 +4414,7 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 		ctx, &v3.FilterAttributeKeyRequest{
 			SearchText: req.SearchText,
 			DataSource: v3.DataSourceLogs,
-			Limit:      req.Limit,
+			Limit:      int(req.AttributesLimit),
 		})
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf("couldn't get attribute keys: %w", err))
@@ -4467,7 +4467,7 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 		// suggest 2 examples for top 2 attribs
 		topAttribs := []v3.AttributeKey{}
 		for _, attrib := range suggestions.AttributeKeys {
-			if len(topAttribs) >= req.ExamplesLimit {
+			if len(topAttribs) >= int(req.ExamplesLimit) {
 				break
 			}
 
@@ -4494,9 +4494,9 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 		} else {
 
 			// TODO(Raj): Clean this up
-			for valueIdx := 0; valueIdx < 2; valueIdx++ {
+			for valueIdx := 0; valueIdx < int(numValuesPerAttrib); valueIdx++ {
 				for attrIdx, topAttr := range topAttribs {
-					if len(suggestions.ExampleQueries) < req.ExamplesLimit {
+					if len(suggestions.ExampleQueries) < int(req.ExamplesLimit) {
 						attrValues := topAttribValues[attrIdx]
 						if valueIdx < len(attrValues) {
 							exampleQuery := newExampleQuery()
@@ -4517,7 +4517,7 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 	}
 
 	// Suggest static example queries for standard log attributes if needed.
-	if len(suggestions.ExampleQueries) < req.ExamplesLimit {
+	if len(suggestions.ExampleQueries) < int(req.ExamplesLimit) {
 		exampleQuery := newExampleQuery()
 		exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
 			Key: v3.AttributeKey{

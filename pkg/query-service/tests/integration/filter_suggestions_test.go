@@ -158,7 +158,7 @@ func (tb *FilterSuggestionsTestBed) mockAttribKeysQueryResponse(
 	tb.mockClickhouse.ExpectQuery(
 		"select.*from.*signoz_logs.distributed_tag_attributes.*",
 	).WithArgs(
-		constants.DefaultFilterSuggestionsLimit,
+		constants.DefaultFilterSuggestionsAttributesLimit,
 	).WillReturnRows(
 		mockhouse.NewRows(cols, values),
 	)

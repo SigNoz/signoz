@@ -846,26 +846,33 @@ func parseQBFilterSuggestionsRequest(r *http.Request) (
 		return nil, model.BadRequest(err)
 	}
 
-	limit := baseconstants.DefaultFilterSuggestionsLimit
-	limitStr := r.URL.Query().Get("limit")
-	if len(limitStr) > 0 {
-		limit, err := strconv.Atoi(limitStr)
-		if err != nil || limit < 1 {
-			return nil, model.BadRequest(fmt.Errorf(
-				"invalid limit: %s", limitStr,
-			))
+	parsePositiveIntQP := func(queryParam string, defaultValue uint64) (uint64, *model.ApiError) {
+		value := defaultValue
+		qpValue := r.URL.Query().Get(queryParam)
+		if len(qpValue) > 0 {
+			value, err := strconv.Atoi(qpValue)
+			if err != nil || value < 1 {
+				return 0, model.BadRequest(fmt.Errorf(
+					"invalid %s: %s", queryParam, qpValue,
+				))
+			}
 		}
+		return value, nil
+
 	}
 
-	examplesLimit := baseconstants.DefaultFilterSuggestionsExamplesLimit
-	examplesLimitStr := r.URL.Query().Get("exampleLimit")
-	if len(examplesLimitStr) > 0 {
-		examplesLimit, err := strconv.Atoi(examplesLimitStr)
-		if err != nil || examplesLimit < 1 {
-			return nil, model.BadRequest(fmt.Errorf(
-				"invalid examples limit: %s", limitStr,
-			))
-		}
+	attributesLimit, err := parsePositiveIntQP(
+		"attributesLimit", baseconstants.DefaultFilterSuggestionsAttributesLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	examplesLimit, err := parsePositiveIntQP(
+		"examplesLimit", baseconstants.DefaultFilterSuggestionsExamplesLimit,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	var existingFilter *v3.FilterSet
@@ -886,11 +893,11 @@ func parseQBFilterSuggestionsRequest(r *http.Request) (
 	searchText := r.URL.Query().Get("searchText")
 
 	return &v3.QBFilterSuggestionsRequest{
-		DataSource:     dataSource,
-		Limit:          limit,
-		SearchText:     searchText,
-		ExamplesLimit:  examplesLimit,
-		ExistingFilter: existingFilter,
+		DataSource:      dataSource,
+		AttributesLimit: attributesLimit,
+		SearchText:      searchText,
+		ExamplesLimit:   examplesLimit,
+		ExistingFilter:  existingFilter,
 	}, nil
 }
 
