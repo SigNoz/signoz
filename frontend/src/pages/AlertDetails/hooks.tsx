@@ -42,7 +42,6 @@ import {
 	AlertRuleTopContributorsPayload,
 } from 'types/api/alerts/def';
 import { PayloadProps } from 'types/api/alerts/get';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { nanoToMilli } from 'utils/timeUtils';
 
@@ -251,11 +250,7 @@ type GetAlertRuleDetailsTimelineTableProps = GetAlertRuleDetailsApiProps & {
 		| undefined;
 };
 
-export const useGetAlertRuleDetailsTimelineTable = ({
-	filters,
-}: {
-	filters: TagFilter;
-}): GetAlertRuleDetailsTimelineTableProps => {
+export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimelineTableProps => {
 	const { ruleId, startTime, endTime, params } = useAlertHistoryQueryParams();
 	const { updatedOrder, offset } = useMemo(
 		() => ({
@@ -279,7 +274,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 			timelineFilter,
 			updatedOrder,
 			offset,
-			JSON.stringify(filters.items),
+			// JSON.stringify(filters.items),
 		],
 		{
 			queryFn: () =>
@@ -290,7 +285,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 					limit: TIMELINE_TABLE_PAGE_SIZE,
 					order: updatedOrder,
 					offset,
-					filters,
+					// filters,
 
 					...(timelineFilter && timelineFilter !== TimelineFilter.ALL
 						? {
