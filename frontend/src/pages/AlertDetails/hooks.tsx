@@ -257,11 +257,10 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 	filters: TagFilter;
 }): GetAlertRuleDetailsTimelineTableProps => {
 	const { ruleId, startTime, endTime, params } = useAlertHistoryQueryParams();
-
-	const { updatedOrder, getUpdatedOffset } = useMemo(
+	const { updatedOrder, offset } = useMemo(
 		() => ({
 			updatedOrder: params.get(urlKey.order) ?? OrderPreferenceItems.ASC,
-			getUpdatedOffset: params.get(urlKey.offset) ?? '0',
+			offset: parseInt(params.get(urlKey.offset) ?? '1', 10),
 		}),
 		[params],
 	);
@@ -279,7 +278,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 			endTime,
 			timelineFilter,
 			updatedOrder,
-			getUpdatedOffset,
+			offset,
 			JSON.stringify(filters.items),
 		],
 		{
@@ -290,7 +289,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 					end: endTime,
 					limit: TIMELINE_TABLE_PAGE_SIZE,
 					order: updatedOrder,
-					offset: parseInt(getUpdatedOffset, 10),
+					offset,
 					filters,
 
 					...(timelineFilter && timelineFilter !== TimelineFilter.ALL
@@ -327,7 +326,7 @@ export const useTimelineTable = ({
 
 	const params = useMemo(() => new URLSearchParams(search), [search]);
 
-	const updatedOffset = params.get(urlKey.offset) ?? '0';
+	const offset = params.get('offset') ?? '1';
 
 	const onChangeHandler: TableProps<AlertRuleTimelineTableResponse>['onChange'] = useCallback(
 		(
@@ -339,7 +338,7 @@ export const useTimelineTable = ({
 		) => {
 			if (!Array.isArray(sorter)) {
 				const { pageSize = 0, current = 0 } = pagination;
-				const { columnKey = '', order } = sorter;
+				const { order } = sorter;
 				const updatedOrder = order === 'ascend' ? 'asc' : 'desc';
 				const params = new URLSearchParams(window.location.search);
 
@@ -347,8 +346,7 @@ export const useTimelineTable = ({
 					`${pathname}?${createQueryParams({
 						...Object.fromEntries(params),
 						order: updatedOrder,
-						offset: current - 1,
-						orderParam: columnKey,
+						offset: current * TIMELINE_TABLE_PAGE_SIZE - TIMELINE_TABLE_PAGE_SIZE,
 						pageSize,
 					})}`,
 				);
@@ -360,7 +358,7 @@ export const useTimelineTable = ({
 	const paginationConfig: TablePaginationConfig = {
 		pageSize: TIMELINE_TABLE_PAGE_SIZE,
 		showTotal: PaginationInfoText,
-		current: parseInt(updatedOffset, 10) + 1,
+		current: parseInt(offset, 10) / TIMELINE_TABLE_PAGE_SIZE + 1,
 		showSizeChanger: false,
 		hideOnSinglePage: true,
 		total: totalItems,
