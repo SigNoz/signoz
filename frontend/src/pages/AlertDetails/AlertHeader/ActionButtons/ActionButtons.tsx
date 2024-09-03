@@ -14,7 +14,7 @@ import {
 	useAlertRuleStatusToggle,
 } from 'pages/AlertDetails/hooks';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { AlertDef } from 'types/api/alerts/def';
 
 import { AlertHeaderProps } from '../AlertHeader';
@@ -56,6 +56,8 @@ function AlertActionButtons({
 	state: string;
 	alertDetails: AlertHeaderProps['alertDetails'];
 }): JSX.Element {
+	const [dropdownOpen, setDropdownOpen] = useState(false);
+
 	const {
 		handleAlertStateToggle,
 		isAlertRuleEnabled,
@@ -65,6 +67,12 @@ function AlertActionButtons({
 		alertDetails: (alertDetails as unknown) as AlertDef,
 	});
 	const { handleAlertDelete } = useAlertRuleDelete({ ruleId: Number(ruleId) });
+
+	const handleDeleteWithClose = useCallback(() => {
+		handleAlertDelete();
+		setDropdownOpen(false);
+	}, [handleAlertDelete]);
+
 	const params = useUrlQuery();
 
 	const handleRename = React.useCallback(() => {
@@ -104,9 +112,11 @@ function AlertActionButtons({
 
 			<Dropdown
 				trigger={['click']}
+				open={dropdownOpen}
 				menu={{ items: menu }}
+				onOpenChange={setDropdownOpen}
 				dropdownRender={(menu: React.ReactNode): React.ReactNode =>
-					DropdownMenuRenderer(menu, handleAlertDelete)
+					DropdownMenuRenderer(menu, handleDeleteWithClose)
 				}
 			>
 				<Tooltip title="More options">
