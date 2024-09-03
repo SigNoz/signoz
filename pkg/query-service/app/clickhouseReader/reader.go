@@ -4458,58 +4458,56 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 		}
 	}
 
-	// Suggest example query for top suggested attribute using existing
-	// autocomplete logic for recommending attrib values
-	//
-	// Example queries for multiple top attributes using a batch version of
-	// GetLogAttributeValues is expected to come in a follow up change
+	// Suggest example queries for top suggested attributes
 	if len(suggestions.AttributeKeys) > 0 {
-		// suggest 2 examples for top 2 attribs
-		topAttribs := []v3.AttributeKey{}
+		exampleAttribs := []v3.AttributeKey{}
 		for _, attrib := range suggestions.AttributeKeys {
-			if len(topAttribs) >= int(req.ExamplesLimit) {
-				break
-			}
+			// only suggest examples for actual log attributes or resource attributes
+			isAttributeOrResource := slices.Contains([]v3.AttributeKeyType{
+				v3.AttributeKeyTypeResource, v3.AttributeKeyTypeTag,
+			}, attrib.Type)
 
-			// only suggest examples for actual attributes
-			_, isTopLevelField := constants.StaticFieldsLogsV3[attrib.Key]
 			isNumOrStringType := slices.Contains([]v3.AttributeKeyDataType{
 				v3.AttributeKeyDataTypeInt64, v3.AttributeKeyDataTypeFloat64, v3.AttributeKeyDataTypeString,
 			}, attrib.DataType)
 
-			if !isTopLevelField && isNumOrStringType {
-				topAttribs = append(topAttribs, attrib)
+			if isAttributeOrResource && isNumOrStringType {
+				exampleAttribs = append(exampleAttribs, attrib)
+			}
+
+			if len(exampleAttribs) >= int(req.ExamplesLimit) {
+				break
 			}
 		}
 
-		numValuesPerAttrib := math.Ceil(float64(req.ExamplesLimit) / float64(len(topAttribs)))
+		valuesToQueryPerAttrib := math.Ceil(float64(req.ExamplesLimit) / float64(len(exampleAttribs)))
 
-		topAttribValues, err := r.getValuesForLogAttributes(
-			ctx, topAttribs, uint64(numValuesPerAttrib),
+		exampleAttribValues, err := r.getValuesForLogAttributes(
+			ctx, exampleAttribs, uint64(valuesToQueryPerAttrib),
 		)
-
 		if err != nil {
 			// Do not fail the entire request if only example query generation fails
 			zap.L().Error("could not find attribute values for creating example query", zap.Error(err))
 		} else {
 
-			// TODO(Raj): Clean this up
-			for valueIdx := 0; valueIdx < int(numValuesPerAttrib); valueIdx++ {
-				for attrIdx, topAttr := range topAttribs {
-					if len(suggestions.ExampleQueries) < int(req.ExamplesLimit) {
-						attrValues := topAttribValues[attrIdx]
-						if valueIdx < len(attrValues) {
-							exampleQuery := newExampleQuery()
-							exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
-								Key:      topAttr,
-								Operator: "=",
-								Value:    attrValues[valueIdx],
-							})
+			// add example queries for as many attributes as possible.
+			// suggest 1st value for 1st attrib, followed by 1st value for second attrib and so on
+			// and if there is still room, suggest 2nd value for 1st attrib, 2nd value for 2nd attrib and so on
+			for valueIdx := 0; valueIdx < int(valuesToQueryPerAttrib); valueIdx++ {
+				for attrIdx, attr := range exampleAttribs {
+					needMoreExamples := len(suggestions.ExampleQueries) < int(req.ExamplesLimit)
 
-							suggestions.ExampleQueries = append(
-								suggestions.ExampleQueries, exampleQuery,
-							)
-						}
+					if needMoreExamples && valueIdx < len(exampleAttribValues[attrIdx]) {
+						exampleQuery := newExampleQuery()
+						exampleQuery.Items = append(exampleQuery.Items, v3.FilterItem{
+							Key:      attr,
+							Operator: "=",
+							Value:    exampleAttribValues[attrIdx][valueIdx],
+						})
+
+						suggestions.ExampleQueries = append(
+							suggestions.ExampleQueries, exampleQuery,
+						)
 					}
 				}
 			}

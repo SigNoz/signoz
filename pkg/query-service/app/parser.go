@@ -858,7 +858,6 @@ func parseQBFilterSuggestionsRequest(r *http.Request) (
 			}
 		}
 		return value, nil
-
 	}
 
 	attributesLimit, err := parsePositiveIntQP(
@@ -894,10 +893,10 @@ func parseQBFilterSuggestionsRequest(r *http.Request) (
 
 	return &v3.QBFilterSuggestionsRequest{
 		DataSource:      dataSource,
-		AttributesLimit: attributesLimit,
 		SearchText:      searchText,
-		ExamplesLimit:   examplesLimit,
 		ExistingFilter:  existingFilter,
+		AttributesLimit: attributesLimit,
+		ExamplesLimit:   examplesLimit,
 	}, nil
 }
 
