@@ -22,7 +22,7 @@ function HorizontalTimelineGraph({
 	data: AlertRuleTimelineGraphResponse[];
 }): JSX.Element {
 	const transformedData: AlignedData = useMemo(() => {
-		if (data?.length <= 1) {
+		if (!data?.length) {
 			return [[], []];
 		}
 
