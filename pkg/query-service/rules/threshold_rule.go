@@ -1205,12 +1205,31 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 					break
 				}
 			}
+			// use min value from the series
+			if shouldAlert {
+				var minValue float64 = math.Inf(1)
+				for _, smpl := range series.Points {
+					if smpl.Value < minValue {
+						minValue = smpl.Value
+					}
+				}
+				alertSmpl = Sample{Point: Point{V: minValue}, Metric: lblsNormalized, MetricOrig: lbls}
+			}
 		} else if r.compareOp() == ValueIsBelow {
 			for _, smpl := range series.Points {
 				if smpl.Value >= r.targetVal() {
 					shouldAlert = false
 					break
 				}
+			}
+			if shouldAlert {
+				var maxValue float64 = math.Inf(-1)
+				for _, smpl := range series.Points {
+					if smpl.Value > maxValue {
+						maxValue = smpl.Value
+					}
+				}
+				alertSmpl = Sample{Point: Point{V: maxValue}, Metric: lblsNormalized, MetricOrig: lbls}
 			}
 		} else if r.compareOp() == ValueIsEq {
 			for _, smpl := range series.Points {
@@ -1224,6 +1243,15 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 				if smpl.Value == r.targetVal() {
 					shouldAlert = false
 					break
+				}
+			}
+			// use any non-inf or nan value from the series
+			if shouldAlert {
+				for _, smpl := range series.Points {
+					if !math.IsInf(smpl.Value, 0) && !math.IsNaN(smpl.Value) {
+						alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+						break
+					}
 				}
 			}
 		}
