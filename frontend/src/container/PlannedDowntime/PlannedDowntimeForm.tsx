@@ -105,6 +105,10 @@ export function PlannedDowntimeForm(
 			?.unit || 'm',
 	);
 
+	const [formData, setFormData] = useState<PlannedDowntimeFormData>(
+		initialValues?.schedule as PlannedDowntimeFormData,
+	);
+
 	const [recurrenceType, setRecurrenceType] = useState<string | null>(
 		(initialValues.schedule?.recurrence?.repeatType as string) ||
 			recurrenceOptions.doesNotRepeat.value,
@@ -300,6 +304,111 @@ export function PlannedDowntimeForm(
 		}),
 	);
 
+	const timezoneFormatted = (
+		time: string | dayjs.Dayjs,
+		timeZone?: string,
+		isEditMode?: boolean,
+		format?: string,
+	): string => {
+		if (!time) {
+			return '';
+		}
+		if (!timeZone) {
+			return dayjs(time).format(format);
+		}
+		return dayjs(time).tz(timeZone, isEditMode).format(format);
+	};
+
+	const startTimeText = (): string => {
+		let startTime = formData?.startTime;
+		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
+			startTime = formData?.recurrence?.startTime || formData?.startTime || '';
+		}
+
+		if (!startTime) {
+			return '';
+		}
+
+		if (formData.timezone) {
+			startTime = handleTimeConvertion(
+				startTime,
+				timezoneInitialValue,
+				formData?.timezone,
+				!isEditMode,
+			);
+		}
+		const daysOfWeek = formData?.recurrence?.repeatOn;
+
+		const formattedStartTime = timezoneFormatted(
+			startTime,
+			formData.timezone,
+			!isEditMode,
+			'HH:mm',
+		);
+
+		const formattedStartDate = timezoneFormatted(
+			startTime,
+			formData.timezone,
+			!isEditMode,
+			'Do MMM YYYY',
+		);
+
+		const formattedDaysOfWeek = daysOfWeek?.join(', ');
+		switch (recurrenceType) {
+			case 'daily':
+				return `Schedule will start from ${formattedStartDate} and will trigger at ${formattedStartTime} daily`;
+			case 'monthly':
+				return `Schedule will start from ${formattedStartDate} and will trigger at ${formattedStartTime} on ${dayjs(
+					startTime,
+				).format('Do')} day of every month`;
+			case 'weekly':
+				return `Schedule will start from ${formattedStartDate} and will trigger at ${formattedStartTime} ${
+					formattedDaysOfWeek ? `on [${formattedDaysOfWeek}]` : ''
+				} every week`;
+			default:
+				return `Schedule will start at ${formattedStartTime} on ${formattedStartDate}`;
+		}
+	};
+
+	const endTimeText = (): string => {
+		let endTime = formData?.endTime;
+		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
+			endTime = formData?.recurrence?.endTime || '';
+
+			if (!isEditMode && !endTime) {
+				endTime = formData?.endTime || '';
+			}
+		}
+
+		if (!endTime) {
+			return '';
+		}
+
+		if (formData.timezone) {
+			endTime = handleTimeConvertion(
+				endTime,
+				timezoneInitialValue,
+				formData?.timezone,
+				!isEditMode,
+			);
+		}
+
+		const formattedEndTime = timezoneFormatted(
+			endTime,
+			formData.timezone,
+			!isEditMode,
+			'HH:mm',
+		);
+
+		const formattedEndDate = timezoneFormatted(
+			endTime,
+			formData.timezone,
+			!isEditMode,
+			'Do MMM YYYY',
+		);
+		return `Schedule will end at ${formattedEndTime} on ${formattedEndDate}`;
+	};
+
 	return (
 		<Modal
 			title={
@@ -323,6 +432,7 @@ export function PlannedDowntimeForm(
 				onFinish={onFinish}
 				onValuesChange={(): void => {
 					setRecurrenceType(form.getFieldValue('recurrence')?.repeatType as string);
+					setFormData(form.getFieldsValue());
 				}}
 				autoComplete="off"
 			>
@@ -348,6 +458,7 @@ export function PlannedDowntimeForm(
 						popupClassName="datePicker"
 					/>
 				</Form.Item>
+				<div className="scheduleTimeInfoText">{startTimeText()}</div>
 				<Form.Item
 					label="Repeats every"
 					name={['recurrence', 'repeatType']}
@@ -426,6 +537,7 @@ export function PlannedDowntimeForm(
 						popupClassName="datePicker"
 					/>
 				</Form.Item>
+				<div className="scheduleTimeInfoText">{endTimeText()}</div>
 				<div>
 					<div className="alert-rule-form">
 						<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
