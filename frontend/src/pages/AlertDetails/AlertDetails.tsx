@@ -71,12 +71,19 @@ function AlertDetails(): JSX.Element {
 	const { routes } = useRouteTabUtils();
 
 	const {
-		data: { isLoading, data, isRefetching, isError },
+		isLoading,
+		isRefetching,
+		isError,
 		ruleId,
 		isValidRuleId,
+		alertDetailsResponse,
 	} = useGetAlertRuleDetails();
 
-	if (isError || !isValidRuleId) {
+	if (
+		isError ||
+		!isValidRuleId ||
+		(alertDetailsResponse && alertDetailsResponse.statusCode !== 200)
+	) {
 		return <NotFound />;
 	}
 
@@ -98,7 +105,7 @@ function AlertDetails(): JSX.Element {
 			<Divider className="divider breadcrumb-divider" />
 
 			<AlertDetailsStatusRenderer
-				{...{ isLoading, isError, isRefetching, data }}
+				{...{ isLoading, isError, isRefetching, data: alertDetailsResponse }}
 			/>
 			<Divider className="divider" />
 			<div className="tabs-and-filters">

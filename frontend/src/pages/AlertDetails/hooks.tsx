@@ -17,6 +17,7 @@ import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
 import { urlKey } from 'container/AllError/utils';
+import useAxiosError from 'hooks/useAxiosError';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
@@ -27,7 +28,7 @@ import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
 import { useCallback, useMemo, useState } from 'react';
-import { useMutation, useQuery, UseQueryResult } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { generatePath, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -40,11 +41,11 @@ import {
 	AlertRuleTimelineTableResponsePayload,
 	AlertRuleTopContributorsPayload,
 } from 'types/api/alerts/def';
+import { PayloadProps } from 'types/api/alerts/get';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { nanoToMilli } from 'utils/timeUtils';
 
-const defaultErrorMessage = 'Something went wrong';
 export const useAlertHistoryQueryParams = (): {
 	ruleId: string | null;
 	startTime: number;
@@ -133,17 +134,29 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 
 	return { routes };
 };
-
-export const useGetAlertRuleDetails = (): {
+type Props = {
 	ruleId: string | null;
-	data: UseQueryResult;
 	isValidRuleId: boolean;
-} => {
+	alertDetailsResponse:
+		| SuccessResponse<PayloadProps, unknown>
+		| ErrorResponse
+		| undefined;
+	isLoading: boolean;
+	isRefetching: boolean;
+	isError: boolean;
+};
+
+export const useGetAlertRuleDetails = (): Props => {
 	const { ruleId } = useAlertHistoryQueryParams();
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
-	const data = useQuery([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId], {
+	const {
+		isLoading,
+		data: alertDetailsResponse,
+		isRefetching,
+		isError,
+	} = useQuery([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId], {
 		queryFn: () =>
 			get({
 				id: parseInt(ruleId || '', 10),
@@ -153,7 +166,14 @@ export const useGetAlertRuleDetails = (): {
 		refetchOnWindowFocus: false,
 	});
 
-	return { ruleId, data, isValidRuleId };
+	return {
+		ruleId,
+		isLoading,
+		alertDetailsResponse,
+		isRefetching,
+		isError,
+		isValidRuleId,
+	};
 };
 
 type GetAlertRuleDetailsApiProps = {
@@ -364,6 +384,7 @@ export const useAlertRuleStatusToggle = ({
 	const [isAlertRuleEnabled, setIsAlertRuleEnabled] = useState(
 		isAlertRuleInitiallyEnabled,
 	);
+	const handleError = useAxiosError();
 
 	const { mutate: toggleAlertState } = useMutation(
 		[REACT_QUERY_KEY.TOGGLE_ALERT_STATE, ruleId],
@@ -377,11 +398,9 @@ export const useAlertRuleStatusToggle = ({
 					message: `Alert has been turned ${!isAlertRuleEnabled ? 'on' : 'off'}.`,
 				});
 			},
-			onError: () => {
+			onError: (error) => {
 				setIsAlertRuleEnabled(isAlertRuleInitiallyEnabled);
-				notifications.error({
-					message: defaultErrorMessage,
-				});
+				handleError(error);
 			},
 		},
 	);
@@ -409,6 +428,7 @@ export const useAlertRuleDuplicate = ({
 		queryFn: getAll,
 		cacheTime: 0,
 	});
+	const handleError = useAxiosError();
 	const { mutate: duplicateAlert } = useMutation(
 		[REACT_QUERY_KEY.DUPLICATE_ALERT_RULE],
 		save,
@@ -431,11 +451,7 @@ export const useAlertRuleDuplicate = ({
 					history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 				}
 			},
-			onError: () => {
-				notifications.error({
-					message: defaultErrorMessage,
-				});
-			},
+			onError: handleError,
 		},
 	);
 
@@ -457,6 +473,7 @@ export const useAlertRuleDelete = ({
 	handleAlertDelete: () => void;
 } => {
 	const { notifications } = useNotifications();
+	const handleError = useAxiosError();
 
 	const { mutate: deleteAlert } = useMutation(
 		[REACT_QUERY_KEY.REMOVE_ALERT_RULE, ruleId],
@@ -469,12 +486,7 @@ export const useAlertRuleDelete = ({
 
 				history.push(ROUTES.LIST_ALL_ALERT);
 			},
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			onError: () => {
-				notifications.error({
-					message: defaultErrorMessage,
-				});
-			},
+			onError: handleError,
 		},
 	);
 
