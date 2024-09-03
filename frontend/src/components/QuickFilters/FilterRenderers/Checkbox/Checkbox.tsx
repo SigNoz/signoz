@@ -5,6 +5,7 @@
 import './Checkbox.styles.scss';
 
 import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
+import cx from 'classnames';
 import { IQuickFiltersConfig } from 'components/QuickFilters/QuickFilters';
 import { OPERATORS } from 'constants/queryBuilder';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
@@ -84,7 +85,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		]?.filters?.items.find((item) => isEqual(item.key, filter.attributeKey));
 
 		if (filterSync) {
-			console.log(filterSync.op);
 			if (SELECTED_OPERATORS.includes(filterSync.op)) {
 				if (isArray(filterSync.value)) {
 					filterSync.value.forEach((val) => {
@@ -122,6 +122,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		lastUsedQuery,
 	]);
 
+	// disable the filter when there are multiple entries of the same attribute key present in the filter bar
 	const isFilterDisabled = useMemo(
 		() =>
 			(currentQuery?.builder?.queryData?.[
@@ -132,6 +133,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		[currentQuery?.builder?.queryData, lastUsedQuery, filter.attributeKey],
 	);
 
+	// variable to check if the current filter has multiple values to its name in the key op value section
 	const isMultipleValuesTrueForTheKey =
 		Object.values(currentFilterState).filter((val) => val).length > 1;
 
@@ -169,6 +171,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	): void => {
 		const query = cloneDeep(currentQuery.builder.queryData?.[lastUsedQuery || 0]);
 
+		// if only or all are clicked we do not need to worry about anything just override whatever we have
+		// by either adding a new IN operator value clause in case of ONLY or remove everything we have for ALL.
 		if (isOnlyOrAllClicked && query.filters.items) {
 			const isOnlyOrAll = isSomeFilterPresentForCurrentAttribute
 				? currentFilterState[value] && !isMultipleValuesTrueForTheKey
@@ -191,6 +195,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			if (
 				query.filters.items.some((item) => isEqual(item.key, filter.attributeKey))
 			) {
+				// if there is already a running filter for the current attribute key then
+				// we split the cases by which particular operator is present right now!
 				const currentFilter = query.filters.items.find((q) =>
 					isEqual(q.key, filter.attributeKey),
 				);
@@ -199,6 +205,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					switch (runningOperator) {
 						case 'in':
 							if (checked) {
+								// if it's an IN operator then if we are checking another value it get's added to the
+								// filter clause. example -  key IN [value1, currentSelectedValue]
 								if (isArray(currentFilter.value)) {
 									const newFilter = {
 										...currentFilter,
@@ -211,11 +219,11 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										return item;
 									});
 								} else {
+									// if the current state wasn't an array we make it one and add our value
 									const newFilter = {
 										...currentFilter,
 										value: [currentFilter.value as string, value],
 									};
-									// eslint-disable-next-line sonarjs/no-identical-functions
 									query.filters.items = query.filters.items.map((item) => {
 										if (isEqual(item.key, filter.attributeKey)) {
 											return newFilter;
@@ -224,6 +232,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 									});
 								}
 							} else if (!checked) {
+								// if we are removing some value when the running operator is IN we filter.
+								// example - key IN [value1,currentSelectedValue] becomes key IN [value1] in case of array
 								if (isArray(currentFilter.value)) {
 									const newFilter = {
 										...currentFilter,
@@ -243,14 +253,18 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										});
 									}
 								} else {
-									query.filters.items = query.filters.items.filter((item) =>
-										isEqual(item.key, filter.attributeKey),
+									// if not an array remove the whole thing altogether!
+									query.filters.items = query.filters.items.filter(
+										(item) => !isEqual(item.key, filter.attributeKey),
 									);
 								}
 							}
 							break;
 						case 'nin':
+							// if the current running operator is NIN then when unchecking the value it gets
+							// added to the clause like key NIN [value1 , currentUnselectedValue]
 							if (!checked) {
+								// in case of array add the currentUnselectedValue to the list.
 								if (isArray(currentFilter.value)) {
 									const newFilter = {
 										...currentFilter,
@@ -263,6 +277,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										return item;
 									});
 								} else {
+									// in case of not an array make it one!
 									const newFilter = {
 										...currentFilter,
 										value: [currentFilter.value as string, value],
@@ -275,6 +290,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 									});
 								}
 							} else if (checked) {
+								// opposite of above!
 								if (isArray(currentFilter.value)) {
 									const newFilter = {
 										...currentFilter,
@@ -294,14 +310,50 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										});
 									}
 								} else {
-									query.filters.items = query.filters.items.filter((item) =>
-										isEqual(item.key, filter.attributeKey),
+									query.filters.items = query.filters.items.filter(
+										(item) => !isEqual(item.key, filter.attributeKey),
 									);
 								}
 							}
 							break;
 						case '=':
+							if (checked) {
+								const newFilter = {
+									...currentFilter,
+									op: getOperatorValue(OPERATORS.IN),
+									value: [currentFilter.value as string, value],
+								};
+								query.filters.items = query.filters.items.map((item) => {
+									if (isEqual(item.key, filter.attributeKey)) {
+										return newFilter;
+									}
+									return item;
+								});
+							} else if (!checked) {
+								query.filters.items = query.filters.items.filter(
+									(item) => !isEqual(item.key, filter.attributeKey),
+								);
+							}
+							break;
 						case '!=':
+							if (!checked) {
+								const newFilter = {
+									...currentFilter,
+									op: getOperatorValue(OPERATORS.NIN),
+									value: [currentFilter.value as string, value],
+								};
+								query.filters.items = query.filters.items.map((item) => {
+									if (isEqual(item.key, filter.attributeKey)) {
+										return newFilter;
+									}
+									return item;
+								});
+							} else if (checked) {
+								query.filters.items = query.filters.items.filter(
+									(item) => !isEqual(item.key, filter.attributeKey),
+								);
+							}
+							break;
 						default:
 							break;
 					}
@@ -379,6 +431,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 						<Input
 							placeholder="Filter values"
 							onChange={(e): void => setSearchText(e.target.value)}
+							disabled={isFilterDisabled}
 						/>
 					</section>
 					{attributeValues.length > 0 ? (
@@ -393,8 +446,16 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 									/>
 
 									<div
-										className="checkbox-value-section"
-										onClick={(): void => onChange(value, currentFilterState[value], true)}
+										className={cx(
+											'checkbox-value-section',
+											isFilterDisabled ? 'filter-disabled' : '',
+										)}
+										onClick={(): void => {
+											if (isFilterDisabled) {
+												return;
+											}
+											onChange(value, currentFilterState[value], true);
+										}}
 									>
 										{filter.customRendererForValue ? (
 											filter.customRendererForValue(value)

@@ -55,6 +55,24 @@
 				width: 100%;
 				cursor: pointer;
 
+				&.filter-disabled {
+					cursor: not-allowed;
+
+					.value-string {
+						color: var(--bg-slate-200);
+					}
+
+					.only-btn {
+						cursor: not-allowed;
+						color: var(--bg-slate-200);
+					}
+
+					.toggle-btn {
+						cursor: not-allowed;
+						color: var(--bg-slate-200);
+					}
+				}
+
 				.value-string {
 				}
 
