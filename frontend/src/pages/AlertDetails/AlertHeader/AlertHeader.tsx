@@ -1,5 +1,7 @@
 import './AlertHeader.styles.scss';
 
+import { useMemo } from 'react';
+
 import AlertActionButtons from './ActionButtons/ActionButtons';
 import AlertLabels from './AlertLabels/AlertLabels';
 import AlertSeverity from './AlertSeverity/AlertSeverity';
@@ -15,6 +17,14 @@ export type AlertHeaderProps = {
 };
 function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 	const { state, alert, id, labels } = alertDetails;
+
+	const labelsWithoutSeverity = useMemo(
+		() =>
+			Object.fromEntries(
+				Object.entries(labels).filter(([key]) => key !== 'severity'),
+			),
+		[labels],
+	);
 
 	return (
 		<div className="alert-info">
@@ -34,7 +44,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 						status="firing"
 						timestamp={dayjs().subtract(1, 'd').valueOf()}
 					/> */}
-					<AlertLabels labels={labels} />
+					<AlertLabels labels={labelsWithoutSeverity} />
 				</div>
 			</div>
 			<div className="alert-info__action-buttons">
