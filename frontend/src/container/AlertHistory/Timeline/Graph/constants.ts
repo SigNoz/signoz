@@ -2,6 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 
 export const ALERT_STATUS: { [key: string]: number } = {
 	firing: 0,
+	inactive: 0,
 	normal: 1,
 	'no-data': 2,
 	disabled: 3,
