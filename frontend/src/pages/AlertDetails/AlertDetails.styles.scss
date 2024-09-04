@@ -171,7 +171,7 @@
 		.ant-tabs {
 			&-nav {
 				&::before {
-					border-bottom: 1px solid var(--bg-vanilla-300) !important;
+					border: none !important;
 				}
 			}
 			&-tab {

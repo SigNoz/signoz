@@ -12,3 +12,11 @@
 		letter-spacing: -0.07px;
 	}
 }
+
+.lightMode {
+	.timeline {
+		&__title {
+			color: var(--text-ink-400);
+		}
+	}
+}
