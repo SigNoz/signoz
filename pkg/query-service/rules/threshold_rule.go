@@ -36,7 +36,7 @@ import (
 )
 
 type ThresholdRule struct {
-	BaseRule
+	*BaseRule
 	// Ever since we introduced the new metrics query builder, the version is "v4"
 	// for all the rules
 	// if the version is "v3", then we use the old querier
@@ -70,8 +70,7 @@ func NewThresholdRule(
 	}
 
 	t := ThresholdRule{
-		BaseRule: *baseRule,
-		// opts:           opts,
+		BaseRule:       baseRule,
 		version:        p.Version,
 		temporalityMap: make(map[string]map[v3.Temporality]bool),
 	}

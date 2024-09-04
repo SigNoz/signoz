@@ -20,7 +20,7 @@ import (
 )
 
 type PromRule struct {
-	BaseRule
+	*BaseRule
 	pqlEngine *pqle.PqlEngine
 }
 
@@ -39,7 +39,7 @@ func NewPromRule(
 	}
 
 	p := PromRule{
-		BaseRule: *baseRule,
+		BaseRule: baseRule,
 	}
 
 	query, err := p.getPqlQuery()
