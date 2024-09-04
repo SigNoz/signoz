@@ -63,6 +63,7 @@ function AlertActionButtons({
 				onClick: (): void => handleAlertDuplicate(),
 				style: menuItemStyle,
 			},
+			{ type: 'divider' },
 			{
 				key: 'delete-rule',
 				label: 'Delete',
