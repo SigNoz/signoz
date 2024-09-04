@@ -28,7 +28,7 @@ import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
 import { useCallback, useMemo, useState } from 'react';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { generatePath, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -382,6 +382,8 @@ export const useAlertRuleStatusToggle = ({
 	const [isAlertRuleEnabled, setIsAlertRuleEnabled] = useState(
 		isAlertRuleInitiallyEnabled,
 	);
+
+	const queryClient = useQueryClient();
 	const handleError = useAxiosError();
 
 	const { mutate: toggleAlertState } = useMutation(
@@ -395,6 +397,8 @@ export const useAlertRuleStatusToggle = ({
 				notifications.success({
 					message: `Alert has been ${!isAlertRuleEnabled ? 'enabled' : 'disabled'}.`,
 				});
+
+				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS]);
 			},
 			onError: (error) => {
 				setIsAlertRuleEnabled(isAlertRuleInitiallyEnabled);
