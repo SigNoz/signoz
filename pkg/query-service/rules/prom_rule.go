@@ -39,7 +39,8 @@ func NewPromRule(
 	}
 
 	p := PromRule{
-		BaseRule: baseRule,
+		BaseRule:  baseRule,
+		pqlEngine: pqlEngine,
 	}
 
 	query, err := p.getPqlQuery()
@@ -48,7 +49,7 @@ func NewPromRule(
 		// can not generate a valid prom QL query
 		return nil, err
 	}
-	zap.L().Info("creating new prom rule", zap.String("name", p.name), zap.String("condition", p.ruleCondition.String()), zap.String("query", query))
+	zap.L().Info("creating new prom rule", zap.String("name", p.name), zap.String("query", query))
 	return &p, nil
 }
 
