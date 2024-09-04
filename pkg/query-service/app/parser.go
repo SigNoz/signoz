@@ -846,29 +846,38 @@ func parseQBFilterSuggestionsRequest(r *http.Request) (
 		return nil, model.BadRequest(err)
 	}
 
-	parsePositiveIntQP := func(queryParam string, defaultValue uint64) (uint64, *model.ApiError) {
+	parsePositiveIntQP := func(
+		queryParam string, defaultValue uint64, maxValue uint64,
+	) (uint64, *model.ApiError) {
 		value := defaultValue
+
 		qpValue := r.URL.Query().Get(queryParam)
 		if len(qpValue) > 0 {
 			value, err := strconv.Atoi(qpValue)
-			if err != nil || value < 1 {
+
+			if err != nil || value < 1 || value > int(maxValue) {
 				return 0, model.BadRequest(fmt.Errorf(
 					"invalid %s: %s", queryParam, qpValue,
 				))
 			}
 		}
+
 		return value, nil
 	}
 
 	attributesLimit, err := parsePositiveIntQP(
-		"attributesLimit", baseconstants.DefaultFilterSuggestionsAttributesLimit,
+		"attributesLimit",
+		baseconstants.DefaultFilterSuggestionsAttributesLimit,
+		baseconstants.MaxFilterSuggestionsAttributesLimit,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	examplesLimit, err := parsePositiveIntQP(
-		"examplesLimit", baseconstants.DefaultFilterSuggestionsExamplesLimit,
+		"examplesLimit",
+		baseconstants.DefaultFilterSuggestionsExamplesLimit,
+		baseconstants.MaxFilterSuggestionsExamplesLimit,
 	)
 	if err != nil {
 		return nil, err

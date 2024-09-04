@@ -118,7 +118,8 @@ func TestLogsFilterSuggestionsWithExistingFilter(t *testing.T) {
 
 	tb.mockAttribKeysQueryResponse([]v3.AttributeKey{testAttrib, testFilterAttrib})
 	tb.mockAttribValuesQueryResponse(
-		[]v3.AttributeKey{testAttrib}, [][]string{{testAttribValue}},
+		[]v3.AttributeKey{testAttrib, testFilterAttrib},
+		[][]string{{testAttribValue}, {testFilterAttribValue}},
 	)
 
 	testFilterJson, err := json.Marshal(testFilter)

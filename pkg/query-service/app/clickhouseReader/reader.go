@@ -4458,32 +4458,29 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 		}
 	}
 
-	// Suggest example queries for top suggested attributes
-	if len(suggestions.AttributeKeys) > 0 {
-		exampleAttribs := []v3.AttributeKey{}
-		for _, attrib := range suggestions.AttributeKeys {
-			// only suggest examples for actual log attributes or resource attributes
-			isAttributeOrResource := slices.Contains([]v3.AttributeKeyType{
-				v3.AttributeKeyTypeResource, v3.AttributeKeyTypeTag,
-			}, attrib.Type)
+	// Suggest example queries for top suggested log attributes and resource attributes
+	exampleAttribs := []v3.AttributeKey{}
+	for _, attrib := range suggestions.AttributeKeys {
+		isAttributeOrResource := slices.Contains([]v3.AttributeKeyType{
+			v3.AttributeKeyTypeResource, v3.AttributeKeyTypeTag,
+		}, attrib.Type)
 
-			isNumOrStringType := slices.Contains([]v3.AttributeKeyDataType{
-				v3.AttributeKeyDataTypeInt64, v3.AttributeKeyDataTypeFloat64, v3.AttributeKeyDataTypeString,
-			}, attrib.DataType)
+		isNumOrStringType := slices.Contains([]v3.AttributeKeyDataType{
+			v3.AttributeKeyDataTypeInt64, v3.AttributeKeyDataTypeFloat64, v3.AttributeKeyDataTypeString,
+		}, attrib.DataType)
 
-			if isAttributeOrResource && isNumOrStringType {
-				exampleAttribs = append(exampleAttribs, attrib)
-			}
-
-			if len(exampleAttribs) >= int(req.ExamplesLimit) {
-				break
-			}
+		if isAttributeOrResource && isNumOrStringType {
+			exampleAttribs = append(exampleAttribs, attrib)
 		}
 
-		valuesToQueryPerAttrib := math.Ceil(float64(req.ExamplesLimit) / float64(len(exampleAttribs)))
+		if len(exampleAttribs) >= int(req.ExamplesLimit) {
+			break
+		}
+	}
 
+	if len(exampleAttribs) > 0 {
 		exampleAttribValues, err := r.getValuesForLogAttributes(
-			ctx, exampleAttribs, uint64(valuesToQueryPerAttrib),
+			ctx, exampleAttribs, req.ExamplesLimit,
 		)
 		if err != nil {
 			// Do not fail the entire request if only example query generation fails
@@ -4493,7 +4490,7 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 			// add example queries for as many attributes as possible.
 			// suggest 1st value for 1st attrib, followed by 1st value for second attrib and so on
 			// and if there is still room, suggest 2nd value for 1st attrib, 2nd value for 2nd attrib and so on
-			for valueIdx := 0; valueIdx < int(valuesToQueryPerAttrib); valueIdx++ {
+			for valueIdx := 0; valueIdx < int(req.ExamplesLimit); valueIdx++ {
 				for attrIdx, attr := range exampleAttribs {
 					needMoreExamples := len(suggestions.ExampleQueries) < int(req.ExamplesLimit)
 
@@ -4533,9 +4530,13 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 	return &suggestions, nil
 }
 
-func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attributes []v3.AttributeKey, limit uint64) (
-	[][]any, *model.ApiError,
-) {
+// Get up to `limit` values seen for each attribute in `attributes`
+// Returns a slice of slices where the ith slice has values for ith entry in `attributes`
+func (r *ClickHouseReader) getValuesForLogAttributes(
+	ctx context.Context, attributes []v3.AttributeKey, limit uint64,
+) ([][]any, *model.ApiError) {
+	// query top `limit` distinct values seen for `tagKey`s of interest
+	// ordered by timestamp when the value was seen
 	query := fmt.Sprintf(
 		`
 		select tagKey, stringTagValue, int64TagValue, float64TagValue
@@ -4579,19 +4580,20 @@ func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attrib
 
 	result := make([][]any, len(attributes))
 
-	// Helper for getting hold of the result to populate for each scanned row
-
+	// Helper for getting hold of the result slice to append to for each scanned row
 	resultIdxForAttrib := func(key string, dataType v3.AttributeKeyDataType) int {
 		return slices.IndexFunc(attributes, func(attrib v3.AttributeKey) bool {
 			return attrib.Key == key && attrib.DataType == dataType
 		})
 	}
 
-	var tagKey string
-	var stringValue string
-	var float64Value sql.NullFloat64
-	var int64Value sql.NullInt64
+	// Scan rows and append to result
 	for rows.Next() {
+		var tagKey string
+		var stringValue string
+		var float64Value sql.NullFloat64
+		var int64Value sql.NullInt64
+
 		err := rows.Scan(
 			&tagKey, &stringValue, &int64Value, &float64Value,
 		)
@@ -4602,16 +4604,17 @@ func (r *ClickHouseReader) getValuesForLogAttributes(ctx context.Context, attrib
 		}
 
 		if len(stringValue) > 0 {
-
 			attrResultIdx := resultIdxForAttrib(tagKey, v3.AttributeKeyDataTypeString)
 			if attrResultIdx >= 0 {
 				result[attrResultIdx] = append(result[attrResultIdx], stringValue)
 			}
+
 		} else if int64Value.Valid {
 			attrResultIdx := resultIdxForAttrib(tagKey, v3.AttributeKeyDataTypeInt64)
 			if attrResultIdx >= 0 {
 				result[attrResultIdx] = append(result[attrResultIdx], int64Value.Int64)
 			}
+
 		} else if float64Value.Valid {
 			attrResultIdx := resultIdxForAttrib(tagKey, v3.AttributeKeyDataTypeFloat64)
 			if attrResultIdx >= 0 {
