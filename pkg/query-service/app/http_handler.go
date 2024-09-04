@@ -23,6 +23,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 
+	"go.signoz.io/signoz/ee/query-service/anomaly"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
@@ -78,6 +79,7 @@ type APIHandler struct {
 	alertManager      am.Manager
 	ruleManager       *rules.Manager
 	featureFlags      interfaces.FeatureLookup
+	cache             cache.Cache
 	querier           interfaces.Querier
 	querierV2         interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
@@ -4076,7 +4078,37 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
+	anomalyQueryExists := false
+	anomalyQueryRangeParams := &v3.QueryRangeParamsV3{}
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.IsAnomaly {
+				anomalyQueryExists = true
+				anomalyQueryRangeParams = queryRangeParams.Clone()
+				break
+			}
+		}
+	}
+
 	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams, spanKeys)
+	if anomalyQueryExists {
+		anomalyProvider := anomaly.NewWeeklyProvider(
+			anomaly.WithCache[*anomaly.WeeklyProvider](aH.cache),
+			anomaly.WithKeyGenerator[*anomaly.WeeklyProvider](queryBuilder.NewKeyGenerator()),
+			anomaly.WithReader[*anomaly.WeeklyProvider](aH.reader),
+			anomaly.WithFeatureLookup[*anomaly.WeeklyProvider](aH.featureFlags),
+		)
+		anomalies, err := anomalyProvider.GetBaseSeasonalProvider().GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{
+			Params:      anomalyQueryRangeParams,
+			Seasonality: anomaly.SeasonalityWeekly,
+		})
+		if err != nil {
+			apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			RespondError(w, apiErrObj, errQuriesByName)
+			return
+		}
+		result = append(result, anomalies.Results...)
+	}
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
