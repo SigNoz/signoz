@@ -22,9 +22,8 @@ type Rule interface {
 
 	PreferredChannels() []string
 
-	Eval(context.Context, time.Time, *Queriers) (interface{}, error)
+	Eval(context.Context, time.Time) (interface{}, error)
 	String() string
-	// Query() string
 	SetLastError(error)
 	LastError() error
 	SetHealth(RuleHealth)

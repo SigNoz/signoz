@@ -21,6 +21,7 @@ import (
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
@@ -56,7 +57,7 @@ func prepareTaskName(ruleId interface{}) string {
 // ManagerOptions bundles options for the Manager.
 type ManagerOptions struct {
 	NotifierOpts am.NotifierOptions
-	Queriers     *Queriers
+	PqlEngine    *pqle.PqlEngine
 
 	// RepoURL is used to generate a backlink in sent alert messages
 	RepoURL string
@@ -127,11 +128,9 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		tr, err := NewThresholdRule(
 			ruleId,
 			opts.Rule,
-			ThresholdRuleOpts{
-				EvalDelay: opts.ManagerOpts.EvalDelay,
-			},
 			opts.FF,
 			opts.Reader,
+			WithEvalDelay(opts.ManagerOpts.EvalDelay),
 		)
 
 		if err != nil {
@@ -150,8 +149,8 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			ruleId,
 			opts.Rule,
 			opts.Logger,
-			PromRuleOpts{},
 			opts.Reader,
+			opts.ManagerOpts.PqlEngine,
 		)
 
 		if err != nil {
@@ -793,12 +792,10 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 		rule, err = NewThresholdRule(
 			alertname,
 			parsedRule,
-			ThresholdRuleOpts{
-				SendUnmatched: true,
-				SendAlways:    true,
-			},
 			m.featureFlags,
 			m.reader,
+			WithSendAlways(),
+			WithSendUnmatched(),
 		)
 
 		if err != nil {
@@ -813,10 +810,10 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 			alertname,
 			parsedRule,
 			m.logger,
-			PromRuleOpts{
-				SendAlways: true,
-			},
 			m.reader,
+			m.opts.PqlEngine,
+			WithSendAlways(),
+			WithSendUnmatched(),
 		)
 
 		if err != nil {
@@ -830,7 +827,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 	// set timestamp to current utc time
 	ts := time.Now().UTC()
 
-	count, err := rule.Eval(ctx, ts, m.opts.Queriers)
+	count, err := rule.Eval(ctx, ts)
 	if err != nil {
 		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
 		return 0, newApiErrorInternal(fmt.Errorf("rule evaluation failed"))
