@@ -350,9 +350,11 @@ export const useTimelineTable = ({
 	);
 
 	const offsetInt = parseInt(offset, 10);
+	const pageSize = params.get('pageSize') ?? String(TIMELINE_TABLE_PAGE_SIZE);
+	const pageSizeInt = parseInt(pageSize, 10);
 
 	const paginationConfig: TablePaginationConfig = {
-		pageSize: TIMELINE_TABLE_PAGE_SIZE,
+		pageSize: pageSizeInt,
 		showTotal: PaginationInfoText,
 		current: offsetInt / TIMELINE_TABLE_PAGE_SIZE + 1,
 		showSizeChanger: false,
