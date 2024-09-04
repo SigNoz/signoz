@@ -153,7 +153,12 @@ func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangePar
 //
 // The [End - fluxInterval, End] is always added to the list of misses, because
 // the data might still be in flux and not yet available in the database.
-func findMissingTimeRanges(start, end, step int64, seriesList []*v3.Series, fluxInterval time.Duration) (misses []missInterval) {
+//
+// replaceCacheData is used to indicate if the cache data should be replaced instead of merging
+// with the new data
+// TODO: Remove replaceCacheData with a better logic
+func findMissingTimeRanges(start, end, step int64, seriesList []*v3.Series, fluxInterval time.Duration) (misses []missInterval, replaceCacheData bool) {
+	replaceCacheData = false
 	var cachedStart, cachedEnd int64
 	for idx := range seriesList {
 		series := seriesList[idx]
@@ -168,6 +173,8 @@ func findMissingTimeRanges(start, end, step int64, seriesList []*v3.Series, flux
 		}
 	}
 
+	// time.Now is used because here we are considering the case where data might not
+	// be fully ingested for last (fluxInterval) minutes
 	endMillis := time.Now().UnixMilli()
 	adjustStep := int64(math.Min(float64(step), 60))
 	roundedMillis := endMillis - (endMillis % (adjustStep * 1000))
@@ -206,6 +213,7 @@ func findMissingTimeRanges(start, end, step int64, seriesList []*v3.Series, flux
 		// Case 5: Cached time range is a disjoint of the requested time range
 		// Add a miss for the entire requested time range
 		misses = append(misses, missInterval{start: start, end: end})
+		replaceCacheData = true
 	}
 
 	// remove the struts with start > end
@@ -216,16 +224,16 @@ func findMissingTimeRanges(start, end, step int64, seriesList []*v3.Series, flux
 			validMisses = append(validMisses, miss)
 		}
 	}
-	return validMisses
+	return validMisses, replaceCacheData
 }
 
 // findMissingTimeRanges finds the missing time ranges in the cached data
 // and returns them as a list of misses
-func (q *querier) findMissingTimeRanges(start, end, step int64, cachedData []byte) (misses []missInterval) {
+func (q *querier) findMissingTimeRanges(start, end, step int64, cachedData []byte) (misses []missInterval, replaceCachedData bool) {
 	var cachedSeriesList []*v3.Series
 	if err := json.Unmarshal(cachedData, &cachedSeriesList); err != nil {
 		// In case of error, we return the entire range as a miss
-		return []missInterval{{start: start, end: end}}
+		return []missInterval{{start: start, end: end}}, true
 	}
 	return findMissingTimeRanges(start, end, step, cachedSeriesList, q.fluxInterval)
 }
@@ -363,7 +371,7 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 					cachedData = data
 				}
 			}
-			misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
+			misses, replaceCachedData := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
 			missedSeries := make([]*v3.Series, 0)
 			cachedSeries := make([]*v3.Series, 0)
 			for _, miss := range misses {
@@ -380,7 +388,9 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 				zap.L().Error("error unmarshalling cached data", zap.Error(err))
 			}
 			mergedSeries := mergeSerieses(cachedSeries, missedSeries)
-
+			if replaceCachedData {
+				mergedSeries = missedSeries
+			}
 			channelResults <- channelResult{Err: nil, Name: queryName, Query: promQuery.Query, Series: mergedSeries}
 
 			// Cache the seriesList for future queries
