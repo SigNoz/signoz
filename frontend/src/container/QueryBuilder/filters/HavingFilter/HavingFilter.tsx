@@ -1,3 +1,4 @@
+import { Color } from '@signozhq/design-tokens';
 import { Select } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 // ** Constants
@@ -34,6 +35,7 @@ export function HavingFilter({
 	const [currentFormValue, setCurrentFormValue] = useState<HavingForm>(
 		initialHavingValues,
 	);
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
 	const { isMulti } = useTagValidation(
 		currentFormValue.op,
@@ -112,6 +114,7 @@ export function HavingFilter({
 			if (isValidSearch) {
 				setSearchText(currentSearch);
 			}
+			setErrorMessage(null);
 		},
 		[isMulti],
 	);
@@ -200,15 +203,22 @@ export function HavingFilter({
 
 	const handleBlur = useCallback((): void => {
 		if (searchText) {
-			const isValidSearch = isValidHavingValue(searchText);
-			if (isValidSearch) {
-				const updatedLocalValues = [...localValues, searchText];
-				setLocalValues(updatedLocalValues);
-				onChange(updatedLocalValues.map(transformFromStringToHaving));
+			const { columnName, op, value } = getHavingObject(searchText);
+			const isCompleteHavingClause =
+				columnName && op && value.every((v) => v !== '');
+
+			if (isCompleteHavingClause && isValidHavingValue(searchText)) {
+				setLocalValues((prev) => {
+					const updatedValues = [...prev, searchText];
+					onChange(updatedValues.map(transformFromStringToHaving));
+					return updatedValues;
+				});
 				setSearchText('');
+			} else {
+				setErrorMessage('Invalid HAVING clause');
 			}
 		}
-	}, [searchText, localValues, onChange]);
+	}, [searchText, onChange]);
 
 	useEffect(() => {
 		parseSearchText(searchText);
@@ -221,29 +231,35 @@ export function HavingFilter({
 	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
 
 	return (
-		<Select
-			getPopupContainer={popupContainer}
-			autoClearSearchValue={false}
-			mode="multiple"
-			onSearch={handleSearch}
-			searchValue={searchText}
-			tagRender={tagRender}
-			value={localValues}
-			data-testid="havingSelect"
-			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-			style={{ width: '100%' }}
-			notFoundContent={currentFormValue.value.length === 0 ? undefined : null}
-			placeholder="GroupBy(operation) > 5"
-			onDeselect={handleDeselect}
-			onChange={handleChange}
-			onSelect={handleSelect}
-			onBlur={handleBlur}
-		>
-			{options.map((opt) => (
-				<Select.Option key={opt.value} value={opt.value} title="havingOption">
-					{opt.label}
-				</Select.Option>
-			))}
-		</Select>
+		<>
+			<Select
+				getPopupContainer={popupContainer}
+				autoClearSearchValue={false}
+				mode="multiple"
+				onSearch={handleSearch}
+				searchValue={searchText}
+				tagRender={tagRender}
+				value={localValues}
+				data-testid="havingSelect"
+				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				style={{ width: '100%' }}
+				notFoundContent={currentFormValue.value.length === 0 ? undefined : null}
+				placeholder="GroupBy(operation) > 5"
+				onDeselect={handleDeselect}
+				onChange={handleChange}
+				onSelect={handleSelect}
+				onBlur={handleBlur}
+				status={errorMessage ? 'error' : undefined}
+			>
+				{options.map((opt) => (
+					<Select.Option key={opt.value} value={opt.value} title="havingOption">
+						{opt.label}
+					</Select.Option>
+				))}
+			</Select>
+			{errorMessage && (
+				<div style={{ color: Color.BG_CHERRY_500 }}>{errorMessage}</div>
+			)}
+		</>
 	);
 }
