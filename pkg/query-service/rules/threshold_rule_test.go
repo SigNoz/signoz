@@ -674,7 +674,7 @@ func TestNormalizeLabelName(t *testing.T) {
 func TestPrepareLinksToLogs(t *testing.T) {
 	postableRule := PostableRule{
 		AlertName:  "Tricky Condition Tests",
-		AlertType:  "LOGS_BASED_ALERT",
+		AlertType:  AlertTypeLogs,
 		RuleType:   RuleTypeThreshold,
 		EvalWindow: Duration(5 * time.Minute),
 		Frequency:  Duration(1 * time.Minute),

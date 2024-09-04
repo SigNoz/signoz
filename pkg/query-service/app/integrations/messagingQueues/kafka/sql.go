@@ -26,7 +26,6 @@ WITH consumer_query AS (
     GROUP BY serviceName
 )
 
--- Main query to select all metrics
 SELECT
     serviceName AS service_name,
     p99,
@@ -65,12 +64,34 @@ SELECT
     serviceName AS service_name,
     p99,
     COALESCE((error_count * 100.0) / total_count, 0) AS error_percentage,
-    COALESCE(total_count / %d, 0) AS rps  -- Convert nanoseconds to seconds
+    COALESCE(total_count / %d, 0) AS throughput  -- Convert nanoseconds to seconds
 FROM
     producer_query
 ORDER BY
     serviceName;
 
 `, start, end, queueType, topic, partition, timeRange)
+	return query
+}
+
+func generateNetworkLatencyThroughputSQL(start, end int64, consumerGroup, partitionID, queueType string) string {
+	timeRange := (end - start) / 1000000000
+	query := fmt.Sprintf(`
+SELECT
+    stringTagMap['messaging.client_id'] AS client_id,
+	stringTagMap['service.instance.id'] AS service_instance_id,
+    serviceName AS service_name,
+    count(*) / %d AS throughput
+FROM signoz_traces.distributed_signoz_index_v2
+WHERE
+    timestamp >= '%d'
+    AND timestamp <= '%d'
+    AND kind = 5
+    AND msgSystem = '%s' 
+    AND stringTagMap['messaging.kafka.consumer.group'] = '%s'
+    AND stringTagMap['messaging.destination.partition.id'] = '%s'
+GROUP BY service_name, client_id, service_instance_id
+ORDER BY throughput DESC
+`, timeRange, start, end, queueType, consumerGroup, partitionID)
 	return query
 }

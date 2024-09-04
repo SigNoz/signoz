@@ -10,6 +10,7 @@ import {
 	FileKey2,
 	Layers2,
 	LayoutGrid,
+	ListMinus,
 	MessageSquare,
 	Receipt,
 	Route,
@@ -85,6 +86,12 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.ALL_DASHBOARD,
 		label: 'Dashboards',
 		icon: <LayoutGrid size={16} />,
+	},
+	{
+		key: ROUTES.MESSAGING_QUEUES,
+		label: 'Messaging Queues',
+		icon: <ListMinus size={16} />,
+		isBeta: true,
 	},
 	{
 		key: ROUTES.LIST_ALL_ALERT,
