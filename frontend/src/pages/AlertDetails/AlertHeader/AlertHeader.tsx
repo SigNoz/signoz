@@ -1,7 +1,6 @@
 import './AlertHeader.styles.scss';
 
-import { useAlertRule } from 'providers/Alert';
-import { useEffect, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import AlertActionButtons from './ActionButtons/ActionButtons';
 import AlertLabels from './AlertLabels/AlertLabels';
@@ -28,13 +27,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 		[labels],
 	);
 
-	const { isAlertRuleDisabled, setIsAlertRuleDisabled } = useAlertRule();
-
-	useEffect(() => {
-		if (isAlertRuleDisabled === undefined) {
-			setIsAlertRuleDisabled(disabled);
-		}
-	}, [disabled, setIsAlertRuleDisabled, isAlertRuleDisabled]);
+	const [isAlertRuleDisabled, setIsAlertRuleDisabled] = useState(disabled);
 
 	return (
 		<div className="alert-info">
@@ -57,7 +50,12 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 				</div>
 			</div>
 			<div className="alert-info__action-buttons">
-				<AlertActionButtons alertDetails={alertDetails} ruleId={alertDetails.id} />
+				<AlertActionButtons
+					alertDetails={alertDetails}
+					ruleId={alertDetails.id}
+					isAlertRuleDisabled={isAlertRuleDisabled}
+					setIsAlertRuleDisabled={setIsAlertRuleDisabled}
+				/>
 			</div>
 		</div>
 	);

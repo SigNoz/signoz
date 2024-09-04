@@ -27,7 +27,6 @@ import { History, Table } from 'lucide-react';
 import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
-import { useAlertRule } from 'providers/Alert';
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -367,12 +366,15 @@ export const useTimelineTable = ({
 
 export const useAlertRuleStatusToggle = ({
 	ruleId,
+	isAlertRuleDisabled,
+	setIsAlertRuleDisabled,
 }: {
 	ruleId: string;
+	isAlertRuleDisabled: boolean;
+	setIsAlertRuleDisabled: React.Dispatch<React.SetStateAction<boolean>>;
 }): {
 	handleAlertStateToggle: (state: boolean) => void;
 } => {
-	const { isAlertRuleDisabled, setIsAlertRuleDisabled } = useAlertRule();
 	const { notifications } = useNotifications();
 
 	const queryClient = useQueryClient();
@@ -386,12 +388,13 @@ export const useAlertRuleStatusToggle = ({
 				setIsAlertRuleDisabled((prev) => !prev);
 			},
 			onSuccess: () => {
+				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				notifications.success({
 					message: `Alert has been ${isAlertRuleDisabled ? 'enabled' : 'disabled'}.`,
 				});
 			},
 			onError: (error) => {
-				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS]);
+				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				handleError(error);
 			},
 		},

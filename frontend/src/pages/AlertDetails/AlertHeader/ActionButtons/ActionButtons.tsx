@@ -14,7 +14,6 @@ import {
 	useAlertRuleStatusToggle,
 } from 'pages/AlertDetails/hooks';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
-import { useAlertRule } from 'providers/Alert';
 import React from 'react';
 import { CSSProperties } from 'styled-components';
 import { AlertDef } from 'types/api/alerts/def';
@@ -28,12 +27,19 @@ const menuItemStyle: CSSProperties = {
 function AlertActionButtons({
 	ruleId,
 	alertDetails,
+	isAlertRuleDisabled,
+	setIsAlertRuleDisabled,
 }: {
 	ruleId: string;
 	alertDetails: AlertHeaderProps['alertDetails'];
+	isAlertRuleDisabled: boolean;
+	setIsAlertRuleDisabled: React.Dispatch<React.SetStateAction<boolean>>;
 }): JSX.Element {
-	const { isAlertRuleDisabled } = useAlertRule();
-	const { handleAlertStateToggle } = useAlertRuleStatusToggle({ ruleId });
+	const { handleAlertStateToggle } = useAlertRuleStatusToggle({
+		ruleId,
+		isAlertRuleDisabled,
+		setIsAlertRuleDisabled,
+	});
 
 	const { handleAlertDuplicate } = useAlertRuleDuplicate({
 		alertDetails: (alertDetails as unknown) as AlertDef,
@@ -81,8 +87,8 @@ function AlertActionButtons({
 
 	return (
 		<div className="alert-action-buttons">
-			<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
-				{isAlertRuleDisabled !== undefined && (
+			<Tooltip title={alertDetails.disabled ? 'Enable alert' : 'Disable alert'}>
+				{alertDetails.disabled !== undefined && (
 					<Switch
 						size="small"
 						onChange={handleAlertStateToggle}
