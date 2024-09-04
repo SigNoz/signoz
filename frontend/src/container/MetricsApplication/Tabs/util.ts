@@ -49,6 +49,7 @@ export function onViewTracePopupClick({
 		const urlParams = new URLSearchParams(window.location.search);
 		urlParams.set(QueryParams.startTime, currentTime.toString());
 		urlParams.set(QueryParams.endTime, tPlusOne.toString());
+		urlParams.delete('relativeTime');
 		const avialableParams = routeConfig[ROUTES.TRACE];
 		const queryString = getQueryString(avialableParams, urlParams);
 

@@ -208,7 +208,7 @@ function Application(): JSX.Element {
 			const urlParams = new URLSearchParams(search);
 			urlParams.set(QueryParams.startTime, currentTime.toString());
 			urlParams.set(QueryParams.endTime, tPlusOne.toString());
-
+			urlParams.delete('relativeTime');
 			const avialableParams = routeConfig[ROUTES.TRACE];
 			const queryString = getQueryString(avialableParams, urlParams);
 
@@ -235,15 +235,15 @@ function Application(): JSX.Element {
 			{
 				id: uuid().slice(0, 8),
 				key: {
-					key: 'hasError',
-					dataType: DataTypes.bool,
-					type: 'tag',
+					key: 'severity_text',
+					dataType: DataTypes.String,
+					type: '',
 					isColumn: true,
 					isJSON: false,
-					id: 'hasError--bool--tag--true',
+					id: 'severity_text--string----true',
 				},
 				op: '=',
-				value: ['true'],
+				value: 'ERROR',
 			},
 		],
 	});
