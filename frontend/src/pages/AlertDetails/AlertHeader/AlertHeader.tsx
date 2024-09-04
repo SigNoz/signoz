@@ -1,5 +1,8 @@
 import './AlertHeader.styles.scss';
 
+import { useAlertRule } from 'providers/Alert';
+import { useEffect, useMemo } from 'react';
+
 import AlertActionButtons from './ActionButtons/ActionButtons';
 import AlertLabels from './AlertLabels/AlertLabels';
 import AlertSeverity from './AlertSeverity/AlertSeverity';
@@ -11,10 +14,27 @@ export type AlertHeaderProps = {
 		alert: string;
 		id: string;
 		labels: Record<string, string>;
+		disabled: boolean;
 	};
 };
 function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
-	const { state, alert, id, labels } = alertDetails;
+	const { state, alert, labels, disabled } = alertDetails;
+
+	const labelsWithoutSeverity = useMemo(
+		() =>
+			Object.fromEntries(
+				Object.entries(labels).filter(([key]) => key !== 'severity'),
+			),
+		[labels],
+	);
+
+	const { isAlertRuleDisabled, setIsAlertRuleDisabled } = useAlertRule();
+
+	useEffect(() => {
+		if (isAlertRuleDisabled === undefined) {
+			setIsAlertRuleDisabled(disabled);
+		}
+	}, [disabled, setIsAlertRuleDisabled, isAlertRuleDisabled]);
 
 	return (
 		<div className="alert-info">
@@ -23,7 +43,6 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 					<div className="alert-title-wrapper">
 						<AlertState state={state} />
 						<div className="alert-title">{alert}</div>
-						<div className="alert-id">{id}</div>
 					</div>
 				</div>
 				<div className="bottom-section">
@@ -34,15 +53,11 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 						status="firing"
 						timestamp={dayjs().subtract(1, 'd').valueOf()}
 					/> */}
-					<AlertLabels labels={labels} />
+					<AlertLabels labels={labelsWithoutSeverity} />
 				</div>
 			</div>
 			<div className="alert-info__action-buttons">
-				<AlertActionButtons
-					alertDetails={alertDetails}
-					ruleId={alertDetails.id}
-					state={state}
-				/>
+				<AlertActionButtons alertDetails={alertDetails} ruleId={alertDetails.id} />
 			</div>
 		</div>
 	);

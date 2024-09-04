@@ -21,19 +21,28 @@ function HorizontalTimelineGraph({
 	isDarkMode: boolean;
 	data: AlertRuleTimelineGraphResponse[];
 }): JSX.Element {
-	const transformedData: AlignedData = useMemo(
-		() =>
-			data?.length > 1
-				? [
-						data.map((item: AlertRuleTimelineGraphResponse) => item.start / 1000),
-						data.map(
-							(item: AlertRuleTimelineGraphResponse) => ALERT_STATUS[item.state],
-						),
-				  ]
-				: [[], []],
+	const transformedData: AlignedData = useMemo(() => {
+		if (!data?.length) {
+			return [[], []];
+		}
 
-		[data],
-	);
+		// add a first and last entry to make sure the graph displays all the data
+		const FIVE_MINUTES_IN_SECONDS = 300;
+
+		const timestamps = [
+			data[0].start / 1000 - FIVE_MINUTES_IN_SECONDS, // 5 minutes before the first entry
+			...data.map((item) => item.start / 1000),
+			data[data.length - 1].end / 1000, // end value of last entry
+		];
+
+		const states = [
+			ALERT_STATUS[data[0].state], // Same state as the first entry
+			...data.map((item) => ALERT_STATUS[item.state]),
+			ALERT_STATUS[data[data.length - 1].state], // Same state as the last entry
+		];
+
+		return [timestamps, states];
+	}, [data]);
 
 	const options: uPlot.Options = useMemo(
 		() => ({

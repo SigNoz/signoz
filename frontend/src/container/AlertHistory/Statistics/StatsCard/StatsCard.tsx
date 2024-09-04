@@ -1,12 +1,18 @@
 import './StatsCard.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
+import { Tooltip } from 'antd';
+import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ArrowDownLeft, ArrowUpRight, Calendar } from 'lucide-react';
 import { AlertRuleStats } from 'types/api/alerts/def';
 import { calculateChange } from 'utils/calculateChange';
 
 import StatsGraph from './StatsGraph/StatsGraph';
+import {
+	convertTimestampToLocaleDateString,
+	extractDayFromTimestamp,
+} from './utils';
 
 type ChangePercentageProps = {
 	percentage: number;
@@ -78,6 +84,25 @@ function StatsCard({
 		totalPastCount,
 	);
 
+	const startTime = urlQuery.get(QueryParams.startTime);
+	const endTime = urlQuery.get(QueryParams.endTime);
+
+	let displayTime = relativeTime;
+
+	if (!displayTime && startTime && endTime) {
+		const formattedStartDate = extractDayFromTimestamp(startTime);
+		const formattedEndDate = extractDayFromTimestamp(endTime);
+		displayTime = `${formattedStartDate} to ${formattedEndDate}`;
+	}
+
+	if (!displayTime) {
+		displayTime = '';
+	}
+	const formattedStartTimeForTooltip = convertTimestampToLocaleDateString(
+		startTime,
+	);
+	const formattedEndTimeForTooltip = convertTimestampToLocaleDateString(endTime);
+
 	return (
 		<div className={`stats-card ${isEmpty ? 'stats-card--empty' : ''}`}>
 			<div className="stats-card__title-wrapper">
@@ -86,7 +111,15 @@ function StatsCard({
 					<div className="icon">
 						<Calendar size={14} color={Color.BG_SLATE_200} />
 					</div>
-					<div className="text">{relativeTime}</div>
+					{relativeTime ? (
+						<div className="text">{displayTime}</div>
+					) : (
+						<Tooltip
+							title={`From ${formattedStartTimeForTooltip} to ${formattedEndTimeForTooltip}`}
+						>
+							<div className="text">{displayTime}</div>
+						</Tooltip>
+					)}
 				</div>
 			</div>
 
