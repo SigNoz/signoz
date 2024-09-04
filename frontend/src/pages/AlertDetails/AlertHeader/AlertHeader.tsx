@@ -41,7 +41,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 			<div className="alert-info__info-wrapper">
 				<div className="top-section">
 					<div className="alert-title-wrapper">
-						<AlertState state={state} />
+						<AlertState state={isAlertRuleDisabled ? 'disabled' : state} />
 						<div className="alert-title">{alert}</div>
 					</div>
 				</div>
