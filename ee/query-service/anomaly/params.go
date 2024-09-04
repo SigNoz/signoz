@@ -16,6 +16,15 @@ const (
 	SeasonalityWeekly Seasonality = "weekly"
 )
 
+func (s Seasonality) IsValid() bool {
+	switch s {
+	case SeasonalityHourly, SeasonalityDaily, SeasonalityWeekly:
+		return true
+	default:
+		return false
+	}
+}
+
 type GetAnomaliesRequest struct {
 	Params      *v3.QueryRangeParamsV3
 	Seasonality Seasonality
