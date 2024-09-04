@@ -19,7 +19,6 @@ function TimelineTable(): JSX.Element {
 		isValidRuleId,
 		ruleId,
 	} = useGetAlertRuleDetailsTimelineTable();
-	// { filters }
 
 	const { timelineData, totalItems } = useMemo(() => {
 		const response = data?.payload?.data;
