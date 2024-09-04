@@ -91,6 +91,7 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.MESSAGING_QUEUES,
 		label: 'Messaging Queues',
 		icon: <ListMinus size={16} />,
+		isBeta: true,
 	},
 	{
 		key: ROUTES.LIST_ALL_ALERT,

@@ -1,6 +1,7 @@
 import './MQTables.styles.scss';
 
 import { Skeleton, Table, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import axios from 'axios';
 import { isNumber } from 'chart.js/helpers';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
@@ -17,7 +18,7 @@ import {
 	RowData,
 	SelectedTimelineQuery,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useHistory } from 'react-router-dom';
 
@@ -169,11 +170,28 @@ function MessagingQueuesTable({
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => getConsumerDetails(props), [currentTab, props]);
 
-	const isEmptyDetails = (timelineQueryData: SelectedTimelineQuery): boolean =>
-		isEmpty(timelineQueryData) ||
-		(!timelineQueryData?.group &&
-			!timelineQueryData?.topic &&
-			!timelineQueryData?.partition);
+	const isLogEventCalled = useRef<boolean>(false);
+
+	const isEmptyDetails = (timelineQueryData: SelectedTimelineQuery): boolean => {
+		const isEmptyDetail =
+			isEmpty(timelineQueryData) ||
+			(!timelineQueryData?.group &&
+				!timelineQueryData?.topic &&
+				!timelineQueryData?.partition);
+
+		if (!isEmptyDetail && !isLogEventCalled.current) {
+			logEvent('Messaging Queues: More details viewed', {
+				'tab-option': ConsumerLagDetailTitle[currentTab],
+				variables: {
+					group: timelineQueryData?.group,
+					topic: timelineQueryData?.topic,
+					partition: timelineQueryData?.partition,
+				},
+			});
+			isLogEventCalled.current = true;
+		}
+		return isEmptyDetail;
+	};
 
 	return (
 		<div className="mq-tables-container">
