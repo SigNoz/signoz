@@ -626,7 +626,7 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		_, shoulAlert := rule.shouldAlert(c.values)
+		_, shoulAlert := rule.ShouldAlert(c.values)
 		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
 	}
 }
@@ -830,7 +830,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		sample, shoulAlert := rule.shouldAlert(c.values)
+		sample, shoulAlert := rule.ShouldAlert(c.values)
 		for name, value := range c.values.Labels {
 			assert.Equal(t, value, sample.Metric.Get(normalizeLabelName(name)))
 		}

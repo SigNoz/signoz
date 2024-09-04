@@ -608,7 +608,7 @@ func TestPromRuleShouldAlert(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		_, shoulAlert := rule.shouldAlert(toCommonSeries(c.values))
+		_, shoulAlert := rule.ShouldAlert(toCommonSeries(c.values))
 		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
 	}
 }

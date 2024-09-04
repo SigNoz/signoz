@@ -17,7 +17,7 @@ import (
 
 const (
 	// how long before re-sending the alert
-	resolvedRetention = 15 * time.Minute
+	ResolvedRetention = 15 * time.Minute
 
 	TestAlertPostFix = "_TEST_ALERT"
 )

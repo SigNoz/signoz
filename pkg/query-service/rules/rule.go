@@ -17,6 +17,9 @@ type Rule interface {
 	Labels() labels.BaseLabels
 	Annotations() labels.BaseLabels
 	Condition() *RuleCondition
+	EvalDelay() time.Duration
+	EvalWindow() time.Duration
+	HoldDuration() time.Duration
 	State() AlertState
 	ActiveAlerts() []*Alert
 

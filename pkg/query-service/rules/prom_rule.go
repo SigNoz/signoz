@@ -130,7 +130,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			continue
 		}
 
-		alertSmpl, shouldAlert := r.shouldAlert(toCommonSeries(series))
+		alertSmpl, shouldAlert := r.ShouldAlert(toCommonSeries(series))
 		if !shouldAlert {
 			continue
 		}
@@ -229,7 +229,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > resolvedRetention) {
+			if a.State == StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ResolvedRetention) {
 				delete(r.active, fp)
 			}
 			if a.State != StateInactive {
