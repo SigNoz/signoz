@@ -25,9 +25,9 @@ function PopoverContent({
 	const isDarkMode = useIsDarkMode();
 	return (
 		<div className="contributor-row-popover-buttons">
-			{!!relatedTracesLink && (
+			{!!relatedLogsLink && (
 				<Link
-					to={`${ROUTES.LOGS_EXPLORER}?${relatedTracesLink}`}
+					to={`${ROUTES.LOGS_EXPLORER}?${relatedLogsLink}`}
 					className="contributor-row-popover-buttons__button"
 				>
 					<div className="icon">
@@ -36,9 +36,9 @@ function PopoverContent({
 					<div className="text">View Logs</div>
 				</Link>
 			)}
-			{!!relatedLogsLink && (
+			{!!relatedTracesLink && (
 				<Link
-					to={`${ROUTES.TRACES_EXPLORER}?${relatedLogsLink}`}
+					to={`${ROUTES.TRACES_EXPLORER}?${relatedTracesLink}`}
 					className="contributor-row-popover-buttons__button"
 				>
 					<div className="icon">

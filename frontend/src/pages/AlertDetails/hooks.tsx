@@ -27,8 +27,9 @@ import { History, Table } from 'lucide-react';
 import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
-import { useCallback, useMemo, useState } from 'react';
-import { useMutation, useQuery } from 'react-query';
+import { useAlertRule } from 'providers/Alert';
+import { useCallback, useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { generatePath, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -42,7 +43,6 @@ import {
 	AlertRuleTopContributorsPayload,
 } from 'types/api/alerts/def';
 import { PayloadProps } from 'types/api/alerts/get';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { nanoToMilli } from 'utils/timeUtils';
 
@@ -251,17 +251,12 @@ type GetAlertRuleDetailsTimelineTableProps = GetAlertRuleDetailsApiProps & {
 		| undefined;
 };
 
-export const useGetAlertRuleDetailsTimelineTable = ({
-	filters,
-}: {
-	filters: TagFilter;
-}): GetAlertRuleDetailsTimelineTableProps => {
+export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimelineTableProps => {
 	const { ruleId, startTime, endTime, params } = useAlertHistoryQueryParams();
-
-	const { updatedOrder, getUpdatedOffset } = useMemo(
+	const { updatedOrder, offset } = useMemo(
 		() => ({
 			updatedOrder: params.get(urlKey.order) ?? OrderPreferenceItems.ASC,
-			getUpdatedOffset: params.get(urlKey.offset) ?? '0',
+			offset: parseInt(params.get(urlKey.offset) ?? '1', 10),
 		}),
 		[params],
 	);
@@ -279,8 +274,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 			endTime,
 			timelineFilter,
 			updatedOrder,
-			getUpdatedOffset,
-			JSON.stringify(filters.items),
+			offset,
 		],
 		{
 			queryFn: () =>
@@ -290,8 +284,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 					end: endTime,
 					limit: TIMELINE_TABLE_PAGE_SIZE,
 					order: updatedOrder,
-					offset: parseInt(getUpdatedOffset, 10),
-					filters,
+					offset,
 
 					...(timelineFilter && timelineFilter !== TimelineFilter.ALL
 						? {
@@ -327,7 +320,7 @@ export const useTimelineTable = ({
 
 	const params = useMemo(() => new URLSearchParams(search), [search]);
 
-	const updatedOffset = params.get(urlKey.offset) ?? '0';
+	const offset = params.get('offset') ?? '0';
 
 	const onChangeHandler: TableProps<AlertRuleTimelineTableResponse>['onChange'] = useCallback(
 		(
@@ -339,7 +332,7 @@ export const useTimelineTable = ({
 		) => {
 			if (!Array.isArray(sorter)) {
 				const { pageSize = 0, current = 0 } = pagination;
-				const { columnKey = '', order } = sorter;
+				const { order } = sorter;
 				const updatedOrder = order === 'ascend' ? 'asc' : 'desc';
 				const params = new URLSearchParams(window.location.search);
 
@@ -347,8 +340,7 @@ export const useTimelineTable = ({
 					`${pathname}?${createQueryParams({
 						...Object.fromEntries(params),
 						order: updatedOrder,
-						offset: current - 1,
-						orderParam: columnKey,
+						offset: current * TIMELINE_TABLE_PAGE_SIZE - TIMELINE_TABLE_PAGE_SIZE,
 						pageSize,
 					})}`,
 				);
@@ -357,10 +349,14 @@ export const useTimelineTable = ({
 		[pathname],
 	);
 
+	const offsetInt = parseInt(offset, 10);
+	const pageSize = params.get('pageSize') ?? String(TIMELINE_TABLE_PAGE_SIZE);
+	const pageSizeInt = parseInt(pageSize, 10);
+
 	const paginationConfig: TablePaginationConfig = {
-		pageSize: TIMELINE_TABLE_PAGE_SIZE,
+		pageSize: pageSizeInt,
 		showTotal: PaginationInfoText,
-		current: parseInt(updatedOffset, 10) + 1,
+		current: offsetInt / TIMELINE_TABLE_PAGE_SIZE + 1,
 		showSizeChanger: false,
 		hideOnSinglePage: true,
 		total: totalItems,
@@ -370,20 +366,16 @@ export const useTimelineTable = ({
 };
 
 export const useAlertRuleStatusToggle = ({
-	state,
 	ruleId,
 }: {
-	state: string;
 	ruleId: string;
 }): {
 	handleAlertStateToggle: (state: boolean) => void;
-	isAlertRuleEnabled: boolean;
 } => {
+	const { isAlertRuleDisabled, setIsAlertRuleDisabled } = useAlertRule();
 	const { notifications } = useNotifications();
-	const isAlertRuleInitiallyEnabled = state !== 'disabled';
-	const [isAlertRuleEnabled, setIsAlertRuleEnabled] = useState(
-		isAlertRuleInitiallyEnabled,
-	);
+
+	const queryClient = useQueryClient();
 	const handleError = useAxiosError();
 
 	const { mutate: toggleAlertState } = useMutation(
@@ -391,26 +383,29 @@ export const useAlertRuleStatusToggle = ({
 		patchAlert,
 		{
 			onMutate: () => {
-				setIsAlertRuleEnabled((prev) => !prev);
+				setIsAlertRuleDisabled((prev) => !prev);
 			},
 			onSuccess: () => {
 				notifications.success({
-					message: `Alert has been turned ${!isAlertRuleEnabled ? 'on' : 'off'}.`,
+					message: `Alert has been ${isAlertRuleDisabled ? 'enabled' : 'disabled'}.`,
 				});
 			},
 			onError: (error) => {
-				setIsAlertRuleEnabled(isAlertRuleInitiallyEnabled);
+				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS]);
 				handleError(error);
 			},
 		},
 	);
 
-	const handleAlertStateToggle = (state: boolean): void => {
-		const args = { id: parseInt(ruleId, 10), data: { disabled: !state } };
+	const handleAlertStateToggle = (): void => {
+		const args = {
+			id: parseInt(ruleId, 10),
+			data: { disabled: !isAlertRuleDisabled },
+		};
 		toggleAlertState(args);
 	};
 
-	return { handleAlertStateToggle, isAlertRuleEnabled };
+	return { handleAlertStateToggle };
 };
 
 export const useAlertRuleDuplicate = ({

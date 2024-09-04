@@ -66,7 +66,7 @@ function DateTimeSelection({
 	globalTimeLoading,
 	showResetButton = false,
 	showOldExplorerCTA = false,
-	defaultRelativeTime = RelativeTimeMap['30min'] as Time,
+	defaultRelativeTime = RelativeTimeMap['6hr'] as Time,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
@@ -469,6 +469,22 @@ function DateTimeSelection({
 		}
 
 		const currentRoute = location.pathname;
+
+		// set the default relative time for alert history and overview pages if relative time is not specified
+		if (
+			(!urlQuery.has(QueryParams.startTime) ||
+				!urlQuery.has(QueryParams.endTime)) &&
+			!urlQuery.has(QueryParams.relativeTime) &&
+			(currentRoute === ROUTES.ALERT_OVERVIEW ||
+				currentRoute === ROUTES.ALERT_HISTORY)
+		) {
+			updateTimeInterval(defaultRelativeTime);
+			urlQuery.set(QueryParams.relativeTime, defaultRelativeTime);
+			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			history.replace(generatedUrl);
+			return;
+		}
+
 		const time = getDefaultTime(currentRoute);
 
 		const currentOptions = getOptions(currentRoute);
@@ -710,7 +726,7 @@ DateTimeSelection.defaultProps = {
 	hideShareModal: false,
 	showOldExplorerCTA: false,
 	showResetButton: false,
-	defaultRelativeTime: RelativeTimeMap['30min'] as Time,
+	defaultRelativeTime: RelativeTimeMap['6hr'] as Time,
 };
 interface DispatchProps {
 	updateTimeInterval: (
