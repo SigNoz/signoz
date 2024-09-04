@@ -7,16 +7,8 @@ import (
 	pql "github.com/prometheus/prometheus/promql"
 	"github.com/stretchr/testify/assert"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.uber.org/zap"
 )
-
-type testLogger struct {
-	t *testing.T
-}
-
-func (l testLogger) Log(args ...interface{}) error {
-	l.t.Log(args...)
-	return nil
-}
 
 func TestPromRuleShouldAlert(t *testing.T) {
 	postableRule := PostableRule{
@@ -611,7 +603,7 @@ func TestPromRuleShouldAlert(t *testing.T) {
 		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewPromRule("69", &postableRule, testLogger{t}, PromRuleOpts{}, nil)
+		rule, err := NewPromRule("69", &postableRule, zap.NewNop(), PromRuleOpts{}, nil)
 		if err != nil {
 			assert.NoError(t, err)
 		}
