@@ -1,5 +1,6 @@
 .logs-module-page {
 	display: flex;
+	height: 100%;
 	.log-quick-filter-left-section {
 		width: 0%;
 		flex-shrink: 0;
@@ -22,11 +23,11 @@
 
 	&.filter-visible {
 		.log-quick-filter-left-section {
-			width: 20%;
+			width: 260px;
 		}
 
 		.log-module-right-section {
-			width: 80%;
+			width: calc(100% - 260px);
 		}
 	}
 }

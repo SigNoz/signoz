@@ -26,18 +26,42 @@
 				letter-spacing: -0.07px;
 			}
 
-			.sync-icon {
-				background-color: var(--bg-ink-500);
-				border: 0;
-				box-shadow: none;
-				padding: 8px;
-				margin-left: 2px;
+			.sync-tag {
+				display: flex;
+				padding: 5px 9px;
+				flex-direction: column;
+				justify-content: center;
+				align-items: center;
+				gap: 10px;
+				border-radius: 2px;
+				border: 1px solid rgba(78, 116, 248, 0.2);
+				background: rgba(78, 116, 248, 0.1);
+				color: var(--bg-robin-500);
+				font-family: 'Geist Mono';
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 18px; /* 128.571% */
+				text-transform: uppercase;
 			}
 		}
 
 		.right-actions {
 			display: flex;
 			align-items: center;
+			gap: 12px;
+
+			.divider-filter {
+				width: 1px;
+				height: 14px;
+				background: #161922;
+			}
+
+			.sync-icon {
+				background-color: var(--bg-ink-500);
+				border: 0;
+				box-shadow: none;
+			}
 		}
 	}
 }

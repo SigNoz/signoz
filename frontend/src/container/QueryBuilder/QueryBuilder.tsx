@@ -1,17 +1,20 @@
 import './QueryBuilder.styles.scss';
 
 import { Button, Col, Divider, Row, Tooltip, Typography } from 'antd';
+import cx from 'classnames';
 import {
 	MAX_FORMULAS,
 	MAX_QUERIES,
 	OPERATORS,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DatabaseZap, Sigma } from 'lucide-react';
 // ** Constants
 import { memo, useEffect, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { DataSource } from 'types/common/queryBuilder';
 
 // ** Components
@@ -36,6 +39,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 		panelType,
 		initialDataSource,
 		setLastUsedQuery,
+		lastUsedQuery,
 	} = useQueryBuilder();
 
 	const containerRef = useRef(null);
@@ -46,6 +50,10 @@ export const QueryBuilder = memo(function QueryBuilder({
 			null,
 		[config],
 	);
+
+	const { pathname } = useLocation();
+
+	const isLogsExplorerPage = pathname === ROUTES.LOGS_EXPLORER;
 
 	useEffect(() => {
 		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
@@ -267,10 +275,13 @@ export const QueryBuilder = memo(function QueryBuilder({
 
 			{!isListViewPanel && (
 				<Col span={1} className="query-builder-mini-map">
-					{currentQuery.builder.queryData.map((query) => (
+					{currentQuery.builder.queryData.map((query, index) => (
 						<Button
 							disabled={isDisabledQueryButton}
-							className="query-btn"
+							className={cx(
+								'query-btn',
+								isLogsExplorerPage && lastUsedQuery === index ? 'sync-btn' : '',
+							)}
 							key={query.queryName}
 							onClick={(): void => handleScrollIntoView('query', query.queryName)}
 						>

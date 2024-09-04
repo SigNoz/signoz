@@ -4,6 +4,7 @@ import styled from 'styled-components';
 
 export const WrapperStyled = styled.div`
 	display: flex;
+	height: 100%;
 	flex-direction: column;
 	flex: 1;
 	color: ${themeColors.lightWhite};

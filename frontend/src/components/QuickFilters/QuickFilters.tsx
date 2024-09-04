@@ -5,7 +5,7 @@ import {
 	SyncOutlined,
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
-import { Tag, Tooltip, Typography } from 'antd';
+import { Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -88,15 +88,16 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 			<section className="header">
 				<section className="left-actions">
 					<FilterOutlined />
-					<Typography.Text className="text">Filters</Typography.Text>
-					<Tooltip title="Reset All">
-						<SyncOutlined className="sync-icon" onClick={handleReset} />
-					</Tooltip>
+					<Typography.Text className="text">Filters for</Typography.Text>
 					<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
-						<Tag color="blue">Sync : {lastQueryName}</Tag>
+						<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
 					</Tooltip>
 				</section>
 				<section className="right-actions">
+					<Tooltip title="Reset All">
+						<SyncOutlined className="sync-icon" onClick={handleReset} />
+					</Tooltip>
+					<div className="divider-filter" />
 					<Tooltip title="Collapse Filters">
 						<VerticalAlignTopOutlined
 							rotate={270}
