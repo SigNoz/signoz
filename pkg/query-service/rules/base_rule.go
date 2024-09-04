@@ -70,9 +70,6 @@ type BaseRule struct {
 	// sendAlways will send alert irresepective of resendDelay
 	// or other params
 	sendAlways bool
-
-	// withEvalDelay sets the evalDelay for the rule
-	withEvalDelay time.Duration
 }
 
 type RuleOption func(*BaseRule)
@@ -91,7 +88,7 @@ func WithSendUnmatched() RuleOption {
 
 func WithEvalDelay(dur time.Duration) RuleOption {
 	return func(r *BaseRule) {
-		r.withEvalDelay = dur
+		r.evalDelay = dur
 	}
 }
 
