@@ -191,6 +191,38 @@ func TestPromRuleShouldAlert(t *testing.T) {
 		{
 			values: pql.Series{
 				Floats: []pql.FPoint{
+					{F: 11.0},
+					{F: 4.0},
+					{F: 3.0},
+					{F: 7.0},
+					{F: 12.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "1", // Above
+			matchType:           "2", // Always
+			target:              2.0,
+			expectedAlertSample: v3.Point{Value: 3.0},
+		},
+		{
+			values: pql.Series{
+				Floats: []pql.FPoint{
+					{F: 11.0},
+					{F: 4.0},
+					{F: 3.0},
+					{F: 7.0},
+					{F: 12.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Below
+			matchType:           "2", // Always
+			target:              13.0,
+			expectedAlertSample: v3.Point{Value: 12.0},
+		},
+		{
+			values: pql.Series{
+				Floats: []pql.FPoint{
 					{F: 10.0},
 					{F: 4.0},
 					{F: 6.0},

@@ -527,6 +527,38 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 		{
 			values: v3.Series{
 				Points: []v3.Point{
+					{Value: 11.0},
+					{Value: 4.0},
+					{Value: 3.0},
+					{Value: 7.0},
+					{Value: 12.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "1", // Above
+			matchType:           "2", // Always
+			target:              2.0,
+			expectedAlertSample: v3.Point{Value: 3.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 11.0},
+					{Value: 4.0},
+					{Value: 3.0},
+					{Value: 7.0},
+					{Value: 12.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Below
+			matchType:           "2", // Always
+			target:              13.0,
+			expectedAlertSample: v3.Point{Value: 12.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
 					{Value: 10.0},
 					{Value: 4.0},
 					{Value: 6.0},
