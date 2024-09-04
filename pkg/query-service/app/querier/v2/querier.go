@@ -153,6 +153,10 @@ func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangePar
 //
 // The [End - fluxInterval, End] is always added to the list of misses, because
 // the data might still be in flux and not yet available in the database.
+//
+// replaceCacheData is used to indicate if the cache data should be replaced instead of merging
+// with the new data
+// TODO: Remove replaceCacheData with a better logic
 func findMissingTimeRanges(start, end, step int64, seriesList []*v3.Series, fluxInterval time.Duration) (misses []missInterval, replaceCacheData bool) {
 	replaceCacheData = false
 	var cachedStart, cachedEnd int64
