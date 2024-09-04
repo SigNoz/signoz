@@ -472,6 +472,8 @@ function DateTimeSelection({
 
 		// set the default relative time for alert history and overview pages if relative time is not specified
 		if (
+			(!urlQuery.has(QueryParams.startTime) ||
+				!urlQuery.has(QueryParams.endTime)) &&
 			!urlQuery.has(QueryParams.relativeTime) &&
 			(currentRoute === ROUTES.ALERT_OVERVIEW ||
 				currentRoute === ROUTES.ALERT_HISTORY)
