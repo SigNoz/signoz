@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
+import { convertMetricKeyToTrace } from 'hooks/useResourceAttribute/utils';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import {
 	BaseAutocompleteData,
@@ -8,10 +9,14 @@ import {
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-export const AllTraceFilterKeyValue = {
+const RESOURCE_DEPLOYMENT_ENVIRONMENT = convertMetricKeyToTrace(
+	'resource_deployment_environment',
+);
+export const AllTraceFilterKeyValue: Record<string, string> = {
 	durationNanoMin: 'Duration',
 	durationNano: 'Duration',
 	durationNanoMax: 'Duration',
+	[RESOURCE_DEPLOYMENT_ENVIRONMENT]: 'Environment',
 	hasError: 'Status',
 	serviceName: 'Service Name',
 	name: 'Operation / Name',
@@ -22,7 +27,7 @@ export const AllTraceFilterKeyValue = {
 	httpRoute: 'HTTP Route',
 	httpUrl: 'HTTP URL',
 	traceID: 'Trace ID',
-};
+} as const;
 
 export type AllTraceFilterKeys = keyof typeof AllTraceFilterKeyValue;
 
@@ -64,7 +69,7 @@ export const addFilter = (
 			| undefined
 		>
 	>,
-	keys?: BaseAutocompleteData,
+	keys: BaseAutocompleteData,
 ): void => {
 	setSelectedFilters((prevFilters) => {
 		const isDuration = [
@@ -122,7 +127,7 @@ export const removeFilter = (
 			| undefined
 		>
 	>,
-	keys?: BaseAutocompleteData,
+	keys: BaseAutocompleteData,
 ): void => {
 	setSelectedFilters((prevFilters) => {
 		if (!prevFilters || !prevFilters[filterType]?.values.length) {
@@ -201,6 +206,15 @@ export const traceFilterKeys: Record<
 		isColumn: true,
 		isJSON: false,
 		id: 'serviceName--string--tag--true',
+	},
+
+	[RESOURCE_DEPLOYMENT_ENVIRONMENT]: {
+		key: RESOURCE_DEPLOYMENT_ENVIRONMENT,
+		dataType: DataTypes.String,
+		type: 'resource',
+		isColumn: false,
+		isJSON: false,
+		id: `${RESOURCE_DEPLOYMENT_ENVIRONMENT}--string--resource--false`,
 	},
 	name: {
 		key: 'name',
@@ -282,7 +296,7 @@ export const traceFilterKeys: Record<
 		isJSON: false,
 		id: 'durationNanoMax--float64--tag--true',
 	},
-};
+} as const;
 
 interface AggregateValuesProps {
 	value: AllTraceFilterKeys;
