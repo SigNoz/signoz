@@ -114,7 +114,6 @@ export function HavingFilter({
 			if (isValidSearch) {
 				setSearchText(currentSearch);
 			}
-			setErrorMessage(null);
 		},
 		[isMulti],
 	);
@@ -201,6 +200,10 @@ export function HavingFilter({
 		resetChanges();
 	};
 
+	const handleFocus = useCallback(() => {
+		setErrorMessage(null);
+	}, []);
+
 	const handleBlur = useCallback((): void => {
 		if (searchText) {
 			const { columnName, op, value } = getHavingObject(searchText);
@@ -248,6 +251,7 @@ export function HavingFilter({
 				onDeselect={handleDeselect}
 				onChange={handleChange}
 				onSelect={handleSelect}
+				onFocus={handleFocus}
 				onBlur={handleBlur}
 				status={errorMessage ? 'error' : undefined}
 			>
