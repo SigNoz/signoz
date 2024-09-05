@@ -106,11 +106,33 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 		return nil, err
 	}
 
+	past2SeasonResults, _, err := p.querierV2.QueryRange(ctx, params.Past2SeasonQuery, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	past2SeasonResults, err = postprocess.PostProcessResult(past2SeasonResults, params.Past2SeasonQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	past3SeasonResults, _, err := p.querierV2.QueryRange(ctx, params.Past3SeasonQuery, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	past3SeasonResults, err = postprocess.PostProcessResult(past3SeasonResults, params.Past3SeasonQuery)
+	if err != nil {
+		return nil, err
+	}
+
 	return &anomalyQueryResults{
 		CurrentPeriodResults: currentPeriodResults,
 		PastPeriodResults:    pastPeriodResults,
 		CurrentSeasonResults: currentSeasonResults,
 		PastSeasonResults:    pastSeasonResults,
+		Past2SeasonResults:   past2SeasonResults,
+		Past3SeasonResults:   past3SeasonResults,
 	}, nil
 }
 
@@ -155,7 +177,11 @@ func (p *BaseSeasonalProvider) getMovingAvg(series *v3.Series, windowSize, start
 	return avg
 }
 
-func (p *BaseSeasonalProvider) getPredictedSeries(series, prevSeries, currentSeasonSeries, pastSeasonSeries *v3.Series) *v3.Series {
+func (p *BaseSeasonalProvider) getMean(past, past2, past3 float64) float64 {
+	return (past + past2 + past3) / 3
+}
+
+func (p *BaseSeasonalProvider) getPredictedSeries(series, prevSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries *v3.Series) *v3.Series {
 	predictedSeries := &v3.Series{
 		Labels:      series.Labels,
 		LabelsArray: series.LabelsArray,
@@ -163,7 +189,7 @@ func (p *BaseSeasonalProvider) getPredictedSeries(series, prevSeries, currentSea
 	}
 
 	for idx, curr := range series.Points {
-		predictedValue := p.getMovingAvg(prevSeries, windowSize, idx) + p.getAvg(currentSeasonSeries) - p.getAvg(pastSeasonSeries)
+		predictedValue := p.getMovingAvg(prevSeries, windowSize, idx) + p.getAvg(currentSeasonSeries) - p.getMean(p.getAvg(pastSeasonSeries), p.getAvg(past2SeasonSeries), p.getAvg(past3SeasonSeries))
 		predictedSeries.Points = append(predictedSeries.Points, v3.Point{
 			Timestamp: curr.Timestamp,
 			Value:     predictedValue,
@@ -173,7 +199,7 @@ func (p *BaseSeasonalProvider) getPredictedSeries(series, prevSeries, currentSea
 	return predictedSeries
 }
 
-func (p *BaseSeasonalProvider) getBounds(series, prevSeries, currentSeasonSeries, pastSeasonSeries *v3.Series, zScoreThreshold float64) (*v3.Series, *v3.Series) {
+func (p *BaseSeasonalProvider) getBounds(series, prevSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries *v3.Series, zScoreThreshold float64) (*v3.Series, *v3.Series) {
 	upperBoundSeries := &v3.Series{
 		Labels:      series.Labels,
 		LabelsArray: series.LabelsArray,
@@ -202,33 +228,29 @@ func (p *BaseSeasonalProvider) getBounds(series, prevSeries, currentSeasonSeries
 	return upperBoundSeries, lowerBoundSeries
 }
 
-func (p *BaseSeasonalProvider) getExpectedValue(_, prevSeries, currentSeasonSeries, pastSeasonSeries *v3.Series) float64 {
-	prevSeriesAvg := p.getAvg(prevSeries)
+func (p *BaseSeasonalProvider) getExpectedValue(_, prevSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries *v3.Series, idx int) float64 {
+	prevSeriesAvg := p.getMovingAvg(prevSeries, windowSize, idx)
 	currentSeasonSeriesAvg := p.getAvg(currentSeasonSeries)
 	pastSeasonSeriesAvg := p.getAvg(pastSeasonSeries)
-	zap.L().Debug("getExpectedValue",
-		zap.Float64("prevSeriesAvg", prevSeriesAvg),
-		zap.Float64("currentSeasonSeriesAvg", currentSeasonSeriesAvg),
-		zap.Float64("pastSeasonSeriesAvg", pastSeasonSeriesAvg),
-		zap.Float64("expectedValue", prevSeriesAvg+currentSeasonSeriesAvg-pastSeasonSeriesAvg),
-	)
-	return prevSeriesAvg + currentSeasonSeriesAvg - pastSeasonSeriesAvg
+	past2SeasonSeriesAvg := p.getAvg(past2SeasonSeries)
+	past3SeasonSeriesAvg := p.getAvg(past3SeasonSeries)
+	return prevSeriesAvg + currentSeasonSeriesAvg - p.getMean(pastSeasonSeriesAvg, past2SeasonSeriesAvg, past3SeasonSeriesAvg)
 }
 
-func (p *BaseSeasonalProvider) getScore(series, prevSeries, weekSeries, weekPrevSeries *v3.Series, value float64) float64 {
-	expectedValue := p.getExpectedValue(series, prevSeries, weekSeries, weekPrevSeries)
+func (p *BaseSeasonalProvider) getScore(series, prevSeries, weekSeries, weekPrevSeries, past2SeasonSeries, past3SeasonSeries *v3.Series, value float64, idx int) float64 {
+	expectedValue := p.getExpectedValue(series, prevSeries, weekSeries, weekPrevSeries, past2SeasonSeries, past3SeasonSeries, idx)
 	return (value - expectedValue) / p.getStdDev(weekSeries)
 }
 
-func (p *BaseSeasonalProvider) getAnomalyScores(series, prevSeries, currentSeasonSeries, pastSeasonSeries *v3.Series) *v3.Series {
+func (p *BaseSeasonalProvider) getAnomalyScores(series, prevSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries *v3.Series) *v3.Series {
 	anomalyScoreSeries := &v3.Series{
 		Labels:      series.Labels,
 		LabelsArray: series.LabelsArray,
 		Points:      []v3.Point{},
 	}
 
-	for _, curr := range series.Points {
-		anomalyScore := p.getScore(series, prevSeries, currentSeasonSeries, pastSeasonSeries, curr.Value)
+	for idx, curr := range series.Points {
+		anomalyScore := p.getScore(series, prevSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries, curr.Value, idx)
 		anomalyScoreSeries.Points = append(anomalyScoreSeries.Points, v3.Point{
 			Timestamp: curr.Timestamp,
 			Value:     anomalyScore,
@@ -265,6 +287,16 @@ func (p *BaseSeasonalProvider) GetAnomalies(ctx context.Context, req *GetAnomali
 		pastSeasonResultsMap[result.QueryName] = result
 	}
 
+	past2SeasonResultsMap := make(map[string]*v3.Result)
+	for _, result := range anomalyQueryResults.Past2SeasonResults {
+		past2SeasonResultsMap[result.QueryName] = result
+	}
+
+	past3SeasonResultsMap := make(map[string]*v3.Result)
+	for _, result := range anomalyQueryResults.Past3SeasonResults {
+		past3SeasonResultsMap[result.QueryName] = result
+	}
+
 	for _, result := range currentPeriodResultsMap {
 		funcs := req.Params.CompositeQuery.BuilderQueries[result.QueryName].Functions
 
@@ -293,20 +325,40 @@ func (p *BaseSeasonalProvider) GetAnomalies(ctx context.Context, req *GetAnomali
 		if !ok {
 			continue
 		}
+		past2SeasonResult, ok := past2SeasonResultsMap[result.QueryName]
+		if !ok {
+			continue
+		}
+		past3SeasonResult, ok := past3SeasonResultsMap[result.QueryName]
+		if !ok {
+			continue
+		}
 
 		for _, series := range result.Series {
+			stdDev := p.getStdDev(series)
+			zap.L().Info("stdDev", zap.Float64("stdDev", stdDev), zap.Any("labels", series.Labels))
+
 			pastPeriodSeries := p.getMatchingSeries(pastPeriodResult, series)
 			currentSeasonSeries := p.getMatchingSeries(currentSeasonResult, series)
 			pastSeasonSeries := p.getMatchingSeries(pastSeasonResult, series)
+			past2SeasonSeries := p.getMatchingSeries(past2SeasonResult, series)
+			past3SeasonSeries := p.getMatchingSeries(past3SeasonResult, series)
 
-			predictedSeries := p.getPredictedSeries(series, pastPeriodSeries, currentSeasonSeries, pastSeasonSeries)
+			prevSeriesAvg := p.getAvg(pastPeriodSeries)
+			currentSeasonSeriesAvg := p.getAvg(currentSeasonSeries)
+			pastSeasonSeriesAvg := p.getAvg(pastSeasonSeries)
+			past2SeasonSeriesAvg := p.getAvg(past2SeasonSeries)
+			past3SeasonSeriesAvg := p.getAvg(past3SeasonSeries)
+			zap.L().Info("getAvg", zap.Float64("prevSeriesAvg", prevSeriesAvg), zap.Float64("currentSeasonSeriesAvg", currentSeasonSeriesAvg), zap.Float64("pastSeasonSeriesAvg", pastSeasonSeriesAvg), zap.Float64("past2SeasonSeriesAvg", past2SeasonSeriesAvg), zap.Float64("past3SeasonSeriesAvg", past3SeasonSeriesAvg), zap.Any("labels", series.Labels))
+
+			predictedSeries := p.getPredictedSeries(series, pastPeriodSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries)
 			result.PredictedSeries = append(result.PredictedSeries, predictedSeries)
 
-			upperBoundSeries, lowerBoundSeries := p.getBounds(series, pastPeriodSeries, currentSeasonSeries, pastSeasonSeries, zScoreThreshold)
+			upperBoundSeries, lowerBoundSeries := p.getBounds(series, pastPeriodSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries, zScoreThreshold)
 			result.UpperBoundSeries = append(result.UpperBoundSeries, upperBoundSeries)
 			result.LowerBoundSeries = append(result.LowerBoundSeries, lowerBoundSeries)
 
-			anomalyScoreSeries := p.getAnomalyScores(series, pastPeriodSeries, currentSeasonSeries, pastSeasonSeries)
+			anomalyScoreSeries := p.getAnomalyScores(series, pastPeriodSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries)
 			result.AnomalyScores = append(result.AnomalyScores, anomalyScoreSeries)
 		}
 	}

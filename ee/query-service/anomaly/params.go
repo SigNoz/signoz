@@ -63,6 +63,9 @@ type anomalyQueryParams struct {
 	//        : For daily seasonality, this is the query range params for the (now-2d-5m, now-1d)
 	//        : For hourly seasonality, this is the query range params for the (now-2h-5m, now-1h)
 	PastSeasonQuery *v3.QueryRangeParamsV3
+
+	Past2SeasonQuery *v3.QueryRangeParamsV3
+	Past3SeasonQuery *v3.QueryRangeParamsV3
 }
 
 func copyCompositeQuery(req *v3.QueryRangeParamsV3) *v3.CompositeQuery {
@@ -158,10 +161,10 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 		pastGrowthPeriodStart = start - 14*24*time.Hour.Milliseconds()
 		pastGrowthPeriodEnd = start - 7*24*time.Hour.Milliseconds()
 	case SeasonalityDaily:
-		pastGrowthPeriodStart = start - 2*time.Hour.Milliseconds()
-		pastGrowthPeriodEnd = start - 1*time.Hour.Milliseconds()
+		pastGrowthPeriodStart = start - 2*23*time.Hour.Milliseconds()
+		pastGrowthPeriodEnd = start - 1*23*time.Hour.Milliseconds()
 	case SeasonalityHourly:
-		pastGrowthPeriodStart = start - 2*time.Hour.Milliseconds()
+		pastGrowthPeriodStart = start - 2*2*time.Hour.Milliseconds()
 		pastGrowthPeriodEnd = start - 1*time.Hour.Milliseconds()
 	}
 
@@ -175,11 +178,59 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 	}
 	updateStepInterval(pastGrowthQuery)
 
+	var past2GrowthPeriodStart, past2GrowthPeriodEnd int64
+	switch seasonality {
+	case SeasonalityWeekly:
+		past2GrowthPeriodStart = start - 21*24*time.Hour.Milliseconds()
+		past2GrowthPeriodEnd = start - 14*24*time.Hour.Milliseconds()
+	case SeasonalityDaily:
+		past2GrowthPeriodStart = start - 3*23*time.Hour.Milliseconds()
+		past2GrowthPeriodEnd = start - 2*23*time.Hour.Milliseconds()
+	case SeasonalityHourly:
+		past2GrowthPeriodStart = start - 3*2*time.Hour.Milliseconds()
+		past2GrowthPeriodEnd = start - 2*2*time.Hour.Milliseconds()
+	}
+
+	past2GrowthQuery := &v3.QueryRangeParamsV3{
+		Start:          past2GrowthPeriodStart,
+		End:            past2GrowthPeriodEnd,
+		Step:           int64(math.Max(float64(common.MinAllowedStepInterval(past2GrowthPeriodStart, past2GrowthPeriodEnd)), 60)),
+		CompositeQuery: copyCompositeQuery(req),
+		Variables:      make(map[string]interface{}, 0),
+		NoCache:        false,
+	}
+	updateStepInterval(past2GrowthQuery)
+
+	var past3GrowthPeriodStart, past3GrowthPeriodEnd int64
+	switch seasonality {
+	case SeasonalityWeekly:
+		past3GrowthPeriodStart = start - 28*24*time.Hour.Milliseconds()
+		past3GrowthPeriodEnd = start - 21*24*time.Hour.Milliseconds()
+	case SeasonalityDaily:
+		past3GrowthPeriodStart = start - 4*23*time.Hour.Milliseconds()
+		past3GrowthPeriodEnd = start - 3*23*time.Hour.Milliseconds()
+	case SeasonalityHourly:
+		past3GrowthPeriodStart = start - 4*2*time.Hour.Milliseconds()
+		past3GrowthPeriodEnd = start - 3*2*time.Hour.Milliseconds()
+	}
+
+	past3GrowthQuery := &v3.QueryRangeParamsV3{
+		Start:          past3GrowthPeriodStart,
+		End:            past3GrowthPeriodEnd,
+		Step:           int64(math.Max(float64(common.MinAllowedStepInterval(past3GrowthPeriodStart, past3GrowthPeriodEnd)), 60)),
+		CompositeQuery: copyCompositeQuery(req),
+		Variables:      make(map[string]interface{}, 0),
+		NoCache:        false,
+	}
+	updateStepInterval(past3GrowthQuery)
+
 	return &anomalyQueryParams{
 		CurrentPeriodQuery: currentPeriodQuery,
 		PastPeriodQuery:    pastPeriodQuery,
 		CurrentSeasonQuery: currentGrowthQuery,
 		PastSeasonQuery:    pastGrowthQuery,
+		Past2SeasonQuery:   past2GrowthQuery,
+		Past3SeasonQuery:   past3GrowthQuery,
 	}
 }
 
@@ -188,4 +239,6 @@ type anomalyQueryResults struct {
 	PastPeriodResults    []*v3.Result
 	CurrentSeasonResults []*v3.Result
 	PastSeasonResults    []*v3.Result
+	Past2SeasonResults   []*v3.Result
+	Past3SeasonResults   []*v3.Result
 }
