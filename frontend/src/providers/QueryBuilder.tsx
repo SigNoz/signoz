@@ -233,6 +233,8 @@ export function QueryBuilderProvider({
 				timeUpdated ? merge(currentQuery, newQueryState) : newQueryState,
 			);
 			setQueryType(type);
+			// this is required to reset the last used query when navigating or initializing the query builder
+			setLastUsedQuery(0);
 		},
 		[prepareQueryBuilderData, currentQuery],
 	);

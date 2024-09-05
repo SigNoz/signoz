@@ -173,7 +173,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 		// if only or all are clicked we do not need to worry about anything just override whatever we have
 		// by either adding a new IN operator value clause in case of ONLY or remove everything we have for ALL.
-		if (isOnlyOrAllClicked && query.filters.items) {
+		if (isOnlyOrAllClicked && query?.filters?.items) {
 			const isOnlyOrAll = isSomeFilterPresentForCurrentAttribute
 				? currentFilterState[value] && !isMultipleValuesTrueForTheKey
 					? 'All'
@@ -191,13 +191,13 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				};
 				query.filters.items = [...query.filters.items, newFilterItem];
 			}
-		} else if (query.filters.items) {
+		} else if (query?.filters?.items) {
 			if (
-				query.filters.items.some((item) => isEqual(item.key, filter.attributeKey))
+				query.filters?.items?.some((item) => isEqual(item.key, filter.attributeKey))
 			) {
 				// if there is already a running filter for the current attribute key then
 				// we split the cases by which particular operator is present right now!
-				const currentFilter = query.filters.items.find((q) =>
+				const currentFilter = query.filters?.items?.find((q) =>
 					isEqual(q.key, filter.attributeKey),
 				);
 				if (currentFilter) {
