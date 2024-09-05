@@ -7,8 +7,11 @@ import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
 import { filterDropdown } from 'container/ServiceApplication/Filter/FilterDropdown';
 import useResourceAttribute from 'hooks/useResourceAttribute';
-import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import { useRef } from 'react';
+import {
+	convertRawQueriesToTraceSelectedTags,
+	resourceAttributesToTracesFilterItems,
+} from 'hooks/useResourceAttribute/utils';
+import { useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -18,7 +21,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from './Tabs/types';
-import { useGetAPMToTracesQueries } from './Tabs/util';
+import { handleNonInQueryRange, useGetAPMToTracesQueries } from './Tabs/util';
 import {
 	convertedTracesToDownloadData,
 	getErrorRate,
@@ -45,24 +48,32 @@ function TopOperationsTable({
 	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
 
 	const params = useParams<{ servicename: string }>();
+	const tagFilters = useMemo(
+		() =>
+			handleNonInQueryRange(resourceAttributesToTracesFilterItems(queries), true),
+		[queries],
+	);
 
 	const handleOnClick = (operation: string): void => {
 		const { servicename: encodedServiceName } = params;
 		const servicename = decodeURIComponent(encodedServiceName);
 
-		const opFilter: TagFilterItem = {
-			id: uuid().slice(0, 8),
-			key: {
-				key: 'name',
-				dataType: DataTypes.String,
-				type: 'tag',
-				isColumn: true,
-				isJSON: false,
-				id: 'name--string--tag--true',
+		const opFilters: TagFilterItem[] = [
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'name',
+					dataType: DataTypes.String,
+					type: 'tag',
+					isColumn: true,
+					isJSON: false,
+					id: 'name--string--tag--true',
+				},
+				op: 'in',
+				value: [operation],
 			},
-			op: 'in',
-			value: [operation],
-		};
+			...tagFilters,
+		];
 
 		const preparedQuery: Query = {
 			...apmToTraceQuery,
@@ -72,7 +83,7 @@ function TopOperationsTable({
 					...item,
 					filters: {
 						...item.filters,
-						items: [...item.filters.items, opFilter],
+						items: [...item.filters.items, ...opFilters],
 					},
 				})),
 			},
