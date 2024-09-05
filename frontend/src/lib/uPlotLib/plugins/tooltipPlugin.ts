@@ -222,6 +222,7 @@ type ToolTipPluginProps = {
 	isMergedSeries?: boolean;
 	stackBarChart?: boolean;
 	isDarkMode: boolean;
+	customTooltipElement?: HTMLDivElement;
 };
 
 const tooltipPlugin = ({
@@ -232,7 +233,9 @@ const tooltipPlugin = ({
 	isMergedSeries,
 	stackBarChart,
 	isDarkMode,
-}: ToolTipPluginProps): any => {
+	customTooltipElement,
+}: // eslint-disable-next-line sonarjs/cognitive-complexity
+ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
 	let bLeft: any;
@@ -298,6 +301,9 @@ const tooltipPlugin = ({
 							isMergedSeries,
 							stackBarChart,
 						);
+						if (customTooltipElement) {
+							content.appendChild(customTooltipElement);
+						}
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });
 					}

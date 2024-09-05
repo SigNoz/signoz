@@ -47,6 +47,7 @@ import {
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
+import { isCloudUser } from 'utils/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
@@ -71,7 +72,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isPremiumChatSupportEnabled =
 		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
 
+	const isChatSupportEnabled =
+		useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active || false;
+
+	const isCloudUserVal = isCloudUser();
+
 	const showAddCreditCardModal =
+		isChatSupportEnabled &&
+		isCloudUserVal &&
 		!isPremiumChatSupportEnabled &&
 		!licenseData?.payload?.trialConvertedToSubscription;
 
@@ -241,7 +249,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isTracesView = (): boolean =>
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
+	const isMessagingQueues = (): boolean =>
+		routeKey === 'MESSAGING_QUEUES' || routeKey === 'MESSAGING_QUEUES_DETAIL';
+
 	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
+	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
+	const isAlertOverview = (): boolean => routeKey === 'ALERT_OVERVIEW';
 	const isDashboardView = (): boolean => {
 		/**
 		 * need to match using regex here as the getRoute function will not work for
@@ -329,7 +342,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isTracesView() ||
 											isDashboardView() ||
 											isDashboardWidgetView() ||
-											isDashboardListView()
+											isDashboardListView() ||
+											isAlertHistory() ||
+											isAlertOverview() ||
+											isMessagingQueues()
 												? 0
 												: '0 1rem',
 									}}

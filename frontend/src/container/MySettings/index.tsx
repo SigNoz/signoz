@@ -26,7 +26,9 @@ function MySettings(): JSX.Element {
 			label: (
 				<div className="theme-option">
 					<Sun size={12} data-testid="light-theme-icon" /> Light{' '}
-					<Tag color="magenta">Beta</Tag>
+					<Tag bordered={false} color="geekblue">
+						Beta
+					</Tag>
 				</div>
 			),
 			value: 'light',
