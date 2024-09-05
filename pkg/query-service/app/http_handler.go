@@ -4091,24 +4091,6 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams, spanKeys)
-	if anomalyQueryExists {
-		anomalyProvider := anomaly.NewWeeklyProvider(
-			anomaly.WithCache[*anomaly.WeeklyProvider](aH.cache),
-			anomaly.WithKeyGenerator[*anomaly.WeeklyProvider](queryBuilder.NewKeyGenerator()),
-			anomaly.WithReader[*anomaly.WeeklyProvider](aH.reader),
-			anomaly.WithFeatureLookup[*anomaly.WeeklyProvider](aH.featureFlags),
-		)
-		anomalies, err := anomalyProvider.GetBaseSeasonalProvider().GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{
-			Params:      anomalyQueryRangeParams,
-			Seasonality: anomaly.SeasonalityWeekly,
-		})
-		if err != nil {
-			apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
-			return
-		}
-		result = append(result, anomalies.Results...)
-	}
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
@@ -4129,6 +4111,38 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		return
 	}
 	sendQueryResultEvents(r, result, queryRangeParams)
+
+	if anomalyQueryExists {
+		anomalyProvider := anomaly.NewWeeklyProvider(
+			anomaly.WithCache[*anomaly.WeeklyProvider](aH.cache),
+			anomaly.WithKeyGenerator[*anomaly.WeeklyProvider](queryBuilder.NewKeyGenerator()),
+			anomaly.WithReader[*anomaly.WeeklyProvider](aH.reader),
+			anomaly.WithFeatureLookup[*anomaly.WeeklyProvider](aH.featureFlags),
+		)
+		anomalies, err := anomalyProvider.GetBaseSeasonalProvider().GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{
+			Params:      anomalyQueryRangeParams,
+			Seasonality: anomaly.SeasonalityWeekly,
+		})
+		if err != nil {
+			apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			RespondError(w, apiErrObj, errQuriesByName)
+			return
+		}
+		uniqueResults := make(map[string]*v3.Result)
+		for _, anomaly := range anomalies.Results {
+			uniqueResults[anomaly.QueryName] = anomaly
+		}
+		for _, result := range result {
+			if _, ok := uniqueResults[result.QueryName]; !ok {
+				uniqueResults[result.QueryName] = result
+			}
+		}
+		result = make([]*v3.Result, 0, len(uniqueResults))
+		for _, anomaly := range uniqueResults {
+			result = append(result, anomaly)
+		}
+	}
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}

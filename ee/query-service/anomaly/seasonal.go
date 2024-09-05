@@ -166,6 +166,35 @@ func (p *BaseSeasonalProvider) getPredictedSeries(series, prevSeries, currentSea
 	return predictedSeries
 }
 
+func (p *BaseSeasonalProvider) getBounds(series, prevSeries, currentSeasonSeries, pastSeasonSeries *v3.Series, zScoreThreshold float64) (*v3.Series, *v3.Series) {
+	upperBoundSeries := &v3.Series{
+		Labels:      series.Labels,
+		LabelsArray: series.LabelsArray,
+		Points:      []v3.Point{},
+	}
+
+	lowerBoundSeries := &v3.Series{
+		Labels:      series.Labels,
+		LabelsArray: series.LabelsArray,
+		Points:      []v3.Point{},
+	}
+
+	for idx, curr := range series.Points {
+		upperBound := p.getMovingAvg(prevSeries, len(series.Points), idx) + zScoreThreshold*p.getStdDev(series)
+		lowerBound := p.getMovingAvg(prevSeries, len(series.Points), idx) - zScoreThreshold*p.getStdDev(series)
+		upperBoundSeries.Points = append(upperBoundSeries.Points, v3.Point{
+			Timestamp: curr.Timestamp,
+			Value:     upperBound,
+		})
+		lowerBoundSeries.Points = append(lowerBoundSeries.Points, v3.Point{
+			Timestamp: curr.Timestamp,
+			Value:     lowerBound,
+		})
+	}
+
+	return upperBoundSeries, lowerBoundSeries
+}
+
 func (p *BaseSeasonalProvider) getExpectedValue(_, prevSeries, currentSeasonSeries, pastSeasonSeries *v3.Series) float64 {
 	prevSeriesAvg := p.getAvg(prevSeries)
 	currentSeasonSeriesAvg := p.getAvg(currentSeasonSeries)
@@ -230,6 +259,21 @@ func (p *BaseSeasonalProvider) GetAnomalies(ctx context.Context, req *GetAnomali
 	}
 
 	for _, result := range currentPeriodResultsMap {
+		funcs := req.Params.CompositeQuery.BuilderQueries[result.QueryName].Functions
+
+		var zScoreThreshold float64
+		for _, f := range funcs {
+			if f.Name == v3.FunctionNameAnomaly {
+				value, ok := f.NamedArgs["z_score_threshold"]
+				if ok {
+					zScoreThreshold = value.(float64)
+				} else {
+					zScoreThreshold = 3
+				}
+				break
+			}
+		}
+
 		pastPeriodResult, ok := pastPeriodResultsMap[result.QueryName]
 		if !ok {
 			continue
@@ -250,6 +294,10 @@ func (p *BaseSeasonalProvider) GetAnomalies(ctx context.Context, req *GetAnomali
 
 			predictedSeries := p.getPredictedSeries(series, pastPeriodSeries, currentSeasonSeries, pastSeasonSeries)
 			result.PredictedSeries = append(result.PredictedSeries, predictedSeries)
+
+			upperBoundSeries, lowerBoundSeries := p.getBounds(series, pastPeriodSeries, currentSeasonSeries, pastSeasonSeries, zScoreThreshold)
+			result.UpperBoundSeries = append(result.UpperBoundSeries, upperBoundSeries)
+			result.LowerBoundSeries = append(result.LowerBoundSeries, lowerBoundSeries)
 
 			anomalyScoreSeries := p.getAnomalyScores(series, pastPeriodSeries, currentSeasonSeries, pastSeasonSeries)
 			result.AnomalyScores = append(result.AnomalyScores, anomalyScoreSeries)
