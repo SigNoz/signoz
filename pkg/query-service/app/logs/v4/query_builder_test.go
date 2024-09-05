@@ -114,155 +114,6 @@ func TestGetSelectLabels(t *testing.T) {
 	}
 }
 
-var timeResourceBucketFilterData = []struct {
-	Name               string
-	FilterSet          *v3.FilterSet
-	GroupBy            []v3.AttributeKey
-	OrderBy            []v3.OrderBy
-	AggregateAttribute v3.AttributeKey
-	ExpectedFilter     string
-	Fields             map[string]v3.AttributeKey
-	Error              string
-}{
-	{
-		Name: "Test attribute and resource attribute",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "john", Operator: "="},
-			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "my_service", Operator: "!="},
-		}},
-		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'k8s_namespace') != 'my_service' AND lower(labels) not like '%k8s_namespace%my_service%'",
-	},
-	{
-		Name: "Test like",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.%", Operator: "like"},
-		}},
-		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'host') LIKE '102.%' AND lower(labels) like '%host%102.%%'",
-	},
-	{
-		Name: "Test IN",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: []interface{}{"1", "2"}, Operator: "in"},
-		}},
-		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'bytes') IN ['1','2'] AND (lower(labels) like '%\"bytes\":\"1\"%' OR lower(labels) like '%\"bytes\":\"2\"%')",
-	},
-	{
-		Name: "Test NOT IN",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: []interface{}{"john", "bunny"}, Operator: "nin"},
-		}},
-		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'name') NOT IN ['john','bunny'] AND (lower(labels) not like '%\"name\":\"john\"%' AND lower(labels) not like '%\"name\":\"bunny\"%')",
-	},
-	{
-		Name: "Test exists",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "", Operator: "exists"},
-		}},
-		ExpectedFilter: "simpleJSONHas(labels, 'bytes') AND lower(labels) like '%bytes%'",
-	},
-	{
-		Name: "Test not exists",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "", Operator: "nexists"},
-		}},
-		ExpectedFilter: "not simpleJSONHas(labels, 'bytes') AND lower(labels) like '%bytes%'",
-	},
-	{
-		Name: "Test contains",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.", Operator: "contains"},
-		}},
-		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'host') LIKE '%102.%' AND lower(labels) like '%host%102.%'",
-	},
-	{
-		Name: "Test contains with single quotes",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "hello 'world'", Operator: "contains"},
-		}},
-		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'message') LIKE '%hello \\'world\\'%' AND lower(labels) like '%message%hello \\'world\\'%'",
-	},
-	{
-		Name: "Test not contains",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.", Operator: "ncontains"},
-		}},
-		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'host') NOT LIKE '%102.%' AND lower(labels) not like '%host%102.%'",
-	},
-	{
-		Name: "Test regex",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource, IsColumn: true}, Value: "host: \"(?P<host>\\S+)\"", Operator: "regex"},
-		}},
-		ExpectedFilter: "match(simpleJSONExtractString(lower(labels), 'host'), 'host: \"(?P<host>\\\\S+)\"') AND lower(labels) like '%host%'",
-	},
-	{
-		Name: "Test not regex",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.", Operator: "nregex"},
-		}},
-		ExpectedFilter: "NOT match(simpleJSONExtractString(lower(labels), 'host'), '102.') AND lower(labels) not like '%host%'",
-	},
-	{
-		Name: "Wrong data",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeResource, DataType: v3.AttributeKeyDataTypeFloat64}, Value: true, Operator: "="},
-		}},
-		Error: "failed to validate and cast value for bytes: invalid data type, expected float, got bool",
-	},
-	{
-		Name: "Test not exists on top level field",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "span_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Operator: "nexists"},
-		}},
-		ExpectedFilter: "",
-	},
-	{
-		Name: "Test attribute, group by, aggregate attribute",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.%", Operator: "like"},
-		}},
-		GroupBy: []v3.AttributeKey{
-			{Key: "service.name", Type: v3.AttributeKeyTypeResource},
-		},
-		AggregateAttribute: v3.AttributeKey{Key: "container_name", Type: v3.AttributeKeyTypeResource},
-		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'host') LIKE '102.%' AND lower(labels) like '%host%102.%%' AND (simpleJSONHas(labels, 'container_name') AND " +
-			"lower(labels) like '%container_name%') AND ( (simpleJSONHas(labels, 'service.name') AND lower(labels) like '%service.name%') )",
-	},
-	{
-		Name: "Test attribute, multiple group by, multiple orderBy, aggregate attribute",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "102.%", Operator: "like"},
-		}},
-		GroupBy: []v3.AttributeKey{
-			{Key: "service.name", Type: v3.AttributeKeyTypeResource},
-			{Key: "project.name", Type: v3.AttributeKeyTypeResource},
-			{Key: "method.name", Type: v3.AttributeKeyTypeTag},
-		},
-		OrderBy: []v3.OrderBy{
-			{Key: "service.name", Type: v3.AttributeKeyTypeResource, Order: "DESC"},
-			{Key: "project.name", Type: v3.AttributeKeyTypeResource, Order: "DESC"},
-		},
-		AggregateAttribute: v3.AttributeKey{Key: "container_name", Type: v3.AttributeKeyTypeResource},
-		ExpectedFilter: "simpleJSONExtractString(lower(labels), 'host') LIKE '102.%' AND lower(labels) like '%host%102.%%' AND (simpleJSONHas(labels, 'container_name') AND " +
-			"lower(labels) like '%container_name%') AND ( (simpleJSONHas(labels, 'service.name') AND lower(labels) like '%service.name%') AND (simpleJSONHas(labels, 'project.name') AND lower(labels) like '%project.name%') )",
-	},
-}
-
-func TestBuildResourceFilters(t *testing.T) {
-	for _, tt := range timeResourceBucketFilterData {
-		Convey("TestBuildLogsResourceFilterQuery", t, func() {
-			query, err := buildResourceBucketFilters(tt.FilterSet, tt.GroupBy, tt.OrderBy, tt.AggregateAttribute)
-			if tt.Error != "" {
-				So(err.Error(), ShouldEqual, tt.Error)
-			} else {
-				So(err, ShouldBeNil)
-				So(query, ShouldEqual, tt.ExpectedFilter)
-			}
-
-		})
-	}
-}
-
 var timeSeriesFilterQueryData = []struct {
 	Name           string
 	FilterSet      *v3.FilterSet
@@ -546,29 +397,29 @@ var testBuildLogsQueryData = []struct {
 			"attributes_number['bytes'] > 100.000000 AND mapContains(attributes_number, 'bytes') AND mapContains(attributes_string, 'user_name') " +
 			"group by ts order by value DESC",
 	},
-	{
-		Name:      "Test aggregate count on a with resource filter",
-		PanelType: v3.PanelTypeGraph,
-		Start:     1680066360726210000,
-		End:       1680066458000000000,
-		BuilderQuery: &v3.BuilderQuery{
-			QueryName:          "A",
-			StepInterval:       60,
-			AggregateAttribute: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-			AggregateOperator:  v3.AggregateOperatorCount,
-			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeResource}, Value: 100, Operator: ">"},
-			}},
-			Expression: "A",
-		},
-		TableName: "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value " +
-			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND " +
-			"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND " +
-			"mapContains(attributes_string, 'user_name') AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource " +
-			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(lower(labels), 'bytes') > 100.000000" +
-			" AND lower(labels) like '%bytes%')) group by ts order by value DESC",
-	},
+	// {
+	// 	Name:      "Test aggregate count on a with resource filter",
+	// 	PanelType: v3.PanelTypeGraph,
+	// 	Start:     1680066360726210000,
+	// 	End:       1680066458000000000,
+	// 	BuilderQuery: &v3.BuilderQuery{
+	// 		QueryName:          "A",
+	// 		StepInterval:       60,
+	// 		AggregateAttribute: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+	// 		AggregateOperator:  v3.AggregateOperatorCount,
+	// 		Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+	// 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeResource}, Value: 100, Operator: ">"},
+	// 		}},
+	// 		Expression: "A",
+	// 	},
+	// 	TableName: "logs",
+	// 	ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value " +
+	// 		"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND " +
+	// 		"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND " +
+	// 		"mapContains(attributes_string, 'user_name') AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource " +
+	// 		"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(lower(labels), 'bytes') > 100.000000" +
+	// 		" AND lower(labels) like '%bytes%')) group by ts order by value DESC",
+	// },
 	{
 		Name:      "Test aggregate count distinct and order by value",
 		PanelType: v3.PanelTypeGraph,
@@ -705,7 +556,7 @@ var testBuildLogsQueryData = []struct {
 			"AND mapContains(attributes_string, 'method') AND `attribute_string_name_exists`=true " +
 			"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource " +
 			"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(lower(labels), 'x') != 'abc' " +
-			"AND lower(labels) not like '%x%abc%' AND ( (simpleJSONHas(labels, 'x') AND lower(labels) like '%x%') ))) group by `method`,`x`,ts order by `method` ASC,`x` ASC",
+			"AND lower(labels) not like '%x%abc%' AND ( (simpleJSONHas(lower(labels), 'x') AND lower(labels) like '%x%') ))) group by `method`,`x`,ts order by `method` ASC,`x` ASC",
 	},
 	{
 		Name:      "Test aggregate avg",

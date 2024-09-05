@@ -149,7 +149,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 				continue
 			}
 
-			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
+			op := v3.FilterOperator(strings.ToLower(string(item.Operator)))
 
 			var value interface{}
 			var err error
@@ -229,136 +229,6 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 	return queryString, nil
 }
 
-func buildResourceBucketFilters(fs *v3.FilterSet, groupBy []v3.AttributeKey, orderBy []v3.OrderBy, aggregateAttribute v3.AttributeKey) (string, error) {
-	var andConditions []string
-	var orConditions []string
-	// only add the resource attributes to the filters here
-	if fs != nil && len(fs.Items) != 0 {
-		for _, item := range fs.Items {
-			// skip anything other than resource attribute
-			if item.Key.Type != v3.AttributeKeyTypeResource {
-				continue
-			}
-
-			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
-			var value interface{}
-			var err error
-			if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
-				value, err = utils.ValidateAndCastValue(item.Value, item.Key.DataType)
-				if err != nil {
-					return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
-				}
-			}
-
-			columnName := fmt.Sprintf("simpleJSONExtractString(lower(labels), '%s')", item.Key.Key)
-
-			if logsOp, ok := logOperators[op]; ok {
-				switch op {
-				case v3.FilterOperatorExists:
-					andConditions = append(andConditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", item.Key.Key))
-				case v3.FilterOperatorNotExists:
-					andConditions = append(andConditions, fmt.Sprintf("not simpleJSONHas(labels, '%s')", item.Key.Key))
-				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
-					fmtVal := utils.ClickHouseFormattedValue(value)
-					// for regex don't lowercase it as it will result in something else
-					andConditions = append(andConditions, fmt.Sprintf(logsOp, columnName, fmtVal))
-				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
-					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
-					andConditions = append(andConditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, strings.ToLower(val)))
-				default:
-					fmtVal := utils.ClickHouseFormattedValue(value)
-					andConditions = append(andConditions, fmt.Sprintf("%s %s %s", columnName, logsOp, strings.ToLower(fmtVal)))
-				}
-
-				// add index filters
-				switch op {
-				case v3.FilterOperatorContains, v3.FilterOperatorEqual, v3.FilterOperatorLike:
-					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
-					andConditions = append(andConditions, fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", strings.ToLower(item.Key.Key), strings.ToLower(val)))
-				case v3.FilterOperatorNotContains, v3.FilterOperatorNotEqual, v3.FilterOperatorNotLike:
-					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
-					andConditions = append(andConditions, fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", strings.ToLower(item.Key.Key), strings.ToLower(val)))
-				case v3.FilterOperatorNotRegex:
-					andConditions = append(andConditions, fmt.Sprintf("lower(labels) not like '%%%s%%'", strings.ToLower(item.Key.Key)))
-				case v3.FilterOperatorIn, v3.FilterOperatorNotIn:
-
-					// for in operator value needs to used for indexing in a different way.
-					// eg1:= x in a,b,c = (labels like '%x%a%' or labels like '%"x":"b"%' or labels like '%"x"="c"%')
-					// eg1:= x nin a,b,c = (labels nlike '%x%a%' AND labels nlike '%"x"="b"' AND labels nlike '%"x"="c"%')
-					tCondition := []string{}
-
-					separator := " OR "
-					sqlOp := "like"
-					if op == v3.FilterOperatorNotIn {
-						separator = " AND "
-						sqlOp = "not like"
-					}
-
-					values := []string{}
-
-					switch item.Value.(type) {
-					case string:
-						values = append(values, item.Value.(string))
-					case []interface{}:
-						for _, v := range (item.Value).([]interface{}) {
-							// also resources attributes are always string values
-							strV, ok := v.(string)
-							if !ok {
-								continue
-							}
-							values = append(values, strV)
-						}
-					}
-
-					if len(values) > 0 {
-						for _, v := range values {
-							tCondition = append(tCondition, fmt.Sprintf("lower(labels) %s '%%\"%s\":\"%s\"%%'", sqlOp, strings.ToLower(item.Key.Key), strings.ToLower(v)))
-						}
-						andConditions = append(andConditions, "("+strings.Join(tCondition, separator)+")")
-					}
-
-				default:
-					andConditions = append(andConditions, fmt.Sprintf("lower(labels) like '%%%s%%'", strings.ToLower(item.Key.Key)))
-				}
-
-			} else {
-				return "", fmt.Errorf("unsupported operator: %s", op)
-			}
-
-		}
-	}
-
-	// for group by add exists check in resources
-	if aggregateAttribute.Key != "" && aggregateAttribute.Type == v3.AttributeKeyTypeResource {
-		andConditions = append(andConditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND lower(labels) like '%%%s%%')", aggregateAttribute.Key, strings.ToLower(aggregateAttribute.Key)))
-	}
-
-	// for aggregate attribute add exists check in resources
-	// we are using OR for groupBy and orderby as we just want to filter out the logs using fingerprint
-	for _, attr := range groupBy {
-		if attr.Type != v3.AttributeKeyTypeResource {
-			continue
-		}
-		orConditions = append(orConditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND lower(labels) like '%%%s%%')", attr.Key, strings.ToLower(attr.Key)))
-	}
-
-	// for orderBy it's not required as the keys will be already present in the group by
-	// so no point in adding them
-
-	if len(orConditions) > 0 {
-		// TODO: change OR to AND once we know how to solve for group by
-		orConditionStr := "( " + strings.Join(orConditions, " AND ") + " )"
-		andConditions = append(andConditions, orConditionStr)
-	}
-
-	if len(andConditions) == 0 {
-		return "", nil
-	}
-
-	conditionStr := strings.Join(andConditions, " AND ")
-	return conditionStr, nil
-}
-
 func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, preferRPM bool) (string, error) {
 
 	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute)
@@ -380,18 +250,13 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	// bucket_start filter is added for primary key
 	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d) AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", logsStart, logsEnd, bucketStart, bucketEnd)
 
-	resourceBucketFilters, err := buildResourceBucketFilters(mq.Filters, mq.GroupBy, mq.OrderBy, mq.AggregateAttribute)
+	resourceSubQuery, err := buildResourceSubQuery(bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute)
 	if err != nil {
 		return "", err
 	}
 
-	if len(resourceBucketFilters) > 0 {
-		filter := " AND (resource_fingerprint GLOBAL IN (" +
-			"SELECT fingerprint FROM signoz_logs.%s " +
-			"WHERE (seen_at_ts_bucket_start >= %d) AND (seen_at_ts_bucket_start <= %d) AND "
-		filter = fmt.Sprintf(filter, DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd)
-
-		filterSubQuery = filterSubQuery + filter + resourceBucketFilters + "))"
+	if len(resourceSubQuery) > 0 {
+		filterSubQuery = filterSubQuery + " AND (resource_fingerprint GLOBAL IN " + resourceSubQuery + ")"
 	}
 
 	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
