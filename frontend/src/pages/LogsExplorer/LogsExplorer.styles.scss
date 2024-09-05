@@ -7,6 +7,8 @@
 	}
 
 	.log-module-right-section {
+		display: flex;
+		flex-direction: column;
 		width: 100%;
 		.log-explorer-query-container {
 			display: flex;
