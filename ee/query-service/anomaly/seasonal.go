@@ -13,6 +13,10 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	windowSize = 7
+)
+
 // BaseProvider is an interface that includes common methods for all provider types
 type BaseProvider interface {
 	GetBaseSeasonalProvider() *BaseSeasonalProvider
@@ -140,6 +144,9 @@ func (p *BaseSeasonalProvider) getStdDev(series *v3.Series) float64 {
 
 func (p *BaseSeasonalProvider) getMovingAvg(series *v3.Series, windowSize, startIdx int) float64 {
 	var sum float64
+	if startIdx >= len(series.Points)-windowSize {
+		startIdx = len(series.Points) - windowSize
+	}
 	points := series.Points[startIdx:]
 	for i := 0; i < windowSize && i < len(points); i++ {
 		sum += points[i].Value
@@ -156,7 +163,7 @@ func (p *BaseSeasonalProvider) getPredictedSeries(series, prevSeries, currentSea
 	}
 
 	for idx, curr := range series.Points {
-		predictedValue := p.getMovingAvg(prevSeries, len(series.Points), idx) + p.getAvg(currentSeasonSeries) - p.getAvg(pastSeasonSeries)
+		predictedValue := p.getMovingAvg(prevSeries, windowSize, idx) + p.getAvg(currentSeasonSeries) - p.getAvg(pastSeasonSeries)
 		predictedSeries.Points = append(predictedSeries.Points, v3.Point{
 			Timestamp: curr.Timestamp,
 			Value:     predictedValue,
@@ -180,8 +187,8 @@ func (p *BaseSeasonalProvider) getBounds(series, prevSeries, currentSeasonSeries
 	}
 
 	for idx, curr := range series.Points {
-		upperBound := p.getMovingAvg(prevSeries, len(series.Points), idx) + zScoreThreshold*p.getStdDev(series)
-		lowerBound := p.getMovingAvg(prevSeries, len(series.Points), idx) - zScoreThreshold*p.getStdDev(series)
+		upperBound := p.getMovingAvg(prevSeries, windowSize, idx) + zScoreThreshold*p.getStdDev(series)
+		lowerBound := p.getMovingAvg(prevSeries, windowSize, idx) - zScoreThreshold*p.getStdDev(series)
 		upperBoundSeries.Points = append(upperBoundSeries.Points, v3.Point{
 			Timestamp: curr.Timestamp,
 			Value:     upperBound,
