@@ -3,10 +3,12 @@ package anomaly
 import (
 	"context"
 	"math"
+	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/postprocess"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
 )
@@ -46,6 +48,7 @@ func WithReader[T BaseProvider](reader interfaces.Reader) GenericProviderOption[
 type BaseSeasonalProvider struct {
 	querierV2    interfaces.Querier
 	reader       interfaces.Reader
+	fluxInterval time.Duration
 	cache        cache.Cache
 	keyGenerator cache.KeyGenerator
 	ff           interfaces.FeatureLookup
@@ -64,7 +67,17 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 		return nil, err
 	}
 
+	currentPeriodResults, err = postprocess.PostProcessResult(currentPeriodResults, params.CurrentPeriodQuery)
+	if err != nil {
+		return nil, err
+	}
+
 	pastPeriodResults, _, err := p.querierV2.QueryRange(ctx, params.PastPeriodQuery, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	pastPeriodResults, err = postprocess.PostProcessResult(pastPeriodResults, params.PastPeriodQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +87,17 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 		return nil, err
 	}
 
+	currentSeasonResults, err = postprocess.PostProcessResult(currentSeasonResults, params.CurrentSeasonQuery)
+	if err != nil {
+		return nil, err
+	}
+
 	pastSeasonResults, _, err := p.querierV2.QueryRange(ctx, params.PastSeasonQuery, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	pastSeasonResults, err = postprocess.PostProcessResult(pastSeasonResults, params.PastSeasonQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +138,16 @@ func (p *BaseSeasonalProvider) getStdDev(series *v3.Series) float64 {
 	return math.Sqrt(sum / float64(len(series.Points)))
 }
 
+func (p *BaseSeasonalProvider) getMovingAvg(series *v3.Series, windowSize, startIdx int) float64 {
+	var sum float64
+	points := series.Points[startIdx:]
+	for i := 0; i < windowSize && i < len(points); i++ {
+		sum += points[i].Value
+	}
+	avg := sum / float64(windowSize)
+	return avg
+}
+
 func (p *BaseSeasonalProvider) getPredictedSeries(series, prevSeries, currentSeasonSeries, pastSeasonSeries *v3.Series) *v3.Series {
 	predictedSeries := &v3.Series{
 		Labels:      series.Labels,
@@ -122,8 +155,8 @@ func (p *BaseSeasonalProvider) getPredictedSeries(series, prevSeries, currentSea
 		Points:      []v3.Point{},
 	}
 
-	for _, curr := range series.Points {
-		predictedValue := p.getAvg(prevSeries) + p.getAvg(currentSeasonSeries) - p.getAvg(pastSeasonSeries)
+	for idx, curr := range series.Points {
+		predictedValue := p.getMovingAvg(prevSeries, len(series.Points), idx) + p.getAvg(currentSeasonSeries) - p.getAvg(pastSeasonSeries)
 		predictedSeries.Points = append(predictedSeries.Points, v3.Point{
 			Timestamp: curr.Timestamp,
 			Value:     predictedValue,
@@ -223,7 +256,12 @@ func (p *BaseSeasonalProvider) GetAnomalies(ctx context.Context, req *GetAnomali
 		}
 	}
 
+	results := make([]*v3.Result, 0, len(currentPeriodResultsMap))
+	for _, result := range currentPeriodResultsMap {
+		results = append(results, result)
+	}
+
 	return &GetAnomaliesResponse{
-		Results: anomalyQueryResults.CurrentPeriodResults,
+		Results: results,
 	}, nil
 }

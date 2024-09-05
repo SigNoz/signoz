@@ -2,6 +2,9 @@ package anomaly
 
 import (
 	"context"
+
+	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
+	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 )
 
 type WeeklyProvider struct {
@@ -22,6 +25,14 @@ func NewWeeklyProvider(opts ...GenericProviderOption[*WeeklyProvider]) *WeeklyPr
 	for _, opt := range opts {
 		opt(wp)
 	}
+
+	wp.querierV2 = querierV2.NewQuerier(querierV2.QuerierOptions{
+		Reader:        wp.reader,
+		Cache:         wp.cache,
+		KeyGenerator:  queryBuilder.NewKeyGenerator(),
+		FluxInterval:  wp.fluxInterval,
+		FeatureLookup: wp.ff,
+	})
 
 	return wp
 }
