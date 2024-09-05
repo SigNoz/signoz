@@ -13715,10 +13715,10 @@ postcss@8.4.38, postcss@^8.0.0, postcss@^8.1.1, postcss@^8.3.7, postcss@^8.4.21,
     picocolors "^1.0.0"
     source-map-js "^1.2.0"
 
-posthog-js@1.142.1:
-  version "1.142.1"
-  resolved "https://registry.yarnpkg.com/posthog-js/-/posthog-js-1.142.1.tgz#3b91229732938c5c76b5ee6d410698a267e073e9"
-  integrity sha512-yqeWTWitlb0sCaH5v6s7UJ+pPspzf/lkzPaSE5pMMXRM2i2KNsMoZEAZqbPCW8fQ8QL6lHs6d8PLjHrvbR288w==
+posthog-js@1.160.3:
+  version "1.160.3"
+  resolved "https://registry.yarnpkg.com/posthog-js/-/posthog-js-1.160.3.tgz#17c8af4c9ffa2d795d925ca1e7146e61cd5ccabd"
+  integrity sha512-mGvxOIlWPtdPx8EI0MQ81wNKlnH2K0n4RqwQOl044b34BCKiFVzZ7Hc7geMuZNaRAvCi5/5zyGeWHcAYZQxiMQ==
   dependencies:
     fflate "^0.4.8"
     preact "^10.19.3"
