@@ -1,8 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './LogsExplorerViews.styles.scss';
 
-import { Button } from 'antd';
+import { Button, Typography } from 'antd';
+import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
 import logEvent from 'api/common/logEvent';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -48,7 +50,15 @@ import {
 } from 'lodash-es';
 import { Sliders } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	memo,
+	MutableRefObject,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -69,12 +79,20 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
+import QueryStatus from './QueryStatus';
+
 function LogsExplorerViews({
 	selectedView,
 	showFrequencyChart,
+	setIsLoadingQueries,
+	listQueryKeyRef,
+	chartQueryKeyRef,
 }: {
 	selectedView: SELECTED_VIEWS;
 	showFrequencyChart: boolean;
+	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
+	listQueryKeyRef: MutableRefObject<any>;
+	chartQueryKeyRef: MutableRefObject<any>;
 }): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
@@ -82,14 +100,14 @@ function LogsExplorerViews({
 	// this is to respect the panel type present in the URL rather than defaulting it to list always.
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
-	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
+	const { activeLogId, onTimeRangeChange } = useCopyLogLink();
 
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
 	);
 
-	const { minTime } = useSelector<AppState, GlobalReducer>(
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
@@ -116,6 +134,8 @@ function LogsExplorerViews({
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
+	const [queryId, setQueryId] = useState<string>(v4());
+	const [queryStats, setQueryStats] = useState<WsDataEvent>();
 
 	const handleAxisError = useAxiosError();
 
@@ -214,9 +234,18 @@ function LogsExplorerViews({
 		{
 			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
 		},
+		{},
+		undefined,
+		chartQueryKeyRef,
 	);
 
-	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
+	const {
+		data,
+		isLoading,
+		isFetching,
+		isError,
+		isSuccess,
+	} = useGetExplorerQueryRange(
 		requestData,
 		panelType,
 		DEFAULT_ENTITY_VERSION,
@@ -225,12 +254,17 @@ function LogsExplorerViews({
 			enabled: !isLimit && !!requestData,
 		},
 		{
-			...(timeRange &&
-				activeLogId &&
+			...(activeLogId &&
 				!logs.length && {
-					start: timeRange.start,
-					end: timeRange.end,
+					start: minTime,
+					end: maxTime,
 				}),
+		},
+		undefined,
+		listQueryKeyRef,
+		{
+			...(!isEmpty(queryId) &&
+				selectedPanelType !== PANEL_TYPES.LIST && { 'X-SIGNOZ-QUERY-ID': queryId }),
 		},
 	);
 
@@ -317,6 +351,23 @@ function LogsExplorerViews({
 			orderByTimestamp,
 		],
 	);
+
+	useEffect(() => {
+		setQueryId(v4());
+	}, [data]);
+
+	useEffect(() => {
+		if (
+			!isEmpty(queryId) &&
+			(isLoading || isFetching) &&
+			selectedPanelType !== PANEL_TYPES.LIST
+		) {
+			setQueryStats(undefined);
+			setTimeout(() => {
+				getQueryStats({ queryId, setData: setQueryStats });
+			}, 500);
+		}
+	}, [queryId, isLoading, isFetching, selectedPanelType]);
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
@@ -469,7 +520,7 @@ function LogsExplorerViews({
 			setLogs(newLogs);
 			onTimeRangeChange({
 				start: currentParams?.start,
-				end: timeRange?.end || currentParams?.end,
+				end: currentParams?.end,
 				pageSize: newLogs.length,
 			});
 		}
@@ -486,8 +537,7 @@ function LogsExplorerViews({
 				filters: listQuery?.filters || initialFilters,
 				page: 1,
 				log: null,
-				pageSize:
-					timeRange?.pageSize && activeLogId ? timeRange?.pageSize : pageSize,
+				pageSize,
 			});
 
 			setLogs([]);
@@ -502,7 +552,6 @@ function LogsExplorerViews({
 		listQuery,
 		pageSize,
 		minTime,
-		timeRange,
 		activeLogId,
 		onTimeRangeChange,
 		panelType,
@@ -568,6 +617,25 @@ function LogsExplorerViews({
 			}
 		},
 	});
+
+	useEffect(() => {
+		if (
+			isLoading ||
+			isFetching ||
+			isLoadingListChartData ||
+			isFetchingListChartData
+		) {
+			setIsLoadingQueries(true);
+		} else {
+			setIsLoadingQueries(false);
+		}
+	}, [
+		isLoading,
+		isFetching,
+		isFetchingListChartData,
+		isLoadingListChartData,
+		setIsLoadingQueries,
+	]);
 
 	const flattenLogData = useMemo(
 		() =>
@@ -663,6 +731,30 @@ function LogsExplorerViews({
 										/>
 									)}
 								</div>
+							</div>
+						)}
+						{(selectedPanelType === PANEL_TYPES.TIME_SERIES ||
+							selectedPanelType === PANEL_TYPES.TABLE) && (
+							<div className="query-stats">
+								<QueryStatus
+									loading={isLoading || isFetching}
+									error={isError}
+									success={isSuccess}
+								/>
+								{queryStats?.read_rows && (
+									<Typography.Text className="rows">
+										{getYAxisFormattedValue(queryStats.read_rows?.toString(), 'short')}{' '}
+										rows
+									</Typography.Text>
+								)}
+								{queryStats?.elapsed_ms && (
+									<>
+										<div className="divider" />
+										<Typography.Text className="time">
+											{getYAxisFormattedValue(queryStats?.elapsed_ms?.toString(), 'ms')}
+										</Typography.Text>
+									</>
+								)}
 							</div>
 						)}
 					</div>

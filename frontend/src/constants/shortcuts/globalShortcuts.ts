@@ -9,6 +9,7 @@ export const GlobalShortcuts = {
 	NavigateToDashboards: 'd+shift',
 	NavigateToAlerts: 'a+shift',
 	NavigateToExceptions: 'e+shift',
+	NavigateToMessagingQueues: 'm+shift',
 };
 
 export const GlobalShortcutsName = {
@@ -19,6 +20,7 @@ export const GlobalShortcutsName = {
 	NavigateToDashboards: 'shift+d',
 	NavigateToAlerts: 'shift+a',
 	NavigateToExceptions: 'shift+e',
+	NavigateToMessagingQueues: 'shift+m',
 };
 
 export const GlobalShortcutsDescription = {
@@ -29,4 +31,5 @@ export const GlobalShortcutsDescription = {
 	NavigateToDashboards: 'Navigate to dashboards page',
 	NavigateToAlerts: 'Navigate to alerts page',
 	NavigateToExceptions: 'Navigate to Exceptions page',
+	NavigateToMessagingQueues: 'Navigate to Messaging Queues page',
 };
