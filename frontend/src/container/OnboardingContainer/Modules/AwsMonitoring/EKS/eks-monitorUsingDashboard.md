@@ -1,6 +1,6 @@
 ## Monitor using Dashboards
 
-To visualize the Kubernetes Metrics, you can use following pre-built Dashboard:
+To visualize the Kubernetes Metrics, you can use following pre-built Dashboards:
 
 - [K8s Infra Metrics](https://github.com/SigNoz/dashboards/tree/main/k8s-infra-metrics)
 
