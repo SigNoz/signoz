@@ -52,6 +52,10 @@ dayjs.locale('en');
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+const TIME_FORMAT = 'HH:mm';
+const DATE_FORMAT = 'Do MMM YYYY';
+const ORDINAL_FORMAT = 'Do';
+
 interface PlannedDowntimeFormData {
 	name: string;
 	startTime: dayjs.Dayjs | string;
@@ -343,28 +347,33 @@ export function PlannedDowntimeForm(
 			startTime,
 			formData.timezone,
 			!isEditMode,
-			'HH:mm',
+			TIME_FORMAT,
 		);
 
 		const formattedStartDate = timezoneFormatted(
 			startTime,
 			formData.timezone,
 			!isEditMode,
-			'Do MMM YYYY',
+			DATE_FORMAT,
+		);
+
+		const ordinalFormat = timezoneFormatted(
+			startTime,
+			formData.timezone,
+			!isEditMode,
+			ORDINAL_FORMAT,
 		);
 
 		const formattedDaysOfWeek = daysOfWeek?.join(', ');
 		switch (recurrenceType) {
 			case 'daily':
-				return `Schedule will start from ${formattedStartDate} and will trigger at ${formattedStartTime} daily`;
+				return `Scheduled from ${formattedStartDate}, daily starting at ${formattedStartTime}.`;
 			case 'monthly':
-				return `Schedule will start from ${formattedStartDate} and will trigger at ${formattedStartTime} on ${dayjs(
-					startTime,
-				).format('Do')} day of every month`;
+				return `Scheduled from ${formattedStartDate}, monthly on the ${ordinalFormat} starting at ${formattedStartTime}.`;
 			case 'weekly':
-				return `Schedule will start from ${formattedStartDate} and will trigger at ${formattedStartTime} ${
+				return `Scheduled from ${formattedStartDate}, weekly ${
 					formattedDaysOfWeek ? `on [${formattedDaysOfWeek}]` : ''
-				} every week`;
+				} starting at ${formattedStartTime}`;
 			default:
 				return `Schedule will start at ${formattedStartTime} on ${formattedStartDate}`;
 		}
@@ -397,16 +406,16 @@ export function PlannedDowntimeForm(
 			endTime,
 			formData.timezone,
 			!isEditMode,
-			'HH:mm',
+			TIME_FORMAT,
 		);
 
 		const formattedEndDate = timezoneFormatted(
 			endTime,
 			formData.timezone,
 			!isEditMode,
-			'Do MMM YYYY',
+			DATE_FORMAT,
 		);
-		return `Schedule will end at ${formattedEndTime} on ${formattedEndDate}`;
+		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
 	};
 
 	return (
