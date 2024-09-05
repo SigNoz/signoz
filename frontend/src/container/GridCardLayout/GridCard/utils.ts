@@ -138,12 +138,16 @@ export const isDataAvailableByPanelType = (
 	data?: MetricRangePayloadProps['data'],
 	panelType?: string,
 ): boolean => {
-	let panelData = data?.result;
-	if (panelType === PANEL_TYPES.TABLE) {
-		panelData = (data?.result?.[0] as any)?.table?.rows;
-	} else if (panelType === PANEL_TYPES.LIST) {
-		panelData = data?.newResult?.data?.result?.[0]?.list as any[];
-	}
+	const getPanelData = (): any[] | undefined => {
+		switch (panelType) {
+			case PANEL_TYPES.TABLE:
+				return (data?.result?.[0] as any)?.table?.rows;
+			case PANEL_TYPES.LIST:
+				return data?.newResult?.data?.result?.[0]?.list as any[];
+			default:
+				return data?.result;
+		}
+	};
 
-	return Boolean(panelData?.length);
+	return Boolean(getPanelData()?.length);
 };

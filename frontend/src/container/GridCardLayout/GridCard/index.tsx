@@ -184,7 +184,7 @@ function GridCardGraph({
 			},
 			onSettled: (data) => {
 				dataAvailable?.(
-					isDataAvailableByPanelType(data?.payload?.data, widget.panelTypes),
+					isDataAvailableByPanelType(data?.payload?.data, widget?.panelTypes),
 				);
 			},
 		},
