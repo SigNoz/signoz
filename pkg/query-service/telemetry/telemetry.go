@@ -176,7 +176,6 @@ type Telemetry struct {
 	rateLimits    map[string]int8
 	activeUser    map[string]int8
 	patTokenUser  bool
-	countUsers    int8
 	mutex         sync.RWMutex
 
 	alertsInfoCallback func(ctx context.Context) (*model.AlertsInfo, error)
@@ -259,6 +258,8 @@ func createTelemetry() {
 		metricsTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.MetricsTTL})
 		logsTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.LogsTTL})
 
+		userCount, _ := telemetry.reader.GetUserCount(ctx)
+
 		data := map[string]interface{}{
 			"totalSpans":                            totalSpans,
 			"spansInLastHeartBeatInterval":          spansInLastHeartBeatInterval,
@@ -266,7 +267,7 @@ func createTelemetry() {
 			"getSamplesInfoInLastHeartBeatInterval": getSamplesInfoInLastHeartBeatInterval,
 			"totalLogs":                             totalLogs,
 			"getLogsInfoInLastHeartBeatInterval":    getLogsInfoInLastHeartBeatInterval,
-			"countUsers":                            telemetry.countUsers,
+			"countUsers":                            userCount,
 			"metricsTTLStatus":                      metricsTTL.Status,
 			"tracesTTLStatus":                       traceTTL.Status,
 			"logsTTLStatus":                         logsTTL.Status,
@@ -450,11 +451,22 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
+	// extract user group from user.groupId
+	role, _ := a.reader.GetUserRole(context.Background(), user.GroupId)
+
 	if a.saasOperator != nil {
-		a.saasOperator.Enqueue(analytics.Identify{
-			UserId: a.userEmail,
-			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
-		})
+		if role != "" {
+			a.saasOperator.Enqueue(analytics.Identify{
+				UserId: a.userEmail,
+				Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("role", role),
+			})
+		} else {
+			a.saasOperator.Enqueue(analytics.Identify{
+				UserId: a.userEmail,
+				Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
+			})
+		}
+
 		a.saasOperator.Enqueue(analytics.Group{
 			UserId:  a.userEmail,
 			GroupId: a.getCompanyDomain(),
@@ -472,10 +484,6 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 		GroupId: a.getCompanyDomain(),
 		Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
 	})
-}
-
-func (a *Telemetry) SetCountUsers(countUsers int8) {
-	a.countUsers = countUsers
 }
 
 func (a *Telemetry) SetUserEmail(email string) {
