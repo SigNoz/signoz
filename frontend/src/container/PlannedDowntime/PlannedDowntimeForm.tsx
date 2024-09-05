@@ -375,7 +375,7 @@ export function PlannedDowntimeForm(
 					formattedDaysOfWeek ? `on [${formattedDaysOfWeek}]` : ''
 				} starting at ${formattedStartTime}`;
 			default:
-				return `Schedule will start at ${formattedStartTime} on ${formattedStartDate}`;
+				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
 		}
 	};
 
