@@ -38,7 +38,7 @@ import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
-import { VIEW_TYPES, VIEWS } from './constants';
+import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailProps } from './LogDetail.interfaces';
 import QueryBuilderSearchWrapper from './QueryBuilderSearchWrapper';
 
@@ -259,7 +259,14 @@ function LogDetail({
 					isEdit={isEdit}
 				/>
 			)}
-			{selectedView === VIEW_TYPES.INFRAMETRICS && <InfraMetrics logData={log} />}
+			{selectedView === VIEW_TYPES.INFRAMETRICS && (
+				<InfraMetrics
+					clusterName={log.resources_string?.[RESOURCE_KEYS.CLUSTER_NAME] as string}
+					podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] as string}
+					nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] as string}
+					hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] as string}
+				/>
+			)}
 		</Drawer>
 	);
 }
