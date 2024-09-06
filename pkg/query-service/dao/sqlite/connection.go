@@ -103,6 +103,9 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 		return nil, err
 	}
 
+	telemetry.GetInstance().SetUserCountCallback(mds.GetUserCount)
+	telemetry.GetInstance().SetUserRoleCallback(mds.GetUserRole)
+
 	return mds, nil
 }
 

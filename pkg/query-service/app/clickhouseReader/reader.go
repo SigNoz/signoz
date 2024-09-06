@@ -3152,22 +3152,6 @@ func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {
 	return totalSpans, nil
 }
 
-func (r *ClickHouseReader) GetUserRole(ctx context.Context, groupId string) (string, error) {
-	role, err := dao.DB().GetGroup(context.Background(), groupId)
-	if err != nil || role == nil {
-		return "", err
-	}
-	return role.Name, nil
-}
-
-func (r *ClickHouseReader) GetUserCount(ctx context.Context) (int, error) {
-	users, err := dao.DB().GetUsers(ctx)
-	if err != nil {
-		return 0, err
-	}
-	return len(users), nil
-}
-
 func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var spansInLastHeartBeatInterval uint64

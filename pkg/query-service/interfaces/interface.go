@@ -75,8 +75,6 @@ type Reader interface {
 	GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error)
 	GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error)
 	GetTotalSpans(ctx context.Context) (uint64, error)
-	GetUserRole(ctx context.Context, groupId string) (string, error)
-	GetUserCount(ctx context.Context) (int, error)
 	GetTotalLogs(ctx context.Context) (uint64, error)
 	GetTotalSamples(ctx context.Context) (uint64, error)
 	GetSpansInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error)

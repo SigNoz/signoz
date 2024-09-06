@@ -179,10 +179,20 @@ type Telemetry struct {
 	mutex         sync.RWMutex
 
 	alertsInfoCallback func(ctx context.Context) (*model.AlertsInfo, error)
+	userCountCallback  func(ctx context.Context) (int, error)
+	userRoleCallback   func(ctx context.Context, groupId string) (string, error)
 }
 
 func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*model.AlertsInfo, error)) {
 	a.alertsInfoCallback = callback
+}
+
+func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context) (int, error)) {
+	a.userCountCallback = callback
+}
+
+func (a *Telemetry) SetUserRoleCallback(callback func(ctx context.Context, groupId string) (string, error)) {
+	a.userRoleCallback = callback
 }
 
 func createTelemetry() {
@@ -258,7 +268,7 @@ func createTelemetry() {
 		metricsTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.MetricsTTL})
 		logsTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.LogsTTL})
 
-		userCount, _ := telemetry.reader.GetUserCount(ctx)
+		userCount, _ := telemetry.userCountCallback(ctx)
 
 		data := map[string]interface{}{
 			"totalSpans":                            totalSpans,
@@ -452,7 +462,7 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 		return
 	}
 	// extract user group from user.groupId
-	role, _ := a.reader.GetUserRole(context.Background(), user.GroupId)
+	role, _ := a.userRoleCallback(context.Background(), user.GroupId)
 
 	if a.saasOperator != nil {
 		if role != "" {
