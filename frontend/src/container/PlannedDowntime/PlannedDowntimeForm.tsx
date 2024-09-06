@@ -41,7 +41,7 @@ import {
 	getAlertOptionsFromIds,
 	getDurationInfo,
 	getEndTime,
-	handleTimeConvertion,
+	handleTimeConversion,
 	isScheduleRecurring,
 	recurrenceOptions,
 	recurrenceOptionWithSubmenu,
@@ -139,7 +139,7 @@ export function PlannedDowntimeForm(
 						.filter((alert) => alert !== undefined) as string[],
 					name: values.name,
 					schedule: {
-						startTime: handleTimeConvertion(
+						startTime: handleTimeConversion(
 							values.startTime,
 							timezoneInitialValue,
 							values.timezone,
@@ -147,7 +147,7 @@ export function PlannedDowntimeForm(
 						),
 						timezone: values.timezone,
 						endTime: values.endTime
-							? handleTimeConvertion(
+							? handleTimeConversion(
 									values.endTime,
 									timezoneInitialValue,
 									values.timezone,
@@ -204,14 +204,14 @@ export function PlannedDowntimeForm(
 							? `${values.recurrence?.duration}${durationUnit}`
 							: undefined,
 						endTime: !isEmpty(values.endTime)
-							? handleTimeConvertion(
+							? handleTimeConversion(
 									values.endTime,
 									timezoneInitialValue,
 									values.timezone,
 									!isEditMode,
 							  )
 							: undefined,
-						startTime: handleTimeConvertion(
+						startTime: handleTimeConversion(
 							values.startTime,
 							timezoneInitialValue,
 							values.timezone,
@@ -308,7 +308,7 @@ export function PlannedDowntimeForm(
 		}),
 	);
 
-	const timezoneFormatted = (
+	const getTimezoneFormattedTime = (
 		time: string | dayjs.Dayjs,
 		timeZone?: string,
 		isEditMode?: boolean,
@@ -323,7 +323,7 @@ export function PlannedDowntimeForm(
 		return dayjs(time).tz(timeZone, isEditMode).format(format);
 	};
 
-	const startTimeText = (): string => {
+	const startTimeText = useMemo((): string => {
 		let startTime = formData?.startTime;
 		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
 			startTime = formData?.recurrence?.startTime || formData?.startTime || '';
@@ -334,7 +334,7 @@ export function PlannedDowntimeForm(
 		}
 
 		if (formData.timezone) {
-			startTime = handleTimeConvertion(
+			startTime = handleTimeConversion(
 				startTime,
 				timezoneInitialValue,
 				formData?.timezone,
@@ -343,21 +343,21 @@ export function PlannedDowntimeForm(
 		}
 		const daysOfWeek = formData?.recurrence?.repeatOn;
 
-		const formattedStartTime = timezoneFormatted(
+		const formattedStartTime = getTimezoneFormattedTime(
 			startTime,
 			formData.timezone,
 			!isEditMode,
 			TIME_FORMAT,
 		);
 
-		const formattedStartDate = timezoneFormatted(
+		const formattedStartDate = getTimezoneFormattedTime(
 			startTime,
 			formData.timezone,
 			!isEditMode,
 			DATE_FORMAT,
 		);
 
-		const ordinalFormat = timezoneFormatted(
+		const ordinalFormat = getTimezoneFormattedTime(
 			startTime,
 			formData.timezone,
 			!isEditMode,
@@ -377,9 +377,9 @@ export function PlannedDowntimeForm(
 			default:
 				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
 		}
-	};
+	}, [formData, recurrenceType, isEditMode, timezoneInitialValue]);
 
-	const endTimeText = (): string => {
+	const endTimeText = useMemo((): string => {
 		let endTime = formData?.endTime;
 		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
 			endTime = formData?.recurrence?.endTime || '';
@@ -394,7 +394,7 @@ export function PlannedDowntimeForm(
 		}
 
 		if (formData.timezone) {
-			endTime = handleTimeConvertion(
+			endTime = handleTimeConversion(
 				endTime,
 				timezoneInitialValue,
 				formData?.timezone,
@@ -402,21 +402,21 @@ export function PlannedDowntimeForm(
 			);
 		}
 
-		const formattedEndTime = timezoneFormatted(
+		const formattedEndTime = getTimezoneFormattedTime(
 			endTime,
 			formData.timezone,
 			!isEditMode,
 			TIME_FORMAT,
 		);
 
-		const formattedEndDate = timezoneFormatted(
+		const formattedEndDate = getTimezoneFormattedTime(
 			endTime,
 			formData.timezone,
 			!isEditMode,
 			DATE_FORMAT,
 		);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
-	};
+	}, [formData, recurrenceType, isEditMode, timezoneInitialValue]);
 
 	return (
 		<Modal
@@ -452,7 +452,7 @@ export function PlannedDowntimeForm(
 					label="Starts from"
 					name="startTime"
 					rules={formValidationRules}
-					className="formItemWithBullet"
+					className={!isEmpty(startTimeText) ? 'formItemWithBullet' : ''}
 					getValueProps={(value): any => ({
 						value: value ? dayjs(value).tz(timezoneInitialValue) : undefined,
 					})}
@@ -467,7 +467,9 @@ export function PlannedDowntimeForm(
 						popupClassName="datePicker"
 					/>
 				</Form.Item>
-				<div className="scheduleTimeInfoText">{startTimeText()}</div>
+				{!isEmpty(startTimeText) && (
+					<div className="scheduleTimeInfoText">{startTimeText}</div>
+				)}
 				<Form.Item
 					label="Repeats every"
 					name={['recurrence', 'repeatType']}
@@ -531,7 +533,7 @@ export function PlannedDowntimeForm(
 							required: recurrenceType === recurrenceOptions.doesNotRepeat.value,
 						},
 					]}
-					className="formItemWithBullet"
+					className={!isEmpty(endTimeText) ? 'formItemWithBullet' : ''}
 					getValueProps={(value): any => ({
 						value: value ? dayjs(value).tz(timezoneInitialValue) : undefined,
 					})}
@@ -546,7 +548,9 @@ export function PlannedDowntimeForm(
 						popupClassName="datePicker"
 					/>
 				</Form.Item>
-				<div className="scheduleTimeInfoText">{endTimeText()}</div>
+				{!isEmpty(endTimeText) && (
+					<div className="scheduleTimeInfoText">{endTimeText}</div>
+				)}
 				<div>
 					<div className="alert-rule-form">
 						<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>

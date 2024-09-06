@@ -262,7 +262,7 @@ export function formatWithTimezone(
 	return `${parsedDate?.substring(0, 19)}${targetOffset}`;
 }
 
-export function handleTimeConvertion(
+export function handleTimeConversion(
 	dateValue: string | dayjs.Dayjs,
 	timezoneInit?: string,
 	timezone?: string,
