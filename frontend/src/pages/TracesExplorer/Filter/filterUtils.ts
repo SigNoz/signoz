@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
-import { convertMetricKeyToTrace } from 'hooks/useResourceAttribute/utils';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import {
 	BaseAutocompleteData,
@@ -9,14 +8,11 @@ import {
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-const RESOURCE_DEPLOYMENT_ENVIRONMENT = convertMetricKeyToTrace(
-	'resource_deployment_environment',
-);
 export const AllTraceFilterKeyValue: Record<string, string> = {
 	durationNanoMin: 'Duration',
 	durationNano: 'Duration',
 	durationNanoMax: 'Duration',
-	[RESOURCE_DEPLOYMENT_ENVIRONMENT]: 'Environment',
+	'deployment.environment': 'Environment',
 	hasError: 'Status',
 	serviceName: 'Service Name',
 	name: 'Operation / Name',
@@ -208,13 +204,13 @@ export const traceFilterKeys: Record<
 		id: 'serviceName--string--tag--true',
 	},
 
-	[RESOURCE_DEPLOYMENT_ENVIRONMENT]: {
-		key: RESOURCE_DEPLOYMENT_ENVIRONMENT,
+	'deployment.environment': {
+		key: 'deployment.environment',
 		dataType: DataTypes.String,
 		type: 'resource',
 		isColumn: false,
 		isJSON: false,
-		id: `${RESOURCE_DEPLOYMENT_ENVIRONMENT}--string--resource--false`,
+		id: 'deployment.environment--string--resource--false',
 	},
 	name: {
 		key: 'name',
