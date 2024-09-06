@@ -130,7 +130,7 @@ func Test_buildIndexFilterForInOperator(t *testing.T) {
 				op:    v3.FilterOperatorNotIn,
 				value: "application'\"s",
 			},
-			want: `(lower(labels) not like '%"service.name":"application'"s"%')`,
+			want: `(lower(labels) not like '%"service.name":"application\'"s"%')`,
 		},
 	}
 	for _, tt := range tests {
@@ -170,6 +170,15 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 				value: "application",
 			},
 			want: `lower(labels) not like '%service.name%application%'`,
+		},
+		{
+			name: "test contains with % and _",
+			args: args{
+				key:   "service.name",
+				op:    v3.FilterOperatorNotContains,
+				value: "application%_test",
+			},
+			want: `lower(labels) not like '%service.name%application%_test%'`,
 		},
 		{
 			name: "test not regex",

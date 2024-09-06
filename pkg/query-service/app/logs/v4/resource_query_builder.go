@@ -64,7 +64,8 @@ func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value inter
 	// if there are no values to filter on, return an empty string
 	if len(values) > 0 {
 		for _, v := range values {
-			conditions = append(conditions, fmt.Sprintf("lower(labels) %s '%%\"%s\":\"%s\"%%'", sqlOp, key, strings.ToLower(v)))
+			value := utils.QuoteEscapedString(strings.ToLower(v))
+			conditions = append(conditions, fmt.Sprintf("lower(labels) %s '%%\"%s\":\"%s\"%%'", sqlOp, key, value))
 		}
 		return "(" + strings.Join(conditions, separator) + ")"
 	}
@@ -196,9 +197,9 @@ func buildResourceSubQuery(bucketStart, bucketEnd int64, fs *v3.FilterSet, group
 	conditionStr := strings.Join(conditions, " AND ")
 
 	// BUILD THE FINAL QUERY
-	query := fmt.Sprintf("(SELECT fingerprint FROM signoz_logs.%s WHERE (seen_at_ts_bucket_start >= %d) AND (seen_at_ts_bucket_start <= %d) AND ", DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd)
+	query := fmt.Sprintf("SELECT fingerprint FROM signoz_logs.%s WHERE (seen_at_ts_bucket_start >= %d) AND (seen_at_ts_bucket_start <= %d) AND ", DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd)
 
-	query = query + conditionStr + ")"
+	query = "(" + query + conditionStr + ")"
 
 	return query, nil
 }
