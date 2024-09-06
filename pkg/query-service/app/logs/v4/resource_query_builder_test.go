@@ -25,7 +25,7 @@ func Test_buildResourceFilter(t *testing.T) {
 				key: "service.name",
 				op:  v3.FilterOperatorExists,
 			},
-			want: `simpleJSONHas(lower(labels), 'service.name')`,
+			want: `simpleJSONHas(labels, 'service.name')`,
 		},
 		{
 			name: "test nexists",
@@ -33,7 +33,7 @@ func Test_buildResourceFilter(t *testing.T) {
 				key: "service.name",
 				op:  v3.FilterOperatorNotExists,
 			},
-			want: `not simpleJSONHas(lower(labels), 'service.name')`,
+			want: `not simpleJSONHas(labels, 'service.name')`,
 		},
 		{
 			name: "test regex",
@@ -43,7 +43,7 @@ func Test_buildResourceFilter(t *testing.T) {
 				op:     v3.FilterOperatorRegex,
 				value:  ".*",
 			},
-			want: `match(simpleJSONExtractString(lower(labels), 'service.name'), '.*')`,
+			want: `match(simpleJSONExtractString(labels, 'service.name'), '.*')`,
 		},
 		{
 			name: "test contains",
@@ -51,9 +51,9 @@ func Test_buildResourceFilter(t *testing.T) {
 				logsOp: "LIKE",
 				key:    "service.name",
 				op:     v3.FilterOperatorContains,
-				value:  "application%_",
+				value:  "Application%_",
 			},
-			want: `simpleJSONExtractString(lower(labels), 'service.name') LIKE '%application\%\_%'`,
+			want: `simpleJSONExtractString(labels, 'service.name') LIKE '%Application\%\_%'`,
 		},
 		{
 			name: "test eq",
@@ -63,7 +63,7 @@ func Test_buildResourceFilter(t *testing.T) {
 				op:     v3.FilterOperatorEqual,
 				value:  "Application",
 			},
-			want: `simpleJSONExtractString(lower(labels), 'service.name') = 'application'`,
+			want: `simpleJSONExtractString(labels, 'service.name') = 'Application'`,
 		},
 		{
 			name: "test value with quotes",
@@ -73,7 +73,7 @@ func Test_buildResourceFilter(t *testing.T) {
 				op:     v3.FilterOperatorEqual,
 				value:  "Application's",
 			},
-			want: `simpleJSONExtractString(lower(labels), 'service.name') = 'application\'s'`,
+			want: `simpleJSONExtractString(labels, 'service.name') = 'Application\'s'`,
 		},
 	}
 	for _, tt := range tests {
@@ -103,7 +103,7 @@ func Test_buildIndexFilterForInOperator(t *testing.T) {
 				op:    v3.FilterOperatorIn,
 				value: []interface{}{"Application", "Test"},
 			},
-			want: `(lower(labels) like '%"service.name":"application"%' OR lower(labels) like '%"service.name":"test"%')`,
+			want: `(labels like '%"service.name":"Application"%' OR labels like '%"service.name":"Test"%')`,
 		},
 		{
 			name: "test nin array",
@@ -112,7 +112,7 @@ func Test_buildIndexFilterForInOperator(t *testing.T) {
 				op:    v3.FilterOperatorNotIn,
 				value: []interface{}{"Application", "Test"},
 			},
-			want: `(lower(labels) not like '%"service.name":"application"%' AND lower(labels) not like '%"service.name":"test"%')`,
+			want: `(labels not like '%"service.name":"Application"%' AND labels not like '%"service.name":"Test"%')`,
 		},
 		{
 			name: "test in string",
@@ -121,7 +121,7 @@ func Test_buildIndexFilterForInOperator(t *testing.T) {
 				op:    v3.FilterOperatorIn,
 				value: "application",
 			},
-			want: `(lower(labels) like '%"service.name":"application"%')`,
+			want: `(labels like '%"service.name":"application"%')`,
 		},
 		{
 			name: "test nin string",
@@ -130,7 +130,7 @@ func Test_buildIndexFilterForInOperator(t *testing.T) {
 				op:    v3.FilterOperatorNotIn,
 				value: "application'\"_s",
 			},
-			want: `(lower(labels) not like '%"service.name":"application\'"\_s"%')`,
+			want: `(labels not like '%"service.name":"application\'"\_s"%')`,
 		},
 	}
 	for _, tt := range tests {
@@ -160,7 +160,7 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 				op:    v3.FilterOperatorContains,
 				value: "application",
 			},
-			want: `lower(labels) like '%service.name%application%'`,
+			want: `labels like '%service.name%application%'`,
 		},
 		{
 			name: "test not contains",
@@ -169,7 +169,7 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 				op:    v3.FilterOperatorNotContains,
 				value: "application",
 			},
-			want: `lower(labels) not like '%service.name%application%'`,
+			want: `labels not like '%service.name%application%'`,
 		},
 		{
 			name: "test contains with % and _",
@@ -178,7 +178,7 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 				op:    v3.FilterOperatorNotContains,
 				value: "application%_test",
 			},
-			want: `lower(labels) not like '%service.name%application\%\_test%'`,
+			want: `labels not like '%service.name%application\%\_test%'`,
 		},
 		{
 			name: "test not regex",
@@ -187,7 +187,7 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 				op:    v3.FilterOperatorNotRegex,
 				value: ".*",
 			},
-			want: `lower(labels) not like '%service.name%'`,
+			want: `labels not like '%service.name%'`,
 		},
 		{
 			name: "test in",
@@ -196,7 +196,7 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 				op:    v3.FilterOperatorNotIn,
 				value: []interface{}{"Application", "Test"},
 			},
-			want: `(lower(labels) not like '%"service.name":"application"%' AND lower(labels) not like '%"service.name":"test"%')`,
+			want: `(labels not like '%"service.name":"Application"%' AND labels not like '%"service.name":"Test"%')`,
 		},
 		{
 			name: "test eq",
@@ -205,7 +205,7 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 				op:    v3.FilterOperatorEqual,
 				value: "Application",
 			},
-			want: `lower(labels) like '%service.name%application%'`,
+			want: `labels like '%service.name%Application%'`,
 		},
 	}
 	for _, tt := range tests {
@@ -265,8 +265,8 @@ func Test_buildResourceFiltersFromFilterItems(t *testing.T) {
 				},
 			},
 			want: []string{
-				"simpleJSONExtractString(lower(labels), 'service.name') = 'test'",
-				"lower(labels) like '%service.name%test%'",
+				"simpleJSONExtractString(labels, 'service.name') = 'test'",
+				"labels like '%service.name%test%'",
 			},
 			wantErr: false,
 		},
@@ -297,10 +297,10 @@ func Test_buildResourceFiltersFromFilterItems(t *testing.T) {
 				},
 			},
 			want: []string{
-				"simpleJSONExtractString(lower(labels), 'service.name') = 'test'",
-				"lower(labels) like '%service.name%test%'",
-				"simpleJSONExtractString(lower(labels), 'namespace') LIKE '%test1%'",
-				"lower(labels) like '%namespace%test1%'",
+				"simpleJSONExtractString(labels, 'service.name') = 'test'",
+				"labels like '%service.name%test%'",
+				"simpleJSONExtractString(labels, 'namespace') LIKE '%test1%'",
+				"labels like '%namespace%test1%'",
 			},
 			wantErr: false,
 		},
@@ -340,7 +340,7 @@ func Test_buildResourceFiltersFromGroupBy(t *testing.T) {
 				},
 			},
 			want: []string{
-				"(simpleJSONHas(lower(labels), 'service.name') AND lower(labels) like '%service.name%')",
+				"(simpleJSONHas(labels, 'service.name') AND labels like '%service.name%')",
 			},
 		},
 		{
@@ -360,8 +360,8 @@ func Test_buildResourceFiltersFromGroupBy(t *testing.T) {
 				},
 			},
 			want: []string{
-				"(simpleJSONHas(lower(labels), 'service.name') AND lower(labels) like '%service.name%')",
-				"(simpleJSONHas(lower(labels), 'namespace') AND lower(labels) like '%namespace%')",
+				"(simpleJSONHas(labels, 'service.name') AND labels like '%service.name%')",
+				"(simpleJSONHas(labels, 'namespace') AND labels like '%namespace%')",
 			},
 		},
 	}
@@ -392,7 +392,7 @@ func Test_buildResourceFiltersFromAggregateAttribute(t *testing.T) {
 					Type:     v3.AttributeKeyTypeResource,
 				},
 			},
-			want: "(simpleJSONHas(lower(labels), 'service.name') AND lower(labels) like '%service.name%')",
+			want: "(simpleJSONHas(labels, 'service.name') AND labels like '%service.name%')",
 		},
 	}
 	for _, tt := range tests {
@@ -460,10 +460,10 @@ func Test_buildResourceSubQuery(t *testing.T) {
 			},
 			want: "(SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE " +
 				"(seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND " +
-				"simpleJSONExtractString(lower(labels), 'service.name') = 'test' AND lower(labels) like '%service.name%test%' " +
-				"AND simpleJSONExtractString(lower(labels), 'namespace') LIKE '%test1%' AND lower(labels) like '%namespace%test1%' " +
-				"AND (simpleJSONHas(lower(labels), 'cluster.name') AND lower(labels) like '%cluster.name%') AND " +
-				"( (simpleJSONHas(lower(labels), 'host.name') AND lower(labels) like '%host.name%') ))",
+				"simpleJSONExtractString(labels, 'service.name') = 'test' AND labels like '%service.name%test%' " +
+				"AND simpleJSONExtractString(labels, 'namespace') LIKE '%test1%' AND labels like '%namespace%test1%' " +
+				"AND (simpleJSONHas(labels, 'cluster.name') AND labels like '%cluster.name%') AND " +
+				"( (simpleJSONHas(labels, 'host.name') AND labels like '%host.name%') ))",
 			wantErr: false,
 		},
 	}
