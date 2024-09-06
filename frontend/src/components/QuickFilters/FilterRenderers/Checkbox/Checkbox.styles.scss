@@ -1,0 +1,145 @@
+.checkbox-filter {
+	display: flex;
+	flex-direction: column;
+	padding: 12px;
+	gap: 12px;
+	border-bottom: 1px solid var(--bg-slate-400);
+	.filter-header-checkbox {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+
+		.left-action {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+
+			.title {
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 18px;
+				letter-spacing: -0.07px;
+				text-transform: capitalize;
+			}
+		}
+
+		.right-action {
+			display: flex;
+			align-items: center;
+
+			.clear-all {
+				font-size: 12px;
+				color: var(--bg-robin-500);
+				cursor: pointer;
+			}
+		}
+	}
+
+	.values {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+
+		.value {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.checkbox-value-section {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				width: 100%;
+				cursor: pointer;
+
+				&.filter-disabled {
+					cursor: not-allowed;
+
+					.value-string {
+						color: var(--bg-slate-200);
+					}
+
+					.only-btn {
+						cursor: not-allowed;
+						color: var(--bg-slate-200);
+					}
+
+					.toggle-btn {
+						cursor: not-allowed;
+						color: var(--bg-slate-200);
+					}
+				}
+
+				.value-string {
+				}
+
+				.only-btn {
+					display: none;
+				}
+				.toggle-btn {
+					display: none;
+				}
+
+				.toggle-btn:hover {
+					background-color: unset;
+				}
+
+				.only-btn:hover {
+					background-color: unset;
+				}
+			}
+
+			.checkbox-value-section:hover {
+				.toggle-btn {
+					display: none;
+				}
+				.only-btn {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					height: 21px;
+				}
+			}
+		}
+
+		.value:hover {
+			.toggle-btn {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				height: 21px;
+			}
+		}
+	}
+
+	.no-data {
+		align-self: center;
+	}
+
+	.show-more {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		.show-more-text {
+			color: var(--bg-robin-500);
+			cursor: pointer;
+		}
+	}
+}
+
+.lightMode {
+	.checkbox-filter {
+		border-bottom: 1px solid var(--bg-vanilla-300);
+		.filter-header-checkbox {
+			.left-action {
+				.title {
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+	}
+}
