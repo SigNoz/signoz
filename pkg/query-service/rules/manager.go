@@ -12,8 +12,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/go-kit/log"
-
 	"go.uber.org/zap"
 
 	"errors"
@@ -26,6 +24,17 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
+
+type PrepareTaskOptions struct {
+	Rule        *PostableRule
+	TaskName    string
+	RuleDB      RuleDB
+	Logger      *zap.Logger
+	Reader      interfaces.Reader
+	FF          interfaces.FeatureLookup
+	ManagerOpts *ManagerOptions
+	NotifyFunc  NotifyFunc
+}
 
 const taskNamesuffix = "webAppEditor"
 
@@ -56,13 +65,15 @@ type ManagerOptions struct {
 	DBConn *sqlx.DB
 
 	Context      context.Context
-	Logger       log.Logger
+	Logger       *zap.Logger
 	ResendDelay  time.Duration
 	DisableRules bool
 	FeatureFlags interfaces.FeatureLookup
 	Reader       interfaces.Reader
 
 	EvalDelay time.Duration
+
+	PrepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
 }
 
 // The Manager manages recording and alerting rules.
@@ -78,10 +89,12 @@ type Manager struct {
 	// datastore to store alert definitions
 	ruleDB RuleDB
 
-	logger log.Logger
+	logger *zap.Logger
 
 	featureFlags interfaces.FeatureLookup
 	reader       interfaces.Reader
+
+	prepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -94,7 +107,67 @@ func defaultOptions(o *ManagerOptions) *ManagerOptions {
 	if o.ResendDelay == time.Duration(0) {
 		o.ResendDelay = 1 * time.Minute
 	}
+	if o.Logger == nil {
+		o.Logger = zap.L()
+	}
+	if o.PrepareTaskFunc == nil {
+		o.PrepareTaskFunc = defaultPrepareTaskFunc
+	}
 	return o
+}
+
+func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
+
+	rules := make([]Rule, 0)
+	var task Task
+
+	ruleId := ruleIdFromTaskName(opts.TaskName)
+	if opts.Rule.RuleType == RuleTypeThreshold {
+		// create a threshold rule
+		tr, err := NewThresholdRule(
+			ruleId,
+			opts.Rule,
+			ThresholdRuleOpts{
+				EvalDelay: opts.ManagerOpts.EvalDelay,
+			},
+			opts.FF,
+			opts.Reader,
+		)
+
+		if err != nil {
+			return task, err
+		}
+
+		rules = append(rules, tr)
+
+		// create ch rule task for evalution
+		task = newTask(TaskTypeCh, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+
+	} else if opts.Rule.RuleType == RuleTypeProm {
+
+		// create promql rule
+		pr, err := NewPromRule(
+			ruleId,
+			opts.Rule,
+			opts.Logger,
+			PromRuleOpts{},
+			opts.Reader,
+		)
+
+		if err != nil {
+			return task, err
+		}
+
+		rules = append(rules, pr)
+
+		// create promql rule task for evalution
+		task = newTask(TaskTypeProm, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+
+	} else {
+		return nil, fmt.Errorf("unsupported rule type. Supported types: %s, %s", RuleTypeProm, RuleTypeThreshold)
+	}
+
+	return task, nil
 }
 
 // NewManager returns an implementation of Manager, ready to be started
@@ -116,15 +189,16 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 	telemetry.GetInstance().SetAlertsInfoCallback(db.GetAlertsInfo)
 
 	m := &Manager{
-		tasks:        map[string]Task{},
-		rules:        map[string]Rule{},
-		notifier:     notifier,
-		ruleDB:       db,
-		opts:         o,
-		block:        make(chan struct{}),
-		logger:       o.Logger,
-		featureFlags: o.FeatureFlags,
-		reader:       o.Reader,
+		tasks:           map[string]Task{},
+		rules:           map[string]Rule{},
+		notifier:        notifier,
+		ruleDB:          db,
+		opts:            o,
+		block:           make(chan struct{}),
+		logger:          o.Logger,
+		featureFlags:    o.FeatureFlags,
+		reader:          o.Reader,
+		prepareTaskFunc: o.PrepareTaskFunc,
 	}
 	return m, nil
 }
@@ -251,11 +325,24 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 
 	zap.L().Debug("editing a rule task", zap.String("name", taskName))
 
-	newTask, err := m.prepareTask(false, rule, taskName)
+	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
+		Rule:        rule,
+		TaskName:    taskName,
+		RuleDB:      m.ruleDB,
+		Logger:      m.logger,
+		Reader:      m.reader,
+		FF:          m.featureFlags,
+		ManagerOpts: m.opts,
+		NotifyFunc:  m.prepareNotifyFunc(),
+	})
 
 	if err != nil {
 		zap.L().Error("loading tasks failed", zap.Error(err))
 		return errors.New("error preparing rule with given parameters, previous rule set restored")
+	}
+
+	for _, r := range newTask.Rules() {
+		m.rules[r.ID()] = r
 	}
 
 	// If there is an old task with the same identifier, stop it and wait for
@@ -357,7 +444,20 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 	defer m.mtx.Unlock()
 
 	zap.L().Debug("adding a new rule task", zap.String("name", taskName))
-	newTask, err := m.prepareTask(false, rule, taskName)
+	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
+		Rule:        rule,
+		TaskName:    taskName,
+		RuleDB:      m.ruleDB,
+		Logger:      m.logger,
+		Reader:      m.reader,
+		FF:          m.featureFlags,
+		ManagerOpts: m.opts,
+		NotifyFunc:  m.prepareNotifyFunc(),
+	})
+
+	for _, r := range newTask.Rules() {
+		m.rules[r.ID()] = r
+	}
 
 	if err != nil {
 		zap.L().Error("creating rule task failed", zap.String("name", taskName), zap.Error(err))
@@ -380,77 +480,6 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 
 	m.tasks[taskName] = newTask
 	return nil
-}
-
-// prepareTask prepares a rule task from postable rule
-func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string) (Task, error) {
-
-	if acquireLock {
-		m.mtx.Lock()
-		defer m.mtx.Unlock()
-	}
-
-	rules := make([]Rule, 0)
-	var task Task
-
-	if r.AlertName == "" {
-		zap.L().Error("task load failed, at least one rule must be set", zap.String("name", taskName))
-		return task, fmt.Errorf("task load failed, at least one rule must be set")
-	}
-
-	ruleId := ruleIdFromTaskName(taskName)
-	if r.RuleType == RuleTypeThreshold {
-		// create a threshold rule
-		tr, err := NewThresholdRule(
-			ruleId,
-			r,
-			ThresholdRuleOpts{
-				EvalDelay: m.opts.EvalDelay,
-			},
-			m.featureFlags,
-			m.reader,
-		)
-
-		if err != nil {
-			return task, err
-		}
-
-		rules = append(rules, tr)
-
-		// create ch rule task for evalution
-		task = newTask(TaskTypeCh, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc(), m.ruleDB)
-
-		// add rule to memory
-		m.rules[ruleId] = tr
-
-	} else if r.RuleType == RuleTypeProm {
-
-		// create promql rule
-		pr, err := NewPromRule(
-			ruleId,
-			r,
-			log.With(m.logger, "alert", r.AlertName),
-			PromRuleOpts{},
-			m.reader,
-		)
-
-		if err != nil {
-			return task, err
-		}
-
-		rules = append(rules, pr)
-
-		// create promql rule task for evalution
-		task = newTask(TaskTypeProm, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc(), m.ruleDB)
-
-		// add rule to memory
-		m.rules[ruleId] = pr
-
-	} else {
-		return nil, fmt.Errorf("unsupported rule type. Supported types: %s, %s", RuleTypeProm, RuleTypeThreshold)
-	}
-
-	return task, nil
 }
 
 // RuleTasks returns the list of manager's rule tasks.
@@ -783,7 +812,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 		rule, err = NewPromRule(
 			alertname,
 			parsedRule,
-			log.With(m.logger, "alert", alertname),
+			m.logger,
 			PromRuleOpts{
 				SendAlways: true,
 			},
