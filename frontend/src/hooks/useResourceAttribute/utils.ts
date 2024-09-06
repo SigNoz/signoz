@@ -106,7 +106,7 @@ export const resourceAttributesToTracesFilterItems = (
 			dataType: DataTypes.String,
 			id: `${convertMetricKeyToTrace(res.tagKey)}--string--resource--true`,
 		},
-		op: `${res.operator}`,
+		op: `${res.operator === 'Not IN' ? 'nin' : res.operator}`,
 		value: res.tagValue,
 	}));
 

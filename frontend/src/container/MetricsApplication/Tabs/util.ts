@@ -90,15 +90,12 @@ export function onGraphClickHandler(
 	};
 }
 
-export const handleNonInQueryRange = (
-	tags: TagFilterItem[],
-	isTrace = false,
-): TagFilterItem[] =>
+export const handleNonInQueryRange = (tags: TagFilterItem[]): TagFilterItem[] =>
 	tags.map((tag) => {
 		if (tag.op === 'Not IN') {
 			return {
 				...tag,
-				op: isTrace ? 'nin' : 'NIN',
+				op: 'NIN',
 			};
 		}
 		return tag;

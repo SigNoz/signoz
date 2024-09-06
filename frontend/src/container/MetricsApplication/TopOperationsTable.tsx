@@ -21,7 +21,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from './Tabs/types';
-import { handleNonInQueryRange, useGetAPMToTracesQueries } from './Tabs/util';
+import { useGetAPMToTracesQueries } from './Tabs/util';
 import {
 	convertedTracesToDownloadData,
 	getErrorRate,
@@ -49,8 +49,7 @@ function TopOperationsTable({
 
 	const params = useParams<{ servicename: string }>();
 	const tagFilters = useMemo(
-		() =>
-			handleNonInQueryRange(resourceAttributesToTracesFilterItems(queries), true),
+		() => resourceAttributesToTracesFilterItems(queries),
 		[queries],
 	);
 
