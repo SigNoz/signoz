@@ -49,9 +49,9 @@ type anomalyQueryParams struct {
 	// and to detect anomalies
 	CurrentPeriodQuery *v3.QueryRangeParamsV3
 	// PastPeriodQuery is the query range params for past seasonal period
-	// Example: For weekly seasonality, (now-1w-4h-5m, now-1w)
-	//        : For daily seasonality, (now-1d-2h-5m, now-1d)
-	//        : For hourly seasonality, (now-1h-30m-5m, now-1h)
+	// Example: For weekly seasonality, (now-1w-5m, now-1w)
+	//        : For daily seasonality, (now-1d-5m, now-1d)
+	//        : For hourly seasonality, (now-1h-5m, now-1h)
 	PastPeriodQuery *v3.QueryRangeParamsV3
 	// CurrentSeasonQuery is the query range params for current period (seasonal)
 	// Example: For weekly seasonality, this is the query range params for the (now-1w-5m, now)
@@ -107,17 +107,17 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 	var pastPeriodStart, pastPeriodEnd int64
 
 	switch seasonality {
-	// for one week period, we fetch the data from the past week with 4 hours offset
+	// for one week period, we fetch the data from the past week with 5 min offset
 	case SeasonalityWeekly:
-		pastPeriodStart = start - 166*time.Hour.Milliseconds() - 4*time.Hour.Milliseconds()
-		pastPeriodEnd = end - 166*time.Hour.Milliseconds()
-	// for one day period, we fetch the data from the past day with 2 hours offset
+		pastPeriodStart = start - 24*7*time.Hour.Milliseconds() - 5*time.Minute.Milliseconds()
+		pastPeriodEnd = end - 24*7*time.Hour.Milliseconds()
+	// for one day period, we fetch the data from the past day with 5 min offset
 	case SeasonalityDaily:
-		pastPeriodStart = start - 23*time.Hour.Milliseconds() - 2*time.Hour.Milliseconds()
-		pastPeriodEnd = end - 23*time.Hour.Milliseconds()
-	// for one hour period, we fetch the data from the past hour with 30 minutes offset
+		pastPeriodStart = start - 24*time.Hour.Milliseconds() - 5*time.Minute.Milliseconds()
+		pastPeriodEnd = end - 24*time.Hour.Milliseconds()
+	// for one hour period, we fetch the data from the past hour with 5 min offset
 	case SeasonalityHourly:
-		pastPeriodStart = start - 1*time.Hour.Milliseconds() - 30*time.Minute.Milliseconds()
+		pastPeriodStart = start - 1*time.Hour.Milliseconds() - 5*time.Minute.Milliseconds()
 		pastPeriodEnd = end - 1*time.Hour.Milliseconds()
 	}
 

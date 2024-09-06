@@ -148,6 +148,9 @@ func (p *BaseSeasonalProvider) getMatchingSeries(queryResult *v3.Result, series 
 }
 
 func (p *BaseSeasonalProvider) getAvg(series *v3.Series) float64 {
+	if series == nil || len(series.Points) == 0 {
+		return 0
+	}
 	var sum float64
 	for _, smpl := range series.Points {
 		sum += smpl.Value
@@ -190,6 +193,12 @@ func (p *BaseSeasonalProvider) getPredictedSeries(series, prevSeries, currentSea
 
 	for idx, curr := range series.Points {
 		predictedValue := p.getMovingAvg(prevSeries, windowSize, idx) + p.getAvg(currentSeasonSeries) - p.getMean(p.getAvg(pastSeasonSeries), p.getAvg(past2SeasonSeries), p.getAvg(past3SeasonSeries))
+
+		if predictedValue < 0 {
+			predictedValue = p.getMovingAvg(prevSeries, windowSize, idx)
+		}
+
+		zap.L().Info("predictedSeries", zap.Float64("movingAvg", p.getMovingAvg(prevSeries, windowSize, idx)), zap.Float64("avg", p.getAvg(currentSeasonSeries)), zap.Float64("mean", p.getMean(p.getAvg(pastSeasonSeries), p.getAvg(past2SeasonSeries), p.getAvg(past3SeasonSeries))), zap.Any("labels", series.Labels))
 		predictedSeries.Points = append(predictedSeries.Points, v3.Point{
 			Timestamp: curr.Timestamp,
 			Value:     predictedValue,
