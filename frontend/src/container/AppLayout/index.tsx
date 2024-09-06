@@ -78,6 +78,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isCloudUserVal = isCloudUser();
 
 	const showAddCreditCardModal =
+		isLoggedIn &&
 		isChatSupportEnabled &&
 		isCloudUserVal &&
 		!isPremiumChatSupportEnabled &&

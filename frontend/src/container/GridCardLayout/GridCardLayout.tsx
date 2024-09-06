@@ -438,6 +438,10 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				: true,
 		[selectedDashboard],
 	);
+
+	let isDataAvailableInAnyWidget = false;
+	const isLogEventCalled = useRef<boolean>(false);
+
 	return isDashboardEmpty ? (
 		<DashboardEmptyState />
 	) : (
@@ -516,6 +520,18 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 						);
 					}
 
+					const checkIfDataExists = (isDataAvailable: boolean): void => {
+						if (!isDataAvailableInAnyWidget && isDataAvailable) {
+							isDataAvailableInAnyWidget = true;
+						}
+						if (!isLogEventCalled.current && isDataAvailableInAnyWidget) {
+							isLogEventCalled.current = true;
+							logEvent('Dashboard Detail: Panel data fetched', {
+								isDataAvailableInAnyWidget,
+							});
+						}
+					};
+
 					return (
 						<CardContainer
 							className={isDashboardLocked ? '' : 'enable-resize'}
@@ -534,6 +550,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 									variables={variables}
 									version={selectedDashboard?.data?.version}
 									onDragSelect={onDragSelect}
+									dataAvailable={checkIfDataExists}
 								/>
 							</Card>
 						</CardContainer>
