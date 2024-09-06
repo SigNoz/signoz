@@ -242,7 +242,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	return (
 		<div>
 			<Modal
-				className="workspace-locked__modal"
+				rootClassName="workspace-locked__modal"
 				title={
 					<div className="workspace-locked__modal__header">
 						<span className="workspace-locked__modal__title">

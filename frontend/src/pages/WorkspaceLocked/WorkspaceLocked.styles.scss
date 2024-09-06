@@ -1,8 +1,4 @@
-$workspaceLocked: 'workspace-locked';
 $light-theme: 'lightMode';
-$ant-modal-override: 'ant-modal';
-$ant-tabs-override: 'ant-tabs';
-$ant-list-override: 'ant-list';
 
 @keyframes gradientFlow {
 	0% {
@@ -16,17 +12,17 @@ $ant-list-override: 'ant-list';
 	}
 }
 
-// Unfortunately, we don't have a way to scope the mask since `.ant-modal-mask` is a parent node in the tree.
-// #TODO: We have to use the global selector to style the mask.
-.#{$ant-modal-override}-mask {
-	backdrop-filter: blur(2px);
-}
+.workspace-locked {
+	&__modal {
+		.ant-modal-mask {
+			backdrop-filter: blur(2px);
+		}
+	}
 
-.#{$workspaceLocked} {
 	&__tabs {
 		margin-top: 148px;
 
-		.#{$ant-tabs-override} {
+		.ant-tabs {
 			&-nav {
 				&::before {
 					border-color: var(--bg-slate-500);
@@ -54,7 +50,7 @@ $ant-list-override: 'ant-list';
 				gap: 16px;
 			}
 		}
-		.#{$ant-modal-override}-content {
+		.ant-modal-content {
 			border-radius: 4px;
 			border: 1px solid var(--bg-slate-400);
 			background: linear-gradient(
@@ -71,11 +67,11 @@ $ant-list-override: 'ant-list';
 			}
 		}
 
-		.#{$ant-modal-override}-header {
+		.ant-modal-header {
 			background: transparent;
 		}
 
-		.#{$ant-list-override} {
+		.ant-list {
 			&-item {
 				border-color: var(--bg-slate-500);
 
