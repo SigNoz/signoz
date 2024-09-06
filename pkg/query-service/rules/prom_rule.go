@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"go.uber.org/zap"
 
 	plabels "github.com/prometheus/prometheus/model/labels"
@@ -54,7 +52,7 @@ type PromRule struct {
 	// map of active alerts
 	active map[uint64]*Alert
 
-	logger log.Logger
+	logger *zap.Logger
 	opts   PromRuleOpts
 
 	reader interfaces.Reader
@@ -63,7 +61,7 @@ type PromRule struct {
 func NewPromRule(
 	id string,
 	postableRule *PostableRule,
-	logger log.Logger,
+	logger *zap.Logger,
 	opts PromRuleOpts,
 	reader interfaces.Reader,
 ) (*PromRule, error) {
@@ -405,7 +403,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				level.Warn(r.logger).Log("msg", "Expanding alert template failed", "err", err, "data", tmplData)
+				r.logger.Warn("Expanding alert template failed", zap.Error(err), zap.Any("data", tmplData))
 			}
 			return result
 		}
@@ -593,12 +591,31 @@ func (r *PromRule) shouldAlert(series pql.Series) (pql.Sample, bool) {
 					break
 				}
 			}
+			// use min value from the series
+			if shouldAlert {
+				var minValue float64 = math.Inf(1)
+				for _, smpl := range series.Floats {
+					if smpl.F < minValue {
+						minValue = smpl.F
+					}
+				}
+				alertSmpl = pql.Sample{F: minValue, Metric: series.Metric}
+			}
 		} else if r.compareOp() == ValueIsBelow {
 			for _, smpl := range series.Floats {
 				if smpl.F >= r.targetVal() {
 					shouldAlert = false
 					break
 				}
+			}
+			if shouldAlert {
+				var maxValue float64 = math.Inf(-1)
+				for _, smpl := range series.Floats {
+					if smpl.F > maxValue {
+						maxValue = smpl.F
+					}
+				}
+				alertSmpl = pql.Sample{F: maxValue, Metric: series.Metric}
 			}
 		} else if r.compareOp() == ValueIsEq {
 			for _, smpl := range series.Floats {
@@ -612,6 +629,14 @@ func (r *PromRule) shouldAlert(series pql.Series) (pql.Sample, bool) {
 				if smpl.F == r.targetVal() {
 					shouldAlert = false
 					break
+				}
+			}
+			if shouldAlert {
+				for _, smpl := range series.Floats {
+					if !math.IsInf(smpl.F, 0) && !math.IsNaN(smpl.F) {
+						alertSmpl = pql.Sample{F: smpl.F, Metric: series.Metric}
+						break
+					}
 				}
 			}
 		}

@@ -1,0 +1,26 @@
+.see-more-button {
+	background: none;
+	padding: 2px;
+	font-size: 14px;
+	line-height: 18px;
+	letter-spacing: -0.005em;
+	color: var(--text-vanilla-400);
+	border: none;
+	cursor: pointer;
+}
+
+.see-more-popover-content {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+	width: 300px;
+}
+
+.lightMode {
+	.see-more-button {
+		color: var(--text-ink-400);
+	}
+	.see-more-popover-content {
+		background: var(--bg-vanilla-100);
+	}
+}

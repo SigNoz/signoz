@@ -1,0 +1,39 @@
+.copy-to-clipboard {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 14px;
+	padding: 4px 6px;
+	width: 100px;
+
+	&:hover {
+		background-color: transparent !important;
+	}
+
+	.ant-btn-icon {
+		margin: 0 !important;
+	}
+	& > * {
+		color: var(--text-vanilla-400);
+		font-weight: 400;
+		line-height: 20px;
+		letter-spacing: -0.07px;
+	}
+
+	&--success {
+		& span,
+		&:hover {
+			color: var(--bg-forest-400);
+		}
+	}
+}
+
+.lightMode {
+	.copy-to-clipboard {
+		&:not(&--success) {
+			& > * {
+				color: var(--text-ink-400);
+			}
+		}
+	}
+}

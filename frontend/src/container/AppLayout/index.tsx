@@ -78,6 +78,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isCloudUserVal = isCloudUser();
 
 	const showAddCreditCardModal =
+		isLoggedIn &&
 		isChatSupportEnabled &&
 		isCloudUserVal &&
 		!isPremiumChatSupportEnabled &&
@@ -253,6 +254,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'MESSAGING_QUEUES' || routeKey === 'MESSAGING_QUEUES_DETAIL';
 
 	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
+	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
+	const isAlertOverview = (): boolean => routeKey === 'ALERT_OVERVIEW';
 	const isDashboardView = (): boolean => {
 		/**
 		 * need to match using regex here as the getRoute function will not work for
@@ -341,6 +344,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isDashboardView() ||
 											isDashboardWidgetView() ||
 											isDashboardListView() ||
+											isAlertHistory() ||
+											isAlertOverview() ||
 											isMessagingQueues()
 												? 0
 												: '0 1rem',
