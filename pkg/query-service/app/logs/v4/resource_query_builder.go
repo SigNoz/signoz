@@ -24,7 +24,7 @@ func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value 
 		return fmt.Sprintf(logsOp, searchKey, chFmtVal)
 	case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 		// this is required as clickhouseFormattedValue add's quotes to the string
-		lowerEscapedStringValue := utils.QuoteEscapedString(strings.ToLower(fmt.Sprintf("%s", value)))
+		lowerEscapedStringValue := utils.QuoteEscapedStringForContains(strings.ToLower(fmt.Sprintf("%s", value)))
 		return fmt.Sprintf("%s %s '%%%s%%'", searchKey, logsOp, lowerEscapedStringValue)
 	default:
 		chFmtValLower := strings.ToLower(chFmtVal)
@@ -64,7 +64,7 @@ func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value inter
 	// if there are no values to filter on, return an empty string
 	if len(values) > 0 {
 		for _, v := range values {
-			value := utils.QuoteEscapedString(strings.ToLower(v))
+			value := utils.QuoteEscapedStringForContains(strings.ToLower(v))
 			conditions = append(conditions, fmt.Sprintf("lower(labels) %s '%%\"%s\":\"%s\"%%'", sqlOp, key, value))
 		}
 		return "(" + strings.Join(conditions, separator) + ")"
@@ -76,7 +76,7 @@ func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value inter
 // example:= x like '%john%' = lower(labels) like '%x%john%'
 func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{}) string {
 	// not using clickhouseFormattedValue as we don't wan't the quotes
-	formattedValueEscapedLower := utils.QuoteEscapedString(strings.ToLower(fmt.Sprintf("%s", value)))
+	formattedValueEscapedLower := utils.QuoteEscapedStringForContains(strings.ToLower(fmt.Sprintf("%s", value)))
 
 	// add index filters
 	switch op {

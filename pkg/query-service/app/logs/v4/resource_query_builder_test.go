@@ -51,9 +51,9 @@ func Test_buildResourceFilter(t *testing.T) {
 				logsOp: "LIKE",
 				key:    "service.name",
 				op:     v3.FilterOperatorContains,
-				value:  "application",
+				value:  "application%_",
 			},
-			want: `simpleJSONExtractString(lower(labels), 'service.name') LIKE '%application%'`,
+			want: `simpleJSONExtractString(lower(labels), 'service.name') LIKE '%application\%\_%'`,
 		},
 		{
 			name: "test eq",
@@ -128,9 +128,9 @@ func Test_buildIndexFilterForInOperator(t *testing.T) {
 			args: args{
 				key:   "service.name",
 				op:    v3.FilterOperatorNotIn,
-				value: "application'\"s",
+				value: "application'\"_s",
 			},
-			want: `(lower(labels) not like '%"service.name":"application\'"s"%')`,
+			want: `(lower(labels) not like '%"service.name":"application\'"\_s"%')`,
 		},
 	}
 	for _, tt := range tests {
@@ -178,7 +178,7 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 				op:    v3.FilterOperatorNotContains,
 				value: "application%_test",
 			},
-			want: `lower(labels) not like '%service.name%application%_test%'`,
+			want: `lower(labels) not like '%service.name%application\%\_test%'`,
 		},
 		{
 			name: "test not regex",
