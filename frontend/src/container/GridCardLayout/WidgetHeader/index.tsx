@@ -11,7 +11,7 @@ import {
 	MoreOutlined,
 	WarningOutlined,
 } from '@ant-design/icons';
-import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
+import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -51,6 +51,7 @@ interface IWidgetHeaderProps {
 	isWarning: boolean;
 	isFetchingResponse: boolean;
 	tableProcessedDataRef: React.MutableRefObject<RowData[]>;
+	setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
 }
 
 function WidgetHeader({
@@ -67,6 +68,7 @@ function WidgetHeader({
 	isWarning,
 	isFetchingResponse,
 	tableProcessedDataRef,
+	setSearchTerm,
 }: IWidgetHeaderProps): JSX.Element | null {
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
@@ -208,6 +210,19 @@ function WidgetHeader({
 			>
 				{title}
 			</Typography.Text>
+			{widget.panelTypes === PANEL_TYPES.TABLE && (
+				<Input.Search
+					placeholder="Search over all the cloumns..."
+					key={widget.id}
+					onSearch={(value): void => setSearchTerm(value)}
+					onChange={(e): void => {
+						console.log(e.target.value);
+						setSearchTerm(e.target.value || '');
+					}}
+					allowClear
+					style={{ width: '40%' }}
+				/>
+			)}
 			<div className="widget-header-actions">
 				<div className="widget-api-actions">{threshold}</div>
 				{isFetchingResponse && !queryResponse.isError && (
