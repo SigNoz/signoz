@@ -107,7 +107,7 @@ export const resourceAttributesToTracesFilterItems = (
 			id: `${convertMetricKeyToTrace(res.tagKey)}--string--resource--true`,
 		},
 		op: `${res.operator}`,
-		value: `${res.tagValue}`.split(','),
+		value: res.tagValue,
 	}));
 
 export const OperatorSchema: IOption[] = OperatorConversions.map(
