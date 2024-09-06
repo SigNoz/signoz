@@ -472,6 +472,15 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 					if (currentWidget?.panelTypes === PANEL_GROUP_TYPES.ROW) {
 						const rowWidgetProperties = currentPanelMap[id] || {};
+						let { title } = currentWidget;
+						if (rowWidgetProperties.collapsed) {
+							const widgetCount = rowWidgetProperties.widgets?.length || 0;
+							const collapsedText = `(${widgetCount} widget${
+								widgetCount > 1 ? 's' : ''
+							})`;
+							title += ` ${collapsedText}`;
+						}
+
 						return (
 							<CardContainer
 								className="row-card"
@@ -489,9 +498,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 												cursor="move"
 											/>
 										)}
-										<Typography.Text className="section-title">
-											{currentWidget.title}
-										</Typography.Text>
+										<Typography.Text className="section-title">{title}</Typography.Text>
 										{rowWidgetProperties.collapsed ? (
 											<ChevronDown
 												size={14}
