@@ -154,6 +154,14 @@ func QuoteEscapedString(str string) string {
 	return str
 }
 
+func QuoteEscapedStringForContains(str string) string {
+	// https: //clickhouse.com/docs/en/sql-reference/functions/string-search-functions#like
+	str = QuoteEscapedString(str)
+	str = strings.ReplaceAll(str, `%`, `\%`)
+	str = strings.ReplaceAll(str, `_`, `\_`)
+	return str
+}
+
 // ClickHouseFormattedValue formats the value to be used in clickhouse query
 func ClickHouseFormattedValue(v interface{}) string {
 	// if it's pointer convert it to a value

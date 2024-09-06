@@ -8,32 +8,31 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
+// buildResourceFilter builds a clickhouse filter string for resource labels
 func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value interface{}) string {
-	// we are using lower(labels) as we want case insensitive filtering
-	searchKey := fmt.Sprintf("simpleJSONExtractString(lower(labels), '%s')", key)
+	searchKey := fmt.Sprintf("simpleJSONExtractString(labels, '%s')", key)
 
 	chFmtVal := utils.ClickHouseFormattedValue(value)
 
 	switch op {
 	case v3.FilterOperatorExists:
-		return fmt.Sprintf("simpleJSONHas(lower(labels), '%s')", key)
+		return fmt.Sprintf("simpleJSONHas(labels, '%s')", key)
 	case v3.FilterOperatorNotExists:
-		return fmt.Sprintf("not simpleJSONHas(lower(labels), '%s')", key)
+		return fmt.Sprintf("not simpleJSONHas(labels, '%s')", key)
 	case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 		return fmt.Sprintf(logsOp, searchKey, chFmtVal)
 	case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 		// this is required as clickhouseFormattedValue add's quotes to the string
-		lowerEscapedStringValue := utils.QuoteEscapedString(strings.ToLower(fmt.Sprintf("%s", value)))
-		return fmt.Sprintf("%s %s '%%%s%%'", searchKey, logsOp, lowerEscapedStringValue)
+		escapedStringValue := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", value))
+		return fmt.Sprintf("%s %s '%%%s%%'", searchKey, logsOp, escapedStringValue)
 	default:
-		chFmtValLower := strings.ToLower(chFmtVal)
-		return fmt.Sprintf("%s %s %s", searchKey, logsOp, chFmtValLower)
+		return fmt.Sprintf("%s %s %s", searchKey, logsOp, chFmtVal)
 	}
 }
 
-// for in operator value needs to used for indexing in a different way.
-// eg1:= x in a,b,c = (labels like '%x%a%' or labels like '%"x":"b"%' or labels like '%"x"="c"%')
-// eg1:= x nin a,b,c = (labels nlike '%x%a%' AND labels nlike '%"x"="b"' AND labels nlike '%"x"="c"%')
+// buildIndexFilterForInOperator builds a clickhouse filter string for in operator
+// example:= x in a,b,c = (labels like '%x%a%' or labels like '%"x":"b"%' or labels like '%"x"="c"%')
+// example:= x nin a,b,c = (labels nlike '%x%a%' AND labels nlike '%"x"="b"' AND labels nlike '%"x"="c"%')
 func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value interface{}) string {
 	conditions := []string{}
 	separator := " OR "
@@ -43,8 +42,9 @@ func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value inter
 		sqlOp = "not like"
 	}
 
+	// values is a slice of strings, we need to convert value to this type
+	// value can be string or []interface{}
 	values := []string{}
-
 	switch value.(type) {
 	case string:
 		values = append(values, value.(string))
@@ -59,34 +59,40 @@ func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value inter
 		}
 	}
 
+	// if there are no values to filter on, return an empty string
 	if len(values) > 0 {
 		for _, v := range values {
-			conditions = append(conditions, fmt.Sprintf("lower(labels) %s '%%\"%s\":\"%s\"%%'", sqlOp, key, strings.ToLower(v)))
+			value := utils.QuoteEscapedStringForContains(v)
+			conditions = append(conditions, fmt.Sprintf("labels %s '%%\"%s\":\"%s\"%%'", sqlOp, key, value))
 		}
 		return "(" + strings.Join(conditions, separator) + ")"
 	}
 	return ""
 }
 
+// buildResourceIndexFilter builds a clickhouse filter string for resource labels
+// example:= x like '%john%' = labels like '%x%john%'
 func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{}) string {
 	// not using clickhouseFormattedValue as we don't wan't the quotes
-	formattedValueEscapedLower := utils.QuoteEscapedString(strings.ToLower(fmt.Sprintf("%s", value)))
+	formattedValueEscaped := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", value))
 
 	// add index filters
 	switch op {
 	case v3.FilterOperatorContains, v3.FilterOperatorEqual, v3.FilterOperatorLike:
-		return fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", key, formattedValueEscapedLower)
+		return fmt.Sprintf("labels like '%%%s%%%s%%'", key, formattedValueEscaped)
 	case v3.FilterOperatorNotContains, v3.FilterOperatorNotEqual, v3.FilterOperatorNotLike:
-		return fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", key, formattedValueEscapedLower)
+		return fmt.Sprintf("labels not like '%%%s%%%s%%'", key, formattedValueEscaped)
 	case v3.FilterOperatorNotRegex:
-		return fmt.Sprintf("lower(labels) not like '%%%s%%'", key)
+		return fmt.Sprintf("labels not like '%%%s%%'", key)
 	case v3.FilterOperatorIn, v3.FilterOperatorNotIn:
 		return buildIndexFilterForInOperator(key, op, value)
 	default:
-		return fmt.Sprintf("lower(labels) like '%%%s%%'", key)
+		return fmt.Sprintf("labels like '%%%s%%'", key)
 	}
 }
 
+// buildResourceFiltersFromFilterItems builds a list of clickhouse filter strings for resource labels from a FilterSet.
+// It skips any filter items that are not resource attributes and checks that the operator is supported and the data type is correct.
 func buildResourceFiltersFromFilterItems(fs *v3.FilterSet) ([]string, error) {
 	var conditions []string
 	if fs == nil || len(fs.Items) == 0 {
@@ -101,7 +107,7 @@ func buildResourceFiltersFromFilterItems(fs *v3.FilterSet) ([]string, error) {
 		// since out map is in lower case we are converting it to lowercase
 		operatorLower := strings.ToLower(string(item.Operator))
 		op := v3.FilterOperator(operatorLower)
-		keyName := strings.ToLower(item.Key.Key)
+		keyName := item.Key.Key
 
 		// resource filter value data type will always be string
 		// will be an interface if the operator is IN or NOT IN
@@ -145,17 +151,14 @@ func buildResourceFiltersFromGroupBy(groupBy []v3.AttributeKey) []string {
 		if attr.Type != v3.AttributeKeyTypeResource {
 			continue
 		}
-		key := strings.ToLower(attr.Key)
-		conditions = append(conditions, fmt.Sprintf("(simpleJSONHas(lower(labels), '%s') AND lower(labels) like '%%%s%%')", key, key))
+		conditions = append(conditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND labels like '%%%s%%')", attr.Key, attr.Key))
 	}
-
 	return conditions
 }
 
 func buildResourceFiltersFromAggregateAttribute(aggregateAttribute v3.AttributeKey) string {
 	if aggregateAttribute.Key != "" && aggregateAttribute.Type == v3.AttributeKeyTypeResource {
-		key := strings.ToLower(aggregateAttribute.Key)
-		return fmt.Sprintf("(simpleJSONHas(lower(labels), '%s') AND lower(labels) like '%%%s%%')", key, key)
+		return fmt.Sprintf("(simpleJSONHas(labels, '%s') AND labels like '%%%s%%')", aggregateAttribute.Key, aggregateAttribute.Key)
 	}
 
 	return ""
@@ -190,9 +193,9 @@ func buildResourceSubQuery(bucketStart, bucketEnd int64, fs *v3.FilterSet, group
 	conditionStr := strings.Join(conditions, " AND ")
 
 	// BUILD THE FINAL QUERY
-	query := fmt.Sprintf("(SELECT fingerprint FROM signoz_logs.%s WHERE (seen_at_ts_bucket_start >= %d) AND (seen_at_ts_bucket_start <= %d) AND ", DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd)
+	query := fmt.Sprintf("SELECT fingerprint FROM signoz_logs.%s WHERE (seen_at_ts_bucket_start >= %d) AND (seen_at_ts_bucket_start <= %d) AND ", DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd)
 
-	query = query + conditionStr + ")"
+	query = "(" + query + conditionStr + ")"
 
 	return query, nil
 }
