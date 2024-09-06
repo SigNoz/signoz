@@ -190,6 +190,19 @@ func ClickHouseFormattedValue(v interface{}) string {
 			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
 			return "[]"
 		}
+	case []string:
+		if len(x) == 0 {
+			return "[]"
+		}
+		str := "["
+		for idx, sVal := range x {
+			str += fmt.Sprintf("'%s'", QuoteEscapedString(sVal))
+			if idx != len(x)-1 {
+				str += ","
+			}
+		}
+		str += "]"
+		return str
 	default:
 		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
 		return ""

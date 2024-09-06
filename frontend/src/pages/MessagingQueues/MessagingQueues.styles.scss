@@ -1,0 +1,424 @@
+.messaging-queue-container {
+	.messaging-breadcrumb {
+		display: flex;
+		padding: 0px 16px;
+		align-items: center;
+		gap: 8px;
+		padding-top: 10px;
+		padding-bottom: 8px;
+		color: var(--bg-vanilla-400);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px;
+		letter-spacing: -0.07px;
+
+		border-bottom: 1px solid var(--bg-slate-400);
+
+		.message-queue-text {
+			cursor: pointer;
+			color: var(--bg-vanilla-400);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px;
+			letter-spacing: -0.07px;
+		}
+	}
+
+	.messaging-header {
+		display: flex;
+		min-height: 48px;
+		padding: 10px 16px;
+		justify-content: space-between;
+		align-items: center;
+
+		color: var(--bg-vanilla-400);
+		font-family: 'Geist Mono';
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px;
+		letter-spacing: 0.25px;
+
+		border-bottom: 1px solid var(--bg-slate-500);
+
+		.header-config {
+			display: flex;
+			gap: 10px;
+			align-items: center;
+
+			.messaging-queue-options {
+				.ant-select-selector {
+					display: flex;
+					height: 32px;
+					padding: 6px 6px 6px 8px;
+					align-items: center;
+					gap: 4px;
+
+					border-radius: 2px;
+					border: 1px solid var(--bg-slate-400);
+					background: var(--bg-ink-300);
+				}
+			}
+		}
+	}
+
+	.messaging-queue-main-graph {
+		display: flex;
+		padding: 24px 16px;
+		flex-direction: column;
+		gap: 16px;
+
+		.config-options {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.config-select-option {
+				.ant-select-selector {
+					display: flex;
+					min-height: 32px;
+					align-items: center;
+					gap: 16px;
+					min-width: 164px;
+
+					border-radius: 2px;
+					border: 1px solid var(--bg-slate-400);
+					background: var(--bg-ink-300);
+				}
+			}
+		}
+
+		.mq-graph {
+			height: 420px;
+			padding: 24px 24px 0 24px;
+		}
+
+		border-bottom: 1px solid var(--bg-slate-500);
+	}
+
+	.messaging-queue-details {
+		display: flex;
+		padding: 16px;
+
+		.mq-details-options {
+			letter-spacing: -0.06px;
+			.ant-radio-button-wrapper {
+				border-color: var(--bg-slate-400);
+				color: var(--bg-vanilla-400);
+			}
+			.ant-radio-button-wrapper-checked {
+				background: var(--bg-slate-400);
+				color: var(--bg-vanilla-100);
+			}
+			.ant-radio-button-wrapper-disabled {
+				background: var(--bg-ink-400);
+				color: var(--bg-slate-200);
+			}
+			.ant-radio-button-wrapper::before {
+				width: 0px;
+			}
+
+			.disabled-option {
+				.coming-soon {
+					margin-left: 8px;
+				}
+			}
+		}
+	}
+}
+
+.messaging-queue-options-popup {
+	width: 264px !important;
+}
+
+.messaging-overview {
+	padding: 24px 16px 10px 16px;
+
+	.overview-text {
+		color: var(--bg-vanilla-100);
+		font-family: Inter;
+		font-size: 16px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 24px;
+		letter-spacing: -0.08px;
+		margin: 0;
+	}
+
+	.overview-subtext {
+		color: var(--bg-vanilla-400);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px;
+		letter-spacing: -0.07px;
+		margin: 0;
+		margin-top: 4px;
+	}
+
+	.overview-doc-area {
+		margin: 16px 0 28px 0;
+		display: flex;
+
+		.middle-card {
+			border-left: none !important;
+			border-right: none !important;
+		}
+
+		.overview-info-card {
+			display: flex;
+			width: 376px;
+			min-height: 176px;
+			padding: 18px 20px 20px 20px;
+			flex-direction: column;
+			justify-content: space-between;
+			border: 1px solid var(--bg-slate-500);
+			border-radius: 2px;
+
+			.card-title {
+				color: var(--bg-vanilla-100);
+				font-family: Inter;
+				font-size: 13px;
+				font-style: normal;
+				font-weight: 600;
+				line-height: 22px;
+				letter-spacing: 0.52px;
+				text-transform: uppercase;
+				margin: 0;
+			}
+
+			.card-info-text {
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px;
+				letter-spacing: -0.07px;
+				margin: 0;
+				margin-top: 4px;
+			}
+
+			.button-grp {
+				display: flex;
+				gap: 8px;
+
+				.ant-btn {
+					min-width: 80px;
+				}
+
+				.ant-btn-default {
+					background-color: var(--bg-slate-400);
+					border: none;
+					box-shadow: none;
+				}
+			}
+		}
+	}
+
+	.summary-section {
+		display: flex;
+
+		.summary-card {
+			display: flex;
+			padding: 12px;
+			flex-direction: column;
+			align-items: flex-start;
+			border: 1px solid var(--bg-slate-500);
+			background: var(--bg-ink-400);
+			width: 337px;
+			height: 283px;
+			border-radius: 2px;
+
+			.summary-title {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				width: 100%;
+				height: 24px;
+
+				> p {
+					color: var(--bg-vanilla-400);
+					font-family: Inter;
+					font-size: 13px;
+					font-style: normal;
+					font-weight: 500; /* 169.231% */
+					letter-spacing: 0.52px;
+					text-transform: uppercase;
+					margin: 0;
+				}
+
+				.time-value {
+					display: flex;
+					gap: 4px;
+					align-items: center;
+
+					> p {
+						color: var(--bg-slate-200);
+						font-family: Inter;
+						font-size: 12px;
+						font-style: normal;
+						font-weight: 600;
+						line-height: 22px;
+						letter-spacing: 0.48px;
+						text-transform: uppercase;
+					}
+				}
+			}
+
+			.view-detail-btn {
+				height: 100%;
+				width: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+		}
+	}
+
+	.coming-soon-card {
+		background: var(--bg-ink-500) !important;
+		border-left: none !important;
+	}
+}
+
+.overview-confirm-modal {
+	background-color: var(--bg-ink-500);
+	padding: 0;
+	border-radius: 4px;
+
+	.ant-modal-content {
+		background-color: var(--bg-ink-300);
+		.ant-modal-confirm-content {
+			color: var(--bg-vanilla-100);
+		}
+
+		.ant-modal-confirm-body-wrapper {
+			display: flex;
+			flex-direction: column;
+			height: 150px;
+			justify-content: space-between;
+		}
+	}
+}
+
+.lightMode {
+	.messaging-queue-container {
+		.messaging-breadcrumb {
+			color: var(--bg-ink-400);
+			border-bottom: 1px solid var(--bg-vanilla-300);
+		}
+		.messaging-header {
+			color: var(--bg-ink-400);
+			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.header-config {
+				.messaging-queue-options {
+					.ant-select-selector {
+						border: 1px solid var(--bg-vanilla-300);
+						background: var(--bg-vanilla-100);
+					}
+				}
+			}
+		}
+
+		.messaging-queue-main-graph {
+			.config-options {
+				.config-select-option {
+					.ant-select-selector {
+						border: 1px solid var(--bg-vanilla-300);
+						background: var(--bg-vanilla-100);
+					}
+				}
+			}
+
+			border-bottom: 1px solid var(--bg-vanilla-300);
+		}
+
+		.messaging-queue-details {
+			.mq-details-options {
+				.ant-radio-button-wrapper {
+					border-color: var(--bg-vanilla-300);
+					color: var(--bg-slate-200);
+				}
+				.ant-radio-button-wrapper-checked {
+					color: var(--bg-slate-200);
+					background: var(--bg-vanilla-300);
+				}
+				.ant-radio-button-wrapper-disabled {
+					background: var(--bg-vanilla-100);
+					color: var(--bg-vanilla-400);
+				}
+			}
+		}
+	}
+
+	.messaging-overview {
+		.overview-text {
+			color: var(--bg-slate-200);
+		}
+
+		.overview-subtext {
+			color: var(--bg-slate-300);
+		}
+
+		.overview-doc-area {
+			.overview-info-card {
+				border: 1px solid var(--bg-vanilla-300);
+
+				.card-title {
+					color: var(--bg-slate-200);
+				}
+
+				.card-info-text {
+					color: var(--bg-slate-300);
+				}
+
+				.button-grp {
+					.ant-btn-default {
+						background-color: var(--bg-vanilla-100);
+					}
+				}
+			}
+		}
+
+		.summary-section {
+			.summary-card {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+
+				.summary-title {
+					> p {
+						color: var(--bg-slate-200);
+					}
+
+					.time-value {
+						> p {
+							color: var(--bg-slate-200);
+						}
+					}
+				}
+			}
+		}
+
+		.coming-soon-card {
+			background: var(--bg-vanilla-200) !important;
+		}
+	}
+
+	.overview-confirm-modal {
+		background-color: var(--bg-vanilla-100);
+
+		.ant-modal-content {
+			background-color: var(--bg-vanilla-100);
+			.ant-modal-confirm-content {
+				color: var(--bg-slate-200);
+			}
+		}
+	}
+}

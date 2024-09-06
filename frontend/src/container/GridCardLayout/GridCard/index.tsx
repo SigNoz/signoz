@@ -33,6 +33,8 @@ function GridCardGraph({
 	version,
 	onClickHandler,
 	onDragSelect,
+	customTooltipElement,
+	dataAvailable,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -179,6 +181,9 @@ function GridCardGraph({
 			onError: (error) => {
 				setErrorMessage(error.message);
 			},
+			onSettled: (data) => {
+				dataAvailable?.(Boolean(data?.payload?.data?.result?.length));
+			},
 		},
 	);
 
@@ -215,6 +220,7 @@ function GridCardGraph({
 					setRequestData={setRequestData}
 					onClickHandler={onClickHandler}
 					onDragSelect={onDragSelect}
+					customTooltipElement={customTooltipElement}
 				/>
 			)}
 		</div>
