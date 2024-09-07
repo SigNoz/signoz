@@ -51,7 +51,7 @@ aws ecs list-tasks --cluster ${CLUSTER_NAME} --region ${REGION}
 To verify that the data is being sent to SigNoz Cloud, you can go to the dashboard section of SigNoz and import one of the following dashboards below:
 
 - [instancemetrics.json](https://raw.githubusercontent.com/SigNoz/dashboards/chore/ecs-dashboards/ecs-infra-metrics/instance-metrics.json)
-- [hostmetrics-with-variable.json](https://raw.githubusercontent.com/SigNoz/dashboards/main/hostmetrics/hostmetrics-with-variable.json)
+- [hostmetrics.json](https://raw.githubusercontent.com/SigNoz/dashboards/main/hostmetrics/hostmetrics.json)
 
 &nbsp;
 
