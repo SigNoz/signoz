@@ -135,6 +135,11 @@
 
 		&:hover {
 			background: var(--bg-slate-400);
+
+			.text,
+			.icon {
+				color: var(--text-vanilla-100);
+			}
 		}
 
 		.icon {
