@@ -69,7 +69,12 @@ function ServiceMetricTable({
 	const [RPS, setRPS] = useState(0);
 
 	useEffect(() => {
-		if (!isFetching && licenseData?.payload?.onTrial && isCloudUserVal) {
+		if (
+			!isFetching &&
+			licenseData?.payload?.onTrial &&
+			!licenseData?.payload?.trialConvertedToSubscription &&
+			isCloudUserVal
+		) {
 			if (services.length > 0) {
 				const rps = getTotalRPS(services);
 				setRPS(rps);
