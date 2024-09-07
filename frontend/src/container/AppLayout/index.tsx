@@ -78,6 +78,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isCloudUserVal = isCloudUser();
 
 	const showAddCreditCardModal =
+		isLoggedIn &&
 		isChatSupportEnabled &&
 		isCloudUserVal &&
 		!isPremiumChatSupportEnabled &&
@@ -213,7 +214,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const pageTitle = t(routeKey);
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED ||
-		pathname === ROUTES.WORKSPACE_LOCKED ||
 		pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING ||
 		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
 		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
@@ -281,6 +281,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const isSideNavCollapsed = getLocalStorageKey(IS_SIDEBAR_COLLAPSED);
 
+	/**
+	 * Note: Right now we don't have a page-level method to pass the sidebar collapse state.
+	 * Since the use case for overriding is not widely needed, we are setting it here
+	 * so that the workspace locked page will have an expanded sidebar regardless of how users
+	 * have set it or what is stored in localStorage. This will not affect the localStorage config.
+	 */
+	const isWorkspaceLocked = pathname === ROUTES.WORKSPACE_LOCKED;
+
 	return (
 		<Layout
 			className={cx(
@@ -325,7 +333,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						licenseData={licenseData}
 						isFetching={isFetching}
 						onCollapse={onCollapse}
-						collapsed={collapsed}
+						collapsed={isWorkspaceLocked ? false : collapsed}
 					/>
 				)}
 				<div

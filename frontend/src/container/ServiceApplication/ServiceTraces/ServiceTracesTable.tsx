@@ -26,7 +26,12 @@ function ServiceTraceTable({
 	const tableColumns = useMemo(() => getColumns(search, false), [search]);
 
 	useEffect(() => {
-		if (!isFetching && licenseData?.payload?.onTrial && isCloudUserVal) {
+		if (
+			!isFetching &&
+			licenseData?.payload?.onTrial &&
+			!licenseData?.payload?.trialConvertedToSubscription &&
+			isCloudUserVal
+		) {
 			if (services.length > 0) {
 				const rps = getTotalRPS(services);
 				setRPS(rps);

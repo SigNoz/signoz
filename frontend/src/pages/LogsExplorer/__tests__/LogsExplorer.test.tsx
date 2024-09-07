@@ -189,6 +189,8 @@ describe('Logs Explorer Tests', () => {
 									initialDataSource: null,
 									panelType: PANEL_TYPES.TIME_SERIES,
 									isEnabledQuery: false,
+									lastUsedQuery: 0,
+									setLastUsedQuery: noop,
 									handleSetQueryData: noop,
 									handleSetFormulaData: noop,
 									handleSetQueryItemData: noop,
