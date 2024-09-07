@@ -16,6 +16,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import {
 	getHostQueryPayload,
 	getNodeQueryPayload,
+	hostCardTitles,
 	nodeCardTitles,
 } from './constants';
 
@@ -40,6 +41,8 @@ function NodeMetrics({
 		}
 		return getHostQueryPayload(hostName);
 	}, [clusterName, nodeName, hostName]);
+
+	const cardTitles = nodeName ? nodeCardTitles : hostCardTitles;
 
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
@@ -103,9 +106,9 @@ function NodeMetrics({
 	};
 	return (
 		<Row gutter={24}>
-			{chartData.map((data, idx) => (
-				<Col span={24} key={nodeCardTitles[idx]}>
-					<Typography.Text>{nodeCardTitles[idx]}</Typography.Text>
+			{queries.map((query, idx) => (
+				<Col span={24} key={cardTitles[idx]}>
+					<Typography.Text>{cardTitles[idx]}</Typography.Text>
 					<Card
 						bordered
 						className={cx('infra-metrics-card', {
@@ -115,7 +118,7 @@ function NodeMetrics({
 						})}
 						ref={graphRef}
 					>
-						{renderCardContent(queries[idx], idx)}
+						{renderCardContent(query, idx)}
 					</Card>
 				</Col>
 			))}

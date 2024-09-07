@@ -96,7 +96,7 @@ function PodMetrics({
 
 	return (
 		<Row gutter={24}>
-			{chartData.map((data, idx) => (
+			{queries.map((query, idx) => (
 				<Col span={24} key={cardTitles[idx]}>
 					<Typography.Text>{cardTitles[idx]}</Typography.Text>
 					<Card
@@ -108,7 +108,7 @@ function PodMetrics({
 						})}
 						ref={graphRef}
 					>
-						{renderCardContent(queries[idx], idx)}
+						{renderCardContent(query, idx)}
 					</Card>
 				</Col>
 			))}

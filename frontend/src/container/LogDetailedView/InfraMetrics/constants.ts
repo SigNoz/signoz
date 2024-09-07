@@ -3222,20 +3222,20 @@ export const getHostQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							id: 'system_disk_operation_time--float64--Sum--true',
+							id: 'system_network_connections--float64--Gauge--true',
 							isColumn: true,
 							isJSON: false,
-							key: 'system_disk_operation_time',
-							type: 'Sum',
+							key: 'system_network_connections',
+							type: 'Gauge',
 						},
-						aggregateOperator: 'rate',
+						aggregateOperator: 'avg',
 						dataSource: DataSource.METRICS,
 						disabled: false,
 						expression: 'A',
 						filters: {
 							items: [
 								{
-									id: 'd21dc017',
+									id: '87f665b5',
 									key: {
 										dataType: DataTypes.String,
 										id: 'host_name--string--tag--false',
@@ -3254,36 +3254,30 @@ export const getHostQueryPayload = (
 						groupBy: [
 							{
 								dataType: DataTypes.String,
-								id: 'device--string--tag--false',
+								id: 'protocol--string--tag--false',
 								isColumn: false,
 								isJSON: false,
-								key: 'device',
+								key: 'protocol',
 								type: 'tag',
 							},
 							{
 								dataType: DataTypes.String,
-								id: 'direction--string--tag--false',
+								id: 'state--string--tag--false',
 								isColumn: false,
 								isJSON: false,
-								key: 'direction',
+								key: 'state',
 								type: 'tag',
 							},
 						],
-						having: [
-							{
-								columnName: 'SUM(system_disk_operation_time)',
-								op: '>',
-								value: 0,
-							},
-						],
-						legend: '{{device}}::{{direction}}',
-						limit: null,
+						having: [],
+						legend: '{{protocol}}::{{state}}',
+						limit: 30,
 						orderBy: [],
 						queryName: 'A',
 						reduceTo: 'avg',
 						spaceAggregation: 'sum',
 						stepInterval: 60,
-						timeAggregation: 'rate',
+						timeAggregation: 'avg',
 					},
 				],
 				queryFormulas: [],
@@ -3296,7 +3290,7 @@ export const getHostQueryPayload = (
 					query: '',
 				},
 			],
-			id: '9c6d18ad-89ff-4e38-a15a-440e72ed6ca8',
+			id: 'ab685a3d-fa4c-4663-8d94-c452e59038f3',
 			promql: [
 				{
 					disabled: false,
@@ -3395,10 +3389,10 @@ export const getHostQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							id: 'system_network_io--float64--Sum--true',
+							id: 'system_disk_operation_time--float64--Sum--true',
 							isColumn: true,
 							isJSON: false,
-							key: 'system_network_io',
+							key: 'system_disk_operation_time',
 							type: 'Sum',
 						},
 						aggregateOperator: 'rate',
@@ -3408,7 +3402,7 @@ export const getHostQueryPayload = (
 						filters: {
 							items: [
 								{
-									id: 'e35cae4e',
+									id: 'd21dc017',
 									key: {
 										dataType: DataTypes.String,
 										id: 'host_name--string--tag--false',
@@ -3424,15 +3418,32 @@ export const getHostQueryPayload = (
 							op: 'AND',
 						},
 						functions: [],
-						groupBy: [],
+						groupBy: [
+							{
+								dataType: DataTypes.String,
+								id: 'device--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'device',
+								type: 'tag',
+							},
+							{
+								dataType: DataTypes.String,
+								id: 'direction--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'direction',
+								type: 'tag',
+							},
+						],
 						having: [
 							{
-								columnName: 'SUM(system_network_io)',
+								columnName: 'SUM(system_disk_operation_time)',
 								op: '>',
 								value: 0,
 							},
 						],
-						legend: '',
+						legend: '{{device}}::{{direction}}',
 						limit: null,
 						orderBy: [],
 						queryName: 'A',
@@ -3452,7 +3463,195 @@ export const getHostQueryPayload = (
 					query: '',
 				},
 			],
-			id: '6e58ef98-c680-4d28-a538-4b1ac71d3c37',
+			id: '9c6d18ad-89ff-4e38-a15a-440e72ed6ca8',
+			promql: [
+				{
+					disabled: false,
+					legend: '',
+					name: 'A',
+					query: '',
+				},
+			],
+			queryType: EQueryType.QUERY_BUILDER,
+		},
+		globalSelectedInterval: '3h',
+		variables: {},
+		formatForWeb: false,
+	},
+	{
+		selectedTime: 'GLOBAL_TIME',
+		graphType: PANEL_TYPES.TIME_SERIES,
+		query: {
+			builder: {
+				queryData: [
+					{
+						aggregateAttribute: {
+							dataType: DataTypes.Float64,
+							id: 'system_disk_pending_operations--float64--Gauge--true',
+							isColumn: true,
+							isJSON: false,
+							key: 'system_disk_pending_operations',
+							type: 'Gauge',
+						},
+						aggregateOperator: 'max',
+						dataSource: DataSource.METRICS,
+						disabled: false,
+						expression: 'A',
+						filters: {
+							items: [
+								{
+									id: 'a1023af9',
+									key: {
+										dataType: DataTypes.String,
+										id: 'host_name--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'host_name',
+										type: 'tag',
+									},
+									op: '=',
+									value: hostName,
+								},
+							],
+							op: 'AND',
+						},
+						functions: [],
+						groupBy: [
+							{
+								dataType: DataTypes.String,
+								id: 'device--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'device',
+								type: 'tag',
+							},
+						],
+						having: [
+							{
+								columnName: 'SUM(system_disk_pending_operations)',
+								op: '>',
+								value: 0,
+							},
+						],
+						legend: '{{device}}',
+						limit: null,
+						orderBy: [],
+						queryName: 'A',
+						reduceTo: 'avg',
+						spaceAggregation: 'sum',
+						stepInterval: 60,
+						timeAggregation: 'max',
+					},
+				],
+				queryFormulas: [],
+			},
+			clickhouse_sql: [
+				{
+					disabled: false,
+					legend: '',
+					name: 'A',
+					query: '',
+				},
+			],
+			id: 'f4cfc2a5-78fc-42cc-8f4a-194c8c916132',
+			promql: [
+				{
+					disabled: false,
+					legend: '',
+					name: 'A',
+					query: '',
+				},
+			],
+			queryType: EQueryType.QUERY_BUILDER,
+		},
+		globalSelectedInterval: '3h',
+		variables: {},
+		formatForWeb: false,
+	},
+	{
+		selectedTime: 'GLOBAL_TIME',
+		graphType: PANEL_TYPES.TIME_SERIES,
+		query: {
+			builder: {
+				queryData: [
+					{
+						aggregateAttribute: {
+							dataType: DataTypes.Float64,
+							id: 'system_disk_operation_time--float64--Sum--true',
+							isColumn: true,
+							isJSON: false,
+							key: 'system_disk_operation_time',
+							type: 'Sum',
+						},
+						aggregateOperator: 'rate',
+						dataSource: DataSource.METRICS,
+						disabled: false,
+						expression: 'A',
+						filters: {
+							items: [
+								{
+									id: 'd21dc017',
+									key: {
+										dataType: DataTypes.String,
+										id: 'host_name--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'host_name',
+										type: 'tag',
+									},
+									op: '=',
+									value: hostName,
+								},
+							],
+							op: 'AND',
+						},
+						functions: [],
+						groupBy: [
+							{
+								dataType: DataTypes.String,
+								id: 'device--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'device',
+								type: 'tag',
+							},
+							{
+								dataType: DataTypes.String,
+								id: 'direction--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'direction',
+								type: 'tag',
+							},
+						],
+						having: [
+							{
+								columnName: 'SUM(system_disk_operation_time)',
+								op: '>',
+								value: 0,
+							},
+						],
+						legend: '{{device}}::{{direction}}',
+						limit: null,
+						orderBy: [],
+						queryName: 'A',
+						reduceTo: 'avg',
+						spaceAggregation: 'sum',
+						stepInterval: 60,
+						timeAggregation: 'rate',
+					},
+				],
+				queryFormulas: [],
+			},
+			clickhouse_sql: [
+				{
+					disabled: false,
+					legend: '',
+					name: 'A',
+					query: '',
+				},
+			],
+			id: '9c6d18ad-89ff-4e38-a15a-440e72ed6ca8',
 			promql: [
 				{
 					disabled: false,
@@ -3470,10 +3669,14 @@ export const getHostQueryPayload = (
 ];
 
 export const cardTitles: string[] = [
-	'Pod CPU usage',
-	'Pod memory usage (WSS)',
+	'Pod CPU usage [% of Limit]',
+	'Pod filesystem usage [%]',
+	'Pod memory usage [% of Request]',
 	'Pod network IO',
-	'Pod filesystem usage',
+	'Pod CPU usage [% of Request]',
+	'Pod memory usage [% of Limit]',
+	'CPU usage',
+	'Memory Usage',
 ];
 
 export const VIEW_TYPES = {
@@ -3481,9 +3684,26 @@ export const VIEW_TYPES = {
 	POD: 'pod',
 };
 
-export const nodeCardTitles = [
+export const nodeCardTitles: string[] = [
 	'Node CPU usage',
 	'Node memory usage (WSS)',
 	'Node network IO',
 	'Node filesystem usage',
+];
+
+export const hostCardTitles: string[] = [
+	'CPU Used',
+	'Memory Used',
+	'CPU Usage',
+	'Memory Usage',
+	'System Load Average',
+	'Network usage (bytes)',
+	'Network usage (packet/s)',
+	'Network errors',
+	'Network dropped',
+	'Network connections',
+	'System disk io (bytes transferred)',
+	'System disk operations/s',
+	'Queue size',
+	'Disk operations time',
 ];

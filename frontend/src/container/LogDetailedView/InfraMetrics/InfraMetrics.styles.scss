@@ -1,3 +1,10 @@
+.empty-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
 .infra-metrics-container {
     .views-tabs {
         margin-bottom: 1rem;

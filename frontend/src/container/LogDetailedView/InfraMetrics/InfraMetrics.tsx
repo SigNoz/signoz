@@ -1,7 +1,7 @@
 import './InfraMetrics.styles.scss';
 
 import { ClusterOutlined, ContainerOutlined } from '@ant-design/icons';
-import { Radio } from 'antd';
+import { Empty, Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import { useState } from 'react';
 
@@ -28,6 +28,17 @@ function InfraMetrics({
 	const handleModeChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
 	};
+
+	if (!podName && !nodeName && !hostName) {
+		return (
+			<div className="empty-container">
+				<Empty
+					image={Empty.PRESENTED_IMAGE_SIMPLE}
+					description="No data available. Please select a valid log line containing a pod, node, or host attributes to view metrics."
+				/>
+			</div>
+		);
+	}
 
 	return (
 		<div className="infra-metrics-container">
