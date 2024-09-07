@@ -11,5 +11,5 @@ export const RESOURCE_KEYS = {
 	CLUSTER_NAME: 'k8s.cluster.name',
 	POD_NAME: 'k8s.pod.name',
 	NODE_NAME: 'k8s.node.name',
-	HOST_NAME: 'hostname',
+	HOST_NAME: 'host.name',
 } as const;
