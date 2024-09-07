@@ -19,6 +19,7 @@ import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
 import { identity, pick, pickBy } from 'lodash-es';
 import posthog from 'posthog-js';
+import AlertRuleProvider from 'providers/Alert';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useEffect, useState } from 'react';
@@ -236,22 +237,24 @@ function App(): JSX.Element {
 							<QueryBuilderProvider>
 								<DashboardProvider>
 									<KeyboardHotkeysProvider>
-										<AppLayout>
-											<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-												<Switch>
-													{routes.map(({ path, component, exact }) => (
-														<Route
-															key={`${path}`}
-															exact={exact}
-															path={path}
-															component={component}
-														/>
-													))}
+										<AlertRuleProvider>
+											<AppLayout>
+												<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+													<Switch>
+														{routes.map(({ path, component, exact }) => (
+															<Route
+																key={`${path}`}
+																exact={exact}
+																path={path}
+																component={component}
+															/>
+														))}
 
-													<Route path="*" component={NotFound} />
-												</Switch>
-											</Suspense>
-										</AppLayout>
+														<Route path="*" component={NotFound} />
+													</Switch>
+												</Suspense>
+											</AppLayout>
+										</AlertRuleProvider>
 									</KeyboardHotkeysProvider>
 								</DashboardProvider>
 							</QueryBuilderProvider>

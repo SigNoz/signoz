@@ -67,7 +67,6 @@ export function TableViewActions(
 	);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
-	const textToCopy = fieldData.value;
 
 	if (record.field === 'body') {
 		const parsedBody = recursiveParseJSON(fieldData.value);
@@ -89,6 +88,17 @@ export function TableViewActions(
 			: { __html: '' };
 
 	const fieldFilterKey = filterKeyForField(fieldData.field);
+	let textToCopy = fieldData.value;
+
+	// remove starting and ending quotes from the value
+	try {
+		textToCopy = textToCopy.replace(/^"|"$/g, '');
+	} catch (error) {
+		console.error(
+			'Failed to remove starting and ending quotes from the value',
+			error,
+		);
+	}
 
 	return (
 		<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
