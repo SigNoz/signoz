@@ -5315,9 +5315,35 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 		return nil, err
 	}
 
+	labelsQuery := fmt.Sprintf("SELECT DISTINCT labels FROM %s.%s WHERE rule_id = $1",
+		signozHistoryDBName, ruleStateHistoryTableName)
+	rows, err := r.db.Query(ctx, labelsQuery, ruleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	labelsMap := make(map[string][]string)
+	for rows.Next() {
+		var rawLabel string
+		err = rows.Scan(&rawLabel)
+		if err != nil {
+			return nil, err
+		}
+		label := map[string]string{}
+		err = json.Unmarshal([]byte(rawLabel), &label)
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range label {
+			labelsMap[k] = append(labelsMap[k], v)
+		}
+	}
+
 	timeline := &v3.RuleStateTimeline{
-		Items: history,
-		Total: total,
+		Items:  history,
+		Total:  total,
+		Labels: labelsMap,
 	}
 
 	return timeline, nil

@@ -1182,8 +1182,9 @@ func (l LabelsString) String() string {
 }
 
 type RuleStateTimeline struct {
-	Items []RuleStateHistory `json:"items"`
-	Total uint64             `json:"total"`
+	Items  []RuleStateHistory  `json:"items"`
+	Total  uint64              `json:"total"`
+	Labels map[string][]string `json:"labels"`
 }
 
 type RuleStateHistory struct {
