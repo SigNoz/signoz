@@ -1,0 +1,18 @@
+@mixin flex-center {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.tabs-and-filters {
+	@include flex-center;
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+	.filters {
+		@include flex-center;
+		gap: 16px;
+		.reset-button {
+			@include flex-center;
+		}
+	}
+}
