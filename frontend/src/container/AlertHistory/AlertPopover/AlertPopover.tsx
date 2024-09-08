@@ -64,12 +64,13 @@ function AlertPopover({
 	relatedLogsLink,
 }: Props): JSX.Element {
 	return (
-		<div className="alert-popover">
+		<div className="alert-popover-trigger-action">
 			<Popover
 				showArrow={false}
 				placement="bottom"
 				color="linear-gradient(139deg, rgba(18, 19, 23, 1) 0%, rgba(18, 19, 23, 1) 98.68%)"
 				destroyTooltipOnHide
+				rootClassName="alert-history-popover"
 				content={
 					<PopoverContent
 						relatedTracesLink={relatedTracesLink}
