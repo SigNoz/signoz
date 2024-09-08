@@ -96,7 +96,6 @@ export function QueryTable({
 			<ResizeTable
 				columns={tableColumns}
 				tableLayout="fixed"
-				// dataSource={newDataSource}
 				dataSource={filterTable === null ? baseData : filterTable}
 				scroll={{ x: true }}
 				pagination={paginationConfig}
