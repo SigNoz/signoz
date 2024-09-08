@@ -1,3 +1,4 @@
+import { AttributeValuesMap } from 'components/ClientSideQBSearch/ClientSideQBSearch';
 import { HAVING_FILTER_REGEXP } from 'constants/regExp';
 import { IOption } from 'hooks/useResourceAttribute/types';
 import uniqWith from 'lodash-es/unionWith';
@@ -92,3 +93,20 @@ export const getValidOrderByResult = (result: IOption[]): IOption[] =>
 
 		return acc;
 	}, []);
+
+export const transformKeyValuesToAttributeValuesMap = (
+	attributeValuesMap: Record<string, string[] | number[] | boolean[]>,
+): AttributeValuesMap =>
+	Object.fromEntries(
+		Object.entries(attributeValuesMap).map(([key, values]) => [
+			key,
+			{
+				stringAttributeValues:
+					typeof values[0] === 'string' ? (values as string[]) : [],
+				numberAttributeValues:
+					typeof values[0] === 'number' ? (values as number[]) : [],
+				boolAttributeValues:
+					typeof values[0] === 'boolean' ? (values as boolean[]) : [],
+			},
+		]),
+	);
