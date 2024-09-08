@@ -591,12 +591,31 @@ func (r *PromRule) shouldAlert(series pql.Series) (pql.Sample, bool) {
 					break
 				}
 			}
+			// use min value from the series
+			if shouldAlert {
+				var minValue float64 = math.Inf(1)
+				for _, smpl := range series.Floats {
+					if smpl.F < minValue {
+						minValue = smpl.F
+					}
+				}
+				alertSmpl = pql.Sample{F: minValue, Metric: series.Metric}
+			}
 		} else if r.compareOp() == ValueIsBelow {
 			for _, smpl := range series.Floats {
 				if smpl.F >= r.targetVal() {
 					shouldAlert = false
 					break
 				}
+			}
+			if shouldAlert {
+				var maxValue float64 = math.Inf(-1)
+				for _, smpl := range series.Floats {
+					if smpl.F > maxValue {
+						maxValue = smpl.F
+					}
+				}
+				alertSmpl = pql.Sample{F: maxValue, Metric: series.Metric}
 			}
 		} else if r.compareOp() == ValueIsEq {
 			for _, smpl := range series.Floats {
@@ -610,6 +629,14 @@ func (r *PromRule) shouldAlert(series pql.Series) (pql.Sample, bool) {
 				if smpl.F == r.targetVal() {
 					shouldAlert = false
 					break
+				}
+			}
+			if shouldAlert {
+				for _, smpl := range series.Floats {
+					if !math.IsInf(smpl.F, 0) && !math.IsNaN(smpl.F) {
+						alertSmpl = pql.Sample{F: smpl.F, Metric: series.Metric}
+						break
+					}
 				}
 			}
 		}

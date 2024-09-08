@@ -22,6 +22,7 @@ import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
 import { GridCardGraphProps } from './types';
+import { isDataAvailableByPanelType } from './utils';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
 function GridCardGraph({
@@ -182,7 +183,9 @@ function GridCardGraph({
 				setErrorMessage(error.message);
 			},
 			onSettled: (data) => {
-				dataAvailable?.(Boolean(data?.payload?.data?.result?.length));
+				dataAvailable?.(
+					isDataAvailableByPanelType(data?.payload?.data, widget?.panelTypes),
+				);
 			},
 		},
 	);
