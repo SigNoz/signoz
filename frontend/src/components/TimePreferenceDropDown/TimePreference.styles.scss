@@ -27,6 +27,51 @@
 	}
 }
 
+.time-preference {
+	display: grid;
+	grid-template-columns: 1fr max-content;
+
+	.time-format-toggle {
+		margin-left: 4px;
+		.ant-radio-button-wrapper-checked {
+			color: #fff;
+			background: var(--bg-slate-400);
+			border-color: var(--bg-slate-400);
+
+			&:hover {
+				color: #fff;
+				background: var(--bg-slate-400);
+				border-color: var(--bg-slate-400);
+
+				&::before {
+					background-color: var(--bg-slate-400);
+				}
+			}
+
+			&:focus {
+				color: #fff;
+				background: var(--bg-slate-400);
+				border-color: var(--bg-slate-400);
+			}
+		}
+
+		.ant-radio-button-wrapper {
+			border-color: var(--bg-slate-400);
+			color: #fff;
+
+			&:hover,
+			&:focus {
+				color: #fff;
+				border-color: var(--bg-slate-400);
+			}
+
+			&::before {
+				background-color: var(--bg-slate-400);
+			}
+		}
+	}
+}
+
 .lightMode {
 	.time-selection-target {
 		border: 1px solid var(--bg-vanilla-300);

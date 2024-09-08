@@ -2,6 +2,7 @@ import './TimePreference.styles.scss';
 
 import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Radio, Typography } from 'antd';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import TimeItems, {
 	timePreferance,
 	timePreferenceType,
@@ -23,6 +24,7 @@ function TimeFormatToggle(props: TimeFormatToggleProps): JSX.Element {
 			onChange={handleToggle}
 			value={timeFormat || '12H'}
 			buttonStyle="solid"
+			className="time-format-toggle"
 		>
 			<Radio.Button value="24H">24H</Radio.Button>
 			<Radio.Button value="12H">12H</Radio.Button>
@@ -35,6 +37,7 @@ function TimePreference({
 	selectedTime,
 	setTimeFormat,
 	timeFormat,
+	panelType,
 }: TimePreferenceDropDownProps): JSX.Element {
 	const timeMenuItemOnChangeHandler = useCallback(
 		(event: TimeMenuItemOnChangeHandlerEvent) => {
@@ -55,7 +58,7 @@ function TimePreference({
 	);
 
 	return (
-		<div>
+		<div className="time-preference">
 			<Dropdown
 				menu={menu}
 				rootClassName="time-selection-menu"
@@ -72,7 +75,9 @@ function TimePreference({
 					<DownOutlined />
 				</Button>
 			</Dropdown>
-			<TimeFormatToggle timeFormat={timeFormat} setTimeFormat={setTimeFormat} />
+			{panelType === PANEL_TYPES.TIME_SERIES && (
+				<TimeFormatToggle timeFormat={timeFormat} setTimeFormat={setTimeFormat} />
+			)}
 		</div>
 	);
 }
@@ -84,6 +89,7 @@ interface TimeMenuItemOnChangeHandlerEvent {
 interface TimePreferenceDropDownProps {
 	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
+	panelType: PANEL_TYPES;
 	timeFormat?: '24H' | '12H';
 	setTimeFormat?: Dispatch<SetStateAction<'24H' | '12H'>>;
 }

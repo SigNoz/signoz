@@ -200,6 +200,7 @@ function RightContainer({
 							}}
 							timeFormat={timeFormat}
 							setTimeFormat={setTimeFormat}
+							panelType={selectedGraph}
 						/>
 					</>
 				)}

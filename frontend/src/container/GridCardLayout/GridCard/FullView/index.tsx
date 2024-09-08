@@ -172,6 +172,8 @@ function FullView({
 
 	const isListView = widget.panelTypes === PANEL_TYPES.LIST;
 
+	const [timeFormat, setTimeFormat] = useState<'24H' | '12H'>('12H');
+
 	if (response.isLoading && widget.panelTypes !== PANEL_TYPES.LIST) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
@@ -187,6 +189,9 @@ function FullView({
 						<TimePreference
 							selectedTime={selectedTime}
 							setSelectedTime={setSelectedTime}
+							timeFormat={timeFormat}
+							setTimeFormat={setTimeFormat}
+							panelType={widget.panelTypes}
 						/>
 						<Button
 							style={{
@@ -226,6 +231,7 @@ function FullView({
 						graphVisibility={graphsVisibilityStates}
 						onDragSelect={onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
+						timeFormat={timeFormat}
 					/>
 				</GraphContainer>
 			</div>
