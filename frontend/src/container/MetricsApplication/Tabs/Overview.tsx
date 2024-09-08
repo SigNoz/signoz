@@ -203,7 +203,7 @@ function Application(): JSX.Element {
 			isViewLogsClicked?: boolean,
 		): (() => void) => (): void => {
 			const currentTime = timestamp;
-			const tPlusOne = timestamp + 60 * 1000;
+			const tPlusOne = timestamp + 60;
 
 			const urlParams = new URLSearchParams(search);
 			urlParams.set(QueryParams.startTime, currentTime.toString());
@@ -242,8 +242,8 @@ function Application(): JSX.Element {
 					isJSON: false,
 					id: 'severity_text--string----true',
 				},
-				op: '=',
-				value: 'ERROR',
+				op: 'in',
+				value: ['ERROR', 'FATAL'],
 			},
 		],
 	});
