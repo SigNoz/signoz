@@ -347,6 +347,10 @@ function SideNav({
 			onClickHandler(ROUTES.ALL_DASHBOARD, null),
 		);
 
+		registerShortcut(GlobalShortcuts.NavigateToMessagingQueues, () =>
+			onClickHandler(ROUTES.MESSAGING_QUEUES, null),
+		);
+
 		registerShortcut(GlobalShortcuts.NavigateToAlerts, () =>
 			onClickHandler(ROUTES.LIST_ALL_ALERT, null),
 		);
@@ -362,6 +366,7 @@ function SideNav({
 			deregisterShortcut(GlobalShortcuts.NavigateToDashboards);
 			deregisterShortcut(GlobalShortcuts.NavigateToAlerts);
 			deregisterShortcut(GlobalShortcuts.NavigateToExceptions);
+			deregisterShortcut(GlobalShortcuts.NavigateToMessagingQueues);
 		};
 	}, [deregisterShortcut, onClickHandler, onCollapse, registerShortcut]);
 

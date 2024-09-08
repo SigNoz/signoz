@@ -308,6 +308,7 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 	// fetch alerts from rules db
 	query := "SELECT data FROM rules"
 	var alertsData []string
+	var alertNames []string
 	err := r.Select(&alertsData, query)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
@@ -315,14 +316,18 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 	}
 	for _, alert := range alertsData {
 		var rule GettableRule
+		if strings.Contains(alert, "time_series_v2") {
+			alertsInfo.AlertsWithTSV2 = alertsInfo.AlertsWithTSV2 + 1
+		}
 		err = json.Unmarshal([]byte(alert), &rule)
 		if err != nil {
 			zap.L().Error("invalid rule data", zap.Error(err))
 			continue
 		}
-		if rule.AlertType == "LOGS_BASED_ALERT" {
+		alertNames = append(alertNames, rule.AlertName)
+		if rule.AlertType == AlertTypeLogs {
 			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
-		} else if rule.AlertType == "METRIC_BASED_ALERT" {
+		} else if rule.AlertType == AlertTypeMetric {
 			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
 			if rule.RuleCondition != nil && rule.RuleCondition.CompositeQuery != nil {
 				if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
@@ -338,11 +343,11 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 					}
 				}
 			}
-		} else if rule.AlertType == "TRACES_BASED_ALERT" {
+		} else if rule.AlertType == AlertTypeTraces {
 			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
 		}
 		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1
 	}
-
+	alertsInfo.AlertNames = alertNames
 	return &alertsInfo, nil
 }

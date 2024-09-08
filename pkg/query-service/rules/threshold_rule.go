@@ -91,8 +91,7 @@ type ThresholdRule struct {
 	lastTimestampWithDatapoints time.Time
 
 	// Type of the rule
-	// One of ["LOGS_BASED_ALERT", "TRACES_BASED_ALERT", "METRIC_BASED_ALERT", "EXCEPTIONS_BASED_ALERT"]
-	typ string
+	typ AlertType
 
 	// querier is used for alerts created before the introduction of new metrics query builder
 	querier interfaces.Querier
@@ -634,13 +633,13 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 
 	q := r.prepareQueryRange(ts)
 	// Logs list view expects time in milliseconds
-	tr := timeRange{
+	tr := v3.URLShareableTimeRange{
 		Start:    q.Start,
 		End:      q.End,
 		PageSize: 100,
 	}
 
-	options := Options{
+	options := v3.URLShareableOptions{
 		MaxLines:      2,
 		Format:        "list",
 		SelectColumns: []v3.AttributeKey{},
@@ -650,9 +649,9 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 	urlEncodedTimeRange := url.QueryEscape(string(period))
 
 	filterItems := r.fetchFilters(selectedQuery, lbls)
-	urlData := urlShareableCompositeQuery{
+	urlData := v3.URLShareableCompositeQuery{
 		QueryType: string(v3.QueryTypeBuilder),
-		Builder: builderQuery{
+		Builder: v3.URLShareableBuilderQuery{
 			QueryData: []v3.BuilderQuery{
 				{
 					DataSource:         v3.DataSourceLogs,
@@ -680,7 +679,7 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(string(data))
+	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
 
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
@@ -698,13 +697,13 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 
 	q := r.prepareQueryRange(ts)
 	// Traces list view expects time in nanoseconds
-	tr := timeRange{
+	tr := v3.URLShareableTimeRange{
 		Start:    q.Start * time.Second.Microseconds(),
 		End:      q.End * time.Second.Microseconds(),
 		PageSize: 100,
 	}
 
-	options := Options{
+	options := v3.URLShareableOptions{
 		MaxLines:      2,
 		Format:        "list",
 		SelectColumns: constants.TracesListViewDefaultSelectedColumns,
@@ -714,9 +713,9 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	urlEncodedTimeRange := url.QueryEscape(string(period))
 
 	filterItems := r.fetchFilters(selectedQuery, lbls)
-	urlData := urlShareableCompositeQuery{
+	urlData := v3.URLShareableCompositeQuery{
 		QueryType: string(v3.QueryTypeBuilder),
-		Builder: builderQuery{
+		Builder: v3.URLShareableBuilderQuery{
 			QueryData: []v3.BuilderQuery{
 				{
 					DataSource:         v3.DataSourceTraces,
@@ -744,7 +743,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(string(data))
+	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
 
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
@@ -963,6 +962,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 
 		lb := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel)
+		resultLabels := labels.NewBuilder(smpl.MetricOrig).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel).Labels()
 
 		for _, l := range r.labels {
 			lb.Set(l.Name, expand(l.Value))
@@ -983,12 +983,12 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		// Links with timestamps should go in annotations since labels
 		// is used alert grouping, and we want to group alerts with the same
 		// label set, but different timestamps, together.
-		if r.typ == "TRACES_BASED_ALERT" {
+		if r.typ == AlertTypeTraces {
 			link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
 			if link != "" && r.hostFromSource() != "" {
 				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
 			}
-		} else if r.typ == "LOGS_BASED_ALERT" {
+		} else if r.typ == AlertTypeLogs {
 			link := r.prepareLinksToLogs(ts, smpl.MetricOrig)
 			if link != "" && r.hostFromSource() != "" {
 				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
@@ -1010,14 +1010,15 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 
 		alerts[h] = &Alert{
-			Labels:       lbs,
-			Annotations:  annotations,
-			ActiveAt:     ts,
-			State:        StatePending,
-			Value:        smpl.V,
-			GeneratorURL: r.GeneratorURL(),
-			Receivers:    r.preferredChannels,
-			Missing:      smpl.IsMissing,
+			Labels:            lbs,
+			QueryResultLables: resultLabels,
+			Annotations:       annotations,
+			ActiveAt:          ts,
+			State:             StatePending,
+			Value:             smpl.V,
+			GeneratorURL:      r.GeneratorURL(),
+			Receivers:         r.preferredChannels,
+			Missing:           smpl.IsMissing,
 		}
 	}
 
@@ -1043,7 +1044,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.active {
-		labelsJSON, err := json.Marshal(a.Labels)
+		labelsJSON, err := json.Marshal(a.QueryResultLables)
 		if err != nil {
 			zap.L().Error("error marshaling labels", zap.Error(err), zap.Any("labels", a.Labels))
 		}
@@ -1063,7 +1064,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 					StateChanged: true,
 					UnixMilli:    ts.UnixMilli(),
 					Labels:       v3.LabelsString(labelsJSON),
-					Fingerprint:  a.Labels.Hash(),
+					Fingerprint:  a.QueryResultLables.Hash(),
 				})
 			}
 			continue
@@ -1083,7 +1084,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 				StateChanged: true,
 				UnixMilli:    ts.UnixMilli(),
 				Labels:       v3.LabelsString(labelsJSON),
-				Fingerprint:  a.Labels.Hash(),
+				Fingerprint:  a.QueryResultLables.Hash(),
 				Value:        a.Value,
 			})
 		}
@@ -1213,12 +1214,31 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 					break
 				}
 			}
+			// use min value from the series
+			if shouldAlert {
+				var minValue float64 = math.Inf(1)
+				for _, smpl := range series.Points {
+					if smpl.Value < minValue {
+						minValue = smpl.Value
+					}
+				}
+				alertSmpl = Sample{Point: Point{V: minValue}, Metric: lblsNormalized, MetricOrig: lbls}
+			}
 		} else if r.compareOp() == ValueIsBelow {
 			for _, smpl := range series.Points {
 				if smpl.Value >= r.targetVal() {
 					shouldAlert = false
 					break
 				}
+			}
+			if shouldAlert {
+				var maxValue float64 = math.Inf(-1)
+				for _, smpl := range series.Points {
+					if smpl.Value > maxValue {
+						maxValue = smpl.Value
+					}
+				}
+				alertSmpl = Sample{Point: Point{V: maxValue}, Metric: lblsNormalized, MetricOrig: lbls}
 			}
 		} else if r.compareOp() == ValueIsEq {
 			for _, smpl := range series.Points {
@@ -1232,6 +1252,15 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 				if smpl.Value == r.targetVal() {
 					shouldAlert = false
 					break
+				}
+			}
+			// use any non-inf or nan value from the series
+			if shouldAlert {
+				for _, smpl := range series.Points {
+					if !math.IsInf(smpl.Value, 0) && !math.IsNaN(smpl.Value) {
+						alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+						break
+					}
 				}
 			}
 		}

@@ -128,6 +128,54 @@ export const useActiveLog = (): UseActiveLog => {
 		[currentQuery, notifications, queryClient, redirectWithQueryBuilderData],
 	);
 
+	const onGroupByAttribute = useCallback(
+		async (
+			fieldKey: string,
+			isJSON?: boolean,
+			dataType?: DataTypes,
+		): Promise<void> => {
+			try {
+				const keysAutocompleteResponse = await queryClient.fetchQuery(
+					[QueryBuilderKeys.GET_AGGREGATE_KEYS, fieldKey],
+					// eslint-disable-next-line sonarjs/no-identical-functions
+					async () =>
+						getAggregateKeys({
+							searchText: fieldKey,
+							aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
+							dataSource: currentQuery.builder.queryData[0].dataSource,
+							aggregateAttribute:
+								currentQuery.builder.queryData[0].aggregateAttribute.key,
+						}),
+				);
+
+				const keysAutocomplete: BaseAutocompleteData[] =
+					keysAutocompleteResponse.payload?.attributeKeys || [];
+
+				const existAutocompleteKey = chooseAutocompleteFromCustomValue(
+					keysAutocomplete,
+					fieldKey,
+					isJSON,
+					dataType,
+				);
+
+				const nextQuery: Query = {
+					...currentQuery,
+					builder: {
+						...currentQuery.builder,
+						queryData: currentQuery.builder.queryData.map((item) => ({
+							...item,
+							groupBy: [...item.groupBy, existAutocompleteKey],
+						})),
+					},
+				};
+
+				redirectWithQueryBuilderData(nextQuery);
+			} catch {
+				notifications.error({ message: SOMETHING_WENT_WRONG });
+			}
+		},
+		[currentQuery, notifications, queryClient, redirectWithQueryBuilderData],
+	);
 	const onAddToQueryLogs = useCallback(
 		(fieldKey: string, fieldValue: string, operator: string) => {
 			const updatedQueryString = getGeneratedFilterQueryString(
@@ -147,5 +195,6 @@ export const useActiveLog = (): UseActiveLog => {
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery: isLogsPage ? onAddToQueryLogs : onAddToQueryExplorer,
+		onGroupByAttribute,
 	};
 };

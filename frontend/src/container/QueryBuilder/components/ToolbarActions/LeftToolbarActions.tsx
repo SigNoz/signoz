@@ -1,5 +1,6 @@
 import './ToolbarActions.styles.scss';
 
+import { FilterOutlined } from '@ant-design/icons';
 import { Button, Switch, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { Atom, SquareMousePointer, Terminal } from 'lucide-react';
@@ -11,6 +12,8 @@ interface LeftToolbarActionsProps {
 	onToggleHistrogramVisibility: () => void;
 	onChangeSelectedView: (view: SELECTED_VIEWS) => void;
 	showFrequencyChart: boolean;
+	showFilter: boolean;
+	handleFilterVisibilityChange: () => void;
 }
 
 const activeTab = 'active-tab';
@@ -23,11 +26,20 @@ export default function LeftToolbarActions({
 	onToggleHistrogramVisibility,
 	onChangeSelectedView,
 	showFrequencyChart,
+	showFilter,
+	handleFilterVisibilityChange,
 }: LeftToolbarActionsProps): JSX.Element {
 	const { clickhouse, search, queryBuilder: QB } = items;
 
 	return (
 		<div className="left-toolbar">
+			{!showFilter && (
+				<Tooltip title="Show Filters">
+					<Button onClick={handleFilterVisibilityChange} className="filter-btn">
+						<FilterOutlined />
+					</Button>
+				</Tooltip>
+			)}
 			<div className="left-toolbar-query-actions">
 				<Tooltip title="Search">
 					<Button

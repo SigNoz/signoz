@@ -41,6 +41,7 @@ import (
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
 
+	queryprogress "go.signoz.io/signoz/pkg/query-service/app/clickhouseReader/query_progress"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
@@ -122,6 +123,7 @@ type ClickHouseReader struct {
 	queryEngine             *promql.Engine
 	remoteStorage           *remote.Storage
 	fanoutStorage           *storage.Storage
+	queryProgressTracker    queryprogress.QueryProgressTracker
 
 	promConfigFile string
 	promConfig     *config.Config
@@ -182,6 +184,7 @@ func NewReaderFromClickhouseConnection(
 	wrap := clickhouseConnWrapper{
 		conn: db,
 		settings: ClickhouseQuerySettings{
+			MaxExecutionTime:                    os.Getenv("ClickHouseMaxExecutionTime"),
 			MaxExecutionTimeLeaf:                os.Getenv("ClickHouseMaxExecutionTimeLeaf"),
 			TimeoutBeforeCheckingExecutionSpeed: os.Getenv("ClickHouseTimeoutBeforeCheckingExecutionSpeed"),
 			MaxBytesToRead:                      os.Getenv("ClickHouseMaxBytesToRead"),
@@ -215,6 +218,7 @@ func NewReaderFromClickhouseConnection(
 		promConfigFile:          configFile,
 		featureFlags:            featureFlag,
 		cluster:                 cluster,
+		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
 	}
 }
 
@@ -3343,15 +3347,38 @@ func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.Dashbo
 		return &dashboardsInfo, err
 	}
 	totalDashboardsWithPanelAndName := 0
+	var dashboardNames []string
+	count := 0
 	for _, dashboard := range dashboardsData {
 		if isDashboardWithPanelAndName(dashboard.Data) {
 			totalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName + 1
 		}
-		dashboardsInfo = countPanelsInDashboard(dashboard.Data)
+		dashboardName := extractDashboardName(dashboard.Data)
+		if dashboardName != "" {
+			dashboardNames = append(dashboardNames, dashboardName)
+		}
+		dashboardInfo := countPanelsInDashboard(dashboard.Data)
+		dashboardsInfo.LogsBasedPanels += dashboardInfo.LogsBasedPanels
+		dashboardsInfo.TracesBasedPanels += dashboardInfo.TracesBasedPanels
+		dashboardsInfo.MetricBasedPanels += dashboardsInfo.MetricBasedPanels
+		if isDashboardWithTSV2(dashboard.Data) {
+			count = count + 1
+		}
 	}
+
+	dashboardsInfo.DashboardNames = dashboardNames
 	dashboardsInfo.TotalDashboards = len(dashboardsData)
 	dashboardsInfo.TotalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName
+	dashboardsInfo.QueriesWithTSV2 = count
 	return &dashboardsInfo, nil
+}
+
+func isDashboardWithTSV2(data map[string]interface{}) bool {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(jsonData), "time_series_v2")
 }
 
 func isDashboardWithPanelAndName(data map[string]interface{}) bool {
@@ -3373,6 +3400,19 @@ func isDashboardWithPanelAndName(data map[string]interface{}) bool {
 
 	return isDashboardWithPanelAndName
 }
+
+func extractDashboardName(data map[string]interface{}) string {
+
+	if data != nil && data["title"] != nil {
+		title, ok := data["title"].(string)
+		if ok {
+			return title
+		}
+	}
+
+	return ""
+}
+
 func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
 	var logsPanelCount, tracesPanelCount, metricsPanelCount int
 	// totalPanels := 0
@@ -4706,6 +4746,30 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 
 	defer utils.Elapsed("GetTimeSeriesResultV3", ctxArgs)()
 
+	// Hook up query progress reporting if requested.
+	queryId := ctx.Value("queryId")
+	if queryId != nil {
+		qid, ok := queryId.(string)
+		if !ok {
+			zap.L().Error("GetTimeSeriesResultV3: queryId in ctx not a string as expected", zap.Any("queryId", queryId))
+
+		} else {
+			ctx = clickhouse.Context(ctx, clickhouse.WithProgress(
+				func(p *clickhouse.Progress) {
+					go func() {
+						err := r.queryProgressTracker.ReportQueryProgress(qid, p)
+						if err != nil {
+							zap.L().Error(
+								"Couldn't report query progress",
+								zap.String("queryId", qid), zap.Error(err),
+							)
+						}
+					}()
+				},
+			))
+		}
+	}
+
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
@@ -5159,13 +5223,17 @@ func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHis
 }
 
 func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
-	ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistory, error) {
+	ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (*v3.RuleStateTimeline, error) {
 
 	var conditions []string
 
 	conditions = append(conditions, fmt.Sprintf("rule_id = '%s'", ruleID))
 
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", params.Start, params.End))
+
+	if params.State != "" {
+		conditions = append(conditions, fmt.Sprintf("state = '%s'", params.State))
+	}
 
 	if params.Filters != nil && len(params.Filters.Items) != 0 {
 		for _, item := range params.Filters.Items {
@@ -5225,7 +5293,19 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 		return nil, err
 	}
 
-	return history, nil
+	var total uint64
+	err = r.db.QueryRow(ctx, fmt.Sprintf("SELECT count(*) FROM %s.%s WHERE %s",
+		signozHistoryDBName, ruleStateHistoryTableName, whereClause)).Scan(&total)
+	if err != nil {
+		return nil, err
+	}
+
+	timeline := &v3.RuleStateTimeline{
+		Items: history,
+		Total: total,
+	}
+
+	return timeline, nil
 }
 
 func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
@@ -5463,4 +5543,16 @@ func (r *ClickHouseReader) GetMinAndMaxTimestampForTraceID(ctx context.Context, 
 	zap.L().Debug("GetMinAndMaxTimestampForTraceID", zap.Any("minTime", minTime), zap.Any("maxTime", maxTime))
 
 	return minTime.UnixNano(), maxTime.UnixNano(), nil
+}
+
+func (r *ClickHouseReader) ReportQueryStartForProgressTracking(
+	queryId string,
+) (func(), *model.ApiError) {
+	return r.queryProgressTracker.ReportQueryStarted(queryId)
+}
+
+func (r *ClickHouseReader) SubscribeToQueryProgress(
+	queryId string,
+) (<-chan v3.QueryProgress, func(), *model.ApiError) {
+	return r.queryProgressTracker.SubscribeToQueryProgress(queryId)
 }
