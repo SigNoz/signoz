@@ -6,7 +6,8 @@ import {
 	useGetAlertRuleDetailsTimelineTable,
 	useTimelineTable,
 } from 'pages/AlertDetails/hooks';
-import { useMemo, useState } from 'react';
+import { useAlertRule } from 'providers/Alert';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -37,11 +38,17 @@ function TimelineTable(): JSX.Element {
 	});
 
 	const { t } = useTranslation('common');
+	const { setAlertRuleLabels } = useAlertRule();
 
-	const labelsFromFirstItem = useMemo(
-		() => data?.payload?.data?.items?.[0]?.labels ?? {},
-		[data],
-	);
+	useEffect(() => {
+		const labelsFromFirstItem = data?.payload?.data?.items?.[0]?.labels ?? {};
+
+		if (ruleId && Object.keys(labelsFromFirstItem).length > 0) {
+			setAlertRuleLabels((prevLabels) =>
+				new Map(prevLabels).set(ruleId, labelsFromFirstItem),
+			);
+		}
+	}, [data, setAlertRuleLabels, ruleId]);
 
 	if (isError || !isValidRuleId || !ruleId) {
 		return <div>{t('something_went_wrong')}</div>;
@@ -54,7 +61,6 @@ function TimelineTable(): JSX.Element {
 				columns={timelineTableColumns({
 					filters,
 					setFilters,
-					labels: labelsFromFirstItem,
 				})}
 				dataSource={timelineData}
 				pagination={paginationConfig}

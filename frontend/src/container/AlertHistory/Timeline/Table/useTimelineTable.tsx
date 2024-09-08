@@ -10,6 +10,9 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Search } from 'lucide-react';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
+import { useAlertHistoryQueryParams } from 'pages/AlertDetails/hooks';
+import { useAlertRule } from 'providers/Alert';
+import { useMemo } from 'react';
 import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { formatEpochTimestamp } from 'utils/timeUtils';
@@ -21,13 +24,19 @@ const transfromLabelsToQbKeys = (
 function LabelFilter({
 	filters,
 	setFilters,
-	labels,
 }: {
 	setFilters: (filters: TagFilter) => void;
 	filters: TagFilter;
-	labels: AlertRuleTimelineTableResponse['labels'];
 }): JSX.Element | null {
 	const isDarkMode = useIsDarkMode();
+
+	const { ruleId } = useAlertHistoryQueryParams();
+	const { alertRuleLabels } = useAlertRule();
+
+	const transformedKeys = useMemo(() => {
+		if (!ruleId) return [];
+		return transfromLabelsToQbKeys(alertRuleLabels?.get(ruleId) || {});
+	}, [alertRuleLabels, ruleId]);
 
 	const handleSearch = (tagFilters: TagFilter): void => {
 		const tagFiltersLength = tagFilters.items.length;
@@ -40,8 +49,6 @@ function LabelFilter({
 		}
 		setFilters(tagFilters);
 	};
-
-	const transformedKeys = transfromLabelsToQbKeys(labels);
 
 	return (
 		<ClientSideQBSearch
@@ -62,11 +69,9 @@ function LabelFilter({
 export const timelineTableColumns = ({
 	filters,
 	setFilters,
-	labels,
 }: {
 	filters: TagFilter;
 	setFilters: (filters: TagFilter) => void;
-	labels: AlertRuleTimelineTableResponse['labels'];
 }): ColumnsType<AlertRuleTimelineTableResponse> => [
 	{
 		title: 'STATE',
@@ -80,9 +85,7 @@ export const timelineTableColumns = ({
 		),
 	},
 	{
-		title: (
-			<LabelFilter setFilters={setFilters} filters={filters} labels={labels} />
-		),
+		title: <LabelFilter setFilters={setFilters} filters={filters} />,
 		dataIndex: 'labels',
 		render: (labels): JSX.Element => (
 			<div className="alert-rule-labels">

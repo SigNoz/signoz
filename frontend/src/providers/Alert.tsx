@@ -3,6 +3,10 @@ import React, { createContext, useContext, useState } from 'react';
 interface AlertRuleContextType {
 	alertRuleState: string | undefined;
 	setAlertRuleState: React.Dispatch<React.SetStateAction<string | undefined>>;
+	alertRuleLabels: Map<string, Record<string, string>>;
+	setAlertRuleLabels: React.Dispatch<
+		React.SetStateAction<Map<string, Record<string, string>>>
+	>;
 }
 
 const AlertRuleContext = createContext<AlertRuleContextType | undefined>(
@@ -18,9 +22,19 @@ function AlertRuleProvider({
 		undefined,
 	);
 
-	const value = React.useMemo(() => ({ alertRuleState, setAlertRuleState }), [
-		alertRuleState,
-	]);
+	const [alertRuleLabels, setAlertRuleLabels] = useState<
+		Map<string, Record<string, string>>
+	>(new Map());
+
+	const value = React.useMemo(
+		() => ({
+			isAlertRuleDisabled,
+			setIsAlertRuleDisabled,
+			alertRuleLabels,
+			setAlertRuleLabels,
+		}),
+		[isAlertRuleDisabled, alertRuleLabels],
+	);
 
 	return (
 		<AlertRuleContext.Provider value={value}>
