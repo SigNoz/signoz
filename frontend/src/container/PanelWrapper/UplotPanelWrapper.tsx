@@ -31,6 +31,7 @@ function UplotPanelWrapper({
 	onDragSelect,
 	selectedGraph,
 	customTooltipElement,
+	timeFormat,
 }: PanelWrapperProps): JSX.Element {
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
@@ -128,6 +129,7 @@ function UplotPanelWrapper({
 				hiddenGraph,
 				setHiddenGraph,
 				customTooltipElement,
+				timeFormat,
 			}),
 		[
 			widget?.id,
@@ -150,6 +152,7 @@ function UplotPanelWrapper({
 			currentQuery,
 			hiddenGraph,
 			customTooltipElement,
+			timeFormat,
 		],
 	);
 

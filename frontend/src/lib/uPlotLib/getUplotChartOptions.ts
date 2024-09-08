@@ -54,6 +54,7 @@ export interface GetUPlotChartOptions {
 		}>
 	>;
 	customTooltipElement?: HTMLDivElement;
+	timeFormat?: '24H' | '12H';
 }
 
 /** the function converts series A , series B , series C to
@@ -156,6 +157,7 @@ export const getUPlotChartOptions = ({
 	hiddenGraph,
 	setHiddenGraph,
 	customTooltipElement,
+	timeFormat,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -355,6 +357,6 @@ export const getUPlotChartOptions = ({
 			hiddenGraph,
 			isDarkMode,
 		}),
-		axes: getAxes(isDarkMode, yAxisUnit),
+		axes: getAxes(isDarkMode, yAxisUnit, timeFormat),
 	};
 };

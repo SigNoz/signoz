@@ -71,6 +71,8 @@ function RightContainer({
 	setSoftMin,
 	columnUnits,
 	setColumnUnits,
+	setTimeFormat,
+	timeFormat,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
 		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
@@ -196,6 +198,8 @@ function RightContainer({
 								selectedTime,
 								setSelectedTime,
 							}}
+							timeFormat={timeFormat}
+							setTimeFormat={setTimeFormat}
 						/>
 					</>
 				)}
@@ -350,10 +354,14 @@ interface RightContainerProps {
 	setColumnUnits: Dispatch<SetStateAction<ColumnUnit>>;
 	setSoftMin: Dispatch<SetStateAction<number | null>>;
 	setSoftMax: Dispatch<SetStateAction<number | null>>;
+	timeFormat?: '24H' | '12H';
+	setTimeFormat?: Dispatch<SetStateAction<'24H' | '12H'>>;
 }
 
 RightContainer.defaultProps = {
 	selectedWidget: undefined,
+	setTimeFormat: undefined,
+	timeFormat: '12H',
 };
 
 export default RightContainer;

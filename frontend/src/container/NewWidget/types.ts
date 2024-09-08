@@ -27,6 +27,7 @@ export interface WidgetGraphProps {
 	requestData: GetQueryResultsProps;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	isLoadingPanelData: boolean;
+	timeFormat?: '24H' | '12H';
 }
 
 export type WidgetGraphContainerProps = {
@@ -38,4 +39,5 @@ export type WidgetGraphContainerProps = {
 	selectedGraph: PANEL_TYPES;
 	selectedWidget: Widgets;
 	isLoadingPanelData: boolean;
+	timeFormat?: '24H' | '12H';
 };

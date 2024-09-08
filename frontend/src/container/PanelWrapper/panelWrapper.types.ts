@@ -24,6 +24,7 @@ export type PanelWrapperProps = {
 	selectedGraph?: PANEL_TYPES;
 	tableProcessedDataRef?: React.MutableRefObject<RowData[]>;
 	customTooltipElement?: HTMLDivElement;
+	timeFormat?: '24H' | '12H';
 };
 
 export type TooltipData = {
