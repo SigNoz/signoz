@@ -30,6 +30,7 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
+import { TimeFormat } from 'utils/timeUtils';
 
 import { getLocalStorageGraphVisibilityState } from '../utils';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
@@ -172,7 +173,9 @@ function FullView({
 
 	const isListView = widget.panelTypes === PANEL_TYPES.LIST;
 
-	const [timeFormat, setTimeFormat] = useState<'24H' | '12H'>('12H');
+	const [timeFormat, setTimeFormat] = useState<
+		TimeFormat.TWENTY_FOUR_HOUR | TimeFormat.TWELVE_HOUR
+	>(TimeFormat.TWELVE_HOUR);
 
 	if (response.isLoading && widget.panelTypes !== PANEL_TYPES.LIST) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;

@@ -42,6 +42,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType, getGraphTypeForFormat } from 'utils/getGraphType';
+import { TimeFormat } from 'utils/timeUtils';
 
 import LeftContainer from './LeftContainer';
 import QueryTypeTag from './LeftContainer/QueryTypeTag';
@@ -270,7 +271,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		enum: selectedWidget?.timePreferance || 'GLOBAL_TIME',
 	});
 
-	const [timeFormat, setTimeFormat] = useState<'24H' | '12H'>('12H');
+	const [timeFormat, setTimeFormat] = useState<
+		TimeFormat.TWENTY_FOUR_HOUR | TimeFormat.TWELVE_HOUR
+	>(TimeFormat.TWELVE_HOUR);
 
 	const updateDashboardMutation = useUpdateDashboard();
 

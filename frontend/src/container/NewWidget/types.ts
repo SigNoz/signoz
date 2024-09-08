@@ -5,6 +5,7 @@ import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { TimeFormat } from 'utils/timeUtils';
 
 import { timePreferance } from './RightContainer/timeItems';
 
@@ -27,7 +28,7 @@ export interface WidgetGraphProps {
 	requestData: GetQueryResultsProps;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	isLoadingPanelData: boolean;
-	timeFormat?: '24H' | '12H';
+	timeFormat?: TimeFormat.TWENTY_FOUR_HOUR | TimeFormat.TWELVE_HOUR;
 }
 
 export type WidgetGraphContainerProps = {
@@ -39,5 +40,5 @@ export type WidgetGraphContainerProps = {
 	selectedGraph: PANEL_TYPES;
 	selectedWidget: Widgets;
 	isLoadingPanelData: boolean;
-	timeFormat?: '24H' | '12H';
+	timeFormat?: TimeFormat.TWENTY_FOUR_HOUR | TimeFormat.TWELVE_HOUR;
 };

@@ -125,3 +125,8 @@ export const epochToTimeString = (epochMs: number): string => {
 	};
 	return date.toLocaleTimeString('en-US', options);
 };
+
+export enum TimeFormat {
+	TWENTY_FOUR_HOUR = '24H',
+	TWELVE_HOUR = '12H',
+}

@@ -9,6 +9,7 @@ import TimeItems, {
 } from 'container/NewWidget/RightContainer/timeItems';
 import { Globe } from 'lucide-react';
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
+import { TimeFormat } from 'utils/timeUtils';
 
 import { menuItems } from './config';
 
@@ -22,7 +23,7 @@ function TimeFormatToggle(props: TimeFormatToggleProps): JSX.Element {
 	return (
 		<Radio.Group
 			onChange={handleToggle}
-			value={timeFormat || '12H'}
+			value={timeFormat || TimeFormat.TWELVE_HOUR}
 			buttonStyle="solid"
 			className="time-format-toggle"
 		>
@@ -90,23 +91,27 @@ interface TimePreferenceDropDownProps {
 	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 	panelType: PANEL_TYPES;
-	timeFormat?: '24H' | '12H';
-	setTimeFormat?: Dispatch<SetStateAction<'24H' | '12H'>>;
+	timeFormat?: TimeFormat.TWENTY_FOUR_HOUR | TimeFormat.TWELVE_HOUR;
+	setTimeFormat?: Dispatch<
+		SetStateAction<TimeFormat.TWENTY_FOUR_HOUR | TimeFormat.TWELVE_HOUR>
+	>;
 }
 
 interface TimeFormatToggleProps {
-	timeFormat?: '24H' | '12H';
-	setTimeFormat?: Dispatch<SetStateAction<'24H' | '12H'>>;
+	timeFormat?: TimeFormat.TWENTY_FOUR_HOUR | TimeFormat.TWELVE_HOUR;
+	setTimeFormat?: Dispatch<
+		SetStateAction<TimeFormat.TWENTY_FOUR_HOUR | TimeFormat.TWELVE_HOUR>
+	>;
 }
 
 TimePreference.defaultProps = {
 	setTimeFormat: undefined,
-	timeFormat: '12H',
+	timeFormat: TimeFormat.TWELVE_HOUR,
 };
 
 TimeFormatToggle.defaultProps = {
 	setTimeFormat: undefined,
-	timeFormat: '12H',
+	timeFormat: TimeFormat.TWELVE_HOUR,
 };
 
 export default TimePreference;

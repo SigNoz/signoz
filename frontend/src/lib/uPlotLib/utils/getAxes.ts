@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import { TimeFormat } from 'utils/timeUtils';
 
 import getGridColor from './getGridColor';
 
@@ -24,7 +25,7 @@ function format24HourTime(ts, includeDate = false): string {
 const getAxes = (
 	isDarkMode: boolean,
 	yAxisUnit?: string,
-	timeFormat?: '24H' | '12H',
+	timeFormat?: TimeFormat.TWENTY_FOUR_HOUR | TimeFormat.TWELVE_HOUR,
 ): any => [
 	{
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
@@ -39,7 +40,7 @@ const getAxes = (
 			show: true,
 		},
 		gap: 5,
-		...(timeFormat === '24H'
+		...(timeFormat === TimeFormat.TWENTY_FOUR_HOUR
 			? {
 					values: (_self, ticks): any =>
 						ticks.map((ts, i) => format24HourTime(ts, i % 5 === 0)), // Include date every 5th tick

@@ -20,6 +20,7 @@ import {
 } from 'react';
 import { ColumnUnit, Widgets } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
+import { TimeFormat } from 'utils/timeUtils';
 
 import { ColumnUnitSelector } from './ColumnUnitSelector/ColumnUnitSelector';
 import {
@@ -355,14 +356,16 @@ interface RightContainerProps {
 	setColumnUnits: Dispatch<SetStateAction<ColumnUnit>>;
 	setSoftMin: Dispatch<SetStateAction<number | null>>;
 	setSoftMax: Dispatch<SetStateAction<number | null>>;
-	timeFormat?: '24H' | '12H';
-	setTimeFormat?: Dispatch<SetStateAction<'24H' | '12H'>>;
+	timeFormat?: TimeFormat.TWENTY_FOUR_HOUR | TimeFormat.TWELVE_HOUR;
+	setTimeFormat?: Dispatch<
+		SetStateAction<TimeFormat.TWENTY_FOUR_HOUR | TimeFormat.TWELVE_HOUR>
+	>;
 }
 
 RightContainer.defaultProps = {
 	selectedWidget: undefined,
 	setTimeFormat: undefined,
-	timeFormat: '12H',
+	timeFormat: TimeFormat.TWELVE_HOUR,
 };
 
 export default RightContainer;

@@ -22,6 +22,7 @@ import { UpdateTimeInterval } from 'store/actions';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { TimeFormat } from 'utils/timeUtils';
 
 function WidgetGraph({
 	selectedWidget,
@@ -124,11 +125,11 @@ interface WidgetGraphProps {
 	>;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	selectedGraph: PANEL_TYPES;
-	timeFormat?: '24H' | '12H';
+	timeFormat?: TimeFormat.TWENTY_FOUR_HOUR | TimeFormat.TWELVE_HOUR;
 }
 
 WidgetGraph.defaultProps = {
-	timeFormat: '12H',
+	timeFormat: TimeFormat.TWELVE_HOUR,
 };
 
 export default WidgetGraph;
