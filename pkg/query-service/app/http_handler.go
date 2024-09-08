@@ -4066,7 +4066,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
 		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
-		if isUsed == true && len(traceIDs) > 0 {
+		if isUsed && len(traceIDs) > 0 {
 			zap.L().Debug("traceID used as filter in traces query")
 			// query signoz_spans table with traceID to get min and max timestamp
 			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
@@ -4119,10 +4119,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			anomaly.WithReader[*anomaly.WeeklyProvider](aH.reader),
 			anomaly.WithFeatureLookup[*anomaly.WeeklyProvider](aH.featureFlags),
 		)
-		anomalies, err := anomalyProvider.GetBaseSeasonalProvider().GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{
-			Params:      anomalyQueryRangeParams,
-			Seasonality: anomaly.SeasonalityWeekly,
-		})
+		anomalies, err := anomalyProvider.GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{Params: anomalyQueryRangeParams})
 		if err != nil {
 			apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 			RespondError(w, apiErrObj, errQuriesByName)

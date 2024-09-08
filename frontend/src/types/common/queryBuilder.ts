@@ -159,6 +159,7 @@ export enum QueryFunctionsTypes {
 	CLAMP_MAX = 'clampMax',
 	ABSOLUTE = 'absolute',
 	RUNNING_DIFF = 'runningDiff',
+	ANOMALY = 'anomaly',
 	LOG_2 = 'log2',
 	LOG_10 = 'log10',
 	CUMULATIVE_SUM = 'cumSum',

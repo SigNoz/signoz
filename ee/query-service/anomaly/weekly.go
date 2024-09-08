@@ -38,5 +38,6 @@ func NewWeeklyProvider(opts ...GenericProviderOption[*WeeklyProvider]) *WeeklyPr
 }
 
 func (p *WeeklyProvider) GetAnomalies(ctx context.Context, req *GetAnomaliesRequest) (*GetAnomaliesResponse, error) {
-	return nil, nil
+	req.Seasonality = SeasonalityWeekly
+	return p.getAnomalies(ctx, req)
 }

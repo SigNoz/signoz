@@ -28,6 +28,10 @@ export const metricQueryFunctionOptions: SelectOption<string, string>[] = [
 		label: 'Running Diff',
 	},
 	{
+		value: QueryFunctionsTypes.ANOMALY,
+		label: 'Anomaly',
+	},
+	{
 		value: QueryFunctionsTypes.LOG_2,
 		label: 'Log2',
 	},
@@ -117,6 +121,9 @@ export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
 		showInput: false,
 	},
 	cumSum: {
+		showInput: false,
+	},
+	anomaly: {
 		showInput: false,
 	},
 	ewma3: {
