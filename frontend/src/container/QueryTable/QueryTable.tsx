@@ -71,6 +71,7 @@ export function QueryTable({
 				dataSource={newDataSource}
 				scroll={{ x: true }}
 				pagination={paginationConfig}
+				sticky
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}
 			/>
