@@ -38,7 +38,7 @@ type PrepareTaskOptions struct {
 
 const taskNamesuffix = "webAppEditor"
 
-func ruleIdFromTaskName(n string) string {
+func RuleIdFromTaskName(n string) string {
 	return strings.Split(n, "-groupname")[0]
 }
 
@@ -121,7 +121,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 	rules := make([]Rule, 0)
 	var task Task
 
-	ruleId := ruleIdFromTaskName(opts.TaskName)
+	ruleId := RuleIdFromTaskName(opts.TaskName)
 	if opts.Rule.RuleType == RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := NewThresholdRule(
@@ -400,7 +400,7 @@ func (m *Manager) deleteTask(taskName string) {
 	if ok {
 		oldg.Stop()
 		delete(m.tasks, taskName)
-		delete(m.rules, ruleIdFromTaskName(taskName))
+		delete(m.rules, RuleIdFromTaskName(taskName))
 		zap.L().Debug("rule task deleted", zap.String("name", taskName))
 	} else {
 		zap.L().Info("rule not found for deletion", zap.String("name", taskName))
@@ -617,7 +617,7 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*GettableRules, error) {
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
-			ruleResponse.State = StateDisabled
+			ruleResponse.State = model.StateDisabled
 			ruleResponse.Disabled = true
 		} else {
 			ruleResponse.State = rm.State()
@@ -644,7 +644,7 @@ func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error)
 	r.Id = fmt.Sprintf("%d", s.Id)
 	// fetch state of rule from memory
 	if rm, ok := m.rules[r.Id]; !ok {
-		r.State = StateDisabled
+		r.State = model.StateDisabled
 		r.Disabled = true
 	} else {
 		r.State = rm.State()
@@ -751,7 +751,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 
 	// fetch state of rule from memory
 	if rm, ok := m.rules[ruleId]; !ok {
-		response.State = StateDisabled
+		response.State = model.StateDisabled
 		response.Disabled = true
 	} else {
 		response.State = rm.State()
