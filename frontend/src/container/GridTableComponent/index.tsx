@@ -23,6 +23,7 @@ function GridTableComponent({
 	thresholds,
 	columnUnits,
 	tableProcessedDataRef,
+	sticky,
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
@@ -146,6 +147,7 @@ function GridTableComponent({
 				loading={false}
 				columns={newColumnData}
 				dataSource={dataSource}
+				sticky={sticky}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}
 			/>
