@@ -421,3 +421,6 @@ const DefaultFilterSuggestionsAttributesLimit = 50
 const MaxFilterSuggestionsAttributesLimit = 100
 const DefaultFilterSuggestionsExamplesLimit = 2
 const MaxFilterSuggestionsExamplesLimit = 10
+
+var SpanRenderLimitStr = GetOrDefaultEnv("SPAN_RENDER_LIMIT", "2500")
+var MaxSpansInTraceStr = GetOrDefaultEnv("MAX_SPANS_IN_TRACE", "250000")
