@@ -258,17 +258,19 @@ function OnboardingPageV2(): JSX.Element {
 								{questionnaireStepItems.map((item, index) => (
 									<div
 										key={item.id}
-										className={`question-block ${
-											index <= currentQuestion ? 'active' : ''
+										className={`setup-flow__question-block ${
+											index <= currentQuestion ? 'setup-flow__question-block--active' : ''
 										}`}
 										ref={(el): void => {
 											questionRefs.current[index] = el;
 										}}
 									>
-										<Title level={4} className="content">
+										<Title level={4} className="setup-flow__content">
 											{item.title}
 										</Title>
-										<Paragraph className="description">{item.description}</Paragraph>
+										<Paragraph className="setup-flow__description">
+											{item.description}
+										</Paragraph>
 										{item.uiConfig?.showSearch && (
 											<Search
 												placeholder="Search options"
@@ -276,7 +278,7 @@ function OnboardingPageV2(): JSX.Element {
 												style={{ marginBottom: 16 }}
 											/>
 										)}
-										<div className="radio-buttons">
+										<div className="setup-flow__radio-buttons">
 											{item.options.map((group) => {
 												const filteredOptions = group.items.filter((option) =>
 													option.toLowerCase().includes(searchQuery),
@@ -285,7 +287,7 @@ function OnboardingPageV2(): JSX.Element {
 												return (
 													<React.Fragment key={group.id}>
 														{group.category && (
-															<div className="category">
+															<div className="setup-flow__category">
 																{group.category} ({filteredOptions.length})
 															</div>
 														)}
@@ -298,12 +300,18 @@ function OnboardingPageV2(): JSX.Element {
 																	value={option}
 																	checked={answers[index] === option}
 																	onChange={(): void => handleOptionChange(index, option)}
-																	className="radio-input"
+																	className="setup-flow__radio-input"
 																/>
 																<span
-																	className={`radio-custom ${
-																		answers[index] === option ? 'pulse selected' : ''
-																	} ${animatingOption === option ? 'animating' : ''}`}
+																	className={`setup-flow__radio-custom ${
+																		answers[index] === option
+																			? 'setup-flow__radio-custom--pulse setup-flow__radio-custom--selected'
+																			: ''
+																	} ${
+																		animatingOption === option
+																			? 'setup-flow__radio-custom--animating'
+																			: ''
+																	}`}
 																>
 																	<Text>{option}</Text>
 																</span>
@@ -318,7 +326,7 @@ function OnboardingPageV2(): JSX.Element {
 														(option) => !option.toLowerCase().includes(searchQuery),
 													),
 												) && (
-													<Flex gap={8} align="center" className="no-results">
+													<Flex gap={8} align="center" className="setup-flow__no-results">
 														<Text>No results found for &ldquo;{searchQuery}&rdquo;</Text>
 														<Button type="primary">
 															Tell our team, we will help you out
