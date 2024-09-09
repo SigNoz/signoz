@@ -10,6 +10,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/converter"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
@@ -17,9 +18,10 @@ import (
 
 // BaseRule contains common fields and methods for all rule types
 type BaseRule struct {
-	id     string
-	name   string
-	source string
+	id             string
+	name           string
+	source         string
+	handledRestart bool
 
 	// Type of the rule
 	typ AlertType
@@ -259,8 +261,8 @@ func (r *BaseRule) GetEvaluationTimestamp() time.Time {
 	return r.evaluationTimestamp
 }
 
-func (r *BaseRule) State() AlertState {
-	maxState := StateInactive
+func (r *BaseRule) State() model.AlertState {
+	maxState := model.StateInactive
 	for _, a := range r.active {
 		if a.State > maxState {
 			maxState = a.State
@@ -370,12 +372,31 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 					break
 				}
 			}
+			// use min value from the series
+			if shouldAlert {
+				var minValue float64 = math.Inf(1)
+				for _, smpl := range series.Points {
+					if smpl.Value < minValue {
+						minValue = smpl.Value
+					}
+				}
+				alertSmpl = Sample{Point: Point{V: minValue}, Metric: lblsNormalized, MetricOrig: lbls}
+			}
 		} else if r.compareOp() == ValueIsBelow {
 			for _, smpl := range series.Points {
 				if smpl.Value >= r.targetVal() {
 					shouldAlert = false
 					break
 				}
+			}
+			if shouldAlert {
+				var maxValue float64 = math.Inf(-1)
+				for _, smpl := range series.Points {
+					if smpl.Value > maxValue {
+						maxValue = smpl.Value
+					}
+				}
+				alertSmpl = Sample{Point: Point{V: maxValue}, Metric: lblsNormalized, MetricOrig: lbls}
 			}
 		} else if r.compareOp() == ValueIsEq {
 			for _, smpl := range series.Points {
@@ -389,6 +410,15 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 				if smpl.Value == r.targetVal() {
 					shouldAlert = false
 					break
+				}
+			}
+			// use any non-inf or nan value from the series
+			if shouldAlert {
+				for _, smpl := range series.Points {
+					if !math.IsInf(smpl.Value, 0) && !math.IsNaN(smpl.Value) {
+						alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+						break
+					}
 				}
 			}
 		}
@@ -451,4 +481,99 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		}
 	}
 	return alertSmpl, shouldAlert
+}
+
+func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []v3.RuleStateHistory) error {
+	zap.L().Debug("recording rule state history", zap.String("ruleid", r.ID()), zap.Any("prevState", prevState), zap.Any("currentState", currentState), zap.Any("itemsToAdd", itemsToAdd))
+	revisedItemsToAdd := map[uint64]v3.RuleStateHistory{}
+
+	lastSavedState, err := r.reader.GetLastSavedRuleStateHistory(ctx, r.ID())
+	if err != nil {
+		return err
+	}
+	// if the query-service has been restarted, or the rule has been modified (which re-initializes the rule),
+	// the state would reset so we need to add the corresponding state changes to previously saved states
+	if !r.handledRestart && len(lastSavedState) > 0 {
+		zap.L().Debug("handling restart", zap.String("ruleid", r.ID()), zap.Any("lastSavedState", lastSavedState))
+		l := map[uint64]v3.RuleStateHistory{}
+		for _, item := range itemsToAdd {
+			l[item.Fingerprint] = item
+		}
+
+		shouldSkip := map[uint64]bool{}
+
+		for _, item := range lastSavedState {
+			// for the last saved item with fingerprint, check if there is a corresponding entry in the current state
+			currentState, ok := l[item.Fingerprint]
+			if !ok {
+				// there was a state change in the past, but not in the current state
+				// if the state was firing, then we should add a resolved state change
+				if item.State == model.StateFiring || item.State == model.StateNoData {
+					item.State = model.StateInactive
+					item.StateChanged = true
+					item.UnixMilli = time.Now().UnixMilli()
+					revisedItemsToAdd[item.Fingerprint] = item
+				}
+				// there is nothing to do if the prev state was normal
+			} else {
+				if item.State != currentState.State {
+					item.State = currentState.State
+					item.StateChanged = true
+					item.UnixMilli = time.Now().UnixMilli()
+					revisedItemsToAdd[item.Fingerprint] = item
+				}
+			}
+			// do not add this item to revisedItemsToAdd as it is already processed
+			shouldSkip[item.Fingerprint] = true
+		}
+		zap.L().Debug("after lastSavedState loop", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
+
+		// if there are any new state changes that were not saved, add them to the revised items
+		for _, item := range itemsToAdd {
+			if _, ok := revisedItemsToAdd[item.Fingerprint]; !ok && !shouldSkip[item.Fingerprint] {
+				revisedItemsToAdd[item.Fingerprint] = item
+			}
+		}
+		zap.L().Debug("after itemsToAdd loop", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
+
+		newState := model.StateInactive
+		for _, item := range revisedItemsToAdd {
+			if item.State == model.StateFiring || item.State == model.StateNoData {
+				newState = model.StateFiring
+				break
+			}
+		}
+		zap.L().Debug("newState", zap.String("ruleid", r.ID()), zap.Any("newState", newState))
+
+		// if there is a change in the overall state, update the overall state
+		if lastSavedState[0].OverallState != newState {
+			for fingerprint, item := range revisedItemsToAdd {
+				item.OverallState = newState
+				item.OverallStateChanged = true
+				revisedItemsToAdd[fingerprint] = item
+			}
+		}
+		zap.L().Debug("revisedItemsToAdd after newState", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
+
+	} else {
+		for _, item := range itemsToAdd {
+			revisedItemsToAdd[item.Fingerprint] = item
+		}
+	}
+
+	if len(revisedItemsToAdd) > 0 && r.reader != nil {
+		zap.L().Debug("writing rule state history", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
+
+		entries := make([]v3.RuleStateHistory, 0, len(revisedItemsToAdd))
+		for _, item := range revisedItemsToAdd {
+			entries = append(entries, item)
+		}
+		err := r.reader.AddRuleStateHistory(ctx, entries)
+		if err != nil {
+			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
+		}
+	}
+	r.handledRestart = true
+
+	return nil
 }

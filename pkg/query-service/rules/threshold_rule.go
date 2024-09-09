@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
@@ -674,7 +675,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 			QueryResultLables: resultLabels,
 			Annotations:       annotations,
 			ActiveAt:          ts,
-			State:             StatePending,
+			State:             model.StatePending,
 			Value:             smpl.V,
 			GeneratorURL:      r.GeneratorURL(),
 			Receivers:         r.preferredChannels,
@@ -688,7 +689,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
 		// Update the last value and annotations if so, create a new alert entry otherwise.
-		if alert, ok := r.active[h]; ok && alert.State != StateInactive {
+		if alert, ok := r.active[h]; ok && alert.State != model.StateInactive {
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
@@ -710,31 +711,32 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ResolvedRetention) {
+			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ResolvedRetention) {
 				delete(r.active, fp)
 			}
-			if a.State != StateInactive {
-				a.State = StateInactive
+			if a.State != model.StateInactive {
+				a.State = model.StateInactive
 				a.ResolvedAt = ts
 				itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
 					RuleID:       r.ID(),
 					RuleName:     r.Name(),
-					State:        "normal",
+					State:        model.StateInactive,
 					StateChanged: true,
 					UnixMilli:    ts.UnixMilli(),
 					Labels:       v3.LabelsString(labelsJSON),
 					Fingerprint:  a.QueryResultLables.Hash(),
+					Value:        a.Value,
 				})
 			}
 			continue
 		}
 
-		if a.State == StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
-			a.State = StateFiring
+		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
+			a.State = model.StateFiring
 			a.FiredAt = ts
-			state := "firing"
+			state := model.StateFiring
 			if a.Missing {
-				state = "no_data"
+				state = model.StateNoData
 			}
 			itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
 				RuleID:       r.ID(),
@@ -751,28 +753,15 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 	currentState := r.State()
 
-	if currentState != prevState {
-		for idx := range itemsToAdd {
-			if currentState == StateInactive {
-				itemsToAdd[idx].OverallState = "normal"
-			} else {
-				itemsToAdd[idx].OverallState = currentState.String()
-			}
-			itemsToAdd[idx].OverallStateChanged = true
-		}
-	} else {
-		for idx := range itemsToAdd {
-			itemsToAdd[idx].OverallState = currentState.String()
-			itemsToAdd[idx].OverallStateChanged = false
-		}
+	overallStateChanged := currentState != prevState
+	for idx, item := range itemsToAdd {
+		item.OverallStateChanged = overallStateChanged
+		item.OverallState = currentState
+		itemsToAdd[idx] = item
 	}
 
-	if len(itemsToAdd) > 0 && r.reader != nil {
-		err := r.reader.AddRuleStateHistory(ctx, itemsToAdd)
-		if err != nil {
-			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
-		}
-	}
+	r.RecordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
+
 	r.health = HealthGood
 	r.lastError = err
 

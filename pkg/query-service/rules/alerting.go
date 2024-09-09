@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
@@ -37,61 +38,8 @@ const (
 	HealthBad     RuleHealth = "err"
 )
 
-// AlertState denotes the state of an active alert.
-type AlertState int
-
-const (
-	StateInactive AlertState = iota
-	StatePending
-	StateFiring
-	StateDisabled
-)
-
-func (s AlertState) String() string {
-	switch s {
-	case StateInactive:
-		return "inactive"
-	case StatePending:
-		return "pending"
-	case StateFiring:
-		return "firing"
-	case StateDisabled:
-		return "disabled"
-	}
-	panic(errors.Errorf("unknown alert state: %d", s))
-}
-
-func (s AlertState) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.String())
-}
-
-func (s *AlertState) UnmarshalJSON(b []byte) error {
-	var v interface{}
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	switch value := v.(type) {
-	case string:
-		switch value {
-		case "inactive":
-			*s = StateInactive
-		case "pending":
-			*s = StatePending
-		case "firing":
-			*s = StateFiring
-		case "disabled":
-			*s = StateDisabled
-		default:
-			return errors.New("invalid alert state")
-		}
-		return nil
-	default:
-		return errors.New("invalid alert state")
-	}
-}
-
 type Alert struct {
-	State AlertState
+	State model.AlertState
 
 	Labels      labels.BaseLabels
 	Annotations labels.BaseLabels
@@ -114,7 +62,7 @@ type Alert struct {
 }
 
 func (a *Alert) needsSending(ts time.Time, resendDelay time.Duration) bool {
-	if a.State == StatePending {
+	if a.State == model.StatePending {
 		return false
 	}
 

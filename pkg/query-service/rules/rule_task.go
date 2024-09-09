@@ -288,6 +288,7 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 		for fp, a := range far.active {
 			ar.active[fp] = a
 		}
+		ar.handledRestart = far.handledRestart
 	}
 
 	return nil

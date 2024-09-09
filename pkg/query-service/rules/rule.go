@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
@@ -20,7 +22,7 @@ type Rule interface {
 	EvalDelay() time.Duration
 	EvalWindow() time.Duration
 	HoldDuration() time.Duration
-	State() AlertState
+	State() model.AlertState
 	ActiveAlerts() []*Alert
 
 	PreferredChannels() []string
@@ -35,6 +37,8 @@ type Rule interface {
 	GetEvaluationDuration() time.Duration
 	SetEvaluationTimestamp(time.Time)
 	GetEvaluationTimestamp() time.Time
+
+	RecordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []v3.RuleStateHistory) error
 
 	SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc)
 }
