@@ -617,7 +617,7 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*GettableRules, error) {
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
-			ruleResponse.State = StateDisabled
+			ruleResponse.State = model.StateDisabled
 			ruleResponse.Disabled = true
 		} else {
 			ruleResponse.State = rm.State()
@@ -644,7 +644,7 @@ func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error)
 	r.Id = fmt.Sprintf("%d", s.Id)
 	// fetch state of rule from memory
 	if rm, ok := m.rules[r.Id]; !ok {
-		r.State = StateDisabled
+		r.State = model.StateDisabled
 		r.Disabled = true
 	} else {
 		r.State = rm.State()
@@ -751,7 +751,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 
 	// fetch state of rule from memory
 	if rm, ok := m.rules[ruleId]; !ok {
-		response.State = StateDisabled
+		response.State = model.StateDisabled
 		response.Disabled = true
 	} else {
 		response.State = rm.State()
