@@ -60,6 +60,7 @@ import { Form, FormContainer, FormItem } from './styles';
 
 function DateTimeSelection({
 	showAutoRefresh,
+	showRefreshText = true,
 	hideShareModal = false,
 	location,
 	updateTimeInterval,
@@ -632,7 +633,7 @@ function DateTimeSelection({
 					<NewExplorerCTA />
 				</div>
 			)}
-			{!hasSelectedTimeError && !refreshButtonHidden && (
+			{!hasSelectedTimeError && !refreshButtonHidden && showRefreshText && (
 				<RefreshText
 					{...{
 						onLastRefreshHandler,
@@ -716,6 +717,7 @@ function DateTimeSelection({
 
 interface DateTimeSelectionV2Props {
 	showAutoRefresh: boolean;
+	showRefreshText?: boolean;
 	hideShareModal?: boolean;
 	showOldExplorerCTA?: boolean;
 	showResetButton?: boolean;
@@ -725,6 +727,7 @@ interface DateTimeSelectionV2Props {
 DateTimeSelection.defaultProps = {
 	hideShareModal: false,
 	showOldExplorerCTA: false,
+	showRefreshText: true,
 	showResetButton: false,
 	defaultRelativeTime: RelativeTimeMap['6hr'] as Time,
 };

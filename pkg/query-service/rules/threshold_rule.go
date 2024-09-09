@@ -20,6 +20,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/converter"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
@@ -100,6 +101,8 @@ type ThresholdRule struct {
 
 	reader    interfaces.Reader
 	evalDelay time.Duration
+
+	handledRestart bool
 }
 
 type ThresholdRuleOpts struct {
@@ -309,9 +312,9 @@ func (r *ThresholdRule) GetEvaluationTimestamp() time.Time {
 
 // State returns the maximum state of alert instances for this rule.
 // StateFiring > StatePending > StateInactive
-func (r *ThresholdRule) State() AlertState {
+func (r *ThresholdRule) State() model.AlertState {
 
-	maxState := StateInactive
+	maxState := model.StateInactive
 	for _, a := range r.active {
 		if a.State > maxState {
 			maxState = a.State
@@ -898,6 +901,102 @@ func normalizeLabelName(name string) string {
 	return normalized
 }
 
+// TODO(srikanthccv): implement base rule and use for all types of rules
+func (r *ThresholdRule) recordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []v3.RuleStateHistory) error {
+	zap.L().Debug("recording rule state history", zap.String("ruleid", r.ID()), zap.Any("prevState", prevState), zap.Any("currentState", currentState), zap.Any("itemsToAdd", itemsToAdd))
+	revisedItemsToAdd := map[uint64]v3.RuleStateHistory{}
+
+	lastSavedState, err := r.reader.GetLastSavedRuleStateHistory(ctx, r.ID())
+	if err != nil {
+		return err
+	}
+	// if the query-service has been restarted, or the rule has been modified (which re-initializes the rule),
+	// the state would reset so we need to add the corresponding state changes to previously saved states
+	if !r.handledRestart && len(lastSavedState) > 0 {
+		zap.L().Debug("handling restart", zap.String("ruleid", r.ID()), zap.Any("lastSavedState", lastSavedState))
+		l := map[uint64]v3.RuleStateHistory{}
+		for _, item := range itemsToAdd {
+			l[item.Fingerprint] = item
+		}
+
+		shouldSkip := map[uint64]bool{}
+
+		for _, item := range lastSavedState {
+			// for the last saved item with fingerprint, check if there is a corresponding entry in the current state
+			currentState, ok := l[item.Fingerprint]
+			if !ok {
+				// there was a state change in the past, but not in the current state
+				// if the state was firing, then we should add a resolved state change
+				if item.State == model.StateFiring || item.State == model.StateNoData {
+					item.State = model.StateInactive
+					item.StateChanged = true
+					item.UnixMilli = time.Now().UnixMilli()
+					revisedItemsToAdd[item.Fingerprint] = item
+				}
+				// there is nothing to do if the prev state was normal
+			} else {
+				if item.State != currentState.State {
+					item.State = currentState.State
+					item.StateChanged = true
+					item.UnixMilli = time.Now().UnixMilli()
+					revisedItemsToAdd[item.Fingerprint] = item
+				}
+			}
+			// do not add this item to revisedItemsToAdd as it is already processed
+			shouldSkip[item.Fingerprint] = true
+		}
+		zap.L().Debug("after lastSavedState loop", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
+
+		// if there are any new state changes that were not saved, add them to the revised items
+		for _, item := range itemsToAdd {
+			if _, ok := revisedItemsToAdd[item.Fingerprint]; !ok && !shouldSkip[item.Fingerprint] {
+				revisedItemsToAdd[item.Fingerprint] = item
+			}
+		}
+		zap.L().Debug("after itemsToAdd loop", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
+
+		newState := model.StateInactive
+		for _, item := range revisedItemsToAdd {
+			if item.State == model.StateFiring || item.State == model.StateNoData {
+				newState = model.StateFiring
+				break
+			}
+		}
+		zap.L().Debug("newState", zap.String("ruleid", r.ID()), zap.Any("newState", newState))
+
+		// if there is a change in the overall state, update the overall state
+		if lastSavedState[0].OverallState != newState {
+			for fingerprint, item := range revisedItemsToAdd {
+				item.OverallState = newState
+				item.OverallStateChanged = true
+				revisedItemsToAdd[fingerprint] = item
+			}
+		}
+		zap.L().Debug("revisedItemsToAdd after newState", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
+
+	} else {
+		for _, item := range itemsToAdd {
+			revisedItemsToAdd[item.Fingerprint] = item
+		}
+	}
+
+	if len(revisedItemsToAdd) > 0 && r.reader != nil {
+		zap.L().Debug("writing rule state history", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
+
+		entries := make([]v3.RuleStateHistory, 0, len(revisedItemsToAdd))
+		for _, item := range revisedItemsToAdd {
+			entries = append(entries, item)
+		}
+		err := r.reader.AddRuleStateHistory(ctx, entries)
+		if err != nil {
+			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
+		}
+	}
+	r.handledRestart = true
+
+	return nil
+}
+
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
 	prevState := r.State()
@@ -1005,7 +1104,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			QueryResultLables: resultLabels,
 			Annotations:       annotations,
 			ActiveAt:          ts,
-			State:             StatePending,
+			State:             model.StatePending,
 			Value:             smpl.V,
 			GeneratorURL:      r.GeneratorURL(),
 			Receivers:         r.preferredChannels,
@@ -1019,7 +1118,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
 		// Update the last value and annotations if so, create a new alert entry otherwise.
-		if alert, ok := r.active[h]; ok && alert.State != StateInactive {
+		if alert, ok := r.active[h]; ok && alert.State != model.StateInactive {
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
@@ -1042,31 +1141,32 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > resolvedRetention) {
+			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > resolvedRetention) {
 				delete(r.active, fp)
 			}
-			if a.State != StateInactive {
-				a.State = StateInactive
+			if a.State != model.StateInactive {
+				a.State = model.StateInactive
 				a.ResolvedAt = ts
 				itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
 					RuleID:       r.ID(),
 					RuleName:     r.Name(),
-					State:        "normal",
+					State:        model.StateInactive,
 					StateChanged: true,
 					UnixMilli:    ts.UnixMilli(),
 					Labels:       v3.LabelsString(labelsJSON),
 					Fingerprint:  a.QueryResultLables.Hash(),
+					Value:        a.Value,
 				})
 			}
 			continue
 		}
 
-		if a.State == StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
-			a.State = StateFiring
+		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
+			a.State = model.StateFiring
 			a.FiredAt = ts
-			state := "firing"
+			state := model.StateFiring
 			if a.Missing {
-				state = "no_data"
+				state = model.StateNoData
 			}
 			itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
 				RuleID:       r.ID(),
@@ -1083,28 +1183,15 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 	currentState := r.State()
 
-	if currentState != prevState {
-		for idx := range itemsToAdd {
-			if currentState == StateInactive {
-				itemsToAdd[idx].OverallState = "normal"
-			} else {
-				itemsToAdd[idx].OverallState = currentState.String()
-			}
-			itemsToAdd[idx].OverallStateChanged = true
-		}
-	} else {
-		for idx := range itemsToAdd {
-			itemsToAdd[idx].OverallState = currentState.String()
-			itemsToAdd[idx].OverallStateChanged = false
-		}
+	overallStateChanged := currentState != prevState
+	for idx, item := range itemsToAdd {
+		item.OverallStateChanged = overallStateChanged
+		item.OverallState = currentState
+		itemsToAdd[idx] = item
 	}
 
-	if len(itemsToAdd) > 0 && r.reader != nil {
-		err := r.reader.AddRuleStateHistory(ctx, itemsToAdd)
-		if err != nil {
-			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
-		}
-	}
+	r.recordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
+
 	r.health = HealthGood
 	r.lastError = err
 
