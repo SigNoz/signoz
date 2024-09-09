@@ -58,17 +58,10 @@ const updateOrderBy = (
 		}
 		return { ...item };
 	}
-	// Check if sortOrderBy already exists in item.orderBy
-	const updatedOrderBy = item.orderBy.filter(
-		(order) => order.columnName !== sortOrderBy?.columnName,
-	);
-
-	// Add the new sortOrderBy
-	updatedOrderBy.unshift(sortOrderBy);
 
 	return {
 		...item,
-		orderBy: updatedOrderBy,
+		orderBy: [sortOrderBy],
 	};
 };
 
