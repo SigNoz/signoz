@@ -1183,23 +1183,24 @@ func (l LabelsString) String() string {
 }
 
 type RuleStateTimeline struct {
-	Items []RuleStateHistory `json:"items"`
-	Total uint64             `json:"total"`
+	Items  []RuleStateHistory  `json:"items"`
+	Total  uint64              `json:"total"`
+	Labels map[string][]string `json:"labels"`
 }
 
 type RuleStateHistory struct {
 	RuleID   string `json:"ruleID" ch:"rule_id"`
 	RuleName string `json:"ruleName" ch:"rule_name"`
 	// One of ["normal", "firing"]
-	OverallState        string `json:"overallState" ch:"overall_state"`
-	OverallStateChanged bool   `json:"overallStateChanged" ch:"overall_state_changed"`
+	OverallState        model.AlertState `json:"overallState" ch:"overall_state"`
+	OverallStateChanged bool             `json:"overallStateChanged" ch:"overall_state_changed"`
 	// One of ["normal", "firing", "no_data", "muted"]
-	State        string       `json:"state" ch:"state"`
-	StateChanged bool         `json:"stateChanged" ch:"state_changed"`
-	UnixMilli    int64        `json:"unixMilli" ch:"unix_milli"`
-	Labels       LabelsString `json:"labels" ch:"labels"`
-	Fingerprint  uint64       `json:"fingerprint" ch:"fingerprint"`
-	Value        float64      `json:"value" ch:"value"`
+	State        model.AlertState `json:"state" ch:"state"`
+	StateChanged bool             `json:"stateChanged" ch:"state_changed"`
+	UnixMilli    int64            `json:"unixMilli" ch:"unix_milli"`
+	Labels       LabelsString     `json:"labels" ch:"labels"`
+	Fingerprint  uint64           `json:"fingerprint" ch:"fingerprint"`
+	Value        float64          `json:"value" ch:"value"`
 
 	RelatedTracesLink string `json:"relatedTracesLink"`
 	RelatedLogsLink   string `json:"relatedLogsLink"`
@@ -1237,16 +1238,16 @@ type RuleStateHistoryContributor struct {
 }
 
 type RuleStateTransition struct {
-	RuleID         string `json:"ruleID" ch:"rule_id"`
-	State          string `json:"state" ch:"state"`
-	FiringTime     int64  `json:"firingTime" ch:"firing_time"`
-	ResolutionTime int64  `json:"resolutionTime" ch:"resolution_time"`
+	RuleID         string           `json:"ruleID" ch:"rule_id"`
+	State          model.AlertState `json:"state" ch:"state"`
+	FiringTime     int64            `json:"firingTime" ch:"firing_time"`
+	ResolutionTime int64            `json:"resolutionTime" ch:"resolution_time"`
 }
 
 type ReleStateItem struct {
-	State string `json:"state"`
-	Start int64  `json:"start"`
-	End   int64  `json:"end"`
+	State model.AlertState `json:"state"`
+	Start int64            `json:"start"`
+	End   int64            `json:"end"`
 }
 
 type Stats struct {
