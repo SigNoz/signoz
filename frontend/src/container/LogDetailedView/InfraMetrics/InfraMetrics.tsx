@@ -1,8 +1,8 @@
 import './InfraMetrics.styles.scss';
 
-import { ClusterOutlined, ContainerOutlined } from '@ant-design/icons';
 import { Empty, Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
+import { History, Table } from 'lucide-react';
 import { useState } from 'react';
 
 import { VIEW_TYPES } from './constants';
@@ -14,6 +14,7 @@ interface MetricsDataProps {
 	nodeName: string;
 	hostName: string;
 	clusterName: string;
+	logLineTimestamp: string;
 }
 
 function InfraMetrics({
@@ -21,6 +22,7 @@ function InfraMetrics({
 	nodeName,
 	hostName,
 	clusterName,
+	logLineTimestamp,
 }: MetricsDataProps): JSX.Element {
 	const initialView = podName ? VIEW_TYPES.POD : VIEW_TYPES.NODE;
 	const [selectedView, setSelectedView] = useState<string>(initialView);
@@ -52,7 +54,7 @@ function InfraMetrics({
 					value={VIEW_TYPES.NODE}
 				>
 					<div className="view-title">
-						<ClusterOutlined style={{ fontSize: '14px' }} />
+						<Table size={14} />
 						Node
 					</div>
 				</Radio.Button>
@@ -62,7 +64,7 @@ function InfraMetrics({
 						value={VIEW_TYPES.POD}
 					>
 						<div className="view-title">
-							<ContainerOutlined style={{ fontSize: '14px' }} />
+							<History size={14} />
 							Pod
 						</div>
 					</Radio.Button>
@@ -73,10 +75,15 @@ function InfraMetrics({
 					nodeName={nodeName}
 					clusterName={clusterName}
 					hostName={hostName}
+					logLineTimestamp={logLineTimestamp}
 				/>
 			)}
 			{selectedView === VIEW_TYPES.POD && podName && (
-				<PodMetrics podName={podName} clusterName={clusterName} />
+				<PodMetrics
+					podName={podName}
+					clusterName={clusterName}
+					logLineTimestamp={logLineTimestamp}
+				/>
 			)}
 		</div>
 	);

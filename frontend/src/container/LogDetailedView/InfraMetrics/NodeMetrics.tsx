@@ -2,10 +2,10 @@ import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useMemo, useRef } from 'react';
@@ -16,25 +16,37 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import {
 	getHostQueryPayload,
 	getNodeQueryPayload,
-	hostCardTitles,
-	nodeCardTitles,
+	hostWidgetInfo,
+	nodeWidgetInfo,
 } from './constants';
 
 function NodeMetrics({
 	nodeName,
 	clusterName,
 	hostName,
+	logLineTimestamp,
 }: {
 	nodeName: string;
 	clusterName: string;
 	hostName: string;
+	logLineTimestamp: string;
 }): JSX.Element {
-	const { start, end } = getStartEndRangeTime({
-		type: 'GLOBAL_TIME',
-		interval: '3h',
-	});
-	const minTimeScale = (parseInt(start, 10) * 1e3) / 1000;
-	const maxTimeScale = (parseInt(end, 10) * 1e3) / 1000;
+	const { start, end, verticalLineTimestamp } = useMemo(() => {
+		const logTimestamp = dayjs(logLineTimestamp);
+		const now = dayjs();
+		const startTime = logTimestamp.subtract(3, 'hour');
+
+		const endTime = logTimestamp.add(3, 'hour').isBefore(now)
+			? logTimestamp.add(3, 'hour')
+			: now;
+
+		return {
+			start: startTime.unix(),
+			end: endTime.unix(),
+			verticalLineTimestamp: logTimestamp.unix(),
+		};
+	}, [logLineTimestamp]);
+
 	const queryPayloads = useMemo(() => {
 		if (nodeName) {
 			return getNodeQueryPayload(clusterName, nodeName);
@@ -42,7 +54,7 @@ function NodeMetrics({
 		return getHostQueryPayload(hostName);
 	}, [clusterName, nodeName, hostName]);
 
-	const cardTitles = nodeName ? nodeCardTitles : hostCardTitles;
+	const widgetInfo = nodeName ? nodeWidgetInfo : hostWidgetInfo;
 
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
@@ -62,12 +74,6 @@ function NodeMetrics({
 		[queries],
 	);
 
-	const getYAxisUnit = (idx: number): string => {
-		if (idx === 1 || idx === 3) return 'bytes';
-		if (idx === 2) return 'binBps';
-		return '';
-	};
-
 	const options = useMemo(
 		() =>
 			queries.map(({ data }, idx) =>
@@ -75,14 +81,23 @@ function NodeMetrics({
 					apiResponse: data?.payload,
 					isDarkMode,
 					dimensions,
-					yAxisUnit: getYAxisUnit(idx),
+					yAxisUnit: widgetInfo[idx].yAxisUnit,
 					softMax: null,
 					softMin: null,
-					minTimeScale,
-					maxTimeScale,
+					minTimeScale: start,
+					maxTimeScale: end,
+					verticalLineTimestamp,
 				}),
 			),
-		[queries, isDarkMode, dimensions, minTimeScale, maxTimeScale],
+		[
+			queries,
+			isDarkMode,
+			dimensions,
+			widgetInfo,
+			start,
+			end,
+			verticalLineTimestamp,
+		],
 	);
 
 	const renderCardContent = (
@@ -99,7 +114,12 @@ function NodeMetrics({
 			return <div>{errorMessage}</div>;
 		}
 		return (
-			<div className="chart-container">
+			<div
+				className={cx('chart-container', {
+					'no-data-container':
+						!query.isLoading && !query?.data?.payload?.data?.result?.length,
+				})}
+			>
 				<Uplot options={options[idx]} data={chartData[idx]} />
 			</div>
 		);
@@ -107,17 +127,9 @@ function NodeMetrics({
 	return (
 		<Row gutter={24}>
 			{queries.map((query, idx) => (
-				<Col span={24} key={cardTitles[idx]}>
-					<Typography.Text>{cardTitles[idx]}</Typography.Text>
-					<Card
-						bordered
-						className={cx('infra-metrics-card', {
-							'no-data-card':
-								!queries[idx].isLoading &&
-								!queries[idx]?.data?.payload?.data?.result?.length,
-						})}
-						ref={graphRef}
-					>
+				<Col span={12} key={widgetInfo[idx].title}>
+					<Typography.Text>{widgetInfo[idx].title}</Typography.Text>
+					<Card bordered className="infra-metrics-card" ref={graphRef}>
 						{renderCardContent(query, idx)}
 					</Card>
 				</Col>

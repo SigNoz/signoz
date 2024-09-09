@@ -23,7 +23,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import {
-	Activity,
+	BarChart2,
 	Braces,
 	Copy,
 	Filter,
@@ -201,8 +201,8 @@ function LogDetail({
 						value={VIEW_TYPES.INFRAMETRICS}
 					>
 						<div className="view-title">
-							<Activity size={14} />
-							InfraMetrics
+							<BarChart2 size={14} />
+							Metrics
 						</div>
 					</Radio.Button>
 				</Radio.Group>
@@ -265,6 +265,7 @@ function LogDetail({
 					podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] as string}
 					nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] as string}
 					hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] as string}
+					logLineTimestamp={log.timestamp.toString()}
 				/>
 			)}
 		</Drawer>

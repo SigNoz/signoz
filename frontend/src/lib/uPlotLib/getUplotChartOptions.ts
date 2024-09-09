@@ -54,6 +54,7 @@ export interface GetUPlotChartOptions {
 		}>
 	>;
 	customTooltipElement?: HTMLDivElement;
+	verticalLineTimestamp?: number;
 }
 
 /** the function converts series A , series B , series C to
@@ -156,6 +157,7 @@ export const getUPlotChartOptions = ({
 	hiddenGraph,
 	setHiddenGraph,
 	customTooltipElement,
+	verticalLineTimestamp,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -222,6 +224,86 @@ export const getUPlotChartOptions = ({
 				onClick: onClickHandler,
 				apiResponse,
 			}),
+			// {
+			// 	hooks: {
+			// 		draw: [
+			// 			(u): void => {
+			// 				if (verticalLineTimestamp) {
+			// 					const { ctx } = u;
+			// 					ctx.save();
+			// 					ctx.setLineDash([4, 2]);
+			// 					ctx.strokeStyle = 'white';
+			// 					ctx.lineWidth = 1;
+			// 					const x = u.valToPos(verticalLineTimestamp, 'x', true);
+			// 					const lineStart = u.bbox.top;
+			// 					const lineEnd = u.bbox.top + u.bbox.height;
+
+			// 					ctx.beginPath();
+			// 					ctx.moveTo(x, lineStart);
+			// 					ctx.lineTo(x, lineEnd);
+			// 					ctx.stroke();
+			// 					ctx.setLineDash([]);
+			// 					ctx.fillStyle = 'white';
+			// 					ctx.font = '10px Arial';
+			// 					ctx.textAlign = 'center';
+			// 					const label = new Date(
+			// 						verticalLineTimestamp * 1000,
+			// 					).toLocaleTimeString();
+			// 					ctx.fillText(`Logline: ${label}`, x, u.bbox.top + u.bbox.height + 15);
+
+			// 					ctx.restore();
+			// 				}
+			// 			},
+			// 		],
+			// 	},
+			// },
+			{
+				hooks: {
+					draw: [
+						(u): void => {
+							if (verticalLineTimestamp) {
+								const { ctx } = u;
+								ctx.save();
+
+								// Draw the vertical dotted line (keep this part unchanged)
+								ctx.setLineDash([4, 2]);
+								ctx.strokeStyle = 'white';
+								ctx.lineWidth = 1;
+								const x = u.valToPos(verticalLineTimestamp, 'x', true);
+
+								ctx.beginPath();
+								ctx.moveTo(x, u.bbox.top);
+								ctx.lineTo(x, u.bbox.top + u.bbox.height);
+								ctx.stroke();
+
+								// Improved label for logline timestamp
+								ctx.setLineDash([]);
+								ctx.font = 'bold 12px Arial'; // Slightly larger and bold
+								ctx.textAlign = 'center';
+								const label = new Date(
+									verticalLineTimestamp * 1000,
+								).toLocaleTimeString();
+								const labelText = `Logline: ${label}`;
+
+								// Position the label at the bottom of the chart
+								const labelY = u.bbox.top + u.bbox.height + 20;
+
+								// Add a subtle background for better readability
+								const labelWidth = ctx.measureText(labelText).width + 10;
+								const labelHeight = 20;
+								ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+								ctx.fillRect(x - labelWidth / 2, labelY - 15, labelWidth, labelHeight);
+
+								// Draw the label text
+								ctx.fillStyle = 'white';
+								ctx.fillText(labelText, x, labelY);
+
+								ctx.restore();
+							}
+						},
+					],
+				},
+			},
 		],
 		hooks: {
 			draw: [
