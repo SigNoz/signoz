@@ -7,11 +7,8 @@ import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
 import { filterDropdown } from 'container/ServiceApplication/Filter/FilterDropdown';
 import useResourceAttribute from 'hooks/useResourceAttribute';
-import {
-	convertRawQueriesToTraceSelectedTags,
-	resourceAttributesToTracesFilterItems,
-} from 'hooks/useResourceAttribute/utils';
-import { useMemo, useRef } from 'react';
+import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -48,10 +45,6 @@ function TopOperationsTable({
 	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
 
 	const params = useParams<{ servicename: string }>();
-	const tagFilters = useMemo(
-		() => resourceAttributesToTracesFilterItems(queries),
-		[queries],
-	);
 
 	const handleOnClick = (operation: string): void => {
 		const { servicename: encodedServiceName } = params;
@@ -71,7 +64,6 @@ function TopOperationsTable({
 				op: 'in',
 				value: [operation],
 			},
-			...tagFilters,
 		];
 
 		const preparedQuery: Query = {
