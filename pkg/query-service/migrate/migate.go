@@ -60,7 +60,7 @@ func ClickHouseMigrate(conn driver.Conn, cluster string) error {
 
 	database := "CREATE DATABASE IF NOT EXISTS signoz_analytics ON CLUSTER %s"
 
-	localTable := `CREATE TABLE IF NOT EXISTS signoz_analytics.rule_state_history ON CLUSTER %s
+	localTable := `CREATE TABLE IF NOT EXISTS signoz_analytics.rule_state_history_v0 ON CLUSTER %s
 (
 	_retention_days UInt32 DEFAULT 180,
     rule_id LowCardinality(String),
@@ -80,7 +80,7 @@ ORDER BY (rule_id, unix_milli)
 TTL toDateTime(unix_milli / 1000) + toIntervalDay(_retention_days)
 SETTINGS ttl_only_drop_parts = 1, index_granularity = 8192`
 
-	distributedTable := `CREATE TABLE IF NOT EXISTS signoz_analytics.distributed_rule_state_history ON CLUSTER %s
+	distributedTable := `CREATE TABLE IF NOT EXISTS signoz_analytics.distributed_rule_state_history_v0 ON CLUSTER %s
 (
     rule_id LowCardinality(String),
     rule_name LowCardinality(String),
@@ -93,7 +93,7 @@ SETTINGS ttl_only_drop_parts = 1, index_granularity = 8192`
     value Float64 CODEC(Gorilla, ZSTD(1)),
     labels String CODEC(ZSTD(5)),
 )
-ENGINE = Distributed(%s, signoz_analytics, rule_state_history, cityHash64(rule_id, rule_name, fingerprint))`
+ENGINE = Distributed(%s, signoz_analytics, rule_state_history_v0, cityHash64(rule_id, rule_name, fingerprint))`
 
 	// check if db exists
 	dbExists := `SELECT count(*) FROM system.databases WHERE name = 'signoz_analytics'`
@@ -111,7 +111,7 @@ ENGINE = Distributed(%s, signoz_analytics, rule_state_history, cityHash64(rule_i
 	}
 
 	// check if table exists
-	tableExists := `SELECT count(*) FROM system.tables WHERE name = 'rule_state_history' AND database = 'signoz_analytics'`
+	tableExists := `SELECT count(*) FROM system.tables WHERE name = 'rule_state_history_v0' AND database = 'signoz_analytics'`
 	var tableCount uint64
 	err = conn.QueryRow(context.Background(), tableExists).Scan(&tableCount)
 	if err != nil {
@@ -126,7 +126,7 @@ ENGINE = Distributed(%s, signoz_analytics, rule_state_history, cityHash64(rule_i
 	}
 
 	// check if distributed table exists
-	distributedTableExists := `SELECT count(*) FROM system.tables WHERE name = 'distributed_rule_state_history' AND database = 'signoz_analytics'`
+	distributedTableExists := `SELECT count(*) FROM system.tables WHERE name = 'distributed_rule_state_history_v0' AND database = 'signoz_analytics'`
 	var distributedTableCount uint64
 	err = conn.QueryRow(context.Background(), distributedTableExists).Scan(&distributedTableCount)
 	if err != nil {

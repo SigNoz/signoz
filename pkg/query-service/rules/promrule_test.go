@@ -30,11 +30,12 @@ func TestPromRuleShouldAlert(t *testing.T) {
 	}
 
 	cases := []struct {
-		values      pql.Series
-		expectAlert bool
-		compareOp   string
-		matchType   string
-		target      float64
+		values              pql.Series
+		expectAlert         bool
+		compareOp           string
+		matchType           string
+		target              float64
+		expectedAlertSample v3.Point
 	}{
 		// Test cases for Equals Always
 		{
@@ -47,10 +48,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 0.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "3", // Equals
-			matchType:   "2", // Always
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "2", // Always
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 0.0},
 		},
 		{
 			values: pql.Series{
@@ -108,10 +110,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 0.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "3", // Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 0.0},
 		},
 		{
 			values: pql.Series{
@@ -123,10 +126,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 1.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "3", // Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 0.0},
 		},
 		{
 			values: pql.Series{
@@ -138,10 +142,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 1.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "3", // Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 0.0},
 		},
 		{
 			values: pql.Series{
@@ -169,10 +174,43 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "1", // Greater Than
-			matchType:   "2", // Always
-			target:      1.5,
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "2", // Always
+			target:              1.5,
+			expectedAlertSample: v3.Point{Value: 2.0},
+		},
+		{
+			values: pql.Series{
+				Floats: []pql.FPoint{
+					{F: 11.0},
+					{F: 4.0},
+					{F: 3.0},
+					{F: 7.0},
+					{F: 12.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "1", // Above
+			matchType:           "2", // Always
+			target:              2.0,
+			expectedAlertSample: v3.Point{Value: 3.0},
+		},
+		{
+			values: pql.Series{
+				Floats: []pql.FPoint{
+					{F: 11.0},
+					{F: 4.0},
+					{F: 3.0},
+					{F: 7.0},
+					{F: 12.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Below
+			matchType:           "2", // Always
+			target:              13.0,
+			expectedAlertSample: v3.Point{Value: 12.0},
 		},
 		{
 			values: pql.Series{
@@ -200,10 +238,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "1", // Greater Than
-			matchType:   "1", // Once
-			target:      4.5,
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "1", // Once
+			target:              4.5,
+			expectedAlertSample: v3.Point{Value: 10.0},
 		},
 		{
 			values: pql.Series{
@@ -261,10 +300,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 1.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "4", // Not Equals
-			matchType:   "2", // Always
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "2", // Always
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 1.0},
 		},
 		{
 			values: pql.Series{
@@ -292,10 +332,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 0.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "4", // Not Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 1.0},
 		},
 		{
 			values: pql.Series{
@@ -322,10 +363,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 1.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "4", // Not Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 1.0},
 		},
 		{
 			values: pql.Series{
@@ -337,10 +379,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 1.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "4", // Not Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 1.0},
 		},
 		// Test cases for Less Than Always
 		{
@@ -353,10 +396,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 1.5},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "2", // Less Than
-			matchType:   "2", // Always
-			target:      4,
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "2", // Always
+			target:              4,
+			expectedAlertSample: v3.Point{Value: 1.5},
 		},
 		{
 			values: pql.Series{
@@ -384,10 +428,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 2.5},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "2", // Less Than
-			matchType:   "1", // Once
-			target:      4,
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "1", // Once
+			target:              4,
+			expectedAlertSample: v3.Point{Value: 2.5},
 		},
 		{
 			values: pql.Series{
@@ -415,10 +460,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "3", // Equals
-			matchType:   "3", // OnAverage
-			target:      6.0,
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "3", // OnAverage
+			target:              6.0,
+			expectedAlertSample: v3.Point{Value: 6.0},
 		},
 		{
 			values: pql.Series{
@@ -445,10 +491,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "4", // Not Equals
-			matchType:   "3", // OnAverage
-			target:      4.5,
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "3", // OnAverage
+			target:              4.5,
+			expectedAlertSample: v3.Point{Value: 6.0},
 		},
 		{
 			values: pql.Series{
@@ -475,10 +522,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "1", // Greater Than
-			matchType:   "3", // OnAverage
-			target:      4.5,
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "3", // OnAverage
+			target:              4.5,
+			expectedAlertSample: v3.Point{Value: 6.0},
 		},
 		{
 			values: pql.Series{
@@ -490,10 +538,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "2", // Less Than
-			matchType:   "3", // OnAverage
-			target:      12.0,
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "3", // OnAverage
+			target:              12.0,
+			expectedAlertSample: v3.Point{Value: 6.0},
 		},
 		// Test cases for InTotal
 		{
@@ -506,10 +555,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "3", // Equals
-			matchType:   "4", // InTotal
-			target:      30.0,
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "4", // InTotal
+			target:              30.0,
+			expectedAlertSample: v3.Point{Value: 30.0},
 		},
 		{
 			values: pql.Series{
@@ -532,10 +582,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 10.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "4", // Not Equals
-			matchType:   "4", // InTotal
-			target:      9.0,
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "4", // InTotal
+			target:              9.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
 		},
 		{
 			values: pql.Series{
@@ -555,10 +606,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 10.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "1", // Greater Than
-			matchType:   "4", // InTotal
-			target:      10.0,
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "4", // InTotal
+			target:              10.0,
+			expectedAlertSample: v3.Point{Value: 20.0},
 		},
 		{
 			values: pql.Series{
@@ -579,10 +631,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 					{F: 10.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "2", // Less Than
-			matchType:   "4", // InTotal
-			target:      30.0,
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "4", // InTotal
+			target:              30.0,
+			expectedAlertSample: v3.Point{Value: 20.0},
 		},
 		{
 			values: pql.Series{
