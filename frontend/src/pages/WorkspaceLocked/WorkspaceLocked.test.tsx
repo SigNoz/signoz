@@ -20,17 +20,17 @@ describe('WorkspaceLocked', () => {
 		});
 
 		const workspaceLocked = await screen.findByRole('heading', {
-			name: /workspace locked/i,
+			name: /upgrade to continue/i,
 		});
 		expect(workspaceLocked).toBeInTheDocument();
 
 		const gotQuestionText = await screen.findByText(/got question?/i);
 		expect(gotQuestionText).toBeInTheDocument();
 
-		const contactUsLink = await screen.findByRole('link', {
-			name: /contact us/i,
+		const contactUsBtn = await screen.findByRole('button', {
+			name: /Contact Us/i,
 		});
-		expect(contactUsLink).toBeInTheDocument();
+		expect(contactUsBtn).toBeInTheDocument();
 	});
 
 	test('Render for Admin', async () => {
@@ -42,11 +42,11 @@ describe('WorkspaceLocked', () => {
 
 		render(<WorkspaceLocked />);
 		const contactAdminMessage = await screen.queryByText(
-			/please contact your administrator for further help/i,
+			/contact your admin to proceed with the upgrade./i,
 		);
 		expect(contactAdminMessage).not.toBeInTheDocument();
 		const updateCreditCardBtn = await screen.findByRole('button', {
-			name: /update credit card/i,
+			name: /continue my journey/i,
 		});
 		expect(updateCreditCardBtn).toBeInTheDocument();
 	});
@@ -60,12 +60,12 @@ describe('WorkspaceLocked', () => {
 
 		render(<WorkspaceLocked />, {}, 'VIEWER');
 		const updateCreditCardBtn = await screen.queryByRole('button', {
-			name: /update credit card/i,
+			name: /Continue My Journey/i,
 		});
 		expect(updateCreditCardBtn).not.toBeInTheDocument();
 
 		const contactAdminMessage = await screen.findByText(
-			/please contact your administrator for further help/i,
+			/contact your admin to proceed with the upgrade./i,
 		);
 		expect(contactAdminMessage).toBeInTheDocument();
 	});

@@ -35,6 +35,8 @@ describe('ToolbarActions', () => {
 				onChangeSelectedView={handleChangeSelectedView}
 				onToggleHistrogramVisibility={handleToggleShowFrequencyChart}
 				showFrequencyChart
+				showFilter
+				handleFilterVisibilityChange={(): void => {}}
 			/>,
 		);
 		expect(screen.getByTestId('search-view')).toBeInTheDocument();
@@ -79,6 +81,8 @@ describe('ToolbarActions', () => {
 				onChangeSelectedView={handleChangeSelectedView}
 				onToggleHistrogramVisibility={handleToggleShowFrequencyChart}
 				showFrequencyChart
+				showFilter
+				handleFilterVisibilityChange={(): void => {}}
 			/>,
 		);
 

@@ -140,6 +140,11 @@ const useOptionsMenu = ({
 					return col;
 				})
 				.filter(Boolean) as BaseAutocompleteData[];
+
+			// this is the last point where we can set the default columns and if uptil now also we have an empty array then we will set the default columns
+			if (!initialSelected || !initialSelected?.length) {
+				initialSelected = defaultTraceSelectedColumns;
+			}
 		}
 
 		return initialSelected || [];
