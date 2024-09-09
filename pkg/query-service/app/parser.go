@@ -22,7 +22,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -255,7 +254,7 @@ func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error)
 		levelDownStr = "0"
 	}
 	if SpanRenderLimitStr == "" || SpanRenderLimitStr == "null" {
-		SpanRenderLimitStr = constants.SpanRenderLimitStr
+		SpanRenderLimitStr = baseconstants.SpanRenderLimitStr
 	}
 
 	levelUpInt, err := strconv.Atoi(levelUpStr)
@@ -270,7 +269,7 @@ func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error)
 	if err != nil {
 		return nil, err
 	}
-	MaxSpansInTraceInt, err := strconv.Atoi(constants.MaxSpansInTraceStr)
+	MaxSpansInTraceInt, err := strconv.Atoi(baseconstants.MaxSpansInTraceStr)
 	if err != nil {
 		return nil, err
 	}
