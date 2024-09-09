@@ -4,6 +4,7 @@ import { Button, Card } from 'antd';
 import get from 'api/alerts/get';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import EditRulesContainer from 'container/EditRules';
 import { useNotifications } from 'hooks/useNotifications';
@@ -21,19 +22,21 @@ import {
 
 function EditRules(): JSX.Element {
 	const params = useUrlQuery();
-	const ruleId = params.get('ruleId');
+	const ruleId = params.get(QueryParams.ruleId);
 	const { t } = useTranslation('common');
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
 	const { isLoading, data, isRefetching, isError } = useQuery(
-		['ruleId', ruleId],
+		[REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId],
 		{
 			queryFn: () =>
 				get({
 					id: parseInt(ruleId || '', 10),
 				}),
 			enabled: isValidRuleId,
+			refetchOnMount: false,
+			refetchOnWindowFocus: false,
 		},
 	);
 
@@ -62,7 +65,7 @@ function EditRules(): JSX.Element {
 		(data?.payload?.data === undefined && !isLoading)
 	) {
 		return (
-			<div className="edit-rules-container">
+			<div className="edit-rules-container edit-rules-container--error">
 				<Card size="small" className="edit-rules-card">
 					<p className="content">
 						{data?.message === errorMessageReceivedFromBackend
@@ -84,10 +87,12 @@ function EditRules(): JSX.Element {
 	}
 
 	return (
-		<EditRulesContainer
-			ruleId={parseInt(ruleId, 10)}
-			initialValue={data.payload.data}
-		/>
+		<div className="edit-rules-container">
+			<EditRulesContainer
+				ruleId={parseInt(ruleId, 10)}
+				initialValue={data.payload.data}
+			/>
+		</div>
 	);
 }
 

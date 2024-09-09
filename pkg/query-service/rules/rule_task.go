@@ -37,8 +37,8 @@ type RuleTask struct {
 
 const DefaultFrequency = 1 * time.Minute
 
-// newRuleTask makes a new RuleTask with the given name, options, and rules.
-func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *RuleTask {
+// NewRuleTask makes a new RuleTask with the given name, options, and rules.
+func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *RuleTask {
 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency

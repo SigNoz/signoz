@@ -1,9 +1,8 @@
 ## Monitor using Dashboards
 
-To visualize the Kubernetes Metrics, you can use one of the following pre-built Dashboards:
+To visualize the Kubernetes Metrics, you can use following pre-built Dashboards:
 
-- [K8s Node-Level Metrics](https://github.com/SigNoz/dashboards/blob/main/k8s-node-%26-pod-metrics/k8s-node-level-metrics.json)
-- [K8s Pod_level Metrics](https://github.com/SigNoz/dashboards/blob/main/k8s-node-%26-pod-metrics/k8s-pod-level-metrics.json)
+- [K8s Infra Metrics](https://github.com/SigNoz/dashboards/tree/main/k8s-infra-metrics)
 
 You should copy the JSON data in these files and create a New Dashboard in the Dashboard Tab of SigNoz.
 

@@ -77,6 +77,14 @@ jest.mock(
 		},
 );
 
+window.ResizeObserver =
+	window.ResizeObserver ||
+	jest.fn().mockImplementation(() => ({
+		disconnect: jest.fn(),
+		observe: jest.fn(),
+		unobserve: jest.fn(),
+	}));
+
 const successNotification = jest.fn();
 jest.mock('hooks/useNotifications', () => ({
 	__esModule: true,
@@ -617,9 +625,7 @@ describe('TracesExplorer - ', () => {
 		const viewListOptions = await screen.findByRole('listbox');
 		expect(viewListOptions).toBeInTheDocument();
 
-		expect(
-			within(viewListOptions).getByText('success traces list view'),
-		).toBeInTheDocument();
+		expect(within(viewListOptions).getByText('R-test panel')).toBeInTheDocument();
 
 		expect(within(viewListOptions).getByText('Table View')).toBeInTheDocument();
 

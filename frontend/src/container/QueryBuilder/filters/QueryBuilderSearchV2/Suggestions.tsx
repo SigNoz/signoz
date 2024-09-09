@@ -4,20 +4,22 @@ import { Color } from '@signozhq/design-tokens';
 import { Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { isEmpty, isObject } from 'lodash-es';
-import { Zap } from 'lucide-react';
+import { Check, Zap } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
+import { getTagToken } from '../QueryBuilderSearch/utils';
 import { DropdownState } from './QueryBuilderSearchV2';
 
 interface ISuggestionsProps {
 	label: string;
 	value: BaseAutocompleteData | string;
 	option: DropdownState;
+	searchValue: string;
 }
 
 function Suggestions(props: ISuggestionsProps): React.ReactElement {
-	const { label, value, option } = props;
+	const { label, value, option, searchValue } = props;
 
 	const optionType = useMemo(() => {
 		if (isObject(value)) {
@@ -25,6 +27,15 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 		}
 		return '';
 	}, [value]);
+
+	const dataType = useMemo(() => {
+		if (isObject(value)) {
+			return value.dataType;
+		}
+		return '';
+	}, [value]);
+
+	const { tagValue } = getTagToken(searchValue);
 
 	const [truncated, setTruncated] = useState<boolean>(false);
 
@@ -58,13 +69,21 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 			) : (
 				<Tooltip title={truncated ? label : ''} placement="topLeft">
 					<div className="container-without-tag">
-						<div className="dot" />
-						<Typography.Text
-							className={cx('text value', option)}
-							ellipsis={{ onEllipsis: (ellipsis): void => setTruncated(ellipsis) }}
-						>
-							{`${label}`}
-						</Typography.Text>
+						<section className="left">
+							<div className="dot" />
+							<Typography.Text
+								className={cx('text value', option)}
+								ellipsis={{ onEllipsis: (ellipsis): void => setTruncated(ellipsis) }}
+							>
+								{`${label}`}
+							</Typography.Text>
+						</section>
+						<section className="right">
+							{dataType && (
+								<Typography.Text className="data-type">{dataType}</Typography.Text>
+							)}
+							{tagValue.includes(label) && <Check size={14} />}
+						</section>
 					</div>
 				</Tooltip>
 			)}

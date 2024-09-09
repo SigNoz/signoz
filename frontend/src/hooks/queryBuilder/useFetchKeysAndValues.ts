@@ -92,15 +92,9 @@ export const useFetchKeysAndValues = (
 	const isQueryEnabled = useMemo(
 		() =>
 			query.dataSource === DataSource.METRICS
-				? !!query.aggregateOperator &&
-				  !!query.dataSource &&
-				  !!query.aggregateAttribute.dataType
+				? !!query.dataSource && !!query.aggregateAttribute.dataType
 				: true,
-		[
-			query.aggregateAttribute.dataType,
-			query.aggregateOperator,
-			query.dataSource,
-		],
+		[query.aggregateAttribute.dataType, query.dataSource],
 	);
 
 	const { data, isFetching, status } = useGetAggregateKeys(

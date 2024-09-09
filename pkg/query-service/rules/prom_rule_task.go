@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-kit/log"
 	opentracing "github.com/opentracing/opentracing-go"
 	plabels "github.com/prometheus/prometheus/model/labels"
 	"go.signoz.io/signoz/pkg/query-service/common"
@@ -33,7 +32,7 @@ type PromRuleTask struct {
 	terminated chan struct{}
 
 	pause  bool
-	logger log.Logger
+	logger *zap.Logger
 	notify NotifyFunc
 
 	ruleDB RuleDB
@@ -41,7 +40,7 @@ type PromRuleTask struct {
 
 // newPromRuleTask holds rules that have promql condition
 // and evalutes the rule at a given frequency
-func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *PromRuleTask {
+func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *PromRuleTask {
 	zap.L().Info("Initiating a new rule group", zap.String("name", name), zap.Duration("frequency", frequency))
 
 	if time.Now() == time.Now().Add(frequency) {
@@ -60,7 +59,7 @@ func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, o
 		terminated:           make(chan struct{}),
 		notify:               notify,
 		ruleDB:               ruleDB,
-		logger:               log.With(opts.Logger, "group", name),
+		logger:               opts.Logger,
 	}
 }
 

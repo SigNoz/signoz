@@ -91,8 +91,7 @@ type ThresholdRule struct {
 	lastTimestampWithDatapoints time.Time
 
 	// Type of the rule
-	// One of ["LOGS_BASED_ALERT", "TRACES_BASED_ALERT", "METRIC_BASED_ALERT", "EXCEPTIONS_BASED_ALERT"]
-	typ string
+	typ AlertType
 
 	// querier is used for alerts created before the introduction of new metrics query builder
 	querier interfaces.Querier
@@ -671,7 +670,7 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(string(data))
+	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
 
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
@@ -735,7 +734,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(string(data))
+	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
 
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
@@ -975,12 +974,12 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		// Links with timestamps should go in annotations since labels
 		// is used alert grouping, and we want to group alerts with the same
 		// label set, but different timestamps, together.
-		if r.typ == "TRACES_BASED_ALERT" {
+		if r.typ == AlertTypeTraces {
 			link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
 			if link != "" && r.hostFromSource() != "" {
 				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
 			}
-		} else if r.typ == "LOGS_BASED_ALERT" {
+		} else if r.typ == AlertTypeLogs {
 			link := r.prepareLinksToLogs(ts, smpl.MetricOrig)
 			if link != "" && r.hostFromSource() != "" {
 				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
@@ -1206,12 +1205,31 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 					break
 				}
 			}
+			// use min value from the series
+			if shouldAlert {
+				var minValue float64 = math.Inf(1)
+				for _, smpl := range series.Points {
+					if smpl.Value < minValue {
+						minValue = smpl.Value
+					}
+				}
+				alertSmpl = Sample{Point: Point{V: minValue}, Metric: lblsNormalized, MetricOrig: lbls}
+			}
 		} else if r.compareOp() == ValueIsBelow {
 			for _, smpl := range series.Points {
 				if smpl.Value >= r.targetVal() {
 					shouldAlert = false
 					break
 				}
+			}
+			if shouldAlert {
+				var maxValue float64 = math.Inf(-1)
+				for _, smpl := range series.Points {
+					if smpl.Value > maxValue {
+						maxValue = smpl.Value
+					}
+				}
+				alertSmpl = Sample{Point: Point{V: maxValue}, Metric: lblsNormalized, MetricOrig: lbls}
 			}
 		} else if r.compareOp() == ValueIsEq {
 			for _, smpl := range series.Points {
@@ -1225,6 +1243,15 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 				if smpl.Value == r.targetVal() {
 					shouldAlert = false
 					break
+				}
+			}
+			// use any non-inf or nan value from the series
+			if shouldAlert {
+				for _, smpl := range series.Points {
+					if !math.IsInf(smpl.Value, 0) && !math.IsNaN(smpl.Value) {
+						alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+						break
+					}
 				}
 			}
 		}
