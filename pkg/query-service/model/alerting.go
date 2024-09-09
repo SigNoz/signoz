@@ -57,7 +57,7 @@ func (s *AlertState) UnmarshalJSON(b []byte) error {
 		case "disabled":
 			*s = StateDisabled
 		default:
-			return errors.New("invalid alert state")
+			*s = StateInactive
 		}
 		return nil
 	default:
