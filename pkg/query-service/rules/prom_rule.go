@@ -403,7 +403,9 @@ func (r *PromRule) recordRuleStateHistory(ctx context.Context, prevState, curren
 			}
 		}
 		zap.L().Debug("newState", zap.String("ruleid", r.ID()), zap.Any("newState", newState))
-		if lastSavedState[0].State != newState {
+
+		// if there is a change in the overall state, update the overall state
+		if lastSavedState[0].OverallState != newState {
 			for fingerprint, item := range revisedItemsToAdd {
 				item.OverallState = newState
 				item.OverallStateChanged = true

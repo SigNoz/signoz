@@ -1205,10 +1205,6 @@ type RuleStateHistory struct {
 	RelatedLogsLink   string `json:"relatedLogsLink"`
 }
 
-func (r *RuleStateHistory) ShouldRenotify() bool {
-	return r.StateChanged && r.State == model.StateFiring && (time.Now().UnixMilli()-r.UnixMilli) >= 4*time.Hour.Milliseconds()
-}
-
 type QueryRuleStateHistory struct {
 	Start   int64      `json:"start"`
 	End     int64      `json:"end"`
