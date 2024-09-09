@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/signoz/pkg/query-service/formatter"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
@@ -195,7 +196,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			QueryResultLables: resultLabels,
 			Annotations:       annotations,
 			ActiveAt:          ts,
-			State:             StatePending,
+			State:             model.StatePending,
 			Value:             alertSmpl.V,
 			GeneratorURL:      r.GeneratorURL(),
 			Receivers:         r.preferredChannels,
@@ -207,7 +208,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
 		// Update the last value and annotations if so, create a new alert entry otherwise.
-		if alert, ok := r.active[h]; ok && alert.State != StateInactive {
+		if alert, ok := r.active[h]; ok && alert.State != model.StateInactive {
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
 			alert.Receivers = r.preferredChannels
@@ -222,23 +223,23 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.active {
-		labelsJSON, err := json.Marshal(a.Labels)
+		labelsJSON, err := json.Marshal(a.QueryResultLables)
 		if err != nil {
 			zap.L().Error("error marshaling labels", zap.Error(err), zap.String("name", r.Name()))
 		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > resolvedRetention) {
+			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > resolvedRetention) {
 				delete(r.active, fp)
 			}
-			if a.State != StateInactive {
-				a.State = StateInactive
+			if a.State != model.StateInactive {
+				a.State = model.StateInactive
 				a.ResolvedAt = ts
 				itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
 					RuleID:       r.ID(),
 					RuleName:     r.Name(),
-					State:        "normal",
+					State:        model.StateInactive,
 					StateChanged: true,
 					UnixMilli:    ts.UnixMilli(),
 					Labels:       v3.LabelsString(labelsJSON),
@@ -248,12 +249,12 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			continue
 		}
 
-		if a.State == StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
-			a.State = StateFiring
+		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
+			a.State = model.StateFiring
 			a.FiredAt = ts
-			state := "firing"
+			state := model.StateFiring
 			if a.Missing {
-				state = "no_data"
+				state = model.StateNoData
 			}
 			itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
 				RuleID:       r.ID(),
@@ -273,23 +274,14 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 
 	currentState := r.State()
 
-	if currentState != prevState {
-		for idx := range itemsToAdd {
-			if currentState == StateInactive {
-				itemsToAdd[idx].OverallState = "normal"
-			} else {
-				itemsToAdd[idx].OverallState = currentState.String()
-			}
-			itemsToAdd[idx].OverallStateChanged = true
-		}
+	overallStateChanged := currentState != prevState
+	for idx, item := range itemsToAdd {
+		item.OverallStateChanged = overallStateChanged
+		item.OverallState = currentState
+		itemsToAdd[idx] = item
 	}
 
-	if len(itemsToAdd) > 0 && r.reader != nil {
-		err := r.reader.AddRuleStateHistory(ctx, itemsToAdd)
-		if err != nil {
-			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
-		}
-	}
+	r.RecordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
 
 	return len(r.active), nil
 }
