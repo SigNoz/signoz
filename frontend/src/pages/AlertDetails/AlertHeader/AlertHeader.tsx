@@ -37,6 +37,10 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 		}
 	}, [disabled, setIsAlertRuleDisabled, isAlertRuleDisabled]);
 
+	// on unmount remove the disabeld state
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	useEffect(() => (): void => setIsAlertRuleDisabled(undefined), []);
+
 	return (
 		<div className="alert-info">
 			<div className="alert-info__info-wrapper">
