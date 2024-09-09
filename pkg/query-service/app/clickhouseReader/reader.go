@@ -5358,6 +5358,7 @@ func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
 	FROM %s.%s
 	WHERE rule_id = '%s' AND (state_changed = true) AND (state = '%s') AND unix_milli >= %d AND unix_milli <= %d
 	GROUP BY fingerprint
+	HAVING labels != '{}'
 	ORDER BY count DESC`,
 		signozHistoryDBName, ruleStateHistoryTableName, ruleID, model.StateFiring.String(), params.Start, params.End)
 
