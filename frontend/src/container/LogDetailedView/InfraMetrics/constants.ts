@@ -973,7 +973,7 @@ export const getPodQueryPayload = (
 										dataType: DataTypes.String,
 										id: 'k8s_pod_name--string--tag--false',
 										isColumn: false,
-										key: 'k8s_node_name',
+										key: 'k8s_pod_name',
 										type: 'tag',
 									},
 									op: 'in',
