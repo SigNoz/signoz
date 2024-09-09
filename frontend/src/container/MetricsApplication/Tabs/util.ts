@@ -210,5 +210,5 @@ export function useGetAPMToTracesQueries({
 			finalFilters,
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [servicename, updateAllQueriesOperators]);
+	}, [servicename, queries, updateAllQueriesOperators]);
 }
