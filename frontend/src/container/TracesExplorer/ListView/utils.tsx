@@ -54,7 +54,7 @@ export const getListColumns = (
 						: dayjs(item / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
 				return (
 					<BlockLink to={getTraceLink(item)}>
-						<Typography.Text>{date}</Typography.Text>;
+						<Typography.Text>{date}</Typography.Text>
 					</BlockLink>
 				);
 			},
