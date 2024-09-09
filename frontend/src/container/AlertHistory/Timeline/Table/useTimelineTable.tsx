@@ -6,37 +6,40 @@ import ClientSideQBSearch, {
 	AttributeKey,
 } from 'components/ClientSideQBSearch/ClientSideQBSearch';
 import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
+import { transformKeyValuesToAttributeValuesMap } from 'container/QueryBuilder/filters/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Search } from 'lucide-react';
-import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
+import AlertLabels, {
+	AlertLabelsProps,
+} from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
-import { useAlertHistoryQueryParams } from 'pages/AlertDetails/hooks';
-import { useAlertRule } from 'providers/Alert';
 import { useMemo } from 'react';
 import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
-const transfromLabelsToQbKeys = (
+const transformLabelsToQbKeys = (
 	labels: AlertRuleTimelineTableResponse['labels'],
-): AttributeKey[] => Object.keys(labels).map((key) => ({ key }));
+): AttributeKey[] => Object.keys(labels).flatMap((key) => [{ key }]);
 
 function LabelFilter({
 	filters,
 	setFilters,
+	labels,
 }: {
 	setFilters: (filters: TagFilter) => void;
 	filters: TagFilter;
+	labels: AlertLabelsProps['labels'];
 }): JSX.Element | null {
 	const isDarkMode = useIsDarkMode();
 
-	const { ruleId } = useAlertHistoryQueryParams();
-	const { alertRuleLabels } = useAlertRule();
-
-	const transformedKeys = useMemo(() => {
-		if (!ruleId) return [];
-		return transfromLabelsToQbKeys(alertRuleLabels?.get(ruleId) || {});
-	}, [alertRuleLabels, ruleId]);
+	const { transformedKeys, attributesMap } = useMemo(
+		() => ({
+			transformedKeys: transformLabelsToQbKeys(labels || {}),
+			attributesMap: transformKeyValuesToAttributeValuesMap(labels),
+		}),
+		[labels],
+	);
 
 	const handleSearch = (tagFilters: TagFilter): void => {
 		const tagFiltersLength = tagFilters.items.length;
@@ -56,6 +59,7 @@ function LabelFilter({
 			filters={filters}
 			className="alert-history-label-search"
 			attributeKeys={transformedKeys}
+			attributeValuesMap={attributesMap}
 			suffixIcon={
 				<Search
 					size={14}
@@ -68,9 +72,11 @@ function LabelFilter({
 
 export const timelineTableColumns = ({
 	filters,
+	labels,
 	setFilters,
 }: {
 	filters: TagFilter;
+	labels: AlertLabelsProps['labels'];
 	setFilters: (filters: TagFilter) => void;
 }): ColumnsType<AlertRuleTimelineTableResponse> => [
 	{
@@ -85,7 +91,9 @@ export const timelineTableColumns = ({
 		),
 	},
 	{
-		title: <LabelFilter setFilters={setFilters} filters={filters} />,
+		title: (
+			<LabelFilter setFilters={setFilters} filters={filters} labels={labels} />
+		),
 		dataIndex: 'labels',
 		render: (labels): JSX.Element => (
 			<div className="alert-rule-labels">

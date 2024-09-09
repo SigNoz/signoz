@@ -98,7 +98,7 @@ export const transformKeyValuesToAttributeValuesMap = (
 	attributeValuesMap: Record<string, string[] | number[] | boolean[]>,
 ): AttributeValuesMap =>
 	Object.fromEntries(
-		Object.entries(attributeValuesMap).map(([key, values]) => [
+		Object.entries(attributeValuesMap || {}).map(([key, values]) => [
 			key,
 			{
 				stringAttributeValues:

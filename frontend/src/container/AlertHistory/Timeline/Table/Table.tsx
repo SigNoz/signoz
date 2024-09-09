@@ -6,8 +6,7 @@ import {
 	useGetAlertRuleDetailsTimelineTable,
 	useTimelineTable,
 } from 'pages/AlertDetails/hooks';
-import { useAlertRule } from 'providers/Alert';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -25,11 +24,12 @@ function TimelineTable(): JSX.Element {
 		ruleId,
 	} = useGetAlertRuleDetailsTimelineTable({ filters });
 
-	const { timelineData, totalItems } = useMemo(() => {
+	const { timelineData, totalItems, labels } = useMemo(() => {
 		const response = data?.payload?.data;
 		return {
 			timelineData: response?.items,
 			totalItems: response?.total,
+			labels: response?.labels,
 		};
 	}, [data?.payload?.data]);
 
@@ -38,17 +38,6 @@ function TimelineTable(): JSX.Element {
 	});
 
 	const { t } = useTranslation('common');
-	const { setAlertRuleLabels } = useAlertRule();
-
-	useEffect(() => {
-		const labelsFromFirstItem = data?.payload?.data?.items?.[0]?.labels ?? {};
-
-		if (ruleId && Object.keys(labelsFromFirstItem).length > 0) {
-			setAlertRuleLabels((prevLabels) =>
-				new Map(prevLabels).set(ruleId, labelsFromFirstItem),
-			);
-		}
-	}, [data, setAlertRuleLabels, ruleId]);
 
 	if (isError || !isValidRuleId || !ruleId) {
 		return <div>{t('something_went_wrong')}</div>;
@@ -60,6 +49,7 @@ function TimelineTable(): JSX.Element {
 				rowKey={(row): string => `${row.fingerprint}-${row.value}-${row.unixMilli}`}
 				columns={timelineTableColumns({
 					filters,
+					labels: labels ?? {},
 					setFilters,
 				})}
 				dataSource={timelineData}
