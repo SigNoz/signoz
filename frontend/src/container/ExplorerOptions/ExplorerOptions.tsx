@@ -63,7 +63,9 @@ import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
+import { PreservedViewsTypes } from './constants';
 import ExplorerOptionsHideArea from './ExplorerOptionsHideArea';
+import { PreservedViewsInLocalStorage } from './types';
 import {
 	DATASOURCE_VS_ROUTES,
 	generateRGBAFromHex,
@@ -94,9 +96,10 @@ function ExplorerOptions({
 	const isDarkMode = useIsDarkMode();
 	const isLogsExplorer = sourcepage === DataSource.LOGS;
 
-	const PRESERVED_VIEW_LOCAL_STORAGE_KEY = isLogsExplorer
-		? LOCALSTORAGE.LAST_USED_SAVED_LOGS_VIEW
-		: LOCALSTORAGE.LAST_USED_SAVED_TRACES_VIEW;
+	const PRESERVED_VIEW_LOCAL_STORAGE_KEY = LOCALSTORAGE.LAST_USED_SAVED_VIEWS;
+	const PRESERVED_VIEW_TYPE = isLogsExplorer
+		? PreservedViewsTypes.LOGS
+		: PreservedViewsTypes.TRACES;
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
@@ -272,6 +275,31 @@ function ExplorerOptions({
 		[viewsData, handleExplorerTabChange],
 	);
 
+	const updatePreservedViewInLocalStorage = (option: {
+		key: string;
+		value: string;
+	}): void => {
+		// Retrieve stored views from local storage
+		const storedViews = localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
+
+		// Initialize or parse the stored views
+		const updatedViews: PreservedViewsInLocalStorage = storedViews
+			? JSON.parse(storedViews)
+			: {};
+
+		// Update the views with the new selection
+		updatedViews[PRESERVED_VIEW_TYPE] = {
+			key: option.key,
+			value: option.value,
+		};
+
+		// Save the updated views back to local storage
+		localStorage.setItem(
+			PRESERVED_VIEW_LOCAL_STORAGE_KEY,
+			JSON.stringify(updatedViews),
+		);
+	};
+
 	const handleSelect = (
 		value: string,
 		option: { key: string; value: string },
@@ -291,23 +319,34 @@ function ExplorerOptions({
 			});
 		}
 
-		localStorage.setItem(
-			PRESERVED_VIEW_LOCAL_STORAGE_KEY,
-			JSON.stringify({
-				key: option.key,
-				value: option.value,
-			}),
-		);
+		updatePreservedViewInLocalStorage(option);
 
 		if (ref.current) {
 			ref.current.blur();
 		}
 	};
 
-	const handleClearSelect = (): void => {
-		if (localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY)) {
-			localStorage.removeItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
+	const removeCurrentViewFromLocalStorage = (): void => {
+		// Retrieve stored views from local storage
+		const storedViews = localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
+
+		if (storedViews) {
+			// Parse the stored views
+			const parsedViews = JSON.parse(storedViews);
+
+			// Remove the current view type from the parsed views
+			delete parsedViews[PRESERVED_VIEW_TYPE];
+
+			// Update local storage with the modified views
+			localStorage.setItem(
+				PRESERVED_VIEW_LOCAL_STORAGE_KEY,
+				JSON.stringify(parsedViews),
+			);
 		}
+	};
+
+	const handleClearSelect = (): void => {
+		removeCurrentViewFromLocalStorage();
 
 		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
 	};
@@ -384,8 +423,12 @@ function ExplorerOptions({
 	] = useState(false);
 
 	useEffect(() => {
-		const value = localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
-		const preservedView = JSON.parse(value || '{}');
+		const parsedPreservedView = JSON.parse(
+			localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY) || '{}',
+		);
+
+		const preservedView = parsedPreservedView[PRESERVED_VIEW_TYPE] || {};
+
 		let timeoutId: string | number | NodeJS.Timeout | undefined;
 
 		if (
@@ -404,6 +447,7 @@ function ExplorerOptions({
 		return (): void => clearTimeout(timeoutId);
 	}, [
 		PRESERVED_VIEW_LOCAL_STORAGE_KEY,
+		PRESERVED_VIEW_TYPE,
 		isRecentlyUsedSavedViewSelected,
 		onMenuItemSelectHandler,
 		viewKey,
