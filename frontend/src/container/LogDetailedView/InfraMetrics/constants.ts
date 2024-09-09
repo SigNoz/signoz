@@ -893,7 +893,7 @@ export const getPodQueryPayload = (
 						filters: {
 							items: [
 								{
-									id: 'c0f3e7ef',
+									id: '877385bf',
 									key: {
 										dataType: DataTypes.String,
 										id: 'k8s_cluster_name--string--tag--false',
@@ -905,7 +905,7 @@ export const getPodQueryPayload = (
 									value: clusterName,
 								},
 								{
-									id: 'ae457343',
+									id: '877385cd',
 									key: {
 										dataType: DataTypes.String,
 										id: 'k8s_pod_name--string--tag--false',
@@ -956,7 +956,7 @@ export const getPodQueryPayload = (
 						filters: {
 							items: [
 								{
-									id: '8a387fb7',
+									id: '877385bf',
 									key: {
 										dataType: DataTypes.String,
 										id: 'k8s_cluster_name--string--tag--false',
@@ -968,7 +968,7 @@ export const getPodQueryPayload = (
 									value: clusterName,
 								},
 								{
-									id: '6ce28dde',
+									id: '877385cd',
 									key: {
 										dataType: DataTypes.String,
 										id: 'k8s_pod_name--string--tag--false',
@@ -976,20 +976,8 @@ export const getPodQueryPayload = (
 										key: 'k8s_pod_name',
 										type: 'tag',
 									},
-									op: 'in',
+									op: '=',
 									value: podName,
-								},
-								{
-									id: '3a50eee8',
-									key: {
-										dataType: DataTypes.String,
-										id: 'k8s_namespace_name--string--tag--false',
-										isColumn: false,
-										key: 'k8s_namespace_name',
-										type: 'tag',
-									},
-									op: 'in',
-									value: ['{{.k8s_namespace_name}}'],
 								},
 							],
 							op: 'AND',
@@ -1033,7 +1021,7 @@ export const getPodQueryPayload = (
 					query: '',
 				},
 			],
-			id: 'bbdc1096-339c-490c-a977-6eff00e3d72f',
+			id: '16908d4e-1565-4847-8d87-01ebb8fc494a',
 			promql: [
 				{
 					disabled: false,
@@ -1046,6 +1034,7 @@ export const getPodQueryPayload = (
 		},
 		globalSelectedInterval: '6h',
 		variables: {},
+		fillGaps: false,
 		formatForWeb: false,
 	},
 	{
