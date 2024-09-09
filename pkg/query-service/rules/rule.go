@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
@@ -17,7 +18,7 @@ type Rule interface {
 	Labels() labels.BaseLabels
 	Annotations() labels.BaseLabels
 	Condition() *RuleCondition
-	State() AlertState
+	State() model.AlertState
 	ActiveAlerts() []*Alert
 
 	PreferredChannels() []string
