@@ -256,7 +256,7 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 	const { updatedOrder, offset } = useMemo(
 		() => ({
 			updatedOrder: params.get(urlKey.order) ?? OrderPreferenceItems.ASC,
-			offset: parseInt(params.get(urlKey.offset) ?? '1', 10),
+			offset: parseInt(params.get(urlKey.offset) ?? '0', 10),
 		}),
 		[params],
 	);
