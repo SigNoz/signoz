@@ -4114,6 +4114,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		}
 		result = make([]*v3.Result, 0, len(uniqueResults))
 		for _, anomaly := range uniqueResults {
+			anomaly.IsAnomaly = true
 			result = append(result, anomaly)
 		}
 	}

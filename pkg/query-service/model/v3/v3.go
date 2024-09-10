@@ -1159,6 +1159,7 @@ type Result struct {
 	AnomalyScores    []*Series `json:"anomalyScores,omitempty"`
 	List             []*Row    `json:"list,omitempty"`
 	Table            *Table    `json:"table,omitempty"`
+	IsAnomaly        bool      `json:"isAnomaly,omitempty"`
 }
 
 type LogsLiveTailClient struct {

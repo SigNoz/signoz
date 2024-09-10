@@ -17,6 +17,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/converter"
+	"go.signoz.io/signoz/pkg/query-service/model"
 
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
@@ -224,7 +225,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (baser
 		return nil, fmt.Errorf("internal error while setting temporality")
 	}
 
-	anomalies, err := r.anomalyProvider.GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{
+	anomalies, err := r.weeklyAnomalyProvider.GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{
 		Params:      params,
 		Seasonality: anomaly.SeasonalityWeekly,
 	})
@@ -353,7 +354,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 			QueryResultLables: resultLabels,
 			Annotations:       annotations,
 			ActiveAt:          ts,
-			State:             baserules.StatePending,
+			State:             model.StatePending,
 			Value:             smpl.V,
 			GeneratorURL:      r.GeneratorURL(),
 			Receivers:         r.PreferredChannels(),
@@ -367,7 +368,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
 		// Update the last value and annotations if so, create a new alert entry otherwise.
-		if alert, ok := r.active[h]; ok && alert.State != baserules.StateInactive {
+		if alert, ok := r.active[h]; ok && alert.State != model.StateInactive {
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
@@ -389,16 +390,16 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == baserules.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > baserules.ResolvedRetention) {
+			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > baserules.ResolvedRetention) {
 				delete(r.active, fp)
 			}
-			if a.State != baserules.StateInactive {
-				a.State = baserules.StateInactive
+			if a.State != model.StateInactive {
+				a.State = model.StateInactive
 				a.ResolvedAt = ts
 				itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
 					RuleID:       r.ID(),
 					RuleName:     r.Name(),
-					State:        "normal",
+					State:        model.StateInactive,
 					StateChanged: true,
 					UnixMilli:    ts.UnixMilli(),
 					Labels:       v3.LabelsString(labelsJSON),
@@ -408,12 +409,12 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 			continue
 		}
 
-		if a.State == baserules.StatePending && ts.Sub(a.ActiveAt) >= r.HoldDuration() {
-			a.State = baserules.StateFiring
+		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.HoldDuration() {
+			a.State = model.StateFiring
 			a.FiredAt = ts
-			state := "firing"
+			state := model.StateFiring
 			if a.Missing {
-				state = "no_data"
+				state = model.StateNoData
 			}
 			itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
 				RuleID:       r.ID(),
@@ -432,16 +433,12 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 
 	if currentState != prevState {
 		for idx := range itemsToAdd {
-			if currentState == baserules.StateInactive {
-				itemsToAdd[idx].OverallState = "normal"
-			} else {
-				itemsToAdd[idx].OverallState = currentState.String()
-			}
+			itemsToAdd[idx].OverallState = currentState
 			itemsToAdd[idx].OverallStateChanged = true
 		}
 	} else {
 		for idx := range itemsToAdd {
-			itemsToAdd[idx].OverallState = currentState.String()
+			itemsToAdd[idx].OverallState = currentState
 			itemsToAdd[idx].OverallStateChanged = false
 		}
 	}
