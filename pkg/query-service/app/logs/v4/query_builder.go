@@ -61,6 +61,7 @@ func getClickhouseKey(key v3.AttributeKey) string {
 	}
 
 	// materialized column created from query
+	// https://github.com/SigNoz/signoz/pull/4775
 	return "`" + utils.GetClickhouseColumnNameV2(string(key.Type), string(key.DataType), key.Key) + "`"
 }
 
@@ -417,7 +418,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		queryTmplPrefix = "SELECT"
 	} else if panelType == v3.PanelTypeTable {
 		queryTmplPrefix =
-			"SELECT now() as ts,"
+			"SELECT"
 		// step or aggregate interval is whole time period in case of table panel
 		step = (utils.GetEpochNanoSecs(end) - utils.GetEpochNanoSecs(start)) / NANOSECOND
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {

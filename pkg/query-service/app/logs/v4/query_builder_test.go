@@ -679,7 +679,7 @@ func Test_buildLogsQuery(t *testing.T) {
 					},
 				},
 			},
-			want: "SELECT now() as ts, attributes_string['user_name'] as `user_name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 " +
+			want: "SELECT attributes_string['user_name'] as `user_name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 " +
 				"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 				"AND attributes_string['service.name'] = 'test' AND mapContains(attributes_string, 'service.name') AND mapContains(attributes_string, 'user_name') " +
 				"group by `user_name` order by `user_name` desc",
@@ -839,7 +839,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 					},
 				},
 			},
-			want: "SELECT now() as ts, attributes_string['name'] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 " +
+			want: "SELECT attributes_string['name'] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 " +
 				"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 				"AND lower(body) like lower('%requestor_list%') AND lower(body) like lower('%index_service%') AND " +
 				"has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service') AND mapContains(attributes_string, 'name') " +
@@ -955,7 +955,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 					Limit:             10,
 				},
 			},
-			want: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) order by value DESC LIMIT 10",
+			want: "SELECT toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) order by value DESC LIMIT 10",
 		},
 		{
 			name: "Test limit less than pageSize - order by ts",
