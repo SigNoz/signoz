@@ -25,6 +25,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -275,28 +276,15 @@ function ExplorerOptions({
 		const extraData = JSON.parse(currentViewDetails?.extraData ?? '{}');
 
 		if (!!extraData && extraData?.selectColumns) {
-			localStorage.setItem(
-				LOCALSTORAGE.OLD_SELECT_COLUMNS,
-				JSON.stringify(options.selectColumns),
-			);
-
 			handleOptionsChange({
 				...options,
 				selectColumns: extraData.selectColumns,
 			});
-		} else {
-			const oldSelectColumns = JSON.parse(
-				localStorage.getItem(LOCALSTORAGE.OLD_SELECT_COLUMNS) ?? '{}',
-			);
-			if (
-				Object.keys(oldSelectColumns).length &&
-				!isEqual(oldSelectColumns, options.selectColumns)
-			) {
-				handleOptionsChange({
-					...options,
-					selectColumns: oldSelectColumns,
-				});
-			}
+		} else if (!isEqual(defaultTraceSelectedColumns, options.selectColumns)) {
+			handleOptionsChange({
+				...options,
+				selectColumns: defaultTraceSelectedColumns,
+			});
 		}
 	};
 
