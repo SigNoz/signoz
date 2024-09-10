@@ -28,6 +28,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/dao"
 	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
+	"go.signoz.io/signoz/ee/query-service/rules"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -52,7 +53,7 @@ import (
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
-	rules "go.signoz.io/signoz/pkg/query-service/rules"
+	baserules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
@@ -81,7 +82,7 @@ type ServerOptions struct {
 // Server runs HTTP api service
 type Server struct {
 	serverOptions *ServerOptions
-	ruleManager   *rules.Manager
+	ruleManager   *baserules.Manager
 
 	// public http router
 	httpConn   net.Listener
@@ -727,7 +728,7 @@ func makeRulesManager(
 	db *sqlx.DB,
 	ch baseint.Reader,
 	disableRules bool,
-	fm baseint.FeatureLookup) (*rules.Manager, error) {
+	fm baseint.FeatureLookup) (*baserules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
@@ -743,9 +744,9 @@ func makeRulesManager(
 	}
 
 	// create manager opts
-	managerOpts := &rules.ManagerOptions{
+	managerOpts := &baserules.ManagerOptions{
 		NotifierOpts: notifierOpts,
-		Queriers: &rules.Queriers{
+		Queriers: &baserules.Queriers{
 			PqlEngine: pqle,
 			Ch:        ch.GetConn(),
 		},
@@ -757,10 +758,12 @@ func makeRulesManager(
 		FeatureFlags: fm,
 		Reader:       ch,
 		EvalDelay:    baseconst.GetEvalDelay(),
+
+		PrepareTaskFunc: rules.PrepareTaskFunc,
 	}
 
 	// create Manager
-	manager, err := rules.NewManager(managerOpts)
+	manager, err := baserules.NewManager(managerOpts)
 	if err != nil {
 		return nil, fmt.Errorf("rule manager error: %v", err)
 	}

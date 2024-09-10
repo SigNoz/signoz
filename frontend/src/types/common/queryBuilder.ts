@@ -189,6 +189,8 @@ export type QueryBuilderData = {
 export type QueryBuilderContextType = {
 	currentQuery: Query;
 	stagedQuery: Query | null;
+	lastUsedQuery: number | null;
+	setLastUsedQuery: Dispatch<SetStateAction<number | null>>;
 	supersetQuery: Query;
 	setSupersetQuery: Dispatch<SetStateAction<QueryState>>;
 	initialDataSource: DataSource | null;

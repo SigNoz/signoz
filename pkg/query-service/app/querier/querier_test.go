@@ -20,12 +20,13 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 	// 4. Cached time range is a right overlap of the requested time range
 	// 5. Cached time range is a disjoint of the requested time range
 	testCases := []struct {
-		name           string
-		requestedStart int64 // in milliseconds
-		requestedEnd   int64 // in milliseconds
-		requestedStep  int64 // in seconds
-		cachedSeries   []*v3.Series
-		expectedMiss   []missInterval
+		name              string
+		requestedStart    int64 // in milliseconds
+		requestedEnd      int64 // in milliseconds
+		requestedStep     int64 // in seconds
+		cachedSeries      []*v3.Series
+		expectedMiss      []missInterval
+		replaceCachedData bool
 	}{
 		{
 			name:           "cached time range is a subset of the requested time range",
@@ -190,14 +191,18 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 					end:   1675115596722 + 180*60*1000,
 				},
 			},
+			replaceCachedData: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			misses := findMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, tc.cachedSeries, 0*time.Minute)
+			misses, replaceCachedData := findMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, tc.cachedSeries, 0*time.Minute)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
+			}
+			if replaceCachedData != tc.replaceCachedData {
+				t.Errorf("expected replaceCachedData %t, got %t", tc.replaceCachedData, replaceCachedData)
 			}
 			for i, miss := range misses {
 				if miss.start != tc.expectedMiss[i].start {
@@ -395,7 +400,7 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			misses := findMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, tc.cachedSeries, tc.fluxInterval)
+			misses, _ := findMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, tc.cachedSeries, tc.fluxInterval)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}

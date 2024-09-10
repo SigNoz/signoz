@@ -8,6 +8,13 @@ on:
       - release/v*
 
 jobs:
+  check-no-ee-references:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run check
+      run: make check-no-ee-references
+
   build-frontend:
     runs-on: ubuntu-latest
     steps:

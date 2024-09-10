@@ -77,6 +77,12 @@
 					border: 1px solid rgba(242, 71, 105, 0.4);
 					color: var(--bg-sakura-400);
 				}
+
+				&.sync-btn {
+					border: 1px solid rgba(78, 116, 248, 0.2);
+					background: rgba(78, 116, 248, 0.1);
+					color: var(--bg-robin-500);
+				}
 			}
 
 			&.formula-btn {

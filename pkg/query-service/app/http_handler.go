@@ -746,32 +746,10 @@ func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.
 		return
 	}
 
-	res, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID, &params)
+	stateItems, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID, &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
-	}
-
-	stateItems := []v3.ReleStateItem{}
-
-	for idx, item := range res {
-		start := item.FiringTime
-		end := item.ResolutionTime
-		stateItems = append(stateItems, v3.ReleStateItem{
-			State: item.State,
-			Start: start,
-			End:   end,
-		})
-		if idx < len(res)-1 {
-			nextStart := res[idx+1].FiringTime
-			if nextStart > end {
-				stateItems = append(stateItems, v3.ReleStateItem{
-					State: "normal",
-					Start: end,
-					End:   nextStart,
-				})
-			}
-		}
 	}
 
 	aH.Respond(w, stateItems)
