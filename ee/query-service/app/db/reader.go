@@ -26,7 +26,7 @@ func NewDataConnector(
 	dialTimeout time.Duration,
 	cluster string,
 ) *ClickhouseReader {
-	ch := basechr.NewReader(localDB, promConfigPath, lm, maxIdleConns, maxOpenConns, dialTimeout, cluster)
+	ch := basechr.NewReader(localDB, promConfigPath, lm, maxIdleConns, maxOpenConns, dialTimeout, cluster, useLogsNewSchema)
 	return &ClickhouseReader{
 		conn:             ch.GetConn(),
 		appdb:            localDB,

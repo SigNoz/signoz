@@ -29,6 +29,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	logsv4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/preferences"
@@ -140,6 +141,9 @@ type APIHandlerOpts struct {
 
 	// Querier Influx Interval
 	FluxInterval time.Duration
+
+	// Use Logs New schema
+	UseLogsNewSchema bool
 }
 
 // NewAPIHandler returns an APIHandler
@@ -151,19 +155,21 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	querierOpts := querier.QuerierOptions{
-		Reader:        opts.Reader,
-		Cache:         opts.Cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  opts.FluxInterval,
-		FeatureLookup: opts.FeatureFlags,
+		Reader:           opts.Reader,
+		Cache:            opts.Cache,
+		KeyGenerator:     queryBuilder.NewKeyGenerator(),
+		FluxInterval:     opts.FluxInterval,
+		FeatureLookup:    opts.FeatureFlags,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:        opts.Reader,
-		Cache:         opts.Cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  opts.FluxInterval,
-		FeatureLookup: opts.FeatureFlags,
+		Reader:           opts.Reader,
+		Cache:            opts.Cache,
+		KeyGenerator:     queryBuilder.NewKeyGenerator(),
+		FluxInterval:     opts.FluxInterval,
+		FeatureLookup:    opts.FeatureFlags,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
@@ -187,10 +193,15 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		querierV2:                     querierv2,
 	}
 
+	logsQueryBuilder := logsv3.PrepareLogsQuery
+	if opts.UseLogsNewSchema {
+		logsQueryBuilder = logsv4.PrepareLogsQuery
+	}
+
 	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
-		BuildLogQuery:    logsv3.PrepareLogsQuery,
+		BuildLogQuery:    logsQueryBuilder,
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
 

@@ -32,7 +32,9 @@ const (
 	defaultSpanAttributeKeysTable  string        = "distributed_span_attributes_keys"
 	defaultLogsDB                  string        = "signoz_logs"
 	defaultLogsTable               string        = "distributed_logs"
+	defaultLogsTableV2             string        = "distributed_logs_v2"
 	defaultLogsLocalTable          string        = "logs"
+	defaultLogsLocalTableV2        string        = "logs_v2"
 	defaultLogAttributeKeysTable   string        = "distributed_logs_attribute_keys"
 	defaultLogResourceKeysTable    string        = "distributed_logs_resource_keys"
 	defaultLogTagAttributeTable    string        = "distributed_tag_attributes"
@@ -63,7 +65,9 @@ type namespaceConfig struct {
 	TopLevelOperationsTable string
 	LogsDB                  string
 	LogsTable               string
+	LogsTableV2             string
 	LogsLocalTable          string
+	LogsLocalTableV2        string
 	LogsAttributeKeysTable  string
 	LogsResourceKeysTable   string
 	LogsTagAttributeTable   string
@@ -150,7 +154,9 @@ func NewOptions(
 			TopLevelOperationsTable: defaultTopLevelOperationsTable,
 			LogsDB:                  defaultLogsDB,
 			LogsTable:               defaultLogsTable,
+			LogsTableV2:             defaultLogsTableV2,
 			LogsLocalTable:          defaultLogsLocalTable,
+			LogsLocalTableV2:        defaultLogsLocalTableV2,
 			LogsAttributeKeysTable:  defaultLogAttributeKeysTable,
 			LogsResourceKeysTable:   defaultLogResourceKeysTable,
 			LogsTagAttributeTable:   defaultLogTagAttributeTable,

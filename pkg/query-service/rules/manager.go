@@ -26,14 +26,15 @@ import (
 )
 
 type PrepareTaskOptions struct {
-	Rule        *PostableRule
-	TaskName    string
-	RuleDB      RuleDB
-	Logger      *zap.Logger
-	Reader      interfaces.Reader
-	FF          interfaces.FeatureLookup
-	ManagerOpts *ManagerOptions
-	NotifyFunc  NotifyFunc
+	Rule             *PostableRule
+	TaskName         string
+	RuleDB           RuleDB
+	Logger           *zap.Logger
+	Reader           interfaces.Reader
+	FF               interfaces.FeatureLookup
+	ManagerOpts      *ManagerOptions
+	NotifyFunc       NotifyFunc
+	UseLogsNewSchema bool
 }
 
 const taskNamesuffix = "webAppEditor"
@@ -73,6 +74,8 @@ type ManagerOptions struct {
 
 	EvalDelay time.Duration
 
+	UseLogsNewSchema bool
+
 	PrepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
 }
 
@@ -93,6 +96,8 @@ type Manager struct {
 
 	featureFlags interfaces.FeatureLookup
 	reader       interfaces.Reader
+
+	UseLogsNewSchema bool
 
 	prepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
 }
@@ -128,7 +133,8 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			ruleId,
 			opts.Rule,
 			ThresholdRuleOpts{
-				EvalDelay: opts.ManagerOpts.EvalDelay,
+				EvalDelay:        opts.ManagerOpts.EvalDelay,
+				UseLogsNewSchema: opts.UseLogsNewSchema,
 			},
 			opts.FF,
 			opts.Reader,
@@ -326,14 +332,15 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 	zap.L().Debug("editing a rule task", zap.String("name", taskName))
 
 	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
-		Rule:        rule,
-		TaskName:    taskName,
-		RuleDB:      m.ruleDB,
-		Logger:      m.logger,
-		Reader:      m.reader,
-		FF:          m.featureFlags,
-		ManagerOpts: m.opts,
-		NotifyFunc:  m.prepareNotifyFunc(),
+		Rule:             rule,
+		TaskName:         taskName,
+		RuleDB:           m.ruleDB,
+		Logger:           m.logger,
+		Reader:           m.reader,
+		FF:               m.featureFlags,
+		ManagerOpts:      m.opts,
+		NotifyFunc:       m.prepareNotifyFunc(),
+		UseLogsNewSchema: m.opts.UseLogsNewSchema,
 	})
 
 	if err != nil {
@@ -445,14 +452,15 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 
 	zap.L().Debug("adding a new rule task", zap.String("name", taskName))
 	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
-		Rule:        rule,
-		TaskName:    taskName,
-		RuleDB:      m.ruleDB,
-		Logger:      m.logger,
-		Reader:      m.reader,
-		FF:          m.featureFlags,
-		ManagerOpts: m.opts,
-		NotifyFunc:  m.prepareNotifyFunc(),
+		Rule:             rule,
+		TaskName:         taskName,
+		RuleDB:           m.ruleDB,
+		Logger:           m.logger,
+		Reader:           m.reader,
+		FF:               m.featureFlags,
+		ManagerOpts:      m.opts,
+		NotifyFunc:       m.prepareNotifyFunc(),
+		UseLogsNewSchema: m.opts.UseLogsNewSchema,
 	})
 
 	for _, r := range newTask.Rules() {
@@ -794,8 +802,9 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 			alertname,
 			parsedRule,
 			ThresholdRuleOpts{
-				SendUnmatched: true,
-				SendAlways:    true,
+				SendUnmatched:    true,
+				SendAlways:       true,
+				UseLogsNewSchema: m.UseLogsNewSchema,
 			},
 			m.featureFlags,
 			m.reader,

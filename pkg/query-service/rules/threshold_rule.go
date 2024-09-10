@@ -98,8 +98,9 @@ type ThresholdRule struct {
 	// querierV2 is used for alerts created after the introduction of new metrics query builder
 	querierV2 interfaces.Querier
 
-	reader    interfaces.Reader
-	evalDelay time.Duration
+	reader           interfaces.Reader
+	evalDelay        time.Duration
+	UseLogsNewSchema bool
 }
 
 type ThresholdRuleOpts struct {
@@ -116,7 +117,8 @@ type ThresholdRuleOpts struct {
 	// before evaluating the rule. This is useful in scenarios
 	// where data might not be available in the system immediately
 	// after the timestamp.
-	EvalDelay time.Duration
+	EvalDelay        time.Duration
+	UseLogsNewSchema bool
 }
 
 func NewThresholdRule(
@@ -151,6 +153,7 @@ func NewThresholdRule(
 		version:           p.Version,
 		temporalityMap:    make(map[string]map[v3.Temporality]bool),
 		evalDelay:         opts.EvalDelay,
+		UseLogsNewSchema:  opts.UseLogsNewSchema,
 	}
 
 	if int64(t.evalWindow) == 0 {
