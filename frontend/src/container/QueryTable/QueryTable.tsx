@@ -19,6 +19,7 @@ export function QueryTable({
 	downloadOption,
 	columns,
 	dataSource,
+	sticky,
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
@@ -71,6 +72,7 @@ export function QueryTable({
 				dataSource={newDataSource}
 				scroll={{ x: true }}
 				pagination={paginationConfig}
+				sticky={sticky}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}
 			/>

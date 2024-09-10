@@ -4,6 +4,8 @@ import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { resourceAttributesToTracesFilterItems } from 'hooks/useResourceAttribute/utils';
 import history from 'lib/history';
 import { traceFilterKeys } from 'pages/TracesExplorer/Filter/filterUtils';
 import { Dispatch, SetStateAction, useMemo } from 'react';
@@ -142,7 +144,12 @@ export function useGetAPMToTracesQueries({
 	filters?: TagFilterItem[];
 }): Query {
 	const { updateAllQueriesOperators } = useQueryBuilder();
+	const { queries } = useResourceAttribute();
 
+	const resourceAttributesFilters = useMemo(
+		() => resourceAttributesToTracesFilterItems(queries),
+		[queries],
+	);
 	const finalFilters: TagFilterItem[] = [];
 	let spanKindFilter: TagFilterItem;
 	let dbCallFilter: TagFilterItem;
@@ -185,6 +192,10 @@ export function useGetAPMToTracesQueries({
 		finalFilters.push(...filters);
 	}
 
+	if (resourceAttributesFilters?.length) {
+		finalFilters.push(...resourceAttributesFilters);
+	}
+
 	return useMemo(() => {
 		const updatedQuery = updateAllQueriesOperators(
 			initialQueriesMap.traces,
@@ -199,5 +210,5 @@ export function useGetAPMToTracesQueries({
 			finalFilters,
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [servicename, updateAllQueriesOperators]);
+	}, [servicename, queries, updateAllQueriesOperators]);
 }
