@@ -312,10 +312,10 @@ const (
 		"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool," +
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "
 	LogsSQLSelectV2 = "SELECT " +
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body," +
-		"attributes_string," +
-		"attributes_number," +
-		"attributes_bool," +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, " +
+		"attributes_string, " +
+		"attributes_number, " +
+		"attributes_bool, " +
 		"resources_string "
 	TracesExplorerViewSQLSelectWithSubQuery = "WITH subQuery AS (SELECT distinct on (traceID) traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s %s ORDER BY durationNano DESC "
