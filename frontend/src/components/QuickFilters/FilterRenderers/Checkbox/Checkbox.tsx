@@ -82,7 +82,9 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		);
 		const filterSync = currentQuery?.builder.queryData?.[
 			lastUsedQuery || 0
-		]?.filters?.items.find((item) => isEqual(item.key, filter.attributeKey));
+		]?.filters?.items.find((item) =>
+			isEqual(item.key?.key, filter.attributeKey.key),
+		);
 
 		if (filterSync) {
 			if (SELECTED_OPERATORS.includes(filterSync.op)) {
@@ -127,8 +129,9 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		() =>
 			(currentQuery?.builder?.queryData?.[
 				lastUsedQuery || 0
-			]?.filters?.items?.filter((item) => isEqual(item.key, filter.attributeKey))
-				?.length || 0) > 1,
+			]?.filters?.items?.filter((item) =>
+				isEqual(item.key?.key, filter.attributeKey.key),
+			)?.length || 0) > 1,
 
 		[currentQuery?.builder?.queryData, lastUsedQuery, filter.attributeKey],
 	);
@@ -149,7 +152,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 						items:
 							idx === lastUsedQuery
 								? item.filters.items.filter(
-										(fil) => !isEqual(fil.key, filter.attributeKey),
+										(fil) => !isEqual(fil.key?.key, filter.attributeKey.key),
 								  )
 								: [...item.filters.items],
 					},
@@ -161,7 +164,9 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 	const isSomeFilterPresentForCurrentAttribute = currentQuery.builder.queryData?.[
 		lastUsedQuery || 0
-	]?.filters?.items?.some((item) => isEqual(item.key, filter.attributeKey));
+	]?.filters?.items?.some((item) =>
+		isEqual(item.key?.key, filter.attributeKey.key),
+	);
 
 	const onChange = (
 		value: string,
@@ -180,7 +185,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					: 'Only'
 				: 'Only';
 			query.filters.items = query.filters.items.filter(
-				(q) => !isEqual(q.key, filter.attributeKey),
+				(q) => !isEqual(q.key?.key, filter.attributeKey.key),
 			);
 			if (isOnlyOrAll === 'Only') {
 				const newFilterItem: TagFilterItem = {
@@ -193,12 +198,14 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			}
 		} else if (query?.filters?.items) {
 			if (
-				query.filters?.items?.some((item) => isEqual(item.key, filter.attributeKey))
+				query.filters?.items?.some((item) =>
+					isEqual(item.key?.key, filter.attributeKey.key),
+				)
 			) {
 				// if there is already a running filter for the current attribute key then
 				// we split the cases by which particular operator is present right now!
 				const currentFilter = query.filters?.items?.find((q) =>
-					isEqual(q.key, filter.attributeKey),
+					isEqual(q.key?.key, filter.attributeKey.key),
 				);
 				if (currentFilter) {
 					const runningOperator = currentFilter?.op;
@@ -213,7 +220,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										value: [...currentFilter.value, value],
 									};
 									query.filters.items = query.filters.items.map((item) => {
-										if (isEqual(item.key, filter.attributeKey)) {
+										if (isEqual(item.key?.key, filter.attributeKey.key)) {
 											return newFilter;
 										}
 										return item;
@@ -225,7 +232,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										value: [currentFilter.value as string, value],
 									};
 									query.filters.items = query.filters.items.map((item) => {
-										if (isEqual(item.key, filter.attributeKey)) {
+										if (isEqual(item.key?.key, filter.attributeKey.key)) {
 											return newFilter;
 										}
 										return item;
@@ -242,11 +249,11 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 									if (newFilter.value.length === 0) {
 										query.filters.items = query.filters.items.filter(
-											(item) => !isEqual(item.key, filter.attributeKey),
+											(item) => !isEqual(item.key?.key, filter.attributeKey.key),
 										);
 									} else {
 										query.filters.items = query.filters.items.map((item) => {
-											if (isEqual(item.key, filter.attributeKey)) {
+											if (isEqual(item.key?.key, filter.attributeKey.key)) {
 												return newFilter;
 											}
 											return item;
@@ -255,7 +262,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 								} else {
 									// if not an array remove the whole thing altogether!
 									query.filters.items = query.filters.items.filter(
-										(item) => !isEqual(item.key, filter.attributeKey),
+										(item) => !isEqual(item.key?.key, filter.attributeKey.key),
 									);
 								}
 							}
@@ -271,7 +278,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										value: [...currentFilter.value, value],
 									};
 									query.filters.items = query.filters.items.map((item) => {
-										if (isEqual(item.key, filter.attributeKey)) {
+										if (isEqual(item.key?.key, filter.attributeKey.key)) {
 											return newFilter;
 										}
 										return item;
@@ -283,7 +290,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										value: [currentFilter.value as string, value],
 									};
 									query.filters.items = query.filters.items.map((item) => {
-										if (isEqual(item.key, filter.attributeKey)) {
+										if (isEqual(item.key?.key, filter.attributeKey.key)) {
 											return newFilter;
 										}
 										return item;
@@ -299,11 +306,11 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 									if (newFilter.value.length === 0) {
 										query.filters.items = query.filters.items.filter(
-											(item) => !isEqual(item.key, filter.attributeKey),
+											(item) => !isEqual(item.key?.key, filter.attributeKey.key),
 										);
 									} else {
 										query.filters.items = query.filters.items.map((item) => {
-											if (isEqual(item.key, filter.attributeKey)) {
+											if (isEqual(item.key?.key, filter.attributeKey.key)) {
 												return newFilter;
 											}
 											return item;
@@ -311,7 +318,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 									}
 								} else {
 									query.filters.items = query.filters.items.filter(
-										(item) => !isEqual(item.key, filter.attributeKey),
+										(item) => !isEqual(item.key?.key, filter.attributeKey.key),
 									);
 								}
 							}
@@ -324,14 +331,14 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 									value: [currentFilter.value as string, value],
 								};
 								query.filters.items = query.filters.items.map((item) => {
-									if (isEqual(item.key, filter.attributeKey)) {
+									if (isEqual(item.key?.key, filter.attributeKey.key)) {
 										return newFilter;
 									}
 									return item;
 								});
 							} else if (!checked) {
 								query.filters.items = query.filters.items.filter(
-									(item) => !isEqual(item.key, filter.attributeKey),
+									(item) => !isEqual(item.key?.key, filter.attributeKey.key),
 								);
 							}
 							break;
@@ -343,14 +350,14 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 									value: [currentFilter.value as string, value],
 								};
 								query.filters.items = query.filters.items.map((item) => {
-									if (isEqual(item.key, filter.attributeKey)) {
+									if (isEqual(item.key?.key, filter.attributeKey.key)) {
 										return newFilter;
 									}
 									return item;
 								});
 							} else if (checked) {
 								query.filters.items = query.filters.items.filter(
-									(item) => !isEqual(item.key, filter.attributeKey),
+									(item) => !isEqual(item.key?.key, filter.attributeKey.key),
 								);
 							}
 							break;
