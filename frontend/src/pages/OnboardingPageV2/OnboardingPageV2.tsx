@@ -21,6 +21,7 @@ export interface Question {
 	options: OptionGroup[];
 	uiConfig?: {
 		showSearch?: boolean;
+		filterByCategory?: boolean;
 	};
 }
 const setupStepItems = [
@@ -113,7 +114,7 @@ function OnboardingPageV2(): JSX.Element {
 			</Header>
 			<Layout>
 				<Row>
-					<Col span={8}>
+					<Col span={16}>
 						<Content>
 							<div className="setup-flow">
 								{questionnaireStepItems.map((item, index) => (
