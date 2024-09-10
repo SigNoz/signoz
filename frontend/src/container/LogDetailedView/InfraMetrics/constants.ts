@@ -2958,7 +2958,7 @@ export const podWidgetInfo = [
 	},
 	{
 		title: 'Pod network IO',
-		yAxisUnit: 'bytes',
+		yAxisUnit: 'binBps',
 	},
 ];
 
@@ -2978,7 +2978,7 @@ export const nodeWidgetInfo = [
 	},
 	{
 		title: 'Node network IO',
-		yAxisUnit: 'bytes',
+		yAxisUnit: 'binBps',
 	},
 	{
 		title: 'Node filesystem usage',
