@@ -18,7 +18,6 @@ import (
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
 
-	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -255,7 +254,7 @@ func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error)
 		levelDownStr = "0"
 	}
 	if SpanRenderLimitStr == "" || SpanRenderLimitStr == "null" {
-		SpanRenderLimitStr = constants.SpanRenderLimitStr
+		SpanRenderLimitStr = baseconstants.SpanRenderLimitStr
 	}
 
 	levelUpInt, err := strconv.Atoi(levelUpStr)
@@ -270,7 +269,7 @@ func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error)
 	if err != nil {
 		return nil, err
 	}
-	MaxSpansInTraceInt, err := strconv.Atoi(constants.MaxSpansInTraceStr)
+	MaxSpansInTraceInt, err := strconv.Atoi(baseconstants.MaxSpansInTraceStr)
 	if err != nil {
 		return nil, err
 	}
