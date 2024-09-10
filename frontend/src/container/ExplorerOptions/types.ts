@@ -8,6 +8,8 @@ import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { SaveViewPayloadProps, SaveViewProps } from 'types/api/saveViews/types';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 
+import { PreservedViewsTypes } from './constants';
+
 export interface SaveNewViewHandlerProps {
 	viewName: string;
 	compositeQuery: ICompositeMetricQuery;
@@ -26,3 +28,11 @@ export interface SaveNewViewHandlerProps {
 	redirectWithQueryBuilderData: QueryBuilderContextType['redirectWithQueryBuilderData'];
 	setNewViewName: Dispatch<SetStateAction<string>>;
 }
+
+export type PreservedViewType =
+	| PreservedViewsTypes.LOGS
+	| PreservedViewsTypes.TRACES;
+
+export type PreservedViewsInLocalStorage = Partial<
+	Record<PreservedViewType, { key: string; value: string }>
+>;
