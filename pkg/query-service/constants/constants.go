@@ -25,6 +25,11 @@ var ConfigSignozIo = "https://config.signoz.io/api/v1"
 
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
+func IsOSSTelemetryEnabled() bool {
+	ossSegmentKey := GetOrDefaultEnv("OSS_TELEMETRY_ENABLED", "true")
+	return ossSegmentKey == "true"
+}
+
 const MaxAllowedPointsInTimeSeries = 300
 
 func IsTelemetryEnabled() bool {
