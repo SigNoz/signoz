@@ -89,6 +89,7 @@ const (
 	maxProgressiveSteps                   = 4
 	charset                               = "abcdefghijklmnopqrstuvwxyz" +
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	NANOSECOND = 1000000000
 )
 
 var (
@@ -5348,6 +5349,58 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 		response[tagKey] = key
 	}
 	return response, nil
+}
+
+func (r *ClickHouseReader) LiveTailLogsV4(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClientV2) {
+	if timestampStart == 0 {
+		timestampStart = uint64(time.Now().UnixNano())
+	} else {
+		timestampStart = uint64(utils.GetEpochNanoSecs(int64(timestampStart)))
+	}
+
+	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			done := true
+			client.Done <- &done
+			zap.L().Debug("closing go routine : " + client.Name)
+			return
+		case <-ticker.C:
+			// get the new 100 logs as anything more older won't make sense
+			var tmpQuery string
+			bucketStart := (timestampStart / NANOSECOND) - 1800
+
+			// we have to form the query differently if the resource filters are used
+			if strings.Contains(query, defaultLogsResourceV2) {
+				tmpQuery = fmt.Sprintf("seen_at_ts_bucket_start >=%d)) AND ts_bucket_start >=%d AND timestamp >=%d", bucketStart, bucketStart, timestampStart)
+			} else {
+				tmpQuery = fmt.Sprintf("ts_bucket_start >=%d AND timestamp >=%d", bucketStart, timestampStart)
+			}
+			if idStart != "" {
+				tmpQuery = fmt.Sprintf("%s AND id > '%s'", tmpQuery, idStart)
+			}
+			// the reason we are doing desc is that we need the latest logs first
+			tmpQuery = query + tmpQuery + " order by timestamp desc, id desc limit 100"
+
+			// using the old structure since we can directly read it to the struct as use it.
+			response := []model.SignozLogV2{}
+			err := r.db.Select(ctx, &response, tmpQuery)
+			if err != nil {
+				zap.L().Error("Error while getting logs", zap.Error(err))
+				client.Error <- err
+				return
+			}
+			for i := len(response) - 1; i >= 0; i-- {
+				client.Logs <- &response[i]
+				if i == 0 {
+					timestampStart = response[i].Timestamp
+					idStart = response[i].ID
+				}
+			}
+		}
+	}
 }
 
 func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClient) {

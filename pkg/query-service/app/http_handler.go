@@ -106,6 +106,8 @@ type APIHandler struct {
 
 	// Websocket connection upgrader
 	Upgrader *websocket.Upgrader
+
+	UseLogsNewSchema bool
 }
 
 type APIHandlerOpts struct {
@@ -191,6 +193,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
+		UseLogsNewSchema:              opts.UseLogsNewSchema,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -3971,10 +3974,6 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// create the client
-	client := &v3.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
-	go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
-
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -3987,26 +3986,56 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &err, "streaming is not supported")
 		return
 	}
+
 	// flush the headers
 	flusher.Flush()
-	for {
-		select {
-		case log := <-client.Logs:
-			var buf bytes.Buffer
-			enc := json.NewEncoder(&buf)
-			enc.Encode(log)
-			fmt.Fprintf(w, "data: %v\n\n", buf.String())
-			flusher.Flush()
-		case <-client.Done:
-			zap.L().Debug("done!")
-			return
-		case err := <-client.Error:
-			zap.L().Error("error occurred", zap.Error(err))
-			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
-			flusher.Flush()
-			return
+
+	// create the client
+	if aH.UseLogsNewSchema {
+		// create the client
+		client := &v3.LogsLiveTailClientV2{Name: r.RemoteAddr, Logs: make(chan *model.SignozLogV2, 1000), Done: make(chan *bool), Error: make(chan error)}
+		go aH.reader.LiveTailLogsV4(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
+		for {
+			select {
+			case log := <-client.Logs:
+				var buf bytes.Buffer
+				enc := json.NewEncoder(&buf)
+				enc.Encode(log)
+				fmt.Fprintf(w, "data: %v\n\n", buf.String())
+				flusher.Flush()
+			case <-client.Done:
+				zap.L().Debug("done!")
+				return
+			case err := <-client.Error:
+				zap.L().Error("error occurred", zap.Error(err))
+				fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
+				flusher.Flush()
+				return
+			}
+		}
+	} else {
+		client := &v3.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
+		go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
+		for {
+			select {
+			case log := <-client.Logs:
+				var buf bytes.Buffer
+				enc := json.NewEncoder(&buf)
+				enc.Encode(log)
+				fmt.Fprintf(w, "data: %v\n\n", buf.String())
+				flusher.Flush()
+			case <-client.Done:
+				zap.L().Debug("done!")
+				return
+			case err := <-client.Error:
+				zap.L().Error("error occurred", zap.Error(err))
+				fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
+				flusher.Flush()
+				return
+			}
 		}
 	}
+
 }
 
 func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {

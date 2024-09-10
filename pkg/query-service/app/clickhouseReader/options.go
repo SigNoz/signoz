@@ -33,6 +33,7 @@ const (
 	defaultLogsDB                  string        = "signoz_logs"
 	defaultLogsTable               string        = "distributed_logs"
 	defaultLogsTableV2             string        = "distributed_logs_v2"
+	defaultLogsResourceV2          string        = "distributed_logs_v2_resource"
 	defaultLogsLocalTable          string        = "logs"
 	defaultLogsLocalTableV2        string        = "logs_v2"
 	defaultLogAttributeKeysTable   string        = "distributed_logs_attribute_keys"
@@ -68,6 +69,7 @@ type namespaceConfig struct {
 	LogsTableV2             string
 	LogsLocalTable          string
 	LogsLocalTableV2        string
+	LogsResourceV2          string
 	LogsAttributeKeysTable  string
 	LogsResourceKeysTable   string
 	LogsTagAttributeTable   string
@@ -155,6 +157,7 @@ func NewOptions(
 			LogsDB:                  defaultLogsDB,
 			LogsTable:               defaultLogsTable,
 			LogsTableV2:             defaultLogsTableV2,
+			LogsResourceV2:          defaultLogsResourceV2,
 			LogsLocalTable:          defaultLogsLocalTable,
 			LogsLocalTableV2:        defaultLogsLocalTableV2,
 			LogsAttributeKeysTable:  defaultLogAttributeKeysTable,

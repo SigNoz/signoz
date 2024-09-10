@@ -71,6 +71,7 @@ type Reader interface {
 	GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error)
 	GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error)
 	LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClient)
+	LiveTailLogsV4(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClientV2)
 
 	GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error)
 	GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error)
