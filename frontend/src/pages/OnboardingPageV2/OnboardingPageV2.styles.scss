@@ -129,6 +129,41 @@
 	text-transform: uppercase;
 	display: flex;
 }
+
+.setup-flow__content-container {
+	display: flex;
+}
+
+.setup-flow__category-filter {
+	margin-left: 20px;
+}
+
+.setup-flow__category-filter-item {
+	cursor: pointer;
+	padding: 5px 10px;
+	margin-bottom: 5px;
+	border-radius: 4px;
+}
+
+.setup-flow__category-filter-item--selected {
+	background-color: #1890ff;
+	color: white;
+}
+
+.setup-flow__content-container {
+	display: flex;
+}
+
+.left-content {
+	flex: 0 0 70%;
+	max-width: 70%;
+}
+
+.right-content {
+	flex: 1;
+	max-width: 30%;
+}
+
 @media (max-width: 600px) {
 	.setup-flow__question-block {
 		padding-left: 30px;

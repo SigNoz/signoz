@@ -1,5 +1,5 @@
 import { Button, Flex, Input, Typography } from 'antd';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { Question } from './OnboardingPageV2'; // Adjust the import path as necessary
 
@@ -29,6 +29,17 @@ function QuestionBlock({
 	handleSearch,
 	questionRefs,
 }: QuestionBlockProps): JSX.Element {
+	const [selectedCategory, setSelectedCategory] = useState<string>('All');
+
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	const handleCategoryClick = (category: string): void => {
+		setSelectedCategory(category);
+	};
+
+	const filteredGroups = item.options.filter(
+		(group) => selectedCategory === 'All' || group.category === selectedCategory,
+	);
+
 	return (
 		<div
 			key={item.id}
@@ -44,66 +55,102 @@ function QuestionBlock({
 				{item.title}
 			</Title>
 			<Paragraph className="setup-flow__description">{item.description}</Paragraph>
-			{item.uiConfig?.showSearch && (
-				<Search
-					placeholder="Search options"
-					onChange={handleSearch}
-					style={{ marginBottom: 16 }}
-				/>
-			)}
-			<div className="setup-flow__radio-buttons">
-				{item.options.map((group) => {
-					const filteredOptions = group.items.filter((option) =>
-						option.toLowerCase().includes(searchQuery),
-					);
-					if (filteredOptions.length === 0) return null;
-					return (
-						<React.Fragment key={group.id}>
-							{group.category && (
-								<div className="setup-flow__category">
-									{group.category} ({filteredOptions.length})
-								</div>
-							)}
 
-							{filteredOptions.map((option) => (
-								<label key={`${group.id}-option-${option}`} className="radio-label">
-									<input
-										type="radio"
-										name={`question-${index}`}
-										value={option}
-										checked={answers[index] === option}
-										onChange={(): void => handleOptionChange(index, option)}
-										className="setup-flow__radio-input"
-									/>
-									<span
-										className={`setup-flow__radio-custom ${
-											answers[index] === option
-												? 'setup-flow__radio-custom--pulse setup-flow__radio-custom--selected'
-												: ''
-										} ${
-											animatingOption === option
-												? 'setup-flow__radio-custom--animating'
-												: ''
-										}`}
-									>
-										<Text>{option}</Text>
-									</span>
-								</label>
-							))}
-						</React.Fragment>
-					);
-				})}
-				{item.uiConfig?.showSearch &&
-					item.options.every((group) =>
-						group.items.every(
-							(option) => !option.toLowerCase().includes(searchQuery),
-						),
-					) && (
-						<Flex gap={8} align="center" className="setup-flow__no-results">
-							<Text>No results found for &ldquo;{searchQuery}&rdquo;</Text>
-							<Button type="primary">Tell our team, we will help you out</Button>
-						</Flex>
+			<div className="setup-flow__content-container">
+				<div className="left-content">
+					{item.uiConfig?.showSearch && (
+						<Search
+							placeholder="Search options"
+							onChange={handleSearch}
+							style={{ marginBottom: 16 }}
+						/>
 					)}
+					<div className="setup-flow__radio-buttons">
+						{filteredGroups.map((group) => {
+							const filteredOptions = group.items.filter((option) =>
+								option.toLowerCase().includes(searchQuery),
+							);
+							if (filteredOptions.length === 0) return null;
+							return (
+								<React.Fragment key={group.id}>
+									{group.category && (
+										<div className="setup-flow__category">
+											{group.category} ({filteredOptions.length})
+										</div>
+									)}
+
+									{filteredOptions.map((option) => (
+										<label key={`${group.id}-option-${option}`} className="radio-label">
+											<input
+												type="radio"
+												name={`question-${index}`}
+												value={option}
+												checked={answers[index] === option}
+												onChange={(): void => handleOptionChange(index, option)}
+												className="setup-flow__radio-input"
+											/>
+											<span
+												className={`setup-flow__radio-custom ${
+													answers[index] === option
+														? 'setup-flow__radio-custom--pulse setup-flow__radio-custom--selected'
+														: ''
+												} ${
+													animatingOption === option
+														? 'setup-flow__radio-custom--animating'
+														: ''
+												}`}
+											>
+												<Text>{option}</Text>
+											</span>
+										</label>
+									))}
+								</React.Fragment>
+							);
+						})}
+						{item.uiConfig?.showSearch &&
+							item.options.every((group) =>
+								group.items.every(
+									(option) => !option.toLowerCase().includes(searchQuery),
+								),
+							) && (
+								<Flex gap={8} align="center" className="setup-flow__no-results">
+									<Text>No results found for &ldquo;{searchQuery}&rdquo;</Text>
+									<Button type="primary">Tell our team, we will help you out</Button>
+								</Flex>
+							)}
+					</div>
+				</div>
+				<div className="right-content">
+					{item.uiConfig?.filterByCategory && (
+						<div className="setup-flow__category-filter">
+							<Button
+								className={`setup-flow__category-filter-item ${
+									selectedCategory === 'All'
+										? 'setup-flow__category-filter-item--selected'
+										: ''
+								}`}
+								// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+								onClick={() => handleCategoryClick('All')}
+							>
+								All ({item.options.reduce((acc, group) => acc + group.items.length, 0)})
+							</Button>
+							{item.options.map((group) => (
+								<Button
+									key={group.id}
+									className={`setup-flow__category-filter-item ${
+										selectedCategory === group.category
+											? 'setup-flow__category-filter-item--selected'
+											: ''
+									}`}
+									// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+									onClick={() => handleCategoryClick(group.category)}
+								>
+									{group.category} ({group.items.length})
+								</Button>
+							))}
+						</div>
+					)}
+				</div>
 			</div>
 		</div>
 	);
