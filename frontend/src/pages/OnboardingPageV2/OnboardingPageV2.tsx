@@ -1,6 +1,6 @@
 import './OnboardingPageV2.styles.scss';
 
-import { Col, Layout, Row, Steps } from 'antd';
+import { Button, Col, Flex, Layout, Row, Steps } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 
 import QuestionBlock from './QuestionBlock';
@@ -105,9 +105,19 @@ function OnboardingPageV2(): JSX.Element {
 
 	return (
 		<Layout>
-			<Header className="setup-flow__header">header</Header>
+			<Header className="setup-flow__header">
+				<Flex justify="space-between">
+					<div>Get Started (2/4)</div>
+					<Flex gap={8}>
+						<Button size="middle" type="primary">
+							Get expert Assistance
+						</Button>
+						<Button size="middle">Help</Button>
+					</Flex>
+				</Flex>
+			</Header>
 			<Header
-				className="setup-flow__header"
+				className="setup-flow__header setup-flow__header--sticky"
 				style={{ position: 'sticky', top: 0, zIndex: 1, width: '100%' }}
 			>
 				<Steps size="small" current={1} items={updatedSetupStepItems} />
