@@ -927,6 +927,30 @@ func TestPrepareLogsQuery(t *testing.T) {
 				"from signoz_logs.distributed_logs_v2 where attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND ",
 		},
 		{
+			name: "Live Tail Query with resource attribute",
+			args: args{
+				start:     1680066360726,
+				end:       1680066458000,
+				queryType: v3.QueryTypeBuilder,
+				panelType: v3.PanelTypeList,
+				mq: &v3.BuilderQuery{
+					QueryName:         "A",
+					StepInterval:      60,
+					AggregateOperator: v3.AggregateOperatorNoOp,
+					Expression:        "A",
+					Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+						{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+						{Key: v3.AttributeKey{Key: "service.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "app", Operator: "contains"},
+					},
+					},
+				},
+				options: v3.LogQBOptions{IsLivetailQuery: true},
+			},
+			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string from " +
+				"signoz_logs.distributed_logs_v2 where attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND " +
+				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE simpleJSONExtractString(labels, 'service.name') LIKE '%app%' AND labels like '%service.name%app%' AND ",
+		},
+		{
 			name: "Live Tail Query W/O filter",
 			args: args{
 				start:     1680066360726,
