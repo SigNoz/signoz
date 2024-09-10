@@ -32,10 +32,10 @@ function LogsExplorerChart({
 		(element, index, allLabels) => ({
 			data: element,
 			backgroundColor: isLogsExplorerViews
-				? getColorsForSeverityLabels(allLabels[index])
+				? getColorsForSeverityLabels(allLabels[index], index)
 				: colors[index % colors.length] || themeColors.red,
 			borderColor: isLogsExplorerViews
-				? getColorsForSeverityLabels(allLabels[index])
+				? getColorsForSeverityLabels(allLabels[index], index)
 				: colors[index % colors.length] || themeColors.red,
 			...(isLabelEnabled
 				? {

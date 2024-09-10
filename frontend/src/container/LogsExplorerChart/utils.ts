@@ -1,6 +1,11 @@
 import { Color } from '@signozhq/design-tokens';
+import { themeColors } from 'constants/theme';
+import { colors } from 'lib/getRandomColor';
 
-export function getColorsForSeverityLabels(label: string): string {
+export function getColorsForSeverityLabels(
+	label: string,
+	index: number,
+): string {
 	switch (label) {
 		case '{severity_text="TRACE"}':
 		case '{severity_text="trace"}':
@@ -21,6 +26,7 @@ export function getColorsForSeverityLabels(label: string): string {
 		case '{severity_text="fatal"}':
 			return Color.BG_SAKURA_500;
 		default:
-			return Color.BG_SLATE_200;
+			// if the severity label is not found, return a random color
+			return colors[index % colors.length] || themeColors.red;
 	}
 }
