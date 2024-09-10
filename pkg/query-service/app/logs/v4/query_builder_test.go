@@ -342,7 +342,7 @@ func Test_buildLogsTimeSeriesFilterQuery(t *testing.T) {
 					},
 				},
 			},
-			want: " AND attributes_string['service.name'] = 'test' AND mapContains(attributes_string, 'service.name') " +
+			want: "attributes_string['service.name'] = 'test' AND mapContains(attributes_string, 'service.name') " +
 				"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method')",
 		},
 		{
@@ -374,7 +374,7 @@ func Test_buildLogsTimeSeriesFilterQuery(t *testing.T) {
 					Type:     v3.AttributeKeyTypeTag,
 				},
 			},
-			want: " AND attributes_string['service.name'] = 'test' AND mapContains(attributes_string, 'service.name') " +
+			want: "attributes_string['service.name'] = 'test' AND mapContains(attributes_string, 'service.name') " +
 				"AND mapContains(attributes_string, 'user_name') AND mapContains(attributes_string, 'test')",
 		},
 		{
@@ -422,7 +422,7 @@ func Test_buildLogsTimeSeriesFilterQuery(t *testing.T) {
 					Type:     v3.AttributeKeyTypeTag,
 				},
 			},
-			want: " AND attributes_string['service.name'] = 'test' AND mapContains(attributes_string, 'service.name') " +
+			want: "attributes_string['service.name'] = 'test' AND mapContains(attributes_string, 'service.name') " +
 				"AND mapContains(attributes_string, 'user_name') AND `attribute_string_method_exists`=true AND mapContains(attributes_string, 'test')",
 		},
 	}
