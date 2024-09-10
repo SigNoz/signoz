@@ -1,10 +1,10 @@
-import { Button, Flex, Input, Typography } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
+import { Avatar, Button, Flex, Input, Typography } from 'antd';
 import React, { useState } from 'react';
 
 import { Question } from './OnboardingPageV2'; // Adjust the import path as necessary
 
 const { Title, Paragraph, Text } = Typography;
-const { Search } = Input;
 
 interface QuestionBlockProps {
 	item: Question;
@@ -59,52 +59,63 @@ function QuestionBlock({
 			<div className="setup-flow__content-container">
 				<div className="left-content">
 					{item.uiConfig?.showSearch && (
-						<Search
-							placeholder="Search options"
+						<Input
+							placeholder="Kubernetes, AWS, React JS ...."
+							size="large"
+							prefix={<SearchOutlined style={{ color: '#C0C1C3' }} />}
 							onChange={handleSearch}
 							style={{ marginBottom: 16 }}
+							className="setup-flow__search"
 						/>
 					)}
-					<div className="setup-flow__radio-buttons">
+					<Flex vertical gap={48} className="setup-flow__radio-buttons">
 						{filteredGroups.map((group) => {
 							const filteredOptions = group.items.filter((option) =>
 								option.toLowerCase().includes(searchQuery),
 							);
 							if (filteredOptions.length === 0) return null;
 							return (
-								<React.Fragment key={group.id}>
+								<Flex gap={8} vertical key={group.id}>
 									{group.category && (
 										<div className="setup-flow__category">
 											{group.category} ({filteredOptions.length})
 										</div>
 									)}
 
-									{filteredOptions.map((option) => (
-										<label key={`${group.id}-option-${option}`} className="radio-label">
-											<input
-												type="radio"
-												name={`question-${index}`}
-												value={option}
-												checked={answers[index] === option}
-												onChange={(): void => handleOptionChange(index, option)}
-												className="setup-flow__radio-input"
-											/>
-											<span
-												className={`setup-flow__radio-custom ${
-													answers[index] === option
-														? 'setup-flow__radio-custom--pulse setup-flow__radio-custom--selected'
-														: ''
-												} ${
-													animatingOption === option
-														? 'setup-flow__radio-custom--animating'
-														: ''
-												}`}
+									<Flex gap={14} wrap="wrap">
+										{filteredOptions.map((option) => (
+											<label
+												key={`${group.id}-option-${option}`}
+												className="setup-flow__radio-label"
 											>
-												<Text>{option}</Text>
-											</span>
-										</label>
-									))}
-								</React.Fragment>
+												<input
+													type="radio"
+													name={`question-${index}`}
+													value={option}
+													checked={answers[index] === option}
+													onChange={(): void => handleOptionChange(index, option)}
+													className="setup-flow__radio-input"
+												/>
+												<Flex
+													align="center"
+													gap={8}
+													className={`setup-flow__radio-custom ${
+														answers[index] === option
+															? 'setup-flow__radio-custom--pulse setup-flow__radio-custom--selected'
+															: ''
+													} ${
+														animatingOption === option
+															? 'setup-flow__radio-custom--animating'
+															: ''
+													}`}
+												>
+													<Avatar size={24} />
+													<Text className="setup-flow__radio-custom__text">{option}</Text>
+												</Flex>
+											</label>
+										))}
+									</Flex>
+								</Flex>
 							);
 						})}
 						{item.uiConfig?.showSearch &&
@@ -118,12 +129,14 @@ function QuestionBlock({
 									<Button type="primary">Tell our team, we will help you out</Button>
 								</Flex>
 							)}
-					</div>
+					</Flex>
 				</div>
 				<div className="right-content">
 					{item.uiConfig?.filterByCategory && (
-						<div className="setup-flow__category-filter">
+						<Flex vertical align="flex-start" className="setup-flow__category-filter">
 							<Button
+								type="text"
+								ghost
 								className={`setup-flow__category-filter-item ${
 									selectedCategory === 'All'
 										? 'setup-flow__category-filter-item--selected'
@@ -136,6 +149,8 @@ function QuestionBlock({
 							</Button>
 							{item.options.map((group) => (
 								<Button
+									type="text"
+									ghost
 									key={group.id}
 									className={`setup-flow__category-filter-item ${
 										selectedCategory === group.category
@@ -148,7 +163,7 @@ function QuestionBlock({
 									{group.category} ({group.items.length})
 								</Button>
 							))}
-						</div>
+						</Flex>
 					)}
 				</div>
 			</div>
