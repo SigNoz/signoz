@@ -110,8 +110,6 @@ function LogsExplorerChart({
 		[data, handleCreateDatasets],
 	);
 
-	console.log('graphData', graphData);
-
 	return (
 		<CardStyled className={className}>
 			{isLoading ? (
