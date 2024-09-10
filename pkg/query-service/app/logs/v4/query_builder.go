@@ -61,6 +61,7 @@ func getClickhouseKey(key v3.AttributeKey) string {
 	}
 
 	// materialized column created from query
+	// https://github.com/SigNoz/signoz/pull/4775
 	return "`" + utils.GetClickhouseColumnNameV2(string(key.Type), string(key.DataType), key.Key) + "`"
 }
 
@@ -353,7 +354,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	// build the where clause for resource table
-	resourceSubQuery, err := buildResourceSubQuery(bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute)
+	resourceSubQuery, err := buildResourceSubQuery(bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
 	if err != nil {
 		return "", err
 	}
@@ -417,7 +418,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		queryTmplPrefix = "SELECT"
 	} else if panelType == v3.PanelTypeTable {
 		queryTmplPrefix =
-			"SELECT now() as ts,"
+			"SELECT"
 		// step or aggregate interval is whole time period in case of table panel
 		step = (utils.GetEpochNanoSecs(end) - utils.GetEpochNanoSecs(start)) / NANOSECOND
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
@@ -443,6 +444,17 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 		return "", err
 	}
 
+	// no values for bucket start and end
+	resourceSubQuery, err := buildResourceSubQuery(0, 0, mq.Filters, mq.GroupBy, mq.AggregateAttribute, true)
+	if err != nil {
+		return "", err
+	}
+	// join both the filter clauses
+	if resourceSubQuery != "" {
+		filterSubQuery = filterSubQuery + " AND (resource_fingerprint GLOBAL IN " + resourceSubQuery
+	}
+
+	// the reader will add the timestamp and id filters
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorNoOp:
 		query := constants.LogsSQLSelectV2 + "from signoz_logs." + DISTRIBUTED_LOGS_V2 + " where "

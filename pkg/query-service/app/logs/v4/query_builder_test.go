@@ -679,7 +679,7 @@ func Test_buildLogsQuery(t *testing.T) {
 					},
 				},
 			},
-			want: "SELECT now() as ts, attributes_string['user_name'] as `user_name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 " +
+			want: "SELECT attributes_string['user_name'] as `user_name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 " +
 				"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 				"AND attributes_string['service.name'] = 'test' AND mapContains(attributes_string, 'service.name') AND mapContains(attributes_string, 'user_name') " +
 				"group by `user_name` order by `user_name` desc",
@@ -833,17 +833,18 @@ func TestPrepareLogsQuery(t *testing.T) {
 					},
 					GroupBy: []v3.AttributeKey{
 						{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+						{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
 					},
 					OrderBy: []v3.OrderBy{
 						{ColumnName: "name", Order: "DESC"},
 					},
 				},
 			},
-			want: "SELECT now() as ts, attributes_string['name'] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 " +
-				"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-				"AND lower(body) like lower('%requestor_list%') AND lower(body) like lower('%index_service%') AND " +
-				"has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service') AND mapContains(attributes_string, 'name') " +
-				"group by `name` order by `name` DESC",
+			want: "SELECT attributes_string['name'] as `name`, resources_string['host'] as `host`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where " +
+				"(timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND lower(body) like lower('%requestor_list%') " +
+				"AND lower(body) like lower('%index_service%') AND has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service') AND mapContains(attributes_string, 'name') AND " +
+				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND " +
+				"( (simpleJSONHas(labels, 'host') AND labels like '%host%') ))) group by `name`,`host` order by `name` DESC",
 		},
 		{
 			name: "Test TS with limit- first",
@@ -860,16 +861,19 @@ func TestPrepareLogsQuery(t *testing.T) {
 					Expression:         "A",
 					Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 						{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+						{Key: v3.AttributeKey{Key: "service.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "app", Operator: "="},
 					},
 					},
 					Limit:   10,
-					GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+					GroupBy: []v3.AttributeKey{{Key: "user", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 				},
 				options: v3.LogQBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 			},
-			want: "SELECT `method` from (SELECT attributes_string['method'] as `method`, toFloat64(count(distinct(attributes_string['name']))) as value from signoz_logs.distributed_logs_v2 " +
+			want: "SELECT `user` from (SELECT attributes_string['user'] as `user`, toFloat64(count(distinct(attributes_string['name']))) as value from signoz_logs.distributed_logs_v2 " +
 				"where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['method'] = 'GET' " +
-				"AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'name') group by `method` order by value DESC) LIMIT 10",
+				"AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'user') AND mapContains(attributes_string, 'name') AND (resource_fingerprint GLOBAL IN " +
+				"(SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'app' " +
+				"AND labels like '%service.name%app%')) group by `user` order by value DESC) LIMIT 10",
 		},
 		{
 			name: "Test TS with limit- second",
@@ -886,17 +890,19 @@ func TestPrepareLogsQuery(t *testing.T) {
 					Expression:         "A",
 					Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 						{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+						{Key: v3.AttributeKey{Key: "service.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "app", Operator: "="},
 					},
 					},
-					GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+					GroupBy: []v3.AttributeKey{{Key: "user", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 					Limit:   2,
 				},
 				options: v3.LogQBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit},
 			},
-			want: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string['method'] as `method`, toFloat64(count(distinct(attributes_string['name']))) as value " +
-				"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-				"AND attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'method') " +
-				"AND mapContains(attributes_string, 'name') AND (`method`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `method`,ts order by value DESC",
+			want: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string['user'] as `user`, toFloat64(count(distinct(attributes_string['name']))) as value " +
+				"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND " +
+				"attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'user') AND mapContains(attributes_string, 'name') AND " +
+				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND " +
+				"simpleJSONExtractString(labels, 'service.name') = 'app' AND labels like '%service.name%app%')) AND (`user`) GLOBAL IN (#LIMIT_PLACEHOLDER) group by `user`,ts order by value DESC",
 		},
 		{
 			name: "Live Tail Query",
@@ -919,6 +925,30 @@ func TestPrepareLogsQuery(t *testing.T) {
 			},
 			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string " +
 				"from signoz_logs.distributed_logs_v2 where attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND ",
+		},
+		{
+			name: "Live Tail Query with resource attribute",
+			args: args{
+				start:     1680066360726,
+				end:       1680066458000,
+				queryType: v3.QueryTypeBuilder,
+				panelType: v3.PanelTypeList,
+				mq: &v3.BuilderQuery{
+					QueryName:         "A",
+					StepInterval:      60,
+					AggregateOperator: v3.AggregateOperatorNoOp,
+					Expression:        "A",
+					Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+						{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+						{Key: v3.AttributeKey{Key: "service.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "app", Operator: "contains"},
+					},
+					},
+				},
+				options: v3.LogQBOptions{IsLivetailQuery: true},
+			},
+			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string from " +
+				"signoz_logs.distributed_logs_v2 where attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND " +
+				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE simpleJSONExtractString(labels, 'service.name') LIKE '%app%' AND labels like '%service.name%app%' AND ",
 		},
 		{
 			name: "Live Tail Query W/O filter",
@@ -955,7 +985,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 					Limit:             10,
 				},
 			},
-			want: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) order by value DESC LIMIT 10",
+			want: "SELECT toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) order by value DESC LIMIT 10",
 		},
 		{
 			name: "Test limit less than pageSize - order by ts",
