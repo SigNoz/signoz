@@ -140,6 +140,7 @@ function TimeSeriesView({
 				className="graph-container"
 				style={{ height: '100%', width: '100%' }}
 				ref={graphRef}
+				data-testid="time-series-graph"
 			>
 				{isLoading &&
 					(dataSource === DataSource.LOGS ? <LogsLoading /> : <TracesLoading />)}
