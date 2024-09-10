@@ -293,7 +293,7 @@ func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 	return mergedSeries
 }
 
-func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
+func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 
 	cacheKeys := q.keyGenerator.GenerateKeys(params)
 
@@ -306,9 +306,9 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 		}
 		wg.Add(1)
 		if queryName == builderQuery.Expression {
-			go q.runBuilderQuery(ctx, builderQuery, params, keys, cacheKeys, ch, &wg)
+			go q.runBuilderQuery(ctx, builderQuery, params, cacheKeys, ch, &wg)
 		} else {
-			go q.runBuilderExpression(ctx, builderQuery, params, keys, cacheKeys, ch, &wg)
+			go q.runBuilderExpression(ctx, builderQuery, params, cacheKeys, ch, &wg)
 		}
 	}
 
@@ -320,6 +320,7 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 	var errs []error
 
 	for result := range ch {
+		fmt.Println("error here", result.Err)
 		if result.Err != nil {
 			errs = append(errs, result.Err)
 			errQueriesByName[result.Name] = result.Err
@@ -466,9 +467,9 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	return results, errQueriesByName, err
 }
 
-func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
+func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 
-	queries, err := q.builder.PrepareQueries(params, keys)
+	queries, err := q.builder.PrepareQueries(params)
 
 	if err != nil {
 		return nil, nil, err
@@ -515,7 +516,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 	return res, nil, nil
 }
 
-func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
+func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 	var results []*v3.Result
 	var err error
 	var errQueriesByName map[string]error
@@ -523,9 +524,9 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 		switch params.CompositeQuery.QueryType {
 		case v3.QueryTypeBuilder:
 			if params.CompositeQuery.PanelType == v3.PanelTypeList || params.CompositeQuery.PanelType == v3.PanelTypeTrace {
-				results, errQueriesByName, err = q.runBuilderListQueries(ctx, params, keys)
+				results, errQueriesByName, err = q.runBuilderListQueries(ctx, params)
 			} else {
-				results, errQueriesByName, err = q.runBuilderQueries(ctx, params, keys)
+				results, errQueriesByName, err = q.runBuilderQueries(ctx, params)
 			}
 			// in builder query, the only errors we expose are the ones that exceed the resource limits
 			// everything else is internal error as they are not actionable by the user
