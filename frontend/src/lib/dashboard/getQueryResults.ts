@@ -24,11 +24,15 @@ export async function GetMetricQueryRange(
 	version: string,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
+	extendedEnd?: boolean,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
-
-	console.log(props);
-
+	console.log(extendedEnd);
+	if (extendedEnd) {
+		// const currentTime = Date.now();
+		queryPayload.end += 3 * 60 * 60 * 1000;
+		// queryPayload.end = Math.min(queryPayload.end, currentTime);
+	}
 	const response = await getMetricsQueryRange(
 		queryPayload,
 		version || 'v3',

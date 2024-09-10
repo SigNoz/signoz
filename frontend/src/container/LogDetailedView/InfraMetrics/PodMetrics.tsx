@@ -5,6 +5,7 @@ import { ENTITY_VERSION_V4 } from 'constants/app';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
@@ -24,6 +25,10 @@ function PodMetrics({
 	clusterName: string;
 	logLineTimestamp: string;
 }): JSX.Element {
+	const queryParams = useUrlQuery();
+	const globalSelectedInterval = queryParams.get('relativeTime')
+		? '6h'
+		: 'custom';
 	const { start, end, verticalLineTimestamp } = useMemo(() => {
 		const logTimestamp = dayjs(logLineTimestamp);
 		const now = dayjs();
@@ -39,16 +44,23 @@ function PodMetrics({
 			verticalLineTimestamp: logTimestamp.unix(),
 		};
 	}, [logLineTimestamp]);
-	const queryPayloads = useMemo(() => getPodQueryPayload(clusterName, podName), [
-		clusterName,
-		podName,
-	]);
-
+	console.log(start, end, verticalLineTimestamp, logLineTimestamp);
+	const queryPayloads = useMemo(
+		() => getPodQueryPayload(clusterName, podName, globalSelectedInterval),
+		[clusterName, globalSelectedInterval, podName],
+	);
+	const extendedEnd = !queryParams.get('relative');
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
 			queryKey: ['metrics', payload, ENTITY_VERSION_V4, 'POD'],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
+				GetMetricQueryRange(
+					payload,
+					ENTITY_VERSION_V4,
+					undefined,
+					undefined,
+					extendedEnd,
+				),
 			enabled: !!payload,
 		})),
 	);
@@ -77,7 +89,7 @@ function PodMetrics({
 					verticalLineTimestamp,
 				}),
 			),
-		[queries, isDarkMode, dimensions, start, end, verticalLineTimestamp],
+		[queries, isDarkMode, dimensions, start, verticalLineTimestamp, end],
 	);
 
 	const renderCardContent = (

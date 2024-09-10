@@ -5,6 +5,7 @@ import { ENTITY_VERSION_V4 } from 'constants/app';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
@@ -31,6 +32,10 @@ function NodeMetrics({
 	hostName: string;
 	logLineTimestamp: string;
 }): JSX.Element {
+	const queryParams = useUrlQuery();
+	const globalSelectedInterval = queryParams.get('relativeTime')
+		? '6h'
+		: 'custom';
 	const { start, end, verticalLineTimestamp } = useMemo(() => {
 		const logTimestamp = dayjs(logLineTimestamp);
 		const now = dayjs();
@@ -49,18 +54,24 @@ function NodeMetrics({
 
 	const queryPayloads = useMemo(() => {
 		if (nodeName) {
-			return getNodeQueryPayload(clusterName, nodeName);
+			return getNodeQueryPayload(clusterName, nodeName, globalSelectedInterval);
 		}
-		return getHostQueryPayload(hostName);
-	}, [clusterName, nodeName, hostName]);
+		return getHostQueryPayload(hostName, globalSelectedInterval);
+	}, [nodeName, hostName, globalSelectedInterval, clusterName]);
 
 	const widgetInfo = nodeName ? nodeWidgetInfo : hostWidgetInfo;
-
+	const extendedEnd = !queryParams.get('relative');
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
 			queryKey: ['metrics', payload, ENTITY_VERSION_V4, 'NODE'],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
+				GetMetricQueryRange(
+					payload,
+					ENTITY_VERSION_V4,
+					undefined,
+					undefined,
+					extendedEnd,
+				),
 			enabled: !!payload,
 		})),
 	);
@@ -95,8 +106,8 @@ function NodeMetrics({
 			dimensions,
 			widgetInfo,
 			start,
-			end,
 			verticalLineTimestamp,
+			end,
 		],
 	);
 
