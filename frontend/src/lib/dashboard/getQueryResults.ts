@@ -29,9 +29,9 @@ export async function GetMetricQueryRange(
 	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
 	console.log(extendedEnd);
 	if (extendedEnd) {
-		// const currentTime = Date.now();
+		const currentTime = Date.now();
 		queryPayload.end += 3 * 60 * 60 * 1000;
-		// queryPayload.end = Math.min(queryPayload.end, currentTime);
+		queryPayload.end = Math.min(queryPayload.end, currentTime);
 	}
 	const response = await getMetricsQueryRange(
 		queryPayload,
