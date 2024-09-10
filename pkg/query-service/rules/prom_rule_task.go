@@ -192,7 +192,7 @@ func (g *PromRuleTask) HasAlertingRules() bool {
 	defer g.mtx.Unlock()
 
 	for _, rule := range g.rules {
-		if _, ok := rule.(*ThresholdRule); ok {
+		if _, ok := rule.(*PromRule); ok {
 			return true
 		}
 	}
@@ -284,11 +284,11 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 		g.seriesInPreviousEval[i] = from.seriesInPreviousEval[fi]
 		ruleMap[nameAndLabels] = indexes[1:]
 
-		ar, ok := rule.(*ThresholdRule)
+		ar, ok := rule.(*PromRule)
 		if !ok {
 			continue
 		}
-		far, ok := from.rules[fi].(*ThresholdRule)
+		far, ok := from.rules[fi].(*PromRule)
 		if !ok {
 			continue
 		}
@@ -296,6 +296,7 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 		for fp, a := range far.active {
 			ar.active[fp] = a
 		}
+		ar.handledRestart = far.handledRestart
 	}
 
 	// Handle deleted and unmatched duplicate rules.
