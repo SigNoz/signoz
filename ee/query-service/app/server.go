@@ -155,6 +155,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.MaxOpenConns,
 			serverOptions.DialTimeout,
 			serverOptions.Cluster,
+			serverOptions.UseLogsNewSchema,
 		)
 		go qb.Start(readerReady)
 		reader = qb
