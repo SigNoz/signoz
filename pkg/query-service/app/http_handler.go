@@ -3555,55 +3555,6 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	aH.Respond(w, response)
 }
 
-func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
-	data := map[string]v3.AttributeKey{}
-	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
-		if query.DataSource == v3.DataSourceLogs {
-			fields, apiError := aH.reader.GetLogFields(ctx)
-			if apiError != nil {
-				return nil, apiError.Err
-			}
-
-			// top level fields meta will always be present in the frontend. (can be support for that as enchancement)
-			getType := func(t string) (v3.AttributeKeyType, bool) {
-				if t == "attributes" {
-					return v3.AttributeKeyTypeTag, false
-				} else if t == "resources" {
-					return v3.AttributeKeyTypeResource, false
-				}
-				return "", true
-			}
-
-			for _, selectedField := range fields.Selected {
-				fieldType, pass := getType(selectedField.Type)
-				if pass {
-					continue
-				}
-				data[selectedField.Name] = v3.AttributeKey{
-					Key:      selectedField.Name,
-					Type:     fieldType,
-					DataType: v3.AttributeKeyDataType(strings.ToLower(selectedField.DataType)),
-					IsColumn: true,
-				}
-			}
-			for _, interestingField := range fields.Interesting {
-				fieldType, pass := getType(interestingField.Type)
-				if pass {
-					continue
-				}
-				data[interestingField.Name] = v3.AttributeKey{
-					Key:      interestingField.Name,
-					Type:     fieldType,
-					DataType: v3.AttributeKeyDataType(strings.ToLower(interestingField.DataType)),
-					IsColumn: false,
-				}
-			}
-			break
-		}
-	}
-	return data, nil
-}
-
 func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
 	data := map[string]v3.AttributeKey{}
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
@@ -3645,9 +3596,14 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
+			logsFields, err := aH.reader.GetLogFields(ctx)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
 			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+			fields := v3.GetLogFieldsV3(ctx, queryRangeParams, logsFields)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, errQuriesByName)
@@ -3938,9 +3894,14 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 	case v3.QueryTypeBuilder:
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
+			logsFields, err := aH.reader.GetLogFields(r.Context())
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, nil)
+				return
+			}
 			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(r.Context(), queryRangeParams)
+			fields := v3.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, nil)
@@ -4021,8 +3982,13 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
 			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+			logsFields, err := aH.reader.GetLogFields(r.Context())
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, nil)
+				return
+			}
+			fields := v3.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, errQuriesByName)

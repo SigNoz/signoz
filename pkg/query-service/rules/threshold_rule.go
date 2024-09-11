@@ -31,6 +31,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/formatter"
 
 	yaml "gopkg.in/yaml.v2"
@@ -491,10 +492,18 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(params) {
-			// Note: Sending empty fields key because enrichment is only needed for json
-			// TODO: Add support for attribute enrichment later
-			logsv3.Enrich(params, map[string]v3.AttributeKey{})
+			logsFields, err := r.reader.GetLogFields(ctx)
+			if err != nil {
+				return nil, err
+			}
+			logsKeys := v3.GetLogFieldsV3(ctx, params, logsFields)
+			logsv3.Enrich(params, logsKeys)
 		}
+		spanKeys, err := r.reader.GetSpanAttributeKeys(ctx)
+		if err != nil {
+			return nil, err
+		}
+		tracesV3.Enrich(params, spanKeys)
 	}
 
 	var results []*v3.Result
