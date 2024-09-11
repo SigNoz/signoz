@@ -4,293 +4,58 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
-	"sync"
 	"time"
 
 	"go.uber.org/zap"
 
-	plabels "github.com/prometheus/prometheus/model/labels"
-	pql "github.com/prometheus/prometheus/promql"
-	"go.signoz.io/signoz/pkg/query-service/converter"
+	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/signoz/pkg/query-service/formatter"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 	yaml "gopkg.in/yaml.v2"
 )
 
-type PromRuleOpts struct {
-	// SendAlways will send alert irresepective of resendDelay
-	// or other params
-	SendAlways bool
-}
-
 type PromRule struct {
-	id            string
-	name          string
-	source        string
-	ruleCondition *RuleCondition
-
-	evalWindow   time.Duration
-	holdDuration time.Duration
-	labels       plabels.Labels
-	annotations  plabels.Labels
-
-	preferredChannels []string
-
-	mtx                 sync.Mutex
-	evaluationDuration  time.Duration
-	evaluationTimestamp time.Time
-
-	health RuleHealth
-
-	lastError error
-
-	// map of active alerts
-	active map[uint64]*Alert
-
-	logger *zap.Logger
-	opts   PromRuleOpts
-
-	reader interfaces.Reader
-
-	handledRestart bool
+	*BaseRule
+	pqlEngine *pqle.PqlEngine
 }
 
 func NewPromRule(
 	id string,
 	postableRule *PostableRule,
 	logger *zap.Logger,
-	opts PromRuleOpts,
 	reader interfaces.Reader,
+	pqlEngine *pqle.PqlEngine,
+	opts ...RuleOption,
 ) (*PromRule, error) {
 
-	if postableRule.RuleCondition == nil {
-		return nil, fmt.Errorf("no rule condition")
-	} else if !postableRule.RuleCondition.IsValid() {
-		return nil, fmt.Errorf("invalid rule condition")
+	baseRule, err := NewBaseRule(id, postableRule, reader, opts...)
+	if err != nil {
+		return nil, err
 	}
 
 	p := PromRule{
-		id:                id,
-		name:              postableRule.AlertName,
-		source:            postableRule.Source,
-		ruleCondition:     postableRule.RuleCondition,
-		evalWindow:        time.Duration(postableRule.EvalWindow),
-		labels:            plabels.FromMap(postableRule.Labels),
-		annotations:       plabels.FromMap(postableRule.Annotations),
-		preferredChannels: postableRule.PreferredChannels,
-		health:            HealthUnknown,
-		active:            map[uint64]*Alert{},
-		logger:            logger,
-		opts:              opts,
+		BaseRule:  baseRule,
+		pqlEngine: pqlEngine,
 	}
-	p.reader = reader
 
-	if int64(p.evalWindow) == 0 {
-		p.evalWindow = 5 * time.Minute
-	}
 	query, err := p.getPqlQuery()
 
 	if err != nil {
 		// can not generate a valid prom QL query
 		return nil, err
 	}
-
-	zap.L().Info("creating new alerting rule", zap.String("name", p.name), zap.String("condition", p.ruleCondition.String()), zap.String("query", query))
-
+	zap.L().Info("creating new prom rule", zap.String("name", p.name), zap.String("query", query))
 	return &p, nil
-}
-
-func (r *PromRule) Name() string {
-	return r.name
-}
-
-func (r *PromRule) ID() string {
-	return r.id
-}
-
-func (r *PromRule) Condition() *RuleCondition {
-	return r.ruleCondition
-}
-
-// targetVal returns the target value for the rule condition
-// when the y-axis and target units are non-empty, it
-// converts the target value to the y-axis unit
-func (r *PromRule) targetVal() float64 {
-	if r.ruleCondition == nil || r.ruleCondition.Target == nil {
-		return 0
-	}
-
-	// get the converter for the target unit
-	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
-	// convert the target value to the y-axis unit
-	value := unitConverter.Convert(converter.Value{
-		F: *r.ruleCondition.Target,
-		U: converter.Unit(r.ruleCondition.TargetUnit),
-	}, converter.Unit(r.Unit()))
-
-	return value.F
 }
 
 func (r *PromRule) Type() RuleType {
 	return RuleTypeProm
-}
-
-func (r *PromRule) GeneratorURL() string {
-	return prepareRuleGeneratorURL(r.ID(), r.source)
-}
-
-func (r *PromRule) PreferredChannels() []string {
-	return r.preferredChannels
-}
-
-func (r *PromRule) SetLastError(err error) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	r.lastError = err
-}
-
-func (r *PromRule) LastError() error {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	return r.lastError
-}
-
-func (r *PromRule) SetHealth(health RuleHealth) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	r.health = health
-}
-
-func (r *PromRule) Health() RuleHealth {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	return r.health
-}
-
-// SetEvaluationDuration updates evaluationDuration to the duration it took to evaluate the rule on its last evaluation.
-func (r *PromRule) SetEvaluationDuration(dur time.Duration) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	r.evaluationDuration = dur
-}
-
-func (r *PromRule) HoldDuration() time.Duration {
-	return r.holdDuration
-}
-
-func (r *PromRule) EvalWindow() time.Duration {
-	return r.evalWindow
-}
-
-// Labels returns the labels of the alerting rule.
-func (r *PromRule) Labels() qslabels.BaseLabels {
-	return r.labels
-}
-
-// Annotations returns the annotations of the alerting rule.
-func (r *PromRule) Annotations() qslabels.BaseLabels {
-	return r.annotations
-}
-
-// GetEvaluationDuration returns the time in seconds it took to evaluate the alerting rule.
-func (r *PromRule) GetEvaluationDuration() time.Duration {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	return r.evaluationDuration
-}
-
-// SetEvaluationTimestamp updates evaluationTimestamp to the timestamp of when the rule was last evaluated.
-func (r *PromRule) SetEvaluationTimestamp(ts time.Time) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	r.evaluationTimestamp = ts
-}
-
-// GetEvaluationTimestamp returns the time the evaluation took place.
-func (r *PromRule) GetEvaluationTimestamp() time.Time {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	return r.evaluationTimestamp
-}
-
-// State returns the maximum state of alert instances for this rule.
-// StateFiring > StatePending > StateInactive
-func (r *PromRule) State() model.AlertState {
-
-	maxState := model.StateInactive
-	for _, a := range r.active {
-		if a.State > maxState {
-			maxState = a.State
-		}
-	}
-	return maxState
-}
-
-func (r *PromRule) currentAlerts() []*Alert {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	alerts := make([]*Alert, 0, len(r.active))
-
-	for _, a := range r.active {
-		anew := *a
-		alerts = append(alerts, &anew)
-	}
-	return alerts
-}
-
-func (r *PromRule) ActiveAlerts() []*Alert {
-	var res []*Alert
-	for _, a := range r.currentAlerts() {
-		if a.ResolvedAt.IsZero() {
-			res = append(res, a)
-		}
-	}
-	return res
-}
-
-func (r *PromRule) Unit() string {
-	if r.ruleCondition != nil && r.ruleCondition.CompositeQuery != nil {
-		return r.ruleCondition.CompositeQuery.Unit
-	}
-	return ""
-}
-
-// ForEachActiveAlert runs the given function on each alert.
-// This should be used when you want to use the actual alerts from the ThresholdRule
-// and not on its copy.
-// If you want to run on a copy of alerts then don't use this, get the alerts from 'ActiveAlerts()'.
-func (r *PromRule) ForEachActiveAlert(f func(*Alert)) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	for _, a := range r.active {
-		f(a)
-	}
-}
-
-func (r *PromRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
-	alerts := []*Alert{}
-	r.ForEachActiveAlert(func(alert *Alert) {
-		if r.opts.SendAlways || alert.needsSending(ts, resendDelay) {
-			alert.LastSentAt = ts
-			// Allow for two Eval or Alertmanager send failures.
-			delta := resendDelay
-			if interval > resendDelay {
-				delta = interval
-			}
-			alert.ValidUntil = ts.Add(4 * delta)
-			anew := *alert
-			alerts = append(alerts, &anew)
-		}
-	})
-	notifyFunc(ctx, "", alerts...)
 }
 
 func (r *PromRule) GetSelectedQuery() string {
@@ -327,117 +92,7 @@ func (r *PromRule) getPqlQuery() (string, error) {
 	return "", fmt.Errorf("invalid promql rule query")
 }
 
-func (r *PromRule) matchType() MatchType {
-	if r.ruleCondition == nil {
-		return AtleastOnce
-	}
-	return r.ruleCondition.MatchType
-}
-
-func (r *PromRule) compareOp() CompareOp {
-	if r.ruleCondition == nil {
-		return ValueIsEq
-	}
-	return r.ruleCondition.CompareOp
-}
-
-// TODO(srikanthccv): implement base rule and use for all types of rules
-func (r *PromRule) recordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []v3.RuleStateHistory) error {
-	zap.L().Debug("recording rule state history", zap.String("ruleid", r.ID()), zap.Any("prevState", prevState), zap.Any("currentState", currentState), zap.Any("itemsToAdd", itemsToAdd))
-	revisedItemsToAdd := map[uint64]v3.RuleStateHistory{}
-
-	lastSavedState, err := r.reader.GetLastSavedRuleStateHistory(ctx, r.ID())
-	if err != nil {
-		return err
-	}
-	// if the query-service has been restarted, or the rule has been modified (which re-initializes the rule),
-	// the state would reset so we need to add the corresponding state changes to previously saved states
-	if !r.handledRestart && len(lastSavedState) > 0 {
-		zap.L().Debug("handling restart", zap.String("ruleid", r.ID()), zap.Any("lastSavedState", lastSavedState))
-		l := map[uint64]v3.RuleStateHistory{}
-		for _, item := range itemsToAdd {
-			l[item.Fingerprint] = item
-		}
-
-		shouldSkip := map[uint64]bool{}
-
-		for _, item := range lastSavedState {
-			// for the last saved item with fingerprint, check if there is a corresponding entry in the current state
-			currentState, ok := l[item.Fingerprint]
-			if !ok {
-				// there was a state change in the past, but not in the current state
-				// if the state was firing, then we should add a resolved state change
-				if item.State == model.StateFiring || item.State == model.StateNoData {
-					item.State = model.StateInactive
-					item.StateChanged = true
-					item.UnixMilli = time.Now().UnixMilli()
-					revisedItemsToAdd[item.Fingerprint] = item
-				}
-				// there is nothing to do if the prev state was normal
-			} else {
-				if item.State != currentState.State {
-					item.State = currentState.State
-					item.StateChanged = true
-					item.UnixMilli = time.Now().UnixMilli()
-					revisedItemsToAdd[item.Fingerprint] = item
-				}
-			}
-			// do not add this item to revisedItemsToAdd as it is already processed
-			shouldSkip[item.Fingerprint] = true
-		}
-		zap.L().Debug("after lastSavedState loop", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
-
-		// if there are any new state changes that were not saved, add them to the revised items
-		for _, item := range itemsToAdd {
-			if _, ok := revisedItemsToAdd[item.Fingerprint]; !ok && !shouldSkip[item.Fingerprint] {
-				revisedItemsToAdd[item.Fingerprint] = item
-			}
-		}
-		zap.L().Debug("after itemsToAdd loop", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
-
-		newState := model.StateInactive
-		for _, item := range revisedItemsToAdd {
-			if item.State == model.StateFiring || item.State == model.StateNoData {
-				newState = model.StateFiring
-				break
-			}
-		}
-		zap.L().Debug("newState", zap.String("ruleid", r.ID()), zap.Any("newState", newState))
-
-		// if there is a change in the overall state, update the overall state
-		if lastSavedState[0].OverallState != newState {
-			for fingerprint, item := range revisedItemsToAdd {
-				item.OverallState = newState
-				item.OverallStateChanged = true
-				revisedItemsToAdd[fingerprint] = item
-			}
-		}
-		zap.L().Debug("revisedItemsToAdd after newState", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
-
-	} else {
-		for _, item := range itemsToAdd {
-			revisedItemsToAdd[item.Fingerprint] = item
-		}
-	}
-
-	if len(revisedItemsToAdd) > 0 && r.reader != nil {
-		zap.L().Debug("writing rule state history", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
-
-		entries := make([]v3.RuleStateHistory, 0, len(revisedItemsToAdd))
-		for _, item := range revisedItemsToAdd {
-			entries = append(entries, item)
-		}
-		err := r.reader.AddRuleStateHistory(ctx, entries)
-		if err != nil {
-			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
-		}
-	}
-	r.handledRestart = true
-
-	return nil
-}
-
-func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
+func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
 
 	prevState := r.State()
 
@@ -452,7 +107,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		return nil, err
 	}
 	zap.L().Info("evaluating promql query", zap.String("name", r.Name()), zap.String("query", q))
-	res, err := queriers.PqlEngine.RunAlertQuery(ctx, q, start, end, interval)
+	res, err := r.pqlEngine.RunAlertQuery(ctx, q, start, end, interval)
 	if err != nil {
 		r.SetHealth(HealthBad)
 		r.SetLastError(err)
@@ -476,7 +131,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			continue
 		}
 
-		alertSmpl, shouldAlert := r.shouldAlert(series)
+		alertSmpl, shouldAlert := r.shouldAlert(toCommonSeries(series))
 		if !shouldAlert {
 			continue
 		}
@@ -484,7 +139,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 
 		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
 
-		tmplData := AlertTemplateData(l, valueFormatter.Format(alertSmpl.F, r.Unit()), threshold)
+		tmplData := AlertTemplateData(l, valueFormatter.Format(alertSmpl.V, r.Unit()), threshold)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
@@ -507,20 +162,20 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			return result
 		}
 
-		lb := plabels.NewBuilder(alertSmpl.Metric).Del(plabels.MetricName)
-		resultLabels := plabels.NewBuilder(alertSmpl.Metric).Del(plabels.MetricName).Labels()
+		lb := qslabels.NewBuilder(alertSmpl.Metric).Del(qslabels.MetricNameLabel)
+		resultLabels := qslabels.NewBuilder(alertSmpl.Metric).Del(qslabels.MetricNameLabel).Labels()
 
-		for _, l := range r.labels {
-			lb.Set(l.Name, expand(l.Value))
+		for name, value := range r.labels.Map() {
+			lb.Set(name, expand(value))
 		}
 
 		lb.Set(qslabels.AlertNameLabel, r.Name())
 		lb.Set(qslabels.AlertRuleIdLabel, r.ID())
 		lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
 
-		annotations := make(plabels.Labels, 0, len(r.annotations))
-		for _, a := range r.annotations {
-			annotations = append(annotations, plabels.Label{Name: a.Name, Value: expand(a.Value)})
+		annotations := make(qslabels.Labels, 0, len(r.annotations.Map()))
+		for name, value := range r.annotations.Map() {
+			annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
 		}
 
 		lbs := lb.Labels()
@@ -542,7 +197,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			Annotations:       annotations,
 			ActiveAt:          ts,
 			State:             model.StatePending,
-			Value:             alertSmpl.F,
+			Value:             alertSmpl.V,
 			GeneratorURL:      r.GeneratorURL(),
 			Receivers:         r.preferredChannels,
 		}
@@ -626,167 +281,9 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		itemsToAdd[idx] = item
 	}
 
-	r.recordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
+	r.RecordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
 
 	return len(r.active), nil
-}
-
-func (r *PromRule) shouldAlert(series pql.Series) (pql.Sample, bool) {
-	var alertSmpl pql.Sample
-	var shouldAlert bool
-	switch r.matchType() {
-	case AtleastOnce:
-		// If any sample matches the condition, the rule is firing.
-		if r.compareOp() == ValueIsAbove {
-			for _, smpl := range series.Floats {
-				if smpl.F > r.targetVal() {
-					alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if r.compareOp() == ValueIsBelow {
-			for _, smpl := range series.Floats {
-				if smpl.F < r.targetVal() {
-					alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if r.compareOp() == ValueIsEq {
-			for _, smpl := range series.Floats {
-				if smpl.F == r.targetVal() {
-					alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if r.compareOp() == ValueIsNotEq {
-			for _, smpl := range series.Floats {
-				if smpl.F != r.targetVal() {
-					alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
-					shouldAlert = true
-					break
-				}
-			}
-		}
-	case AllTheTimes:
-		// If all samples match the condition, the rule is firing.
-		shouldAlert = true
-		alertSmpl = pql.Sample{F: r.targetVal(), Metric: series.Metric}
-		if r.compareOp() == ValueIsAbove {
-			for _, smpl := range series.Floats {
-				if smpl.F <= r.targetVal() {
-					shouldAlert = false
-					break
-				}
-			}
-			// use min value from the series
-			if shouldAlert {
-				var minValue float64 = math.Inf(1)
-				for _, smpl := range series.Floats {
-					if smpl.F < minValue {
-						minValue = smpl.F
-					}
-				}
-				alertSmpl = pql.Sample{F: minValue, Metric: series.Metric}
-			}
-		} else if r.compareOp() == ValueIsBelow {
-			for _, smpl := range series.Floats {
-				if smpl.F >= r.targetVal() {
-					shouldAlert = false
-					break
-				}
-			}
-			if shouldAlert {
-				var maxValue float64 = math.Inf(-1)
-				for _, smpl := range series.Floats {
-					if smpl.F > maxValue {
-						maxValue = smpl.F
-					}
-				}
-				alertSmpl = pql.Sample{F: maxValue, Metric: series.Metric}
-			}
-		} else if r.compareOp() == ValueIsEq {
-			for _, smpl := range series.Floats {
-				if smpl.F != r.targetVal() {
-					shouldAlert = false
-					break
-				}
-			}
-		} else if r.compareOp() == ValueIsNotEq {
-			for _, smpl := range series.Floats {
-				if smpl.F == r.targetVal() {
-					shouldAlert = false
-					break
-				}
-			}
-			if shouldAlert {
-				for _, smpl := range series.Floats {
-					if !math.IsInf(smpl.F, 0) && !math.IsNaN(smpl.F) {
-						alertSmpl = pql.Sample{F: smpl.F, Metric: series.Metric}
-						break
-					}
-				}
-			}
-		}
-	case OnAverage:
-		// If the average of all samples matches the condition, the rule is firing.
-		var sum float64
-		for _, smpl := range series.Floats {
-			if math.IsNaN(smpl.F) {
-				continue
-			}
-			sum += smpl.F
-		}
-		avg := sum / float64(len(series.Floats))
-		alertSmpl = pql.Sample{F: avg, Metric: series.Metric}
-		if r.compareOp() == ValueIsAbove {
-			if avg > r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsBelow {
-			if avg < r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsEq {
-			if avg == r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsNotEq {
-			if avg != r.targetVal() {
-				shouldAlert = true
-			}
-		}
-	case InTotal:
-		// If the sum of all samples matches the condition, the rule is firing.
-		var sum float64
-		for _, smpl := range series.Floats {
-			if math.IsNaN(smpl.F) {
-				continue
-			}
-			sum += smpl.F
-		}
-		alertSmpl = pql.Sample{F: sum, Metric: series.Metric}
-		if r.compareOp() == ValueIsAbove {
-			if sum > r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsBelow {
-			if sum < r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsEq {
-			if sum == r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsNotEq {
-			if sum != r.targetVal() {
-				shouldAlert = true
-			}
-		}
-	}
-	return alertSmpl, shouldAlert
 }
 
 func (r *PromRule) String() string {
@@ -806,4 +303,24 @@ func (r *PromRule) String() string {
 	}
 
 	return string(byt)
+}
+
+func toCommonSeries(series promql.Series) v3.Series {
+	commonSeries := v3.Series{}
+
+	for _, lbl := range series.Metric {
+		commonSeries.Labels[lbl.Name] = lbl.Value
+		commonSeries.LabelsArray = append(commonSeries.LabelsArray, map[string]string{
+			lbl.Name: lbl.Value,
+		})
+	}
+
+	for _, f := range series.Floats {
+		commonSeries.Points = append(commonSeries.Points, v3.Point{
+			Timestamp: f.T,
+			Value:     f.F,
+		})
+	}
+
+	return commonSeries
 }
