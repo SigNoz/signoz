@@ -367,7 +367,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 			}
 			ctx = context.WithValue(ctx, common.LogCommentKey, kvs)
 
-			_, err := rule.Eval(ctx, ts, g.opts.Queriers)
+			_, err := rule.Eval(ctx, ts)
 			if err != nil {
 				rule.SetHealth(HealthBad)
 				rule.SetLastError(err)

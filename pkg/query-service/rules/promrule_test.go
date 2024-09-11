@@ -656,12 +656,12 @@ func TestPromRuleShouldAlert(t *testing.T) {
 		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewPromRule("69", &postableRule, zap.NewNop(), PromRuleOpts{}, nil)
+		rule, err := NewPromRule("69", &postableRule, zap.NewNop(), nil, nil)
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		_, shoulAlert := rule.shouldAlert(c.values)
+		_, shoulAlert := rule.shouldAlert(toCommonSeries(c.values))
 		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
 	}
 }
