@@ -320,7 +320,6 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 	var errs []error
 
 	for result := range ch {
-		fmt.Println("error here", result.Err)
 		if result.Err != nil {
 			errs = append(errs, result.Err)
 			errQueriesByName[result.Name] = result.Err
