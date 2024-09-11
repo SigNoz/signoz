@@ -21,6 +21,7 @@ import (
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
@@ -38,7 +39,7 @@ type PrepareTaskOptions struct {
 
 const taskNamesuffix = "webAppEditor"
 
-func ruleIdFromTaskName(n string) string {
+func RuleIdFromTaskName(n string) string {
 	return strings.Split(n, "-groupname")[0]
 }
 
@@ -56,7 +57,7 @@ func prepareTaskName(ruleId interface{}) string {
 // ManagerOptions bundles options for the Manager.
 type ManagerOptions struct {
 	NotifierOpts am.NotifierOptions
-	Queriers     *Queriers
+	PqlEngine    *pqle.PqlEngine
 
 	// RepoURL is used to generate a backlink in sent alert messages
 	RepoURL string
@@ -121,17 +122,15 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 	rules := make([]Rule, 0)
 	var task Task
 
-	ruleId := ruleIdFromTaskName(opts.TaskName)
+	ruleId := RuleIdFromTaskName(opts.TaskName)
 	if opts.Rule.RuleType == RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := NewThresholdRule(
 			ruleId,
 			opts.Rule,
-			ThresholdRuleOpts{
-				EvalDelay: opts.ManagerOpts.EvalDelay,
-			},
 			opts.FF,
 			opts.Reader,
+			WithEvalDelay(opts.ManagerOpts.EvalDelay),
 		)
 
 		if err != nil {
@@ -150,8 +149,8 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			ruleId,
 			opts.Rule,
 			opts.Logger,
-			PromRuleOpts{},
 			opts.Reader,
+			opts.ManagerOpts.PqlEngine,
 		)
 
 		if err != nil {
@@ -400,7 +399,7 @@ func (m *Manager) deleteTask(taskName string) {
 	if ok {
 		oldg.Stop()
 		delete(m.tasks, taskName)
-		delete(m.rules, ruleIdFromTaskName(taskName))
+		delete(m.rules, RuleIdFromTaskName(taskName))
 		zap.L().Debug("rule task deleted", zap.String("name", taskName))
 	} else {
 		zap.L().Info("rule not found for deletion", zap.String("name", taskName))
@@ -617,7 +616,7 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*GettableRules, error) {
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
-			ruleResponse.State = StateDisabled
+			ruleResponse.State = model.StateDisabled
 			ruleResponse.Disabled = true
 		} else {
 			ruleResponse.State = rm.State()
@@ -644,7 +643,7 @@ func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error)
 	r.Id = fmt.Sprintf("%d", s.Id)
 	// fetch state of rule from memory
 	if rm, ok := m.rules[r.Id]; !ok {
-		r.State = StateDisabled
+		r.State = model.StateDisabled
 		r.Disabled = true
 	} else {
 		r.State = rm.State()
@@ -751,7 +750,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 
 	// fetch state of rule from memory
 	if rm, ok := m.rules[ruleId]; !ok {
-		response.State = StateDisabled
+		response.State = model.StateDisabled
 		response.Disabled = true
 	} else {
 		response.State = rm.State()
@@ -793,12 +792,10 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 		rule, err = NewThresholdRule(
 			alertname,
 			parsedRule,
-			ThresholdRuleOpts{
-				SendUnmatched: true,
-				SendAlways:    true,
-			},
 			m.featureFlags,
 			m.reader,
+			WithSendAlways(),
+			WithSendUnmatched(),
 		)
 
 		if err != nil {
@@ -813,10 +810,10 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 			alertname,
 			parsedRule,
 			m.logger,
-			PromRuleOpts{
-				SendAlways: true,
-			},
 			m.reader,
+			m.opts.PqlEngine,
+			WithSendAlways(),
+			WithSendUnmatched(),
 		)
 
 		if err != nil {
@@ -830,7 +827,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 	// set timestamp to current utc time
 	ts := time.Now().UTC()
 
-	count, err := rule.Eval(ctx, ts, m.opts.Queriers)
+	count, err := rule.Eval(ctx, ts)
 	if err != nil {
 		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
 		return 0, newApiErrorInternal(fmt.Errorf("rule evaluation failed"))
