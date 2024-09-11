@@ -204,11 +204,19 @@ func createTelemetry() {
 		return
 	}
 
-	telemetry = &Telemetry{
-		ossOperator: analytics.New(api_key),
-		ipAddress:   getOutboundIP(),
-		rateLimits:  make(map[string]int8),
-		activeUser:  make(map[string]int8),
+	if constants.IsOSSTelemetryEnabled() {
+		telemetry = &Telemetry{
+			ossOperator: analytics.New(api_key),
+			ipAddress:   getOutboundIP(),
+			rateLimits:  make(map[string]int8),
+			activeUser:  make(map[string]int8),
+		}
+	} else {
+		telemetry = &Telemetry{
+			ipAddress:  getOutboundIP(),
+			rateLimits: make(map[string]int8),
+			activeUser: make(map[string]int8),
+		}
 	}
 	telemetry.minRandInt = 0
 	telemetry.maxRandInt = int(1 / DEFAULT_SAMPLING)
@@ -484,16 +492,18 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 		})
 	}
 
-	a.ossOperator.Enqueue(analytics.Identify{
-		UserId: a.ipAddress,
-		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
-	})
-	// Updating a groups properties
-	a.ossOperator.Enqueue(analytics.Group{
-		UserId:  a.ipAddress,
-		GroupId: a.getCompanyDomain(),
-		Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
-	})
+	if a.ossOperator != nil {
+		a.ossOperator.Enqueue(analytics.Identify{
+			UserId: a.ipAddress,
+			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
+		})
+		// Updating a groups properties
+		a.ossOperator.Enqueue(analytics.Group{
+			UserId:  a.ipAddress,
+			GroupId: a.getCompanyDomain(),
+			Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
+		})
+	}
 }
 
 func (a *Telemetry) SetUserEmail(email string) {
