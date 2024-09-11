@@ -117,9 +117,7 @@ type ClickHouseReader struct {
 	topLevelOperationsTable string
 	logsDB                  string
 	logsTable               string
-	logsTableV2             string
 	logsLocalTable          string
-	logsLocalTableV2        string
 	logsAttributeKeys       string
 	logsResourceKeys        string
 	logsTagAttributeTable   string
@@ -127,6 +125,11 @@ type ClickHouseReader struct {
 	remoteStorage           *remote.Storage
 	fanoutStorage           *storage.Storage
 	queryProgressTracker    queryprogress.QueryProgressTracker
+
+	logsTableV2              string
+	logsLocalTableV2         string
+	logsResourceTableV2      string
+	logsResourceLocalTableV2 string
 
 	promConfigFile string
 	promConfig     *config.Config
@@ -217,9 +220,7 @@ func NewReaderFromClickhouseConnection(
 		topLevelOperationsTable: options.primary.TopLevelOperationsTable,
 		logsDB:                  options.primary.LogsDB,
 		logsTable:               options.primary.LogsTable,
-		logsTableV2:             options.primary.LogsTableV2,
 		logsLocalTable:          options.primary.LogsLocalTable,
-		logsLocalTableV2:        options.primary.LogsLocalTableV2,
 		logsAttributeKeys:       options.primary.LogsAttributeKeysTable,
 		logsResourceKeys:        options.primary.LogsResourceKeysTable,
 		logsTagAttributeTable:   options.primary.LogsTagAttributeTable,
@@ -228,7 +229,13 @@ func NewReaderFromClickhouseConnection(
 		featureFlags:            featureFlag,
 		cluster:                 cluster,
 		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
-		UseLogsNewSchema:        useLogsNewSchema,
+
+		UseLogsNewSchema: useLogsNewSchema,
+
+		logsTableV2:              options.primary.LogsTableV2,
+		logsLocalTableV2:         options.primary.LogsLocalTableV2,
+		logsResourceTableV2:      options.primary.LogsResourceTableV2,
+		logsResourceLocalTableV2: options.primary.LogsResourceLocalTableV2,
 	}
 }
 
@@ -5373,7 +5380,7 @@ func (r *ClickHouseReader) LiveTailLogsV4(ctx context.Context, query string, tim
 			bucketStart := (timestampStart / NANOSECOND) - 1800
 
 			// we have to form the query differently if the resource filters are used
-			if strings.Contains(query, defaultLogsResourceV2) {
+			if strings.Contains(query, r.logsResourceTableV2) {
 				tmpQuery = fmt.Sprintf("seen_at_ts_bucket_start >=%d)) AND ts_bucket_start >=%d AND timestamp >=%d", bucketStart, bucketStart, timestampStart)
 			} else {
 				tmpQuery = fmt.Sprintf("ts_bucket_start >=%d AND timestamp >=%d", bucketStart, timestampStart)
