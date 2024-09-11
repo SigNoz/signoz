@@ -34,9 +34,7 @@ import { isArray, isEmpty, isEqual, isObject } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import {
-	JSXElementConstructor,
 	KeyboardEvent,
-	ReactElement,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -54,15 +52,8 @@ import {
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
-import ClientSideQBSearchDropdown from './ClientSideQBSearchDropdown';
-
 export interface AttributeKey {
 	key: string;
-	dataType?: string;
-	type?: string;
-	isColumn?: boolean;
-	isJSON?: boolean;
-	id?: string;
 }
 
 export interface AttributeValuesMap {
@@ -77,19 +68,13 @@ interface ClientSideQBSearchProps {
 	className?: string;
 	suffixIcon?: React.ReactNode;
 	attributeValuesMap?: AttributeValuesMap;
-	attributeKeys: AttributeKey[];
+	attributeKeys: BaseAutocompleteData[];
 }
 
 interface AttributeValue {
 	stringAttributeValues: string[] | [];
 	numberAttributeValues: number[] | [];
 	boolAttributeValues: boolean[] | [];
-}
-
-function DropdownMenuRenderer(
-	menu: ReactElement<unknown, string | JSXElementConstructor<unknown>>,
-): React.ReactElement {
-	return <ClientSideQBSearchDropdown menu={menu} />;
 }
 
 function ClientSideQBSearch(
@@ -630,7 +615,6 @@ function ClientSideQBSearch(
 				notFoundContent={null}
 				showAction={['focus']}
 				onBlur={handleOnBlur}
-				dropdownRender={DropdownMenuRenderer}
 			>
 				{dropdownOptions.map((option) => {
 					let val = option.value;
