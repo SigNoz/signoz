@@ -186,8 +186,12 @@ function LogsExplorerViews({
 	const listChartQuery = useMemo(() => {
 		if (!stagedQuery || !listQuery) return null;
 
-		const modifiedQueryData: IBuilderQuery = {
-			...listQuery,
+		const modifiedQueryData: Pick<
+			IBuilderQuery,
+			'aggregateOperator' | 'groupBy'
+		> = {
+			// the aggregate operator for the list query should always be Count and
+			// group by severity_text so as to depict the frequency of logs for each severity
 			aggregateOperator: LogsAggregatorOperator.COUNT,
 			groupBy: [
 				{
