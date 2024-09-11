@@ -7,7 +7,9 @@ import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
+import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
@@ -47,14 +49,7 @@ function TimeSeriesView({
 	]);
 
 	const isDarkMode = useIsDarkMode();
-
-	const width = graphRef.current?.clientWidth
-		? graphRef.current.clientWidth
-		: 700;
-
-	const height = graphRef.current?.clientWidth
-		? graphRef.current.clientHeight
-		: 300;
+	const containerDimensions = useResizeObserver(graphRef);
 
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
@@ -128,8 +123,8 @@ function TimeSeriesView({
 		yAxisUnit: yAxisUnit || '',
 		apiResponse: data?.payload,
 		dimensions: {
-			width,
-			height,
+			width: containerDimensions.width,
+			height: containerDimensions.height,
 		},
 		isDarkMode,
 		minTimeScale,
@@ -145,15 +140,19 @@ function TimeSeriesView({
 				className="graph-container"
 				style={{ height: '100%', width: '100%' }}
 				ref={graphRef}
+				data-testid="time-series-graph"
 			>
-				{isLoading && <LogsLoading />}
+				{isLoading &&
+					(dataSource === DataSource.LOGS ? <LogsLoading /> : <TracesLoading />)}
 
 				{chartData &&
 					chartData[0] &&
 					chartData[0]?.length === 0 &&
 					!isLoading &&
 					!isError &&
-					isFilterApplied && <EmptyLogsSearch />}
+					isFilterApplied && (
+						<EmptyLogsSearch dataSource={dataSource} panelType="TIME_SERIES" />
+					)}
 
 				{chartData &&
 					chartData[0] &&

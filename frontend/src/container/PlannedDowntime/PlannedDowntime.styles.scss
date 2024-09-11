@@ -65,6 +65,30 @@
 			background: var(--bg-ink-300);
 		}
 	}
+
+	.alert-rule-form {
+		display: flex;
+		gap: 8px;
+		align-items: end;
+
+		.alert-rule-info {
+			font-size: 11px;
+			font-weight: 300;
+			color: var(--bg-vanilla-400);
+		}
+	}
+
+	.formItemWithBullet {
+		margin-bottom: 0;
+	}
+
+	.scheduleTimeInfoText {
+		margin-top: 8px;
+		margin-bottom: 20px;
+		font-size: 12px;
+		font-weight: 400;
+		color: var(--bg-vanilla-400);
+	}
 }
 
 .alert-rule-tags {
@@ -169,7 +193,7 @@
 			}
 		}
 
-		.view-created-at {
+		.schedule-created-at {
 			border: 1px solid var(--bg-slate-500);
 			background-color: var(--bg-ink-400);
 			border-top: 0px;
@@ -316,7 +340,7 @@
 	}
 }
 
-.delete-view-modal {
+.delete-schedule-modal {
 	width: calc(100% - 30px) !important; /* Adjust the 20px as needed */
 	max-width: 384px;
 	.ant-modal-content {
@@ -429,7 +453,7 @@
 				color: var(--bg-ink-500);
 			}
 
-			.view-created-at {
+			.schedule-created-at {
 				border: 1px solid var(--bg-vanilla-300);
 				background-color: var(--bg-vanilla-100);
 				.ant-typography {
@@ -459,7 +483,7 @@
 		}
 	}
 
-	.delete-view-modal {
+	.delete-schedule-modal {
 		.ant-modal-content {
 			border: 1px solid var(--bg-vanilla-200);
 			background: var(--bg-vanilla-100);
@@ -530,6 +554,14 @@
 				border: 1px solid var(--bg-vanilla-300);
 				background: var(--bg-vanilla-100);
 			}
+		}
+
+		.scheduleTimeInfoText {
+			color: var(--bg-slate-300);
+		}
+
+		.alert-rule-info {
+			color: var(--bg-slate-300);
 		}
 	}
 }

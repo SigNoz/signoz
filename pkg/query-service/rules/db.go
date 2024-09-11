@@ -2,13 +2,17 @@ package rules
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
 
@@ -43,6 +47,9 @@ type RuleDB interface {
 
 	// GetAllPlannedMaintenance fetches the maintenance definitions from db
 	GetAllPlannedMaintenance(ctx context.Context) ([]PlannedMaintenance, error)
+
+	// used for internal telemetry
+	GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error)
 }
 
 type StoredRule struct {
@@ -294,4 +301,53 @@ func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance Planned
 	}
 
 	return "", nil
+}
+
+func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
+	alertsInfo := model.AlertsInfo{}
+	// fetch alerts from rules db
+	query := "SELECT data FROM rules"
+	var alertsData []string
+	var alertNames []string
+	err := r.Select(&alertsData, query)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return &alertsInfo, err
+	}
+	for _, alert := range alertsData {
+		var rule GettableRule
+		if strings.Contains(alert, "time_series_v2") {
+			alertsInfo.AlertsWithTSV2 = alertsInfo.AlertsWithTSV2 + 1
+		}
+		err = json.Unmarshal([]byte(alert), &rule)
+		if err != nil {
+			zap.L().Error("invalid rule data", zap.Error(err))
+			continue
+		}
+		alertNames = append(alertNames, rule.AlertName)
+		if rule.AlertType == AlertTypeLogs {
+			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
+		} else if rule.AlertType == AlertTypeMetric {
+			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
+			if rule.RuleCondition != nil && rule.RuleCondition.CompositeQuery != nil {
+				if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+					alertsInfo.MetricsBuilderQueries = alertsInfo.MetricsBuilderQueries + 1
+				} else if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+					alertsInfo.MetricsClickHouseQueries = alertsInfo.MetricsClickHouseQueries + 1
+				} else if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
+					alertsInfo.MetricsPrometheusQueries = alertsInfo.MetricsPrometheusQueries + 1
+					for _, query := range rule.RuleCondition.CompositeQuery.PromQueries {
+						if strings.Contains(query.Query, "signoz_") {
+							alertsInfo.SpanMetricsPrometheusQueries = alertsInfo.SpanMetricsPrometheusQueries + 1
+						}
+					}
+				}
+			}
+		} else if rule.AlertType == AlertTypeTraces {
+			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
+		}
+		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1
+	}
+	alertsInfo.AlertNames = alertNames
+	return &alertsInfo, nil
 }

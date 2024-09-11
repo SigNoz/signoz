@@ -5,6 +5,6 @@
 /frontend/ @YounixM
 /frontend/src/container/MetricsApplication @srikanthccv
 /frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
-/deploy/ @prashant-shahi
-/sample-apps/ @prashant-shahi
-.github @prashant-shahi
+/deploy/ @SigNoz/devops
+/sample-apps/ @SigNoz/devops
+.github @SigNoz/devops

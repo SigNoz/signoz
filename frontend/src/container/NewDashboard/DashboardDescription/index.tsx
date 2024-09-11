@@ -1,9 +1,19 @@
 import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
-import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
+import {
+	Button,
+	Card,
+	Input,
+	Modal,
+	Popover,
+	Tag,
+	Tooltip,
+	Typography,
+} from 'antd';
+import logEvent from 'api/common/logEvent';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { dashboardHelpMessage } from 'components/LaunchChatSupport/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -126,6 +136,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const onEmptyWidgetHandler = useCallback(() => {
 		handleToggleDashboardSlider(true);
+		logEvent('Dashboard Detail: Add new panel clicked', {
+			dashboardId: selectedDashboard?.uuid,
+			dashboardName: selectedDashboard?.data.title,
+			numberOfPanels: selectedDashboard?.data.widgets?.length,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [handleToggleDashboardSlider]);
 
 	const handleLockDashboardToggle = (): void => {
@@ -259,6 +275,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		urlQuery.set('columnKey', listSortOrder.columnKey as string);
 		urlQuery.set('order', listSortOrder.order as string);
 		urlQuery.set('page', listSortOrder.pagination as string);
+		urlQuery.set('search', listSortOrder.search as string);
 		urlQuery.delete(QueryParams.relativeTime);
 
 		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlQuery.toString()}`;
@@ -277,44 +294,46 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					>
 						Dashboard /
 					</Button>
-					<Button
-						type="text"
-						className="id-btn"
-						icon={
-							// eslint-disable-next-line jsx-a11y/img-redundant-alt
-							<img
-								src={image}
-								alt="dashboard-image"
-								style={{ height: '14px', width: '14px' }}
-							/>
-						}
-					>
+					<Button type="text" className="id-btn dashboard-name-btn">
+						<img
+							src={image}
+							alt="dashboard-icon"
+							style={{ height: '14px', width: '14px' }}
+						/>
 						{title}
 					</Button>
 				</section>
-				<FacingIssueBtn
-					attributes={{
-						uuid: selectedDashboard?.uuid,
-						title: updatedTitle,
-						screen: 'Dashboard Details',
-					}}
-					eventName="Dashboard: Facing Issues in dashboard"
-					message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
-					buttonText="Facing issues with dashboards?"
-					onHoverText="Click here to get help with dashboard details"
-				/>
 			</div>
-			<section className="dashbord-details">
+			<section className="dashboard-details">
 				<div className="left-section">
-					<img
-						src={image}
-						alt="dashboard-img"
-						style={{ width: '16px', height: '16px' }}
-					/>
-					<Typography.Text className="dashboard-title">{title}</Typography.Text>
+					<Tooltip title={title.length > 30 ? title : ''}>
+						<Typography.Text
+							className="dashboard-title"
+							data-testid="dashboard-title"
+						>
+							<img
+								src={image}
+								alt="dashboard-img"
+								style={{ width: '16px', height: '16px' }}
+							/>{' '}
+							{title}
+						</Typography.Text>
+					</Tooltip>
 					{isDashboardLocked && <LockKeyhole size={14} />}
 				</div>
 				<div className="right-section">
+					<LaunchChatSupport
+						attributes={{
+							uuid: selectedDashboard?.uuid,
+							title: updatedTitle,
+							screen: 'Dashboard Details',
+						}}
+						eventName="Dashboard: Facing Issues in dashboard"
+						message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
+						buttonText="Need help with this dashboard?"
+						onHoverText="Click here to get help with dashboard"
+						intercomMessageDisabled
+					/>
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					<Popover
 						open={isDashboardSettingsOpen}
@@ -325,13 +344,22 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							<div className="menu-content">
 								<section className="section-1">
 									{(isAuthor || role === USER_ROLES.ADMIN) && (
-										<Button
-											type="text"
-											icon={<LockKeyhole size={14} />}
-											onClick={handleLockDashboardToggle}
+										<Tooltip
+											title={
+												selectedDashboard?.created_by === 'integration' &&
+												'Dashboards created by integrations cannot be unlocked'
+											}
 										>
-											{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
-										</Button>
+											<Button
+												type="text"
+												icon={<LockKeyhole size={14} />}
+												disabled={selectedDashboard?.created_by === 'integration'}
+												onClick={handleLockDashboardToggle}
+												data-testid="lock-unlock-dashboard"
+											>
+												{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
+											</Button>
+										</Tooltip>
 									)}
 
 									{!isDashboardLocked && editDashboard && (
@@ -404,7 +432,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						trigger="click"
 						placement="bottomRight"
 					>
-						<Button icon={<Ellipsis size={14} />} type="text" className="icons" />
+						<Button
+							icon={<Ellipsis size={14} />}
+							type="text"
+							className="icons"
+							data-testid="options"
+						/>
 					</Popover>
 					{!isDashboardLocked && editDashboard && (
 						<SettingsDrawer drawerTitle="Dashboard Configuration" />
@@ -415,7 +448,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							onClick={onEmptyWidgetHandler}
 							icon={<PlusOutlined />}
 							type="primary"
-							data-testid="add-panel"
+							data-testid="add-panel-header"
 						>
 							New Panel
 						</Button>

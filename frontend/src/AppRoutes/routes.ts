@@ -2,6 +2,8 @@ import ROUTES from 'constants/routes';
 import { RouteProps } from 'react-router-dom';
 
 import {
+	AlertHistory,
+	AlertOverview,
 	AllAlertChannels,
 	AllErrors,
 	APIKeys,
@@ -23,6 +25,8 @@ import {
 	LogsExplorer,
 	LogsIndexToFields,
 	LogsSaveViews,
+	MessagingQueues,
+	MQDetailPage,
 	MySettings,
 	NewDashboardPage,
 	OldLogsExplorer,
@@ -168,6 +172,20 @@ const routes: AppRoutes[] = [
 		component: CreateNewAlerts,
 		isPrivate: true,
 		key: 'ALERTS_NEW',
+	},
+	{
+		path: ROUTES.ALERT_HISTORY,
+		exact: true,
+		component: AlertHistory,
+		isPrivate: true,
+		key: 'ALERT_HISTORY',
+	},
+	{
+		path: ROUTES.ALERT_OVERVIEW,
+		exact: true,
+		component: AlertOverview,
+		isPrivate: true,
+		key: 'ALERT_OVERVIEW',
 	},
 	{
 		path: ROUTES.TRACE,
@@ -350,6 +368,20 @@ const routes: AppRoutes[] = [
 		component: InstalledIntegrations,
 		isPrivate: true,
 		key: 'INTEGRATIONS',
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES,
+		exact: true,
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES_DETAIL,
+		exact: true,
+		component: MQDetailPage,
+		key: 'MESSAGING_QUEUES_DETAIL',
+		isPrivate: true,
 	},
 ];
 

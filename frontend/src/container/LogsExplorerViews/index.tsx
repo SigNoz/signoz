@@ -1,7 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './LogsExplorerViews.styles.scss';
 
-import { Button } from 'antd';
+import { Button, Typography } from 'antd';
+import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
+import logEvent from 'api/common/logEvent';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -37,10 +40,25 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { defaultTo, isEmpty, omit } from 'lodash-es';
+import {
+	cloneDeep,
+	defaultTo,
+	isEmpty,
+	isUndefined,
+	omit,
+	set,
+} from 'lodash-es';
 import { Sliders } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	memo,
+	MutableRefObject,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -61,12 +79,20 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
+import QueryStatus from './QueryStatus';
+
 function LogsExplorerViews({
 	selectedView,
-	showHistogram,
+	showFrequencyChart,
+	setIsLoadingQueries,
+	listQueryKeyRef,
+	chartQueryKeyRef,
 }: {
 	selectedView: SELECTED_VIEWS;
-	showHistogram: boolean;
+	showFrequencyChart: boolean;
+	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
+	listQueryKeyRef: MutableRefObject<any>;
+	chartQueryKeyRef: MutableRefObject<any>;
 }): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
@@ -74,14 +100,14 @@ function LogsExplorerViews({
 	// this is to respect the panel type present in the URL rather than defaulting it to list always.
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
-	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
+	const { activeLogId, onTimeRangeChange } = useCopyLogLink();
 
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
 	);
 
-	const { minTime } = useSelector<AppState, GlobalReducer>(
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
@@ -108,6 +134,8 @@ function LogsExplorerViews({
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
+	const [queryId, setQueryId] = useState<string>(v4());
+	const [queryStats, setQueryStats] = useState<WsDataEvent>();
 
 	const handleAxisError = useAxiosError();
 
@@ -116,6 +144,12 @@ function LogsExplorerViews({
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
+
+	const { options, config } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: initialDataSource || DataSource.LOGS,
+		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
+	});
 
 	const orderByTimestamp: OrderByPayload | null = useMemo(() => {
 		const timestampOrderBy = listQuery?.orderBy.find(
@@ -174,10 +208,10 @@ function LogsExplorerViews({
 		() =>
 			updateAllQueriesOperators(
 				currentQuery || initialQueriesMap.logs,
-				PANEL_TYPES.TIME_SERIES,
+				selectedPanelType,
 				DataSource.LOGS,
 			),
-		[currentQuery, updateAllQueriesOperators],
+		[currentQuery, selectedPanelType, updateAllQueriesOperators],
 	);
 
 	const handleModeChange = (panelType: PANEL_TYPES): void => {
@@ -200,9 +234,18 @@ function LogsExplorerViews({
 		{
 			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
 		},
+		{},
+		undefined,
+		chartQueryKeyRef,
 	);
 
-	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
+	const {
+		data,
+		isLoading,
+		isFetching,
+		isError,
+		isSuccess,
+	} = useGetExplorerQueryRange(
 		requestData,
 		panelType,
 		DEFAULT_ENTITY_VERSION,
@@ -211,12 +254,17 @@ function LogsExplorerViews({
 			enabled: !isLimit && !!requestData,
 		},
 		{
-			...(timeRange &&
-				activeLogId &&
+			...(activeLogId &&
 				!logs.length && {
-					start: timeRange.start,
-					end: timeRange.end,
+					start: minTime,
+					end: maxTime,
 				}),
+		},
+		undefined,
+		listQueryKeyRef,
+		{
+			...(!isEmpty(queryId) &&
+				selectedPanelType !== PANEL_TYPES.LIST && { 'X-SIGNOZ-QUERY-ID': queryId }),
 		},
 	);
 
@@ -304,13 +352,51 @@ function LogsExplorerViews({
 		],
 	);
 
+	useEffect(() => {
+		setQueryId(v4());
+	}, [data]);
+
+	useEffect(() => {
+		if (
+			!isEmpty(queryId) &&
+			(isLoading || isFetching) &&
+			selectedPanelType !== PANEL_TYPES.LIST
+		) {
+			setQueryStats(undefined);
+			setTimeout(() => {
+				getQueryStats({ queryId, setData: setQueryStats });
+			}, 500);
+		}
+	}, [queryId, isLoading, isFetching, selectedPanelType]);
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isUndefined(data?.payload)) {
+			const currentData = data?.payload?.data?.newResult?.data?.result || [];
+			logEvent('Logs Explorer: Page visited', {
+				panelType,
+				isEmpty: !currentData?.[0]?.list,
+			});
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload]);
+
 	const {
 		mutate: updateDashboard,
 		isLoading: isUpdateDashboardLoading,
 	} = useUpdateDashboard();
 
+	const getUpdatedQueryForExport = useCallback((): Query => {
+		const updatedQuery = cloneDeep(currentQuery);
+
+		set(updatedQuery, 'builder.queryData[0].pageSize', 10);
+
+		return updatedQuery;
+	}, [currentQuery]);
+
 	const handleExport = useCallback(
-		(dashboard: Dashboard | null): void => {
+		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
 			if (!dashboard || !panelType) return;
 
 			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(panelType)
@@ -319,12 +405,24 @@ function LogsExplorerViews({
 
 			const widgetId = v4();
 
+			const query =
+				panelType === PANEL_TYPES.LIST
+					? getUpdatedQueryForExport()
+					: exportDefaultQuery;
+
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
-				exportDefaultQuery,
+				query,
 				widgetId,
 				panelTypeParam,
+				options.selectColumns,
 			);
+
+			logEvent('Logs Explorer: Add to dashboard successful', {
+				panelType,
+				isNewDashboard,
+				dashboardName: dashboard?.data?.title,
+			});
 
 			updateDashboard(updatedDashboard, {
 				onSuccess: (data) => {
@@ -353,7 +451,7 @@ function LogsExplorerViews({
 					}
 
 					const dashboardEditView = generateExportToDashboardLink({
-						query: exportDefaultQuery,
+						query,
 						panelType: panelTypeParam,
 						dashboardId: data.payload?.uuid || '',
 						widgetId,
@@ -365,7 +463,9 @@ function LogsExplorerViews({
 			});
 		},
 		[
+			getUpdatedQueryForExport,
 			exportDefaultQuery,
+			options.selectColumns,
 			history,
 			notifications,
 			panelType,
@@ -420,7 +520,7 @@ function LogsExplorerViews({
 			setLogs(newLogs);
 			onTimeRangeChange({
 				start: currentParams?.start,
-				end: timeRange?.end || currentParams?.end,
+				end: currentParams?.end,
 				pageSize: newLogs.length,
 			});
 		}
@@ -437,8 +537,7 @@ function LogsExplorerViews({
 				filters: listQuery?.filters || initialFilters,
 				page: 1,
 				log: null,
-				pageSize:
-					timeRange?.pageSize && activeLogId ? timeRange?.pageSize : pageSize,
+				pageSize,
 			});
 
 			setLogs([]);
@@ -453,18 +552,11 @@ function LogsExplorerViews({
 		listQuery,
 		pageSize,
 		minTime,
-		timeRange,
 		activeLogId,
 		onTimeRangeChange,
 		panelType,
 		selectedView,
 	]);
-
-	const { options, config } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.METRICS,
-		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
-	});
 
 	const chartData = useMemo(() => {
 		if (!stagedQuery) return [];
@@ -526,6 +618,25 @@ function LogsExplorerViews({
 		},
 	});
 
+	useEffect(() => {
+		if (
+			isLoading ||
+			isFetching ||
+			isLoadingListChartData ||
+			isFetchingListChartData
+		) {
+			setIsLoadingQueries(true);
+		} else {
+			setIsLoadingQueries(false);
+		}
+	}, [
+		isLoading,
+		isFetching,
+		isFetchingListChartData,
+		isLoadingListChartData,
+		setIsLoadingQueries,
+	]);
+
 	const flattenLogData = useMemo(
 		() =>
 			logs.map((log) => {
@@ -545,7 +656,7 @@ function LogsExplorerViews({
 
 	return (
 		<div className="logs-explorer-views-container">
-			{showHistogram && (
+			{showFrequencyChart && (
 				<LogsExplorerChart
 					className="logs-histogram"
 					isLoading={isFetchingListChartData || isLoadingListChartData}
@@ -620,6 +731,30 @@ function LogsExplorerViews({
 										/>
 									)}
 								</div>
+							</div>
+						)}
+						{(selectedPanelType === PANEL_TYPES.TIME_SERIES ||
+							selectedPanelType === PANEL_TYPES.TABLE) && (
+							<div className="query-stats">
+								<QueryStatus
+									loading={isLoading || isFetching}
+									error={isError}
+									success={isSuccess}
+								/>
+								{queryStats?.read_rows && (
+									<Typography.Text className="rows">
+										{getYAxisFormattedValue(queryStats.read_rows?.toString(), 'short')}{' '}
+										rows
+									</Typography.Text>
+								)}
+								{queryStats?.elapsed_ms && (
+									<>
+										<div className="divider" />
+										<Typography.Text className="time">
+											{getYAxisFormattedValue(queryStats?.elapsed_ms?.toString(), 'ms')}
+										</Typography.Text>
+									</>
+								)}
 							</div>
 						)}
 					</div>

@@ -1,20 +1,19 @@
 package utils
 
 import (
-	"fmt"
 	"time"
 
 	"go.uber.org/zap"
 )
 
-func Elapsed(funcName string, args ...interface{}) func() {
+func Elapsed(funcName string, args map[string]interface{}) func() {
 	start := time.Now()
-	argsStr := ""
-	for _, v := range args {
-		argsStr += fmt.Sprintf("%v, ", v)
-	}
-	argsStr = argsStr[:len(argsStr)-2]
 	return func() {
-		zap.L().Info("Elapsed time", zap.String("func_name", funcName), zap.Duration("duration", time.Since(start)), zap.String("args", argsStr))
+		var zapFields []zap.Field
+		zapFields = append(zapFields, zap.String("func_name", funcName), zap.Duration("duration", time.Since(start)))
+		for k, v := range args {
+			zapFields = append(zapFields, zap.Any(k, v))
+		}
+		zap.L().Info("Elapsed time", zapFields...)
 	}
 }

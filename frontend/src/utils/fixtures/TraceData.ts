@@ -16,6 +16,9 @@ export const TraceData: Span[] = [
 			'{"timeUnixNano":1657275433246142000,"attributeMap":{"event":"HTTP request received S1","level":"info","method":"GET","url":"/dispatch?customer=392\\u0026nonse=0.015296363321630757"}}',
 		],
 		false,
+		'Server',
+		'Unset',
+		'Lorem Ipsum',
 	],
 	[
 		1657275433246,
@@ -32,6 +35,9 @@ export const TraceData: Span[] = [
 			'{"timeUnixNano":1657275433246142000,"attributeMap":{"event":"HTTP request received S2","level":"info","method":"GET","url":"/dispatch?customer=392\\u0026nonse=0.015296363321630757"}}',
 		],
 		false,
+		'Server1',
+		'Unset1',
+		'Lorem Ipsum1',
 	],
 	[
 		1657275433246,
@@ -48,5 +54,8 @@ export const TraceData: Span[] = [
 			'{"timeUnixNano":1657275433246142000,"attributeMap":{"event":"HTTP request received S3","level":"info","method":"GET","url":"/dispatch?customer=392\\u0026nonse=0.015296363321630757"}}',
 		],
 		false,
+		'Server2',
+		'Unset2',
+		'Lorem Ipsum2',
 	],
 ];

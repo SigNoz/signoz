@@ -3,6 +3,7 @@ import './GridCardLayout.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -15,7 +16,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
-import { defaultTo } from 'lodash-es';
+import { defaultTo, isUndefined } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import {
 	Check,
@@ -27,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FullScreen, FullScreenHandle } from 'react-full-screen';
 import { ItemCallback, Layout } from 'react-grid-layout';
 import { useDispatch, useSelector } from 'react-redux';
@@ -126,6 +127,18 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		setDashboardLayout(sortLayout(layouts));
 	}, [layouts]);
 
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isUndefined(data)) {
+			logEvent('Dashboard Detail: Opened', {
+				dashboardId: data.uuid,
+				dashboardName: data.title,
+				numberOfPanels: data.widgets?.length,
+				numberOfVariables: Object.keys(data?.variables || {}).length || 0,
+			});
+			logEventCalledRef.current = true;
+		}
+	}, [data]);
 	const onSaveHandler = (): void => {
 		if (!selectedDashboard) return;
 
@@ -181,7 +194,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
+			history.push(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
@@ -425,10 +438,18 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				: true,
 		[selectedDashboard],
 	);
+
+	let isDataAvailableInAnyWidget = false;
+	const isLogEventCalled = useRef<boolean>(false);
+
 	return isDashboardEmpty ? (
 		<DashboardEmptyState />
 	) : (
-		<FullScreen handle={handle} className="fullscreen-grid-container">
+		<FullScreen
+			handle={handle}
+			className="fullscreen-grid-container"
+			data-overlayscrollbars-initialize
+		>
 			<ReactGridLayout
 				cols={12}
 				rowHeight={45}
@@ -451,6 +472,15 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 					if (currentWidget?.panelTypes === PANEL_GROUP_TYPES.ROW) {
 						const rowWidgetProperties = currentPanelMap[id] || {};
+						let { title } = currentWidget;
+						if (rowWidgetProperties.collapsed) {
+							const widgetCount = rowWidgetProperties.widgets?.length || 0;
+							const collapsedText = `(${widgetCount} widget${
+								widgetCount > 1 ? 's' : ''
+							})`;
+							title += ` ${collapsedText}`;
+						}
+
 						return (
 							<CardContainer
 								className="row-card"
@@ -468,9 +498,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 												cursor="move"
 											/>
 										)}
-										<Typography.Text className="section-title">
-											{currentWidget.title}
-										</Typography.Text>
+										<Typography.Text className="section-title">{title}</Typography.Text>
 										{rowWidgetProperties.collapsed ? (
 											<ChevronDown
 												size={14}
@@ -499,6 +527,18 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 						);
 					}
 
+					const checkIfDataExists = (isDataAvailable: boolean): void => {
+						if (!isDataAvailableInAnyWidget && isDataAvailable) {
+							isDataAvailableInAnyWidget = true;
+						}
+						if (!isLogEventCalled.current && isDataAvailableInAnyWidget) {
+							isLogEventCalled.current = true;
+							logEvent('Dashboard Detail: Panel data fetched', {
+								isDataAvailableInAnyWidget,
+							});
+						}
+					};
+
 					return (
 						<CardContainer
 							className={isDashboardLocked ? '' : 'enable-resize'}
@@ -517,6 +557,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 									variables={variables}
 									version={selectedDashboard?.data?.version}
 									onDragSelect={onDragSelect}
+									dataAvailable={checkIfDataExists}
 								/>
 							</Card>
 						</CardContainer>

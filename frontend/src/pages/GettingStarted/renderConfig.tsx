@@ -153,7 +153,7 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 						href="https://signoz-community.slack.com/archives/C01HWQ1R0BC"
 						target="_blank"
 					>
-						#general
+						#dummy_channel
 					</Typography.Link>
 				</>
 			),
