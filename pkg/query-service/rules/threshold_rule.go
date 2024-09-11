@@ -54,6 +54,9 @@ type ThresholdRule struct {
 	querier interfaces.Querier
 	// querierV2 is used for alerts created after the introduction of new metrics query builder
 	querierV2 interfaces.Querier
+
+	logsKeys  map[string]v3.AttributeKey
+	spansKeys map[string]v3.AttributeKey
 }
 
 func NewThresholdRule(
@@ -332,30 +335,34 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 	urlEncodedTimeRange := url.QueryEscape(string(period))
 
 	filterItems := r.fetchFilters(selectedQuery, lbls)
+
+	builderQuery := v3.BuilderQuery{
+		DataSource:         v3.DataSourceLogs,
+		QueryName:          "A",
+		AggregateOperator:  v3.AggregateOperatorNoOp,
+		AggregateAttribute: v3.AttributeKey{},
+		Filters: &v3.FilterSet{
+			Items:    filterItems,
+			Operator: "AND",
+		},
+		Expression:   "A",
+		Disabled:     false,
+		Having:       []v3.Having{},
+		StepInterval: 60,
+		OrderBy: []v3.OrderBy{
+			{
+				ColumnName: "timestamp",
+				Order:      "desc",
+			},
+		},
+	}
+	logsv3.EnrichLogsQuery(&builderQuery, r.logsKeys)
+
 	urlData := v3.URLShareableCompositeQuery{
 		QueryType: string(v3.QueryTypeBuilder),
 		Builder: v3.URLShareableBuilderQuery{
 			QueryData: []v3.BuilderQuery{
-				{
-					DataSource:         v3.DataSourceLogs,
-					QueryName:          "A",
-					AggregateOperator:  v3.AggregateOperatorNoOp,
-					AggregateAttribute: v3.AttributeKey{},
-					Filters: &v3.FilterSet{
-						Items:    filterItems,
-						Operator: "AND",
-					},
-					Expression:   "A",
-					Disabled:     false,
-					Having:       []v3.Having{},
-					StepInterval: 60,
-					OrderBy: []v3.OrderBy{
-						{
-							ColumnName: "timestamp",
-							Order:      "desc",
-						},
-					},
-				},
+				builderQuery,
 			},
 			QueryFormulas: make([]string, 0),
 		},
@@ -399,30 +406,34 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	urlEncodedTimeRange := url.QueryEscape(string(period))
 
 	filterItems := r.fetchFilters(selectedQuery, lbls)
+
+	builderQuery := v3.BuilderQuery{
+		DataSource:         v3.DataSourceTraces,
+		QueryName:          "A",
+		AggregateOperator:  v3.AggregateOperatorNoOp,
+		AggregateAttribute: v3.AttributeKey{},
+		Filters: &v3.FilterSet{
+			Items:    filterItems,
+			Operator: "AND",
+		},
+		Expression:   "A",
+		Disabled:     false,
+		Having:       []v3.Having{},
+		StepInterval: 60,
+		OrderBy: []v3.OrderBy{
+			{
+				ColumnName: "timestamp",
+				Order:      "desc",
+			},
+		},
+	}
+	tracesV3.EnrichTracesQuery(&builderQuery, r.spansKeys)
+
 	urlData := v3.URLShareableCompositeQuery{
 		QueryType: string(v3.QueryTypeBuilder),
 		Builder: v3.URLShareableBuilderQuery{
 			QueryData: []v3.BuilderQuery{
-				{
-					DataSource:         v3.DataSourceTraces,
-					QueryName:          "A",
-					AggregateOperator:  v3.AggregateOperatorNoOp,
-					AggregateAttribute: v3.AttributeKey{},
-					Filters: &v3.FilterSet{
-						Items:    filterItems,
-						Operator: "AND",
-					},
-					Expression:   "A",
-					Disabled:     false,
-					Having:       []v3.Having{},
-					StepInterval: 60,
-					OrderBy: []v3.OrderBy{
-						{
-							ColumnName: "timestamp",
-							Order:      "desc",
-						},
-					},
-				},
+				builderQuery,
 			},
 			QueryFormulas: make([]string, 0),
 		},
@@ -490,20 +501,38 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 	}
 
 	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(params) {
-			logsFields, err := r.reader.GetLogFields(ctx)
+		hasLogsQuery := false
+		hasTracesQuery := false
+		for _, query := range params.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceLogs {
+				hasLogsQuery = true
+			}
+			if query.DataSource == v3.DataSourceTraces {
+				hasTracesQuery = true
+			}
+		}
+
+		if hasLogsQuery {
+			// check if any enrichment is required for logs if yes then enrich them
+			if logsv3.EnrichmentRequired(params) {
+				logsFields, err := r.reader.GetLogFields(ctx)
+				if err != nil {
+					return nil, err
+				}
+				logsKeys := v3.GetLogFieldsV3(ctx, params, logsFields)
+				r.logsKeys = logsKeys
+				logsv3.Enrich(params, logsKeys)
+			}
+		}
+
+		if hasTracesQuery {
+			spanKeys, err := r.reader.GetSpanAttributeKeys(ctx)
 			if err != nil {
 				return nil, err
 			}
-			logsKeys := v3.GetLogFieldsV3(ctx, params, logsFields)
-			logsv3.Enrich(params, logsKeys)
+			r.spansKeys = spanKeys
+			tracesV3.Enrich(params, spanKeys)
 		}
-		spanKeys, err := r.reader.GetSpanAttributeKeys(ctx)
-		if err != nil {
-			return nil, err
-		}
-		tracesV3.Enrich(params, spanKeys)
 	}
 
 	var results []*v3.Result
