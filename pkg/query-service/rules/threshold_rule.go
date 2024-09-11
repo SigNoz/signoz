@@ -295,8 +295,17 @@ func (r *ThresholdRule) fetchFilters(selectedQuery string, lbls labels.Labels) [
 	// add the labels which are not present in the where clause
 	for _, label := range lbls {
 		if _, ok := added[label.Name]; !ok {
+			// take the item from group by if exists
+			groupBy := r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
+			labelAttrKey := v3.AttributeKey{Key: label.Name}
+			for _, item := range groupBy {
+				if item.Key == label.Name {
+					labelAttrKey = item
+				}
+			}
+
 			filterItems = append(filterItems, v3.FilterItem{
-				Key:      v3.AttributeKey{Key: label.Name},
+				Key:      labelAttrKey,
 				Operator: v3.FilterOperatorEqual,
 				Value:    label.Value,
 			})
