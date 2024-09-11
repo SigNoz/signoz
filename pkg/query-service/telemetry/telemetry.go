@@ -176,14 +176,23 @@ type Telemetry struct {
 	rateLimits    map[string]int8
 	activeUser    map[string]int8
 	patTokenUser  bool
-	countUsers    int8
 	mutex         sync.RWMutex
 
 	alertsInfoCallback func(ctx context.Context) (*model.AlertsInfo, error)
+	userCountCallback  func(ctx context.Context) (int, error)
+	userRoleCallback   func(ctx context.Context, groupId string) (string, error)
 }
 
 func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*model.AlertsInfo, error)) {
 	a.alertsInfoCallback = callback
+}
+
+func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context) (int, error)) {
+	a.userCountCallback = callback
+}
+
+func (a *Telemetry) SetUserRoleCallback(callback func(ctx context.Context, groupId string) (string, error)) {
+	a.userRoleCallback = callback
 }
 
 func createTelemetry() {
@@ -195,11 +204,19 @@ func createTelemetry() {
 		return
 	}
 
-	telemetry = &Telemetry{
-		ossOperator: analytics.New(api_key),
-		ipAddress:   getOutboundIP(),
-		rateLimits:  make(map[string]int8),
-		activeUser:  make(map[string]int8),
+	if constants.IsOSSTelemetryEnabled() {
+		telemetry = &Telemetry{
+			ossOperator: analytics.New(api_key),
+			ipAddress:   getOutboundIP(),
+			rateLimits:  make(map[string]int8),
+			activeUser:  make(map[string]int8),
+		}
+	} else {
+		telemetry = &Telemetry{
+			ipAddress:  getOutboundIP(),
+			rateLimits: make(map[string]int8),
+			activeUser: make(map[string]int8),
+		}
 	}
 	telemetry.minRandInt = 0
 	telemetry.maxRandInt = int(1 / DEFAULT_SAMPLING)
@@ -259,6 +276,8 @@ func createTelemetry() {
 		metricsTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.MetricsTTL})
 		logsTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.LogsTTL})
 
+		userCount, _ := telemetry.userCountCallback(ctx)
+
 		data := map[string]interface{}{
 			"totalSpans":                            totalSpans,
 			"spansInLastHeartBeatInterval":          spansInLastHeartBeatInterval,
@@ -266,7 +285,7 @@ func createTelemetry() {
 			"getSamplesInfoInLastHeartBeatInterval": getSamplesInfoInLastHeartBeatInterval,
 			"totalLogs":                             totalLogs,
 			"getLogsInfoInLastHeartBeatInterval":    getLogsInfoInLastHeartBeatInterval,
-			"countUsers":                            telemetry.countUsers,
+			"countUsers":                            userCount,
 			"metricsTTLStatus":                      metricsTTL.Status,
 			"tracesTTLStatus":                       traceTTL.Status,
 			"logsTTLStatus":                         logsTTL.Status,
@@ -450,11 +469,22 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
+	// extract user group from user.groupId
+	role, _ := a.userRoleCallback(context.Background(), user.GroupId)
+
 	if a.saasOperator != nil {
-		a.saasOperator.Enqueue(analytics.Identify{
-			UserId: a.userEmail,
-			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
-		})
+		if role != "" {
+			a.saasOperator.Enqueue(analytics.Identify{
+				UserId: a.userEmail,
+				Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("role", role),
+			})
+		} else {
+			a.saasOperator.Enqueue(analytics.Identify{
+				UserId: a.userEmail,
+				Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
+			})
+		}
+
 		a.saasOperator.Enqueue(analytics.Group{
 			UserId:  a.userEmail,
 			GroupId: a.getCompanyDomain(),
@@ -462,20 +492,18 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 		})
 	}
 
-	a.ossOperator.Enqueue(analytics.Identify{
-		UserId: a.ipAddress,
-		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
-	})
-	// Updating a groups properties
-	a.ossOperator.Enqueue(analytics.Group{
-		UserId:  a.ipAddress,
-		GroupId: a.getCompanyDomain(),
-		Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
-	})
-}
-
-func (a *Telemetry) SetCountUsers(countUsers int8) {
-	a.countUsers = countUsers
+	if a.ossOperator != nil {
+		a.ossOperator.Enqueue(analytics.Identify{
+			UserId: a.ipAddress,
+			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
+		})
+		// Updating a groups properties
+		a.ossOperator.Enqueue(analytics.Group{
+			UserId:  a.ipAddress,
+			GroupId: a.getCompanyDomain(),
+			Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
+		})
+	}
 }
 
 func (a *Telemetry) SetUserEmail(email string) {

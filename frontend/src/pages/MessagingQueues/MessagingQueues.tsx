@@ -3,9 +3,12 @@ import './MessagingQueues.styles.scss';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Modal } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { Calendar, ListMinus } from 'lucide-react';
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { isCloudUser } from 'utils/app';
 
@@ -17,25 +20,37 @@ import { ComingSoon } from './MQCommon/MQCommon';
 
 function MessagingQueues(): JSX.Element {
 	const history = useHistory();
+	const { t } = useTranslation('messagingQueuesKafkaOverview');
 
 	const { confirm } = Modal;
 
 	const showConfirm = (): void => {
+		logEvent('Messaging Queues: View details clicked', {
+			page: 'Messaging Queues Overview',
+			source: 'Consumer Latency view',
+		});
+
 		confirm({
 			icon: <ExclamationCircleFilled />,
-			content:
-				'Before navigating to the details page, please make sure you have configured all the required setup to ensure correct data monitoring.',
+			content: t('confirmModal.content'),
 			className: 'overview-confirm-modal',
 			onOk() {
+				logEvent('Messaging Queues: Proceed button clicked', {
+					page: 'Messaging Queues Overview',
+				});
 				history.push(ROUTES.MESSAGING_QUEUES_DETAIL);
 			},
-			okText: 'Proceed',
+			okText: t('confirmModal.okText'),
 		});
 	};
 
 	const isCloudUserVal = isCloudUser();
 
-	const getStartedRedirect = (link: string): void => {
+	const getStartedRedirect = (link: string, sourceCard: string): void => {
+		logEvent('Messaging Queues: Get started clicked', {
+			source: sourceCard,
+			link: isCloudUserVal ? link : KAFKA_SETUP_DOC_LINK,
+		});
 		if (isCloudUserVal) {
 			history.push(link);
 		} else {
@@ -43,73 +58,78 @@ function MessagingQueues(): JSX.Element {
 		}
 	};
 
+	useEffect(() => {
+		logEvent('Messaging Queues: Overview page visited', {});
+	}, []);
+
 	return (
 		<div className="messaging-queue-container">
 			<div className="messaging-breadcrumb">
 				<ListMinus size={16} />
-				Messaging Queues
+				{t('breadcrumb')}
 			</div>
 			<div className="messaging-header">
-				<div className="header-config">Kafka / Overview</div>
+				<div className="header-config">{t('header')}</div>
 				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
 			<div className="messaging-overview">
-				<p className="overview-text">
-					Start sending data in as little as 20 minutes
-				</p>
-				<p className="overview-subtext">Connect and Monitor Your Data Streams</p>
+				<p className="overview-text">{t('overview.title')}</p>
+				<p className="overview-subtext">{t('overview.subtitle')}</p>
 				<div className="overview-doc-area">
 					<div className="overview-info-card">
 						<div>
-							<p className="card-title">Configure Consumer</p>
-							<p className="card-info-text">
-								Connect your consumer and producer data sources to start monitoring.
-							</p>
+							<p className="card-title">{t('configureConsumer.title')}</p>
+							<p className="card-info-text">{t('configureConsumer.description')}</p>
 						</div>
 						<div className="button-grp">
 							<Button
 								type="default"
 								onClick={(): void =>
-									getStartedRedirect(ROUTES.GET_STARTED_APPLICATION_MONITORING)
+									getStartedRedirect(
+										ROUTES.GET_STARTED_APPLICATION_MONITORING,
+										'Configure Consumer',
+									)
 								}
 							>
-								Get Started
+								{t('configureConsumer.button')}
 							</Button>
 						</div>
 					</div>
 					<div className="overview-info-card middle-card">
 						<div>
-							<p className="card-title">Configure Producer</p>
-							<p className="card-info-text">
-								Connect your consumer and producer data sources to start monitoring.
-							</p>
+							<p className="card-title">{t('configureProducer.title')}</p>
+							<p className="card-info-text">{t('configureProducer.description')}</p>
 						</div>
 						<div className="button-grp">
 							<Button
 								type="default"
 								onClick={(): void =>
-									getStartedRedirect(ROUTES.GET_STARTED_APPLICATION_MONITORING)
+									getStartedRedirect(
+										ROUTES.GET_STARTED_APPLICATION_MONITORING,
+										'Configure Producer',
+									)
 								}
 							>
-								Get Started
+								{t('configureProducer.button')}
 							</Button>
 						</div>
 					</div>
 					<div className="overview-info-card">
 						<div>
-							<p className="card-title">Monitor kafka</p>
-							<p className="card-info-text">
-								Set up your Kafka monitoring to track consumer and producer activities.
-							</p>
+							<p className="card-title">{t('monitorKafka.title')}</p>
+							<p className="card-info-text">{t('monitorKafka.description')}</p>
 						</div>
 						<div className="button-grp">
 							<Button
 								type="default"
 								onClick={(): void =>
-									getStartedRedirect(ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING)
+									getStartedRedirect(
+										ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING,
+										'Monitor kafka',
+									)
 								}
 							>
-								Get Started
+								{t('monitorKafka.button')}
 							</Button>
 						</div>
 					</div>
@@ -125,7 +145,7 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="view-detail-btn">
 							<Button type="primary" onClick={showConfirm}>
-								View Details
+								{t('summarySection.viewDetailsButton')}
 							</Button>
 						</div>
 					</div>

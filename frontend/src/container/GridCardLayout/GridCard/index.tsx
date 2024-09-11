@@ -22,6 +22,7 @@ import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
 import { GridCardGraphProps } from './types';
+import { isDataAvailableByPanelType } from './utils';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
 function GridCardGraph({
@@ -34,6 +35,7 @@ function GridCardGraph({
 	onClickHandler,
 	onDragSelect,
 	customTooltipElement,
+	dataAvailable,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -179,6 +181,11 @@ function GridCardGraph({
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
+			},
+			onSettled: (data) => {
+				dataAvailable?.(
+					isDataAvailableByPanelType(data?.payload?.data, widget?.panelTypes),
+				);
 			},
 		},
 	);

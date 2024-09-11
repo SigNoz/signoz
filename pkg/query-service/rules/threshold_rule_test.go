@@ -42,11 +42,12 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 	}
 
 	cases := []struct {
-		values      v3.Series
-		expectAlert bool
-		compareOp   string
-		matchType   string
-		target      float64
+		values              v3.Series
+		expectAlert         bool
+		compareOp           string
+		matchType           string
+		target              float64
+		expectedAlertSample v3.Point
 	}{
 		// Test cases for Equals Always
 		{
@@ -59,10 +60,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 0.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "3", // Equals
-			matchType:   "2", // Always
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "2", // Always
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 0.0},
 		},
 		{
 			values: v3.Series{
@@ -120,10 +122,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 0.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "3", // Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 0.0},
 		},
 		{
 			values: v3.Series{
@@ -135,10 +138,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 1.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "3", // Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 0.0},
 		},
 		{
 			values: v3.Series{
@@ -150,10 +154,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 1.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "3", // Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 0.0},
 		},
 		{
 			values: v3.Series{
@@ -181,10 +186,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "1", // Greater Than
-			matchType:   "2", // Always
-			target:      1.5,
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "2", // Always
+			target:              1.5,
+			expectedAlertSample: v3.Point{Value: 2.0},
 		},
 		{
 			values: v3.Series{
@@ -212,10 +218,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "1", // Greater Than
-			matchType:   "1", // Once
-			target:      4.5,
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "1", // Once
+			target:              4.5,
+			expectedAlertSample: v3.Point{Value: 10.0},
 		},
 		{
 			values: v3.Series{
@@ -273,10 +280,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 1.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "4", // Not Equals
-			matchType:   "2", // Always
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "2", // Always
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 1.0},
 		},
 		{
 			values: v3.Series{
@@ -304,10 +312,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 0.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "4", // Not Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 1.0},
 		},
 		{
 			values: v3.Series{
@@ -334,10 +343,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 1.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "4", // Not Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 1.0},
 		},
 		{
 			values: v3.Series{
@@ -349,10 +359,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 1.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "4", // Not Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "1", // Once
+			target:              0.0,
+			expectedAlertSample: v3.Point{Value: 1.0},
 		},
 		// Test cases for Less Than Always
 		{
@@ -365,10 +376,27 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 1.5},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "2", // Less Than
-			matchType:   "2", // Always
-			target:      4,
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "2", // Always
+			target:              4,
+			expectedAlertSample: v3.Point{Value: 1.5},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.5},
+					{Value: 2.5},
+					{Value: 1.5},
+					{Value: 3.5},
+					{Value: 1.5},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "2", // Always
+			target:              4,
+			expectedAlertSample: v3.Point{Value: 3.5},
 		},
 		{
 			values: v3.Series{
@@ -396,10 +424,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 2.5},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "2", // Less Than
-			matchType:   "1", // Once
-			target:      4,
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "1", // Once
+			target:              4,
+			expectedAlertSample: v3.Point{Value: 2.5},
 		},
 		{
 			values: v3.Series{
@@ -427,10 +456,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "3", // Equals
-			matchType:   "3", // OnAverage
-			target:      6.0,
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "3", // OnAverage
+			target:              6.0,
+			expectedAlertSample: v3.Point{Value: 6.0},
 		},
 		{
 			values: v3.Series{
@@ -457,10 +487,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "4", // Not Equals
-			matchType:   "3", // OnAverage
-			target:      4.5,
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "3", // OnAverage
+			target:              4.5,
+			expectedAlertSample: v3.Point{Value: 6.0},
 		},
 		{
 			values: v3.Series{
@@ -487,10 +518,43 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "1", // Greater Than
-			matchType:   "3", // OnAverage
-			target:      4.5,
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "3", // OnAverage
+			target:              4.5,
+			expectedAlertSample: v3.Point{Value: 6.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 11.0},
+					{Value: 4.0},
+					{Value: 3.0},
+					{Value: 7.0},
+					{Value: 12.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "1", // Above
+			matchType:           "2", // Always
+			target:              2.0,
+			expectedAlertSample: v3.Point{Value: 3.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 11.0},
+					{Value: 4.0},
+					{Value: 3.0},
+					{Value: 7.0},
+					{Value: 12.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Below
+			matchType:           "2", // Always
+			target:              13.0,
+			expectedAlertSample: v3.Point{Value: 12.0},
 		},
 		{
 			values: v3.Series{
@@ -502,10 +566,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "2", // Less Than
-			matchType:   "3", // OnAverage
-			target:      12.0,
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "3", // OnAverage
+			target:              12.0,
+			expectedAlertSample: v3.Point{Value: 6.0},
 		},
 		// Test cases for InTotal
 		{
@@ -518,10 +583,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 2.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "3", // Equals
-			matchType:   "4", // InTotal
-			target:      30.0,
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "4", // InTotal
+			target:              30.0,
+			expectedAlertSample: v3.Point{Value: 30.0},
 		},
 		{
 			values: v3.Series{
@@ -544,10 +610,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 10.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "4", // Not Equals
-			matchType:   "4", // InTotal
-			target:      9.0,
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "4", // InTotal
+			target:              9.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
 		},
 		{
 			values: v3.Series{
@@ -567,10 +634,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 10.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "1", // Greater Than
-			matchType:   "4", // InTotal
-			target:      10.0,
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "4", // InTotal
+			target:              10.0,
+			expectedAlertSample: v3.Point{Value: 20.0},
 		},
 		{
 			values: v3.Series{
@@ -591,10 +659,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 					{Value: 10.0},
 				},
 			},
-			expectAlert: true,
-			compareOp:   "2", // Less Than
-			matchType:   "4", // InTotal
-			target:      30.0,
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "4", // InTotal
+			target:              30.0,
+			expectedAlertSample: v3.Point{Value: 20.0},
 		},
 		{
 			values: v3.Series{
@@ -616,7 +685,7 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
+		rule, err := NewThresholdRule("69", &postableRule, fm, nil, WithEvalDelay(2*time.Minute))
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -626,8 +695,11 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		_, shoulAlert := rule.shouldAlert(c.values)
+		smpl, shoulAlert := rule.shouldAlert(c.values)
 		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
+		if shoulAlert {
+			assert.Equal(t, c.expectedAlertSample.Value, smpl.V, "Test case %d", idx)
+		}
 	}
 }
 
@@ -702,7 +774,7 @@ func TestPrepareLinksToLogs(t *testing.T) {
 	}
 	fm := featureManager.StartManager()
 
-	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
+	rule, err := NewThresholdRule("69", &postableRule, fm, nil, WithEvalDelay(2*time.Minute))
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -744,7 +816,7 @@ func TestPrepareLinksToTraces(t *testing.T) {
 	}
 	fm := featureManager.StartManager()
 
-	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
+	rule, err := NewThresholdRule("69", &postableRule, fm, nil, WithEvalDelay(2*time.Minute))
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -820,7 +892,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
+		rule, err := NewThresholdRule("69", &postableRule, fm, nil, WithEvalDelay(2*time.Minute))
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -873,17 +945,17 @@ func TestThresholdRuleEvalDelay(t *testing.T) {
 
 	fm := featureManager.StartManager()
 	for idx, c := range cases {
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil) // no eval delay
+		rule, err := NewThresholdRule("69", &postableRule, fm, nil) // no eval delay
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		params := rule.prepareQueryRange(ts)
-
+		params, err := rule.prepareQueryRange(ts)
+		assert.NoError(t, err)
 		assert.Equal(t, c.expectedQuery, params.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
 
-		secondTimeParams := rule.prepareQueryRange(ts)
-
+		secondTimeParams, err := rule.prepareQueryRange(ts)
+		assert.NoError(t, err)
 		assert.Equal(t, c.expectedQuery, secondTimeParams.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
 	}
 }
@@ -922,17 +994,17 @@ func TestThresholdRuleClickHouseTmpl(t *testing.T) {
 
 	fm := featureManager.StartManager()
 	for idx, c := range cases {
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
+		rule, err := NewThresholdRule("69", &postableRule, fm, nil, WithEvalDelay(2*time.Minute))
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		params := rule.prepareQueryRange(ts)
-
+		params, err := rule.prepareQueryRange(ts)
+		assert.NoError(t, err)
 		assert.Equal(t, c.expectedQuery, params.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
 
-		secondTimeParams := rule.prepareQueryRange(ts)
-
+		secondTimeParams, err := rule.prepareQueryRange(ts)
+		assert.NoError(t, err)
 		assert.Equal(t, c.expectedQuery, secondTimeParams.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
 	}
 }
@@ -1065,7 +1137,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "")
 
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, reader)
+		rule, err := NewThresholdRule("69", &postableRule, fm, reader)
 		rule.temporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
@@ -1075,11 +1147,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		queriers := Queriers{
-			Ch: mock,
-		}
-
-		retVal, err := rule.Eval(context.Background(), time.Now(), &queriers)
+		retVal, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1168,7 +1236,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "")
 
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, reader)
+		rule, err := NewThresholdRule("69", &postableRule, fm, reader)
 		rule.temporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
@@ -1178,11 +1246,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		queriers := Queriers{
-			Ch: mock,
-		}
-
-		retVal, err := rule.Eval(context.Background(), time.Now(), &queriers)
+		retVal, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
