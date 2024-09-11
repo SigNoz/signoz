@@ -685,7 +685,7 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
+		rule, err := NewThresholdRule("69", &postableRule, fm, nil, WithEvalDelay(2*time.Minute))
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -774,7 +774,7 @@ func TestPrepareLinksToLogs(t *testing.T) {
 	}
 	fm := featureManager.StartManager()
 
-	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
+	rule, err := NewThresholdRule("69", &postableRule, fm, nil, WithEvalDelay(2*time.Minute))
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -816,7 +816,7 @@ func TestPrepareLinksToTraces(t *testing.T) {
 	}
 	fm := featureManager.StartManager()
 
-	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
+	rule, err := NewThresholdRule("69", &postableRule, fm, nil, WithEvalDelay(2*time.Minute))
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -892,7 +892,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
+		rule, err := NewThresholdRule("69", &postableRule, fm, nil, WithEvalDelay(2*time.Minute))
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -945,17 +945,17 @@ func TestThresholdRuleEvalDelay(t *testing.T) {
 
 	fm := featureManager.StartManager()
 	for idx, c := range cases {
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil) // no eval delay
+		rule, err := NewThresholdRule("69", &postableRule, fm, nil) // no eval delay
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		params := rule.prepareQueryRange(ts)
-
+		params, err := rule.prepareQueryRange(ts)
+		assert.NoError(t, err)
 		assert.Equal(t, c.expectedQuery, params.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
 
-		secondTimeParams := rule.prepareQueryRange(ts)
-
+		secondTimeParams, err := rule.prepareQueryRange(ts)
+		assert.NoError(t, err)
 		assert.Equal(t, c.expectedQuery, secondTimeParams.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
 	}
 }
@@ -994,17 +994,17 @@ func TestThresholdRuleClickHouseTmpl(t *testing.T) {
 
 	fm := featureManager.StartManager()
 	for idx, c := range cases {
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{EvalDelay: 2 * time.Minute}, fm, nil)
+		rule, err := NewThresholdRule("69", &postableRule, fm, nil, WithEvalDelay(2*time.Minute))
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		params := rule.prepareQueryRange(ts)
-
+		params, err := rule.prepareQueryRange(ts)
+		assert.NoError(t, err)
 		assert.Equal(t, c.expectedQuery, params.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
 
-		secondTimeParams := rule.prepareQueryRange(ts)
-
+		secondTimeParams, err := rule.prepareQueryRange(ts)
+		assert.NoError(t, err)
 		assert.Equal(t, c.expectedQuery, secondTimeParams.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
 	}
 }
@@ -1137,7 +1137,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "")
 
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, reader)
+		rule, err := NewThresholdRule("69", &postableRule, fm, reader)
 		rule.temporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
@@ -1147,11 +1147,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		queriers := Queriers{
-			Ch: mock,
-		}
-
-		retVal, err := rule.Eval(context.Background(), time.Now(), &queriers)
+		retVal, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1240,7 +1236,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "")
 
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, reader)
+		rule, err := NewThresholdRule("69", &postableRule, fm, reader)
 		rule.temporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
@@ -1250,11 +1246,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		queriers := Queriers{
-			Ch: mock,
-		}
-
-		retVal, err := rule.Eval(context.Background(), time.Now(), &queriers)
+		retVal, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}

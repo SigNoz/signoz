@@ -18,11 +18,9 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		tr, err := baserules.NewThresholdRule(
 			ruleId,
 			opts.Rule,
-			baserules.ThresholdRuleOpts{
-				EvalDelay: opts.ManagerOpts.EvalDelay,
-			},
 			opts.FF,
 			opts.Reader,
+			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
 		)
 
 		if err != nil {
@@ -41,8 +39,8 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			ruleId,
 			opts.Rule,
 			opts.Logger,
-			baserules.PromRuleOpts{},
 			opts.Reader,
+			opts.ManagerOpts.PqlEngine,
 		)
 
 		if err != nil {
