@@ -1,10 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { Time } from 'container/TopNav/DateTimeSelection/config';
-import {
-	CustomTimeType,
-	Time as TimeV2,
-} from 'container/TopNav/DateTimeSelectionV2/config';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
@@ -13,7 +8,8 @@ import { DataSource } from 'types/common/queryBuilder';
 export const getPodQueryPayload = (
 	clusterName: string,
 	podName: string,
-	globalSelectedInterval: Time | TimeV2 | CustomTimeType,
+	start: number,
+	end: number,
 ): GetQueryResultsProps[] => [
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -108,9 +104,10 @@ export const getPodQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -205,9 +202,10 @@ export const getPodQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -372,9 +370,10 @@ export const getPodQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -539,9 +538,10 @@ export const getPodQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -706,9 +706,11 @@ export const getPodQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
+
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -873,9 +875,10 @@ export const getPodQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -1038,10 +1041,11 @@ export const getPodQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		fillGaps: false,
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -1133,16 +1137,18 @@ export const getPodQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 ];
 
 export const getNodeQueryPayload = (
 	clusterName: string,
 	nodeName: string,
-	globalSelectedInterval: Time | TimeV2 | CustomTimeType,
+	start: number,
+	end: number,
 ): GetQueryResultsProps[] => [
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -1293,10 +1299,11 @@ export const getNodeQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		fillGaps: false,
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -1445,10 +1452,11 @@ export const getNodeQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		fillGaps: false,
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -1554,9 +1562,10 @@ export const getNodeQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -1717,15 +1726,17 @@ export const getNodeQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 ];
 
 export const getHostQueryPayload = (
 	hostName: string,
-	globalSelectedInterval: Time | TimeV2 | CustomTimeType,
+	start: number,
+	end: number,
 ): GetQueryResultsProps[] => [
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -1857,9 +1868,10 @@ export const getHostQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -1941,9 +1953,10 @@ export const getHostQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -2102,9 +2115,10 @@ export const getHostQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -2200,9 +2214,10 @@ export const getHostQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -2292,9 +2307,10 @@ export const getHostQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -2384,9 +2400,10 @@ export const getHostQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -2476,9 +2493,10 @@ export const getHostQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -2568,9 +2586,10 @@ export const getHostQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -2643,9 +2662,10 @@ export const getHostQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -2741,9 +2761,10 @@ export const getHostQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -2831,9 +2852,10 @@ export const getHostQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -2929,9 +2951,10 @@ export const getHostQueryPayload = (
 			],
 			queryType: EQueryType.QUERY_BUILDER,
 		},
-		globalSelectedInterval,
 		variables: {},
 		formatForWeb: false,
+		start,
+		end,
 	},
 ];
 

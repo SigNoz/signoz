@@ -24,15 +24,8 @@ export async function GetMetricQueryRange(
 	version: string,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
-	extendedEnd?: boolean,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
-	console.log(extendedEnd);
-	if (extendedEnd) {
-		const currentTime = Date.now();
-		queryPayload.end += 3 * 60 * 60 * 1000;
-		queryPayload.end = Math.min(queryPayload.end, currentTime);
-	}
 	const response = await getMetricsQueryRange(
 		queryPayload,
 		version || 'v3',
@@ -85,7 +78,7 @@ export interface GetQueryResultsProps {
 	query: Query;
 	graphType: PANEL_TYPES;
 	selectedTime: timePreferenceType;
-	globalSelectedInterval: Time | TimeV2 | CustomTimeType;
+	globalSelectedInterval?: Time | TimeV2 | CustomTimeType;
 	variables?: Record<string, unknown>;
 	params?: Record<string, unknown>;
 	fillGaps?: boolean;
@@ -94,4 +87,6 @@ export interface GetQueryResultsProps {
 		pagination?: Pagination;
 		selectColumns?: any;
 	};
+	start?: number;
+	end?: number;
 }
