@@ -12,17 +12,28 @@ import {
 	Typography,
 } from 'antd';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronRight, Search } from 'lucide-react';
 import { ReactNode, useState } from 'react';
+import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from './ActionItem';
 import TableView from './TableView';
+import { removeEscapeCharacters } from './utils';
 
 interface OverviewProps {
 	logData: ILog;
 	isListViewPanel?: boolean;
+	selectedOptions: OptionsQuery;
+	listViewPanelSelectedFields?: IField[] | null;
+	onGroupByAttribute?: (
+		fieldKey: string,
+		isJSON?: boolean,
+		dataType?: DataTypes,
+	) => Promise<void>;
 }
 
 type Props = OverviewProps &
@@ -34,6 +45,9 @@ function Overview({
 	onAddToQuery,
 	onClickActionItem,
 	isListViewPanel = false,
+	selectedOptions,
+	onGroupByAttribute,
+	listViewPanelSelectedFields,
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
@@ -53,8 +67,7 @@ function Overview({
 			enabled: false,
 		},
 		fontWeight: 400,
-		// fontFamily: 'SF Mono',
-		fontFamily: 'Space Mono',
+		fontFamily: 'Geist Mono',
 		fontSize: 13,
 		lineHeight: '18px',
 		colorDecorators: true,
@@ -80,12 +93,6 @@ function Overview({
 			colors: {
 				'editor.background': Color.BG_INK_400,
 			},
-			// fontFamily: 'SF Mono',
-			fontFamily: 'Space Mono',
-			fontSize: 12,
-			fontWeight: 'normal',
-			lineHeight: 18,
-			letterSpacing: -0.06,
 		});
 	}
 
@@ -118,12 +125,17 @@ function Overview({
 						children: (
 							<div className="logs-body-content">
 								<MEditor
-									value={logData.body}
+									value={removeEscapeCharacters(logData.body)}
 									language="json"
 									options={options}
 									onChange={(): void => {}}
 									height="20vh"
 									theme={isDarkMode ? 'my-theme' : 'light'}
+									onMount={(_, monaco): void => {
+										document.fonts.ready.then(() => {
+											monaco.editor.remeasureFonts();
+										});
+									}}
 									// eslint-disable-next-line react/jsx-no-bind
 									beforeMount={setEditorTheme}
 								/>
@@ -200,8 +212,11 @@ function Overview({
 									logData={logData}
 									onAddToQuery={onAddToQuery}
 									fieldSearchInput={fieldSearchInput}
+									onGroupByAttribute={onGroupByAttribute}
 									onClickActionItem={onClickActionItem}
 									isListViewPanel={isListViewPanel}
+									selectedOptions={selectedOptions}
+									listViewPanelSelectedFields={listViewPanelSelectedFields}
 								/>
 							</>
 						),
@@ -215,6 +230,8 @@ function Overview({
 
 Overview.defaultProps = {
 	isListViewPanel: false,
+	listViewPanelSelectedFields: null,
+	onGroupByAttribute: undefined,
 };
 
 export default Overview;

@@ -8,7 +8,7 @@
 	.label {
 		color: var(--text-robin-400);
 		font-family: SF Mono;
-		font-family: 'Space Mono', monospace;
+		font-family: 'Geist Mono';
 		font-size: 13px;
 		font-weight: var(--font-weight-normal);
 		line-height: 18px;
@@ -18,6 +18,7 @@
 
 	.tags {
 		display: flex;
-		gap: 8;
+		flex-wrap: wrap;
+		gap: 8px;
 	}
 }

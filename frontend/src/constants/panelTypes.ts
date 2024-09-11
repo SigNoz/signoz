@@ -40,4 +40,5 @@ export const getComponentForPanelType = (
 export const AVAILABLE_EXPORT_PANEL_TYPES = [
 	PANEL_TYPES.TIME_SERIES,
 	PANEL_TYPES.TABLE,
+	PANEL_TYPES.LIST,
 ];

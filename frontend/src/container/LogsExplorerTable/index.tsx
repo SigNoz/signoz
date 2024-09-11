@@ -30,6 +30,7 @@ function LogsExplorerTable({
 			queryTableData={data}
 			loading={isLoading}
 			rootClassName="logs-table"
+			sticky
 		/>
 	);
 }

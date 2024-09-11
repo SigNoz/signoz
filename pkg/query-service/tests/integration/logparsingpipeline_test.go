@@ -512,7 +512,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 	postablePipelines logparsingpipeline.PostablePipelines,
 	expectedStatusCode int,
 ) *logparsingpipeline.PipelinesResponse {
-	req, err := NewAuthenticatedTestRequest(
+	req, err := AuthenticatedRequestForTest(
 		tb.testUser, "/api/v1/logs/pipelines", postablePipelines,
 	)
 	if err != nil {
@@ -562,7 +562,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQS(
 }
 
 func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.PipelinesResponse {
-	req, err := NewAuthenticatedTestRequest(
+	req, err := AuthenticatedRequestForTest(
 		tb.testUser, "/api/v1/logs/pipelines/latest", nil,
 	)
 	if err != nil {

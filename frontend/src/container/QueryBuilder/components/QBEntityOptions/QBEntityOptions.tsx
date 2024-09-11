@@ -4,6 +4,8 @@ import './QBEntityOptions.styles.scss';
 import { Button, Col, Tooltip } from 'antd';
 import { noop } from 'antd/lib/_util/warning';
 import cx from 'classnames';
+import ROUTES from 'constants/routes';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction } from 'lodash-es';
 import {
 	ChevronDown,
@@ -13,6 +15,7 @@ import {
 	EyeOff,
 	Trash2,
 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import {
 	IBuilderQuery,
 	QueryFunctionProps,
@@ -35,6 +38,7 @@ interface QBEntityOptionsProps {
 	onQueryFunctionsUpdates?: (functions: QueryFunctionProps[]) => void;
 	showDeleteButton: boolean;
 	isListViewPanel?: boolean;
+	index?: number;
 }
 
 export default function QBEntityOptions({
@@ -51,12 +55,19 @@ export default function QBEntityOptions({
 	showDeleteButton,
 	onQueryFunctionsUpdates,
 	isListViewPanel,
+	index,
 }: QBEntityOptionsProps): JSX.Element {
 	const handleCloneEntity = (): void => {
 		if (isFunction(onCloneQuery)) {
 			onCloneQuery(entityType, entityData);
 		}
 	};
+
+	const { pathname } = useLocation();
+
+	const isLogsExplorerPage = pathname === ROUTES.LOGS_EXPLORER;
+
+	const { lastUsedQuery } = useQueryBuilder();
 
 	const isLogsDataSource = query?.dataSource === DataSource.LOGS;
 
@@ -98,6 +109,7 @@ export default function QBEntityOptions({
 								className={cx(
 									'periscope-btn',
 									entityType === 'query' ? 'query-name' : 'formula-name',
+									isLogsExplorerPage && lastUsedQuery === index ? 'sync-btn' : '',
 								)}
 							>
 								{entityData.queryName}
@@ -143,4 +155,5 @@ QBEntityOptions.defaultProps = {
 	onQueryFunctionsUpdates: undefined,
 	showFunctions: false,
 	onCloneQuery: noop,
+	index: 0,
 };

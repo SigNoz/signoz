@@ -19,6 +19,7 @@ export function QueryTable({
 	downloadOption,
 	columns,
 	dataSource,
+	sticky,
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
@@ -48,6 +49,12 @@ export function QueryTable({
 
 	const tableColumns = modifyColumns ? modifyColumns(newColumns) : newColumns;
 
+	const paginationConfig = {
+		pageSize: 10,
+		showSizeChanger: false,
+		hideOnSinglePage: true,
+	};
+
 	return (
 		<div className="query-table">
 			{isDownloadEnabled && (
@@ -64,6 +71,8 @@ export function QueryTable({
 				tableLayout="fixed"
 				dataSource={newDataSource}
 				scroll={{ x: true }}
+				pagination={paginationConfig}
+				sticky={sticky}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}
 			/>

@@ -348,6 +348,7 @@ export const Query = memo(function Query({
 				onQueryFunctionsUpdates={handleQueryFunctionsUpdates}
 				showDeleteButton={currentQuery.builder.queryData.length > 1}
 				isListViewPanel={isListViewPanel}
+				index={index}
 			/>
 
 			{!isCollapse && (
@@ -544,19 +545,21 @@ export const Query = memo(function Query({
 									)}
 								</Col>
 
-								{isVersionV4 && isMetricsDataSource && panelType === PANEL_TYPES.TABLE && (
-									<Col flex="1 1 12.5rem">
-										<Row>
-											<Col span={6}>
-												<FilterLabel label="Reduce to" />
-											</Col>
+								{isVersionV4 &&
+									isMetricsDataSource &&
+									(panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.PIE) && (
+										<Col flex="1 1 12.5rem">
+											<Row>
+												<Col span={6}>
+													<FilterLabel label="Reduce to" />
+												</Col>
 
-											<Col span={18}>
-												<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
-											</Col>
-										</Row>
-									</Col>
-								)}
+												<Col span={18}>
+													<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+												</Col>
+											</Row>
+										</Col>
+									)}
 							</Row>
 						</Col>
 					)}

@@ -5,7 +5,6 @@
 
 	.app-content {
 		width: calc(100% - 64px);
-		overflow: auto;
 		z-index: 0;
 
 		.content-container {
@@ -22,6 +21,71 @@
 		.app-content {
 			width: calc(100% - 240px);
 		}
+	}
+}
+
+.chat-support-gateway {
+	position: fixed;
+	bottom: 20px;
+	right: 20px;
+	z-index: 1000;
+
+	.chat-support-gateway-btn {
+		max-width: 48px;
+		width: 48px;
+		max-height: 48px;
+		height: 48px;
+		padding: 12px;
+		border-radius: 50%;
+
+		display: flex;
+		justify-content: center;
+		align-items: center;
+
+		background-color: #f25733;
+		border: none;
+
+		&:hover {
+			color: white !important;
+			border-color: white !important;
+		}
+
+		.chat-support-gateway-btn-icon {
+			fill: white;
+		}
+	}
+}
+
+.add-credit-card-btn,
+.cancel-btn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.highlight-text {
+	border-radius: 2px;
+	background: rgba(78, 116, 248, 0.1);
+	padding-right: 4px;
+	font-family: 'Geist Mono';
+	color: var(--bg-robin-500);
+}
+
+.add-credit-card-modal {
+	.ant-modal-footer {
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	.cancel-btn {
+		border-radius: 2px;
+		border: none;
+		background: var(--bg-slate-500, #161922);
+		box-shadow: none;
+	}
+
+	.add-credit-card-btn {
+		box-shadow: none;
 	}
 }
 

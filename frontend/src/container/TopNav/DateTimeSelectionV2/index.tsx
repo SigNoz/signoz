@@ -23,11 +23,11 @@ import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
-import GetMinMax from 'lib/getMinMax';
+import GetMinMax, { isValidTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { isObject } from 'lodash-es';
-import { Check, Copy, Info, Send } from 'lucide-react';
+import { Check, Copy, Info, Send, Undo } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { connect, useSelector } from 'react-redux';
@@ -44,6 +44,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../AutoRefreshV2';
 import { DateTimeRangeType } from '../CustomDateTimeModal';
+import { RelativeTimeMap } from '../DateTimeSelection/config';
 import {
 	convertOldTimeToNewValidCustomTimeFormat,
 	CustomTimeType,
@@ -59,11 +60,14 @@ import { Form, FormContainer, FormItem } from './styles';
 
 function DateTimeSelection({
 	showAutoRefresh,
+	showRefreshText = true,
 	hideShareModal = false,
 	location,
 	updateTimeInterval,
 	globalTimeLoading,
+	showResetButton = false,
 	showOldExplorerCTA = false,
+	defaultRelativeTime = RelativeTimeMap['6hr'] as Time,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
@@ -73,6 +77,7 @@ function DateTimeSelection({
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
+	const relativeTimeFromUrl = urlQuery.get(QueryParams.relativeTime);
 	const queryClient = useQueryClient();
 	const [enableAbsoluteTime, setEnableAbsoluteTime] = useState(false);
 	const [isValidteRelativeTime, setIsValidteRelativeTime] = useState(false);
@@ -241,22 +246,25 @@ function DateTimeSelection({
 		return defaultSelectedOption;
 	};
 
-	const updateLocalStorageForRoutes = (value: Time | string): void => {
-		const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
-		if (preRoutes !== null) {
-			const preRoutesObject = JSON.parse(preRoutes);
+	const updateLocalStorageForRoutes = useCallback(
+		(value: Time | string): void => {
+			const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
+			if (preRoutes !== null) {
+				const preRoutesObject = JSON.parse(preRoutes);
 
-			const preRoute = {
-				...preRoutesObject,
-			};
-			preRoute[location.pathname] = value;
+				const preRoute = {
+					...preRoutesObject,
+				};
+				preRoute[location.pathname] = value;
 
-			setLocalStorageKey(
-				LOCALSTORAGE.METRICS_TIME_IN_DURATION,
-				JSON.stringify(preRoute),
-			);
-		}
-	};
+				setLocalStorageKey(
+					LOCALSTORAGE.METRICS_TIME_IN_DURATION,
+					JSON.stringify(preRoute),
+				);
+			}
+		},
+		[location.pathname],
+	);
 
 	const onLastRefreshHandler = useCallback(() => {
 		const currentTime = dayjs();
@@ -296,48 +304,65 @@ function DateTimeSelection({
 		[location.pathname],
 	);
 
-	const onSelectHandler = (value: Time | CustomTimeType): void => {
-		if (value !== 'custom') {
-			setIsOpen(false);
-			updateTimeInterval(value);
-			updateLocalStorageForRoutes(value);
-			setIsValidteRelativeTime(true);
-			if (refreshButtonHidden) {
-				setRefreshButtonHidden(false);
+	const onSelectHandler = useCallback(
+		(value: Time | CustomTimeType): void => {
+			if (value !== 'custom') {
+				setIsOpen(false);
+				updateTimeInterval(value);
+				updateLocalStorageForRoutes(value);
+				setIsValidteRelativeTime(true);
+				if (refreshButtonHidden) {
+					setRefreshButtonHidden(false);
+				}
+			} else {
+				setRefreshButtonHidden(true);
+				setCustomDTPickerVisible(true);
+				setIsValidteRelativeTime(false);
+				setEnableAbsoluteTime(false);
+
+				return;
 			}
-		} else {
-			setRefreshButtonHidden(true);
-			setCustomDTPickerVisible(true);
-			setIsValidteRelativeTime(false);
-			setEnableAbsoluteTime(false);
 
-			return;
-		}
+			if (!isLogsExplorerPage) {
+				urlQuery.delete('startTime');
+				urlQuery.delete('endTime');
 
-		if (!isLogsExplorerPage) {
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
+				urlQuery.set(QueryParams.relativeTime, value);
 
-			urlQuery.set(QueryParams.relativeTime, value);
+				const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+				history.replace(generatedUrl);
+			}
 
-			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
-		}
+			// For logs explorer - time range handling is managed in useCopyLogLink.ts:52
 
-		// For logs explorer - time range handling is managed in useCopyLogLink.ts:52
-
-		if (!stagedQuery) {
-			return;
-		}
-		// the second boolean param directs the qb about the time change so to merge the query and retain the current state
-		// we removed update step interval to stop auto updating the value on time change
-		initQueryBuilderData(stagedQuery, true);
-	};
+			if (!stagedQuery) {
+				return;
+			}
+			// the second boolean param directs the qb about the time change so to merge the query and retain the current state
+			// we removed update step interval to stop auto updating the value on time change
+			initQueryBuilderData(stagedQuery, true);
+		},
+		[
+			initQueryBuilderData,
+			isLogsExplorerPage,
+			location.pathname,
+			refreshButtonHidden,
+			stagedQuery,
+			updateLocalStorageForRoutes,
+			updateTimeInterval,
+			urlQuery,
+		],
+	);
 
 	const onRefreshHandler = (): void => {
 		onSelectHandler(selectedTime);
 		onLastRefreshHandler();
 	};
+	const handleReset = useCallback(() => {
+		if (defaultRelativeTime) {
+			onSelectHandler(defaultRelativeTime);
+		}
+	}, [defaultRelativeTime, onSelectHandler]);
 
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
 		if (dateTimeRange !== null) {
@@ -404,9 +429,18 @@ function DateTimeSelection({
 		time: Time,
 		currentRoute: string,
 	): Time | CustomTimeType => {
+		// if the relativeTime param is present in the url give top most preference to the same
+		// if the relativeTime param is not valid then move to next preference
+		if (relativeTimeFromUrl != null && isValidTimeFormat(relativeTimeFromUrl)) {
+			return relativeTimeFromUrl as Time;
+		}
+
+		// if the startTime and endTime params are present in the url give next preference to the them.
 		if (searchEndTime !== null && searchStartTime !== null) {
 			return 'custom';
 		}
+
+		// if nothing is present in the url for time range then rely on the local storage values
 		if (
 			(localstorageEndTime === null || localstorageStartTime === null) &&
 			time === 'custom'
@@ -414,6 +448,7 @@ function DateTimeSelection({
 			return getDefaultOption(currentRoute);
 		}
 
+		// if not present in the local storage as well then rely on the defaults set for the page
 		if (OLD_RELATIVE_TIME_VALUES.indexOf(time) > -1) {
 			return convertOldTimeToNewValidCustomTimeFormat(time);
 		}
@@ -435,6 +470,22 @@ function DateTimeSelection({
 		}
 
 		const currentRoute = location.pathname;
+
+		// set the default relative time for alert history and overview pages if relative time is not specified
+		if (
+			(!urlQuery.has(QueryParams.startTime) ||
+				!urlQuery.has(QueryParams.endTime)) &&
+			!urlQuery.has(QueryParams.relativeTime) &&
+			(currentRoute === ROUTES.ALERT_OVERVIEW ||
+				currentRoute === ROUTES.ALERT_HISTORY)
+		) {
+			updateTimeInterval(defaultRelativeTime);
+			urlQuery.set(QueryParams.relativeTime, defaultRelativeTime);
+			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			history.replace(generatedUrl);
+			return;
+		}
+
 		const time = getDefaultTime(currentRoute);
 
 		const currentOptions = getOptions(currentRoute);
@@ -448,12 +499,15 @@ function DateTimeSelection({
 
 		setRefreshButtonHidden(updatedTime === 'custom');
 
-		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
+		if (updatedTime !== 'custom') {
+			updateTimeInterval(updatedTime);
+		} else {
+			updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
+		}
 
 		if (updatedTime !== 'custom') {
 			urlQuery.delete('startTime');
 			urlQuery.delete('endTime');
-
 			urlQuery.set(QueryParams.relativeTime, updatedTime);
 		} else {
 			const startTime = preStartTime.toString();
@@ -461,6 +515,7 @@ function DateTimeSelection({
 
 			urlQuery.set(QueryParams.startTime, startTime);
 			urlQuery.set(QueryParams.endTime, endTime);
+			urlQuery.delete(QueryParams.relativeTime);
 		}
 
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
@@ -560,12 +615,25 @@ function DateTimeSelection({
 
 	return (
 		<div className="date-time-selector">
+			{showResetButton && selectedTime !== defaultRelativeTime && (
+				<FormItem>
+					<Button
+						type="default"
+						className="reset-button"
+						onClick={handleReset}
+						title={`Reset to ${defaultRelativeTime}`}
+						icon={<Undo size={14} />}
+					>
+						Reset
+					</Button>
+				</FormItem>
+			)}
 			{showOldExplorerCTA && (
 				<div style={{ marginRight: 12 }}>
 					<NewExplorerCTA />
 				</div>
 			)}
-			{!hasSelectedTimeError && !refreshButtonHidden && (
+			{!hasSelectedTimeError && !refreshButtonHidden && showRefreshText && (
 				<RefreshText
 					{...{
 						onLastRefreshHandler,
@@ -649,13 +717,19 @@ function DateTimeSelection({
 
 interface DateTimeSelectionV2Props {
 	showAutoRefresh: boolean;
+	showRefreshText?: boolean;
 	hideShareModal?: boolean;
 	showOldExplorerCTA?: boolean;
+	showResetButton?: boolean;
+	defaultRelativeTime?: Time;
 }
 
 DateTimeSelection.defaultProps = {
 	hideShareModal: false,
 	showOldExplorerCTA: false,
+	showRefreshText: true,
+	showResetButton: false,
+	defaultRelativeTime: RelativeTimeMap['6hr'] as Time,
 };
 interface DispatchProps {
 	updateTimeInterval: (

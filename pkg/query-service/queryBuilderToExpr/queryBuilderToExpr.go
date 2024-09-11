@@ -53,48 +53,34 @@ func Parse(filters *v3.FilterSet) (string, error) {
 			return "", fmt.Errorf("operator not supported")
 		}
 
-		// TODO(Raj): Remove the use of dot replaced alternative when key
-		// contains underscore after dots are supported in keys
-		names := []string{getName(v.Key)}
-		if strings.Contains(v.Key.Key, "_") {
-			dotKey := v.Key
-			dotKey.Key = strings.Replace(v.Key.Key, "_", ".", -1)
-			names = append(names, getName(dotKey))
-		}
+		name := getName(v.Key)
 
-		filterParts := []string{}
-		for _, name := range names {
-			var filter string
+		var filter string
 
-			switch v.Operator {
-			// uncomment following lines when new version of expr is used
-			// case v3.FilterOperatorIn, v3.FilterOperatorNotIn:
-			// 	filter = fmt.Sprintf("%s %s list%s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
+		switch v.Operator {
+		// uncomment following lines when new version of expr is used
+		// case v3.FilterOperatorIn, v3.FilterOperatorNotIn:
+		// 	filter = fmt.Sprintf("%s %s list%s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
 
-			case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
-				filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], getTypeName(v.Key.Type))
+		case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
+			filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], getTypeName(v.Key.Type))
 
-			default:
-				filter = fmt.Sprintf("%s %s %s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
+		default:
+			filter = fmt.Sprintf("%s %s %s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
 
-				if v.Operator == v3.FilterOperatorContains || v.Operator == v3.FilterOperatorNotContains {
-					// `contains` and `ncontains` should be case insensitive to match how they work when querying logs.
-					filter = fmt.Sprintf(
-						"lower(%s) %s lower(%s)",
-						name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value),
-					)
-				}
-
-				// Avoid running operators on nil values
-				if v.Operator != v3.FilterOperatorEqual && v.Operator != v3.FilterOperatorNotEqual {
-					filter = fmt.Sprintf("%s != nil && %s", name, filter)
-				}
+			if v.Operator == v3.FilterOperatorContains || v.Operator == v3.FilterOperatorNotContains {
+				// `contains` and `ncontains` should be case insensitive to match how they work when querying logs.
+				filter = fmt.Sprintf(
+					"lower(%s) %s lower(%s)",
+					name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value),
+				)
 			}
 
-			filterParts = append(filterParts, filter)
+			// Avoid running operators on nil values
+			if v.Operator != v3.FilterOperatorEqual && v.Operator != v3.FilterOperatorNotEqual {
+				filter = fmt.Sprintf("%s != nil && %s", name, filter)
+			}
 		}
-
-		filter := strings.Join(filterParts, " || ")
 
 		// check if the filter is a correct expression language
 		_, err := expr.Compile(filter)

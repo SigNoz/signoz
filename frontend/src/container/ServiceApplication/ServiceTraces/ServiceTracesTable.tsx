@@ -26,7 +26,12 @@ function ServiceTraceTable({
 	const tableColumns = useMemo(() => getColumns(search, false), [search]);
 
 	useEffect(() => {
-		if (!isFetching && licenseData?.payload?.onTrial && isCloudUserVal) {
+		if (
+			!isFetching &&
+			licenseData?.payload?.onTrial &&
+			!licenseData?.payload?.trialConvertedToSubscription &&
+			isCloudUserVal
+		) {
 			if (services.length > 0) {
 				const rps = getTotalRPS(services);
 				setRPS(rps);
@@ -36,6 +41,11 @@ function ServiceTraceTable({
 		}
 	}, [services, licenseData, isFetching, isCloudUserVal]);
 
+	const paginationConfig = {
+		defaultPageSize: 10,
+		showTotal: (total: number, range: number[]): string =>
+			`${range[0]}-${range[1]} of ${total} items`,
+	};
 	return (
 		<>
 			{RPS > MAX_RPS_LIMIT && (
@@ -49,11 +59,7 @@ function ServiceTraceTable({
 			<ResourceAttributesFilter />
 
 			<ResizeTable
-				pagination={{
-					defaultPageSize: 10,
-					showTotal: (total: number, range: number[]): string =>
-						`${range[0]}-${range[1]} of ${total} items`,
-				}}
+				pagination={paginationConfig}
 				columns={tableColumns}
 				loading={loading}
 				dataSource={services}

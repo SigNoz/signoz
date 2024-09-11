@@ -15,6 +15,8 @@ export interface PayloadProps {
 		segmentID: string;
 		columns: string[];
 		isSubTree: boolean;
+		startTimestampMillis: number;
+		endTimestampMillis: number;
 	};
 }
 
@@ -31,6 +33,9 @@ export type Span = [
 	string[],
 	string[],
 	boolean,
+	string,
+	string,
+	string,
 ];
 
 export interface ITraceTree {
@@ -47,6 +52,9 @@ export interface ITraceTree {
 	hasError?: boolean;
 	event?: ITraceEvents[];
 	isMissing?: boolean;
+	spanKind: string;
+	statusCodeString: string;
+	statusMessage: string;
 	childReferences?: Record<string, string>[];
 	nonChildReferences?: Record<string, string>[];
 	// For internal use

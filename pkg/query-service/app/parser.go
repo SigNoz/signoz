@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,7 +18,6 @@ import (
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
 
-	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -254,7 +254,7 @@ func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error)
 		levelDownStr = "0"
 	}
 	if SpanRenderLimitStr == "" || SpanRenderLimitStr == "null" {
-		SpanRenderLimitStr = constants.SpanRenderLimitStr
+		SpanRenderLimitStr = baseconstants.SpanRenderLimitStr
 	}
 
 	levelUpInt, err := strconv.Atoi(levelUpStr)
@@ -269,7 +269,7 @@ func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error)
 	if err != nil {
 		return nil, err
 	}
-	MaxSpansInTraceInt, err := strconv.Atoi(constants.MaxSpansInTraceStr)
+	MaxSpansInTraceInt, err := strconv.Atoi(baseconstants.MaxSpansInTraceStr)
 	if err != nil {
 		return nil, err
 	}
@@ -837,6 +837,77 @@ func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequ
 	return &req, nil
 }
 
+func parseQBFilterSuggestionsRequest(r *http.Request) (
+	*v3.QBFilterSuggestionsRequest, *model.ApiError,
+) {
+	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
+	if err := dataSource.Validate(); err != nil {
+		return nil, model.BadRequest(err)
+	}
+
+	parsePositiveIntQP := func(
+		queryParam string, defaultValue uint64, maxValue uint64,
+	) (uint64, *model.ApiError) {
+		value := defaultValue
+
+		qpValue := r.URL.Query().Get(queryParam)
+		if len(qpValue) > 0 {
+			value, err := strconv.Atoi(qpValue)
+
+			if err != nil || value < 1 || value > int(maxValue) {
+				return 0, model.BadRequest(fmt.Errorf(
+					"invalid %s: %s", queryParam, qpValue,
+				))
+			}
+		}
+
+		return value, nil
+	}
+
+	attributesLimit, err := parsePositiveIntQP(
+		"attributesLimit",
+		baseconstants.DefaultFilterSuggestionsAttributesLimit,
+		baseconstants.MaxFilterSuggestionsAttributesLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	examplesLimit, err := parsePositiveIntQP(
+		"examplesLimit",
+		baseconstants.DefaultFilterSuggestionsExamplesLimit,
+		baseconstants.MaxFilterSuggestionsExamplesLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var existingFilter *v3.FilterSet
+	existingFilterB64 := r.URL.Query().Get("existingFilter")
+	if len(existingFilterB64) > 0 {
+		decodedFilterJson, err := base64.RawURLEncoding.DecodeString(existingFilterB64)
+		if err != nil {
+			return nil, model.BadRequest(fmt.Errorf("couldn't base64 decode existingFilter: %w", err))
+		}
+
+		existingFilter = &v3.FilterSet{}
+		err = json.Unmarshal(decodedFilterJson, existingFilter)
+		if err != nil {
+			return nil, model.BadRequest(fmt.Errorf("couldn't JSON decode existingFilter: %w", err))
+		}
+	}
+
+	searchText := r.URL.Query().Get("searchText")
+
+	return &v3.QBFilterSuggestionsRequest{
+		DataSource:      dataSource,
+		SearchText:      searchText,
+		ExistingFilter:  existingFilter,
+		AttributesLimit: attributesLimit,
+		ExamplesLimit:   examplesLimit,
+	}, nil
+}
+
 func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequest, error) {
 	var req v3.FilterAttributeKeyRequest
 
@@ -957,6 +1028,9 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 	if err := json.NewDecoder(r.Body).Decode(&queryRangeParams); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
+
+	// sanitize the request body
+	queryRangeParams.CompositeQuery.Sanitize()
 
 	// validate the request body
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {

@@ -7,17 +7,20 @@ interface AlertInfoCardProps {
 	header: string;
 	subheader: string;
 	link: string;
+	onClick: () => void;
 }
 
 function AlertInfoCard({
 	header,
 	subheader,
 	link,
+	onClick,
 }: AlertInfoCardProps): JSX.Element {
 	return (
 		<div
 			className="alert-info-card"
 			onClick={(): void => {
+				onClick();
 				window.open(link, '_blank');
 			}}
 		>
