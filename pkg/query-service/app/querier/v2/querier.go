@@ -55,6 +55,8 @@ type querier struct {
 	timeRanges     [][]int
 	returnedSeries []*v3.Series
 	returnedErr    error
+
+	UseLogsNewSchema bool
 }
 
 type QuerierOptions struct {
@@ -65,9 +67,10 @@ type QuerierOptions struct {
 	FeatureLookup interfaces.FeatureLookup
 
 	// used for testing
-	TestingMode    bool
-	ReturnedSeries []*v3.Series
-	ReturnedErr    error
+	TestingMode      bool
+	ReturnedSeries   []*v3.Series
+	ReturnedErr      error
+	UseLogsNewSchema bool
 }
 
 func NewQuerier(opts QuerierOptions) interfaces.Querier {
