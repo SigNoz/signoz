@@ -1,5 +1,6 @@
 import './AlertHeader.styles.scss';
 
+import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useAlertRule } from 'providers/Alert';
 import { useEffect, useMemo } from 'react';
 
@@ -42,7 +43,9 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 				<div className="top-section">
 					<div className="alert-title-wrapper">
 						<AlertState state={isAlertRuleDisabled ? 'disabled' : state} />
-						<div className="alert-title">{alert}</div>
+						<div className="alert-title">
+							<LineClampedText text={alert} />
+						</div>
 					</div>
 				</div>
 				<div className="bottom-section">
