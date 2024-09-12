@@ -109,6 +109,7 @@ func NewBaseRule(id string, p *PostableRule, reader interfaces.Reader, opts ...R
 		id:                id,
 		name:              p.AlertName,
 		source:            p.Source,
+		typ:               p.AlertType,
 		ruleCondition:     p.RuleCondition,
 		evalWindow:        time.Duration(p.EvalWindow),
 		labels:            qslabels.FromMap(p.Labels),
