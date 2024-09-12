@@ -577,7 +577,7 @@ func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangePar
 
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
 	// List query has support for only one query.
-	if q.UseLogsNewSchema && params.CompositeQuery != nil {
+	if q.UseLogsNewSchema && params.CompositeQuery != nil && len(params.CompositeQuery.BuilderQueries) == 1 {
 		for _, v := range params.CompositeQuery.BuilderQueries {
 			// only allow of logs queries with timestamp ordering desc
 			if v.DataSource == v3.DataSourceLogs && len(v.OrderBy) == 1 && v.OrderBy[0].ColumnName == "timestamp" && v.OrderBy[0].Order == "desc" {
