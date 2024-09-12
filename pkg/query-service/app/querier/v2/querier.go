@@ -479,44 +479,7 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	return results, errQueriesByName, err
 }
 
-type logsListTsRange struct {
-	Start int64
-	End   int64
-}
-
-const HOUR_NANO = int64(3600000000000)
-
-func getLogsListTsRanges(start, end int64) []logsListTsRange {
-	startNano := utils.GetEpochNanoSecs(start)
-	endNano := utils.GetEpochNanoSecs(end)
-	result := []logsListTsRange{}
-
-	if endNano-startNano > HOUR_NANO {
-		bucket := HOUR_NANO
-		tStartNano := endNano - bucket
-
-		complete := false
-		for {
-			result = append(result, logsListTsRange{Start: tStartNano, End: endNano})
-			if complete {
-				break
-			}
-
-			bucket = bucket * 2
-			endNano = tStartNano
-			tStartNano = tStartNano - bucket
-
-			// break condition
-			if tStartNano <= startNano {
-				complete = true
-				tStartNano = startNano
-			}
-		}
-	}
-	return result
-}
-
-func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey, tsRanges []logsListTsRange) ([]*v3.Result, map[string]error, error) {
+func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey, tsRanges []utils.LogsListTsRange) ([]*v3.Result, map[string]error, error) {
 	res := make([]*v3.Result, 0)
 	qName := ""
 	pageSize := uint64(0)
@@ -581,7 +544,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 		for _, v := range params.CompositeQuery.BuilderQueries {
 			// only allow of logs queries with timestamp ordering desc
 			if v.DataSource == v3.DataSourceLogs && len(v.OrderBy) == 1 && v.OrderBy[0].ColumnName == "timestamp" && v.OrderBy[0].Order == "desc" {
-				startEndArr := getLogsListTsRanges(params.Start, params.End)
+				startEndArr := utils.GetLogsListTsRanges(params.Start, params.End)
 				if len(startEndArr) > 0 {
 					return q.runLogsListQuery(ctx, params, keys, startEndArr)
 				}
