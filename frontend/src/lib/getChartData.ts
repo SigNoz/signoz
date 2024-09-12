@@ -11,7 +11,6 @@ const getChartData = ({
 	queryData,
 	createDataset,
 	isWarningLimit = false,
-	shouldAppendQueryNameToLabel = false,
 }: GetChartDataProps): {
 	data: ChartData;
 	isWarning: boolean;
@@ -32,16 +31,11 @@ const getChartData = ({
 		({ queryData, query: queryG, legend: legendG }) =>
 			queryData.map((e) => {
 				const { values = [], metric, legend, queryName } = e || {};
-				let labelNames = getLabelName(
+				const labelNames = getLabelName(
 					metric,
 					queryName || queryG || '', // query
 					legend || legendG || '',
 				);
-
-				if (shouldAppendQueryNameToLabel) {
-					labelNames = `${queryName || queryG || ''}: ${labelNames}`;
-				}
-
 				const dataValue = values?.map((e) => {
 					const [first = 0, second = ''] = e || [];
 					return {
@@ -138,7 +132,6 @@ export interface GetChartDataProps {
 		allLabels: string[],
 	) => ChartDataset;
 	isWarningLimit?: boolean;
-	shouldAppendQueryNameToLabel?: boolean;
 }
 
 export default getChartData;

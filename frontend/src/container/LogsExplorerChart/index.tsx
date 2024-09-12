@@ -46,13 +46,6 @@ function LogsExplorerChart({
 		[isLabelEnabled, isLogsExplorerViews],
 	);
 
-	const shouldAppendQueryNameToLabel = useMemo(
-		() =>
-			data.some((item) => item.queryName) &&
-			new Set(data.flatMap((item) => item.queryName)).size > 1,
-		[data],
-	);
-
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
 			const startTimestamp = Math.trunc(start);
@@ -113,9 +106,8 @@ function LogsExplorerChart({
 					},
 				],
 				createDataset: handleCreateDatasets,
-				shouldAppendQueryNameToLabel,
 			}),
-		[data, handleCreateDatasets, shouldAppendQueryNameToLabel],
+		[data, handleCreateDatasets],
 	);
 
 	return (
@@ -129,7 +121,6 @@ function LogsExplorerChart({
 					isStacked={isLogsExplorerViews}
 					type="bar"
 					animate
-					showLegendsContainer={!isLogsExplorerViews}
 					onDragSelect={onDragSelect}
 				/>
 			)}

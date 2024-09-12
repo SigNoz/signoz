@@ -186,12 +186,8 @@ function LogsExplorerViews({
 	const listChartQuery = useMemo(() => {
 		if (!stagedQuery || !listQuery) return null;
 
-		const modifiedQueryData: Pick<
-			IBuilderQuery,
-			'aggregateOperator' | 'groupBy'
-		> = {
-			// the aggregate operator for the list query should always be Count and
-			// group by severity_text so as to depict the frequency of logs for each severity
+		const modifiedQueryData: IBuilderQuery = {
+			...listQuery,
 			aggregateOperator: LogsAggregatorOperator.COUNT,
 			groupBy: [
 				{
@@ -247,7 +243,7 @@ function LogsExplorerViews({
 		PANEL_TYPES.TIME_SERIES,
 		DEFAULT_ENTITY_VERSION,
 		{
-			enabled: !!listChartQuery,
+			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
 		},
 		{},
 		undefined,
@@ -576,11 +572,27 @@ function LogsExplorerViews({
 	const chartData = useMemo(() => {
 		if (!stagedQuery) return [];
 
-		if (listChartData && listChartData.payload.data.result.length > 0) {
-			return listChartData.payload.data.result;
+		if (panelType === PANEL_TYPES.LIST) {
+			if (listChartData && listChartData.payload.data.result.length > 0) {
+				return listChartData.payload.data.result;
+			}
+			return [];
 		}
-		return [];
-	}, [stagedQuery, listChartData]);
+
+		if (!data || data.payload.data.result.length === 0) return [];
+
+		const isGroupByExist = stagedQuery.builder.queryData.some(
+			(queryData) => queryData.groupBy.length > 0,
+		);
+
+		const firstPayloadQuery = data.payload.data.result.find(
+			(item) => item.queryName === listQuery?.queryName,
+		);
+
+		const firstPayloadQueryArray = firstPayloadQuery ? [firstPayloadQuery] : [];
+
+		return isGroupByExist ? data.payload.data.result : firstPayloadQueryArray;
+	}, [stagedQuery, panelType, data, listChartData, listQuery]);
 
 	const formatItems = [
 		{
@@ -660,7 +672,7 @@ function LogsExplorerViews({
 					className="logs-histogram"
 					isLoading={isFetchingListChartData || isLoadingListChartData}
 					data={chartData}
-					isLogsExplorerViews
+					isLogsExplorerViews={panelType === PANEL_TYPES.LIST}
 				/>
 			)}
 
