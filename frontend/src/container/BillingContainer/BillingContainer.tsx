@@ -350,14 +350,7 @@ export default function BillingContainer(): JSX.Element {
 			!isLoading && !isFetchingBillingData ? (
 				<>
 					<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
-					<div
-						style={{
-							textAlign: 'left',
-							fontSize: '13px',
-							color: '#dcdcdc',
-							marginTop: '16px',
-						}}
-					>
+					<div className="billing-update-note">
 						Note: Billing metrics are updated once every 24 hours.
 					</div>
 				</>
