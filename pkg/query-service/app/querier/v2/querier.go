@@ -577,15 +577,13 @@ func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangePar
 
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
 	// List query has support for only one query.
-	if params.CompositeQuery != nil {
-		if len(params.CompositeQuery.BuilderQueries) == 1 {
-			for _, v := range params.CompositeQuery.BuilderQueries {
-				// only allow of logs queries with timestamp ordering desc
-				if v.DataSource == v3.DataSourceLogs && len(v.OrderBy) == 1 && v.OrderBy[0].ColumnName == "timestamp" && v.OrderBy[0].Order == "desc" {
-					startEndArr := getLogsListTsRanges(params.Start, params.End)
-					if len(startEndArr) > 0 {
-						return q.runLogsListQuery(ctx, params, keys, startEndArr)
-					}
+	if q.UseLogsNewSchema && params.CompositeQuery != nil {
+		for _, v := range params.CompositeQuery.BuilderQueries {
+			// only allow of logs queries with timestamp ordering desc
+			if v.DataSource == v3.DataSourceLogs && len(v.OrderBy) == 1 && v.OrderBy[0].ColumnName == "timestamp" && v.OrderBy[0].Order == "desc" {
+				startEndArr := getLogsListTsRanges(params.Start, params.End)
+				if len(startEndArr) > 0 {
+					return q.runLogsListQuery(ctx, params, keys, startEndArr)
 				}
 			}
 		}
