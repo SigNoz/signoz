@@ -140,6 +140,7 @@ type ClickHouseReader struct {
 	cluster                string
 
 	useLogsNewSchema bool
+	logsTableName    string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -203,6 +204,11 @@ func NewReaderFromClickhouseConnection(
 		},
 	}
 
+	logsTableName := options.primary.LogsTable
+	if useLogsNewSchema {
+		logsTableName = options.primary.LogsTableV2
+	}
+
 	return &ClickHouseReader{
 		db:                      wrap,
 		localDB:                 localDB,
@@ -236,6 +242,7 @@ func NewReaderFromClickhouseConnection(
 		logsLocalTableV2:         options.primary.LogsLocalTableV2,
 		logsResourceTableV2:      options.primary.LogsResourceTableV2,
 		logsResourceLocalTableV2: options.primary.LogsResourceLocalTableV2,
+		logsTableName:            logsTableName,
 	}
 }
 
@@ -3530,11 +3537,7 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	resources = removeUnderscoreDuplicateFields(resources)
 
 	statements := []model.ShowCreateTableStatement{}
-	table := r.logsLocalTable
-	if r.useLogsNewSchema {
-		table = r.logsLocalTableV2
-	}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, table)
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsTable)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
@@ -3565,6 +3568,72 @@ func isSelectedField(tableStatement string, field model.LogField) bool {
 	return strings.Contains(tableStatement, name)
 }
 
+func (r *ClickHouseReader) UpdateLogFieldV2(ctx context.Context, field *model.UpdateField) *model.ApiError {
+	if !field.Selected {
+		return model.ForbiddenError(errors.New("removing a selected field is not allowed, please reach out to support."))
+	}
+
+	colname := utils.GetClickhouseColumnNameV2(field.Type, field.DataType, field.Name)
+
+	dataType := strings.ToLower(field.DataType)
+	if dataType == "int64" || dataType == "float64" {
+		dataType = "number"
+	}
+	attrColName := fmt.Sprintf("%s_%s", field.Type, dataType)
+	for _, table := range []string{r.logsLocalTableV2, r.logsTableV2} {
+		q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS `%s` %s DEFAULT %s['%s'] CODEC(ZSTD(1))"
+		query := fmt.Sprintf(q,
+			r.logsDB, table,
+			r.cluster,
+			colname, field.DataType,
+			attrColName,
+			field.Name,
+		)
+		err := r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS `%s_exists` bool DEFAULT if(mapContains(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
+			r.logsDB, table,
+			r.cluster,
+			colname,
+			attrColName,
+			field.Name,
+		)
+		err = r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+	}
+
+	// create the index
+	if strings.ToLower(field.DataType) == "bool" {
+		// there is no point in creating index for bool attributes as the cardinality is just 2
+		return nil
+	}
+
+	if field.IndexType == "" {
+		field.IndexType = constants.DefaultLogSkipIndexType
+	}
+	if field.IndexGranularity == 0 {
+		field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
+	}
+	query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS `%s_idx` (`%s`) TYPE %s  GRANULARITY %d",
+		r.logsDB, r.logsLocalTableV2,
+		r.cluster,
+		colname,
+		colname,
+		field.IndexType,
+		field.IndexGranularity,
+	)
+	err := r.db.Exec(ctx, query)
+	if err != nil {
+		return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+	return nil
+}
+
 func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError {
 	// don't allow updating static fields
 	if field.Type == constants.Static {
@@ -3572,130 +3641,70 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		return &model.ApiError{Err: err, Typ: model.ErrorBadData}
 	}
 
+	if r.useLogsNewSchema {
+		return r.UpdateLogFieldV2(ctx, field)
+	}
+
 	// if a field is selected it means that the field needs to be indexed
 	if field.Selected {
+		colname := utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
+
+		keyColName := fmt.Sprintf("%s_%s_key", field.Type, strings.ToLower(field.DataType))
+		valueColName := fmt.Sprintf("%s_%s_value", field.Type, strings.ToLower(field.DataType))
+
 		// create materialized column
-		if r.useLogsNewSchema {
-			colname := utils.GetClickhouseColumnNameV2(field.Type, field.DataType, field.Name)
 
-			dataType := strings.ToLower(field.DataType)
-			if dataType == "int64" || dataType == "float64" {
-				dataType = "number"
-			}
-			attrColName := fmt.Sprintf("%s_%s", field.Type, dataType)
-			for _, table := range []string{r.logsLocalTableV2, r.logsTableV2} {
-				q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS `%s` %s DEFAULT %s['%s'] CODEC(ZSTD(1))"
-				query := fmt.Sprintf(q,
-					r.logsDB, table,
-					r.cluster,
-					colname, field.DataType,
-					attrColName,
-					field.Name,
-				)
-				err := r.db.Exec(ctx, query)
-				if err != nil {
-					return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-				}
-
-				query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS `%s_exists` bool DEFAULT if(mapContains(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
-					r.logsDB, table,
-					r.cluster,
-					colname,
-					attrColName,
-					field.Name,
-				)
-				err = r.db.Exec(ctx, query)
-				if err != nil {
-					return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-				}
-			}
-
-			// create the index
-			if strings.ToLower(field.DataType) == "bool" {
-				// there is no point in creating index for bool attributes as the cardinality is just 2
-				return nil
-			}
-
-			if field.IndexType == "" {
-				field.IndexType = constants.DefaultLogSkipIndexType
-			}
-			if field.IndexGranularity == 0 {
-				field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
-			}
-			query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS `%s_idx` (`%s`) TYPE %s  GRANULARITY %d",
-				r.logsDB, r.logsLocalTableV2,
+		for _, table := range []string{r.logsLocalTable, r.logsTable} {
+			q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s DEFAULT %s[indexOf(%s, '%s')] CODEC(ZSTD(1))"
+			query := fmt.Sprintf(q,
+				r.logsDB, table,
 				r.cluster,
-				colname,
-				colname,
-				field.IndexType,
-				field.IndexGranularity,
+				colname, field.DataType,
+				valueColName,
+				keyColName,
+				field.Name,
 			)
 			err := r.db.Exec(ctx, query)
 			if err != nil {
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 			}
-		} else {
-			// old schema mat columns
 
-			colname := utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
-
-			keyColName := fmt.Sprintf("%s_%s_key", field.Type, strings.ToLower(field.DataType))
-			valueColName := fmt.Sprintf("%s_%s_value", field.Type, strings.ToLower(field.DataType))
-
-			// create materialized column
-
-			for _, table := range []string{r.logsLocalTable, r.logsTable} {
-				q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s DEFAULT %s[indexOf(%s, '%s')] CODEC(ZSTD(1))"
-				query := fmt.Sprintf(q,
-					r.logsDB, table,
-					r.cluster,
-					colname, field.DataType,
-					valueColName,
-					keyColName,
-					field.Name,
-				)
-				err := r.db.Exec(ctx, query)
-				if err != nil {
-					return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-				}
-
-				query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists` bool DEFAULT if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
-					r.logsDB, table,
-					r.cluster,
-					strings.TrimSuffix(colname, "`"),
-					keyColName,
-					field.Name,
-				)
-				err = r.db.Exec(ctx, query)
-				if err != nil {
-					return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-				}
-			}
-
-			// create the index
-			if strings.ToLower(field.DataType) == "bool" {
-				// there is no point in creating index for bool attributes as the cardinality is just 2
-				return nil
-			}
-
-			if field.IndexType == "" {
-				field.IndexType = constants.DefaultLogSkipIndexType
-			}
-			if field.IndexGranularity == 0 {
-				field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
-			}
-			query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx` (%s) TYPE %s  GRANULARITY %d",
-				r.logsDB, r.logsLocalTable,
+			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists` bool DEFAULT if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
+				r.logsDB, table,
 				r.cluster,
 				strings.TrimSuffix(colname, "`"),
-				colname,
-				field.IndexType,
-				field.IndexGranularity,
+				keyColName,
+				field.Name,
 			)
-			err := r.db.Exec(ctx, query)
+			err = r.db.Exec(ctx, query)
 			if err != nil {
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 			}
+		}
+
+		// create the index
+		if strings.ToLower(field.DataType) == "bool" {
+			// there is no point in creating index for bool attributes as the cardinality is just 2
+			return nil
+		}
+
+		if field.IndexType == "" {
+			field.IndexType = constants.DefaultLogSkipIndexType
+		}
+		if field.IndexGranularity == 0 {
+			field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
+		}
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx` (%s) TYPE %s  GRANULARITY %d",
+			r.logsDB, r.logsLocalTable,
+			r.cluster,
+			strings.TrimSuffix(colname, "`"),
+			colname,
+			field.IndexType,
+			field.IndexGranularity,
+		)
+		err := r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
 	} else {
@@ -4293,11 +4302,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	defer rows.Close()
 
 	statements := []model.ShowCreateTableStatement{}
-	table := r.logsLocalTable
-	if r.useLogsNewSchema {
-		table = r.logsLocalTableV2
-	}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, table)
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsTable)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
@@ -4351,11 +4356,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	defer rows.Close()
 
 	statements := []model.ShowCreateTableStatement{}
-	table := r.logsLocalTable
-	if r.useLogsNewSchema {
-		table = r.logsLocalTableV2
-	}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, table)
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsTable)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
@@ -4429,10 +4430,6 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	}
 
 	searchText := fmt.Sprintf("%%%s%%", req.SearchText)
-	table := r.logsLocalTable
-	if r.useLogsNewSchema {
-		table = r.logsLocalTableV2
-	}
 
 	// check if the tagKey is a topLevelColumn
 	if _, ok := constants.StaticFieldsLogsV3[req.FilterAttributeKey]; ok {
@@ -4446,10 +4443,10 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 		// prepare the query and run
 		if len(req.SearchText) != 0 {
-			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) and %s ILIKE $1 limit $2", selectKey, r.logsDB, table, filterValueColumnWhere)
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) and %s ILIKE $1 limit $2", selectKey, r.logsDB, r.logsTable, filterValueColumnWhere)
 			rows, err = r.db.Query(ctx, query, searchText, req.Limit)
 		} else {
-			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) limit $1", selectKey, r.logsDB, table)
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) limit $1", selectKey, r.logsDB, r.logsTable)
 			rows, err = r.db.Query(ctx, query, req.Limit)
 		}
 	} else if len(req.SearchText) != 0 {
@@ -5388,6 +5385,7 @@ func (r *ClickHouseReader) LiveTailLogsV4(ctx context.Context, query string, tim
 			if idStart != "" {
 				tmpQuery = fmt.Sprintf("%s AND id > '%s'", tmpQuery, idStart)
 			}
+
 			// the reason we are doing desc is that we need the latest logs first
 			tmpQuery = query + tmpQuery + " order by timestamp desc, id desc limit 100"
 
