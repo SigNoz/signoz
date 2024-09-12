@@ -8,18 +8,11 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/stats"
-	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 type Reader interface {
-	GetChannel(id string) (*model.ChannelItem, *model.ApiError)
-	GetChannels() (*[]model.ChannelItem, *model.ApiError)
-	DeleteChannel(id string) *model.ApiError
-	CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError)
-	EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError)
-
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams, skipConfig *model.SkipConfig) (*[]model.ServiceOverviewItem, *model.ApiError)

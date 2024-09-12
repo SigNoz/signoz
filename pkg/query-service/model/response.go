@@ -638,6 +638,7 @@ type AlertsInfo struct {
 	LogsBasedAlerts              int      `json:"logsBasedAlerts"`
 	MetricBasedAlerts            int      `json:"metricBasedAlerts"`
 	TracesBasedAlerts            int      `json:"tracesBasedAlerts"`
+	TotalChannels                int      `json:"totalChannels"`
 	SlackChannels                int      `json:"slackChannels"`
 	WebHookChannels              int      `json:"webHookChannels"`
 	PagerDutyChannels            int      `json:"pagerDutyChannels"`
