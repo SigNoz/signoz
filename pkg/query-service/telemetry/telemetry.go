@@ -178,9 +178,12 @@ type Telemetry struct {
 	patTokenUser  bool
 	mutex         sync.RWMutex
 
-	alertsInfoCallback func(ctx context.Context) (*model.AlertsInfo, error)
-	userCountCallback  func(ctx context.Context) (int, error)
-	userRoleCallback   func(ctx context.Context, groupId string) (string, error)
+	alertsInfoCallback     func(ctx context.Context) (*model.AlertsInfo, error)
+	userCountCallback      func(ctx context.Context) (int, error)
+	userRoleCallback       func(ctx context.Context, groupId string) (string, error)
+	getUsersCallback       func(ctx context.Context) ([]model.UserPayload, *model.ApiError)
+	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
+	savedViewsInfoCallback func(ctx context.Context) (*model.SavedViewsInfo, error)
 }
 
 func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*model.AlertsInfo, error)) {
@@ -193,6 +196,18 @@ func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context) (int
 
 func (a *Telemetry) SetUserRoleCallback(callback func(ctx context.Context, groupId string) (string, error)) {
 	a.userRoleCallback = callback
+}
+
+func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context) ([]model.UserPayload, *model.ApiError)) {
+	a.getUsersCallback = callback
+}
+
+func (a *Telemetry) SetSavedViewsInfoCallback(callback func(ctx context.Context) (*model.SavedViewsInfo, error)) {
+	a.savedViewsInfoCallback = callback
+}
+
+func (a *Telemetry) SetDashboardsInfoCallback(callback func(ctx context.Context) (*model.DashboardsInfo, error)) {
+	a.dashboardsInfoCallback = callback
 }
 
 func createTelemetry() {
@@ -296,7 +311,7 @@ func createTelemetry() {
 			data[key] = value
 		}
 
-		users, apiErr := telemetry.reader.GetUsers(ctx)
+		users, apiErr := telemetry.getUsersCallback(ctx)
 		if apiErr == nil {
 			for _, user := range users {
 				if user.Email == DEFAULT_CLOUD_EMAIL {
@@ -308,7 +323,7 @@ func createTelemetry() {
 
 		alertsInfo, err := telemetry.alertsInfoCallback(ctx)
 		if err == nil {
-			dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(ctx)
+			dashboardsInfo, err := telemetry.dashboardsInfoCallback(ctx)
 			if err == nil {
 				channels, err := telemetry.reader.GetChannels()
 				if err == nil {
@@ -328,7 +343,7 @@ func createTelemetry() {
 							alertsInfo.MSTeamsChannels++
 						}
 					}
-					savedViewsInfo, err := telemetry.reader.GetSavedViewsInfo(ctx)
+					savedViewsInfo, err := telemetry.savedViewsInfoCallback(ctx)
 					if err == nil {
 						dashboardsAlertsData := map[string]interface{}{
 							"totalDashboards":                 dashboardsInfo.TotalDashboards,
