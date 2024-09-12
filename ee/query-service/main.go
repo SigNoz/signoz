@@ -97,7 +97,7 @@ func main() {
 	var dialTimeout time.Duration
 	var gatewayUrl string
 
-	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "force logs_v2 schema for logs")
+	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")

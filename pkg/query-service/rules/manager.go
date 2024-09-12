@@ -21,19 +21,21 @@ import (
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
 type PrepareTaskOptions struct {
-	Rule             *PostableRule
-	TaskName         string
-	RuleDB           RuleDB
-	Logger           *zap.Logger
-	Reader           interfaces.Reader
-	FF               interfaces.FeatureLookup
-	ManagerOpts      *ManagerOptions
-	NotifyFunc       NotifyFunc
+	Rule        *PostableRule
+	TaskName    string
+	RuleDB      RuleDB
+	Logger      *zap.Logger
+	Reader      interfaces.Reader
+	FF          interfaces.FeatureLookup
+	ManagerOpts *ManagerOptions
+	NotifyFunc  NotifyFunc
+
 	UseLogsNewSchema bool
 }
 
@@ -57,7 +59,7 @@ func prepareTaskName(ruleId interface{}) string {
 // ManagerOptions bundles options for the Manager.
 type ManagerOptions struct {
 	NotifierOpts am.NotifierOptions
-	Queriers     *Queriers
+	PqlEngine    *pqle.PqlEngine
 
 	// RepoURL is used to generate a backlink in sent alert messages
 	RepoURL string
@@ -74,9 +76,9 @@ type ManagerOptions struct {
 
 	EvalDelay time.Duration
 
-	UseLogsNewSchema bool
-
 	PrepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
+
+	UseLogsNewSchema bool
 }
 
 // The Manager manages recording and alerting rules.
@@ -97,9 +99,9 @@ type Manager struct {
 	featureFlags interfaces.FeatureLookup
 	reader       interfaces.Reader
 
-	UseLogsNewSchema bool
-
 	prepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
+
+	UseLogsNewSchema bool
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -132,12 +134,10 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		tr, err := NewThresholdRule(
 			ruleId,
 			opts.Rule,
-			ThresholdRuleOpts{
-				EvalDelay:        opts.ManagerOpts.EvalDelay,
-				UseLogsNewSchema: opts.UseLogsNewSchema,
-			},
 			opts.FF,
 			opts.Reader,
+			opts.UseLogsNewSchema,
+			WithEvalDelay(opts.ManagerOpts.EvalDelay),
 		)
 
 		if err != nil {
@@ -156,8 +156,8 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			ruleId,
 			opts.Rule,
 			opts.Logger,
-			PromRuleOpts{},
 			opts.Reader,
+			opts.ManagerOpts.PqlEngine,
 		)
 
 		if err != nil {
@@ -332,14 +332,15 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 	zap.L().Debug("editing a rule task", zap.String("name", taskName))
 
 	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
-		Rule:             rule,
-		TaskName:         taskName,
-		RuleDB:           m.ruleDB,
-		Logger:           m.logger,
-		Reader:           m.reader,
-		FF:               m.featureFlags,
-		ManagerOpts:      m.opts,
-		NotifyFunc:       m.prepareNotifyFunc(),
+		Rule:        rule,
+		TaskName:    taskName,
+		RuleDB:      m.ruleDB,
+		Logger:      m.logger,
+		Reader:      m.reader,
+		FF:          m.featureFlags,
+		ManagerOpts: m.opts,
+		NotifyFunc:  m.prepareNotifyFunc(),
+
 		UseLogsNewSchema: m.opts.UseLogsNewSchema,
 	})
 
@@ -452,14 +453,15 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 
 	zap.L().Debug("adding a new rule task", zap.String("name", taskName))
 	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
-		Rule:             rule,
-		TaskName:         taskName,
-		RuleDB:           m.ruleDB,
-		Logger:           m.logger,
-		Reader:           m.reader,
-		FF:               m.featureFlags,
-		ManagerOpts:      m.opts,
-		NotifyFunc:       m.prepareNotifyFunc(),
+		Rule:        rule,
+		TaskName:    taskName,
+		RuleDB:      m.ruleDB,
+		Logger:      m.logger,
+		Reader:      m.reader,
+		FF:          m.featureFlags,
+		ManagerOpts: m.opts,
+		NotifyFunc:  m.prepareNotifyFunc(),
+
 		UseLogsNewSchema: m.opts.UseLogsNewSchema,
 	})
 
@@ -801,13 +803,11 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 		rule, err = NewThresholdRule(
 			alertname,
 			parsedRule,
-			ThresholdRuleOpts{
-				SendUnmatched:    true,
-				SendAlways:       true,
-				UseLogsNewSchema: m.UseLogsNewSchema,
-			},
 			m.featureFlags,
 			m.reader,
+			m.opts.UseLogsNewSchema,
+			WithSendAlways(),
+			WithSendUnmatched(),
 		)
 
 		if err != nil {
@@ -822,10 +822,10 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 			alertname,
 			parsedRule,
 			m.logger,
-			PromRuleOpts{
-				SendAlways: true,
-			},
 			m.reader,
+			m.opts.PqlEngine,
+			WithSendAlways(),
+			WithSendUnmatched(),
 		)
 
 		if err != nil {
@@ -839,7 +839,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 	// set timestamp to current utc time
 	ts := time.Now().UTC()
 
-	count, err := rule.Eval(ctx, ts, m.opts.Queriers)
+	count, err := rule.Eval(ctx, ts)
 	if err != nil {
 		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
 		return 0, newApiErrorInternal(fmt.Errorf("rule evaluation failed"))
