@@ -64,6 +64,7 @@ import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	OrderByPayload,
@@ -188,6 +189,16 @@ function LogsExplorerViews({
 		const modifiedQueryData: IBuilderQuery = {
 			...listQuery,
 			aggregateOperator: LogsAggregatorOperator.COUNT,
+			groupBy: [
+				{
+					key: 'severity_text',
+					dataType: DataTypes.String,
+					type: '',
+					isColumn: true,
+					isJSON: false,
+					id: 'severity_text--string----true',
+				},
+			],
 		};
 
 		const modifiedQuery: Query = {
@@ -661,6 +672,7 @@ function LogsExplorerViews({
 					className="logs-histogram"
 					isLoading={isFetchingListChartData || isLoadingListChartData}
 					data={chartData}
+					isLogsExplorerViews={panelType === PANEL_TYPES.LIST}
 				/>
 			)}
 
