@@ -28,5 +28,6 @@ func NewHourlyProvider(opts ...GenericProviderOption[*HourlyProvider]) *HourlyPr
 }
 
 func (p *HourlyProvider) GetAnomalies(ctx context.Context, req *GetAnomaliesRequest) (*GetAnomaliesResponse, error) {
-	return nil, nil
+	req.Seasonality = SeasonalityHourly
+	return p.getAnomalies(ctx, req)
 }

@@ -28,5 +28,6 @@ func NewDailyProvider(opts ...GenericProviderOption[*DailyProvider]) *DailyProvi
 }
 
 func (p *DailyProvider) GetAnomalies(ctx context.Context, req *GetAnomaliesRequest) (*GetAnomaliesResponse, error) {
-	return nil, nil
+	req.Seasonality = SeasonalityDaily
+	return p.getAnomalies(ctx, req)
 }

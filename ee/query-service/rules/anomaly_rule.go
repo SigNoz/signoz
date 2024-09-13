@@ -57,7 +57,9 @@ type AnomalyRule struct {
 	// querierV2 is used for alerts created after the introduction of new metrics query builder
 	querierV2 interfaces.Querier
 
-	anomalyProvider anomaly.BaseProvider
+	hourlyAnomalyProvider anomaly.Provider
+	dailyAnomalyProvider  anomaly.Provider
+	weeklyAnomalyProvider anomaly.Provider
 }
 
 func NewAnomalyRule(
@@ -98,7 +100,19 @@ func NewAnomalyRule(
 	t.querier = querier.NewQuerier(querierOption)
 	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
 	t.reader = reader
-	t.anomalyProvider = anomaly.NewWeeklyProvider(
+	t.hourlyAnomalyProvider = anomaly.NewHourlyProvider(
+		anomaly.WithCache[*anomaly.HourlyProvider](cache),
+		anomaly.WithKeyGenerator[*anomaly.HourlyProvider](queryBuilder.NewKeyGenerator()),
+		anomaly.WithReader[*anomaly.HourlyProvider](reader),
+		anomaly.WithFeatureLookup[*anomaly.HourlyProvider](featureFlags),
+	)
+	t.dailyAnomalyProvider = anomaly.NewDailyProvider(
+		anomaly.WithCache[*anomaly.DailyProvider](cache),
+		anomaly.WithKeyGenerator[*anomaly.DailyProvider](queryBuilder.NewKeyGenerator()),
+		anomaly.WithReader[*anomaly.DailyProvider](reader),
+		anomaly.WithFeatureLookup[*anomaly.DailyProvider](featureFlags),
+	)
+	t.weeklyAnomalyProvider = anomaly.NewWeeklyProvider(
 		anomaly.WithCache[*anomaly.WeeklyProvider](cache),
 		anomaly.WithKeyGenerator[*anomaly.WeeklyProvider](queryBuilder.NewKeyGenerator()),
 		anomaly.WithReader[*anomaly.WeeklyProvider](reader),
@@ -211,7 +225,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (baser
 		return nil, fmt.Errorf("internal error while setting temporality")
 	}
 
-	anomalies, err := r.anomalyProvider.GetBaseSeasonalProvider().GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{
+	anomalies, err := r.weeklyAnomalyProvider.GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{
 		Params:      params,
 		Seasonality: anomaly.SeasonalityWeekly,
 	})

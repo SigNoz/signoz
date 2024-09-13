@@ -1060,6 +1060,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				if err != nil {
 					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 				}
+				query.QueriesUsedInFormula = expression.Vars()
 
 				// get the group keys for the vars
 				groupKeys := make(map[string][]string)
@@ -1099,6 +1100,9 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			if len(query.Functions) > 0 {
 				for idx := range query.Functions {
 					function := &query.Functions[idx]
+					if function.Name == v3.FunctionNameAnomaly {
+						query.IsAnomaly = true
+					}
 					if function.Name == v3.FunctionNameTimeShift {
 						// move the function to the beginning of the list
 						// so any other function can use the shifted time
