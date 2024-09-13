@@ -807,10 +807,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 			parsedRule,
 			m.featureFlags,
 			m.reader,
-<<<<<<< HEAD
-=======
 			m.opts.UseLogsNewSchema,
->>>>>>> develop
 			WithSendAlways(),
 			WithSendUnmatched(),
 		)
