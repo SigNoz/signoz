@@ -96,7 +96,7 @@ export const prepareQueryRangePayload = ({
 	});
 
 	const endLogTimeStamp = !isUndefined(lastLogLineTimestamp)
-		? new Date(lastLogLineTimestamp as any)?.getTime()
+		? new Date(lastLogLineTimestamp as string | number)?.getTime() || undefined
 		: undefined;
 
 	const queryPayload: QueryRangePayload = {

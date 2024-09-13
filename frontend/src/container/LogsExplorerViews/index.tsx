@@ -276,9 +276,9 @@ function LogsExplorerViews({
 			// send the lastLogTimeStamp only when the panel type is list and the orderBy is timestamp and the order is desc
 			lastLogLineTimestamp:
 				panelType === PANEL_TYPES.LIST &&
-				requestData?.builder?.queryData[0]?.orderBy?.[0]?.columnName ===
+				requestData?.builder?.queryData?.[0]?.orderBy?.[0]?.columnName ===
 					'timestamp' &&
-				requestData?.builder?.queryData[0]?.orderBy?.[0]?.order === 'desc'
+				requestData?.builder?.queryData?.[0]?.orderBy?.[0]?.order === 'desc'
 					? lastLogLineTimestamp
 					: undefined,
 		},
@@ -358,7 +358,7 @@ function LogsExplorerViews({
 				pageSize: nextPageSize,
 			});
 
-			// initially then the last log timestamp to null as we don't have the logs.
+			// initialise the last log timestamp to null as we don't have the logs.
 			// as soon as we scroll to the end of the logs we set the lastLogLineTimestamp to the last log timestamp.
 			setLastLogLineTimestamp(lastLog.timestamp);
 
@@ -553,8 +553,6 @@ function LogsExplorerViews({
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
-
-	console.log(lastLogLineTimestamp);
 
 	useEffect(() => {
 		// clear the lastLogLineTimestamp when the data changes
