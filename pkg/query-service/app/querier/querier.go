@@ -566,7 +566,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 			rowList, err := q.reader.GetListResultV3(ctx, query)
 
 			if err != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+				ch <- channelResult{Err: err, Name: name, Query: query}
 				return
 			}
 			ch <- channelResult{List: rowList, Name: name, Query: query}

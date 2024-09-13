@@ -3716,8 +3716,12 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams)
 
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		queryErrors := map[string]string{}
+		for name, err := range errQuriesByName {
+			queryErrors[fmt.Sprintf("Query-%s", name)] = err.Error()
+		}
+		apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		RespondError(w, apiErrObj, queryErrors)
 		return
 	}
 
@@ -4160,8 +4164,12 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams)
 
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		queryErrors := map[string]string{}
+		for name, err := range errQuriesByName {
+			queryErrors[fmt.Sprintf("Query-%s", name)] = err.Error()
+		}
+		apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		RespondError(w, apiErrObj, queryErrors)
 		return
 	}
 
