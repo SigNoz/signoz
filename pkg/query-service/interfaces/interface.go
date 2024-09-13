@@ -69,6 +69,7 @@ type Reader interface {
 	GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error)
 	GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error)
 	LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClient)
+	LiveTailLogsV4(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClientV2)
 
 	GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error)
 	GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error)
@@ -124,7 +125,7 @@ type Reader interface {
 }
 
 type Querier interface {
-	QueryRange(context.Context, *v3.QueryRangeParamsV3, map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error)
+	QueryRange(context.Context, *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error)
 
 	// test helpers
 	QueriesExecuted() []string

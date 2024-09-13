@@ -60,6 +60,7 @@ func NewThresholdRule(
 	p *PostableRule,
 	featureFlags interfaces.FeatureLookup,
 	reader interfaces.Reader,
+	useLogsNewSchema bool,
 	opts ...RuleOption,
 ) (*ThresholdRule, error) {
 
@@ -77,17 +78,19 @@ func NewThresholdRule(
 	}
 
 	querierOption := querier.QuerierOptions{
-		Reader:        reader,
-		Cache:         nil,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FeatureLookup: featureFlags,
+		Reader:           reader,
+		Cache:            nil,
+		KeyGenerator:     queryBuilder.NewKeyGenerator(),
+		FeatureLookup:    featureFlags,
+		UseLogsNewSchema: useLogsNewSchema,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:        reader,
-		Cache:         nil,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FeatureLookup: featureFlags,
+		Reader:           reader,
+		Cache:            nil,
+		KeyGenerator:     queryBuilder.NewKeyGenerator(),
+		FeatureLookup:    featureFlags,
+		UseLogsNewSchema: useLogsNewSchema,
 	}
 
 	t.querier = querier.NewQuerier(querierOption)
@@ -501,9 +504,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 	var queryErrors map[string]error
 
 	if r.version == "v4" {
-		results, queryErrors, err = r.querierV2.QueryRange(ctx, params, map[string]v3.AttributeKey{})
+		results, queryErrors, err = r.querierV2.QueryRange(ctx, params)
 	} else {
-		results, queryErrors, err = r.querier.QueryRange(ctx, params, map[string]v3.AttributeKey{})
+		results, queryErrors, err = r.querier.QueryRange(ctx, params)
 	}
 
 	if err != nil {

@@ -77,6 +77,7 @@ type ServerOptions struct {
 	FluxInterval      string
 	Cluster           string
 	GatewayUrl        string
+	UseLogsNewSchema  bool
 }
 
 // Server runs HTTP api service
@@ -154,6 +155,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.MaxOpenConns,
 			serverOptions.DialTimeout,
 			serverOptions.Cluster,
+			serverOptions.UseLogsNewSchema,
 		)
 		go qb.Start(readerReady)
 		reader = qb
@@ -176,7 +178,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		localDB,
 		reader,
 		serverOptions.DisableRules,
-		lm)
+		lm,
+		serverOptions.UseLogsNewSchema,
+	)
 
 	if err != nil {
 		return nil, err
@@ -265,6 +269,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
 		Gateway:                       gatewayProxy,
+		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -728,7 +733,8 @@ func makeRulesManager(
 	db *sqlx.DB,
 	ch baseint.Reader,
 	disableRules bool,
-	fm baseint.FeatureLookup) (*baserules.Manager, error) {
+	fm baseint.FeatureLookup,
+	useLogsNewSchema bool) (*baserules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
@@ -756,7 +762,8 @@ func makeRulesManager(
 		Reader:       ch,
 		EvalDelay:    baseconst.GetEvalDelay(),
 
-		PrepareTaskFunc: rules.PrepareTaskFunc,
+		PrepareTaskFunc:  rules.PrepareTaskFunc,
+		UseLogsNewSchema: useLogsNewSchema,
 	}
 
 	// create Manager

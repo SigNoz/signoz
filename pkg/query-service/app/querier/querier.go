@@ -11,10 +11,12 @@ import (
 	"time"
 
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	logsV4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
 	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -54,6 +56,8 @@ type querier struct {
 	timeRanges     [][]int
 	returnedSeries []*v3.Series
 	returnedErr    error
+
+	UseLogsNewSchema bool
 }
 
 type QuerierOptions struct {
@@ -64,12 +68,18 @@ type QuerierOptions struct {
 	FeatureLookup interfaces.FeatureLookup
 
 	// used for testing
-	TestingMode    bool
-	ReturnedSeries []*v3.Series
-	ReturnedErr    error
+	TestingMode      bool
+	ReturnedSeries   []*v3.Series
+	ReturnedErr      error
+	UseLogsNewSchema bool
 }
 
 func NewQuerier(opts QuerierOptions) interfaces.Querier {
+	logsQueryBuilder := logsV3.PrepareLogsQuery
+	if opts.UseLogsNewSchema {
+		logsQueryBuilder = logsV4.PrepareLogsQuery
+	}
+
 	return &querier{
 		cache:        opts.Cache,
 		reader:       opts.Reader,
@@ -78,14 +88,15 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 
 		builder: queryBuilder.NewQueryBuilder(queryBuilder.QueryBuilderOptions{
 			BuildTraceQuery:  tracesV3.PrepareTracesQuery,
-			BuildLogQuery:    logsV3.PrepareLogsQuery,
+			BuildLogQuery:    logsQueryBuilder,
 			BuildMetricQuery: metricsV3.PrepareMetricQuery,
 		}, opts.FeatureLookup),
 		featureLookUp: opts.FeatureLookup,
 
-		testingMode:    opts.TestingMode,
-		returnedSeries: opts.ReturnedSeries,
-		returnedErr:    opts.ReturnedErr,
+		testingMode:      opts.TestingMode,
+		returnedSeries:   opts.ReturnedSeries,
+		returnedErr:      opts.ReturnedErr,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 }
 
@@ -293,7 +304,7 @@ func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 	return mergedSeries
 }
 
-func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
+func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 
 	cacheKeys := q.keyGenerator.GenerateKeys(params)
 
@@ -306,9 +317,9 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 		}
 		wg.Add(1)
 		if queryName == builderQuery.Expression {
-			go q.runBuilderQuery(ctx, builderQuery, params, keys, cacheKeys, ch, &wg)
+			go q.runBuilderQuery(ctx, builderQuery, params, cacheKeys, ch, &wg)
 		} else {
-			go q.runBuilderExpression(ctx, builderQuery, params, keys, cacheKeys, ch, &wg)
+			go q.runBuilderExpression(ctx, builderQuery, params, cacheKeys, ch, &wg)
 		}
 	}
 
@@ -466,9 +477,80 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	return results, errQueriesByName, err
 }
 
-func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
+func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangeParamsV3, tsRanges []utils.LogsListTsRange) ([]*v3.Result, map[string]error, error) {
+	res := make([]*v3.Result, 0)
+	qName := ""
+	pageSize := uint64(0)
 
-	queries, err := q.builder.PrepareQueries(params, keys)
+	// se we are considering only one query
+	for name, v := range params.CompositeQuery.BuilderQueries {
+		qName = name
+		pageSize = v.PageSize
+	}
+	data := []*v3.Row{}
+
+	for _, v := range tsRanges {
+		params.Start = v.Start
+		params.End = v.End
+
+		params.CompositeQuery.BuilderQueries[qName].PageSize = pageSize - uint64(len(data))
+		queries, err := q.builder.PrepareQueries(params)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// this will to run only once
+		for name, query := range queries {
+			rowList, err := q.reader.GetListResultV3(ctx, query)
+			if err != nil {
+				errs := []error{err}
+				errQuriesByName := map[string]error{
+					name: err,
+				}
+				return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+			}
+			data = append(data, rowList...)
+		}
+
+		// append a filter to the params
+		if len(data) > 0 {
+			params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key:      "id",
+					IsColumn: true,
+					DataType: "string",
+				},
+				Operator: v3.FilterOperatorLessThan,
+				Value:    data[len(data)-1].Data["id"],
+			})
+		}
+
+		if uint64(len(data)) >= pageSize {
+			break
+		}
+	}
+	res = append(res, &v3.Result{
+		QueryName: qName,
+		List:      data,
+	})
+	return res, nil, nil
+}
+
+func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
+	// List query has support for only one query.
+	if q.UseLogsNewSchema && params.CompositeQuery != nil && len(params.CompositeQuery.BuilderQueries) == 1 {
+		for _, v := range params.CompositeQuery.BuilderQueries {
+			// only allow of logs queries with timestamp ordering desc
+			if v.DataSource == v3.DataSourceLogs && len(v.OrderBy) == 1 && v.OrderBy[0].ColumnName == "timestamp" && v.OrderBy[0].Order == "desc" {
+				startEndArr := utils.GetLogsListTsRanges(params.Start, params.End)
+				if len(startEndArr) > 0 {
+					return q.runLogsListQuery(ctx, params, startEndArr)
+				}
+			}
+		}
+	}
+
+	queries, err := q.builder.PrepareQueries(params)
 
 	if err != nil {
 		return nil, nil, err
@@ -515,7 +597,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 	return res, nil, nil
 }
 
-func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
+func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 	var results []*v3.Result
 	var err error
 	var errQueriesByName map[string]error
@@ -523,9 +605,9 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 		switch params.CompositeQuery.QueryType {
 		case v3.QueryTypeBuilder:
 			if params.CompositeQuery.PanelType == v3.PanelTypeList || params.CompositeQuery.PanelType == v3.PanelTypeTrace {
-				results, errQueriesByName, err = q.runBuilderListQueries(ctx, params, keys)
+				results, errQueriesByName, err = q.runBuilderListQueries(ctx, params)
 			} else {
-				results, errQueriesByName, err = q.runBuilderQueries(ctx, params, keys)
+				results, errQueriesByName, err = q.runBuilderQueries(ctx, params)
 			}
 			// in builder query, the only errors we expose are the ones that exceed the resource limits
 			// everything else is internal error as they are not actionable by the user

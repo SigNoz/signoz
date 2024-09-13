@@ -1,5 +1,12 @@
 package model
 
+type LogsLiveTailClientV2 struct {
+	Name  string
+	Logs  chan *SignozLogV2
+	Done  chan *bool
+	Error chan error
+}
+
 type LogsLiveTailClient struct {
 	Name  string
 	Logs  chan *SignozLog

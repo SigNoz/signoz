@@ -316,6 +316,12 @@ const (
 		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
 		"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool," +
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "
+	LogsSQLSelectV2 = "SELECT " +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, " +
+		"attributes_string, " +
+		"attributes_number, " +
+		"attributes_bool, " +
+		"resources_string "
 	TracesExplorerViewSQLSelectWithSubQuery = "WITH subQuery AS (SELECT distinct on (traceID) traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s %s ORDER BY durationNano DESC "
 	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
@@ -376,6 +382,12 @@ var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
 	},
 	"body": {
 		Key:      "body",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
+	"__attrs": {
+		Key:      "__attrs",
 		DataType: v3.AttributeKeyDataTypeString,
 		Type:     v3.AttributeKeyTypeUnspecified,
 		IsColumn: true,
