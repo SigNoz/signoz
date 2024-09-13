@@ -321,7 +321,7 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 		}
 		if strings.Contains(alert, "signoz_logs.distributed_logs") ||
 			strings.Contains(alert, "signoz_logs.logs") {
-			alertsInfo.AlertsWithTSV2 = alertsInfo.AlertsWithTSV2 + 1
+			alertsInfo.AlertsWithLogsChQuery = alertsInfo.AlertsWithLogsChQuery + 1
 		}
 		err = json.Unmarshal([]byte(alert), &rule)
 		if err != nil {
