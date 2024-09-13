@@ -3396,7 +3396,9 @@ func isDashboardWithLogsClickhouseQuery(data map[string]interface{}) bool {
 	if err != nil {
 		return false
 	}
-	return strings.Contains(string(jsonData), "signoz_logs.distributed_logs")
+	result := strings.Contains(string(jsonData), "signoz_logs.distributed_logs") ||
+		strings.Contains(string(jsonData), "signoz_logs.logs")
+	return result
 }
 
 func isDashboardWithPanelAndName(data map[string]interface{}) bool {
