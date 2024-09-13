@@ -1,6 +1,6 @@
 import './MySettings.styles.scss';
 
-import { Button, Radio, RadioChangeEvent, Space, Typography } from 'antd';
+import { Button, Radio, RadioChangeEvent, Space, Tag, Typography } from 'antd';
 import { Logout } from 'api/utils';
 import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
 import { LogOut, Moon, Sun } from 'lucide-react';
@@ -26,6 +26,9 @@ function MySettings(): JSX.Element {
 			label: (
 				<div className="theme-option">
 					<Sun size={12} data-testid="light-theme-icon" /> Light{' '}
+					<Tag bordered={false} color="geekblue">
+						Beta
+					</Tag>
 				</div>
 			),
 			value: 'light',

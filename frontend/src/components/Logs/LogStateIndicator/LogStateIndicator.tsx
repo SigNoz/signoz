@@ -1,6 +1,7 @@
 import './LogStateIndicator.styles.scss';
 
 import cx from 'classnames';
+import { FontSize } from 'container/OptionsMenu/types';
 
 export const SEVERITY_TEXT_TYPE = {
 	TRACE: 'TRACE',
@@ -44,13 +45,15 @@ export const LogType = {
 function LogStateIndicator({
 	type,
 	isActive,
+	fontSize,
 }: {
 	type: string;
+	fontSize: FontSize;
 	isActive?: boolean;
 }): JSX.Element {
 	return (
 		<div className={cx('log-state-indicator', isActive ? 'isActive' : '')}>
-			<div className={cx('line', type)}> </div>
+			<div className={cx('line', type, fontSize)}> </div>
 		</div>
 	);
 }

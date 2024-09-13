@@ -253,10 +253,11 @@ type FilterAttributeKeyRequest struct {
 }
 
 type QBFilterSuggestionsRequest struct {
-	DataSource     DataSource `json:"dataSource"`
-	SearchText     string     `json:"searchText"`
-	Limit          int        `json:"limit"`
-	ExistingFilter *FilterSet `json:"existing_filter"`
+	DataSource      DataSource `json:"dataSource"`
+	SearchText      string     `json:"searchText"`
+	ExistingFilter  *FilterSet `json:"existingFilter"`
+	AttributesLimit uint64     `json:"attributesLimit"`
+	ExamplesLimit   uint64     `json:"examplesLimit"`
 }
 
 type QBFilterSuggestionsResponse struct {
@@ -446,13 +447,15 @@ func (c *CompositeQuery) EnabledQueries() int {
 }
 
 func (c *CompositeQuery) Sanitize() {
+	if c == nil {
+		return
+	}
 	// remove groupBy for queries with list panel type
 	for _, query := range c.BuilderQueries {
 		if len(query.GroupBy) > 0 && c.PanelType == PanelTypeList {
 			query.GroupBy = []AttributeKey{}
 		}
 	}
-
 }
 
 func (c *CompositeQuery) Validate() error {
@@ -1040,8 +1043,8 @@ type LogsLiveTailClient struct {
 }
 
 type Series struct {
-	Labels      map[string]string   `json:"labels,omitempty"`
-	LabelsArray []map[string]string `json:"labelsArray,omitempty"`
+	Labels      map[string]string   `json:"labels"`
+	LabelsArray []map[string]string `json:"labelsArray"`
 	Points      []Point             `json:"values"`
 }
 
@@ -1179,24 +1182,34 @@ func (l LabelsString) String() string {
 	return string(l)
 }
 
+type RuleStateTimeline struct {
+	Items  []RuleStateHistory  `json:"items"`
+	Total  uint64              `json:"total"`
+	Labels map[string][]string `json:"labels"`
+}
+
 type RuleStateHistory struct {
 	RuleID   string `json:"ruleID" ch:"rule_id"`
 	RuleName string `json:"ruleName" ch:"rule_name"`
 	// One of ["normal", "firing"]
-	OverallState        string `json:"overallState" ch:"overall_state"`
-	OverallStateChanged bool   `json:"overallStateChanged" ch:"overall_state_changed"`
+	OverallState        model.AlertState `json:"overallState" ch:"overall_state"`
+	OverallStateChanged bool             `json:"overallStateChanged" ch:"overall_state_changed"`
 	// One of ["normal", "firing", "no_data", "muted"]
-	State        string       `json:"state" ch:"state"`
-	StateChanged bool         `json:"stateChanged" ch:"state_changed"`
-	UnixMilli    int64        `json:"unixMilli" ch:"unix_milli"`
-	Labels       LabelsString `json:"labels" ch:"labels"`
-	Fingerprint  uint64       `json:"fingerprint" ch:"fingerprint"`
-	Value        float64      `json:"value" ch:"value"`
+	State        model.AlertState `json:"state" ch:"state"`
+	StateChanged bool             `json:"stateChanged" ch:"state_changed"`
+	UnixMilli    int64            `json:"unixMilli" ch:"unix_milli"`
+	Labels       LabelsString     `json:"labels" ch:"labels"`
+	Fingerprint  uint64           `json:"fingerprint" ch:"fingerprint"`
+	Value        float64          `json:"value" ch:"value"`
+
+	RelatedTracesLink string `json:"relatedTracesLink"`
+	RelatedLogsLink   string `json:"relatedLogsLink"`
 }
 
 type QueryRuleStateHistory struct {
 	Start   int64      `json:"start"`
 	End     int64      `json:"end"`
+	State   string     `json:"state"`
 	Filters *FilterSet `json:"filters"`
 	Offset  int64      `json:"offset"`
 	Limit   int64      `json:"limit"`
@@ -1217,22 +1230,24 @@ func (r *QueryRuleStateHistory) Validate() error {
 }
 
 type RuleStateHistoryContributor struct {
-	Fingerprint uint64       `json:"fingerprint" ch:"fingerprint"`
-	Labels      LabelsString `json:"labels" ch:"labels"`
-	Count       uint64       `json:"count" ch:"count"`
+	Fingerprint       uint64       `json:"fingerprint" ch:"fingerprint"`
+	Labels            LabelsString `json:"labels" ch:"labels"`
+	Count             uint64       `json:"count" ch:"count"`
+	RelatedTracesLink string       `json:"relatedTracesLink"`
+	RelatedLogsLink   string       `json:"relatedLogsLink"`
 }
 
 type RuleStateTransition struct {
-	RuleID         string `json:"ruleID" ch:"rule_id"`
-	State          string `json:"state" ch:"state"`
-	FiringTime     int64  `json:"firingTime" ch:"firing_time"`
-	ResolutionTime int64  `json:"resolutionTime" ch:"resolution_time"`
+	RuleID         string           `json:"ruleID" ch:"rule_id"`
+	State          model.AlertState `json:"state" ch:"state"`
+	FiringTime     int64            `json:"firingTime" ch:"firing_time"`
+	ResolutionTime int64            `json:"resolutionTime" ch:"resolution_time"`
 }
 
 type ReleStateItem struct {
-	State string `json:"state"`
-	Start int64  `json:"start"`
-	End   int64  `json:"end"`
+	State model.AlertState `json:"state"`
+	Start int64            `json:"start"`
+	End   int64            `json:"end"`
 }
 
 type Stats struct {
@@ -1244,4 +1259,40 @@ type Stats struct {
 	PastAvgResolutionTime          string  `json:"pastAvgResolutionTime"`
 	CurrentAvgResolutionTimeSeries *Series `json:"currentAvgResolutionTimeSeries"`
 	PastAvgResolutionTimeSeries    *Series `json:"pastAvgResolutionTimeSeries"`
+}
+
+type QueryProgress struct {
+	ReadRows uint64 `json:"read_rows"`
+
+	ReadBytes uint64 `json:"read_bytes"`
+
+	ElapsedMs uint64 `json:"elapsed_ms"`
+}
+
+type URLShareableTimeRange struct {
+	Start    int64 `json:"start"`
+	End      int64 `json:"end"`
+	PageSize int64 `json:"pageSize"`
+}
+
+type URLShareableBuilderQuery struct {
+	QueryData     []BuilderQuery `json:"queryData"`
+	QueryFormulas []string       `json:"queryFormulas"`
+}
+
+type URLShareableCompositeQuery struct {
+	QueryType string                   `json:"queryType"`
+	Builder   URLShareableBuilderQuery `json:"builder"`
+}
+
+type URLShareableOptions struct {
+	MaxLines      int            `json:"maxLines"`
+	Format        string         `json:"format"`
+	SelectColumns []AttributeKey `json:"selectColumns"`
+}
+
+type LogQBOptions struct {
+	GraphLimitQtype string
+	IsLivetailQuery bool
+	PreferRPM       bool
 }

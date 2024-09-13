@@ -2,14 +2,23 @@
 import './LogDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
+import Convert from 'ansi-to-html';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ContextView from 'container/LogDetailedView/ContextView/ContextView';
 import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
-import { aggregateAttributesResourcesToString } from 'container/LogDetailedView/utils';
+import {
+	aggregateAttributesResourcesToString,
+	removeEscapeCharacters,
+	unescapeString,
+} from 'container/LogDetailedView/utils';
+import { useOptionsMenu } from 'container/OptionsMenu';
+import dompurify from 'dompurify';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import {
@@ -21,21 +30,27 @@ import {
 	TextSelect,
 	X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import { VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailProps } from './LogDetail.interfaces';
 import QueryBuilderSearchWrapper from './QueryBuilderSearchWrapper';
 
+const convert = new Convert();
+
 function LogDetail({
 	log,
 	onClose,
 	onAddToQuery,
+	onGroupByAttribute,
 	onClickActionItem,
 	selectedTab,
 	isListViewPanel = false,
+	listViewPanelSelectedFields,
 }: LogDetailProps): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
@@ -45,6 +60,19 @@ function LogDetail({
 	const [contextQuery, setContextQuery] = useState<Query | undefined>();
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
+	const { initialDataSource, stagedQuery } = useQueryBuilder();
+
+	const listQuery = useMemo(() => {
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+
+		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
+	}, [stagedQuery]);
+
+	const { options } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: initialDataSource || DataSource.LOGS,
+		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
+	});
 
 	const isDarkMode = useIsDarkMode();
 
@@ -70,6 +98,17 @@ function LogDetail({
 			onClose(e);
 		}
 	};
+
+	const htmlBody = useMemo(
+		() => ({
+			__html: convert.toHtml(
+				dompurify.sanitize(unescapeString(log?.body || ''), {
+					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				}),
+			),
+		}),
+		[log?.body],
+	);
 
 	const handleJSONCopy = (): void => {
 		copyToClipboard(LogJsonData);
@@ -108,8 +147,8 @@ function LogDetail({
 		>
 			<div className="log-detail-drawer__log">
 				<Divider type="vertical" className={cx('log-type-indicator', logType)} />
-				<Tooltip title={log?.body} placement="left">
-					<Typography.Text className="log-body">{log?.body}</Typography.Text>
+				<Tooltip title={removeEscapeCharacters(log?.body)} placement="left">
+					<div className="log-body" dangerouslySetInnerHTML={htmlBody} />
 				</Tooltip>
 
 				<div className="log-overflow-shadow">&nbsp;</div>
@@ -191,7 +230,10 @@ function LogDetail({
 					logData={log}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onClickActionItem}
+					onGroupByAttribute={onGroupByAttribute}
 					isListViewPanel={isListViewPanel}
+					selectedOptions={options}
+					listViewPanelSelectedFields={listViewPanelSelectedFields}
 				/>
 			)}
 			{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}

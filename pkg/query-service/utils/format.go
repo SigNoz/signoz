@@ -154,6 +154,14 @@ func QuoteEscapedString(str string) string {
 	return str
 }
 
+func QuoteEscapedStringForContains(str string) string {
+	// https: //clickhouse.com/docs/en/sql-reference/functions/string-search-functions#like
+	str = QuoteEscapedString(str)
+	str = strings.ReplaceAll(str, `%`, `\%`)
+	str = strings.ReplaceAll(str, `_`, `\_`)
+	return str
+}
+
 // ClickHouseFormattedValue formats the value to be used in clickhouse query
 func ClickHouseFormattedValue(v interface{}) string {
 	// if it's pointer convert it to a value
@@ -190,6 +198,19 @@ func ClickHouseFormattedValue(v interface{}) string {
 			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
 			return "[]"
 		}
+	case []string:
+		if len(x) == 0 {
+			return "[]"
+		}
+		str := "["
+		for idx, sVal := range x {
+			str += fmt.Sprintf("'%s'", QuoteEscapedString(sVal))
+			if idx != len(x)-1 {
+				str += ","
+			}
+		}
+		str += "]"
+		return str
 	default:
 		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
 		return ""
@@ -248,6 +269,28 @@ func GetClickhouseColumnName(typeName string, dataType, field string) string {
 	field = strings.ReplaceAll(field, ".", "$$")
 
 	colName := fmt.Sprintf("`%s_%s_%s`", strings.ToLower(typeName), strings.ToLower(dataType), field)
+	return colName
+}
+
+func GetClickhouseColumnNameV2(typeName string, dataType, field string) string {
+	if typeName == string(v3.AttributeKeyTypeTag) {
+		typeName = constants.Attributes
+	}
+
+	if typeName != string(v3.AttributeKeyTypeResource) {
+		typeName = typeName[:len(typeName)-1]
+	}
+
+	dataType = strings.ToLower(dataType)
+
+	if dataType == "int64" || dataType == "float64" {
+		dataType = "number"
+	}
+
+	// if name contains . replace it with `$$`
+	field = strings.ReplaceAll(field, ".", "$$")
+
+	colName := fmt.Sprintf("%s_%s_%s", strings.ToLower(typeName), dataType, field)
 	return colName
 }
 

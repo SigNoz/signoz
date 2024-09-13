@@ -1,0 +1,10 @@
+.alert-state {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	&__label {
+		font-size: 14px;
+		line-height: 18px;
+		letter-spacing: -0.07px;
+	}
+}

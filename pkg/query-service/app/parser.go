@@ -18,7 +18,6 @@ import (
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
 
-	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -255,7 +254,7 @@ func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error)
 		levelDownStr = "0"
 	}
 	if SpanRenderLimitStr == "" || SpanRenderLimitStr == "null" {
-		SpanRenderLimitStr = constants.SpanRenderLimitStr
+		SpanRenderLimitStr = baseconstants.SpanRenderLimitStr
 	}
 
 	levelUpInt, err := strconv.Atoi(levelUpStr)
@@ -270,7 +269,7 @@ func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error)
 	if err != nil {
 		return nil, err
 	}
-	MaxSpansInTraceInt, err := strconv.Atoi(constants.MaxSpansInTraceStr)
+	MaxSpansInTraceInt, err := strconv.Atoi(baseconstants.MaxSpansInTraceStr)
 	if err != nil {
 		return nil, err
 	}
@@ -846,15 +845,41 @@ func parseQBFilterSuggestionsRequest(r *http.Request) (
 		return nil, model.BadRequest(err)
 	}
 
-	limit := baseconstants.DefaultFilterSuggestionsLimit
-	limitStr := r.URL.Query().Get("limit")
-	if len(limitStr) > 0 {
-		limit, err := strconv.Atoi(limitStr)
-		if err != nil || limit < 1 {
-			return nil, model.BadRequest(fmt.Errorf(
-				"invalid limit: %s", limitStr,
-			))
+	parsePositiveIntQP := func(
+		queryParam string, defaultValue uint64, maxValue uint64,
+	) (uint64, *model.ApiError) {
+		value := defaultValue
+
+		qpValue := r.URL.Query().Get(queryParam)
+		if len(qpValue) > 0 {
+			value, err := strconv.Atoi(qpValue)
+
+			if err != nil || value < 1 || value > int(maxValue) {
+				return 0, model.BadRequest(fmt.Errorf(
+					"invalid %s: %s", queryParam, qpValue,
+				))
+			}
 		}
+
+		return value, nil
+	}
+
+	attributesLimit, err := parsePositiveIntQP(
+		"attributesLimit",
+		baseconstants.DefaultFilterSuggestionsAttributesLimit,
+		baseconstants.MaxFilterSuggestionsAttributesLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	examplesLimit, err := parsePositiveIntQP(
+		"examplesLimit",
+		baseconstants.DefaultFilterSuggestionsExamplesLimit,
+		baseconstants.MaxFilterSuggestionsExamplesLimit,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	var existingFilter *v3.FilterSet
@@ -875,10 +900,11 @@ func parseQBFilterSuggestionsRequest(r *http.Request) (
 	searchText := r.URL.Query().Get("searchText")
 
 	return &v3.QBFilterSuggestionsRequest{
-		DataSource:     dataSource,
-		Limit:          limit,
-		SearchText:     searchText,
-		ExistingFilter: existingFilter,
+		DataSource:      dataSource,
+		SearchText:      searchText,
+		ExistingFilter:  existingFilter,
+		AttributesLimit: attributesLimit,
+		ExamplesLimit:   examplesLimit,
 	}, nil
 }
 

@@ -10,6 +10,7 @@ import {
 	FileKey2,
 	Layers2,
 	LayoutGrid,
+	ListMinus,
 	MessageSquare,
 	Receipt,
 	Route,
@@ -87,6 +88,12 @@ const menuItems: SidebarItem[] = [
 		icon: <LayoutGrid size={16} />,
 	},
 	{
+		key: ROUTES.MESSAGING_QUEUES,
+		label: 'Messaging Queues',
+		icon: <ListMinus size={16} />,
+		isBeta: true,
+	},
+	{
 		key: ROUTES.LIST_ALL_ALERT,
 		label: 'Alerts',
 		icon: <BellDot size={16} />,
@@ -105,6 +112,7 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.SERVICE_MAP,
 		label: 'Service Map',
 		icon: <Route size={16} />,
+		isBeta: true,
 	},
 	{
 		key: ROUTES.USAGE_EXPLORER,

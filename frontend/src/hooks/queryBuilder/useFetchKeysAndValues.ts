@@ -6,17 +6,21 @@ import {
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import useDebounceValue from 'hooks/useDebounce';
-import { isEqual, uniqWith } from 'lodash-es';
+import { cloneDeep, isEqual, uniqWith, unset } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { useGetAggregateKeys } from './useGetAggregateKeys';
+import { useGetAttributeSuggestions } from './useGetAttributeSuggestions';
 
 type IuseFetchKeysAndValues = {
 	keys: BaseAutocompleteData[];
@@ -24,6 +28,7 @@ type IuseFetchKeysAndValues = {
 	isFetching: boolean;
 	sourceKeys: BaseAutocompleteData[];
 	handleRemoveSourceKey: (newSourceKey: string) => void;
+	exampleQueries: TagFilter[];
 };
 
 /**
@@ -37,8 +42,10 @@ export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQuery,
 	searchKey: string,
+	shouldUseSuggestions?: boolean,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
+	const [exampleQueries, setExampleQueries] = useState<TagFilter[]>([]);
 	const [sourceKeys, setSourceKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
 	const [isAggregateFetching, setAggregateFetching] = useState<boolean>(false);
@@ -60,18 +67,34 @@ export const useFetchKeysAndValues = (
 
 	const searchParams = useDebounceValue(memoizedSearchParams, DEBOUNCE_DELAY);
 
+	const queryFiltersWithoutId = useMemo(
+		() => ({
+			...query.filters,
+			items: query.filters.items.map((item) => {
+				const filterWithoutId = cloneDeep(item);
+				unset(filterWithoutId, 'id');
+				return filterWithoutId;
+			}),
+		}),
+		[query.filters],
+	);
+
+	const memoizedSuggestionsParams = useMemo(
+		() => [searchKey, query.dataSource, queryFiltersWithoutId],
+		[query.dataSource, queryFiltersWithoutId, searchKey],
+	);
+
+	const suggestionsParams = useDebounceValue(
+		memoizedSuggestionsParams,
+		DEBOUNCE_DELAY,
+	);
+
 	const isQueryEnabled = useMemo(
 		() =>
 			query.dataSource === DataSource.METRICS
-				? !!query.aggregateOperator &&
-				  !!query.dataSource &&
-				  !!query.aggregateAttribute.dataType
+				? !!query.dataSource && !!query.aggregateAttribute.dataType
 				: true,
-		[
-			query.aggregateAttribute.dataType,
-			query.aggregateOperator,
-			query.dataSource,
-		],
+		[query.aggregateAttribute.dataType, query.dataSource],
 	);
 
 	const { data, isFetching, status } = useGetAggregateKeys(
@@ -82,7 +105,26 @@ export const useFetchKeysAndValues = (
 			aggregateAttribute: query.aggregateAttribute.key,
 			tagType: query.aggregateAttribute.type ?? null,
 		},
-		{ queryKey: [searchParams], enabled: isQueryEnabled },
+		{
+			queryKey: [searchParams],
+			enabled: isQueryEnabled && !shouldUseSuggestions,
+		},
+	);
+
+	const {
+		data: suggestionsData,
+		isFetching: isFetchingSuggestions,
+		status: fetchingSuggestionsStatus,
+	} = useGetAttributeSuggestions(
+		{
+			searchText: searchKey,
+			dataSource: query.dataSource,
+			filters: query.filters,
+		},
+		{
+			queryKey: [suggestionsParams],
+			enabled: isQueryEnabled && shouldUseSuggestions,
+		},
 	);
 
 	/**
@@ -162,11 +204,41 @@ export const useFetchKeysAndValues = (
 		}
 	}, [data?.payload?.attributeKeys, status]);
 
+	useEffect(() => {
+		if (
+			fetchingSuggestionsStatus === 'success' &&
+			suggestionsData?.payload?.attributes
+		) {
+			setKeys(suggestionsData.payload.attributes);
+			setSourceKeys((prevState) =>
+				uniqWith(
+					[...(suggestionsData.payload.attributes ?? []), ...prevState],
+					isEqual,
+				),
+			);
+		} else {
+			setKeys([]);
+		}
+		if (
+			fetchingSuggestionsStatus === 'success' &&
+			suggestionsData?.payload?.example_queries
+		) {
+			setExampleQueries(suggestionsData.payload.example_queries);
+		} else {
+			setExampleQueries([]);
+		}
+	}, [
+		suggestionsData?.payload?.attributes,
+		fetchingSuggestionsStatus,
+		suggestionsData?.payload?.example_queries,
+	]);
+
 	return {
 		keys,
 		results,
-		isFetching: isFetching || isAggregateFetching,
+		isFetching: isFetching || isAggregateFetching || isFetchingSuggestions,
 		sourceKeys,
 		handleRemoveSourceKey,
+		exampleQueries,
 	};
 };

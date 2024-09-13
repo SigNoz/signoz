@@ -4,6 +4,7 @@ import Convert from 'ansi-to-html';
 import { DrawerProps } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES, VIEWS } from 'components/LogDetail/constants';
+import { unescapeString } from 'container/LogDetailedView/utils';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
@@ -39,6 +40,7 @@ function RawLogView({
 	linesPerRow,
 	isTextOverflowEllipsisDisabled,
 	selectedFields = [],
+	fontSize,
 }: RawLogViewProps): JSX.Element {
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
@@ -54,6 +56,7 @@ function RawLogView({
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 	} = useActiveLog();
 
 	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
@@ -143,7 +146,9 @@ function RawLogView({
 	const html = useMemo(
 		() => ({
 			__html: convert.toHtml(
-				dompurify.sanitize(text, { FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS] }),
+				dompurify.sanitize(unescapeString(text), {
+					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				}),
 			),
 		}),
 		[text],
@@ -160,6 +165,7 @@ function RawLogView({
 			$isActiveLog={isActiveLog}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
+			fontSize={fontSize}
 		>
 			<LogStateIndicator
 				type={logType}
@@ -168,6 +174,7 @@ function RawLogView({
 					activeContextLog?.id === data.id ||
 					isActiveLog
 				}
+				fontSize={fontSize}
 			/>
 
 			<RawLogContent
@@ -176,6 +183,7 @@ function RawLogView({
 				$isDarkMode={isDarkMode}
 				$isTextOverflowEllipsisDisabled={isTextOverflowEllipsisDisabled}
 				linesPerRow={linesPerRow}
+				fontSize={fontSize}
 				dangerouslySetInnerHTML={html}
 			/>
 
@@ -199,6 +207,7 @@ function RawLogView({
 					onClose={handleCloseLogDetail}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
+					onGroupByAttribute={onGroupByAttribute}
 				/>
 			)}
 		</RawLogViewContainer>

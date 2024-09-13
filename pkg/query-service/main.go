@@ -33,6 +33,7 @@ func main() {
 	// disables rule execution but allows change to the rule definition
 	var disableRules bool
 
+	var useLogsNewSchema bool
 	// the url used to build link in the alert messages in slack and other systems
 	var ruleRepoURL, cacheConfigPath, fluxInterval string
 	var cluster string
@@ -43,6 +44,7 @@ func main() {
 	var maxOpenConns int
 	var dialTimeout time.Duration
 
+	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
@@ -79,6 +81,7 @@ func main() {
 		CacheConfigPath:   cacheConfigPath,
 		FluxInterval:      fluxInterval,
 		Cluster:           cluster,
+		UseLogsNewSchema:  useLogsNewSchema,
 	}
 
 	// Read the jwt secret key
