@@ -105,6 +105,8 @@ type APIHandler struct {
 
 	// Websocket connection upgrader
 	Upgrader *websocket.Upgrader
+
+	UseLogsNewSchema bool
 }
 
 type APIHandlerOpts struct {
@@ -140,6 +142,9 @@ type APIHandlerOpts struct {
 
 	// Querier Influx Interval
 	FluxInterval time.Duration
+
+	// Use new schema
+	UseLogsNewSchema bool
 }
 
 // NewAPIHandler returns an APIHandler
@@ -151,19 +156,21 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	querierOpts := querier.QuerierOptions{
-		Reader:        opts.Reader,
-		Cache:         opts.Cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  opts.FluxInterval,
-		FeatureLookup: opts.FeatureFlags,
+		Reader:           opts.Reader,
+		Cache:            opts.Cache,
+		KeyGenerator:     queryBuilder.NewKeyGenerator(),
+		FluxInterval:     opts.FluxInterval,
+		FeatureLookup:    opts.FeatureFlags,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:        opts.Reader,
-		Cache:         opts.Cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  opts.FluxInterval,
-		FeatureLookup: opts.FeatureFlags,
+		Reader:           opts.Reader,
+		Cache:            opts.Cache,
+		KeyGenerator:     queryBuilder.NewKeyGenerator(),
+		FluxInterval:     opts.FluxInterval,
+		FeatureLookup:    opts.FeatureFlags,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
@@ -185,6 +192,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
+		UseLogsNewSchema:              opts.UseLogsNewSchema,
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
