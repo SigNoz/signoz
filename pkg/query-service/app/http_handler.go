@@ -798,10 +798,21 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			filterItems := []v3.FilterItem{}
 			groupBy := []v3.AttributeKey{}
 			if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
-				selectedQuery := rule.RuleCondition.GetSelectedQueryName()
-				filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
-				groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
+				if rule.RuleCondition.CompositeQuery != nil {
+					if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
+						selectedQuery := rule.RuleCondition.GetSelectedQueryName()
+						if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+							rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters != nil {
+							filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
+						}
+						if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+							rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy != nil {
+							groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
+						}
+					}
+				}
 			}
+
 			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy)
 			end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
 			start := end.Add(-time.Duration(rule.EvalWindow))
@@ -842,10 +853,21 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 			filterItems := []v3.FilterItem{}
 			groupBy := []v3.AttributeKey{}
 			if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
-				selectedQuery := rule.RuleCondition.GetSelectedQueryName()
-				filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
-				groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
+				if rule.RuleCondition.CompositeQuery != nil {
+					if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
+						selectedQuery := rule.RuleCondition.GetSelectedQueryName()
+						if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+							rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters != nil {
+							filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
+						}
+						if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+							rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy != nil {
+							groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
+						}
+					}
+				}
 			}
+
 			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy)
 			end := time.Unix(params.End/1000, 0)
 			start := time.Unix(params.Start/1000, 0)

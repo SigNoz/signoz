@@ -7,7 +7,6 @@ import (
 
 	"github.com/pkg/errors"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	// "go.signoz.io/signoz/pkg/query-service/rules"
 )
 
 // AlertState denotes the state of an active alert.
@@ -168,24 +167,6 @@ type RuleStateHistoryContributor struct {
 	RelatedTracesLink string       `json:"relatedTracesLink"`
 	RelatedLogsLink   string       `json:"relatedLogsLink"`
 }
-
-// func (r *RuleStateHistoryContributor) AddLinks(rule *rules.GettableRule, lbls map[string]string, params *QueryRuleStateHistory) {
-// 	filterItems := []v3.FilterItem{}
-// 	groupBy := []v3.AttributeKey{}
-// 	if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
-// 		selectedQuery := rule.RuleCondition.GetSelectedQueryName()
-// 		filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
-// 		groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
-// 	}
-// 	filters := contextlinks.PrepareFilters(lbls, filterItems, groupBy)
-// 	end := time.Unix(params.End/1000, 0)
-// 	start := end.Add(-time.Duration(rule.EvalWindow))
-// 	if rule.AlertType == rules.AlertTypeLogs {
-// 		r.RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, filters)
-// 	} else if rule.AlertType == rules.AlertTypeTraces {
-// 		r.RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, filters)
-// 	}
-// }
 
 type RuleStateTransition struct {
 	RuleID         string     `json:"ruleID" ch:"rule_id"`
