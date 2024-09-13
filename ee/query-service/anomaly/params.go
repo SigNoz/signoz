@@ -79,6 +79,7 @@ func updateStepInterval(req *v3.QueryRangeParamsV3) {
 	start := req.Start
 	end := req.End
 
+	req.Step = int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60))
 	for _, q := range req.CompositeQuery.BuilderQueries {
 		// If the step interval is less than the minimum allowed step interval, set it to the minimum allowed step interval
 		if minStep := common.MinAllowedStepInterval(start, end); q.StepInterval < minStep {
@@ -94,7 +95,10 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 	currentPeriodQuery := &v3.QueryRangeParamsV3{
 		Start:          start,
 		End:            end,
+<<<<<<< HEAD
 		Step:           int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
+=======
+>>>>>>> develop
 		CompositeQuery: req.CompositeQuery,
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        false,
@@ -121,7 +125,10 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 	pastPeriodQuery := &v3.QueryRangeParamsV3{
 		Start:          pastPeriodStart,
 		End:            pastPeriodEnd,
+<<<<<<< HEAD
 		Step:           int64(math.Max(float64(common.MinAllowedStepInterval(pastPeriodStart, pastPeriodEnd)), 60)),
+=======
+>>>>>>> develop
 		CompositeQuery: copyCompositeQuery(req),
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        false,
@@ -145,7 +152,10 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 	currentGrowthQuery := &v3.QueryRangeParamsV3{
 		Start:          currentGrowthPeriodStart,
 		End:            currentGrowthPeriodEnd,
+<<<<<<< HEAD
 		Step:           int64(math.Max(float64(common.MinAllowedStepInterval(currentGrowthPeriodStart, currentGrowthPeriodEnd)), 60)),
+=======
+>>>>>>> develop
 		CompositeQuery: copyCompositeQuery(req),
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        false,
@@ -168,7 +178,10 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 	pastGrowthQuery := &v3.QueryRangeParamsV3{
 		Start:          pastGrowthPeriodStart,
 		End:            pastGrowthPeriodEnd,
+<<<<<<< HEAD
 		Step:           int64(math.Max(float64(common.MinAllowedStepInterval(pastGrowthPeriodStart, pastGrowthPeriodEnd)), 60)),
+=======
+>>>>>>> develop
 		CompositeQuery: copyCompositeQuery(req),
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        false,

@@ -38,7 +38,8 @@ type APIHandlerOptions struct {
 	Cache                         cache.Cache
 	Gateway                       *httputil.ReverseProxy
 	// Querier Influx Interval
-	FluxInterval time.Duration
+	FluxInterval     time.Duration
+	UseLogsNewSchema bool
 }
 
 type APIHandler struct {
@@ -63,6 +64,7 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		Cache:                         opts.Cache,
 		FluxInterval:                  opts.FluxInterval,
+		UseLogsNewSchema:              opts.UseLogsNewSchema,
 	})
 
 	if err != nil {

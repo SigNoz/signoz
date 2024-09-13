@@ -13,7 +13,7 @@ import (
 func TestPromRuleShouldAlert(t *testing.T) {
 	postableRule := PostableRule{
 		AlertName:  "Test Rule",
-		AlertType:  "METRIC_BASED_ALERT",
+		AlertType:  AlertTypeMetric,
 		RuleType:   RuleTypeProm,
 		EvalWindow: Duration(5 * time.Minute),
 		Frequency:  Duration(1 * time.Minute),

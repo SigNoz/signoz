@@ -219,7 +219,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 
 	}
 
-	itemsToAdd := []v3.RuleStateHistory{}
+	itemsToAdd := []model.RuleStateHistory{}
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.active {
@@ -236,13 +236,13 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			if a.State != model.StateInactive {
 				a.State = model.StateInactive
 				a.ResolvedAt = ts
-				itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
+				itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
 					RuleID:       r.ID(),
 					RuleName:     r.Name(),
 					State:        model.StateInactive,
 					StateChanged: true,
 					UnixMilli:    ts.UnixMilli(),
-					Labels:       v3.LabelsString(labelsJSON),
+					Labels:       model.LabelsString(labelsJSON),
 					Fingerprint:  a.QueryResultLables.Hash(),
 				})
 			}
@@ -256,13 +256,13 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			if a.Missing {
 				state = model.StateNoData
 			}
-			itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
+			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
 				RuleID:       r.ID(),
 				RuleName:     r.Name(),
 				State:        state,
 				StateChanged: true,
 				UnixMilli:    ts.UnixMilli(),
-				Labels:       v3.LabelsString(labelsJSON),
+				Labels:       model.LabelsString(labelsJSON),
 				Fingerprint:  a.QueryResultLables.Hash(),
 				Value:        a.Value,
 			})
@@ -306,7 +306,11 @@ func (r *PromRule) String() string {
 }
 
 func toCommonSeries(series promql.Series) v3.Series {
-	commonSeries := v3.Series{}
+	commonSeries := v3.Series{
+		Labels:      make(map[string]string),
+		LabelsArray: make([]map[string]string, 0),
+		Points:      make([]v3.Point, 0),
+	}
 
 	for _, lbl := range series.Metric {
 		commonSeries.Labels[lbl.Name] = lbl.Value
