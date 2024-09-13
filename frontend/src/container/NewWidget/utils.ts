@@ -8,7 +8,7 @@ import {
 	listViewInitialTraceQuery,
 	PANEL_TYPES_INITIAL_QUERY,
 } from 'container/NewDashboard/ComponentsSlider/constants';
-import { isEqual, set, unset } from 'lodash-es';
+import { cloneDeep, isEqual, set, unset } from 'lodash-es';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -43,54 +43,59 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
 					'groupBy',
 					'limit',
 					'having',
 					'orderBy',
 					'functions',
-					'queryName',
-					'expression',
+					'stepInterval',
 					'disabled',
+					'queryName',
 					'legend',
+					'expression',
 				],
 			},
 		},
 		[DataSource.METRICS]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'spaceAggregation',
 					'groupBy',
 					'limit',
 					'having',
 					'orderBy',
-					'functions',
-					'spaceAggregation',
-					'queryName',
-					'expression',
-					'disabled',
+					'stepInterval',
 					'legend',
+					'queryName',
+					'disabled',
+					'functions',
+					'expression',
 				],
 			},
 		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
 					'groupBy',
 					'limit',
 					'having',
 					'orderBy',
-					'queryName',
-					'expression',
+					'functions',
+					'stepInterval',
 					'disabled',
+					'queryName',
 					'legend',
+					'expression',
 				],
 			},
 		},
@@ -99,54 +104,59 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
 					'groupBy',
 					'limit',
 					'having',
 					'orderBy',
 					'functions',
-					'queryName',
-					'expression',
+					'stepInterval',
 					'disabled',
+					'queryName',
 					'legend',
+					'expression',
 				],
 			},
 		},
 		[DataSource.METRICS]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'spaceAggregation',
 					'groupBy',
 					'limit',
 					'having',
 					'orderBy',
-					'functions',
-					'spaceAggregation',
-					'queryName',
-					'expression',
-					'disabled',
+					'stepInterval',
 					'legend',
+					'queryName',
+					'disabled',
+					'functions',
+					'expression',
 				],
 			},
 		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
 					'groupBy',
 					'limit',
 					'having',
 					'orderBy',
-					'queryName',
-					'expression',
+					'functions',
+					'stepInterval',
 					'disabled',
+					'queryName',
 					'legend',
+					'expression',
 				],
 			},
 		},
@@ -155,48 +165,59 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
 					'groupBy',
 					'limit',
 					'having',
 					'orderBy',
 					'functions',
+					'stepInterval',
 					'disabled',
+					'queryName',
 					'legend',
+					'expression',
 				],
 			},
 		},
 		[DataSource.METRICS]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'spaceAggregation',
 					'groupBy',
 					'limit',
 					'having',
 					'orderBy',
-					'functions',
-					'spaceAggregation',
-					'disabled',
+					'stepInterval',
 					'legend',
+					'queryName',
+					'disabled',
+					'functions',
+					'expression',
 				],
 			},
 		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
 					'groupBy',
 					'limit',
 					'having',
 					'orderBy',
+					'functions',
+					'stepInterval',
 					'disabled',
+					'queryName',
 					'legend',
+					'expression',
 				],
 			},
 		},
@@ -205,18 +226,18 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
 					'groupBy',
 					'limit',
 					'having',
 					'orderBy',
 					'functions',
+					'stepInterval',
+					'disabled',
 					'queryName',
 					'expression',
-					'disabled',
-					'reduceTo',
 					'legend',
 				],
 			},
@@ -224,37 +245,40 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		[DataSource.METRICS]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'spaceAggregation',
 					'groupBy',
+					'reduceTo',
 					'limit',
 					'having',
 					'orderBy',
-					'functions',
-					'spaceAggregation',
+					'stepInterval',
+					'legend',
 					'queryName',
 					'expression',
 					'disabled',
-					'reduceTo',
-					'legend',
+					'functions',
 				],
 			},
 		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
 					'groupBy',
 					'limit',
 					'having',
 					'orderBy',
+					'functions',
+					'stepInterval',
+					'disabled',
 					'queryName',
 					'expression',
-					'disabled',
-					'reduceTo',
 					'legend',
 				],
 			},
@@ -264,18 +288,18 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
 					'groupBy',
-					'reduceTo',
 					'limit',
 					'having',
 					'orderBy',
 					'functions',
+					'stepInterval',
+					'disabled',
 					'queryName',
 					'expression',
-					'disabled',
 					'legend',
 				],
 			},
@@ -283,37 +307,40 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		[DataSource.METRICS]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'spaceAggregation',
 					'groupBy',
 					'reduceTo',
 					'limit',
 					'having',
 					'orderBy',
-					'functions',
-					'spaceAggregation',
+					'stepInterval',
+					'legend',
 					'queryName',
 					'expression',
 					'disabled',
-					'legend',
+					'functions',
 				],
 			},
 		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
 					'groupBy',
-					'reduceTo',
 					'limit',
 					'having',
 					'orderBy',
+					'functions',
+					'stepInterval',
+					'disabled',
 					'queryName',
 					'expression',
-					'disabled',
 					'legend',
 				],
 			},
@@ -322,7 +349,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 	[PANEL_TYPES.LIST]: {
 		[DataSource.LOGS]: {
 			builder: {
-				queryData: ['filters', 'limit', 'orderBy'],
+				queryData: ['filters', 'limit', 'orderBy', 'functions'],
 			},
 		},
 		[DataSource.METRICS]: {
@@ -332,7 +359,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		},
 		[DataSource.TRACES]: {
 			builder: {
-				queryData: ['filters', 'limit', 'orderBy'],
+				queryData: ['filters', 'limit', 'orderBy', 'functions'],
 			},
 		},
 	},
@@ -340,12 +367,13 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'filters',
 					'reduceTo',
 					'having',
 					'functions',
+					'stepInterval',
 					'queryName',
 					'expression',
 					'disabled',
@@ -356,30 +384,32 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		[DataSource.METRICS]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'spaceAggregation',
 					'having',
 					'reduceTo',
-					'functions',
-					'spaceAggregation',
+					'stepInterval',
+					'legend',
 					'queryName',
 					'expression',
 					'disabled',
-					'legend',
+					'functions',
 				],
 			},
 		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
-					'filters',
-					'aggregateOperator',
 					'aggregateAttribute',
-					'groupBy',
-					'limit',
+					'aggregateOperator',
+					'filters',
+					'reduceTo',
 					'having',
-					'orderBy',
+					'functions',
+					'stepInterval',
 					'queryName',
 					'expression',
 					'disabled',
@@ -399,12 +429,8 @@ export function handleQueryChange(
 		builder: {
 			...supersetQuery.builder,
 			queryData: supersetQuery.builder.queryData.map((query, index) => {
-				const { dataSource, expression, queryName } = query;
-				const tempQuery = {
-					...initialQueryBuilderFormValuesMap[dataSource],
-					expression,
-					queryName,
-				};
+				const { dataSource } = query;
+				const tempQuery = cloneDeep(initialQueryBuilderFormValuesMap[dataSource]);
 
 				const fieldsToSelect =
 					panelTypeDataSourceFormValuesMap[newPanelType][dataSource].builder
@@ -419,6 +445,8 @@ export function handleQueryChange(
 					set(tempQuery, 'offset', 0);
 					set(tempQuery, 'pageSize', 10);
 				} else if (tempQuery.aggregateOperator === 'noop') {
+					// this condition takes care of the part where we start with the list panel type and then shift to other panels
+					// because in other cases we never set list operator and other fields in superset query rather just update in the current / staged query
 					set(tempQuery, 'aggregateOperator', 'count');
 					unset(tempQuery, 'offset');
 					unset(tempQuery, 'pageSize');

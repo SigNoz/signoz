@@ -71,6 +71,7 @@ type Reader interface {
 	GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error)
 	GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error)
 	LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClient)
+	LiveTailLogsV4(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClientV2)
 
 	GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error)
 	GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error)
@@ -109,18 +110,24 @@ type Reader interface {
 	GetMetricMetadata(context.Context, string, string) (*v3.MetricMetadataResponse, error)
 
 	AddRuleStateHistory(ctx context.Context, ruleStateHistory []v3.RuleStateHistory) error
-	GetOverallStateTransitions(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateTransition, error)
-	ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistory, error)
+	GetOverallStateTransitions(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.ReleStateItem, error)
+	ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (*v3.RuleStateTimeline, error)
 	GetTotalTriggers(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (uint64, error)
 	GetTriggersByInterval(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (*v3.Series, error)
 	GetAvgResolutionTime(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (float64, error)
 	GetAvgResolutionTimeByInterval(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (*v3.Series, error)
 	ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistoryContributor, error)
+	GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]v3.RuleStateHistory, error)
+
 	GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error)
+
+	// Query Progress tracking helpers.
+	ReportQueryStartForProgressTracking(queryId string) (reportQueryFinished func(), err *model.ApiError)
+	SubscribeToQueryProgress(queryId string) (<-chan v3.QueryProgress, func(), *model.ApiError)
 }
 
 type Querier interface {
-	QueryRange(context.Context, *v3.QueryRangeParamsV3, map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error)
+	QueryRange(context.Context, *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error)
 
 	// test helpers
 	QueriesExecuted() []string

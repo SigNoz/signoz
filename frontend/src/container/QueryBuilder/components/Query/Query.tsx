@@ -348,6 +348,7 @@ export const Query = memo(function Query({
 				onQueryFunctionsUpdates={handleQueryFunctionsUpdates}
 				showDeleteButton={currentQuery.builder.queryData.length > 1}
 				isListViewPanel={isListViewPanel}
+				index={index}
 			/>
 
 			{!isCollapse && (

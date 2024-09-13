@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
@@ -28,6 +29,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	logsv4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/preferences"
@@ -101,6 +103,11 @@ type APIHandler struct {
 	// at the moment, we mark the app ready when the first user
 	// is registers.
 	SetupCompleted bool
+
+	// Websocket connection upgrader
+	Upgrader *websocket.Upgrader
+
+	UseLogsNewSchema bool
 }
 
 type APIHandlerOpts struct {
@@ -136,6 +143,9 @@ type APIHandlerOpts struct {
 
 	// Querier Influx Interval
 	FluxInterval time.Duration
+
+	// Use Logs New schema
+	UseLogsNewSchema bool
 }
 
 // NewAPIHandler returns an APIHandler
@@ -147,19 +157,21 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	querierOpts := querier.QuerierOptions{
-		Reader:        opts.Reader,
-		Cache:         opts.Cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  opts.FluxInterval,
-		FeatureLookup: opts.FeatureFlags,
+		Reader:           opts.Reader,
+		Cache:            opts.Cache,
+		KeyGenerator:     queryBuilder.NewKeyGenerator(),
+		FluxInterval:     opts.FluxInterval,
+		FeatureLookup:    opts.FeatureFlags,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:        opts.Reader,
-		Cache:         opts.Cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  opts.FluxInterval,
-		FeatureLookup: opts.FeatureFlags,
+		Reader:           opts.Reader,
+		Cache:            opts.Cache,
+		KeyGenerator:     queryBuilder.NewKeyGenerator(),
+		FluxInterval:     opts.FluxInterval,
+		FeatureLookup:    opts.FeatureFlags,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
@@ -181,12 +193,18 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
+		UseLogsNewSchema:              opts.UseLogsNewSchema,
+	}
+
+	logsQueryBuilder := logsv3.PrepareLogsQuery
+	if opts.UseLogsNewSchema {
+		logsQueryBuilder = logsv4.PrepareLogsQuery
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
-		BuildLogQuery:    logsv3.PrepareLogsQuery,
+		BuildLogQuery:    logsQueryBuilder,
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
 
@@ -207,9 +225,17 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		// to signup signoz through invite link only.
 		aH.SetupCompleted = true
 	}
+
+	aH.Upgrader = &websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+
 	return aH, nil
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 type structuredResponse struct {
 	Data   interface{}       `json:"data"`
 	Total  int               `json:"total"`
@@ -218,11 +244,13 @@ type structuredResponse struct {
 	Errors []structuredError `json:"errors"`
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 type structuredError struct {
 	Code int    `json:"code,omitempty"`
 	Msg  string `json:"msg"`
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 type ApiResponse struct {
 	Status    status          `json:"status"`
 	Data      interface{}     `json:"data,omitempty"`
@@ -230,6 +258,7 @@ type ApiResponse struct {
 	Error     string          `json:"error,omitempty"`
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -273,6 +302,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 	}
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -305,8 +335,16 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 
 	subRouter.HandleFunc("/filter_suggestions", am.ViewAccess(aH.getQueryBuilderSuggestions)).Methods(http.MethodGet)
 
+	// TODO(Raj): Remove this handler after /ws based path has been completely rolled out.
+	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
+
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/ws").Subrouter()
+	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMiddleware) {
@@ -315,6 +353,7 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }
@@ -691,6 +730,13 @@ func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
+	if math.IsNaN(currentAvgResolutionTime) || math.IsInf(currentAvgResolutionTime, 0) {
+		currentAvgResolutionTime = 0
+	}
+	if math.IsNaN(pastAvgResolutionTime) || math.IsInf(pastAvgResolutionTime, 0) {
+		pastAvgResolutionTime = 0
+	}
+
 	stats := v3.Stats{
 		TotalCurrentTriggers:           totalCurrentTriggers,
 		TotalPastTriggers:              totalPastTriggers,
@@ -714,32 +760,10 @@ func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.
 		return
 	}
 
-	res, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID, &params)
+	stateItems, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID, &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
-	}
-
-	stateItems := []v3.ReleStateItem{}
-
-	for idx, item := range res {
-		start := item.FiringTime
-		end := item.ResolutionTime
-		stateItems = append(stateItems, v3.ReleStateItem{
-			State: item.State,
-			Start: start,
-			End:   end,
-		})
-		if idx < len(res)-1 {
-			nextStart := res[idx+1].FiringTime
-			if nextStart > end {
-				stateItems = append(stateItems, v3.ReleStateItem{
-					State: "normal",
-					Start: end,
-					End:   nextStart,
-				})
-			}
-		}
 	}
 
 	aH.Respond(w, stateItems)
@@ -763,6 +787,37 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
+
+	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	if err == nil {
+		for idx := range res.Items {
+			lbls := make(map[string]string)
+			err := json.Unmarshal([]byte(res.Items[idx].Labels), &lbls)
+			if err != nil {
+				continue
+			}
+			filterItems := []v3.FilterItem{}
+			if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
+				if rule.RuleCondition.CompositeQuery != nil {
+					if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
+						for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+							if query.Filters != nil && len(query.Filters.Items) > 0 {
+								filterItems = append(filterItems, query.Filters.Items...)
+							}
+						}
+					}
+				}
+			}
+			newFilters := common.PrepareFilters(lbls, filterItems)
+			ts := time.Unix(res.Items[idx].UnixMilli/1000, 0)
+			if rule.AlertType == rules.AlertTypeLogs {
+				res.Items[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, newFilters)
+			} else if rule.AlertType == rules.AlertTypeTraces {
+				res.Items[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, newFilters)
+			}
+		}
+	}
+
 	aH.Respond(w, res)
 }
 
@@ -780,6 +835,25 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
+
+	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	if err == nil {
+		for idx := range res {
+			lbls := make(map[string]string)
+			err := json.Unmarshal([]byte(res[idx].Labels), &lbls)
+			if err != nil {
+				continue
+			}
+			ts := time.Unix(params.End/1000, 0)
+			filters := common.PrepareFilters(lbls, nil)
+			if rule.AlertType == rules.AlertTypeLogs {
+				res[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, filters)
+			} else if rule.AlertType == rules.AlertTypeTraces {
+				res[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, filters)
+			}
+		}
+	}
+
 	aH.Respond(w, res)
 }
 
@@ -2414,8 +2488,111 @@ func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *Auth
 
 	kafkaSubRouter.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerData)).Methods(http.MethodPost)
 	kafkaSubRouter.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerData)).Methods(http.MethodPost)
+	kafkaSubRouter.HandleFunc("/network-latency", am.ViewAccess(aH.getNetworkData)).Methods(http.MethodPost)
 
 	// for other messaging queues, add SubRouters here
+}
+
+// not using md5 hashing as the plain string would work
+func uniqueIdentifier(clientID, serviceInstanceID, serviceName, separator string) string {
+	return clientID + separator + serviceInstanceID + separator + serviceName
+}
+
+func (aH *APIHandler) getNetworkData(
+	w http.ResponseWriter, r *http.Request,
+) {
+	attributeCache := &mq.Clients{
+		Hash: make(map[string]struct{}),
+	}
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQRParamsNetwork(messagingQueue, "throughput", attributeCache)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQueriesByName map[string]error
+
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQueriesByName)
+		return
+	}
+
+	for _, res := range result {
+		for _, series := range res.Series {
+			clientID, clientIDOk := series.Labels["client_id"]
+			serviceInstanceID, serviceInstanceIDOk := series.Labels["service_instance_id"]
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			hashKey := uniqueIdentifier(clientID, serviceInstanceID, serviceName, "#")
+			_, ok := attributeCache.Hash[hashKey]
+			if clientIDOk && serviceInstanceIDOk && serviceNameOk && !ok {
+				attributeCache.Hash[hashKey] = struct{}{}
+				attributeCache.ClientID = append(attributeCache.ClientID, clientID)
+				attributeCache.ServiceInstanceID = append(attributeCache.ServiceInstanceID, serviceInstanceID)
+				attributeCache.ServiceName = append(attributeCache.ServiceName, serviceName)
+			}
+		}
+	}
+
+	queryRangeParams, err = mq.BuildQRParamsNetwork(messagingQueue, "fetch-latency", attributeCache)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
+		return
+	}
+
+	latencyColumn := &v3.Result{QueryName: "latency"}
+	var latencySeries []*v3.Series
+	for _, res := range resultFetchLatency {
+		for _, series := range res.Series {
+			clientID, clientIDOk := series.Labels["client_id"]
+			serviceInstanceID, serviceInstanceIDOk := series.Labels["service_instance_id"]
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			hashKey := uniqueIdentifier(clientID, serviceInstanceID, serviceName, "#")
+			_, ok := attributeCache.Hash[hashKey]
+			if clientIDOk && serviceInstanceIDOk && serviceNameOk && ok {
+				latencySeries = append(latencySeries, series)
+			}
+		}
+	}
+
+	latencyColumn.Series = latencySeries
+	result = append(result, latencyColumn)
+
+	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+
+	resp := v3.QueryRangeResponse{
+		Result: resultFetchLatency,
+	}
+	aH.Respond(w, resp)
 }
 
 func (aH *APIHandler) getProducerData(
@@ -2446,7 +2623,7 @@ func (aH *APIHandler) getProducerData(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams, nil)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -2487,7 +2664,7 @@ func (aH *APIHandler) getConsumerData(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams, nil)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -2849,7 +3026,7 @@ func (aH *APIHandler) calculateLogsConnectionStatus(
 		},
 	}
 	queryRes, _, err := aH.querier.QueryRange(
-		ctx, qrParams, map[string]v3.AttributeKey{},
+		ctx, qrParams,
 	)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
@@ -3499,6 +3676,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
+		tracesV3.Enrich(queryRangeParams, spanKeys)
 	}
 
 	// WARN: Only works for AND operator in traces query
@@ -3517,7 +3695,25 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
+	// Hook up query progress tracking if requested
+	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
+	if len(queryIdHeader) > 0 {
+		ctx = context.WithValue(ctx, "queryId", queryIdHeader)
+
+		onQueryFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
+		if err != nil {
+			zap.L().Error(
+				"couldn't report query start for progress tracking",
+				zap.String("queryId", queryIdHeader), zap.Error(err),
+			)
+		} else {
+			defer func() {
+				go onQueryFinished()
+			}()
+		}
+	}
+
+	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams)
 
 	if err != nil {
 		queryErrors := map[string]string{}
@@ -3670,7 +3866,164 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
 }
 
+func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Request) {
+	// Upgrade connection to websocket, sending back the requested protocol
+	// value for sec-websocket-protocol
+	//
+	// Since js websocket API doesn't allow setting headers, this header is often
+	// used for passing auth tokens. As per websocket spec the connection will only
+	// succeed if the requested `Sec-Websocket-Protocol` is sent back as a header
+	// in the upgrade response (signifying that the protocol is supported by the server).
+	upgradeResponseHeaders := http.Header{}
+	requestedProtocol := r.Header.Get("Sec-WebSocket-Protocol")
+	if len(requestedProtocol) > 0 {
+		upgradeResponseHeaders.Add("Sec-WebSocket-Protocol", requestedProtocol)
+	}
+
+	c, err := aH.Upgrader.Upgrade(w, r, upgradeResponseHeaders)
+	if err != nil {
+		RespondError(w, model.InternalError(fmt.Errorf(
+			"couldn't upgrade connection: %w", err,
+		)), nil)
+		return
+	}
+	defer c.Close()
+
+	// Websocket upgrade complete. Subscribe to query progress and send updates to client
+	//
+	// Note: we handle any subscription problems (queryId query param missing or query already complete etc)
+	// after the websocket connection upgrade by closing the channel.
+	// The other option would be to handle the errors before websocket upgrade by sending an
+	// error response instead of the upgrade response, but that leads to a generic websocket
+	// connection failure on the client.
+
+	queryId := r.URL.Query().Get("q")
+
+	progressCh, unsubscribe, apiErr := aH.reader.SubscribeToQueryProgress(queryId)
+	if apiErr != nil {
+		// Shouldn't happen unless query progress requested after query finished
+		zap.L().Warn(
+			"couldn't subscribe to query progress",
+			zap.String("queryId", queryId), zap.Any("error", apiErr),
+		)
+		return
+	}
+	defer func() { go unsubscribe() }()
+
+	for queryProgress := range progressCh {
+		msg, err := json.Marshal(queryProgress)
+		if err != nil {
+			zap.L().Error(
+				"failed to serialize progress message",
+				zap.String("queryId", queryId), zap.Any("progress", queryProgress), zap.Error(err),
+			)
+			continue
+		}
+
+		err = c.WriteMessage(websocket.TextMessage, msg)
+		if err != nil {
+			zap.L().Error(
+				"failed to write progress msg to websocket",
+				zap.String("queryId", queryId), zap.String("msg", string(msg)), zap.Error(err),
+			)
+			break
+
+		} else {
+			zap.L().Debug(
+				"wrote progress msg to websocket",
+				zap.String("queryId", queryId), zap.String("msg", string(msg)), zap.Error(err),
+			)
+		}
+	}
+}
+
+func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
+
+	// get the param from url and add it to body
+	stringReader := strings.NewReader(r.URL.Query().Get("q"))
+	r.Body = io.NopCloser(stringReader)
+
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+	if apiErrorObj != nil {
+		zap.L().Error(apiErrorObj.Err.Error())
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	var err error
+	var queryString string
+	switch queryRangeParams.CompositeQuery.QueryType {
+	case v3.QueryTypeBuilder:
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(queryRangeParams) {
+			// get the fields if any logs query is present
+			var fields map[string]v3.AttributeKey
+			fields, err = aH.getLogFieldsV3(r.Context(), queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, nil)
+				return
+			}
+			logsv3.Enrich(queryRangeParams, fields)
+		}
+
+		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+			return
+		}
+
+	default:
+		err = fmt.Errorf("invalid query type")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(200)
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
+		RespondError(w, &err, "streaming is not supported")
+		return
+	}
+
+	// flush the headers
+	flusher.Flush()
+
+	// create the client
+	client := &v3.LogsLiveTailClientV2{Name: r.RemoteAddr, Logs: make(chan *model.SignozLogV2, 1000), Done: make(chan *bool), Error: make(chan error)}
+	go aH.reader.LiveTailLogsV4(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
+	for {
+		select {
+		case log := <-client.Logs:
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			enc.Encode(log)
+			fmt.Fprintf(w, "data: %v\n\n", buf.String())
+			flusher.Flush()
+		case <-client.Done:
+			zap.L().Debug("done!")
+			return
+		case err := <-client.Error:
+			zap.L().Error("error occurred", zap.Error(err))
+			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
+			flusher.Flush()
+			return
+		}
+	}
+
+}
+
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
+	if aH.UseLogsNewSchema {
+		aH.liveTailLogsV2(w, r)
+		return
+	}
 
 	// get the param from url and add it to body
 	stringReader := strings.NewReader(r.URL.Query().Get("q"))
@@ -3748,6 +4101,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
 }
 
 func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
@@ -3788,6 +4142,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
+		tracesV3.Enrich(queryRangeParams, spanKeys)
 	}
 
 	// WARN: Only works for AND operator in traces query
@@ -3806,7 +4161,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams, spanKeys)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams)
 
 	if err != nil {
 		queryErrors := map[string]string{}
