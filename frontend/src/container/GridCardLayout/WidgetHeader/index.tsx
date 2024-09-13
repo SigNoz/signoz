@@ -214,6 +214,7 @@ function WidgetHeader({
 					addonBefore={<SearchOutlined size={14} />}
 					placeholder="Search..."
 					bordered={false}
+					autoFocus
 					addonAfter={
 						<X
 							size={14}
@@ -227,7 +228,6 @@ function WidgetHeader({
 					}
 					key={widget.id}
 					onChange={(e): void => {
-						console.log(e.target.value);
 						setSearchTerm(e.target.value || '');
 					}}
 				/>

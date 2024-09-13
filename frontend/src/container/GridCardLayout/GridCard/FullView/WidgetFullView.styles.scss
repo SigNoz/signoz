@@ -15,6 +15,13 @@
 		box-sizing: border-box;
 		margin: 16px 0;
 		border-radius: 3px;
+
+		.global-search {
+			.ant-input-group-addon {
+				border: none;
+				background-color: var(--bg-ink-300);
+			}
+		}
 	}
 
 	.height-widget {
