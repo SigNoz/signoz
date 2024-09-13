@@ -2299,6 +2299,7 @@ func (r *ClickHouseReader) SetTTLLogsV2(ctx context.Context, params *model.TTLPa
 	}
 
 	// TTL query for logs_v2_resource table
+	// adding 1800 as our bucket size is 1800 seconds
 	ttlLogsV2Resource := fmt.Sprintf(
 		"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + "+
 			"INTERVAL %v SECOND DELETE", tableNameArray[1], r.cluster, params.DelDuration)
