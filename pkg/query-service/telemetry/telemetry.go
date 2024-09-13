@@ -339,6 +339,7 @@ func createTelemetry() {
 							"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
 							"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
 							"dashboardsWithTSV2":              dashboardsInfo.QueriesWithTSV2,
+							"dashboardWithLogsChQuery":        dashboardsInfo.DashboardsWithLogsChQuery,
 							"totalAlerts":                     alertsInfo.TotalAlerts,
 							"alertsWithTSV2":                  alertsInfo.AlertsWithTSV2,
 							"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
@@ -358,6 +359,7 @@ func createTelemetry() {
 							"metricsClickHouseQueries":        alertsInfo.MetricsClickHouseQueries,
 							"metricsPrometheusQueries":        alertsInfo.MetricsPrometheusQueries,
 							"spanMetricsPrometheusQueries":    alertsInfo.SpanMetricsPrometheusQueries,
+							"alertsWithLogsChQuery":           alertsInfo.AlertsWithLogsChQuery,
 						}
 						// send event only if there are dashboards or alerts or channels
 						if (dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0) && apiErr == nil {
