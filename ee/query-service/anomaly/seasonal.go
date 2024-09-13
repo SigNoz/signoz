@@ -59,22 +59,22 @@ func (p *BaseSeasonalProvider) getQueryParams(req *GetAnomaliesRequest) *anomaly
 }
 
 func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQueryParams) (*anomalyQueryResults, error) {
-	currentPeriodResults, _, err := p.querierV2.QueryRange(ctx, params.CurrentPeriodQuery, nil)
+	currentPeriodResults, _, err := p.querierV2.QueryRange(ctx, params.CurrentPeriodQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	pastPeriodResults, _, err := p.querierV2.QueryRange(ctx, params.PastPeriodQuery, nil)
+	pastPeriodResults, _, err := p.querierV2.QueryRange(ctx, params.PastPeriodQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	currentSeasonResults, _, err := p.querierV2.QueryRange(ctx, params.CurrentSeasonQuery, nil)
+	currentSeasonResults, _, err := p.querierV2.QueryRange(ctx, params.CurrentSeasonQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	pastSeasonResults, _, err := p.querierV2.QueryRange(ctx, params.PastSeasonQuery, nil)
+	pastSeasonResults, _, err := p.querierV2.QueryRange(ctx, params.PastSeasonQuery)
 	if err != nil {
 		return nil, err
 	}
