@@ -504,9 +504,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 	var queryErrors map[string]error
 
 	if r.version == "v4" {
-		results, queryErrors, err = r.querierV2.QueryRange(ctx, params, map[string]v3.AttributeKey{})
+		results, queryErrors, err = r.querierV2.QueryRange(ctx, params)
 	} else {
-		results, queryErrors, err = r.querier.QueryRange(ctx, params, map[string]v3.AttributeKey{})
+		results, queryErrors, err = r.querier.QueryRange(ctx, params)
 	}
 
 	if err != nil {

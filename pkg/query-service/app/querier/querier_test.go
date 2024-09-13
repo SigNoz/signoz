@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
+	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/cache/inmemory"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
@@ -584,7 +585,8 @@ func TestQueryRange(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
+		_, errByName, err := q.QueryRange(context.Background(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -693,7 +695,8 @@ func TestQueryRangeValueType(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
+		_, errByName, err := q.QueryRange(context.Background(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -746,7 +749,8 @@ func TestQueryRangeTimeShift(t *testing.T) {
 	expectedTimeRangeInQueryString := fmt.Sprintf("timestamp >= %d AND timestamp <= %d", (1675115596722-86400*1000)*1000000, ((1675115596722+120*60*1000)-86400*1000)*1000000)
 
 	for i, param := range params {
-		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
+		_, errByName, err := q.QueryRange(context.Background(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -844,7 +848,8 @@ func TestQueryRangeTimeShiftWithCache(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
+		_, errByName, err := q.QueryRange(context.Background(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -944,7 +949,8 @@ func TestQueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
+		_, errByName, err := q.QueryRange(context.Background(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -1033,7 +1039,8 @@ func TestQueryRangeValueTypePromQL(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
+		_, errByName, err := q.QueryRange(context.Background(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}

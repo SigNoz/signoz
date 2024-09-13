@@ -77,7 +77,6 @@ func (q *querier) runBuilderQuery(
 	ctx context.Context,
 	builderQuery *v3.BuilderQuery,
 	params *v3.QueryRangeParamsV3,
-	keys map[string]v3.AttributeKey,
 	cacheKeys map[string]string,
 	ch chan channelResult,
 	wg *sync.WaitGroup,
@@ -196,7 +195,6 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				keys,
 				tracesV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
 			)
 			if err != nil {
@@ -208,7 +206,6 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				keys,
 				tracesV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
 			)
 			if err != nil {
@@ -222,7 +219,6 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				keys,
 				tracesV3.Options{PreferRPM: preferRPM},
 			)
 			if err != nil {
@@ -333,7 +329,6 @@ func (q *querier) runBuilderExpression(
 	ctx context.Context,
 	builderQuery *v3.BuilderQuery,
 	params *v3.QueryRangeParamsV3,
-	keys map[string]v3.AttributeKey,
 	cacheKeys map[string]string,
 	ch chan channelResult,
 	wg *sync.WaitGroup,
@@ -342,7 +337,7 @@ func (q *querier) runBuilderExpression(
 
 	queryName := builderQuery.QueryName
 
-	queries, err := q.builder.PrepareQueries(params, keys)
+	queries, err := q.builder.PrepareQueries(params)
 	if err != nil {
 		ch <- channelResult{Err: err, Name: queryName, Query: "", Series: nil}
 		return
@@ -377,7 +372,7 @@ func (q *querier) runBuilderExpression(
 			NoCache:        params.NoCache,
 			CompositeQuery: params.CompositeQuery,
 			Variables:      params.Variables,
-		}, keys)
+		})
 		query := missQueries[queryName]
 		series, err := q.execClickHouseQuery(ctx, query)
 		if err != nil {
