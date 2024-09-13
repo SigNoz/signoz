@@ -95,7 +95,6 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 	currentPeriodQuery := &v3.QueryRangeParamsV3{
 		Start:          start,
 		End:            end,
-		Step:           int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
 		CompositeQuery: req.CompositeQuery,
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        false,
