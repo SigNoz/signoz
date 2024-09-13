@@ -553,7 +553,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 	}
 
 	for _, series := range queryResult.Series {
-		smpl, shouldAlert := r.shouldAlert(*series)
+		smpl, shouldAlert := r.ShouldAlert(*series)
 		if shouldAlert {
 			resultVector = append(resultVector, smpl)
 		}
@@ -714,7 +714,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > resolvedRetention) {
+			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ResolvedRetention) {
 				delete(r.active, fp)
 			}
 			if a.State != model.StateInactive {

@@ -173,6 +173,18 @@ func (r *BaseRule) currentAlerts() []*Alert {
 	return alerts
 }
 
+func (r *BaseRule) EvalDelay() time.Duration {
+	return r.evalDelay
+}
+
+func (r *BaseRule) EvalWindow() time.Duration {
+	return r.evalWindow
+}
+
+func (r *BaseRule) HoldDuration() time.Duration {
+	return r.holdDuration
+}
+
 func (r *ThresholdRule) hostFromSource() string {
 	parsedUrl, err := url.Parse(r.source)
 	if err != nil {
@@ -296,7 +308,7 @@ func (r *BaseRule) ForEachActiveAlert(f func(*Alert)) {
 	}
 }
 
-func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
+func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 	var alertSmpl Sample
 	var shouldAlert bool
 	var lbls qslabels.Labels

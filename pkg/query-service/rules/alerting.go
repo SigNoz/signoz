@@ -18,7 +18,7 @@ import (
 
 const (
 	// how long before re-sending the alert
-	resolvedRetention = 15 * time.Minute
+	ResolvedRetention = 15 * time.Minute
 
 	TestAlertPostFix = "_TEST_ALERT"
 )
@@ -28,6 +28,7 @@ type RuleType string
 const (
 	RuleTypeThreshold = "threshold_rule"
 	RuleTypeProm      = "promql_rule"
+	RuleTypeAnomaly   = "anomaly_rule"
 )
 
 type RuleHealth string

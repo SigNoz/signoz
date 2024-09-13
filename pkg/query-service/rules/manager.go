@@ -18,6 +18,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -32,6 +33,7 @@ type PrepareTaskOptions struct {
 	RuleDB      RuleDB
 	Logger      *zap.Logger
 	Reader      interfaces.Reader
+	Cache       cache.Cache
 	FF          interfaces.FeatureLookup
 	ManagerOpts *ManagerOptions
 	NotifyFunc  NotifyFunc
