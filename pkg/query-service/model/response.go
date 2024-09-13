@@ -665,6 +665,7 @@ type AlertsInfo struct {
 	SpanMetricsPrometheusQueries int      `json:"spanMetricsPrometheusQueries"`
 	AlertNames                   []string `json:"alertNames"`
 	AlertsWithTSV2               int      `json:"alertsWithTSv2"`
+	AlertsWithLogsChQuery        int      `json:"alertsWithLogsChQuery"`
 }
 
 type SavedViewsInfo struct {
@@ -681,6 +682,7 @@ type DashboardsInfo struct {
 	TracesBasedPanels               int      `json:"tracesBasedPanels"`
 	DashboardNames                  []string `json:"dashboardNames"`
 	QueriesWithTSV2                 int      `json:"queriesWithTSV2"`
+	DashboardsWithLogsChQuery       int      `json:"dashboardsWithLogsChQuery"`
 }
 
 type TagTelemetryData struct {
