@@ -1029,10 +1029,12 @@ type Table struct {
 }
 
 type Result struct {
-	QueryName string    `json:"queryName,omitempty"`
-	Series    []*Series `json:"series,omitempty"`
-	List      []*Row    `json:"list,omitempty"`
-	Table     *Table    `json:"table,omitempty"`
+	QueryName       string    `json:"queryName,omitempty"`
+	Series          []*Series `json:"series,omitempty"`
+	PredictedSeries []*Series `json:"predictedSeries,omitempty"`
+	AnomalyScores   []*Series `json:"anomalyScores,omitempty"`
+	List            []*Row    `json:"list,omitempty"`
+	Table           *Table    `json:"table,omitempty"`
 }
 
 type LogsLiveTailClientV2 struct {
