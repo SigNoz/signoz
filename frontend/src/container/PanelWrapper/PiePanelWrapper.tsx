@@ -134,7 +134,7 @@ function PiePanelWrapper({
 																	// and treats 4K smaller than 40
 																	value: getYAxisFormattedValue(
 																		arc.data.value,
-																		widget?.yAxisUnit || '',
+																		widget?.yAxisUnit || 'none',
 																	),
 																	color: arc.data.color,
 																	key: label,
