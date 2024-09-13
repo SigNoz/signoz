@@ -83,7 +83,6 @@ func (q *querier) runBuilderQuery(
 	ctx context.Context,
 	builderQuery *v3.BuilderQuery,
 	params *v3.QueryRangeParamsV3,
-	keys map[string]v3.AttributeKey,
 	cacheKeys map[string]string,
 	ch chan channelResult,
 	wg *sync.WaitGroup,
@@ -201,7 +200,6 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				keys,
 				tracesV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
 			)
 			if err != nil {
@@ -213,7 +211,6 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				keys,
 				tracesV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
 			)
 			if err != nil {
@@ -227,7 +224,6 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				keys,
 				tracesV3.Options{PreferRPM: preferRPM},
 			)
 			if err != nil {
