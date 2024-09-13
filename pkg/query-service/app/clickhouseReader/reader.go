@@ -3257,6 +3257,7 @@ func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.Dashbo
 	totalDashboardsWithPanelAndName := 0
 	var dashboardNames []string
 	count := 0
+	logChQueriesCount := 0
 	for _, dashboard := range dashboardsData {
 		if isDashboardWithPanelAndName(dashboard.Data) {
 			totalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName + 1
@@ -3272,12 +3273,16 @@ func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.Dashbo
 		if isDashboardWithTSV2(dashboard.Data) {
 			count = count + 1
 		}
+		if isDashboardWithLogsClickhouseQuery(dashboard.Data) {
+			logChQueriesCount = logChQueriesCount + 1
+		}
 	}
 
 	dashboardsInfo.DashboardNames = dashboardNames
 	dashboardsInfo.TotalDashboards = len(dashboardsData)
 	dashboardsInfo.TotalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName
 	dashboardsInfo.QueriesWithTSV2 = count
+	dashboardsInfo.DashboardsWithLogsChQuery = logChQueriesCount
 	return &dashboardsInfo, nil
 }
 
@@ -3287,6 +3292,16 @@ func isDashboardWithTSV2(data map[string]interface{}) bool {
 		return false
 	}
 	return strings.Contains(string(jsonData), "time_series_v2")
+}
+
+func isDashboardWithLogsClickhouseQuery(data map[string]interface{}) bool {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return false
+	}
+	result := strings.Contains(string(jsonData), "signoz_logs.distributed_logs") ||
+		strings.Contains(string(jsonData), "signoz_logs.logs")
+	return result
 }
 
 func isDashboardWithPanelAndName(data map[string]interface{}) bool {
@@ -4866,7 +4881,7 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 
 	if err != nil {
 		zap.L().Error("error while reading time series result", zap.Error(err))
-		return nil, err
+		return nil, errors.New(err.Error())
 	}
 	defer rows.Close()
 
@@ -4913,7 +4928,7 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 
 	if err != nil {
 		zap.L().Error("error while reading time series result", zap.Error(err))
-		return nil, err
+		return nil, errors.New(err.Error())
 	}
 	defer rows.Close()
 
