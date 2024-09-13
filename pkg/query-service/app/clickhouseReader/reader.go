@@ -3050,122 +3050,6 @@ func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *mode
 	}
 }
 
-func (r *ClickHouseReader) GetMetricResultEE(ctx context.Context, query string) ([]*model.Series, string, error) {
-	zap.L().Error("GetMetricResultEE is not implemented for opensource version")
-	return nil, "", fmt.Errorf("GetMetricResultEE is not implemented for opensource version")
-}
-
-// GetMetricResult runs the query and returns list of time series
-func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*model.Series, error) {
-
-	defer utils.Elapsed("GetMetricResult", nil)()
-
-	zap.L().Info("Executing metric result query: ", zap.String("query", query))
-
-	rows, err := r.db.Query(ctx, query)
-
-	if err != nil {
-		zap.L().Error("Error in processing query", zap.Error(err))
-		return nil, err
-	}
-
-	var (
-		columnTypes = rows.ColumnTypes()
-		columnNames = rows.Columns()
-		vars        = make([]interface{}, len(columnTypes))
-	)
-	for i := range columnTypes {
-		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
-	}
-	// when group by is applied, each combination of cartesian product
-	// of attributes is separate series. each item in metricPointsMap
-	// represent a unique series.
-	metricPointsMap := make(map[string][]model.MetricPoint)
-	// attribute key-value pairs for each group selection
-	attributesMap := make(map[string]map[string]string)
-
-	defer rows.Close()
-	for rows.Next() {
-		if err := rows.Scan(vars...); err != nil {
-			return nil, err
-		}
-		var groupBy []string
-		var metricPoint model.MetricPoint
-		groupAttributes := make(map[string]string)
-		// Assuming that the end result row contains a timestamp, value and option labels
-		// Label key and value are both strings.
-		for idx, v := range vars {
-			colName := columnNames[idx]
-			switch v := v.(type) {
-			case *string:
-				// special case for returning all labels
-				if colName == "fullLabels" {
-					var metric map[string]string
-					err := json.Unmarshal([]byte(*v), &metric)
-					if err != nil {
-						return nil, err
-					}
-					for key, val := range metric {
-						groupBy = append(groupBy, val)
-						groupAttributes[key] = val
-					}
-				} else {
-					groupBy = append(groupBy, *v)
-					groupAttributes[colName] = *v
-				}
-			case *time.Time:
-				metricPoint.Timestamp = v.UnixMilli()
-			case *float64:
-				metricPoint.Value = *v
-			case **float64:
-				// ch seems to return this type when column is derived from
-				// SELECT count(*)/ SELECT count(*)
-				floatVal := *v
-				if floatVal != nil {
-					metricPoint.Value = *floatVal
-				}
-			case *float32:
-				float32Val := float32(*v)
-				metricPoint.Value = float64(float32Val)
-			case *uint8, *uint64, *uint16, *uint32:
-				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
-					metricPoint.Value = float64(reflect.ValueOf(v).Elem().Uint())
-				} else {
-					groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
-					groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint())
-				}
-			case *int8, *int16, *int32, *int64:
-				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
-					metricPoint.Value = float64(reflect.ValueOf(v).Elem().Int())
-				} else {
-					groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
-					groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
-				}
-			default:
-				zap.L().Error("invalid var found in metric builder query result", zap.Any("v", v), zap.String("colName", colName))
-			}
-		}
-		sort.Strings(groupBy)
-		key := strings.Join(groupBy, "")
-		attributesMap[key] = groupAttributes
-		metricPointsMap[key] = append(metricPointsMap[key], metricPoint)
-	}
-
-	var seriesList []*model.Series
-	for key := range metricPointsMap {
-		points := metricPointsMap[key]
-		// first point in each series could be invalid since the
-		// aggregations are applied with point from prev series
-		if len(points) != 0 && len(points) > 1 {
-			points = points[1:]
-		}
-		attributes := attributesMap[key]
-		series := model.Series{Labels: attributes, Points: points}
-		seriesList = append(seriesList, &series)
-	}
-	return seriesList, nil
-}
-
 func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {
 
 	var totalSpans uint64
@@ -5370,7 +5254,7 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 	return response, nil
 }
 
-func (r *ClickHouseReader) LiveTailLogsV4(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClientV2) {
+func (r *ClickHouseReader) LiveTailLogsV4(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClientV2) {
 	if timestampStart == 0 {
 		timestampStart = uint64(time.Now().UnixNano())
 	} else {
@@ -5423,7 +5307,7 @@ func (r *ClickHouseReader) LiveTailLogsV4(ctx context.Context, query string, tim
 	}
 }
 
-func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClient) {
+func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClient) {
 	if timestampStart == 0 {
 		timestampStart = uint64(time.Now().UnixNano())
 	} else {
@@ -5467,7 +5351,7 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 	}
 }
 
-func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHistory []v3.RuleStateHistory) error {
+func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHistory []model.RuleStateHistory) error {
 	var statement driver.Batch
 	var err error
 
@@ -5498,11 +5382,11 @@ func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHis
 	return nil
 }
 
-func (r *ClickHouseReader) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]v3.RuleStateHistory, error) {
+func (r *ClickHouseReader) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]model.RuleStateHistory, error) {
 	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE rule_id = '%s' AND state_changed = true ORDER BY unix_milli DESC LIMIT 1 BY fingerprint",
 		signozHistoryDBName, ruleStateHistoryTableName, ruleID)
 
-	history := []v3.RuleStateHistory{}
+	history := []model.RuleStateHistory{}
 	err := r.db.Select(ctx, &history, query)
 	if err != nil {
 		return nil, err
@@ -5511,7 +5395,7 @@ func (r *ClickHouseReader) GetLastSavedRuleStateHistory(ctx context.Context, rul
 }
 
 func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
-	ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (*v3.RuleStateTimeline, error) {
+	ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (*model.RuleStateTimeline, error) {
 
 	var conditions []string
 
@@ -5574,7 +5458,7 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE %s ORDER BY unix_milli %s LIMIT %d OFFSET %d",
 		signozHistoryDBName, ruleStateHistoryTableName, whereClause, params.Order, params.Limit, params.Offset)
 
-	history := []v3.RuleStateHistory{}
+	history := []model.RuleStateHistory{}
 	zap.L().Debug("rule state history query", zap.String("query", query))
 	err := r.db.Select(ctx, &history, query)
 	if err != nil {
@@ -5616,7 +5500,7 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 		}
 	}
 
-	timeline := &v3.RuleStateTimeline{
+	timeline := &model.RuleStateTimeline{
 		Items:  history,
 		Total:  total,
 		Labels: labelsMap,
@@ -5626,7 +5510,7 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 }
 
 func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
-	ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistoryContributor, error) {
+	ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) ([]model.RuleStateHistoryContributor, error) {
 	query := fmt.Sprintf(`SELECT
 		fingerprint,
 		any(labels) as labels,
@@ -5639,7 +5523,7 @@ func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
 		signozHistoryDBName, ruleStateHistoryTableName, ruleID, model.StateFiring.String(), params.Start, params.End)
 
 	zap.L().Debug("rule state history top contributors query", zap.String("query", query))
-	contributors := []v3.RuleStateHistoryContributor{}
+	contributors := []model.RuleStateHistoryContributor{}
 	err := r.db.Select(ctx, &contributors, query)
 	if err != nil {
 		zap.L().Error("Error while reading rule state history", zap.Error(err))
@@ -5649,7 +5533,7 @@ func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
 	return contributors, nil
 }
 
-func (r *ClickHouseReader) GetOverallStateTransitions(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.ReleStateItem, error) {
+func (r *ClickHouseReader) GetOverallStateTransitions(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) ([]model.ReleStateItem, error) {
 
 	tmpl := `WITH firing_events AS (
     SELECT
@@ -5695,18 +5579,18 @@ ORDER BY firing_time ASC;`
 
 	zap.L().Debug("overall state transitions query", zap.String("query", query))
 
-	transitions := []v3.RuleStateTransition{}
+	transitions := []model.RuleStateTransition{}
 	err := r.db.Select(ctx, &transitions, query)
 	if err != nil {
 		return nil, err
 	}
 
-	stateItems := []v3.ReleStateItem{}
+	stateItems := []model.ReleStateItem{}
 
 	for idx, item := range transitions {
 		start := item.FiringTime
 		end := item.ResolutionTime
-		stateItems = append(stateItems, v3.ReleStateItem{
+		stateItems = append(stateItems, model.ReleStateItem{
 			State: item.State,
 			Start: start,
 			End:   end,
@@ -5714,7 +5598,7 @@ ORDER BY firing_time ASC;`
 		if idx < len(transitions)-1 {
 			nextStart := transitions[idx+1].FiringTime
 			if nextStart > end {
-				stateItems = append(stateItems, v3.ReleStateItem{
+				stateItems = append(stateItems, model.ReleStateItem{
 					State: model.StateInactive,
 					Start: end,
 					End:   nextStart,
@@ -5736,7 +5620,7 @@ ORDER BY firing_time ASC;`
 
 	if len(transitions) == 0 {
 		// no transitions found, it is either firing or inactive for whole time range
-		stateItems = append(stateItems, v3.ReleStateItem{
+		stateItems = append(stateItems, model.ReleStateItem{
 			State: state,
 			Start: params.Start,
 			End:   params.End,
@@ -5744,7 +5628,7 @@ ORDER BY firing_time ASC;`
 	} else {
 		// there were some transitions, we need to add the last state at the end
 		if state == model.StateInactive {
-			stateItems = append(stateItems, v3.ReleStateItem{
+			stateItems = append(stateItems, model.ReleStateItem{
 				State: model.StateInactive,
 				Start: transitions[len(transitions)-1].ResolutionTime,
 				End:   params.End,
@@ -5761,12 +5645,12 @@ ORDER BY firing_time ASC;`
 			if err := r.db.QueryRow(ctx, firingQuery).Scan(&firingTime); err != nil {
 				return nil, err
 			}
-			stateItems = append(stateItems, v3.ReleStateItem{
+			stateItems = append(stateItems, model.ReleStateItem{
 				State: model.StateInactive,
 				Start: transitions[len(transitions)-1].ResolutionTime,
 				End:   firingTime,
 			})
-			stateItems = append(stateItems, v3.ReleStateItem{
+			stateItems = append(stateItems, model.ReleStateItem{
 				State: model.StateFiring,
 				Start: firingTime,
 				End:   params.End,
@@ -5776,7 +5660,7 @@ ORDER BY firing_time ASC;`
 	return stateItems, nil
 }
 
-func (r *ClickHouseReader) GetAvgResolutionTime(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (float64, error) {
+func (r *ClickHouseReader) GetAvgResolutionTime(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (float64, error) {
 
 	tmpl := `
 WITH firing_events AS (
@@ -5831,7 +5715,7 @@ FROM matched_events;
 	return avgResolutionTime, nil
 }
 
-func (r *ClickHouseReader) GetAvgResolutionTimeByInterval(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (*v3.Series, error) {
+func (r *ClickHouseReader) GetAvgResolutionTimeByInterval(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (*v3.Series, error) {
 
 	step := common.MinAllowedStepInterval(params.Start, params.End)
 
@@ -5888,7 +5772,7 @@ ORDER BY ts ASC;`
 	return result[0], nil
 }
 
-func (r *ClickHouseReader) GetTotalTriggers(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (uint64, error) {
+func (r *ClickHouseReader) GetTotalTriggers(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (uint64, error) {
 	query := fmt.Sprintf("SELECT count(*) FROM %s.%s WHERE rule_id = '%s' AND (state_changed = true) AND (state = '%s') AND unix_milli >= %d AND unix_milli <= %d",
 		signozHistoryDBName, ruleStateHistoryTableName, ruleID, model.StateFiring.String(), params.Start, params.End)
 
@@ -5902,7 +5786,7 @@ func (r *ClickHouseReader) GetTotalTriggers(ctx context.Context, ruleID string, 
 	return totalTriggers, nil
 }
 
-func (r *ClickHouseReader) GetTriggersByInterval(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) (*v3.Series, error) {
+func (r *ClickHouseReader) GetTriggersByInterval(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (*v3.Series, error) {
 	step := common.MinAllowedStepInterval(params.Start, params.End)
 
 	query := fmt.Sprintf("SELECT count(*), toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL %d SECOND) as ts FROM %s.%s WHERE rule_id = '%s' AND (state_changed = true) AND (state = '%s') AND unix_milli >= %d AND unix_milli <= %d GROUP BY ts ORDER BY ts ASC",
@@ -5949,6 +5833,6 @@ func (r *ClickHouseReader) ReportQueryStartForProgressTracking(
 
 func (r *ClickHouseReader) SubscribeToQueryProgress(
 	queryId string,
-) (<-chan v3.QueryProgress, func(), *model.ApiError) {
+) (<-chan model.QueryProgress, func(), *model.ApiError) {
 	return r.queryProgressTracker.SubscribeToQueryProgress(queryId)
 }

@@ -472,9 +472,9 @@ func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
 	return alertSmpl, shouldAlert
 }
 
-func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []v3.RuleStateHistory) error {
+func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []model.RuleStateHistory) error {
 	zap.L().Debug("recording rule state history", zap.String("ruleid", r.ID()), zap.Any("prevState", prevState), zap.Any("currentState", currentState), zap.Any("itemsToAdd", itemsToAdd))
-	revisedItemsToAdd := map[uint64]v3.RuleStateHistory{}
+	revisedItemsToAdd := map[uint64]model.RuleStateHistory{}
 
 	lastSavedState, err := r.reader.GetLastSavedRuleStateHistory(ctx, r.ID())
 	if err != nil {
@@ -484,7 +484,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 	// the state would reset so we need to add the corresponding state changes to previously saved states
 	if !r.handledRestart && len(lastSavedState) > 0 {
 		zap.L().Debug("handling restart", zap.String("ruleid", r.ID()), zap.Any("lastSavedState", lastSavedState))
-		l := map[uint64]v3.RuleStateHistory{}
+		l := map[uint64]model.RuleStateHistory{}
 		for _, item := range itemsToAdd {
 			l[item.Fingerprint] = item
 		}
@@ -553,7 +553,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 	if len(revisedItemsToAdd) > 0 && r.reader != nil {
 		zap.L().Debug("writing rule state history", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
 
-		entries := make([]v3.RuleStateHistory, 0, len(revisedItemsToAdd))
+		entries := make([]model.RuleStateHistory, 0, len(revisedItemsToAdd))
 		for _, item := range revisedItemsToAdd {
 			entries = append(entries, item)
 		}

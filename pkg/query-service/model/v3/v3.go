@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type DataSource string
@@ -1037,20 +1036,6 @@ type Result struct {
 	Table           *Table    `json:"table,omitempty"`
 }
 
-type LogsLiveTailClientV2 struct {
-	Name  string
-	Logs  chan *model.SignozLogV2
-	Done  chan *bool
-	Error chan error
-}
-
-type LogsLiveTailClient struct {
-	Name  string
-	Logs  chan *model.SignozLog
-	Done  chan *bool
-	Error chan error
-}
-
 type Series struct {
 	Labels      map[string]string   `json:"labels"`
 	LabelsArray []map[string]string `json:"labelsArray"`
@@ -1167,115 +1152,6 @@ type MetricMetadataResponse struct {
 	Type        string    `json:"type"`
 	IsMonotonic bool      `json:"isMonotonic"`
 	Temporality string    `json:"temporality"`
-}
-
-type LabelsString string
-
-func (l *LabelsString) MarshalJSON() ([]byte, error) {
-	lbls := make(map[string]string)
-	err := json.Unmarshal([]byte(*l), &lbls)
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(lbls)
-}
-
-func (l *LabelsString) Scan(src interface{}) error {
-	if data, ok := src.(string); ok {
-		*l = LabelsString(data)
-	}
-	return nil
-}
-
-func (l LabelsString) String() string {
-	return string(l)
-}
-
-type RuleStateTimeline struct {
-	Items  []RuleStateHistory  `json:"items"`
-	Total  uint64              `json:"total"`
-	Labels map[string][]string `json:"labels"`
-}
-
-type RuleStateHistory struct {
-	RuleID   string `json:"ruleID" ch:"rule_id"`
-	RuleName string `json:"ruleName" ch:"rule_name"`
-	// One of ["normal", "firing"]
-	OverallState        model.AlertState `json:"overallState" ch:"overall_state"`
-	OverallStateChanged bool             `json:"overallStateChanged" ch:"overall_state_changed"`
-	// One of ["normal", "firing", "no_data", "muted"]
-	State        model.AlertState `json:"state" ch:"state"`
-	StateChanged bool             `json:"stateChanged" ch:"state_changed"`
-	UnixMilli    int64            `json:"unixMilli" ch:"unix_milli"`
-	Labels       LabelsString     `json:"labels" ch:"labels"`
-	Fingerprint  uint64           `json:"fingerprint" ch:"fingerprint"`
-	Value        float64          `json:"value" ch:"value"`
-
-	RelatedTracesLink string `json:"relatedTracesLink"`
-	RelatedLogsLink   string `json:"relatedLogsLink"`
-}
-
-type QueryRuleStateHistory struct {
-	Start   int64      `json:"start"`
-	End     int64      `json:"end"`
-	State   string     `json:"state"`
-	Filters *FilterSet `json:"filters"`
-	Offset  int64      `json:"offset"`
-	Limit   int64      `json:"limit"`
-	Order   string     `json:"order"`
-}
-
-func (r *QueryRuleStateHistory) Validate() error {
-	if r.Start == 0 || r.End == 0 {
-		return fmt.Errorf("start and end are required")
-	}
-	if r.Offset < 0 || r.Limit < 0 {
-		return fmt.Errorf("offset and limit must be greater than 0")
-	}
-	if r.Order != "asc" && r.Order != "desc" {
-		return fmt.Errorf("order must be asc or desc")
-	}
-	return nil
-}
-
-type RuleStateHistoryContributor struct {
-	Fingerprint       uint64       `json:"fingerprint" ch:"fingerprint"`
-	Labels            LabelsString `json:"labels" ch:"labels"`
-	Count             uint64       `json:"count" ch:"count"`
-	RelatedTracesLink string       `json:"relatedTracesLink"`
-	RelatedLogsLink   string       `json:"relatedLogsLink"`
-}
-
-type RuleStateTransition struct {
-	RuleID         string           `json:"ruleID" ch:"rule_id"`
-	State          model.AlertState `json:"state" ch:"state"`
-	FiringTime     int64            `json:"firingTime" ch:"firing_time"`
-	ResolutionTime int64            `json:"resolutionTime" ch:"resolution_time"`
-}
-
-type ReleStateItem struct {
-	State model.AlertState `json:"state"`
-	Start int64            `json:"start"`
-	End   int64            `json:"end"`
-}
-
-type Stats struct {
-	TotalCurrentTriggers           uint64  `json:"totalCurrentTriggers"`
-	TotalPastTriggers              uint64  `json:"totalPastTriggers"`
-	CurrentTriggersSeries          *Series `json:"currentTriggersSeries"`
-	PastTriggersSeries             *Series `json:"pastTriggersSeries"`
-	CurrentAvgResolutionTime       string  `json:"currentAvgResolutionTime"`
-	PastAvgResolutionTime          string  `json:"pastAvgResolutionTime"`
-	CurrentAvgResolutionTimeSeries *Series `json:"currentAvgResolutionTimeSeries"`
-	PastAvgResolutionTimeSeries    *Series `json:"pastAvgResolutionTimeSeries"`
-}
-
-type QueryProgress struct {
-	ReadRows uint64 `json:"read_rows"`
-
-	ReadBytes uint64 `json:"read_bytes"`
-
-	ElapsedMs uint64 `json:"elapsed_ms"`
 }
 
 type URLShareableTimeRange struct {

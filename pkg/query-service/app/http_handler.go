@@ -396,11 +396,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/grafana", am.EditAccess(aH.createDashboardsTransform)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/variables/query", am.ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.getSavedViews)).Methods(http.MethodGet)
@@ -671,7 +669,7 @@ func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 
 func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
-	params := v3.QueryRuleStateHistory{}
+	params := model.QueryRuleStateHistory{}
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -737,7 +735,7 @@ func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 		pastAvgResolutionTime = 0
 	}
 
-	stats := v3.Stats{
+	stats := model.Stats{
 		TotalCurrentTriggers:           totalCurrentTriggers,
 		TotalPastTriggers:              totalPastTriggers,
 		CurrentTriggersSeries:          currentTriggersSeries,
@@ -753,7 +751,7 @@ func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
-	params := v3.QueryRuleStateHistory{}
+	params := model.QueryRuleStateHistory{}
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -771,7 +769,7 @@ func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.
 
 func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
-	params := v3.QueryRuleStateHistory{}
+	params := model.QueryRuleStateHistory{}
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -823,7 +821,7 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 
 func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
-	params := v3.QueryRuleStateHistory{}
+	params := model.QueryRuleStateHistory{}
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -939,25 +937,6 @@ func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, nil)
 
-}
-
-func (aH *APIHandler) queryDashboardVars(w http.ResponseWriter, r *http.Request) {
-
-	query := r.URL.Query().Get("query")
-	if query == "" {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query is required")}, nil)
-		return
-	}
-	if strings.Contains(strings.ToLower(query), "alter table") {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query shouldn't alter data")}, nil)
-		return
-	}
-	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-	aH.Respond(w, dashboardVars)
 }
 
 func prepareQuery(r *http.Request) (string, error) {
@@ -1087,27 +1066,6 @@ func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, r *http.Request, sign
 		return
 	}
 	aH.Respond(w, dashboard)
-}
-
-func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.Request) {
-
-	defer r.Body.Close()
-	b, err := io.ReadAll(r.Body)
-
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
-		return
-	}
-
-	var importData model.GrafanaJSON
-
-	err = json.Unmarshal(b, &importData)
-	if err == nil {
-		signozDashboard := dashboards.TransformGrafanaJSONToSignoz(importData)
-		aH.saveAndReturn(w, r, signozDashboard)
-		return
-	}
-	RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error while creating dashboard from grafana json")
 }
 
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
@@ -3996,7 +3954,7 @@ func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
 	flusher.Flush()
 
 	// create the client
-	client := &v3.LogsLiveTailClientV2{Name: r.RemoteAddr, Logs: make(chan *model.SignozLogV2, 1000), Done: make(chan *bool), Error: make(chan error)}
+	client := &model.LogsLiveTailClientV2{Name: r.RemoteAddr, Logs: make(chan *model.SignozLogV2, 1000), Done: make(chan *bool), Error: make(chan error)}
 	go aH.reader.LiveTailLogsV4(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
 	for {
 		select {
@@ -4066,7 +4024,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create the client
-	client := &v3.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
+	client := &model.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
 	go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
 
 	w.Header().Set("Connection", "keep-alive")
