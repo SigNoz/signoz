@@ -66,6 +66,7 @@ type ServerOptions struct {
 	CacheConfigPath   string
 	FluxInterval      string
 	Cluster           string
+	UseLogsNewSchema  bool
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -128,6 +129,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.MaxOpenConns,
 			serverOptions.DialTimeout,
 			serverOptions.Cluster,
+			serverOptions.UseLogsNewSchema,
 		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
@@ -144,7 +146,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	<-readerReady
-	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules, fm)
+	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules, fm, serverOptions.UseLogsNewSchema)
 	if err != nil {
 		return nil, err
 	}
@@ -197,6 +199,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
+		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 	})
 	if err != nil {
 		return nil, err
@@ -713,7 +716,8 @@ func makeRulesManager(
 	db *sqlx.DB,
 	ch interfaces.Reader,
 	disableRules bool,
-	fm interfaces.FeatureLookup) (*rules.Manager, error) {
+	fm interfaces.FeatureLookup,
+	useLogsNewSchema bool) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromReader(ch)
@@ -730,16 +734,17 @@ func makeRulesManager(
 
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		NotifierOpts: notifierOpts,
-		PqlEngine:    pqle,
-		RepoURL:      ruleRepoURL,
-		DBConn:       db,
-		Context:      context.Background(),
-		Logger:       nil,
-		DisableRules: disableRules,
-		FeatureFlags: fm,
-		Reader:       ch,
-		EvalDelay:    constants.GetEvalDelay(),
+		NotifierOpts:     notifierOpts,
+		PqlEngine:        pqle,
+		RepoURL:          ruleRepoURL,
+		DBConn:           db,
+		Context:          context.Background(),
+		Logger:           nil,
+		DisableRules:     disableRules,
+		FeatureFlags:     fm,
+		Reader:           ch,
+		EvalDelay:        constants.GetEvalDelay(),
+		UseLogsNewSchema: useLogsNewSchema,
 	}
 
 	// create Manager

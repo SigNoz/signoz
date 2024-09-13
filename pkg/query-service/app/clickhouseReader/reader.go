@@ -132,6 +132,8 @@ type ClickHouseReader struct {
 
 	liveTailRefreshSeconds int
 	cluster                string
+
+	useLogsNewSchema bool
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -143,6 +145,7 @@ func NewReader(
 	maxOpenConns int,
 	dialTimeout time.Duration,
 	cluster string,
+	useLogsNewSchema bool,
 ) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
@@ -153,7 +156,7 @@ func NewReader(
 		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
 	}
 
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster)
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema)
 }
 
 func NewReaderFromClickhouseConnection(
@@ -163,6 +166,7 @@ func NewReaderFromClickhouseConnection(
 	configFile string,
 	featureFlag interfaces.FeatureLookup,
 	cluster string,
+	useLogsNewSchema bool,
 ) *ClickHouseReader {
 	alertManager, err := am.New("")
 	if err != nil {
@@ -219,6 +223,7 @@ func NewReaderFromClickhouseConnection(
 		featureFlags:            featureFlag,
 		cluster:                 cluster,
 		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
+		useLogsNewSchema:        useLogsNewSchema,
 	}
 }
 
