@@ -8,7 +8,6 @@ import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
@@ -17,7 +16,7 @@ import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
-import { identity, pick, pickBy } from 'lodash-es';
+import { pick } from 'lodash-es';
 import posthog from 'posthog-js';
 import AlertRuleProvider from 'providers/Alert';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
@@ -50,9 +49,7 @@ function App(): JSX.Element {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const { trackPageView } = useAnalytics();
-
-	const { hostname, pathname } = window.location;
+	const { hostname } = window.location;
 
 	const isCloudUserVal = isCloudUser();
 
@@ -114,29 +111,9 @@ function App(): JSX.Element {
 
 		const { name, email } = user;
 
-		const identifyPayload = {
-			email,
-			name,
-			company_name: orgName,
-			role,
-			source: 'signoz-ui',
-		};
-
-		const sanitizedIdentifyPayload = pickBy(identifyPayload, identity);
 		const domain = extractDomain(email);
 		const hostNameParts = hostname.split('.');
 
-		const groupTraits = {
-			name: orgName,
-			tenant_id: hostNameParts[0],
-			data_region: hostNameParts[1],
-			tenant_url: hostname,
-			company_domain: domain,
-			source: 'signoz-ui',
-		};
-
-		window.analytics.identify(email, sanitizedIdentifyPayload);
-		window.analytics.group(domain, groupTraits);
 		window.clarity('identify', email, name);
 
 		posthog?.identify(email, {
@@ -196,11 +173,6 @@ function App(): JSX.Element {
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isLoggedInState, isOnBasicPlan, user]);
-
-	useEffect(() => {
-		trackPageView(pathname);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [pathname]);
 
 	useEffect(() => {
 		if (user && user?.email && user?.userId && user?.name) {
