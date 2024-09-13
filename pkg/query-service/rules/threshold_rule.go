@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"net/url"
 	"regexp"
-	"sort"
 	"text/template"
 	"time"
 	"unicode"
@@ -16,6 +14,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/contextlinks"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 
@@ -243,81 +242,6 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3,
 	}, nil
 }
 
-// The following function is used to prepare the where clause for the query
-// `lbls` contains the key value pairs of the labels from the result of the query
-// We iterate over the where clause and replace the labels with the actual values
-// There are two cases:
-// 1. The label is present in the where clause
-// 2. The label is not present in the where clause
-//
-// Example for case 2:
-// Latency by serviceName without any filter
-// In this case, for each service with latency > threshold we send a notification
-// The expectation will be that clicking on the related traces for service A, will
-// take us to the traces page with the filter serviceName=A
-// So for all the missing labels in the where clause, we add them as key = value
-//
-// Example for case 1:
-// Severity text IN (WARN, ERROR)
-// In this case, the Severity text will appear in the `lbls` if it were part of the group
-// by clause, in which case we replace it with the actual value for the notification
-// i.e Severity text = WARN
-// If the Severity text is not part of the group by clause, then we add it as it is
-func (r *ThresholdRule) fetchFilters(selectedQuery string, lbls labels.Labels) []v3.FilterItem {
-	var filterItems []v3.FilterItem
-
-	added := make(map[string]struct{})
-
-	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder &&
-		r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
-		r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters != nil {
-
-		for _, item := range r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items {
-			exists := false
-			for _, label := range lbls {
-				if item.Key.Key == label.Name {
-					// if the label is present in the where clause, replace it with key = value
-					filterItems = append(filterItems, v3.FilterItem{
-						Key:      item.Key,
-						Operator: v3.FilterOperatorEqual,
-						Value:    label.Value,
-					})
-					exists = true
-					added[label.Name] = struct{}{}
-					break
-				}
-			}
-
-			if !exists {
-				// if the label is not present in the where clause, add it as it is
-				filterItems = append(filterItems, item)
-			}
-		}
-	}
-
-	// add the labels which are not present in the where clause
-	for _, label := range lbls {
-		if _, ok := added[label.Name]; !ok {
-			// take the item from group by if exists
-			groupBy := r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
-			labelAttrKey := v3.AttributeKey{Key: label.Name}
-			for _, item := range groupBy {
-				if item.Key == label.Name {
-					labelAttrKey = item
-				}
-			}
-
-			filterItems = append(filterItems, v3.FilterItem{
-				Key:      labelAttrKey,
-				Operator: v3.FilterOperatorEqual,
-				Value:    label.Value,
-			})
-		}
-	}
-
-	return filterItems
-}
-
 func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) string {
 	selectedQuery := r.GetSelectedQuery()
 
@@ -326,67 +250,18 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 		return ""
 	}
 
-	q, err := r.prepareQueryRange(ts)
-	if err != nil {
+	q := r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery]
+	if q == nil {
 		return ""
 	}
-	// Logs list view expects time in milliseconds
-	tr := v3.URLShareableTimeRange{
-		Start:    q.Start,
-		End:      q.End,
-		PageSize: 100,
+
+	if q.DataSource != v3.DataSourceLogs {
+		return ""
 	}
 
-	options := v3.URLShareableOptions{
-		MaxLines:      2,
-		Format:        "list",
-		SelectColumns: []v3.AttributeKey{},
-	}
+	filterItems := contextlinks.PrepareFilters(lbls.Map(), q.Filters.Items, q.GroupBy)
 
-	period, _ := json.Marshal(tr)
-	urlEncodedTimeRange := url.QueryEscape(string(period))
-
-	filterItems := r.fetchFilters(selectedQuery, lbls)
-
-	builderQuery := v3.BuilderQuery{
-		DataSource:         v3.DataSourceLogs,
-		QueryName:          "A",
-		AggregateOperator:  v3.AggregateOperatorNoOp,
-		AggregateAttribute: v3.AttributeKey{},
-		Filters: &v3.FilterSet{
-			Items:    filterItems,
-			Operator: "AND",
-		},
-		Expression:   "A",
-		Disabled:     false,
-		Having:       []v3.Having{},
-		StepInterval: 60,
-		OrderBy: []v3.OrderBy{
-			{
-				ColumnName: "timestamp",
-				Order:      "desc",
-			},
-		},
-	}
-	logsv3.EnrichLogsQuery(&builderQuery, r.logsKeys)
-
-	urlData := v3.URLShareableCompositeQuery{
-		QueryType: string(v3.QueryTypeBuilder),
-		Builder: v3.URLShareableBuilderQuery{
-			QueryData: []v3.BuilderQuery{
-				builderQuery,
-			},
-			QueryFormulas: make([]string, 0),
-		},
-	}
-
-	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
-
-	optionsData, _ := json.Marshal(options)
-	urlEncodedOptions := url.QueryEscape(string(optionsData))
-
-	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+	return contextlinks.PrepareLinksToLogs(ts, ts.Add(-time.Duration(r.evalWindow)), filterItems)
 }
 
 func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) string {
@@ -397,108 +272,22 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 		return ""
 	}
 
-	q, err := r.prepareQueryRange(ts)
-	if err != nil {
+	q := r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery]
+	if q == nil {
 		return ""
 	}
-	// Traces list view expects time in nanoseconds
-	tr := v3.URLShareableTimeRange{
-		Start:    q.Start * time.Second.Microseconds(),
-		End:      q.End * time.Second.Microseconds(),
-		PageSize: 100,
+
+	if q.DataSource != v3.DataSourceTraces {
+		return ""
 	}
 
-	options := v3.URLShareableOptions{
-		MaxLines:      2,
-		Format:        "list",
-		SelectColumns: constants.TracesListViewDefaultSelectedColumns,
-	}
+	filterItems := contextlinks.PrepareFilters(lbls.Map(), q.Filters.Items, q.GroupBy)
 
-	period, _ := json.Marshal(tr)
-	urlEncodedTimeRange := url.QueryEscape(string(period))
-
-	filterItems := r.fetchFilters(selectedQuery, lbls)
-
-	builderQuery := v3.BuilderQuery{
-		DataSource:         v3.DataSourceTraces,
-		QueryName:          "A",
-		AggregateOperator:  v3.AggregateOperatorNoOp,
-		AggregateAttribute: v3.AttributeKey{},
-		Filters: &v3.FilterSet{
-			Items:    filterItems,
-			Operator: "AND",
-		},
-		Expression:   "A",
-		Disabled:     false,
-		Having:       []v3.Having{},
-		StepInterval: 60,
-		OrderBy: []v3.OrderBy{
-			{
-				ColumnName: "timestamp",
-				Order:      "desc",
-			},
-		},
-	}
-	tracesV3.EnrichTracesQuery(&builderQuery, r.spansKeys)
-
-	urlData := v3.URLShareableCompositeQuery{
-		QueryType: string(v3.QueryTypeBuilder),
-		Builder: v3.URLShareableBuilderQuery{
-			QueryData: []v3.BuilderQuery{
-				builderQuery,
-			},
-			QueryFormulas: make([]string, 0),
-		},
-	}
-
-	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
-
-	optionsData, _ := json.Marshal(options)
-	urlEncodedOptions := url.QueryEscape(string(optionsData))
-
-	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+	return contextlinks.PrepareLinksToTraces(ts, ts.Add(-time.Duration(r.evalWindow)), filterItems)
 }
 
 func (r *ThresholdRule) GetSelectedQuery() string {
-	if r.ruleCondition != nil {
-		if r.ruleCondition.SelectedQuery != "" {
-			return r.ruleCondition.SelectedQuery
-		}
-
-		queryNames := map[string]struct{}{}
-
-		if r.ruleCondition.CompositeQuery != nil {
-			if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
-				for name := range r.ruleCondition.CompositeQuery.BuilderQueries {
-					queryNames[name] = struct{}{}
-				}
-			} else if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
-				for name := range r.ruleCondition.CompositeQuery.ClickHouseQueries {
-					queryNames[name] = struct{}{}
-				}
-			}
-		}
-
-		// The following logic exists for backward compatibility
-		// If there is no selected query, then
-		// - check if F1 is present, if yes, return F1
-		// - else return the query with max ascii value
-		// this logic is not really correct. we should be considering
-		// whether the query is enabled or not. but this is a temporary
-		// fix to support backward compatibility
-		if _, ok := queryNames["F1"]; ok {
-			return "F1"
-		}
-		keys := make([]string, 0, len(queryNames))
-		for k := range queryNames {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		return keys[len(keys)-1]
-	}
-	// This should never happen
-	return ""
+	return r.ruleCondition.GetSelectedQueryName()
 }
 
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vector, error) {

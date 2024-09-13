@@ -41,6 +41,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/contextlinks"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 
@@ -795,23 +796,19 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 				continue
 			}
 			filterItems := []v3.FilterItem{}
+			groupBy := []v3.AttributeKey{}
 			if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
-				if rule.RuleCondition.CompositeQuery != nil {
-					if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
-						for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
-							if query.Filters != nil && len(query.Filters.Items) > 0 {
-								filterItems = append(filterItems, query.Filters.Items...)
-							}
-						}
-					}
-				}
+				selectedQuery := rule.RuleCondition.GetSelectedQueryName()
+				filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
+				groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
 			}
-			newFilters := common.PrepareFilters(lbls, filterItems)
-			ts := time.Unix(res.Items[idx].UnixMilli/1000, 0)
+			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy)
+			end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
+			start := end.Add(-time.Duration(rule.EvalWindow))
 			if rule.AlertType == rules.AlertTypeLogs {
-				res.Items[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, newFilters)
+				res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
 			} else if rule.AlertType == rules.AlertTypeTraces {
-				res.Items[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, newFilters)
+				res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
 			}
 		}
 	}
@@ -842,12 +839,20 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 			if err != nil {
 				continue
 			}
-			ts := time.Unix(params.End/1000, 0)
-			filters := common.PrepareFilters(lbls, nil)
+			filterItems := []v3.FilterItem{}
+			groupBy := []v3.AttributeKey{}
+			if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
+				selectedQuery := rule.RuleCondition.GetSelectedQueryName()
+				filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
+				groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
+			}
+			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy)
+			end := time.Unix(params.End/1000, 0)
+			start := time.Unix(params.Start/1000, 0)
 			if rule.AlertType == rules.AlertTypeLogs {
-				res[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, filters)
+				res[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
 			} else if rule.AlertType == rules.AlertTypeTraces {
-				res[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, filters)
+				res[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
 			}
 		}
 	}
@@ -3559,11 +3564,6 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			}
 			// get the fields if any logs query is present
 			fields := model.GetLogFieldsV3(ctx, queryRangeParams, logsFields)
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, errQuriesByName)
-				return
-			}
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
@@ -3948,11 +3948,6 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			}
 			// get the fields if any logs query is present
 			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, nil)
-				return
-			}
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
