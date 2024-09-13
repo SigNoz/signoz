@@ -11,9 +11,9 @@ jobs:
   check-no-ee-references:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Run check
-      run: make check-no-ee-references
+      - uses: actions/checkout@v4
+      - name: Run check
+        run: make check-no-ee-references
 
   build-frontend:
     runs-on: ubuntu-latest
@@ -43,7 +43,6 @@ jobs:
         run: |
           echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > frontend/.env
           echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> frontend/.env
-          echo 'CLARITY_PROJECT_ID="${{ secrets.CLARITY_PROJECT_ID }}"' >> frontend/.env
       - name: Install dependencies
         run: cd frontend && yarn install
       - name: Run ESLint
