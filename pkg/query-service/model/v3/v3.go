@@ -1035,6 +1035,13 @@ type Result struct {
 	Table     *Table    `json:"table,omitempty"`
 }
 
+type LogsLiveTailClientV2 struct {
+	Name  string
+	Logs  chan *model.SignozLogV2
+	Done  chan *bool
+	Error chan error
+}
+
 type LogsLiveTailClient struct {
 	Name  string
 	Logs  chan *model.SignozLog

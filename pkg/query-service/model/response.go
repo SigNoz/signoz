@@ -572,6 +572,21 @@ type SignozLog struct {
 	Attributes_bool    map[string]bool    `json:"attributes_bool" ch:"attributes_bool"`
 }
 
+type SignozLogV2 struct {
+	Timestamp         uint64             `json:"timestamp" ch:"timestamp"`
+	ID                string             `json:"id" ch:"id"`
+	TraceID           string             `json:"trace_id" ch:"trace_id"`
+	SpanID            string             `json:"span_id" ch:"span_id"`
+	TraceFlags        uint32             `json:"trace_flags" ch:"trace_flags"`
+	SeverityText      string             `json:"severity_text" ch:"severity_text"`
+	SeverityNumber    uint8              `json:"severity_number" ch:"severity_number"`
+	Body              string             `json:"body" ch:"body"`
+	Resources_string  map[string]string  `json:"resources_string" ch:"resources_string"`
+	Attributes_string map[string]string  `json:"attributes_string" ch:"attributes_string"`
+	Attributes_number map[string]float64 `json:"attributes_float" ch:"attributes_number"`
+	Attributes_bool   map[string]bool    `json:"attributes_bool" ch:"attributes_bool"`
+}
+
 type LogsTailClient struct {
 	Name   string
 	Logs   chan *SignozLog

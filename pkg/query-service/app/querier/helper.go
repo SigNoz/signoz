@@ -9,6 +9,7 @@ import (
 	"time"
 
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	logsV4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
 	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/cache/status"
@@ -19,6 +20,7 @@ import (
 )
 
 func prepareLogsQuery(_ context.Context,
+	useLogsNewSchema bool,
 	start,
 	end int64,
 	builderQuery *v3.BuilderQuery,
@@ -27,30 +29,35 @@ func prepareLogsQuery(_ context.Context,
 ) (string, error) {
 	query := ""
 
+	logsQueryBuilder := logsV3.PrepareLogsQuery
+	if useLogsNewSchema {
+		logsQueryBuilder = logsV4.PrepareLogsQuery
+	}
+
 	if params == nil || builderQuery == nil {
 		return query, fmt.Errorf("params and builderQuery cannot be nil")
 	}
 
 	// for ts query with limit replace it as it is already formed
 	if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
-		limitQuery, err := logsV3.PrepareLogsQuery(
+		limitQuery, err := logsQueryBuilder(
 			start,
 			end,
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
-			logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
+			v3.LogQBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
 		)
 		if err != nil {
 			return query, err
 		}
-		placeholderQuery, err := logsV3.PrepareLogsQuery(
+		placeholderQuery, err := logsQueryBuilder(
 			start,
 			end,
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
-			logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
+			v3.LogQBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
 		)
 		if err != nil {
 			return query, err
@@ -59,13 +66,13 @@ func prepareLogsQuery(_ context.Context,
 		return query, err
 	}
 
-	query, err := logsV3.PrepareLogsQuery(
+	query, err := logsQueryBuilder(
 		start,
 		end,
 		params.CompositeQuery.QueryType,
 		params.CompositeQuery.PanelType,
 		builderQuery,
-		logsV3.Options{PreferRPM: preferRPM},
+		v3.LogQBOptions{PreferRPM: preferRPM},
 	)
 	if err != nil {
 		return query, err
@@ -101,7 +108,7 @@ func (q *querier) runBuilderQuery(
 		var query string
 		var err error
 		if _, ok := cacheKeys[queryName]; !ok {
-			query, err = prepareLogsQuery(ctx, start, end, builderQuery, params, preferRPM)
+			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, start, end, builderQuery, params, preferRPM)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
@@ -125,7 +132,7 @@ func (q *querier) runBuilderQuery(
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
-			query, err = prepareLogsQuery(ctx, miss.start, miss.end, builderQuery, params, preferRPM)
+			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, miss.start, miss.end, builderQuery, params, preferRPM)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return

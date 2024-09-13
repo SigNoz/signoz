@@ -29,6 +29,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	logsv4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/preferences"
@@ -143,7 +144,7 @@ type APIHandlerOpts struct {
 	// Querier Influx Interval
 	FluxInterval time.Duration
 
-	// Use new schema
+	// Use Logs New schema
 	UseLogsNewSchema bool
 }
 
@@ -195,10 +196,15 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
 	}
 
+	logsQueryBuilder := logsv3.PrepareLogsQuery
+	if opts.UseLogsNewSchema {
+		logsQueryBuilder = logsv4.PrepareLogsQuery
+	}
+
 	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
-		BuildLogQuery:    logsv3.PrepareLogsQuery,
+		BuildLogQuery:    logsQueryBuilder,
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
 
@@ -3927,7 +3933,93 @@ func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Req
 	}
 }
 
+func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
+
+	// get the param from url and add it to body
+	stringReader := strings.NewReader(r.URL.Query().Get("q"))
+	r.Body = io.NopCloser(stringReader)
+
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+	if apiErrorObj != nil {
+		zap.L().Error(apiErrorObj.Err.Error())
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	var err error
+	var queryString string
+	switch queryRangeParams.CompositeQuery.QueryType {
+	case v3.QueryTypeBuilder:
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(queryRangeParams) {
+			// get the fields if any logs query is present
+			var fields map[string]v3.AttributeKey
+			fields, err = aH.getLogFieldsV3(r.Context(), queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, nil)
+				return
+			}
+			logsv3.Enrich(queryRangeParams, fields)
+		}
+
+		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+			return
+		}
+
+	default:
+		err = fmt.Errorf("invalid query type")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(200)
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
+		RespondError(w, &err, "streaming is not supported")
+		return
+	}
+
+	// flush the headers
+	flusher.Flush()
+
+	// create the client
+	client := &v3.LogsLiveTailClientV2{Name: r.RemoteAddr, Logs: make(chan *model.SignozLogV2, 1000), Done: make(chan *bool), Error: make(chan error)}
+	go aH.reader.LiveTailLogsV4(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
+	for {
+		select {
+		case log := <-client.Logs:
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			enc.Encode(log)
+			fmt.Fprintf(w, "data: %v\n\n", buf.String())
+			flusher.Flush()
+		case <-client.Done:
+			zap.L().Debug("done!")
+			return
+		case err := <-client.Error:
+			zap.L().Error("error occurred", zap.Error(err))
+			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
+			flusher.Flush()
+			return
+		}
+	}
+
+}
+
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
+	if aH.UseLogsNewSchema {
+		aH.liveTailLogsV2(w, r)
+		return
+	}
 
 	// get the param from url and add it to body
 	stringReader := strings.NewReader(r.URL.Query().Get("q"))
@@ -4005,6 +4097,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
 }
 
 func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {

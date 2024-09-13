@@ -11,6 +11,7 @@ import (
 	"time"
 
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	logsV4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
 	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
@@ -52,10 +53,9 @@ type querier struct {
 	testingMode     bool
 	queriesExecuted []string
 	// tuple of start and end time in milliseconds
-	timeRanges     [][]int
-	returnedSeries []*v3.Series
-	returnedErr    error
-
+	timeRanges       [][]int
+	returnedSeries   []*v3.Series
+	returnedErr      error
 	UseLogsNewSchema bool
 }
 
@@ -74,6 +74,11 @@ type QuerierOptions struct {
 }
 
 func NewQuerier(opts QuerierOptions) interfaces.Querier {
+	logsQueryBuilder := logsV3.PrepareLogsQuery
+	if opts.UseLogsNewSchema {
+		logsQueryBuilder = logsV4.PrepareLogsQuery
+	}
+
 	return &querier{
 		cache:        opts.Cache,
 		reader:       opts.Reader,
@@ -82,14 +87,15 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 
 		builder: queryBuilder.NewQueryBuilder(queryBuilder.QueryBuilderOptions{
 			BuildTraceQuery:  tracesV3.PrepareTracesQuery,
-			BuildLogQuery:    logsV3.PrepareLogsQuery,
+			BuildLogQuery:    logsQueryBuilder,
 			BuildMetricQuery: metricsV4.PrepareMetricQuery,
 		}, opts.FeatureLookup),
 		featureLookUp: opts.FeatureLookup,
 
-		testingMode:    opts.TestingMode,
-		returnedSeries: opts.ReturnedSeries,
-		returnedErr:    opts.ReturnedErr,
+		testingMode:      opts.TestingMode,
+		returnedSeries:   opts.ReturnedSeries,
+		returnedErr:      opts.ReturnedErr,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 }
 
