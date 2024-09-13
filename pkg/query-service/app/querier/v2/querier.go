@@ -11,10 +11,12 @@ import (
 	"time"
 
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	logsV4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
 	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -51,9 +53,10 @@ type querier struct {
 	testingMode     bool
 	queriesExecuted []string
 	// tuple of start and end time in milliseconds
-	timeRanges     [][]int
-	returnedSeries []*v3.Series
-	returnedErr    error
+	timeRanges       [][]int
+	returnedSeries   []*v3.Series
+	returnedErr      error
+	UseLogsNewSchema bool
 }
 
 type QuerierOptions struct {
@@ -64,12 +67,18 @@ type QuerierOptions struct {
 	FeatureLookup interfaces.FeatureLookup
 
 	// used for testing
-	TestingMode    bool
-	ReturnedSeries []*v3.Series
-	ReturnedErr    error
+	TestingMode      bool
+	ReturnedSeries   []*v3.Series
+	ReturnedErr      error
+	UseLogsNewSchema bool
 }
 
 func NewQuerier(opts QuerierOptions) interfaces.Querier {
+	logsQueryBuilder := logsV3.PrepareLogsQuery
+	if opts.UseLogsNewSchema {
+		logsQueryBuilder = logsV4.PrepareLogsQuery
+	}
+
 	return &querier{
 		cache:        opts.Cache,
 		reader:       opts.Reader,
@@ -78,14 +87,15 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 
 		builder: queryBuilder.NewQueryBuilder(queryBuilder.QueryBuilderOptions{
 			BuildTraceQuery:  tracesV3.PrepareTracesQuery,
-			BuildLogQuery:    logsV3.PrepareLogsQuery,
+			BuildLogQuery:    logsQueryBuilder,
 			BuildMetricQuery: metricsV4.PrepareMetricQuery,
 		}, opts.FeatureLookup),
 		featureLookUp: opts.FeatureLookup,
 
-		testingMode:    opts.TestingMode,
-		returnedSeries: opts.ReturnedSeries,
-		returnedErr:    opts.ReturnedErr,
+		testingMode:      opts.TestingMode,
+		returnedSeries:   opts.ReturnedSeries,
+		returnedErr:      opts.ReturnedErr,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 }
 
@@ -475,7 +485,78 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	return results, errQueriesByName, err
 }
 
+func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangeParamsV3, tsRanges []utils.LogsListTsRange) ([]*v3.Result, map[string]error, error) {
+	res := make([]*v3.Result, 0)
+	qName := ""
+	pageSize := uint64(0)
+
+	// se we are considering only one query
+	for name, v := range params.CompositeQuery.BuilderQueries {
+		qName = name
+		pageSize = v.PageSize
+	}
+	data := []*v3.Row{}
+
+	for _, v := range tsRanges {
+		params.Start = v.Start
+		params.End = v.End
+
+		params.CompositeQuery.BuilderQueries[qName].PageSize = pageSize - uint64(len(data))
+		queries, err := q.builder.PrepareQueries(params)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// this will to run only once
+		for name, query := range queries {
+			rowList, err := q.reader.GetListResultV3(ctx, query)
+			if err != nil {
+				errs := []error{err}
+				errQuriesByName := map[string]error{
+					name: err,
+				}
+				return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+			}
+			data = append(data, rowList...)
+		}
+
+		// append a filter to the params
+		if len(data) > 0 {
+			params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key:      "id",
+					IsColumn: true,
+					DataType: "string",
+				},
+				Operator: v3.FilterOperatorLessThan,
+				Value:    data[len(data)-1].Data["id"],
+			})
+		}
+
+		if uint64(len(data)) >= pageSize {
+			break
+		}
+	}
+	res = append(res, &v3.Result{
+		QueryName: qName,
+		List:      data,
+	})
+	return res, nil, nil
+}
+
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
+	// List query has support for only one query.
+	if q.UseLogsNewSchema && params.CompositeQuery != nil && len(params.CompositeQuery.BuilderQueries) == 1 {
+		for _, v := range params.CompositeQuery.BuilderQueries {
+			// only allow of logs queries with timestamp ordering desc
+			if v.DataSource == v3.DataSourceLogs && len(v.OrderBy) == 1 && v.OrderBy[0].ColumnName == "timestamp" && v.OrderBy[0].Order == "desc" {
+				startEndArr := utils.GetLogsListTsRanges(params.Start, params.End)
+				if len(startEndArr) > 0 {
+					return q.runLogsListQuery(ctx, params, startEndArr)
+				}
+			}
+		}
+	}
 
 	queries, err := q.builder.PrepareQueries(params)
 

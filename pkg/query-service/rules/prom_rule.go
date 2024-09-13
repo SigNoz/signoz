@@ -306,7 +306,11 @@ func (r *PromRule) String() string {
 }
 
 func toCommonSeries(series promql.Series) v3.Series {
-	commonSeries := v3.Series{}
+	commonSeries := v3.Series{
+		Labels:      make(map[string]string),
+		LabelsArray: make([]map[string]string, 0),
+		Points:      make([]v3.Point, 0),
+	}
 
 	for _, lbl := range series.Metric {
 		commonSeries.Labels[lbl.Name] = lbl.Value
