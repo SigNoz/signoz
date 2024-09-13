@@ -60,12 +60,10 @@ export function QueryTable({
 	};
 
 	const [filterTable, setFilterTable] = useState<RowData[] | null>(null);
-	const [baseData] = useState(newDataSource);
 
 	const onTableSearch = useCallback(
 		(value?: string): void => {
-			console.log('searchValue', value);
-			const filterTable = baseData.filter((o) =>
+			const filterTable = newDataSource.filter((o) =>
 				Object.keys(o).some((k) =>
 					String(o[k])
 						.toLowerCase()
@@ -75,12 +73,12 @@ export function QueryTable({
 
 			setFilterTable(filterTable);
 		},
-		[baseData],
+		[newDataSource],
 	);
 
 	useEffect(() => {
 		onTableSearch(searchTerm);
-	}, [baseData, onTableSearch, searchTerm]);
+	}, [newDataSource, onTableSearch, searchTerm]);
 
 	return (
 		<div className="query-table">
@@ -96,7 +94,7 @@ export function QueryTable({
 			<ResizeTable
 				columns={tableColumns}
 				tableLayout="fixed"
-				dataSource={filterTable === null ? baseData : filterTable}
+				dataSource={filterTable === null ? newDataSource : filterTable}
 				scroll={{ x: true }}
 				pagination={paginationConfig}
 				sticky={sticky}
