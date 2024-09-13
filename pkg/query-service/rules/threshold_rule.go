@@ -531,7 +531,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 				if err != nil {
 					return nil, err
 				}
-				logsKeys := v3.GetLogFieldsV3(ctx, params, logsFields)
+				logsKeys := model.GetLogFieldsV3(ctx, params, logsFields)
 				r.logsKeys = logsKeys
 				logsv3.Enrich(params, logsKeys)
 			}

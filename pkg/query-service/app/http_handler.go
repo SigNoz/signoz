@@ -1051,23 +1051,6 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, r *http.Request, signozDashboard model.DashboardData) {
-	toSave := make(map[string]interface{})
-	toSave["title"] = signozDashboard.Title
-	toSave["description"] = signozDashboard.Description
-	toSave["tags"] = signozDashboard.Tags
-	toSave["layout"] = signozDashboard.Layout
-	toSave["widgets"] = signozDashboard.Widgets
-	toSave["variables"] = signozDashboard.Variables
-
-	dashboard, apiError := dashboards.CreateDashboard(r.Context(), toSave, aH.featureFlags)
-	if apiError != nil {
-		RespondError(w, apiError, nil)
-		return
-	}
-	aH.Respond(w, dashboard)
-}
-
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 
 	var postData map[string]interface{}
@@ -3575,7 +3558,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 				return
 			}
 			// get the fields if any logs query is present
-			fields := v3.GetLogFieldsV3(ctx, queryRangeParams, logsFields)
+			fields := model.GetLogFieldsV3(ctx, queryRangeParams, logsFields)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, errQuriesByName)
@@ -3612,6 +3595,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	// Hook up query progress tracking if requested
 	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
 	if len(queryIdHeader) > 0 {
+		//lint:ignore SA1029 ignore for now
 		ctx = context.WithValue(ctx, "queryId", queryIdHeader)
 
 		onQueryFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
@@ -3871,13 +3855,13 @@ func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
 			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(r.Context(), queryRangeParams)
+			logsFields, err := aH.reader.GetLogFields(r.Context())
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, nil)
 				return
 			}
+			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
@@ -3963,7 +3947,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			// get the fields if any logs query is present
-			fields := v3.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
+			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, nil)
@@ -4051,12 +4035,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 				RespondError(w, apiErrObj, nil)
 				return
 			}
-			fields := v3.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, errQuriesByName)
-				return
-			}
+			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
