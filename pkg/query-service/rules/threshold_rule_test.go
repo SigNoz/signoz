@@ -677,6 +677,111 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 			matchType:   "4", // InTotal
 			target:      20.0,
 		},
+		// Test cases for Last
+		// greater than last
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "5", // Last
+			target:              5.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "1", // Greater Than
+			matchType:   "5", // Last
+			target:      20.0,
+		},
+		// less than last
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "5", // Last
+			target:              15.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "2", // Less Than
+			matchType:   "5", // Last
+			target:      5.0,
+		},
+		// equals last
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "5", // Last
+			target:              10.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "3", // Equals
+			matchType:   "5", // Last
+			target:      5.0,
+		},
+		// not equals last
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "5", // Last
+			target:              5.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "4", // Not Equals
+			matchType:   "5", // Last
+			target:      10.0,
+		},
 	}
 
 	fm := featureManager.StartManager()
