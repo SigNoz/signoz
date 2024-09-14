@@ -137,7 +137,6 @@ function App(): JSX.Element {
 
 		window.analytics.identify(email, sanitizedIdentifyPayload);
 		window.analytics.group(domain, groupTraits);
-		window.clarity('identify', email, name);
 
 		posthog?.identify(email, {
 			email,

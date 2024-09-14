@@ -204,11 +204,19 @@ func createTelemetry() {
 		return
 	}
 
-	telemetry = &Telemetry{
-		ossOperator: analytics.New(api_key),
-		ipAddress:   getOutboundIP(),
-		rateLimits:  make(map[string]int8),
-		activeUser:  make(map[string]int8),
+	if constants.IsOSSTelemetryEnabled() {
+		telemetry = &Telemetry{
+			ossOperator: analytics.New(api_key),
+			ipAddress:   getOutboundIP(),
+			rateLimits:  make(map[string]int8),
+			activeUser:  make(map[string]int8),
+		}
+	} else {
+		telemetry = &Telemetry{
+			ipAddress:  getOutboundIP(),
+			rateLimits: make(map[string]int8),
+			activeUser: make(map[string]int8),
+		}
 	}
 	telemetry.minRandInt = 0
 	telemetry.maxRandInt = int(1 / DEFAULT_SAMPLING)
@@ -331,6 +339,7 @@ func createTelemetry() {
 							"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
 							"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
 							"dashboardsWithTSV2":              dashboardsInfo.QueriesWithTSV2,
+							"dashboardWithLogsChQuery":        dashboardsInfo.DashboardsWithLogsChQuery,
 							"totalAlerts":                     alertsInfo.TotalAlerts,
 							"alertsWithTSV2":                  alertsInfo.AlertsWithTSV2,
 							"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
@@ -350,6 +359,7 @@ func createTelemetry() {
 							"metricsClickHouseQueries":        alertsInfo.MetricsClickHouseQueries,
 							"metricsPrometheusQueries":        alertsInfo.MetricsPrometheusQueries,
 							"spanMetricsPrometheusQueries":    alertsInfo.SpanMetricsPrometheusQueries,
+							"alertsWithLogsChQuery":           alertsInfo.AlertsWithLogsChQuery,
 						}
 						// send event only if there are dashboards or alerts or channels
 						if (dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0) && apiErr == nil {
@@ -484,16 +494,18 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 		})
 	}
 
-	a.ossOperator.Enqueue(analytics.Identify{
-		UserId: a.ipAddress,
-		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
-	})
-	// Updating a groups properties
-	a.ossOperator.Enqueue(analytics.Group{
-		UserId:  a.ipAddress,
-		GroupId: a.getCompanyDomain(),
-		Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
-	})
+	if a.ossOperator != nil {
+		a.ossOperator.Enqueue(analytics.Identify{
+			UserId: a.ipAddress,
+			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
+		})
+		// Updating a groups properties
+		a.ossOperator.Enqueue(analytics.Group{
+			UserId:  a.ipAddress,
+			GroupId: a.getCompanyDomain(),
+			Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
+		})
+	}
 }
 
 func (a *Telemetry) SetUserEmail(email string) {

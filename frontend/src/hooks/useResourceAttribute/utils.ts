@@ -93,6 +93,22 @@ export const resourceAttributesToTagFilterItems = (
 		value: `${res.tagValue}`.split(','),
 	}));
 };
+/* Convert resource attributes to trace filters items for queryBuilder */
+export const resourceAttributesToTracesFilterItems = (
+	queries: IResourceAttribute[],
+): TagFilterItem[] =>
+	queries.map((res) => ({
+		id: `${res.id}`,
+		key: {
+			key: convertMetricKeyToTrace(res.tagKey),
+			isColumn: false,
+			type: MetricsType.Resource,
+			dataType: DataTypes.String,
+			id: `${convertMetricKeyToTrace(res.tagKey)}--string--resource--true`,
+		},
+		op: `${res.operator === 'Not IN' ? 'nin' : res.operator}`,
+		value: res.tagValue,
+	}));
 
 export const OperatorSchema: IOption[] = OperatorConversions.map(
 	(operator) => ({
