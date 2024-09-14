@@ -42,14 +42,11 @@ import (
 	"go.uber.org/zap"
 
 	queryprogress "go.signoz.io/signoz/pkg/query-service/app/clickhouseReader/query_progress"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/dao"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -3241,171 +3238,6 @@ func removeUnderscoreDuplicateFields(fields []model.LogField) []model.LogField {
 		updatedFields = append(updatedFields, v)
 	}
 	return updatedFields
-}
-
-// GetDashboardsInfo returns analytics data for dashboards
-func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
-	dashboardsInfo := model.DashboardsInfo{}
-	// fetch dashboards from dashboard db
-	query := "SELECT data FROM dashboards"
-	var dashboardsData []dashboards.Dashboard
-	err := r.localDB.Select(&dashboardsData, query)
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return &dashboardsInfo, err
-	}
-	totalDashboardsWithPanelAndName := 0
-	var dashboardNames []string
-	count := 0
-	logChQueriesCount := 0
-	for _, dashboard := range dashboardsData {
-		if isDashboardWithPanelAndName(dashboard.Data) {
-			totalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName + 1
-		}
-		dashboardName := extractDashboardName(dashboard.Data)
-		if dashboardName != "" {
-			dashboardNames = append(dashboardNames, dashboardName)
-		}
-		dashboardInfo := countPanelsInDashboard(dashboard.Data)
-		dashboardsInfo.LogsBasedPanels += dashboardInfo.LogsBasedPanels
-		dashboardsInfo.TracesBasedPanels += dashboardInfo.TracesBasedPanels
-		dashboardsInfo.MetricBasedPanels += dashboardsInfo.MetricBasedPanels
-		if isDashboardWithTSV2(dashboard.Data) {
-			count = count + 1
-		}
-		if isDashboardWithLogsClickhouseQuery(dashboard.Data) {
-			logChQueriesCount = logChQueriesCount + 1
-		}
-	}
-
-	dashboardsInfo.DashboardNames = dashboardNames
-	dashboardsInfo.TotalDashboards = len(dashboardsData)
-	dashboardsInfo.TotalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName
-	dashboardsInfo.QueriesWithTSV2 = count
-	dashboardsInfo.DashboardsWithLogsChQuery = logChQueriesCount
-	return &dashboardsInfo, nil
-}
-
-func isDashboardWithTSV2(data map[string]interface{}) bool {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return false
-	}
-	return strings.Contains(string(jsonData), "time_series_v2")
-}
-
-func isDashboardWithLogsClickhouseQuery(data map[string]interface{}) bool {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return false
-	}
-	result := strings.Contains(string(jsonData), "signoz_logs.distributed_logs") ||
-		strings.Contains(string(jsonData), "signoz_logs.logs")
-	return result
-}
-
-func isDashboardWithPanelAndName(data map[string]interface{}) bool {
-	isDashboardName := false
-	isDashboardWithPanelAndName := false
-	if data != nil && data["title"] != nil && data["widgets"] != nil {
-		title, ok := data["title"].(string)
-		if ok && title != "Sample Title" {
-			isDashboardName = true
-		}
-		widgets, ok := data["widgets"]
-		if ok && isDashboardName {
-			data, ok := widgets.([]interface{})
-			if ok && len(data) > 0 {
-				isDashboardWithPanelAndName = true
-			}
-		}
-	}
-
-	return isDashboardWithPanelAndName
-}
-
-func extractDashboardName(data map[string]interface{}) string {
-
-	if data != nil && data["title"] != nil {
-		title, ok := data["title"].(string)
-		if ok {
-			return title
-		}
-	}
-
-	return ""
-}
-
-func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
-	var logsPanelCount, tracesPanelCount, metricsPanelCount int
-	// totalPanels := 0
-	if data != nil && data["widgets"] != nil {
-		widgets, ok := data["widgets"]
-		if ok {
-			data, ok := widgets.([]interface{})
-			if ok {
-				for _, widget := range data {
-					sData, ok := widget.(map[string]interface{})
-					if ok && sData["query"] != nil {
-						// totalPanels++
-						query, ok := sData["query"].(map[string]interface{})
-						if ok && query["queryType"] == "builder" && query["builder"] != nil {
-							builderData, ok := query["builder"].(map[string]interface{})
-							if ok && builderData["queryData"] != nil {
-								builderQueryData, ok := builderData["queryData"].([]interface{})
-								if ok {
-									for _, queryData := range builderQueryData {
-										data, ok := queryData.(map[string]interface{})
-										if ok {
-											if data["dataSource"] == "traces" {
-												tracesPanelCount++
-											} else if data["dataSource"] == "metrics" {
-												metricsPanelCount++
-											} else if data["dataSource"] == "logs" {
-												logsPanelCount++
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return model.DashboardsInfo{
-		LogsBasedPanels:   logsPanelCount,
-		TracesBasedPanels: tracesPanelCount,
-		MetricBasedPanels: metricsPanelCount,
-	}
-}
-
-func (r *ClickHouseReader) GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error) {
-	savedViewsInfo := model.SavedViewsInfo{}
-	savedViews, err := explorer.GetViews()
-	if err != nil {
-		zap.S().Debug("Error in fetching saved views info: ", err)
-		return &savedViewsInfo, err
-	}
-	savedViewsInfo.TotalSavedViews = len(savedViews)
-	for _, view := range savedViews {
-		if view.SourcePage == "traces" {
-			savedViewsInfo.TracesSavedViews += 1
-		} else if view.SourcePage == "logs" {
-			savedViewsInfo.LogsSavedViews += 1
-		}
-	}
-	return &savedViewsInfo, nil
-}
-
-func (r *ClickHouseReader) GetUsers(ctx context.Context) ([]model.UserPayload, error) {
-
-	users, apiErr := dao.DB().GetUsers(ctx)
-	if apiErr != nil {
-		return nil, apiErr.Err
-	}
-	return users, nil
 }
 
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {

@@ -15,6 +15,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.uber.org/zap"
 )
 
@@ -148,6 +150,8 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
 		return nil, fmt.Errorf("error in adding column locked to dashboards table: %s", err.Error())
 	}
+
+	telemetry.GetInstance().SetDashboardsInfoCallback(GetDashboardsInfo)
 
 	return db, nil
 }
@@ -433,4 +437,127 @@ func getIdDifference(existingIds []string, newIds []string) []string {
 	}
 
 	return difference
+}
+
+// GetDashboardsInfo returns analytics data for dashboards
+func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
+	dashboardsInfo := model.DashboardsInfo{}
+	// fetch dashboards from dashboard db
+	query := "SELECT data FROM dashboards"
+	var dashboardsData []Dashboard
+	err := db.Select(&dashboardsData, query)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return &dashboardsInfo, err
+	}
+	totalDashboardsWithPanelAndName := 0
+	var dashboardNames []string
+	count := 0
+	for _, dashboard := range dashboardsData {
+		if isDashboardWithPanelAndName(dashboard.Data) {
+			totalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName + 1
+		}
+		dashboardName := extractDashboardName(dashboard.Data)
+		if dashboardName != "" {
+			dashboardNames = append(dashboardNames, dashboardName)
+		}
+		dashboardInfo := countPanelsInDashboard(dashboard.Data)
+		dashboardsInfo.LogsBasedPanels += dashboardInfo.LogsBasedPanels
+		dashboardsInfo.TracesBasedPanels += dashboardInfo.TracesBasedPanels
+		dashboardsInfo.MetricBasedPanels += dashboardsInfo.MetricBasedPanels
+		if isDashboardWithTSV2(dashboard.Data) {
+			count = count + 1
+		}
+	}
+
+	dashboardsInfo.DashboardNames = dashboardNames
+	dashboardsInfo.TotalDashboards = len(dashboardsData)
+	dashboardsInfo.TotalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName
+	dashboardsInfo.QueriesWithTSV2 = count
+	return &dashboardsInfo, nil
+}
+
+func isDashboardWithTSV2(data map[string]interface{}) bool {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(jsonData), "time_series_v2")
+}
+
+func isDashboardWithPanelAndName(data map[string]interface{}) bool {
+	isDashboardName := false
+	isDashboardWithPanelAndName := false
+	if data != nil && data["title"] != nil && data["widgets"] != nil {
+		title, ok := data["title"].(string)
+		if ok && title != "Sample Title" {
+			isDashboardName = true
+		}
+		widgets, ok := data["widgets"]
+		if ok && isDashboardName {
+			data, ok := widgets.([]interface{})
+			if ok && len(data) > 0 {
+				isDashboardWithPanelAndName = true
+			}
+		}
+	}
+
+	return isDashboardWithPanelAndName
+}
+
+func extractDashboardName(data map[string]interface{}) string {
+
+	if data != nil && data["title"] != nil {
+		title, ok := data["title"].(string)
+		if ok {
+			return title
+		}
+	}
+
+	return ""
+}
+
+func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
+	var logsPanelCount, tracesPanelCount, metricsPanelCount int
+	// totalPanels := 0
+	if data != nil && data["widgets"] != nil {
+		widgets, ok := data["widgets"]
+		if ok {
+			data, ok := widgets.([]interface{})
+			if ok {
+				for _, widget := range data {
+					sData, ok := widget.(map[string]interface{})
+					if ok && sData["query"] != nil {
+						// totalPanels++
+						query, ok := sData["query"].(map[string]interface{})
+						if ok && query["queryType"] == "builder" && query["builder"] != nil {
+							builderData, ok := query["builder"].(map[string]interface{})
+							if ok && builderData["queryData"] != nil {
+								builderQueryData, ok := builderData["queryData"].([]interface{})
+								if ok {
+									for _, queryData := range builderQueryData {
+										data, ok := queryData.(map[string]interface{})
+										if ok {
+											if data["dataSource"] == "traces" {
+												tracesPanelCount++
+											} else if data["dataSource"] == "metrics" {
+												metricsPanelCount++
+											} else if data["dataSource"] == "logs" {
+												logsPanelCount++
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return model.DashboardsInfo{
+		LogsBasedPanels:   logsPanelCount,
+		TracesBasedPanels: tracesPanelCount,
+		MetricBasedPanels: metricsPanelCount,
+	}
 }
