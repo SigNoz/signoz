@@ -158,6 +158,8 @@ exporters:
 
 service:
   telemetry:
+    logs:
+      encoding: json
     metrics:
       address: 0.0.0.0:8888
   extensions:
