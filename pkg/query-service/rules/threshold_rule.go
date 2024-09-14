@@ -168,16 +168,8 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3,
 
 	zap.L().Info("prepareQueryRange", zap.Int64("ts", ts.UnixMilli()), zap.Int64("evalWindow", r.evalWindow.Milliseconds()), zap.Int64("evalDelay", r.evalDelay.Milliseconds()))
 
-	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli()
-	end := ts.UnixMilli()
-
-	if r.evalDelay > 0 {
-		start = start - int64(r.evalDelay.Milliseconds())
-		end = end - int64(r.evalDelay.Milliseconds())
-	}
-	// round to minute otherwise we could potentially miss data
-	start = start - (start % (60 * 1000))
-	end = end - (end % (60 * 1000))
+	startTs, endTs := r.Timestamps(ts)
+	start, end := startTs.UnixMilli(), endTs.UnixMilli()
 
 	if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
 		params := &v3.QueryRangeParamsV3{

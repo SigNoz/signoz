@@ -840,7 +840,11 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			filterItems, groupBy, keys := aH.metaForLinks(r.Context(), rule)
 			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy, keys)
 			end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
-			start := end.Add(-time.Duration(rule.EvalWindow))
+			// why are we subtracting 3 minutes?
+			// the query range is calculated based on the rule's evalWindow and evalDelay
+			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
+			// to get the correct query range
+			start := end.Add(-time.Duration(rule.EvalWindow)).Add(-3 * time.Minute)
 			if rule.AlertType == rules.AlertTypeLogs {
 				res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
 			} else if rule.AlertType == rules.AlertTypeTraces {
