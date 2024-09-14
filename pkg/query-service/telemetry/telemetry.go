@@ -448,11 +448,9 @@ func getOutboundIP() string {
 	}
 
 	defer resp.Body.Close()
+	ipBody, err := io.ReadAll(resp.Body)
 	if err == nil {
-		ipBody, err := io.ReadAll(resp.Body)
-		if err == nil {
-			ip = ipBody
-		}
+		ip = ipBody
 	}
 
 	return string(ip)
