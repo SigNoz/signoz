@@ -139,6 +139,7 @@ export const getGraphOptions = (
 	},
 	scales: {
 		x: {
+			stacked: isStacked,
 			grid: {
 				display: true,
 				color: getGridColor(),
@@ -165,6 +166,7 @@ export const getGraphOptions = (
 			ticks: { color: getAxisLabelColor(currentTheme) },
 		},
 		y: {
+			stacked: isStacked,
 			display: true,
 			grid: {
 				display: true,
@@ -177,9 +179,6 @@ export const getGraphOptions = (
 					return getYAxisFormattedValue(value.toString(), yAxisUnit);
 				},
 			},
-		},
-		stacked: {
-			display: isStacked === undefined ? false : 'auto',
 		},
 	},
 	elements: {

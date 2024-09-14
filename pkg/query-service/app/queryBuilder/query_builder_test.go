@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	logsV4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
@@ -576,6 +577,217 @@ func TestLogsQueryWithFormula(t *testing.T) {
 	qb := NewQueryBuilder(qbOptions, fm)
 
 	for _, test := range testLogsWithFormula {
+		t.Run(test.Name, func(t *testing.T) {
+			queries, err := qb.PrepareQueries(test.Query)
+			require.NoError(t, err)
+			require.Equal(t, test.ExpectedQuery, queries["C"])
+		})
+	}
+
+}
+
+var testLogsWithFormulaV2 = []struct {
+	Name          string
+	Query         *v3.QueryRangeParamsV3
+	ExpectedQuery string
+}{
+	{
+		Name: "test formula without dot in filter and group by attribute",
+		Query: &v3.QueryRangeParamsV3{
+			Start: 1702979275000000000,
+			End:   1702981075000000000,
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						DataSource:   v3.DataSourceLogs,
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "key_1", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag}, Value: true, Operator: v3.FilterOperatorEqual},
+						}},
+						AggregateOperator: v3.AggregateOperatorCount,
+						Expression:        "A",
+						OrderBy: []v3.OrderBy{
+							{
+								ColumnName: "timestamp",
+								Order:      "desc",
+							},
+						},
+						GroupBy: []v3.AttributeKey{
+							{Key: "key_1", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag},
+						},
+					},
+					"B": {
+						QueryName:    "B",
+						StepInterval: 60,
+						DataSource:   v3.DataSourceLogs,
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "key_2", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag}, Value: true, Operator: v3.FilterOperatorEqual},
+						}},
+						AggregateOperator: v3.AggregateOperatorCount,
+						Expression:        "B",
+						OrderBy: []v3.OrderBy{
+							{
+								ColumnName: "timestamp",
+								Order:      "desc",
+							},
+						},
+						GroupBy: []v3.AttributeKey{
+							{Key: "key_1", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag},
+						},
+					},
+					"C": {
+						QueryName:  "C",
+						Expression: "A + B",
+					},
+				},
+			},
+		},
+		ExpectedQuery: "SELECT A.`key_1` as `key_1`, A.`ts` as `ts`, A.value + B.value as value FROM " +
+			"(SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_bool['key_1'] as `key_1`, toFloat64(count(*)) as value from " +
+			"signoz_logs.distributed_logs_v2 where (timestamp >= 1702979275000000000 AND timestamp <= 1702981075000000000) AND (ts_bucket_start >= 1702977475 AND ts_bucket_start <= 1702981075) " +
+			"AND attributes_bool['key_1'] = true AND mapContains(attributes_bool, 'key_1') AND mapContains(attributes_bool, 'key_1') group by `key_1`,ts order by value DESC) as A  INNER JOIN (SELECT " +
+			"toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_bool['key_1'] as `key_1`, toFloat64(count(*)) as value " +
+			"from signoz_logs.distributed_logs_v2 where (timestamp >= 1702979275000000000 AND timestamp <= 1702981075000000000) AND (ts_bucket_start >= 1702977475 AND ts_bucket_start <= 1702981075) " +
+			"AND attributes_bool['key_2'] = true AND mapContains(attributes_bool, 'key_2') AND mapContains(attributes_bool, 'key_1') group by `key_1`,ts order by value DESC) as B  ON A.`key_1` = B.`key_1` AND A.`ts` = B.`ts`",
+	},
+	{
+		Name: "test formula with dot in filter and group by attribute",
+		Query: &v3.QueryRangeParamsV3{
+			Start: 1702979056000000000,
+			End:   1702982656000000000,
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeTable,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						DataSource:   v3.DataSourceLogs,
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "key1.1", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag}, Value: true, Operator: v3.FilterOperatorEqual},
+						}},
+						AggregateOperator: v3.AggregateOperatorCount,
+						Expression:        "A",
+						OrderBy: []v3.OrderBy{
+							{
+								ColumnName: "timestamp",
+								Order:      "desc",
+							},
+						},
+						GroupBy: []v3.AttributeKey{
+							{Key: "key1.1", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag},
+						},
+					},
+					"B": {
+						QueryName:    "B",
+						StepInterval: 60,
+						DataSource:   v3.DataSourceLogs,
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "key1.2", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag}, Value: true, Operator: v3.FilterOperatorEqual},
+						}},
+						AggregateOperator: v3.AggregateOperatorCount,
+						Expression:        "B",
+						OrderBy: []v3.OrderBy{
+							{
+								ColumnName: "timestamp",
+								Order:      "desc",
+							},
+						},
+						GroupBy: []v3.AttributeKey{
+							{Key: "key1.1", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag},
+						},
+					},
+					"C": {
+						QueryName:  "C",
+						Expression: "A + B",
+					},
+				},
+			},
+		},
+		ExpectedQuery: "SELECT A.`key1.1` as `key1.1`, A.`ts` as `ts`, A.value + B.value as value FROM (SELECT attributes_bool['key1.1'] as `key1.1`, " +
+			"toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1702979056000000000 AND timestamp <= 1702982656000000000) AND (ts_bucket_start >= 1702977256 AND ts_bucket_start <= 1702982656) " +
+			"AND attributes_bool['key1.1'] = true AND mapContains(attributes_bool, 'key1.1') AND mapContains(attributes_bool, 'key1.1') group by `key1.1` order by value DESC) as A  INNER JOIN (SELECT " +
+			"attributes_bool['key1.1'] as `key1.1`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1702979056000000000 AND timestamp <= 1702982656000000000) " +
+			"AND (ts_bucket_start >= 1702977256 AND ts_bucket_start <= 1702982656) AND attributes_bool['key1.2'] = true AND mapContains(attributes_bool, 'key1.2') AND " +
+			"mapContains(attributes_bool, 'key1.1') group by `key1.1` order by value DESC) as B  ON A.`key1.1` = B.`key1.1` AND A.`ts` = B.`ts`",
+	},
+	{
+		Name: "test formula with dot in filter and group by materialized attribute",
+		Query: &v3.QueryRangeParamsV3{
+			Start: 1702980884000000000,
+			End:   1702984484000000000,
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						DataSource:   v3.DataSourceLogs,
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "key_2", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: true, Operator: v3.FilterOperatorEqual},
+						}},
+						AggregateOperator: v3.AggregateOperatorCount,
+						Expression:        "A",
+						OrderBy: []v3.OrderBy{
+							{
+								ColumnName: "timestamp",
+								Order:      "desc",
+							},
+						},
+						GroupBy: []v3.AttributeKey{
+							{Key: "key1.1", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+						},
+					},
+					"B": {
+						QueryName:    "B",
+						StepInterval: 60,
+						DataSource:   v3.DataSourceLogs,
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "key_1", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag}, Value: true, Operator: v3.FilterOperatorEqual},
+						}},
+						AggregateOperator: v3.AggregateOperatorCount,
+						Expression:        "B",
+						OrderBy: []v3.OrderBy{
+							{
+								ColumnName: "timestamp",
+								Order:      "desc",
+							},
+						},
+						GroupBy: []v3.AttributeKey{
+							{Key: "key1.1", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+						},
+					},
+					"C": {
+						QueryName:  "C",
+						Expression: "A - B",
+					},
+				},
+			},
+		},
+		ExpectedQuery: "SELECT A.`key1.1` as `key1.1`, A.`ts` as `ts`, A.value - B.value as value FROM (SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, " +
+			"`attribute_bool_key1$$1` as `key1.1`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1702980884000000000 AND timestamp <= 1702984484000000000) AND " +
+			"(ts_bucket_start >= 1702979084 AND ts_bucket_start <= 1702984484) AND `attribute_bool_key_2` = true AND `attribute_bool_key1$$1_exists`=true group by `key1.1`,ts order by value DESC) as " +
+			"A  INNER JOIN (SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, `attribute_bool_key1$$1` as `key1.1`, toFloat64(count(*)) as value from " +
+			"signoz_logs.distributed_logs_v2 where (timestamp >= 1702980884000000000 AND timestamp <= 1702984484000000000) AND (ts_bucket_start >= 1702979084 AND ts_bucket_start <= 1702984484) AND " +
+			"attributes_bool['key_1'] = true AND mapContains(attributes_bool, 'key_1') AND `attribute_bool_key1$$1_exists`=true group by `key1.1`,ts order by value DESC) as B  " +
+			"ON A.`key1.1` = B.`key1.1` AND A.`ts` = B.`ts`",
+	},
+}
+
+func TestLogsQueryWithFormulaV2(t *testing.T) {
+	t.Parallel()
+
+	qbOptions := QueryBuilderOptions{
+		BuildLogQuery: logsV4.PrepareLogsQuery,
+	}
+	fm := featureManager.StartManager()
+	qb := NewQueryBuilder(qbOptions, fm)
+
+	for _, test := range testLogsWithFormulaV2 {
 		t.Run(test.Name, func(t *testing.T) {
 			queries, err := qb.PrepareQueries(test.Query)
 			require.NoError(t, err)

@@ -139,7 +139,7 @@ export function TableViewActions(
 									<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
 								)
 							}
-							onClick={onClickHandler(OPERATORS.IN, fieldFilterKey, fieldData.value)}
+							onClick={onClickHandler(OPERATORS['='], fieldFilterKey, fieldData.value)}
 						/>
 					</Tooltip>
 					<Tooltip title="Filter out value">
@@ -152,7 +152,11 @@ export function TableViewActions(
 									<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
 								)
 							}
-							onClick={onClickHandler(OPERATORS.NIN, fieldFilterKey, fieldData.value)}
+							onClick={onClickHandler(
+								OPERATORS['!='],
+								fieldFilterKey,
+								fieldData.value,
+							)}
 						/>
 					</Tooltip>
 					{!isOldLogsExplorerOrLiveLogsPage && (

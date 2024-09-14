@@ -486,12 +486,6 @@ func AddOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
-type Options struct {
-	GraphLimitQtype string
-	IsLivetailQuery bool
-	PreferRPM       bool
-}
-
 func IsOrderByTs(orderBy []v3.OrderBy) bool {
 	if len(orderBy) == 1 && (orderBy[0].Key == constants.TIMESTAMP || orderBy[0].ColumnName == constants.TIMESTAMP) {
 		return true
@@ -502,7 +496,7 @@ func IsOrderByTs(orderBy []v3.OrderBy) bool {
 // PrepareLogsQuery prepares the query for logs
 // start and end are in epoch millisecond
 // step is in seconds
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.LogQBOptions) (string, error) {
 
 	// adjust the start and end time to the step interval
 	// NOTE: Disabling this as it's creating confusion between charts and actual data
