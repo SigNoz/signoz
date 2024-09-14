@@ -14,6 +14,8 @@ import (
 
 // ValidateAndCastValue validates and casts the value of a key to the corresponding data type of the key
 func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (interface{}, error) {
+	// get the actual value if it's a pointer
+	v = getPointerValue(v)
 	switch dataType {
 	case v3.AttributeKeyDataTypeString:
 		switch x := v.(type) {
@@ -269,6 +271,28 @@ func GetClickhouseColumnName(typeName string, dataType, field string) string {
 	field = strings.ReplaceAll(field, ".", "$$")
 
 	colName := fmt.Sprintf("`%s_%s_%s`", strings.ToLower(typeName), strings.ToLower(dataType), field)
+	return colName
+}
+
+func GetClickhouseColumnNameV2(typeName string, dataType, field string) string {
+	if typeName == string(v3.AttributeKeyTypeTag) {
+		typeName = constants.Attributes
+	}
+
+	if typeName != string(v3.AttributeKeyTypeResource) {
+		typeName = typeName[:len(typeName)-1]
+	}
+
+	dataType = strings.ToLower(dataType)
+
+	if dataType == "int64" || dataType == "float64" {
+		dataType = "number"
+	}
+
+	// if name contains . replace it with `$$`
+	field = strings.ReplaceAll(field, ".", "$$")
+
+	colName := fmt.Sprintf("%s_%s_%s", strings.ToLower(typeName), dataType, field)
 	return colName
 }
 
