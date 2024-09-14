@@ -20,6 +20,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Rule,
 			opts.FF,
 			opts.Reader,
+			opts.UseLogsNewSchema,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
 		)
 
