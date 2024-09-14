@@ -147,6 +147,13 @@
 	}
 
 	.logs-histogram {
+		.ant-card-body {
+			height: 140px;
+			min-height: 140px;
+			padding: 0 16px 22px 16px;
+			font-family: 'Geist Mono';
+		}
+
 		margin-bottom: 0px;
 	}
 }
