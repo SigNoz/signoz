@@ -54,6 +54,7 @@ type ThresholdRule struct {
 	// querierV2 is used for alerts created after the introduction of new metrics query builder
 	querierV2 interfaces.Querier
 
+	// used for attribute metadata enrichment for logs and traces
 	logsKeys  map[string]v3.AttributeKey
 	spansKeys map[string]v3.AttributeKey
 }
@@ -259,9 +260,9 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 		return ""
 	}
 
-	filterItems := contextlinks.PrepareFilters(lbls.Map(), q.Filters.Items, q.GroupBy)
+	filterItems := contextlinks.PrepareFilters(lbls.Map(), q.Filters.Items, q.GroupBy, r.logsKeys)
 
-	return contextlinks.PrepareLinksToLogs(ts, ts.Add(-time.Duration(r.evalWindow)), filterItems)
+	return contextlinks.PrepareLinksToLogs(ts.Add(-time.Duration(r.evalWindow)), ts, filterItems)
 }
 
 func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) string {
@@ -281,9 +282,9 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 		return ""
 	}
 
-	filterItems := contextlinks.PrepareFilters(lbls.Map(), q.Filters.Items, q.GroupBy)
+	filterItems := contextlinks.PrepareFilters(lbls.Map(), q.Filters.Items, q.GroupBy, r.spansKeys)
 
-	return contextlinks.PrepareLinksToTraces(ts, ts.Add(-time.Duration(r.evalWindow)), filterItems)
+	return contextlinks.PrepareLinksToTraces(ts.Add(-time.Duration(r.evalWindow)), ts, filterItems)
 }
 
 func (r *ThresholdRule) GetSelectedQuery() string {
@@ -490,11 +491,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		if r.typ == AlertTypeTraces {
 			link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
 			if link != "" && r.hostFromSource() != "" {
+				zap.L().Info("adding traces link to annotations", zap.String("link", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)))
 				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
 			}
 		} else if r.typ == AlertTypeLogs {
 			link := r.prepareLinksToLogs(ts, smpl.MetricOrig)
 			if link != "" && r.hostFromSource() != "" {
+				zap.L().Info("adding logs link to annotations", zap.String("link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)))
 				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
 			}
 		}

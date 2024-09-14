@@ -768,6 +768,48 @@ func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.
 	aH.Respond(w, stateItems)
 }
 
+func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule) ([]v3.FilterItem, []v3.AttributeKey, map[string]v3.AttributeKey) {
+	filterItems := []v3.FilterItem{}
+	groupBy := []v3.AttributeKey{}
+	keys := make(map[string]v3.AttributeKey)
+
+	if rule.AlertType == rules.AlertTypeLogs {
+		logFields, err := aH.reader.GetLogFields(ctx)
+		if err == nil {
+			params := &v3.QueryRangeParamsV3{
+				CompositeQuery: rule.RuleCondition.CompositeQuery,
+			}
+			keys = model.GetLogFieldsV3(ctx, params, logFields)
+		} else {
+			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
+		}
+	} else if rule.AlertType == rules.AlertTypeTraces {
+		traceFields, err := aH.reader.GetSpanAttributeKeys(ctx)
+		if err == nil {
+			keys = traceFields
+		} else {
+			zap.L().Error("failed to get span attributes using empty keys; the link might not work as expected", zap.Error(err))
+		}
+	}
+
+	if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
+		if rule.RuleCondition.CompositeQuery != nil {
+			if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
+				selectedQuery := rule.RuleCondition.GetSelectedQueryName()
+				if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+					rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters != nil {
+					filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
+				}
+				if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+					rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy != nil {
+					groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
+				}
+			}
+		}
+	}
+	return filterItems, groupBy, keys
+}
+
 func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
 	params := model.QueryRuleStateHistory{}
@@ -795,25 +837,8 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			if err != nil {
 				continue
 			}
-			filterItems := []v3.FilterItem{}
-			groupBy := []v3.AttributeKey{}
-			if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
-				if rule.RuleCondition.CompositeQuery != nil {
-					if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
-						selectedQuery := rule.RuleCondition.GetSelectedQueryName()
-						if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
-							rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters != nil {
-							filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
-						}
-						if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
-							rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy != nil {
-							groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
-						}
-					}
-				}
-			}
-
-			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy)
+			filterItems, groupBy, keys := aH.metaForLinks(r.Context(), rule)
+			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy, keys)
 			end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
 			start := end.Add(-time.Duration(rule.EvalWindow))
 			if rule.AlertType == rules.AlertTypeLogs {
@@ -850,25 +875,8 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 			if err != nil {
 				continue
 			}
-			filterItems := []v3.FilterItem{}
-			groupBy := []v3.AttributeKey{}
-			if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
-				if rule.RuleCondition.CompositeQuery != nil {
-					if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
-						selectedQuery := rule.RuleCondition.GetSelectedQueryName()
-						if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
-							rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters != nil {
-							filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
-						}
-						if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
-							rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy != nil {
-							groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
-						}
-					}
-				}
-			}
-
-			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy)
+			filterItems, groupBy, keys := aH.metaForLinks(r.Context(), rule)
+			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy, keys)
 			end := time.Unix(params.End/1000, 0)
 			start := time.Unix(params.Start/1000, 0)
 			if rule.AlertType == rules.AlertTypeLogs {
