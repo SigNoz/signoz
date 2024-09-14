@@ -246,6 +246,13 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3,
 func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) string {
 	selectedQuery := r.GetSelectedQuery()
 
+	qr, err := r.prepareQueryRange(ts)
+	if err != nil {
+		return ""
+	}
+	start := time.UnixMilli(qr.Start)
+	end := time.UnixMilli(qr.End)
+
 	// TODO(srikanthccv): handle formula queries
 	if selectedQuery < "A" || selectedQuery > "Z" {
 		return ""
@@ -260,13 +267,25 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 		return ""
 	}
 
-	filterItems := contextlinks.PrepareFilters(lbls.Map(), q.Filters.Items, q.GroupBy, r.logsKeys)
+	queryFilter := []v3.FilterItem{}
+	if q.Filters != nil {
+		queryFilter = q.Filters.Items
+	}
 
-	return contextlinks.PrepareLinksToLogs(ts.Add(-time.Duration(r.evalWindow)), ts, filterItems)
+	filterItems := contextlinks.PrepareFilters(lbls.Map(), queryFilter, q.GroupBy, r.logsKeys)
+
+	return contextlinks.PrepareLinksToLogs(start, end, filterItems)
 }
 
 func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) string {
 	selectedQuery := r.GetSelectedQuery()
+
+	qr, err := r.prepareQueryRange(ts)
+	if err != nil {
+		return ""
+	}
+	start := time.UnixMilli(qr.Start)
+	end := time.UnixMilli(qr.End)
 
 	// TODO(srikanthccv): handle formula queries
 	if selectedQuery < "A" || selectedQuery > "Z" {
@@ -282,9 +301,14 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 		return ""
 	}
 
-	filterItems := contextlinks.PrepareFilters(lbls.Map(), q.Filters.Items, q.GroupBy, r.spansKeys)
+	queryFilter := []v3.FilterItem{}
+	if q.Filters != nil {
+		queryFilter = q.Filters.Items
+	}
 
-	return contextlinks.PrepareLinksToTraces(ts.Add(-time.Duration(r.evalWindow)), ts, filterItems)
+	filterItems := contextlinks.PrepareFilters(lbls.Map(), queryFilter, q.GroupBy, r.spansKeys)
+
+	return contextlinks.PrepareLinksToTraces(start, end, filterItems)
 }
 
 func (r *ThresholdRule) GetSelectedQuery() string {
