@@ -47,6 +47,7 @@ import {
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
+import { isCloudUser } from 'utils/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
@@ -71,7 +72,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isPremiumChatSupportEnabled =
 		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
 
+	const isChatSupportEnabled =
+		useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active || false;
+
+	const isCloudUserVal = isCloudUser();
+
 	const showAddCreditCardModal =
+		isLoggedIn &&
+		isChatSupportEnabled &&
+		isCloudUserVal &&
 		!isPremiumChatSupportEnabled &&
 		!licenseData?.payload?.trialConvertedToSubscription;
 
@@ -205,7 +214,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const pageTitle = t(routeKey);
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED ||
-		pathname === ROUTES.WORKSPACE_LOCKED ||
 		pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING ||
 		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
 		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
@@ -241,7 +249,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isTracesView = (): boolean =>
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
+	const isMessagingQueues = (): boolean =>
+		routeKey === 'MESSAGING_QUEUES' || routeKey === 'MESSAGING_QUEUES_DETAIL';
+
 	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
+	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
+	const isAlertOverview = (): boolean => routeKey === 'ALERT_OVERVIEW';
 	const isDashboardView = (): boolean => {
 		/**
 		 * need to match using regex here as the getRoute function will not work for
@@ -267,6 +280,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [isDarkMode]);
 
 	const isSideNavCollapsed = getLocalStorageKey(IS_SIDEBAR_COLLAPSED);
+
+	/**
+	 * Note: Right now we don't have a page-level method to pass the sidebar collapse state.
+	 * Since the use case for overriding is not widely needed, we are setting it here
+	 * so that the workspace locked page will have an expanded sidebar regardless of how users
+	 * have set it or what is stored in localStorage. This will not affect the localStorage config.
+	 */
+	const isWorkspaceLocked = pathname === ROUTES.WORKSPACE_LOCKED;
 
 	return (
 		<Layout
@@ -312,7 +333,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						licenseData={licenseData}
 						isFetching={isFetching}
 						onCollapse={onCollapse}
-						collapsed={collapsed}
+						collapsed={isWorkspaceLocked ? false : collapsed}
 					/>
 				)}
 				<div
@@ -329,7 +350,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isTracesView() ||
 											isDashboardView() ||
 											isDashboardWidgetView() ||
-											isDashboardListView()
+											isDashboardListView() ||
+											isAlertHistory() ||
+											isAlertOverview() ||
+											isMessagingQueues()
 												? 0
 												: '0 1rem',
 									}}

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
+import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 
 import LeftToolbarActions from '../LeftToolbarActions';
 import RightToolbarActions from '../RightToolbarActions';
@@ -34,6 +35,8 @@ describe('ToolbarActions', () => {
 				onChangeSelectedView={handleChangeSelectedView}
 				onToggleHistrogramVisibility={handleToggleShowFrequencyChart}
 				showFrequencyChart
+				showFilter
+				handleFilterVisibilityChange={(): void => {}}
 			/>,
 		);
 		expect(screen.getByTestId('search-view')).toBeInTheDocument();
@@ -78,6 +81,8 @@ describe('ToolbarActions', () => {
 				onChangeSelectedView={handleChangeSelectedView}
 				onToggleHistrogramVisibility={handleToggleShowFrequencyChart}
 				showFrequencyChart
+				showFilter
+				handleFilterVisibilityChange={(): void => {}}
 			/>,
 		);
 
@@ -94,7 +99,9 @@ describe('ToolbarActions', () => {
 	it('RightToolbarActions - render correctly with props', async () => {
 		const onStageRunQuery = jest.fn();
 		const { queryByText } = render(
-			<RightToolbarActions onStageRunQuery={onStageRunQuery} />,
+			<MockQueryClientProvider>
+				<RightToolbarActions onStageRunQuery={onStageRunQuery} />,
+			</MockQueryClientProvider>,
 		);
 
 		const stageNRunBtn = queryByText('Stage & Run Query');

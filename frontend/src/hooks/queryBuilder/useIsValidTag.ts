@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { OperatorType } from './useOperatorType';
 
-const validationMapper: Record<
+export const validationMapper: Record<
 	OperatorType,
 	(resultLength: number) => boolean
 > = {

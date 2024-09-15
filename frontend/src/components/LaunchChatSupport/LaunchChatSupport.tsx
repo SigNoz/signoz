@@ -13,6 +13,7 @@ import { defaultTo } from 'lodash-es';
 import { CreditCard, HelpCircle, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
+import { useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { License } from 'types/api/licenses/def';
@@ -47,6 +48,7 @@ function LaunchChatSupport({
 		false,
 	);
 
+	const { pathname } = useLocation();
 	const isPremiumChatSupportEnabled =
 		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
 
@@ -65,6 +67,11 @@ function LaunchChatSupport({
 
 	const handleFacingIssuesClick = (): void => {
 		if (showAddCreditCardModal) {
+			logEvent('Disabled Chat Support: Clicked', {
+				source: `facing issues button`,
+				page: pathname,
+				...attributes,
+			});
 			setIsAddCreditCardModalOpen(true);
 		} else {
 			logEvent(eventName, attributes);
@@ -105,7 +112,7 @@ function LaunchChatSupport({
 	const handleAddCreditCard = (): void => {
 		logEvent('Add Credit card modal: Clicked', {
 			source: `facing issues button`,
-			page: '',
+			page: pathname,
 			...attributes,
 		});
 

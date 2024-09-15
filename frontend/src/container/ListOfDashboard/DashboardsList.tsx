@@ -45,6 +45,8 @@ import {
 	Ellipsis,
 	EllipsisVertical,
 	Expand,
+	ExternalLink,
+	Github,
 	HdmiPort,
 	LayoutGrid,
 	Link2,
@@ -53,6 +55,8 @@ import {
 	RotateCw,
 	Search,
 } from 'lucide-react';
+// #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
+// see more: https://github.com/lucide-icons/lucide/issues/94
 import { handleContactSupport } from 'pages/Integrations/utils';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -87,6 +91,7 @@ function DashboardsList(): JSX.Element {
 	const {
 		data: dashboardListResponse,
 		isLoading: isDashboardListLoading,
+		isRefetching: isDashboardListRefetching,
 		error: dashboardFetchError,
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
@@ -600,6 +605,28 @@ function DashboardsList(): JSX.Element {
 				),
 				key: '1',
 			},
+			{
+				label: (
+					<a
+						href="https://github.com/SigNoz/dashboards"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<Flex
+							justify="space-between"
+							align="center"
+							style={{ width: '100%' }}
+							gap="small"
+						>
+							<div className="create-dashboard-menu-item">
+								<Github size={14} /> View templates
+							</div>
+							<ExternalLink size={14} />
+						</Flex>
+					</a>
+				),
+				key: '2',
+			},
 		];
 
 		if (createNewDashboard) {
@@ -677,7 +704,9 @@ function DashboardsList(): JSX.Element {
 					</Flex>
 				</div>
 
-				{isDashboardListLoading || isFilteringDashboards ? (
+				{isDashboardListLoading ||
+				isFilteringDashboards ||
+				isDashboardListRefetching ? (
 					<div className="loading-dashboard-details">
 						<Skeleton.Input active size="large" className="skeleton-1" />
 						<Skeleton.Input active size="large" className="skeleton-1" />
@@ -876,7 +905,11 @@ function DashboardsList(): JSX.Element {
 									columns={columns}
 									dataSource={data}
 									showSorterTooltip
-									loading={isDashboardListLoading || isFilteringDashboards}
+									loading={
+										isDashboardListLoading ||
+										isFilteringDashboards ||
+										isDashboardListRefetching
+									}
 									showHeader={false}
 									pagination={paginationConfig}
 								/>
