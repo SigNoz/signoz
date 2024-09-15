@@ -98,16 +98,10 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				styledclass={[styles.selectedSpanDetailsContainer, styles.overflow]}
 				direction="vertical"
 			>
-				<Row
-					align="middle"
-					justify="space-between"
-					style={{
-						marginTop: '16px',
-					}}
-				>
+				<Row align="middle" justify="space-between">
 					<Typography.Text strong>Details for selected Span</Typography.Text>
 					<Button
-						className="periscope-btn nav-item-label "
+						className="periscope-btn nav-item-label expand-collapse-btn"
 						icon={<PanelRight size={16} />}
 						onClick={(): void => setCollapsed((prev) => !prev)}
 					/>

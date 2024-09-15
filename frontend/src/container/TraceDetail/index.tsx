@@ -268,9 +268,8 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 				collapsed={collapsed}
 				reverseArrow
 				width={300}
-				collapsedWidth={40}
+				collapsedWidth={48}
 				defaultCollapsed
-				// onCollapse={(value): void => setCollapsed(value)}
 				trigger={null}
 				data-testid="span-details-sider"
 			>
