@@ -13,6 +13,7 @@ export type GridTableComponentProps = {
 	thresholds?: ThresholdProps[];
 	columnUnits?: ColumnUnit;
 	tableProcessedDataRef?: React.MutableRefObject<RowData[]>;
+	sticky?: TableProps<RowData>['sticky'];
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 

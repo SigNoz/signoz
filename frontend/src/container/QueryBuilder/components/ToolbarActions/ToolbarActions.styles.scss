@@ -2,6 +2,17 @@
 	display: flex;
 	align-items: center;
 
+	.filter-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: none;
+		width: 32px;
+		height: 32px;
+		margin-right: 12px;
+		border: 1px solid var(--bg-slate-400);
+	}
+
 	.left-toolbar-query-actions {
 		display: flex;
 		border-radius: 2px;

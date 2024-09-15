@@ -259,8 +259,8 @@ type GettableRules struct {
 
 // GettableRule has info for an alerting rules.
 type GettableRule struct {
-	Id    string     `json:"id"`
-	State AlertState `json:"state"`
+	Id    string           `json:"id"`
+	State model.AlertState `json:"state"`
 	PostableRule
 	CreatedAt *time.Time `json:"createAt"`
 	CreatedBy *string    `json:"createBy"`

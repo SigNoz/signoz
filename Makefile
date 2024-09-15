@@ -178,6 +178,15 @@ clear-swarm-ch:
 	@docker run --rm -v "$(PWD)/$(SWARM_DIRECTORY)/data:/pwd" busybox \
 	sh -c "cd /pwd && rm -rf clickhouse*/* zookeeper-*/*"
 
+check-no-ee-references:
+	@echo "Checking for 'ee' package references in 'pkg' directory..."
+	@if grep -R --include="*.go" '.*/ee/.*' pkg/; then \
+		echo "Error: Found references to 'ee' packages in 'pkg' directory"; \
+		exit 1; \
+	else \
+		echo "No references to 'ee' packages found in 'pkg' directory"; \
+	fi
+
 test:
 	go test ./pkg/query-service/app/metrics/...
 	go test ./pkg/query-service/cache/...

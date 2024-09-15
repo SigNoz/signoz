@@ -77,6 +77,18 @@
 			color: var(--bg-vanilla-400);
 		}
 	}
+
+	.formItemWithBullet {
+		margin-bottom: 0;
+	}
+
+	.scheduleTimeInfoText {
+		margin-top: 8px;
+		margin-bottom: 20px;
+		font-size: 12px;
+		font-weight: 400;
+		color: var(--bg-vanilla-400);
+	}
 }
 
 .alert-rule-tags {
@@ -542,6 +554,14 @@
 				border: 1px solid var(--bg-vanilla-300);
 				background: var(--bg-vanilla-100);
 			}
+		}
+
+		.scheduleTimeInfoText {
+			color: var(--bg-slate-300);
+		}
+
+		.alert-rule-info {
+			color: var(--bg-slate-300);
 		}
 	}
 }

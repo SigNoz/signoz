@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridTableComponent from 'container/GridTableComponent';
 import { GRID_TABLE_CONFIG } from 'container/GridTableComponent/config';
 
@@ -18,6 +19,7 @@ function TablePanelWrapper({
 			thresholds={thresholds}
 			columnUnits={widget.columnUnits}
 			tableProcessedDataRef={tableProcessedDataRef}
+			sticky={widget.panelTypes === PANEL_TYPES.TABLE}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}
 		/>
