@@ -204,3 +204,8 @@ export const InstalledIntegrations = Loadable(
 			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
 		),
 );
+
+export const MetricsExplorer = Loadable(
+	() =>
+		import(/* webpackChunkName: "MetricsExplorer" */ 'pages/MetricsExplorer'),
+);

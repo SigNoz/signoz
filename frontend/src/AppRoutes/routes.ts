@@ -23,6 +23,7 @@ import {
 	LogsExplorer,
 	LogsIndexToFields,
 	LogsSaveViews,
+	MetricsExplorer,
 	MySettings,
 	NewDashboardPage,
 	OldLogsExplorer,
@@ -350,6 +351,13 @@ const routes: AppRoutes[] = [
 		component: InstalledIntegrations,
 		isPrivate: true,
 		key: 'INTEGRATIONS',
+	},
+	{
+		path: ROUTES.METRICS_EXPLORER,
+		exact: true,
+		component: MetricsExplorer,
+		isPrivate: true,
+		key: 'METRICS_EXPLORER',
 	},
 ];
 

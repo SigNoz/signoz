@@ -99,4 +99,5 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	SHORTCUTS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	INTEGRATIONS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SERVICE_TOP_LEVEL_OPERATIONS: ['ADMIN', 'EDITOR', 'VIEWER'],
+	METRICS_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 };

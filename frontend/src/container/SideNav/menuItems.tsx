@@ -82,6 +82,11 @@ const menuItems: SidebarItem[] = [
 		icon: <ScrollText size={16} />,
 	},
 	{
+		key: ROUTES.METRICS_EXPLORER,
+		label: 'Metrics Explorer',
+		icon: <LayoutGrid size={16} />,
+	},
+	{
 		key: ROUTES.ALL_DASHBOARD,
 		label: 'Dashboards',
 		icon: <LayoutGrid size={16} />,
