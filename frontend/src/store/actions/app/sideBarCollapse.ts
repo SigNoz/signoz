@@ -12,5 +12,9 @@ export const sideBarCollapse = (
 			type: 'SIDEBAR_COLLAPSE',
 			payload: collapseState,
 		});
+		// trigger a resize event so that any component that relies
+		// on the window's width to calculate its layout can be recalculated
+		// including the dashboard's grid layout
+		window.dispatchEvent(new Event('resize'));
 	};
 };
