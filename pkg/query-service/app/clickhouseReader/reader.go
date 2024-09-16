@@ -3288,24 +3288,12 @@ func (r *ClickHouseReader) extractSelectedAndInterestingFields(tableStatement st
 	for _, field := range *fields {
 		field.Type = fieldType
 		// all static fields are assumed to be selected as we don't allow changing them
-		if r.isSelectedField(tableStatement, field) {
+		if isColumn(r.useLogsNewSchema, tableStatement, field.Type, field.Name, field.DataType) {
 			response.Selected = append(response.Selected, field)
 		} else {
 			response.Interesting = append(response.Interesting, field)
 		}
 	}
-}
-
-func (r *ClickHouseReader) isSelectedField(tableStatement string, field model.LogField) bool {
-	// in case of attributes and resources, if there is a materialized column present then it is selected
-	// TODO: handle partial change complete eg:- index is removed but materialized column is still present
-	var name string
-	if r.useLogsNewSchema {
-		name = utils.GetClickhouseColumnNameV2(field.Type, field.DataType, field.Name)
-	} else {
-		name = utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
-	}
-	return strings.Contains(tableStatement, name)
 }
 
 func (r *ClickHouseReader) UpdateLogFieldV2(ctx context.Context, field *model.UpdateField) *model.ApiError {
