@@ -241,21 +241,6 @@ export const getUPlotChartOptions = ({
 								ctx.lineTo(x, u.bbox.top + u.bbox.height);
 								ctx.stroke();
 								ctx.setLineDash([]);
-								// ctx.font = 'bold 10px';
-								// ctx.textAlign = 'center';
-								// const label = new Date(
-								// 	verticalLineTimestamp * 1000,
-								// ).toLocaleTimeString();
-								// const labelText = `Logline: ${label}`;
-								// const labelY = u.bbox.top + 20;
-								// const labelWidth = ctx.measureText(labelText).width + 10;
-								// const labelHeight = 20;
-								// ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-								// ctx.fillRect(x - labelWidth / 2, labelY - 15, labelWidth, labelHeight);
-
-								// ctx.fillStyle = 'white';
-								// ctx.fillText(labelText, x, labelY);
-
 								ctx.restore();
 							}
 						},

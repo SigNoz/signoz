@@ -23,7 +23,3 @@ export interface IFieldAttributes {
 export interface JSONViewProps {
 	logData: ILog;
 }
-
-export interface InfraMetricsSProps {
-	logData: ILog;
-}
