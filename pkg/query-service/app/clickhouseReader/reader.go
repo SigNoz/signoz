@@ -3971,11 +3971,12 @@ func isColumn(useLogsNewSchema bool, tableStatement, attrType, field, datType st
 	// value of attrType will be `resource` or `tag`, if `tag` change it to `attribute`
 	var name string
 	if useLogsNewSchema {
-		name = utils.GetClickhouseColumnNameV2(attrType, datType, field)
+		// adding explict '`'
+		name = fmt.Sprintf("`%s`", utils.GetClickhouseColumnNameV2(attrType, datType, field))
 	} else {
 		name = utils.GetClickhouseColumnName(attrType, datType, field)
 	}
-	return strings.Contains(tableStatement, fmt.Sprintf("%s ", name))
+	return strings.Contains(tableStatement, fmt.Sprintf("%s", name))
 }
 
 func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
