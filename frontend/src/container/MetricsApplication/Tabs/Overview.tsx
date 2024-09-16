@@ -243,7 +243,7 @@ function Application(): JSX.Element {
 					id: 'severity_text--string----true',
 				},
 				op: 'in',
-				value: ['ERROR', 'FATAL'],
+				value: ['ERROR', 'FATAL', 'error', 'fatal'],
 			},
 		],
 	});
