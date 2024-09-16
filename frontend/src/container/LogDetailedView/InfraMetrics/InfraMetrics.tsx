@@ -70,6 +70,7 @@ function InfraMetrics({
 					</Radio.Button>
 				)}
 			</Radio.Group>
+			{/* TODO(Rahul): Make a common config driven component for this and other infra metrics components */}
 			{selectedView === VIEW_TYPES.NODE && (
 				<NodeMetrics
 					nodeName={nodeName}
