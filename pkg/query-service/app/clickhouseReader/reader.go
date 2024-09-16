@@ -3971,7 +3971,8 @@ func isColumn(useLogsNewSchema bool, tableStatement, attrType, field, datType st
 	// value of attrType will be `resource` or `tag`, if `tag` change it to `attribute`
 	var name string
 	if useLogsNewSchema {
-		name = utils.GetClickhouseColumnNameV2(attrType, datType, field)
+		// adding explict '`'
+		name = fmt.Sprintf("`%s`", utils.GetClickhouseColumnNameV2(attrType, datType, field))
 	} else {
 		name = utils.GetClickhouseColumnName(attrType, datType, field)
 	}
