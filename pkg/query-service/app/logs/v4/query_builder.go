@@ -451,7 +451,11 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 	}
 	// join both the filter clauses
 	if resourceSubQuery != "" {
-		filterSubQuery = filterSubQuery + " AND (resource_fingerprint GLOBAL IN " + resourceSubQuery
+		if filterSubQuery != "" {
+			filterSubQuery = filterSubQuery + " AND (resource_fingerprint GLOBAL IN " + resourceSubQuery
+		} else {
+			filterSubQuery = "(resource_fingerprint GLOBAL IN " + resourceSubQuery
+		}
 	}
 
 	// the reader will add the timestamp and id filters

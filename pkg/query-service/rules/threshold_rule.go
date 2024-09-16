@@ -504,9 +504,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 	var queryErrors map[string]error
 
 	if r.version == "v4" {
-		results, queryErrors, err = r.querierV2.QueryRange(ctx, params, map[string]v3.AttributeKey{})
+		results, queryErrors, err = r.querierV2.QueryRange(ctx, params)
 	} else {
-		results, queryErrors, err = r.querier.QueryRange(ctx, params, map[string]v3.AttributeKey{})
+		results, queryErrors, err = r.querier.QueryRange(ctx, params)
 	}
 
 	if err != nil {
@@ -703,7 +703,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		r.active[h] = a
 	}
 
-	itemsToAdd := []v3.RuleStateHistory{}
+	itemsToAdd := []model.RuleStateHistory{}
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.active {
@@ -720,13 +720,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 			if a.State != model.StateInactive {
 				a.State = model.StateInactive
 				a.ResolvedAt = ts
-				itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
+				itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
 					RuleID:       r.ID(),
 					RuleName:     r.Name(),
 					State:        model.StateInactive,
 					StateChanged: true,
 					UnixMilli:    ts.UnixMilli(),
-					Labels:       v3.LabelsString(labelsJSON),
+					Labels:       model.LabelsString(labelsJSON),
 					Fingerprint:  a.QueryResultLables.Hash(),
 					Value:        a.Value,
 				})
@@ -741,13 +741,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 			if a.Missing {
 				state = model.StateNoData
 			}
-			itemsToAdd = append(itemsToAdd, v3.RuleStateHistory{
+			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
 				RuleID:       r.ID(),
 				RuleName:     r.Name(),
 				State:        state,
 				StateChanged: true,
 				UnixMilli:    ts.UnixMilli(),
-				Labels:       v3.LabelsString(labelsJSON),
+				Labels:       model.LabelsString(labelsJSON),
 				Fingerprint:  a.QueryResultLables.Hash(),
 				Value:        a.Value,
 			})
