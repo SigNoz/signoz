@@ -4364,6 +4364,9 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 ) ([][]any, *model.ApiError) {
 	// query top `limit` distinct values seen for `tagKey`s of interest
 	// ordered by timestamp when the value was seen
+
+	// we added the settings max_rows_to_group_by=100, group_by_overflow_mode = 'break'
+	// to avoid query from taking up all the resources when value is high cardinality.
 	query := fmt.Sprintf(
 		`
 		select tagKey, stringTagValue, int64TagValue, float64TagValue
@@ -4383,7 +4386,7 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 					max(timestamp) as ts
 				from %s.%s
 				where tagKey in $1
-				group by (tagKey, stringTagValue, int64TagValue, float64TagValue)
+				group by (tagKey, stringTagValue, int64TagValue, float64TagValue) SETTINGS max_rows_to_group_by = 100, group_by_overflow_mode = 'break', max_threads=4
 			)
 		)
 		where rank <= %d
