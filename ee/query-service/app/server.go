@@ -746,10 +746,7 @@ func makeRulesManager(
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
 		NotifierOpts: notifierOpts,
-		Queriers: &baserules.Queriers{
-			PqlEngine: pqle,
-			Ch:        ch.GetConn(),
-		},
+		PqlEngine:    pqle,
 		RepoURL:      ruleRepoURL,
 		DBConn:       db,
 		Context:      context.Background(),
