@@ -26,6 +26,7 @@ import history from 'lib/history';
 import { History, Table } from 'lucide-react';
 import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
+import BetaTag from 'periscope/components/BetaTag/BetaTag';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
 import { useAlertRule } from 'providers/Alert';
 import { useCallback, useMemo } from 'react';
@@ -125,6 +126,7 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 				<div className="tab-item">
 					<History size={14} />
 					History
+					<BetaTag />
 				</div>
 			),
 			route: getRouteUrl(AlertDetailsTab.HISTORY),
@@ -256,7 +258,7 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 	const { updatedOrder, offset } = useMemo(
 		() => ({
 			updatedOrder: params.get(urlKey.order) ?? OrderPreferenceItems.ASC,
-			offset: parseInt(params.get(urlKey.offset) ?? '1', 10),
+			offset: parseInt(params.get(urlKey.offset) ?? '0', 10),
 		}),
 		[params],
 	);

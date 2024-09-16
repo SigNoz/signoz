@@ -35,6 +35,8 @@ type PrepareTaskOptions struct {
 	FF          interfaces.FeatureLookup
 	ManagerOpts *ManagerOptions
 	NotifyFunc  NotifyFunc
+
+	UseLogsNewSchema bool
 }
 
 const taskNamesuffix = "webAppEditor"
@@ -75,6 +77,8 @@ type ManagerOptions struct {
 	EvalDelay time.Duration
 
 	PrepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
+
+	UseLogsNewSchema bool
 }
 
 // The Manager manages recording and alerting rules.
@@ -96,6 +100,8 @@ type Manager struct {
 	reader       interfaces.Reader
 
 	prepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
+
+	UseLogsNewSchema bool
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -130,6 +136,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			opts.Rule,
 			opts.FF,
 			opts.Reader,
+			opts.UseLogsNewSchema,
 			WithEvalDelay(opts.ManagerOpts.EvalDelay),
 		)
 
@@ -333,6 +340,8 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 		FF:          m.featureFlags,
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
+
+		UseLogsNewSchema: m.opts.UseLogsNewSchema,
 	})
 
 	if err != nil {
@@ -452,6 +461,8 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 		FF:          m.featureFlags,
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
+
+		UseLogsNewSchema: m.opts.UseLogsNewSchema,
 	})
 
 	for _, r := range newTask.Rules() {
@@ -794,6 +805,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 			parsedRule,
 			m.featureFlags,
 			m.reader,
+			m.opts.UseLogsNewSchema,
 			WithSendAlways(),
 			WithSendUnmatched(),
 		)
