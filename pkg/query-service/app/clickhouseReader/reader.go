@@ -1,15 +1,12 @@
 package clickhouseReader
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"math/rand"
-	"net/http"
 	"os"
 	"reflect"
 	"regexp"
@@ -42,14 +39,11 @@ import (
 	"go.uber.org/zap"
 
 	queryprogress "go.signoz.io/signoz/pkg/query-service/app/clickhouseReader/query_progress"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/dao"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -139,8 +133,9 @@ type ClickHouseReader struct {
 	liveTailRefreshSeconds int
 	cluster                string
 
-	useLogsNewSchema bool
-	logsTableName    string
+	useLogsNewSchema   bool
+	logsTableName      string
+	logsLocalTableName string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -175,7 +170,7 @@ func NewReaderFromClickhouseConnection(
 	cluster string,
 	useLogsNewSchema bool,
 ) *ClickHouseReader {
-	alertManager, err := am.New("")
+	alertManager, err := am.New()
 	if err != nil {
 		zap.L().Error("failed to initialize alert manager", zap.Error(err))
 		zap.L().Error("check if the alert manager URL is correctly set and valid")
@@ -205,8 +200,10 @@ func NewReaderFromClickhouseConnection(
 	}
 
 	logsTableName := options.primary.LogsTable
+	logsLocalTableName := options.primary.LogsLocalTable
 	if useLogsNewSchema {
 		logsTableName = options.primary.LogsTableV2
+		logsLocalTableName = options.primary.LogsLocalTableV2
 	}
 
 	return &ClickHouseReader{
@@ -243,6 +240,7 @@ func NewReaderFromClickhouseConnection(
 		logsResourceTableV2:      options.primary.LogsResourceTableV2,
 		logsResourceLocalTableV2: options.primary.LogsResourceLocalTableV2,
 		logsTableName:            logsTableName,
+		logsLocalTableName:       logsLocalTableName,
 	}
 }
 
@@ -411,267 +409,6 @@ func connect(cfg *namespaceConfig) (clickhouse.Conn, error) {
 
 func (r *ClickHouseReader) GetConn() clickhouse.Conn {
 	return r.db
-}
-
-func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiError {
-
-	receiver := &am.Receiver{}
-	if err := json.Unmarshal([]byte(channel.Data), receiver); err != nil { // Parse []byte to go struct pointer
-		return &model.ApiError{Typ: model.ErrorBadData, Err: err}
-	}
-
-	response, err := http.Post(constants.GetAlertManagerApiPrefix()+"v1/receivers", "application/json", bytes.NewBuffer([]byte(channel.Data)))
-
-	if err != nil {
-		zap.L().Error("Error in getting response of API call to alertmanager/v1/receivers", zap.Error(err))
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	if response.StatusCode > 299 {
-		responseData, _ := io.ReadAll(response.Body)
-
-		err := fmt.Errorf("error in getting 2xx response in API call to alertmanager/v1/receivers")
-		zap.L().Error("Error in getting 2xx response in API call to alertmanager/v1/receivers", zap.String("Status", response.Status), zap.String("Data", string(responseData)))
-
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return nil
-}
-
-func (r *ClickHouseReader) GetChannel(id string) (*model.ChannelItem, *model.ApiError) {
-
-	idInt, _ := strconv.Atoi(id)
-	channel := model.ChannelItem{}
-
-	query := "SELECT id, created_at, updated_at, name, type, data data FROM notification_channels WHERE id=? "
-
-	stmt, err := r.localDB.Preparex(query)
-
-	if err != nil {
-		zap.L().Error("Error in preparing sql query for GetChannel", zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	err = stmt.Get(&channel, idInt)
-
-	if err != nil {
-		zap.L().Error("Error in getting channel with id", zap.Int("id", idInt), zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return &channel, nil
-
-}
-
-func (r *ClickHouseReader) DeleteChannel(id string) *model.ApiError {
-
-	idInt, _ := strconv.Atoi(id)
-
-	channelToDelete, apiErrorObj := r.GetChannel(id)
-
-	if apiErrorObj != nil {
-		return apiErrorObj
-	}
-
-	tx, err := r.localDB.Begin()
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	{
-		stmt, err := tx.Prepare(`DELETE FROM notification_channels WHERE id=$1;`)
-		if err != nil {
-			zap.L().Error("Error in preparing statement for INSERT to notification_channels", zap.Error(err))
-			tx.Rollback()
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-		defer stmt.Close()
-
-		if _, err := stmt.Exec(idInt); err != nil {
-			zap.L().Error("Error in Executing prepared statement for INSERT to notification_channels", zap.Error(err))
-			tx.Rollback() // return an error too, we may want to wrap them
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-	}
-
-	apiError := r.alertManager.DeleteRoute(channelToDelete.Name)
-	if apiError != nil {
-		tx.Rollback()
-		return apiError
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		zap.L().Error("Error in committing transaction for DELETE command to notification_channels", zap.Error(err))
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return nil
-
-}
-
-func (r *ClickHouseReader) GetChannels() (*[]model.ChannelItem, *model.ApiError) {
-
-	channels := []model.ChannelItem{}
-
-	query := "SELECT id, created_at, updated_at, name, type, data data FROM notification_channels"
-
-	err := r.localDB.Select(&channels, query)
-
-	zap.L().Info(query)
-
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return &channels, nil
-
-}
-
-func getChannelType(receiver *am.Receiver) string {
-
-	if receiver.EmailConfigs != nil {
-		return "email"
-	}
-	if receiver.OpsGenieConfigs != nil {
-		return "opsgenie"
-	}
-	if receiver.PagerdutyConfigs != nil {
-		return "pagerduty"
-	}
-	if receiver.PushoverConfigs != nil {
-		return "pushover"
-	}
-	if receiver.SNSConfigs != nil {
-		return "sns"
-	}
-	if receiver.SlackConfigs != nil {
-		return "slack"
-	}
-	if receiver.VictorOpsConfigs != nil {
-		return "victorops"
-	}
-	if receiver.WebhookConfigs != nil {
-		return "webhook"
-	}
-	if receiver.WechatConfigs != nil {
-		return "wechat"
-	}
-	if receiver.MSTeamsConfigs != nil {
-		return "msteams"
-	}
-	return ""
-}
-
-func (r *ClickHouseReader) EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError) {
-
-	idInt, _ := strconv.Atoi(id)
-
-	channel, apiErrObj := r.GetChannel(id)
-
-	if apiErrObj != nil {
-		return nil, apiErrObj
-	}
-	if channel.Name != receiver.Name {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("channel name cannot be changed")}
-	}
-
-	tx, err := r.localDB.Begin()
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	channel_type := getChannelType(receiver)
-
-	// check if channel type is supported in the current user plan
-	if err := r.featureFlags.CheckFeature(fmt.Sprintf("ALERT_CHANNEL_%s", strings.ToUpper(channel_type))); err != nil {
-		zap.L().Warn("an unsupported feature was blocked", zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unsupported feature. please upgrade your plan to access this feature")}
-	}
-
-	receiverString, _ := json.Marshal(receiver)
-
-	{
-		stmt, err := tx.Prepare(`UPDATE notification_channels SET updated_at=$1, type=$2, data=$3 WHERE id=$4;`)
-
-		if err != nil {
-			zap.L().Error("Error in preparing statement for UPDATE to notification_channels", zap.Error(err))
-			tx.Rollback()
-			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-		defer stmt.Close()
-
-		if _, err := stmt.Exec(time.Now(), channel_type, string(receiverString), idInt); err != nil {
-			zap.L().Error("Error in Executing prepared statement for UPDATE to notification_channels", zap.Error(err))
-			tx.Rollback() // return an error too, we may want to wrap them
-			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-	}
-
-	apiError := r.alertManager.EditRoute(receiver)
-	if apiError != nil {
-		tx.Rollback()
-		return nil, apiError
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		zap.L().Error("Error in committing transaction for INSERT to notification_channels", zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return receiver, nil
-
-}
-
-func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError) {
-
-	channel_type := getChannelType(receiver)
-
-	// check if channel type is supported in the current user plan
-	if err := r.featureFlags.CheckFeature(fmt.Sprintf("ALERT_CHANNEL_%s", strings.ToUpper(channel_type))); err != nil {
-		zap.L().Warn("an unsupported feature was blocked", zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unsupported feature. please upgrade your plan to access this feature")}
-	}
-
-	receiverString, _ := json.Marshal(receiver)
-
-	tx, err := r.localDB.Begin()
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	{
-		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
-		if err != nil {
-			zap.L().Error("Error in preparing statement for INSERT to notification_channels", zap.Error(err))
-			tx.Rollback()
-			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-		defer stmt.Close()
-
-		if _, err := stmt.Exec(time.Now(), time.Now(), receiver.Name, channel_type, string(receiverString)); err != nil {
-			zap.L().Error("Error in Executing prepared statement for INSERT to notification_channels", zap.Error(err))
-			tx.Rollback() // return an error too, we may want to wrap them
-			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-	}
-
-	apiError := r.alertManager.AddRoute(receiver)
-	if apiError != nil {
-		tx.Rollback()
-		return nil, apiError
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		zap.L().Error("Error in committing transaction for INSERT to notification_channels", zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return receiver, nil
-
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
@@ -3243,171 +2980,6 @@ func removeUnderscoreDuplicateFields(fields []model.LogField) []model.LogField {
 	return updatedFields
 }
 
-// GetDashboardsInfo returns analytics data for dashboards
-func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
-	dashboardsInfo := model.DashboardsInfo{}
-	// fetch dashboards from dashboard db
-	query := "SELECT data FROM dashboards"
-	var dashboardsData []dashboards.Dashboard
-	err := r.localDB.Select(&dashboardsData, query)
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return &dashboardsInfo, err
-	}
-	totalDashboardsWithPanelAndName := 0
-	var dashboardNames []string
-	count := 0
-	logChQueriesCount := 0
-	for _, dashboard := range dashboardsData {
-		if isDashboardWithPanelAndName(dashboard.Data) {
-			totalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName + 1
-		}
-		dashboardName := extractDashboardName(dashboard.Data)
-		if dashboardName != "" {
-			dashboardNames = append(dashboardNames, dashboardName)
-		}
-		dashboardInfo := countPanelsInDashboard(dashboard.Data)
-		dashboardsInfo.LogsBasedPanels += dashboardInfo.LogsBasedPanels
-		dashboardsInfo.TracesBasedPanels += dashboardInfo.TracesBasedPanels
-		dashboardsInfo.MetricBasedPanels += dashboardsInfo.MetricBasedPanels
-		if isDashboardWithTSV2(dashboard.Data) {
-			count = count + 1
-		}
-		if isDashboardWithLogsClickhouseQuery(dashboard.Data) {
-			logChQueriesCount = logChQueriesCount + 1
-		}
-	}
-
-	dashboardsInfo.DashboardNames = dashboardNames
-	dashboardsInfo.TotalDashboards = len(dashboardsData)
-	dashboardsInfo.TotalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName
-	dashboardsInfo.QueriesWithTSV2 = count
-	dashboardsInfo.DashboardsWithLogsChQuery = logChQueriesCount
-	return &dashboardsInfo, nil
-}
-
-func isDashboardWithTSV2(data map[string]interface{}) bool {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return false
-	}
-	return strings.Contains(string(jsonData), "time_series_v2")
-}
-
-func isDashboardWithLogsClickhouseQuery(data map[string]interface{}) bool {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return false
-	}
-	result := strings.Contains(string(jsonData), "signoz_logs.distributed_logs") ||
-		strings.Contains(string(jsonData), "signoz_logs.logs")
-	return result
-}
-
-func isDashboardWithPanelAndName(data map[string]interface{}) bool {
-	isDashboardName := false
-	isDashboardWithPanelAndName := false
-	if data != nil && data["title"] != nil && data["widgets"] != nil {
-		title, ok := data["title"].(string)
-		if ok && title != "Sample Title" {
-			isDashboardName = true
-		}
-		widgets, ok := data["widgets"]
-		if ok && isDashboardName {
-			data, ok := widgets.([]interface{})
-			if ok && len(data) > 0 {
-				isDashboardWithPanelAndName = true
-			}
-		}
-	}
-
-	return isDashboardWithPanelAndName
-}
-
-func extractDashboardName(data map[string]interface{}) string {
-
-	if data != nil && data["title"] != nil {
-		title, ok := data["title"].(string)
-		if ok {
-			return title
-		}
-	}
-
-	return ""
-}
-
-func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
-	var logsPanelCount, tracesPanelCount, metricsPanelCount int
-	// totalPanels := 0
-	if data != nil && data["widgets"] != nil {
-		widgets, ok := data["widgets"]
-		if ok {
-			data, ok := widgets.([]interface{})
-			if ok {
-				for _, widget := range data {
-					sData, ok := widget.(map[string]interface{})
-					if ok && sData["query"] != nil {
-						// totalPanels++
-						query, ok := sData["query"].(map[string]interface{})
-						if ok && query["queryType"] == "builder" && query["builder"] != nil {
-							builderData, ok := query["builder"].(map[string]interface{})
-							if ok && builderData["queryData"] != nil {
-								builderQueryData, ok := builderData["queryData"].([]interface{})
-								if ok {
-									for _, queryData := range builderQueryData {
-										data, ok := queryData.(map[string]interface{})
-										if ok {
-											if data["dataSource"] == "traces" {
-												tracesPanelCount++
-											} else if data["dataSource"] == "metrics" {
-												metricsPanelCount++
-											} else if data["dataSource"] == "logs" {
-												logsPanelCount++
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return model.DashboardsInfo{
-		LogsBasedPanels:   logsPanelCount,
-		TracesBasedPanels: tracesPanelCount,
-		MetricBasedPanels: metricsPanelCount,
-	}
-}
-
-func (r *ClickHouseReader) GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error) {
-	savedViewsInfo := model.SavedViewsInfo{}
-	savedViews, err := explorer.GetViews()
-	if err != nil {
-		zap.S().Debug("Error in fetching saved views info: ", err)
-		return &savedViewsInfo, err
-	}
-	savedViewsInfo.TotalSavedViews = len(savedViews)
-	for _, view := range savedViews {
-		if view.SourcePage == "traces" {
-			savedViewsInfo.TracesSavedViews += 1
-		} else if view.SourcePage == "logs" {
-			savedViewsInfo.LogsSavedViews += 1
-		}
-	}
-	return &savedViewsInfo, nil
-}
-
-func (r *ClickHouseReader) GetUsers(ctx context.Context) ([]model.UserPayload, error) {
-
-	users, apiErr := dao.DB().GetUsers(ctx)
-	if apiErr != nil {
-		return nil, apiErr.Err
-	}
-	return users, nil
-}
-
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
 	// response will contain top level fields from the otel log model
 	response := model.GetFieldsResponse{
@@ -3436,35 +3008,28 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	resources = removeUnderscoreDuplicateFields(resources)
 
 	statements := []model.ShowCreateTableStatement{}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsTable)
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
 
-	extractSelectedAndInterestingFields(statements[0].Statement, constants.Attributes, &attributes, &response)
-	extractSelectedAndInterestingFields(statements[0].Statement, constants.Resources, &resources, &response)
+	r.extractSelectedAndInterestingFields(statements[0].Statement, constants.Attributes, &attributes, &response)
+	r.extractSelectedAndInterestingFields(statements[0].Statement, constants.Resources, &resources, &response)
 
 	return &response, nil
 }
 
-func extractSelectedAndInterestingFields(tableStatement string, fieldType string, fields *[]model.LogField, response *model.GetFieldsResponse) {
+func (r *ClickHouseReader) extractSelectedAndInterestingFields(tableStatement string, fieldType string, fields *[]model.LogField, response *model.GetFieldsResponse) {
 	for _, field := range *fields {
 		field.Type = fieldType
 		// all static fields are assumed to be selected as we don't allow changing them
-		if isSelectedField(tableStatement, field) {
+		if isColumn(r.useLogsNewSchema, tableStatement, field.Type, field.Name, field.DataType) {
 			response.Selected = append(response.Selected, field)
 		} else {
 			response.Interesting = append(response.Interesting, field)
 		}
 	}
-}
-
-func isSelectedField(tableStatement string, field model.LogField) bool {
-	// in case of attributes and resources, if there is a materialized column present then it is selected
-	// TODO: handle partial change complete eg:- index is removed but materialized column is still present
-	name := utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
-	return strings.Contains(tableStatement, name)
 }
 
 func (r *ClickHouseReader) UpdateLogFieldV2(ctx context.Context, field *model.UpdateField) *model.ApiError {
@@ -4142,7 +3707,8 @@ func isColumn(useLogsNewSchema bool, tableStatement, attrType, field, datType st
 	// value of attrType will be `resource` or `tag`, if `tag` change it to `attribute`
 	var name string
 	if useLogsNewSchema {
-		name = utils.GetClickhouseColumnNameV2(attrType, datType, field)
+		// adding explict '`'
+		name = fmt.Sprintf("`%s`", utils.GetClickhouseColumnNameV2(attrType, datType, field))
 	} else {
 		name = utils.GetClickhouseColumnName(attrType, datType, field)
 	}
@@ -4201,7 +3767,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	defer rows.Close()
 
 	statements := []model.ShowCreateTableStatement{}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsTable)
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
@@ -4255,7 +3821,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	defer rows.Close()
 
 	statements := []model.ShowCreateTableStatement{}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsTable)
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
@@ -4342,10 +3908,10 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 		// prepare the query and run
 		if len(req.SearchText) != 0 {
-			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) and %s ILIKE $1 limit $2", selectKey, r.logsDB, r.logsTable, filterValueColumnWhere)
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) and %s ILIKE $1 limit $2", selectKey, r.logsDB, r.logsLocalTableName, filterValueColumnWhere)
 			rows, err = r.db.Query(ctx, query, searchText, req.Limit)
 		} else {
-			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) limit $1", selectKey, r.logsDB, r.logsTable)
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) limit $1", selectKey, r.logsDB, r.logsLocalTableName)
 			rows, err = r.db.Query(ctx, query, req.Limit)
 		}
 	} else if len(req.SearchText) != 0 {
@@ -4534,6 +4100,9 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 ) ([][]any, *model.ApiError) {
 	// query top `limit` distinct values seen for `tagKey`s of interest
 	// ordered by timestamp when the value was seen
+
+	// we added the settings max_rows_to_group_by=100, group_by_overflow_mode = 'break'
+	// to avoid query from taking up all the resources when value is high cardinality.
 	query := fmt.Sprintf(
 		`
 		select tagKey, stringTagValue, int64TagValue, float64TagValue
@@ -4553,7 +4122,7 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 					max(timestamp) as ts
 				from %s.%s
 				where tagKey in $1
-				group by (tagKey, stringTagValue, int64TagValue, float64TagValue)
+				group by (tagKey, stringTagValue, int64TagValue, float64TagValue) SETTINGS max_rows_to_group_by = 100, group_by_overflow_mode = 'break', max_threads=4
 			)
 		)
 		where rank <= %d

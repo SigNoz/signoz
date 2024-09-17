@@ -8,18 +8,11 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/stats"
-	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 type Reader interface {
-	GetChannel(id string) (*model.ChannelItem, *model.ApiError)
-	GetChannels() (*[]model.ChannelItem, *model.ApiError)
-	DeleteChannel(id string) *model.ApiError
-	CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError)
-	EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError)
-
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams, skipConfig *model.SkipConfig) (*[]model.ServiceOverviewItem, *model.ApiError)
@@ -71,8 +64,6 @@ type Reader interface {
 	LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClient)
 	LiveTailLogsV4(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClientV2)
 
-	GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error)
-	GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error)
 	GetTotalSpans(ctx context.Context) (uint64, error)
 	GetTotalLogs(ctx context.Context) (uint64, error)
 	GetTotalSamples(ctx context.Context) (uint64, error)
@@ -91,7 +82,6 @@ type Reader interface {
 	GetLogAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error)
 	GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error)
 	GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error)
-	GetUsers(ctx context.Context) ([]model.UserPayload, error)
 	GetQBFilterSuggestionsForLogs(
 		ctx context.Context,
 		req *v3.QBFilterSuggestionsRequest,
