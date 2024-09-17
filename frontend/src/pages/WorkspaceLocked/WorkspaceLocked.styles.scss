@@ -147,6 +147,14 @@ $light-theme: 'lightMode';
 		animation: gradientFlow 24s ease infinite;
 		margin-bottom: 18px;
 	}
+
+	&__faq-container {
+		.ant-collapse,
+		.ant-collapse-item,
+		.ant-collapse-content-active {
+			border-color: var(--bg-slate-400);
+		}
+	}
 }
 
 .contact-us {
