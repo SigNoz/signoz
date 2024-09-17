@@ -728,7 +728,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 	return &serviceOverviewItems, nil
 }
 
-func buildFilterArrayQuery(ctx context.Context, excludeMap map[string]struct{}, params []string, filter string, query *string, args []interface{}) []interface{} {
+func buildFilterArrayQuery(_ context.Context, excludeMap map[string]struct{}, params []string, filter string, query *string, args []interface{}) []interface{} {
 	for i, e := range params {
 		filterKey := filter + String(5)
 		if i == 0 && i == len(params)-1 {
@@ -1237,7 +1237,7 @@ func String(length int) string {
 	return StringWithCharset(length, charset)
 }
 
-func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery) (string, []interface{}, *model.ApiError) {
+func buildQueryWithTagParams(_ context.Context, tags []model.TagQuery) (string, []interface{}, *model.ApiError) {
 	query := ""
 	var args []interface{}
 	for _, item := range tags {
@@ -1447,7 +1447,7 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	return &tagFiltersResult, nil
 }
 
-func excludeTags(ctx context.Context, tags []string) []string {
+func excludeTags(_ context.Context, tags []string) []string {
 	excludedTagsMap := map[string]bool{
 		"http.code":           true,
 		"http.route":          true,
@@ -2201,7 +2201,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
-func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTransactionsStore int) {
+func (r *ClickHouseReader) deleteTtlTransactions(_ context.Context, numberOfTransactionsStore int) {
 	_, err := r.localDB.Exec("DELETE FROM ttl_status WHERE transaction_id NOT IN (SELECT distinct transaction_id FROM ttl_status ORDER BY created_at DESC LIMIT ?)", numberOfTransactionsStore)
 	if err != nil {
 		zap.L().Error("Error in processing ttl_status delete sql query", zap.Error(err))
@@ -2209,7 +2209,7 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTr
 }
 
 // checkTTLStatusItem checks if ttl_status table has an entry for the given table name
-func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName string) (model.TTLStatusItem, *model.ApiError) {
+func (r *ClickHouseReader) checkTTLStatusItem(_ context.Context, tableName string) (model.TTLStatusItem, *model.ApiError) {
 	statusItem := []model.TTLStatusItem{}
 
 	query := `SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = ? ORDER BY created_at DESC`
@@ -4098,44 +4098,65 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 func (r *ClickHouseReader) getValuesForLogAttributes(
 	ctx context.Context, attributes []v3.AttributeKey, limit uint64,
 ) ([][]any, *model.ApiError) {
-	// query top `limit` distinct values seen for `tagKey`s of interest
-	// ordered by timestamp when the value was seen
+	/*
+		The query used here needs to be as cheap as possible, and while uncommon, it is possible for
+		a tag to have 100s of millions of values (eg: message, request_id)
 
-	// we added the settings max_rows_to_group_by=100, group_by_overflow_mode = 'break'
-	// to avoid query from taking up all the resources when value is high cardinality.
-	query := fmt.Sprintf(
-		`
-		select tagKey, stringTagValue, int64TagValue, float64TagValue
-		from (
-			select
-				tagKey,
-				stringTagValue,
-				int64TagValue,
-				float64TagValue,
-				row_number() over (partition by tagKey order by ts desc) as rank
-			from (
-				select
-					tagKey,
-					stringTagValue,
-					int64TagValue,
-					float64TagValue,
-					max(timestamp) as ts
-				from %s.%s
-				where tagKey in $1
-				group by (tagKey, stringTagValue, int64TagValue, float64TagValue) SETTINGS max_rows_to_group_by = 100, group_by_overflow_mode = 'break', max_threads=4
-			)
+		Construct a query to UNION the result of querying first `limit` values for each attribute. For example:
+		```
+			select * from (
+				(
+					select tagKey, stringTagValue, int64TagValue, float64TagValue
+					from signoz_logs.distributed_tag_attributes
+					where tagKey = $1 and (
+						stringTagValue != '' or int64TagValue is not null or float64TagValue is not null
+					)
+					limit 2
+				) UNION DISTINCT (
+					select tagKey, stringTagValue, int64TagValue, float64TagValue
+					from signoz_logs.distributed_tag_attributes
+					where tagKey = $2 and (
+						stringTagValue != '' or int64TagValue is not null or float64TagValue is not null
+					)
+					limit 2
+				)
+			) settings max_threads=2
+		```
+		Since tag_attributes table uses ReplacingMergeTree, the values would be distinct and no order by
+		is being used to ensure the `limit` clause minimizes the amount of data scanned.
+
+		This query scanned ~30k rows per attribute on fiscalnote-v2 for attributes like `message` and `time`
+		that had >~110M values each
+	*/
+
+	if len(attributes) > 10 {
+		zap.L().Error(
+			"log attribute values requested for too many attributes. This can lead to slow and costly queries",
+			zap.Int("count", len(attributes)),
 		)
-		where rank <= %d
-		`,
-		r.logsDB, r.logsTagAttributeTable, limit,
-	)
-
-	attribNames := []string{}
-	for _, attrib := range attributes {
-		attribNames = append(attribNames, attrib.Key)
+		attributes = attributes[:10]
 	}
 
-	rows, err := r.db.Query(ctx, query, attribNames)
+	tagQueries := []string{}
+	tagKeyQueryArgs := []any{}
+	for idx, attrib := range attributes {
+		tagQueries = append(tagQueries, fmt.Sprintf(`(
+			select tagKey, stringTagValue, int64TagValue, float64TagValue
+			from %s.%s
+			where tagKey = $%d and (
+				stringTagValue != '' or int64TagValue is not null or float64TagValue is not null
+			)
+			limit %d
+		)`, r.logsDB, r.logsTagAttributeTable, idx+1, limit))
+
+		tagKeyQueryArgs = append(tagKeyQueryArgs, attrib.Key)
+	}
+
+	query := fmt.Sprintf(`select * from (
+		%s
+	) settings max_threads=2`, strings.Join(tagQueries, " UNION DISTINCT "))
+
+	rows, err := r.db.Query(ctx, query, tagKeyQueryArgs...)
 	if err != nil {
 		zap.L().Error("couldn't query attrib values for suggestions", zap.Error(err))
 		return nil, model.InternalError(fmt.Errorf(
