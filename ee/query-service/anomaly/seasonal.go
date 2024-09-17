@@ -179,19 +179,19 @@ func (p *BaseSeasonalProvider) getStdDev(series *v3.Series) float64 {
 
 // getMovingAvg gets the moving average for the given series
 // for the given window size and start index
-func (p *BaseSeasonalProvider) getMovingAvg(series *v3.Series, windowSize, startIdx int) float64 {
+func (p *BaseSeasonalProvider) getMovingAvg(series *v3.Series, movingAvgWindowSize, startIdx int) float64 {
 	if series == nil || len(series.Points) == 0 {
 		return 0
 	}
-	if startIdx >= len(series.Points)-windowSize {
-		startIdx = len(series.Points) - windowSize
+	if startIdx >= len(series.Points)-movingAvgWindowSize {
+		startIdx = len(series.Points) - movingAvgWindowSize
 	}
 	var sum float64
 	points := series.Points[startIdx:]
-	for i := 0; i < windowSize && i < len(points); i++ {
+	for i := 0; i < movingAvgWindowSize && i < len(points); i++ {
 		sum += points[i].Value
 	}
-	avg := sum / float64(windowSize)
+	avg := sum / float64(movingAvgWindowSize)
 	return avg
 }
 
