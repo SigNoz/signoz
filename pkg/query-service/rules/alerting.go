@@ -84,26 +84,13 @@ type NamedAlert struct {
 type CompareOp string
 
 const (
-	CompareOpNone CompareOp = "0"
-	ValueIsAbove  CompareOp = "1"
-	ValueIsBelow  CompareOp = "2"
-	ValueIsEq     CompareOp = "3"
-	ValueIsNotEq  CompareOp = "4"
+	CompareOpNone       CompareOp = "0"
+	ValueIsAbove        CompareOp = "1"
+	ValueIsBelow        CompareOp = "2"
+	ValueIsEq           CompareOp = "3"
+	ValueIsNotEq        CompareOp = "4"
+	ValueIsAboveOrBelow CompareOp = "5"
 )
-
-func ResolveCompareOp(cop CompareOp) string {
-	switch cop {
-	case ValueIsAbove:
-		return ">"
-	case ValueIsBelow:
-		return "<"
-	case ValueIsEq:
-		return "=="
-	case ValueIsNotEq:
-		return "!="
-	}
-	return ""
-}
 
 type MatchType string
 
@@ -123,6 +110,8 @@ type RuleCondition struct {
 	AbsentFor      uint64             `yaml:"absentFor,omitempty" json:"absentFor,omitempty"`
 	MatchType      MatchType          `json:"matchType,omitempty"`
 	TargetUnit     string             `json:"targetUnit,omitempty"`
+	Algorithm      string             `json:"algorithm,omitempty"`
+	Seasonality    string             `json:"seasonality,omitempty"`
 	SelectedQuery  string             `json:"selectedQueryName,omitempty"`
 }
 

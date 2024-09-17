@@ -7,6 +7,7 @@ import (
 	"math"
 	"regexp"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 	"unicode"
@@ -57,9 +58,9 @@ type AnomalyRule struct {
 	// querierV2 is used for alerts created after the introduction of new metrics query builder
 	querierV2 interfaces.Querier
 
-	hourlyAnomalyProvider anomaly.Provider
-	dailyAnomalyProvider  anomaly.Provider
-	weeklyAnomalyProvider anomaly.Provider
+	provider anomaly.Provider
+
+	seasonality anomaly.Seasonality
 }
 
 func NewAnomalyRule(
@@ -71,7 +72,7 @@ func NewAnomalyRule(
 	opts ...baserules.RuleOption,
 ) (*AnomalyRule, error) {
 
-	zap.L().Info("creating new ThresholdRule", zap.String("id", id), zap.Any("opts", opts))
+	zap.L().Info("creating new AnomalyRule", zap.String("id", id), zap.Any("opts", opts))
 
 	baseRule, err := baserules.NewBaseRule(id, p, reader, opts...)
 	if err != nil {
@@ -82,6 +83,19 @@ func NewAnomalyRule(
 		BaseRule:       baseRule,
 		temporalityMap: make(map[string]map[v3.Temporality]bool),
 	}
+	t.active = make(map[uint64]*baserules.Alert)
+
+	if strings.ToLower(p.RuleCondition.Seasonality) == "hourly" {
+		t.seasonality = anomaly.SeasonalityHourly
+	} else if strings.ToLower(p.RuleCondition.Seasonality) == "daily" {
+		t.seasonality = anomaly.SeasonalityDaily
+	} else if strings.ToLower(p.RuleCondition.Seasonality) == "weekly" {
+		t.seasonality = anomaly.SeasonalityWeekly
+	} else {
+		t.seasonality = anomaly.SeasonalityDaily
+	}
+
+	zap.L().Info("seasonality", zap.String("seasonality", t.seasonality.String()))
 
 	querierOption := querier.QuerierOptions{
 		Reader:        reader,
@@ -100,24 +114,28 @@ func NewAnomalyRule(
 	t.querier = querier.NewQuerier(querierOption)
 	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
 	t.reader = reader
-	t.hourlyAnomalyProvider = anomaly.NewHourlyProvider(
-		anomaly.WithCache[*anomaly.HourlyProvider](cache),
-		anomaly.WithKeyGenerator[*anomaly.HourlyProvider](queryBuilder.NewKeyGenerator()),
-		anomaly.WithReader[*anomaly.HourlyProvider](reader),
-		anomaly.WithFeatureLookup[*anomaly.HourlyProvider](featureFlags),
-	)
-	t.dailyAnomalyProvider = anomaly.NewDailyProvider(
-		anomaly.WithCache[*anomaly.DailyProvider](cache),
-		anomaly.WithKeyGenerator[*anomaly.DailyProvider](queryBuilder.NewKeyGenerator()),
-		anomaly.WithReader[*anomaly.DailyProvider](reader),
-		anomaly.WithFeatureLookup[*anomaly.DailyProvider](featureFlags),
-	)
-	t.weeklyAnomalyProvider = anomaly.NewWeeklyProvider(
-		anomaly.WithCache[*anomaly.WeeklyProvider](cache),
-		anomaly.WithKeyGenerator[*anomaly.WeeklyProvider](queryBuilder.NewKeyGenerator()),
-		anomaly.WithReader[*anomaly.WeeklyProvider](reader),
-		anomaly.WithFeatureLookup[*anomaly.WeeklyProvider](featureFlags),
-	)
+	if t.seasonality == anomaly.SeasonalityHourly {
+		t.provider = anomaly.NewHourlyProvider(
+			anomaly.WithCache[*anomaly.HourlyProvider](cache),
+			anomaly.WithKeyGenerator[*anomaly.HourlyProvider](queryBuilder.NewKeyGenerator()),
+			anomaly.WithReader[*anomaly.HourlyProvider](reader),
+			anomaly.WithFeatureLookup[*anomaly.HourlyProvider](featureFlags),
+		)
+	} else if t.seasonality == anomaly.SeasonalityDaily {
+		t.provider = anomaly.NewDailyProvider(
+			anomaly.WithCache[*anomaly.DailyProvider](cache),
+			anomaly.WithKeyGenerator[*anomaly.DailyProvider](queryBuilder.NewKeyGenerator()),
+			anomaly.WithReader[*anomaly.DailyProvider](reader),
+			anomaly.WithFeatureLookup[*anomaly.DailyProvider](featureFlags),
+		)
+	} else if t.seasonality == anomaly.SeasonalityWeekly {
+		t.provider = anomaly.NewWeeklyProvider(
+			anomaly.WithCache[*anomaly.WeeklyProvider](cache),
+			anomaly.WithKeyGenerator[*anomaly.WeeklyProvider](queryBuilder.NewKeyGenerator()),
+			anomaly.WithReader[*anomaly.WeeklyProvider](reader),
+			anomaly.WithFeatureLookup[*anomaly.WeeklyProvider](featureFlags),
+		)
+	}
 	return &t, nil
 }
 
@@ -225,9 +243,9 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (baser
 		return nil, fmt.Errorf("internal error while setting temporality")
 	}
 
-	anomalies, err := r.weeklyAnomalyProvider.GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{
+	anomalies, err := r.provider.GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{
 		Params:      params,
-		Seasonality: anomaly.SeasonalityWeekly,
+		Seasonality: r.seasonality,
 	})
 	if err != nil {
 		return nil, err
@@ -243,7 +261,10 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (baser
 
 	var resultVector baserules.Vector
 
-	for _, series := range queryResult.Series {
+	scoresJSON, _ := json.Marshal(queryResult.AnomalyScores)
+	zap.L().Info("anomaly scores", zap.String("scores", string(scoresJSON)))
+
+	for _, series := range queryResult.AnomalyScores {
 		smpl, shouldAlert := r.ShouldAlert(*series)
 		if shouldAlert {
 			resultVector = append(resultVector, smpl)

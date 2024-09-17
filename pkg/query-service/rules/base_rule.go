@@ -376,6 +376,14 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 					break
 				}
 			}
+		} else if r.compareOp() == ValueIsAboveOrBelow {
+			for _, smpl := range series.Points {
+				if smpl.Value > r.targetVal() || smpl.Value < r.targetVal() {
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+					shouldAlert = true
+					break
+				}
+			}
 		}
 	case AllTheTimes:
 		// If all samples match the condition, the rule is firing.
@@ -437,6 +445,14 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 					}
 				}
 			}
+		} else if r.compareOp() == ValueIsAboveOrBelow {
+			for _, smpl := range series.Points {
+				if smpl.Value > r.targetVal() || smpl.Value < r.targetVal() {
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+					shouldAlert = true
+					break
+				}
+			}
 		}
 	case OnAverage:
 		// If the average of all samples matches the condition, the rule is firing.
@@ -466,6 +482,10 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 			if avg != r.targetVal() {
 				shouldAlert = true
 			}
+		} else if r.compareOp() == ValueIsAboveOrBelow {
+			if avg > r.targetVal() || avg < r.targetVal() {
+				shouldAlert = true
+			}
 		}
 	case InTotal:
 		// If the sum of all samples matches the condition, the rule is firing.
@@ -492,6 +512,10 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 			}
 		} else if r.compareOp() == ValueIsNotEq {
 			if sum != r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsAboveOrBelow {
+			if sum > r.targetVal() || sum < r.targetVal() {
 				shouldAlert = true
 			}
 		}

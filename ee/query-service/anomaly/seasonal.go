@@ -184,7 +184,7 @@ func (p *BaseSeasonalProvider) getMovingAvg(series *v3.Series, movingAvgWindowSi
 		return 0
 	}
 	if startIdx >= len(series.Points)-movingAvgWindowSize {
-		startIdx = len(series.Points) - movingAvgWindowSize
+		startIdx = int(math.Max(0, float64(len(series.Points)-movingAvgWindowSize)))
 	}
 	var sum float64
 	points := series.Points[startIdx:]
@@ -250,7 +250,7 @@ func (p *BaseSeasonalProvider) getPredictedSeries(
 // moving avg of the previous period series + z score threshold * std dev of the series
 // moving avg of the previous period series - z score threshold * std dev of the series
 func (p *BaseSeasonalProvider) getBounds(
-	series, prevSeries, _, _, _, _ *v3.Series,
+	series, predictedSeries *v3.Series,
 	zScoreThreshold float64,
 ) (*v3.Series, *v3.Series) {
 	upperBoundSeries := &v3.Series{
@@ -266,8 +266,8 @@ func (p *BaseSeasonalProvider) getBounds(
 	}
 
 	for idx, curr := range series.Points {
-		upperBound := p.getMovingAvg(prevSeries, movingAvgWindowSize, idx) + zScoreThreshold*p.getStdDev(series)
-		lowerBound := p.getMovingAvg(prevSeries, movingAvgWindowSize, idx) - zScoreThreshold*p.getStdDev(series)
+		upperBound := p.getMovingAvg(predictedSeries, movingAvgWindowSize, idx) + zScoreThreshold*p.getStdDev(series)
+		lowerBound := p.getMovingAvg(predictedSeries, movingAvgWindowSize, idx) - zScoreThreshold*p.getStdDev(series)
 		upperBoundSeries.Points = append(upperBoundSeries.Points, v3.Point{
 			Timestamp: curr.Timestamp,
 			Value:     upperBound,
@@ -431,11 +431,7 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, req *GetAnomali
 
 			upperBoundSeries, lowerBoundSeries := p.getBounds(
 				series,
-				pastPeriodSeries,
-				currentSeasonSeries,
-				pastSeasonSeries,
-				past2SeasonSeries,
-				past3SeasonSeries,
+				predictedSeries,
 				zScoreThreshold,
 			)
 			result.UpperBoundSeries = append(result.UpperBoundSeries, upperBoundSeries)
