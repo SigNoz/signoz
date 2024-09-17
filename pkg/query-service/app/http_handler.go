@@ -3656,15 +3656,18 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	// Hook up query progress tracking if requested
 	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
 	if len(queryIdHeader) > 0 {
-		ctx = context.WithValue(ctx, "queryId", queryIdHeader)
-
 		onQueryFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
+
 		if err != nil {
 			zap.L().Error(
 				"couldn't report query start for progress tracking",
 				zap.String("queryId", queryIdHeader), zap.Error(err),
 			)
+
 		} else {
+			// Adding queryId to the context signals clickhouse queries to report progress
+			ctx = context.WithValue(ctx, "queryId", queryIdHeader)
+
 			defer func() {
 				go onQueryFinished()
 			}()
