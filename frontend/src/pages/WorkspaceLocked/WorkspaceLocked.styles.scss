@@ -1,4 +1,5 @@
 $light-theme: 'lightMode';
+$dark-theme: 'darkMode';
 
 @keyframes gradientFlow {
 	0% {
@@ -152,7 +153,9 @@ $light-theme: 'lightMode';
 		.ant-collapse,
 		.ant-collapse-item,
 		.ant-collapse-content-active {
-			border-color: var(--bg-slate-400);
+			.#{$dark-theme} & {
+				border-color: var(--bg-slate-400);
+			}
 		}
 	}
 }
