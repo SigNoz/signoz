@@ -41,6 +41,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/contextlinks"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 
@@ -767,6 +768,48 @@ func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.
 	aH.Respond(w, stateItems)
 }
 
+func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule) ([]v3.FilterItem, []v3.AttributeKey, map[string]v3.AttributeKey) {
+	filterItems := []v3.FilterItem{}
+	groupBy := []v3.AttributeKey{}
+	keys := make(map[string]v3.AttributeKey)
+
+	if rule.AlertType == rules.AlertTypeLogs {
+		logFields, err := aH.reader.GetLogFields(ctx)
+		if err == nil {
+			params := &v3.QueryRangeParamsV3{
+				CompositeQuery: rule.RuleCondition.CompositeQuery,
+			}
+			keys = model.GetLogFieldsV3(ctx, params, logFields)
+		} else {
+			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
+		}
+	} else if rule.AlertType == rules.AlertTypeTraces {
+		traceFields, err := aH.reader.GetSpanAttributeKeys(ctx)
+		if err == nil {
+			keys = traceFields
+		} else {
+			zap.L().Error("failed to get span attributes using empty keys; the link might not work as expected", zap.Error(err))
+		}
+	}
+
+	if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
+		if rule.RuleCondition.CompositeQuery != nil {
+			if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
+				selectedQuery := rule.RuleCondition.GetSelectedQueryName()
+				if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+					rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters != nil {
+					filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
+				}
+				if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+					rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy != nil {
+					groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
+				}
+			}
+		}
+	}
+	return filterItems, groupBy, keys
+}
+
 func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
 	params := model.QueryRuleStateHistory{}
@@ -794,24 +837,18 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			if err != nil {
 				continue
 			}
-			filterItems := []v3.FilterItem{}
-			if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
-				if rule.RuleCondition.CompositeQuery != nil {
-					if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
-						for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
-							if query.Filters != nil && len(query.Filters.Items) > 0 {
-								filterItems = append(filterItems, query.Filters.Items...)
-							}
-						}
-					}
-				}
-			}
-			newFilters := common.PrepareFilters(lbls, filterItems)
-			ts := time.Unix(res.Items[idx].UnixMilli/1000, 0)
+			filterItems, groupBy, keys := aH.metaForLinks(r.Context(), rule)
+			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy, keys)
+			end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
+			// why are we subtracting 3 minutes?
+			// the query range is calculated based on the rule's evalWindow and evalDelay
+			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
+			// to get the correct query range
+			start := end.Add(-time.Duration(rule.EvalWindow)).Add(-3 * time.Minute)
 			if rule.AlertType == rules.AlertTypeLogs {
-				res.Items[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, newFilters)
+				res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
 			} else if rule.AlertType == rules.AlertTypeTraces {
-				res.Items[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, newFilters)
+				res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
 			}
 		}
 	}
@@ -842,12 +879,14 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 			if err != nil {
 				continue
 			}
-			ts := time.Unix(params.End/1000, 0)
-			filters := common.PrepareFilters(lbls, nil)
+			filterItems, groupBy, keys := aH.metaForLinks(r.Context(), rule)
+			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy, keys)
+			end := time.Unix(params.End/1000, 0)
+			start := time.Unix(params.Start/1000, 0)
 			if rule.AlertType == rules.AlertTypeLogs {
-				res[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, filters)
+				res[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
 			} else if rule.AlertType == rules.AlertTypeTraces {
-				res[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, filters)
+				res[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
 			}
 		}
 	}
@@ -1049,23 +1088,6 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, dashboard)
 
-}
-
-func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, r *http.Request, signozDashboard model.DashboardData) {
-	toSave := make(map[string]interface{})
-	toSave["title"] = signozDashboard.Title
-	toSave["description"] = signozDashboard.Description
-	toSave["tags"] = signozDashboard.Tags
-	toSave["layout"] = signozDashboard.Layout
-	toSave["widgets"] = signozDashboard.Widgets
-	toSave["variables"] = signozDashboard.Variables
-
-	dashboard, apiError := dashboards.CreateDashboard(r.Context(), toSave, aH.featureFlags)
-	if apiError != nil {
-		RespondError(w, apiError, nil)
-		return
-	}
-	aH.Respond(w, dashboard)
 }
 
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
@@ -3527,55 +3549,6 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	aH.Respond(w, response)
 }
 
-func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
-	data := map[string]v3.AttributeKey{}
-	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
-		if query.DataSource == v3.DataSourceLogs {
-			fields, apiError := aH.reader.GetLogFields(ctx)
-			if apiError != nil {
-				return nil, apiError.Err
-			}
-
-			// top level fields meta will always be present in the frontend. (can be support for that as enchancement)
-			getType := func(t string) (v3.AttributeKeyType, bool) {
-				if t == "attributes" {
-					return v3.AttributeKeyTypeTag, false
-				} else if t == "resources" {
-					return v3.AttributeKeyTypeResource, false
-				}
-				return "", true
-			}
-
-			for _, selectedField := range fields.Selected {
-				fieldType, pass := getType(selectedField.Type)
-				if pass {
-					continue
-				}
-				data[selectedField.Name] = v3.AttributeKey{
-					Key:      selectedField.Name,
-					Type:     fieldType,
-					DataType: v3.AttributeKeyDataType(strings.ToLower(selectedField.DataType)),
-					IsColumn: true,
-				}
-			}
-			for _, interestingField := range fields.Interesting {
-				fieldType, pass := getType(interestingField.Type)
-				if pass {
-					continue
-				}
-				data[interestingField.Name] = v3.AttributeKey{
-					Key:      interestingField.Name,
-					Type:     fieldType,
-					DataType: v3.AttributeKeyDataType(strings.ToLower(interestingField.DataType)),
-					IsColumn: false,
-				}
-			}
-			break
-		}
-	}
-	return data, nil
-}
-
 func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
 	data := map[string]v3.AttributeKey{}
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
@@ -3617,14 +3590,14 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
-			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+			logsFields, err := aH.reader.GetLogFields(ctx)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, errQuriesByName)
 				return
 			}
+			// get the fields if any logs query is present
+			fields := model.GetLogFieldsV3(ctx, queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
@@ -3666,6 +3639,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 		} else {
 			// Adding queryId to the context signals clickhouse queries to report progress
+			//lint:ignore SA1029 ignore for now
 			ctx = context.WithValue(ctx, "queryId", queryIdHeader)
 
 			defer func() {
@@ -3918,13 +3892,13 @@ func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
 			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(r.Context(), queryRangeParams)
+			logsFields, err := aH.reader.GetLogFields(r.Context())
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, nil)
 				return
 			}
+			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
@@ -4003,14 +3977,14 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 	case v3.QueryTypeBuilder:
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
-			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(r.Context(), queryRangeParams)
+			logsFields, err := aH.reader.GetLogFields(r.Context())
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, nil)
 				return
 			}
+			// get the fields if any logs query is present
+			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
@@ -4087,13 +4061,13 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
 			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+			logsFields, err := aH.reader.GetLogFields(r.Context())
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, errQuriesByName)
+				RespondError(w, apiErrObj, nil)
 				return
 			}
+			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 

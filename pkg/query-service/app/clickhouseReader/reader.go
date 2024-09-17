@@ -728,7 +728,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 	return &serviceOverviewItems, nil
 }
 
-func buildFilterArrayQuery(ctx context.Context, excludeMap map[string]struct{}, params []string, filter string, query *string, args []interface{}) []interface{} {
+func buildFilterArrayQuery(_ context.Context, excludeMap map[string]struct{}, params []string, filter string, query *string, args []interface{}) []interface{} {
 	for i, e := range params {
 		filterKey := filter + String(5)
 		if i == 0 && i == len(params)-1 {
@@ -1237,7 +1237,7 @@ func String(length int) string {
 	return StringWithCharset(length, charset)
 }
 
-func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery) (string, []interface{}, *model.ApiError) {
+func buildQueryWithTagParams(_ context.Context, tags []model.TagQuery) (string, []interface{}, *model.ApiError) {
 	query := ""
 	var args []interface{}
 	for _, item := range tags {
@@ -1447,7 +1447,7 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	return &tagFiltersResult, nil
 }
 
-func excludeTags(ctx context.Context, tags []string) []string {
+func excludeTags(_ context.Context, tags []string) []string {
 	excludedTagsMap := map[string]bool{
 		"http.code":           true,
 		"http.route":          true,
@@ -2201,7 +2201,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
-func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTransactionsStore int) {
+func (r *ClickHouseReader) deleteTtlTransactions(_ context.Context, numberOfTransactionsStore int) {
 	_, err := r.localDB.Exec("DELETE FROM ttl_status WHERE transaction_id NOT IN (SELECT distinct transaction_id FROM ttl_status ORDER BY created_at DESC LIMIT ?)", numberOfTransactionsStore)
 	if err != nil {
 		zap.L().Error("Error in processing ttl_status delete sql query", zap.Error(err))
@@ -2209,7 +2209,7 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTr
 }
 
 // checkTTLStatusItem checks if ttl_status table has an entry for the given table name
-func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName string) (model.TTLStatusItem, *model.ApiError) {
+func (r *ClickHouseReader) checkTTLStatusItem(_ context.Context, tableName string) (model.TTLStatusItem, *model.ApiError) {
 	statusItem := []model.TTLStatusItem{}
 
 	query := `SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = ? ORDER BY created_at DESC`
