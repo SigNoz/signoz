@@ -16,6 +16,13 @@ const (
 	SeasonalityWeekly Seasonality = "weekly"
 )
 
+var (
+	oneWeekOffset = 24 * 7 * time.Hour.Milliseconds()
+	oneDayOffset  = 24 * time.Hour.Milliseconds()
+	oneHourOffset = time.Hour.Milliseconds()
+	fiveMinOffset = 5 * time.Minute.Milliseconds()
+)
+
 func (s Seasonality) IsValid() bool {
 	switch s {
 	case SeasonalityHourly, SeasonalityDaily, SeasonalityWeekly:
@@ -35,7 +42,7 @@ type GetAnomaliesResponse struct {
 }
 
 // anomalyParams is the params for anomaly detection
-// prediction = avg(past_period_query) + avg(current_season_query) - avg(past_season_query)
+// prediction = avg(past_period_query) + avg(current_season_query) - mean(past_season_query, past2_season_query, past3_season_query)
 //
 //	                  ^                                  ^
 //		              |                                  |
@@ -49,9 +56,9 @@ type anomalyQueryParams struct {
 	// and to detect anomalies
 	CurrentPeriodQuery *v3.QueryRangeParamsV3
 	// PastPeriodQuery is the query range params for past seasonal period
-	// Example: For weekly seasonality, (now-1w-4h-5m, now-1w)
-	//        : For daily seasonality, (now-1d-2h-5m, now-1d)
-	//        : For hourly seasonality, (now-1h-30m-5m, now-1h)
+	// Example: For weekly seasonality, (now-1w-5m, now-1w)
+	//        : For daily seasonality, (now-1d-5m, now-1d)
+	//        : For hourly seasonality, (now-1h-5m, now-1h)
 	PastPeriodQuery *v3.QueryRangeParamsV3
 	// CurrentSeasonQuery is the query range params for current period (seasonal)
 	// Example: For weekly seasonality, this is the query range params for the (now-1w-5m, now)
@@ -63,16 +70,17 @@ type anomalyQueryParams struct {
 	//        : For daily seasonality, this is the query range params for the (now-2d-5m, now-1d)
 	//        : For hourly seasonality, this is the query range params for the (now-2h-5m, now-1h)
 	PastSeasonQuery *v3.QueryRangeParamsV3
-}
 
-func copyCompositeQuery(req *v3.QueryRangeParamsV3) *v3.CompositeQuery {
-	deepCopyCompositeQuery := *req.CompositeQuery
-	deepCopyCompositeQuery.BuilderQueries = make(map[string]*v3.BuilderQuery)
-	for k, v := range req.CompositeQuery.BuilderQueries {
-		query := *v
-		deepCopyCompositeQuery.BuilderQueries[k] = &query
-	}
-	return &deepCopyCompositeQuery
+	// Past2SeasonQuery is the query range params for past 2 seasonal period to the current season
+	// Example: For weekly seasonality, this is the query range params for the (now-3w-5m, now-2w)
+	//        : For daily seasonality, this is the query range params for the (now-3d-5m, now-2d)
+	//        : For hourly seasonality, this is the query range params for the (now-3h-5m, now-2h)
+	Past2SeasonQuery *v3.QueryRangeParamsV3
+	// Past3SeasonQuery is the query range params for past 3 seasonal period to the current season
+	// Example: For weekly seasonality, this is the query range params for the (now-4w-5m, now-3w)
+	//        : For daily seasonality, this is the query range params for the (now-4d-5m, now-3d)
+	//        : For hourly seasonality, this is the query range params for the (now-4h-5m, now-3h)
+	Past3SeasonQuery *v3.QueryRangeParamsV3
 }
 
 func updateStepInterval(req *v3.QueryRangeParamsV3) {
@@ -95,7 +103,7 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 	currentPeriodQuery := &v3.QueryRangeParamsV3{
 		Start:          start,
 		End:            end,
-		CompositeQuery: req.CompositeQuery,
+		CompositeQuery: req.CompositeQuery.Clone(),
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        false,
 	}
@@ -104,24 +112,24 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 	var pastPeriodStart, pastPeriodEnd int64
 
 	switch seasonality {
-	// for one week period, we fetch the data from the past week with 4 hours offset
+	// for one week period, we fetch the data from the past week with 5 min offset
 	case SeasonalityWeekly:
-		pastPeriodStart = start - 166*time.Hour.Milliseconds() - 4*time.Hour.Milliseconds()
-		pastPeriodEnd = end - 166*time.Hour.Milliseconds()
-	// for one day period, we fetch the data from the past day with 2 hours offset
+		pastPeriodStart = start - oneWeekOffset - fiveMinOffset
+		pastPeriodEnd = end - oneWeekOffset
+	// for one day period, we fetch the data from the past day with 5 min offset
 	case SeasonalityDaily:
-		pastPeriodStart = start - 23*time.Hour.Milliseconds() - 2*time.Hour.Milliseconds()
-		pastPeriodEnd = end - 23*time.Hour.Milliseconds()
-	// for one hour period, we fetch the data from the past hour with 30 minutes offset
+		pastPeriodStart = start - oneDayOffset - fiveMinOffset
+		pastPeriodEnd = end - oneDayOffset
+	// for one hour period, we fetch the data from the past hour with 5 min offset
 	case SeasonalityHourly:
-		pastPeriodStart = start - 1*time.Hour.Milliseconds() - 30*time.Minute.Milliseconds()
-		pastPeriodEnd = end - 1*time.Hour.Milliseconds()
+		pastPeriodStart = start - oneHourOffset - fiveMinOffset
+		pastPeriodEnd = end - oneHourOffset
 	}
 
 	pastPeriodQuery := &v3.QueryRangeParamsV3{
 		Start:          pastPeriodStart,
 		End:            pastPeriodEnd,
-		CompositeQuery: copyCompositeQuery(req),
+		CompositeQuery: req.CompositeQuery.Clone(),
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        false,
 	}
@@ -131,20 +139,20 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 	var currentGrowthPeriodStart, currentGrowthPeriodEnd int64
 	switch seasonality {
 	case SeasonalityWeekly:
-		currentGrowthPeriodStart = start - 7*24*time.Hour.Milliseconds()
+		currentGrowthPeriodStart = start - oneWeekOffset
 		currentGrowthPeriodEnd = end
 	case SeasonalityDaily:
-		currentGrowthPeriodStart = start - 23*time.Hour.Milliseconds()
+		currentGrowthPeriodStart = start - oneDayOffset
 		currentGrowthPeriodEnd = end
 	case SeasonalityHourly:
-		currentGrowthPeriodStart = start - 1*time.Hour.Milliseconds()
+		currentGrowthPeriodStart = start - oneHourOffset
 		currentGrowthPeriodEnd = end
 	}
 
 	currentGrowthQuery := &v3.QueryRangeParamsV3{
 		Start:          currentGrowthPeriodStart,
 		End:            currentGrowthPeriodEnd,
-		CompositeQuery: copyCompositeQuery(req),
+		CompositeQuery: req.CompositeQuery.Clone(),
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        false,
 	}
@@ -153,30 +161,76 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 	var pastGrowthPeriodStart, pastGrowthPeriodEnd int64
 	switch seasonality {
 	case SeasonalityWeekly:
-		pastGrowthPeriodStart = start - 14*24*time.Hour.Milliseconds()
-		pastGrowthPeriodEnd = start - 7*24*time.Hour.Milliseconds()
+		pastGrowthPeriodStart = start - 2*oneWeekOffset
+		pastGrowthPeriodEnd = start - 1*oneWeekOffset
 	case SeasonalityDaily:
-		pastGrowthPeriodStart = start - 2*time.Hour.Milliseconds()
-		pastGrowthPeriodEnd = start - 1*time.Hour.Milliseconds()
+		pastGrowthPeriodStart = start - 2*oneDayOffset
+		pastGrowthPeriodEnd = start - 1*oneDayOffset
 	case SeasonalityHourly:
-		pastGrowthPeriodStart = start - 2*time.Hour.Milliseconds()
-		pastGrowthPeriodEnd = start - 1*time.Hour.Milliseconds()
+		pastGrowthPeriodStart = start - 2*oneHourOffset
+		pastGrowthPeriodEnd = start - 1*oneHourOffset
 	}
 
 	pastGrowthQuery := &v3.QueryRangeParamsV3{
 		Start:          pastGrowthPeriodStart,
 		End:            pastGrowthPeriodEnd,
-		CompositeQuery: copyCompositeQuery(req),
+		CompositeQuery: req.CompositeQuery.Clone(),
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        false,
 	}
 	updateStepInterval(pastGrowthQuery)
+
+	var past2GrowthPeriodStart, past2GrowthPeriodEnd int64
+	switch seasonality {
+	case SeasonalityWeekly:
+		past2GrowthPeriodStart = start - 3*oneWeekOffset
+		past2GrowthPeriodEnd = start - 2*oneWeekOffset
+	case SeasonalityDaily:
+		past2GrowthPeriodStart = start - 3*oneDayOffset
+		past2GrowthPeriodEnd = start - 2*oneDayOffset
+	case SeasonalityHourly:
+		past2GrowthPeriodStart = start - 3*oneHourOffset
+		past2GrowthPeriodEnd = start - 2*oneHourOffset
+	}
+
+	past2GrowthQuery := &v3.QueryRangeParamsV3{
+		Start:          past2GrowthPeriodStart,
+		End:            past2GrowthPeriodEnd,
+		CompositeQuery: req.CompositeQuery.Clone(),
+		Variables:      make(map[string]interface{}, 0),
+		NoCache:        false,
+	}
+	updateStepInterval(past2GrowthQuery)
+
+	var past3GrowthPeriodStart, past3GrowthPeriodEnd int64
+	switch seasonality {
+	case SeasonalityWeekly:
+		past3GrowthPeriodStart = start - 4*oneWeekOffset
+		past3GrowthPeriodEnd = start - 3*oneWeekOffset
+	case SeasonalityDaily:
+		past3GrowthPeriodStart = start - 4*oneDayOffset
+		past3GrowthPeriodEnd = start - 3*oneDayOffset
+	case SeasonalityHourly:
+		past3GrowthPeriodStart = start - 4*oneHourOffset
+		past3GrowthPeriodEnd = start - 3*oneHourOffset
+	}
+
+	past3GrowthQuery := &v3.QueryRangeParamsV3{
+		Start:          past3GrowthPeriodStart,
+		End:            past3GrowthPeriodEnd,
+		CompositeQuery: req.CompositeQuery.Clone(),
+		Variables:      make(map[string]interface{}, 0),
+		NoCache:        false,
+	}
+	updateStepInterval(past3GrowthQuery)
 
 	return &anomalyQueryParams{
 		CurrentPeriodQuery: currentPeriodQuery,
 		PastPeriodQuery:    pastPeriodQuery,
 		CurrentSeasonQuery: currentGrowthQuery,
 		PastSeasonQuery:    pastGrowthQuery,
+		Past2SeasonQuery:   past2GrowthQuery,
+		Past3SeasonQuery:   past3GrowthQuery,
 	}
 }
 
@@ -185,4 +239,6 @@ type anomalyQueryResults struct {
 	PastPeriodResults    []*v3.Result
 	CurrentSeasonResults []*v3.Result
 	PastSeasonResults    []*v3.Result
+	Past2SeasonResults   []*v3.Result
+	Past3SeasonResults   []*v3.Result
 }
