@@ -151,7 +151,7 @@ type APIHandlerOpts struct {
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
-	alertManager, err := am.New("")
+	alertManager, err := am.New()
 	if err != nil {
 		return nil, err
 	}
@@ -1182,7 +1182,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	channel, apiErrorObj := aH.reader.GetChannel(id)
+	channel, apiErrorObj := aH.ruleManager.RuleDB().GetChannel(id)
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
 		return
@@ -1192,7 +1192,7 @@ func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	apiErrorObj := aH.reader.DeleteChannel(id)
+	apiErrorObj := aH.ruleManager.RuleDB().DeleteChannel(id)
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
 		return
@@ -1201,7 +1201,7 @@ func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
-	channels, apiErrorObj := aH.reader.GetChannels()
+	channels, apiErrorObj := aH.ruleManager.RuleDB().GetChannels()
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
 		return
@@ -1254,7 +1254,7 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErrorObj := aH.reader.EditChannel(receiver, id)
+	_, apiErrorObj := aH.ruleManager.RuleDB().EditChannel(receiver, id)
 
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
@@ -1282,7 +1282,7 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErrorObj := aH.reader.CreateChannel(receiver)
+	_, apiErrorObj := aH.ruleManager.RuleDB().CreateChannel(receiver)
 
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
@@ -3656,15 +3656,18 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	// Hook up query progress tracking if requested
 	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
 	if len(queryIdHeader) > 0 {
-		ctx = context.WithValue(ctx, "queryId", queryIdHeader)
-
 		onQueryFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
+
 		if err != nil {
 			zap.L().Error(
 				"couldn't report query start for progress tracking",
 				zap.String("queryId", queryIdHeader), zap.Error(err),
 			)
+
 		} else {
+			// Adding queryId to the context signals clickhouse queries to report progress
+			ctx = context.WithValue(ctx, "queryId", queryIdHeader)
+
 			defer func() {
 				go onQueryFinished()
 			}()
