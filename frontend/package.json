@@ -207,7 +207,6 @@
 		"eslint-plugin-sonarjs": "^0.12.0",
 		"husky": "^7.0.4",
 		"is-ci": "^3.0.1",
-		"jest-playwright-preset": "^1.7.2",
 		"jest-styled-components": "^7.0.8",
 		"lint-staged": "^12.5.0",
 		"msw": "1.3.2",

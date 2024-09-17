@@ -15,7 +15,7 @@ import (
 
 var (
 	// TODO(srikanthccv): make this configurable?
-	windowSize = 7
+	movingAvgWindowSize = 7
 )
 
 // BaseProvider is an interface that includes common methods for all provider types
@@ -179,24 +179,31 @@ func (p *BaseSeasonalProvider) getStdDev(series *v3.Series) float64 {
 
 // getMovingAvg gets the moving average for the given series
 // for the given window size and start index
-func (p *BaseSeasonalProvider) getMovingAvg(series *v3.Series, windowSize, startIdx int) float64 {
+func (p *BaseSeasonalProvider) getMovingAvg(series *v3.Series, movingAvgWindowSize, startIdx int) float64 {
 	if series == nil || len(series.Points) == 0 {
 		return 0
 	}
-	if startIdx >= len(series.Points)-windowSize {
-		startIdx = len(series.Points) - windowSize
+	if startIdx >= len(series.Points)-movingAvgWindowSize {
+		startIdx = len(series.Points) - movingAvgWindowSize
 	}
 	var sum float64
 	points := series.Points[startIdx:]
-	for i := 0; i < windowSize && i < len(points); i++ {
+	for i := 0; i < movingAvgWindowSize && i < len(points); i++ {
 		sum += points[i].Value
 	}
-	avg := sum / float64(windowSize)
+	avg := sum / float64(movingAvgWindowSize)
 	return avg
 }
 
-func (p *BaseSeasonalProvider) getMean(past, past2, past3 float64) float64 {
-	return (past + past2 + past3) / 3
+func (p *BaseSeasonalProvider) getMean(floats ...float64) float64 {
+	if len(floats) == 0 {
+		return 0
+	}
+	var sum float64
+	for _, f := range floats {
+		sum += f
+	}
+	return sum / float64(len(floats))
 }
 
 func (p *BaseSeasonalProvider) getPredictedSeries(
@@ -214,16 +221,16 @@ func (p *BaseSeasonalProvider) getPredictedSeries(
 	// minus the mean of the past season series, past2 season series and past3 season series
 	for idx, curr := range series.Points {
 		predictedValue :=
-			p.getMovingAvg(prevSeries, windowSize, idx) +
+			p.getMovingAvg(prevSeries, movingAvgWindowSize, idx) +
 				p.getAvg(currentSeasonSeries) -
 				p.getMean(p.getAvg(pastSeasonSeries), p.getAvg(past2SeasonSeries), p.getAvg(past3SeasonSeries))
 
 		if predictedValue < 0 {
-			predictedValue = p.getMovingAvg(prevSeries, windowSize, idx)
+			predictedValue = p.getMovingAvg(prevSeries, movingAvgWindowSize, idx)
 		}
 
 		zap.L().Info("predictedSeries",
-			zap.Float64("movingAvg", p.getMovingAvg(prevSeries, windowSize, idx)),
+			zap.Float64("movingAvg", p.getMovingAvg(prevSeries, movingAvgWindowSize, idx)),
 			zap.Float64("avg", p.getAvg(currentSeasonSeries)),
 			zap.Float64("mean", p.getMean(p.getAvg(pastSeasonSeries), p.getAvg(past2SeasonSeries), p.getAvg(past3SeasonSeries))),
 			zap.Any("labels", series.Labels),
@@ -259,8 +266,8 @@ func (p *BaseSeasonalProvider) getBounds(
 	}
 
 	for idx, curr := range series.Points {
-		upperBound := p.getMovingAvg(prevSeries, windowSize, idx) + zScoreThreshold*p.getStdDev(series)
-		lowerBound := p.getMovingAvg(prevSeries, windowSize, idx) - zScoreThreshold*p.getStdDev(series)
+		upperBound := p.getMovingAvg(prevSeries, movingAvgWindowSize, idx) + zScoreThreshold*p.getStdDev(series)
+		lowerBound := p.getMovingAvg(prevSeries, movingAvgWindowSize, idx) - zScoreThreshold*p.getStdDev(series)
 		upperBoundSeries.Points = append(upperBoundSeries.Points, v3.Point{
 			Timestamp: curr.Timestamp,
 			Value:     upperBound,
@@ -280,7 +287,7 @@ func (p *BaseSeasonalProvider) getBounds(
 func (p *BaseSeasonalProvider) getExpectedValue(
 	_, prevSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries *v3.Series, idx int,
 ) float64 {
-	prevSeriesAvg := p.getMovingAvg(prevSeries, windowSize, idx)
+	prevSeriesAvg := p.getMovingAvg(prevSeries, movingAvgWindowSize, idx)
 	currentSeasonSeriesAvg := p.getAvg(currentSeasonSeries)
 	pastSeasonSeriesAvg := p.getAvg(pastSeasonSeries)
 	past2SeasonSeriesAvg := p.getAvg(past2SeasonSeries)
