@@ -91,6 +91,7 @@ function DashboardsList(): JSX.Element {
 	const {
 		data: dashboardListResponse,
 		isLoading: isDashboardListLoading,
+		isRefetching: isDashboardListRefetching,
 		error: dashboardFetchError,
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
@@ -703,7 +704,9 @@ function DashboardsList(): JSX.Element {
 					</Flex>
 				</div>
 
-				{isDashboardListLoading || isFilteringDashboards ? (
+				{isDashboardListLoading ||
+				isFilteringDashboards ||
+				isDashboardListRefetching ? (
 					<div className="loading-dashboard-details">
 						<Skeleton.Input active size="large" className="skeleton-1" />
 						<Skeleton.Input active size="large" className="skeleton-1" />
@@ -902,7 +905,11 @@ function DashboardsList(): JSX.Element {
 									columns={columns}
 									dataSource={data}
 									showSorterTooltip
-									loading={isDashboardListLoading || isFilteringDashboards}
+									loading={
+										isDashboardListLoading ||
+										isFilteringDashboards ||
+										isDashboardListRefetching
+									}
 									showHeader={false}
 									pagination={paginationConfig}
 								/>
