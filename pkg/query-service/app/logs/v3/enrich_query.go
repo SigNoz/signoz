@@ -61,26 +61,23 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 	return false
 }
 
+// if the field is timestamp/id/value we don't need to enrich
+// if the field is static we don't need to enrich
+// for all others we need to enrich
+// an attribute/resource can be materialized/dematerialized
+// but the query should work regardless and shouldn't fail
 func isEnriched(field v3.AttributeKey) bool {
 	// if it is timestamp/id dont check
 	if field.Key == "timestamp" || field.Key == "id" || field.Key == constants.SigNozOrderByValue {
 		return true
 	}
 
-	if field.IsColumn {
+	// don't need to enrich the static fields as they will be always used a column
+	if _, ok := constants.StaticFieldsLogsV3[field.Key]; ok && field.IsColumn {
 		return true
 	}
 
-	if field.Type == v3.AttributeKeyTypeUnspecified || field.DataType == v3.AttributeKeyDataTypeUnspecified {
-		return false
-	}
-
-	// try to enrich all attributes which doesn't have isColumn = true
-	if !field.IsColumn {
-		return false
-	}
-
-	return true
+	return false
 }
 
 func Enrich(params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey) {

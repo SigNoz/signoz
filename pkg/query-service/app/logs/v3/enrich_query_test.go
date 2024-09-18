@@ -51,7 +51,7 @@ var testEnrichmentRequiredData = []struct {
 		EnrichmentRequired: true,
 	},
 	{
-		Name: "filter enrichment not required",
+		Name: "filter enrichment required",
 		Params: v3.QueryRangeParamsV3{
 			CompositeQuery: &v3.CompositeQuery{
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -87,7 +87,7 @@ var testEnrichmentRequiredData = []struct {
 		EnrichmentRequired: true,
 	},
 	{
-		Name: "filter enrichment not required required json",
+		Name: "filter enrichment required required json",
 		Params: v3.QueryRangeParamsV3{
 			CompositeQuery: &v3.CompositeQuery{
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -105,7 +105,7 @@ var testEnrichmentRequiredData = []struct {
 		EnrichmentRequired: true,
 	},
 	{
-		Name: "groupBy enrichment not required",
+		Name: "groupBy enrichment required",
 		Params: v3.QueryRangeParamsV3{
 			CompositeQuery: &v3.CompositeQuery{
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -194,8 +194,9 @@ var testEnrichmentRequiredData = []struct {
 						QueryName:  "test",
 						Expression: "test",
 						DataSource: v3.DataSourceLogs,
-						GroupBy:    []v3.AttributeKey{{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-						OrderBy:    []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "ASC"}},
+						// here we have to fallback to trace_id attribute instead of column
+						GroupBy: []v3.AttributeKey{{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+						OrderBy: []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "ASC"}},
 					},
 				},
 			},
@@ -387,6 +388,71 @@ var testEnrichParamsData = []struct {
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 							{Key: v3.AttributeKey{Key: "test", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "test", Operator: "="},
 							{Key: v3.AttributeKey{Key: "test", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "test1", Operator: "="},
+						}},
+					},
+				},
+			},
+		},
+	},
+	{
+		Name: "Enrich if an attribute/resource attribute is materialized/dematerialized",
+		Params: v3.QueryRangeParamsV3{
+			CompositeQuery: &v3.CompositeQuery{
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"test": {
+						QueryName:  "test",
+						Expression: "test",
+						DataSource: v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{
+							Key:      "mat_resource",
+							Type:     v3.AttributeKeyTypeResource,
+							DataType: v3.AttributeKeyDataTypeInt64,
+							IsColumn: true,
+						},
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "mat_attr", Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "test", Operator: "="},
+							{Key: v3.AttributeKey{Key: "normal_attr", DataType: v3.AttributeKeyDataTypeString, IsColumn: false}, Value: "test1", Operator: "="},
+						}},
+					},
+				},
+			},
+		},
+		Fields: map[string]v3.AttributeKey{
+			"mat_resource": {
+				Key:      "mat_resource",
+				Type:     v3.AttributeKeyTypeResource,
+				DataType: v3.AttributeKeyDataTypeInt64,
+				IsColumn: false,
+			},
+			"mat_attr": {
+				Key:      "mat_attr",
+				Type:     v3.AttributeKeyTypeTag,
+				DataType: v3.AttributeKeyDataTypeString,
+				IsColumn: false,
+			},
+			"normal_attr": {
+				Key:      "normal_attr",
+				Type:     v3.AttributeKeyTypeTag,
+				DataType: v3.AttributeKeyDataTypeString,
+				IsColumn: true,
+			},
+		},
+		Result: v3.QueryRangeParamsV3{
+			CompositeQuery: &v3.CompositeQuery{
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"test": {
+						QueryName:  "test",
+						Expression: "test",
+						DataSource: v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{
+							Key:      "mat_resource",
+							Type:     v3.AttributeKeyTypeResource,
+							DataType: v3.AttributeKeyDataTypeInt64,
+							IsColumn: false,
+						},
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "mat_attr", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString, IsColumn: false}, Value: "test", Operator: "="},
+							{Key: v3.AttributeKey{Key: "normal_attr", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "test1", Operator: "="},
 						}},
 					},
 				},
