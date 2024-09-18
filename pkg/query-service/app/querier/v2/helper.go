@@ -262,6 +262,7 @@ func (q *querier) runBuilderQuery(
 		}
 	}
 	misses, replaceCachedData := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
+	fmt.Println("misses", misses, "replaceCachedData", replaceCachedData, "cachedData", string(cachedData), "start", start, "end", end, "builderQuery.StepInterval", builderQuery.StepInterval)
 	missedSeries := make([]*v3.Series, 0)
 	cachedSeries := make([]*v3.Series, 0)
 	for _, miss := range misses {

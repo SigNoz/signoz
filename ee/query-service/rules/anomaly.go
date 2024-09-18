@@ -5,19 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"regexp"
-	"sort"
 	"strings"
 	"sync"
 	"time"
-	"unicode"
 
 	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/ee/query-service/anomaly"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/converter"
 	"go.signoz.io/signoz/pkg/query-service/model"
 
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
@@ -42,14 +38,8 @@ const (
 
 type AnomalyRule struct {
 	*baserules.BaseRule
-	// temporalityMap is a map of metric name to temporality
-	// to avoid fetching temporality for the same metric multiple times
-	// querying the v4 table on low cardinal temporality column
-	// should be fast but we can still avoid the query if we have the data in memory
-	temporalityMap map[string]map[v3.Temporality]bool
 
-	active map[uint64]*baserules.Alert
-	mtx    sync.Mutex
+	mtx sync.Mutex
 
 	reader interfaces.Reader
 
@@ -80,10 +70,8 @@ func NewAnomalyRule(
 	}
 
 	t := AnomalyRule{
-		BaseRule:       baseRule,
-		temporalityMap: make(map[string]map[v3.Temporality]bool),
+		BaseRule: baseRule,
 	}
-	t.active = make(map[uint64]*baserules.Alert)
 
 	if strings.ToLower(p.RuleCondition.Seasonality) == "hourly" {
 		t.seasonality = anomaly.SeasonalityHourly
@@ -99,14 +87,14 @@ func NewAnomalyRule(
 
 	querierOption := querier.QuerierOptions{
 		Reader:        reader,
-		Cache:         nil,
+		Cache:         cache,
 		KeyGenerator:  queryBuilder.NewKeyGenerator(),
 		FeatureLookup: featureFlags,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
 		Reader:        reader,
-		Cache:         nil,
+		Cache:         cache,
 		KeyGenerator:  queryBuilder.NewKeyGenerator(),
 		FeatureLookup: featureFlags,
 	}
@@ -143,22 +131,6 @@ func (r *AnomalyRule) Type() baserules.RuleType {
 	return RuleTypeAnomaly
 }
 
-func (r *AnomalyRule) targetVal() float64 {
-	if r.Condition() == nil || r.Condition().Target == nil {
-		return 0
-	}
-
-	// get the converter for the target unit
-	unitConverter := converter.FromUnit(converter.Unit(r.Condition().TargetUnit))
-	// convert the target value to the y-axis unit
-	value := unitConverter.Convert(converter.Value{
-		F: *r.Condition().Target,
-		U: converter.Unit(r.Condition().TargetUnit),
-	}, converter.Unit(r.Unit()))
-
-	return value.F
-}
-
 func (r *AnomalyRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3, error) {
 
 	zap.L().Info("prepareQueryRange", zap.Int64("ts", ts.UnixMilli()), zap.Int64("evalWindow", r.EvalWindow().Milliseconds()), zap.Int64("evalDelay", r.EvalDelay().Milliseconds()))
@@ -187,49 +159,12 @@ func (r *AnomalyRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3, e
 		Step:           int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
 		CompositeQuery: compositeQuery,
 		Variables:      make(map[string]interface{}, 0),
-		NoCache:        true,
+		NoCache:        false,
 	}, nil
 }
 
 func (r *AnomalyRule) GetSelectedQuery() string {
-	if r.Condition() != nil {
-		if r.Condition().SelectedQuery != "" {
-			return r.Condition().SelectedQuery
-		}
-
-		queryNames := map[string]struct{}{}
-
-		if r.Condition().CompositeQuery != nil {
-			if r.Condition().QueryType() == v3.QueryTypeBuilder {
-				for name := range r.Condition().CompositeQuery.BuilderQueries {
-					queryNames[name] = struct{}{}
-				}
-			} else if r.Condition().QueryType() == v3.QueryTypeClickHouseSQL {
-				for name := range r.Condition().CompositeQuery.ClickHouseQueries {
-					queryNames[name] = struct{}{}
-				}
-			}
-		}
-
-		// The following logic exists for backward compatibility
-		// If there is no selected query, then
-		// - check if F1 is present, if yes, return F1
-		// - else return the query with max ascii value
-		// this logic is not really correct. we should be considering
-		// whether the query is enabled or not. but this is a temporary
-		// fix to support backward compatibility
-		if _, ok := queryNames["F1"]; ok {
-			return "F1"
-		}
-		keys := make([]string, 0, len(queryNames))
-		for k := range queryNames {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		return keys[len(keys)-1]
-	}
-	// This should never happen
-	return ""
+	return r.Condition().GetSelectedQueryName()
 }
 
 func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (baserules.Vector, error) {
@@ -238,7 +173,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (baser
 	if err != nil {
 		return nil, err
 	}
-	err = r.populateTemporality(ctx, params)
+	err = r.PopulateTemporality(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("internal error while setting temporality")
 	}
@@ -273,23 +208,6 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (baser
 	return resultVector, nil
 }
 
-func normalizeLabelName(name string) string {
-	// See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
-
-	// Regular expression to match non-alphanumeric characters except underscores
-	reg := regexp.MustCompile(`[^a-zA-Z0-9_]`)
-
-	// Replace all non-alphanumeric characters except underscores with underscores
-	normalized := reg.ReplaceAllString(name, "_")
-
-	// If the first character is not a letter or an underscore, prepend an underscore
-	if len(normalized) > 0 && !unicode.IsLetter(rune(normalized[0])) && normalized[0] != '_' {
-		normalized = "_" + normalized
-	}
-
-	return normalized
-}
-
 func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
 
 	prevState := r.State()
@@ -314,7 +232,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		}
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
-		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
+		threshold := valueFormatter.Format(r.TargetVal(), r.Unit())
 		zap.L().Debug("Alert template data for rule", zap.String("name", r.Name()), zap.String("formatter", valueFormatter.Name()), zap.String("value", value), zap.String("threshold", threshold))
 
 		tmplData := baserules.AlertTemplateData(l, value, threshold)
@@ -354,7 +272,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 
 		annotations := make(labels.Labels, 0, len(r.Annotations().Map()))
 		for name, value := range r.Annotations().Map() {
-			annotations = append(annotations, labels.Label{Name: normalizeLabelName(name), Value: expand(value)})
+			annotations = append(annotations, labels.Label{Name: common.NormalizeLabelName(name), Value: expand(value)})
 		}
 		if smpl.IsMissing {
 			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
@@ -389,7 +307,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
 		// Update the last value and annotations if so, create a new alert entry otherwise.
-		if alert, ok := r.active[h]; ok && alert.State != model.StateInactive {
+		if alert, ok := r.Active[h]; ok && alert.State != model.StateInactive {
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
@@ -397,13 +315,13 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 			continue
 		}
 
-		r.active[h] = a
+		r.Active[h] = a
 	}
 
 	itemsToAdd := []model.RuleStateHistory{}
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
-	for fp, a := range r.active {
+	for fp, a := range r.Active {
 		labelsJSON, err := json.Marshal(a.QueryResultLables)
 		if err != nil {
 			zap.L().Error("error marshaling labels", zap.Error(err), zap.Any("labels", a.Labels))
@@ -412,7 +330,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
 			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > baserules.ResolvedRetention) {
-				delete(r.active, fp)
+				delete(r.Active, fp)
 			}
 			if a.State != model.StateInactive {
 				a.State = model.StateInactive
@@ -471,7 +389,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		}
 	}
 
-	return len(r.active), nil
+	return len(r.Active), nil
 }
 
 func (r *AnomalyRule) String() string {
@@ -491,61 +409,4 @@ func (r *AnomalyRule) String() string {
 	}
 
 	return string(byt)
-}
-
-// populateTemporality same as addTemporality but for v4 and better
-func (r *AnomalyRule) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
-
-	missingTemporality := make([]string, 0)
-	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
-	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
-		for _, query := range qp.CompositeQuery.BuilderQueries {
-			// if there is no temporality specified in the query but we have it in the map
-			// then use the value from the map
-			if query.Temporality == "" && r.temporalityMap[query.AggregateAttribute.Key] != nil {
-				// We prefer delta if it is available
-				if r.temporalityMap[query.AggregateAttribute.Key][v3.Delta] {
-					query.Temporality = v3.Delta
-				} else if r.temporalityMap[query.AggregateAttribute.Key][v3.Cumulative] {
-					query.Temporality = v3.Cumulative
-				} else {
-					query.Temporality = v3.Unspecified
-				}
-			}
-			// we don't have temporality for this metric
-			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
-				missingTemporality = append(missingTemporality, query.AggregateAttribute.Key)
-			}
-			if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
-				metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
-			}
-		}
-	}
-
-	var nameToTemporality map[string]map[v3.Temporality]bool
-	var err error
-
-	if len(missingTemporality) > 0 {
-		nameToTemporality, err = r.reader.FetchTemporality(ctx, missingTemporality)
-		if err != nil {
-			return err
-		}
-	}
-
-	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
-		for name := range qp.CompositeQuery.BuilderQueries {
-			query := qp.CompositeQuery.BuilderQueries[name]
-			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
-				if nameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
-					query.Temporality = v3.Delta
-				} else if nameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
-					query.Temporality = v3.Cumulative
-				} else {
-					query.Temporality = v3.Unspecified
-				}
-				r.temporalityMap[query.AggregateAttribute.Key] = nameToTemporality[query.AggregateAttribute.Key]
-			}
-		}
-	}
-	return nil
 }
