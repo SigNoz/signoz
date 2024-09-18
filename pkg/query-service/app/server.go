@@ -710,7 +710,7 @@ func (s *Server) Stop() error {
 }
 
 func makeRulesManager(
-	promConfigPath,
+	_,
 	alertManagerURL string,
 	ruleRepoURL string,
 	db *sqlx.DB,

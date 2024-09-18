@@ -190,7 +190,12 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		return nil, err
 	}
 
-	db := NewRuleDB(o.DBConn)
+	amManager, err := am.New()
+	if err != nil {
+		return nil, err
+	}
+
+	db := NewRuleDB(o.DBConn, amManager)
 
 	telemetry.GetInstance().SetAlertsInfoCallback(db.GetAlertsInfo)
 
