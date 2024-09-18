@@ -4,14 +4,18 @@ import "time"
 
 var (
 	testCases = []struct {
-		targetUnit   string
-		yAxisUnit    string
-		values       [][]interface{}
-		expectAlerts int
-		compareOp    string
-		matchType    string
-		target       float64
-		summaryAny   []string
+		targetUnit         string
+		yAxisUnit          string
+		values             [][]interface{}
+		metaValues         [][]interface{}
+		attrMetaValues     [][]interface{}
+		resourceMetaValues [][]interface{}
+		createTableValues  [][]interface{}
+		expectAlerts       int
+		compareOp          string
+		matchType          string
+		target             float64
+		summaryAny         []string
 	}{
 		{
 			targetUnit: "s",
@@ -23,10 +27,16 @@ var (
 				{float64(299316000), "attr", time.Now().Add(3 * time.Second)},         // 0.3 seconds
 				{float64(66640400.00000001), "attr", time.Now().Add(4 * time.Second)}, // 0.06 seconds
 			},
-			expectAlerts: 0,
-			compareOp:    "1", // Above
-			matchType:    "1", // Once
-			target:       1,   // 1 second
+			metaValues: [][]interface{}{},
+			createTableValues: [][]interface{}{
+				{"statement"},
+			},
+			attrMetaValues:     [][]interface{}{},
+			resourceMetaValues: [][]interface{}{},
+			expectAlerts:       0,
+			compareOp:          "1", // Above
+			matchType:          "1", // Once
+			target:             1,   // 1 second
 		},
 		{
 			targetUnit: "ms",
@@ -38,10 +48,16 @@ var (
 				{float64(299316000), "attr", time.Now().Add(3 * time.Second)},         // 299.31 ms
 				{float64(66640400.00000001), "attr", time.Now().Add(4 * time.Second)}, // 66.64 ms
 			},
-			expectAlerts: 4,
-			compareOp:    "1", // Above
-			matchType:    "1", // Once
-			target:       200, // 200 ms
+			metaValues: [][]interface{}{},
+			createTableValues: [][]interface{}{
+				{"statement"},
+			},
+			attrMetaValues:     [][]interface{}{},
+			resourceMetaValues: [][]interface{}{},
+			expectAlerts:       4,
+			compareOp:          "1", // Above
+			matchType:          "1", // Once
+			target:             200, // 200 ms
 			summaryAny: []string{
 				"observed metric value is 299 ms",
 				"the observed metric value is 573 ms",
@@ -59,10 +75,16 @@ var (
 				{float64(299316000), "attr", time.Now().Add(3 * time.Second)},         // 0.3 GB
 				{float64(66640400.00000001), "attr", time.Now().Add(4 * time.Second)}, // 66.64 MB
 			},
-			expectAlerts: 0,
-			compareOp:    "1", // Above
-			matchType:    "1", // Once
-			target:       200, // 200 GB
+			metaValues: [][]interface{}{},
+			createTableValues: [][]interface{}{
+				{"statement"},
+			},
+			attrMetaValues:     [][]interface{}{},
+			resourceMetaValues: [][]interface{}{},
+			expectAlerts:       0,
+			compareOp:          "1", // Above
+			matchType:          "1", // Once
+			target:             200, // 200 GB
 		},
 	}
 )

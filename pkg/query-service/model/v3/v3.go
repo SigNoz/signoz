@@ -370,11 +370,39 @@ type QueryRangeParamsV3 struct {
 	FormatForWeb   bool                   `json:"formatForWeb,omitempty"`
 }
 
+func (q *QueryRangeParamsV3) Clone() *QueryRangeParamsV3 {
+	if q == nil {
+		return nil
+	}
+	return &QueryRangeParamsV3{
+		Start:          q.Start,
+		End:            q.End,
+		Step:           q.Step,
+		CompositeQuery: q.CompositeQuery.Clone(),
+		Variables:      q.Variables,
+		NoCache:        q.NoCache,
+		Version:        q.Version,
+		FormatForWeb:   q.FormatForWeb,
+	}
+}
+
 type PromQuery struct {
 	Query    string `json:"query"`
 	Stats    string `json:"stats,omitempty"`
 	Disabled bool   `json:"disabled"`
 	Legend   string `json:"legend,omitempty"`
+}
+
+func (p *PromQuery) Clone() *PromQuery {
+	if p == nil {
+		return nil
+	}
+	return &PromQuery{
+		Query:    p.Query,
+		Stats:    p.Stats,
+		Disabled: p.Disabled,
+		Legend:   p.Legend,
+	}
 }
 
 func (p *PromQuery) Validate() error {
@@ -395,6 +423,16 @@ type ClickHouseQuery struct {
 	Legend   string `json:"legend,omitempty"`
 }
 
+func (c *ClickHouseQuery) Clone() *ClickHouseQuery {
+	if c == nil {
+		return nil
+	}
+	return &ClickHouseQuery{
+		Query:    c.Query,
+		Disabled: c.Disabled,
+		Legend:   c.Legend,
+	}
+}
 func (c *ClickHouseQuery) Validate() error {
 	if c == nil {
 		return nil
@@ -418,6 +456,43 @@ type CompositeQuery struct {
 	Unit string `json:"unit,omitempty"`
 	// FillGaps is used to fill the gaps in the time series data
 	FillGaps bool `json:"fillGaps,omitempty"`
+}
+
+func (c *CompositeQuery) Clone() *CompositeQuery {
+	if c == nil {
+		return nil
+	}
+	var builderQueries map[string]*BuilderQuery
+	if c.BuilderQueries != nil {
+		builderQueries = make(map[string]*BuilderQuery)
+		for name, query := range c.BuilderQueries {
+			builderQueries[name] = query.Clone()
+		}
+	}
+	var clickHouseQueries map[string]*ClickHouseQuery
+	if c.ClickHouseQueries != nil {
+		clickHouseQueries = make(map[string]*ClickHouseQuery)
+		for name, query := range c.ClickHouseQueries {
+			clickHouseQueries[name] = query.Clone()
+		}
+	}
+	var promQueries map[string]*PromQuery
+	if c.PromQueries != nil {
+		promQueries = make(map[string]*PromQuery)
+		for name, query := range c.PromQueries {
+			promQueries[name] = query.Clone()
+		}
+	}
+	return &CompositeQuery{
+		BuilderQueries:    builderQueries,
+		ClickHouseQueries: clickHouseQueries,
+		PromQueries:       promQueries,
+		PanelType:         c.PanelType,
+		QueryType:         c.QueryType,
+		Unit:              c.Unit,
+		FillGaps:          c.FillGaps,
+	}
+
 }
 
 func (c *CompositeQuery) EnabledQueries() int {
@@ -645,6 +720,7 @@ const (
 	FunctionNameMedian5     FunctionName = "median5"
 	FunctionNameMedian7     FunctionName = "median7"
 	FunctionNameTimeShift   FunctionName = "timeShift"
+	FunctionNameAnomaly     FunctionName = "anomaly"
 )
 
 func (f FunctionName) Validate() error {
@@ -664,7 +740,8 @@ func (f FunctionName) Validate() error {
 		FunctionNameMedian3,
 		FunctionNameMedian5,
 		FunctionNameMedian7,
-		FunctionNameTimeShift:
+		FunctionNameTimeShift,
+		FunctionNameAnomaly:
 		return nil
 	default:
 		return fmt.Errorf("invalid function name: %s", f)
@@ -672,33 +749,68 @@ func (f FunctionName) Validate() error {
 }
 
 type Function struct {
-	Name FunctionName  `json:"name"`
-	Args []interface{} `json:"args,omitempty"`
+	Name      FunctionName           `json:"name"`
+	Args      []interface{}          `json:"args,omitempty"`
+	NamedArgs map[string]interface{} `json:"namedArgs,omitempty"`
 }
 
 type BuilderQuery struct {
-	QueryName          string            `json:"queryName"`
-	StepInterval       int64             `json:"stepInterval"`
-	DataSource         DataSource        `json:"dataSource"`
-	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
-	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
-	Temporality        Temporality       `json:"temporality,omitempty"`
-	Filters            *FilterSet        `json:"filters,omitempty"`
-	GroupBy            []AttributeKey    `json:"groupBy,omitempty"`
-	Expression         string            `json:"expression"`
-	Disabled           bool              `json:"disabled"`
-	Having             []Having          `json:"having,omitempty"`
-	Legend             string            `json:"legend,omitempty"`
-	Limit              uint64            `json:"limit"`
-	Offset             uint64            `json:"offset"`
-	PageSize           uint64            `json:"pageSize"`
-	OrderBy            []OrderBy         `json:"orderBy,omitempty"`
-	ReduceTo           ReduceToOperator  `json:"reduceTo,omitempty"`
-	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
-	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
-	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
-	Functions          []Function        `json:"functions,omitempty"`
-	ShiftBy            int64
+	QueryName            string            `json:"queryName"`
+	StepInterval         int64             `json:"stepInterval"`
+	DataSource           DataSource        `json:"dataSource"`
+	AggregateOperator    AggregateOperator `json:"aggregateOperator"`
+	AggregateAttribute   AttributeKey      `json:"aggregateAttribute,omitempty"`
+	Temporality          Temporality       `json:"temporality,omitempty"`
+	Filters              *FilterSet        `json:"filters,omitempty"`
+	GroupBy              []AttributeKey    `json:"groupBy,omitempty"`
+	Expression           string            `json:"expression"`
+	Disabled             bool              `json:"disabled"`
+	Having               []Having          `json:"having,omitempty"`
+	Legend               string            `json:"legend,omitempty"`
+	Limit                uint64            `json:"limit"`
+	Offset               uint64            `json:"offset"`
+	PageSize             uint64            `json:"pageSize"`
+	OrderBy              []OrderBy         `json:"orderBy,omitempty"`
+	ReduceTo             ReduceToOperator  `json:"reduceTo,omitempty"`
+	SelectColumns        []AttributeKey    `json:"selectColumns,omitempty"`
+	TimeAggregation      TimeAggregation   `json:"timeAggregation,omitempty"`
+	SpaceAggregation     SpaceAggregation  `json:"spaceAggregation,omitempty"`
+	Functions            []Function        `json:"functions,omitempty"`
+	ShiftBy              int64
+	IsAnomaly            bool
+	QueriesUsedInFormula []string
+}
+
+func (b *BuilderQuery) Clone() *BuilderQuery {
+	if b == nil {
+		return nil
+	}
+	return &BuilderQuery{
+		QueryName:            b.QueryName,
+		StepInterval:         b.StepInterval,
+		DataSource:           b.DataSource,
+		AggregateOperator:    b.AggregateOperator,
+		AggregateAttribute:   b.AggregateAttribute,
+		Temporality:          b.Temporality,
+		Filters:              b.Filters.Clone(),
+		GroupBy:              b.GroupBy,
+		Expression:           b.Expression,
+		Disabled:             b.Disabled,
+		Having:               b.Having,
+		Legend:               b.Legend,
+		Limit:                b.Limit,
+		Offset:               b.Offset,
+		PageSize:             b.PageSize,
+		OrderBy:              b.OrderBy,
+		ReduceTo:             b.ReduceTo,
+		SelectColumns:        b.SelectColumns,
+		TimeAggregation:      b.TimeAggregation,
+		SpaceAggregation:     b.SpaceAggregation,
+		Functions:            b.Functions,
+		ShiftBy:              b.ShiftBy,
+		IsAnomaly:            b.IsAnomaly,
+		QueriesUsedInFormula: b.QueriesUsedInFormula,
+	}
 }
 
 // CanDefaultZero returns true if the missing value can be substituted by zero
@@ -877,6 +989,16 @@ type FilterSet struct {
 	Items    []FilterItem `json:"items"`
 }
 
+func (f *FilterSet) Clone() *FilterSet {
+	if f == nil {
+		return nil
+	}
+	return &FilterSet{
+		Operator: f.Operator,
+		Items:    f.Items,
+	}
+}
+
 func (f *FilterSet) Validate() error {
 	if f == nil {
 		return nil
@@ -1028,12 +1150,15 @@ type Table struct {
 }
 
 type Result struct {
-	QueryName       string    `json:"queryName,omitempty"`
-	Series          []*Series `json:"series,omitempty"`
-	PredictedSeries []*Series `json:"predictedSeries,omitempty"`
-	AnomalyScores   []*Series `json:"anomalyScores,omitempty"`
-	List            []*Row    `json:"list,omitempty"`
-	Table           *Table    `json:"table,omitempty"`
+	QueryName        string    `json:"queryName,omitempty"`
+	Series           []*Series `json:"series,omitempty"`
+	PredictedSeries  []*Series `json:"predictedSeries,omitempty"`
+	UpperBoundSeries []*Series `json:"upperBoundSeries,omitempty"`
+	LowerBoundSeries []*Series `json:"lowerBoundSeries,omitempty"`
+	AnomalyScores    []*Series `json:"anomalyScores,omitempty"`
+	List             []*Row    `json:"list,omitempty"`
+	Table            *Table    `json:"table,omitempty"`
+	IsAnomaly        bool      `json:"isAnomaly,omitempty"`
 }
 
 type Series struct {
