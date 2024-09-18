@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"reflect"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -242,17 +243,17 @@ var testEnrichParamsData = []struct {
 			},
 		},
 		Fields: map[string]v3.AttributeKey{
-			"test": {
+			"test##tag##int64": {
 				Key:      "test",
 				Type:     v3.AttributeKeyTypeTag,
 				DataType: v3.AttributeKeyDataTypeInt64,
 			},
-			"user_name": {
+			"user_name##tag##string": {
 				Key:      "user_name",
 				Type:     v3.AttributeKeyTypeTag,
 				DataType: v3.AttributeKeyDataTypeString,
 			},
-			"response_time": {
+			"response_time##tag##int64": {
 				Key:      "response_time",
 				Type:     v3.AttributeKeyTypeTag,
 				DataType: v3.AttributeKeyDataTypeInt64,
@@ -303,18 +304,18 @@ var testEnrichParamsData = []struct {
 			},
 		},
 		Fields: map[string]v3.AttributeKey{
-			"method.name": {
+			"method.name##tag##string": {
 				Key:      "method.name",
 				Type:     v3.AttributeKeyTypeTag,
 				DataType: v3.AttributeKeyDataTypeString,
 				IsColumn: true,
 			},
-			"service.name": {
+			"service.name##tag##string": {
 				Key:      "service.name",
 				Type:     v3.AttributeKeyTypeTag,
 				DataType: v3.AttributeKeyDataTypeString,
 			},
-			"host.name": {
+			"host.name##tag##string": {
 				Key:      "host.name",
 				Type:     v3.AttributeKeyTypeTag,
 				DataType: v3.AttributeKeyDataTypeString,
@@ -366,7 +367,7 @@ var testEnrichParamsData = []struct {
 			},
 		},
 		Fields: map[string]v3.AttributeKey{
-			"test": {
+			"test##tag##string": {
 				Key:      "test",
 				Type:     v3.AttributeKeyTypeTag,
 				DataType: v3.AttributeKeyDataTypeString,
@@ -418,19 +419,19 @@ var testEnrichParamsData = []struct {
 			},
 		},
 		Fields: map[string]v3.AttributeKey{
-			"mat_resource": {
+			"mat_resource##resource##int64": {
 				Key:      "mat_resource",
 				Type:     v3.AttributeKeyTypeResource,
 				DataType: v3.AttributeKeyDataTypeInt64,
 				IsColumn: false,
 			},
-			"mat_attr": {
+			"mat_attr##tag##string": {
 				Key:      "mat_attr",
 				Type:     v3.AttributeKeyTypeTag,
 				DataType: v3.AttributeKeyDataTypeString,
 				IsColumn: false,
 			},
-			"normal_attr": {
+			"normal_attr##tag##string": {
 				Key:      "normal_attr",
 				Type:     v3.AttributeKeyTypeTag,
 				DataType: v3.AttributeKeyDataTypeString,
@@ -739,6 +740,56 @@ func TestParseStrValue(t *testing.T) {
 			vtype, value := parseStrValue(tt.Value.(string), tt.Operator)
 			So(vtype, ShouldEqual, tt.ResultType)
 			So(value, ShouldEqual, tt.Result)
+		})
+	}
+}
+
+func Test_generateEnrichmentKeys(t *testing.T) {
+	type args struct {
+		field v3.AttributeKey
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "all are present",
+			args: args{
+				field: v3.AttributeKey{
+					Key:      "data",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+				},
+			},
+			want: []string{"data##tag##string"},
+		},
+		{
+			name: "type present",
+			args: args{
+				field: v3.AttributeKey{
+					Key:  "data",
+					Type: v3.AttributeKeyTypeTag,
+				},
+			},
+			want: []string{"data##tag##float64", "data##tag##int64", "data##tag##string", "data##tag##bool"},
+		},
+		{
+			name: "dataType present",
+			args: args{
+				field: v3.AttributeKey{
+					Key:      "data",
+					DataType: v3.AttributeKeyDataTypeString,
+				},
+			},
+			want: []string{"data##tag##string", "data##resource##string"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := generateEnrichmentKeys(tt.args.field); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("generateEnrichmentKeys() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

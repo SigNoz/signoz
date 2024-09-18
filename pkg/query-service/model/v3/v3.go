@@ -287,6 +287,10 @@ func (q AttributeKeyDataType) Validate() error {
 	}
 }
 
+func (q AttributeKeyDataType) String() string {
+	return string(q)
+}
+
 // FilterAttributeValueRequest is a request to fetch possible attribute values
 // for a selected aggregate operator, aggregate attribute, filter attribute key
 // and search text.
@@ -316,6 +320,10 @@ const (
 	AttributeKeyTypeTag         AttributeKeyType = "tag"
 	AttributeKeyTypeResource    AttributeKeyType = "resource"
 )
+
+func (t AttributeKeyType) String() string {
+	return string(t)
+}
 
 type AttributeKey struct {
 	Key      string               `json:"key"`
