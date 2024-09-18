@@ -1,5 +1,8 @@
 import './Header.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
+import { LifeBuoy } from 'lucide-react';
+
 export function OnboardingHeader(): JSX.Element {
 	return (
 		<div className="header-container">
@@ -8,7 +11,7 @@ export function OnboardingHeader(): JSX.Element {
 				<span className="logo-text">SigNoz</span>
 			</div>
 			<div className="get-help-container">
-				<img src="/Icons/get_help.svg" alt="Get Help" />
+				<LifeBuoy size={12} color={Color.BG_VANILLA_400} />
 				<span className="get-help-text ">Get Help</span>
 			</div>
 		</div>

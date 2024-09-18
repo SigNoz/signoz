@@ -19,20 +19,20 @@
 
 .footer-container .footer-content {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	gap: 10px;
 }
 
 .footer-container .footer-link {
 	display: flex;
-	align-items: flex-end;
+	align-items: center;
 	gap: 6px;
 	color: #c0c1c3;
 }
 
 .footer-container .footer-text {
 	color: var(--Vanilla-400, var(--Greyscale-Vanilla-400, #c0c1c3));
-	font-size: 14px;
+	font-size: 12px;
 	font-style: normal;
 	font-weight: 400;
 	line-height: normal;
