@@ -189,21 +189,13 @@ export default function WorkspaceBlocked(): JSX.Element {
 					{/* #FIXME: please suggest if there is any better way to loop in different columns to get the masonry layout */}
 					<Col
 						span={10}
-						style={{
-							display: 'flex',
-							flexDirection: 'column',
-							alignItems: 'flex-end',
-						}}
+						className="workspace-locked__customer-stories__left-container"
 					>
 						{renderCustomerStories((index) => index % 2 === 0)}
 					</Col>
 					<Col
 						span={10}
-						style={{
-							display: 'flex',
-							flexDirection: 'column',
-							alignItems: 'flex-start',
-						}}
+						className="workspace-locked__customer-stories__right-container"
 					>
 						{renderCustomerStories((index) => index % 2 !== 0)}
 					</Col>
@@ -240,7 +232,6 @@ export default function WorkspaceBlocked(): JSX.Element {
 						<Space
 							size="large"
 							direction="vertical"
-							style={{ width: '100%' }}
 							className="workspace-locked__faq-container"
 						>
 							<Collapse items={faqData} defaultActiveKey={['1']} />
