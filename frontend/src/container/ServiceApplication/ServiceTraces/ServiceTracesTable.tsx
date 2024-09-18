@@ -49,10 +49,11 @@ function ServiceTraceTable({
 	return (
 		<>
 			{RPS > MAX_RPS_LIMIT && (
-				<Flex justify="flex-end">
-					<Typography.Text type="warning" style={{ marginTop: 0 }}>
+				<Flex justify="left">
+					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
 						<WarningFilled /> {getText('rps_over_100')}
-					</Typography.Text>
+						<a href="mailto:cloud-support@signoz.io">email</a>
+					</Typography.Title>
 				</Flex>
 			)}
 
