@@ -70,7 +70,9 @@ function InviteTeamMembers({
 				</div>
 
 				<div className="do-later-container">
-					<Button type="link">I&apos;ll do this later</Button>
+					<Button type="link" onClick={onNext}>
+						I&apos;ll do this later
+					</Button>
 				</div>
 			</div>
 		</div>
