@@ -3,9 +3,9 @@ import './OnboardingQuestionaire.styles.scss';
 import { useState } from 'react';
 
 import { AboutSigNozQuestions } from './AboutSigNozQuestions/AboutSigNozQuestions';
-import { OnboardingFooter } from './Footer/Footer';
-import { OnboardingHeader } from './Header/Header';
 import InviteTeamMembers from './InviteTeamMembers/InviteTeamMembers';
+import { OnboardingFooter } from './OnboardingFooter/OnboardingFooter';
+import { OnboardingHeader } from './OnboardingHeader/OnboardingHeader';
 import OptimiseSignozNeeds from './OptimiseSignozNeeds/OptimiseSignozNeeds';
 import OrgQuestions from './OrgQuestions/OrgQuestions';
 

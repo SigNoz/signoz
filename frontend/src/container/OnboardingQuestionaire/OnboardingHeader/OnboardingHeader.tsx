@@ -1,4 +1,4 @@
-import './Header.styles.scss';
+import './OnboardingHeader.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { LifeBuoy } from 'lucide-react';

@@ -1,4 +1,4 @@
-import './Footer.styles.scss';
+import './OnboardingFooter.styles.scss';
 
 import { ArrowUpRight, Dot } from 'lucide-react';
 
