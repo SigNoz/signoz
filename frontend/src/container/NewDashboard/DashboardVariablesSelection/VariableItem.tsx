@@ -500,11 +500,17 @@ function VariableItem({
 											{...retProps(option as string)}
 											onClick={(e): void => handleToggle(e as any, option as string)}
 										>
-											<Tooltip title={option.toString()} placement="bottomRight">
-												<Typography.Text ellipsis className="option-text">
-													{option.toString()}
-												</Typography.Text>
-											</Tooltip>
+											<Typography.Text
+												ellipsis={{
+													tooltip: {
+														placement: variableData.multiSelect ? 'top' : 'right',
+														autoAdjustOverflow: true,
+													},
+												}}
+												className="option-text"
+											>
+												{option.toString()}
+											</Typography.Text>
 
 											{variableData.multiSelect &&
 												optionState.tag === option.toString() &&
