@@ -1,7 +1,11 @@
 import { Button, Slider, SliderSingleProps, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { ArrowLeft, ArrowRight, Minus } from 'lucide-react';
+import { useState } from 'react';
 
 interface OptimiseSignozNeedsProps {
+	optimiseSignozDetails: Record<string, number> | null;
+	setOptimiseSignozDetails: (details: Record<string, number> | null) => void;
 	onNext: () => void;
 	onBack: () => void;
 }
@@ -32,9 +36,69 @@ const serviceMarks: SliderSingleProps['marks'] = {
 };
 
 function OptimiseSignozNeeds({
+	optimiseSignozDetails,
+	setOptimiseSignozDetails,
 	onNext,
 	onBack,
 }: OptimiseSignozNeedsProps): JSX.Element {
+	const [logsPerDay, setLogsPerDay] = useState<number>(
+		optimiseSignozDetails?.logsPerDay || 25,
+	);
+	const [hostsPerDay, setHostsPerDay] = useState<number>(
+		optimiseSignozDetails?.hostsPerDay || 40,
+	);
+	const [services, setServices] = useState<number>(
+		optimiseSignozDetails?.services || 10,
+	);
+
+	const handleOnNext = (): void => {
+		setOptimiseSignozDetails({
+			logsPerDay,
+			hostsPerDay,
+			services,
+		});
+
+		logEvent('Onboarding: Optimise SigNoz Needs: Next', {
+			logsPerDay,
+			hostsPerDay,
+			services,
+		});
+
+		onNext();
+	};
+
+	const handleOnBack = (): void => {
+		setOptimiseSignozDetails({
+			logsPerDay,
+			hostsPerDay,
+			services,
+		});
+
+		logEvent('Onboarding: Optimise SigNoz Needs: Back', {
+			logsPerDay,
+			hostsPerDay,
+			services,
+		});
+
+		onBack();
+	};
+
+	const handleWillDoLater = (): void => {
+		setOptimiseSignozDetails({
+			logsPerDay: 0,
+			hostsPerDay: 0,
+			services: 0,
+		});
+
+		logEvent('Onboarding: Optimise SigNoz Needs: Will do later', {
+			logsPerDay: 0,
+			hostsPerDay: 0,
+			services: 0,
+		});
+
+		onNext();
+	};
+
 	return (
 		<div className="questions-container">
 			<Typography.Title level={3} className="title">
@@ -57,7 +121,8 @@ function OptimiseSignozNeeds({
 						<div className="slider-container">
 							<Slider
 								marks={logMarks}
-								defaultValue={25}
+								defaultValue={logsPerDay}
+								onChange={(value): void => setLogsPerDay(value)}
 								styles={{
 									track: {
 										background: '#4E74F8',
@@ -69,12 +134,13 @@ function OptimiseSignozNeeds({
 
 					<div className="form-group">
 						<label className="question" htmlFor="organisationName">
-							Metrics <Minus size={14} /> Number of Hosts / Day
+							Metrics <Minus size={14} /> Number of Hosts
 						</label>
 						<div className="slider-container">
 							<Slider
 								marks={hostMarks}
-								defaultValue={40}
+								defaultValue={hostsPerDay}
+								onChange={(value): void => setHostsPerDay(value)}
 								styles={{
 									track: {
 										background: '#4E74F8',
@@ -91,7 +157,8 @@ function OptimiseSignozNeeds({
 						<div className="slider-container">
 							<Slider
 								marks={serviceMarks}
-								defaultValue={10}
+								defaultValue={services}
+								onChange={(value): void => setServices(value)}
 								styles={{
 									track: {
 										background: '#4E74F8',
@@ -103,19 +170,19 @@ function OptimiseSignozNeeds({
 				</div>
 
 				<div className="next-prev-container">
-					<Button type="default" className="next-button" onClick={onBack}>
+					<Button type="default" className="next-button" onClick={handleOnBack}>
 						<ArrowLeft size={14} />
 						Back
 					</Button>
 
-					<Button type="primary" className="next-button" onClick={onNext}>
+					<Button type="primary" className="next-button" onClick={handleOnNext}>
 						Next
 						<ArrowRight size={14} />
 					</Button>
 				</div>
 
 				<div className="do-later-container">
-					<Button type="link" onClick={onNext}>
+					<Button type="link" onClick={handleWillDoLater}>
 						I&apos;ll do this later
 					</Button>
 				</div>
