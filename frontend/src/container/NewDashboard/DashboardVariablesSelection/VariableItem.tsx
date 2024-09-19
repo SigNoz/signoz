@@ -357,8 +357,8 @@ function VariableItem({
 			(Array.isArray(selectValue) && selectValue?.includes(option.toString()));
 
 		if (isChecked) {
-			if (mode === ToggleTagValue.Only) {
-				handleChange(option.toString());
+			if (mode === ToggleTagValue.Only && variableData.multiSelect) {
+				handleChange([option.toString()]);
 			} else if (!variableData.multiSelect) {
 				handleChange(option.toString());
 			} else {
