@@ -1,7 +1,6 @@
 import { RocketOutlined } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
 import {
-	AreaChart,
 	BarChart2,
 	BellDot,
 	BugIcon,
@@ -113,11 +112,6 @@ const menuItems: SidebarItem[] = [
 		label: 'Service Map',
 		icon: <Route size={16} />,
 		isBeta: true,
-	},
-	{
-		key: ROUTES.USAGE_EXPLORER,
-		label: 'Usage Explorer',
-		icon: <AreaChart size={16} />,
 	},
 	{
 		key: ROUTES.BILLING,

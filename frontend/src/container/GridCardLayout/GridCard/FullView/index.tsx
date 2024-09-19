@@ -144,7 +144,7 @@ function FullView({
 
 	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
 		boolean[]
-	>(Array(response.data?.payload.data.result.length).fill(true));
+	>(Array(response.data?.payload?.data?.result?.length).fill(true));
 
 	useEffect(() => {
 		const {

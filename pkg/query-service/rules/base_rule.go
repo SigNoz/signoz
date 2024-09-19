@@ -109,6 +109,7 @@ func NewBaseRule(id string, p *PostableRule, reader interfaces.Reader, opts ...R
 		id:                id,
 		name:              p.AlertName,
 		source:            p.Source,
+		typ:               p.AlertType,
 		ruleCondition:     p.RuleCondition,
 		evalWindow:        time.Duration(p.EvalWindow),
 		labels:            qslabels.FromMap(p.Labels),
@@ -199,6 +200,21 @@ func (r *BaseRule) Unit() string {
 		return r.ruleCondition.CompositeQuery.Unit
 	}
 	return ""
+}
+
+func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
+	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli()
+	end := ts.UnixMilli()
+
+	if r.evalDelay > 0 {
+		start = start - int64(r.evalDelay.Milliseconds())
+		end = end - int64(r.evalDelay.Milliseconds())
+	}
+	// round to minute otherwise we could potentially miss data
+	start = start - (start % (60 * 1000))
+	end = end - (end % (60 * 1000))
+
+	return time.UnixMilli(start), time.UnixMilli(end)
 }
 
 func (r *BaseRule) SetLastError(err error) {
@@ -471,9 +487,9 @@ func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
 	return alertSmpl, shouldAlert
 }
 
-func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []v3.RuleStateHistory) error {
+func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []model.RuleStateHistory) error {
 	zap.L().Debug("recording rule state history", zap.String("ruleid", r.ID()), zap.Any("prevState", prevState), zap.Any("currentState", currentState), zap.Any("itemsToAdd", itemsToAdd))
-	revisedItemsToAdd := map[uint64]v3.RuleStateHistory{}
+	revisedItemsToAdd := map[uint64]model.RuleStateHistory{}
 
 	lastSavedState, err := r.reader.GetLastSavedRuleStateHistory(ctx, r.ID())
 	if err != nil {
@@ -483,7 +499,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 	// the state would reset so we need to add the corresponding state changes to previously saved states
 	if !r.handledRestart && len(lastSavedState) > 0 {
 		zap.L().Debug("handling restart", zap.String("ruleid", r.ID()), zap.Any("lastSavedState", lastSavedState))
-		l := map[uint64]v3.RuleStateHistory{}
+		l := map[uint64]model.RuleStateHistory{}
 		for _, item := range itemsToAdd {
 			l[item.Fingerprint] = item
 		}
@@ -552,7 +568,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 	if len(revisedItemsToAdd) > 0 && r.reader != nil {
 		zap.L().Debug("writing rule state history", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
 
-		entries := make([]v3.RuleStateHistory, 0, len(revisedItemsToAdd))
+		entries := make([]model.RuleStateHistory, 0, len(revisedItemsToAdd))
 		for _, item := range revisedItemsToAdd {
 			entries = append(entries, item)
 		}
