@@ -40,6 +40,10 @@ assignees: ''
 
 <!-- Include any other details, special requirements, or specific visualizations you'd like to request for this dashboard. -->
 
+## References or Screenshots
+
+<!-- Add any references or screenshots of requested dashboard if available. -->
+
 ## 📋 Notes
 
 Please review the [CONTRIBUTING.md](https://github.com/SigNoz/dashboards/blob/main/CONTRIBUTING.md) for guidelines on dashboard structure, naming conventions, and how to submit a pull request.
