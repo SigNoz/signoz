@@ -62,6 +62,8 @@ import { v4 as uuid } from 'uuid';
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	currentQuery: initialQueriesMap.metrics,
 	supersetQuery: initialQueriesMap.metrics,
+	lastUsedQuery: null,
+	setLastUsedQuery: () => {},
 	setSupersetQuery: () => {},
 	stagedQuery: initialQueriesMap.metrics,
 	initialDataSource: null,
@@ -117,6 +119,7 @@ export function QueryBuilderProvider({
 
 	const [currentQuery, setCurrentQuery] = useState<QueryState>(queryState);
 	const [supersetQuery, setSupersetQuery] = useState<QueryState>(queryState);
+	const [lastUsedQuery, setLastUsedQuery] = useState<number | null>(0);
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
 
 	const [queryType, setQueryType] = useState<EQueryType>(queryTypeParam);
@@ -815,6 +818,8 @@ export function QueryBuilderProvider({
 			currentPathnameRef.current = location.pathname;
 
 			setStagedQuery(null);
+			// reset the last used query to 0 when navigating away from the page
+			setLastUsedQuery(0);
 		}
 	}, [location, stagedQuery, currentQuery]);
 
@@ -857,6 +862,8 @@ export function QueryBuilderProvider({
 		() => ({
 			currentQuery: query,
 			supersetQuery: superQuery,
+			lastUsedQuery,
+			setLastUsedQuery,
 			setSupersetQuery,
 			stagedQuery,
 			initialDataSource,
@@ -884,6 +891,7 @@ export function QueryBuilderProvider({
 		[
 			query,
 			superQuery,
+			lastUsedQuery,
 			stagedQuery,
 			initialDataSource,
 			panelType,

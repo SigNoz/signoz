@@ -4,6 +4,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Group } from '@visx/group';
 import { Pie } from '@visx/shape';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
@@ -129,7 +130,12 @@ function PiePanelWrapper({
 															showTooltip({
 																tooltipData: {
 																	label,
-																	value: arc.data.value,
+																	// do not update the unit in the data as the arc allotment is based on value
+																	// and treats 4K smaller than 40
+																	value: getYAxisFormattedValue(
+																		arc.data.value,
+																		widget?.yAxisUnit || 'none',
+																	),
 																	color: arc.data.color,
 																	key: label,
 																},
