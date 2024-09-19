@@ -168,16 +168,51 @@ func isValidLabelValue(v string) bool {
 	return utf8.ValidString(v)
 }
 
+func isAllQueriesDisabled(compositeQuery *v3.CompositeQuery) bool {
+	if compositeQuery == nil {
+		return false
+	}
+	if compositeQuery.BuilderQueries == nil && compositeQuery.PromQueries == nil && compositeQuery.ClickHouseQueries == nil {
+		return false
+	}
+	switch compositeQuery.QueryType {
+	case v3.QueryTypeBuilder:
+		for _, query := range compositeQuery.BuilderQueries {
+			if !query.Disabled {
+				return false
+			}
+		}
+	case v3.QueryTypePromQL:
+		for _, query := range compositeQuery.PromQueries {
+			if !query.Disabled {
+				return false
+			}
+		}
+	case v3.QueryTypeClickHouseSQL:
+		for _, query := range compositeQuery.ClickHouseQueries {
+			if !query.Disabled {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func (r *PostableRule) Validate() error {
 
 	var errs []error
 
 	if r.RuleCondition == nil {
-		errs = append(errs, errors.Errorf("rule condition is required"))
+		// will get panic if we try to access CompositeQuery, so return here
+		return errors.Errorf("rule condition is required")
 	} else {
 		if r.RuleCondition.CompositeQuery == nil {
 			errs = append(errs, errors.Errorf("composite metric query is required"))
 		}
+	}
+
+	if isAllQueriesDisabled(r.RuleCondition.CompositeQuery) {
+		errs = append(errs, errors.Errorf("all queries are disabled in rule condition"))
 	}
 
 	if r.RuleType == RuleTypeThreshold {
