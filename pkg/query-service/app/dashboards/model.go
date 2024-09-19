@@ -453,6 +453,7 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 	totalDashboardsWithPanelAndName := 0
 	var dashboardNames []string
 	count := 0
+	logChQueriesCount := 0
 	for _, dashboard := range dashboardsData {
 		if isDashboardWithPanelAndName(dashboard.Data) {
 			totalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName + 1
@@ -468,12 +469,16 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 		if isDashboardWithTSV2(dashboard.Data) {
 			count = count + 1
 		}
+		if isDashboardWithLogsClickhouseQuery(dashboard.Data) {
+			logChQueriesCount = logChQueriesCount + 1
+		}
 	}
 
 	dashboardsInfo.DashboardNames = dashboardNames
 	dashboardsInfo.TotalDashboards = len(dashboardsData)
 	dashboardsInfo.TotalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName
 	dashboardsInfo.QueriesWithTSV2 = count
+	dashboardsInfo.DashboardsWithLogsChQuery = logChQueriesCount
 	return &dashboardsInfo, nil
 }
 
@@ -483,6 +488,16 @@ func isDashboardWithTSV2(data map[string]interface{}) bool {
 		return false
 	}
 	return strings.Contains(string(jsonData), "time_series_v2")
+}
+
+func isDashboardWithLogsClickhouseQuery(data map[string]interface{}) bool {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return false
+	}
+	result := strings.Contains(string(jsonData), "signoz_logs.distributed_logs ") ||
+		strings.Contains(string(jsonData), "signoz_logs.logs ")
+	return result
 }
 
 func isDashboardWithPanelAndName(data map[string]interface{}) bool {
