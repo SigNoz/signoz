@@ -8,6 +8,7 @@ import (
 
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 func PrepareLinksToTraces(start, end time.Time, filterItems []v3.FilterItem) string {
@@ -146,7 +147,7 @@ func PrepareLinksToLogs(start, end time.Time, filterItems []v3.FilterItem) strin
 // by clause, in which case we replace it with the actual value for the notification
 // i.e Severity text = WARN
 // If the Severity text is not part of the group by clause, then we add it as it is
-func PrepareFilters(labels map[string]string, whereClauseItems []v3.FilterItem, groupByItems []v3.AttributeKey, keys map[string]v3.AttributeKey) []v3.FilterItem {
+func PrepareFilters(alertTypeLogs bool, labels map[string]string, whereClauseItems []v3.FilterItem, groupByItems []v3.AttributeKey, keys map[string]v3.AttributeKey) []v3.FilterItem {
 	var filterItems []v3.FilterItem
 
 	added := make(map[string]struct{})
@@ -178,8 +179,21 @@ func PrepareFilters(labels map[string]string, whereClauseItems []v3.FilterItem, 
 	for key, value := range labels {
 		if _, ok := added[key]; !ok {
 			// start by taking the attribute key from the keys map, if not present, create a new one
-			attributeKey, ok := keys[key]
-			if !ok {
+			var attributeKey v3.AttributeKey
+			var attrFound bool
+			if alertTypeLogs {
+				for _, tKey := range utils.GenerateLogEnrichmentKeys(v3.AttributeKey{Key: key}) {
+					if val, ok := keys[tKey]; ok {
+						attributeKey = val
+						attrFound = true
+						break
+					}
+				}
+			} else {
+				attributeKey, attrFound = keys[key]
+			}
+
+			if !attrFound {
 				attributeKey = v3.AttributeKey{Key: key}
 			}
 

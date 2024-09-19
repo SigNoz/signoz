@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"reflect"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -740,56 +739,6 @@ func TestParseStrValue(t *testing.T) {
 			vtype, value := parseStrValue(tt.Value.(string), tt.Operator)
 			So(vtype, ShouldEqual, tt.ResultType)
 			So(value, ShouldEqual, tt.Result)
-		})
-	}
-}
-
-func Test_generateEnrichmentKeys(t *testing.T) {
-	type args struct {
-		field v3.AttributeKey
-	}
-	tests := []struct {
-		name string
-		args args
-		want []string
-	}{
-		{
-			name: "all are present",
-			args: args{
-				field: v3.AttributeKey{
-					Key:      "data",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeTag,
-				},
-			},
-			want: []string{"data##tag##string"},
-		},
-		{
-			name: "type present",
-			args: args{
-				field: v3.AttributeKey{
-					Key:  "data",
-					Type: v3.AttributeKeyTypeTag,
-				},
-			},
-			want: []string{"data##tag##float64", "data##tag##int64", "data##tag##string", "data##tag##bool"},
-		},
-		{
-			name: "dataType present",
-			args: args{
-				field: v3.AttributeKey{
-					Key:      "data",
-					DataType: v3.AttributeKeyDataTypeString,
-				},
-			},
-			want: []string{"data##tag##string", "data##resource##string"},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := generateEnrichmentKeys(tt.args.field); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("generateEnrichmentKeys() = %v, want %v", got, tt.want)
-			}
 		})
 	}
 }

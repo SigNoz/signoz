@@ -7,6 +7,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
@@ -130,37 +131,6 @@ func EnrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) 
 	return nil
 }
 
-// This tries to see all possible fields that it can fall back to if some meta is missing
-// check Test_generateEnrichmentKeys for example
-func generateEnrichmentKeys(field v3.AttributeKey) []string {
-	names := []string{}
-	if field.Type != v3.AttributeKeyTypeUnspecified && field.DataType != v3.AttributeKeyDataTypeUnspecified {
-		names = append(names, field.Key+"##"+field.Type.String()+"##"+field.DataType.String())
-		return names
-	}
-
-	types := []string{}
-	dTypes := []string{}
-	if field.Type != v3.AttributeKeyTypeUnspecified {
-		types = append(types, field.Type.String())
-	} else {
-		types = append(types, v3.AttributeKeyTypeTag.String(), v3.AttributeKeyTypeResource.String())
-	}
-	if field.DataType != v3.AttributeKeyDataTypeUnspecified {
-		dTypes = append(dTypes, field.DataType.String())
-	} else {
-		dTypes = append(dTypes, v3.AttributeKeyDataTypeFloat64.String(), v3.AttributeKeyDataTypeInt64.String(), v3.AttributeKeyDataTypeString.String(), v3.AttributeKeyDataTypeBool.String())
-	}
-
-	for _, t := range types {
-		for _, d := range dTypes {
-			names = append(names, field.Key+"##"+t+"##"+d)
-		}
-	}
-
-	return names
-}
-
 func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.AttributeKey) v3.AttributeKey {
 	if isEnriched(field) {
 		return field
@@ -172,7 +142,7 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 	}
 
 	// check if the field is present in the fields map
-	for _, key := range generateEnrichmentKeys(field) {
+	for _, key := range utils.GenerateLogEnrichmentKeys(field) {
 		if val, ok := fields[key]; ok {
 			return val
 		}
