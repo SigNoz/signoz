@@ -41,6 +41,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/contextlinks"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 
@@ -151,7 +152,7 @@ type APIHandlerOpts struct {
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
-	alertManager, err := am.New("")
+	alertManager, err := am.New()
 	if err != nil {
 		return nil, err
 	}
@@ -396,11 +397,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/grafana", am.EditAccess(aH.createDashboardsTransform)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/variables/query", am.ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.getSavedViews)).Methods(http.MethodGet)
@@ -671,7 +670,7 @@ func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 
 func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
-	params := v3.QueryRuleStateHistory{}
+	params := model.QueryRuleStateHistory{}
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -737,7 +736,7 @@ func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 		pastAvgResolutionTime = 0
 	}
 
-	stats := v3.Stats{
+	stats := model.Stats{
 		TotalCurrentTriggers:           totalCurrentTriggers,
 		TotalPastTriggers:              totalPastTriggers,
 		CurrentTriggersSeries:          currentTriggersSeries,
@@ -753,7 +752,7 @@ func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
-	params := v3.QueryRuleStateHistory{}
+	params := model.QueryRuleStateHistory{}
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -769,9 +768,51 @@ func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.
 	aH.Respond(w, stateItems)
 }
 
+func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule) ([]v3.FilterItem, []v3.AttributeKey, map[string]v3.AttributeKey) {
+	filterItems := []v3.FilterItem{}
+	groupBy := []v3.AttributeKey{}
+	keys := make(map[string]v3.AttributeKey)
+
+	if rule.AlertType == rules.AlertTypeLogs {
+		logFields, err := aH.reader.GetLogFields(ctx)
+		if err == nil {
+			params := &v3.QueryRangeParamsV3{
+				CompositeQuery: rule.RuleCondition.CompositeQuery,
+			}
+			keys = model.GetLogFieldsV3(ctx, params, logFields)
+		} else {
+			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
+		}
+	} else if rule.AlertType == rules.AlertTypeTraces {
+		traceFields, err := aH.reader.GetSpanAttributeKeys(ctx)
+		if err == nil {
+			keys = traceFields
+		} else {
+			zap.L().Error("failed to get span attributes using empty keys; the link might not work as expected", zap.Error(err))
+		}
+	}
+
+	if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
+		if rule.RuleCondition.CompositeQuery != nil {
+			if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
+				selectedQuery := rule.RuleCondition.GetSelectedQueryName()
+				if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+					rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters != nil {
+					filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
+				}
+				if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+					rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy != nil {
+					groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
+				}
+			}
+		}
+	}
+	return filterItems, groupBy, keys
+}
+
 func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
-	params := v3.QueryRuleStateHistory{}
+	params := model.QueryRuleStateHistory{}
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -796,24 +837,18 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			if err != nil {
 				continue
 			}
-			filterItems := []v3.FilterItem{}
-			if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
-				if rule.RuleCondition.CompositeQuery != nil {
-					if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
-						for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
-							if query.Filters != nil && len(query.Filters.Items) > 0 {
-								filterItems = append(filterItems, query.Filters.Items...)
-							}
-						}
-					}
-				}
-			}
-			newFilters := common.PrepareFilters(lbls, filterItems)
-			ts := time.Unix(res.Items[idx].UnixMilli/1000, 0)
+			filterItems, groupBy, keys := aH.metaForLinks(r.Context(), rule)
+			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy, keys)
+			end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
+			// why are we subtracting 3 minutes?
+			// the query range is calculated based on the rule's evalWindow and evalDelay
+			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
+			// to get the correct query range
+			start := end.Add(-time.Duration(rule.EvalWindow)).Add(-3 * time.Minute)
 			if rule.AlertType == rules.AlertTypeLogs {
-				res.Items[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, newFilters)
+				res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
 			} else if rule.AlertType == rules.AlertTypeTraces {
-				res.Items[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, newFilters)
+				res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
 			}
 		}
 	}
@@ -823,7 +858,7 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 
 func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
-	params := v3.QueryRuleStateHistory{}
+	params := model.QueryRuleStateHistory{}
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -844,12 +879,14 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 			if err != nil {
 				continue
 			}
-			ts := time.Unix(params.End/1000, 0)
-			filters := common.PrepareFilters(lbls, nil)
+			filterItems, groupBy, keys := aH.metaForLinks(r.Context(), rule)
+			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy, keys)
+			end := time.Unix(params.End/1000, 0)
+			start := time.Unix(params.Start/1000, 0)
 			if rule.AlertType == rules.AlertTypeLogs {
-				res[idx].RelatedLogsLink = common.PrepareLinksToLogs(ts, filters)
+				res[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
 			} else if rule.AlertType == rules.AlertTypeTraces {
-				res[idx].RelatedTracesLink = common.PrepareLinksToTraces(ts, filters)
+				res[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
 			}
 		}
 	}
@@ -939,25 +976,6 @@ func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, nil)
 
-}
-
-func (aH *APIHandler) queryDashboardVars(w http.ResponseWriter, r *http.Request) {
-
-	query := r.URL.Query().Get("query")
-	if query == "" {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query is required")}, nil)
-		return
-	}
-	if strings.Contains(strings.ToLower(query), "alter table") {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query shouldn't alter data")}, nil)
-		return
-	}
-	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-	aH.Respond(w, dashboardVars)
 }
 
 func prepareQuery(r *http.Request) (string, error) {
@@ -1070,44 +1088,6 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, dashboard)
 
-}
-
-func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, r *http.Request, signozDashboard model.DashboardData) {
-	toSave := make(map[string]interface{})
-	toSave["title"] = signozDashboard.Title
-	toSave["description"] = signozDashboard.Description
-	toSave["tags"] = signozDashboard.Tags
-	toSave["layout"] = signozDashboard.Layout
-	toSave["widgets"] = signozDashboard.Widgets
-	toSave["variables"] = signozDashboard.Variables
-
-	dashboard, apiError := dashboards.CreateDashboard(r.Context(), toSave, aH.featureFlags)
-	if apiError != nil {
-		RespondError(w, apiError, nil)
-		return
-	}
-	aH.Respond(w, dashboard)
-}
-
-func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.Request) {
-
-	defer r.Body.Close()
-	b, err := io.ReadAll(r.Body)
-
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
-		return
-	}
-
-	var importData model.GrafanaJSON
-
-	err = json.Unmarshal(b, &importData)
-	if err == nil {
-		signozDashboard := dashboards.TransformGrafanaJSONToSignoz(importData)
-		aH.saveAndReturn(w, r, signozDashboard)
-		return
-	}
-	RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error while creating dashboard from grafana json")
 }
 
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
@@ -1224,7 +1204,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	channel, apiErrorObj := aH.reader.GetChannel(id)
+	channel, apiErrorObj := aH.ruleManager.RuleDB().GetChannel(id)
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
 		return
@@ -1234,7 +1214,7 @@ func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	apiErrorObj := aH.reader.DeleteChannel(id)
+	apiErrorObj := aH.ruleManager.RuleDB().DeleteChannel(id)
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
 		return
@@ -1243,7 +1223,7 @@ func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
-	channels, apiErrorObj := aH.reader.GetChannels()
+	channels, apiErrorObj := aH.ruleManager.RuleDB().GetChannels()
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
 		return
@@ -1296,7 +1276,7 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErrorObj := aH.reader.EditChannel(receiver, id)
+	_, apiErrorObj := aH.ruleManager.RuleDB().EditChannel(receiver, id)
 
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
@@ -1324,7 +1304,7 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErrorObj := aH.reader.CreateChannel(receiver)
+	_, apiErrorObj := aH.ruleManager.RuleDB().CreateChannel(receiver)
 
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
@@ -3569,55 +3549,6 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	aH.Respond(w, response)
 }
 
-func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
-	data := map[string]v3.AttributeKey{}
-	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
-		if query.DataSource == v3.DataSourceLogs {
-			fields, apiError := aH.reader.GetLogFields(ctx)
-			if apiError != nil {
-				return nil, apiError.Err
-			}
-
-			// top level fields meta will always be present in the frontend. (can be support for that as enchancement)
-			getType := func(t string) (v3.AttributeKeyType, bool) {
-				if t == "attributes" {
-					return v3.AttributeKeyTypeTag, false
-				} else if t == "resources" {
-					return v3.AttributeKeyTypeResource, false
-				}
-				return "", true
-			}
-
-			for _, selectedField := range fields.Selected {
-				fieldType, pass := getType(selectedField.Type)
-				if pass {
-					continue
-				}
-				data[selectedField.Name] = v3.AttributeKey{
-					Key:      selectedField.Name,
-					Type:     fieldType,
-					DataType: v3.AttributeKeyDataType(strings.ToLower(selectedField.DataType)),
-					IsColumn: true,
-				}
-			}
-			for _, interestingField := range fields.Interesting {
-				fieldType, pass := getType(interestingField.Type)
-				if pass {
-					continue
-				}
-				data[interestingField.Name] = v3.AttributeKey{
-					Key:      interestingField.Name,
-					Type:     fieldType,
-					DataType: v3.AttributeKeyDataType(strings.ToLower(interestingField.DataType)),
-					IsColumn: false,
-				}
-			}
-			break
-		}
-	}
-	return data, nil
-}
-
 func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
 	data := map[string]v3.AttributeKey{}
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
@@ -3659,14 +3590,14 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
-			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+			logsFields, err := aH.reader.GetLogFields(ctx)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, errQuriesByName)
 				return
 			}
+			// get the fields if any logs query is present
+			fields := model.GetLogFieldsV3(ctx, queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
@@ -3698,15 +3629,19 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	// Hook up query progress tracking if requested
 	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
 	if len(queryIdHeader) > 0 {
-		ctx = context.WithValue(ctx, "queryId", queryIdHeader)
-
 		onQueryFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
+
 		if err != nil {
 			zap.L().Error(
 				"couldn't report query start for progress tracking",
 				zap.String("queryId", queryIdHeader), zap.Error(err),
 			)
+
 		} else {
+			// Adding queryId to the context signals clickhouse queries to report progress
+			//lint:ignore SA1029 ignore for now
+			ctx = context.WithValue(ctx, "queryId", queryIdHeader)
+
 			defer func() {
 				go onQueryFinished()
 			}()
@@ -3716,8 +3651,12 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams)
 
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		queryErrors := map[string]string{}
+		for name, err := range errQuriesByName {
+			queryErrors[fmt.Sprintf("Query-%s", name)] = err.Error()
+		}
+		apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		RespondError(w, apiErrObj, queryErrors)
 		return
 	}
 
@@ -3953,13 +3892,13 @@ func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
 			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(r.Context(), queryRangeParams)
+			logsFields, err := aH.reader.GetLogFields(r.Context())
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, nil)
 				return
 			}
+			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
@@ -3992,7 +3931,7 @@ func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
 	flusher.Flush()
 
 	// create the client
-	client := &v3.LogsLiveTailClientV2{Name: r.RemoteAddr, Logs: make(chan *model.SignozLogV2, 1000), Done: make(chan *bool), Error: make(chan error)}
+	client := &model.LogsLiveTailClientV2{Name: r.RemoteAddr, Logs: make(chan *model.SignozLogV2, 1000), Done: make(chan *bool), Error: make(chan error)}
 	go aH.reader.LiveTailLogsV4(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
 	for {
 		select {
@@ -4038,14 +3977,14 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 	case v3.QueryTypeBuilder:
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
-			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(r.Context(), queryRangeParams)
+			logsFields, err := aH.reader.GetLogFields(r.Context())
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, nil)
 				return
 			}
+			// get the fields if any logs query is present
+			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
@@ -4062,7 +4001,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create the client
-	client := &v3.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
+	client := &model.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
 	go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
 
 	w.Header().Set("Connection", "keep-alive")
@@ -4122,13 +4061,13 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
 			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+			logsFields, err := aH.reader.GetLogFields(r.Context())
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, errQuriesByName)
+				RespondError(w, apiErrObj, nil)
 				return
 			}
+			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
@@ -4160,8 +4099,12 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams)
 
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		queryErrors := map[string]string{}
+		for name, err := range errQuriesByName {
+			queryErrors[fmt.Sprintf("Query-%s", name)] = err.Error()
+		}
+		apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		RespondError(w, apiErrObj, queryErrors)
 		return
 	}
 

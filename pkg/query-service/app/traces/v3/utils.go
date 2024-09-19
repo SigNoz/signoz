@@ -8,6 +8,39 @@ import (
 	"go.uber.org/zap"
 )
 
+var TracesListViewDefaultSelectedColumns = []v3.AttributeKey{
+	{
+		Key:      "serviceName",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "name",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "durationNano",
+		DataType: v3.AttributeKeyDataTypeArrayFloat64,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "httpMethod",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "responseStatusCode",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+}
+
 // check if traceId filter is used in traces query and return the list of traceIds
 func TraceIdFilterUsedWithEqual(params *v3.QueryRangeParamsV3) (bool, []string) {
 	compositeQuery := params.CompositeQuery
