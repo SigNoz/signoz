@@ -1,4 +1,4 @@
-import { Question } from './OnboardingPageV2'; // Adjust the import path as necessary
+import { Question } from './OnboardingAddDataSource'; // Adjust the import path as necessary
 
 export const questions: Question[] = [
 	{
