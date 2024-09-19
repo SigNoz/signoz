@@ -1,7 +1,17 @@
+import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Select, Typography } from 'antd';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import {
+	ArrowLeft,
+	ArrowRight,
+	CheckCircle,
+	Plus,
+	TriangleAlert,
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface InviteTeamMembersProps {
+	teamMembers: string[];
+	setTeamMembers: (teamMembers: string[]) => void;
 	onNext: () => void;
 	onBack: () => void;
 }
@@ -15,9 +25,39 @@ const userRolesOptions = (
 );
 
 function InviteTeamMembers({
+	teamMembers,
+	setTeamMembers,
 	onNext,
 	onBack,
 }: InviteTeamMembersProps): JSX.Element {
+	const [teamMembersToInvite, setTeamMembersToInvite] = useState<string[]>(
+		teamMembers || [''],
+	);
+
+	const handleAddTeamMember = (): void => {
+		setTeamMembersToInvite([...teamMembersToInvite, '']);
+	};
+
+	const handleNext = (): void => {
+		console.log(teamMembersToInvite);
+		setTeamMembers(teamMembersToInvite);
+		onNext();
+	};
+
+	const handleOnChange = (
+		e: React.ChangeEvent<HTMLInputElement>,
+		index: number,
+	): void => {
+		const newTeamMembers = [...teamMembersToInvite];
+		newTeamMembers[index] = e.target.value;
+		setTeamMembersToInvite(newTeamMembers);
+	};
+
+	const isValidEmail = (email: string): boolean => {
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		return emailRegex.test(email);
+	};
+
 	return (
 		<div className="questions-container">
 			<Typography.Title level={3} className="title">
@@ -39,20 +79,44 @@ function InviteTeamMembers({
 						</div>
 
 						<div className="invite-team-members-container">
-							<Input
-								addonAfter={userRolesOptions}
-								placeholder="your-teammate@org.com"
-							/>
+							{teamMembersToInvite.map((member, index) => (
+								// eslint-disable-next-line react/no-array-index-key
+								<div className="team-member-container" key={`${member}-${index}`}>
+									<Input
+										addonBefore={userRolesOptions}
+										addonAfter={
+											// eslint-disable-next-line no-nested-ternary
+											member.length > 0 ? (
+												isValidEmail(member) ? (
+													<CheckCircle size={14} color={Color.BG_FOREST_500} />
+												) : (
+													<TriangleAlert size={14} color={Color.BG_SIENNA_500} />
+												)
+											) : null
+										}
+										placeholder="your-teammate@org.com"
+										value={member}
+										type="email"
+										required
+										autoFocus
+										autoComplete="off"
+										onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+											handleOnChange(e, index)
+										}
+									/>
+								</div>
+							))}
+						</div>
 
-							<Input
-								addonAfter={userRolesOptions}
-								placeholder="your-teammate@org.com"
-							/>
-
-							<Input
-								addonAfter={userRolesOptions}
-								placeholder="your-teammate@org.com"
-							/>
+						<div className="invite-team-members-add-another-member-container">
+							<Button
+								type="primary"
+								className="add-another-member-button"
+								icon={<Plus size={14} />}
+								onClick={handleAddTeamMember}
+							>
+								Member
+							</Button>
 						</div>
 					</div>
 				</div>
@@ -63,7 +127,7 @@ function InviteTeamMembers({
 						Back
 					</Button>
 
-					<Button type="primary" className="next-button" onClick={onNext}>
+					<Button type="primary" className="next-button" onClick={handleNext}>
 						Send Invites
 						<ArrowRight size={14} />
 					</Button>
