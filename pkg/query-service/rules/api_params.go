@@ -177,18 +177,27 @@ func isAllQueriesDisabled(compositeQuery *v3.CompositeQuery) bool {
 	}
 	switch compositeQuery.QueryType {
 	case v3.QueryTypeBuilder:
+		if len(compositeQuery.BuilderQueries) == 0 {
+			return false
+		}
 		for _, query := range compositeQuery.BuilderQueries {
 			if !query.Disabled {
 				return false
 			}
 		}
 	case v3.QueryTypePromQL:
+		if len(compositeQuery.PromQueries) == 0 {
+			return false
+		}
 		for _, query := range compositeQuery.PromQueries {
 			if !query.Disabled {
 				return false
 			}
 		}
 	case v3.QueryTypeClickHouseSQL:
+		if len(compositeQuery.ClickHouseQueries) == 0 {
+			return false
+		}
 		for _, query := range compositeQuery.ClickHouseQueries {
 			if !query.Disabled {
 				return false
