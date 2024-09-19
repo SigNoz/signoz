@@ -214,6 +214,7 @@ function WidgetHeader({
 					addonBefore={<SearchOutlined size={14} />}
 					placeholder="Search..."
 					bordered={false}
+					data-testid="widget-header-search-input"
 					autoFocus
 					addonAfter={
 						<X
@@ -268,6 +269,7 @@ function WidgetHeader({
 							<SearchOutlined
 								className="search-header-icons"
 								onClick={(): void => setShowGlobalSearch(true)}
+								data-testid="widget-header-search"
 							/>
 						)}
 						<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
