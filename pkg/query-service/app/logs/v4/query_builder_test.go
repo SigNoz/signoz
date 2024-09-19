@@ -277,10 +277,10 @@ func Test_buildAttributeFilter(t *testing.T) {
 						Type:     v3.AttributeKeyTypeResource,
 					},
 					Operator: v3.FilterOperatorLike,
-					Value:    "test",
+					Value:    "test%",
 				},
 			},
-			want: "resources_string['service.name'] LIKE 'test'",
+			want: "resources_string['service.name'] LIKE 'test%'",
 		},
 		{
 			name: "build attribute filter like-body",
