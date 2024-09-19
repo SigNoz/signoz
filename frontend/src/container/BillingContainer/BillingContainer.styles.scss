@@ -50,6 +50,13 @@
 			align-items: center;
 		}
 	}
+
+	.billing-update-note {
+		text-align: left;
+		font-size: 13px;
+		color: var(--bg-vanilla-200);
+		margin-top: 16px;
+	}
 }
 
 .ant-skeleton.ant-skeleton-element.ant-skeleton-active {
@@ -74,6 +81,10 @@
 					border-color: var(--bg-vanilla-200);
 				}
 			}
+		}
+
+		.billing-update-note {
+			color: var(--bg-ink-200);
 		}
 	}
 }

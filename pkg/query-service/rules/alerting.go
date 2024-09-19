@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
@@ -122,6 +123,47 @@ type RuleCondition struct {
 	MatchType      MatchType          `json:"matchType,omitempty"`
 	TargetUnit     string             `json:"targetUnit,omitempty"`
 	SelectedQuery  string             `json:"selectedQueryName,omitempty"`
+}
+
+func (rc *RuleCondition) GetSelectedQueryName() string {
+	if rc != nil {
+		if rc.SelectedQuery != "" {
+			return rc.SelectedQuery
+		}
+
+		queryNames := map[string]struct{}{}
+
+		if rc.CompositeQuery != nil {
+			if rc.QueryType() == v3.QueryTypeBuilder {
+				for name := range rc.CompositeQuery.BuilderQueries {
+					queryNames[name] = struct{}{}
+				}
+			} else if rc.QueryType() == v3.QueryTypeClickHouseSQL {
+				for name := range rc.CompositeQuery.ClickHouseQueries {
+					queryNames[name] = struct{}{}
+				}
+			}
+		}
+
+		// The following logic exists for backward compatibility
+		// If there is no selected query, then
+		// - check if F1 is present, if yes, return F1
+		// - else return the query with max ascii value
+		// this logic is not really correct. we should be considering
+		// whether the query is enabled or not. but this is a temporary
+		// fix to support backward compatibility
+		if _, ok := queryNames["F1"]; ok {
+			return "F1"
+		}
+		keys := make([]string, 0, len(queryNames))
+		for k := range queryNames {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		return keys[len(keys)-1]
+	}
+	// This should never happen
+	return ""
 }
 
 func (rc *RuleCondition) IsValid() bool {
