@@ -103,6 +103,10 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 		return nil, err
 	}
 
+	telemetry.GetInstance().SetUserCountCallback(mds.GetUserCount)
+	telemetry.GetInstance().SetUserRoleCallback(mds.GetUserRole)
+	telemetry.GetInstance().SetGetUsersCallback(mds.GetUsers)
+
 	return mds, nil
 }
 
@@ -140,7 +144,6 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 
 	users, _ := mds.GetUsers(ctx)
 	countUsers := len(users)
-	telemetry.GetInstance().SetCountUsers(int8(countUsers))
 	if countUsers > 0 {
 		telemetry.GetInstance().SetCompanyDomain(users[countUsers-1].Email)
 		telemetry.GetInstance().SetUserEmail(users[countUsers-1].Email)

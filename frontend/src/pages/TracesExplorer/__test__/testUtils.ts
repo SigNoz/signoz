@@ -244,7 +244,12 @@ export function checkIfSectionIsNotOpen(
 	expect(section.querySelector('.ant-collapse-item-active')).toBeNull();
 }
 
-export const defaultOpenSections = ['hasError', 'durationNano', 'serviceName'];
+export const defaultOpenSections = [
+	'hasError',
+	'durationNano',
+	'serviceName',
+	'deployment.environment',
+];
 
 export const defaultClosedSections = Object.keys(AllTraceFilterKeyValue).filter(
 	(section) =>
