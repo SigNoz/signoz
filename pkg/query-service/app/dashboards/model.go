@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -472,6 +473,8 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 		if isDashboardWithLogsClickhouseQuery(dashboard.Data) {
 			logChQueriesCount = logChQueriesCount + 1
 		}
+
+		// check if dashboard is a has a log operator with contains
 	}
 
 	dashboardsInfo.DashboardNames = dashboardNames
@@ -532,8 +535,31 @@ func extractDashboardName(data map[string]interface{}) string {
 	return ""
 }
 
+func checkLogPanelAttrContains(data map[string]interface{}) int {
+	var logsPanelsWithAttrContains int
+	filters, ok := data["filters"].(map[string]interface{})
+	if ok && filters["items"] != nil {
+		items, ok := filters["items"].([]interface{})
+		if ok {
+			for _, item := range items {
+				itemMap, ok := item.(map[string]interface{})
+				if ok {
+					if slices.Contains([]string{"contains", "ncontains", "like", "nlike"}, itemMap["op"].(string)) {
+						// check if it's not body
+						key, ok := itemMap["key"].(map[string]string)
+						if ok && key["key"] != "body" {
+							logsPanelsWithAttrContains++
+						}
+					}
+				}
+			}
+		}
+	}
+	return logsPanelsWithAttrContains
+}
+
 func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
-	var logsPanelCount, tracesPanelCount, metricsPanelCount int
+	var logsPanelCount, tracesPanelCount, metricsPanelCount, logsPanelsWithAttrContains int
 	// totalPanels := 0
 	if data != nil && data["widgets"] != nil {
 		widgets, ok := data["widgets"]
@@ -559,6 +585,7 @@ func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
 												metricsPanelCount++
 											} else if data["dataSource"] == "logs" {
 												logsPanelCount++
+												logsPanelsWithAttrContains += checkLogPanelAttrContains(data)
 											}
 										}
 									}
@@ -574,5 +601,7 @@ func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
 		LogsBasedPanels:   logsPanelCount,
 		TracesBasedPanels: tracesPanelCount,
 		MetricBasedPanels: metricsPanelCount,
+
+		LogsPanelsWithAttrContainsOp: logsPanelsWithAttrContains,
 	}
 }

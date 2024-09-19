@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -568,6 +569,19 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 			if rule.RuleCondition != nil && rule.RuleCondition.CompositeQuery != nil {
 				if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 					alertsInfo.MetricsBuilderQueries = alertsInfo.MetricsBuilderQueries + 1
+
+					for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+						if query.Filters != nil {
+							for _, item := range query.Filters.Items {
+								if slices.Contains([]string{"contains", "ncontains", "like", "nlike"}, string(item.Operator)) {
+									if item.Key.Key != "body" {
+										alertsInfo.AlertsWithLogsContainsOp += 1
+									}
+								}
+							}
+						}
+					}
+
 				} else if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
 					alertsInfo.MetricsClickHouseQueries = alertsInfo.MetricsClickHouseQueries + 1
 				} else if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
