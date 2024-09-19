@@ -216,6 +216,7 @@
 			transition: background-color 0.3s ease;
 			min-width: 258px;
 			cursor: pointer;
+			box-sizing: border-box;
 		}
 
 		.radio-button.active,
@@ -226,6 +227,61 @@
 		.tool-button:hover {
 			border: 1px solid rgba(78, 116, 248, 0.4);
 			background: rgba(78, 116, 248, 0.2);
+		}
+
+		.two-column-grid {
+			width: 100%;
+			display: grid;
+			grid-template-columns: 1fr 1fr; /* Two equal columns */
+			gap: 10px;
+		}
+
+		.onboarding-questionaire-button,
+		.add-another-member-button {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			border-radius: 2px;
+			border: 1px solid var(--Greyscale-Slate-400, #1d212d);
+			background: var(--Ink-300, #16181d);
+			color: var(--Vanilla-400, var(--Greyscale-Vanilla-400, #c0c1c3));
+			box-shadow: none;
+			font-size: 14px;
+			font-style: normal;
+			text-align: left;
+			font-weight: 400;
+			transition: background-color 0.3s ease;
+			cursor: pointer;
+			height: 40px;
+			box-sizing: border-box;
+
+			&:hover {
+				border: 1px solid rgba(78, 116, 248, 0.4);
+				background: rgba(78, 116, 248, 0.2);
+			}
+
+			&:focus-visible {
+				outline: none;
+			}
+
+			&.active {
+				border: 1px solid rgba(78, 116, 248, 0.4);
+				background: rgba(78, 116, 248, 0.2);
+			}
+		}
+
+		.add-another-member-button {
+			font-size: 12px;
+			height: 32px;
+		}
+
+		.onboarding-questionaire-other-input {
+			.ant-input-group {
+				.ant-input {
+					border-top-right-radius: 0px !important;
+					border-bottom-right-radius: 0px !important;
+				}
+			}
 		}
 
 		.tool-grid {
@@ -274,5 +330,13 @@
 		height: 60px;
 		padding: 12px 24px;
 		box-sizing: border-box;
+	}
+
+	.invite-team-members-add-another-member-container {
+		width: 100%;
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		margin-top: 12px;
 	}
 }
