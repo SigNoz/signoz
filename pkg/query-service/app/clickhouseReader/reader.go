@@ -2317,8 +2317,9 @@ func (r *ClickHouseReader) SetTTLLogsV2(ctx context.Context, params *model.TTLPa
 	// set the ttl if nothing is pending/ no errors
 	go func(ttlPayload map[string]string) {
 		for tableName, query := range ttlPayload {
-			// we don't want the ttl query to timeout
-			query += " SETTINGS distributed_ddl_task_timeout = -1"
+			// https://github.com/SigNoz/signoz/issues/5470
+			// we will change ttl for only the new parts and not the old ones
+			query += " SETTINGS materialize_ttl_after_modify=0"
 
 			_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
 			if dbErr != nil {
