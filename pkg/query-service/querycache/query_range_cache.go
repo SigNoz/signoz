@@ -54,18 +54,14 @@ func (q *queryCache) FindMissingTimeRanges(start, end, step int64, cacheKey stri
 		return []MissInterval{{Start: start, End: end}}
 	}
 
-	cachedData, retrieveStatus, _ := q.cache.Retrieve(cacheKey, true)
-	zap.L().Info("cache retrieve status for key", zap.String("cacheKey", cacheKey), zap.String("status", retrieveStatus.String()))
-	var cachedSeriesDataList []*CachedSeriesData
-	if err := json.Unmarshal(cachedData, &cachedSeriesDataList); err != nil {
-		// In case of error, we return the entire range as a miss
-		return []MissInterval{{Start: start, End: end}}
-	}
+	cachedSeriesDataList := q.getCachedSeriesData(cacheKey)
 
 	// Sort the cached data by start time
 	sort.Slice(cachedSeriesDataList, func(i, j int) bool {
 		return cachedSeriesDataList[i].Start < cachedSeriesDataList[j].Start
 	})
+
+	zap.L().Info("Number of non-overlapping cached series data", zap.Int("count", len(cachedSeriesDataList)))
 
 	// Exclude the flux interval from the cached end time
 
@@ -119,6 +115,15 @@ func (q *queryCache) FindMissingTimeRanges(start, end, step int64, cacheKey stri
 	return missingRanges
 }
 
+func (q *queryCache) getCachedSeriesData(cacheKey string) []*CachedSeriesData {
+	cachedData, _, _ := q.cache.Retrieve(cacheKey, true)
+	var cachedSeriesDataList []*CachedSeriesData
+	if err := json.Unmarshal(cachedData, &cachedSeriesDataList); err != nil {
+		return nil
+	}
+	return cachedSeriesDataList
+}
+
 func (q *queryCache) mergeSeries(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 	// Merge the missed series with the cached series by timestamp
 	mergedSeries := make([]*v3.Series, 0)
@@ -160,6 +165,10 @@ func (q *queryCache) storeMergedData(cacheKey string, mergedData []CachedSeriesD
 }
 
 func (q *queryCache) MergeWithCachedSeriesData(cacheKey string, newData []CachedSeriesData) []CachedSeriesData {
+
+	if q.cache == nil {
+		return newData
+	}
 
 	cachedData, _, _ := q.cache.Retrieve(cacheKey, true)
 	var existingData []CachedSeriesData

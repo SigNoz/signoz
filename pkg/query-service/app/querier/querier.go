@@ -213,12 +213,14 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 			cacheKey, ok := cacheKeys[queryName]
 
 			if !ok || params.NoCache {
+				zap.L().Info("skipping cache for metrics prom query", zap.String("queryName", queryName), zap.Int64("start", params.Start), zap.Int64("end", params.End), zap.Int64("step", params.Step), zap.Bool("noCache", params.NoCache), zap.String("cacheKey", cacheKeys[queryName]))
 				query := metricsV3.BuildPromQuery(promQuery, params.Step, params.Start, params.End)
 				series, err := q.execPromQuery(ctx, query)
 				channelResults <- channelResult{Err: err, Name: queryName, Query: query.Query, Series: series}
 				return
 			}
 			misses := q.queryCache.FindMissingTimeRanges(params.Start, params.End, params.Step, cacheKey)
+			zap.L().Info("cache misses for metrics prom query", zap.Any("misses", misses))
 			missedSeries := make([]querycache.CachedSeriesData, 0)
 			for _, miss := range misses {
 				query := metricsV3.BuildPromQuery(promQuery, params.Step, miss.Start, miss.End)
