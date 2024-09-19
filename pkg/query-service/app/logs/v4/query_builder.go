@@ -146,6 +146,7 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 
 			return fmt.Sprintf(logsOp, keyName, fmtVal), nil
 		case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
+			// we also want to treat %, _ as literals for contains
 			val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value))
 			// for body the contains is case insensitive
 			if keyName == BODY {
@@ -153,14 +154,15 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 			} else {
 				return fmt.Sprintf("%s %s '%%%s%%'", keyName, logsOp, val), nil
 			}
-		default:
-			// for use lower for like and ilike
-			if op == v3.FilterOperatorLike || op == v3.FilterOperatorNotLike {
-				if keyName == BODY {
-					keyName = fmt.Sprintf("lower(%s)", keyName)
-					fmtVal = fmt.Sprintf("lower(%s)", fmtVal)
-				}
+		case v3.FilterOperatorLike, v3.FilterOperatorNotLike:
+			// for body use lower for like and ilike
+			val := utils.QuoteEscapedString(fmt.Sprintf("%s", item.Value))
+			if keyName == BODY {
+				return fmt.Sprintf("lower(%s) %s lower('%s')", keyName, logsOp, val), nil
+			} else {
+				return fmt.Sprintf("%s %s '%s'", keyName, logsOp, val), nil
 			}
+		default:
 			return fmt.Sprintf("%s %s %s", keyName, logsOp, fmtVal), nil
 		}
 	} else {
