@@ -57,13 +57,13 @@
 	&__heading {
 		font-size: 24px;
 		margin-bottom: 12px;
-		color: #fff;
+		color: var(--text-vanilla-100);
 		font-weight: 600;
 	}
 
 	&__description {
 		font-size: 16px;
-		color: var(--Vanilla-400, #c0c1c3);
+		color: var(--text-vanilla-400);
 		margin-bottom: 48px !important;
 		line-height: 1.5;
 	}
@@ -85,7 +85,7 @@
 	&__radio-custom {
 		padding: 10px 20px;
 		background-color: #2a2a2a;
-		color: var(--Vanilla-400, #c0c1c3);
+		color: var(--text-vanilla-400);
 		font-size: 16px;
 		font-style: normal;
 		font-weight: 400;
@@ -97,17 +97,17 @@
 		box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.19);
 
 		&:hover {
-			background: var(--Robin-500, #4e74f8);
+			background: var(--bg-robin-500);
 			box-shadow: 0 4px 8px rgba(58, 134, 255, 0.2);
 		}
 
 		&__text {
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--text-vanilla-400);
 		}
 
 		&--selected {
-			background: var(--Robin-500, #4e74f8);
-			border-color: var(--Robin-500, #4e74f8);
+			background: var(--bg-robin-500);
+			border-color: var(--bg-robin-500);
 			color: #fff;
 			box-shadow: 0 4px 10px rgba(58, 134, 255, 0.4);
 		}
@@ -188,8 +188,8 @@
 		rgba(109, 85, 255, 0.9) 86.5%,
 		rgba(69, 104, 220, 0) 100%
 	);
-	box-shadow: 0px 10.564px 660.221px 5281.768px rgba(0, 0, 0, 0.25);
-	filter: blur(158.45303344726562px);
+	box-shadow: 0px 10px 660px 5281px rgba(0, 0, 0, 0.25);
+	filter: blur(158px);
 	z-index: -1;
 }
 
@@ -206,22 +206,22 @@
 @keyframes selectPulse {
 	0% {
 		background-color: #2a2a2a;
-		border-color: var(--Robin-500, #4e74f8);
+		border-color: var(--bg-robin-500);
 	}
 	20% {
 		background-color: rgba(58, 134, 255, 0.5);
-		border-color: var(--Robin-500, #4e74f8);
+		border-color: var(--bg-robin-500);
 	}
 	40% {
 		background-color: #2a2a2a;
-		border-color: var(--Robin-500, #4e74f8);
+		border-color: var(--bg-robin-500);
 	}
 	60% {
 		background-color: rgba(58, 134, 255, 0.8);
-		border-color: var(--Robin-500, #4e74f8);
+		border-color: var(--bg-robin-500);
 	}
 	100% {
-		background-color: var(--Robin-500, #4e74f8);
-		border-color: var(--Robin-500, #4e74f8);
+		background-color: var(--bg-robin-500);
+		border-color: var(--bg-robin-500);
 	}
 }
