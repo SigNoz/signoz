@@ -88,6 +88,19 @@ function VariableItem({
 		(state) => state.globalTime,
 	);
 
+	useEffect(() => {
+		if (variableData.allSelected && variableData.type === 'QUERY') {
+			setVariablesToGetUpdated((prev) => {
+				const variablesQueue = [...prev.filter((v) => v !== variableData.name)];
+				if (variableData.name) {
+					variablesQueue.push(variableData.name);
+				}
+				return variablesQueue;
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [minTime, maxTime]);
+
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
 	const getDependentVariables = (queryValue: string): string[] => {
