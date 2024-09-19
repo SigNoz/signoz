@@ -545,25 +545,29 @@ func Enrich(params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) {
 	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		for _, query := range params.CompositeQuery.BuilderQueries {
 			if query.DataSource == v3.DataSourceTraces {
-				// enrich aggregate attribute
-				query.AggregateAttribute = enrichKeyWithMetadata(query.AggregateAttribute, keys)
-				// enrich filter items
-				if query.Filters != nil && len(query.Filters.Items) > 0 {
-					for idx, filter := range query.Filters.Items {
-						query.Filters.Items[idx].Key = enrichKeyWithMetadata(filter.Key, keys)
-					}
-				}
-				// enrich group by
-				for idx, groupBy := range query.GroupBy {
-					query.GroupBy[idx] = enrichKeyWithMetadata(groupBy, keys)
-				}
-				// enrich order by
-				query.OrderBy = enrichOrderBy(query.OrderBy, keys)
-				// enrich select columns
-				for idx, selectColumn := range query.SelectColumns {
-					query.SelectColumns[idx] = enrichKeyWithMetadata(selectColumn, keys)
-				}
+				EnrichTracesQuery(query, keys)
 			}
 		}
+	}
+}
+
+func EnrichTracesQuery(query *v3.BuilderQuery, keys map[string]v3.AttributeKey) {
+	// enrich aggregate attribute
+	query.AggregateAttribute = enrichKeyWithMetadata(query.AggregateAttribute, keys)
+	// enrich filter items
+	if query.Filters != nil && len(query.Filters.Items) > 0 {
+		for idx, filter := range query.Filters.Items {
+			query.Filters.Items[idx].Key = enrichKeyWithMetadata(filter.Key, keys)
+		}
+	}
+	// enrich group by
+	for idx, groupBy := range query.GroupBy {
+		query.GroupBy[idx] = enrichKeyWithMetadata(groupBy, keys)
+	}
+	// enrich order by
+	query.OrderBy = enrichOrderBy(query.OrderBy, keys)
+	// enrich select columns
+	for idx, selectColumn := range query.SelectColumns {
+		query.SelectColumns[idx] = enrichKeyWithMetadata(selectColumn, keys)
 	}
 }

@@ -202,6 +202,21 @@ func (r *BaseRule) Unit() string {
 	return ""
 }
 
+func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
+	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli()
+	end := ts.UnixMilli()
+
+	if r.evalDelay > 0 {
+		start = start - int64(r.evalDelay.Milliseconds())
+		end = end - int64(r.evalDelay.Milliseconds())
+	}
+	// round to minute otherwise we could potentially miss data
+	start = start - (start % (60 * 1000))
+	end = end - (end % (60 * 1000))
+
+	return time.UnixMilli(start), time.UnixMilli(end)
+}
+
 func (r *BaseRule) SetLastError(err error) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()

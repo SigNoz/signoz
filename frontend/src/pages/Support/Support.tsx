@@ -83,7 +83,7 @@ const supportChannels = [
 		name: 'Schedule a call',
 		icon: <Calendar />,
 		title: 'Schedule a call with the founders.',
-		url: 'https://calendly.com/pranay-signoz/signoz-intro-calls',
+		url: 'https://calendly.com/vishal-signoz/30min',
 		btnText: 'Schedule call',
 	},
 	{

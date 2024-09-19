@@ -94,11 +94,11 @@ func Enrich(params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey) {
 		if query.Expression != queryName && query.DataSource != v3.DataSourceLogs {
 			continue
 		}
-		enrichLogsQuery(query, fields)
+		EnrichLogsQuery(query, fields)
 	}
 }
 
-func enrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) error {
+func EnrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) error {
 	// enrich aggregation attribute
 	if query.AggregateAttribute.Key != "" {
 		query.AggregateAttribute = enrichFieldWithMetadata(query.AggregateAttribute, fields)

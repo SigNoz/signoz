@@ -147,7 +147,15 @@ func Test_getExistsNexistsFilter(t *testing.T) {
 				op:   v3.FilterOperatorExists,
 				item: v3.FilterItem{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified}},
 			},
-			want: "",
+			want: "trace_id != ''",
+		},
+		{
+			name: "exists top level column- number",
+			args: args{
+				op:   v3.FilterOperatorNotExists,
+				item: v3.FilterItem{Key: v3.AttributeKey{Key: "severity_number", DataType: v3.AttributeKeyDataTypeArrayFloat64, Type: v3.AttributeKeyTypeUnspecified}},
+			},
+			want: "severity_number = 0",
 		},
 	}
 	for _, tt := range tests {
@@ -269,10 +277,10 @@ func Test_buildAttributeFilter(t *testing.T) {
 						Type:     v3.AttributeKeyTypeResource,
 					},
 					Operator: v3.FilterOperatorLike,
-					Value:    "test",
+					Value:    "test%",
 				},
 			},
-			want: "resources_string['service.name'] LIKE 'test'",
+			want: "resources_string['service.name'] LIKE 'test%'",
 		},
 		{
 			name: "build attribute filter like-body",
