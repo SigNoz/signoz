@@ -483,6 +483,27 @@ func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
 				shouldAlert = true
 			}
 		}
+	case Last:
+		// If the last sample matches the condition, the rule is firing.
+		shouldAlert = false
+		alertSmpl = Sample{Point: Point{V: series.Points[len(series.Points)-1].Value}, Metric: lblsNormalized, MetricOrig: lbls}
+		if r.compareOp() == ValueIsAbove {
+			if series.Points[len(series.Points)-1].Value > r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			if series.Points[len(series.Points)-1].Value < r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsEq {
+			if series.Points[len(series.Points)-1].Value == r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			if series.Points[len(series.Points)-1].Value != r.targetVal() {
+				shouldAlert = true
+			}
+		}
 	}
 	return alertSmpl, shouldAlert
 }
