@@ -1,58 +1,49 @@
 ---
 name: Request Dashboard
 about: Request a new dashboard for the SigNoz Dashboards repository
-title: ''
+title: '[Dashboard Request] '
 labels: 'dashboard-template'
 assignees: ''
 
 ---
 
-## 📝 Dashboard Request Template
+<!-- Use this template to request a new dashboard for the SigNoz Dashboards repository. Providing detailed information will help us understand your needs better and speed up the dashboard creation process. -->
 
-*Use this template to request a new dashboard for the SigNoz Dashboards repository. Please provide as much detail as possible to help us understand your needs.*
+## Dashboard Name
 
----
+<!-- Provide the name for the requested dashboard. Be specific (e.g., "MySQL Monitoring Dashboard"). -->
 
-### 1. Dashboard Name
+## Expected Dashboard Sections and Panels
 
-Name of the requested dashboard (e.g., MySQL Monitoring Dashboard):
+(Can be tweaked (add or remove panels/sections) according to available metrics)
 
----
+### Section Name
 
-### 2. Expected Dashboard Sections and Panels
+<!-- Brief description of what this section should display (e.g., "Resource usage metrics for MySQL database"). -->
 
-#### Section Name
+### Panel Name
 
-Brief description of the section (e.g., "Resource usage metrics for MySQL database").
+<!-- Description of the panel (e.g., "Displays current CPU usage, memory usage, etc."). -->
 
-#### Panel Name
-
-Panel description (e.g., "Value-type panels displaying current CPU usage, memory usage, etc.").
-
-- **Example:**
+<!-- - **Example:**
   - **Section**: Resource Metrics
     - **Panel**: CPU Usage - Displays the current CPU usage across all database instances.
-    - **Panel**: Memory Usage - Displays the total memory used by the MySQL process.
+    - **Panel**: Memory Usage - Displays the total memory used by the MySQL process. -->
 
-(Repeat this format for additional sections and panels)
+<!-- Repeat this format for any additional sections or panels. -->
 
----
+## Expected Dashboard Variables
 
-### 3. Expected Variables
+<!-- List any dashboard variables that should be included in the dashboard. Examples could be `deployment.environment`, `hostname`, `region`, etc. -->
 
-List any variables you expect to use in the dashboard (e.g., `deployment.environment`, `hostname`, etc.).
+## Additional Comments or Requirements
 
----
+<!-- Include any other details, special requirements, or specific visualizations you'd like to request for this dashboard. -->
 
-### 4. Additional Comments or Requirements
+## References or Screenshots
 
-Any additional details or special requirements for the dashboard?
+<!-- Add any references or screenshots of requested dashboard if available. -->
 
----
-
-### 📋 Notes
+## 📋 Notes
 
 Please review the [CONTRIBUTING.md](https://github.com/SigNoz/dashboards/blob/main/CONTRIBUTING.md) for guidelines on dashboard structure, naming conventions, and how to submit a pull request.
-
----
-Thank you for your request! We will review it and provide feedback or guidance as necessary.
