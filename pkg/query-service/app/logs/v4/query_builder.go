@@ -80,9 +80,23 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 
 func getExistsNexistsFilter(op v3.FilterOperator, item v3.FilterItem) string {
 	if _, ok := constants.StaticFieldsLogsV3[item.Key.Key]; ok && item.Key.Type == v3.AttributeKeyTypeUnspecified {
-		// no exists filter for static fields as they exists everywhere
-		// TODO(nitya): Think what we can do here
-		return ""
+		// https://opentelemetry.io/docs/specs/otel/logs/data-model/
+		// for top level keys of the log model: trace_id, span_id, severity_number, trace_flags etc
+		// we don't have an exists column.
+		// to check if they exists/nexists
+		// we can use = 0 or != 0 for numbers
+		// we can use = '' or != '' for strings
+		chOp := "!="
+		if op == v3.FilterOperatorNotExists {
+			chOp = "="
+		}
+		key := getClickhouseKey(item.Key)
+		if item.Key.DataType == v3.AttributeKeyDataTypeString {
+			return fmt.Sprintf("%s %s ''", key, chOp)
+		}
+		// we just have two types, number and string for top level columns
+
+		return fmt.Sprintf("%s %s 0", key, chOp)
 	} else if item.Key.IsColumn {
 		// get filter for materialized columns
 		val := true
