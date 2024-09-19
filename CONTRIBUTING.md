@@ -30,6 +30,7 @@ Also, have a look at these [good first issues label](https://github.com/SigNoz/s
     - [To run ClickHouse setup](#41-to-run-clickhouse-setup-recommended-for-local-development)
 - [Contribute to SigNoz Helm Chart](#5-contribute-to-signoz-helm-chart-)
     - [To run helm chart for local development](#51-to-run-helm-chart-for-local-development)
+- [Contribute to Dashboards](#6-contribute-to-dashboards-)
 - [Other Ways to Contribute](#other-ways-to-contribute)
 
 # 1. General Instructions 📝
@@ -369,6 +370,17 @@ curl -sL https://github.com/SigNoz/signoz/raw/develop/sample-apps/hotrod/hotrod-
  
 ---
 
+# 6. Contribute to Dashboards 📈
+
+**Need to Update: [https://github.com/SigNoz/dashboards](https://github.com/SigNoz/dashboards)**
+
+To contribute a new dashboard template for any service, follow the contribution guidelines in the [Dashboard Contributing Guide](https://github.com/SigNoz/dashboards/blob/main/CONTRIBUTING.md). In brief:
+
+1. Create a dashboard JSON file.
+2. Add a README file explaining the dashboard, the metrics ingested, and the configurations needed.
+3. Include screenshots of the dashboard in the `assets/` directory.
+4. Submit a pull request for review.
+
 ## Other Ways to Contribute
 
 There are many other ways to get involved with the community and to participate in this project:
@@ -378,7 +390,6 @@ There are many other ways to get involved with the community and to participate 
 - Submit a new feature request as an issue.
 - Help answer questions on forums such as Stack Overflow and [SigNoz Community Slack Channel](https://signoz.io/slack).
 - Tell others about the project on Twitter, your blog, etc.
-
 
 Again, Feel free to ping us on [`#contributing`](https://signoz-community.slack.com/archives/C01LWQ8KS7M) or [`#contributing-frontend`](https://signoz-community.slack.com/archives/C027134DM8B) on our slack community if you need any help on this :)
 
