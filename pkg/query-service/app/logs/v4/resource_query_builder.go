@@ -23,8 +23,13 @@ func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value 
 		return fmt.Sprintf(logsOp, searchKey, chFmtVal)
 	case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 		// this is required as clickhouseFormattedValue add's quotes to the string
+		// we also want to treat %, _ as literals for contains
 		escapedStringValue := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", value))
 		return fmt.Sprintf("%s %s '%%%s%%'", searchKey, logsOp, escapedStringValue)
+	case v3.FilterOperatorLike, v3.FilterOperatorNotLike:
+		// this is required as clickhouseFormattedValue add's quotes to the string
+		escapedStringValue := utils.QuoteEscapedString(fmt.Sprintf("%s", value))
+		return fmt.Sprintf("%s %s '%s'", searchKey, logsOp, escapedStringValue)
 	default:
 		return fmt.Sprintf("%s %s %s", searchKey, logsOp, chFmtVal)
 	}
@@ -74,13 +79,19 @@ func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value inter
 // example:= x like '%john%' = labels like '%x%john%'
 func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{}) string {
 	// not using clickhouseFormattedValue as we don't wan't the quotes
-	formattedValueEscaped := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", value))
+	strVal := fmt.Sprintf("%s", value)
+	formattedValueEscapedForContains := utils.QuoteEscapedStringForContains(strVal)
+	formattedValueEscaped := utils.QuoteEscapedString(strVal)
 
 	// add index filters
 	switch op {
-	case v3.FilterOperatorContains, v3.FilterOperatorEqual, v3.FilterOperatorLike:
+	case v3.FilterOperatorContains:
+		return fmt.Sprintf("labels like '%%%s%%%s%%'", key, formattedValueEscapedForContains)
+	case v3.FilterOperatorNotContains:
+		return fmt.Sprintf("labels not like '%%%s%%%s%%'", key, formattedValueEscapedForContains)
+	case v3.FilterOperatorLike, v3.FilterOperatorEqual:
 		return fmt.Sprintf("labels like '%%%s%%%s%%'", key, formattedValueEscaped)
-	case v3.FilterOperatorNotContains, v3.FilterOperatorNotEqual, v3.FilterOperatorNotLike:
+	case v3.FilterOperatorNotLike, v3.FilterOperatorNotEqual:
 		return fmt.Sprintf("labels not like '%%%s%%%s%%'", key, formattedValueEscaped)
 	case v3.FilterOperatorNotRegex:
 		return fmt.Sprintf("labels not like '%%%s%%'", key)
