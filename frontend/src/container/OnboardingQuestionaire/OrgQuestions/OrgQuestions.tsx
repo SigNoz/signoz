@@ -1,27 +1,58 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import '../OnboardingQuestionaire.styles.scss';
 
-import { Button, Typography } from 'antd';
-import { ArrowRight } from 'lucide-react';
+import { Color } from '@signozhq/design-tokens';
+import { Button, Input, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
+import { ArrowRight, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
 interface OrgQuestionsProps {
+	orgDetails: any;
+	setOrgDetails: (details: any) => void;
 	onNext: () => void;
 }
 
-function OrgQuestions({ onNext }: OrgQuestionsProps): JSX.Element {
-	const [organisationName, setOrganisationName] = useState<string>('');
+const observabilityTools = [
+	'AWS Cloudwatch',
+	'DataDog',
+	'New Relic',
+	'Grafana / Prometheus',
+	'Azure App Monitor',
+	'GCP-native o11y tools',
+	'Honeycomb',
+];
+
+const o11yFamiliarityOptions: Record<string, string> = {
+	new: "I'm completely new",
+	builtStack: "I've built a stack before",
+	experienced: 'I have some experience',
+	dontKnow: "I don't know what it is",
+};
+
+function OrgQuestions({
+	orgDetails,
+	setOrgDetails,
+	onNext,
+}: OrgQuestionsProps): JSX.Element {
+	const [organisationName, setOrganisationName] = useState<string>(
+		orgDetails?.organisationName || '',
+	);
 	const [usesObservability, setUsesObservability] = useState<boolean | null>(
-		null,
+		orgDetails?.usesObservability || null,
 	);
 	const [observabilityTool, setObservabilityTool] = useState<string | null>(
-		null,
+		orgDetails?.observabilityTool || null,
 	);
-	const [otherTool, setOtherTool] = useState<string>('');
-	const [familiarity, setFamiliarity] = useState<string | null>(null);
+	const [otherTool, setOtherTool] = useState<string>(
+		orgDetails?.otherTool || '',
+	);
+	const [familiarity, setFamiliarity] = useState<string | null>(
+		orgDetails?.familiarity || null,
+	);
 	const [isNextDisabled, setIsNextDisabled] = useState<boolean>(true);
 
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -44,6 +75,26 @@ function OrgQuestions({ onNext }: OrgQuestionsProps): JSX.Element {
 		observabilityTool,
 		otherTool,
 	]);
+
+	const handleOnNext = (): void => {
+		setOrgDetails({
+			organisationName,
+			usesObservability,
+			observabilityTool,
+			otherTool,
+			familiarity,
+		});
+
+		logEvent('Onboarding: Org Questions: Next', {
+			organisationName,
+			usesObservability,
+			observabilityTool,
+			otherTool,
+			familiarity,
+		});
+
+		onNext();
+	};
 
 	return (
 		<div className="questions-container">
@@ -77,20 +128,25 @@ function OrgQuestions({ onNext }: OrgQuestionsProps): JSX.Element {
 							Do you currently use any observability/monitoring tool?
 						</label>
 
-						<div className="radio-group">
-							<button
-								type="button"
+						<div className="two-column-grid">
+							<Button
+								type="primary"
 								name="usesObservability"
-								className={`radio-button ${usesObservability === true ? 'active' : ''}`}
+								className={`onboarding-questionaire-button ${
+									usesObservability === true ? 'active' : ''
+								}`}
 								onClick={(): void => {
 									setUsesObservability(true);
 								}}
 							>
-								Yes
-							</button>
-							<button
-								type="button"
-								className={`radio-button ${
+								Yes{' '}
+								{usesObservability === true && (
+									<CheckCircle size={12} color={Color.BG_FOREST_500} />
+								)}
+							</Button>
+							<Button
+								type="primary"
+								className={`onboarding-questionaire-button ${
 									usesObservability === false ? 'active' : ''
 								}`}
 								onClick={(): void => {
@@ -99,8 +155,11 @@ function OrgQuestions({ onNext }: OrgQuestionsProps): JSX.Element {
 									setOtherTool('');
 								}}
 							>
-								No
-							</button>
+								No{' '}
+								{usesObservability === false && (
+									<CheckCircle size={12} color={Color.BG_FOREST_500} />
+								)}
+							</Button>
 						</div>
 					</div>
 
@@ -109,83 +168,44 @@ function OrgQuestions({ onNext }: OrgQuestionsProps): JSX.Element {
 							<label className="question" htmlFor="observabilityTool">
 								Which observability tool do you currently use?
 							</label>
-							<div className="tool-grid">
-								<button
-									type="button"
-									className={`tool-button ${
-										observabilityTool === 'AWS Cloudwatch' ? 'active' : ''
-									}`}
-									onClick={(): void => setObservabilityTool('AWS Cloudwatch')}
-								>
-									AWS Cloudwatch
-								</button>
-								<button
-									type="button"
-									className={`tool-button ${
-										observabilityTool === 'DataDog' ? 'active' : ''
-									}`}
-									onClick={(): void => setObservabilityTool('DataDog')}
-								>
-									DataDog
-								</button>
-								<button
-									type="button"
-									className={`tool-button ${
-										observabilityTool === 'New Relic' ? 'active' : ''
-									}`}
-									onClick={(): void => setObservabilityTool('New Relic')}
-								>
-									New Relic
-								</button>
-								<button
-									type="button"
-									className={`tool-button ${
-										observabilityTool === 'Grafana / Prometheus' ? 'active' : ''
-									}`}
-									onClick={(): void => setObservabilityTool('Grafana / Prometheus')}
-								>
-									Grafana / Prometheus
-								</button>
-								<button
-									type="button"
-									className={`tool-button ${
-										observabilityTool === 'Azure App Monitor' ? 'active' : ''
-									}`}
-									onClick={(): void => setObservabilityTool('Azure App Monitor')}
-								>
-									Azure App Monitor
-								</button>
-								<button
-									type="button"
-									className={`tool-button ${
-										observabilityTool === 'GCP-native o11y tools' ? 'active' : ''
-									}`}
-									onClick={(): void => setObservabilityTool('GCP-native o11y tools')}
-								>
-									GCP-native o11y tools
-								</button>
-								<button
-									type="button"
-									className={`tool-button ${
-										observabilityTool === 'Honeycomb' ? 'active' : ''
-									}`}
-									onClick={(): void => setObservabilityTool('Honeycomb')}
-								>
-									Honeycomb
-								</button>
+							<div className="two-column-grid">
+								{observabilityTools.map((tool) => (
+									<Button
+										key={tool}
+										type="primary"
+										className={`onboarding-questionaire-button ${
+											observabilityTool === tool ? 'active' : ''
+										}`}
+										onClick={(): void => setObservabilityTool(tool)}
+									>
+										{tool}
+
+										{observabilityTool === tool && (
+											<CheckCircle size={12} color={Color.BG_FOREST_500} />
+										)}
+									</Button>
+								))}
 
 								{observabilityTool === 'Others' ? (
-									<input
+									<Input
 										type="text"
-										className="tool-button input-field"
+										className="onboarding-questionaire-other-input"
 										placeholder="Please specify the tool"
 										value={otherTool}
+										autoFocus
+										addonAfter={
+											otherTool !== '' ? (
+												<CheckCircle size={12} color={Color.BG_FOREST_500} />
+											) : (
+												''
+											)
+										}
 										onChange={(e): void => setOtherTool(e.target.value)}
 									/>
 								) : (
 									<button
 										type="button"
-										className={`tool-button ${
+										className={`onboarding-questionaire-button ${
 											observabilityTool === 'Others' ? 'active' : ''
 										}`}
 										onClick={(): void => setObservabilityTool('Others')}
@@ -201,39 +221,22 @@ function OrgQuestions({ onNext }: OrgQuestionsProps): JSX.Element {
 						<div className="question">
 							Are you familiar with observability (o11y)?
 						</div>
-						<div className="grid">
-							<button
-								type="button"
-								className={`grid-button ${familiarity === 'new' ? 'active' : ''}`}
-								onClick={(): void => setFamiliarity('new')}
-							>
-								I&apos;m completely new
-							</button>
-							<button
-								type="button"
-								className={`grid-button ${
-									familiarity === 'built-stack' ? 'active' : ''
-								}`}
-								onClick={(): void => setFamiliarity('built-stack')}
-							>
-								I&apos;ve built a stack before
-							</button>
-							<button
-								type="button"
-								className={`grid-button ${
-									familiarity === 'experienced' ? 'active' : ''
-								}`}
-								onClick={(): void => setFamiliarity('experienced')}
-							>
-								I have some experience
-							</button>
-							<button
-								type="button"
-								className={`grid-button ${familiarity === 'dont-know' ? 'active' : ''}`}
-								onClick={(): void => setFamiliarity('dont-know')}
-							>
-								I don&apos;t know what it is
-							</button>
+						<div className="two-column-grid">
+							{Object.keys(o11yFamiliarityOptions).map((option: string) => (
+								<Button
+									key={option}
+									type="primary"
+									className={`onboarding-questionaire-button ${
+										familiarity === option ? 'active' : ''
+									}`}
+									onClick={(): void => setFamiliarity(option)}
+								>
+									{o11yFamiliarityOptions[option]}
+									{familiarity === option && (
+										<CheckCircle size={12} color={Color.BG_FOREST_500} />
+									)}
+								</Button>
+							))}
 						</div>
 					</div>
 				</div>
@@ -242,7 +245,7 @@ function OrgQuestions({ onNext }: OrgQuestionsProps): JSX.Element {
 					<Button
 						type="primary"
 						className={`next-button ${isNextDisabled ? 'disabled' : ''}`}
-						onClick={onNext}
+						onClick={handleOnNext}
 						disabled={isNextDisabled}
 					>
 						Next
