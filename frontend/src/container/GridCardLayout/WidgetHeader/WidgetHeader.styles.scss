@@ -2,7 +2,7 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	height: 30px;
+	height: 36px;
 	width: 100%;
 	padding: 0.5rem;
 	box-sizing: border-box;
@@ -10,6 +10,14 @@
 	font-weight: 600;
 
 	cursor: move;
+
+	.ant-input-group-addon {
+		border: none;
+		background-color: var(--bg-ink-500);
+	}
+	.search-header-icons {
+		cursor: pointer;
+	}
 }
 
 .widget-header-title {
@@ -19,6 +27,7 @@
 .widget-header-actions {
 	display: flex;
 	align-items: center;
+	gap: 8px;
 }
 .widget-header-more-options {
 	visibility: hidden;
@@ -30,10 +39,22 @@
 	padding: 8px;
 }
 
+.widget-header-more-options-visible {
+	visibility: visible;
+}
+
 .widget-header-hover {
 	visibility: visible;
 }
 
 .widget-api-actions {
 	padding-right: 0.25rem;
+}
+
+.lightMode {
+	.widget-header-container {
+		.ant-input-group-addon {
+			background-color: inherit;
+		}
+	}
 }
