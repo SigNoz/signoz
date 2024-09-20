@@ -50,19 +50,21 @@ function TopOperationsTable({
 		const { servicename: encodedServiceName } = params;
 		const servicename = decodeURIComponent(encodedServiceName);
 
-		const opFilter: TagFilterItem = {
-			id: uuid().slice(0, 8),
-			key: {
-				key: 'name',
-				dataType: DataTypes.String,
-				type: 'tag',
-				isColumn: true,
-				isJSON: false,
-				id: 'name--string--tag--true',
+		const opFilters: TagFilterItem[] = [
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'name',
+					dataType: DataTypes.String,
+					type: 'tag',
+					isColumn: true,
+					isJSON: false,
+					id: 'name--string--tag--true',
+				},
+				op: 'in',
+				value: [operation],
 			},
-			op: 'in',
-			value: [operation],
-		};
+		];
 
 		const preparedQuery: Query = {
 			...apmToTraceQuery,
@@ -72,7 +74,7 @@ function TopOperationsTable({
 					...item,
 					filters: {
 						...item.filters,
-						items: [...item.filters.items, opFilter],
+						items: [...item.filters.items, ...opFilters],
 					},
 				})),
 			},
@@ -164,6 +166,12 @@ function TopOperationsTable({
 
 	const downloadableData = convertedTracesToDownloadData(data);
 
+	const paginationConfig = {
+		pageSize: 10,
+		showSizeChanger: false,
+		hideOnSinglePage: true,
+	};
+
 	return (
 		<div className="top-operation">
 			<div className="top-operation--download">
@@ -181,6 +189,7 @@ function TopOperationsTable({
 				tableLayout="fixed"
 				dataSource={data}
 				rowKey="name"
+				pagination={paginationConfig}
 			/>
 		</div>
 	);

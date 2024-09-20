@@ -12,6 +12,7 @@ import updateDowntimeSchedule, {
 } from 'api/plannedDowntime/updateDowntimeSchedule';
 import { showErrorNotification } from 'components/ExplorerCard/utils';
 import dayjs from 'dayjs';
+import { isEmpty, isEqual } from 'lodash-es';
 import { UseMutateAsyncFunction } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
@@ -42,7 +43,8 @@ export const formatDateTime = (dateTimeString?: string | null): string => {
 	if (!dateTimeString) {
 		return 'N/A';
 	}
-	return dayjs(dateTimeString).format('MMM DD, YYYY h:mm A');
+
+	return dayjs(dateTimeString.slice(0, 19)).format('MMM DD, YYYY h:mm A');
 };
 
 export const getAlertOptionsFromIds = (
@@ -149,6 +151,15 @@ export const recurrenceOptions = {
 	monthly: { label: 'Monthly', value: 'monthly' },
 };
 
+export const recurrenceWeeklyOptions = {
+	monday: { label: 'Monday', value: 'monday' },
+	tuesday: { label: 'Tuesday', value: 'tuesday' },
+	wednesday: { label: 'Wednesday', value: 'wednesday' },
+	thursday: { label: 'Thursday', value: 'thursday' },
+	friday: { label: 'Friday', value: 'friday' },
+	saturday: { label: 'Saturday', value: 'saturday' },
+	sunday: { label: 'Sunday', value: 'sunday' },
+};
 interface DurationInfo {
 	value: number;
 	unit: string;
@@ -160,17 +171,108 @@ export function getDurationInfo(
 	if (!durationString) {
 		return null;
 	}
-	// Regular expression to extract value and unit from the duration string
-	const durationRegex = /(\d+)([hms])/;
-	// Match the value and unit parts in the duration string
-	const match = durationString.match(durationRegex);
-	if (match && match.length >= 3) {
-		// Extract value and unit from the match
-		const value = parseInt(match[1], 10);
-		const unit = match[2];
-		// Return duration info object
-		return { value, unit };
+
+	// Regular expressions to extract hours, minutes
+	const hoursRegex = /(\d+)h/;
+	const minutesRegex = /(\d+)m/;
+
+	// Extract hours, minutes from the duration string
+	const hoursMatch = durationString.match(hoursRegex);
+	const minutesMatch = durationString.match(minutesRegex);
+
+	// Convert extracted values to integers, defaulting to 0 if not found
+	const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
+	const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
+
+	// If there are no minutes and only hours, return the hours
+	if (hours > 0 && minutes === 0) {
+		return { value: hours, unit: 'h' };
 	}
-	// If no value or unit part found, return null
-	return null;
+
+	// Otherwise, calculate the total duration in minutes
+	const totalMinutes = hours * 60 + minutes;
+	return { value: totalMinutes, unit: 'm' };
+}
+
+export interface Option {
+	label: string;
+	value: string;
+}
+
+export const recurrenceOptionWithSubmenu: Option[] = [
+	recurrenceOptions.doesNotRepeat,
+	recurrenceOptions.daily,
+	recurrenceOptions.weekly,
+	recurrenceOptions.monthly,
+];
+
+export const getRecurrenceOptionFromValue = (
+	value?: string | Option | null,
+): Option | null | undefined => {
+	if (!value) {
+		return null;
+	}
+	if (typeof value === 'string') {
+		return Object.values(recurrenceOptions).find(
+			(option) => option.value === value,
+		);
+	}
+	return value;
+};
+
+export const getEndTime = ({
+	kind,
+	schedule,
+}: Partial<
+	DowntimeSchedules & {
+		editMode: boolean;
+	}
+>): string | dayjs.Dayjs => {
+	if (kind === 'fixed') {
+		return schedule?.endTime || '';
+	}
+
+	return schedule?.recurrence?.endTime || '';
+};
+
+export const isScheduleRecurring = (
+	schedule?: DowntimeSchedules['schedule'],
+): boolean => (schedule ? !isEmpty(schedule?.recurrence) : false);
+
+function convertUtcOffsetToTimezoneOffset(offsetMinutes: number): string {
+	const sign = offsetMinutes >= 0 ? '+' : '-';
+	const absOffset = Math.abs(offsetMinutes);
+	const hours = String(Math.floor(absOffset / 60)).padStart(2, '0');
+	const minutes = String(absOffset % 60).padStart(2, '0');
+	return `${sign}${hours}:${minutes}`;
+}
+
+export function formatWithTimezone(
+	dateValue?: string | dayjs.Dayjs,
+	timezone?: string,
+): string {
+	const parsedDate =
+		typeof dateValue === 'string' ? dateValue : dateValue?.format();
+	console.log('dateValue', parsedDate, 'timezone', timezone);
+	// Get the target timezone offset
+	const targetOffset = convertUtcOffsetToTimezoneOffset(
+		dayjs(dateValue).tz(timezone).utcOffset(),
+	);
+
+	return `${parsedDate?.substring(0, 19)}${targetOffset}`;
+}
+
+export function handleTimeConversion(
+	dateValue: string | dayjs.Dayjs,
+	timezoneInit?: string,
+	timezone?: string,
+	shouldKeepLocalTime?: boolean,
+): string {
+	const timezoneChanged = !isEqual(timezoneInit, timezone);
+	const initialTime = dayjs(dateValue).tz(timezoneInit);
+
+	const formattedTime = formatWithTimezone(initialTime, timezone);
+	return timezoneChanged
+		? formattedTime
+		: dayjs(dateValue).tz(timezone, shouldKeepLocalTime).format();
 }

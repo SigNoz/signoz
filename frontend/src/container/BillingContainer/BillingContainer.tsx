@@ -19,10 +19,10 @@ import { ColumnsType } from 'antd/es/table';
 import updateCreditCardApi from 'api/billing/checkout';
 import getUsage, { UsageResponsePayloadProps } from 'api/billing/getUsage';
 import manageCreditCardApi from 'api/billing/manage';
+import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import useAxiosError from 'hooks/useAxiosError';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
@@ -136,8 +136,6 @@ export default function BillingContainer(): JSX.Element {
 	const [apiResponse, setApiResponse] = useState<
 		Partial<UsageResponsePayloadProps>
 	>({});
-
-	const { trackEvent } = useAnalytics();
 
 	const { isFetching, data: licensesData, error: licenseError } = useLicense();
 
@@ -316,7 +314,7 @@ export default function BillingContainer(): JSX.Element {
 
 	const handleBilling = useCallback(async () => {
 		if (isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription) {
-			trackEvent('Billing : Upgrade Plan', {
+			logEvent('Billing : Upgrade Plan', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
@@ -327,7 +325,7 @@ export default function BillingContainer(): JSX.Element {
 				cancelURL: window.location.href,
 			});
 		} else {
-			trackEvent('Billing : Manage Billing', {
+			logEvent('Billing : Manage Billing', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
@@ -350,7 +348,12 @@ export default function BillingContainer(): JSX.Element {
 	const BillingUsageGraphCallback = useCallback(
 		() =>
 			!isLoading && !isFetchingBillingData ? (
-				<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
+				<>
+					<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
+					<div className="billing-update-note">
+						Note: Billing metrics are updated once every 24 hours.
+					</div>
+				</>
 			) : (
 				<Card className="empty-graph-card" bordered={false}>
 					<Spinner size="large" tip="Loading..." height="35vh" />

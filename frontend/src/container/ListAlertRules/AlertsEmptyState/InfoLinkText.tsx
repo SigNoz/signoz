@@ -6,6 +6,7 @@ interface InfoLinkTextProps {
 	link: string;
 	leftIconVisible: boolean;
 	rightIconVisible: boolean;
+	onClick: () => void;
 }
 
 function InfoLinkText({
@@ -13,10 +14,12 @@ function InfoLinkText({
 	link,
 	leftIconVisible,
 	rightIconVisible,
+	onClick,
 }: InfoLinkTextProps): JSX.Element {
 	return (
 		<Flex
 			onClick={(): void => {
+				onClick();
 				window.open(link, '_blank');
 			}}
 			className="info-link-container"

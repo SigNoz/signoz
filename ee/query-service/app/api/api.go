@@ -24,7 +24,6 @@ import (
 type APIHandlerOptions struct {
 	DataConnector                 interfaces.DataConnector
 	SkipConfig                    *basemodel.SkipConfig
-	PreferDelta                   bool
 	PreferSpanMetrics             bool
 	MaxIdleConns                  int
 	MaxOpenConns                  int
@@ -39,7 +38,8 @@ type APIHandlerOptions struct {
 	Cache                         cache.Cache
 	Gateway                       *httputil.ReverseProxy
 	// Querier Influx Interval
-	FluxInterval time.Duration
+	FluxInterval     time.Duration
+	UseLogsNewSchema bool
 }
 
 type APIHandler struct {
@@ -53,7 +53,6 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
 		SkipConfig:                    opts.SkipConfig,
-		PerferDelta:                   opts.PreferDelta,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
 		MaxIdleConns:                  opts.MaxIdleConns,
 		MaxOpenConns:                  opts.MaxOpenConns,
@@ -65,6 +64,7 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		Cache:                         opts.Cache,
 		FluxInterval:                  opts.FluxInterval,
+		UseLogsNewSchema:              opts.UseLogsNewSchema,
 	})
 
 	if err != nil {

@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
-import { isArray } from 'lodash-es';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import {
 	BaseAutocompleteData,
@@ -9,10 +8,11 @@ import {
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-export const AllTraceFilterKeyValue = {
+export const AllTraceFilterKeyValue: Record<string, string> = {
 	durationNanoMin: 'Duration',
 	durationNano: 'Duration',
 	durationNanoMax: 'Duration',
+	'deployment.environment': 'Environment',
 	hasError: 'Status',
 	serviceName: 'Service Name',
 	name: 'Operation / Name',
@@ -23,7 +23,7 @@ export const AllTraceFilterKeyValue = {
 	httpRoute: 'HTTP Route',
 	httpUrl: 'HTTP URL',
 	traceID: 'Trace ID',
-};
+} as const;
 
 export type AllTraceFilterKeys = keyof typeof AllTraceFilterKeyValue;
 
@@ -41,6 +41,18 @@ export type FilterType = Record<
 	{ values: string[] | string; keys: BaseAutocompleteData }
 >;
 
+export function convertToStringArr(
+	value: string | string[] | undefined,
+): string[] {
+	if (value) {
+		if (typeof value === 'string') {
+			return [value];
+		}
+		return value;
+	}
+	return [];
+}
+
 export const addFilter = (
 	filterType: AllTraceFilterKeys,
 	value: string,
@@ -53,7 +65,7 @@ export const addFilter = (
 			| undefined
 		>
 	>,
-	keys?: BaseAutocompleteData,
+	keys: BaseAutocompleteData,
 ): void => {
 	setSelectedFilters((prevFilters) => {
 		const isDuration = [
@@ -62,28 +74,36 @@ export const addFilter = (
 			'durationNano',
 		].includes(filterType);
 
+		// Convert value to string array
+		const valueArray = convertToStringArr(value);
+
 		// If previous filters are undefined, initialize them
 		if (!prevFilters) {
 			return ({
-				[filterType]: { values: isDuration ? value : [value], keys },
+				[filterType]: { values: isDuration ? value : valueArray, keys },
 			} as unknown) as FilterType;
 		}
+
 		// If the filter type doesn't exist, initialize it
 		if (!prevFilters[filterType]?.values.length) {
 			return {
 				...prevFilters,
-				[filterType]: { values: isDuration ? value : [value], keys },
+				[filterType]: { values: isDuration ? value : valueArray, keys },
 			};
 		}
+
 		// If the value already exists, don't add it again
-		if (prevFilters[filterType].values.includes(value)) {
+		if (convertToStringArr(prevFilters[filterType].values).includes(value)) {
 			return prevFilters;
 		}
+
 		// Otherwise, add the value to the existing array
 		return {
 			...prevFilters,
 			[filterType]: {
-				values: isDuration ? value : [...prevFilters[filterType].values, value],
+				values: isDuration
+					? value
+					: [...convertToStringArr(prevFilters[filterType].values), value],
 				keys,
 			},
 		};
@@ -103,17 +123,15 @@ export const removeFilter = (
 			| undefined
 		>
 	>,
-	keys?: BaseAutocompleteData,
+	keys: BaseAutocompleteData,
 ): void => {
 	setSelectedFilters((prevFilters) => {
 		if (!prevFilters || !prevFilters[filterType]?.values.length) {
 			return prevFilters;
 		}
 
-		const prevValue = prevFilters[filterType]?.values;
-		const updatedValues = !isArray(prevValue)
-			? prevValue
-			: prevValue?.filter((item: any) => item !== value);
+		const prevValue = convertToStringArr(prevFilters[filterType]?.values);
+		const updatedValues = prevValue.filter((item: any) => item !== value);
 
 		if (updatedValues.length === 0) {
 			const { [filterType]: item, ...remainingFilters } = prevFilters;
@@ -184,6 +202,15 @@ export const traceFilterKeys: Record<
 		isColumn: true,
 		isJSON: false,
 		id: 'serviceName--string--tag--true',
+	},
+
+	'deployment.environment': {
+		key: 'deployment.environment',
+		dataType: DataTypes.String,
+		type: 'resource',
+		isColumn: false,
+		isJSON: false,
+		id: 'deployment.environment--string--resource--false',
 	},
 	name: {
 		key: 'name',
@@ -265,7 +292,7 @@ export const traceFilterKeys: Record<
 		isJSON: false,
 		id: 'durationNanoMax--float64--tag--true',
 	},
-};
+} as const;
 
 interface AggregateValuesProps {
 	value: AllTraceFilterKeys;

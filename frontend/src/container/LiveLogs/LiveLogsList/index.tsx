@@ -3,6 +3,7 @@ import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -37,6 +38,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 		activeLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 		onSetActiveLog,
 	} = useActiveLog();
 
@@ -62,6 +64,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 						data={log}
 						linesPerRow={options.maxLines}
 						selectedFields={selectedFields}
+						fontSize={options.fontSize}
 					/>
 				);
 			}
@@ -74,12 +77,14 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 					linesPerRow={options.maxLines}
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
+					fontSize={options.fontSize}
 				/>
 			);
 		},
 		[
 			onAddToQuery,
 			onSetActiveLog,
+			options.fontSize,
 			options.format,
 			options.maxLines,
 			selectedFields,
@@ -122,19 +127,22 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 								logs,
 								fields: selectedFields,
 								linesPerRow: options.maxLines,
+								fontSize: options.fontSize,
 								appendTo: 'end',
 								activeLogIndex,
 							}}
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
-							<Virtuoso
-								ref={ref}
-								initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
-								data={logs}
-								totalCount={logs.length}
-								itemContent={getItemContent}
-							/>
+							<OverlayScrollbar isVirtuoso>
+								<Virtuoso
+									ref={ref}
+									initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
+									data={logs}
+									totalCount={logs.length}
+									itemContent={getItemContent}
+								/>
+							</OverlayScrollbar>
 						</Card>
 					)}
 				</InfinityWrapperStyled>
@@ -144,6 +152,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 				log={activeLog}
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}
+				onGroupByAttribute={onGroupByAttribute}
 				onClickActionItem={onAddToQuery}
 			/>
 		</>

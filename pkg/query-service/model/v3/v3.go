@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type DataSource string
@@ -252,6 +251,19 @@ type FilterAttributeKeyRequest struct {
 	Limit              int               `json:"limit"`
 }
 
+type QBFilterSuggestionsRequest struct {
+	DataSource      DataSource `json:"dataSource"`
+	SearchText      string     `json:"searchText"`
+	ExistingFilter  *FilterSet `json:"existingFilter"`
+	AttributesLimit uint64     `json:"attributesLimit"`
+	ExamplesLimit   uint64     `json:"examplesLimit"`
+}
+
+type QBFilterSuggestionsResponse struct {
+	AttributeKeys  []AttributeKey `json:"attributes"`
+	ExampleQueries []FilterSet    `json:"example_queries"`
+}
+
 type AttributeKeyDataType string
 
 const (
@@ -354,6 +366,24 @@ type QueryRangeParamsV3 struct {
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
 	NoCache        bool                   `json:"noCache"`
+	Version        string                 `json:"-"`
+	FormatForWeb   bool                   `json:"formatForWeb,omitempty"`
+}
+
+func (q *QueryRangeParamsV3) Clone() *QueryRangeParamsV3 {
+	if q == nil {
+		return nil
+	}
+	return &QueryRangeParamsV3{
+		Start:          q.Start,
+		End:            q.End,
+		Step:           q.Step,
+		CompositeQuery: q.CompositeQuery.Clone(),
+		Variables:      q.Variables,
+		NoCache:        q.NoCache,
+		Version:        q.Version,
+		FormatForWeb:   q.FormatForWeb,
+	}
 }
 
 type PromQuery struct {
@@ -361,6 +391,18 @@ type PromQuery struct {
 	Stats    string `json:"stats,omitempty"`
 	Disabled bool   `json:"disabled"`
 	Legend   string `json:"legend,omitempty"`
+}
+
+func (p *PromQuery) Clone() *PromQuery {
+	if p == nil {
+		return nil
+	}
+	return &PromQuery{
+		Query:    p.Query,
+		Stats:    p.Stats,
+		Disabled: p.Disabled,
+		Legend:   p.Legend,
+	}
 }
 
 func (p *PromQuery) Validate() error {
@@ -381,6 +423,16 @@ type ClickHouseQuery struct {
 	Legend   string `json:"legend,omitempty"`
 }
 
+func (c *ClickHouseQuery) Clone() *ClickHouseQuery {
+	if c == nil {
+		return nil
+	}
+	return &ClickHouseQuery{
+		Query:    c.Query,
+		Disabled: c.Disabled,
+		Legend:   c.Legend,
+	}
+}
 func (c *ClickHouseQuery) Validate() error {
 	if c == nil {
 		return nil
@@ -399,8 +451,48 @@ type CompositeQuery struct {
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
-	Unit              string                      `json:"unit,omitempty"`
-	FillGaps          bool                        `json:"fillGaps,omitempty"`
+	// Unit for the time series data shown in the graph
+	// This is used in alerts to format the value and threshold
+	Unit string `json:"unit,omitempty"`
+	// FillGaps is used to fill the gaps in the time series data
+	FillGaps bool `json:"fillGaps,omitempty"`
+}
+
+func (c *CompositeQuery) Clone() *CompositeQuery {
+	if c == nil {
+		return nil
+	}
+	var builderQueries map[string]*BuilderQuery
+	if c.BuilderQueries != nil {
+		builderQueries = make(map[string]*BuilderQuery)
+		for name, query := range c.BuilderQueries {
+			builderQueries[name] = query.Clone()
+		}
+	}
+	var clickHouseQueries map[string]*ClickHouseQuery
+	if c.ClickHouseQueries != nil {
+		clickHouseQueries = make(map[string]*ClickHouseQuery)
+		for name, query := range c.ClickHouseQueries {
+			clickHouseQueries[name] = query.Clone()
+		}
+	}
+	var promQueries map[string]*PromQuery
+	if c.PromQueries != nil {
+		promQueries = make(map[string]*PromQuery)
+		for name, query := range c.PromQueries {
+			promQueries[name] = query.Clone()
+		}
+	}
+	return &CompositeQuery{
+		BuilderQueries:    builderQueries,
+		ClickHouseQueries: clickHouseQueries,
+		PromQueries:       promQueries,
+		PanelType:         c.PanelType,
+		QueryType:         c.QueryType,
+		Unit:              c.Unit,
+		FillGaps:          c.FillGaps,
+	}
+
 }
 
 func (c *CompositeQuery) EnabledQueries() int {
@@ -426,6 +518,18 @@ func (c *CompositeQuery) EnabledQueries() int {
 		}
 	}
 	return count
+}
+
+func (c *CompositeQuery) Sanitize() {
+	if c == nil {
+		return
+	}
+	// remove groupBy for queries with list panel type
+	for _, query := range c.BuilderQueries {
+		if len(query.GroupBy) > 0 && c.PanelType == PanelTypeList {
+			query.GroupBy = []AttributeKey{}
+		}
+	}
 }
 
 func (c *CompositeQuery) Validate() error {
@@ -600,21 +704,23 @@ func GetPercentileFromOperator(operator SpaceAggregation) float64 {
 type FunctionName string
 
 const (
-	FunctionNameCutOffMin FunctionName = "cutOffMin"
-	FunctionNameCutOffMax FunctionName = "cutOffMax"
-	FunctionNameClampMin  FunctionName = "clampMin"
-	FunctionNameClampMax  FunctionName = "clampMax"
-	FunctionNameAbsolute  FunctionName = "absolute"
-	FunctionNameLog2      FunctionName = "log2"
-	FunctionNameLog10     FunctionName = "log10"
-	FunctionNameCumSum    FunctionName = "cumSum"
-	FunctionNameEWMA3     FunctionName = "ewma3"
-	FunctionNameEWMA5     FunctionName = "ewma5"
-	FunctionNameEWMA7     FunctionName = "ewma7"
-	FunctionNameMedian3   FunctionName = "median3"
-	FunctionNameMedian5   FunctionName = "median5"
-	FunctionNameMedian7   FunctionName = "median7"
-	FunctionNameTimeShift FunctionName = "timeShift"
+	FunctionNameCutOffMin   FunctionName = "cutOffMin"
+	FunctionNameCutOffMax   FunctionName = "cutOffMax"
+	FunctionNameClampMin    FunctionName = "clampMin"
+	FunctionNameClampMax    FunctionName = "clampMax"
+	FunctionNameAbsolute    FunctionName = "absolute"
+	FunctionNameRunningDiff FunctionName = "runningDiff"
+	FunctionNameLog2        FunctionName = "log2"
+	FunctionNameLog10       FunctionName = "log10"
+	FunctionNameCumSum      FunctionName = "cumSum"
+	FunctionNameEWMA3       FunctionName = "ewma3"
+	FunctionNameEWMA5       FunctionName = "ewma5"
+	FunctionNameEWMA7       FunctionName = "ewma7"
+	FunctionNameMedian3     FunctionName = "median3"
+	FunctionNameMedian5     FunctionName = "median5"
+	FunctionNameMedian7     FunctionName = "median7"
+	FunctionNameTimeShift   FunctionName = "timeShift"
+	FunctionNameAnomaly     FunctionName = "anomaly"
 )
 
 func (f FunctionName) Validate() error {
@@ -624,6 +730,7 @@ func (f FunctionName) Validate() error {
 		FunctionNameClampMin,
 		FunctionNameClampMax,
 		FunctionNameAbsolute,
+		FunctionNameRunningDiff,
 		FunctionNameLog2,
 		FunctionNameLog10,
 		FunctionNameCumSum,
@@ -633,7 +740,8 @@ func (f FunctionName) Validate() error {
 		FunctionNameMedian3,
 		FunctionNameMedian5,
 		FunctionNameMedian7,
-		FunctionNameTimeShift:
+		FunctionNameTimeShift,
+		FunctionNameAnomaly:
 		return nil
 	default:
 		return fmt.Errorf("invalid function name: %s", f)
@@ -641,33 +749,68 @@ func (f FunctionName) Validate() error {
 }
 
 type Function struct {
-	Name FunctionName  `json:"name"`
-	Args []interface{} `json:"args,omitempty"`
+	Name      FunctionName           `json:"name"`
+	Args      []interface{}          `json:"args,omitempty"`
+	NamedArgs map[string]interface{} `json:"namedArgs,omitempty"`
 }
 
 type BuilderQuery struct {
-	QueryName          string            `json:"queryName"`
-	StepInterval       int64             `json:"stepInterval"`
-	DataSource         DataSource        `json:"dataSource"`
-	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
-	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
-	Temporality        Temporality       `json:"temporality,omitempty"`
-	Filters            *FilterSet        `json:"filters,omitempty"`
-	GroupBy            []AttributeKey    `json:"groupBy,omitempty"`
-	Expression         string            `json:"expression"`
-	Disabled           bool              `json:"disabled"`
-	Having             []Having          `json:"having,omitempty"`
-	Legend             string            `json:"legend,omitempty"`
-	Limit              uint64            `json:"limit"`
-	Offset             uint64            `json:"offset"`
-	PageSize           uint64            `json:"pageSize"`
-	OrderBy            []OrderBy         `json:"orderBy,omitempty"`
-	ReduceTo           ReduceToOperator  `json:"reduceTo,omitempty"`
-	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
-	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
-	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
-	Functions          []Function        `json:"functions,omitempty"`
-	ShiftBy            int64
+	QueryName            string            `json:"queryName"`
+	StepInterval         int64             `json:"stepInterval"`
+	DataSource           DataSource        `json:"dataSource"`
+	AggregateOperator    AggregateOperator `json:"aggregateOperator"`
+	AggregateAttribute   AttributeKey      `json:"aggregateAttribute,omitempty"`
+	Temporality          Temporality       `json:"temporality,omitempty"`
+	Filters              *FilterSet        `json:"filters,omitempty"`
+	GroupBy              []AttributeKey    `json:"groupBy,omitempty"`
+	Expression           string            `json:"expression"`
+	Disabled             bool              `json:"disabled"`
+	Having               []Having          `json:"having,omitempty"`
+	Legend               string            `json:"legend,omitempty"`
+	Limit                uint64            `json:"limit"`
+	Offset               uint64            `json:"offset"`
+	PageSize             uint64            `json:"pageSize"`
+	OrderBy              []OrderBy         `json:"orderBy,omitempty"`
+	ReduceTo             ReduceToOperator  `json:"reduceTo,omitempty"`
+	SelectColumns        []AttributeKey    `json:"selectColumns,omitempty"`
+	TimeAggregation      TimeAggregation   `json:"timeAggregation,omitempty"`
+	SpaceAggregation     SpaceAggregation  `json:"spaceAggregation,omitempty"`
+	Functions            []Function        `json:"functions,omitempty"`
+	ShiftBy              int64
+	IsAnomaly            bool
+	QueriesUsedInFormula []string
+}
+
+func (b *BuilderQuery) Clone() *BuilderQuery {
+	if b == nil {
+		return nil
+	}
+	return &BuilderQuery{
+		QueryName:            b.QueryName,
+		StepInterval:         b.StepInterval,
+		DataSource:           b.DataSource,
+		AggregateOperator:    b.AggregateOperator,
+		AggregateAttribute:   b.AggregateAttribute,
+		Temporality:          b.Temporality,
+		Filters:              b.Filters.Clone(),
+		GroupBy:              b.GroupBy,
+		Expression:           b.Expression,
+		Disabled:             b.Disabled,
+		Having:               b.Having,
+		Legend:               b.Legend,
+		Limit:                b.Limit,
+		Offset:               b.Offset,
+		PageSize:             b.PageSize,
+		OrderBy:              b.OrderBy,
+		ReduceTo:             b.ReduceTo,
+		SelectColumns:        b.SelectColumns,
+		TimeAggregation:      b.TimeAggregation,
+		SpaceAggregation:     b.SpaceAggregation,
+		Functions:            b.Functions,
+		ShiftBy:              b.ShiftBy,
+		IsAnomaly:            b.IsAnomaly,
+		QueriesUsedInFormula: b.QueriesUsedInFormula,
+	}
 }
 
 // CanDefaultZero returns true if the missing value can be substituted by zero
@@ -747,9 +890,9 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 		}
 	}
 	if b.GroupBy != nil {
-		if len(b.GroupBy) > 0 && panelType == PanelTypeList {
-			return fmt.Errorf("group by is not supported for list panel type")
-		}
+		// if len(b.GroupBy) > 0 && panelType == PanelTypeList {
+		// 	return fmt.Errorf("group by is not supported for list panel type")
+		// }
 
 		for _, groupBy := range b.GroupBy {
 			if err := groupBy.Validate(); err != nil {
@@ -846,6 +989,16 @@ type FilterSet struct {
 	Items    []FilterItem `json:"items"`
 }
 
+func (f *FilterSet) Clone() *FilterSet {
+	if f == nil {
+		return nil
+	}
+	return &FilterSet{
+		Operator: f.Operator,
+		Items:    f.Items,
+	}
+}
+
 func (f *FilterSet) Validate() error {
 	if f == nil {
 		return nil
@@ -892,7 +1045,8 @@ const (
 	FilterOperatorNotContains     FilterOperator = "ncontains"
 	FilterOperatorRegex           FilterOperator = "regex"
 	FilterOperatorNotRegex        FilterOperator = "nregex"
-	// (I)LIKE is faster than REGEX and supports index
+	// (I)LIKE is faster than REGEX
+	// ilike doesn't support index so internally we use lower(body) like for query
 	FilterOperatorLike    FilterOperator = "like"
 	FilterOperatorNotLike FilterOperator = "nlike"
 
@@ -976,17 +1130,35 @@ type QueryRangeResponse struct {
 	Result                []*Result `json:"result"`
 }
 
-type Result struct {
-	QueryName string    `json:"queryName"`
-	Series    []*Series `json:"series"`
-	List      []*Row    `json:"list"`
+type TableColumn struct {
+	Name string `json:"name"`
+	// QueryName is the name of the query that this column belongs to
+	QueryName string `json:"queryName"`
+	// IsValueColumn is true if this column is a value column
+	// i.e it is the column that contains the actual value that is being plotted
+	IsValueColumn bool `json:"isValueColumn"`
 }
 
-type LogsLiveTailClient struct {
-	Name  string
-	Logs  chan *model.SignozLog
-	Done  chan *bool
-	Error chan error
+type TableRow struct {
+	Data      map[string]interface{} `json:"data"`
+	QueryName string                 `json:"-"`
+}
+
+type Table struct {
+	Columns []*TableColumn `json:"columns"`
+	Rows    []*TableRow    `json:"rows"`
+}
+
+type Result struct {
+	QueryName        string    `json:"queryName,omitempty"`
+	Series           []*Series `json:"series,omitempty"`
+	PredictedSeries  []*Series `json:"predictedSeries,omitempty"`
+	UpperBoundSeries []*Series `json:"upperBoundSeries,omitempty"`
+	LowerBoundSeries []*Series `json:"lowerBoundSeries,omitempty"`
+	AnomalyScores    []*Series `json:"anomalyScores,omitempty"`
+	List             []*Row    `json:"list,omitempty"`
+	Table            *Table    `json:"table,omitempty"`
+	IsAnomaly        bool      `json:"isAnomaly,omitempty"`
 }
 
 type Series struct {
@@ -1105,4 +1277,32 @@ type MetricMetadataResponse struct {
 	Type        string    `json:"type"`
 	IsMonotonic bool      `json:"isMonotonic"`
 	Temporality string    `json:"temporality"`
+}
+
+type URLShareableTimeRange struct {
+	Start    int64 `json:"start"`
+	End      int64 `json:"end"`
+	PageSize int64 `json:"pageSize"`
+}
+
+type URLShareableBuilderQuery struct {
+	QueryData     []BuilderQuery `json:"queryData"`
+	QueryFormulas []string       `json:"queryFormulas"`
+}
+
+type URLShareableCompositeQuery struct {
+	QueryType string                   `json:"queryType"`
+	Builder   URLShareableBuilderQuery `json:"builder"`
+}
+
+type URLShareableOptions struct {
+	MaxLines      int            `json:"maxLines"`
+	Format        string         `json:"format"`
+	SelectColumns []AttributeKey `json:"selectColumns"`
+}
+
+type LogQBOptions struct {
+	GraphLimitQtype string
+	IsLivetailQuery bool
+	PreferRPM       bool
 }

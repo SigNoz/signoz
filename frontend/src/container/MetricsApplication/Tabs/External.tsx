@@ -1,5 +1,7 @@
 import { Col } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import {
@@ -13,8 +15,13 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
-import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import useUrlQuery from 'hooks/useUrlQuery';
+import history from 'lib/history';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useLocation, useParams } from 'react-router-dom';
+import { UpdateTimeInterval } from 'store/actions';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
@@ -37,6 +44,27 @@ function External(): JSX.Element {
 
 	const servicename = decodeURIComponent(encodedServiceName);
 	const { queries } = useResourceAttribute();
+
+	const urlQuery = useUrlQuery();
+	const { pathname } = useLocation();
+	const dispatch = useDispatch();
+
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			history.push(generatedUrl);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch, pathname, urlQuery],
+	);
 
 	const tagFilterItems = useMemo(
 		() =>
@@ -92,6 +120,43 @@ function External(): JSX.Element {
 			}),
 		[servicename, tagFilterItems],
 	);
+
+	const errorApmToTraceQuery = useGetAPMToTracesQueries({
+		servicename,
+		isExternalCall: true,
+		filters: [
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'hasError',
+					dataType: DataTypes.bool,
+					type: 'tag',
+					isColumn: true,
+					isJSON: false,
+					id: 'hasError--bool--tag--true',
+				},
+				op: 'in',
+				value: ['true'],
+			},
+		],
+	});
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current) {
+			const selectedEnvironments = queries.find(
+				(val) => val.tagKey === 'resource_deployment_environment',
+			)?.tagValue;
+
+			logEvent('APM: Service detail page visited', {
+				selectedEnvironments,
+				resourceAttributeUsed: !!queries?.length,
+				section: 'externalMetrics',
+			});
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const externalCallRPSWidget = useMemo(
 		() =>
@@ -156,7 +221,7 @@ function External(): JSX.Element {
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
-							apmToTraceQuery,
+							apmToTraceQuery: errorApmToTraceQuery,
 						})}
 					>
 						View Traces
@@ -175,6 +240,7 @@ function External(): JSX.Element {
 										'external_call_error_percentage',
 									);
 								}}
+								onDragSelect={onDragSelect}
 								version={ENTITY_VERSION_V4}
 							/>
 						</GraphContainer>
@@ -210,6 +276,7 @@ function External(): JSX.Element {
 										'external_call_duration',
 									);
 								}}
+								onDragSelect={onDragSelect}
 								version={ENTITY_VERSION_V4}
 							/>
 						</GraphContainer>
@@ -246,6 +313,7 @@ function External(): JSX.Element {
 										'external_call_rps_by_address',
 									)
 								}
+								onDragSelect={onDragSelect}
 								version={ENTITY_VERSION_V4}
 							/>
 						</GraphContainer>
@@ -281,6 +349,7 @@ function External(): JSX.Element {
 										'external_call_duration_by_address',
 									);
 								}}
+								onDragSelect={onDragSelect}
 								version={ENTITY_VERSION_V4}
 							/>
 						</GraphContainer>

@@ -69,7 +69,12 @@ function ServiceMetricTable({
 	const [RPS, setRPS] = useState(0);
 
 	useEffect(() => {
-		if (!isFetching && licenseData?.payload?.onTrial && isCloudUserVal) {
+		if (
+			!isFetching &&
+			licenseData?.payload?.onTrial &&
+			!licenseData?.payload?.trialConvertedToSubscription &&
+			isCloudUserVal
+		) {
 			if (services.length > 0) {
 				const rps = getTotalRPS(services);
 				setRPS(rps);
@@ -79,12 +84,18 @@ function ServiceMetricTable({
 		}
 	}, [services, licenseData, isFetching, isCloudUserVal]);
 
+	const paginationConfig = {
+		defaultPageSize: 10,
+		showTotal: (total: number, range: number[]): string =>
+			`${range[0]}-${range[1]} of ${total} items`,
+	};
 	return (
 		<>
 			{RPS > MAX_RPS_LIMIT && (
-				<Flex justify="center">
+				<Flex justify="left">
 					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
 						<WarningFilled /> {getText('rps_over_100')}
+						<a href="mailto:cloud-support@signoz.io">email</a>
 					</Typography.Title>
 				</Flex>
 			)}
@@ -92,11 +103,7 @@ function ServiceMetricTable({
 			<ResourceAttributesFilter />
 
 			<ResizeTable
-				pagination={{
-					defaultPageSize: 10,
-					showTotal: (total: number, range: number[]): string =>
-						`${range[0]}-${range[1]} of ${total} items`,
-				}}
+				pagination={paginationConfig}
 				columns={tableColumns}
 				loading={isLoading}
 				dataSource={services}

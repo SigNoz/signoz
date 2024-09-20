@@ -18,11 +18,13 @@ export type QueryRangePayload = {
 		promQueries?: Record<string, IPromQLQuery>;
 		queryType: EQueryType;
 		panelType: PANEL_TYPES;
+		fillGaps?: boolean;
 	};
 	end: number;
 	start: number;
 	step: number;
 	variables?: Record<string, unknown>;
+	formatForWeb?: boolean;
 	[param: string]: unknown;
 };
 export interface MetricRangePayloadProps {

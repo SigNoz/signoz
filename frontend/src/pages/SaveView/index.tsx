@@ -10,6 +10,7 @@ import {
 	TableProps,
 	Typography,
 } from 'antd';
+import logEvent from 'api/common/logEvent';
 import {
 	getViewDetailsUsingViewKey,
 	showErrorNotification,
@@ -30,7 +31,7 @@ import {
 	Trash2,
 	X,
 } from 'lucide-react';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -143,6 +144,22 @@ function SaveView(): JSX.Element {
 		viewName: newViewName,
 	});
 
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isLoading) {
+			if (sourcepage === DataSource.TRACES) {
+				logEvent('Traces Views: Views visited', {
+					number: viewsData?.data?.data?.length,
+				});
+			} else if (sourcepage === DataSource.LOGS) {
+				logEvent('Logs Views: Views visited', {
+					number: viewsData?.data?.data?.length,
+				});
+			}
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [viewsData?.data.data, isLoading]);
 	const onUpdateQueryHandler = (): void => {
 		updateViewAsync(
 			{
@@ -246,13 +263,19 @@ function SaveView(): JSX.Element {
 								<PenLine
 									size={14}
 									className={isEditDeleteSupported ? '' : 'hidden'}
+									data-testid="edit-view"
 									onClick={(): void => handleEditModelOpen(view, bgColor)}
 								/>
-								<Compass size={14} onClick={(): void => handleRedirectQuery(view)} />
+								<Compass
+									size={14}
+									onClick={(): void => handleRedirectQuery(view)}
+									data-testid="go-to-explorer"
+								/>
 								<Trash2
 									size={14}
 									className={isEditDeleteSupported ? '' : 'hidden'}
 									color={Color.BG_CHERRY_500}
+									data-testid="delete-view"
 									onClick={(): void => handleDeleteModelOpen(view.uuid, view.name)}
 								/>
 							</div>
@@ -276,6 +299,8 @@ function SaveView(): JSX.Element {
 			},
 		},
 	];
+
+	const paginationConfig = { pageSize: 5, hideOnSinglePage: true };
 
 	return (
 		<div className="save-view-container">
@@ -303,7 +328,7 @@ function SaveView(): JSX.Element {
 					dataSource={dataSource}
 					loading={isLoading || isRefetching}
 					showHeader={false}
-					pagination={{ pageSize: 5 }}
+					pagination={paginationConfig}
 				/>
 			</div>
 
@@ -328,6 +353,7 @@ function SaveView(): JSX.Element {
 						onClick={onDeleteHandler}
 						className="delete-btn"
 						disabled={isDeleteLoading}
+						data-testid="confirm-delete"
 					>
 						Delete view
 					</Button>,
@@ -352,6 +378,7 @@ function SaveView(): JSX.Element {
 						icon={<Check size={16} color={Color.BG_VANILLA_100} />}
 						onClick={onUpdateQueryHandler}
 						disabled={isViewUpdating}
+						data-testid="save-view"
 					>
 						Save changes
 					</Button>,
@@ -366,6 +393,7 @@ function SaveView(): JSX.Element {
 					<Input
 						placeholder="e.g. Crash landing view"
 						value={newViewName}
+						data-testid="view-name"
 						onChange={(e): void => setNewViewName(e.target.value)}
 					/>
 				</div>

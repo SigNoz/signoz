@@ -36,6 +36,7 @@ receivers:
       #   endpoint: 0.0.0.0:6832
   hostmetrics:
     collection_interval: 30s
+    root_path: /hostfs
     scrapers:
       cpu: {}
       load: {}
@@ -157,6 +158,8 @@ exporters:
 
 service:
   telemetry:
+    logs:
+      encoding: json
     metrics:
       address: 0.0.0.0:8888
   extensions:

@@ -26,7 +26,12 @@ function ServiceTraceTable({
 	const tableColumns = useMemo(() => getColumns(search, false), [search]);
 
 	useEffect(() => {
-		if (!isFetching && licenseData?.payload?.onTrial && isCloudUserVal) {
+		if (
+			!isFetching &&
+			licenseData?.payload?.onTrial &&
+			!licenseData?.payload?.trialConvertedToSubscription &&
+			isCloudUserVal
+		) {
 			if (services.length > 0) {
 				const rps = getTotalRPS(services);
 				setRPS(rps);
@@ -36,24 +41,26 @@ function ServiceTraceTable({
 		}
 	}, [services, licenseData, isFetching, isCloudUserVal]);
 
+	const paginationConfig = {
+		defaultPageSize: 10,
+		showTotal: (total: number, range: number[]): string =>
+			`${range[0]}-${range[1]} of ${total} items`,
+	};
 	return (
 		<>
 			{RPS > MAX_RPS_LIMIT && (
-				<Flex justify="flex-end">
-					<Typography.Text type="warning" style={{ marginTop: 0 }}>
+				<Flex justify="left">
+					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
 						<WarningFilled /> {getText('rps_over_100')}
-					</Typography.Text>
+						<a href="mailto:cloud-support@signoz.io">email</a>
+					</Typography.Title>
 				</Flex>
 			)}
 
 			<ResourceAttributesFilter />
 
 			<ResizeTable
-				pagination={{
-					defaultPageSize: 10,
-					showTotal: (total: number, range: number[]): string =>
-						`${range[0]}-${range[1]} of ${total} items`,
-				}}
+				pagination={paginationConfig}
 				columns={tableColumns}
 				loading={loading}
 				dataSource={services}

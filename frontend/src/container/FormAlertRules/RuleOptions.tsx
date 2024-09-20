@@ -103,6 +103,7 @@ function RuleOptions({
 			<Select.Option value="2">{t('option_allthetimes')}</Select.Option>
 			<Select.Option value="3">{t('option_onaverage')}</Select.Option>
 			<Select.Option value="4">{t('option_intotal')}</Select.Option>
+			<Select.Option value="5">{t('option_last')}</Select.Option>
 		</InlineSelect>
 	);
 

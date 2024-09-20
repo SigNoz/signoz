@@ -6,6 +6,8 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/querycache"
+	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
 func AdjustedMetricTimeRange(start, end, step int64, mq v3.BuilderQuery) (int64, int64) {
@@ -13,8 +15,18 @@ func AdjustedMetricTimeRange(start, end, step int64, mq v3.BuilderQuery) (int64,
 	start = start - (start % (step * 1000))
 	// if the query is a rate query, we adjust the start time by one more step
 	// so that we can calculate the rate for the first data point
+	hasRunningDiff := false
+	for _, fn := range mq.Functions {
+		if fn.Name == v3.FunctionNameRunningDiff {
+			hasRunningDiff = true
+			break
+		}
+	}
 	if (mq.AggregateOperator.IsRateOperator() || mq.TimeAggregation.IsRateOperator()) &&
 		mq.Temporality != v3.Delta {
+		start -= step * 1000
+	}
+	if hasRunningDiff {
 		start -= step * 1000
 	}
 	// align the end to the nearest minute
@@ -59,4 +71,36 @@ func LCMList(nums []int64) int64 {
 		result = LCM(result, num)
 	}
 	return result
+}
+
+func GetSeriesFromCachedData(data []querycache.CachedSeriesData, start, end int64) []*v3.Series {
+	series := make(map[uint64]*v3.Series)
+
+	for _, cachedData := range data {
+		for _, data := range cachedData.Data {
+			h := labels.FromMap(data.Labels).Hash()
+
+			if _, ok := series[h]; !ok {
+				series[h] = &v3.Series{
+					Labels:      data.Labels,
+					LabelsArray: data.LabelsArray,
+					Points:      make([]v3.Point, 0),
+				}
+			}
+
+			for _, point := range data.Points {
+				if point.Timestamp >= start && point.Timestamp <= end {
+					series[h].Points = append(series[h].Points, point)
+				}
+			}
+		}
+	}
+
+	newSeries := make([]*v3.Series, 0, len(series))
+	for _, s := range series {
+		s.SortPoints()
+		s.RemoveDuplicatePoints()
+		newSeries = append(newSeries, s)
+	}
+	return newSeries
 }

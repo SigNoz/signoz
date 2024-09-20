@@ -27,8 +27,8 @@ func (bi *BuiltInIntegrations) list(ctx context.Context) (
 	[]IntegrationDetails, *model.ApiError,
 ) {
 	integrations := maps.Values(builtInIntegrations)
-	slices.SortFunc(integrations, func(i1, i2 IntegrationDetails) bool {
-		return i1.Id < i2.Id
+	slices.SortFunc(integrations, func(i1, i2 IntegrationDetails) int {
+		return strings.Compare(i1.Id, i2.Id)
 	})
 	return integrations, nil
 }

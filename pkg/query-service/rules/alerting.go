@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
@@ -37,35 +39,13 @@ const (
 	HealthBad     RuleHealth = "err"
 )
 
-// AlertState denotes the state of an active alert.
-type AlertState int
-
-const (
-	StateInactive AlertState = iota
-	StatePending
-	StateFiring
-	StateDisabled
-)
-
-func (s AlertState) String() string {
-	switch s {
-	case StateInactive:
-		return "inactive"
-	case StatePending:
-		return "pending"
-	case StateFiring:
-		return "firing"
-	case StateDisabled:
-		return "disabled"
-	}
-	panic(errors.Errorf("unknown alert state: %d", s))
-}
-
 type Alert struct {
-	State AlertState
+	State model.AlertState
 
 	Labels      labels.BaseLabels
 	Annotations labels.BaseLabels
+
+	QueryResultLables labels.BaseLabels
 
 	GeneratorURL string
 
@@ -78,10 +58,12 @@ type Alert struct {
 	ResolvedAt time.Time
 	LastSentAt time.Time
 	ValidUntil time.Time
+
+	Missing bool
 }
 
 func (a *Alert) needsSending(ts time.Time, resendDelay time.Duration) bool {
-	if a.State == StatePending {
+	if a.State == model.StatePending {
 		return false
 	}
 
@@ -130,6 +112,7 @@ const (
 	AllTheTimes   MatchType = "2"
 	OnAverage     MatchType = "3"
 	InTotal       MatchType = "4"
+	Last          MatchType = "5"
 )
 
 type RuleCondition struct {
@@ -143,6 +126,47 @@ type RuleCondition struct {
 	MatchType         MatchType          `json:"matchType,omitempty"`
 	TargetUnit        string             `json:"targetUnit,omitempty"`
 	SelectedQuery     string             `json:"selectedQueryName,omitempty"`
+}
+
+func (rc *RuleCondition) GetSelectedQueryName() string {
+	if rc != nil {
+		if rc.SelectedQuery != "" {
+			return rc.SelectedQuery
+		}
+
+		queryNames := map[string]struct{}{}
+
+		if rc.CompositeQuery != nil {
+			if rc.QueryType() == v3.QueryTypeBuilder {
+				for name := range rc.CompositeQuery.BuilderQueries {
+					queryNames[name] = struct{}{}
+				}
+			} else if rc.QueryType() == v3.QueryTypeClickHouseSQL {
+				for name := range rc.CompositeQuery.ClickHouseQueries {
+					queryNames[name] = struct{}{}
+				}
+			}
+		}
+
+		// The following logic exists for backward compatibility
+		// If there is no selected query, then
+		// - check if F1 is present, if yes, return F1
+		// - else return the query with max ascii value
+		// this logic is not really correct. we should be considering
+		// whether the query is enabled or not. but this is a temporary
+		// fix to support backward compatibility
+		if _, ok := queryNames["F1"]; ok {
+			return "F1"
+		}
+		keys := make([]string, 0, len(queryNames))
+		for k := range queryNames {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		return keys[len(keys)-1]
+	}
+	// This should never happen
+	return ""
 }
 
 func (rc *RuleCondition) IsValid() bool {

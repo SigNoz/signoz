@@ -2,7 +2,9 @@ import './QuerySection.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
@@ -14,7 +16,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { defaultTo } from 'lodash-es';
+import { defaultTo, isUndefined } from 'lodash-es';
 import { Atom, Play, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -122,6 +124,18 @@ function QuerySection({
 	};
 
 	const handleRunQuery = (): void => {
+		const widgetId = urlQuery.get('widgetId');
+		const isNewPanel = isUndefined(widgets?.find((e) => e.id === widgetId));
+
+		logEvent('Panel Edit: Stage and run query', {
+			dataSource: currentQuery.builder?.queryData?.[0]?.dataSource,
+			panelType: selectedWidget.panelTypes,
+			queryType: currentQuery.queryType,
+			widgetId: selectedWidget.id,
+			dashboardId: selectedDashboard?.uuid,
+			dashboardName: selectedDashboard?.data.title,
+			isNewPanel,
+		});
 		handleStageQuery(currentQuery);
 	};
 
@@ -223,6 +237,21 @@ function QuerySection({
 				onChange={handleQueryCategoryChange}
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+						<LaunchChatSupport
+							attributes={{
+								uuid: selectedDashboard?.uuid,
+								title: selectedDashboard?.data.title,
+								screen: 'Dashboard widget',
+								panelType: selectedGraph,
+								widgetId: query.id,
+								queryType: currentQuery.queryType,
+							}}
+							eventName="Dashboard: Facing Issues in dashboard"
+							buttonText="Need help with this chart?"
+							// message={chartHelpMessage(selectedDashboard, graphType)}
+							onHoverText="Click here to get help with this dashboard widget"
+							intercomMessageDisabled
+						/>
 						<TextToolTip
 							text="This will temporarily save the current query and graph state. This will persist across tab change"
 							url="https://signoz.io/docs/userguide/query-builder?utm_source=product&utm_medium=query-builder"

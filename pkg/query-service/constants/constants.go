@@ -25,6 +25,11 @@ var ConfigSignozIo = "https://config.signoz.io/api/v1"
 
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
+func IsOSSTelemetryEnabled() bool {
+	ossSegmentKey := GetOrDefaultEnv("OSS_TELEMETRY_ENABLED", "true")
+	return ossSegmentKey == "true"
+}
+
 const MaxAllowedPointsInTimeSeries = 300
 
 func IsTelemetryEnabled() bool {
@@ -54,6 +59,10 @@ func GetAlertManagerApiPrefix() string {
 	}
 	return "http://alertmanager:9093/api/"
 }
+
+var TELEMETRY_HEART_BEAT_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_HEART_BEAT_DURATION_MINUTES", 720)
+
+var TELEMETRY_ACTIVE_USER_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_ACTIVE_USER_DURATION_MINUTES", 360)
 
 var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email_template.html")
 
@@ -148,6 +157,15 @@ func GetContextTimeoutMaxAllowed() time.Duration {
 	return contextTimeoutDuration
 }
 
+func GetEvalDelay() time.Duration {
+	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
+	evalDelayDuration, err := time.ParseDuration(evalDelayStr)
+	if err != nil {
+		return 0
+	}
+	return evalDelayDuration
+}
+
 var ContextTimeoutMaxAllowed = GetContextTimeoutMaxAllowed()
 
 const (
@@ -232,6 +250,18 @@ func GetOrDefaultEnv(key string, fallback string) string {
 	return v
 }
 
+func GetOrDefaultEnvInt(key string, fallback int) int {
+	v := os.Getenv(key)
+	if len(v) == 0 {
+		return fallback
+	}
+	intVal, err := strconv.Atoi(v)
+	if err != nil {
+		return fallback
+	}
+	return intVal
+}
+
 const (
 	STRING                = "String"
 	UINT32                = "UInt32"
@@ -286,6 +316,12 @@ const (
 		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
 		"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool," +
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "
+	LogsSQLSelectV2 = "SELECT " +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, " +
+		"attributes_string, " +
+		"attributes_number, " +
+		"attributes_bool, " +
+		"resources_string "
 	TracesExplorerViewSQLSelectWithSubQuery = "WITH subQuery AS (SELECT distinct on (traceID) traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s %s ORDER BY durationNano DESC "
 	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
@@ -350,6 +386,12 @@ var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
 		Type:     v3.AttributeKeyTypeUnspecified,
 		IsColumn: true,
 	},
+	"__attrs": {
+		Key:      "__attrs",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
 }
 
 const SigNozOrderByValue = "#SIGNOZ_VALUE"
@@ -359,35 +401,10 @@ const TIMESTAMP = "timestamp"
 const FirstQueryGraphLimit = "first_query_graph_limit"
 const SecondQueryGraphLimit = "second_query_graph_limit"
 
-var TracesListViewDefaultSelectedColumns = []v3.AttributeKey{
-	{
-		Key:      "serviceName",
-		DataType: v3.AttributeKeyDataTypeString,
-		Type:     v3.AttributeKeyTypeTag,
-		IsColumn: true,
-	},
-	{
-		Key:      "name",
-		DataType: v3.AttributeKeyDataTypeString,
-		Type:     v3.AttributeKeyTypeTag,
-		IsColumn: true,
-	},
-	{
-		Key:      "durationNano",
-		DataType: v3.AttributeKeyDataTypeArrayFloat64,
-		Type:     v3.AttributeKeyTypeTag,
-		IsColumn: true,
-	},
-	{
-		Key:      "httpMethod",
-		DataType: v3.AttributeKeyDataTypeString,
-		Type:     v3.AttributeKeyTypeTag,
-		IsColumn: true,
-	},
-	{
-		Key:      "responseStatusCode",
-		DataType: v3.AttributeKeyDataTypeString,
-		Type:     v3.AttributeKeyTypeTag,
-		IsColumn: true,
-	},
-}
+const DefaultFilterSuggestionsAttributesLimit = 50
+const MaxFilterSuggestionsAttributesLimit = 100
+const DefaultFilterSuggestionsExamplesLimit = 2
+const MaxFilterSuggestionsExamplesLimit = 10
+
+var SpanRenderLimitStr = GetOrDefaultEnv("SPAN_RENDER_LIMIT", "2500")
+var MaxSpansInTraceStr = GetOrDefaultEnv("MAX_SPANS_IN_TRACE", "250000")

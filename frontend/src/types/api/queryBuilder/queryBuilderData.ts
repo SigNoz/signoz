@@ -74,6 +74,7 @@ export type IBuilderQuery = {
 	legend: string;
 	pageSize?: number;
 	offset?: number;
+	selectColumns?: BaseAutocompleteData[];
 };
 
 export interface IClickHouseQuery {

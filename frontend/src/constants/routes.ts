@@ -13,6 +13,7 @@ const ROUTES = {
 	GET_STARTED_INFRASTRUCTURE_MONITORING:
 		'/get-started/infrastructure-monitoring',
 	GET_STARTED_AWS_MONITORING: '/get-started/aws-monitoring',
+	GET_STARTED_AZURE_MONITORING: '/get-started/azure-monitoring',
 	USAGE_EXPLORER: '/usage-explorer',
 	APPLICATION: '/services',
 	ALL_DASHBOARD: '/dashboard',
@@ -21,6 +22,8 @@ const ROUTES = {
 	EDIT_ALERTS: '/alerts/edit',
 	LIST_ALL_ALERT: '/alerts',
 	ALERTS_NEW: '/alerts/new',
+	ALERT_HISTORY: '/alerts/history',
+	ALERT_OVERVIEW: '/alerts/overview',
 	ALL_CHANNELS: '/settings/channels',
 	CHANNELS_NEW: '/settings/channels/new',
 	CHANNELS_EDIT: '/settings/channels/:id',
@@ -53,6 +56,8 @@ const ROUTES = {
 	WORKSPACE_LOCKED: '/workspace-locked',
 	SHORTCUTS: '/shortcuts',
 	INTEGRATIONS: '/integrations',
+	MESSAGING_QUEUES: '/messaging-queues',
+	MESSAGING_QUEUES_DETAIL: '/messaging-queues/detail',
 } as const;
 
 export default ROUTES;
