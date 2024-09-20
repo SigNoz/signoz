@@ -540,11 +540,14 @@ func checkLogPanelAttrContains(data map[string]interface{}) int {
 			for _, item := range items {
 				itemMap, ok := item.(map[string]interface{})
 				if ok {
-					if slices.Contains([]string{"contains", "ncontains", "like", "nlike"}, itemMap["op"].(string)) {
-						// check if it's not body
-						key, ok := itemMap["key"].(map[string]string)
-						if ok && key["key"] != "body" {
-							logsPanelsWithAttrContains++
+					opStr, ok := itemMap["op"].(string)
+					if ok {
+						if slices.Contains([]string{"contains", "ncontains", "like", "nlike"}, opStr) {
+							// check if it's not body
+							key, ok := itemMap["key"].(map[string]string)
+							if ok && key["key"] != "body" {
+								logsPanelsWithAttrContains++
+							}
 						}
 					}
 				}
