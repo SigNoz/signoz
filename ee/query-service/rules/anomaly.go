@@ -16,7 +16,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/model"
 
-	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -43,8 +42,6 @@ type AnomalyRule struct {
 
 	reader interfaces.Reader
 
-	// querier is used for alerts created before the introduction of new metrics query builder
-	querier interfaces.Querier
 	// querierV2 is used for alerts created after the introduction of new metrics query builder
 	querierV2 interfaces.Querier
 
@@ -83,14 +80,7 @@ func NewAnomalyRule(
 		t.seasonality = anomaly.SeasonalityDaily
 	}
 
-	zap.L().Info("seasonality", zap.String("seasonality", t.seasonality.String()))
-
-	querierOption := querier.QuerierOptions{
-		Reader:        reader,
-		Cache:         cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FeatureLookup: featureFlags,
-	}
+	zap.L().Info("using seasonality", zap.String("seasonality", t.seasonality.String()))
 
 	querierOptsV2 := querierV2.QuerierOptions{
 		Reader:        reader,
@@ -99,7 +89,6 @@ func NewAnomalyRule(
 		FeatureLookup: featureFlags,
 	}
 
-	t.querier = querier.NewQuerier(querierOption)
 	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
 	t.reader = reader
 	if t.seasonality == anomaly.SeasonalityHourly {
@@ -343,6 +332,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 					UnixMilli:    ts.UnixMilli(),
 					Labels:       model.LabelsString(labelsJSON),
 					Fingerprint:  a.QueryResultLables.Hash(),
+					Value:        a.Value,
 				})
 			}
 			continue
@@ -370,24 +360,14 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 
 	currentState := r.State()
 
-	if currentState != prevState {
-		for idx := range itemsToAdd {
-			itemsToAdd[idx].OverallState = currentState
-			itemsToAdd[idx].OverallStateChanged = true
-		}
-	} else {
-		for idx := range itemsToAdd {
-			itemsToAdd[idx].OverallState = currentState
-			itemsToAdd[idx].OverallStateChanged = false
-		}
+	overallStateChanged := currentState != prevState
+	for idx, item := range itemsToAdd {
+		item.OverallStateChanged = overallStateChanged
+		item.OverallState = currentState
+		itemsToAdd[idx] = item
 	}
 
-	if len(itemsToAdd) > 0 && r.reader != nil {
-		err := r.reader.AddRuleStateHistory(ctx, itemsToAdd)
-		if err != nil {
-			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
-		}
-	}
+	r.RecordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
 
 	return len(r.Active), nil
 }

@@ -67,6 +67,7 @@ func (p *BaseSeasonalProvider) getQueryParams(req *GetAnomaliesRequest) *anomaly
 }
 
 func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQueryParams) (*anomalyQueryResults, error) {
+	zap.L().Info("fetching results for current period", zap.Any("currentPeriodQuery", params.CurrentPeriodQuery))
 	currentPeriodResults, _, err := p.querierV2.QueryRange(ctx, params.CurrentPeriodQuery)
 	if err != nil {
 		return nil, err
@@ -77,6 +78,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 		return nil, err
 	}
 
+	zap.L().Info("fetching results for past period", zap.Any("pastPeriodQuery", params.PastPeriodQuery))
 	pastPeriodResults, _, err := p.querierV2.QueryRange(ctx, params.PastPeriodQuery)
 	if err != nil {
 		return nil, err
@@ -87,6 +89,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 		return nil, err
 	}
 
+	zap.L().Info("fetching results for current season", zap.Any("currentSeasonQuery", params.CurrentSeasonQuery))
 	currentSeasonResults, _, err := p.querierV2.QueryRange(ctx, params.CurrentSeasonQuery)
 	if err != nil {
 		return nil, err
@@ -97,6 +100,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 		return nil, err
 	}
 
+	zap.L().Info("fetching results for past season", zap.Any("pastSeasonQuery", params.PastSeasonQuery))
 	pastSeasonResults, _, err := p.querierV2.QueryRange(ctx, params.PastSeasonQuery)
 	if err != nil {
 		return nil, err
@@ -107,6 +111,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 		return nil, err
 	}
 
+	zap.L().Info("fetching results for past 2 season", zap.Any("past2SeasonQuery", params.Past2SeasonQuery))
 	past2SeasonResults, _, err := p.querierV2.QueryRange(ctx, params.Past2SeasonQuery)
 	if err != nil {
 		return nil, err
@@ -117,6 +122,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 		return nil, err
 	}
 
+	zap.L().Info("fetching results for past 3 season", zap.Any("past3SeasonQuery", params.Past3SeasonQuery))
 	past3SeasonResults, _, err := p.querierV2.QueryRange(ctx, params.Past3SeasonQuery)
 	if err != nil {
 		return nil, err
