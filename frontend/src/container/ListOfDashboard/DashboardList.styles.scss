@@ -64,8 +64,9 @@
 
 						.dashboard-icon {
 							display: inline-block;
-							margin-right: 4px;
 							line-height: 20px;
+							height: 14px;
+							width: 14px;
 						}
 
 						.dot {
@@ -77,7 +78,7 @@
 						.title-link {
 							display: flex;
 							align-items: center;
-							gap: 4px;
+							gap: 8px;
 						}
 
 						.title {

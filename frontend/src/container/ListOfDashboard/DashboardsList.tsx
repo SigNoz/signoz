@@ -462,7 +462,6 @@ function DashboardsList(): JSX.Element {
 									<Link to={getLink()} className="title-link">
 										<img
 											src={dashboard?.image || Base64Icons[0]}
-											style={{ height: '14px', width: '14px' }}
 											alt="dashboard-image"
 											className="dashboard-icon"
 										/>

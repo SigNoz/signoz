@@ -306,11 +306,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 			</div>
 			<section className="dashboard-details">
 				<div className="left-section">
-					<img
-						src={image}
-						alt="dashboard-img"
-						style={{ width: '16px', height: '16px' }}
-					/>
+					<img src={image} alt="dashboard-img" className="dashboard-img" />
 					<Tooltip title={title.length > 30 ? title : ''}>
 						<Typography.Text
 							className="dashboard-title"
