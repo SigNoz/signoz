@@ -46,6 +46,14 @@
 			gap: 8px;
 		}
 
+		.rc-virtual-list-holder {
+			[data-testid='option-ALL'] {
+				border-bottom: 1px solid var(--bg-slate-400);
+				padding-bottom: 12px;
+				margin-bottom: 8px;
+			}
+		}
+
 		.all-label {
 			display: flex;
 			gap: 16px;
@@ -74,8 +82,8 @@
 }
 
 .dropdown-styles {
-	min-width: 300px;
-	max-width: 400px;
+	min-width: 400px;
+	max-width: 500px;
 }
 
 .lightMode {
