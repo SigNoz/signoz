@@ -61,9 +61,9 @@ func Test_buildResourceFilter(t *testing.T) {
 				logsOp: "=",
 				key:    "service.name",
 				op:     v3.FilterOperatorEqual,
-				value:  "Application",
+				value:  "Application%",
 			},
-			want: `simpleJSONExtractString(labels, 'service.name') = 'Application'`,
+			want: `simpleJSONExtractString(labels, 'service.name') = 'Application%'`,
 		},
 		{
 			name: "test value with quotes",
@@ -74,6 +74,16 @@ func Test_buildResourceFilter(t *testing.T) {
 				value:  "Application's",
 			},
 			want: `simpleJSONExtractString(labels, 'service.name') = 'Application\'s'`,
+		},
+		{
+			name: "test like",
+			args: args{
+				logsOp: "LIKE",
+				key:    "service.name",
+				op:     v3.FilterOperatorLike,
+				value:  "Application%_",
+			},
+			want: `simpleJSONExtractString(labels, 'service.name') LIKE 'Application%_'`,
 		},
 	}
 	for _, tt := range tests {
@@ -119,9 +129,9 @@ func Test_buildIndexFilterForInOperator(t *testing.T) {
 			args: args{
 				key:   "service.name",
 				op:    v3.FilterOperatorIn,
-				value: "application",
+				value: "application%",
 			},
-			want: `(labels like '%"service.name":"application"%')`,
+			want: `(labels like '%"service.name":"application\%"%')`,
 		},
 		{
 			name: "test nin string",
@@ -179,6 +189,15 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 				value: "application%_test",
 			},
 			want: `labels not like '%service.name%application\%\_test%'`,
+		},
+		{
+			name: "test like with % and _",
+			args: args{
+				key:   "service.name",
+				op:    v3.FilterOperatorLike,
+				value: "application%_test",
+			},
+			want: `labels like '%service.name%application%_test%'`,
 		},
 		{
 			name: "test not regex",

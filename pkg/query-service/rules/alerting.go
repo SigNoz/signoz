@@ -112,6 +112,7 @@ const (
 	AllTheTimes   MatchType = "2"
 	OnAverage     MatchType = "3"
 	InTotal       MatchType = "4"
+	Last          MatchType = "5"
 )
 
 type RuleCondition struct {
