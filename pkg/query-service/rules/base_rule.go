@@ -202,6 +202,21 @@ func (r *BaseRule) Unit() string {
 	return ""
 }
 
+func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
+	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli()
+	end := ts.UnixMilli()
+
+	if r.evalDelay > 0 {
+		start = start - int64(r.evalDelay.Milliseconds())
+		end = end - int64(r.evalDelay.Milliseconds())
+	}
+	// round to minute otherwise we could potentially miss data
+	start = start - (start % (60 * 1000))
+	end = end - (end % (60 * 1000))
+
+	return time.UnixMilli(start), time.UnixMilli(end)
+}
+
 func (r *BaseRule) SetLastError(err error) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
@@ -465,6 +480,27 @@ func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
 			}
 		} else if r.compareOp() == ValueIsNotEq {
 			if sum != r.targetVal() {
+				shouldAlert = true
+			}
+		}
+	case Last:
+		// If the last sample matches the condition, the rule is firing.
+		shouldAlert = false
+		alertSmpl = Sample{Point: Point{V: series.Points[len(series.Points)-1].Value}, Metric: lblsNormalized, MetricOrig: lbls}
+		if r.compareOp() == ValueIsAbove {
+			if series.Points[len(series.Points)-1].Value > r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			if series.Points[len(series.Points)-1].Value < r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsEq {
+			if series.Points[len(series.Points)-1].Value == r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			if series.Points[len(series.Points)-1].Value != r.targetVal() {
 				shouldAlert = true
 			}
 		}

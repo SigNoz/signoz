@@ -370,7 +370,10 @@ function FormAlertRules({
 				});
 
 				// invalidate rule in cache
-				ruleCache.invalidateQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
+				ruleCache.invalidateQueries([
+					REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+					`${ruleId}`,
+				]);
 
 				// eslint-disable-next-line sonarjs/no-identical-functions
 				setTimeout(() => {

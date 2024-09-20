@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -465,9 +466,12 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 		dashboardsInfo.LogsBasedPanels += dashboardInfo.LogsBasedPanels
 		dashboardsInfo.TracesBasedPanels += dashboardInfo.TracesBasedPanels
 		dashboardsInfo.MetricBasedPanels += dashboardsInfo.MetricBasedPanels
+		dashboardsInfo.LogsPanelsWithAttrContainsOp += dashboardInfo.LogsPanelsWithAttrContainsOp
+		dashboardsInfo.DashboardsWithLogsChQuery += dashboardInfo.DashboardsWithLogsChQuery
 		if isDashboardWithTSV2(dashboard.Data) {
 			count = count + 1
 		}
+		// check if dashboard is a has a log operator with contains
 	}
 
 	dashboardsInfo.DashboardNames = dashboardNames
@@ -483,6 +487,16 @@ func isDashboardWithTSV2(data map[string]interface{}) bool {
 		return false
 	}
 	return strings.Contains(string(jsonData), "time_series_v2")
+}
+
+func isDashboardWithLogsClickhouseQuery(data map[string]interface{}) bool {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return false
+	}
+	result := strings.Contains(string(jsonData), "signoz_logs.distributed_logs") ||
+		strings.Contains(string(jsonData), "signoz_logs.logs")
+	return result
 }
 
 func isDashboardWithPanelAndName(data map[string]interface{}) bool {
@@ -517,11 +531,38 @@ func extractDashboardName(data map[string]interface{}) string {
 	return ""
 }
 
-func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
-	var logsPanelCount, tracesPanelCount, metricsPanelCount int
+func checkLogPanelAttrContains(data map[string]interface{}) int {
+	var logsPanelsWithAttrContains int
+	filters, ok := data["filters"].(map[string]interface{})
+	if ok && filters["items"] != nil {
+		items, ok := filters["items"].([]interface{})
+		if ok {
+			for _, item := range items {
+				itemMap, ok := item.(map[string]interface{})
+				if ok {
+					opStr, ok := itemMap["op"].(string)
+					if ok {
+						if slices.Contains([]string{"contains", "ncontains", "like", "nlike"}, opStr) {
+							// check if it's not body
+							key, ok := itemMap["key"].(map[string]string)
+							if ok && key["key"] != "body" {
+								logsPanelsWithAttrContains++
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return logsPanelsWithAttrContains
+}
+
+func countPanelsInDashboard(inputData map[string]interface{}) model.DashboardsInfo {
+	var logsPanelCount, tracesPanelCount, metricsPanelCount, logsPanelsWithAttrContains int
+	var logChQuery bool
 	// totalPanels := 0
-	if data != nil && data["widgets"] != nil {
-		widgets, ok := data["widgets"]
+	if inputData != nil && inputData["widgets"] != nil {
+		widgets, ok := inputData["widgets"]
 		if ok {
 			data, ok := widgets.([]interface{})
 			if ok {
@@ -544,10 +585,15 @@ func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
 												metricsPanelCount++
 											} else if data["dataSource"] == "logs" {
 												logsPanelCount++
+												logsPanelsWithAttrContains += checkLogPanelAttrContains(data)
 											}
 										}
 									}
 								}
+							}
+						} else if ok && query["queryType"] == "clickhouse_sql" && query["clickhouse_sql"] != nil {
+							if isDashboardWithLogsClickhouseQuery(inputData) {
+								logChQuery = true
 							}
 						}
 					}
@@ -555,9 +601,17 @@ func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
 			}
 		}
 	}
+
+	logChQueryCount := 0
+	if logChQuery {
+		logChQueryCount = 1
+	}
 	return model.DashboardsInfo{
 		LogsBasedPanels:   logsPanelCount,
 		TracesBasedPanels: tracesPanelCount,
 		MetricBasedPanels: metricsPanelCount,
+
+		DashboardsWithLogsChQuery:    logChQueryCount,
+		LogsPanelsWithAttrContainsOp: logsPanelsWithAttrContains,
 	}
 }

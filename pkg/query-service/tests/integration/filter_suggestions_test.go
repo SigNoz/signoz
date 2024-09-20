@@ -186,7 +186,7 @@ func (tb *FilterSuggestionsTestBed) mockAttribValuesQueryResponse(
 		{Type: "Nullable(Float64)", Name: "float64TagValue"},
 	}
 
-	expectedAttribKeysInQuery := []string{}
+	expectedAttribKeysInQuery := []any{}
 	mockResultRows := [][]any{}
 	for idx, attrib := range expectedAttribs {
 		expectedAttribKeysInQuery = append(expectedAttribKeysInQuery, attrib.Key)
@@ -198,8 +198,8 @@ func (tb *FilterSuggestionsTestBed) mockAttribValuesQueryResponse(
 	}
 
 	tb.mockClickhouse.ExpectQuery(
-		"select.*tagKey.*stringTagValue.*int64TagValue.*float64TagValue.*distributed_tag_attributes.*tagKey.*in.*",
-	).WithArgs(expectedAttribKeysInQuery).WillReturnRows(mockhouse.NewRows(resultCols, mockResultRows))
+		"select.*tagKey.*stringTagValue.*int64TagValue.*float64TagValue.*distributed_tag_attributes.*tagKey",
+	).WithArgs(expectedAttribKeysInQuery...).WillReturnRows(mockhouse.NewRows(resultCols, mockResultRows))
 }
 
 type FilterSuggestionsTestBed struct {
