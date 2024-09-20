@@ -135,6 +135,13 @@ var BasicPlan = basemodel.FeatureSet{
 		UsageLimit: -1,
 		Route:      "",
 	},
+	basemodel.Feature{
+		Name:       basemodel.AnomalyDetection,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
 }
 
 var ProPlan = basemodel.FeatureSet{
@@ -246,6 +253,13 @@ var ProPlan = basemodel.FeatureSet{
 	basemodel.Feature{
 		Name:       QueryBuilderSearchV2,
 		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
+		Name:       basemodel.AnomalyDetection,
+		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -375,6 +389,13 @@ var EnterprisePlan = basemodel.FeatureSet{
 	basemodel.Feature{
 		Name:       QueryBuilderSearchV2,
 		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
+		Name:       basemodel.AnomalyDetection,
+		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
