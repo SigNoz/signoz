@@ -261,10 +261,10 @@ function LogDetail({
 			)}
 			{selectedView === VIEW_TYPES.INFRAMETRICS && (
 				<InfraMetrics
-					clusterName={log.resources_string?.[RESOURCE_KEYS.CLUSTER_NAME] as string}
-					podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] as string}
-					nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] as string}
-					hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] as string}
+					clusterName={log.resources_string?.[RESOURCE_KEYS.CLUSTER_NAME] || ''}
+					podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] || ''}
+					nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] || ''}
+					hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] || ''}
 					logLineTimestamp={log.timestamp.toString()}
 				/>
 			)}

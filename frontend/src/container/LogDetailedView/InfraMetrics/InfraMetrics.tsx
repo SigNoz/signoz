@@ -24,8 +24,9 @@ function InfraMetrics({
 	clusterName,
 	logLineTimestamp,
 }: MetricsDataProps): JSX.Element {
-	const initialView = podName ? VIEW_TYPES.POD : VIEW_TYPES.NODE;
-	const [selectedView, setSelectedView] = useState<string>(initialView);
+	const [selectedView, setSelectedView] = useState<string>(() =>
+		podName ? VIEW_TYPES.POD : VIEW_TYPES.NODE,
+	);
 
 	const handleModeChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
