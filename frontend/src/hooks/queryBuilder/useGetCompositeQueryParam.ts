@@ -13,7 +13,9 @@ export const useGetCompositeQueryParam = (): Query | null => {
 		try {
 			if (!compositeQuery) return null;
 
-			parsedCompositeQuery = JSON.parse(decodeURIComponent(compositeQuery));
+			parsedCompositeQuery = JSON.parse(
+				decodeURIComponent(compositeQuery.replace(/\+/g, ' ')),
+			);
 		} catch (e) {
 			parsedCompositeQuery = null;
 		}
