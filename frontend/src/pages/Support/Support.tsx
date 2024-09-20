@@ -10,8 +10,6 @@ import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import {
 	Book,
-	// Cable,
-	// Calendar,
 	CreditCard,
 	Github,
 	MessageSquare,
