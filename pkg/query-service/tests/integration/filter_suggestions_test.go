@@ -138,6 +138,12 @@ func TestLogsFilterSuggestionsWithExistingFilter(t *testing.T) {
 	}
 }
 
+func TestResourceAttribsRankedHigherInLogsFilterSuggestions(t *testing.T) {
+	require := require.New(t)
+
+	require.Equal(1, 2)
+}
+
 // Mocks response for CH queries made by reader.GetLogAttributeKeys
 func (tb *FilterSuggestionsTestBed) mockAttribKeysQueryResponse(
 	attribsToReturn []v3.AttributeKey,
