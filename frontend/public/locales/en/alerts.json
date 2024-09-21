@@ -53,6 +53,7 @@
 	"option_atleastonce": "at least once",
 	"option_onaverage": "on average",
 	"option_intotal": "in total",
+	"option_last": "last",
 	"option_above": "above",
 	"option_below": "below",
 	"option_equal": "is equal to",

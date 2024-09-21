@@ -23,6 +23,8 @@ export const prepareQueryRangePayload = ({
 	variables = {},
 	params = {},
 	fillGaps = false,
+	start: startTime,
+	end: endTime,
 }: GetQueryResultsProps): PrepareQueryRangePayload => {
 	let legendMap: Record<string, string> = {};
 	const {
@@ -100,8 +102,8 @@ export const prepareQueryRangePayload = ({
 		: undefined;
 
 	const queryPayload: QueryRangePayload = {
-		start: parseInt(start, 10) * 1e3,
-		end: endLogTimeStamp || parseInt(end, 10) * 1e3,
+		start: startTime ? startTime * 1e3 : parseInt(start, 10) * 1e3,
+		end: endTime ? endTime * 1e3 : endLogTimeStamp || parseInt(end, 10) * 1e3,
 		step: getStep({
 			start: allowSelectedIntervalForStepGen
 				? start
