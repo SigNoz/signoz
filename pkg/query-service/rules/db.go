@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -551,10 +552,6 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 		if strings.Contains(alert, "time_series_v2") {
 			alertsInfo.AlertsWithTSV2 = alertsInfo.AlertsWithTSV2 + 1
 		}
-		if strings.Contains(alert, "signoz_logs.distributed_logs") ||
-			strings.Contains(alert, "signoz_logs.logs") {
-			alertsInfo.AlertsWithLogsChQuery = alertsInfo.AlertsWithLogsChQuery + 1
-		}
 		err = json.Unmarshal([]byte(alert), &rule)
 		if err != nil {
 			zap.L().Error("invalid rule data", zap.Error(err))
@@ -563,6 +560,29 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 		alertNames = append(alertNames, rule.AlertName)
 		if rule.AlertType == AlertTypeLogs {
 			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
+
+			if rule.RuleCondition != nil && rule.RuleCondition.CompositeQuery != nil {
+				if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+					if strings.Contains(alert, "signoz_logs.distributed_logs") ||
+						strings.Contains(alert, "signoz_logs.logs") {
+						alertsInfo.AlertsWithLogsChQuery = alertsInfo.AlertsWithLogsChQuery + 1
+					}
+				}
+			}
+
+			for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+				if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+					if query.Filters != nil {
+						for _, item := range query.Filters.Items {
+							if slices.Contains([]string{"contains", "ncontains", "like", "nlike"}, string(item.Operator)) {
+								if item.Key.Key != "body" {
+									alertsInfo.AlertsWithLogsContainsOp += 1
+								}
+							}
+						}
+					}
+				}
+			}
 		} else if rule.AlertType == AlertTypeMetric {
 			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
 			if rule.RuleCondition != nil && rule.RuleCondition.CompositeQuery != nil {

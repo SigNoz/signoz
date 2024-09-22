@@ -333,6 +333,7 @@ func createTelemetry() {
 						"dashboardNames":                  dashboardsInfo.DashboardNames,
 						"alertNames":                      alertsInfo.AlertNames,
 						"logsBasedPanels":                 dashboardsInfo.LogsBasedPanels,
+						"logsPanelsWithAttrContains":      dashboardsInfo.LogsPanelsWithAttrContainsOp,
 						"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
 						"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
 						"dashboardsWithTSV2":              dashboardsInfo.QueriesWithTSV2,
@@ -346,6 +347,7 @@ func createTelemetry() {
 						"totalSavedViews":                 savedViewsInfo.TotalSavedViews,
 						"logsSavedViews":                  savedViewsInfo.LogsSavedViews,
 						"tracesSavedViews":                savedViewsInfo.TracesSavedViews,
+						"logSavedViewsWithContainsOp":     savedViewsInfo.LogsSavedViewWithContainsOp,
 						"slackChannels":                   alertsInfo.SlackChannels,
 						"webHookChannels":                 alertsInfo.WebHookChannels,
 						"pagerDutyChannels":               alertsInfo.PagerDutyChannels,
@@ -357,6 +359,7 @@ func createTelemetry() {
 						"metricsPrometheusQueries":        alertsInfo.MetricsPrometheusQueries,
 						"spanMetricsPrometheusQueries":    alertsInfo.SpanMetricsPrometheusQueries,
 						"alertsWithLogsChQuery":           alertsInfo.AlertsWithLogsChQuery,
+						"alertsWithLogsContainsOp":        alertsInfo.AlertsWithLogsContainsOp,
 					}
 					// send event only if there are dashboards or alerts or channels
 					if (dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || alertsInfo.TotalChannels > 0 || savedViewsInfo.TotalSavedViews > 0) && apiErr == nil {

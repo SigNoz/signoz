@@ -9,9 +9,10 @@ import {
 	ExclamationCircleOutlined,
 	FullscreenOutlined,
 	MoreOutlined,
+	SearchOutlined,
 	WarningOutlined,
 } from '@ant-design/icons';
-import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
+import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -20,8 +21,9 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
+import { X } from 'lucide-react';
 import { unparse } from 'papaparse';
-import { ReactNode, useCallback, useMemo } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -51,6 +53,7 @@ interface IWidgetHeaderProps {
 	isWarning: boolean;
 	isFetchingResponse: boolean;
 	tableProcessedDataRef: React.MutableRefObject<RowData[]>;
+	setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
 }
 
 function WidgetHeader({
@@ -67,6 +70,7 @@ function WidgetHeader({
 	isWarning,
 	isFetchingResponse,
 	tableProcessedDataRef,
+	setSearchTerm,
 }: IWidgetHeaderProps): JSX.Element | null {
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
@@ -187,6 +191,10 @@ function WidgetHeader({
 
 	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
 
+	const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+
+	const globalSearchAvailable = widget.panelTypes === PANEL_TYPES.TABLE;
+
 	const menu = useMemo(
 		() => ({
 			items: updatedMenuList,
@@ -201,46 +209,80 @@ function WidgetHeader({
 
 	return (
 		<div className="widget-header-container">
-			<Typography.Text
-				ellipsis
-				data-testid={title}
-				className="widget-header-title"
-			>
-				{title}
-			</Typography.Text>
-			<div className="widget-header-actions">
-				<div className="widget-api-actions">{threshold}</div>
-				{isFetchingResponse && !queryResponse.isError && (
-					<Spinner style={{ paddingRight: '0.25rem' }} />
-				)}
-				{queryResponse.isError && (
-					<Tooltip
-						title={errorMessage}
-						placement={errorTooltipPosition}
-						className="widget-api-actions"
+			{showGlobalSearch ? (
+				<Input
+					addonBefore={<SearchOutlined size={14} />}
+					placeholder="Search..."
+					bordered={false}
+					data-testid="widget-header-search-input"
+					autoFocus
+					addonAfter={
+						<X
+							size={14}
+							onClick={(e): void => {
+								e.stopPropagation();
+								e.preventDefault();
+								setShowGlobalSearch(false);
+							}}
+							className="search-header-icons"
+						/>
+					}
+					key={widget.id}
+					onChange={(e): void => {
+						setSearchTerm(e.target.value || '');
+					}}
+				/>
+			) : (
+				<>
+					<Typography.Text
+						ellipsis
+						data-testid={title}
+						className="widget-header-title"
 					>
-						<ExclamationCircleOutlined />
-					</Tooltip>
-				)}
+						{title}
+					</Typography.Text>
+					<div className="widget-header-actions">
+						<div className="widget-api-actions">{threshold}</div>
+						{isFetchingResponse && !queryResponse.isError && (
+							<Spinner style={{ paddingRight: '0.25rem' }} />
+						)}
+						{queryResponse.isError && (
+							<Tooltip
+								title={errorMessage}
+								placement={errorTooltipPosition}
+								className="widget-api-actions"
+							>
+								<ExclamationCircleOutlined />
+							</Tooltip>
+						)}
 
-				{isWarning && (
-					<Tooltip
-						title={WARNING_MESSAGE}
-						placement={errorTooltipPosition}
-						className="widget-api-actions"
-					>
-						<WarningOutlined />
-					</Tooltip>
-				)}
-				<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
-					<MoreOutlined
-						data-testid="widget-header-options"
-						className={`widget-header-more-options ${
-							parentHover ? 'widget-header-hover' : ''
-						}`}
-					/>
-				</Dropdown>
-			</div>
+						{isWarning && (
+							<Tooltip
+								title={WARNING_MESSAGE}
+								placement={errorTooltipPosition}
+								className="widget-api-actions"
+							>
+								<WarningOutlined />
+							</Tooltip>
+						)}
+						{globalSearchAvailable && (
+							<SearchOutlined
+								className="search-header-icons"
+								onClick={(): void => setShowGlobalSearch(true)}
+								data-testid="widget-header-search"
+							/>
+						)}
+						<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
+							<MoreOutlined
+								data-testid="widget-header-options"
+								className={`widget-header-more-options ${
+									parentHover ? 'widget-header-hover' : ''
+								} ${globalSearchAvailable ? 'widget-header-more-options-visible' : ''}`}
+							/>
+						</Dropdown>
+					</div>
+				</>
+			)}
 		</div>
 	);
 }

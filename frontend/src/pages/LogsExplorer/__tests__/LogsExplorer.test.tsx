@@ -26,6 +26,21 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import LogsExplorer from '../index';
 
 const queryRangeURL = 'http://localhost/api/v3/query_range';
+
+jest.mock('uplot', () => {
+	const paths = {
+		spline: jest.fn(),
+		bars: jest.fn(),
+	};
+	const uplotMock = jest.fn(() => ({
+		paths,
+	}));
+	return {
+		paths,
+		default: uplotMock,
+	};
+});
+
 // mocking the graph components in this test as this should be handled separately
 jest.mock(
 	'container/TimeSeriesView/TimeSeriesView',
