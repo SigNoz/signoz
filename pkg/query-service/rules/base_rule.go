@@ -331,7 +331,7 @@ func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
 
 	if r.ruleCondition.RequireMinPoints {
 		if len(series.Points) < r.ruleCondition.RequiredNumPoints {
-			zap.L().Debug("not enough data points to evaluate series", zap.String("ruleid", r.ID()), zap.Int("numPoints", len(series.Points)), zap.Int("requiredPoints", r.ruleCondition.RequiredNumPoints))
+			zap.L().Info("not enough data points to evaluate series, skipping", zap.String("ruleid", r.ID()), zap.Int("numPoints", len(series.Points)), zap.Int("requiredPoints", r.ruleCondition.RequiredNumPoints))
 			return alertSmpl, false
 		}
 	}
