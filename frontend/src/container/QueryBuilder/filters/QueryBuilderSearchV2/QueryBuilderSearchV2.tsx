@@ -729,6 +729,7 @@ function QueryBuilderSearchV2(
 	}, [tags]);
 
 	useEffect(() => {
+		// convert the query and tags to same format before comparison
 		if (!isEqual(getInitTags(query), tags)) {
 			setTags(getInitTags(query));
 		}
