@@ -112,6 +112,7 @@ func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{
 	strVal := fmt.Sprintf("%s", value)
 	formattedValueEscapedForContains := strings.ToLower(utils.QuoteEscapedStringForContains(strVal))
 	formattedValueEscaped := utils.QuoteEscapedString(strVal)
+	formattedValueEscapedLower := strings.ToLower(formattedValueEscaped)
 
 	// add index filters
 	switch op {
@@ -120,9 +121,9 @@ func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{
 	case v3.FilterOperatorNotContains:
 		return fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", key, formattedValueEscapedForContains)
 	case v3.FilterOperatorLike:
-		return fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", key, formattedValueEscaped)
+		return fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", key, formattedValueEscapedLower)
 	case v3.FilterOperatorNotLike:
-		return fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", key, formattedValueEscaped)
+		return fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", key, formattedValueEscapedLower)
 	case v3.FilterOperatorEqual:
 		return fmt.Sprintf("labels like '%%%s%%%s%%'", key, formattedValueEscaped)
 	case v3.FilterOperatorNotEqual:
