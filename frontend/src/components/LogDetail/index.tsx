@@ -9,6 +9,7 @@ import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ContextView from 'container/LogDetailedView/ContextView/ContextView';
+import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
 import {
@@ -22,6 +23,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import {
+	BarChart2,
 	Braces,
 	Copy,
 	Filter,
@@ -36,7 +38,7 @@ import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
-import { VIEW_TYPES, VIEWS } from './constants';
+import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailProps } from './LogDetail.interfaces';
 import QueryBuilderSearchWrapper from './QueryBuilderSearchWrapper';
 
@@ -192,6 +194,17 @@ function LogDetail({
 							Context
 						</div>
 					</Radio.Button>
+					<Radio.Button
+						className={
+							selectedView === VIEW_TYPES.INFRAMETRICS ? 'selected_view tab' : 'tab'
+						}
+						value={VIEW_TYPES.INFRAMETRICS}
+					>
+						<div className="view-title">
+							<BarChart2 size={14} />
+							Metrics
+						</div>
+					</Radio.Button>
 				</Radio.Group>
 
 				{selectedView === VIEW_TYPES.JSON && (
@@ -244,6 +257,15 @@ function LogDetail({
 					filters={filters}
 					contextQuery={contextQuery}
 					isEdit={isEdit}
+				/>
+			)}
+			{selectedView === VIEW_TYPES.INFRAMETRICS && (
+				<InfraMetrics
+					clusterName={log.resources_string?.[RESOURCE_KEYS.CLUSTER_NAME] || ''}
+					podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] || ''}
+					nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] || ''}
+					hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] || ''}
+					logLineTimestamp={log.timestamp.toString()}
 				/>
 			)}
 		</Drawer>

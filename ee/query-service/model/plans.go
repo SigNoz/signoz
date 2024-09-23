@@ -13,7 +13,6 @@ const Onboarding = "ONBOARDING"
 const ChatSupport = "CHAT_SUPPORT"
 const Gateway = "GATEWAY"
 const PremiumSupport = "PREMIUM_SUPPORT"
-const QueryBuilderSearchV2 = "QUERY_BUILDER_SEARCH_V2"
 
 var BasicPlan = basemodel.FeatureSet{
 	basemodel.Feature{
@@ -123,13 +122,6 @@ var BasicPlan = basemodel.FeatureSet{
 	},
 	basemodel.Feature{
 		Name:       PremiumSupport,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       QueryBuilderSearchV2,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
@@ -251,15 +243,8 @@ var ProPlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       QueryBuilderSearchV2,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
 		Name:       basemodel.AnomalyDetection,
-		Active:     true,
+		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -387,15 +372,8 @@ var EnterprisePlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       QueryBuilderSearchV2,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
 		Name:       basemodel.AnomalyDetection,
-		Active:     true,
+		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
