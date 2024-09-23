@@ -70,13 +70,14 @@ func NewAnomalyRule(
 		BaseRule: baseRule,
 	}
 
-	if strings.ToLower(p.RuleCondition.Seasonality) == "hourly" {
+	switch strings.ToLower(p.RuleCondition.Seasonality) {
+	case "hourly":
 		t.seasonality = anomaly.SeasonalityHourly
-	} else if strings.ToLower(p.RuleCondition.Seasonality) == "daily" {
+	case "daily":
 		t.seasonality = anomaly.SeasonalityDaily
-	} else if strings.ToLower(p.RuleCondition.Seasonality) == "weekly" {
+	case "weekly":
 		t.seasonality = anomaly.SeasonalityWeekly
-	} else {
+	default:
 		t.seasonality = anomaly.SeasonalityDaily
 	}
 

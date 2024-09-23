@@ -388,9 +388,9 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 					break
 				}
 			}
-		} else if r.compareOp() == ValueIsAboveOrBelow {
+		} else if r.compareOp() == ValueOutsideBounds {
 			for _, smpl := range series.Points {
-				if smpl.Value > r.targetVal() || smpl.Value < r.targetVal() {
+				if math.Abs(smpl.Value) >= r.targetVal() {
 					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
 					shouldAlert = true
 					break
@@ -457,9 +457,9 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 					}
 				}
 			}
-		} else if r.compareOp() == ValueIsAboveOrBelow {
+		} else if r.compareOp() == ValueOutsideBounds {
 			for _, smpl := range series.Points {
-				if smpl.Value > r.targetVal() || smpl.Value < r.targetVal() {
+				if math.Abs(smpl.Value) >= r.targetVal() {
 					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
 					shouldAlert = true
 					break
@@ -494,8 +494,8 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 			if avg != r.targetVal() {
 				shouldAlert = true
 			}
-		} else if r.compareOp() == ValueIsAboveOrBelow {
-			if avg > r.targetVal() || avg < r.targetVal() {
+		} else if r.compareOp() == ValueOutsideBounds {
+			if math.Abs(avg) >= r.targetVal() {
 				shouldAlert = true
 			}
 		}
@@ -526,8 +526,8 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 			if sum != r.targetVal() {
 				shouldAlert = true
 			}
-		} else if r.compareOp() == ValueIsAboveOrBelow {
-			if sum > r.targetVal() || sum < r.targetVal() {
+		} else if r.compareOp() == ValueOutsideBounds {
+			if math.Abs(sum) >= r.targetVal() {
 				shouldAlert = true
 			}
 		}
