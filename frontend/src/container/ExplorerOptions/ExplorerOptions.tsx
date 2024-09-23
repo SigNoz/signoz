@@ -8,6 +8,7 @@ import {
 	ColorPicker,
 	Divider,
 	Input,
+	InputRef,
 	Modal,
 	RefSelectProps,
 	Select,
@@ -37,6 +38,7 @@ import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMapp
 import { cloneDeep } from 'lodash-es';
 import {
 	Check,
+	ChevronUp,
 	ConciergeBell,
 	Disc3,
 	PanelBottomClose,
@@ -47,6 +49,7 @@ import {
 import {
 	CSSProperties,
 	Dispatch,
+	ReactElement,
 	SetStateAction,
 	useCallback,
 	useEffect,
@@ -90,9 +93,13 @@ function ExplorerOptions({
 	const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 	const [newViewName, setNewViewName] = useState<string>('');
 	const [color, setColor] = useState(Color.BG_SIENNA_500);
+	const [dropdownVisible, setDropdownVisible] = useState(false);
+	const [searchText, setSearchText] = useState('');
+	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const { notifications } = useNotifications();
 	const history = useHistory();
 	const ref = useRef<RefSelectProps>(null);
+	const inputRef = useRef<InputRef>(null);
 	const isDarkMode = useIsDarkMode();
 	const isLogsExplorer = sourcepage === DataSource.LOGS;
 
@@ -100,10 +107,6 @@ function ExplorerOptions({
 	const PRESERVED_VIEW_TYPE = isLogsExplorer
 		? PreservedViewsTypes.LOGS
 		: PreservedViewsTypes.TRACES;
-
-	const onModalToggle = useCallback((value: boolean) => {
-		setIsExport(value);
-	}, []);
 
 	const {
 		currentQuery,
@@ -167,8 +170,8 @@ function ExplorerOptions({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [handleConditionalQueryModification, history]);
 
-	const onCancel = (value: boolean) => (): void => {
-		onModalToggle(value);
+	const onDiscard = (): void => {
+		setIsExport(false);
 	};
 
 	const onAddToDashboard = (): void => {
@@ -457,7 +460,7 @@ function ExplorerOptions({
 
 	return (
 		<div className="explorer-options-container">
-			{isQueryUpdated && !isExplorerOptionHidden && (
+			{isQueryUpdated && !isExplorerOptionHidden && !isExport && (
 				<div
 					className={cx(
 						isEditDeleteSupported ? '' : 'hide-update',
@@ -485,125 +488,170 @@ function ExplorerOptions({
 					</Tooltip>
 				</div>
 			)}
-			{!isExplorerOptionHidden && (
-				<div
-					className="explorer-options"
-					style={{
-						background: extraData
-							? `linear-gradient(90deg, rgba(0,0,0,0) -5%, ${rgbaColor} 9%, rgba(0,0,0,0) 30%)`
-							: 'transparent',
-					}}
-				>
-					<div className="view-options">
-						<Select<string, { key: string; value: string }>
-							showSearch
-							placeholder="Select a view"
-							loading={viewsIsLoading || isRefetching}
-							value={viewName || undefined}
-							onSelect={handleSelect}
-							style={{
-								minWidth: 170,
-							}}
-							dropdownStyle={dropdownStyle}
-							className="views-dropdown"
-							allowClear={{
-								clearIcon: <XCircle size={16} style={{ marginTop: '-3px' }} />,
-							}}
-							onClear={handleClearSelect}
-							ref={ref}
-						>
-							{viewsData?.data?.data?.map((view) => {
-								const extraData =
-									view.extraData !== '' ? JSON.parse(view.extraData) : '';
-								let bgColor = getRandomColor();
-								if (extraData !== '') {
-									bgColor = extraData.color;
+			{!isExplorerOptionHidden &&
+				(isExport ? (
+					<div className="export-panel-container">
+						<ExportPanelContainer
+							query={query}
+							isLoading={isLoading}
+							onExport={onExport}
+							onDiscard={onDiscard}
+						/>
+					</div>
+				) : (
+					<div
+						className="explorer-options"
+						style={{
+							background: extraData
+								? `linear-gradient(90deg, rgba(0,0,0,0) -5%, ${rgbaColor} 9%, rgba(0,0,0,0) 30%)`
+								: 'transparent',
+						}}
+					>
+						<div className="view-options">
+							<Select
+								placeholder="Select a view"
+								loading={viewsIsLoading || isRefetching}
+								value={viewName || undefined}
+								onSelect={handleSelect}
+								style={{ minWidth: 170 }}
+								dropdownStyle={dropdownStyle}
+								className="views-dropdown"
+								onClear={handleClearSelect}
+								allowClear={
+									viewName && !dropdownOpen
+										? { clearIcon: <XCircle size={16} /> }
+										: false
 								}
-								return (
-									<Select.Option key={view.uuid} value={view.name}>
-										<div className="render-options">
-											<span
-												className="dot"
-												style={{
-													background: bgColor,
-													boxShadow: `0px 0px 6px 0px ${bgColor}`,
+								ref={ref}
+								suffixIcon={dropdownOpen && <ChevronUp size={16} />}
+								// eslint-disable-next-line react/no-unstable-nested-components
+								dropdownRender={(menu): ReactElement => (
+									<>
+										{dropdownVisible && (
+											<Input
+												ref={inputRef}
+												placeholder="Search..."
+												value={searchText}
+												onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
+													setSearchText(e.target.value);
 												}}
-											/>{' '}
-											{view.name}
-										</div>
-									</Select.Option>
-								);
-							})}
-						</Select>
+												style={{ marginBottom: '8px' }}
+											/>
+										)}
+										{menu}
+									</>
+								)}
+								filterOption={(input, option): boolean =>
+									(option?.value ?? '').toLowerCase().includes(input.toLowerCase())
+								}
+								open={dropdownVisible}
+								onDropdownVisibleChange={(visible: boolean): void => {
+									setDropdownOpen(visible);
+									setDropdownVisible(visible);
+									if (visible) {
+										setTimeout(() => inputRef.current?.focus(), 100);
+									}
+								}}
+								searchValue={searchText}
+								onSearch={setSearchText}
+							>
+								{viewsData?.data?.data?.map((view) => {
+									const extraData =
+										view.extraData !== '' ? JSON.parse(view.extraData) : '';
+									let bgColor = getRandomColor();
+									if (extraData !== '') {
+										bgColor = extraData.color;
+									}
+									return (
+										<Select.Option key={view.uuid} value={view.name}>
+											<div className="render-options">
+												<span
+													className="dot"
+													style={{
+														background: bgColor,
+														boxShadow: `0px 0px 6px 0px ${bgColor}`,
+													}}
+												/>{' '}
+												{view.name}
+											</div>
+										</Select.Option>
+									);
+								})}
+							</Select>
 
-						<Button
-							shape="round"
-							onClick={handleSaveViewModalToggle}
-							className={isEditDeleteSupported ? '' : 'hidden'}
-							disabled={viewsIsLoading || isRefetching}
-							icon={<Disc3 size={16} />}
-						>
-							Save this view
-						</Button>
-					</div>
-
-					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
-
-					<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
-						<Button
-							disabled={disabled}
-							shape="round"
-							onClick={onCreateAlertsHandler}
-							icon={<ConciergeBell size={16} />}
-						>
-							Create an Alert
-						</Button>
-
-						<Button
-							type="primary"
-							disabled={disabled}
-							shape="round"
-							onClick={onAddToDashboard}
-							icon={<Plus size={16} />}
-						>
-							Add to Dashboard
-						</Button>
-					</div>
-					<div className="actions">
-						<Tooltip
-							title={
-								<div>
-									{isLogsExplorer
-										? 'Learn more about Logs explorer '
-										: 'Learn more about Traces explorer '}
-									<Typography.Link
-										href={
-											isLogsExplorer
-												? 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar'
-												: 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar'
-										}
-										target="_blank"
-									>
-										{' '}
-										here
-									</Typography.Link>{' '}
-								</div>
-							}
-						>
-							<InfoCircleOutlined className="info-icon" />
-						</Tooltip>
-						<Tooltip title="Hide">
 							<Button
-								disabled={disabled}
-								shape="circle"
-								onClick={hideToolbar}
-								icon={<PanelBottomClose size={16} />}
-								data-testid="hide-toolbar"
-							/>
-						</Tooltip>
+								shape="round"
+								onClick={handleSaveViewModalToggle}
+								className={isEditDeleteSupported ? '' : 'hidden'}
+								disabled={viewsIsLoading || isRefetching}
+								icon={<Disc3 size={16} />}
+							>
+								Save this view
+							</Button>
+						</div>
+
+						<hr className={isEditDeleteSupported ? '' : 'hidden'} />
+
+						<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
+							<Tooltip title="Create an Alert">
+								<Button
+									disabled={disabled}
+									onClick={onCreateAlertsHandler}
+									icon={<ConciergeBell size={16} />}
+									style={{
+										background: 'none',
+										border: 'none',
+									}}
+								/>
+							</Tooltip>
+
+							<Tooltip title="Add to Dashboard">
+								<Button
+									disabled={disabled}
+									onClick={onAddToDashboard}
+									icon={<Plus size={16} />}
+									style={{
+										background: 'none',
+										border: 'none',
+									}}
+								/>
+							</Tooltip>
+						</div>
+						<div className="actions">
+							<Tooltip
+								title={
+									<div>
+										{isLogsExplorer
+											? 'Learn more about Logs explorer '
+											: 'Learn more about Traces explorer '}
+										<Typography.Link
+											href={
+												isLogsExplorer
+													? 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar'
+													: 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar'
+											}
+											target="_blank"
+										>
+											{' '}
+											here
+										</Typography.Link>{' '}
+									</div>
+								}
+							>
+								<InfoCircleOutlined className="info-icon" />
+							</Tooltip>
+							<Tooltip title="Hide">
+								<Button
+									disabled={disabled}
+									shape="circle"
+									onClick={hideToolbar}
+									icon={<PanelBottomClose size={16} />}
+									data-testid="hide-toolbar"
+								/>
+							</Tooltip>
+						</div>
 					</div>
-				</div>
-			)}
+				))}
 
 			<ExplorerOptionsHideArea
 				isExplorerOptionHidden={isExplorerOptionHidden}
@@ -646,21 +694,6 @@ function ExplorerOptions({
 						onChange={(e): void => setNewViewName(e.target.value)}
 					/>
 				</div>
-			</Modal>
-
-			<Modal
-				footer={null}
-				onOk={onCancel(false)}
-				onCancel={onCancel(false)}
-				open={isExport}
-				centered
-				destroyOnClose
-			>
-				<ExportPanelContainer
-					query={query}
-					isLoading={isLoading}
-					onExport={onExport}
-				/>
 			</Modal>
 		</div>
 	);

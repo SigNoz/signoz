@@ -1,15 +1,21 @@
-import { Button, Typography } from 'antd';
+import { ArrowLeftOutlined, CheckOutlined } from '@ant-design/icons';
+import { Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useAxiosError from 'hooks/useAxiosError';
+import { PlusIcon } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 
 import { ExportPanelProps } from '.';
 import {
+	ButtonWrapper,
 	DashboardSelect,
+	DiscardButton,
+	ExportButton,
+	IconWrapper,
 	NewDashboardButton,
 	SelectWrapper,
 	Title,
@@ -20,6 +26,7 @@ import { filterOptions, getSelectOptions } from './utils';
 function ExportPanelContainer({
 	isLoading,
 	onExport,
+	onDiscard,
 }: ExportPanelProps): JSX.Element {
 	const { t } = useTranslation(['dashboard']);
 
@@ -84,10 +91,10 @@ function ExportPanelContainer({
 		isLoading;
 
 	return (
-		<Wrapper direction="vertical">
-			<Title>Export Panel</Title>
+		<Wrapper>
+			<Title>Export Panel to...</Title>
 
-			<SelectWrapper direction="horizontal">
+			<SelectWrapper>
 				<DashboardSelect
 					placeholder="Select Dashboard"
 					options={options}
@@ -98,27 +105,38 @@ function ExportPanelContainer({
 					onSelect={handleSelect}
 					filterOption={filterOptions}
 				/>
-				<Button
-					type="primary"
-					loading={isLoading}
-					disabled={isDisabled}
-					onClick={handleExportClick}
-				>
-					Export
-				</Button>
 			</SelectWrapper>
 
 			<Typography>
-				Or create dashboard with this panel -
+				Or
 				<NewDashboardButton
 					disabled={createDashboardLoading}
 					loading={createDashboardLoading}
 					type="link"
 					onClick={handleNewDashboard}
+					icon={
+						<IconWrapper>
+							<PlusIcon size={12} />
+						</IconWrapper>
+					}
 				>
-					New Dashboard
+					Create new dashboard
 				</NewDashboardButton>
 			</Typography>
+			<ButtonWrapper>
+				<DiscardButton icon={<ArrowLeftOutlined />} onClick={onDiscard}>
+					Discard
+				</DiscardButton>
+				<ExportButton
+					type="primary"
+					loading={isLoading}
+					disabled={isDisabled}
+					onClick={handleExportClick}
+					icon={<CheckOutlined />}
+				>
+					Export to dashboard
+				</ExportButton>
+			</ButtonWrapper>
 		</Wrapper>
 	);
 }
