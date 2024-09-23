@@ -26,13 +26,13 @@ export async function GetMetricQueryRange(
 	headers?: Record<string, string>,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
-
 	const response = await getMetricsQueryRange(
 		queryPayload,
 		version || 'v3',
 		signal,
 		headers,
 	);
+	
 
 	if (response.statusCode >= 400) {
 		let error = `API responded with ${response.statusCode} -  ${response.error} status: ${response.message}`;
@@ -78,7 +78,7 @@ export interface GetQueryResultsProps {
 	query: Query;
 	graphType: PANEL_TYPES;
 	selectedTime: timePreferenceType;
-	globalSelectedInterval: Time | TimeV2 | CustomTimeType;
+	globalSelectedInterval?: Time | TimeV2 | CustomTimeType;
 	variables?: Record<string, unknown>;
 	params?: Record<string, unknown>;
 	fillGaps?: boolean;
@@ -87,4 +87,6 @@ export interface GetQueryResultsProps {
 		pagination?: Pagination;
 		selectColumns?: any;
 	};
+	start?: number;
+	end?: number;
 }
