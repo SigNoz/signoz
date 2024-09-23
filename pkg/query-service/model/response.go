@@ -632,12 +632,15 @@ type AlertsInfo struct {
 	AlertNames                   []string `json:"alertNames"`
 	AlertsWithTSV2               int      `json:"alertsWithTSv2"`
 	AlertsWithLogsChQuery        int      `json:"alertsWithLogsChQuery"`
+	AlertsWithLogsContainsOp     int      `json:"alertsWithLogsContainsOp"`
 }
 
 type SavedViewsInfo struct {
 	TotalSavedViews  int `json:"totalSavedViews"`
 	TracesSavedViews int `json:"tracesSavedViews"`
 	LogsSavedViews   int `json:"logsSavedViews"`
+
+	LogsSavedViewWithContainsOp int `json:"logsSavedViewWithContainsOp"`
 }
 
 type DashboardsInfo struct {
@@ -649,6 +652,7 @@ type DashboardsInfo struct {
 	DashboardNames                  []string `json:"dashboardNames"`
 	QueriesWithTSV2                 int      `json:"queriesWithTSV2"`
 	DashboardsWithLogsChQuery       int      `json:"dashboardsWithLogsChQuery"`
+	LogsPanelsWithAttrContainsOp    int      `json:"logsPanelsWithAttrContainsOp"`
 }
 
 type TagTelemetryData struct {
