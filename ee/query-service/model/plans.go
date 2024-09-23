@@ -244,7 +244,7 @@ var ProPlan = basemodel.FeatureSet{
 	},
 	basemodel.Feature{
 		Name:       basemodel.AnomalyDetection,
-		Active:     false,
+		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -373,7 +373,7 @@ var EnterprisePlan = basemodel.FeatureSet{
 	},
 	basemodel.Feature{
 		Name:       basemodel.AnomalyDetection,
-		Active:     false,
+		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
