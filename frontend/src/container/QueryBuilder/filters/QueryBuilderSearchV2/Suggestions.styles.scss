@@ -168,3 +168,59 @@
 		}
 	}
 }
+
+.lightMode {
+	.text {
+		color: var(--bg-ink-400);
+	}
+
+	.option {
+		.container {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+
+			.right-section {
+				.data-type {
+					background: var(--bg-vanilla-300);
+				}
+			}
+			.option-meta-data-container {
+				display: flex;
+				gap: 8px;
+			}
+		}
+
+		.container-without-tag {
+			.left {
+				.OPERATOR {
+					color: var(--bg-ink-400);
+				}
+
+				.VALUE {
+					color: var(--bg-ink-400);
+				}
+			}
+
+			.right {
+				.data-type {
+					background: var(--bg-vanilla-300);
+				}
+			}
+		}
+	}
+	.option:hover {
+		.container {
+			.left-section {
+				.value {
+					color: var(--bg-ink-100);
+				}
+			}
+		}
+		.container-without-tag {
+			.value {
+				color: var(--bg-ink-100);
+			}
+		}
+	}
+}

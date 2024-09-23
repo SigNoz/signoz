@@ -9,15 +9,18 @@ export function getColorsForSeverityLabels(
 	const lowerCaseLabel = label.toLowerCase();
 
 	if (lowerCaseLabel.includes(`{severity_text="trace"}`)) {
-		return Color.BG_ROBIN_300;
+		return Color.BG_FOREST_400;
 	}
 
 	if (lowerCaseLabel.includes(`{severity_text="debug"}`)) {
-		return Color.BG_FOREST_500;
+		return Color.BG_AQUA_500;
 	}
 
-	if (lowerCaseLabel.includes(`{severity_text="info"}`)) {
-		return Color.BG_SLATE_400;
+	if (
+		lowerCaseLabel.includes(`{severity_text="info"}`) ||
+		lowerCaseLabel.includes(`{severity_text=""}`)
+	) {
+		return Color.BG_ROBIN_500;
 	}
 
 	if (lowerCaseLabel.includes(`{severity_text="warn"}`)) {

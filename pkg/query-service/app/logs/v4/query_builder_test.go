@@ -147,7 +147,15 @@ func Test_getExistsNexistsFilter(t *testing.T) {
 				op:   v3.FilterOperatorExists,
 				item: v3.FilterItem{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified}},
 			},
-			want: "",
+			want: "trace_id != ''",
+		},
+		{
+			name: "exists top level column- number",
+			args: args{
+				op:   v3.FilterOperatorNotExists,
+				item: v3.FilterItem{Key: v3.AttributeKey{Key: "severity_number", DataType: v3.AttributeKeyDataTypeArrayFloat64, Type: v3.AttributeKeyTypeUnspecified}},
+			},
+			want: "severity_number = 0",
 		},
 	}
 	for _, tt := range tests {
@@ -242,7 +250,7 @@ func Test_buildAttributeFilter(t *testing.T) {
 					Value:    "test",
 				},
 			},
-			want: "resources_string['service.name'] LIKE '%test%'",
+			want: "resources_string['service.name'] ILIKE '%test%'",
 		},
 		{
 			name: "build attribute filter contains- body",
@@ -269,10 +277,10 @@ func Test_buildAttributeFilter(t *testing.T) {
 						Type:     v3.AttributeKeyTypeResource,
 					},
 					Operator: v3.FilterOperatorLike,
-					Value:    "test",
+					Value:    "test%",
 				},
 			},
-			want: "resources_string['service.name'] LIKE 'test'",
+			want: "resources_string['service.name'] ILIKE 'test%'",
 		},
 		{
 			name: "build attribute filter like-body",
@@ -948,7 +956,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 			},
 			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string from " +
 				"signoz_logs.distributed_logs_v2 where attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND " +
-				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE simpleJSONExtractString(labels, 'service.name') LIKE '%app%' AND labels like '%service.name%app%' AND ",
+				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE simpleJSONExtractString(lower(labels), 'service.name') LIKE '%app%' AND lower(labels) like '%service.name%app%' AND ",
 		},
 		{
 			name: "Live Tail Query W/O filter",
