@@ -326,32 +326,32 @@ function RuleOptions({
 
 								<VerticalLine>
 									<Space direction="horizontal" align="center">
-										<Form.Item noStyle name={['condition', 'requireFullWindow']}>
+										<Form.Item noStyle name={['condition', 'requireMinPoints']}>
 											<Checkbox
-												checked={alertDef?.condition?.requireFullWindow}
+												checked={alertDef?.condition?.requireMinPoints}
 												onChange={(e): void => {
 													setAlertDef({
 														...alertDef,
 														condition: {
 															...alertDef.condition,
-															requireFullWindow: e.target.checked,
+															requireMinPoints: e.target.checked,
 														},
 													});
 												}}
 											/>
 										</Form.Item>
-										<Typography.Text>{t('text_require_full_window')}</Typography.Text>
+										<Typography.Text>{t('text_require_min_points')}</Typography.Text>
 
-										<Form.Item noStyle name={['condition', 'requireNumPoints']}>
+										<Form.Item noStyle name={['condition', 'requiredNumPoints']}>
 											<InputNumber
 												min={1}
-												value={alertDef?.condition?.requireNumPoints}
+												value={alertDef?.condition?.requiredNumPoints}
 												onChange={(value): void => {
 													setAlertDef({
 														...alertDef,
 														condition: {
 															...alertDef.condition,
-															requireNumPoints: Number(value) || 0,
+															requiredNumPoints: Number(value) || 0,
 														},
 													});
 												}}

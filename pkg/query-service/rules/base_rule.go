@@ -329,6 +329,13 @@ func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
 		return alertSmpl, false
 	}
 
+	if r.ruleCondition.RequireMinPoints {
+		if len(series.Points) < r.ruleCondition.RequiredNumPoints {
+			zap.L().Debug("not enough data points to evaluate series", zap.String("ruleid", r.ID()), zap.Int("numPoints", len(series.Points)), zap.Int("requiredPoints", r.ruleCondition.RequiredNumPoints))
+			return alertSmpl, false
+		}
+	}
+
 	switch r.matchType() {
 	case AtleastOnce:
 		// If any sample matches the condition, the rule is firing.

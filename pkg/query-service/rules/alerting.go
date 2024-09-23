@@ -120,8 +120,8 @@ type RuleCondition struct {
 	CompareOp         CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
 	Target            *float64           `yaml:"target,omitempty" json:"target,omitempty"`
 	AlertOnAbsent     bool               `yaml:"alertOnAbsent,omitempty" json:"alertOnAbsent,omitempty"`
-	RequireFullWindow bool               `yaml:"requireFullWindow,omitempty" json:"requireFullWindow,omitempty"`
-	RequireNumPoints  int                `yaml:"requireNumPoints,omitempty" json:"requireNumPoints,omitempty"`
+	RequireMinPoints  bool               `yaml:"requireMinPoints,omitempty" json:"requireMinPoints,omitempty"`
+	RequiredNumPoints int                `yaml:"requiredNumPoints,omitempty" json:"requiredNumPoints,omitempty"`
 	AbsentFor         uint64             `yaml:"absentFor,omitempty" json:"absentFor,omitempty"`
 	MatchType         MatchType          `json:"matchType,omitempty"`
 	TargetUnit        string             `json:"targetUnit,omitempty"`
