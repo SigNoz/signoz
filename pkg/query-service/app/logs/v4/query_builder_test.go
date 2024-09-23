@@ -250,7 +250,7 @@ func Test_buildAttributeFilter(t *testing.T) {
 					Value:    "test",
 				},
 			},
-			want: "resources_string['service.name'] LIKE '%test%'",
+			want: "resources_string['service.name'] ILIKE '%test%'",
 		},
 		{
 			name: "build attribute filter contains- body",
@@ -280,7 +280,7 @@ func Test_buildAttributeFilter(t *testing.T) {
 					Value:    "test%",
 				},
 			},
-			want: "resources_string['service.name'] LIKE 'test%'",
+			want: "resources_string['service.name'] ILIKE 'test%'",
 		},
 		{
 			name: "build attribute filter like-body",
@@ -956,7 +956,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 			},
 			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string from " +
 				"signoz_logs.distributed_logs_v2 where attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND " +
-				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE simpleJSONExtractString(labels, 'service.name') LIKE '%app%' AND labels like '%service.name%app%' AND ",
+				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE simpleJSONExtractString(lower(labels), 'service.name') LIKE '%app%' AND lower(labels) like '%service.name%app%' AND ",
 		},
 		{
 			name: "Live Tail Query W/O filter",
