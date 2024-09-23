@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -25,8 +26,11 @@ import { debounce, isArray, isString } from 'lodash-es';
 import map from 'lodash-es/map';
 import { ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { variablePropsToPayloadVariables } from '../utils';
@@ -80,6 +84,23 @@ function VariableItem({
 		[],
 	);
 
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	useEffect(() => {
+		if (variableData.allSelected && variableData.type === 'QUERY') {
+			setVariablesToGetUpdated((prev) => {
+				const variablesQueue = [...prev.filter((v) => v !== variableData.name)];
+				if (variableData.name) {
+					variablesQueue.push(variableData.name);
+				}
+				return variablesQueue;
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [minTime, maxTime]);
+
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
 	const getDependentVariables = (queryValue: string): string[] => {
@@ -111,7 +132,14 @@ function VariableItem({
 
 		const variableKey = dependentVariablesStr.replace(/\s/g, '');
 
-		return [REACT_QUERY_KEY.DASHBOARD_BY_ID, variableName, variableKey];
+		// added this time dependency for variables query as API respects the passed time range now
+		return [
+			REACT_QUERY_KEY.DASHBOARD_BY_ID,
+			variableName,
+			variableKey,
+			`${minTime}`,
+			`${maxTime}`,
+		];
 	};
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -151,10 +179,14 @@ function VariableItem({
 								valueNotInList = true;
 							}
 						}
+						// variablesData.allSelected is added for the case where on change of options we need to update the
+						// local storage
 						if (
 							variableData.type === 'QUERY' &&
 							variableData.name &&
-							(variablesToGetUpdated.includes(variableData.name) || valueNotInList)
+							(variablesToGetUpdated.includes(variableData.name) ||
+								valueNotInList ||
+								variableData.allSelected)
 						) {
 							let value = variableData.selectedValue;
 							let allSelected = false;
@@ -338,8 +370,8 @@ function VariableItem({
 			(Array.isArray(selectValue) && selectValue?.includes(option.toString()));
 
 		if (isChecked) {
-			if (mode === ToggleTagValue.Only) {
-				handleChange(option.toString());
+			if (mode === ToggleTagValue.Only && variableData.multiSelect) {
+				handleChange([option.toString()]);
 			} else if (!variableData.multiSelect) {
 				handleChange(option.toString());
 			} else {
