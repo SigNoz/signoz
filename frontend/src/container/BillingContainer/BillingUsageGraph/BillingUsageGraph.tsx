@@ -46,7 +46,6 @@ const calculateStartEndTime = (
 ): { startTime: number; endTime: number } => {
 	const timestamps: number[] = [];
 	data?.details?.breakdown?.forEach((breakdown: any) => {
-		console.log(breakdown);
 		if (breakdown?.dayWiseBreakdown?.breakdown?.length === 1) {
 			const currentDay = breakdown.dayWiseBreakdown.breakdown[0];
 			const nextDay = {
