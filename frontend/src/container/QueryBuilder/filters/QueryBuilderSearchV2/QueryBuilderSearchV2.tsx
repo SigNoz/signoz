@@ -295,7 +295,26 @@ function QueryBuilderSearchV2(
 				setCurrentState(DropdownState.OPERATOR);
 				setSearchValue((parsedValue as BaseAutocompleteData)?.key);
 			} else if (currentState === DropdownState.OPERATOR) {
-				if (value === OPERATORS.EXISTS || value === OPERATORS.NOT_EXISTS) {
+				if (isEmpty(value) && currentFilterItem?.key?.key) {
+					setTags((prev) => [
+						...prev,
+						{
+							key: {
+								key: 'body',
+								dataType: DataTypes.String,
+								type: '',
+								isColumn: true,
+								isJSON: false,
+								id: 'body--string----true',
+							},
+							op: OPERATORS.CONTAINS,
+							value: currentFilterItem?.key?.key,
+						},
+					]);
+					setCurrentFilterItem(undefined);
+					setSearchValue('');
+					setCurrentState(DropdownState.ATTRIBUTE_KEY);
+				} else if (value === OPERATORS.EXISTS || value === OPERATORS.NOT_EXISTS) {
 					setTags((prev) => [
 						...prev,
 						{
@@ -399,6 +418,7 @@ function QueryBuilderSearchV2(
 				whereClauseConfig?.customKey === 'body' &&
 				whereClauseConfig?.customOp === OPERATORS.CONTAINS
 			) {
+				// eslint-disable-next-line sonarjs/no-identical-functions
 				setTags((prev) => [
 					...prev,
 					{
@@ -643,12 +663,14 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
+				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
 				setDropdownOptions(operatorOptions);
 			} else if (strippedKey.endsWith('[*]') && strippedKey.startsWith('body.')) {
 				operatorOptions = [OPERATORS.HAS, OPERATORS.NHAS].map((operator) => ({
 					label: operator,
 					value: operator,
 				}));
+				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
 				setDropdownOptions(operatorOptions);
 			} else {
 				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES.universal.map(
@@ -663,6 +685,7 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
+				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
 				setDropdownOptions(operatorOptions);
 			}
 		}
