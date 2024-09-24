@@ -6,10 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"regexp"
 	"text/template"
 	"time"
-	"unicode"
 
 	"go.uber.org/zap"
 
@@ -43,11 +41,6 @@ type ThresholdRule struct {
 	// if the version is "v3", then we use the old querier
 	// if the version is "v4", then we use the new querierV2
 	version string
-	// temporalityMap is a map of metric name to temporality
-	// to avoid fetching temporality for the same metric multiple times
-	// querying the v4 table on low cardinal temporality column
-	// should be fast but we can still avoid the query if we have the data in memory
-	temporalityMap map[string]map[v3.Temporality]bool
 
 	// querier is used for alerts created before the introduction of new metrics query builder
 	querier interfaces.Querier
@@ -76,9 +69,8 @@ func NewThresholdRule(
 	}
 
 	t := ThresholdRule{
-		BaseRule:       baseRule,
-		version:        p.Version,
-		temporalityMap: make(map[string]map[v3.Temporality]bool),
+		BaseRule: baseRule,
+		version:  p.Version,
 	}
 
 	querierOption := querier.QuerierOptions{
@@ -105,63 +97,6 @@ func NewThresholdRule(
 
 func (r *ThresholdRule) Type() RuleType {
 	return RuleTypeThreshold
-}
-
-// populateTemporality same as addTemporality but for v4 and better
-func (r *ThresholdRule) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
-
-	missingTemporality := make([]string, 0)
-	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
-	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
-		for _, query := range qp.CompositeQuery.BuilderQueries {
-			// if there is no temporality specified in the query but we have it in the map
-			// then use the value from the map
-			if query.Temporality == "" && r.temporalityMap[query.AggregateAttribute.Key] != nil {
-				// We prefer delta if it is available
-				if r.temporalityMap[query.AggregateAttribute.Key][v3.Delta] {
-					query.Temporality = v3.Delta
-				} else if r.temporalityMap[query.AggregateAttribute.Key][v3.Cumulative] {
-					query.Temporality = v3.Cumulative
-				} else {
-					query.Temporality = v3.Unspecified
-				}
-			}
-			// we don't have temporality for this metric
-			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
-				missingTemporality = append(missingTemporality, query.AggregateAttribute.Key)
-			}
-			if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
-				metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
-			}
-		}
-	}
-
-	var nameToTemporality map[string]map[v3.Temporality]bool
-	var err error
-
-	if len(missingTemporality) > 0 {
-		nameToTemporality, err = r.reader.FetchTemporality(ctx, missingTemporality)
-		if err != nil {
-			return err
-		}
-	}
-
-	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
-		for name := range qp.CompositeQuery.BuilderQueries {
-			query := qp.CompositeQuery.BuilderQueries[name]
-			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
-				if nameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
-					query.Temporality = v3.Delta
-				} else if nameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
-					query.Temporality = v3.Cumulative
-				} else {
-					query.Temporality = v3.Unspecified
-				}
-				r.temporalityMap[query.AggregateAttribute.Key] = nameToTemporality[query.AggregateAttribute.Key]
-			}
-		}
-	}
-	return nil
 }
 
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3, error) {
@@ -313,7 +248,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 	if err != nil {
 		return nil, err
 	}
-	err = r.populateTemporality(ctx, params)
+	err = r.PopulateTemporality(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("internal error while setting temporality")
 	}
@@ -406,29 +341,12 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 	}
 
 	for _, series := range queryResult.Series {
-		smpl, shouldAlert := r.shouldAlert(*series)
+		smpl, shouldAlert := r.ShouldAlert(*series)
 		if shouldAlert {
 			resultVector = append(resultVector, smpl)
 		}
 	}
 	return resultVector, nil
-}
-
-func normalizeLabelName(name string) string {
-	// See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
-
-	// Regular expression to match non-alphanumeric characters except underscores
-	reg := regexp.MustCompile(`[^a-zA-Z0-9_]`)
-
-	// Replace all non-alphanumeric characters except underscores with underscores
-	normalized := reg.ReplaceAllString(name, "_")
-
-	// If the first character is not a letter or an underscore, prepend an underscore
-	if len(normalized) > 0 && !unicode.IsLetter(rune(normalized[0])) && normalized[0] != '_' {
-		normalized = "_" + normalized
-	}
-
-	return normalized
 }
 
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
@@ -495,7 +413,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 		annotations := make(labels.Labels, 0, len(r.annotations.Map()))
 		for name, value := range r.annotations.Map() {
-			annotations = append(annotations, labels.Label{Name: normalizeLabelName(name), Value: expand(value)})
+			annotations = append(annotations, labels.Label{Name: common.NormalizeLabelName(name), Value: expand(value)})
 		}
 		if smpl.IsMissing {
 			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
@@ -547,7 +465,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
 		// Update the last value and annotations if so, create a new alert entry otherwise.
-		if alert, ok := r.active[h]; ok && alert.State != model.StateInactive {
+		if alert, ok := r.Active[h]; ok && alert.State != model.StateInactive {
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
@@ -555,13 +473,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 			continue
 		}
 
-		r.active[h] = a
+		r.Active[h] = a
 	}
 
 	itemsToAdd := []model.RuleStateHistory{}
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
-	for fp, a := range r.active {
+	for fp, a := range r.Active {
 		labelsJSON, err := json.Marshal(a.QueryResultLables)
 		if err != nil {
 			zap.L().Error("error marshaling labels", zap.Error(err), zap.Any("labels", a.Labels))
@@ -569,8 +487,8 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > resolvedRetention) {
-				delete(r.active, fp)
+			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ResolvedRetention) {
+				delete(r.Active, fp)
 			}
 			if a.State != model.StateInactive {
 				a.State = model.StateInactive
@@ -623,7 +541,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 	r.health = HealthGood
 	r.lastError = err
 
-	return len(r.active), nil
+	return len(r.Active), nil
 }
 
 func (r *ThresholdRule) String() string {
