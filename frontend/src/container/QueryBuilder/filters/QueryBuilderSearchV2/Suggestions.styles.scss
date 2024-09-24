@@ -77,14 +77,14 @@
 
 				&.resource {
 					border-radius: 50px;
-					background: rgba(245, 108, 135, 0.1) !important;
-					color: var(--bg-sakura-400) !important;
+					background: #4bcff910 !important;
+					color: var(--bg-aqua-400) !important;
 
 					.dot {
-						background-color: var(--bg-sakura-400);
+						background-color: var(--bg-aqua-400);
 					}
 					.text {
-						color: var(--bg-sakura-400);
+						color: var(--bg-aqua-400);
 						font-family: Inter;
 						font-size: 12px;
 						font-style: normal;
@@ -165,6 +165,62 @@
 	.container-without-tag {
 		.value {
 			color: var(--bg-vanilla-100);
+		}
+	}
+}
+
+.lightMode {
+	.text {
+		color: var(--bg-ink-400);
+	}
+
+	.option {
+		.container {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+
+			.right-section {
+				.data-type {
+					background: var(--bg-vanilla-300);
+				}
+			}
+			.option-meta-data-container {
+				display: flex;
+				gap: 8px;
+			}
+		}
+
+		.container-without-tag {
+			.left {
+				.OPERATOR {
+					color: var(--bg-ink-400);
+				}
+
+				.VALUE {
+					color: var(--bg-ink-400);
+				}
+			}
+
+			.right {
+				.data-type {
+					background: var(--bg-vanilla-300);
+				}
+			}
+		}
+	}
+	.option:hover {
+		.container {
+			.left-section {
+				.value {
+					color: var(--bg-ink-100);
+				}
+			}
+		}
+		.container-without-tag {
+			.value {
+				color: var(--bg-ink-100);
+			}
 		}
 	}
 }

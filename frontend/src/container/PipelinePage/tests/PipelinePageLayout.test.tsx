@@ -11,6 +11,20 @@ import { v4 } from 'uuid';
 import PipelinePageLayout from '../Layouts/Pipeline';
 import { matchMedia } from './AddNewPipeline.test';
 
+jest.mock('uplot', () => {
+	const paths = {
+		spline: jest.fn(),
+		bars: jest.fn(),
+	};
+	const uplotMock = jest.fn(() => ({
+		paths,
+	}));
+	return {
+		paths,
+		default: uplotMock,
+	};
+});
+
 beforeAll(() => {
 	matchMedia();
 });

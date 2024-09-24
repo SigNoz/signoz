@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -247,6 +248,18 @@ func GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error) {
 			savedViewsInfo.TracesSavedViews += 1
 		} else if view.SourcePage == "logs" {
 			savedViewsInfo.LogsSavedViews += 1
+
+			for _, query := range view.CompositeQuery.BuilderQueries {
+				if query.Filters != nil {
+					for _, item := range query.Filters.Items {
+						if slices.Contains([]string{"contains", "ncontains", "like", "nlike"}, string(item.Operator)) {
+							if item.Key.Key != "body" {
+								savedViewsInfo.LogsSavedViewWithContainsOp += 1
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 	return &savedViewsInfo, nil

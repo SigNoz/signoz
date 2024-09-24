@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron"
+	"go.uber.org/zap"
 	"gopkg.in/segmentio/analytics-go.v3"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -258,7 +259,11 @@ func createTelemetry() {
 	ctx := context.Background()
 	// Define heartbeat function
 	heartbeatFunc := func() {
-		tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(ctx, HEART_BEAT_DURATION)
+		tagsInfo, err := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(ctx, HEART_BEAT_DURATION)
+		if err != nil {
+			zap.L().Error("heartbeatFunc: failed to get tags info", zap.Error(err))
+			return
+		}
 
 		if len(tagsInfo.Env) != 0 {
 			telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "", true, false)
@@ -333,6 +338,7 @@ func createTelemetry() {
 						"dashboardNames":                  dashboardsInfo.DashboardNames,
 						"alertNames":                      alertsInfo.AlertNames,
 						"logsBasedPanels":                 dashboardsInfo.LogsBasedPanels,
+						"logsPanelsWithAttrContains":      dashboardsInfo.LogsPanelsWithAttrContainsOp,
 						"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
 						"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
 						"dashboardsWithTSV2":              dashboardsInfo.QueriesWithTSV2,
@@ -346,6 +352,7 @@ func createTelemetry() {
 						"totalSavedViews":                 savedViewsInfo.TotalSavedViews,
 						"logsSavedViews":                  savedViewsInfo.LogsSavedViews,
 						"tracesSavedViews":                savedViewsInfo.TracesSavedViews,
+						"logSavedViewsWithContainsOp":     savedViewsInfo.LogsSavedViewWithContainsOp,
 						"slackChannels":                   alertsInfo.SlackChannels,
 						"webHookChannels":                 alertsInfo.WebHookChannels,
 						"pagerDutyChannels":               alertsInfo.PagerDutyChannels,
@@ -357,6 +364,7 @@ func createTelemetry() {
 						"metricsPrometheusQueries":        alertsInfo.MetricsPrometheusQueries,
 						"spanMetricsPrometheusQueries":    alertsInfo.SpanMetricsPrometheusQueries,
 						"alertsWithLogsChQuery":           alertsInfo.AlertsWithLogsChQuery,
+						"alertsWithLogsContainsOp":        alertsInfo.AlertsWithLogsContainsOp,
 					}
 					// send event only if there are dashboards or alerts or channels
 					if (dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || alertsInfo.TotalChannels > 0 || savedViewsInfo.TotalSavedViews > 0) && apiErr == nil {

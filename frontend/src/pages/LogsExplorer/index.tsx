@@ -67,7 +67,7 @@ function LogsExplorer(): JSX.Element {
 		}
 		if (
 			currentQuery.builder.queryData.length === 1 &&
-			currentQuery.builder.queryData[0].groupBy.length > 0
+			currentQuery.builder.queryData?.[0]?.groupBy?.length > 0
 		) {
 			handleChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER);
 		}
