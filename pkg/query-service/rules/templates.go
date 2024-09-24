@@ -16,6 +16,7 @@ import (
 
 	"golang.org/x/text/cases"
 
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 )
 
@@ -204,15 +205,34 @@ func NewTemplateExpander(
 
 // AlertTemplateData returns the interface to be used in expanding the template.
 func AlertTemplateData(labels map[string]string, value string, threshold string) interface{} {
+	newLabels := make(map[string]string)
+	for k, v := range labels {
+		newLabels[k] = v
+		newLabels[common.NormalizeLabelName(k)] = v
+	}
+
 	return struct {
 		Labels    map[string]string
 		Value     string
 		Threshold string
 	}{
-		Labels:    labels,
+		Labels:    newLabels,
 		Value:     value,
 		Threshold: threshold,
 	}
+}
+
+func (te *TemplateExpander) preprocessTemplate() {
+	re := regexp.MustCompile(`({{.*?}})|(\$(\w+(?:\.\w+)*))`)
+	te.text = re.ReplaceAllStringFunc(te.text, func(match string) string {
+		if strings.HasPrefix(match, "{{") {
+			// If it's a Go template block, leave it unchanged
+			return match
+		}
+		// Otherwise, it's our custom $variable syntax
+		path := strings.Split(match[1:], ".")
+		return "{{index $labels \"" + strings.Join(path, ".") + "\"}}"
+	})
 }
 
 // Funcs adds the functions in fm to the Expander's function map.
@@ -236,6 +256,8 @@ func (te TemplateExpander) Expand() (result string, resultErr error) {
 			}
 		}
 	}()
+
+	te.preprocessTemplate()
 
 	tmpl, err := text_template.New(te.name).Funcs(te.funcMap).Option("missingkey=zero").Parse(te.text)
 	if err != nil {
