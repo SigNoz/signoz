@@ -8,9 +8,9 @@ import (
 	"strings"
 )
 
-const (
+var (
 	RoutePrefix   string = "/api/gateway"
-	AllowedPrefix string = "/v1/workspaces/me"
+	AllowedPrefix []string = []string{"/v1/workspaces/me", "/v1/onboardingAnswers"}
 )
 
 type proxy struct {
