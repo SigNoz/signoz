@@ -177,6 +177,8 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 		am.ViewAccess(ah.listLicensesV2)).
 		Methods(http.MethodGet)
 
+	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)
+
 	// Gateway
 	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.AdminAccess(ah.ServeGatewayHTTP))
 

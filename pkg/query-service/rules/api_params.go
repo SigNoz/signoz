@@ -133,7 +133,9 @@ func parseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 
 	if rule.RuleCondition != nil {
 		if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-			rule.RuleType = RuleTypeThreshold
+			if rule.RuleType == "" {
+				rule.RuleType = RuleTypeThreshold
+			}
 		} else if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
 			rule.RuleType = RuleTypeProm
 		}
