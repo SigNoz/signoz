@@ -4,7 +4,7 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { cloneDeep, get, isEmpty, set } from 'lodash-es';
+import { cloneDeep, get, isEmpty } from 'lodash-es';
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { eventEmitter } from 'utils/getEventEmitter';
@@ -23,6 +23,7 @@ function GridTableComponent({
 	thresholds,
 	columnUnits,
 	tableProcessedDataRef,
+	sticky,
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
@@ -37,15 +38,13 @@ function GridTableComponent({
 	const createDataInCorrectFormat = useCallback(
 		(dataSource: RowData[]): RowData[] =>
 			dataSource.map((d) => {
-				const finalObject = {};
+				const finalObject: Record<string, number | string> = {};
 
 				// we use the order of the columns here to have similar download as the user view
+				// the [] access for the object is used because the titles can contain dot(.) as well
 				columns.forEach((k) => {
-					set(
-						finalObject,
-						get(k, 'title', '') as string,
-						get(d, get(k, 'dataIndex', ''), 'n/a'),
-					);
+					finalObject[`${get(k, 'title', '')}`] =
+						d[`${get(k, 'dataIndex', '')}`] || 'n/a';
 				});
 				return finalObject as RowData;
 			}),
@@ -85,6 +84,7 @@ function GridTableComponent({
 		applyColumnUnits,
 		originalDataSource,
 	]);
+
 	useEffect(() => {
 		if (tableProcessedDataRef) {
 			// eslint-disable-next-line no-param-reassign
@@ -146,6 +146,7 @@ function GridTableComponent({
 				loading={false}
 				columns={newColumnData}
 				dataSource={dataSource}
+				sticky={sticky}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}
 			/>

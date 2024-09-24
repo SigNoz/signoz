@@ -37,8 +37,8 @@ type RuleTask struct {
 
 const DefaultFrequency = 1 * time.Minute
 
-// newRuleTask makes a new RuleTask with the given name, options, and rules.
-func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *RuleTask {
+// NewRuleTask makes a new RuleTask with the given name, options, and rules.
+func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *RuleTask {
 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
@@ -285,9 +285,10 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 			continue
 		}
 
-		for fp, a := range far.active {
-			ar.active[fp] = a
+		for fp, a := range far.Active {
+			ar.Active[fp] = a
 		}
+		ar.handledRestart = far.handledRestart
 	}
 
 	return nil
@@ -348,7 +349,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 			}
 			ctx = context.WithValue(ctx, common.LogCommentKey, kvs)
 
-			_, err := rule.Eval(ctx, ts, g.opts.Queriers)
+			_, err := rule.Eval(ctx, ts)
 			if err != nil {
 				rule.SetHealth(HealthBad)
 				rule.SetLastError(err)

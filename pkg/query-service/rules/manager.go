@@ -18,9 +18,11 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
@@ -31,14 +33,17 @@ type PrepareTaskOptions struct {
 	RuleDB      RuleDB
 	Logger      *zap.Logger
 	Reader      interfaces.Reader
+	Cache       cache.Cache
 	FF          interfaces.FeatureLookup
 	ManagerOpts *ManagerOptions
 	NotifyFunc  NotifyFunc
+
+	UseLogsNewSchema bool
 }
 
 const taskNamesuffix = "webAppEditor"
 
-func ruleIdFromTaskName(n string) string {
+func RuleIdFromTaskName(n string) string {
 	return strings.Split(n, "-groupname")[0]
 }
 
@@ -56,7 +61,7 @@ func prepareTaskName(ruleId interface{}) string {
 // ManagerOptions bundles options for the Manager.
 type ManagerOptions struct {
 	NotifierOpts am.NotifierOptions
-	Queriers     *Queriers
+	PqlEngine    *pqle.PqlEngine
 
 	// RepoURL is used to generate a backlink in sent alert messages
 	RepoURL string
@@ -70,10 +75,13 @@ type ManagerOptions struct {
 	DisableRules bool
 	FeatureFlags interfaces.FeatureLookup
 	Reader       interfaces.Reader
+	Cache        cache.Cache
 
 	EvalDelay time.Duration
 
 	PrepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
+
+	UseLogsNewSchema bool
 }
 
 // The Manager manages recording and alerting rules.
@@ -91,10 +99,12 @@ type Manager struct {
 
 	logger *zap.Logger
 
-	featureFlags interfaces.FeatureLookup
-	reader       interfaces.Reader
-
+	featureFlags    interfaces.FeatureLookup
+	reader          interfaces.Reader
+	cache           cache.Cache
 	prepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
+
+	UseLogsNewSchema bool
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -121,17 +131,16 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 	rules := make([]Rule, 0)
 	var task Task
 
-	ruleId := ruleIdFromTaskName(opts.TaskName)
+	ruleId := RuleIdFromTaskName(opts.TaskName)
 	if opts.Rule.RuleType == RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := NewThresholdRule(
 			ruleId,
 			opts.Rule,
-			ThresholdRuleOpts{
-				EvalDelay: opts.ManagerOpts.EvalDelay,
-			},
 			opts.FF,
 			opts.Reader,
+			opts.UseLogsNewSchema,
+			WithEvalDelay(opts.ManagerOpts.EvalDelay),
 		)
 
 		if err != nil {
@@ -150,8 +159,8 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			ruleId,
 			opts.Rule,
 			opts.Logger,
-			PromRuleOpts{},
 			opts.Reader,
+			opts.ManagerOpts.PqlEngine,
 		)
 
 		if err != nil {
@@ -184,7 +193,12 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		return nil, err
 	}
 
-	db := NewRuleDB(o.DBConn)
+	amManager, err := am.New()
+	if err != nil {
+		return nil, err
+	}
+
+	db := NewRuleDB(o.DBConn, amManager)
 
 	telemetry.GetInstance().SetAlertsInfoCallback(db.GetAlertsInfo)
 
@@ -198,6 +212,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		logger:          o.Logger,
 		featureFlags:    o.FeatureFlags,
 		reader:          o.Reader,
+		cache:           o.Cache,
 		prepareTaskFunc: o.PrepareTaskFunc,
 	}
 	return m, nil
@@ -331,9 +346,12 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 		RuleDB:      m.ruleDB,
 		Logger:      m.logger,
 		Reader:      m.reader,
+		Cache:       m.cache,
 		FF:          m.featureFlags,
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
+
+		UseLogsNewSchema: m.opts.UseLogsNewSchema,
 	})
 
 	if err != nil {
@@ -400,7 +418,7 @@ func (m *Manager) deleteTask(taskName string) {
 	if ok {
 		oldg.Stop()
 		delete(m.tasks, taskName)
-		delete(m.rules, ruleIdFromTaskName(taskName))
+		delete(m.rules, RuleIdFromTaskName(taskName))
 		zap.L().Debug("rule task deleted", zap.String("name", taskName))
 	} else {
 		zap.L().Info("rule not found for deletion", zap.String("name", taskName))
@@ -450,18 +468,21 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 		RuleDB:      m.ruleDB,
 		Logger:      m.logger,
 		Reader:      m.reader,
+		Cache:       m.cache,
 		FF:          m.featureFlags,
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
-	})
 
-	for _, r := range newTask.Rules() {
-		m.rules[r.ID()] = r
-	}
+		UseLogsNewSchema: m.opts.UseLogsNewSchema,
+	})
 
 	if err != nil {
 		zap.L().Error("creating rule task failed", zap.String("name", taskName), zap.Error(err))
 		return errors.New("error loading rules, previous rule set restored")
+	}
+
+	for _, r := range newTask.Rules() {
+		m.rules[r.ID()] = r
 	}
 
 	// If there is an another task with the same identifier, raise an error
@@ -617,7 +638,7 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*GettableRules, error) {
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
-			ruleResponse.State = StateDisabled
+			ruleResponse.State = model.StateDisabled
 			ruleResponse.Disabled = true
 		} else {
 			ruleResponse.State = rm.State()
@@ -644,7 +665,7 @@ func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error)
 	r.Id = fmt.Sprintf("%d", s.Id)
 	// fetch state of rule from memory
 	if rm, ok := m.rules[r.Id]; !ok {
-		r.State = StateDisabled
+		r.State = model.StateDisabled
 		r.Disabled = true
 	} else {
 		r.State = rm.State()
@@ -751,7 +772,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 
 	// fetch state of rule from memory
 	if rm, ok := m.rules[ruleId]; !ok {
-		response.State = StateDisabled
+		response.State = model.StateDisabled
 		response.Disabled = true
 	} else {
 		response.State = rm.State()
@@ -793,12 +814,11 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 		rule, err = NewThresholdRule(
 			alertname,
 			parsedRule,
-			ThresholdRuleOpts{
-				SendUnmatched: true,
-				SendAlways:    true,
-			},
 			m.featureFlags,
 			m.reader,
+			m.opts.UseLogsNewSchema,
+			WithSendAlways(),
+			WithSendUnmatched(),
 		)
 
 		if err != nil {
@@ -813,10 +833,10 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 			alertname,
 			parsedRule,
 			m.logger,
-			PromRuleOpts{
-				SendAlways: true,
-			},
 			m.reader,
+			m.opts.PqlEngine,
+			WithSendAlways(),
+			WithSendUnmatched(),
 		)
 
 		if err != nil {
@@ -830,7 +850,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 	// set timestamp to current utc time
 	ts := time.Now().UTC()
 
-	count, err := rule.Eval(ctx, ts, m.opts.Queriers)
+	count, err := rule.Eval(ctx, ts)
 	if err != nil {
 		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
 		return 0, newApiErrorInternal(fmt.Errorf("rule evaluation failed"))

@@ -38,7 +38,8 @@ type APIHandlerOptions struct {
 	Cache                         cache.Cache
 	Gateway                       *httputil.ReverseProxy
 	// Querier Influx Interval
-	FluxInterval time.Duration
+	FluxInterval     time.Duration
+	UseLogsNewSchema bool
 }
 
 type APIHandler struct {
@@ -63,6 +64,7 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		Cache:                         opts.Cache,
 		FluxInterval:                  opts.FluxInterval,
+		UseLogsNewSchema:              opts.UseLogsNewSchema,
 	})
 
 	if err != nil {
@@ -174,6 +176,8 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v2/licenses",
 		am.ViewAccess(ah.listLicensesV2)).
 		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)
 
 	// Gateway
 	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.AdminAccess(ah.ServeGatewayHTTP))

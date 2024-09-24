@@ -120,7 +120,6 @@
 .contributor-row-popover-buttons {
 	display: flex;
 	flex-direction: column;
-	border: 1px solid var(--bg-slate-400);
 
 	&__button {
 		display: flex;
@@ -133,12 +132,35 @@
 		width: 160px;
 		cursor: pointer;
 
+		.text,
+		.icon {
+			color: var(--text-vanilla-100);
+
+			.lightMode & {
+				color: var(--text-ink-500);
+			}
+		}
+
 		&:hover {
 			background: var(--bg-slate-400);
+
+			.text,
+			.icon {
+				color: var(--text-vanilla-100);
+
+				.lightMode & {
+					color: var(--text-ink-500);
+				}
+			}
 		}
 
 		.icon {
 			display: flex;
+		}
+
+		.lightMode & {
+			background: var(--bg-vanilla-100);
+			border-color: var(--bg-vanilla-400);
 		}
 	}
 }

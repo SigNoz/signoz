@@ -1,10 +1,16 @@
 .query-table {
-    position: relative;
-    height: inherit;
-    .query-table--download {
-        position: absolute;
-        top: 15px;
-        right: 0px;
-        z-index: 1;
-    }
+	position: relative;
+	height: inherit;
+	.query-table--download {
+		position: absolute;
+		top: 15px;
+		right: 0px;
+		z-index: 1;
+	}
+
+	.ant-table {
+		&::-webkit-scrollbar {
+			width: 0.1rem;
+		}
+	}
 }

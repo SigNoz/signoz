@@ -211,7 +211,11 @@ function RightContainer({
 					<YAxisUnitSelector
 						defaultValue={yAxisUnit}
 						onSelect={setYAxisUnit}
-						fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
+						fieldLabel={
+							selectedGraphType === 'Value' || selectedGraphType === 'Pie'
+								? 'Unit'
+								: 'Y Axis Unit'
+						}
 					/>
 				)}
 				{allowSoftMinMax && (
