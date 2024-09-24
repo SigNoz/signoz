@@ -144,9 +144,20 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			return nil, err
 		}
 	}
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
+	}
 
 	<-readerReady
-	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules, fm, serverOptions.UseLogsNewSchema)
+	rm, err := makeRulesManager(
+		serverOptions.PromConfigPath,
+		constants.GetAlertManagerApiPrefix(),
+		serverOptions.RuleRepoURL, localDB, reader, c, serverOptions.DisableRules, fm, serverOptions.UseLogsNewSchema)
 	if err != nil {
 		return nil, err
 	}
@@ -157,15 +168,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
 		}
 	}()
-
-	var c cache.Cache
-	if serverOptions.CacheConfigPath != "" {
-		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		c = cache.NewCache(cacheOpts)
-	}
 
 	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 	if err != nil {
@@ -715,6 +717,7 @@ func makeRulesManager(
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch interfaces.Reader,
+	cache cache.Cache,
 	disableRules bool,
 	fm interfaces.FeatureLookup,
 	useLogsNewSchema bool) (*rules.Manager, error) {
@@ -743,6 +746,7 @@ func makeRulesManager(
 		DisableRules:     disableRules,
 		FeatureFlags:     fm,
 		Reader:           ch,
+		Cache:            cache,
 		EvalDelay:        constants.GetEvalDelay(),
 		UseLogsNewSchema: useLogsNewSchema,
 	}

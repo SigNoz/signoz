@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/converter"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -53,7 +54,7 @@ type BaseRule struct {
 
 	health    RuleHealth
 	lastError error
-	active    map[uint64]*Alert
+	Active    map[uint64]*Alert
 
 	// lastTimestampWithDatapoints is the timestamp of the last datapoint we observed
 	// for this rule
@@ -72,6 +73,12 @@ type BaseRule struct {
 	// sendAlways will send alert irresepective of resendDelay
 	// or other params
 	sendAlways bool
+
+	// TemporalityMap is a map of metric name to temporality
+	// to avoid fetching temporality for the same metric multiple times
+	// querying the v4 table on low cardinal temporality column
+	// should be fast but we can still avoid the query if we have the data in memory
+	TemporalityMap map[string]map[v3.Temporality]bool
 }
 
 type RuleOption func(*BaseRule)
@@ -116,8 +123,9 @@ func NewBaseRule(id string, p *PostableRule, reader interfaces.Reader, opts ...R
 		annotations:       qslabels.FromMap(p.Annotations),
 		preferredChannels: p.PreferredChannels,
 		health:            HealthUnknown,
-		active:            map[uint64]*Alert{},
+		Active:            map[uint64]*Alert{},
 		reader:            reader,
+		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
 	}
 
 	if baseRule.evalWindow == 0 {
@@ -165,12 +173,28 @@ func (r *BaseRule) currentAlerts() []*Alert {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	alerts := make([]*Alert, 0, len(r.active))
-	for _, a := range r.active {
+	alerts := make([]*Alert, 0, len(r.Active))
+	for _, a := range r.Active {
 		anew := *a
 		alerts = append(alerts, &anew)
 	}
 	return alerts
+}
+
+func (r *BaseRule) EvalDelay() time.Duration {
+	return r.evalDelay
+}
+
+func (r *BaseRule) EvalWindow() time.Duration {
+	return r.evalWindow
+}
+
+func (r *BaseRule) HoldDuration() time.Duration {
+	return r.holdDuration
+}
+
+func (r *BaseRule) TargetVal() float64 {
+	return r.targetVal()
 }
 
 func (r *ThresholdRule) hostFromSource() string {
@@ -267,7 +291,7 @@ func (r *BaseRule) GetEvaluationTimestamp() time.Time {
 
 func (r *BaseRule) State() model.AlertState {
 	maxState := model.StateInactive
-	for _, a := range r.active {
+	for _, a := range r.Active {
 		if a.State > maxState {
 			maxState = a.State
 		}
@@ -306,12 +330,12 @@ func (r *BaseRule) ForEachActiveAlert(f func(*Alert)) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	for _, a := range r.active {
+	for _, a := range r.Active {
 		f(a)
 	}
 }
 
-func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
+func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 	var alertSmpl Sample
 	var shouldAlert bool
 	var lbls qslabels.Labels
@@ -319,7 +343,7 @@ func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
 
 	for name, value := range series.Labels {
 		lbls = append(lbls, qslabels.Label{Name: name, Value: value})
-		lblsNormalized = append(lblsNormalized, qslabels.Label{Name: normalizeLabelName(name), Value: value})
+		lblsNormalized = append(lblsNormalized, qslabels.Label{Name: common.NormalizeLabelName(name), Value: value})
 	}
 
 	series.Points = removeGroupinSetPoints(series)
@@ -359,6 +383,14 @@ func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ValueIsNotEq {
 			for _, smpl := range series.Points {
 				if smpl.Value != r.targetVal() {
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+					shouldAlert = true
+					break
+				}
+			}
+		} else if r.compareOp() == ValueOutsideBounds {
+			for _, smpl := range series.Points {
+				if math.Abs(smpl.Value) >= r.targetVal() {
 					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
 					shouldAlert = true
 					break
@@ -425,6 +457,14 @@ func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
 					}
 				}
 			}
+		} else if r.compareOp() == ValueOutsideBounds {
+			for _, smpl := range series.Points {
+				if math.Abs(smpl.Value) >= r.targetVal() {
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+					shouldAlert = true
+					break
+				}
+			}
 		}
 	case OnAverage:
 		// If the average of all samples matches the condition, the rule is firing.
@@ -454,6 +494,10 @@ func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
 			if avg != r.targetVal() {
 				shouldAlert = true
 			}
+		} else if r.compareOp() == ValueOutsideBounds {
+			if math.Abs(avg) >= r.targetVal() {
+				shouldAlert = true
+			}
 		}
 	case InTotal:
 		// If the sum of all samples matches the condition, the rule is firing.
@@ -480,6 +524,10 @@ func (r *BaseRule) shouldAlert(series v3.Series) (Sample, bool) {
 			}
 		} else if r.compareOp() == ValueIsNotEq {
 			if sum != r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueOutsideBounds {
+			if math.Abs(sum) >= r.targetVal() {
 				shouldAlert = true
 			}
 		}
@@ -600,5 +648,61 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 	}
 	r.handledRestart = true
 
+	return nil
+}
+
+func (r *BaseRule) PopulateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+
+	missingTemporality := make([]string, 0)
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for _, query := range qp.CompositeQuery.BuilderQueries {
+			// if there is no temporality specified in the query but we have it in the map
+			// then use the value from the map
+			if query.Temporality == "" && r.TemporalityMap[query.AggregateAttribute.Key] != nil {
+				// We prefer delta if it is available
+				if r.TemporalityMap[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if r.TemporalityMap[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+			}
+			// we don't have temporality for this metric
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				missingTemporality = append(missingTemporality, query.AggregateAttribute.Key)
+			}
+			if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
+				metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
+			}
+		}
+	}
+
+	var nameToTemporality map[string]map[v3.Temporality]bool
+	var err error
+
+	if len(missingTemporality) > 0 {
+		nameToTemporality, err = r.reader.FetchTemporality(ctx, missingTemporality)
+		if err != nil {
+			return err
+		}
+	}
+
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for name := range qp.CompositeQuery.BuilderQueries {
+			query := qp.CompositeQuery.BuilderQueries[name]
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				if nameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if nameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+				r.TemporalityMap[query.AggregateAttribute.Key] = nameToTemporality[query.AggregateAttribute.Key]
+			}
+		}
+	}
 	return nil
 }

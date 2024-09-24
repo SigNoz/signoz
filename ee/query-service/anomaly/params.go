@@ -16,6 +16,10 @@ const (
 	SeasonalityWeekly Seasonality = "weekly"
 )
 
+func (s Seasonality) String() string {
+	return string(s)
+}
+
 var (
 	oneWeekOffset = 24 * 7 * time.Hour.Milliseconds()
 	oneDayOffset  = 24 * time.Hour.Milliseconds()
