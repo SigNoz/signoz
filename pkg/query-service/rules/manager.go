@@ -18,6 +18,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -32,6 +33,7 @@ type PrepareTaskOptions struct {
 	RuleDB      RuleDB
 	Logger      *zap.Logger
 	Reader      interfaces.Reader
+	Cache       cache.Cache
 	FF          interfaces.FeatureLookup
 	ManagerOpts *ManagerOptions
 	NotifyFunc  NotifyFunc
@@ -73,6 +75,7 @@ type ManagerOptions struct {
 	DisableRules bool
 	FeatureFlags interfaces.FeatureLookup
 	Reader       interfaces.Reader
+	Cache        cache.Cache
 
 	EvalDelay time.Duration
 
@@ -96,9 +99,9 @@ type Manager struct {
 
 	logger *zap.Logger
 
-	featureFlags interfaces.FeatureLookup
-	reader       interfaces.Reader
-
+	featureFlags    interfaces.FeatureLookup
+	reader          interfaces.Reader
+	cache           cache.Cache
 	prepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
 
 	UseLogsNewSchema bool
@@ -209,6 +212,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		logger:          o.Logger,
 		featureFlags:    o.FeatureFlags,
 		reader:          o.Reader,
+		cache:           o.Cache,
 		prepareTaskFunc: o.PrepareTaskFunc,
 	}
 	return m, nil
@@ -342,6 +346,7 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 		RuleDB:      m.ruleDB,
 		Logger:      m.logger,
 		Reader:      m.reader,
+		Cache:       m.cache,
 		FF:          m.featureFlags,
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
@@ -463,6 +468,7 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 		RuleDB:      m.ruleDB,
 		Logger:      m.logger,
 		Reader:      m.reader,
+		Cache:       m.cache,
 		FF:          m.featureFlags,
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
