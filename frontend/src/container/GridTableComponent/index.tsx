@@ -5,6 +5,7 @@ import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep, get, isEmpty } from 'lodash-es';
+import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { eventEmitter } from 'utils/getEventEmitter';
@@ -92,6 +93,11 @@ function GridTableComponent({
 		}
 	}, [createDataInCorrectFormat, dataSource, tableProcessedDataRef]);
 
+	const handleLongText = useCallback(
+		(text: string): ReactNode => <LineClampedText text={text} lines={3} />,
+		[],
+	);
+
 	const newColumnData = columns.map((e) => ({
 		...e,
 		render: (text: string): ReactNode => {
@@ -116,7 +122,7 @@ function GridTableComponent({
 							}
 						>
 							<Space>
-								{text}
+								{handleLongText(text)}
 								{hasMultipleMatches && (
 									<Tooltip title={t('this_value_satisfies_multiple_thresholds')}>
 										<ExclamationCircleFilled className="value-graph-icon" />
@@ -127,7 +133,7 @@ function GridTableComponent({
 					);
 				}
 			}
-			return <div>{text}</div>;
+			return <div>{handleLongText(text)}</div>;
 		},
 	}));
 
