@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron"
+	"go.uber.org/zap"
 	"gopkg.in/segmentio/analytics-go.v3"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -258,7 +259,11 @@ func createTelemetry() {
 	ctx := context.Background()
 	// Define heartbeat function
 	heartbeatFunc := func() {
-		tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(ctx, HEART_BEAT_DURATION)
+		tagsInfo, err := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(ctx, HEART_BEAT_DURATION)
+		if err != nil {
+			zap.L().Error("heartbeatFunc: failed to get tags info", zap.Error(err))
+			return
+		}
 
 		if len(tagsInfo.Env) != 0 {
 			telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "", true, false)
