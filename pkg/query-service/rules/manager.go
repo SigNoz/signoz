@@ -476,13 +476,13 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 		UseLogsNewSchema: m.opts.UseLogsNewSchema,
 	})
 
-	for _, r := range newTask.Rules() {
-		m.rules[r.ID()] = r
-	}
-
 	if err != nil {
 		zap.L().Error("creating rule task failed", zap.String("name", taskName), zap.Error(err))
 		return errors.New("error loading rules, previous rule set restored")
+	}
+
+	for _, r := range newTask.Rules() {
+		m.rules[r.ID()] = r
 	}
 
 	// If there is an another task with the same identifier, raise an error
