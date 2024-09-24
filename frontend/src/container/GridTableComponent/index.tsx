@@ -1,3 +1,5 @@
+import './GridTableComponent.styles.scss';
+
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Space, Tooltip } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
@@ -94,7 +96,17 @@ function GridTableComponent({
 	}, [createDataInCorrectFormat, dataSource, tableProcessedDataRef]);
 
 	const handleLongText = useCallback(
-		(text: string): ReactNode => <LineClampedText text={text} lines={3} />,
+		(text: string): ReactNode => (
+			<LineClampedText
+				text={text}
+				lines={3}
+				tooltipProps={{
+					placement: 'right',
+					autoAdjustOverflow: true,
+					overlayClassName: 'long-text-tooltip',
+				}}
+			/>
+		),
 		[],
 	);
 
