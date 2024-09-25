@@ -729,7 +729,8 @@ function QueryBuilderSearchV2(
 	}, [tags]);
 
 	useEffect(() => {
-		if (!isEqual(query.filters.items, tags)) {
+		// convert the query and tags to same format before comparison
+		if (!isEqual(getInitTags(query), tags)) {
 			setTags(getInitTags(query));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -769,7 +770,7 @@ function QueryBuilderSearchV2(
 	);
 
 	const queryTags = useMemo(
-		() => tags.map((tag) => `${tag.key.key} ${tag.op} ${tag.value}`),
+		() => tags.map((tag) => `${tag.key?.key} ${tag.op} ${tag.value}`),
 		[tags],
 	);
 

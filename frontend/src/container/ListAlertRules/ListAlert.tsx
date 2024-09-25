@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { Input, Typography } from 'antd';
+import { Flex, Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
@@ -34,12 +34,7 @@ import { GettableAlert } from 'types/api/alerts/get';
 import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
-import {
-	Button,
-	ButtonContainer,
-	ColumnButton,
-	SearchContainer,
-} from './styles';
+import { Button, ColumnButton, SearchContainer } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
 import { alertActionLogEvent, filterAlerts } from './utils';
@@ -373,21 +368,25 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					onChange={handleSearch}
 					defaultValue={searchString}
 				/>
-				<ButtonContainer>
+				<Flex gap={12}>
+					{addNewAlert && (
+						<Button
+							type="primary"
+							onClick={onClickNewAlertHandler}
+							icon={<PlusOutlined />}
+						>
+							New Alert
+						</Button>
+					)}
 					<TextToolTip
 						{...{
 							text: `More details on how to create alerts`,
 							url:
 								'https://signoz.io/docs/alerts/?utm_source=product&utm_medium=list-alerts',
+							urlText: 'Learn More',
 						}}
 					/>
-
-					{addNewAlert && (
-						<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
-							New Alert
-						</Button>
-					)}
-				</ButtonContainer>
+				</Flex>
 			</SearchContainer>
 			<DynamicColumnTable
 				tablesource={TableDataSource.Alert}
