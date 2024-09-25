@@ -159,7 +159,6 @@ services:
       [
         "-config=/root/config/prometheus.yml",
         "--use-logs-new-schema=true"
-        # "--prefer-delta=true"
       ]
     # ports:
     #   - "6060:6060"     # pprof port
