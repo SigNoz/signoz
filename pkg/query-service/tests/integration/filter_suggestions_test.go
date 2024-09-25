@@ -185,7 +185,7 @@ func TestResourceAttribsRankedHigherInLogsFilterSuggestions(t *testing.T) {
 		expectedTopSuggestions[:2], [][]string{{"test"}, {"test"}},
 	)
 
-	suggestionsQueryParams := map[string]string{}
+	suggestionsQueryParams := map[string]string{"examplesLimit": "2"}
 	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(suggestionsQueryParams)
 
 	require.Equal(
