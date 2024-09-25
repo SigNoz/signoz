@@ -47,9 +47,6 @@ function LineClampedText({
 	return isOverflowing ? (
 		<Tooltip
 			title={text}
-			placement="right"
-			autoAdjustOverflow
-			overlayClassName="long-text-tooltip"
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...tooltipProps}
 		>

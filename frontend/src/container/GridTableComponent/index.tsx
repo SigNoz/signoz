@@ -95,21 +95,6 @@ function GridTableComponent({
 		}
 	}, [createDataInCorrectFormat, dataSource, tableProcessedDataRef]);
 
-	const handleLongText = useCallback(
-		(text: string): ReactNode => (
-			<LineClampedText
-				text={text}
-				lines={3}
-				tooltipProps={{
-					placement: 'right',
-					autoAdjustOverflow: true,
-					overlayClassName: 'long-text-tooltip',
-				}}
-			/>
-		),
-		[],
-	);
-
 	const newColumnData = columns.map((e) => ({
 		...e,
 		render: (text: string): ReactNode => {
@@ -134,7 +119,16 @@ function GridTableComponent({
 							}
 						>
 							<Space>
-								{handleLongText(text)}
+								<LineClampedText
+									text={text}
+									lines={3}
+									tooltipProps={{
+										placement: 'right',
+										autoAdjustOverflow: true,
+										overlayClassName: 'long-text-tooltip',
+									}}
+								/>
+
 								{hasMultipleMatches && (
 									<Tooltip title={t('this_value_satisfies_multiple_thresholds')}>
 										<ExclamationCircleFilled className="value-graph-icon" />
@@ -145,7 +139,19 @@ function GridTableComponent({
 					);
 				}
 			}
-			return <div>{handleLongText(text)}</div>;
+			return (
+				<div>
+					<LineClampedText
+						text={text}
+						lines={3}
+						tooltipProps={{
+							placement: 'right',
+							autoAdjustOverflow: true,
+							overlayClassName: 'long-text-tooltip',
+						}}
+					/>
+				</div>
+			);
 		},
 	}));
 
