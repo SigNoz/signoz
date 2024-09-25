@@ -141,44 +141,57 @@ func TestLogsFilterSuggestionsWithExistingFilter(t *testing.T) {
 func TestResourceAttribsRankedHigherInLogsFilterSuggestions(t *testing.T) {
 	require := require.New(t)
 
-	testAttribKeys := []v3.AttributeKey{}
-
-	tags := []string{"user_id", "user_email"}
-	for _, k := range tags {
-		testAttribKeys = append(testAttribKeys, v3.AttributeKey{
+	tagKeys := []v3.AttributeKey{}
+	for _, k := range []string{"user_id", "user_email"} {
+		tagKeys = append(tagKeys, v3.AttributeKey{
 			Key:      k,
 			Type:     v3.AttributeKeyTypeTag,
-			DataType: v3.AttributeKeyDataTypeArrayString,
+			DataType: v3.AttributeKeyDataTypeString,
 			IsColumn: false,
 		})
 	}
 
-	topResourceAttribs := []string{"service", "env"}
-	otherResourceAttribs := []string{"container_name", "container_id"}
-
-	for _, k := range append(otherResourceAttribs, topResourceAttribs...) {
-		testAttribKeys = append(testAttribKeys, v3.AttributeKey{
+	specialResourceAttrKeys := []v3.AttributeKey{}
+	for _, k := range []string{"service", "env"} {
+		specialResourceAttrKeys = append(specialResourceAttrKeys, v3.AttributeKey{
 			Key:      k,
 			Type:     v3.AttributeKeyTypeResource,
-			DataType: v3.AttributeKeyDataTypeArrayString,
+			DataType: v3.AttributeKeyDataTypeString,
+			IsColumn: false,
+		})
+	}
+
+	otherResourceAttrKeys := []v3.AttributeKey{}
+	for _, k := range []string{"container_name", "container_id"} {
+		otherResourceAttrKeys = append(otherResourceAttrKeys, v3.AttributeKey{
+			Key:      k,
+			Type:     v3.AttributeKeyTypeResource,
+			DataType: v3.AttributeKeyDataTypeString,
 			IsColumn: false,
 		})
 	}
 
 	tb := NewFilterSuggestionsTestBed(t)
-	tb.mockAttribKeysQueryResponse(testAttribKeys)
+
+	mockAttrKeysInDB := append(tagKeys, otherResourceAttrKeys...)
+	mockAttrKeysInDB = append(mockAttrKeysInDB, specialResourceAttrKeys...)
+
+	tb.mockAttribKeysQueryResponse(mockAttrKeysInDB)
+
+	expectedTopSuggestions := append(specialResourceAttrKeys, otherResourceAttrKeys...)
+	expectedTopSuggestions = append(expectedTopSuggestions, tagKeys...)
+
+	tb.mockAttribValuesQueryResponse(
+		expectedTopSuggestions[:2], [][]string{{"test"}, {"test"}},
+	)
 
 	suggestionsQueryParams := map[string]string{}
 	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(suggestionsQueryParams)
-	suggestedKeys := []string{}
-	for _, k := range suggestionsResp.AttributeKeys {
-		suggestedKeys = append(suggestedKeys, k.Key)
-	}
 
-	expectedSuggestionKeys := append(topResourceAttribs, otherResourceAttribs...)
-	expectedSuggestionKeys = append(expectedSuggestionKeys, tags...)
-
-	require.Equal(expectedSuggestionKeys, suggestedKeys[:len(expectedSuggestionKeys)])
+	require.Equal(
+		expectedTopSuggestions,
+		suggestionsResp.AttributeKeys[:len(expectedTopSuggestions)],
+	)
 }
 
 // Mocks response for CH queries made by reader.GetLogAttributeKeys

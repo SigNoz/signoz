@@ -254,11 +254,12 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 var attribRanker = newRankingStrategy()
 
 func newRankingStrategy() attribRankingStrategy {
-	// Some attributes should be ranked independent of rest of the synonyms
-	resourceAttrsInDecreasingRank := []string{
+	// Some special resource attributes should get ranked above all others.
+	interestingResourceAttrsInDescRank := []string{
 		"service", "service.name", "env", "k8s.namespace.name",
 	}
-	// add synonyms for interesting attributes for rest of the ranking
+
+	// Synonyms of interesting attributes should come next
 	resourceHierarchy := logsv2.ResourceHierarchy()
 	for _, attr := range []string{
 		"service.name",
@@ -268,28 +269,28 @@ func newRankingStrategy() attribRankingStrategy {
 		"k8s.container.name",
 		"k8s.node.name",
 	} {
-		resourceAttrsInDecreasingRank = append(resourceAttrsInDecreasingRank, resourceHierarchy.Synonyms(attr)...)
+		interestingResourceAttrsInDescRank = append(
+			interestingResourceAttrsInDescRank, resourceHierarchy.Synonyms(attr)...,
+		)
 	}
 
-	resourceAttrsInIncreasingRank := resourceAttrsInDecreasingRank[:]
-	slices.Reverse(resourceAttrsInIncreasingRank)
+	interestingResourceAttrsInAscRank := interestingResourceAttrsInDescRank[:]
+	slices.Reverse(interestingResourceAttrsInAscRank)
 
 	return attribRankingStrategy{
-		resourceAttrsInIncreasingRank: resourceAttrsInIncreasingRank,
+		interestingResourceAttrsInAscRank: interestingResourceAttrsInAscRank,
 	}
 }
 
 type attribRankingStrategy struct {
-	// in decreasing order of ranking
-	resourceAttrsInIncreasingRank []string
+	interestingResourceAttrsInAscRank []string
 }
 
 // The higher the score, the higher the rank
 func (s *attribRankingStrategy) score(attrib v3.AttributeKey) int {
-
-	// Scoring criteria is expected to get more sophisticated in follow up changes
 	if attrib.Type == v3.AttributeKeyTypeResource {
-		return 3 + slices.Index(s.resourceAttrsInIncreasingRank, attrib.Key)
+		// 3 + (-1) if attrib.Key is not an interesting resource attribute
+		return 3 + slices.Index(s.interestingResourceAttrsInAscRank, attrib.Key)
 	}
 
 	if attrib.Type == v3.AttributeKeyTypeTag {
