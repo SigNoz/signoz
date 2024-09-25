@@ -25,6 +25,7 @@ services:
     command:
       [
         "-config=/root/config/prometheus.yml",
+        "--use-logs-new-schema=true"
         # "--prefer-delta=true"
       ]
     ports:
