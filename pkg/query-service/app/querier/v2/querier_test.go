@@ -2,17 +2,45 @@ package v2
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
+	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/cache/inmemory"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/querycache"
 )
 
-func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
+func minTimestamp(series []*v3.Series) int64 {
+	min := int64(math.MaxInt64)
+	for _, series := range series {
+		for _, point := range series.Points {
+			if point.Timestamp < min {
+				min = point.Timestamp
+			}
+		}
+	}
+	return min
+}
+
+func maxTimestamp(series []*v3.Series) int64 {
+	max := int64(math.MinInt64)
+	for _, series := range series {
+		for _, point := range series.Points {
+			if point.Timestamp > max {
+				max = point.Timestamp
+			}
+		}
+	}
+	return max
+}
+
+func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 	// There are five scenarios:
 	// 1. Cached time range is a subset of the requested time range
 	// 2. Cached time range is a superset of the requested time range
@@ -25,7 +53,7 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 		requestedEnd      int64 // in milliseconds
 		requestedStep     int64 // in seconds
 		cachedSeries      []*v3.Series
-		expectedMiss      []missInterval
+		expectedMiss      []querycache.MissInterval
 		replaceCachedData bool
 	}{
 		{
@@ -50,14 +78,14 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 					},
 				},
 			},
-			expectedMiss: []missInterval{
+			expectedMiss: []querycache.MissInterval{
 				{
-					start: 1675115596722,
-					end:   1675115596722 + 60*60*1000 - 1,
+					Start: 1675115596722,
+					End:   1675115596722 + 60*60*1000,
 				},
 				{
-					start: 1675115596722 + 120*60*1000 + 1,
-					end:   1675115596722 + 180*60*1000,
+					Start: 1675115596722 + 120*60*1000,
+					End:   1675115596722 + 180*60*1000,
 				},
 			},
 		},
@@ -91,7 +119,7 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 					},
 				},
 			},
-			expectedMiss: []missInterval{},
+			expectedMiss: []querycache.MissInterval{},
 		},
 		{
 			name:           "cached time range is a left overlap of the requested time range",
@@ -119,10 +147,10 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 					},
 				},
 			},
-			expectedMiss: []missInterval{
+			expectedMiss: []querycache.MissInterval{
 				{
-					start: 1675115596722 + 120*60*1000 + 1,
-					end:   1675115596722 + 180*60*1000,
+					Start: 1675115596722 + 120*60*1000,
+					End:   1675115596722 + 180*60*1000,
 				},
 			},
 		},
@@ -152,10 +180,10 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 					},
 				},
 			},
-			expectedMiss: []missInterval{
+			expectedMiss: []querycache.MissInterval{
 				{
-					start: 1675115596722,
-					end:   1675115596722 + 60*60*1000 - 1,
+					Start: 1675115596722,
+					End:   1675115596722 + 60*60*1000,
 				},
 			},
 		},
@@ -185,31 +213,48 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 					},
 				},
 			},
-			expectedMiss: []missInterval{
+			expectedMiss: []querycache.MissInterval{
 				{
-					start: 1675115596722,
-					end:   1675115596722 + 180*60*1000,
+					Start: 1675115596722,
+					End:   1675115596722 + 180*60*1000,
 				},
 			},
 			replaceCachedData: true,
 		},
 	}
 
-	for _, tc := range testCases {
+	c := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
+
+	qc := querycache.NewQueryCache(querycache.WithCache(c))
+
+	for idx, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			misses, replaceCachedData := findMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, tc.cachedSeries, 0*time.Minute)
+			cacheKey := fmt.Sprintf("test-cache-key-%d", idx)
+			cachedData := &querycache.CachedSeriesData{
+				Start: minTimestamp(tc.cachedSeries),
+				End:   maxTimestamp(tc.cachedSeries),
+				Data:  tc.cachedSeries,
+			}
+			jsonData, err := json.Marshal([]*querycache.CachedSeriesData{cachedData})
+			if err != nil {
+				t.Errorf("error marshalling cached data: %v", err)
+			}
+			err = c.Store(cacheKey, jsonData, 5*time.Minute)
+			if err != nil {
+				t.Errorf("error storing cached data: %v", err)
+			}
+
+			misses := qc.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
-			if replaceCachedData != tc.replaceCachedData {
-				t.Errorf("expected replaceCachedData %t, got %t", tc.replaceCachedData, replaceCachedData)
-			}
+
 			for i, miss := range misses {
-				if miss.start != tc.expectedMiss[i].start {
-					t.Errorf("expected start %d, got %d", tc.expectedMiss[i].start, miss.start)
+				if miss.Start != tc.expectedMiss[i].Start {
+					t.Errorf("expected start %d, got %d", tc.expectedMiss[i].Start, miss.Start)
 				}
-				if miss.end != tc.expectedMiss[i].end {
-					t.Errorf("expected end %d, got %d", tc.expectedMiss[i].end, miss.end)
+				if miss.End != tc.expectedMiss[i].End {
+					t.Errorf("expected end %d, got %d", tc.expectedMiss[i].End, miss.End)
 				}
 			}
 		})
@@ -225,7 +270,7 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 		requestedStep  int64
 		cachedSeries   []*v3.Series
 		fluxInterval   time.Duration
-		expectedMiss   []missInterval
+		expectedMiss   []querycache.MissInterval
 	}{
 		{
 			name:           "cached time range is a subset of the requested time range",
@@ -250,14 +295,14 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 				},
 			},
 			fluxInterval: 5 * time.Minute,
-			expectedMiss: []missInterval{
+			expectedMiss: []querycache.MissInterval{
 				{
-					start: 1675115596722,
-					end:   1675115596722 + 60*60*1000 - 1,
+					Start: 1675115596722,
+					End:   1675115596722 + 60*60*1000,
 				},
 				{
-					start: 1675115596722 + 120*60*1000 + 1,
-					end:   1675115596722 + 180*60*1000,
+					Start: 1675115596722 + 120*60*1000,
+					End:   1675115596722 + 180*60*1000,
 				},
 			},
 		},
@@ -292,7 +337,7 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 				},
 			},
 			fluxInterval: 5 * time.Minute,
-			expectedMiss: []missInterval{},
+			expectedMiss: []querycache.MissInterval{},
 		},
 		{
 			name:           "cache time range is a left overlap of the requested time range",
@@ -321,10 +366,10 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 				},
 			},
 			fluxInterval: 5 * time.Minute,
-			expectedMiss: []missInterval{
+			expectedMiss: []querycache.MissInterval{
 				{
-					start: 1675115596722 + 120*60*1000 + 1,
-					end:   1675115596722 + 180*60*1000,
+					Start: 1675115596722 + 120*60*1000,
+					End:   1675115596722 + 180*60*1000,
 				},
 			},
 		},
@@ -355,10 +400,10 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 				},
 			},
 			fluxInterval: 5 * time.Minute,
-			expectedMiss: []missInterval{
+			expectedMiss: []querycache.MissInterval{
 				{
-					start: 1675115596722,
-					end:   1675115596722 + 60*60*1000 - 1,
+					Start: 1675115596722,
+					End:   1675115596722 + 60*60*1000,
 				},
 			},
 		},
@@ -389,27 +434,47 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 				},
 			},
 			fluxInterval: 5 * time.Minute,
-			expectedMiss: []missInterval{
+			expectedMiss: []querycache.MissInterval{
 				{
-					start: 1675115596722,
-					end:   1675115596722 + 180*60*1000,
+					Start: 1675115596722,
+					End:   1675115596722 + 180*60*1000,
 				},
 			},
 		},
 	}
 
-	for _, tc := range testCases {
+	c := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
+
+	qc := querycache.NewQueryCache(querycache.WithCache(c))
+
+	for idx, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			misses, _ := findMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, tc.cachedSeries, tc.fluxInterval)
+			cacheKey := fmt.Sprintf("test-cache-key-%d", idx)
+			cachedData := &querycache.CachedSeriesData{
+				Start: minTimestamp(tc.cachedSeries),
+				End:   maxTimestamp(tc.cachedSeries),
+				Data:  tc.cachedSeries,
+			}
+			jsonData, err := json.Marshal([]*querycache.CachedSeriesData{cachedData})
+			if err != nil {
+				t.Errorf("error marshalling cached data: %v", err)
+				return
+			}
+			err = c.Store(cacheKey, jsonData, 5*time.Minute)
+			if err != nil {
+				t.Errorf("error storing cached data: %v", err)
+				return
+			}
+			misses := qc.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
 			for i, miss := range misses {
-				if miss.start != tc.expectedMiss[i].start {
-					t.Errorf("expected start %d, got %d", tc.expectedMiss[i].start, miss.start)
+				if miss.Start != tc.expectedMiss[i].Start {
+					t.Errorf("expected start %d, got %d", tc.expectedMiss[i].Start, miss.Start)
 				}
-				if miss.end != tc.expectedMiss[i].end {
-					t.Errorf("expected end %d, got %d", tc.expectedMiss[i].end, miss.end)
+				if miss.End != tc.expectedMiss[i].End {
+					t.Errorf("expected end %d, got %d", tc.expectedMiss[i].End, miss.End)
 				}
 			}
 		})
@@ -593,7 +658,8 @@ func TestV2QueryRangePanelGraph(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
+		_, errByName, err := q.QueryRange(context.Background(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -738,7 +804,8 @@ func TestV2QueryRangeValueType(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
+		_, errByName, err := q.QueryRange(context.Background(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -792,7 +859,8 @@ func TestV2QueryRangeTimeShift(t *testing.T) {
 	expectedTimeRangeInQueryString := fmt.Sprintf("timestamp >= %d AND timestamp <= %d", (1675115596722-86400*1000)*1000000, ((1675115596722+120*60*1000)-86400*1000)*1000000)
 
 	for i, param := range params {
-		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
+		_, errByName, err := q.QueryRange(context.Background(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -892,7 +960,8 @@ func TestV2QueryRangeTimeShiftWithCache(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
+		_, errByName, err := q.QueryRange(context.Background(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -994,7 +1063,8 @@ func TestV2QueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
+		_, errByName, err := q.QueryRange(context.Background(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -1068,24 +1138,25 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 
 	expectedQueryAndTimeRanges := []struct {
 		query  string
-		ranges []missInterval
+		ranges []querycache.MissInterval
 	}{
 		{
 			query: "signoz_calls_total",
-			ranges: []missInterval{
-				{start: 1675115596722, end: 1675115596722 + 120*60*1000},
+			ranges: []querycache.MissInterval{
+				{Start: 1675115596722, End: 1675115596722 + 120*60*1000},
 			},
 		},
 		{
 			query: "signoz_latency_bucket",
-			ranges: []missInterval{
-				{start: 1675115596722 + 60*60*1000, end: 1675115596722 + 180*60*1000},
+			ranges: []querycache.MissInterval{
+				{Start: 1675115596722 + 60*60*1000, End: 1675115596722 + 180*60*1000},
 			},
 		},
 	}
 
 	for i, param := range params {
-		_, errByName, err := q.QueryRange(context.Background(), param, nil)
+		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
+		_, errByName, err := q.QueryRange(context.Background(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -1099,10 +1170,10 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 		if len(q.TimeRanges()[i]) != 2 {
 			t.Errorf("expected time ranges to be %v, got %v", expectedQueryAndTimeRanges[i].ranges, q.TimeRanges()[i])
 		}
-		if q.TimeRanges()[i][0] != int(expectedQueryAndTimeRanges[i].ranges[0].start) {
+		if q.TimeRanges()[i][0] != int(expectedQueryAndTimeRanges[i].ranges[0].Start) {
 			t.Errorf("expected time ranges to be %v, got %v", expectedQueryAndTimeRanges[i].ranges, q.TimeRanges()[i])
 		}
-		if q.TimeRanges()[i][1] != int(expectedQueryAndTimeRanges[i].ranges[0].end) {
+		if q.TimeRanges()[i][1] != int(expectedQueryAndTimeRanges[i].ranges[0].End) {
 			t.Errorf("expected time ranges to be %v, got %v", expectedQueryAndTimeRanges[i].ranges, q.TimeRanges()[i])
 		}
 	}

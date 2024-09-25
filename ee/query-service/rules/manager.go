@@ -20,6 +20,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Rule,
 			opts.FF,
 			opts.Reader,
+			opts.UseLogsNewSchema,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
 		)
 
@@ -51,6 +52,25 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 
 		// create promql rule task for evalution
 		task = newTask(baserules.TaskTypeProm, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+
+	} else if opts.Rule.RuleType == baserules.RuleTypeAnomaly {
+		// create anomaly rule
+		ar, err := NewAnomalyRule(
+			ruleId,
+			opts.Rule,
+			opts.FF,
+			opts.Reader,
+			opts.Cache,
+			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
+		)
+		if err != nil {
+			return task, err
+		}
+
+		rules = append(rules, ar)
+
+		// create anomaly rule task for evalution
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
 
 	} else {
 		return nil, fmt.Errorf("unsupported rule type. Supported types: %s, %s", baserules.RuleTypeProm, baserules.RuleTypeThreshold)

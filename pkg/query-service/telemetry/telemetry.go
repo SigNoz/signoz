@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron"
+	"go.uber.org/zap"
 	"gopkg.in/segmentio/analytics-go.v3"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -178,9 +179,12 @@ type Telemetry struct {
 	patTokenUser  bool
 	mutex         sync.RWMutex
 
-	alertsInfoCallback func(ctx context.Context) (*model.AlertsInfo, error)
-	userCountCallback  func(ctx context.Context) (int, error)
-	userRoleCallback   func(ctx context.Context, groupId string) (string, error)
+	alertsInfoCallback     func(ctx context.Context) (*model.AlertsInfo, error)
+	userCountCallback      func(ctx context.Context) (int, error)
+	userRoleCallback       func(ctx context.Context, groupId string) (string, error)
+	getUsersCallback       func(ctx context.Context) ([]model.UserPayload, *model.ApiError)
+	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
+	savedViewsInfoCallback func(ctx context.Context) (*model.SavedViewsInfo, error)
 }
 
 func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*model.AlertsInfo, error)) {
@@ -193,6 +197,18 @@ func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context) (int
 
 func (a *Telemetry) SetUserRoleCallback(callback func(ctx context.Context, groupId string) (string, error)) {
 	a.userRoleCallback = callback
+}
+
+func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context) ([]model.UserPayload, *model.ApiError)) {
+	a.getUsersCallback = callback
+}
+
+func (a *Telemetry) SetSavedViewsInfoCallback(callback func(ctx context.Context) (*model.SavedViewsInfo, error)) {
+	a.savedViewsInfoCallback = callback
+}
+
+func (a *Telemetry) SetDashboardsInfoCallback(callback func(ctx context.Context) (*model.DashboardsInfo, error)) {
+	a.dashboardsInfoCallback = callback
 }
 
 func createTelemetry() {
@@ -243,7 +259,11 @@ func createTelemetry() {
 	ctx := context.Background()
 	// Define heartbeat function
 	heartbeatFunc := func() {
-		tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(ctx, HEART_BEAT_DURATION)
+		tagsInfo, err := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(ctx, HEART_BEAT_DURATION)
+		if err != nil {
+			zap.L().Error("heartbeatFunc: failed to get tags info", zap.Error(err))
+			return
+		}
 
 		if len(tagsInfo.Env) != 0 {
 			telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "", true, false)
@@ -296,7 +316,7 @@ func createTelemetry() {
 			data[key] = value
 		}
 
-		users, apiErr := telemetry.reader.GetUsers(ctx)
+		users, apiErr := telemetry.getUsersCallback(ctx)
 		if apiErr == nil {
 			for _, user := range users {
 				if user.Email == DEFAULT_CLOUD_EMAIL {
@@ -308,65 +328,51 @@ func createTelemetry() {
 
 		alertsInfo, err := telemetry.alertsInfoCallback(ctx)
 		if err == nil {
-			dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(ctx)
+			dashboardsInfo, err := telemetry.dashboardsInfoCallback(ctx)
 			if err == nil {
-				channels, err := telemetry.reader.GetChannels()
+				savedViewsInfo, err := telemetry.savedViewsInfoCallback(ctx)
 				if err == nil {
-					for _, channel := range *channels {
-						switch channel.Type {
-						case "slack":
-							alertsInfo.SlackChannels++
-						case "webhook":
-							alertsInfo.WebHookChannels++
-						case "pagerduty":
-							alertsInfo.PagerDutyChannels++
-						case "opsgenie":
-							alertsInfo.OpsGenieChannels++
-						case "email":
-							alertsInfo.EmailChannels++
-						case "msteams":
-							alertsInfo.MSTeamsChannels++
-						}
+					dashboardsAlertsData := map[string]interface{}{
+						"totalDashboards":                 dashboardsInfo.TotalDashboards,
+						"totalDashboardsWithPanelAndName": dashboardsInfo.TotalDashboardsWithPanelAndName,
+						"dashboardNames":                  dashboardsInfo.DashboardNames,
+						"alertNames":                      alertsInfo.AlertNames,
+						"logsBasedPanels":                 dashboardsInfo.LogsBasedPanels,
+						"logsPanelsWithAttrContains":      dashboardsInfo.LogsPanelsWithAttrContainsOp,
+						"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
+						"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
+						"dashboardsWithTSV2":              dashboardsInfo.QueriesWithTSV2,
+						"dashboardWithLogsChQuery":        dashboardsInfo.DashboardsWithLogsChQuery,
+						"totalAlerts":                     alertsInfo.TotalAlerts,
+						"alertsWithTSV2":                  alertsInfo.AlertsWithTSV2,
+						"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
+						"metricBasedAlerts":               alertsInfo.MetricBasedAlerts,
+						"tracesBasedAlerts":               alertsInfo.TracesBasedAlerts,
+						"totalChannels":                   alertsInfo.TotalChannels,
+						"totalSavedViews":                 savedViewsInfo.TotalSavedViews,
+						"logsSavedViews":                  savedViewsInfo.LogsSavedViews,
+						"tracesSavedViews":                savedViewsInfo.TracesSavedViews,
+						"logSavedViewsWithContainsOp":     savedViewsInfo.LogsSavedViewWithContainsOp,
+						"slackChannels":                   alertsInfo.SlackChannels,
+						"webHookChannels":                 alertsInfo.WebHookChannels,
+						"pagerDutyChannels":               alertsInfo.PagerDutyChannels,
+						"opsGenieChannels":                alertsInfo.OpsGenieChannels,
+						"emailChannels":                   alertsInfo.EmailChannels,
+						"msteamsChannels":                 alertsInfo.MSTeamsChannels,
+						"metricsBuilderQueries":           alertsInfo.MetricsBuilderQueries,
+						"metricsClickHouseQueries":        alertsInfo.MetricsClickHouseQueries,
+						"metricsPrometheusQueries":        alertsInfo.MetricsPrometheusQueries,
+						"spanMetricsPrometheusQueries":    alertsInfo.SpanMetricsPrometheusQueries,
+						"alertsWithLogsChQuery":           alertsInfo.AlertsWithLogsChQuery,
+						"alertsWithLogsContainsOp":        alertsInfo.AlertsWithLogsContainsOp,
 					}
-					savedViewsInfo, err := telemetry.reader.GetSavedViewsInfo(ctx)
-					if err == nil {
-						dashboardsAlertsData := map[string]interface{}{
-							"totalDashboards":                 dashboardsInfo.TotalDashboards,
-							"totalDashboardsWithPanelAndName": dashboardsInfo.TotalDashboardsWithPanelAndName,
-							"dashboardNames":                  dashboardsInfo.DashboardNames,
-							"alertNames":                      alertsInfo.AlertNames,
-							"logsBasedPanels":                 dashboardsInfo.LogsBasedPanels,
-							"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
-							"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
-							"dashboardsWithTSV2":              dashboardsInfo.QueriesWithTSV2,
-							"totalAlerts":                     alertsInfo.TotalAlerts,
-							"alertsWithTSV2":                  alertsInfo.AlertsWithTSV2,
-							"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
-							"metricBasedAlerts":               alertsInfo.MetricBasedAlerts,
-							"tracesBasedAlerts":               alertsInfo.TracesBasedAlerts,
-							"totalChannels":                   len(*channels),
-							"totalSavedViews":                 savedViewsInfo.TotalSavedViews,
-							"logsSavedViews":                  savedViewsInfo.LogsSavedViews,
-							"tracesSavedViews":                savedViewsInfo.TracesSavedViews,
-							"slackChannels":                   alertsInfo.SlackChannels,
-							"webHookChannels":                 alertsInfo.WebHookChannels,
-							"pagerDutyChannels":               alertsInfo.PagerDutyChannels,
-							"opsGenieChannels":                alertsInfo.OpsGenieChannels,
-							"emailChannels":                   alertsInfo.EmailChannels,
-							"msteamsChannels":                 alertsInfo.MSTeamsChannels,
-							"metricsBuilderQueries":           alertsInfo.MetricsBuilderQueries,
-							"metricsClickHouseQueries":        alertsInfo.MetricsClickHouseQueries,
-							"metricsPrometheusQueries":        alertsInfo.MetricsPrometheusQueries,
-							"spanMetricsPrometheusQueries":    alertsInfo.SpanMetricsPrometheusQueries,
-						}
-						// send event only if there are dashboards or alerts or channels
-						if (dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0) && apiErr == nil {
-							for _, user := range users {
-								if user.Email == DEFAULT_CLOUD_EMAIL {
-									continue
-								}
-								telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, user.Email, false, false)
+					// send event only if there are dashboards or alerts or channels
+					if (dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || alertsInfo.TotalChannels > 0 || savedViewsInfo.TotalSavedViews > 0) && apiErr == nil {
+						for _, user := range users {
+							if user.Email == DEFAULT_CLOUD_EMAIL {
+								continue
 							}
+							telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, user.Email, false, false)
 						}
 					}
 				}
@@ -450,11 +456,9 @@ func getOutboundIP() string {
 	}
 
 	defer resp.Body.Close()
+	ipBody, err := io.ReadAll(resp.Body)
 	if err == nil {
-		ipBody, err := io.ReadAll(resp.Body)
-		if err == nil {
-			ip = ipBody
-		}
+		ip = ipBody
 	}
 
 	return string(ip)

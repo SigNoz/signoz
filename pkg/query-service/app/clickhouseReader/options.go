@@ -40,6 +40,11 @@ const (
 	defaultWriteBatchDelay         time.Duration = 5 * time.Second
 	defaultWriteBatchSize          int           = 10000
 	defaultEncoding                Encoding      = EncodingJSON
+
+	defaultLogsLocalTableV2         string = "logs_v2"
+	defaultLogsTableV2              string = "distributed_logs_v2"
+	defaultLogsResourceLocalTableV2 string = "logs_v2_resource"
+	defaultLogsResourceTableV2      string = "distributed_logs_v2_resource"
 )
 
 // NamespaceConfig is Clickhouse's internal configuration data
@@ -72,6 +77,11 @@ type namespaceConfig struct {
 	WriteBatchSize          int
 	Encoding                Encoding
 	Connector               Connector
+
+	LogsLocalTableV2         string
+	LogsTableV2              string
+	LogsResourceLocalTableV2 string
+	LogsResourceTableV2      string
 }
 
 // Connecto defines how to connect to the database
@@ -159,6 +169,11 @@ func NewOptions(
 			WriteBatchSize:          defaultWriteBatchSize,
 			Encoding:                defaultEncoding,
 			Connector:               defaultConnector,
+
+			LogsTableV2:              defaultLogsTableV2,
+			LogsLocalTableV2:         defaultLogsLocalTableV2,
+			LogsResourceTableV2:      defaultLogsResourceTableV2,
+			LogsResourceLocalTableV2: defaultLogsResourceLocalTableV2,
 		},
 		others: make(map[string]*namespaceConfig, len(otherNamespaces)),
 	}
