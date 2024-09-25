@@ -341,7 +341,8 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 }
 
 // logsPPLPfx is a short constant for logsPipelinePrefix
-const LogsPPLPfx = "logstransform/pipeline_"
+const OldLogsPPLPfx = "logstransform/pipeline_"
+const LogsPPLPfx = "signozlogspipeline/pipeline_"
 
 const IntegrationPipelineIdPrefix = "integration"
 

@@ -32,7 +32,8 @@ func buildLogParsingProcessors(agentConf, parsingProcessors map[string]interface
 	}
 	// remove the old unwanted processors
 	for k := range agentProcessors {
-		if _, ok := exists[k]; !ok && strings.HasPrefix(k, constants.LogsPPLPfx) {
+		isPipelineProcessor := (strings.HasPrefix(k, constants.LogsPPLPfx) || strings.HasPrefix(k, constants.OldLogsPPLPfx))
+		if _, ok := exists[k]; !ok && isPipelineProcessor {
 			delete(agentProcessors, k)
 		}
 	}
@@ -78,7 +79,7 @@ func buildLogsProcessors(current []string, logsParserPipeline []string) ([]strin
 	var pipeline []string
 	for _, v := range current {
 		k := v
-		if _, ok := exists[k]; ok || !strings.HasPrefix(k, constants.LogsPPLPfx) {
+		if _, ok := exists[k]; ok || !strings.HasPrefix(k, constants.LogsPPLPfx) || strings.HasPrefix(k, constants.OldLogsPPLPfx) {
 			pipeline = append(pipeline, v)
 		}
 	}
@@ -110,7 +111,8 @@ func buildLogsProcessors(current []string, logsParserPipeline []string) ([]strin
 		m := logsParserPipeline[i]
 		if loc, ok := specVsExistingMap[i]; ok {
 			for j := lastMatched; j < loc; j++ {
-				if strings.HasPrefix(pipeline[j], constants.LogsPPLPfx) {
+				isPipelineProcessor := strings.HasPrefix(pipeline[j], constants.LogsPPLPfx) || strings.HasPrefix(pipeline[j], constants.OldLogsPPLPfx)
+				if isPipelineProcessor {
 					delete(specVsExistingMap, existingVsSpec[j])
 				} else {
 					newPipeline = append(newPipeline, pipeline[j])
