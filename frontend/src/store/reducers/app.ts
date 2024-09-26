@@ -4,7 +4,6 @@ import { getInitialUserTokenRefreshToken } from 'store/utils';
 import {
 	AppAction,
 	LOGGED_IN,
-	SIDEBAR_COLLAPSE,
 	UPDATE_CONFIGS,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
@@ -43,7 +42,6 @@ const getInitialUser = (): User | null => {
 
 const InitialValue: InitialValueTypes = {
 	isLoggedIn: getLocalStorageKey(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
-	isSideBarCollapsed: true,
 	currentVersion: '',
 	latestVersion: '',
 	featureResponse: {
@@ -72,13 +70,6 @@ const appReducer = (
 			return {
 				...state,
 				isLoggedIn: action.payload.isLoggedIn,
-			};
-		}
-
-		case SIDEBAR_COLLAPSE: {
-			return {
-				...state,
-				isSideBarCollapsed: action.payload,
 			};
 		}
 

@@ -5,13 +5,11 @@ import './AppLayout.styles.scss';
 
 import * as Sentry from '@sentry/react';
 import { Flex } from 'antd';
-import getLocalStorageKey from 'api/browser/localstorage/get';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import cx from 'classnames';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import SideNav from 'container/SideNav';
@@ -48,10 +46,6 @@ import { getRouteKey } from './utils';
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn, user, role } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
-	);
-
-	const [collapsed] = useState<boolean>(
-		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
 
 	const { notifications } = useNotifications();
@@ -262,15 +256,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [isDarkMode]);
 
-	const isSideNavCollapsed = getLocalStorageKey(IS_SIDEBAR_COLLAPSED);
-
 	return (
-		<Layout
-			className={cx(
-				isDarkMode ? 'darkMode' : 'lightMode',
-				isSideNavCollapsed ? 'sidebarCollapsed' : '',
-			)}
-		>
+		<Layout className={cx(isDarkMode ? 'darkMode' : 'lightMode')}>
 			<Helmet>
 				<title>{pageTitle}</title>
 			</Helmet>
@@ -296,20 +283,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				</div>
 			)}
 
-			<Flex
-				className={cx(
-					'app-layout',
-					isDarkMode ? 'darkMode' : 'lightMode',
-					!collapsed && !renderFullScreen ? 'docked' : '',
-				)}
-			>
+			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
 				{isToDisplayLayout && !renderFullScreen && (
 					<SideNav licenseData={licenseData} isFetching={isFetching} />
 				)}
-				<div
-					className={cx('app-content', collapsed ? 'collapsed' : '')}
-					data-overlayscrollbars-initialize
-				>
+				<div className="app-content" data-overlayscrollbars-initialize>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent data-overlayscrollbars-initialize>
 							<OverlayScrollbar>

@@ -350,7 +350,6 @@ function SideNav({
 		);
 
 		return (): void => {
-			deregisterShortcut(GlobalShortcuts.SidebarCollapse);
 			deregisterShortcut(GlobalShortcuts.NavigateToServices);
 			deregisterShortcut(GlobalShortcuts.NavigateToTraces);
 			deregisterShortcut(GlobalShortcuts.NavigateToLogs);
