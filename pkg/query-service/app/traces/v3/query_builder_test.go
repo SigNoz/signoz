@@ -1162,13 +1162,13 @@ var testBuildTracesQueryData = []struct {
 				},
 			},
 		},
-		ExpectedQuery: "WITH subQuery AS (SELECT distinct on (traceID) traceID, durationNano, serviceName," +
-			" name FROM signoz_traces.distributed_signoz_index_v2 WHERE parentSpanID = '' AND (timestamp >= '1680066360726210000' AND " +
-			"timestamp <= '1680066458000000000')  AND stringTagMap['method'] = 'GET' ORDER BY durationNano DESC  LIMIT 100)" +
-			" SELECT subQuery.serviceName, subQuery.name, count() AS span_count, subQuery.durationNano, traceID" +
-			" FROM signoz_traces.distributed_signoz_index_v2 GLOBAL INNER JOIN subQuery ON distributed_signoz_index_v2.traceID" +
-			" = subQuery.traceID GROUP BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName " +
-			"ORDER BY subQuery.durationNano desc;",
+		ExpectedQuery: "SELECT subQuery.serviceName, subQuery.name, count() AS span_count, subQuery.durationNano, subQuery.traceID" +
+		"AS traceID FROM signoz_traces.distributed_signoz_index_v2 GLOBAL INNER JOIN" +  
+		" ( SELECT * FROM (SELECT distinct on (traceID) traceID, durationNano, serviceName, name " + 
+		"FROM signoz_traces.distributed_signoz_index_v2 WHERE parentSpanID = '' AND (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')  " + 
+		"AND stringTagMap['method'] = 'GET' ORDER BY durationNano DESC  LIMIT 100)" +
+		" AS inner_subquery ) AS subQuery " + 
+		"ON signoz_traces.distributed_signoz_index_v2.traceID = subQuery.traceID GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc",
 		PanelType: v3.PanelTypeTrace,
 	},
 }
