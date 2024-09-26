@@ -97,7 +97,7 @@ func startCluster() error {
 		return err
 	}
 
-	cmd := getCmd("docker-compose", "-f", composeFile, "-p", prefix,
+	cmd := getCmd("docker", "compose", "-f", composeFile, "-p", prefix,
 		"up", "--force-recreate", "--build", "--remove-orphans", "--detach")
 
 	log.Printf("Starting signoz cluster...\n")
@@ -119,7 +119,7 @@ func startCluster() error {
 }
 
 func stopCluster() {
-	cmd := getCmd("docker-compose", "-f", composeFile, "-p", prefix, "down", "-v")
+	cmd := getCmd("docker", "compose", "-f", composeFile, "-p", prefix, "down", "-v")
 	if err := cmd.Run(); err != nil {
 		log.Printf("Error while stopping the cluster. Error: %v\n", err)
 	}
