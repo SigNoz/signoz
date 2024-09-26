@@ -1168,7 +1168,7 @@ var testBuildTracesQueryData = []struct {
 		"FROM signoz_traces.distributed_signoz_index_v2 WHERE parentSpanID = '' AND (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')  " + 
 		"AND stringTagMap['method'] = 'GET' ORDER BY durationNano DESC  LIMIT 100)" +
 		" AS inner_subquery ) AS subQuery " + 
-		"ON signoz_traces.distributed_signoz_index_v2.traceID = subQuery.traceID WHERE AND (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') "+
+		"ON signoz_traces.distributed_signoz_index_v2.traceID = subQuery.traceID WHERE (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') "+
 		"GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc;",
 		PanelType: v3.PanelTypeTrace,
 	},
