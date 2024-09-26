@@ -54,6 +54,23 @@ export default function WorkspaceBlocked(): JSX.Element {
 		data: licensesData,
 	} = useLicense();
 
+	useEffect((): void => {
+		logEvent('Trial: Blocker Screen Viewed', {});
+	}, []);
+
+	const handleContactUsClick = (): void => {
+		logEvent('Trial: Contact Us CTA Clicked', {});
+	};
+
+	const handleTabClick = (key: string): void => {
+		logEvent('Trial: Blocked Screen Tabs Clicked', { tabKey: key });
+	};
+
+	const handleCollapseChange = (key: string | string[]): void => {
+		const lastKey = Array.isArray(key) ? key.slice(-1)[0] : key;
+		logEvent('Trial: Blocker Screen Tab FAQ Item Clicked', { panelKey: lastKey });
+	};
+
 	useEffect(() => {
 		if (!isFetchingLicenseData) {
 			const shouldBlockWorkspace = licensesData?.payload?.workSpaceBlock;
@@ -135,7 +152,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 
 	const tabItems: TabsProps['items'] = [
 		{
-			key: '1',
+			key: 'whyChooseSignoz',
 			label: t('whyChooseSignoz'),
 			children: (
 				<Row align="middle" justify="center">
@@ -182,7 +199,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 			),
 		},
 		{
-			key: '2',
+			key: 'youAreInGoodCompany',
 			label: t('youAreInGoodCompany'),
 			children: (
 				<Row gutter={[24, 16]} justify="center">
@@ -224,7 +241,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 		// 	children: 'Our Pricing',
 		// },
 		{
-			key: '4',
+			key: 'faqs',
 			label: t('faqs'),
 			children: (
 				<Row align="middle" justify="center">
@@ -234,7 +251,11 @@ export default function WorkspaceBlocked(): JSX.Element {
 							direction="vertical"
 							className="workspace-locked__faq-container"
 						>
-							<Collapse items={faqData} defaultActiveKey={['1']} />
+							<Collapse
+								items={faqData}
+								defaultActiveKey={['signoz-cloud-vs-community']}
+								onChange={handleCollapseChange}
+							/>
 							{isAdmin && (
 								<Button
 									type="primary"
@@ -272,6 +293,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 								size="middle"
 								href="mailto:cloud-support@signoz.io"
 								role="button"
+								onClick={handleContactUsClick}
 							>
 								Contact Us
 							</Button>
@@ -355,7 +377,11 @@ export default function WorkspaceBlocked(): JSX.Element {
 							)}
 
 							<div className="workspace-locked__tabs">
-								<Tabs items={tabItems} defaultActiveKey="2" />
+								<Tabs
+									items={tabItems}
+									defaultActiveKey="youAreInGoodCompany"
+									onTabClick={handleTabClick}
+								/>
 							</div>
 						</>
 					)}
