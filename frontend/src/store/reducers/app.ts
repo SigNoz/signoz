@@ -1,5 +1,4 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
-import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { getInitialUserTokenRefreshToken } from 'store/utils';
 import {
@@ -44,7 +43,7 @@ const getInitialUser = (): User | null => {
 
 const InitialValue: InitialValueTypes = {
 	isLoggedIn: getLocalStorageKey(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
-	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
+	isSideBarCollapsed: true,
 	currentVersion: '',
 	latestVersion: '',
 	featureResponse: {

@@ -22,22 +22,13 @@ import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import {
-	ReactNode,
-	useCallback,
-	useEffect,
-	useLayoutEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
-import { sideBarCollapse } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {
@@ -59,7 +50,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		(state) => state.app,
 	);
 
-	const [collapsed, setCollapsed] = useState<boolean>(
+	const [collapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
 
@@ -116,14 +107,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const latestCurrentCounter = useRef(0);
 	const latestVersionCounter = useRef(0);
-
-	const onCollapse = useCallback(() => {
-		setCollapsed((collapsed) => !collapsed);
-	}, []);
-
-	useLayoutEffect(() => {
-		dispatch(sideBarCollapse(collapsed));
-	}, [collapsed, dispatch]);
 
 	useEffect(() => {
 		if (
@@ -281,14 +264,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const isSideNavCollapsed = getLocalStorageKey(IS_SIDEBAR_COLLAPSED);
 
-	/**
-	 * Note: Right now we don't have a page-level method to pass the sidebar collapse state.
-	 * Since the use case for overriding is not widely needed, we are setting it here
-	 * so that the workspace locked page will have an expanded sidebar regardless of how users
-	 * have set it or what is stored in localStorage. This will not affect the localStorage config.
-	 */
-	const isWorkspaceLocked = pathname === ROUTES.WORKSPACE_LOCKED;
-
 	return (
 		<Layout
 			className={cx(
@@ -329,12 +304,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				)}
 			>
 				{isToDisplayLayout && !renderFullScreen && (
-					<SideNav
-						licenseData={licenseData}
-						isFetching={isFetching}
-						onCollapse={onCollapse}
-						collapsed={isWorkspaceLocked ? false : collapsed}
-					/>
+					<SideNav licenseData={licenseData} isFetching={isFetching} />
 				)}
 				<div
 					className={cx('app-content', collapsed ? 'collapsed' : '')}
