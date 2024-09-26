@@ -7,7 +7,6 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/google/uuid"
 	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 )
@@ -52,7 +51,7 @@ func (tracker *inMemoryQueryProgressTracker) ReportQueryProgress(
 
 func (tracker *inMemoryQueryProgressTracker) SubscribeToQueryProgress(
 	queryId string,
-) (<-chan v3.QueryProgress, func(), *model.ApiError) {
+) (<-chan model.QueryProgress, func(), *model.ApiError) {
 	queryTracker, err := tracker.getQueryTracker(queryId)
 	if err != nil {
 		return nil, nil, err
@@ -97,7 +96,7 @@ type queryTracker struct {
 	queryId    string
 	isFinished bool
 
-	progress      *v3.QueryProgress
+	progress      *model.QueryProgress
 	subscriptions map[string]*queryProgressSubscription
 
 	lock sync.Mutex
@@ -124,7 +123,7 @@ func (qt *queryTracker) handleProgressUpdate(p *clickhouse.Progress) {
 
 	if qt.progress == nil {
 		// This is the first update
-		qt.progress = &v3.QueryProgress{}
+		qt.progress = &model.QueryProgress{}
 	}
 	updateQueryProgress(qt.progress, p)
 
@@ -135,7 +134,7 @@ func (qt *queryTracker) handleProgressUpdate(p *clickhouse.Progress) {
 }
 
 func (qt *queryTracker) subscribe() (
-	<-chan v3.QueryProgress, func(), *model.ApiError,
+	<-chan model.QueryProgress, func(), *model.ApiError,
 ) {
 	qt.lock.Lock()
 	defer qt.lock.Unlock()
@@ -200,20 +199,20 @@ func (qt *queryTracker) onFinished() {
 }
 
 type queryProgressSubscription struct {
-	ch       chan v3.QueryProgress
+	ch       chan model.QueryProgress
 	isClosed bool
 	lock     sync.Mutex
 }
 
 func newQueryProgressSubscription() *queryProgressSubscription {
-	ch := make(chan v3.QueryProgress, 1000)
+	ch := make(chan model.QueryProgress, 1000)
 	return &queryProgressSubscription{
 		ch: ch,
 	}
 }
 
 // Must not block or panic in any scenario
-func (ch *queryProgressSubscription) send(progress v3.QueryProgress) {
+func (ch *queryProgressSubscription) send(progress model.QueryProgress) {
 	ch.lock.Lock()
 	defer ch.lock.Unlock()
 
@@ -248,7 +247,7 @@ func (ch *queryProgressSubscription) close() {
 	}
 }
 
-func updateQueryProgress(qp *v3.QueryProgress, chProgress *clickhouse.Progress) {
+func updateQueryProgress(qp *model.QueryProgress, chProgress *clickhouse.Progress) {
 	qp.ReadRows += chProgress.Rows
 	qp.ReadBytes += chProgress.Bytes
 	qp.ElapsedMs += uint64(chProgress.Elapsed.Milliseconds())

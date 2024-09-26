@@ -170,6 +170,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			return nil, err
 		}
 	}
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
+	}
 
 	<-readerReady
 	rm, err := makeRulesManager(serverOptions.PromConfigPath,
@@ -177,6 +185,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.RuleRepoURL,
 		localDB,
 		reader,
+		c,
 		serverOptions.DisableRules,
 		lm,
 		serverOptions.UseLogsNewSchema,
@@ -236,15 +245,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 	telemetry.GetInstance().SetSaasOperator(constants.SaasSegmentKey)
-
-	var c cache.Cache
-	if serverOptions.CacheConfigPath != "" {
-		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		c = cache.NewCache(cacheOpts)
-	}
 
 	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 
@@ -732,6 +732,7 @@ func makeRulesManager(
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch baseint.Reader,
+	cache cache.Cache,
 	disableRules bool,
 	fm baseint.FeatureLookup,
 	useLogsNewSchema bool) (*baserules.Manager, error) {
@@ -760,6 +761,7 @@ func makeRulesManager(
 		DisableRules: disableRules,
 		FeatureFlags: fm,
 		Reader:       ch,
+		Cache:        cache,
 		EvalDelay:    baseconst.GetEvalDelay(),
 
 		PrepareTaskFunc:  rules.PrepareTaskFunc,
