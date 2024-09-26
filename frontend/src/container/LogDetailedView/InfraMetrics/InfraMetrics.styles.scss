@@ -1,0 +1,34 @@
+.empty-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.infra-metrics-container {
+    .views-tabs {
+        margin-bottom: 1rem;
+    }
+}
+
+.infra-metrics-card {
+    margin: 1rem 0;
+    height: 300px;
+    padding: 10px;
+
+    .ant-card-body {
+        padding: 0;
+    }
+
+    .chart-container {
+         width: 100%;
+         height: 100%;
+    }
+
+    .no-data-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+}

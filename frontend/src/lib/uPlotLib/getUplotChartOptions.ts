@@ -54,6 +54,7 @@ export interface GetUPlotChartOptions {
 		}>
 	>;
 	customTooltipElement?: HTMLDivElement;
+	verticalLineTimestamp?: number;
 }
 
 /** the function converts series A , series B , series C to
@@ -156,6 +157,7 @@ export const getUPlotChartOptions = ({
 	hiddenGraph,
 	setHiddenGraph,
 	customTooltipElement,
+	verticalLineTimestamp,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -222,6 +224,29 @@ export const getUPlotChartOptions = ({
 				onClick: onClickHandler,
 				apiResponse,
 			}),
+			{
+				hooks: {
+					draw: [
+						(u): void => {
+							if (verticalLineTimestamp) {
+								const { ctx } = u;
+								ctx.save();
+								ctx.setLineDash([4, 2]);
+								ctx.strokeStyle = 'white';
+								ctx.lineWidth = 1;
+								const x = u.valToPos(verticalLineTimestamp, 'x', true);
+
+								ctx.beginPath();
+								ctx.moveTo(x, u.bbox.top);
+								ctx.lineTo(x, u.bbox.top + u.bbox.height);
+								ctx.stroke();
+								ctx.setLineDash([]);
+								ctx.restore();
+							}
+						},
+					],
+				},
+			},
 		],
 		hooks: {
 			draw: [
