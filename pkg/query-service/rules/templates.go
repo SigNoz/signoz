@@ -205,6 +205,11 @@ func NewTemplateExpander(
 
 // AlertTemplateData returns the interface to be used in expanding the template.
 func AlertTemplateData(labels map[string]string, value string, threshold string) interface{} {
+	// This exists here for backwards compatibility.
+	// The labels map passed in no longer contains the normalized labels.
+	// To continue supporting the old way of referencing labels, we need to
+	// add the normalized labels just for the template expander.
+	// This is done by creating a new map and adding the normalized labels to it.
 	newLabels := make(map[string]string)
 	for k, v := range labels {
 		newLabels[k] = v
@@ -222,6 +227,12 @@ func AlertTemplateData(labels map[string]string, value string, threshold string)
 	}
 }
 
+// preprocessTemplate preprocesses the template to replace our custom $variable syntax with the correct Go template syntax.
+// example, $service.name in the template is replaced with {{index $labels "service.name"}}
+// While we could use go template functions to do this, we need to keep the syntax
+// consistent across the platform.
+// If there is a go template block, it won't be replaced.
+// The example for existing go template block is: {{$threshold}} or {{$value}} or any other valid go template syntax.
 func (te *TemplateExpander) preprocessTemplate() {
 	re := regexp.MustCompile(`({{.*?}})|(\$(\w+(?:\.\w+)*))`)
 	te.text = re.ReplaceAllStringFunc(te.text, func(match string) string {
