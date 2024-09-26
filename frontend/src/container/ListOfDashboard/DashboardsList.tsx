@@ -91,6 +91,7 @@ function DashboardsList(): JSX.Element {
 	const {
 		data: dashboardListResponse,
 		isLoading: isDashboardListLoading,
+		isRefetching: isDashboardListRefetching,
 		error: dashboardFetchError,
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
@@ -458,17 +459,19 @@ function DashboardsList(): JSX.Element {
 									placement="left"
 									overlayClassName="title-toolip"
 								>
-									<Typography.Text data-testid={`dashboard-title-${index}`}>
-										<Link to={getLink()} className="title">
-											<img
-												src={dashboard?.image || Base64Icons[0]}
-												style={{ height: '14px', width: '14px' }}
-												alt="dashboard-image"
-												className="dashboard-icon"
-											/>
+									<Link to={getLink()} className="title-link">
+										<img
+											src={dashboard?.image || Base64Icons[0]}
+											alt="dashboard-image"
+											className="dashboard-icon"
+										/>
+										<Typography.Text
+											data-testid={`dashboard-title-${index}`}
+											className="title"
+										>
 											{dashboard.name}
-										</Link>
-									</Typography.Text>
+										</Typography.Text>
+									</Link>
 								</Tooltip>
 							</div>
 
@@ -703,7 +706,9 @@ function DashboardsList(): JSX.Element {
 					</Flex>
 				</div>
 
-				{isDashboardListLoading || isFilteringDashboards ? (
+				{isDashboardListLoading ||
+				isFilteringDashboards ||
+				isDashboardListRefetching ? (
 					<div className="loading-dashboard-details">
 						<Skeleton.Input active size="large" className="skeleton-1" />
 						<Skeleton.Input active size="large" className="skeleton-1" />
@@ -902,7 +907,11 @@ function DashboardsList(): JSX.Element {
 									columns={columns}
 									dataSource={data}
 									showSorterTooltip
-									loading={isDashboardListLoading || isFilteringDashboards}
+									loading={
+										isDashboardListLoading ||
+										isFilteringDashboards ||
+										isDashboardListRefetching
+									}
 									showHeader={false}
 									pagination={paginationConfig}
 								/>

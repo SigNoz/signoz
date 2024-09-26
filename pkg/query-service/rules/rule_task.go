@@ -285,8 +285,8 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 			continue
 		}
 
-		for fp, a := range far.active {
-			ar.active[fp] = a
+		for fp, a := range far.Active {
+			ar.Active[fp] = a
 		}
 		ar.handledRestart = far.handledRestart
 	}
@@ -349,7 +349,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 			}
 			ctx = context.WithValue(ctx, common.LogCommentKey, kvs)
 
-			_, err := rule.Eval(ctx, ts, g.opts.Queriers)
+			_, err := rule.Eval(ctx, ts)
 			if err != nil {
 				rule.SetHealth(HealthBad)
 				rule.SetLastError(err)

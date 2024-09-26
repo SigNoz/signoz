@@ -1,14 +1,15 @@
 package common
 
 import (
-	"encoding/json"
-	"fmt"
 	"math"
-	"net/url"
+	"regexp"
 	"time"
+	"unicode"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/querycache"
+	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
 func AdjustedMetricTimeRange(start, end, step int64, mq v3.BuilderQuery) (int64, int64) {
@@ -74,182 +75,51 @@ func LCMList(nums []int64) int64 {
 	return result
 }
 
-// TODO(srikanthccv): move the custom function in threshold_rule.go to here
-func PrepareLinksToTraces(ts time.Time, filterItems []v3.FilterItem) string {
+func NormalizeLabelName(name string) string {
+	// See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
 
-	start := ts.Add(-time.Minute * 15)
-	end := ts.Add(time.Minute * 15)
+	// Regular expression to match non-alphanumeric characters except underscores
+	reg := regexp.MustCompile(`[^a-zA-Z0-9_]`)
 
-	// Traces list view expects time in nanoseconds
-	tr := v3.URLShareableTimeRange{
-		Start:    start.UnixNano(),
-		End:      end.UnixNano(),
-		PageSize: 100,
+	// Replace all non-alphanumeric characters except underscores with underscores
+	normalized := reg.ReplaceAllString(name, "_")
+
+	// If the first character is not a letter or an underscore, prepend an underscore
+	if len(normalized) > 0 && !unicode.IsLetter(rune(normalized[0])) && normalized[0] != '_' {
+		normalized = "_" + normalized
 	}
 
-	options := v3.URLShareableOptions{
-		MaxLines:      2,
-		Format:        "list",
-		SelectColumns: constants.TracesListViewDefaultSelectedColumns,
-	}
-
-	period, _ := json.Marshal(tr)
-	urlEncodedTimeRange := url.QueryEscape(string(period))
-
-	urlData := v3.URLShareableCompositeQuery{
-		QueryType: string(v3.QueryTypeBuilder),
-		Builder: v3.URLShareableBuilderQuery{
-			QueryData: []v3.BuilderQuery{
-				{
-					DataSource:         v3.DataSourceTraces,
-					QueryName:          "A",
-					AggregateOperator:  v3.AggregateOperatorNoOp,
-					AggregateAttribute: v3.AttributeKey{},
-					Filters: &v3.FilterSet{
-						Items:    filterItems,
-						Operator: "AND",
-					},
-					Expression:   "A",
-					Disabled:     false,
-					Having:       []v3.Having{},
-					StepInterval: 60,
-					OrderBy: []v3.OrderBy{
-						{
-							ColumnName: "timestamp",
-							Order:      "desc",
-						},
-					},
-				},
-			},
-			QueryFormulas: make([]string, 0),
-		},
-	}
-
-	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
-
-	optionsData, _ := json.Marshal(options)
-	urlEncodedOptions := url.QueryEscape(string(optionsData))
-
-	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+	return normalized
 }
 
-func PrepareLinksToLogs(ts time.Time, filterItems []v3.FilterItem) string {
-	start := ts.Add(-time.Minute * 15)
-	end := ts.Add(time.Minute * 15)
+func GetSeriesFromCachedData(data []querycache.CachedSeriesData, start, end int64) []*v3.Series {
+	series := make(map[uint64]*v3.Series)
 
-	// Logs list view expects time in milliseconds
-	// Logs list view expects time in milliseconds
-	tr := v3.URLShareableTimeRange{
-		Start:    start.UnixMilli(),
-		End:      end.UnixMilli(),
-		PageSize: 100,
-	}
+	for _, cachedData := range data {
+		for _, data := range cachedData.Data {
+			h := labels.FromMap(data.Labels).Hash()
 
-	options := v3.URLShareableOptions{
-		MaxLines:      2,
-		Format:        "list",
-		SelectColumns: []v3.AttributeKey{},
-	}
+			if _, ok := series[h]; !ok {
+				series[h] = &v3.Series{
+					Labels:      data.Labels,
+					LabelsArray: data.LabelsArray,
+					Points:      make([]v3.Point, 0),
+				}
+			}
 
-	period, _ := json.Marshal(tr)
-	urlEncodedTimeRange := url.QueryEscape(string(period))
-
-	urlData := v3.URLShareableCompositeQuery{
-		QueryType: string(v3.QueryTypeBuilder),
-		Builder: v3.URLShareableBuilderQuery{
-			QueryData: []v3.BuilderQuery{
-				{
-					DataSource:         v3.DataSourceLogs,
-					QueryName:          "A",
-					AggregateOperator:  v3.AggregateOperatorNoOp,
-					AggregateAttribute: v3.AttributeKey{},
-					Filters: &v3.FilterSet{
-						Items:    filterItems,
-						Operator: "AND",
-					},
-					Expression:   "A",
-					Disabled:     false,
-					Having:       []v3.Having{},
-					StepInterval: 60,
-					OrderBy: []v3.OrderBy{
-						{
-							ColumnName: "timestamp",
-							Order:      "desc",
-						},
-					},
-				},
-			},
-			QueryFormulas: make([]string, 0),
-		},
-	}
-
-	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
-
-	optionsData, _ := json.Marshal(options)
-	urlEncodedOptions := url.QueryEscape(string(optionsData))
-
-	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
-}
-
-// The following function is used to prepare the where clause for the query
-// `lbls` contains the key value pairs of the labels from the result of the query
-// We iterate over the where clause and replace the labels with the actual values
-// There are two cases:
-// 1. The label is present in the where clause
-// 2. The label is not present in the where clause
-//
-// Example for case 2:
-// Latency by serviceName without any filter
-// In this case, for each service with latency > threshold we send a notification
-// The expectation will be that clicking on the related traces for service A, will
-// take us to the traces page with the filter serviceName=A
-// So for all the missing labels in the where clause, we add them as key = value
-//
-// Example for case 1:
-// Severity text IN (WARN, ERROR)
-// In this case, the Severity text will appear in the `lbls` if it were part of the group
-// by clause, in which case we replace it with the actual value for the notification
-// i.e Severity text = WARN
-// If the Severity text is not part of the group by clause, then we add it as it is
-func PrepareFilters(labels map[string]string, filters []v3.FilterItem) []v3.FilterItem {
-	var filterItems []v3.FilterItem
-
-	added := make(map[string]struct{})
-
-	for _, item := range filters {
-		exists := false
-		for key, value := range labels {
-			if item.Key.Key == key {
-				// if the label is present in the where clause, replace it with key = value
-				filterItems = append(filterItems, v3.FilterItem{
-					Key:      item.Key,
-					Operator: v3.FilterOperatorEqual,
-					Value:    value,
-				})
-				exists = true
-				added[key] = struct{}{}
-				break
+			for _, point := range data.Points {
+				if point.Timestamp >= start && point.Timestamp <= end {
+					series[h].Points = append(series[h].Points, point)
+				}
 			}
 		}
-
-		if !exists {
-			// if the label is not present in the where clause, add it as it is
-			filterItems = append(filterItems, item)
-		}
 	}
 
-	// add the labels which are not present in the where clause
-	for key, value := range labels {
-		if _, ok := added[key]; !ok {
-			filterItems = append(filterItems, v3.FilterItem{
-				Key:      v3.AttributeKey{Key: key},
-				Operator: v3.FilterOperatorEqual,
-				Value:    value,
-			})
-		}
+	newSeries := make([]*v3.Series, 0, len(series))
+	for _, s := range series {
+		s.SortPoints()
+		s.RemoveDuplicatePoints()
+		newSeries = append(newSeries, s)
 	}
-
-	return filterItems
+	return newSeries
 }
