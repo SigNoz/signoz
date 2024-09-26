@@ -36,6 +36,24 @@ interface OnViewTracePopupClickProps {
 	apmToTraceQuery: Query;
 	isViewLogsClicked?: boolean;
 }
+
+export function generateExplorerPath(
+	isViewLogsClicked: boolean | undefined,
+	urlParams: URLSearchParams,
+	servicename: string | undefined,
+	selectedTraceTags: string,
+	JSONCompositeQuery: string,
+	queryString: string[],
+): string {
+	const basePath = isViewLogsClicked
+		? ROUTES.LOGS_EXPLORER
+		: ROUTES.TRACES_EXPLORER;
+
+	return `${basePath}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
+		QueryParams.compositeQuery
+	}=${JSONCompositeQuery}&${queryString.join('&')}`;
+}
+
 export function onViewTracePopupClick({
 	selectedTraceTags,
 	servicename,
@@ -51,7 +69,7 @@ export function onViewTracePopupClick({
 		const urlParams = new URLSearchParams(window.location.search);
 		urlParams.set(QueryParams.startTime, currentTime.toString());
 		urlParams.set(QueryParams.endTime, tPlusOne.toString());
-		urlParams.delete('relativeTime');
+		urlParams.delete(QueryParams.relativeTime);
 		const avialableParams = routeConfig[ROUTES.TRACE];
 		const queryString = getQueryString(avialableParams, urlParams);
 
@@ -59,12 +77,14 @@ export function onViewTracePopupClick({
 			JSON.stringify(apmToTraceQuery),
 		);
 
-		const basePath = isViewLogsClicked
-			? ROUTES.LOGS_EXPLORER
-			: ROUTES.TRACES_EXPLORER;
-		const newPath = `${basePath}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
-			QueryParams.compositeQuery
-		}=${JSONCompositeQuery}&${queryString.join('&')}`;
+		const newPath = generateExplorerPath(
+			isViewLogsClicked,
+			urlParams,
+			servicename,
+			selectedTraceTags,
+			JSONCompositeQuery,
+			queryString,
+		);
 
 		history.push(newPath);
 	};

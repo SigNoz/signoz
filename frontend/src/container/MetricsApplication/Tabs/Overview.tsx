@@ -46,6 +46,7 @@ import TopOperationMetrics from './Overview/TopOperationMetrics';
 import { Button, Card } from './styles';
 import { IServiceName } from './types';
 import {
+	generateExplorerPath,
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
@@ -208,7 +209,7 @@ function Application(): JSX.Element {
 			const urlParams = new URLSearchParams(search);
 			urlParams.set(QueryParams.startTime, currentTime.toString());
 			urlParams.set(QueryParams.endTime, tPlusOne.toString());
-			urlParams.delete('relativeTime');
+			urlParams.delete(QueryParams.relativeTime);
 			const avialableParams = routeConfig[ROUTES.TRACE];
 			const queryString = getQueryString(avialableParams, urlParams);
 
@@ -216,12 +217,14 @@ function Application(): JSX.Element {
 				JSON.stringify(apmToTraceQuery),
 			);
 
-			const basePath = isViewLogsClicked
-				? ROUTES.LOGS_EXPLORER
-				: ROUTES.TRACES_EXPLORER;
-			const newPath = `${basePath}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
-				QueryParams.compositeQuery
-			}=${JSONCompositeQuery}&${queryString.join('&')}`;
+			const newPath = generateExplorerPath(
+				isViewLogsClicked,
+				urlParams,
+				servicename,
+				selectedTraceTags,
+				JSONCompositeQuery,
+				queryString,
+			);
 
 			history.push(newPath);
 		},
