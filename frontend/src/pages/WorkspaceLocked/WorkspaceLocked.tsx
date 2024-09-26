@@ -187,8 +187,18 @@ export default function WorkspaceBlocked(): JSX.Element {
 			children: (
 				<Row gutter={[24, 16]} justify="center">
 					{/* #FIXME: please suggest if there is any better way to loop in different columns to get the masonry layout */}
-					<Col span={10}>{renderCustomerStories((index) => index % 2 === 0)}</Col>
-					<Col span={10}>{renderCustomerStories((index) => index % 2 !== 0)}</Col>
+					<Col
+						span={10}
+						className="workspace-locked__customer-stories__left-container"
+					>
+						{renderCustomerStories((index) => index % 2 === 0)}
+					</Col>
+					<Col
+						span={10}
+						className="workspace-locked__customer-stories__right-container"
+					>
+						{renderCustomerStories((index) => index % 2 !== 0)}
+					</Col>
 					{isAdmin && (
 						<Col span={24}>
 							<Flex justify="center">
@@ -218,8 +228,12 @@ export default function WorkspaceBlocked(): JSX.Element {
 			label: t('faqs'),
 			children: (
 				<Row align="middle" justify="center">
-					<Col span={18}>
-						<Space size="large" direction="vertical">
+					<Col span={12}>
+						<Space
+							size="large"
+							direction="vertical"
+							className="workspace-locked__faq-container"
+						>
 							<Collapse items={faqData} defaultActiveKey={['1']} />
 							{isAdmin && (
 								<Button
@@ -324,7 +338,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 											loading={isLoading}
 											onClick={handleUpdateCreditCard}
 										>
-											continue my journey
+											Continue my Journey
 										</Button>
 									</Col>
 									<Col>
@@ -340,9 +354,9 @@ export default function WorkspaceBlocked(): JSX.Element {
 								</Row>
 							)}
 
-							<Flex justify="center" className="workspace-locked__tabs">
+							<div className="workspace-locked__tabs">
 								<Tabs items={tabItems} defaultActiveKey="2" />
-							</Flex>
+							</div>
 						</>
 					)}
 				</div>
