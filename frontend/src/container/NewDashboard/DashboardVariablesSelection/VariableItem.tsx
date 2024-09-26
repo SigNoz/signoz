@@ -254,6 +254,7 @@ function VariableItem({
 	});
 
 	const handleChange = (value: string | string[]): void => {
+		console.log('handleChange', value, variableData, optionsData);
 		if (variableData.name) {
 			if (
 				value === ALL_SELECT_VALUE ||
