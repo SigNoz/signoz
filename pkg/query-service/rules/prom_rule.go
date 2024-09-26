@@ -131,7 +131,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			continue
 		}
 
-		alertSmpl, shouldAlert := r.shouldAlert(toCommonSeries(series))
+		alertSmpl, shouldAlert := r.ShouldAlert(toCommonSeries(series))
 		if !shouldAlert {
 			continue
 		}
@@ -208,21 +208,21 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
 		// Update the last value and annotations if so, create a new alert entry otherwise.
-		if alert, ok := r.active[h]; ok && alert.State != model.StateInactive {
+		if alert, ok := r.Active[h]; ok && alert.State != model.StateInactive {
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
 			alert.Receivers = r.preferredChannels
 			continue
 		}
 
-		r.active[h] = a
+		r.Active[h] = a
 
 	}
 
 	itemsToAdd := []model.RuleStateHistory{}
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
-	for fp, a := range r.active {
+	for fp, a := range r.Active {
 		labelsJSON, err := json.Marshal(a.QueryResultLables)
 		if err != nil {
 			zap.L().Error("error marshaling labels", zap.Error(err), zap.String("name", r.Name()))
@@ -230,8 +230,8 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > resolvedRetention) {
-				delete(r.active, fp)
+			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ResolvedRetention) {
+				delete(r.Active, fp)
 			}
 			if a.State != model.StateInactive {
 				a.State = model.StateInactive
@@ -283,7 +283,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 
 	r.RecordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
 
-	return len(r.active), nil
+	return len(r.Active), nil
 }
 
 func (r *PromRule) String() string {

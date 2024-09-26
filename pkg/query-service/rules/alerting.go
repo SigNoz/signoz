@@ -19,7 +19,7 @@ import (
 
 const (
 	// how long before re-sending the alert
-	resolvedRetention = 15 * time.Minute
+	ResolvedRetention = 15 * time.Minute
 
 	TestAlertPostFix = "_TEST_ALERT"
 )
@@ -29,6 +29,7 @@ type RuleType string
 const (
 	RuleTypeThreshold = "threshold_rule"
 	RuleTypeProm      = "promql_rule"
+	RuleTypeAnomaly   = "anomaly_rule"
 )
 
 type RuleHealth string
@@ -83,26 +84,15 @@ type NamedAlert struct {
 type CompareOp string
 
 const (
-	CompareOpNone CompareOp = "0"
-	ValueIsAbove  CompareOp = "1"
-	ValueIsBelow  CompareOp = "2"
-	ValueIsEq     CompareOp = "3"
-	ValueIsNotEq  CompareOp = "4"
+	CompareOpNone      CompareOp = "0"
+	ValueIsAbove       CompareOp = "1"
+	ValueIsBelow       CompareOp = "2"
+	ValueIsEq          CompareOp = "3"
+	ValueIsNotEq       CompareOp = "4"
+	ValueAboveOrEq     CompareOp = "5"
+	ValueBelowOrEq     CompareOp = "6"
+	ValueOutsideBounds CompareOp = "7"
 )
-
-func ResolveCompareOp(cop CompareOp) string {
-	switch cop {
-	case ValueIsAbove:
-		return ">"
-	case ValueIsBelow:
-		return "<"
-	case ValueIsEq:
-		return "=="
-	case ValueIsNotEq:
-		return "!="
-	}
-	return ""
-}
 
 type MatchType string
 
@@ -123,6 +113,8 @@ type RuleCondition struct {
 	AbsentFor      uint64             `yaml:"absentFor,omitempty" json:"absentFor,omitempty"`
 	MatchType      MatchType          `json:"matchType,omitempty"`
 	TargetUnit     string             `json:"targetUnit,omitempty"`
+	Algorithm      string             `json:"algorithm,omitempty"`
+	Seasonality    string             `json:"seasonality,omitempty"`
 	SelectedQuery  string             `json:"selectedQueryName,omitempty"`
 }
 

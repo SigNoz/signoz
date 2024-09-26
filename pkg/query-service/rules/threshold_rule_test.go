@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
@@ -800,7 +801,7 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		smpl, shoulAlert := rule.shouldAlert(c.values)
+		smpl, shoulAlert := rule.ShouldAlert(c.values)
 		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
 		if shoulAlert {
 			assert.Equal(t, c.expectedAlertSample.Value, smpl.V, "Test case %d", idx)
@@ -844,7 +845,7 @@ func TestNormalizeLabelName(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		assert.Equal(t, c.expected, normalizeLabelName(c.labelName))
+		assert.Equal(t, c.expected, common.NormalizeLabelName(c.labelName))
 	}
 }
 
@@ -1007,9 +1008,9 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		sample, shoulAlert := rule.shouldAlert(c.values)
+		sample, shoulAlert := rule.ShouldAlert(c.values)
 		for name, value := range c.values.Labels {
-			assert.Equal(t, value, sample.Metric.Get(normalizeLabelName(name)))
+			assert.Equal(t, value, sample.Metric.Get(common.NormalizeLabelName(name)))
 		}
 
 		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
@@ -1243,7 +1244,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true)
-		rule.temporalityMap = map[string]map[v3.Temporality]bool{
+		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
 			},
@@ -1260,7 +1261,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
 		if c.expectAlerts != 0 {
 			foundCount := 0
-			for _, item := range rule.active {
+			for _, item := range rule.Active {
 				for _, summary := range c.summaryAny {
 					if strings.Contains(item.Annotations.Get("summary"), summary) {
 						foundCount++
@@ -1342,7 +1343,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true)
-		rule.temporalityMap = map[string]map[v3.Temporality]bool{
+		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
 			},
@@ -1357,7 +1358,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		}
 
 		assert.Equal(t, 1, retVal.(int), "case %d", idx)
-		for _, item := range rule.active {
+		for _, item := range rule.Active {
 			if c.expectNoData {
 				assert.True(t, strings.Contains(item.Labels.Get(labels.AlertNameLabel), "[No data]"), "case %d", idx)
 			} else {
@@ -1447,7 +1448,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true)
-		rule.temporalityMap = map[string]map[v3.Temporality]bool{
+		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
 			},
@@ -1465,7 +1466,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 			assert.Equal(t, 0, retVal.(int), "case %d", idx)
 		} else {
 			assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
-			for _, item := range rule.active {
+			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
 					if name == "related_traces" {
 						assert.NotEmpty(t, value, "case %d", idx)
@@ -1572,7 +1573,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true)
-		rule.temporalityMap = map[string]map[v3.Temporality]bool{
+		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
 			},
@@ -1590,7 +1591,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			assert.Equal(t, 0, retVal.(int), "case %d", idx)
 		} else {
 			assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
-			for _, item := range rule.active {
+			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
 					if name == "related_logs" {
 						assert.NotEmpty(t, value, "case %d", idx)

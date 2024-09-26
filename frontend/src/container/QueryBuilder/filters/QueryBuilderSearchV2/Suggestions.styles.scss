@@ -77,14 +77,14 @@
 
 				&.resource {
 					border-radius: 50px;
-					background: rgba(245, 108, 135, 0.1) !important;
-					color: var(--bg-sakura-400) !important;
+					background: #4bcff910 !important;
+					color: var(--bg-aqua-400) !important;
 
 					.dot {
-						background-color: var(--bg-sakura-400);
+						background-color: var(--bg-aqua-400);
 					}
 					.text {
-						color: var(--bg-sakura-400);
+						color: var(--bg-aqua-400);
 						font-family: Inter;
 						font-size: 12px;
 						font-style: normal;
