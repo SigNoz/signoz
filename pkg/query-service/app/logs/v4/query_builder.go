@@ -17,10 +17,10 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorLessThanOrEq:    "<=",
 	v3.FilterOperatorGreaterThan:     ">",
 	v3.FilterOperatorGreaterThanOrEq: ">=",
-	v3.FilterOperatorLike:            "LIKE",
-	v3.FilterOperatorNotLike:         "NOT LIKE",
-	v3.FilterOperatorContains:        "LIKE",
-	v3.FilterOperatorNotContains:     "NOT LIKE",
+	v3.FilterOperatorLike:            "ILIKE",
+	v3.FilterOperatorNotLike:         "NOT ILIKE",
+	v3.FilterOperatorContains:        "ILIKE",
+	v3.FilterOperatorNotContains:     "NOT ILIKE",
 	v3.FilterOperatorRegex:           "match(%s, %s)",
 	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorIn:              "IN",
@@ -150,6 +150,7 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 			val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value))
 			// for body the contains is case insensitive
 			if keyName == BODY {
+				logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
 				return fmt.Sprintf("lower(%s) %s lower('%%%s%%')", keyName, logsOp, val), nil
 			} else {
 				return fmt.Sprintf("%s %s '%%%s%%'", keyName, logsOp, val), nil
@@ -158,6 +159,7 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 			// for body use lower for like and ilike
 			val := utils.QuoteEscapedString(fmt.Sprintf("%s", item.Value))
 			if keyName == BODY {
+				logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
 				return fmt.Sprintf("lower(%s) %s lower('%s')", keyName, logsOp, val), nil
 			} else {
 				return fmt.Sprintf("%s %s '%s'", keyName, logsOp, val), nil

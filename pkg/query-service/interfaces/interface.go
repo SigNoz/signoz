@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/prometheus/util/stats"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/querycache"
 )
 
 type Reader interface {
@@ -120,4 +121,9 @@ type Querier interface {
 	// test helpers
 	QueriesExecuted() []string
 	TimeRanges() [][]int
+}
+
+type QueryCache interface {
+	FindMissingTimeRanges(start, end int64, step int64, cacheKey string) []querycache.MissInterval
+	MergeWithCachedSeriesData(cacheKey string, newData []querycache.CachedSeriesData) []querycache.CachedSeriesData
 }

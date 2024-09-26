@@ -38,7 +38,7 @@ Also, have a look at these [good first issues label](https://github.com/SigNoz/s
 ## 1.1 For Creating Issue(s)
 Before making any significant changes and before filing a new issue, please check [existing open](https://github.com/SigNoz/signoz/issues?q=is%3Aopen+is%3Aissue), or [recently closed](https://github.com/SigNoz/signoz/issues?q=is%3Aissue+is%3Aclosed) issues to make sure somebody else hasn't already reported the issue. Please try to include as much information as you can. 
 
-**Issue Types** - [Bug Report](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=bug_report.md&title=) | [Feature Request](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=feature_request.md&title=) | [Performance Issue Report](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=performance-issue-report.md&title=) | [Report a Security Vulnerability](https://github.com/SigNoz/signoz/security/policy)
+**Issue Types** - [Bug Report](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=bug_report.md&title=) | [Feature Request](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=feature_request.md&title=) | [Performance Issue Report](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=performance-issue-report.md&title=) | [Request Dashboard](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=dashboard-template&projects=&template=request_dashboard.md&title=%5BDashboard+Request%5D+) | [Report a Security Vulnerability](https://github.com/SigNoz/signoz/security/policy)
 
 #### Details like these are incredibly useful:
 
@@ -57,7 +57,7 @@ Before making any significant changes and before filing a new issue, please chec
 Discussing your proposed changes ahead of time will make the contribution
 process smooth for everyone 🙌.
 
- **[`^top^`](#)**
+ **[`^top^`](#contributing-guidelines)**
  
 <hr>
 
@@ -98,13 +98,14 @@ GitHub provides additional document on [forking a repository](https://help.githu
   stability and quality of the component.
 
 
-You can always reach out to `ankit@signoz.io` to understand more about the repo and product. We are very responsive over email and [SLACK](https://signoz.io/slack).
+You can always reach out to `ankit@signoz.io` to understand more about the repo and product. We are very responsive over email and [slack community](https://signoz.io/slack).
 
 ### Pointers:
 - If you find any **bugs** → please create an [**issue.**](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=bug_report.md&title=)
 - If you find anything **missing** in documentation → you can create an issue with the label **`documentation`**.
 - If you want to build any **new feature** → please create an [issue with the label **`enhancement`**.](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=feature_request.md&title=)
 - If you want to **discuss** something about the product, start a new [**discussion**.](https://github.com/SigNoz/signoz/discussions)
+- If you want to request a new **dashboard template** → please create an issue [here](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=dashboard-template&projects=&template=request_dashboard.md&title=%5BDashboard+Request%5D+).
 
 <hr>
 
@@ -118,7 +119,7 @@ e.g. If you are submitting a fix for an issue in frontend, the PR name should be
 
 - Feel free to ping us on [`#contributing`](https://signoz-community.slack.com/archives/C01LWQ8KS7M) or [`#contributing-frontend`](https://signoz-community.slack.com/archives/C027134DM8B) on our slack community if you need any help on this :)
 
- **[`^top^`](#)**
+ **[`^top^`](#contributing-guidelines)**
  
 <hr>
 
@@ -128,14 +129,13 @@ e.g. If you are submitting a fix for an issue in frontend, the PR name should be
 
 - [**Frontend**](#3-develop-frontend-) (Written in Typescript, React)
 - [**Backend**](#4-contribute-to-backend-query-service-) (Query Service,  written in Go)
+- [**Dashboard Templates**](#6-contribute-to-dashboards-) (JSON dashboard templates built with SigNoz)
 
 Depending upon your area of expertise & interest, you can choose one or more to contribute. Below are detailed instructions to contribute in each area.
 
-**Please note:** If you want to work on an issue, please ask the maintainers to assign the issue to you before starting work on it. This would help us understand who is working on an issue and prevent duplicate work. 🙏🏻
+**Please note:** If you want to work on an issue, please add a brief description of your solution on the issue before starting work on it.
 
-⚠️ If you just raise a PR, without the corresponding issue being assigned to you - it may not be accepted.
-
- **[`^top^`](#)**
+ **[`^top^`](#contributing-guidelines)**
  
 <hr>
 
@@ -189,7 +189,7 @@ Also, have a look at [Frontend README.md](https://github.com/SigNoz/signoz/blob/
 ### Important Notes:
 The Maintainers / Contributors who will change Line Numbers of `Frontend` & `Query-Section`, please update line numbers in [`/.scripts/commentLinesForSetup.sh`](https://github.com/SigNoz/signoz/blob/develop/.scripts/commentLinesForSetup.sh)
 
- **[`^top^`](#)**
+ **[`^top^`](#contributing-guidelines)**
 
 ## 3.2 Contribute to Frontend without installing SigNoz backend
 
@@ -210,7 +210,7 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
 
 **Frontend should now be accessible at** [`http://localhost:3301/services`](http://localhost:3301/services)
 
- **[`^top^`](#)**
+ **[`^top^`](#contributing-guidelines)**
  
 <hr>
 
@@ -310,7 +310,7 @@ Click the button below. A workspace with all required environments will be creat
 
 > To use it on your forked repo, edit the 'Open in Gitpod' button URL to `https://gitpod.io/#https://github.com/<your-github-username>/signoz` -->
 
- **[`^top^`](#)**
+ **[`^top^`](#contributing-guidelines)**
  
 <hr>
 
@@ -366,7 +366,7 @@ curl -sL https://github.com/SigNoz/signoz/raw/develop/sample-apps/hotrod/hotrod-
   | HOTROD_NAMESPACE=sample-application bash
 ```
 
- **[`^top^`](#)**
+ **[`^top^`](#contributing-guidelines)**
  
 ---
 

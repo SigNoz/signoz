@@ -459,17 +459,19 @@ function DashboardsList(): JSX.Element {
 									placement="left"
 									overlayClassName="title-toolip"
 								>
-									<Typography.Text data-testid={`dashboard-title-${index}`}>
-										<Link to={getLink()} className="title">
-											<img
-												src={dashboard?.image || Base64Icons[0]}
-												style={{ height: '14px', width: '14px' }}
-												alt="dashboard-image"
-												className="dashboard-icon"
-											/>
+									<Link to={getLink()} className="title-link">
+										<img
+											src={dashboard?.image || Base64Icons[0]}
+											alt="dashboard-image"
+											className="dashboard-icon"
+										/>
+										<Typography.Text
+											data-testid={`dashboard-title-${index}`}
+											className="title"
+										>
 											{dashboard.name}
-										</Link>
-									</Typography.Text>
+										</Typography.Text>
+									</Link>
 								</Tooltip>
 							</div>
 
