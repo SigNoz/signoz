@@ -97,13 +97,18 @@ function GridTableComponent({
 
 	const newColumnData = columns.map((e) => ({
 		...e,
-		render: (text: string): ReactNode => {
-			const isNumber = !Number.isNaN(Number(text));
+		render: (text: string, ...rest: any): ReactNode => {
+			let textForThreshold = text;
+			if (columnUnits && columnUnits?.[e.title as string]) {
+				textForThreshold = rest[0][`${e.title}_without_unit`];
+			}
+			const isNumber = !Number.isNaN(Number(textForThreshold));
+
 			if (thresholds && isNumber) {
 				const { hasMultipleMatches, threshold } = findMatchingThreshold(
 					thresholds,
 					e.title as string,
-					Number(text),
+					Number(textForThreshold),
 				);
 
 				const idx = thresholds.findIndex(
