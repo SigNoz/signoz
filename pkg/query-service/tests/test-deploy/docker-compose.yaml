@@ -160,9 +160,9 @@ services:
         "-config=/root/config/prometheus.yml",
         "--use-logs-new-schema=true"
       ]
-    # ports:
+    ports:
     #   - "6060:6060"     # pprof port
-    #   - "8080:8080"     # query-service port
+      - "8180:8080"     # query-service port
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
