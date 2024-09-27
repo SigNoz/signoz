@@ -61,6 +61,7 @@ import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -262,6 +263,10 @@ function ExplorerOptions({
 		aggregateOperator: StringOperators.NOOP,
 	});
 
+	type ExtraData = {
+		selectColumns?: BaseAutocompleteData[];
+	};
+
 	const updateOrRestoreSelectColumns = (
 		key: string,
 		allViewsData: ViewProps[] | undefined,
@@ -273,9 +278,14 @@ function ExplorerOptions({
 			return;
 		}
 
-		const extraData = JSON.parse(currentViewDetails?.extraData ?? '{}');
+		let extraData: ExtraData = {};
+		try {
+			extraData = JSON.parse(currentViewDetails?.extraData ?? '{}') as ExtraData;
+		} catch (error) {
+			console.error('Error parsing extraData:', error);
+		}
 
-		if (!!extraData && extraData?.selectColumns) {
+		if (extraData.selectColumns?.length) {
 			handleOptionsChange({
 				...options,
 				selectColumns: extraData.selectColumns,
@@ -287,7 +297,6 @@ function ExplorerOptions({
 			});
 		}
 	};
-
 	const onMenuItemSelectHandler = useCallback(
 		({ key }: { key: string }): void => {
 			const currentViewDetails = getViewDetailsUsingViewKey(
