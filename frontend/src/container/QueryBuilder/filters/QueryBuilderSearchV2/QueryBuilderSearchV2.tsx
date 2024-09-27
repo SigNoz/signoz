@@ -286,16 +286,62 @@ function QueryBuilderSearchV2(
 				parsedValue = value;
 			}
 			if (currentState === DropdownState.ATTRIBUTE_KEY) {
-				setCurrentFilterItem((prev) => ({
-					...prev,
-					key: parsedValue as BaseAutocompleteData,
-					op: '',
-					value: '',
-				}));
-				setCurrentState(DropdownState.OPERATOR);
-				setSearchValue((parsedValue as BaseAutocompleteData)?.key);
+				// Case - convert abc def ghi type attribute keys directly to body contains abc def ghi
+				if (
+					isObject(parsedValue) &&
+					parsedValue?.key &&
+					parsedValue?.key?.split(' ').length > 1
+				) {
+					setTags((prev) => [
+						...prev,
+						{
+							key: {
+								key: 'body',
+								dataType: DataTypes.String,
+								type: '',
+								isColumn: true,
+								isJSON: false,
+								// eslint-disable-next-line sonarjs/no-duplicate-string
+								id: 'body--string----true',
+							},
+							op: OPERATORS.CONTAINS,
+							value: (parsedValue as BaseAutocompleteData)?.key,
+						},
+					]);
+					setCurrentFilterItem(undefined);
+					setSearchValue('');
+					setCurrentState(DropdownState.ATTRIBUTE_KEY);
+				} else {
+					setCurrentFilterItem((prev) => ({
+						...prev,
+						key: parsedValue as BaseAutocompleteData,
+						op: '',
+						value: '',
+					}));
+					setCurrentState(DropdownState.OPERATOR);
+					setSearchValue((parsedValue as BaseAutocompleteData)?.key);
+				}
 			} else if (currentState === DropdownState.OPERATOR) {
-				if (value === OPERATORS.EXISTS || value === OPERATORS.NOT_EXISTS) {
+				if (isEmpty(value) && currentFilterItem?.key?.key) {
+					setTags((prev) => [
+						...prev,
+						{
+							key: {
+								key: 'body',
+								dataType: DataTypes.String,
+								type: '',
+								isColumn: true,
+								isJSON: false,
+								id: 'body--string----true',
+							},
+							op: OPERATORS.CONTAINS,
+							value: currentFilterItem?.key?.key,
+						},
+					]);
+					setCurrentFilterItem(undefined);
+					setSearchValue('');
+					setCurrentState(DropdownState.ATTRIBUTE_KEY);
+				} else if (value === OPERATORS.EXISTS || value === OPERATORS.NOT_EXISTS) {
 					setTags((prev) => [
 						...prev,
 						{
@@ -399,6 +445,7 @@ function QueryBuilderSearchV2(
 				whereClauseConfig?.customKey === 'body' &&
 				whereClauseConfig?.customOp === OPERATORS.CONTAINS
 			) {
+				// eslint-disable-next-line sonarjs/no-identical-functions
 				setTags((prev) => [
 					...prev,
 					{
@@ -519,19 +566,20 @@ function QueryBuilderSearchV2(
 					setCurrentState(DropdownState.OPERATOR);
 				}
 			}
-			if (suggestionsData?.payload?.attributes?.length === 0) {
+			// again let's not auto select anything for the user
+			if (tagOperator) {
 				setCurrentFilterItem({
 					key: {
-						key: tagKey.split(' ')[0],
+						key: tagKey,
 						dataType: DataTypes.EMPTY,
 						type: '',
 						isColumn: false,
 						isJSON: false,
 					},
-					op: '',
+					op: tagOperator,
 					value: '',
 				});
-				setCurrentState(DropdownState.OPERATOR);
+				setCurrentState(DropdownState.ATTRIBUTE_VALUE);
 			}
 		} else if (
 			// Case 2 - if key is defined but the search text doesn't match with the set key,
@@ -607,13 +655,32 @@ function QueryBuilderSearchV2(
 	// the useEffect takes care of setting the dropdown values correctly on change of the current state
 	useEffect(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
+			const { tagKey } = getTagToken(searchValue);
 			if (isLogsExplorerPage) {
-				setDropdownOptions(
-					suggestionsData?.payload?.attributes?.map((key) => ({
+				// add the user typed option in the dropdown to select that and move ahead irrespective of the matches and all
+				setDropdownOptions([
+					...(!isEmpty(tagKey) &&
+					!suggestionsData?.payload?.attributes?.some((val) =>
+						isEqual(val.key, tagKey),
+					)
+						? [
+								{
+									label: tagKey,
+									value: {
+										key: tagKey,
+										dataType: DataTypes.EMPTY,
+										type: '',
+										isColumn: false,
+										isJSON: false,
+									},
+								},
+						  ]
+						: []),
+					...(suggestionsData?.payload?.attributes?.map((key) => ({
 						label: key.key,
 						value: key,
-					})) || [],
-				);
+					})) || []),
+				]);
 			} else {
 				setDropdownOptions(
 					data?.payload?.attributeKeys?.map((key) => ({
@@ -643,12 +710,14 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
+				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
 				setDropdownOptions(operatorOptions);
 			} else if (strippedKey.endsWith('[*]') && strippedKey.startsWith('body.')) {
 				operatorOptions = [OPERATORS.HAS, OPERATORS.NHAS].map((operator) => ({
 					label: operator,
 					value: operator,
 				}));
+				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
 				setDropdownOptions(operatorOptions);
 			} else {
 				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES.universal.map(
@@ -663,6 +732,7 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
+				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
 				setDropdownOptions(operatorOptions);
 			}
 		}
@@ -729,7 +799,8 @@ function QueryBuilderSearchV2(
 	}, [tags]);
 
 	useEffect(() => {
-		if (!isEqual(query.filters.items, tags)) {
+		// convert the query and tags to same format before comparison
+		if (!isEqual(getInitTags(query), tags)) {
 			setTags(getInitTags(query));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -769,7 +840,7 @@ function QueryBuilderSearchV2(
 	);
 
 	const queryTags = useMemo(
-		() => tags.map((tag) => `${tag.key.key} ${tag.op} ${tag.value}`),
+		() => tags.map((tag) => `${tag.key?.key} ${tag.op} ${tag.value}`),
 		[tags],
 	);
 
