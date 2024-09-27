@@ -62,14 +62,14 @@ interface VariableItemProps {
 const getSelectValue = (
 	selectedValue: IDashboardVariable['selectedValue'],
 	variableData: IDashboardVariable,
-): string | string[] => {
+): string | string[] | undefined => {
 	if (Array.isArray(selectedValue)) {
 		if (!variableData.multiSelect && selectedValue.length === 1) {
-			return selectedValue[0]?.toString() || '';
+			return selectedValue[0]?.toString();
 		}
 		return selectedValue.map((item) => item.toString());
 	}
-	return selectedValue?.toString() || '';
+	return selectedValue?.toString();
 };
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -300,7 +300,7 @@ function VariableItem({
 		e.stopPropagation();
 		e.preventDefault();
 		const isChecked =
-			variableData.allSelected || selectValue.includes(ALL_SELECT_VALUE);
+			variableData.allSelected || selectValue?.includes(ALL_SELECT_VALUE);
 
 		if (isChecked) {
 			handleChange([]);
@@ -462,6 +462,7 @@ function VariableItem({
 									<span>+ {omittedValues.length} </span>
 								</Tooltip>
 							)}
+							allowClear
 						>
 							{enableSelectAll && (
 								<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
@@ -500,11 +501,17 @@ function VariableItem({
 											{...retProps(option as string)}
 											onClick={(e): void => handleToggle(e as any, option as string)}
 										>
-											<Tooltip title={option.toString()} placement="bottomRight">
-												<Typography.Text ellipsis className="option-text">
-													{option.toString()}
-												</Typography.Text>
-											</Tooltip>
+											<Typography.Text
+												ellipsis={{
+													tooltip: {
+														placement: variableData.multiSelect ? 'top' : 'right',
+														autoAdjustOverflow: true,
+													},
+												}}
+												className="option-text"
+											>
+												{option.toString()}
+											</Typography.Text>
 
 											{variableData.multiSelect &&
 												optionState.tag === option.toString() &&
