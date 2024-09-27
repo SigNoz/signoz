@@ -98,14 +98,8 @@ function HorizontalTimelineGraph({
 									dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 								}
 
-								urlQuery.set(
-									QueryParams.startTime,
-									Math.floor(startTime * 1000).toString(),
-								);
-								urlQuery.set(
-									QueryParams.endTime,
-									Math.floor(endTime * 1000).toString(),
-								);
+								urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+								urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 
 								history.push({
 									search: urlQuery.toString(),
