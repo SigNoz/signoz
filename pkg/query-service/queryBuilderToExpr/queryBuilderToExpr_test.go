@@ -18,42 +18,42 @@ var testCases = []struct {
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "checkbody", Operator: "="},
 		}},
-		Expr: `attributes.key == "checkbody"`,
+		Expr: `attributes["key"] == "checkbody"`,
 	},
 	{
 		Name: "not equal",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "checkbody", Operator: "!="},
 		}},
-		Expr: `attributes.key != "checkbody"`,
+		Expr: `attributes["key"] != "checkbody"`,
 	},
 	{
 		Name: "less than",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: "<"},
 		}},
-		Expr: "attributes.key < 10",
+		Expr: "attributes["key"] < 10",
 	},
 	{
 		Name: "greater than",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: ">"},
 		}},
-		Expr: "attributes.key > 10",
+		Expr: "attributes["key"] > 10",
 	},
 	{
 		Name: "less than equal",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: "<="},
 		}},
-		Expr: "attributes.key <= 10",
+		Expr: "attributes["key"] <= 10",
 	},
 	{
 		Name: "greater than equal",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: ">="},
 		}},
-		Expr: "attributes.key >= 10",
+		Expr: "attributes["key"] >= 10",
 	},
 	// case sensitive
 	{
@@ -104,14 +104,14 @@ var testCases = []struct {
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{1, 2, 3, 4}, Operator: "in"},
 		}},
-		Expr: "attributes.key in [1,2,3,4]",
+		Expr: "attributes["key"] in [1,2,3,4]",
 	},
 	{
 		Name: "not in",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"1", "2"}, Operator: "nin"},
 		}},
-		Expr: "attributes.key not in ['1','2']",
+		Expr: "attributes["key"] not in ['1','2']",
 	},
 	{
 		Name: "exists",
@@ -134,7 +134,7 @@ var testCases = []struct {
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-1]+regex$", Operator: "nregex"},
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
 		}},
-		Expr: `attributes.key <= 10 and body not matches "[0-1]+regex$" and "key" not in attributes`,
+		Expr: `attributes["key"] <= 10 and body not matches "[0-1]+regex$" and "key" not in attributes`,
 	},
 	{
 		Name: "incorrect multi filter",
@@ -143,7 +143,7 @@ var testCases = []struct {
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-9]++", Operator: "nregex"},
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
 		}},
-		Expr:        `attributes.key <= 10 and body not matches "[0-9]++" and "key" not in attributes`,
+		Expr:        `attributes["key"] <= 10 and body not matches "[0-9]++" and "key" not in attributes`,
 		ExpectError: true,
 	},
 }
