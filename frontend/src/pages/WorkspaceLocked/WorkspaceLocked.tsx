@@ -55,20 +55,22 @@ export default function WorkspaceBlocked(): JSX.Element {
 	} = useLicense();
 
 	useEffect((): void => {
-		logEvent('Trial: Blocker Screen Viewed', {});
+		logEvent('Workspace Blocked: Screen Viewed', {});
 	}, []);
 
 	const handleContactUsClick = (): void => {
-		logEvent('Trial: Contact Us CTA Clicked', {});
+		logEvent('Workspace Blocked: Contact Us Clicked', {});
 	};
 
 	const handleTabClick = (key: string): void => {
-		logEvent('Trial: Blocked Screen Tabs Clicked', { tabKey: key });
+		logEvent('Workspace Blocked: Screen Tabs Clicked', { tabKey: key });
 	};
 
 	const handleCollapseChange = (key: string | string[]): void => {
 		const lastKey = Array.isArray(key) ? key.slice(-1)[0] : key;
-		logEvent('Trial: Blocker Screen Tab FAQ Item Clicked', { panelKey: lastKey });
+		logEvent('Workspace Blocked: Screen Tab FAQ Item Clicked', {
+			panelKey: lastKey,
+		});
 	};
 
 	useEffect(() => {
