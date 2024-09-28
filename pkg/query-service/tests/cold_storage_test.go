@@ -85,15 +85,15 @@ func TestSetTTL(t *testing.T) {
 	}{
 		{
 			1, "s3", "traces", "100h", "60h",
-			"Delete TTL should be greater than cold storage move TTL.",
+			`{"data":null,"total":0,"limit":0,"offset":0,"errors":[{"code":400,"msg":"delete TTL should be greater than cold storage move TTL"}]}`,
 		},
 		{
 			2, "s3", "traces", "100", "60s",
-			"Not a valid toCold TTL duration 100",
+			`{"data":null,"total":0,"limit":0,"offset":0,"errors":[{"code":400,"msg":"not a valid toCold TTL duration 100"}]}`,
 		},
 		{
 			3, "s3", "traces", "100s", "100",
-			"Not a valid TTL duration 100",
+			`{"data":null,"total":0,"limit":0,"offset":0,"errors":[{"code":400,"msg":"not a valid TTL duration 100"}]}`,
 		},
 		{
 			4, "s3", "metrics", "1h", "2h",
@@ -206,11 +206,11 @@ func TestGetTTL(t *testing.T) {
 
 	r, err = setTTL("metrics", "s3", "0s", "0s", loginResp.AccessJwt)
 	require.NoError(t, err)
-	require.Contains(t, string(r), "Not a valid TTL duration 0s")
+	require.Contains(t, string(r), `{"data":null,"total":0,"limit":0,"offset":0,"errors":[{"code":400,"msg":"not a valid TTL duration 0s"}]}`)
 
 	r, err = setTTL("traces", "s3", "0s", "0s", loginResp.AccessJwt)
 	require.NoError(t, err)
-	require.Contains(t, string(r), "Not a valid TTL duration 0s")
+	require.Contains(t, string(r), `{"data":null,"total":0,"limit":0,"offset":0,"errors":[{"code":400,"msg":"not a valid TTL duration 0s"}]}`)
 }
 
 func TestMain(m *testing.M) {
