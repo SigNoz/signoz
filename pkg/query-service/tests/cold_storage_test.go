@@ -68,6 +68,32 @@ func TestListDisks(t *testing.T) {
 	require.JSONEq(t, `[{"name":"default","type":"local"}, {"name":"s3","type":"s3"}]`, string(b))
 }
 
+func waitForMinioObjects(timeout time.Duration) (int, error) {
+	start := time.Now()
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+
+	for time.Since(start) < timeout {
+		count := 0
+		for obj := range minioClient.ListObjects(bucketName, "", false, doneCh) {
+			if obj.Err != nil {
+				fmt.Printf("Error retrieving object: %v\n", obj.Err)
+				return 0, obj.Err
+			}
+			fmt.Printf("Found object: %s\n", obj.Key)
+			count++
+		}
+
+		if count > 0 {
+			return count, nil
+		}
+
+		time.Sleep(2 * time.Second)
+	}
+
+	return 0, fmt.Errorf("timed out waiting for objects in Minio")
+}
+
 func TestSetTTL(t *testing.T) {
 	email := "alice@signoz.io"
 	password := "Password@123"
@@ -111,15 +137,8 @@ func TestSetTTL(t *testing.T) {
 		require.Containsf(t, string(r), tc.expected, "Failed case: %d", tc.caseNo)
 	}
 
-	time.Sleep(20 * time.Second)
-	doneCh := make(chan struct{})
-	defer close(doneCh)
-
-	count := 0
-	for range minioClient.ListObjects(bucketName, "", false, doneCh) {
-		count++
-	}
-
+	count, err := waitForMinioObjects(60 * time.Second)
+	require.NoError(t, err)
 	require.True(t, count > 0, "No objects are present in Minio")
 	fmt.Printf("=== Found %d objects in Minio\n", count)
 }
