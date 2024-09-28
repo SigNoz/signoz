@@ -79,7 +79,7 @@ build-query-service-static:
 	@if [ $(DEV_BUILD) != "" ]; then \
 		cd $(QUERY_SERVICE_DIRECTORY) && \
 		CGO_ENABLED=1 go build -tags timetzdata -a -o ./bin/query-service-${GOOS}-${GOARCH} \
-    	-ldflags "-linkmode external -extldflags '-static' -s -w ${LD_FLAGS} ${DEV_LD_FLAGS}"; \
+		-ldflags "-linkmode external -extldflags '-static' -s -w ${LD_FLAGS} ${DEV_LD_FLAGS}"; \
 	else \
 		cd $(QUERY_SERVICE_DIRECTORY) && \
 		CGO_ENABLED=1 go build -tags timetzdata -a -o ./bin/query-service-${GOOS}-${GOARCH} \
