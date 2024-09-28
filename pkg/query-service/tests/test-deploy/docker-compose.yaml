@@ -281,3 +281,8 @@ services:
       LOCUST_OPTS: "--headless -u 10 -r 1"
     volumes:
       - ../common/locust-scripts:/locust
+
+networks:
+  default:
+    name: signoz_test
+    external: true

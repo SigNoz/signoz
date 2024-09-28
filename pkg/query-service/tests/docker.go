@@ -47,9 +47,24 @@ func getCmd(args ...string) *exec.Cmd {
 	return cmd
 }
 
-func startMinio() error {
+func startNetwork(name string) error {
+	cmd := getCmd("docker", "network", "inspect", name)
+	if err := cmd.Run(); err != nil {
+		cmd = getCmd("docker", "network", "create", name)
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to create network '%s': %v", name, err)
+		}
+		log.Printf("Network '%s' created", name)
+	} else {
+		log.Printf("Network '%s' already exists", name)
+	}
+	fmt.Println("Network created")
+	return nil
+}
+
+func startMinio(network string) error {
 	log.Printf("Starting minio")
-	cmd := getCmd("docker", "run", "-d", "-p", "9100:9000", "-p", "9101:9001",
+	cmd := getCmd("docker", "run", "-d", "--network", network, "-p", "9100:9000", "-p", "9101:9001",
 		"--name", "signoz-minio-test", "-e", "MINIO_ROOT_USER=ash",
 		"-e", "MINIO_ROOT_PASSWORD=password",
 		"quay.io/minio/minio", "server", "/data", "--console-address", ":9001")
@@ -70,11 +85,15 @@ func startMinio() error {
 }
 
 func startCluster() error {
+	network := "signoz_test"
+	if err := startNetwork(network); err != nil {
+		return err
+	}
 	if err := os.MkdirAll("./test-deploy/data/minio/test", 0777); err != nil {
 		return err
 	}
 
-	if err := startMinio(); err != nil {
+	if err := startMinio(network); err != nil {
 		return err
 	}
 
