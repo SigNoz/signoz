@@ -102,7 +102,7 @@ func TestAuthRegisterAPI(t *testing.T) {
 	email := "alice@signoz.io"
 	resp, err := register(email, "Password@123", "")
 	require.NoError(t, err)
-	require.Contains(t, resp, "\"status\":\"success\"")
+	require.Contains(t, resp, `{"status":"success"}`)
 
 }
 
