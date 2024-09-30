@@ -1,3 +1,5 @@
+import './GridTableComponent.styles.scss';
+
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Space, Tooltip } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
@@ -5,6 +7,7 @@ import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep, get, isEmpty } from 'lodash-es';
+import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { eventEmitter } from 'utils/getEventEmitter';
@@ -116,7 +119,16 @@ function GridTableComponent({
 							}
 						>
 							<Space>
-								{text}
+								<LineClampedText
+									text={text}
+									lines={3}
+									tooltipProps={{
+										placement: 'right',
+										autoAdjustOverflow: true,
+										overlayClassName: 'long-text-tooltip',
+									}}
+								/>
+
 								{hasMultipleMatches && (
 									<Tooltip title={t('this_value_satisfies_multiple_thresholds')}>
 										<ExclamationCircleFilled className="value-graph-icon" />
@@ -127,7 +139,19 @@ function GridTableComponent({
 					);
 				}
 			}
-			return <div>{text}</div>;
+			return (
+				<div>
+					<LineClampedText
+						text={text}
+						lines={3}
+						tooltipProps={{
+							placement: 'right',
+							autoAdjustOverflow: true,
+							overlayClassName: 'long-text-tooltip',
+						}}
+					/>
+				</div>
+			);
 		},
 	}));
 
