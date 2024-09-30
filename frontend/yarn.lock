@@ -16504,10 +16504,10 @@ uplot@1.6.24:
   resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.24.tgz#dfa213fa7da92763261920ea972ed1a5f9f6af12"
   integrity sha512-WpH2BsrFrqxkMu+4XBvc0eCDsRBhzoq9crttYeSI0bfxpzR5YoSVzZXOKFVWcVC7sp/aDXrdDPbDZGCtck2PVg==
 
-uplot@1.6.26:
-  version "1.6.26"
-  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.26.tgz#a6012fd141ad4a71741c75af0c71283d0ade45a7"
-  integrity sha512-qN0mveL6UsP40TnHzHAJkUQvpfA3y8zSLXtXKVlJo/sLfj2+vjan/Z3g81MCZjy/hEDUFNtnLftPmETDA4s7Rg==
+uplot@1.6.31:
+  version "1.6.31"
+  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.31.tgz#092a4b586590e9794b679e1df885a15584b03698"
+  integrity sha512-sQZqSwVCbJGnFB4IQjQYopzj5CoTZJ4Br1fG/xdONimqgHmsacvCjNesdGDypNKFbrhLGIeshYhy89FxPF+H+w==
 
 upper-case-first@^2.0.2:
   version "2.0.2"
