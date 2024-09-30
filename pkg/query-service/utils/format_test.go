@@ -419,28 +419,28 @@ var testGetClickhouseColumnName = []struct {
 		typeName: string(v3.AttributeKeyTypeTag),
 		dataType: string(v3.AttributeKeyDataTypeInt64),
 		field:    "tag1",
-		want:     "attribute_int64_tag1",
+		want:     "`attribute_int64_tag1`",
 	},
 	{
 		name:     "resource",
 		typeName: string(v3.AttributeKeyTypeResource),
 		dataType: string(v3.AttributeKeyDataTypeInt64),
 		field:    "tag1",
-		want:     "resource_int64_tag1",
+		want:     "`resource_int64_tag1`",
 	},
 	{
 		name:     "attribute old parser",
 		typeName: constants.Attributes,
 		dataType: string(v3.AttributeKeyDataTypeInt64),
 		field:    "tag1",
-		want:     "attribute_int64_tag1",
+		want:     "`attribute_int64_tag1`",
 	},
 	{
 		name:     "resource old parser",
 		typeName: constants.Resources,
 		dataType: string(v3.AttributeKeyDataTypeInt64),
 		field:    "tag1",
-		want:     "resource_int64_tag1",
+		want:     "`resource_int64_tag1`",
 	},
 }
 
@@ -449,7 +449,7 @@ func TestGetClickhouseColumnName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := GetClickhouseColumnName(tt.typeName, tt.dataType, tt.field)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ClickHouseFormattedValue() = %v, want %v", got, tt.want)
+				t.Errorf("ClickHouseFormattedValue() = %v, want `%v`", got, tt.want)
 			}
 		})
 	}
