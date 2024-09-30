@@ -17,7 +17,6 @@ export interface User {
 
 export default interface AppReducer {
 	isLoggedIn: boolean;
-	isSideBarCollapsed: boolean;
 	currentVersion: string;
 	latestVersion: string;
 	isCurrentVersionError: boolean;
