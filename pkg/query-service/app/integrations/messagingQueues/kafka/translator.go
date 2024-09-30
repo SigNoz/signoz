@@ -180,14 +180,19 @@ func BuildQRParamsNetwork(messagingQueue *MessagingQueue, queryContext string, a
 func buildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, queryContext string) (*v3.ClickHouseQuery, error) {
 	start := messagingQueue.Start
 	end := messagingQueue.End
-	topic, ok := messagingQueue.Variables["topic"]
-	if !ok {
-		return nil, fmt.Errorf("invalid type for Topic")
-	}
 
-	partition, ok := messagingQueue.Variables["partition"]
-	if !ok {
-		return nil, fmt.Errorf("invalid type for Partition")
+	var topic, partition string
+
+	if queryContext == "producer" || queryContext == "consumer" {
+		var ok bool
+		topic, ok = messagingQueue.Variables["topic"]
+		if !ok {
+			return nil, fmt.Errorf("invalid type for Topic")
+		}
+		partition, ok = messagingQueue.Variables["partition"]
+		if !ok {
+			return nil, fmt.Errorf("invalid type for Partition")
+		}
 	}
 
 	var query string
@@ -199,6 +204,12 @@ func buildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 			return nil, fmt.Errorf("invalid type for consumer group")
 		}
 		query = generateConsumerSQL(start, end, topic, partition, consumerGroup, queueType)
+	} else if queryContext == "onboard_producers" {
+		query = onboardProducersSQL(start, end, queueType)
+	} else if queryContext == "onboard_consumers" {
+		query = onboardConsumerSQL(start, end, queueType)
+	} else if queryContext == "onboard_kafka" {
+		query = onboardKafkaSQL(start, end)
 	}
 
 	return &v3.ClickHouseQuery{

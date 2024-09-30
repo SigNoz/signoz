@@ -226,3 +226,93 @@ Response in query range `table` format
   }
 }
 ```
+
+### Onboarding APIs
+
+```
+/api/v1/messaging-queues/kafka/consumer-lag/onboarding-producers
+```
+
+```
+{
+    "status": "success",
+    "data": {
+        "resultType": "",
+        "result": [
+            {
+                "queryName": "onboard_producers",
+                "series": [
+                    {
+                        "labels": {},
+                        "labelsArray": [
+                            {
+                                "result": "All attributes are present and meet the conditions"
+                            }
+                        ],
+                        "values": []
+                    }
+                ]
+            }
+        ]
+    }
+}
+```
+
+
+```
+/api/v1/messaging-queues/kafka/consumer-lag/onboarding-consumers
+```
+
+```
+{
+    "status": "success",
+    "data": {
+        "resultType": "",
+        "result": [
+            {
+                "queryName": "onboard_consumers",
+                "series": [
+                    {
+                        "labels": {},
+                        "labelsArray": [
+                            {
+                                "result": "All attributes are present and meet the conditions"
+                            }
+                        ],
+                        "values": []
+                    }
+                ]
+            }
+        ]
+    }
+}
+```
+
+```
+127.0.0.1:8080/api/v1/messaging-queues/kafka/consumer-lag/onboarding-kafka
+```
+
+```
+{
+    "status": "success",
+    "data": {
+        "resultType": "",
+        "result": [
+            {
+                "queryName": "onboard_consumers",
+                "series": [
+                    {
+                        "labels": {},
+                        "labelsArray": [
+                            {
+                                "result": "Neither metric (kafka_consumer_fetch_latency_avg nor kafka_consumer_group_lag) is present in the given time range."
+                            }
+                        ],
+                        "values": []
+                    }
+                ]
+            }
+        ]
+    }
+}
+```
