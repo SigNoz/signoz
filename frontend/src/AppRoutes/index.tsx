@@ -12,6 +12,7 @@ import useAnalytics from 'hooks/analytics/useAnalytics';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
+import useFeatureFlags from 'hooks/useFeatureFlag';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
 import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
@@ -58,23 +59,16 @@ function App(): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 
+	const isOnboardingEnabled =
+		useFeatureFlags(FeatureKeys.ONBOARDING)?.active || false;
+
+	const isChatSupportEnabled =
+		useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active || false;
+
+	const isPremiumSupportEnabled =
+		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
+
 	const featureResponse = useGetFeatureFlag((allFlags) => {
-		const isOnboardingEnabled =
-			allFlags.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
-			false;
-
-		const isChatSupportEnabled =
-			allFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)?.active ||
-			false;
-
-		const isPremiumSupportEnabled =
-			allFlags.find((flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT)?.active ||
-			false;
-
-		const showAddCreditCardModal =
-			!isPremiumSupportEnabled &&
-			!licenseData?.payload?.trialConvertedToSubscription;
-
 		dispatch({
 			type: UPDATE_FEATURE_FLAG_RESPONSE,
 			payload: {
@@ -89,16 +83,6 @@ function App(): JSX.Element {
 			);
 
 			setRoutes(newRoutes);
-		}
-
-		if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			window.Intercom('boot', {
-				app_id: process.env.INTERCOM_APP_ID,
-				email: user?.email || '',
-				name: user?.name || '',
-			});
 		}
 	});
 
@@ -200,6 +184,26 @@ function App(): JSX.Element {
 		trackPageView(pathname);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [pathname]);
+
+	useEffect(() => {
+		const showAddCreditCardModal =
+			!isPremiumSupportEnabled &&
+			!licenseData?.payload?.trialConvertedToSubscription;
+
+		if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
+			window.Intercom('boot', {
+				app_id: process.env.INTERCOM_APP_ID,
+				email: user?.email || '',
+				name: user?.name || '',
+			});
+		}
+	}, [
+		isLoggedInState,
+		isChatSupportEnabled,
+		user,
+		licenseData,
+		isPremiumSupportEnabled,
+	]);
 
 	useEffect(() => {
 		if (user && user?.email && user?.userId && user?.name) {
