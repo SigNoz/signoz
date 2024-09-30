@@ -267,6 +267,7 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 		"",
 		time.Duration(1*time.Minute),
 		nil,
+		false,
 	)
 
 	cfg := struct {
