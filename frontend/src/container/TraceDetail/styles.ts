@@ -59,6 +59,8 @@ export const selectedSpanDetailContainer = css`
 	position: relative;
 	display: flex;
 	flex-direction: column;
+	align-items: center;
+	padding-top: 12px;
 `;
 
 /**
