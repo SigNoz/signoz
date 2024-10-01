@@ -438,3 +438,364 @@ export const dataTypeCategories: DataTypeCategories = [
 export const flattenedCategories = flattenDeep(
 	dataTypeCategories.map((category) => category.formats),
 );
+
+type ConversionFactors = {
+	[key: string]: {
+		[key: string]: number | null;
+	};
+};
+
+const conversionFactors: ConversionFactors = {
+	[CategoryNames.Time]: {
+		[TimeFormats.Hertz]: 1,
+		[TimeFormats.Nanoseconds]: 1e-9,
+		[TimeFormats.Microseconds]: 1e-6,
+		[TimeFormats.Milliseconds]: 1e-3,
+		[TimeFormats.Seconds]: 1,
+		[TimeFormats.Minutes]: 60,
+		[TimeFormats.Hours]: 3600,
+		[TimeFormats.Days]: 86400,
+		[TimeFormats.DurationMs]: 1e-3,
+		[TimeFormats.DurationS]: 1,
+		[TimeFormats.DurationHms]: null, // Requires special handling
+		[TimeFormats.DurationDhms]: null, // Requires special handling
+		[TimeFormats.Timeticks]: null, // Requires special handling
+		[TimeFormats.ClockMs]: 1e-3,
+		[TimeFormats.ClockS]: 1,
+	},
+	[CategoryNames.Throughput]: {
+		[ThroughputFormats.CountsPerSec]: 1,
+		[ThroughputFormats.OpsPerSec]: 1,
+		[ThroughputFormats.RequestsPerSec]: 1,
+		[ThroughputFormats.ReadsPerSec]: 1,
+		[ThroughputFormats.WritesPerSec]: 1,
+		[ThroughputFormats.IOOpsPerSec]: 1,
+		[ThroughputFormats.CountsPerMin]: 1 / 60,
+		[ThroughputFormats.OpsPerMin]: 1 / 60,
+		[ThroughputFormats.ReadsPerMin]: 1 / 60,
+		[ThroughputFormats.WritesPerMin]: 1 / 60,
+	},
+	[CategoryNames.Data]: {
+		[DataFormats.BytesIEC]: 1,
+		[DataFormats.BytesSI]: 1,
+		[DataFormats.BitsIEC]: 0.125,
+		[DataFormats.BitsSI]: 0.125,
+		[DataFormats.KibiBytes]: 1024,
+		[DataFormats.KiloBytes]: 1000,
+		[DataFormats.MebiBytes]: 1048576,
+		[DataFormats.MegaBytes]: 1000000,
+		[DataFormats.GibiBytes]: 1073741824,
+		[DataFormats.GigaBytes]: 1000000000,
+		[DataFormats.TebiBytes]: 1099511627776,
+		[DataFormats.TeraBytes]: 1000000000000,
+		[DataFormats.PebiBytes]: 1125899906842624,
+		[DataFormats.PetaBytes]: 1000000000000000,
+	},
+	[CategoryNames.DataRate]: {
+		[DataRateFormats.PacketsPerSec]: null, // Cannot convert directly to other data rates
+		[DataRateFormats.BytesPerSecIEC]: 1,
+		[DataRateFormats.BytesPerSecSI]: 1,
+		[DataRateFormats.BitsPerSecIEC]: 0.125,
+		[DataRateFormats.BitsPerSecSI]: 0.125,
+		[DataRateFormats.KibiBytesPerSec]: 1024,
+		[DataRateFormats.KibiBitsPerSec]: 128,
+		[DataRateFormats.KiloBytesPerSec]: 1000,
+		[DataRateFormats.KiloBitsPerSec]: 125,
+		[DataRateFormats.MebiBytesPerSec]: 1048576,
+		[DataRateFormats.MebiBitsPerSec]: 131072,
+		[DataRateFormats.MegaBytesPerSec]: 1000000,
+		[DataRateFormats.MegaBitsPerSec]: 125000,
+		[DataRateFormats.GibiBytesPerSec]: 1073741824,
+		[DataRateFormats.GibiBitsPerSec]: 134217728,
+		[DataRateFormats.GigaBytesPerSec]: 1000000000,
+		[DataRateFormats.GigaBitsPerSec]: 125000000,
+		[DataRateFormats.TebiBytesPerSec]: 1099511627776,
+		[DataRateFormats.TebiBitsPerSec]: 137438953472,
+		[DataRateFormats.TeraBytesPerSec]: 1000000000000,
+		[DataRateFormats.TeraBitsPerSec]: 125000000000,
+		[DataRateFormats.PebiBytesPerSec]: 1125899906842624,
+		[DataRateFormats.PebiBitsPerSec]: 140737488355328,
+		[DataRateFormats.PetaBytesPerSec]: 1000000000000000,
+		[DataRateFormats.PetaBitsPerSec]: 125000000000000,
+	},
+	[CategoryNames.HashRate]: {
+		[HashRateFormats.HashesPerSec]: 1,
+		[HashRateFormats.KiloHashesPerSec]: 1e3,
+		[HashRateFormats.MegaHashesPerSec]: 1e6,
+		[HashRateFormats.GigaHashesPerSec]: 1e9,
+		[HashRateFormats.TeraHashesPerSec]: 1e12,
+		[HashRateFormats.PetaHashesPerSec]: 1e15,
+		[HashRateFormats.ExaHashesPerSec]: 1e18,
+	},
+	[CategoryNames.Miscellaneous]: {
+		[MiscellaneousFormats.None]: null,
+		[MiscellaneousFormats.String]: null,
+		[MiscellaneousFormats.Short]: null,
+		[MiscellaneousFormats.Percent]: 1,
+		[MiscellaneousFormats.PercentUnit]: 100,
+		[MiscellaneousFormats.Humidity]: 1,
+		[MiscellaneousFormats.Decibel]: null,
+		[MiscellaneousFormats.Hexadecimal0x]: null,
+		[MiscellaneousFormats.Hexadecimal]: null,
+		[MiscellaneousFormats.ScientificNotation]: null,
+		[MiscellaneousFormats.LocaleFormat]: null,
+		[MiscellaneousFormats.Pixels]: null,
+	},
+	[CategoryNames.Acceleration]: {
+		[AccelerationFormats.MetersPerSecondSquared]: 1,
+		[AccelerationFormats.FeetPerSecondSquared]: 0.3048,
+		[AccelerationFormats.GUnit]: 9.80665,
+	},
+	[CategoryNames.Angle]: {
+		[AngularFormats.Degree]: 1,
+		[AngularFormats.Radian]: 57.29577951308232,
+		[AngularFormats.Gradian]: 0.9,
+		[AngularFormats.ArcMinute]: 1 / 60,
+		[AngularFormats.ArcSecond]: 1 / 3600,
+	},
+	[CategoryNames.Area]: {
+		[AreaFormats.SquareMeters]: 1,
+		[AreaFormats.SquareFeet]: 0.09290304,
+		[AreaFormats.SquareMiles]: 2589988.110336,
+	},
+	[CategoryNames.Computation]: {
+		[FlopsFormats.FLOPs]: 1,
+		[FlopsFormats.MFLOPs]: 1e6,
+		[FlopsFormats.GFLOPs]: 1e9,
+		[FlopsFormats.TFLOPs]: 1e12,
+		[FlopsFormats.PFLOPs]: 1e15,
+		[FlopsFormats.EFLOPs]: 1e18,
+		[FlopsFormats.ZFLOPs]: 1e21,
+		[FlopsFormats.YFLOPs]: 1e24,
+	},
+	[CategoryNames.Concentration]: {
+		[ConcentrationFormats.PPM]: 1,
+		[ConcentrationFormats.PPB]: 0.001,
+		[ConcentrationFormats.NgM3]: null, // Requires density information
+		[ConcentrationFormats.NgNM3]: null, // Requires density information
+		[ConcentrationFormats.UgM3]: null, // Requires density information
+		[ConcentrationFormats.UgNM3]: null, // Requires density information
+		[ConcentrationFormats.MgM3]: null, // Requires density information
+		[ConcentrationFormats.MgNM3]: null, // Requires density information
+		[ConcentrationFormats.GM3]: null, // Requires density information
+		[ConcentrationFormats.GNM3]: null, // Requires density information
+		[ConcentrationFormats.MgDL]: null, // Requires density information
+		[ConcentrationFormats.MmolL]: null, // Requires molecular weight information
+	},
+	[CategoryNames.Currency]: {
+		// Exchange rates would need to be updated regularly
+		[CurrencyFormats.USD]: 1,
+		[CurrencyFormats.GBP]: null,
+		[CurrencyFormats.EUR]: null,
+		[CurrencyFormats.JPY]: null,
+		[CurrencyFormats.RUB]: null,
+		[CurrencyFormats.UAH]: null,
+		[CurrencyFormats.BRL]: null,
+		[CurrencyFormats.DKK]: null,
+		[CurrencyFormats.ISK]: null,
+		[CurrencyFormats.NOK]: null,
+		[CurrencyFormats.SEK]: null,
+		[CurrencyFormats.CZK]: null,
+		[CurrencyFormats.CHF]: null,
+		[CurrencyFormats.PLN]: null,
+		[CurrencyFormats.BTC]: null,
+		[CurrencyFormats.MBTC]: null,
+		[CurrencyFormats.UBTC]: null,
+		[CurrencyFormats.ZAR]: null,
+		[CurrencyFormats.INR]: null,
+		[CurrencyFormats.KRW]: null,
+		[CurrencyFormats.IDR]: null,
+		[CurrencyFormats.PHP]: null,
+		[CurrencyFormats.VND]: null,
+	},
+	[CategoryNames.Datetime]: {
+		// These require special handling
+		[DatetimeFormats.ISO]: null,
+		[DatetimeFormats.ISONoDateIfToday]: null,
+		[DatetimeFormats.US]: null,
+		[DatetimeFormats.USNoDateIfToday]: null,
+		[DatetimeFormats.Local]: null,
+		[DatetimeFormats.LocalNoDateIfToday]: null,
+		[DatetimeFormats.System]: null,
+		[DatetimeFormats.FromNow]: null,
+	},
+	[CategoryNames.Energy]: {
+		[PowerElectricalFormats.WATT]: 1,
+		[PowerElectricalFormats.KWATT]: 1000,
+		[PowerElectricalFormats.MEGWATT]: 1e6,
+		[PowerElectricalFormats.GWATT]: 1e9,
+		[PowerElectricalFormats.MWATT]: 0.001,
+		[PowerElectricalFormats.WM2]: null, // Requires area information
+		[PowerElectricalFormats.VOLTAMP]: 1,
+		[PowerElectricalFormats.KVOLTAMP]: 1000,
+		[PowerElectricalFormats.VOLTAMPREACT]: 1,
+		[PowerElectricalFormats.KVOLTAMPREACT]: 1000,
+		[PowerElectricalFormats.WATTH]: 3600,
+		[PowerElectricalFormats.WATTHPERKG]: null, // Requires mass information
+		[PowerElectricalFormats.KWATTH]: 3.6e6,
+		[PowerElectricalFormats.KWATTM]: 60000,
+		[PowerElectricalFormats.AMPH]: null, // Requires voltage information
+		[PowerElectricalFormats.KAMPH]: null, // Requires voltage information
+		[PowerElectricalFormats.MAMPH]: null, // Requires voltage information
+		[PowerElectricalFormats.JOULE]: 1,
+		[PowerElectricalFormats.EV]: 1.602176634e-19,
+		[PowerElectricalFormats.AMP]: null, // Requires voltage information
+		[PowerElectricalFormats.KAMP]: null, // Requires voltage information
+		[PowerElectricalFormats.MAMP]: null, // Requires voltage information
+		[PowerElectricalFormats.VOLT]: null, // Requires current information
+		[PowerElectricalFormats.KVOLT]: null, // Requires current information
+		[PowerElectricalFormats.MVOLT]: null, // Requires current information
+		[PowerElectricalFormats.DBM]: null, // Requires special conversion
+		[PowerElectricalFormats.OHM]: null, // Requires voltage and current information
+		[PowerElectricalFormats.KOHM]: null, // Requires voltage and current information
+		[PowerElectricalFormats.MOHM]: null, // Requires voltage and current information
+		[PowerElectricalFormats.FARAD]: null, // Capacitance unit, not directly convertible
+		[PowerElectricalFormats.µFARAD]: null, // Capacitance unit, not directly convertible
+		[PowerElectricalFormats.NFARAD]: null, // Capacitance unit, not directly convertible
+		[PowerElectricalFormats.PFARAD]: null, // Capacitance unit, not directly convertible
+		[PowerElectricalFormats.FFARAD]: null, // Capacitance unit, not directly convertible
+		[PowerElectricalFormats.HENRY]: null, // Inductance unit, not directly convertible
+		[PowerElectricalFormats.MHENRY]: null, // Inductance unit, not directly convertible
+		[PowerElectricalFormats.µHENRY]: null, // Inductance unit, not directly convertible
+		[PowerElectricalFormats.LUMENS]: null, // Luminous flux unit, not directly convertible
+	},
+	[CategoryNames.Flow]: {
+		[FlowFormats.FLOWGPM]: 0.00006309020833,
+		[FlowFormats.FLOWCMS]: 1,
+		[FlowFormats.FLOWCFS]: 0.028316846592,
+		[FlowFormats.FLOWCFM]: 0.000471,
+		[FlowFormats.LITREH]: 2.777777777778e-7,
+		[FlowFormats.FLOWLPM]: 1.666666666667e-5,
+		[FlowFormats.FLOWMLPM]: 1.666666666667e-8,
+		[FlowFormats.LUX]: null, // Light measurement, not directly convertible
+	},
+	[CategoryNames.Force]: {
+		[ForceFormats.FORCENM]: 1,
+		[ForceFormats.FORCEKNM]: 1000,
+		[ForceFormats.FORCEN]: null, // Requires distance information
+		[ForceFormats.FORCEKN]: null, // Requires distance information
+	},
+	[CategoryNames.Mass]: {
+		[MassFormats.MASSMG]: 0.000001,
+		[MassFormats.MASSG]: 0.001,
+		[MassFormats.MASSLB]: 0.45359237,
+		[MassFormats.MASSKG]: 1,
+		[MassFormats.MASST]: 1000,
+	},
+	[CategoryNames.Length]: {
+		[LengthFormats.LENGTHMM]: 0.001,
+		[LengthFormats.LENGTHIN]: 0.0254,
+		[LengthFormats.LENGTHFT]: 0.3048,
+		[LengthFormats.LENGTHM]: 1,
+		[LengthFormats.LENGTHKM]: 1000,
+		[LengthFormats.LENGTHMI]: 1609.344,
+	},
+	[CategoryNames.Pressure]: {
+		[PressureFormats.PRESSUREMBAR]: 100,
+		[PressureFormats.PRESSUREBAR]: 100000,
+		[PressureFormats.PRESSUREKBAR]: 100000000,
+		[PressureFormats.PRESSUREPA]: 1,
+		[PressureFormats.PRESSUREHPA]: 100,
+		[PressureFormats.PRESSUREKPA]: 1000,
+		[PressureFormats.PRESSUREHG]: 3386.389,
+		[PressureFormats.PRESSUREPSI]: 6894.75729,
+	},
+	[CategoryNames.Radiation]: {
+		[RadiationFormats.RADBQ]: 1,
+		[RadiationFormats.RADCI]: 3.7e10,
+		[RadiationFormats.RADGY]: 1,
+		[RadiationFormats.RADRAD]: 0.01,
+		[RadiationFormats.RADSV]: 1,
+		[RadiationFormats.RADMSV]: 0.001,
+		[RadiationFormats.RADUSV]: 0.000001,
+		[RadiationFormats.RADREM]: 0.01,
+		[RadiationFormats.RADEXPCKG]: 1,
+		[RadiationFormats.RADR]: 0.000258,
+		[RadiationFormats.RADSVH]: 3600,
+		[RadiationFormats.RADMSVH]: 3.6,
+		[RadiationFormats.RADUSVH]: 0.0036,
+	},
+	[CategoryNames.RotationSpeed]: {
+		[RotationSpeedFormats.ROTRPM]: 0.10471975512,
+		[RotationSpeedFormats.ROTHZ]: 6.283185307,
+		[RotationSpeedFormats.ROTRADS]: 1,
+		[RotationSpeedFormats.ROTDEGS]: 0.017453292519943295,
+	},
+	[CategoryNames.Temperature]: {
+		[TemperatureFormats.CELSIUS]: null, // Requires special conversion
+		[TemperatureFormats.FAHRENHEIT]: null, // Requires special conversion
+		[TemperatureFormats.KELVIN]: null, // Requires special conversion
+	},
+	[CategoryNames.Velocity]: {
+		[VelocityFormats.METERS_PER_SECOND]: 1,
+		[VelocityFormats.KILOMETERS_PER_HOUR]: 0.277777778,
+		[VelocityFormats.MILES_PER_HOUR]: 0.44704,
+		[VelocityFormats.KNOT]: 0.514444444,
+	},
+	[CategoryNames.Volume]: {
+		[VolumeFormats.MILLILITRE]: 0.000001,
+		[VolumeFormats.LITRE]: 0.001,
+		[VolumeFormats.CUBIC_METER]: 1,
+		[VolumeFormats.NORMAL_CUBIC_METER]: 1, // Assuming standard temperature and pressure
+		[VolumeFormats.CUBIC_DECIMETER]: 0.001,
+		[VolumeFormats.GALLONS]: 0.00378541,
+	},
+	[CategoryNames.Boolean]: {
+		[BooleanFormats.TRUE_FALSE]: null, // Not convertible
+		[BooleanFormats.YES_NO]: null, // Not convertible
+		[BooleanFormats.ON_OFF]: null, // Not convertible
+	},
+};
+
+function getConversionFactor(
+	fromUnit: string,
+	toUnit: string,
+	category: CategoryNames,
+): number | null {
+	const categoryFactors = conversionFactors[category];
+	if (!categoryFactors) {
+		return null;
+	}
+	const fromFactor = categoryFactors[fromUnit];
+	const toFactor = categoryFactors[toUnit];
+	if (
+		fromFactor === undefined ||
+		toFactor === undefined ||
+		fromFactor === null ||
+		toFactor === null
+	) {
+		return null;
+	}
+	return fromFactor / toFactor;
+}
+
+export function convertUnit(
+	value: number,
+	fromUnitId?: string,
+	toUnitId?: string,
+): number | null {
+	const category = dataTypeCategories.find((category) =>
+		category.formats.some(
+			(format) => format.id === fromUnitId || format.id === toUnitId,
+		),
+	);
+
+	if (!category) return null;
+
+	const fromUnit = category.formats.find((format) => format.id === fromUnitId)
+		?.id;
+	const toUnit = category.formats.find((format) => format.id === toUnitId)?.id;
+
+	console.log(fromUnit, toUnit);
+
+	if (!fromUnit || !toUnit) return null;
+
+	const conversionFactor = getConversionFactor(
+		fromUnit,
+		toUnit,
+		category.name as any,
+	);
+	if (conversionFactor === null) return null;
+
+	return value * conversionFactor;
+}

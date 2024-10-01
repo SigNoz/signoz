@@ -109,6 +109,7 @@ function GridTableComponent({
 					thresholds,
 					e.title as string,
 					Number(textForThreshold),
+					columnUnits?.[e.title as string],
 				);
 
 				const idx = thresholds.findIndex(
