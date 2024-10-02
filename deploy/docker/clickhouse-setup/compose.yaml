@@ -1,0 +1,112 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest-alpine
+    ports:
+    - "9000:9000"
+    - "8123:8123"
+    - "9181:9181"
+  alertmanager:
+    image: signoz/alertmanager:latest
+    restart: on-failure
+    depends_on:
+      query-service:
+        condition: service_healthy
+    command:
+      - --queryService.url=http://query-service:8085
+      - --storage.path=/data
+  query-service:
+    image: signoz/query-service:latest
+    command:
+      [
+        "-config=/root/config/prometheus.yml",
+        "--use-logs-new-schema=true"
+      ]
+    environment:
+      - ClickHouseUrl=tcp://clickhouse:9000
+      - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
+      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
+      - DASHBOARDS_PATH=/root/config/dashboards
+      - STORAGE=clickhouse
+      - GODEBUG=netdns=go
+      - TELEMETRY_ENABLED=true
+      - DEPLOYMENT_TYPE=docker-standalone-amd
+    restart: on-failure
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "localhost:8080/api/v1/health"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  frontend:
+    image: signoz/frontend:latest
+    restart: on-failure
+    depends_on:
+      - alertmanager
+      - query-service
+    ports:
+      - "3301:3301"
+  otel-collector-migrator:
+    image: signoz/signoz-schema-migrator:latest
+    command:
+      - "--dsn=tcp://clickhouse:9000"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+  otel-collector:
+    image: signoz/signoz-otel-collector:latest
+    command:
+      [
+        "--config=/etc/otel-collector-config.yaml",
+        "--manager-config=/etc/manager-config.yaml",
+        "--copy-path=/var/tmp/collector-config.yaml",
+        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
+      ]
+    user: root # required for reading docker container logs
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
+      - DOCKER_MULTI_NODE_CLUSTER=false
+      - LOW_CARDINAL_EXCEPTION_GROUPING=false
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+    restart: on-failure
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      otel-collector-migrator:
+        condition: service_completed_successfully
+      query-service:
+        condition: service_healthy
+  logspout:
+    image: gliderlabs/logspout:latest
+    container_name: signoz-logspout
+    command: syslog+tcp://otel-collector:2255
+    depends_on:
+      - otel-collector
+    restart: on-failure
+  hotrod:
+    image: jaegertracing/example-hotrod:latest
+    logging:
+      options:
+        max-size: 50m
+        max-file: "3"
+    command: [ "all" ]
+    environment:
+      - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
+  load-hotrod:
+    image: signoz/locust:latest
+    hostname: load-hotrod
+    environment:
+      ATTACKED_HOST: http://hotrod:8080
+      LOCUST_MODE: standalone
+      NO_PROXY: standalone
+      TASK_DELAY_FROM: 5
+      TASK_DELAY_TO: 30
+      QUIET_MODE: "${QUIET_MODE:-false}"
+      LOCUST_OPTS: "--headless -u 10 -r 1"
