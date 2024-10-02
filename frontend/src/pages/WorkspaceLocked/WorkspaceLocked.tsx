@@ -54,6 +54,25 @@ export default function WorkspaceBlocked(): JSX.Element {
 		data: licensesData,
 	} = useLicense();
 
+	useEffect((): void => {
+		logEvent('Workspace Blocked: Screen Viewed', {});
+	}, []);
+
+	const handleContactUsClick = (): void => {
+		logEvent('Workspace Blocked: Contact Us Clicked', {});
+	};
+
+	const handleTabClick = (key: string): void => {
+		logEvent('Workspace Blocked: Screen Tabs Clicked', { tabKey: key });
+	};
+
+	const handleCollapseChange = (key: string | string[]): void => {
+		const lastKey = Array.isArray(key) ? key.slice(-1)[0] : key;
+		logEvent('Workspace Blocked: Screen Tab FAQ Item Clicked', {
+			panelKey: lastKey,
+		});
+	};
+
 	useEffect(() => {
 		if (!isFetchingLicenseData) {
 			const shouldBlockWorkspace = licensesData?.payload?.workSpaceBlock;
@@ -135,7 +154,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 
 	const tabItems: TabsProps['items'] = [
 		{
-			key: '1',
+			key: 'whyChooseSignoz',
 			label: t('whyChooseSignoz'),
 			children: (
 				<Row align="middle" justify="center">
@@ -182,13 +201,23 @@ export default function WorkspaceBlocked(): JSX.Element {
 			),
 		},
 		{
-			key: '2',
+			key: 'youAreInGoodCompany',
 			label: t('youAreInGoodCompany'),
 			children: (
 				<Row gutter={[24, 16]} justify="center">
 					{/* #FIXME: please suggest if there is any better way to loop in different columns to get the masonry layout */}
-					<Col span={10}>{renderCustomerStories((index) => index % 2 === 0)}</Col>
-					<Col span={10}>{renderCustomerStories((index) => index % 2 !== 0)}</Col>
+					<Col
+						span={10}
+						className="workspace-locked__customer-stories__left-container"
+					>
+						{renderCustomerStories((index) => index % 2 === 0)}
+					</Col>
+					<Col
+						span={10}
+						className="workspace-locked__customer-stories__right-container"
+					>
+						{renderCustomerStories((index) => index % 2 !== 0)}
+					</Col>
 					{isAdmin && (
 						<Col span={24}>
 							<Flex justify="center">
@@ -214,13 +243,21 @@ export default function WorkspaceBlocked(): JSX.Element {
 		// 	children: 'Our Pricing',
 		// },
 		{
-			key: '4',
+			key: 'faqs',
 			label: t('faqs'),
 			children: (
 				<Row align="middle" justify="center">
-					<Col span={18}>
-						<Space size="large" direction="vertical">
-							<Collapse items={faqData} defaultActiveKey={['1']} />
+					<Col span={12}>
+						<Space
+							size="large"
+							direction="vertical"
+							className="workspace-locked__faq-container"
+						>
+							<Collapse
+								items={faqData}
+								defaultActiveKey={['signoz-cloud-vs-community']}
+								onChange={handleCollapseChange}
+							/>
 							{isAdmin && (
 								<Button
 									type="primary"
@@ -258,6 +295,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 								size="middle"
 								href="mailto:cloud-support@signoz.io"
 								role="button"
+								onClick={handleContactUsClick}
 							>
 								Contact Us
 							</Button>
@@ -324,7 +362,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 											loading={isLoading}
 											onClick={handleUpdateCreditCard}
 										>
-											continue my journey
+											Continue my Journey
 										</Button>
 									</Col>
 									<Col>
@@ -340,9 +378,13 @@ export default function WorkspaceBlocked(): JSX.Element {
 								</Row>
 							)}
 
-							<Flex justify="center" className="workspace-locked__tabs">
-								<Tabs items={tabItems} defaultActiveKey="2" />
-							</Flex>
+							<div className="workspace-locked__tabs">
+								<Tabs
+									items={tabItems}
+									defaultActiveKey="youAreInGoodCompany"
+									onTabClick={handleTabClick}
+								/>
+							</div>
 						</>
 					)}
 				</div>

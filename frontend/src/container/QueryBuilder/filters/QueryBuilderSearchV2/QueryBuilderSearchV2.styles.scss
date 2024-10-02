@@ -235,16 +235,16 @@
 			}
 
 			&.resource {
-				border: 1px solid rgba(242, 71, 105, 0.2);
+				border: 1px solid #4bcff920;
 
 				.ant-typography {
-					color: var(--bg-sakura-400);
-					background: rgba(245, 108, 135, 0.1);
+					color: var(--bg-aqua-400);
+					background: #4bcff910;
 					font-size: 14px;
 				}
 
 				.ant-tag-close-icon {
-					background: rgba(245, 108, 135, 0.1);
+					background: #4bcff910;
 				}
 			}
 			&.tag {
@@ -343,15 +343,15 @@
 				}
 
 				&.resource {
-					border: 1px solid rgba(242, 71, 105, 0.2);
+					border: 1px solid #4bcff920;
 
 					.ant-typography {
-						color: var(--bg-sakura-400);
-						background: rgba(245, 108, 135, 0.1);
+						color: var(--bg-aqua-400);
+						background: #4bcff910;
 					}
 
 					.ant-tag-close-icon {
-						background: rgba(245, 108, 135, 0.1);
+						background: #4bcff910;
 					}
 				}
 				&.tag {

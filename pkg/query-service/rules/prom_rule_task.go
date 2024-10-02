@@ -293,8 +293,8 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 			continue
 		}
 
-		for fp, a := range far.active {
-			ar.active[fp] = a
+		for fp, a := range far.Active {
+			ar.Active[fp] = a
 		}
 		ar.handledRestart = far.handledRestart
 	}

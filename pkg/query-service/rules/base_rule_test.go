@@ -55,7 +55,7 @@ func TestBaseRule_RequireMinPoints(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, shouldAlert := test.rule.shouldAlert(*test.series)
+			_, shouldAlert := test.rule.ShouldAlert(*test.series)
 			if shouldAlert != test.shouldAlert {
 				t.Errorf("expected shouldAlert to be %v, got %v", test.shouldAlert, shouldAlert)
 			}
