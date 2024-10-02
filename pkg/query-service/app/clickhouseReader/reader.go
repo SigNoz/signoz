@@ -2222,7 +2222,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				return
 			}
 			timeColumn := "timestamp_ms"
-			if strings.Contains(tableName, "v4") {
+			if strings.Contains(tableName, "v4") || strings.Contains(tableName, "exp_hist") {
 				timeColumn = "unix_milli"
 			}
 
