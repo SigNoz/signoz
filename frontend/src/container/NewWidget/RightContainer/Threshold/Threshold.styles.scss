@@ -297,6 +297,16 @@
 				box-shadow: none;
 			}
 		}
+
+		.invalid-unit {
+			color: var(--bg-vanilla-400);
+			font-family: 'Space Mono';
+			font-size: 11px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 16px;
+			letter-spacing: 0.48px;
+		}
 	}
 
 	.threshold-card-container:hover {

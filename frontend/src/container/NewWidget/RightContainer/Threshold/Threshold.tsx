@@ -14,6 +14,7 @@ import {
 	showAsOptions,
 	unitOptions,
 } from '../constants';
+import { convertUnit } from '../dataFormatCategories';
 import ColorSelector from './ColorSelector';
 import CustomColor from './CustomColor';
 import ShowCaseValue from './ShowCaseValue';
@@ -40,6 +41,7 @@ function Threshold({
 	thresholdLabel = '',
 	tableOptions,
 	thresholdTableOptions = '',
+	columnUnits,
 }: ThresholdProps): JSX.Element {
 	const [isEditMode, setIsEditMode] = useState<boolean>(isEditEnabled);
 	const [operator, setOperator] = useState<string | number>(
@@ -339,6 +341,12 @@ function Threshold({
 						</>
 					)}
 				</div>
+				{unit !== 'none' && convertUnit(value, unit, columnUnits) === null && (
+					<Typography.Text className="invalid-unit">
+						Threshold unit ({unit}) is not valid in comparison with the column unit (
+						{columnUnits || 'none'})
+					</Typography.Text>
+				)}
 				{isEditMode && (
 					<div className="threshold-action-button">
 						<Button

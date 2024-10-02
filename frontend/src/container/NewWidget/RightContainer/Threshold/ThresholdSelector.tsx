@@ -21,6 +21,7 @@ function ThresholdSelector({
 	setThresholds,
 	yAxisUnit,
 	selectedGraph,
+	columnUnits,
 }: ThresholdSelectorProps): JSX.Element {
 	const [tableOptions, setTableOptions] = useState<
 		Array<{ value: string; label: string }>
@@ -107,6 +108,7 @@ function ThresholdSelector({
 						thresholdLabel={threshold.thresholdLabel}
 						tableOptions={tableOptions}
 						thresholdTableOptions={threshold.thresholdTableOptions}
+						columnUnits={columnUnits[threshold.thresholdTableOptions || '']}
 					/>
 				))}
 			</div>
