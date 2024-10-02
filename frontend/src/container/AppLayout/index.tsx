@@ -232,19 +232,16 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
 	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
 	const isAlertOverview = (): boolean => routeKey === 'ALERT_OVERVIEW';
-	const isDashboardView = (): boolean => {
-		/**
-		 * need to match using regex here as the getRoute function will not work for
-		 * routes with id
-		 */
-		const regex = /^\/dashboard\/[a-zA-Z0-9_-]+$/;
-		return regex.test(pathname);
-	};
+	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
 
-	const isDashboardWidgetView = (): boolean => {
-		const regex = /^\/dashboard\/[a-zA-Z0-9_-]+\/new$/;
-		return regex.test(pathname);
-	};
+	const isDashboardView = (): boolean =>
+		isPathMatch(/^\/dashboard\/[a-zA-Z0-9_-]+$/);
+
+	const isDashboardWidgetView = (): boolean =>
+		isPathMatch(/^\/dashboard\/[a-zA-Z0-9_-]+\/new$/);
+
+	const isTraceDetailsView = (): boolean =>
+		isPathMatch(/^\/trace\/[a-zA-Z0-9]+(\?.*)?$/);
 
 	useEffect(() => {
 		if (isDarkMode) {
@@ -304,6 +301,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isMessagingQueues()
 												? 0
 												: '0 1rem',
+
+										...(isTraceDetailsView() ? { marginRight: 0 } : {}),
 									}}
 								>
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}

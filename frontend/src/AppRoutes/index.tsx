@@ -59,9 +59,6 @@ function App(): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 
-	const isOnboardingEnabled =
-		useFeatureFlags(FeatureKeys.ONBOARDING)?.active || false;
-
 	const isChatSupportEnabled =
 		useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active || false;
 
@@ -76,6 +73,10 @@ function App(): JSX.Element {
 				refetch: featureResponse.refetch,
 			},
 		});
+
+		const isOnboardingEnabled =
+			allFlags.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
+			false;
 
 		if (!isOnboardingEnabled || !isCloudUserVal) {
 			const newRoutes = routes.filter(

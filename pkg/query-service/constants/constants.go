@@ -341,9 +341,7 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 }
 
 // logsPPLPfx is a short constant for logsPipelinePrefix
-// TODO(Raj): Remove old prefix after new processor based pipelines have been rolled out
-const LogsPPLPfx = "signozlogspipeline/pipeline_"
-const OldLogsPPLPfx = "logstransform/pipeline_"
+const LogsPPLPfx = "logstransform/pipeline_"
 
 const IntegrationPipelineIdPrefix = "integration"
 

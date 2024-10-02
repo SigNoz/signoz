@@ -94,7 +94,7 @@ var buildProcessorTestData = []struct {
 func TestBuildLogParsingProcessors(t *testing.T) {
 	for _, test := range buildProcessorTestData {
 		Convey(test.Name, t, func() {
-			err := updateProcessorConfigsInCollectorConf(test.agentConf, test.pipelineProcessor)
+			err := buildLogParsingProcessors(test.agentConf, test.pipelineProcessor)
 			So(err, ShouldBeNil)
 			So(test.agentConf, ShouldResemble, test.outputConf)
 		})
@@ -200,7 +200,7 @@ var BuildLogsPipelineTestData = []struct {
 func TestBuildLogsPipeline(t *testing.T) {
 	for _, test := range BuildLogsPipelineTestData {
 		Convey(test.Name, t, func() {
-			v, err := buildCollectorPipelineProcessorsList(test.currentPipeline, test.logsPipeline)
+			v, err := buildLogsProcessors(test.currentPipeline, test.logsPipeline)
 			So(err, ShouldBeNil)
 			fmt.Println(test.Name, "\n", test.currentPipeline, "\n", v, "\n", test.expectedPipeline)
 			So(v, ShouldResemble, test.expectedPipeline)
