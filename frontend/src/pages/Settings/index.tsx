@@ -1,19 +1,22 @@
-import RouteTab from 'components/RouteTab';
+import './Settings.styles.scss';
+
 import { FeatureKeys } from 'constants/features';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useFeatureFlag from 'hooks/useFeatureFlag';
-import history from 'lib/history';
+import { Wrench } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
+import SettingsNavItems from './SettingsNavItems';
 import { getRoutes } from './utils';
 
 function SettingsPage(): JSX.Element {
 	const { pathname } = useLocation();
+	const history = useHistory();
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
@@ -28,7 +31,14 @@ function SettingsPage(): JSX.Element {
 		[role, isCurrentOrgSettings, isGatewayEnabled, t],
 	);
 
-	return <RouteTab routes={routes} activeKey={pathname} history={history} />;
+	return (
+		<>
+			<div className="settings-page-header">
+				<Wrench size={16} /> Settings
+			</div>
+			<SettingsNavItems routes={routes} activeKey={pathname} history={history} />
+		</>
+	);
 }
 
 export default SettingsPage;
