@@ -2600,7 +2600,7 @@ func (aH *APIHandler) onboardConsumers(
 		return
 	}
 
-	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_producers")
+	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_consumers")
 
 	if err != nil {
 		zap.L().Error(err.Error())
@@ -2650,7 +2650,7 @@ func (aH *APIHandler) onboardConsumers(
 				attribute = "kind"
 				if intValue != 0 {
 					status = "0"
-					message = "check if your producer spans has kind=4 as attribute"
+					message = "check if your consumer spans has kind=5 as attribute"
 				} else {
 					status = "1"
 				}
@@ -2720,6 +2720,10 @@ func (aH *APIHandler) onboardConsumers(
 			entries = append(entries, entry)
 		}
 	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Attribute < entries[j].Attribute
+	})
 
 	aH.Respond(w, entries)
 }
@@ -2800,6 +2804,10 @@ func (aH *APIHandler) onboardKafka(
 			entries = append(entries, entry)
 		}
 	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Attribute < entries[j].Attribute
+	})
 
 	aH.Respond(w, entries)
 }

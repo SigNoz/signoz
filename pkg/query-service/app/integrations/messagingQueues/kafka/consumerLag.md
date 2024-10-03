@@ -230,89 +230,292 @@ Response in query range `table` format
 ### Onboarding APIs
 
 ```
-/api/v1/messaging-queues/kafka/consumer-lag/onboarding-producers
+/api/v1/messaging-queues/kafka/onboarding/producers
 ```
 
+```json
+{
+    "start": 1727620544260611424,
+    "end": 1727620556401481428
+}
 ```
+
+```json
+// everything is present
 {
     "status": "success",
-    "data": {
-        "resultType": "",
-        "result": [
-            {
-                "queryName": "onboard_producers",
-                "series": [
-                    {
-                        "labels": {},
-                        "labelsArray": [
-                            {
-                                "result": "All attributes are present and meet the conditions"
-                            }
-                        ],
-                        "values": []
-                    }
-                ]
-            }
-        ]
-    }
+    "data": [
+        {
+            "attribute": "kind",
+            "error_message": "",
+            "status": "1"
+        },
+        {
+            "attribute": "messaging.destination.name",
+            "error_message": "",
+            "status": "1"
+        },
+        {
+            "attribute": "messaging.destination.partition.id",
+            "error_message": "messaging.destination.partition.id attribute is not present in your spans",
+            "status": "0"
+        },
+        {
+            "attribute": "messaging.system",
+            "error_message": "",
+            "status": "1"
+        },
+        {
+            "attribute": "telemetry ingestion",
+            "error_message": "",
+            "status": "1"
+        }
+    ]
+}
+
+// partial attributes are present
+{
+    "status": "success",
+    "data": [
+        {
+            "attribute": "kind",
+            "error_message": "",
+            "status": "1"
+        },
+        {
+            "attribute": "messaging.destination.name",
+            "error_message": "messaging.destination.name attribute is not present in your spans",
+            "status": "0"
+        },
+        {
+            "attribute": "messaging.destination.partition.id",
+            "error_message": "",
+            "status": "1"
+        },
+        {
+            "attribute": "messaging.system",
+            "error_message": "",
+            "status": "1"
+        },
+        {
+            "attribute": "telemetry ingestion",
+            "error_message": "",
+            "status": "1"
+        }
+    ]
+}
+
+// no data available
+{
+    "status": "success",
+    "data": [
+        {
+            "attribute": "telemetry ingestion",
+            "error_message": "No data available in the given time range",
+            "status": "0"
+        }
+    ]
 }
 ```
 
 
 ```
-/api/v1/messaging-queues/kafka/consumer-lag/onboarding-consumers
+/api/v1/messaging-queues/kafka/onboarding/consumers
 ```
 
-```
+```json
+// everything is present
 {
-    "status": "success",
-    "data": {
-        "resultType": "",
-        "result": [
-            {
-                "queryName": "onboard_consumers",
-                "series": [
-                    {
-                        "labels": {},
-                        "labelsArray": [
-                            {
-                                "result": "All attributes are present and meet the conditions"
-                            }
-                        ],
-                        "values": []
-                    }
-                ]
-            }
-        ]
+  "status": "success",
+  "data": [
+    {
+      "attribute": "kind",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "messaging.client_id",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "messaging.destination.name",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "messaging.destination.partition.id",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "messaging.kafka.consumer.group",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "messaging.message.body.size",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "messaging.system",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "service.instance.id",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "service_name",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "telemetry ingestion",
+      "error_message": "",
+      "status": "1"
     }
+  ]
+}
+
+// partial attributes are present
+{
+  "status": "success",
+  "data": [
+    {
+      "attribute": "kind",
+      "error_message": "check if your consumer spans has kind=5 as attribute",
+      "status": "0"
+    },
+    {
+      "attribute": "messaging.client_id",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "messaging.destination.name",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "messaging.destination.partition.id",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "messaging.kafka.consumer.group",
+      "error_message": "messaging.kafka.consumer.group attribute is not present in your spans",
+      "status": "0"
+    },
+    {
+      "attribute": "messaging.message.body.size",
+      "error_message": "messaging.message.body.size attribute is not present in your spans",
+      "status": "0"
+    },
+    {
+      "attribute": "messaging.system",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "service.instance.id",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "service_name",
+      "error_message": "",
+      "status": "1"
+    },
+    {
+      "attribute": "telemetry ingestion",
+      "error_message": "",
+      "status": "1"
+    }
+  ]
+}
+
+// no data available
+{
+  "status": "success",
+  "data": [
+    {
+      "attribute": "telemetry ingestion",
+      "error_message": "No data available in the given time range",
+      "status": "0"
+    }
+  ]
 }
 ```
 
 ```
-127.0.0.1:8080/api/v1/messaging-queues/kafka/consumer-lag/onboarding-kafka
+/api/v1/messaging-queues/kafka/onboarding/kafka
 ```
 
+```json
+{
+    "start": 1728485200000000000,
+    "end": 1728749800000000000
+}
 ```
+
+```json
+// everything is present
 {
     "status": "success",
-    "data": {
-        "resultType": "",
-        "result": [
-            {
-                "queryName": "onboard_consumers",
-                "series": [
-                    {
-                        "labels": {},
-                        "labelsArray": [
-                            {
-                                "result": "Neither metric (kafka_consumer_fetch_latency_avg nor kafka_consumer_group_lag) is present in the given time range."
-                            }
-                        ],
-                        "values": []
-                    }
-                ]
-            }
-        ]
-    }
+    "data": [
+        {
+            "attribute": "telemetry ingestion",
+            "error_message": "",
+            "status": "1"
+        },
+        {
+            "attribute": "kafka_consumer_fetch_latency_avg",
+            "error_message": "Metric kafka_consumer_fetch_latency_avg is not present in the given time range.",
+            "status": "0"
+        },
+        {
+            "attribute": "kafka_consumer_group_lag",
+            "error_message": "Metric kafka_consumer_group_lag is not present in the given time range.",
+            "status": "0"
+        }
+    ]
+}
+
+// partial attributes are present
+{
+    "status": "success",
+    "data": [
+        {
+            "attribute": "telemetry ingestion",
+            "error_message": "",
+            "status": "1"
+        },
+        {
+            "attribute": "kafka_consumer_fetch_latency_avg",
+            "error_message": "",
+            "status": "1"
+        },
+        {
+            "attribute": "kafka_consumer_group_lag",
+            "error_message": "",
+            "status": "1"
+        }
+    ]
+}
+
+// no data available
+{
+    "status": "success",
+    "data": [
+        {
+            "attribute": "telemetry ingestion",
+            "error_message": "No data available in the given time range",
+            "status": "0"
+        }
+    ]
 }
 ```
