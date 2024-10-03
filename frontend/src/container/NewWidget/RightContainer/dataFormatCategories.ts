@@ -578,8 +578,6 @@ export function convertUnit(
 		?.id;
 	const toUnit = category.formats.find((format) => format.id === toUnitId)?.id;
 
-	console.log(fromUnit, toUnit);
-
 	if (!fromUnit || !toUnit) return null;
 
 	const conversionFactor = getConversionFactor(

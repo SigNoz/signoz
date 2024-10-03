@@ -5,7 +5,7 @@ import { Button, Input, InputNumber, Select, Space, Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
 
 import {
@@ -194,6 +194,13 @@ function Threshold({
 
 	const allowDragAndDrop = panelTypeVsDragAndDrop[selectedGraph];
 
+	const isInvalidUnitComparison = useMemo(
+		() =>
+			unit !== 'none' &&
+			convertUnit(value, unit, columnUnits?.[tableSelectedOption]) === null,
+		[unit, value, columnUnits, tableSelectedOption],
+	);
+
 	return (
 		<div
 			ref={allowDragAndDrop ? ref : null}
@@ -341,10 +348,10 @@ function Threshold({
 						</>
 					)}
 				</div>
-				{unit !== 'none' && convertUnit(value, unit, columnUnits) === null && (
+				{isInvalidUnitComparison && (
 					<Typography.Text className="invalid-unit">
 						Threshold unit ({unit}) is not valid in comparison with the column unit (
-						{columnUnits || 'none'})
+						{columnUnits?.[tableSelectedOption] || 'none'})
 					</Typography.Text>
 				)}
 				{isEditMode && (

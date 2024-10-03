@@ -108,7 +108,7 @@ function ThresholdSelector({
 						thresholdLabel={threshold.thresholdLabel}
 						tableOptions={tableOptions}
 						thresholdTableOptions={threshold.thresholdTableOptions}
-						columnUnits={columnUnits[threshold.thresholdTableOptions || '']}
+						columnUnits={columnUnits}
 					/>
 				))}
 			</div>

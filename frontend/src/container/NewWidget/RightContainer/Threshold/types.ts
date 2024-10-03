@@ -20,7 +20,7 @@ export type ThresholdProps = {
 	moveThreshold: (dragIndex: number, hoverIndex: number) => void;
 	selectedGraph: PANEL_TYPES;
 	tableOptions?: Array<{ value: string; label: string }>;
-	columnUnits?: string;
+	columnUnits?: ColumnUnit;
 };
 
 export type ShowCaseValueProps = {

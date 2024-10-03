@@ -65,11 +65,6 @@ export function findMatchingThreshold(
 		if (
 			threshold.thresholdValue !== undefined &&
 			threshold.thresholdTableOptions === label &&
-			// evaluateCondition(
-			// 	threshold.thresholdOperator,
-			// 	value,
-			// 	threshold.thresholdValue,
-			// )
 			evaluateThresholdWithConvertedValue(
 				value,
 				threshold?.thresholdValue,
