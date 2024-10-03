@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"regexp"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -2463,15 +2464,19 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 
 // RegisterMessagingQueuesRoutes adds messaging-queues routes
 func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *AuthMiddleware) {
-	// SubRouter for kafka
-	kafkaSubRouter := router.PathPrefix("/api/v1/messaging-queues/kafka/consumer-lag").Subrouter()
 
-	kafkaSubRouter.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerData)).Methods(http.MethodPost)
-	kafkaSubRouter.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerData)).Methods(http.MethodPost)
-	kafkaSubRouter.HandleFunc("/network-latency", am.ViewAccess(aH.getNetworkData)).Methods(http.MethodPost)
-	kafkaSubRouter.HandleFunc("/onboarding-producers", am.ViewAccess(aH.onboardProducers)).Methods(http.MethodPost)
-	kafkaSubRouter.HandleFunc("/onboarding-consumers", am.ViewAccess(aH.onboardConsumers)).Methods(http.MethodPost)
-	kafkaSubRouter.HandleFunc("/onboarding-kafka", am.ViewAccess(aH.onboardKafka)).Methods(http.MethodPost)
+	// SubRouter for kafka
+	kafkaRouter := router.PathPrefix("/api/v1/messaging-queues/kafka").Subrouter()
+
+	consumerLagRouter := kafkaRouter.PathPrefix("/consumer-lag").Subrouter()
+	consumerLagRouter.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerData)).Methods(http.MethodPost)
+	consumerLagRouter.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerData)).Methods(http.MethodPost)
+	consumerLagRouter.HandleFunc("/network-latency", am.ViewAccess(aH.getNetworkData)).Methods(http.MethodPost)
+
+	onboardingRouter := kafkaRouter.PathPrefix("/onboarding").Subrouter()
+	onboardingRouter.HandleFunc("/producers", am.ViewAccess(aH.onboardProducers)).Methods(http.MethodPost)
+	onboardingRouter.HandleFunc("/consumers", am.ViewAccess(aH.onboardConsumers)).Methods(http.MethodPost)
+	onboardingRouter.HandleFunc("/kafka", am.ViewAccess(aH.onboardKafka)).Methods(http.MethodPost)
 
 	// for other messaging queues, add SubRouters here
 }
@@ -2493,69 +2498,94 @@ func (aH *APIHandler) onboardProducers(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "onboard_producers")
+	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_producers")
+
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
-		RespondError(w, apiErr, nil)
-		return
-	}
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
 
-	result, errQuriesByName, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, err)
 		return
 	}
 
-	transformedSeries := &v3.Series{
-		Labels:      make(map[string]string),
-		LabelsArray: make([]map[string]string, 0),
-		Points:      make([]v3.Point, 0),
-	}
+	var entries []mq.OnboardingResponse
 
-	var value string
+	for _, result := range results {
 
-	for _, result := range result {
-		for _, series := range result.Series {
-			for _, point := range series.Points {
-				switch point.Value {
-				case 0:
-					value = "All attributes are present and meet the conditions"
-				case 1:
-					value = "No data available in the given time range"
-				case 2:
-					value = "messaging.system attribute is not present or not equal to kafka in your spans"
-				case 3:
-					value = "check if your producer spans has kind producer"
-				case 4:
-					value = "messaging.destination.name attribute is not present in your spans"
-				case 5:
-					value = "messaging.destination.partition.id attribute is not present in your spans"
-				default:
-					value = "Unknown problem occurred, try increasing the time"
+		for key, value := range result.Data {
+			var message, attribute, status string
+
+			intValue := int(*value.(*uint8))
+
+			if key == "entries" {
+				attribute = "telemetry ingestion"
+				if intValue != 0 {
+					entries = nil
+					entry := mq.OnboardingResponse{
+						Attribute: attribute,
+						Message:   "No data available in the given time range",
+						Status:    "0",
+					}
+					entries = append(entries, entry)
+					break
+				} else {
+					status = "1"
+				}
+			} else if key == "queue" {
+				attribute = "messaging.system"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.system attribute is not present or not equal to kafka in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "kind" {
+				attribute = "kind"
+				if intValue != 0 {
+					status = "0"
+					message = "check if your producer spans has kind=4 as attribute"
+				} else {
+					status = "1"
+				}
+			} else if key == "destination" {
+				attribute = "messaging.destination.name"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.destination.name attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "partition" {
+				attribute = "messaging.destination.partition.id"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.destination.partition.id attribute is not present in your spans"
+				} else {
+					status = "1"
 				}
 			}
+
+			entry := mq.OnboardingResponse{
+				Attribute: attribute,
+				Message:   message,
+				Status:    status,
+			}
+
+			entries = append(entries, entry)
 		}
 	}
 
-	transformedSeries.LabelsArray = append(transformedSeries.LabelsArray, map[string]string{"result": value})
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Attribute < entries[j].Attribute
+	})
 
-	for _, result := range result {
-		for i := range result.Series {
-			result.Series[i] = transformedSeries
-		}
-	}
-
-	resp := v3.QueryRangeResponse{
-		Result: result,
-	}
-	aH.Respond(w, resp)
+	aH.Respond(w, entries)
 }
 
 func (aH *APIHandler) onboardConsumers(
@@ -2570,79 +2600,128 @@ func (aH *APIHandler) onboardConsumers(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "onboard_consumers")
+	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_producers")
+
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
-		RespondError(w, apiErr, nil)
-		return
-	}
+	result, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
 
-	result, errQuriesByName, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, err)
 		return
 	}
 
-	transformedSeries := &v3.Series{
-		Labels:      make(map[string]string),
-		LabelsArray: make([]map[string]string, 0),
-		Points:      make([]v3.Point, 0),
-	}
-
-	var value string
+	var entries []mq.OnboardingResponse
 
 	for _, result := range result {
-		for _, series := range result.Series {
-			for _, point := range series.Points {
-				switch point.Value {
-				case 0:
-					value = "All attributes are present and meet the conditions"
-				case 1:
-					value = "No data available in the given time range"
-				case 2:
-					value = "msgSystem attribute is not present or not equal to 'kafka' in your spans"
-				case 3:
-					value = "kind attribute is not present or not equal to 5 in your spans"
-				case 4:
-					value = "serviceName attribute is not present in your spans"
-				case 5:
-					value = "messaging.destination.name attribute is not present in your spans"
-				case 6:
-					value = "messaging.destination.partition.id attribute is not present in your spans"
-				case 7:
-					value = "messaging.kafka.consumer.group attribute is not present in your spans"
-				case 8:
-					value = "messaging.message.body.size attribute is not present in your spans"
-				case 9:
-					value = "messaging.client_id attribute is not present in your spans"
-				case 10:
-					value = "service.instance.id attribute is not present in your spans"
-				default:
-					value = "Unknown problem occurred, try increasing the time"
+		for key, value := range result.Data {
+			var message, attribute, status string
+
+			intValue := int(*value.(*uint8))
+
+			if key == "entries" {
+				attribute = "telemetry ingestion"
+				if intValue != 0 {
+					entries = nil
+					entry := mq.OnboardingResponse{
+						Attribute: attribute,
+						Message:   "No data available in the given time range",
+						Status:    "0",
+					}
+					entries = append(entries, entry)
+					break
+				} else {
+					status = "1"
+				}
+			} else if key == "queue" {
+				attribute = "messaging.system"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.system attribute is not present or not equal to kafka in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "kind" {
+				attribute = "kind"
+				if intValue != 0 {
+					status = "0"
+					message = "check if your producer spans has kind=4 as attribute"
+				} else {
+					status = "1"
+				}
+			} else if key == "destination" {
+				attribute = "messaging.destination.name"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.destination.name attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "partition" {
+				attribute = "messaging.destination.partition.id"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.destination.partition.id attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "svc" {
+				attribute = "service_name"
+				if intValue != 0 {
+					status = "0"
+					message = "service_name attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "cgroup" {
+				attribute = "messaging.kafka.consumer.group"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.kafka.consumer.group attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "bodysize" {
+				attribute = "messaging.message.body.size"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.message.body.size attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "clientid" {
+				attribute = "messaging.client_id"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.client_id attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "instanceid" {
+				attribute = "service.instance.id"
+				if intValue != 0 {
+					status = "0"
+					message = "service.instance.id attribute is not present in your spans"
+				} else {
+					status = "1"
 				}
 			}
+
+			entry := mq.OnboardingResponse{
+				Attribute: attribute,
+				Message:   message,
+				Status:    status,
+			}
+			entries = append(entries, entry)
 		}
 	}
 
-	transformedSeries.LabelsArray = append(transformedSeries.LabelsArray, map[string]string{"result": value})
-
-	for _, result := range result {
-		for i := range result.Series {
-			result.Series[i] = transformedSeries
-		}
-	}
-
-	resp := v3.QueryRangeResponse{
-		Result: result,
-	}
-	aH.Respond(w, resp)
+	aH.Respond(w, entries)
 }
 
 func (aH *APIHandler) onboardKafka(
@@ -2657,63 +2736,72 @@ func (aH *APIHandler) onboardKafka(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "onboard_consumers")
+	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_kafka")
+
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
-		RespondError(w, apiErr, nil)
-		return
-	}
+	result, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
 
-	result, errQuriesByName, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, err)
 		return
 	}
 
-	transformedSeries := &v3.Series{
-		Labels:      make(map[string]string),
-		LabelsArray: make([]map[string]string, 0),
-		Points:      make([]v3.Point, 0),
-	}
-
-	var value string
+	var entries []mq.OnboardingResponse
 
 	for _, result := range result {
-		for _, series := range result.Series {
-			for _, point := range series.Points {
-				switch point.Value {
-				case 0:
-					value = "All required metrics are present and meet the conditions"
-				case 1:
-					value = "Neither metric (kafka_consumer_fetch_latency_avg nor kafka_consumer_group_lag) is present in the given time range."
-				case 2:
-					value = "Metric kafka_consumer_fetch_latency_avg is not present in the given time range."
-				default:
-					value = "Unknown problem occurred, try increasing the time"
+		for key, value := range result.Data {
+			var message, attribute, status string
+
+			intValue := int(*value.(*uint8))
+
+			if key == "entries" {
+				attribute = "telemetry ingestion"
+				if intValue != 0 {
+					entries = nil
+					entry := mq.OnboardingResponse{
+						Attribute: attribute,
+						Message:   "No data available in the given time range",
+						Status:    "0",
+					}
+					entries = append(entries, entry)
+					break
+				} else {
+					status = "1"
+				}
+			} else if key == "fetchlatency" {
+				attribute = "kafka_consumer_fetch_latency_avg"
+				if intValue != 0 {
+					status = "0"
+					message = "Metric kafka_consumer_fetch_latency_avg is not present in the given time range."
+				} else {
+					status = "1"
+				}
+			} else if key == "grouplag" {
+				attribute = "kafka_consumer_group_lag"
+				if intValue != 0 {
+					status = "0"
+					message = "Metric kafka_consumer_group_lag is not present in the given time range."
+				} else {
+					status = "1"
 				}
 			}
+
+			entry := mq.OnboardingResponse{
+				Attribute: attribute,
+				Message:   message,
+				Status:    status,
+			}
+			entries = append(entries, entry)
 		}
 	}
 
-	transformedSeries.LabelsArray = append(transformedSeries.LabelsArray, map[string]string{"result": value})
-
-	for _, result := range result {
-		for i := range result.Series {
-			result.Series[i] = transformedSeries
-		}
-	}
-
-	resp := v3.QueryRangeResponse{
-		Result: result,
-	}
-	aH.Respond(w, resp)
+	aH.Respond(w, entries)
 }
 
 func (aH *APIHandler) getNetworkData(
