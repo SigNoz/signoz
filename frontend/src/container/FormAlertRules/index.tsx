@@ -12,6 +12,7 @@ import {
 } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
+import getChannels from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { alertHelpMessage } from 'components/LaunchChatSupport/util';
@@ -27,6 +28,7 @@ import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
+import useFetch from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
@@ -296,10 +298,14 @@ function FormAlertRules({
 		return validateQBParams();
 	}, [validateQBParams, validateChQueryParams, alertDef, validatePromParams]);
 
+	const channels = useFetch(getChannels);
+
 	const preparePostData = (): AlertDef => {
 		const postableAlert: AlertDef = {
 			...alertDef,
-			preferredChannels: alertDef.broadcastToAll ? [] : alertDef.preferredChannels,
+			preferredChannels: alertDef.broadcastToAll
+				? channels.payload?.map((channel) => channel.name) || []
+				: alertDef.preferredChannels,
 			alertType,
 			source: window?.location.toString(),
 			ruleType:
@@ -326,11 +332,17 @@ function FormAlertRules({
 	};
 
 	const memoizedPreparePostData = useCallback(preparePostData, [
-		currentQuery,
 		alertDef,
+		channels.payload,
 		alertType,
-		initQuery,
+		currentQuery.queryType,
+		currentQuery.builder.queryData,
+		currentQuery.builder.queryFormulas,
+		currentQuery.promql,
+		currentQuery.clickhouse_sql,
+		currentQuery.unit,
 		panelType,
+		initQuery.panelType,
 	]);
 
 	const isAlertAvailable = useIsFeatureDisabled(
