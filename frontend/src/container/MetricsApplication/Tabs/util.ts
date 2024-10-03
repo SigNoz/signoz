@@ -35,6 +35,7 @@ interface OnViewTracePopupClickProps {
 	timestamp: number;
 	apmToTraceQuery: Query;
 	isViewLogsClicked?: boolean;
+	stepInterval?: number;
 }
 
 export function generateExplorerPath(
@@ -54,21 +55,22 @@ export function generateExplorerPath(
 	}=${JSONCompositeQuery}&${queryString.join('&')}`;
 }
 
+// TODO(@rahul-signoz): update the name of this function once we have view logs button in every panel
 export function onViewTracePopupClick({
 	selectedTraceTags,
 	servicename,
 	timestamp,
 	apmToTraceQuery,
 	isViewLogsClicked,
+	stepInterval,
 }: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
 		const currentTime = timestamp;
-
-		const tPlusOne = timestamp + 60;
+		const endTime = timestamp + (stepInterval || 60);
 
 		const urlParams = new URLSearchParams(window.location.search);
 		urlParams.set(QueryParams.startTime, currentTime.toString());
-		urlParams.set(QueryParams.endTime, tPlusOne.toString());
+		urlParams.set(QueryParams.endTime, endTime.toString());
 		urlParams.delete(QueryParams.relativeTime);
 		const avialableParams = routeConfig[ROUTES.TRACE];
 		const queryString = getQueryString(avialableParams, urlParams);
@@ -175,7 +177,7 @@ export function useGetAPMToLogsQueries({
 	const serviceName = {
 		id: 'service.name--string--resource--true',
 		dataType: DataTypes.String,
-		isColumn: true,
+		isColumn: false,
 		key: 'service.name',
 		type: 'resource',
 		isJSON: false,

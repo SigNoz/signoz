@@ -15,6 +15,7 @@ import {
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
+import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
@@ -180,6 +181,16 @@ function Application(): JSX.Element {
 		id: SERVICE_CHART_ID.errorPercentage,
 	});
 
+	const stepInterval = useMemo(
+		() =>
+			getStep({
+				end: maxTime,
+				inputFormat: 'ns',
+				start: minTime,
+			}),
+		[maxTime, minTime],
+	);
+
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {
 			const startTimestamp = Math.trunc(start);
@@ -204,11 +215,12 @@ function Application(): JSX.Element {
 			isViewLogsClicked?: boolean,
 		): (() => void) => (): void => {
 			const currentTime = timestamp;
-			const tPlusOne = timestamp + 60;
+			const endTime = timestamp + stepInterval;
+			console.log(endTime, stepInterval);
 
 			const urlParams = new URLSearchParams(search);
 			urlParams.set(QueryParams.startTime, currentTime.toString());
-			urlParams.set(QueryParams.endTime, tPlusOne.toString());
+			urlParams.set(QueryParams.endTime, endTime.toString());
 			urlParams.delete(QueryParams.relativeTime);
 			const avialableParams = routeConfig[ROUTES.TRACE];
 			const queryString = getQueryString(avialableParams, urlParams);
@@ -229,7 +241,7 @@ function Application(): JSX.Element {
 			history.push(newPath);
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[],
+		[stepInterval],
 	);
 
 	const logErrorQuery = useGetAPMToLogsQueries({
@@ -280,6 +292,7 @@ function Application(): JSX.Element {
 						selectedTraceTags={selectedTraceTags}
 						topLevelOperationsRoute={topLevelOperationsRoute}
 						topLevelOperationsIsLoading={topLevelOperationsIsLoading}
+						stepInterval={stepInterval}
 					/>
 				</Col>
 
@@ -293,6 +306,7 @@ function Application(): JSX.Element {
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery,
+							stepInterval,
 						})}
 					>
 						View Traces
@@ -321,6 +335,7 @@ function Application(): JSX.Element {
 								selectedTraceTags,
 								timestamp: selectedTimeStamp,
 								apmToTraceQuery,
+								stepInterval,
 							})}
 						>
 							View Traces

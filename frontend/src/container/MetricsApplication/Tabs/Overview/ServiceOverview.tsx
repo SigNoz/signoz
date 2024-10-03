@@ -35,6 +35,7 @@ function ServiceOverview({
 	selectedTimeStamp,
 	topLevelOperationsRoute,
 	topLevelOperationsIsLoading,
+	stepInterval,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
@@ -88,12 +89,14 @@ function ServiceOverview({
 					timestamp: selectedTimeStamp,
 					apmToTraceQuery: apmToLogQuery,
 					isViewLogsClicked: true,
+					stepInterval,
 				})}
 				onViewTracesClick={onViewTracePopupClick({
 					servicename,
 					selectedTraceTags,
 					timestamp: selectedTimeStamp,
 					apmToTraceQuery,
+					stepInterval,
 				})}
 			/>
 			<Card data-testid="service_latency">
@@ -120,8 +123,8 @@ function ServiceOverview({
 		</>
 	);
 }
-
 interface ServiceOverviewProps {
+	stepInterval: number;
 	selectedTimeStamp: number;
 	selectedTraceTags: string;
 	onDragSelect: (start: number, end: number) => void;
