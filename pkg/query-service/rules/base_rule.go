@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/converter"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -339,11 +338,9 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 	var alertSmpl Sample
 	var shouldAlert bool
 	var lbls qslabels.Labels
-	var lblsNormalized qslabels.Labels
 
 	for name, value := range series.Labels {
 		lbls = append(lbls, qslabels.Label{Name: name, Value: value})
-		lblsNormalized = append(lblsNormalized, qslabels.Label{Name: common.NormalizeLabelName(name), Value: value})
 	}
 
 	series.Points = removeGroupinSetPoints(series)
@@ -366,7 +363,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		if r.compareOp() == ValueIsAbove {
 			for _, smpl := range series.Points {
 				if smpl.Value > r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
 					break
 				}
@@ -374,7 +371,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ValueIsBelow {
 			for _, smpl := range series.Points {
 				if smpl.Value < r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
 					break
 				}
@@ -382,7 +379,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ValueIsEq {
 			for _, smpl := range series.Points {
 				if smpl.Value == r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
 					break
 				}
@@ -390,7 +387,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ValueIsNotEq {
 			for _, smpl := range series.Points {
 				if smpl.Value != r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
 					break
 				}
@@ -398,7 +395,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ValueOutsideBounds {
 			for _, smpl := range series.Points {
 				if math.Abs(smpl.Value) >= r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
 					break
 				}
@@ -407,7 +404,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 	case AllTheTimes:
 		// If all samples match the condition, the rule is firing.
 		shouldAlert = true
-		alertSmpl = Sample{Point: Point{V: r.targetVal()}, Metric: lblsNormalized, MetricOrig: lbls}
+		alertSmpl = Sample{Point: Point{V: r.targetVal()}, Metric: lbls}
 		if r.compareOp() == ValueIsAbove {
 			for _, smpl := range series.Points {
 				if smpl.Value <= r.targetVal() {
@@ -423,7 +420,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 						minValue = smpl.Value
 					}
 				}
-				alertSmpl = Sample{Point: Point{V: minValue}, Metric: lblsNormalized, MetricOrig: lbls}
+				alertSmpl = Sample{Point: Point{V: minValue}, Metric: lbls}
 			}
 		} else if r.compareOp() == ValueIsBelow {
 			for _, smpl := range series.Points {
@@ -439,7 +436,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 						maxValue = smpl.Value
 					}
 				}
-				alertSmpl = Sample{Point: Point{V: maxValue}, Metric: lblsNormalized, MetricOrig: lbls}
+				alertSmpl = Sample{Point: Point{V: maxValue}, Metric: lbls}
 			}
 		} else if r.compareOp() == ValueIsEq {
 			for _, smpl := range series.Points {
@@ -459,7 +456,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 			if shouldAlert {
 				for _, smpl := range series.Points {
 					if !math.IsInf(smpl.Value, 0) && !math.IsNaN(smpl.Value) {
-						alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+						alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 						break
 					}
 				}
@@ -467,7 +464,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ValueOutsideBounds {
 			for _, smpl := range series.Points {
 				if math.Abs(smpl.Value) >= r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
 					break
 				}
@@ -484,7 +481,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 			count++
 		}
 		avg := sum / count
-		alertSmpl = Sample{Point: Point{V: avg}, Metric: lblsNormalized, MetricOrig: lbls}
+		alertSmpl = Sample{Point: Point{V: avg}, Metric: lbls}
 		if r.compareOp() == ValueIsAbove {
 			if avg > r.targetVal() {
 				shouldAlert = true
@@ -516,7 +513,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 			}
 			sum += smpl.Value
 		}
-		alertSmpl = Sample{Point: Point{V: sum}, Metric: lblsNormalized, MetricOrig: lbls}
+		alertSmpl = Sample{Point: Point{V: sum}, Metric: lbls}
 		if r.compareOp() == ValueIsAbove {
 			if sum > r.targetVal() {
 				shouldAlert = true
@@ -541,7 +538,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 	case Last:
 		// If the last sample matches the condition, the rule is firing.
 		shouldAlert = false
-		alertSmpl = Sample{Point: Point{V: series.Points[len(series.Points)-1].Value}, Metric: lblsNormalized, MetricOrig: lbls}
+		alertSmpl = Sample{Point: Point{V: series.Points[len(series.Points)-1].Value}, Metric: lbls}
 		if r.compareOp() == ValueIsAbove {
 			if series.Points[len(series.Points)-1].Value > r.targetVal() {
 				shouldAlert = true

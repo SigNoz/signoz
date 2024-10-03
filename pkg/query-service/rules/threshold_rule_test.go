@@ -1010,7 +1010,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 
 		sample, shoulAlert := rule.ShouldAlert(c.values)
 		for name, value := range c.values.Labels {
-			assert.Equal(t, value, sample.Metric.Get(common.NormalizeLabelName(name)))
+			assert.Equal(t, value, sample.Metric.Get(name))
 		}
 
 		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
