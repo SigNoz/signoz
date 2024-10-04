@@ -228,3 +228,4 @@ As always, thanks to our amazing contributors!
 <a href="https://github.com/signoz/signoz/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=signoz/signoz" />
 </a>
+# signoz-_total_code
