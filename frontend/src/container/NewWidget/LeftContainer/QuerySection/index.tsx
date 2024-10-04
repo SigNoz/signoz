@@ -112,16 +112,18 @@ function QuerySection({
 		],
 	);
 
-	const handleQueryCategoryChange = (qCategory: string): void => {
-		const currentQueryType = qCategory;
-
-		featureResponse.refetch().then(() => {
-			handleStageQuery({
-				...currentQuery,
-				queryType: currentQueryType as EQueryType,
+	const handleQueryCategoryChange = useCallback(
+		(qCategory: string): void => {
+			const currentQueryType = qCategory;
+			featureResponse.refetch().then(() => {
+				handleStageQuery({
+					...currentQuery,
+					queryType: currentQueryType as EQueryType,
+				});
 			});
-		});
-	};
+		},
+		[currentQuery, featureResponse, handleStageQuery],
+	);
 
 	const handleRunQuery = (): void => {
 		const widgetId = urlQuery.get('widgetId');
@@ -234,6 +236,16 @@ function QuerySection({
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [handleRunQuery]);
+
+	useEffect(() => {
+		// switch to query builder if query type is not supported
+		if (
+			selectedGraph === PANEL_TYPES.TABLE &&
+			currentQuery.queryType === EQueryType.PROM
+		) {
+			handleQueryCategoryChange(EQueryType.QUERY_BUILDER);
+		}
+	}, [currentQuery, handleQueryCategoryChange, selectedGraph]);
 
 	return (
 		<div className="dashboard-navigation">
