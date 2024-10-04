@@ -14,10 +14,12 @@ import {
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
+import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
+import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -123,6 +125,16 @@ function DBCall(): JSX.Element {
 		[servicename, tagFilterItems],
 	);
 
+	const stepInterval = useMemo(
+		() =>
+			getStep({
+				end: store.getState().globalTime.maxTime,
+				inputFormat: 'ns',
+				start: store.getState().globalTime.minTime,
+			}),
+		[],
+	);
+
 	const logEventCalledRef = useRef(false);
 
 	useEffect(() => {
@@ -158,6 +170,7 @@ function DBCall(): JSX.Element {
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
 						apmToTraceQuery,
+						stepInterval,
 					})}
 				>
 					View Traces
@@ -192,6 +205,7 @@ function DBCall(): JSX.Element {
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
 						apmToTraceQuery,
+						stepInterval,
 					})}
 				>
 					View Traces
