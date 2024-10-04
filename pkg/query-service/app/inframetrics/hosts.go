@@ -109,7 +109,7 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context, req model.HostLis
 			Key:      "system_cpu_load_average_15m",
 			DataType: v3.AttributeKeyDataTypeFloat64,
 		},
-		Temporality: v3.Cumulative,
+		Temporality: v3.Unspecified,
 		GroupBy:     req.GroupBy,
 	}
 	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
@@ -217,6 +217,9 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 	for _, query := range query.CompositeQuery.BuilderQueries {
 		query.StepInterval = step
 		if req.Filters != nil && len(req.Filters.Items) > 0 {
+			if query.Filters == nil {
+				query.Filters = &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}}
+			}
 			query.Filters.Items = append(query.Filters.Items, req.Filters.Items...)
 		}
 	}
@@ -254,6 +257,11 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 		hostName, ok := row.Data["host_name"].(string)
 		if ok {
 			record.HostName = hostName
+		}
+
+		osType, ok := row.Data["os_type"].(string)
+		if ok {
+			record.OS = osType
 		}
 
 		cpu, ok := row.Data["F1"].(float64)

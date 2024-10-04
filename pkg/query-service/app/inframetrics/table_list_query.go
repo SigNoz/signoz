@@ -33,6 +33,11 @@ var TableListQuery = v3.QueryRangeParamsV3{
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
+					{
+						Key:      "os_type",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
 				},
 				Expression:       "A",
 				Limit:            100,
@@ -52,6 +57,11 @@ var TableListQuery = v3.QueryRangeParamsV3{
 				GroupBy: []v3.AttributeKey{
 					{
 						Key:      "host_name",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+					{
+						Key:      "os_type",
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -96,6 +106,11 @@ var TableListQuery = v3.QueryRangeParamsV3{
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
+					{
+						Key:      "os_type",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
 				},
 				Expression:       "C",
 				Limit:            100,
@@ -119,6 +134,11 @@ var TableListQuery = v3.QueryRangeParamsV3{
 				GroupBy: []v3.AttributeKey{
 					{
 						Key:      "host_name",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+					{
+						Key:      "os_type",
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -163,6 +183,11 @@ var TableListQuery = v3.QueryRangeParamsV3{
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
+					{
+						Key:      "os_type",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
 				},
 				Expression:       "E",
 				Limit:            100,
@@ -182,6 +207,11 @@ var TableListQuery = v3.QueryRangeParamsV3{
 				GroupBy: []v3.AttributeKey{
 					{
 						Key:      "host_name",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+					{
+						Key:      "os_type",
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -226,6 +256,11 @@ var TableListQuery = v3.QueryRangeParamsV3{
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
+					{
+						Key:      "os_type",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
 				},
 				Expression:       "G",
 				Limit:            100,
@@ -245,6 +280,11 @@ var TableListQuery = v3.QueryRangeParamsV3{
 				GroupBy: []v3.AttributeKey{
 					{
 						Key:      "host_name",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+					{
+						Key:      "os_type",
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
