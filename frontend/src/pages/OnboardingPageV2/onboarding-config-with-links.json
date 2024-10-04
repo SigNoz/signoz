@@ -1,0 +1,567 @@
+[
+	{
+		"dataSource": "java",
+		"entityID": "dataSource",
+		"label": "Java",
+		"id": "java",
+		"imgUrl": "/Logos/java.png",
+		"tags": ["apm"],
+		"question": {
+			"desc": "Which Java framework do you use?",
+			"type": "select",
+			"entityID": "framework",
+			"options": [
+				{
+					"key": "springboot",
+					"label": "Spring Boot",
+					"imgUrl": "/Logos/java.png",
+					"link": "http://localhost:3000/docs/instrumentation/springboot/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "tomcat",
+					"label": "Tomcat",
+					"imgUrl": "/Logos/java.png",
+					"link": "http://localhost:3000/docs/instrumentation/tomcat/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "jboss",
+					"label": "JBoss",
+					"imgUrl": "/Logos/java.png",
+					"link": "http://localhost:3000/docs/instrumentation/jboss/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "others",
+					"label": "Others",
+					"imgUrl": "/Logos/java.png",
+					"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+				}
+			],
+			"question": {
+				"desc": "What is your Environment?",
+				"type": "select",
+				"entityID": "environment",
+				"options": [
+					{
+						"key": "vm",
+						"label": "VM",
+						"imgUrl": "/Logos/cmd-terminal.svg",
+						"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+					},
+					{
+						"key": "k8s",
+						"label": "Kubernetes",
+						"imgUrl": "/Logos/kubernetes.svg",
+						"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+					},
+					{
+						"key": "windows",
+						"label": "Windows",
+						"imgUrl": "/Logos/java.png",
+						"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+					}
+				]
+			}
+		}
+	},
+	{
+		"dataSource": "python",
+		"label": "Python",
+		"imgUrl": "/Logos/python.png",
+		"tags": ["apm"],
+		"id": "python",
+		"question": {
+			"desc": "Which Python framework do you use?",
+			"type": "select",
+			"entityID": "framework",
+			"options": [
+				{
+					"key": "flask",
+					"label": "Flask",
+					"imgUrl": "/Logos/python.png",
+					"link": "http://localhost:3000/docs/instrumentation/flask/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "django",
+					"label": "Django",
+					"imgUrl": "/Logos/python.png",
+					"link": "http://localhost:3000/docs/instrumentation/django/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "fastapi",
+					"label": "FastAPI",
+					"imgUrl": "/Logos/python.png",
+					"link": "http://localhost:3000/docs/instrumentation/fastapi/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "falcon",
+					"label": "Falcon",
+					"imgUrl": "/Logos/python.png",
+					"link": "http://localhost:3000/docs/instrumentation/falcon/#send-traces-to-signoz-cloud"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "javascript",
+		"label": "JavaScript",
+		"tags": ["apm"],
+		"id": "javascript",
+		"imgUrl": "/Logos/javascript.png",
+		"question": {
+			"desc": "Which JavaScript framework do you use?",
+			"type": "select",
+			"entityID": "framework",
+			"options": [
+				{
+					"key": "nodejs",
+					"label": "NodeJs",
+					"imgUrl": "/Logos/node-js.svg",
+					"link": "http://localhost:3000/docs/instrumentation/javascript/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "express",
+					"label": "Express",
+					"imgUrl": "/Logos/node-js.svg",
+					"link": "http://localhost:3000/docs/instrumentation/express/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "nestjs",
+					"label": "NestJS",
+					"imgUrl": "/Logos/node-js.svg",
+					"link": "http://localhost:3000/docs/instrumentation/nestjs/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "angular",
+					"label": "Angular",
+					"imgUrl": "/Logos/node-js.svg",
+					"link": "http://localhost:3000/docs/instrumentation/angular/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "nextjs",
+					"label": "NextJS",
+					"imgUrl": "/Logos/node-js.svg",
+					"link": "http://localhost:3000/docs/instrumentation/nextjs/#send-traces-to-signoz-cloud"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "golang",
+		"label": "Golang",
+		"imgUrl": "/Logos/go.png",
+		"tags": ["apm"],
+		"id": "golang",
+		"link": "http://localhost:3000/docs/instrumentation/golang/#send-traces-to-signoz-cloud"
+	},
+	{
+		"dataSource": "php",
+		"label": "PHP",
+		"imgUrl": "/Logos/php.png",
+		"tags": ["apm"],
+		"id": "php",
+		"link": "http://localhost:3000/docs/instrumentation/php/#send-traces-to-signoz-cloud"
+	},
+	{
+		"dataSource": "dotnet",
+		"label": ".NET",
+		"imgUrl": "/Logos/dotnet.png",
+		"tags": ["apm"],
+		"id": "dotnet",
+		"link": "http://localhost:3000/docs/instrumentation/dotnet/#send-traces-to-signoz-cloud"
+	},
+	{
+		"dataSource": "ruby-on-rails",
+		"label": "Ruby on Rails",
+		"imgUrl": "/Logos/rails.png",
+		"tags": ["apm"],
+		"id": "ruby-on-rails",
+		"link": "http://localhost:3000/docs/instrumentation/ruby-on-rails/#send-traces-to-signoz-cloud"
+	},
+	{
+		"dataSource": "elixir",
+		"label": "Elixir",
+		"imgUrl": "/Logos/elixir.png",
+		"tags": ["apm"],
+		"id": "elixir",
+		"link": "http://localhost:3000/docs/instrumentation/elixir/#send-traces-to-signoz-cloud"
+	},
+	{
+		"dataSource": "rust",
+		"label": "Rust",
+		"imgUrl": "/Logos/rust.png",
+		"tags": ["apm"],
+		"id": "rust",
+		"link": "http://localhost:3000/docs/instrumentation/rust/#send-traces-to-signoz-cloud"
+	},
+	{
+		"dataSource": "swift",
+		"label": "Swift",
+		"imgUrl": "/Logos/swift.png",
+		"tags": ["apm"],
+		"id": "swift",
+		"link": "http://localhost:3000/docs/instrumentation/swift/#send-traces-to-signoz-cloud"
+	},
+	{
+		"dataSource": "kubernetes-pod-logs",
+		"label": "Kubernetes Pod Logs",
+		"imgUrl": "/Logos/kubernetes.svg",
+		"tags": ["logs"],
+		"id": "kubernetes-pod-logs",
+		"link": "http://localhost:3000/docs/userguide/collect_kubernetes_pod_logs/#steps-to-filterexclude-logs-collection"
+	},
+	{
+		"dataSource": "docker-container-logs",
+		"label": "Docker Container Logs",
+		"imgUrl": "/Logos/docker.svg",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/userguide/collect_docker_logs/#collect-docker-container-logs-in-signoz-cloud"
+	},
+	{
+		"dataSource": "vercel-logs",
+		"label": "Vercel logs",
+		"imgUrl": "/Logos/vercel.png",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/userguide/vercel_logs_to_signoz/#stream-vercel-logs-to-signoz-in-signoz-cloud"
+	},
+	{
+		"dataSource": "heroku-logs",
+		"label": "Heroku logs",
+		"imgUrl": "/Logos/heroku.png",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/userguide/heroku_logs_to_signoz/#stream-heroku-logs-to-signoz-in-signoz-cloud"
+	},
+	{
+		"dataSource": "http-logs",
+		"label": "HTTP logs",
+		"imgUrl": "/Logos/http.png",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/userguide/send-logs-http/#send-logs-to-signoz-cloud"
+	},
+	{
+		"dataSource": "syslogs",
+		"label": "Syslogs",
+		"imgUrl": "/Logos/syslog.png",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/userguide/collecting_syslogs/#collect-syslogs-in-signoz-cloud"
+	},
+	{
+		"dataSource": "fluentd",
+		"label": "FluentD",
+		"imgUrl": "/Logos/fluentd.png",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/userguide/fluentd_to_signoz/#collect-logs-using-fluentd-in-signoz-cloud"
+	},
+	{
+		"dataSource": "fluentbit",
+		"label": "FluentBit",
+		"imgUrl": "/Logos/fluent-bit.png",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/userguide/fluentbit_to_signoz/#collect-logs-using-fluentbit-in-signoz-cloud"
+	},
+	{
+		"dataSource": "logstash",
+		"label": "Logstash",
+		"imgUrl": "/Logos/logstash.svg",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/userguide/logstash_to_signoz/#collect-logs-using-logstash-in-signoz-cloud"
+	},
+	{
+		"dataSource": "tomcat-logs",
+		"label": "Tomcat logs",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/logs-management/send-logs/collect-tomcat-access-and-garbage-collector-logs/#collect-logs-in-signoz-cloud"
+	},
+	{
+		"dataSource": "vector-logs",
+		"label": "Vector Logs",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/logs-management/send-logs/vector-logs-to-signoz/#send-logs-from-vector-to-signoz-in-signoz-cloud"
+	},
+	{
+		"dataSource": "windows-events-logs",
+		"label": "Windows Events logs",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/logs-management/send-logs/windows-events-log/#prerequisites"
+	},
+	{
+		"dataSource": "cloudwatch-logs",
+		"label": "Cloudwatch logs",
+		"imgUrl": "/Logos/ec2.svg",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/userguide/send-cloudwatch-logs-to-signoz/#setup"
+	},
+	{
+		"dataSource": "nodejs-winston-logs",
+		"label": "NodeJs winston logs",
+		"imgUrl": "/Logos/node-js.svg",
+		"tags": ["logs"],
+		"link": "http://localhost:3000/docs/userguide/send-cloudwatch-logs-to-signoz/#setup"
+	},
+	{
+		"dataSource": "application-logs",
+		"label": "Application Logs",
+		"imgUrl": "/Logos/node-js.svg",
+		"tags": ["logs"],
+		"question": {
+			"desc": "Where do you want to collect your application logs from?",
+			"type": "select",
+			"options": [
+				{
+					"key": "from-log-file",
+					"label": "From log file",
+					"imgUrl": "/Logos/node-js.svg",
+					"link": "http://localhost:3000/docs/userguide/collect_logs_from_file/#collect-logs-in-signoz-cloud"
+				},
+				{
+					"key": "aws-lambda-nodejs-logs",
+					"label": "AWS Lambda NodeJS logs",
+					"imgUrl": "/Logos/node-js.svg",
+					"link": "http://localhost:3000/docs/logs-management/send-logs/aws-lambda-nodejs/"
+				},
+				{
+					"key": "otel-python-sdk",
+					"label": "OTel Python SDK",
+					"imgUrl": "/Logos/python.png",
+					"link": "http://localhost:3000/docs/userguide/collecting_application_logs_otel_sdk_python/"
+				},
+				{
+					"key": "otel-java-sdk",
+					"label": "OTel Java SDK",
+					"imgUrl": "/Logos/java.png",
+					"link": "http://localhost:3000/docs/userguide/collecting_application_logs_otel_sdk_java/#collecting-application-logs-using-otel-java-agent"
+				},
+				{
+					"key": "python-logs-auto-instrumentation",
+					"label": "Python logs auto-instrumentation",
+					"imgUrl": "/Logos/python.png",
+					"link": "http://localhost:3000/docs/userguide/python-logs-auto-instrumentation/#collecting-python-application-logs-using-auto-instrumentation"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "kubernetes-infra-metrics",
+		"label": "Kuberenetes Infra Metrics",
+		"tags": ["infrastructure monitoring"],
+		"imgUrl": "/Logos/kubernetes.svg",
+		"link": "http://localhost:3000/docs/tutorial/kubernetes-infra-metrics/"
+	},
+	{
+		"dataSource": "hostmetrics",
+		"label": "Hostmetrics",
+		"tags": ["infrastructure monitoring"],
+		"imgUrl": "/Logos/cmd-terminal.svg",
+		"link": "http://localhost:3000/docs/userguide/hostmetrics/"
+	},
+	{
+		"dataSource": "other-metrics",
+		"label": "Other Metrics",
+		"tags": ["infrastructure monitoring"],
+		"imgUrl": "/Logos/cmd-terminal.svg",
+		"link": "http://localhost:3000/docs/userguide/send-metrics-cloud/"
+	},
+	{
+		"dataSource": "ec2-application-logs",
+		"label": "EC2 Application Logs",
+		"tags": ["AWS", "logs"],
+		"imgUrl": "/Logos/ec2.svg",
+		"link": "http://localhost:3000/docs/aws-monitoring/ec2-logs/"
+	},
+	{
+		"dataSource": "ec2-infrastructure-metrics",
+		"label": "EC2 Infra Metrics",
+		"tags": ["AWS", "logs"],
+		"imgUrl": "/Logos/ec2.svg",
+		"link": "http://localhost:3000/docs/aws-monitoring/ec2-infra-metrics/"
+	},
+	{
+		"dataSource": "ecs-ec2",
+		"label": "ECS EC2",
+		"tags": ["AWS"],
+		"imgUrl": "/Logos/ec2.svg",
+		"link": "http://localhost:3000/docs/userguide/collecting-ecs-logs-and-metrics/"
+	},
+	{
+		"dataSource": "ecs-external",
+		"label": "ECS External",
+		"tags": ["AWS"],
+		"imgUrl": "/Logos/ec2.svg",
+		"link": "http://localhost:3000/docs/userguide/collecting-ecs-logs-and-metrics/"
+	},
+	{
+		"dataSource": "ecs-fargate",
+		"label": "ECS Fargate",
+		"tags": ["AWS"],
+		"imgUrl": "/Logos/ec2.svg",
+		"link": "http://localhost:3000/docs/userguide/collecting-ecs-sidecar-infra/"
+	},
+	{
+		"dataSource": "elb-logs",
+		"label": "ELB Logs",
+		"tags": ["AWS", "logs"],
+		"imgUrl": "/Logos/ec2.svg",
+		"link": "http://localhost:3000/docs/aws-monitoring/elb-logs/"
+	},
+	{
+		"dataSource": "vpc-logs",
+		"label": "VPC Logs",
+		"tags": ["AWS", "logs"],
+		"imgUrl": "/Logos/ec2.svg",
+		"link": "http://localhost:3000/docs/aws-monitoring/vpc-logs/"
+	},
+	{
+		"dataSource": "rds-logs",
+		"label": "RDS Logs",
+		"tags": ["AWS", "logs"],
+		"imgUrl": "/Logos/ec2.svg",
+		"link": "http://localhost:3000/docs/aws-monitoring/rds-logs/"
+	},
+	{
+		"dataSource": "aws-lambda",
+		"label": "Lambda Logs",
+		"tags": ["AWS", "logs"],
+		"imgUrl": "/Logos/ec2.svg",
+		"link": "http://localhost:3000/docs/aws-monitoring/lambda-logs/"
+	},
+	{
+		"dataSource": "vm-metrics-and-logging",
+		"label": "Azure VM",
+		"tags": ["Azure"],
+		"imgUrl": "/Logos/azure-vm.svg",
+		"link": "http://localhost:3000/docs/azure-monitoring/virtual-machines/vm-metrics/"
+	},
+	{
+		"dataSource": "app-service",
+		"label": "App Service",
+		"tags": ["Azure"],
+		"imgUrl": "/Logos/azure-vm.svg",
+		"link": "http://localhost:3000/docs/azure-monitoring/app-service/"
+	},
+	{
+		"dataSource": "aks",
+		"label": "Azure Kubernetes Service",
+		"tags": ["Azure"],
+		"imgUrl": "/Logos/azure-vm.svg",
+		"link": "http://localhost:3000/docs/azure-monitoring/aks/"
+	},
+	{
+		"dataSource": "azure-container-apps",
+		"label": "Container Apps",
+		"tags": ["Azure"],
+		"imgUrl": "/Logos/azure-vm.svg",
+		"link": "http://localhost:3000/docs/azure-monitoring/az-container-app/"
+	},
+	{
+		"dataSource": "azure-functions",
+		"label": "Azure Functions",
+		"tags": ["Azure"],
+		"imgUrl": "/Logos/azure-vm.svg",
+		"link": "http://localhost:3000/docs/azure-monitoring/az-fns/"
+	},
+	{
+		"dataSource": "sql-database-metrics",
+		"label": "Azure SQL Database Metrics",
+		"tags": ["Azure"],
+		"imgUrl": "/Logos/azure-sql-database-metrics.svg",
+		"link": "http://localhost:3000/docs/azure-monitoring/db-metrics/"
+	},
+	{
+		"dataSource": "azure-blob-storage",
+		"label": "Azure Blob storage",
+		"tags": ["Azure"],
+		"imgUrl": "/Logos/azure-blob-storage.svg",
+		"link": "http://localhost:3000/docs/azure-monitoring/az-blob-storage/"
+	},
+	{
+		"dataSource": "cloud-functions",
+		"label": "GCP Cloud functions",
+		"tags": ["GCP"],
+		"imgUrl": "/Logos/software-window.svg",
+		"link": "http://localhost:3000/docs/gcp-monitoring/gcp-fns/"
+	},
+	{
+		"dataSource": "app-engine",
+		"label": "GCP App Engine",
+		"tags": ["GCP"],
+		"imgUrl": "/Logos/software-window.svg",
+		"link": "http://localhost:3000/docs/gcp-monitoring/app-engine/"
+	},
+	{
+		"dataSource": "compute-engine",
+		"label": "GCP Compute Engine",
+		"tags": ["GCP"],
+		"link": "http://localhost:3000/docs/gcp-monitoring/compute-engine/"
+	},
+	{
+		"dataSource": "cloud-storage",
+		"label": "GCP Cloud Storage",
+		"tags": ["GCP"],
+		"link": "http://localhost:3000/docs/gcp-monitoring/gcs/"
+	},
+	{
+		"dataSource": "cloud-sql",
+		"label": "GCP Cloud SQL",
+		"tags": ["GCP"],
+		"link": "http://localhost:3000/docs/gcp-monitoring/cloud-sql/"
+	},
+	{
+		"dataSource": "cloud-load-balance",
+		"label": "GCP Cloud Load Balancer",
+		"tags": ["GCP"],
+		"link": "http://localhost:3000/docs/gcp-monitoring/gcp-clb/"
+	},
+	{
+		"dataSource": "vpc",
+		"label": "GCP VPC",
+		"tags": ["GCP"],
+		"link": "http://localhost:3000/docs/gcp-monitoring/vpc/"
+	},
+	{
+		"dataSource": "gke",
+		"label": "Google Kubernetes Engine",
+		"tags": ["GCP"],
+		"link": "http://localhost:3000/docs/gcp-monitoring/gke/"
+	},
+	{
+		"dataSource": "cloud-run",
+		"label": "GCP Cloud Run",
+		"tags": ["GCP"],
+		"link": "http://localhost:3000/docs/gcp-monitoring/cloud-run/"
+	},
+	{
+		"dataSource": "cloud-monitoring",
+		"label": "GCP Cloud Monitoring",
+		"tags": ["GCP"],
+		"link": "http://localhost:3000/docs/gcp-monitoring/cloud-monitoring/"
+	},
+	{
+		"dataSource": "llm-monitoring",
+		"label": "LLM Monitoring",
+		"tags": ["LLM Monitoring"],
+		"link": "http://localhost:3000/docs/community/llm-monitoring/"
+	},
+	{
+		"dataSource": "android-java",
+		"label": "Android Java",
+		"tags": ["mobile app monitoring"],
+		"link": "https://example.com"
+	},
+	{
+		"dataSource": "android-kotlin",
+		"label": "Android Kotlin",
+		"tags": ["mobile app monitoring"],
+		"link": "https://example.com"
+	},
+	{
+		"dataSource": "flutter",
+		"label": "Flutter",
+		"tags": ["mobile app monitoring"],
+		"link": "https://example.com"
+	},
+	{
+		"dataSource": "swift",
+		"label": "iOS Swift",
+		"tags": ["mobile app monitoring"],
+		"link": "https://example.com"
+	}
+]
