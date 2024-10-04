@@ -26,6 +26,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/inframetrics"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
@@ -109,6 +110,8 @@ type APIHandler struct {
 	Upgrader *websocket.Upgrader
 
 	UseLogsNewSchema bool
+
+	hostsRepo *inframetrics.HostsRepo
 }
 
 type APIHandlerOpts struct {
@@ -178,6 +181,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	querier := querier.NewQuerier(querierOpts)
 	querierv2 := querierV2.NewQuerier(querierOptsV2)
 
+	hostsRepo := inframetrics.NewHostsRepo(opts.Reader, querierv2)
+
 	aH := &APIHandler{
 		reader:                        opts.Reader,
 		appDao:                        opts.AppDao,
@@ -195,6 +200,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		querier:                       querier,
 		querierV2:                     querierv2,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
+		hostsRepo:                     hostsRepo,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -341,6 +347,14 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/hosts").Subrouter()
+	// TODO(srikanthccv): Remove open access after development is complete.
+	subRouter.HandleFunc("/attribute_keys", am.OpenAccess(aH.getHostAttributeKeys)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/attribute_values", am.OpenAccess(aH.getHostAttributeValues)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/list", am.OpenAccess(aH.getHostList)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
