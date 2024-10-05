@@ -36,3 +36,33 @@ type HostListResponse struct {
 	Records []HostListRecord `json:"records"`
 	Groups  []HostListGroup  `json:"groups"`
 }
+
+type ProcessesListRequest struct {
+	Start   int64             `json:"start"` // epoch time in ms
+	End     int64             `json:"end"`   // epoch time in ms
+	Filters *v3.FilterSet     `json:"filters"`
+	GroupBy []v3.AttributeKey `json:"groupBy"`
+}
+
+type ProcessesListRecord struct {
+	ProcessID      string            `json:"processID"`
+	ProcessName    string            `json:"processName"`
+	ProcessCMD     string            `json:"processCMD"`
+	ProcessCMDLine string            `json:"processCMDLine"`
+	ProcessMemory  float64           `json:"processMemory"`
+	ProcessCPU     float64           `json:"processCPU"`
+	Meta           map[string]string `json:"-"`
+}
+
+type ProcessesListGroup struct {
+	GroupValues      []string              `json:"groupValues"`
+	ProcessMemoryAvg float64               `json:"groupMemoryAvg"`
+	ProcessCPUAvg    float64               `json:"groupCPUAvg"`
+	Records          []ProcessesListRecord `json:"records"`
+}
+
+type ProcessesListResponse struct {
+	Type    string                `json:"type"`
+	Records []ProcessesListRecord `json:"records"`
+	Groups  []ProcessesListGroup  `json:"groups"`
+}

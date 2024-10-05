@@ -209,7 +209,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 
 	step := common.MinAllowedStepInterval(req.Start, req.End)
 
-	query := TableListQuery.Clone()
+	query := HostsTableListQuery.Clone()
 	query.Start = req.Start
 	query.End = req.End
 	query.Step = step
