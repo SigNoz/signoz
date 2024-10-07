@@ -44,8 +44,6 @@ function evaluateThresholdWithConvertedValue(
 		return evaluateCondition(thresholdOperator, convertedValue, thresholdValue);
 	}
 
-	// todo-sagar: what if invalid unit for conversion? - currently it just drop unit from comparison and compare the value
-
 	return evaluateCondition(thresholdOperator, value, thresholdValue);
 }
 
