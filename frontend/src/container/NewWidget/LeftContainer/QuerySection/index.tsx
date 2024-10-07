@@ -1,14 +1,17 @@
 import './QuerySection.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Tabs, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
-import { getDefaultWidgetData } from 'container/NewWidget/utils';
+import {
+	getDefaultWidgetData,
+	PANEL_TYPE_TO_QUERY_TYPES,
+} from 'container/NewWidget/utils';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
@@ -149,78 +152,49 @@ function QuerySection({
 		return config;
 	}, []);
 
-	const listItems = [
-		{
-			key: EQueryType.QUERY_BUILDER,
-			label: (
-				<Button className="nav-btns">
-					<Atom size={14} />
-					<Typography>Query Builder</Typography>
-				</Button>
-			),
-			tab: <Typography>Query Builder</Typography>,
-			children: (
-				<QueryBuilder
-					panelType={PANEL_TYPES.LIST}
-					filterConfigs={filterConfigs}
-					version={selectedDashboard?.data?.version || 'v3'}
-					isListViewPanel
-				/>
-			),
-		},
-	];
-
 	const items = useMemo(() => {
-		const baseItems = [
-			{
-				key: EQueryType.QUERY_BUILDER,
-				label: (
-					<Button className="nav-btns">
-						<Atom size={14} />
-						<Typography>Query Builder</Typography>
-					</Button>
-				),
-				tab: <Typography>Query Builder</Typography>,
-				children: (
+		const supportedQueryTypes = PANEL_TYPE_TO_QUERY_TYPES[selectedGraph] || [];
+
+		const queryTypeComponents = {
+			[EQueryType.QUERY_BUILDER]: {
+				icon: <Atom size={14} />,
+				label: 'Query Builder',
+				component: (
 					<QueryBuilder
 						panelType={selectedGraph}
 						filterConfigs={filterConfigs}
 						version={selectedDashboard?.data?.version || 'v3'}
+						isListViewPanel={selectedGraph === PANEL_TYPES.LIST}
 					/>
 				),
 			},
-			{
-				key: EQueryType.CLICKHOUSE,
-				label: (
-					<Button className="nav-btns">
-						<Terminal size={14} />
-						<Typography>ClickHouse Query</Typography>
-					</Button>
-				),
-				tab: <Typography>ClickHouse Query</Typography>,
-				children: <ClickHouseQueryContainer />,
+			[EQueryType.CLICKHOUSE]: {
+				icon: <Terminal size={14} />,
+				label: 'ClickHouse Query',
+				component: <ClickHouseQueryContainer />,
 			},
-		];
-
-		if (selectedGraph !== PANEL_TYPES.TABLE) {
-			baseItems.push({
-				key: EQueryType.PROM,
-				label: (
-					<Tooltip title="PromQL">
-						<Button className="nav-btns">
-							<PromQLIcon
-								fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
-							/>
-							<Typography>PromQL</Typography>
-						</Button>
-					</Tooltip>
+			[EQueryType.PROM]: {
+				icon: (
+					<PromQLIcon
+						fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
+					/>
 				),
-				tab: <Typography>PromQL</Typography>,
-				children: <PromQLQueryContainer />,
-			});
-		}
+				label: 'PromQL',
+				component: <PromQLQueryContainer />,
+			},
+		};
 
-		return baseItems;
+		return supportedQueryTypes.map((queryType) => ({
+			key: queryType,
+			label: (
+				<Button className="nav-btns">
+					{queryTypeComponents[queryType].icon}
+					<Typography>{queryTypeComponents[queryType].label}</Typography>
+				</Button>
+			),
+			tab: <Typography>{queryTypeComponents[queryType].label}</Typography>,
+			children: queryTypeComponents[queryType].component,
+		}));
 	}, [
 		selectedGraph,
 		filterConfigs,
@@ -291,7 +265,7 @@ function QuerySection({
 						</Button>
 					</span>
 				}
-				items={selectedGraph === PANEL_TYPES.LIST ? listItems : items}
+				items={items}
 			/>
 		</div>
 	);
