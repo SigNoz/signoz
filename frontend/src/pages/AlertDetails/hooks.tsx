@@ -161,7 +161,6 @@ export const useGetAlertRuleDetails = (): Props => {
 				id: parseInt(ruleId || '', 10),
 			}),
 		enabled: isValidRuleId,
-		refetchOnMount: false,
 		refetchOnWindowFocus: false,
 	});
 
@@ -369,9 +368,9 @@ export const useAlertRuleStatusToggle = ({
 }: {
 	ruleId: string;
 }): {
-	handleAlertStateToggle: (state: boolean) => void;
+	handleAlertStateToggle: () => void;
 } => {
-	const { isAlertRuleDisabled, setIsAlertRuleDisabled } = useAlertRule();
+	const { alertRuleState, setAlertRuleState } = useAlertRule();
 	const { notifications } = useNotifications();
 
 	const queryClient = useQueryClient();
@@ -381,16 +380,17 @@ export const useAlertRuleStatusToggle = ({
 		[REACT_QUERY_KEY.TOGGLE_ALERT_STATE, ruleId],
 		patchAlert,
 		{
-			onMutate: () => {
-				setIsAlertRuleDisabled((prev) => !prev);
-			},
-			onSuccess: () => {
+			onSuccess: (data) => {
+				setAlertRuleState(data?.payload?.state);
+
 				notifications.success({
-					message: `Alert has been ${isAlertRuleDisabled ? 'enabled' : 'disabled'}.`,
+					message: `Alert has been ${
+						data?.payload?.state === 'disabled' ? 'disabled' : 'enabled'
+					}.`,
 				});
 			},
 			onError: (error) => {
-				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS]);
+				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				handleError(error);
 			},
 		},
@@ -399,7 +399,7 @@ export const useAlertRuleStatusToggle = ({
 	const handleAlertStateToggle = (): void => {
 		const args = {
 			id: parseInt(ruleId, 10),
-			data: { disabled: !isAlertRuleDisabled },
+			data: { disabled: alertRuleState !== 'disabled' },
 		};
 		toggleAlertState(args);
 	};
