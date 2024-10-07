@@ -58,6 +58,21 @@ const calculateStartEndTime = (
 
 export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 	const { data, billAmount } = props;
+	// Added this to fix the issue where breakdown with one day data are causing the bars to spread across multiple days
+	data?.details?.breakdown?.forEach((breakdown: any) => {
+		if (breakdown?.dayWiseBreakdown?.breakdown?.length === 1) {
+			const currentDay = breakdown.dayWiseBreakdown.breakdown[0];
+			const nextDay = {
+				...currentDay,
+				timestamp: currentDay.timestamp + 86400,
+				count: 0,
+				size: 0,
+				quantity: 0,
+				total: 0,
+			};
+			breakdown.dayWiseBreakdown.breakdown.push(nextDay);
+		}
+	});
 	const graphCompatibleData = useMemo(
 		() => convertDataToMetricRangePayload(data),
 		[data],

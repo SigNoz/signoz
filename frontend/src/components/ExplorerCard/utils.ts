@@ -29,9 +29,9 @@ export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
 ) => {
 	const selectedView = data?.find((view) => view.uuid === viewKey);
 	if (selectedView) {
-		const { compositeQuery, name, uuid } = selectedView;
+		const { compositeQuery, name, uuid, extraData } = selectedView;
 		const query = mapQueryDataFromApi(compositeQuery);
-		return { query, name, uuid, panelType: compositeQuery.panelType };
+		return { query, name, uuid, panelType: compositeQuery.panelType, extraData };
 	}
 	return undefined;
 };

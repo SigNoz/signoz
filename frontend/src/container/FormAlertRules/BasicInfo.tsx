@@ -189,6 +189,7 @@ function BasicInfo({
 							checked={shouldBroadCastToAllChannels}
 							onChange={handleBroadcastToAllChannels}
 							disabled={noChannels || !!channels.loading}
+							data-testid="alert-broadcast-to-all-channels"
 						/>
 					</Tooltip>
 				</FormItemMedium>
