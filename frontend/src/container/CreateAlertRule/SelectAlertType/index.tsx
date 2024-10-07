@@ -55,6 +55,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 						onClick={(): void => {
 							onSelect(option.selection);
 						}}
+						data-testid={`alert-type-card-${option.selection}`}
 					>
 						{option.description}{' '}
 						<Typography.Link
