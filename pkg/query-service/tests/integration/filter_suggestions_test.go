@@ -138,6 +138,62 @@ func TestLogsFilterSuggestionsWithExistingFilter(t *testing.T) {
 	}
 }
 
+func TestResourceAttribsRankedHigherInLogsFilterSuggestions(t *testing.T) {
+	require := require.New(t)
+
+	tagKeys := []v3.AttributeKey{}
+	for _, k := range []string{"user_id", "user_email"} {
+		tagKeys = append(tagKeys, v3.AttributeKey{
+			Key:      k,
+			Type:     v3.AttributeKeyTypeTag,
+			DataType: v3.AttributeKeyDataTypeString,
+			IsColumn: false,
+		})
+	}
+
+	specialResourceAttrKeys := []v3.AttributeKey{}
+	for _, k := range []string{"service", "env"} {
+		specialResourceAttrKeys = append(specialResourceAttrKeys, v3.AttributeKey{
+			Key:      k,
+			Type:     v3.AttributeKeyTypeResource,
+			DataType: v3.AttributeKeyDataTypeString,
+			IsColumn: false,
+		})
+	}
+
+	otherResourceAttrKeys := []v3.AttributeKey{}
+	for _, k := range []string{"container_name", "container_id"} {
+		otherResourceAttrKeys = append(otherResourceAttrKeys, v3.AttributeKey{
+			Key:      k,
+			Type:     v3.AttributeKeyTypeResource,
+			DataType: v3.AttributeKeyDataTypeString,
+			IsColumn: false,
+		})
+	}
+
+	tb := NewFilterSuggestionsTestBed(t)
+
+	mockAttrKeysInDB := append(tagKeys, otherResourceAttrKeys...)
+	mockAttrKeysInDB = append(mockAttrKeysInDB, specialResourceAttrKeys...)
+
+	tb.mockAttribKeysQueryResponse(mockAttrKeysInDB)
+
+	expectedTopSuggestions := append(specialResourceAttrKeys, otherResourceAttrKeys...)
+	expectedTopSuggestions = append(expectedTopSuggestions, tagKeys...)
+
+	tb.mockAttribValuesQueryResponse(
+		expectedTopSuggestions[:2], [][]string{{"test"}, {"test"}},
+	)
+
+	suggestionsQueryParams := map[string]string{"examplesLimit": "2"}
+	suggestionsResp := tb.GetQBFilterSuggestionsForLogs(suggestionsQueryParams)
+
+	require.Equal(
+		expectedTopSuggestions,
+		suggestionsResp.AttributeKeys[:len(expectedTopSuggestions)],
+	)
+}
+
 // Mocks response for CH queries made by reader.GetLogAttributeKeys
 func (tb *FilterSuggestionsTestBed) mockAttribKeysQueryResponse(
 	attribsToReturn []v3.AttributeKey,
@@ -186,7 +242,7 @@ func (tb *FilterSuggestionsTestBed) mockAttribValuesQueryResponse(
 		{Type: "Nullable(Float64)", Name: "float64TagValue"},
 	}
 
-	expectedAttribKeysInQuery := []string{}
+	expectedAttribKeysInQuery := []any{}
 	mockResultRows := [][]any{}
 	for idx, attrib := range expectedAttribs {
 		expectedAttribKeysInQuery = append(expectedAttribKeysInQuery, attrib.Key)
@@ -198,8 +254,8 @@ func (tb *FilterSuggestionsTestBed) mockAttribValuesQueryResponse(
 	}
 
 	tb.mockClickhouse.ExpectQuery(
-		"select.*tagKey.*stringTagValue.*int64TagValue.*float64TagValue.*distributed_tag_attributes.*tagKey.*in.*",
-	).WithArgs(expectedAttribKeysInQuery).WillReturnRows(mockhouse.NewRows(resultCols, mockResultRows))
+		"select.*tagKey.*stringTagValue.*int64TagValue.*float64TagValue.*distributed_tag_attributes.*tagKey",
+	).WithArgs(expectedAttribKeysInQuery...).WillReturnRows(mockhouse.NewRows(resultCols, mockResultRows))
 }
 
 type FilterSuggestionsTestBed struct {

@@ -70,7 +70,7 @@ export const useFetchKeysAndValues = (
 	const queryFiltersWithoutId = useMemo(
 		() => ({
 			...query.filters,
-			items: query.filters.items.map((item) => {
+			items: query.filters?.items?.map((item) => {
 				const filterWithoutId = cloneDeep(item);
 				unset(filterWithoutId, 'id');
 				return filterWithoutId;

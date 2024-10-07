@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
@@ -677,6 +678,111 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 			matchType:   "4", // InTotal
 			target:      20.0,
 		},
+		// Test cases for Last
+		// greater than last
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "1", // Greater Than
+			matchType:           "5", // Last
+			target:              5.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "1", // Greater Than
+			matchType:   "5", // Last
+			target:      20.0,
+		},
+		// less than last
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "2", // Less Than
+			matchType:           "5", // Last
+			target:              15.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "2", // Less Than
+			matchType:   "5", // Last
+			target:      5.0,
+		},
+		// equals last
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "3", // Equals
+			matchType:           "5", // Last
+			target:              10.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "3", // Equals
+			matchType:   "5", // Last
+			target:      5.0,
+		},
+		// not equals last
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert:         true,
+			compareOp:           "4", // Not Equals
+			matchType:           "5", // Last
+			target:              5.0,
+			expectedAlertSample: v3.Point{Value: 10.0},
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "4", // Not Equals
+			matchType:   "5", // Last
+			target:      10.0,
+		},
 	}
 
 	fm := featureManager.StartManager()
@@ -695,7 +801,7 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		smpl, shoulAlert := rule.shouldAlert(c.values)
+		smpl, shoulAlert := rule.ShouldAlert(c.values)
 		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
 		if shoulAlert {
 			assert.Equal(t, c.expectedAlertSample.Value, smpl.V, "Test case %d", idx)
@@ -739,7 +845,7 @@ func TestNormalizeLabelName(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		assert.Equal(t, c.expected, normalizeLabelName(c.labelName))
+		assert.Equal(t, c.expected, common.NormalizeLabelName(c.labelName))
 	}
 }
 
@@ -902,9 +1008,9 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
 
-		sample, shoulAlert := rule.shouldAlert(c.values)
+		sample, shoulAlert := rule.ShouldAlert(c.values)
 		for name, value := range c.values.Labels {
-			assert.Equal(t, value, sample.Metric.Get(normalizeLabelName(name)))
+			assert.Equal(t, value, sample.Metric.Get(name))
 		}
 
 		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
@@ -1138,7 +1244,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true)
-		rule.temporalityMap = map[string]map[v3.Temporality]bool{
+		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
 			},
@@ -1155,7 +1261,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
 		if c.expectAlerts != 0 {
 			foundCount := 0
-			for _, item := range rule.active {
+			for _, item := range rule.Active {
 				for _, summary := range c.summaryAny {
 					if strings.Contains(item.Annotations.Get("summary"), summary) {
 						foundCount++
@@ -1237,7 +1343,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true)
-		rule.temporalityMap = map[string]map[v3.Temporality]bool{
+		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
 			},
@@ -1252,7 +1358,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		}
 
 		assert.Equal(t, 1, retVal.(int), "case %d", idx)
-		for _, item := range rule.active {
+		for _, item := range rule.Active {
 			if c.expectNoData {
 				assert.True(t, strings.Contains(item.Labels.Get(labels.AlertNameLabel), "[No data]"), "case %d", idx)
 			} else {
@@ -1303,12 +1409,23 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		t.Errorf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 
+	metaCols := make([]cmock.ColumnType, 0)
+	metaCols = append(metaCols, cmock.ColumnType{Name: "DISTINCT(tagKey)", Type: "String"})
+	metaCols = append(metaCols, cmock.ColumnType{Name: "tagType", Type: "String"})
+	metaCols = append(metaCols, cmock.ColumnType{Name: "dataType", Type: "String"})
+	metaCols = append(metaCols, cmock.ColumnType{Name: "isColumn", Type: "Bool"})
+
 	cols := make([]cmock.ColumnType, 0)
 	cols = append(cols, cmock.ColumnType{Name: "value", Type: "Float64"})
 	cols = append(cols, cmock.ColumnType{Name: "attr", Type: "String"})
 	cols = append(cols, cmock.ColumnType{Name: "timestamp", Type: "String"})
 
 	for idx, c := range testCases {
+		metaRows := cmock.NewRows(metaCols, c.metaValues)
+		mock.
+			ExpectQuery("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM archiveNamespace.span_attributes_keys").
+			WillReturnRows(metaRows)
+
 		rows := cmock.NewRows(cols, c.values)
 
 		// We are testing the eval logic after the query is run
@@ -1331,7 +1448,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true)
-		rule.temporalityMap = map[string]map[v3.Temporality]bool{
+		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
 			},
@@ -1349,7 +1466,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 			assert.Equal(t, 0, retVal.(int), "case %d", idx)
 		} else {
 			assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
-			for _, item := range rule.active {
+			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
 					if name == "related_traces" {
 						assert.NotEmpty(t, value, "case %d", idx)
@@ -1402,12 +1519,38 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		t.Errorf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 
+	attrMetaCols := make([]cmock.ColumnType, 0)
+	attrMetaCols = append(attrMetaCols, cmock.ColumnType{Name: "name", Type: "String"})
+	attrMetaCols = append(attrMetaCols, cmock.ColumnType{Name: "dataType", Type: "String"})
+
+	resourceMetaCols := make([]cmock.ColumnType, 0)
+	resourceMetaCols = append(resourceMetaCols, cmock.ColumnType{Name: "name", Type: "String"})
+	resourceMetaCols = append(resourceMetaCols, cmock.ColumnType{Name: "dataType", Type: "String"})
+
+	createTableCols := make([]cmock.ColumnType, 0)
+	createTableCols = append(createTableCols, cmock.ColumnType{Name: "statement", Type: "String"})
+
 	cols := make([]cmock.ColumnType, 0)
 	cols = append(cols, cmock.ColumnType{Name: "value", Type: "Float64"})
 	cols = append(cols, cmock.ColumnType{Name: "attr", Type: "String"})
 	cols = append(cols, cmock.ColumnType{Name: "timestamp", Type: "String"})
 
 	for idx, c := range testCases {
+		attrMetaRows := cmock.NewRows(attrMetaCols, c.attrMetaValues)
+		mock.
+			ExpectSelect("SELECT DISTINCT name, datatype from signoz_logs.distributed_logs_attribute_keys group by name, datatype").
+			WillReturnRows(attrMetaRows)
+
+		resourceMetaRows := cmock.NewRows(resourceMetaCols, c.resourceMetaValues)
+		mock.
+			ExpectSelect("SELECT DISTINCT name, datatype from signoz_logs.distributed_logs_resource_keys group by name, datatype").
+			WillReturnRows(resourceMetaRows)
+
+		createTableRows := cmock.NewRows(createTableCols, c.createTableValues)
+		mock.
+			ExpectSelect("SHOW CREATE TABLE signoz_logs.logs").
+			WillReturnRows(createTableRows)
+
 		rows := cmock.NewRows(cols, c.values)
 
 		// We are testing the eval logic after the query is run
@@ -1430,7 +1573,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true)
-		rule.temporalityMap = map[string]map[v3.Temporality]bool{
+		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
 			},
@@ -1448,7 +1591,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			assert.Equal(t, 0, retVal.(int), "case %d", idx)
 		} else {
 			assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
-			for _, item := range rule.active {
+			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
 					if name == "related_logs" {
 						assert.NotEmpty(t, value, "case %d", idx)

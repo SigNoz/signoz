@@ -234,6 +234,8 @@ function WidgetGraphComponent({
 		});
 	};
 
+	const [searchTerm, setSearchTerm] = useState<string>('');
+
 	const loadingState =
 		(queryResponse.isLoading || queryResponse.status === 'idle') &&
 		widget.panelTypes !== PANEL_TYPES.LIST;
@@ -317,6 +319,7 @@ function WidgetGraphComponent({
 					isWarning={isWarning}
 					isFetchingResponse={isFetchingResponse}
 					tableProcessedDataRef={tableProcessedDataRef}
+					setSearchTerm={setSearchTerm}
 				/>
 			</div>
 			{queryResponse.isLoading && widget.panelTypes !== PANEL_TYPES.LIST && (
@@ -337,6 +340,7 @@ function WidgetGraphComponent({
 						onDragSelect={onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
 						customTooltipElement={customTooltipElement}
+						searchTerm={searchTerm}
 					/>
 				</div>
 			)}

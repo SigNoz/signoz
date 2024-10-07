@@ -103,6 +103,7 @@ function RuleOptions({
 			<Select.Option value="2">{t('option_allthetimes')}</Select.Option>
 			<Select.Option value="3">{t('option_onaverage')}</Select.Option>
 			<Select.Option value="4">{t('option_intotal')}</Select.Option>
+			<Select.Option value="5">{t('option_last')}</Select.Option>
 		</InlineSelect>
 	);
 
@@ -320,6 +321,45 @@ function RuleOptions({
 											/>
 										</Form.Item>
 										<Typography.Text>{t('text_for')}</Typography.Text>
+									</Space>
+								</VerticalLine>
+
+								<VerticalLine>
+									<Space direction="horizontal" align="center">
+										<Form.Item noStyle name={['condition', 'requireMinPoints']}>
+											<Checkbox
+												checked={alertDef?.condition?.requireMinPoints}
+												onChange={(e): void => {
+													setAlertDef({
+														...alertDef,
+														condition: {
+															...alertDef.condition,
+															requireMinPoints: e.target.checked,
+														},
+													});
+												}}
+											/>
+										</Form.Item>
+										<Typography.Text>{t('text_require_min_points')}</Typography.Text>
+
+										<Form.Item noStyle name={['condition', 'requiredNumPoints']}>
+											<InputNumber
+												min={1}
+												value={alertDef?.condition?.requiredNumPoints}
+												onChange={(value): void => {
+													setAlertDef({
+														...alertDef,
+														condition: {
+															...alertDef.condition,
+															requiredNumPoints: Number(value) || 0,
+														},
+													});
+												}}
+												type="number"
+												onWheel={(e): void => e.currentTarget.blur()}
+											/>
+										</Form.Item>
+										<Typography.Text>{t('text_num_points')}</Typography.Text>
 									</Space>
 								</VerticalLine>
 							</Space>

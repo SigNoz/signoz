@@ -16,12 +16,6 @@
 			width: 100%;
 		}
 	}
-
-	&.docked {
-		.app-content {
-			width: calc(100% - 240px);
-		}
-	}
 }
 
 .chat-support-gateway {
