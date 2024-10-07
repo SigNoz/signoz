@@ -30,7 +30,6 @@ const ROUTES = {
 	ALL_ERROR: '/exceptions',
 	ERROR_DETAIL: '/error-detail',
 	VERSION: '/status',
-	MY_SETTINGS: '/my-settings',
 	SETTINGS: '/settings',
 	ORG_SETTINGS: '/settings/org-settings',
 	API_KEYS: '/settings/access-tokens',
@@ -58,6 +57,7 @@ const ROUTES = {
 	INTEGRATIONS: '/integrations',
 	MESSAGING_QUEUES: '/messaging-queues',
 	MESSAGING_QUEUES_DETAIL: '/messaging-queues/detail',
+	USER_SETTINGS: '/settings/user-settings',
 } as const;
 
 export default ROUTES;

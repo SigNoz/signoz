@@ -55,7 +55,7 @@ export const ErrorTextContainer = styled.div`
 		margin-top: 2rem;
 		margin-bottom: 2rem;
 		display: flex;
-		align-items: center;
+		justify-content: flex-end;
 		gap: 1rem;
 
 		> article {
@@ -96,5 +96,4 @@ export const ActionItemsContainer = styled.div`
 	flex-direction: column;
 	align-items: center;
 	gap: 1rem;
-	margin-top: 10%;
 `;

@@ -65,6 +65,12 @@ export const trySignozCloudMenuItem: SidebarItem = {
 	icon: <Cloudy size={16} />,
 };
 
+export const settingsMenuItem: SidebarItem = {
+	key: ROUTES.SETTINGS,
+	label: 'Settings',
+	icon: <Settings size={16} />,
+};
+
 const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.APPLICATION,
@@ -117,11 +123,6 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.BILLING,
 		label: 'Billing',
 		icon: <Receipt size={16} />,
-	},
-	{
-		key: ROUTES.SETTINGS,
-		label: 'Settings',
-		icon: <Settings size={16} />,
 	},
 ];
 

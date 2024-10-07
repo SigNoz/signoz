@@ -1,10 +1,63 @@
-.settings-page-header {
-    color: var(--bg-vanilla-400);
+.settings-page {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 20px;
-    margin: 18px 0 16px 6px;
+    flex-direction: column;
+    height: 100%;
+
+    &-header {
+        color: var(--bg-vanilla-400);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 20px;
+        margin: 18px 0 24px 32px;
+    }
+
+    &-content {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+
+        .settings-menu-item {
+            color: var(--bg-vanilla-400);
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 0.14px;
+            height: 32px;
+        }
+          .settings-menu {
+            height: 100%;
+            border-right: 1px solid var(--bg-slate-400);
+          }
+          
+          .settings-content {
+            padding: 50px 10px 24px 40px;
+            margin: 0;
+            min-height: 280px;
+            overflow-y: scroll;
+
+            &::-webkit-scrollbar {
+                display: none;
+            }
+
+            -ms-overflow-style: none;  
+            scrollbar-width: none; 
+          }
+    }
+}
+
+.lightMode {
+    .settings-page {
+        &-header {
+            color: var(--bg-slate-400);
+        }
+
+        &-content {
+            .settings-menu-item {
+                color: var(--bg-slate-400);
+            }
+        }
+    }
+    
 }

@@ -20,7 +20,6 @@ import {
 	ChevronRightCircle,
 	PanelRight,
 	RocketIcon,
-	UserCircle,
 } from 'lucide-react';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,6 +37,7 @@ import defaultMenuItems, {
 	helpSupportMenuItem,
 	inviteMemberMenuItem,
 	manageLicenseMenuItem,
+	settingsMenuItem,
 	shortcutMenuItem,
 	slackSupportMenuItem,
 	trySignozCloudMenuItem,
@@ -67,7 +67,6 @@ function SideNav({
 
 	const { pathname, search } = useLocation();
 	const {
-		user,
 		role,
 		featureResponse,
 		currentVersion,
@@ -76,12 +75,6 @@ function SideNav({
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [licenseTag, setLicenseTag] = useState('');
-
-	const userSettingsMenuItem = {
-		key: ROUTES.MY_SETTINGS,
-		label: user?.name || 'User',
-		icon: <UserCircle size={16} />,
-	};
 
 	const [userManagementMenuItems, setUserManagementMenuItems] = useState<
 		UserManagementMenuItems[]
@@ -487,23 +480,18 @@ function SideNav({
 							/>
 						)}
 
-						{user && (
-							<NavItem
-								key={ROUTES.MY_SETTINGS}
-								item={userSettingsMenuItem}
-								isActive={activeMenuKey === userSettingsMenuItem?.key}
-								onClick={(event: MouseEvent): void => {
-									handleUserManagentMenuItemClick(
-										userSettingsMenuItem?.key as string,
-										event,
-									);
-									logEvent('Sidebar: Menu clicked', {
-										menuRoute: userSettingsMenuItem?.key,
-										menuLabel: 'User',
-									});
-								}}
-							/>
-						)}
+						<NavItem
+							key={ROUTES.SETTINGS}
+							item={settingsMenuItem}
+							isActive={activeMenuKey === settingsMenuItem?.key}
+							onClick={(event: MouseEvent): void => {
+								handleUserManagentMenuItemClick(settingsMenuItem?.key as string, event);
+								logEvent('Sidebar: Menu clicked', {
+									menuRoute: settingsMenuItem?.key,
+									menuLabel: settingsMenuItem?.label,
+								});
+							}}
+						/>
 
 						<div className="collapse-expand-handlers" onClick={onCollapse}>
 							{collapsed ? (

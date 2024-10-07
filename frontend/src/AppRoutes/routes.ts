@@ -272,11 +272,11 @@ const routes: AppRoutes[] = [
 		key: 'API_KEYS',
 	},
 	{
-		path: ROUTES.MY_SETTINGS,
+		path: ROUTES.USER_SETTINGS,
 		exact: true,
 		component: MySettings,
 		isPrivate: true,
-		key: 'MY_SETTINGS',
+		key: 'USER_SETTINGS',
 	},
 	{
 		path: ROUTES.LOGS,

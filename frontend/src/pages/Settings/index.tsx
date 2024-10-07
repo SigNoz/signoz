@@ -1,5 +1,6 @@
 import './Settings.styles.scss';
 
+import { Divider } from 'antd';
 import { FeatureKeys } from 'constants/features';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useFeatureFlag from 'hooks/useFeatureFlag';
@@ -32,12 +33,15 @@ function SettingsPage(): JSX.Element {
 	);
 
 	return (
-		<>
+		<div className="settings-page">
 			<div className="settings-page-header">
-				<Wrench size={16} /> Settings
+				<Wrench size={14} /> Settings
 			</div>
-			<SettingsNavItems routes={routes} activeKey={pathname} history={history} />
-		</>
+			<Divider style={{ margin: '0' }} />
+			<div className="settings-page-content">
+				<SettingsNavItems routes={routes} activeKey={pathname} history={history} />
+			</div>
+		</div>
 	);
 }
 

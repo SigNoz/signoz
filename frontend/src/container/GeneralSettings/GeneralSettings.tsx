@@ -1,10 +1,11 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { LoadingOutlined } from '@ant-design/icons';
+import { Color } from '@signozhq/design-tokens';
 import { Button, Card, Col, Divider, Modal, Row, Spin, Typography } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
-import TextToolTip from 'components/TextToolTip';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import find from 'lodash-es/find';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
@@ -43,6 +44,7 @@ function GeneralSettings({
 	logsTtlValuesRefetch,
 }: GeneralSettingsProps): JSX.Element {
 	const { t } = useTranslation(['generalSettings']);
+	const isDarkMode = useIsDarkMode();
 	const [modalMetrics, setModalMetrics] = useState<boolean>(false);
 	const [modalTraces, setModalTraces] = useState<boolean>(false);
 	const [modalLogs, setModalLogs] = useState<boolean>(false);
@@ -524,7 +526,7 @@ function GeneralSettings({
 		) {
 			return (
 				<Fragment key={category.name}>
-					<Col xs={22} xl={11} key={category.name} style={{ margin: '0.5rem' }}>
+					<Col xs={22} key={category.name} style={{ margin: '0.5rem' }}>
 						<Card style={{ height: '100%' }}>
 							<Typography.Title style={{ margin: 0 }} level={3}>
 								{category.name}
@@ -595,17 +597,35 @@ function GeneralSettings({
 		<>
 			{Element}
 			<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
-				<ErrorTextContainer>
-					{!isCloudUserVal && (
-						<TextToolTip
-							{...{
-								text: `More details on how to set retention period`,
-								url: 'https://signoz.io/docs/userguide/retention-period/',
-							}}
-						/>
-					)}
-					{errorText && <ErrorText>{errorText}</ErrorText>}
-				</ErrorTextContainer>
+				{!isCloudUserVal && (
+					<div
+						style={{
+							marginBottom: '1rem',
+							display: 'flex',
+							gap: '0.5rem',
+							background: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_ROBIN_100,
+							padding: '0.5rem',
+							borderRadius: '0.5rem',
+							alignItems: 'center',
+							marginLeft: '.5rem',
+							width: 'fit-content',
+						}}
+					>
+						More details on how to set retention period
+						<a
+							href="https://signoz.io/docs/userguide/retention-period/"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							here
+						</a>
+					</div>
+				)}
+				{errorText && (
+					<ErrorTextContainer>
+						<ErrorText>{errorText}</ErrorText>
+					</ErrorTextContainer>
+				)}
 
 				<Row justify="start">{renderConfig}</Row>
 

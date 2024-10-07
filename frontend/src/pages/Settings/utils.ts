@@ -10,6 +10,7 @@ import {
 	ingestionSettings,
 	multiIngestionSettings,
 	organizationSettings,
+	userSettings,
 } from './config';
 
 export const getRoutes = (
@@ -38,6 +39,7 @@ export const getRoutes = (
 	}
 
 	settings.push(...alertChannels(t));
+	settings.push(...userSettings(t));
 
 	if ((isCloudUser() || isEECloudUser()) && userRole === USER_ROLES.ADMIN) {
 		settings.push(...apiKeys(t));

@@ -1,3 +1,5 @@
+import './Settings.styles.scss';
+
 import { Layout, Menu } from 'antd';
 import { Content } from 'antd/es/layout/layout';
 import { TabRoutes } from 'components/RouteTab/types';
@@ -21,38 +23,31 @@ function SettingsNavItems({
 		history.push(key);
 	};
 
+	const renderComponent = (): JSX.Element | null => {
+		const selectedRoute = routes.find((route) => route.key === currentComponent);
+		return selectedRoute?.Component ? <selectedRoute.Component /> : null;
+	};
+
 	return (
-		<Layout style={{ minHeight: '100vh' }}>
-			<Sider width={200} style={{ background: '#fff' }}>
+		<Layout className="settings-layout">
+			<Sider width={240}>
 				<Menu
 					mode="inline"
 					selectedKeys={[currentComponent]}
-					style={{ height: '100%', borderRight: 0 }}
+					className="settings-menu"
 				>
-					{routes.map((route) => {
-						console.log(route);
-						return (
-							<Menu.Item
-								key={route.key}
-								onClick={(): void => handleMenuItemClick(route.key)}
-							>
-								{route.name}
-							</Menu.Item>
-						);
-					})}
+					{routes.map((route) => (
+						<Menu.Item
+							key={route.key}
+							onClick={(): void => handleMenuItemClick(route.key)}
+						>
+							{route.name}
+						</Menu.Item>
+					))}
 				</Menu>
 			</Sider>
-			<Layout style={{ padding: '0 24px 24px' }}>
-				<Content
-					style={{
-						padding: 24,
-						margin: 0,
-						minHeight: 280,
-					}}
-				>
-					{routes.find((route) => route.key === currentComponent)?.Component &&
-						routes.find((route) => route.key === currentComponent)?.Component()}
-				</Content>
+			<Layout className="settings-content-layout">
+				<Content className="settings-content">{renderComponent()}</Content>
 			</Layout>
 		</Layout>
 	);
