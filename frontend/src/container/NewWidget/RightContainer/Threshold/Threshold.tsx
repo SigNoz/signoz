@@ -312,7 +312,7 @@ function Threshold({
 					{isEditMode ? (
 						<Select
 							defaultValue={unit}
-							options={unitOptions}
+							options={unitOptions(columnUnits?.[tableSelectedOption] || '')}
 							onChange={handleUnitChange}
 							showSearch
 							className="unit-selection"

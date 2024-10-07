@@ -589,3 +589,10 @@ export function convertUnit(
 
 	return value * conversionFactor;
 }
+
+export const getCategoryName = (unitId: string): CategoryNames | null => {
+	const foundCategory = dataTypeCategories.find((category) =>
+		category.formats.some((format) => format.id === unitId),
+	);
+	return foundCategory ? (foundCategory.name as CategoryNames) : null;
+};
