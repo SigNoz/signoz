@@ -1,10 +1,8 @@
 import React, { createContext, useContext, useState } from 'react';
 
 interface AlertRuleContextType {
-	isAlertRuleDisabled: boolean | undefined;
-	setIsAlertRuleDisabled: React.Dispatch<
-		React.SetStateAction<boolean | undefined>
-	>;
+	alertRuleState: string | undefined;
+	setAlertRuleState: React.Dispatch<React.SetStateAction<string | undefined>>;
 }
 
 const AlertRuleContext = createContext<AlertRuleContextType | undefined>(
@@ -16,14 +14,13 @@ function AlertRuleProvider({
 }: {
 	children: React.ReactNode;
 }): JSX.Element {
-	const [isAlertRuleDisabled, setIsAlertRuleDisabled] = useState<
-		boolean | undefined
-	>(undefined);
-
-	const value = React.useMemo(
-		() => ({ isAlertRuleDisabled, setIsAlertRuleDisabled }),
-		[isAlertRuleDisabled],
+	const [alertRuleState, setAlertRuleState] = useState<string | undefined>(
+		undefined,
 	);
+
+	const value = React.useMemo(() => ({ alertRuleState, setAlertRuleState }), [
+		alertRuleState,
+	]);
 
 	return (
 		<AlertRuleContext.Provider value={value}>
