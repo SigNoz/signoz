@@ -9,7 +9,7 @@ import AppReducer from 'types/reducer/app';
 export default function OnboardingIngestionDetails(): JSX.Element {
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const { data: ingestionData, isFetching } = useQuery({
+	const { data: ingestionData } = useQuery({
 		queryFn: getIngestionData,
 		queryKey: ['getIngestionData', user?.userId],
 	});
@@ -19,8 +19,6 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 		ingestionData.payload &&
 		Array.isArray(ingestionData.payload) &&
 		ingestionData?.payload[0];
-
-	console.log('injectionDataPayload', injectionDataPayload);
 
 	return (
 		<div className="configure-product-ingestion-section-content">
