@@ -6,7 +6,6 @@ import {
 	CopyOutlined,
 	DeleteOutlined,
 	EditFilled,
-	ExclamationCircleOutlined,
 	FullscreenOutlined,
 	InfoCircleOutlined,
 	MoreOutlined,
@@ -22,7 +21,7 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { X } from 'lucide-react';
+import { CircleX, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
@@ -265,7 +264,7 @@ function WidgetHeader({
 								placement={errorTooltipPosition}
 								className="widget-api-actions"
 							>
-								<ExclamationCircleOutlined />
+								<CircleX size={20} />
 							</Tooltip>
 						)}
 
