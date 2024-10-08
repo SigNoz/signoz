@@ -232,6 +232,12 @@ function App(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [user]);
 
+	useEffect(() => {
+		if (!isCloudUserVal && !isEECloudUser()) {
+			console.info('We are hiring! https://jobs.gem.com/signoz');
+		}
+	}, [isCloudUserVal]);
+
 	return (
 		<ConfigProvider theme={themeConfig}>
 			<Router history={history}>
