@@ -13,15 +13,15 @@ var defaultStepInterval int64 = 60
 func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) (*v3.QueryRangeParamsV3, error) {
 
 	// ToDo: propagate this through APIs when there are different handlers
-	queueType := kafkaQueue
+	queueType := KafkaQueue
 
-	var cq *v3.CompositeQuery
-
-	chq, err := buildClickHouseQuery(messagingQueue, queueType, queryContext)
+	chq, err := BuildClickHouseQuery(messagingQueue, queueType, queryContext)
 
 	if err != nil {
 		return nil, err
 	}
+
+	var cq *v3.CompositeQuery
 
 	cq, err = buildCompositeQuery(chq, queryContext)
 
@@ -35,6 +35,14 @@ func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) 
 	}
 
 	return queryRangeParams, nil
+}
+
+func PrepareClikhouseQueries(messagingQueue *MessagingQueue, queryContext string) (*v3.ClickHouseQuery, error) {
+	queueType := KafkaQueue
+
+	chq, err := BuildClickHouseQuery(messagingQueue, queueType, queryContext)
+
+	return chq, err
 }
 
 func buildClickHouseQueryNetwork(messagingQueue *MessagingQueue, queueType string) (*v3.ClickHouseQuery, error) {
@@ -137,7 +145,7 @@ func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCac
 
 func BuildQRParamsNetwork(messagingQueue *MessagingQueue, queryContext string, attributeCache *Clients) (*v3.QueryRangeParamsV3, error) {
 
-	queueType := kafkaQueue
+	queueType := KafkaQueue
 
 	unixMilliStart := messagingQueue.Start / 1000000
 	unixMilliEnd := messagingQueue.End / 1000000
@@ -177,17 +185,22 @@ func BuildQRParamsNetwork(messagingQueue *MessagingQueue, queryContext string, a
 	return queryRangeParams, nil
 }
 
-func buildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, queryContext string) (*v3.ClickHouseQuery, error) {
+func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, queryContext string) (*v3.ClickHouseQuery, error) {
 	start := messagingQueue.Start
 	end := messagingQueue.End
-	topic, ok := messagingQueue.Variables["topic"]
-	if !ok {
-		return nil, fmt.Errorf("invalid type for Topic")
-	}
 
-	partition, ok := messagingQueue.Variables["partition"]
-	if !ok {
-		return nil, fmt.Errorf("invalid type for Partition")
+	var topic, partition string
+
+	if queryContext == "producer" || queryContext == "consumer" {
+		var ok bool
+		topic, ok = messagingQueue.Variables["topic"]
+		if !ok {
+			return nil, fmt.Errorf("invalid type for Topic")
+		}
+		partition, ok = messagingQueue.Variables["partition"]
+		if !ok {
+			return nil, fmt.Errorf("invalid type for Partition")
+		}
 	}
 
 	var query string
@@ -199,6 +212,12 @@ func buildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 			return nil, fmt.Errorf("invalid type for consumer group")
 		}
 		query = generateConsumerSQL(start, end, topic, partition, consumerGroup, queueType)
+	} else if queryContext == "onboard_producers" {
+		query = onboardProducersSQL(start, end, queueType)
+	} else if queryContext == "onboard_consumers" {
+		query = onboardConsumerSQL(start, end, queueType)
+	} else if queryContext == "onboard_kafka" {
+		query = onboardKafkaSQL(start, end)
 	}
 
 	return &v3.ClickHouseQuery{

@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/SigNoz/signoz-otel-collector/exporter/clickhouselogsexporter/logsv2"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
@@ -36,26 +37,7 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 	suggestions.AttributeKeys = attribKeysResp.AttributeKeys
 
 	// Rank suggested attributes
-	slices.SortFunc(suggestions.AttributeKeys, func(a v3.AttributeKey, b v3.AttributeKey) int {
-
-		// Higher score => higher rank
-		attribKeyScore := func(a v3.AttributeKey) int {
-
-			// Scoring criteria is expected to get more sophisticated in follow up changes
-			if a.Type == v3.AttributeKeyTypeResource {
-				return 2
-			}
-
-			if a.Type == v3.AttributeKeyTypeTag {
-				return 1
-			}
-
-			return 0
-		}
-
-		// To sort in descending order of score the return value must be negative when a > b
-		return attribKeyScore(b) - attribKeyScore(a)
-	})
+	attribRanker.sort(suggestions.AttributeKeys)
 
 	// Put together suggested example queries.
 
@@ -267,4 +249,60 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 	}
 
 	return result, nil
+}
+
+var attribRanker = newRankingStrategy()
+
+func newRankingStrategy() attribRankingStrategy {
+	// Some special resource attributes should get ranked above all others.
+	interestingResourceAttrsInDescRank := []string{
+		"service", "service.name", "env", "k8s.namespace.name",
+	}
+
+	// Synonyms of interesting attributes should come next
+	resourceHierarchy := logsv2.ResourceHierarchy()
+	for _, attr := range []string{
+		"service.name",
+		"deployment.environment",
+		"k8s.namespace.name",
+		"k8s.pod.name",
+		"k8s.container.name",
+		"k8s.node.name",
+	} {
+		interestingResourceAttrsInDescRank = append(
+			interestingResourceAttrsInDescRank, resourceHierarchy.Synonyms(attr)...,
+		)
+	}
+
+	interestingResourceAttrsInAscRank := interestingResourceAttrsInDescRank[:]
+	slices.Reverse(interestingResourceAttrsInAscRank)
+
+	return attribRankingStrategy{
+		interestingResourceAttrsInAscRank: interestingResourceAttrsInAscRank,
+	}
+}
+
+type attribRankingStrategy struct {
+	interestingResourceAttrsInAscRank []string
+}
+
+// The higher the score, the higher the rank
+func (s *attribRankingStrategy) score(attrib v3.AttributeKey) int {
+	if attrib.Type == v3.AttributeKeyTypeResource {
+		// 3 + (-1) if attrib.Key is not an interesting resource attribute
+		return 3 + slices.Index(s.interestingResourceAttrsInAscRank, attrib.Key)
+	}
+
+	if attrib.Type == v3.AttributeKeyTypeTag {
+		return 1
+	}
+
+	return 0
+}
+
+func (s *attribRankingStrategy) sort(attribKeys []v3.AttributeKey) {
+	slices.SortFunc(attribKeys, func(a v3.AttributeKey, b v3.AttributeKey) int {
+		// To sort in descending order of score the return value must be negative when a > b
+		return s.score(b) - s.score(a)
+	})
 }
