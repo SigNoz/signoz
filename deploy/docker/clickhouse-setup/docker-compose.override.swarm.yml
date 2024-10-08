@@ -1,0 +1,66 @@
+version: '3.8'
+
+x-swarm-common: &swarm-common
+  deploy:
+    mode: replicated
+    replicas: 1
+    update_config:
+      parallelism: 1
+      order: stop-first
+    restart_policy:
+      condition: on-failure
+
+services:
+  zookeeper-1:
+    <<: *swarm-common
+    deploy:
+      replicas: 1
+
+  clickhouse:
+    <<: *swarm-common
+    deploy:
+      replicas: 1
+
+  alertmanager:
+    <<: *swarm-common
+    deploy:
+      replicas: 1
+
+  query-service:
+    <<: *swarm-common
+    deploy:
+      replicas: 1
+
+  frontend:
+    <<: *swarm-common
+    deploy:
+      replicas: 1
+
+  otel-collector-migrator:
+    <<: *swarm-common
+    deploy:
+      replicas: 1
+
+  otel-collector:
+    <<: *swarm-common
+    deploy:
+      replicas: 1
+
+  logspout:
+    <<: *swarm-common
+    deploy:
+      replicas: 1
+
+  hotrod:
+    <<: *swarm-common
+    deploy:
+      replicas: 1
+
+  load-hotrod:
+    <<: *swarm-common
+    deploy:
+      replicas: 1
+
+networks:
+  default:
+    driver: overlay
