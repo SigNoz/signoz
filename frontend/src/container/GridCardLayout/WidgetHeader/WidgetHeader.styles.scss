@@ -58,3 +58,17 @@
 		}
 	}
 }
+
+.long-tooltip {
+	.ant-tooltip-content {
+		max-height: 500px;
+		overflow: auto;
+	}
+	&.ant-tooltip {
+		max-width: 500px;
+	}
+}
+
+.info-tooltip {
+	cursor: pointer;
+}

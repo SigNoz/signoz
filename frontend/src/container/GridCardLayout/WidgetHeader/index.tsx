@@ -8,6 +8,7 @@ import {
 	EditFilled,
 	ExclamationCircleOutlined,
 	FullscreenOutlined,
+	InfoCircleOutlined,
 	MoreOutlined,
 	SearchOutlined,
 	WarningOutlined,
@@ -271,6 +272,15 @@ function WidgetHeader({
 								onClick={(): void => setShowGlobalSearch(true)}
 								data-testid="widget-header-search"
 							/>
+						)}
+						{widget.description && (
+							<Tooltip
+								title={widget.description}
+								overlayClassName="long-tooltip"
+								className="info-tooltip"
+							>
+								<InfoCircleOutlined />
+							</Tooltip>
 						)}
 						<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
 							<MoreOutlined
