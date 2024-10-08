@@ -36,10 +36,11 @@ export default function RightToolbarActions({
 		<div>
 			{isLoadingQueries ? (
 				<div className="loading-container">
-					<Button className="loading-btn" loading={isLoadingQueries} />
 					<Button
+						style={{ minWidth: '158px' }}
 						icon={<X size={14} />}
-						className="cancel-run"
+						type="primary"
+						loading={isLoadingQueries}
 						onClick={(): void => {
 							if (listQueryKeyRef?.current) {
 								queryClient.cancelQueries(listQueryKeyRef.current);
@@ -54,6 +55,7 @@ export default function RightToolbarActions({
 				</div>
 			) : (
 				<Button
+					style={{ minWidth: '158px' }}
 					type="primary"
 					className="right-toolbar"
 					disabled={isLoadingQueries}
