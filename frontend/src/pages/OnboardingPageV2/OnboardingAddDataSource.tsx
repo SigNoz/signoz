@@ -2,7 +2,7 @@ import './OnboardingPageV2.styles.scss';
 
 import { SearchOutlined } from '@ant-design/icons';
 import { Button, Flex, Input, Layout, Steps, Typography } from 'antd';
-import { ArrowRight, Copy, Key, LifeBuoy, X } from 'lucide-react';
+import { ArrowRight, LifeBuoy, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 import onboardingConfigWithLinks from './onboarding-config-with-links.json';
@@ -54,7 +54,7 @@ interface Entity {
 	link?: string;
 }
 
-const setupStepItems = [
+const setupStepItemsBase = [
 	{
 		title: 'Org Setup',
 		description: '',
@@ -71,29 +71,18 @@ const setupStepItems = [
 	},
 ];
 
-const questionnaireStepItems = questions.map((question) => ({
-	id: question.id,
-	title: question.title,
-	description: question.description,
-	options: question.options,
-	uiConfig: question.uiConfig,
-}));
-
 function OnboardingAddDataSource(): JSX.Element {
-	const [answers, setAnswers] = useState<string[]>(
-		new Array(questions.length).fill(''),
-	);
-
 	const questionRefs = useRef<(HTMLDivElement | null)[]>([]);
 	const [groupedDataSources, setGroupedDataSources] = useState<{
 		[tag: string]: Entity[];
 	}>({});
 
+	const [setupStepItems, setSetupStepItems] = useState(setupStepItemsBase);
+
 	const question2Ref = useRef<HTMLDivElement | null>(null);
 	const question3Ref = useRef<HTMLDivElement | null>(null);
 	const question4Ref = useRef<HTMLDivElement | null>(null);
 
-	const [searchQuery, setSearchQuery] = useState<string>('');
 	const [currentStep, setCurrentStep] = useState(1);
 
 	const [hasMoreQuestions, setHasMoreQuestions] = useState<boolean>(true);
@@ -120,6 +109,16 @@ function OnboardingAddDataSource(): JSX.Element {
 		questionRefs.current = questionRefs.current.slice(0, questions.length);
 	}, []);
 
+	const handleScrollToStep = (ref: React.RefObject<HTMLDivElement>): void => {
+		setTimeout(() => {
+			ref.current?.scrollIntoView({
+				behavior: 'smooth',
+				block: 'start',
+				inline: 'nearest',
+			});
+		}, 100);
+	};
+
 	const updateUrl = (url: string, selectedEnvironment: string | null): void => {
 		if (!url || url === '') {
 			return;
@@ -142,7 +141,6 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleSelectDataSource = (dataSource: Entity): void => {
-		console.log('dataSource', dataSource);
 		setSelectedDataSource(dataSource);
 		setSelectedFramework(null);
 		setSelectedEnvironment(null);
@@ -151,11 +149,7 @@ function OnboardingAddDataSource(): JSX.Element {
 			setHasMoreQuestions(true);
 
 			setTimeout(() => {
-				question2Ref.current?.scrollIntoView({
-					behavior: 'smooth',
-					block: 'start',
-					inline: 'nearest',
-				});
+				handleScrollToStep(question2Ref);
 			}, 100);
 		} else {
 			setHasMoreQuestions(false);
@@ -172,21 +166,16 @@ function OnboardingAddDataSource(): JSX.Element {
 		}
 	};
 
-	const handleSelectFramework = (selectedFramework: any, option: any): void => {
-		console.log('selectedFramework', selectedFramework);
-		setSelectedFramework(selectedFramework);
+	const handleSelectFramework = (option: any): void => {
+		setSelectedFramework(option);
 
-		if (selectedFramework.question) {
+		if (option.question) {
 			setHasMoreQuestions(true);
 
 			updateUrl(option?.link, null);
 
 			setTimeout(() => {
-				question3Ref.current?.scrollIntoView({
-					behavior: 'smooth',
-					block: 'start',
-					inline: 'nearest',
-				});
+				handleScrollToStep(question3Ref);
 			}, 100);
 		} else {
 			updateUrl(option.link, null);
@@ -201,27 +190,9 @@ function OnboardingAddDataSource(): JSX.Element {
 		updateUrl(docsUrl, selectedEnvironment?.key);
 
 		setTimeout((): void => {
-			question4Ref.current?.scrollIntoView({
-				behavior: 'smooth',
-				block: 'start',
-				inline: 'nearest',
-			});
+			handleScrollToStep(question4Ref);
 		}, 100);
 	};
-
-	const updatedSetupStepItems = setupStepItems.map((item, index) => {
-		if (index === 1) {
-			// Assuming "Add your first data source" is at index 1
-			return {
-				...item,
-				description: `${item.description} ${answers
-					.slice(0, 5)
-					.filter((answer) => answer)
-					.join(', ')}`, // Assuming the first 5 questions are relevant
-			};
-		}
-		return item;
-	});
 
 	const groupDataSourcesByTags = (
 		dataSources: Entity[],
@@ -250,7 +221,6 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		const query = e.target.value.toLowerCase();
-		setSearchQuery(query);
 
 		if (query === '') {
 			setGroupedDataSources(
@@ -297,6 +267,23 @@ function OnboardingAddDataSource(): JSX.Element {
 		);
 	};
 
+	const handleUpdateCurrentStep = (step: number): void => {
+		setCurrentStep(step);
+
+		if (step === 2) {
+			setSetupStepItems([
+				...setupStepItemsBase.slice(0, 1),
+				{
+					...setupStepItemsBase[1],
+					description: `${selectedDataSource?.label} ${
+						selectedFramework?.label ? `- ${selectedFramework?.label}` : ''
+					} ${selectedEnvironment?.label ? `- ${selectedEnvironment?.label}` : ''}`,
+				},
+				...setupStepItemsBase.slice(2),
+			]);
+		}
+	};
+
 	return (
 		<Layout>
 			<div className="setup-flow__header">
@@ -327,7 +314,7 @@ function OnboardingAddDataSource(): JSX.Element {
 				className="setup-flow__header setup-flow__header--sticky"
 				style={{ position: 'sticky', top: 0, zIndex: 1, width: '100%' }}
 			>
-				<Steps size="small" current={currentStep} items={updatedSetupStepItems} />
+				<Steps size="small" current={currentStep} items={setupStepItems} />
 			</Header>
 
 			<div className="onboarding-product-setup-container">
@@ -335,9 +322,7 @@ function OnboardingAddDataSource(): JSX.Element {
 					<div className="perlian-bg" />
 
 					{currentStep === 1 && (
-						<div
-							className={`onboarding-add-data-source-container ${`step-${currentStep}`}`}
-						>
+						<div className="onboarding-add-data-source-container step-1">
 							<div className="onboarding-data-sources-container">
 								<div className="onboarding-question-header">
 									<div className="question-title-container">
@@ -459,9 +444,7 @@ function OnboardingAddDataSource(): JSX.Element {
 																	selectedFramework?.label === option.label ? 'selected' : ''
 																}`}
 																type="primary"
-																onClick={(): void =>
-																	handleSelectFramework(selectedDataSource.question, option)
-																}
+																onClick={(): void => handleSelectFramework(option)}
 															>
 																{/* {option.imgUrl && ( */}
 																<img
@@ -533,7 +516,7 @@ function OnboardingAddDataSource(): JSX.Element {
 												type="primary"
 												disabled={!selectedDataSource}
 												shape="round"
-												onClick={(): void => setCurrentStep(2)}
+												onClick={(): void => handleUpdateCurrentStep(2)}
 											>
 												Next: Configure your product
 											</Button>
@@ -545,7 +528,7 @@ function OnboardingAddDataSource(): JSX.Element {
 					)}
 
 					{currentStep === 2 && (
-						<div className="onboarding-configure-container">
+						<div className="onboarding-configure-container step-2">
 							<div className="configure-product-docs-section">
 								<iframe
 									title="docs"
@@ -559,14 +542,14 @@ function OnboardingAddDataSource(): JSX.Element {
 								<Button
 									type="default"
 									shape="round"
-									onClick={(): void => setCurrentStep(1)}
+									onClick={(): void => handleUpdateCurrentStep(1)}
 								>
 									Back
 								</Button>
 								<Button
 									type="primary"
 									shape="round"
-									onClick={(): void => setCurrentStep(3)}
+									onClick={(): void => handleUpdateCurrentStep(3)}
 								>
 									Continue
 								</Button>
