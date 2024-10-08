@@ -34,11 +34,6 @@ export interface LoggedInUser {
 	};
 }
 
-export interface SideBarCollapse {
-	type: typeof SIDEBAR_COLLAPSE;
-	payload: boolean;
-}
-
 export interface UpdateAppVersion {
 	type: typeof UPDATE_CURRENT_VERSION;
 	payload: {
@@ -137,7 +132,6 @@ export interface UpdateFeatureFlag {
 
 export type AppAction =
 	| LoggedInUser
-	| SideBarCollapse
 	| UpdateAppVersion
 	| UpdateLatestVersion
 	| UpdateVersionError

@@ -63,6 +63,7 @@ function ChannelSelect({
 			mode="multiple"
 			style={{ width: '100%' }}
 			placeholder={t('placeholder_channel_select')}
+			data-testid="alert-channel-select"
 			value={currentValue}
 			onChange={(value): void => {
 				handleChange(value as string[]);

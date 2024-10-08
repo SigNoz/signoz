@@ -757,7 +757,7 @@ func makeRulesManager(
 		RepoURL:      ruleRepoURL,
 		DBConn:       db,
 		Context:      context.Background(),
-		Logger:       nil,
+		Logger:       zap.L(),
 		DisableRules: disableRules,
 		FeatureFlags: fm,
 		Reader:       ch,
