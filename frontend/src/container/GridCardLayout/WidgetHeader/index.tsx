@@ -235,13 +235,25 @@ function WidgetHeader({
 				/>
 			) : (
 				<>
-					<Typography.Text
-						ellipsis
-						data-testid={title}
-						className="widget-header-title"
-					>
-						{title}
-					</Typography.Text>
+					<div className="widget-header-title-container">
+						<Typography.Text
+							ellipsis
+							data-testid={title}
+							className="widget-header-title"
+						>
+							{title}
+						</Typography.Text>
+						{widget.description && (
+							<Tooltip
+								title={widget.description}
+								overlayClassName="long-tooltip"
+								className="info-tooltip"
+								placement="right"
+							>
+								<InfoCircleOutlined />
+							</Tooltip>
+						)}
+					</div>
 					<div className="widget-header-actions">
 						<div className="widget-api-actions">{threshold}</div>
 						{isFetchingResponse && !queryResponse.isError && (
@@ -272,15 +284,6 @@ function WidgetHeader({
 								onClick={(): void => setShowGlobalSearch(true)}
 								data-testid="widget-header-search"
 							/>
-						)}
-						{widget.description && (
-							<Tooltip
-								title={widget.description}
-								overlayClassName="long-tooltip"
-								className="info-tooltip"
-							>
-								<InfoCircleOutlined />
-							</Tooltip>
 						)}
 						<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
 							<MoreOutlined

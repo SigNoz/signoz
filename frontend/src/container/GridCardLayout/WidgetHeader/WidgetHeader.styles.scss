@@ -20,6 +20,14 @@
 	}
 }
 
+.widget-header-title-container {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .widget-header-title {
 	max-width: 80%;
 }
