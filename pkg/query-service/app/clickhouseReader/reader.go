@@ -1657,6 +1657,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	var countSpans uint64
+	// count the number of spans in the trace and if it exceeds the limit that has been set we return the error to the client!
 	countQuery := fmt.Sprintf("SELECT count() as count from %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
 	err := r.db.QueryRow(ctx, countQuery, params.TraceID).Scan(&countSpans)
 	if err != nil {
@@ -1687,6 +1688,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	}
 
 	var startTime, endTime, durationNano uint64
+	// get the raw results from the distributed_signoz_spans table
 	var searchScanResponses []model.SearchSpanDBResponseItem
 
 	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
@@ -1703,6 +1705,8 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	}
 	end := time.Now()
 	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
+
+	// the current final created response object structure
 	searchSpansResult := []model.SearchSpansResult{{
 		Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
 		Events:    make([][]interface{}, len(searchScanResponses)),
@@ -1711,12 +1715,22 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	}
 
 	searchSpanResponses := []model.SearchSpanResponseItem{}
+	spanIdSpanResponseMap := map[string]*model.SearchSpanResponseItem{}
 	start = time.Now()
+	// the model field is unmarshalled and the searchSpanResponses array is prepared here!
 	for _, item := range searchScanResponses {
 		var jsonItem model.SearchSpanResponseItem
 		easyjson.Unmarshal([]byte(item.Model), &jsonItem)
 		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
 		searchSpanResponses = append(searchSpanResponses, jsonItem)
+
+		_, seen := spanIdSpanResponseMap[jsonItem.SpanID]
+
+		if seen {
+			return nil, fmt.Errorf("cannot have duplicate span ids in single trace")
+		}
+		spanIdSpanResponseMap[jsonItem.SpanID] = &jsonItem
+
 		if startTime == 0 || jsonItem.TimeUnixNano < startTime {
 			startTime = jsonItem.TimeUnixNano
 		}
@@ -1730,8 +1744,53 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	end = time.Now()
 	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
 
+	// todo[vikrantgupta25]: we do not need to do anything below this now. we have the above array as we want it. now convert that to the tree structure here!
+	fmt.Println(len(searchSpanResponses))
+	for _, spanItem := range spanIdSpanResponseMap {
+		for _, reference := range spanItem.References {
+			if reference.RefType == "CHILD_OF" {
+				if reference.SpanId == "" {
+					continue
+				}
+				value, seen := spanIdSpanResponseMap[reference.SpanId]
+				if seen {
+					spanItem.ParentSpanID = reference.SpanId
+					spanItem.IsProcessed = true
+					value.Children = append(value.Children, spanItem)
+					spanIdSpanResponseMap[reference.SpanId] = value
+				} else {
+					// generate missing span here!M
+					missingSpan := model.SearchSpanResponseItem{
+						SpanID:       reference.SpanId,
+						Name:         fmt.Sprintf("Missing span (%s)", reference.SpanId),
+						Children:     []*model.SearchSpanResponseItem{},
+						ServiceName:  "",
+						TimeUnixNano: 0,
+						DurationNano: 0,
+						ParentSpanID: "",
+					}
+					spanItem.ParentSpanID = reference.SpanId
+					spanItem.IsProcessed = true
+					missingSpan.Children = append(missingSpan.Children, spanItem)
+					spanIdSpanResponseMap[reference.SpanId] = &missingSpan
+				}
+
+			}
+		}
+
+	}
+
+	for _, spanItem := range spanIdSpanResponseMap {
+		if spanItem.IsProcessed {
+			delete(spanIdSpanResponseMap, spanItem.SpanID)
+		}
+	}
+
+	// spanIdResponseMap should contain the root of the tree only now!
+
 	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
 	smartAlgoEnabled := err == nil
+	// processing for smartAlgo. we won't be using this now.
 	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
 		start = time.Now()
 		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
@@ -1749,7 +1808,9 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
 		}
 	} else {
+		// add the each individual span to the events array here.
 		for i, item := range searchSpanResponses {
+			// GetValues create the each individual array
 			spanEvents := item.GetValues()
 			searchSpansResult[0].Events[i] = spanEvents
 		}

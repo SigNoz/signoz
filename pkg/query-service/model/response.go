@@ -251,22 +251,25 @@ type Event struct {
 
 //easyjson:json
 type SearchSpanResponseItem struct {
-	TimeUnixNano     uint64            `json:"timestamp"`
-	DurationNano     int64             `json:"durationNano"`
-	SpanID           string            `json:"spanId"`
-	RootSpanID       string            `json:"rootSpanId"`
-	TraceID          string            `json:"traceId"`
-	HasError         bool              `json:"hasError"`
-	Kind             int32             `json:"kind"`
-	ServiceName      string            `json:"serviceName"`
-	Name             string            `json:"name"`
-	References       []OtelSpanRef     `json:"references,omitempty"`
-	TagMap           map[string]string `json:"tagMap"`
-	Events           []string          `json:"event"`
-	RootName         string            `json:"rootName"`
-	StatusMessage    string            `json:"statusMessage"`
-	StatusCodeString string            `json:"statusCodeString"`
-	SpanKind         string            `json:"spanKind"`
+	TimeUnixNano     uint64                    `json:"timestamp"`
+	DurationNano     int64                     `json:"durationNano"`
+	SpanID           string                    `json:"spanId"`
+	RootSpanID       string                    `json:"rootSpanId"`
+	TraceID          string                    `json:"traceId"`
+	HasError         bool                      `json:"hasError"`
+	Kind             int32                     `json:"kind"`
+	ServiceName      string                    `json:"serviceName"`
+	Name             string                    `json:"name"`
+	References       []OtelSpanRef             `json:"references,omitempty"`
+	TagMap           map[string]string         `json:"tagMap"`
+	Events           []string                  `json:"event"`
+	RootName         string                    `json:"rootName"`
+	StatusMessage    string                    `json:"statusMessage"`
+	StatusCodeString string                    `json:"statusCodeString"`
+	SpanKind         string                    `json:"spanKind"`
+	ParentSpanID     string                    `json:"parentSpanID"`
+	Children         []*SearchSpanResponseItem `json:"children"`
+	IsProcessed      bool                      `json:"isProcessed"`
 }
 
 type OtelSpanRef struct {
@@ -284,6 +287,7 @@ func (ref *OtelSpanRef) ToString() string {
 
 func (item *SearchSpanResponseItem) GetValues() []interface{} {
 
+	// why marshal and then unmarshal immediately after that ?
 	references := []OtelSpanRef{}
 	jsonbody, _ := json.Marshal(item.References)
 	json.Unmarshal(jsonbody, &references)
