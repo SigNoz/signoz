@@ -15,13 +15,75 @@
 					"key": "springboot",
 					"label": "Spring Boot",
 					"imgUrl": "/Logos/java.png",
-					"link": "http://localhost:3000/docs/instrumentation/springboot/#send-traces-to-signoz-cloud"
+					"link": "http://localhost:3000/docs/instrumentation/springboot/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/cmd-terminal.svg",
+								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/java.png",
+								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				},
 				{
 					"key": "tomcat",
 					"label": "Tomcat",
 					"imgUrl": "/Logos/java.png",
-					"link": "http://localhost:3000/docs/instrumentation/tomcat/#send-traces-to-signoz-cloud"
+					"link": "http://localhost:3000/docs/instrumentation/tomcat/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/cmd-terminal.svg",
+								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/java.png",
+								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "macos",
+								"label": "MacOS",
+								"imgUrl": "/Logos/java.png",
+								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "linux",
+								"label": "Linux",
+								"imgUrl": "/Logos/java.png",
+								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				},
 				{
 					"key": "jboss",
@@ -35,32 +97,7 @@
 					"imgUrl": "/Logos/java.png",
 					"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
 				}
-			],
-			"question": {
-				"desc": "What is your Environment?",
-				"type": "select",
-				"entityID": "environment",
-				"options": [
-					{
-						"key": "vm",
-						"label": "VM",
-						"imgUrl": "/Logos/cmd-terminal.svg",
-						"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
-					},
-					{
-						"key": "k8s",
-						"label": "Kubernetes",
-						"imgUrl": "/Logos/kubernetes.svg",
-						"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
-					},
-					{
-						"key": "windows",
-						"label": "Windows",
-						"imgUrl": "/Logos/java.png",
-						"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
-					}
-				]
-			}
+			]
 		}
 	},
 	{
