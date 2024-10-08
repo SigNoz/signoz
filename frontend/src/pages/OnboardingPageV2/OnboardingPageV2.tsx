@@ -1,5 +1,3 @@
-import OnboardingQuestionaire from 'container/OnboardingQuestionaire';
-
 import OnboardingAddDataSource from './OnboardingAddDataSource';
 
 function OnboardingPageV2(): JSX.Element {
@@ -7,7 +5,6 @@ function OnboardingPageV2(): JSX.Element {
 		<div className="onboarding-v2">
 			{/* #TODO: OnboardingAddDataSource is currently a Pure Component */}
 			<OnboardingAddDataSource />
-			<OnboardingQuestionaire />
 		</div>
 	);
 }
