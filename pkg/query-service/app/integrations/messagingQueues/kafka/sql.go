@@ -95,3 +95,54 @@ ORDER BY throughput DESC
 `, timeRange, start, end, queueType, consumerGroup, partitionID)
 	return query
 }
+
+func onboardProducersSQL(start, end int64, queueType string) string {
+	query := fmt.Sprintf(`
+SELECT 
+    COUNT(*) = 0 AS entries,
+    COUNT(IF(msgSystem = '%s', 1, NULL)) = 0 AS queue,
+    COUNT(IF(kind = 4, 1, NULL)) = 0 AS kind,
+    COUNT(IF(has(stringTagMap, 'messaging.destination.name'), 1, NULL)) = 0 AS destination,
+    COUNT(IF(has(stringTagMap, 'messaging.destination.partition.id'), 1, NULL)) = 0 AS partition
+FROM 
+    signoz_traces.distributed_signoz_index_v2
+WHERE 
+    timestamp >= '%d'
+    AND timestamp <= '%d';`, queueType, start, end)
+	return query
+}
+
+func onboardConsumerSQL(start, end int64, queueType string) string {
+	query := fmt.Sprintf(`
+SELECT  
+    COUNT(*) = 0 AS entries,
+    COUNT(IF(msgSystem = '%s', 1, NULL)) = 0 AS queue,
+    COUNT(IF(kind = 5, 1, NULL)) = 0 AS kind,
+    COUNT(serviceName) = 0 AS svc,
+    COUNT(IF(has(stringTagMap, 'messaging.destination.name'), 1, NULL)) = 0 AS destination,
+    COUNT(IF(has(stringTagMap, 'messaging.destination.partition.id'), 1, NULL)) = 0 AS partition,
+    COUNT(IF(has(stringTagMap, 'messaging.kafka.consumer.group'), 1, NULL)) = 0 AS cgroup,
+    COUNT(IF(has(numberTagMap, 'messaging.message.body.size'), 1, NULL)) = 0 AS bodysize,
+    COUNT(IF(has(stringTagMap, 'messaging.client_id'), 1, NULL)) = 0 AS clientid,
+    COUNT(IF(has(stringTagMap, 'service.instance.id'), 1, NULL)) = 0 AS instanceid
+FROM signoz_traces.distributed_signoz_index_v2
+WHERE 
+    timestamp >= '%d'
+    AND timestamp <= '%d';`, queueType, start, end)
+	return query
+}
+
+func onboardKafkaSQL(start, end int64) string {
+	query := fmt.Sprintf(`
+SELECT 
+    COUNT(*) = 0 AS entries,
+    COUNT(IF(metric_name = 'kafka_consumer_fetch_latency_avg', 1, NULL)) = 0 AS fetchlatency,
+    COUNT(IF(metric_name = 'kafka_consumer_group_lag', 1, NULL)) = 0 AS grouplag
+FROM 
+    signoz_metrics.time_series_v4_1day
+WHERE
+    metric_name IN ('kafka_consumer_fetch_latency_avg', 'kafka_consumer_group_lag')
+    AND unix_milli >= '%d'
+    AND unix_milli < '%d';`, start/1000000, end/1000000)
+	return query
+}
