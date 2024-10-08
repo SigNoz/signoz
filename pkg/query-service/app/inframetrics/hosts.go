@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
@@ -79,7 +80,37 @@ func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAtt
 	if err != nil {
 		return nil, err
 	}
-	return attributeValuesResponse, nil
+	if req.FilterAttributeKey != "host_name" {
+		return attributeValuesResponse, nil
+	}
+	hostNames := []string{}
+
+	for _, attributeValue := range attributeValuesResponse.StringAttributeValues {
+		if strings.Contains(attributeValue, "k8s-infra-otel-agent") {
+			continue
+		}
+		hostNames = append(hostNames, attributeValue)
+	}
+
+	req.FilterAttributeKey = "k8s_node_name"
+	req.DataSource = v3.DataSourceMetrics
+	req.AggregateAttribute = "system_cpu_load_average_15m"
+	if req.Limit == 0 {
+		req.Limit = 50
+	}
+
+	attributeValuesResponse, err = h.reader.GetMetricAttributeValues(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+	for _, attributeValue := range attributeValuesResponse.StringAttributeValues {
+		if strings.Contains(attributeValue, "k8s-infra-otel-agent") {
+			continue
+		}
+		hostNames = append(hostNames, attributeValue)
+	}
+
+	return &v3.FilterAttributeValueResponse{StringAttributeValues: hostNames}, nil
 }
 
 func getGroupKey(record model.HostListRecord, groupBy []v3.AttributeKey) string {
@@ -90,18 +121,19 @@ func getGroupKey(record model.HostListRecord, groupBy []v3.AttributeKey) string 
 	return groupKey
 }
 
-func (h *HostsRepo) getMetadataAttributes(ctx context.Context, req model.HostListRequest) (map[string]map[string]string, error) {
+func (h *HostsRepo) getMetadataAttributes(ctx context.Context,
+	req model.HostListRequest, hostNameAttrKey string) (map[string]map[string]string, error) {
 	hostAttrs := map[string]map[string]string{}
 
 	hasHostName := false
 	for _, key := range req.GroupBy {
-		if key.Key == "host_name" {
+		if key.Key == hostNameAttrKey {
 			hasHostName = true
 		}
 	}
 
 	if !hasHostName {
-		req.GroupBy = append(req.GroupBy, v3.AttributeKey{Key: "host_name"})
+		req.GroupBy = append(req.GroupBy, v3.AttributeKey{Key: hostNameAttrKey})
 	}
 
 	mq := v3.BuilderQuery{
@@ -132,7 +164,7 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context, req model.HostLis
 			}
 		}
 
-		hostName := stringData["host_name"]
+		hostName := stringData[hostNameAttrKey]
 		if _, ok := hostAttrs[hostName]; !ok {
 			hostAttrs[hostName] = map[string]string{}
 		}
@@ -144,19 +176,20 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context, req model.HostLis
 	return hostAttrs, nil
 }
 
-func (h *HostsRepo) getActiveHosts(ctx context.Context, req model.HostListRequest) (map[string]bool, error) {
+func (h *HostsRepo) getActiveHosts(ctx context.Context,
+	req model.HostListRequest, hostNameAttrKey string) (map[string]bool, error) {
 	activeStatus := map[string]bool{}
 	step := common.MinAllowedStepInterval(req.Start, req.End)
 
 	hasHostName := false
 	for _, key := range req.GroupBy {
-		if key.Key == "host_name" {
+		if key.Key == hostNameAttrKey {
 			hasHostName = true
 		}
 	}
 
 	if !hasHostName {
-		req.GroupBy = append(req.GroupBy, v3.AttributeKey{Key: "host_name"})
+		req.GroupBy = append(req.GroupBy, v3.AttributeKey{Key: hostNameAttrKey})
 	}
 
 	params := v3.QueryRangeParamsV3{
@@ -194,7 +227,7 @@ func (h *HostsRepo) getActiveHosts(ctx context.Context, req model.HostListReques
 
 	for _, result := range queryResponse {
 		for _, series := range result.Series {
-			name := series.Labels["host_name"]
+			name := series.Labels[hostNameAttrKey]
 			activeStatus[name] = true
 		}
 	}
@@ -202,14 +235,11 @@ func (h *HostsRepo) getActiveHosts(ctx context.Context, req model.HostListReques
 	return activeStatus, nil
 }
 
-func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) (model.HostListResponse, error) {
-	resp := model.HostListResponse{
-		Type: "list",
-	}
+func (h *HostsRepo) getHostsForQuery(ctx context.Context,
+	req model.HostListRequest, query *v3.QueryRangeParamsV3, hostNameAttrKey string) ([]model.HostListRecord, error) {
 
 	step := common.MinAllowedStepInterval(req.Start, req.End)
 
-	query := TableListQuery.Clone()
 	query.Start = req.Start
 	query.End = req.End
 	query.Step = step
@@ -224,21 +254,68 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 		}
 	}
 
-	hostAttrs, err := h.getMetadataAttributes(ctx, req)
+	hostAttrs, err := h.getMetadataAttributes(ctx, req, hostNameAttrKey)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
-	activeHosts, err := h.getActiveHosts(ctx, req)
+	activeHosts, err := h.getActiveHosts(ctx, req, hostNameAttrKey)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
 	queryResponse, _, err := h.querierV2.QueryRange(ctx, query)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
+	type hostTSInfo struct {
+		cpuTimeSeries    *v3.Series
+		memoryTimeSeries *v3.Series
+		waitTimeSeries   *v3.Series
+		load15TimeSeries *v3.Series
+	}
+	hostTSInfoMap := map[string]*hostTSInfo{}
+
+	for _, result := range queryResponse {
+		for _, series := range result.Series {
+			hostName := series.Labels[hostNameAttrKey]
+			if _, ok := hostTSInfoMap[hostName]; !ok {
+				hostTSInfoMap[hostName] = &hostTSInfo{}
+			}
+			if result.QueryName == "G" {
+				loadSeries := *series
+				hostTSInfoMap[hostName].load15TimeSeries = &loadSeries
+			}
+		}
+	}
+
+	query.FormatForWeb = false
+	query.CompositeQuery.PanelType = v3.PanelTypeGraph
+
+	formulaResult, err := postprocess.PostProcessResult(queryResponse, query)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, result := range formulaResult {
+		for _, series := range result.Series {
+			hostName := series.Labels[hostNameAttrKey]
+			if _, ok := hostTSInfoMap[hostName]; !ok {
+				hostTSInfoMap[hostName] = &hostTSInfo{}
+			}
+			if result.QueryName == "F1" {
+				hostTSInfoMap[hostName].cpuTimeSeries = series
+			} else if result.QueryName == "F2" {
+				hostTSInfoMap[hostName].memoryTimeSeries = series
+			} else if result.QueryName == "F3" {
+				hostTSInfoMap[hostName].waitTimeSeries = series
+			}
+		}
+	}
+
+	query.FormatForWeb = true
+	query.CompositeQuery.PanelType = v3.PanelTypeTable
 	formattedResponse, _ := postprocess.PostProcessResult(queryResponse, query)
 
 	records := []model.HostListRecord{}
@@ -248,13 +325,13 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 	// each row represents a host
 	for _, row := range hostsInfo.Table.Rows {
 		record := model.HostListRecord{
-			CPU:     -1,
-			Memory:  -1,
-			Wait:    -1,
-			Storage: -1,
+			CPU:    -1,
+			Memory: -1,
+			Wait:   -1,
+			Load15: -1,
 		}
 
-		hostName, ok := row.Data["host_name"].(string)
+		hostName, ok := row.Data[hostNameAttrKey].(string)
 		if ok {
 			record.HostName = hostName
 		}
@@ -276,15 +353,39 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 		if ok {
 			record.Wait = wait
 		}
-		storage, ok := row.Data["F4"].(float64)
+		load15, ok := row.Data["G"].(float64)
 		if ok {
-			record.Storage = storage
+			record.Load15 = load15
 		}
 		record.Meta = hostAttrs[record.HostName]
 		record.Active = activeHosts[record.HostName]
+		if hostTSInfoMap[record.HostName] != nil {
+			record.CPUTimeSeries = hostTSInfoMap[record.HostName].cpuTimeSeries
+			record.MemoryTimeSeries = hostTSInfoMap[record.HostName].memoryTimeSeries
+			record.WaitTimeSeries = hostTSInfoMap[record.HostName].waitTimeSeries
+			record.Load15TimeSeries = hostTSInfoMap[record.HostName].load15TimeSeries
+		}
 		records = append(records, record)
 	}
-	resp.Records = records
+
+	return records, nil
+}
+
+func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) (model.HostListResponse, error) {
+	resp := model.HostListResponse{
+		Type: "list",
+	}
+
+	vmRecords, err := h.getHostsForQuery(ctx, req, &NonK8STableListQuery, "host_name")
+	if err != nil {
+		return resp, err
+	}
+	k8sRecords, err := h.getHostsForQuery(ctx, req, &K8STableListQuery, "k8s_node_name")
+	if err != nil {
+		return resp, err
+	}
+
+	records := append(vmRecords, k8sRecords...)
 
 	if len(req.GroupBy) > 0 {
 		groups := []model.HostListGroup{}
@@ -301,8 +402,8 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 
 		// calculate the group stats, active hosts, etc.
 		for _, records := range groupMap {
-			var avgCPU, avgMemory, avgWait, avgStorage float64
-			var validCPU, validMemory, validWait, validStorage, activeHosts int
+			var avgCPU, avgMemory, avgWait, avgLoad15 float64
+			var validCPU, validMemory, validWait, validLoad15, activeHosts int
 			for _, record := range records {
 				if !math.IsNaN(record.CPU) {
 					avgCPU += record.CPU
@@ -316,9 +417,9 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 					avgWait += record.Wait
 					validWait++
 				}
-				if !math.IsNaN(record.Storage) {
-					avgStorage += record.Storage
-					validStorage++
+				if !math.IsNaN(record.Load15) {
+					avgLoad15 += record.Load15
+					validLoad15++
 				}
 				if record.Active {
 					activeHosts++
@@ -327,7 +428,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 			avgCPU /= float64(validCPU)
 			avgMemory /= float64(validMemory)
 			avgWait /= float64(validWait)
-			avgStorage /= float64(validStorage)
+			avgLoad15 /= float64(validLoad15)
 			inactiveHosts := len(records) - activeHosts
 
 			// take any record and make it as the group meta
@@ -338,19 +439,20 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 			}
 
 			groups = append(groups, model.HostListGroup{
-				GroupValues:     groupValues,
-				Active:          activeHosts,
-				Inactive:        inactiveHosts,
-				Records:         records,
-				GroupCPUAvg:     avgCPU,
-				GroupMemoryAvg:  avgMemory,
-				GroupWaitAvg:    avgWait,
-				GroupStorageAvg: avgStorage,
+				GroupValues:    groupValues,
+				Active:         activeHosts,
+				Inactive:       inactiveHosts,
+				Records:        records,
+				GroupCPUAvg:    avgCPU,
+				GroupMemoryAvg: avgMemory,
+				GroupWaitAvg:   avgWait,
+				GroupLoad15Avg: avgLoad15,
 			})
 		}
 		resp.Groups = groups
 		resp.Type = "grouped_list"
 	}
+	resp.Records = records
 
 	return resp, nil
 }

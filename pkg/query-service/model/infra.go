@@ -10,25 +10,29 @@ type HostListRequest struct {
 }
 
 type HostListRecord struct {
-	HostName string            `json:"hostName"`
-	Active   bool              `json:"active"`
-	OS       string            `json:"os"`
-	CPU      float64           `json:"cpu"`
-	Memory   float64           `json:"memory"`
-	Wait     float64           `json:"wait"`
-	Storage  float64           `json:"storage"`
-	Meta     map[string]string `json:"-"`
+	HostName         string            `json:"hostName"`
+	Active           bool              `json:"active"`
+	OS               string            `json:"os"`
+	CPU              float64           `json:"cpu"`
+	CPUTimeSeries    *v3.Series        `json:"cpuTimeSeries"`
+	Memory           float64           `json:"memory"`
+	MemoryTimeSeries *v3.Series        `json:"memoryTimeSeries"`
+	Wait             float64           `json:"wait"`
+	WaitTimeSeries   *v3.Series        `json:"waitTimeSeries"`
+	Load15           float64           `json:"load15"`
+	Load15TimeSeries *v3.Series        `json:"load15TimeSeries"`
+	Meta             map[string]string `json:"-"`
 }
 
 type HostListGroup struct {
-	GroupValues     []string         `json:"groupValues"`
-	Active          int              `json:"active"`
-	Inactive        int              `json:"inactive"`
-	GroupCPUAvg     float64          `json:"groupCPUAvg"`
-	GroupMemoryAvg  float64          `json:"groupMemoryAvg"`
-	GroupWaitAvg    float64          `json:"groupWaitAvg"`
-	GroupStorageAvg float64          `json:"groupStorageAvg"`
-	Records         []HostListRecord `json:"records"`
+	GroupValues    []string         `json:"groupValues"`
+	Active         int              `json:"active"`
+	Inactive       int              `json:"inactive"`
+	GroupCPUAvg    float64          `json:"groupCPUAvg"`
+	GroupMemoryAvg float64          `json:"groupMemoryAvg"`
+	GroupWaitAvg   float64          `json:"groupWaitAvg"`
+	GroupLoad15Avg float64          `json:"groupLoad15Avg"`
+	Records        []HostListRecord `json:"records"`
 }
 
 type HostListResponse struct {
