@@ -621,6 +621,7 @@ function GeneralSettings({
 						</a>
 					</div>
 				)}
+				{/* TODO: Take feedback from Shuvam and update the above and below line */}
 				{errorText && (
 					<ErrorTextContainer>
 						<ErrorText>{errorText}</ErrorText>
