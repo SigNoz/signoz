@@ -1654,7 +1654,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error), req *model.SearchTraceRequest) (*[]model.SearchSpansResult, error) {
 
 	var countSpans uint64
 	// count the number of spans in the trace and if it exceeds the limit that has been set we return the error to the client!
@@ -1785,8 +1785,15 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 			delete(spanIdSpanResponseMap, spanItem.SpanID)
 		}
 	}
-
 	// spanIdResponseMap should contain the root of the tree only now!
+
+	// next we need to extract the exact traversal of the tree based on collapse and uncollapsed state
+	// recieved in the request payload and return the X points out of the same.
+	uncollapsedNodes := req.UnCollapsedNodes
+
+	preOrderTraversal := getPreOrderTraversal(spanIdSpanResponseMap["bd1f30aea0357bc5"], uncollapsedNodes)
+
+	fmt.Println(preOrderTraversal)
 
 	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
 	smartAlgoEnabled := err == nil
@@ -1820,6 +1827,29 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
 
 	return &searchSpansResult, nil
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+	return false
+}
+
+func getPreOrderTraversal(node *model.SearchSpanResponseItem, uncollapsedNodes []string) []*model.SearchSpanResponseItem {
+	preOrderTraversal := []*model.SearchSpanResponseItem{}
+	preOrderTraversal = append(preOrderTraversal, node)
+	for _, child := range node.Children {
+		if contains(uncollapsedNodes, child.SpanID) {
+			childTraversal := getPreOrderTraversal(child, uncollapsedNodes)
+			preOrderTraversal = append(preOrderTraversal, childTraversal...)
+		} else {
+			preOrderTraversal = append(preOrderTraversal, child)
+		}
+	}
+	return preOrderTraversal
 }
 
 func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
