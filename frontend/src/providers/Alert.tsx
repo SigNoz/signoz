@@ -20,10 +20,10 @@ function AlertRuleProvider({
 
 	const value = React.useMemo(
 		() => ({
-			isAlertRuleDisabled,
-			setIsAlertRuleDisabled,
+			alertRuleState,
+			setAlertRuleState,
 		}),
-		[isAlertRuleDisabled],
+		[alertRuleState],
 	);
 
 	return (
