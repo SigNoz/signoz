@@ -106,12 +106,11 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 			return
 		}
-		uniqueResults := make(map[string]*v3.Result)
-		for _, anomaly := range anomalies.Results {
-			uniqueResults[anomaly.QueryName] = anomaly
-			uniqueResults[anomaly.QueryName].IsAnomaly = true
+		resp := v3.QueryRangeResponse{
+			Result:     anomalies.Results,
+			ResultType: "anomaly",
 		}
-		aH.Respond(w, uniqueResults)
+		aH.Respond(w, resp)
 	} else {
 		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		aH.QueryRangeV4(w, r)
