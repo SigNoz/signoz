@@ -56,12 +56,6 @@
 	}
 }
 
-.right-toolbar {
-	display: flex;
-	align-items: center;
-	background-color: var(--bg-robin-600);
-}
-
 .right-actions {
 	display: flex;
 	align-items: center;
@@ -71,6 +65,22 @@
 	display: flex;
 	gap: 8px;
 	align-items: center;
+}
+
+.btn-query-run {
+	min-width: 158px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+
+	&__content {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	&__icon {
+		margin-right: 8px;
+	}
 }
 
 .lightMode {
