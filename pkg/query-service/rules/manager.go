@@ -18,6 +18,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -32,6 +33,7 @@ type PrepareTaskOptions struct {
 	RuleDB      RuleDB
 	Logger      *zap.Logger
 	Reader      interfaces.Reader
+	Cache       cache.Cache
 	FF          interfaces.FeatureLookup
 	ManagerOpts *ManagerOptions
 	NotifyFunc  NotifyFunc
@@ -73,6 +75,7 @@ type ManagerOptions struct {
 	DisableRules bool
 	FeatureFlags interfaces.FeatureLookup
 	Reader       interfaces.Reader
+	Cache        cache.Cache
 
 	EvalDelay time.Duration
 
@@ -96,9 +99,9 @@ type Manager struct {
 
 	logger *zap.Logger
 
-	featureFlags interfaces.FeatureLookup
-	reader       interfaces.Reader
-
+	featureFlags    interfaces.FeatureLookup
+	reader          interfaces.Reader
+	cache           cache.Cache
 	prepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
 
 	UseLogsNewSchema bool
@@ -170,7 +173,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		task = newTask(TaskTypeProm, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
 
 	} else {
-		return nil, fmt.Errorf("unsupported rule type. Supported types: %s, %s", RuleTypeProm, RuleTypeThreshold)
+		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, RuleTypeProm, RuleTypeThreshold)
 	}
 
 	return task, nil
@@ -209,6 +212,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		logger:          o.Logger,
 		featureFlags:    o.FeatureFlags,
 		reader:          o.Reader,
+		cache:           o.Cache,
 		prepareTaskFunc: o.PrepareTaskFunc,
 	}
 	return m, nil
@@ -342,6 +346,7 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 		RuleDB:      m.ruleDB,
 		Logger:      m.logger,
 		Reader:      m.reader,
+		Cache:       m.cache,
 		FF:          m.featureFlags,
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
@@ -463,6 +468,7 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 		RuleDB:      m.ruleDB,
 		Logger:      m.logger,
 		Reader:      m.reader,
+		Cache:       m.cache,
 		FF:          m.featureFlags,
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
@@ -470,13 +476,13 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 		UseLogsNewSchema: m.opts.UseLogsNewSchema,
 	})
 
-	for _, r := range newTask.Rules() {
-		m.rules[r.ID()] = r
-	}
-
 	if err != nil {
 		zap.L().Error("creating rule task failed", zap.String("name", taskName), zap.Error(err))
 		return errors.New("error loading rules, previous rule set restored")
+	}
+
+	for _, r := range newTask.Rules() {
+		m.rules[r.ID()] = r
 	}
 
 	// If there is an another task with the same identifier, raise an error

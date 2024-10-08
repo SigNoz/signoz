@@ -17,10 +17,6 @@ type Sample struct {
 
 	Metric labels.Labels
 
-	// Label keys as-is from the result query.
-	// The original labels are used to prepare the related{logs, traces} link in alert notification
-	MetricOrig labels.Labels
-
 	IsMissing bool
 }
 

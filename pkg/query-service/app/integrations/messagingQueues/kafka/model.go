@@ -1,6 +1,6 @@
 package kafka
 
-const kafkaQueue = "kafka"
+const KafkaQueue = "kafka"
 
 type MessagingQueue struct {
 	Start     int64             `json:"start"`
@@ -13,4 +13,10 @@ type Clients struct {
 	ClientID          []string
 	ServiceInstanceID []string
 	ServiceName       []string
+}
+
+type OnboardingResponse struct {
+	Attribute string `json:"attribute"`
+	Message   string `json:"error_message"`
+	Status    string `json:"status"`
 }

@@ -118,6 +118,8 @@
 	"exceptions_based_alert_desc": "Send a notification when a condition occurs in the exceptions data.",
 	"field_unit": "Threshold unit",
 	"text_alert_on_absent": "Send a notification if data is missing for",
+	"text_require_min_points": "Run alert evaluation only when there are minimum of",
+	"text_num_points": "data points in each result group",
 	"text_alert_frequency": "Run alert every",
 	"text_for": "minutes",
 	"selected_query_placeholder": "Select query"

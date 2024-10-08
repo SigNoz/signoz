@@ -1,4 +1,5 @@
 $light-theme: 'lightMode';
+$dark-theme: 'darkMode';
 
 @keyframes gradientFlow {
 	0% {
@@ -146,6 +147,34 @@ $light-theme: 'lightMode';
 		-webkit-text-fill-color: transparent;
 		animation: gradientFlow 24s ease infinite;
 		margin-bottom: 18px;
+	}
+
+	&__faq-container {
+		width: 100%;
+
+		.ant-collapse,
+		.ant-collapse-item,
+		.ant-collapse-content-active {
+			.#{$dark-theme} & {
+				border-color: var(--bg-slate-400);
+			}
+		}
+	}
+
+	&__customer-stories {
+		&__left-container,
+		&__right-container {
+			display: flex;
+			flex-direction: column;
+		}
+
+		&__left-container {
+			align-items: flex-end;
+		}
+
+		&__right-container {
+			align-items: flex-start;
+		}
 	}
 }
 
