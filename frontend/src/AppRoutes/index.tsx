@@ -233,10 +233,8 @@ function App(): JSX.Element {
 	}, [user]);
 
 	useEffect(() => {
-		if (!isCloudUserVal && !isEECloudUser()) {
-			console.info('We are hiring! https://jobs.gem.com/signoz');
-		}
-	}, [isCloudUserVal]);
+		console.info('We are hiring! https://jobs.gem.com/signoz');
+	}, []);
 
 	return (
 		<ConfigProvider theme={themeConfig}>
