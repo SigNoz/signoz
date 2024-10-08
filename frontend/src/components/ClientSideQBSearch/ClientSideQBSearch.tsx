@@ -68,7 +68,7 @@ interface ClientSideQBSearchProps {
 	className?: string;
 	suffixIcon?: React.ReactNode;
 	attributeValuesMap?: AttributeValuesMap;
-	attributeKeys: BaseAutocompleteData[];
+	attributeKeys: AttributeKey[];
 }
 
 interface AttributeValue {
