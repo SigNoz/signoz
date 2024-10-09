@@ -61,7 +61,7 @@ WITH partition_query AS (
 
 SELECT
     topic,
-    partition
+    partition,
     p99,
 	COALESCE(total_requests / %d, 0) AS throughput
 FROM
