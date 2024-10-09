@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
+import cloneDeep from 'lodash-es/cloneDeep';
 import {
 	MetricRangePayloadProps,
 	MetricRangePayloadV3,
@@ -10,6 +11,12 @@ export const convertNewDataToOld = (
 ): MetricRangePayloadProps => {
 	const { result, resultType } = newData.data;
 	const oldResult: MetricRangePayloadProps['data']['result'] = [];
+
+	console.log(
+		'convertNewDataToOld - newData',
+		cloneDeep(newData),
+		cloneDeep(result),
+	);
 
 	result.forEach((item) => {
 		if (item.series) {
@@ -28,7 +35,7 @@ export const convertNewDataToOld = (
 				const result: QueryData = {
 					metric: series.labels,
 					values,
-					queryName: `${item.queryName} - Actual`,
+					queryName: `${item.queryName}`,
 				};
 
 				oldResult.push(result);
@@ -51,38 +58,11 @@ export const convertNewDataToOld = (
 				const result: QueryData = {
 					metric: series.labels,
 					values,
-					queryName: `${item.queryName} - Predicted`,
+					queryName: `${item.queryName}`,
 				};
 
 				oldResult.push(result);
 			});
-
-			item.series?.push(item.predictedSeries[0]);
-		}
-
-		if (item.lowerBoundSeries) {
-			item.lowerBoundSeries.forEach((series) => {
-				const values: QueryData['values'] = series.values.reduce<
-					QueryData['values']
-				>((acc, currentInfo) => {
-					const renderValues: [number, string] = [
-						currentInfo.timestamp / 1000,
-						currentInfo.value,
-					];
-
-					return [...acc, renderValues];
-				}, []);
-
-				const result: QueryData = {
-					metric: series.labels,
-					values,
-					queryName: `${item.queryName} - Lower Bound`,
-				};
-
-				oldResult.push(result);
-			});
-
-			item.series?.push(item.lowerBoundSeries[0]);
 		}
 
 		if (item.upperBoundSeries) {
@@ -101,13 +81,34 @@ export const convertNewDataToOld = (
 				const result: QueryData = {
 					metric: series.labels,
 					values,
-					queryName: `${item.queryName} - Upper Bound`,
+					queryName: `${item.queryName}`,
 				};
 
 				oldResult.push(result);
 			});
+		}
 
-			item.series?.push(item.upperBoundSeries[0]);
+		if (item.lowerBoundSeries) {
+			item.lowerBoundSeries.forEach((series) => {
+				const values: QueryData['values'] = series.values.reduce<
+					QueryData['values']
+				>((acc, currentInfo) => {
+					const renderValues: [number, string] = [
+						currentInfo.timestamp / 1000,
+						currentInfo.value,
+					];
+
+					return [...acc, renderValues];
+				}, []);
+
+				const result: QueryData = {
+					metric: series.labels,
+					values,
+					queryName: `${item.queryName}`,
+				};
+
+				oldResult.push(result);
+			});
 		}
 	});
 

@@ -1,3 +1,4 @@
+import { colors } from 'lib/getRandomColor';
 import { cloneDeep, isUndefined } from 'lodash-es';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
@@ -89,4 +90,46 @@ export const getUPlotChartData = (
 			? getStackedSeries(yAxisValuesArr)
 			: yAxisValuesArr),
 	];
+};
+
+const processAnomalyDetectionData = (
+	anomalyDetectionData: any,
+): Record<string, { data: number[][]; color: string }> => {
+	if (!anomalyDetectionData) {
+		return {};
+	}
+
+	const {
+		series,
+		predictedSeries,
+		upperBoundSeries,
+		lowerBoundSeries,
+	} = anomalyDetectionData[0];
+
+	const processedData: Record<string, { data: number[][]; color: string }> = {};
+
+	console.log('processedData', processedData);
+
+	for (let index = 0; index < series?.length; index++) {
+		processedData[series[index].labels.service_name] = {
+			data: [
+				series[index].values.map((v: { timestamp: number }) => v.timestamp),
+				series[index].values.map((v: { value: number }) => v.value),
+				predictedSeries[index].values.map((v: { value: number }) => v.value),
+				upperBoundSeries[index].values.map((v: { value: number }) => v.value),
+				lowerBoundSeries[index].values.map((v: { value: number }) => v.value),
+			],
+			color: colors[index],
+		};
+	}
+
+	return processedData;
+};
+
+export const getUplotChartDataForAnomalyDetection = (
+	apiResponse?: MetricRangePayloadProps,
+): Record<string, { data: number[][]; color: string }> => {
+	const anomalyDetectionData = apiResponse?.data?.newResult?.data?.result;
+
+	return processAnomalyDetectionData(anomalyDetectionData);
 };

@@ -1,8 +1,12 @@
+import './ChartPreview.styles.scss';
+
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { Card } from 'antd';
 import Spinner from 'components/Spinner';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
@@ -34,6 +38,7 @@ import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
+import { AlertDetectionTypes } from '..';
 import { ChartContainer, FailedMessageContainer } from './styles';
 import { getThresholdLabel } from './utils';
 
@@ -141,6 +146,7 @@ function ChartPreview({
 				selectedInterval,
 				minTime,
 				maxTime,
+				alertDef?.ruleType,
 			],
 			retry: false,
 			enabled: canQuery,
@@ -162,8 +168,6 @@ function ChartPreview({
 		);
 		queryResponse.data.payload.data.result = sortedSeriesData;
 	}
-
-	const chartData = getUPlotChartData(queryResponse?.data?.payload);
 
 	const containerDimensions = useResizeObserver(graphRef);
 
@@ -245,36 +249,75 @@ function ChartPreview({
 		],
 	);
 
+	const chartData = getUPlotChartData(queryResponse?.data?.payload);
+
+	const isAnomalyDetectionAlert =
+		alertDef?.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT;
+
+	const chartDataAvailable =
+		chartData && !queryResponse.isError && !queryResponse.isLoading;
+
 	return (
-		<ChartContainer>
-			{headline}
+		<>
+			{isAnomalyDetectionAlert && (
+				<>
+					{queryResponse.isLoading && (
+						<Card className="anomaly-alert-evaluation-view-loading-container">
+							<Spinner size="large" tip="Loading..." height="100%" />
+						</Card>
+					)}
+					{(queryResponse?.isError || queryResponse?.error) && (
+						<Card className="anomaly-alert-evaluation-view-error-container">
+							<FailedMessageContainer color="red" title="Failed to refresh the chart">
+								<InfoCircleOutlined />{' '}
+								{queryResponse.error.message || t('preview_chart_unexpected_error')}
+							</FailedMessageContainer>
+						</Card>
+					)}
 
-			<div ref={graphRef} style={{ height: '100%' }}>
-				{queryResponse.isLoading && (
-					<Spinner size="large" tip="Loading..." height="100%" />
-				)}
-				{(queryResponse?.isError || queryResponse?.error) && (
-					<FailedMessageContainer color="red" title="Failed to refresh the chart">
-						<InfoCircleOutlined />{' '}
-						{queryResponse.error.message || t('preview_chart_unexpected_error')}
-					</FailedMessageContainer>
-				)}
+					{chartDataAvailable &&
+						queryResponse?.data?.payload?.data?.resultType === 'anomaly' && (
+							<AnomalyAlertEvaluationView
+								data={queryResponse?.data?.payload}
+								minTimeScale={minTimeScale}
+								maxTimeScale={maxTimeScale}
+							/>
+						)}
+				</>
+			)}
 
-				{chartData && !queryResponse.isError && !queryResponse.isLoading && (
-					<GridPanelSwitch
-						options={options}
-						panelType={graphType}
-						data={chartData}
-						name={name || 'Chart Preview'}
-						panelData={
-							queryResponse.data?.payload?.data?.newResult?.data?.result || []
-						}
-						query={query || initialQueriesMap.metrics}
-						yAxisUnit={yAxisUnit}
-					/>
-				)}
-			</div>
-		</ChartContainer>
+			{!isAnomalyDetectionAlert && (
+				<ChartContainer>
+					{headline}
+
+					<div ref={graphRef} style={{ height: '100%' }}>
+						{queryResponse.isLoading && (
+							<Spinner size="large" tip="Loading..." height="100%" />
+						)}
+						{(queryResponse?.isError || queryResponse?.error) && (
+							<FailedMessageContainer color="red" title="Failed to refresh the chart">
+								<InfoCircleOutlined />
+								{queryResponse.error.message || t('preview_chart_unexpected_error')}
+							</FailedMessageContainer>
+						)}
+
+						{chartDataAvailable && (
+							<GridPanelSwitch
+								options={options}
+								panelType={graphType}
+								data={chartData}
+								name={name || 'Chart Preview'}
+								panelData={
+									queryResponse.data?.payload?.data?.newResult?.data?.result || []
+								}
+								query={query || initialQueriesMap.metrics}
+								yAxisUnit={yAxisUnit}
+							/>
+						)}
+					</div>
+				</ChartContainer>
+			)}
+		</>
 	);
 }
 

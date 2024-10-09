@@ -1,0 +1,66 @@
+.anomaly-alert-evaluation-view {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	gap: 8px;
+	width: 100%;
+	background: #121317;
+	padding: 16px;
+
+	.anomaly-alert-evaluation-view-chart-section {
+		height: 500px;
+		width: 100%;
+	}
+
+	.anomaly-alert-evaluation-view-series-selection {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		width: 240px;
+
+		.anomaly-alert-evaluation-view-series-list {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+
+			.anomaly-alert-evaluation-view-series-list-items {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+
+				.anomaly-alert-evaluation-view-series-list-item {
+					display: flex;
+					flex-direction: row;
+					gap: 8px;
+
+					cursor: pointer;
+				}
+			}
+		}
+	}
+
+	.uplot {
+		.u-title {
+			text-align: center;
+			font-size: 18px;
+			font-weight: 400;
+			display: flex;
+			height: 40px;
+			font-size: 13px;
+			align-items: center;
+		}
+
+		.u-legend {
+			display: flex;
+			margin-top: 16px;
+
+			tbody {
+				width: 100%;
+
+				.u-series {
+					display: inline-flex;
+				}
+			}
+		}
+	}
+}

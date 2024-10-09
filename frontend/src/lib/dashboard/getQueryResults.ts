@@ -32,7 +32,6 @@ export async function GetMetricQueryRange(
 		signal,
 		headers,
 	);
-	
 
 	if (response.statusCode >= 400) {
 		let error = `API responded with ${response.statusCode} -  ${response.error} status: ${response.message}`;
@@ -71,6 +70,8 @@ export async function GetMetricQueryRange(
 			},
 		);
 	}
+
+	console.log('response', response);
 	return response;
 }
 
