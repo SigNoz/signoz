@@ -517,11 +517,7 @@ export const PANEL_TYPE_TO_QUERY_TYPES: Record<PANEL_TYPES, EQueryType[]> = {
 		EQueryType.CLICKHOUSE,
 		EQueryType.PROM,
 	],
-	[PANEL_TYPES.PIE]: [
-		EQueryType.QUERY_BUILDER,
-		EQueryType.CLICKHOUSE,
-		EQueryType.PROM,
-	],
+	[PANEL_TYPES.PIE]: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
 	[PANEL_TYPES.HISTOGRAM]: [
 		EQueryType.QUERY_BUILDER,
 		EQueryType.CLICKHOUSE,

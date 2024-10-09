@@ -214,7 +214,7 @@ function QuerySection({
 	useEffect(() => {
 		// switch to query builder if query type is not supported
 		if (
-			selectedGraph === PANEL_TYPES.TABLE &&
+			(selectedGraph === PANEL_TYPES.TABLE || selectedGraph === PANEL_TYPES.PIE) &&
 			currentQuery.queryType === EQueryType.PROM
 		) {
 			handleQueryCategoryChange(EQueryType.QUERY_BUILDER);
