@@ -18,9 +18,13 @@ function AlertRuleProvider({
 		undefined,
 	);
 
-	const value = React.useMemo(() => ({ alertRuleState, setAlertRuleState }), [
-		alertRuleState,
-	]);
+	const value = React.useMemo(
+		() => ({
+			alertRuleState,
+			setAlertRuleState,
+		}),
+		[alertRuleState],
+	);
 
 	return (
 		<AlertRuleContext.Provider value={value}>
