@@ -138,7 +138,7 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 }
 
 func GetContextTimeout() time.Duration {
-	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT", "60")
+	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT", "360")
 	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
 	if err != nil {
 		return time.Minute
@@ -407,4 +407,4 @@ const DefaultFilterSuggestionsExamplesLimit = 2
 const MaxFilterSuggestionsExamplesLimit = 10
 
 var SpanRenderLimitStr = GetOrDefaultEnv("SPAN_RENDER_LIMIT", "2500")
-var MaxSpansInTraceStr = GetOrDefaultEnv("MAX_SPANS_IN_TRACE", "250000")
+var MaxSpansInTraceStr = GetOrDefaultEnv("MAX_SPANS_IN_TRACE", "350000")

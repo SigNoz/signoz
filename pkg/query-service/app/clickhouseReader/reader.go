@@ -1745,7 +1745,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
 
 	// todo[vikrantgupta25]: we do not need to do anything below this now. we have the above array as we want it. now convert that to the tree structure here!
-	fmt.Println(len(searchSpanResponses))
+	start= time.Now()
 	for _, spanItem := range spanIdSpanResponseMap {
 		for _, reference := range spanItem.References {
 			if reference.RefType == "CHILD_OF" {
@@ -1780,20 +1780,26 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 
 	}
 
+	fmt.Println(len(spanIdSpanResponseMap))
+
 	for _, spanItem := range spanIdSpanResponseMap {
 		if spanItem.IsProcessed {
 			delete(spanIdSpanResponseMap, spanItem.SpanID)
 		}
 	}
+
+	end = time.Now()
+
+	fmt.Printf("time to construct the tree took %v",end.Sub(start))
 	// spanIdResponseMap should contain the root of the tree only now!
 
 	// next we need to extract the exact traversal of the tree based on collapse and uncollapsed state
 	// recieved in the request payload and return the X points out of the same.
 	uncollapsedNodes := req.UnCollapsedNodes
 
-	preOrderTraversal := getPreOrderTraversal(spanIdSpanResponseMap["bd1f30aea0357bc5"], uncollapsedNodes)
+	preOrderTraversal := getPreOrderTraversal(spanIdSpanResponseMap["c194721de96aecd8ee08c64dd5721f30"], uncollapsedNodes)
 
-	fmt.Println(preOrderTraversal)
+	fmt.Println(len(preOrderTraversal))
 
 	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
 	smartAlgoEnabled := err == nil
