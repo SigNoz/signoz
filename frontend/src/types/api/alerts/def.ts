@@ -12,6 +12,10 @@ export const defaultFrequency = '1m0s';
 // default compare op: above
 export const defaultCompareOp = '1';
 
+export const defaultAlgorithm = 'standard';
+
+export const defaultSeasonality = 'hourly';
+
 export interface AlertDef {
 	id?: number;
 	alertType?: string;
@@ -40,6 +44,8 @@ export interface RuleCondition {
 	absentFor?: number | undefined;
 	requireMinPoints?: boolean | undefined;
 	requiredNumPoints?: number | undefined;
+	algorithm?: string;
+	seasonality?: string;
 }
 export interface Labels {
 	[key: string]: string;

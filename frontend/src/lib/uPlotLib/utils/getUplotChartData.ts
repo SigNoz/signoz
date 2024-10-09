@@ -20,7 +20,7 @@ function getXAxisTimestamps(seriesList: QueryData[]): number[] {
 function fillMissingXAxisTimestamps(timestampArr: number[], data: any[]): any {
 	// Generate a set of all timestamps in the range
 	const allTimestampsSet = new Set(timestampArr);
-	const processedData = JSON.parse(JSON.stringify(data));
+	const processedData = cloneDeep(data);
 
 	// Fill missing timestamps with null values
 	processedData.forEach((entry: { values: (number | null)[][] }) => {

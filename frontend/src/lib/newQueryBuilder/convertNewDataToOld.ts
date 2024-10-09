@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-identical-functions */
 import {
 	MetricRangePayloadProps,
 	MetricRangePayloadV3,
@@ -12,8 +13,8 @@ export const convertNewDataToOld = (
 
 	result.forEach((item) => {
 		if (item.series) {
-			item.series.forEach((serie) => {
-				const values: QueryData['values'] = serie.values.reduce<
+			item.series.forEach((series) => {
+				const values: QueryData['values'] = series.values.reduce<
 					QueryData['values']
 				>((acc, currentInfo) => {
 					const renderValues: [number, string] = [
@@ -23,16 +24,93 @@ export const convertNewDataToOld = (
 
 					return [...acc, renderValues];
 				}, []);
+
 				const result: QueryData = {
-					metric: serie.labels,
+					metric: series.labels,
 					values,
-					queryName: item.queryName,
+					queryName: `${item.queryName} - Actual`,
 				};
 
 				oldResult.push(result);
 			});
 		}
+
+		if (item.predictedSeries) {
+			item.predictedSeries.forEach((series) => {
+				const values: QueryData['values'] = series.values.reduce<
+					QueryData['values']
+				>((acc, currentInfo) => {
+					const renderValues: [number, string] = [
+						currentInfo.timestamp / 1000,
+						currentInfo.value,
+					];
+
+					return [...acc, renderValues];
+				}, []);
+
+				const result: QueryData = {
+					metric: series.labels,
+					values,
+					queryName: `${item.queryName} - Predicted`,
+				};
+
+				oldResult.push(result);
+			});
+
+			item.series?.push(item.predictedSeries[0]);
+		}
+
+		if (item.lowerBoundSeries) {
+			item.lowerBoundSeries.forEach((series) => {
+				const values: QueryData['values'] = series.values.reduce<
+					QueryData['values']
+				>((acc, currentInfo) => {
+					const renderValues: [number, string] = [
+						currentInfo.timestamp / 1000,
+						currentInfo.value,
+					];
+
+					return [...acc, renderValues];
+				}, []);
+
+				const result: QueryData = {
+					metric: series.labels,
+					values,
+					queryName: `${item.queryName} - Lower Bound`,
+				};
+
+				oldResult.push(result);
+			});
+
+			item.series?.push(item.lowerBoundSeries[0]);
+		}
+
+		if (item.upperBoundSeries) {
+			item.upperBoundSeries.forEach((series) => {
+				const values: QueryData['values'] = series.values.reduce<
+					QueryData['values']
+				>((acc, currentInfo) => {
+					const renderValues: [number, string] = [
+						currentInfo.timestamp / 1000,
+						currentInfo.value,
+					];
+
+					return [...acc, renderValues];
+				}, []);
+
+				const result: QueryData = {
+					metric: series.labels,
+					values,
+					queryName: `${item.queryName} - Upper Bound`,
+				};
+
+				oldResult.push(result);
+			});
+
+			item.series?.push(item.upperBoundSeries[0]);
+		}
 	});
+
 	const oldResultType = resultType;
 
 	// TODO: fix it later for using only v3 version of api

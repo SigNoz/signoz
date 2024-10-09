@@ -163,9 +163,27 @@ export const getUPlotChartOptions = ({
 
 	const stackBarChart = stackChart && isUndefined(hiddenGraph);
 
+	const isAnomalyRule = apiResponse?.data?.newResult?.data?.result[0].isAnomaly;
+
 	const series = getStackedSeries(apiResponse?.data?.result || []);
 
-	const bands = stackBarChart ? getBands(series) : null;
+	const anomalySeriesBand = [
+		{
+			series: [1, 3],
+			fill: 'rgba(78, 116, 248, 0.1)',
+		},
+		{
+			series: [4, 1],
+			fill: 'rgba(78, 116, 248, 0.1)',
+		},
+	];
+
+	// eslint-disable-next-line no-nested-ternary
+	const bands = isAnomalyRule
+		? anomalySeriesBand
+		: stackBarChart
+		? getBands(series)
+		: null;
 
 	return {
 		id,
@@ -251,11 +269,14 @@ export const getUPlotChartOptions = ({
 		hooks: {
 			draw: [
 				(u): void => {
+					if (isAnomalyRule) {
+						return;
+					}
+
 					thresholds?.forEach((threshold) => {
 						if (threshold.thresholdValue !== undefined) {
 							const { ctx } = u;
 							ctx.save();
-
 							const yPos = u.valToPos(
 								convertValue(
 									threshold.thresholdValue,
@@ -265,30 +286,22 @@ export const getUPlotChartOptions = ({
 								'y',
 								true,
 							);
-
 							ctx.strokeStyle = threshold.thresholdColor || 'red';
 							ctx.lineWidth = 2;
 							ctx.setLineDash([10, 5]);
-
 							ctx.beginPath();
-
 							const plotLeft = u.bbox.left; // left edge of the plot area
 							const plotRight = plotLeft + u.bbox.width; // right edge of the plot area
-
 							ctx.moveTo(plotLeft, yPos);
 							ctx.lineTo(plotRight, yPos);
-
 							ctx.stroke();
-
 							// Text configuration
 							if (threshold.thresholdLabel) {
 								const text = threshold.thresholdLabel;
 								const textX = plotRight - ctx.measureText(text).width - 20;
-
 								const canvasHeight = ctx.canvas.height;
 								const yposHeight = canvasHeight - yPos;
 								const isHeightGreaterThan90Percent = canvasHeight * 0.9 < yposHeight;
-
 								// Adjust textY based on the condition
 								let textY;
 								if (isHeightGreaterThan90Percent) {
@@ -299,7 +312,6 @@ export const getUPlotChartOptions = ({
 								ctx.fillStyle = threshold.thresholdColor || 'red';
 								ctx.fillText(text, textX, textY);
 							}
-
 							ctx.restore();
 						}
 					});

@@ -2,7 +2,7 @@ import { Form, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { QueryParams } from 'constants/query';
-import FormAlertRules from 'container/FormAlertRules';
+import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import history from 'lib/history';
 import { useEffect, useState } from 'react';
@@ -45,6 +45,7 @@ function CreateRules(): JSX.Element {
 
 	const onSelectType = (typ: AlertTypes): void => {
 		setAlertType(typ);
+
 		switch (typ) {
 			case AlertTypes.LOGS_BASED_ALERT:
 				setInitValues(logAlertDefaults);
@@ -55,13 +56,34 @@ function CreateRules(): JSX.Element {
 			case AlertTypes.EXCEPTIONS_BASED_ALERT:
 				setInitValues(exceptionAlertDefaults);
 				break;
+			case AlertTypes.ANOMALY_BASED_ALERT:
+				setInitValues({
+					...alertDefaults,
+					version: version || ENTITY_VERSION_V4,
+					ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
+				});
+				break;
 			default:
 				setInitValues({
 					...alertDefaults,
 					version: version || ENTITY_VERSION_V4,
+					ruleType: AlertDetectionTypes.THRESHOLD_ALERT,
 				});
 		}
-		queryParams.set(QueryParams.alertType, typ);
+
+		queryParams.set(
+			QueryParams.alertType,
+			typ === AlertTypes.ANOMALY_BASED_ALERT
+				? AlertTypes.METRICS_BASED_ALERT
+				: typ,
+		);
+
+		if (typ === AlertTypes.ANOMALY_BASED_ALERT) {
+			queryParams.set(
+				QueryParams.ruleType,
+				AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
+			);
+		}
 		const generatedUrl = `${location.pathname}?${queryParams.toString()}`;
 		history.replace(generatedUrl);
 	};
