@@ -67,14 +67,15 @@ interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
 }
 
-function removeSelectedValueFromVariables(
+function removeValuesFromVariables(
 	selectedData: DashboardData,
-): DashboardData {
+): Omit<DashboardData, 'uuid'> {
 	if (!selectedData?.variables) {
-		return selectedData;
+		const { uuid, ...rest } = selectedData;
+		return rest;
 	}
 
-	const updatedVariables = Object.entries(selectedData?.variables).reduce(
+	const updatedVariables = Object.entries(selectedData.variables).reduce(
 		(acc, [key, value]) => {
 			const { selectedValue, ...rest } = value;
 			acc[key] = rest;
@@ -83,8 +84,9 @@ function removeSelectedValueFromVariables(
 		{} as Record<string, IDashboardVariable>,
 	);
 
+	const { uuid, ...restData } = selectedData;
 	return {
-		...selectedData,
+		...restData,
 		variables: updatedVariables,
 	};
 }
@@ -434,7 +436,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 										icon={<FileJson size={14} />}
 										onClick={(): void => {
 											downloadObjectAsJson(
-												removeSelectedValueFromVariables(selectedData),
+												removeValuesFromVariables(selectedData),
 												selectedData.title,
 											);
 											setIsDashbordSettingsOpen(false);
@@ -447,11 +449,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 										icon={<ClipboardCopy size={14} />}
 										onClick={(): void => {
 											setCopy(
-												JSON.stringify(
-													removeSelectedValueFromVariables(selectedData),
-													null,
-													2,
-												),
+												JSON.stringify(removeValuesFromVariables(selectedData), null, 2),
 											);
 											setIsDashbordSettingsOpen(false);
 										}}
