@@ -30,13 +30,248 @@ SELECT
     serviceName AS service_name,
     p99,
     COALESCE((error_count * 100.0) / total_requests, 0) AS error_rate,
-    COALESCE(total_requests / %d, 0) AS throughput,  -- Convert nanoseconds to seconds
+    COALESCE(total_requests / %d, 0) AS throughput,
     COALESCE(avg_msg_size, 0) AS avg_msg_size
 FROM
     consumer_query
 ORDER BY
     serviceName;
 `, start, end, queueType, topic, partition, consumerGroup, timeRange)
+	return query
+}
+
+// S1 landing
+func generatePartitionLatencySQL(start, end int64, queueType string) string {
+	timeRange := (end - start) / 1000000000
+	query := fmt.Sprintf(`
+WITH partition_query AS (
+    SELECT
+        quantile(0.99)(durationNano) / 1000000 AS p99,
+        count(*) AS total_requests,
+        stringTagMap['messaging.destination.name'] AS topic,
+		stringTagMap['messaging.destination.partition.id'] AS partition
+    FROM signoz_traces.distributed_signoz_index_v2
+    WHERE
+        timestamp >= '%d'
+        AND timestamp <= '%d'
+        AND kind = 4
+        AND msgSystem = '%s'
+    GROUP BY topic, partition
+)
+
+SELECT
+    topic,
+    partition
+    p99,
+	COALESCE(total_requests / %d, 0) AS throughput
+FROM
+    partition_query
+ORDER BY
+    topic;
+`, start, end, queueType, timeRange)
+	return query
+}
+
+// S1 consumer
+func generateConsumerPartitionLatencySQL(start, end int64, topic, partition, queueType string) string {
+	timeRange := (end - start) / 1000000000
+	query := fmt.Sprintf(`
+WITH consumer_pl AS (
+    SELECT
+        stringTagMap['messaging.kafka.consumer.group'] AS consumer_group,
+        serviceName,
+        quantile(0.99)(durationNano) / 1000000 AS p99,
+        COUNT(*) AS total_requests,
+        SUM(CASE WHEN statusCode = 2 THEN 1 ELSE 0 END) AS error_count
+    FROM signoz_traces.distributed_signoz_index_v2
+    WHERE
+        timestamp >= '%d'
+        AND timestamp <= '%d'
+        AND kind = 5
+        AND msgSystem = '%s'
+        AND stringTagMap['messaging.destination.name'] = '%s'
+        AND stringTagMap['messaging.destination.partition.id'] = '%s'
+    GROUP BY consumer_group, serviceName
+)
+
+SELECT
+    consumer_group,
+    serviceName AS service_name,
+    p99,
+    COALESCE((error_count * 100.0) / total_requests, 0) AS error_rate,
+    COALESCE(total_requests / %d, 0) AS throughput
+FROM
+    consumer_pl
+ORDER BY
+    consumer_group;
+`, start, end, queueType, topic, partition, timeRange)
+	return query
+}
+
+// S3, producer overview
+func generateProducerPartitionThroughputSQL(start, end int64, queueType string) string {
+	timeRange := (end - start) / 1000000000
+	// t, svc, rps, byte*, p99, err
+	query := fmt.Sprintf(`
+WITH producer_latency AS (
+    SELECT
+		serviceName,
+        quantile(0.99)(durationNano) / 1000000 AS p99,
+		stringTagMap['messaging.destination.name'] AS topic,
+        COUNT(*) AS total_requests,
+        SUM(CASE WHEN statusCode = 2 THEN 1 ELSE 0 END) AS error_count
+    FROM signoz_traces.distributed_signoz_index_v2
+    WHERE
+        timestamp >= '%d'
+        AND timestamp <= '%d'
+        AND kind = 4
+        AND msgSystem = '%s'
+    GROUP BY topic, serviceName
+)
+
+SELECT
+	topic,
+	serviceName,	
+    p99,
+    COALESCE((error_count * 100.0) / total_requests, 0) AS error_rate,
+    COALESCE(total_requests / %d, 0) AS throughput
+FROM
+    producer_latency
+`, start, end, queueType, timeRange)
+	return query
+}
+
+// S3, producer topic/service overview
+func generateProducerTopicLatencySQL(start, end int64, topic, service, queueType string) string {
+	timeRange := (end - start) / 1000000000
+	query := fmt.Sprintf(`
+WITH consumer_latency AS (
+    SELECT
+        quantile(0.99)(durationNano) / 1000000 AS p99,
+		stringTagMap['messaging.destination.partition.id'] AS partition,
+        COUNT(*) AS total_requests,
+        SUM(CASE WHEN statusCode = 2 THEN 1 ELSE 0 END) AS error_count
+    FROM signoz_traces.distributed_signoz_index_v2
+    WHERE
+        timestamp >= '%d'
+        AND timestamp <= '%d'
+        AND kind = 4
+		AND serviceName = '%s'
+        AND msgSystem = '%s'
+		AND stringTagMap['messaging.destination.name'] = '%s'
+    GROUP BY partition
+)
+
+SELECT
+	partition,
+    p99,
+    COALESCE((error_count * 100.0) / total_requests, 0) AS error_rate,
+    COALESCE(total_requests / %d, 0) AS throughput
+FROM
+    consumer_latency
+`, start, end, service, queueType, topic, timeRange)
+	return query
+}
+
+// S3 consumer overview
+func generateConsumerLatencySQL(start, end int64, queueType string) string {
+	timeRange := (end - start) / 1000000000
+	query := fmt.Sprintf(`
+WITH consumer_latency AS (
+    SELECT
+        serviceName,
+        stringTagMap['messaging.destination.name'] AS topic,
+        quantile(0.99)(durationNano) / 1000000 AS p99,
+        COUNT(*) AS total_requests,
+        SUM(CASE WHEN statusCode = 2 THEN 1 ELSE 0 END) AS error_count,
+        SUM(
+            CASE
+                WHEN has(numberTagMap, 'messaging.message.body.size') THEN numberTagMap['messaging.message.body.size']
+                ELSE 0
+            END
+        ) AS total_bytes
+    FROM signoz_traces.distributed_signoz_index_v2
+    WHERE
+        timestamp >= '%d'
+        AND timestamp <= '%d'
+        AND kind = 5
+        AND msgSystem = '%s'
+    GROUP BY topic, serviceName
+)
+
+SELECT
+    topic,
+    serviceName AS service_name,
+    p99,
+    COALESCE((error_count * 100.0) / total_requests, 0) AS error_rate,
+    COALESCE(total_requests / %d, 0) AS ingestion_rate,
+    COALESCE(total_bytes / %d, 0) AS byte_rate
+FROM
+    consumer_latency
+ORDER BY
+    topic;
+`, start, end, queueType, timeRange)
+	return query
+}
+
+// S3 consumer topic/service
+func generateConsumerServiceLatencySQL(start, end int64, topic, service, queueType string) string {
+	timeRange := (end - start) / 1000000000
+	query := fmt.Sprintf(`
+WITH consumer_latency AS (
+    SELECT
+        quantile(0.99)(durationNano) / 1000000 AS p99,
+		stringTagMap['messaging.destination.partition.id'] AS partition,
+        COUNT(*) AS total_requests,
+        SUM(CASE WHEN statusCode = 2 THEN 1 ELSE 0 END) AS error_count
+    FROM signoz_traces.distributed_signoz_index_v2
+    WHERE
+        timestamp >= '%d'
+        AND timestamp <= '%d'
+        AND kind = 5
+		AND serviceName = '%s'
+        AND msgSystem = '%s'
+		AND stringTagMap['messaging.destination.name'] = '%s'
+    GROUP BY partition
+)
+
+SELECT
+	partition,
+    p99,
+    COALESCE((error_count * 100.0) / total_requests, 0) AS error_rate,
+    COALESCE(total_requests / %d, 0), 0) AS throughput
+FROM
+    consumer_latency
+`, start, end, service, queueType, topic, timeRange)
+	return query
+}
+
+// s4
+func generateProducerConsumerEvalSQL(start, end int64, queueType string) string {
+	query := fmt.Sprintf(`
+SELECT
+    p.serviceName AS producer_service,
+    c.serviceName AS consumer_service,
+    p.traceID,
+    p.timestamp AS producer_timestamp,
+    c.timestamp AS consumer_timestamp,
+    p.durationNano AS durationNano
+FROM
+    signoz_traces.distributed_signoz_index_v2 p
+INNER JOIN
+    signoz_traces.distributed_signoz_index_v2 c ON
+    p.traceID = c.traceID AND
+    c.parentSpanID = p.spanID
+WHERE
+    p.kind = 4 
+    AND c.kind = 5 
+    AND p.timestamp >= '%d'
+    AND p.timestamp <= '%d'
+    AND c.timestamp >= '%d'
+    AND c.timestamp <= '%d'
+    AND c.msgSystem = '%s'
+    AND p.msgSystem = '%s' ;
+`, start, end, start, end, queueType, queueType)
 	return query
 }
 
@@ -64,12 +299,11 @@ SELECT
     serviceName AS service_name,
     p99,
     COALESCE((error_count * 100.0) / total_count, 0) AS error_percentage,
-    COALESCE(total_count / %d, 0) AS throughput  -- Convert nanoseconds to seconds
+    COALESCE(total_count / %d, 0) AS throughput
 FROM
     producer_query
 ORDER BY
     serviceName;
-
 `, start, end, queueType, topic, partition, timeRange)
 	return query
 }

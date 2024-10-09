@@ -2,8 +2,6 @@ package kafka
 
 import (
 	"fmt"
-	"strings"
-
 	"go.signoz.io/signoz/pkg/query-service/common"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
@@ -37,14 +35,6 @@ func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) 
 	return queryRangeParams, nil
 }
 
-func PrepareClikhouseQueries(messagingQueue *MessagingQueue, queryContext string) (*v3.ClickHouseQuery, error) {
-	queueType := KafkaQueue
-
-	chq, err := BuildClickHouseQuery(messagingQueue, queueType, queryContext)
-
-	return chq, err
-}
-
 func buildClickHouseQueryNetwork(messagingQueue *MessagingQueue, queueType string) (*v3.ClickHouseQuery, error) {
 	start := messagingQueue.Start
 	end := messagingQueue.End
@@ -63,14 +53,6 @@ func buildClickHouseQueryNetwork(messagingQueue *MessagingQueue, queueType strin
 	return &v3.ClickHouseQuery{
 		Query: query,
 	}, nil
-}
-
-func formatstring(str []string) string {
-	joined := strings.Join(str, ", ")
-	if len(joined) <= 2 {
-		return ""
-	}
-	return joined[1 : len(joined)-1]
 }
 
 func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCache *Clients) (map[string]*v3.BuilderQuery, error) {
@@ -143,7 +125,7 @@ func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCac
 	return bq, nil
 }
 
-func BuildQRParamsNetwork(messagingQueue *MessagingQueue, queryContext string, attributeCache *Clients) (*v3.QueryRangeParamsV3, error) {
+func BuildQRParamsWithCache(messagingQueue *MessagingQueue, queryContext string, attributeCache *Clients) (*v3.QueryRangeParamsV3, error) {
 
 	queueType := KafkaQueue
 
@@ -151,6 +133,7 @@ func BuildQRParamsNetwork(messagingQueue *MessagingQueue, queryContext string, a
 	unixMilliEnd := messagingQueue.End / 1000000
 
 	var cq *v3.CompositeQuery
+	var err error
 
 	if queryContext == "throughput" {
 		chq, err := buildClickHouseQueryNetwork(messagingQueue, queueType)
@@ -171,6 +154,14 @@ func BuildQRParamsNetwork(messagingQueue *MessagingQueue, queryContext string, a
 			BuilderQueries: bhq,
 			PanelType:      v3.PanelTypeTable,
 		}
+	} else if queryContext == "producer-throughput-overview" {
+		start := messagingQueue.Start
+		end := messagingQueue.End
+		query := generateProducerPartitionThroughputSQL(start, end, queueType)
+
+		cq, err = buildCompositeQuery(&v3.ClickHouseQuery{
+			Query: query,
+		}, queryContext)
 	}
 
 	queryRangeParams := &v3.QueryRangeParamsV3{
@@ -182,7 +173,7 @@ func BuildQRParamsNetwork(messagingQueue *MessagingQueue, queryContext string, a
 		FormatForWeb:   true,
 	}
 
-	return queryRangeParams, nil
+	return queryRangeParams, err
 }
 
 func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, queryContext string) (*v3.ClickHouseQuery, error) {
@@ -190,8 +181,13 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 	end := messagingQueue.End
 
 	var topic, partition string
-
-	if queryContext == "producer" || queryContext == "consumer" {
+	if queryContext == "producer" ||
+		queryContext == "consumer" ||
+		queryContext == "consumer-throughput-overview" ||
+		queryContext == "consumer_partition_latency" ||
+		queryContext == "producer-topic-throughput" ||
+		queryContext == "producer-throughput-details" ||
+		queryContext == "consumer-throughput-details" {
 		var ok bool
 		topic, ok = messagingQueue.Variables["topic"]
 		if !ok {
@@ -212,6 +208,26 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 			return nil, fmt.Errorf("invalid type for consumer group")
 		}
 		query = generateConsumerSQL(start, end, topic, partition, consumerGroup, queueType)
+	} else if queryContext == "producer-topic-throughput" {
+		query = generatePartitionLatencySQL(start, end, queueType)
+	} else if queryContext == "consumer_partition_latency" {
+		query = generateConsumerPartitionLatencySQL(start, end, topic, partition, queueType)
+	} else if queryContext == "producer-throughput-details" {
+		svcName, ok := messagingQueue.Variables["service_name"]
+		if !ok {
+			return nil, fmt.Errorf("invalid type for service")
+		}
+		query = generateProducerTopicLatencySQL(start, end, topic, svcName, queueType)
+	} else if queryContext == "consumer-throughput-overview" {
+		query = generateConsumerLatencySQL(start, end, queueType)
+	} else if queryContext == "consumer-throughput-details" {
+		svcName, ok := messagingQueue.Variables["service_name"]
+		if !ok {
+			return nil, fmt.Errorf("invalid type for service")
+		}
+		query = generateConsumerServiceLatencySQL(start, end, topic, svcName, queueType)
+	} else if queryContext == "producer-consumer-eval" {
+		query = generateProducerConsumerEvalSQL(start, end, queueType)
 	} else if queryContext == "onboard_producers" {
 		query = onboardProducersSQL(start, end, queueType)
 	} else if queryContext == "onboard_consumers" {
@@ -219,7 +235,6 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 	} else if queryContext == "onboard_kafka" {
 		query = onboardKafkaSQL(start, end)
 	}
-
 	return &v3.ClickHouseQuery{
 		Query: query,
 	}, nil

@@ -28,6 +28,7 @@ Response in query range `table` format
     "resultType": "",
     "result": [
       {
+        
         "table": {
           "columns": [
             {
