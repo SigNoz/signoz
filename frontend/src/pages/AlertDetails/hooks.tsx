@@ -43,6 +43,7 @@ import {
 	AlertRuleTopContributorsPayload,
 } from 'types/api/alerts/def';
 import { PayloadProps } from 'types/api/alerts/get';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { nanoToMilli } from 'utils/timeUtils';
 
 export const useAlertHistoryQueryParams = (): {
@@ -249,7 +250,11 @@ type GetAlertRuleDetailsTimelineTableProps = GetAlertRuleDetailsApiProps & {
 		| undefined;
 };
 
-export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimelineTableProps => {
+export const useGetAlertRuleDetailsTimelineTable = ({
+	filters,
+}: {
+	filters: TagFilter;
+}): GetAlertRuleDetailsTimelineTableProps => {
 	const { ruleId, startTime, endTime, params } = useAlertHistoryQueryParams();
 	const { updatedOrder, offset } = useMemo(
 		() => ({
@@ -273,6 +278,7 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 			timelineFilter,
 			updatedOrder,
 			offset,
+			JSON.stringify(filters.items),
 		],
 		{
 			queryFn: () =>
@@ -283,7 +289,7 @@ export const useGetAlertRuleDetailsTimelineTable = (): GetAlertRuleDetailsTimeli
 					limit: TIMELINE_TABLE_PAGE_SIZE,
 					order: updatedOrder,
 					offset,
-
+					filters,
 					...(timelineFilter && timelineFilter !== TimelineFilter.ALL
 						? {
 								state: timelineFilter === TimelineFilter.FIRED ? 'firing' : 'normal',
