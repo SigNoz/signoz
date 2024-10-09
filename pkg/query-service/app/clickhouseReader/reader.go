@@ -53,20 +53,30 @@ import (
 )
 
 const (
-	primaryNamespace           = "clickhouse"
-	archiveNamespace           = "clickhouse-archive"
-	signozTraceDBName          = "signoz_traces"
-	signozHistoryDBName        = "signoz_analytics"
-	ruleStateHistoryTableName  = "distributed_rule_state_history_v0"
-	signozDurationMVTable      = "distributed_durationSort"
-	signozUsageExplorerTable   = "distributed_usage_explorer"
-	signozSpansTable           = "distributed_signoz_spans"
-	signozErrorIndexTable      = "distributed_signoz_error_index_v2"
-	signozTraceTableName       = "distributed_signoz_index_v2"
-	signozTraceLocalTableName  = "signoz_index_v2"
-	signozMetricDBName         = "signoz_metrics"
+	primaryNamespace          = "clickhouse"
+	archiveNamespace          = "clickhouse-archive"
+	signozTraceDBName         = "signoz_traces"
+	signozHistoryDBName       = "signoz_analytics"
+	ruleStateHistoryTableName = "distributed_rule_state_history_v0"
+	signozDurationMVTable     = "distributed_durationSort"
+	signozUsageExplorerTable  = "distributed_usage_explorer"
+	signozSpansTable          = "distributed_signoz_spans"
+	signozErrorIndexTable     = "distributed_signoz_error_index_v2"
+	signozTraceTableName      = "distributed_signoz_index_v2"
+	signozTraceLocalTableName = "signoz_index_v2"
+	signozMetricDBName        = "signoz_metrics"
+
 	signozSampleLocalTableName = "samples_v4"
 	signozSampleTableName      = "distributed_samples_v4"
+
+	signozSamplesAgg5mLocalTableName = "samples_v4_agg_5m"
+	signozSamplesAgg5mTableName      = "distributed_samples_v4_agg_5m"
+
+	signozSamplesAgg30mLocalTableName = "samples_v4_agg_30m"
+	signozSamplesAgg30mTableName      = "distributed_samples_v4_agg_30m"
+
+	signozExpHistLocalTableName = "exp_hist"
+	signozExpHistTableName      = "distributed_exp_hist"
 
 	signozTSLocalTableNameV4 = "time_series_v4"
 	signozTSTableNameV4      = "distributed_time_series_v4"
@@ -76,6 +86,9 @@ const (
 
 	signozTSLocalTableNameV41Day = "time_series_v4_1day"
 	signozTSTableNameV41Day      = "distributed_time_series_v4_1day"
+
+	signozTSLocalTableNameV41Week = "time_series_v4_1week"
+	signozTSTableNameV41Week      = "distributed_time_series_v4_1week"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -2115,8 +2128,15 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 
 	switch params.Type {
 	case constants.TraceTTL:
-		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + signozUsageExplorerTable, signozTraceDBName + "." + defaultDependencyGraphTable}
-		for _, tableName := range tableNameArray {
+		tableNames := []string{
+			signozTraceDBName + "." + signozTraceTableName,
+			signozTraceDBName + "." + signozDurationMVTable,
+			signozTraceDBName + "." + signozSpansTable,
+			signozTraceDBName + "." + signozErrorIndexTable,
+			signozTraceDBName + "." + signozUsageExplorerTable,
+			signozTraceDBName + "." + defaultDependencyGraphTable,
+		}
+		for _, tableName := range tableNames {
 			tableName := getLocalTableName(tableName)
 			statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 			if err != nil {
@@ -2126,7 +2146,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 			}
 		}
-		for _, tableName := range tableNameArray {
+		for _, tableName := range tableNames {
 			tableName := getLocalTableName(tableName)
 			// TODO: DB queries should be implemented with transactional statements but currently clickhouse doesn't support them. Issue: https://github.com/ClickHouse/ClickHouse/issues/22086
 			go func(tableName string) {
@@ -2155,7 +2175,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 					}
 					return
 				}
-				req += " SETTINGS distributed_ddl_task_timeout = -1;"
+				req += " SETTINGS materialize_ttl_after_modify=0;"
 				zap.L().Error("Executing TTL request: ", zap.String("request", req))
 				statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 				if err := r.db.Exec(context.Background(), req); err != nil {
@@ -2176,7 +2196,16 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		}
 
 	case constants.MetricsTTL:
-		tableNames := []string{signozMetricDBName + "." + signozSampleLocalTableName, signozMetricDBName + "." + signozTSLocalTableNameV4, signozMetricDBName + "." + signozTSLocalTableNameV46Hrs, signozMetricDBName + "." + signozTSLocalTableNameV41Day}
+		tableNames := []string{
+			signozMetricDBName + "." + signozSampleLocalTableName,
+			signozMetricDBName + "." + signozSamplesAgg5mLocalTableName,
+			signozMetricDBName + "." + signozSamplesAgg30mLocalTableName,
+			signozMetricDBName + "." + signozExpHistLocalTableName,
+			signozMetricDBName + "." + signozTSLocalTableNameV4,
+			signozMetricDBName + "." + signozTSLocalTableNameV46Hrs,
+			signozMetricDBName + "." + signozTSLocalTableNameV41Day,
+			signozMetricDBName + "." + signozTSLocalTableNameV41Week,
+		}
 		for _, tableName := range tableNames {
 			statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 			if err != nil {
@@ -2193,7 +2222,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				return
 			}
 			timeColumn := "timestamp_ms"
-			if strings.Contains(tableName, "v4") {
+			if strings.Contains(tableName, "v4") || strings.Contains(tableName, "exp_hist") {
 				timeColumn = "unix_milli"
 			}
 
@@ -2218,7 +2247,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				}
 				return
 			}
-			req += " SETTINGS distributed_ddl_task_timeout = -1"
+			req += " SETTINGS materialize_ttl_after_modify=0"
 			zap.L().Info("Executing TTL request: ", zap.String("request", req))
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
@@ -2279,7 +2308,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				}
 				return
 			}
-			req += " SETTINGS distributed_ddl_task_timeout = -1"
+			req += " SETTINGS materialize_ttl_after_modify=0"
 			zap.L().Info("Executing TTL request: ", zap.String("request", req))
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
