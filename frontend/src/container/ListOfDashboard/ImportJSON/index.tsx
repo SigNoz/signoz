@@ -82,6 +82,11 @@ function ImportJSON({
 
 			const dashboardData = JSON.parse(editorValue) as DashboardData;
 
+			// Add validation for uuid
+			if (dashboardData.uuid !== undefined && dashboardData.uuid.trim() === '') {
+				throw new Error('uuid cannot be an empty string');
+			}
+
 			if (dashboardData?.layout) {
 				dashboardData.layout = getUpdatedLayout(dashboardData.layout);
 			} else {
@@ -123,11 +128,14 @@ function ImportJSON({
 				});
 			}
 			setDashboardCreating(false);
-		} catch {
+		} catch (error) {
 			setDashboardCreating(false);
 			setIsFeatureAlert(false);
 
 			setIsCreateDashboardError(true);
+			notifications.error({
+				message: error instanceof Error ? error.message : t('error_loading_json'),
+			});
 		}
 	};
 
