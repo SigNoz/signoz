@@ -147,7 +147,7 @@ func PrepareLinksToLogs(start, end time.Time, filterItems []v3.FilterItem) strin
 // by clause, in which case we replace it with the actual value for the notification
 // i.e Severity text = WARN
 // If the Severity text is not part of the group by clause, then we add it as it is
-func PrepareFilters(alertTypeLogs bool, labels map[string]string, whereClauseItems []v3.FilterItem, groupByItems []v3.AttributeKey, keys map[string]v3.AttributeKey) []v3.FilterItem {
+func PrepareFilters(labels map[string]string, whereClauseItems []v3.FilterItem, groupByItems []v3.AttributeKey, keys map[string]v3.AttributeKey) []v3.FilterItem {
 	var filterItems []v3.FilterItem
 
 	added := make(map[string]struct{})
@@ -181,18 +181,23 @@ func PrepareFilters(alertTypeLogs bool, labels map[string]string, whereClauseIte
 			// start by taking the attribute key from the keys map, if not present, create a new one
 			var attributeKey v3.AttributeKey
 			var attrFound bool
-			if alertTypeLogs {
-				for _, tKey := range utils.GenerateLogEnrichmentKeys(v3.AttributeKey{Key: key}) {
-					if val, ok := keys[tKey]; ok {
-						attributeKey = val
-						attrFound = true
-						break
-					}
+
+			// as of now this logic will only apply for logs
+			for _, tKey := range utils.GenerateLogEnrichmentKeys(v3.AttributeKey{Key: key}) {
+				if val, ok := keys[tKey]; ok {
+					attributeKey = val
+					attrFound = true
+					break
 				}
-			} else {
+			}
+
+			// check if the attribute key is directly present, as of now this will always be false for logs
+			// as for logs it will be satisfied in the condition above
+			if !attrFound {
 				attributeKey, attrFound = keys[key]
 			}
 
+			// if the attribute key is not present, create a new one
 			if !attrFound {
 				attributeKey = v3.AttributeKey{Key: key}
 			}

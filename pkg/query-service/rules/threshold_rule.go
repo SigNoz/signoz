@@ -199,7 +199,7 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 		queryFilter = q.Filters.Items
 	}
 
-	filterItems := contextlinks.PrepareFilters(true, lbls.Map(), queryFilter, q.GroupBy, r.logsKeys)
+	filterItems := contextlinks.PrepareFilters(lbls.Map(), queryFilter, q.GroupBy, r.logsKeys)
 
 	return contextlinks.PrepareLinksToLogs(start, end, filterItems)
 }
@@ -233,7 +233,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 		queryFilter = q.Filters.Items
 	}
 
-	filterItems := contextlinks.PrepareFilters(false, lbls.Map(), queryFilter, q.GroupBy, r.spansKeys)
+	filterItems := contextlinks.PrepareFilters(lbls.Map(), queryFilter, q.GroupBy, r.spansKeys)
 
 	return contextlinks.PrepareLinksToTraces(start, end, filterItems)
 }
