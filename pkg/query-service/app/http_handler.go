@@ -3324,32 +3324,40 @@ func (aH *APIHandler) getProducerConsumerEval(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval")
+	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "producer-consumer-eval")
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	var result []*v3.Result
-	var errQuriesByName map[string]error
-
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, err)
 		return
 	}
-	result = postprocess.TransformToTableForClickHouseQueries(result)
+	fmt.Print(len(results))
+
+	//if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+	//	zap.L().Error(err.Error())
+	//	RespondError(w, apiErr, nil)
+	//	return
+	//}
+
+	//var result []*v3.Result
+	//var errQuriesByName map[string]error
+	//
+	//result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	//if err != nil {
+	//	apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	//	RespondError(w, apiErrObj, errQuriesByName)
+	//	return
+	//}
+	//result = postprocess.TransformToTableForClickHouseQueries(result)
 
 	resp := v3.QueryRangeResponse{
-		Result: result,
+		//Result: results,
 	}
 	aH.Respond(w, resp)
 }

@@ -210,7 +210,7 @@ FROM
     consumer_latency
 ORDER BY
     topic;
-`, start, end, queueType, timeRange)
+`, start, end, queueType, timeRange, timeRange)
 	return query
 }
 
@@ -239,7 +239,7 @@ SELECT
 	partition,
     p99,
     COALESCE((error_count * 100.0) / total_requests, 0) AS error_rate,
-    COALESCE(total_requests / %d, 0), 0) AS throughput
+    COALESCE(total_requests / %d, 0) AS throughput
 FROM
     consumer_latency
 `, start, end, service, queueType, topic, timeRange)

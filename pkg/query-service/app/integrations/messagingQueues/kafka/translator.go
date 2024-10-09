@@ -183,7 +183,6 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 	var topic, partition string
 	if queryContext == "producer" ||
 		queryContext == "consumer" ||
-		queryContext == "consumer-throughput-overview" ||
 		queryContext == "consumer_partition_latency" ||
 		queryContext == "producer-topic-throughput" ||
 		queryContext == "producer-throughput-details" ||
@@ -193,9 +192,11 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 		if !ok {
 			return nil, fmt.Errorf("invalid type for Topic")
 		}
-		partition, ok = messagingQueue.Variables["partition"]
-		if !ok {
-			return nil, fmt.Errorf("invalid type for Partition")
+		if queryContext != "consumer-throughput-details" {
+			partition, ok = messagingQueue.Variables["partition"]
+			if !ok {
+				return nil, fmt.Errorf("invalid type for Partition")
+			}
 		}
 	}
 
