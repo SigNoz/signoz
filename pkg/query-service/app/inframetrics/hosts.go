@@ -149,6 +149,9 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context,
 		return nil, err
 	}
 
+	// TODO(srikanthccv): remove this
+	query = strings.Replace(query, ".time_series_v4", ".distributed_time_series_v4", 1)
+
 	attrsListResponse, err := h.reader.GetListResultV3(ctx, query)
 	if err != nil {
 		return nil, err
@@ -236,9 +239,16 @@ func (h *HostsRepo) getActiveHosts(ctx context.Context,
 }
 
 func (h *HostsRepo) getHostsForQuery(ctx context.Context,
-	req model.HostListRequest, query *v3.QueryRangeParamsV3, hostNameAttrKey string) ([]model.HostListRecord, error) {
+	req model.HostListRequest, q *v3.QueryRangeParamsV3, hostNameAttrKey string) ([]model.HostListRecord, error) {
 
 	step := common.MinAllowedStepInterval(req.Start, req.End)
+
+	query := q.Clone()
+	if req.OrderBy != nil {
+		for _, q := range query.CompositeQuery.BuilderQueries {
+			q.OrderBy = []v3.OrderBy{*req.OrderBy}
+		}
+	}
 
 	query.Start = req.Start
 	query.End = req.End
@@ -251,6 +261,16 @@ func (h *HostsRepo) getHostsForQuery(ctx context.Context,
 				query.Filters = &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}}
 			}
 			query.Filters.Items = append(query.Filters.Items, req.Filters.Items...)
+			// what is happening here?
+			// if the filter has host_name and we are querying for k8s host metrics,
+			// we need to replace the host_name with k8s_node_name
+			if hostNameAttrKey == "k8s_node_name" {
+				for idx, item := range query.Filters.Items {
+					if item.Key.Key == "host_name" {
+						query.Filters.Items[idx].Key.Key = "k8s_node_name"
+					}
+				}
+			}
 		}
 	}
 
@@ -368,7 +388,26 @@ func (h *HostsRepo) getHostsForQuery(ctx context.Context,
 		records = append(records, record)
 	}
 
+	if req.Offset > 0 {
+		records = records[req.Offset:]
+	}
+	if req.Limit > 0 && len(records) > req.Limit {
+		records = records[:req.Limit]
+	}
+
 	return records, nil
+}
+
+func dedupRecords(records []model.HostListRecord) []model.HostListRecord {
+	seen := map[string]bool{}
+	deduped := []model.HostListRecord{}
+	for _, record := range records {
+		if !seen[record.HostName] {
+			seen[record.HostName] = true
+			deduped = append(deduped, record)
+		}
+	}
+	return deduped
 }
 
 func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) (model.HostListResponse, error) {
@@ -386,6 +425,10 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 	}
 
 	records := append(vmRecords, k8sRecords...)
+
+	// since we added the fix for incorrect host name, it is possible that both host_name and k8s_node_name
+	// are present in the response. we need to dedup the results.
+	records = dedupRecords(records)
 
 	if len(req.GroupBy) > 0 {
 		groups := []model.HostListGroup{}
@@ -437,22 +480,27 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 			for _, key := range req.GroupBy {
 				groupValues = append(groupValues, firstRecord.Meta[key.Key])
 			}
+			hostNames := []string{}
+			for _, record := range records {
+				hostNames = append(hostNames, record.HostName)
+			}
 
 			groups = append(groups, model.HostListGroup{
 				GroupValues:    groupValues,
 				Active:         activeHosts,
 				Inactive:       inactiveHosts,
-				Records:        records,
 				GroupCPUAvg:    avgCPU,
 				GroupMemoryAvg: avgMemory,
 				GroupWaitAvg:   avgWait,
 				GroupLoad15Avg: avgLoad15,
+				HostNames:      hostNames,
 			})
 		}
 		resp.Groups = groups
 		resp.Type = "grouped_list"
 	}
 	resp.Records = records
+	resp.Total = len(records)
 
 	return resp, nil
 }

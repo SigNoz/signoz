@@ -7,6 +7,9 @@ type HostListRequest struct {
 	End     int64             `json:"end"`   // epoch time in ms
 	Filters *v3.FilterSet     `json:"filters"`
 	GroupBy []v3.AttributeKey `json:"groupBy"`
+	OrderBy *v3.OrderBy       `json:"orderBy"`
+	Offset  int               `json:"offset"`
+	Limit   int               `json:"limit"`
 }
 
 type HostListRecord struct {
@@ -25,18 +28,19 @@ type HostListRecord struct {
 }
 
 type HostListGroup struct {
-	GroupValues    []string         `json:"groupValues"`
-	Active         int              `json:"active"`
-	Inactive       int              `json:"inactive"`
-	GroupCPUAvg    float64          `json:"groupCPUAvg"`
-	GroupMemoryAvg float64          `json:"groupMemoryAvg"`
-	GroupWaitAvg   float64          `json:"groupWaitAvg"`
-	GroupLoad15Avg float64          `json:"groupLoad15Avg"`
-	Records        []HostListRecord `json:"records"`
+	GroupValues    []string `json:"groupValues"`
+	Active         int      `json:"active"`
+	Inactive       int      `json:"inactive"`
+	GroupCPUAvg    float64  `json:"groupCPUAvg"`
+	GroupMemoryAvg float64  `json:"groupMemoryAvg"`
+	GroupWaitAvg   float64  `json:"groupWaitAvg"`
+	GroupLoad15Avg float64  `json:"groupLoad15Avg"`
+	HostNames      []string `json:"hostNames"`
 }
 
 type HostListResponse struct {
 	Type    string           `json:"type"`
 	Records []HostListRecord `json:"records"`
 	Groups  []HostListGroup  `json:"groups"`
+	Total   int              `json:"total"`
 }
