@@ -47,7 +47,11 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
-import { Dashboard, DashboardData } from 'types/api/dashboard/getAll';
+import {
+	Dashboard,
+	DashboardData,
+	IDashboardVariable,
+} from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
@@ -61,6 +65,28 @@ import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
 
 interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
+}
+
+function removeSelectedValueFromVariables(
+	selectedData: DashboardData,
+): DashboardData {
+	if (!selectedData?.variables) {
+		return selectedData;
+	}
+
+	const updatedVariables = Object.entries(selectedData?.variables).reduce(
+		(acc, [key, value]) => {
+			const { selectedValue, ...rest } = value;
+			acc[key] = rest;
+			return acc;
+		},
+		{} as Record<string, IDashboardVariable>,
+	);
+
+	return {
+		...selectedData,
+		variables: updatedVariables,
+	};
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -407,7 +433,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 										type="text"
 										icon={<FileJson size={14} />}
 										onClick={(): void => {
-											downloadObjectAsJson(selectedData, selectedData.title);
+											downloadObjectAsJson(
+												removeSelectedValueFromVariables(selectedData),
+												selectedData.title,
+											);
 											setIsDashbordSettingsOpen(false);
 										}}
 									>
@@ -417,7 +446,13 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 										type="text"
 										icon={<ClipboardCopy size={14} />}
 										onClick={(): void => {
-											setCopy(JSON.stringify(selectedData, null, 2));
+											setCopy(
+												JSON.stringify(
+													removeSelectedValueFromVariables(selectedData),
+													null,
+													2,
+												),
+											);
 											setIsDashbordSettingsOpen(false);
 										}}
 									>
