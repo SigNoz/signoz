@@ -1,6 +1,11 @@
 package utils
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+)
 
 func TestLogsListTsRange(t *testing.T) {
 	startEndData := []struct {
@@ -45,5 +50,55 @@ func TestLogsListTsRange(t *testing.T) {
 				t.Errorf("expected range was %v - %v, got %v - %v", v.Start, v.End, test.res[i].Start, test.res[i].End)
 			}
 		}
+	}
+}
+
+func Test_GenerateLogEnrichmentKeys(t *testing.T) {
+	type args struct {
+		field v3.AttributeKey
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "all are present",
+			args: args{
+				field: v3.AttributeKey{
+					Key:      "data",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+				},
+			},
+			want: []string{"data##tag##string"},
+		},
+		{
+			name: "type present",
+			args: args{
+				field: v3.AttributeKey{
+					Key:  "data",
+					Type: v3.AttributeKeyTypeTag,
+				},
+			},
+			want: []string{"data##tag##float64", "data##tag##int64", "data##tag##string", "data##tag##bool"},
+		},
+		{
+			name: "dataType present",
+			args: args{
+				field: v3.AttributeKey{
+					Key:      "data",
+					DataType: v3.AttributeKeyDataTypeString,
+				},
+			},
+			want: []string{"data##tag##string", "data##resource##string"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GenerateLogEnrichmentKeys(tt.args.field); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("generateLogEnrichmentKeys() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
