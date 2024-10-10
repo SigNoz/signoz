@@ -238,7 +238,7 @@ services:
       - query-service
 
   otel-collector-migrator:
-      image: signoz/signoz-schema-migrator:0.102.12
+      image: signoz/signoz-schema-migrator:0.102.10
       deploy:
         restart_policy:
           condition: on-failure
