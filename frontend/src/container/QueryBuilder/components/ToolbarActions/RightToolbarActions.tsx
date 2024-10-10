@@ -1,6 +1,7 @@
 import './ToolbarActions.styles.scss';
 
-import { Button } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Button, Spin } from 'antd';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { Play, X } from 'lucide-react';
@@ -36,10 +37,9 @@ export default function RightToolbarActions({
 		<div>
 			{isLoadingQueries ? (
 				<div className="loading-container">
-					<Button className="loading-btn" loading={isLoadingQueries} />
 					<Button
-						icon={<X size={14} />}
-						className="cancel-run"
+						className="btn-query-run"
+						type="primary"
 						onClick={(): void => {
 							if (listQueryKeyRef?.current) {
 								queryClient.cancelQueries(listQueryKeyRef.current);
@@ -49,18 +49,30 @@ export default function RightToolbarActions({
 							}
 						}}
 					>
-						Cancel Run
+						<div className="btn-query-run__content">
+							<X className="btn-query-run__icon" size={14} />
+							<span className="btn-query-run__text">Cancel Run</span>
+						</div>
+
+						{isLoadingQueries && (
+							<Spin
+								indicator={<LoadingOutlined spin style={{ color: '#fff' }} />}
+								size="small"
+							/>
+						)}
 					</Button>
 				</div>
 			) : (
 				<Button
 					type="primary"
-					className="right-toolbar"
+					className="btn-query-run"
 					disabled={isLoadingQueries}
 					onClick={onStageRunQuery}
-					icon={<Play size={14} />}
 				>
-					Stage & Run Query
+					<div className="btn-query-run__content">
+						<Play className="btn-query-run__icon" size={14} />
+						<span className="btn-query-run__text">Stage & Run Query</span>
+					</div>
 				</Button>
 			)}
 		</div>

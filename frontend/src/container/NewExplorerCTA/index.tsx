@@ -36,9 +36,8 @@ function NewExplorerCTA(): JSX.Element | null {
 			<Button
 				icon={<CompassOutlined />}
 				onClick={onClickHandler}
-				danger
 				data-testid="newExplorerCTA"
-				type="primary"
+				className="periscope-btn"
 			>
 				{buttonText[location.pathname]}
 			</Button>
