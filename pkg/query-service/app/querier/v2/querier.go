@@ -159,6 +159,8 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 
 	cacheKeys := q.keyGenerator.GenerateKeys(params)
 
+	now := time.Now()
+
 	ch := make(chan channelResult, len(params.CompositeQuery.BuilderQueries))
 	var wg sync.WaitGroup
 
@@ -171,6 +173,7 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 
 	wg.Wait()
 	close(ch)
+	zap.L().Info("time taken to run builder queries", zap.Duration("multiQueryDuration", time.Since(now)), zap.Int("num_queries", len(params.CompositeQuery.BuilderQueries)))
 
 	results := make([]*v3.Result, 0)
 	errQueriesByName := make(map[string]error)
