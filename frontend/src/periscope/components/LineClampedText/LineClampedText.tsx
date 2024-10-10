@@ -1,14 +1,16 @@
 import './LineClampedText.styles.scss';
 
-import { Tooltip } from 'antd';
+import { Tooltip, TooltipProps } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 
 function LineClampedText({
 	text,
 	lines,
+	tooltipProps,
 }: {
 	text: string;
 	lines?: number;
+	tooltipProps?: TooltipProps;
 }): JSX.Element {
 	const [isOverflowing, setIsOverflowing] = useState(false);
 	const textRef = useRef<HTMLDivElement>(null);
@@ -42,11 +44,22 @@ function LineClampedText({
 		</div>
 	);
 
-	return isOverflowing ? <Tooltip title={text}>{content}</Tooltip> : content;
+	return isOverflowing ? (
+		<Tooltip
+			title={text}
+			// eslint-disable-next-line react/jsx-props-no-spreading
+			{...tooltipProps}
+		>
+			{content}
+		</Tooltip>
+	) : (
+		content
+	);
 }
 
 LineClampedText.defaultProps = {
 	lines: 1,
+	tooltipProps: {},
 };
 
 export default LineClampedText;

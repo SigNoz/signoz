@@ -6,8 +6,8 @@ import {
 	CopyOutlined,
 	DeleteOutlined,
 	EditFilled,
-	ExclamationCircleOutlined,
 	FullscreenOutlined,
+	InfoCircleOutlined,
 	MoreOutlined,
 	SearchOutlined,
 	WarningOutlined,
@@ -21,7 +21,7 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { X } from 'lucide-react';
+import { CircleX, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
@@ -234,13 +234,25 @@ function WidgetHeader({
 				/>
 			) : (
 				<>
-					<Typography.Text
-						ellipsis
-						data-testid={title}
-						className="widget-header-title"
-					>
-						{title}
-					</Typography.Text>
+					<div className="widget-header-title-container">
+						<Typography.Text
+							ellipsis
+							data-testid={title}
+							className="widget-header-title"
+						>
+							{title}
+						</Typography.Text>
+						{widget.description && (
+							<Tooltip
+								title={widget.description}
+								overlayClassName="long-tooltip"
+								className="info-tooltip"
+								placement="right"
+							>
+								<InfoCircleOutlined />
+							</Tooltip>
+						)}
+					</div>
 					<div className="widget-header-actions">
 						<div className="widget-api-actions">{threshold}</div>
 						{isFetchingResponse && !queryResponse.isError && (
@@ -252,7 +264,7 @@ function WidgetHeader({
 								placement={errorTooltipPosition}
 								className="widget-api-actions"
 							>
-								<ExclamationCircleOutlined />
+								<CircleX size={20} />
 							</Tooltip>
 						)}
 

@@ -47,11 +47,11 @@ export const getListColumns = (
 			key: 'date',
 			title: 'Timestamp',
 			width: 145,
-			render: (item): JSX.Element => {
+			render: (value, item): JSX.Element => {
 				const date =
-					typeof item === 'string'
-						? dayjs(item).format('YYYY-MM-DD HH:mm:ss.SSS')
-						: dayjs(item / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
+					typeof value === 'string'
+						? dayjs(value).format('YYYY-MM-DD HH:mm:ss.SSS')
+						: dayjs(value / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
 				return (
 					<BlockLink to={getTraceLink(item)}>
 						<Typography.Text>{date}</Typography.Text>
@@ -67,10 +67,10 @@ export const getListColumns = (
 			dataIndex: key,
 			key: `${key}-${dataType}-${type}`,
 			width: 145,
-			render: (value): JSX.Element => {
+			render: (value, item): JSX.Element => {
 				if (value === '') {
 					return (
-						<BlockLink to={getTraceLink(value)}>
+						<BlockLink to={getTraceLink(item)}>
 							<Typography data-testid={key}>N/A</Typography>
 						</BlockLink>
 					);
@@ -78,7 +78,7 @@ export const getListColumns = (
 
 				if (key === 'httpMethod' || key === 'responseStatusCode') {
 					return (
-						<BlockLink to={getTraceLink(value)}>
+						<BlockLink to={getTraceLink(item)}>
 							<Tag data-testid={key} color="magenta">
 								{value}
 							</Tag>
@@ -88,14 +88,14 @@ export const getListColumns = (
 
 				if (key === 'durationNano') {
 					return (
-						<BlockLink to={getTraceLink(value)}>
+						<BlockLink to={getTraceLink(item)}>
 							<Typography data-testid={key}>{getMs(value)}ms</Typography>
 						</BlockLink>
 					);
 				}
 
 				return (
-					<BlockLink to={getTraceLink(value)}>
+					<BlockLink to={getTraceLink(item)}>
 						<Typography data-testid={key}>{value}</Typography>
 					</BlockLink>
 				);

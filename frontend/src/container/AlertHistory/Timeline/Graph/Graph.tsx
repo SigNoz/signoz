@@ -1,10 +1,15 @@
 import { Color } from '@signozhq/design-tokens';
 import Uplot from 'components/Uplot';
+import { QueryParams } from 'constants/query';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import useUrlQuery from 'hooks/useUrlQuery';
+import history from 'lib/history';
 import heatmapPlugin from 'lib/uPlotLib/plugins/heatmapPlugin';
 import timelinePlugin from 'lib/uPlotLib/plugins/timelinePlugin';
 import { useMemo, useRef } from 'react';
+import { useDispatch } from 'react-redux';
+import { UpdateTimeInterval } from 'store/actions';
 import { AlertRuleTimelineGraphResponse } from 'types/api/alerts/def';
 import uPlot, { AlignedData } from 'uplot';
 
@@ -41,11 +46,13 @@ function HorizontalTimelineGraph({
 		return [timestamps, states];
 	}, [data]);
 
+	const urlQuery = useUrlQuery();
+	const dispatch = useDispatch();
+
 	const options: uPlot.Options = useMemo(
 		() => ({
 			width,
 			height: 85,
-			cursor: { show: false },
 
 			axes: [
 				{
@@ -66,6 +73,40 @@ function HorizontalTimelineGraph({
 					label: 'States',
 				},
 			],
+			hooks: {
+				setSelect: [
+					(self): void => {
+						const selection = self.select;
+						if (selection) {
+							const startTime = self.posToVal(selection.left, 'x');
+							const endTime = self.posToVal(selection.left + selection.width, 'x');
+
+							const diff = endTime - startTime;
+
+							if (diff > 0) {
+								if (urlQuery.has(QueryParams.relativeTime)) {
+									urlQuery.delete(QueryParams.relativeTime);
+								}
+
+								const startTimestamp = Math.floor(startTime * 1000);
+								const endTimestamp = Math.floor(endTime * 1000);
+
+								if (startTimestamp !== endTimestamp) {
+									dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+								}
+
+								urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+								urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+
+								history.push({
+									search: urlQuery.toString(),
+								});
+							}
+						}
+					},
+				],
+			},
+
 			plugins:
 				transformedData?.length > 1
 					? [
@@ -76,7 +117,7 @@ function HorizontalTimelineGraph({
 					  ]
 					: [],
 		}),
-		[width, isDarkMode, transformedData],
+		[width, isDarkMode, transformedData.length, urlQuery, dispatch],
 	);
 	return <Uplot data={transformedData} options={options} />;
 }

@@ -76,6 +76,7 @@ func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 		"",
 		time.Duration(1*time.Minute),
 		nil,
+		false,
 	)
 	fanoutStorage := pstorage.NewFanout(logger, remoteStorage)
 

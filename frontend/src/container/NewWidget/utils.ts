@@ -11,6 +11,7 @@ import {
 import { cloneDeep, isEqual, set, unset } from 'lodash-es';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 export const getIsQueryModified = (
@@ -492,3 +493,39 @@ export const getDefaultWidgetData = (
 		...listViewInitialTraceQuery.builder.queryData[0].selectColumns,
 	],
 });
+
+export const PANEL_TYPE_TO_QUERY_TYPES: Record<PANEL_TYPES, EQueryType[]> = {
+	[PANEL_TYPES.TIME_SERIES]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.TABLE]: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	[PANEL_TYPES.VALUE]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.LIST]: [EQueryType.QUERY_BUILDER],
+	[PANEL_TYPES.TRACE]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.BAR]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.PIE]: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	[PANEL_TYPES.HISTOGRAM]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.EMPTY_WIDGET]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+};

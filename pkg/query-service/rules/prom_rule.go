@@ -43,6 +43,7 @@ func NewPromRule(
 		BaseRule:  baseRule,
 		pqlEngine: pqlEngine,
 	}
+	p.logger = logger
 
 	query, err := p.getPqlQuery()
 

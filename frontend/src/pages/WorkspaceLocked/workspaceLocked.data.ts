@@ -42,7 +42,7 @@ export const enterpriseGradeValuesData = [
 
 export const customerStoriesData = [
 	{
-		key: 'c-story-1',
+		key: 'story-subomi-oluwalana',
 		avatar: 'https://signoz.io/img/users/subomi-oluwalana.webp',
 		personName: 'Subomi Oluwalana',
 		role: 'Founder & CEO at Convoy',
@@ -53,7 +53,7 @@ export const customerStoriesData = [
 			'https://www.linkedin.com/feed/update/urn:li:activity:7212117589068591105/',
 	},
 	{
-		key: 'c-story-2',
+		key: 'story-dhruv-garg',
 		avatar: 'https://signoz.io/img/users/dhruv-garg.webp',
 		personName: 'Dhruv Garg',
 		role: 'Tech Lead at Nudge',
@@ -64,7 +64,7 @@ export const customerStoriesData = [
 			'https://www.linkedin.com/posts/dhruv-garg79_signoz-docker-kubernetes-activity-7205163679028240384-Otlb/',
 	},
 	{
-		key: 'c-story-3',
+		key: 'story-vivek-bhakta',
 		avatar: 'https://signoz.io/img/users/vivek-bhakta.webp',
 		personName: 'Vivek Bhakta',
 		role: 'CTO at Wombo AI',
@@ -74,7 +74,7 @@ export const customerStoriesData = [
 		link: 'https://x.com/notorious_VB/status/1701773119696904242',
 	},
 	{
-		key: 'c-story-4',
+		key: 'story-pranay-narang',
 		avatar: 'https://signoz.io/img/users/pranay-narang.webp',
 		personName: 'Pranay Narang',
 		role: 'Engineering at Azodha',
@@ -84,7 +84,7 @@ export const customerStoriesData = [
 		link: 'https://x.com/PranayNarang/status/1676247073396752387',
 	},
 	{
-		key: 'c-story-4',
+		key: 'story-Sheheryar-Sewani',
 		avatar: 'https://signoz.io/img/users/shey.webp',
 		personName: 'Sheheryar Sewani',
 		role: 'Seasoned Rails Dev & Founder',
@@ -95,7 +95,7 @@ export const customerStoriesData = [
 			'https://www.linkedin.com/feed/update/urn:li:activity:7181011853915926528/',
 	},
 	{
-		key: 'c-story-5',
+		key: 'story-daniel-schell',
 		avatar: 'https://signoz.io/img/users/daniel.webp',
 		personName: 'Daniel Schell',
 		role: 'Founder & CTO at Airlockdigital',
@@ -115,7 +115,7 @@ export const customerStoriesData = [
 		link: 'https://x.com/gofrendiasgard/status/1680139003658641408',
 	},
 	{
-		key: 'c-story-7',
+		key: 'story-anselm-eickhoff',
 		avatar: 'https://signoz.io/img/users/anselm.jpg',
 		personName: 'Anselm Eickhoff',
 		role: 'Software Architect',
@@ -129,26 +129,26 @@ export const customerStoriesData = [
 
 export const faqData = [
 	{
-		key: '1',
+		key: 'signoz-cloud-vs-community',
 		label:
 			'What is the difference between SigNoz Cloud(Teams) and Community Edition?',
 		children:
 			'You can self-host and manage the community edition yourself. You should choose SigNoz Cloud if you don’t want to worry about managing the SigNoz cluster. There are some exclusive features like SSO & SAML support, which come with SigNoz cloud offering. Our team also offers support on the initial configuration of dashboards & alerts and advises on best practices for setting up your observability stack in the SigNoz cloud offering.',
 	},
 	{
-		key: '2',
+		key: 'calc-for-metrics',
 		label: 'How are number of samples calculated for metrics pricing?',
 		children:
 			"If a timeseries sends data every 30s, then it will generate 2 samples per min. So, if you have 10,000 time series sending data every 30s then you will be sending 20,000 samples per min to SigNoz. This will be around 864 mn samples per month and would cost 86.4 USD/month. Here's an explainer video on how metrics pricing is calculated - Link: https://vimeo.com/973012522",
 	},
 	{
-		key: '3',
+		key: 'enterprise-support-plans',
 		label: 'Do you offer enterprise support plans?',
 		children:
 			'Yes, feel free to reach out to us on hello@signoz.io if you need a dedicated support plan or paid support for setting up your initial SigNoz setup.',
 	},
 	{
-		key: '4',
+		key: 'who-should-use-enterprise-plans',
 		label: 'Who should use Enterprise plans?',
 		children:
 			'Teams which need enterprise support or features like SSO, Audit logs, etc. may find our enterprise plans valuable.',

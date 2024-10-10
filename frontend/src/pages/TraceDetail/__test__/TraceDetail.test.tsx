@@ -139,9 +139,7 @@ describe('TraceDetail', () => {
 		const slider = await findByTestId('span-details-sider');
 		expect(slider).toBeInTheDocument();
 
-		fireEvent.click(
-			slider.querySelector('.ant-layout-sider-trigger') as HTMLElement,
-		);
+		fireEvent.click(slider.querySelector('.expand-collapse-btn') as HTMLElement);
 
 		expect(queryByText('Details for selected Span')).not.toBeInTheDocument();
 	});

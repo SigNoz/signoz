@@ -333,7 +333,7 @@ export const Query = memo(function Query({
 	const isVersionV4 = version && version === ENTITY_VERSION_V4;
 
 	return (
-		<Row gutter={[0, 12]}>
+		<Row gutter={[0, 12]} className={`query-builder-${version}`}>
 			<QBEntityOptions
 				isMetricsDataSource={isMetricsDataSource}
 				showFunctions={

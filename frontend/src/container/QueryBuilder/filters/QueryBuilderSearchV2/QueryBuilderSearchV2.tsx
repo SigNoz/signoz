@@ -244,7 +244,7 @@ function QueryBuilderSearchV2(
 		isFetching: isFetchingSuggestions,
 	} = useGetAttributeSuggestions(
 		{
-			searchText: searchValue.split(' ')[0],
+			searchText: searchValue?.split(' ')[0],
 			dataSource: query.dataSource,
 			filters: query.filters,
 		},
@@ -691,7 +691,7 @@ function QueryBuilderSearchV2(
 			}
 		}
 		if (currentState === DropdownState.OPERATOR) {
-			const keyOperator = searchValue.split(' ');
+			const keyOperator = searchValue?.split(' ');
 			const partialOperator = keyOperator?.[1];
 			const strippedKey = keyOperator?.[0];
 

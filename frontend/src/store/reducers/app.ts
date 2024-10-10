@@ -1,11 +1,9 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
-import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { getInitialUserTokenRefreshToken } from 'store/utils';
 import {
 	AppAction,
 	LOGGED_IN,
-	SIDEBAR_COLLAPSE,
 	UPDATE_CONFIGS,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
@@ -44,7 +42,6 @@ const getInitialUser = (): User | null => {
 
 const InitialValue: InitialValueTypes = {
 	isLoggedIn: getLocalStorageKey(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
-	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	currentVersion: '',
 	latestVersion: '',
 	featureResponse: {
@@ -73,13 +70,6 @@ const appReducer = (
 			return {
 				...state,
 				isLoggedIn: action.payload.isLoggedIn,
-			};
-		}
-
-		case SIDEBAR_COLLAPSE: {
-			return {
-				...state,
-				isSideBarCollapsed: action.payload,
 			};
 		}
 

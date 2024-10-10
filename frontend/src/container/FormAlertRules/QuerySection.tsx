@@ -99,7 +99,7 @@ function QuerySection({
 			{
 				label: (
 					<Tooltip title="Query Builder">
-						<Button className="nav-btns">
+						<Button className="nav-btns" data-testid="query-builder-tab">
 							<Atom size={14} />
 						</Button>
 					</Tooltip>

@@ -1,3 +1,4 @@
+import { AlertLabelsProps } from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 
 // default match type for threshold
@@ -37,6 +38,8 @@ export interface RuleCondition {
 	selectedQueryName?: string;
 	alertOnAbsent?: boolean | undefined;
 	absentFor?: number | undefined;
+	requireMinPoints?: boolean | undefined;
+	requiredNumPoints?: number | undefined;
 }
 export interface Labels {
 	[key: string]: string;
@@ -94,7 +97,11 @@ export interface AlertRuleTimelineTableResponse {
 	relatedLogsLink: string;
 }
 export type AlertRuleTimelineTableResponsePayload = {
-	data: { items: AlertRuleTimelineTableResponse[]; total: number };
+	data: {
+		items: AlertRuleTimelineTableResponse[];
+		total: number;
+		labels: AlertLabelsProps['labels'];
+	};
 };
 type AlertState = 'firing' | 'normal' | 'no-data' | 'muted';
 

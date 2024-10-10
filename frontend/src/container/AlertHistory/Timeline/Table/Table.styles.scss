@@ -109,8 +109,8 @@
 		}
 
 		.alert-rule {
-			&-value,
-			&-created-at {
+			&__value,
+			&__created-at {
 				color: var(--text-ink-400);
 			}
 		}

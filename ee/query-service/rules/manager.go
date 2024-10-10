@@ -73,7 +73,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
 
 	} else {
-		return nil, fmt.Errorf("unsupported rule type. Supported types: %s, %s", baserules.RuleTypeProm, baserules.RuleTypeThreshold)
+		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, baserules.RuleTypeProm, baserules.RuleTypeThreshold)
 	}
 
 	return task, nil

@@ -19,13 +19,14 @@ import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { Button } from '../styles';
 import { IServiceName } from '../types';
 import {
 	handleNonInQueryRange,
 	onViewTracePopupClick,
+	useGetAPMToLogsQueries,
 	useGetAPMToTracesQueries,
 } from '../util';
+import GraphControlsPanel from './GraphControlsPanel/GraphControlsPanel';
 
 function ServiceOverview({
 	onDragSelect,
@@ -34,6 +35,7 @@ function ServiceOverview({
 	selectedTimeStamp,
 	topLevelOperationsRoute,
 	topLevelOperationsIsLoading,
+	stepInterval,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
@@ -75,21 +77,28 @@ function ServiceOverview({
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
 
+	const apmToLogQuery = useGetAPMToLogsQueries({ servicename });
+
 	return (
 		<>
-			<Button
-				type="default"
-				size="small"
+			<GraphControlsPanel
 				id="Service_button"
-				onClick={onViewTracePopupClick({
+				onViewLogsClick={onViewTracePopupClick({
+					servicename,
+					selectedTraceTags,
+					timestamp: selectedTimeStamp,
+					apmToTraceQuery: apmToLogQuery,
+					isViewLogsClicked: true,
+					stepInterval,
+				})}
+				onViewTracesClick={onViewTracePopupClick({
 					servicename,
 					selectedTraceTags,
 					timestamp: selectedTimeStamp,
 					apmToTraceQuery,
+					stepInterval,
 				})}
-			>
-				View Traces
-			</Button>
+			/>
 			<Card data-testid="service_latency">
 				<GraphContainer>
 					{topLevelOperationsIsLoading && (
@@ -114,8 +123,8 @@ function ServiceOverview({
 		</>
 	);
 }
-
 interface ServiceOverviewProps {
+	stepInterval: number;
 	selectedTimeStamp: number;
 	selectedTraceTags: string;
 	onDragSelect: (start: number, end: number) => void;

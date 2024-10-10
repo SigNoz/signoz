@@ -20,6 +20,14 @@
 	}
 }
 
+.widget-header-title-container {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .widget-header-title {
 	max-width: 80%;
 }
@@ -57,4 +65,18 @@
 			background-color: inherit;
 		}
 	}
+}
+
+.long-tooltip {
+	.ant-tooltip-content {
+		max-height: 500px;
+		overflow: auto;
+	}
+	&.ant-tooltip {
+		max-width: 500px;
+	}
+}
+
+.info-tooltip {
+	cursor: pointer;
 }

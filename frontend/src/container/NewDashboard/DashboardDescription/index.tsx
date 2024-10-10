@@ -182,6 +182,15 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const { t } = useTranslation(['dashboard', 'common']);
 
+	// used to set the initial value for the updatedTitle
+	// the context value is sometimes not available during the initial render
+	// due to which the updatedTitle is set to some previous value
+	useEffect(() => {
+		if (selectedDashboard) {
+			setUpdatedTitle(selectedDashboard.data.title);
+		}
+	}, [selectedDashboard]);
+
 	useEffect(() => {
 		if (state.error) {
 			notifications.error({
