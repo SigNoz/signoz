@@ -58,7 +58,7 @@ func startNetwork(name string) error {
 	} else {
 		log.Printf("Network '%s' already exists", name)
 	}
-	fmt.Println("Network created")
+	log.Printf("Network created\n")
 	return nil
 }
 
