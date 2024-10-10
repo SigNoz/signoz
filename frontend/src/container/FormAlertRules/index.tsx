@@ -627,7 +627,7 @@ function FormAlertRules({
 						initialValues={initialValue}
 						layout="vertical"
 						form={formInstance}
-						className="main-container"
+						className="main-container alert-details__chart-container"
 					>
 						{currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 							renderQBChartPreview()}

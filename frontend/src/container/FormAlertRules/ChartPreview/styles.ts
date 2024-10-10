@@ -36,7 +36,7 @@ export const ChartContainer = styled(Card)`
 
 	.ant-card-body {
 		padding: 1.5rem 0;
+		padding-bottom: 80px;
 		height: 57vh;
-		/* padding-bottom: 2rem; */
 	}
 `;
