@@ -24,7 +24,7 @@ import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParse
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { debounce, isArray, isString } from 'lodash-es';
 import map from 'lodash-es/map';
-import { ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -278,6 +278,25 @@ function VariableItem({
 
 	const enableSelectAll = variableData.multiSelect && variableData.showALLOption;
 
+	const [variableDropdownOpen, setVariableDropdownOpen] = useState(false);
+	const wrapperRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent): void => {
+			if (
+				wrapperRef.current &&
+				!wrapperRef.current.contains(event.target as Node)
+			) {
+				setVariableDropdownOpen(false);
+			}
+		};
+
+		window.addEventListener('click', handleClickOutside);
+		return (): void => {
+			window.removeEventListener('click', handleClickOutside);
+		};
+	}, []);
+
 	const selectValue =
 		variableData.allSelected && enableSelectAll
 			? 'ALL'
@@ -412,7 +431,7 @@ function VariableItem({
 			<Typography.Text className="variable-name" ellipsis>
 				${variableData.name}
 			</Typography.Text>
-			<div className="variable-value">
+			<div className="variable-value" ref={wrapperRef}>
 				{variableData.type === 'TEXTBOX' ? (
 					<Input
 						placeholder="Enter value"
@@ -445,6 +464,10 @@ function VariableItem({
 							style={SelectItemStyle}
 							loading={isLoading}
 							showSearch
+							open={variableDropdownOpen}
+							onDropdownVisibleChange={(visible): void =>
+								setVariableDropdownOpen(visible)
+							}
 							data-testid="variable-select"
 							className="variable-select"
 							popupClassName="dropdown-styles"
