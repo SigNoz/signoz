@@ -7,6 +7,7 @@ const create = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	const response = await axios.post('/rules', {
 		...props.data,
+		version: 'v4',
 	});
 
 	return {
