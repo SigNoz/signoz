@@ -24,8 +24,9 @@ Also, have a look at these [good first issues label](https://github.com/SigNoz/s
     - [For Pull Requests(s)](#12-for-pull-requests)
 - [How to Contribute](#2-how-to-contribute-%EF%B8%8F)
 - [Develop Frontend](#3-develop-frontend-)
-  - [Contribute to Frontend with Docker installation of SigNoz](#31-contribute-to-frontend-with-docker-installation-of-signoz)
-  - [Contribute to Frontend without installing SigNoz backend](#32-contribute-to-frontend-without-installing-signoz-backend)
+  - [Prerequisites](#31-prerequisites)
+  - [Contribute to Frontend with Docker installation of SigNoz](#32-contribute-to-frontend-with-docker-installation-of-signoz)
+  - [Contribute to Frontend without installing SigNoz backend](#33-contribute-to-frontend-without-installing-signoz-backend)
 - [Contribute to Backend (Query-Service)](#4-contribute-to-backend-query-service-)
     - [To run ClickHouse setup](#41-to-run-clickhouse-setup-recommended-for-local-development)
 - [Contribute to SigNoz Helm Chart](#5-contribute-to-signoz-helm-chart-)
@@ -145,7 +146,13 @@ Depending upon your area of expertise & interest, you can choose one or more to 
 
 Also, have a look at [Frontend README.md](https://github.com/SigNoz/signoz/blob/develop/frontend/README.md) sections for more info on how to setup SigNoz frontend locally (with and without Docker).
 
-## 3.1 Contribute to Frontend with Docker installation of SigNoz
+## 3.1 Prerequisites
+
+Start by installing the following tools in your system -
+- node - `>= v16.15.0`
+- yarn - `v1.22.19`
+
+## 3.2 Contribute to Frontend with Docker installation of SigNoz
 
 - Clone the SigNoz repository and cd into signoz directory,
   ```
@@ -191,7 +198,7 @@ The Maintainers / Contributors who will change Line Numbers of `Frontend` & `Que
 
  **[`^top^`](#contributing-guidelines)**
 
-## 3.2 Contribute to Frontend without installing SigNoz backend
+## 3.3 Contribute to Frontend without installing SigNoz backend
 
 If you don't want to install the SigNoz backend just for doing frontend development, we can provide you with test environments that you can use as the backend. 
 
