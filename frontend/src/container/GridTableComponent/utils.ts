@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { ColumnsType, ColumnType } from 'antd/es/table';
+import { convertUnit } from 'container/NewWidget/RightContainer/dataFormatCategories';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
@@ -30,10 +31,27 @@ function evaluateCondition(
 	}
 }
 
+function evaluateThresholdWithConvertedValue(
+	value: number,
+	thresholdValue: number,
+	thresholdOperator?: string,
+	thresholdUnit?: string,
+	columnUnits?: string,
+): boolean {
+	const convertedValue = convertUnit(value, columnUnits, thresholdUnit);
+
+	if (convertedValue) {
+		return evaluateCondition(thresholdOperator, convertedValue, thresholdValue);
+	}
+
+	return evaluateCondition(thresholdOperator, value, thresholdValue);
+}
+
 export function findMatchingThreshold(
 	thresholds: ThresholdProps[],
 	label: string,
 	value: number,
+	columnUnits?: string,
 ): {
 	threshold: ThresholdProps;
 	hasMultipleMatches: boolean;
@@ -45,10 +63,12 @@ export function findMatchingThreshold(
 		if (
 			threshold.thresholdValue !== undefined &&
 			threshold.thresholdTableOptions === label &&
-			evaluateCondition(
-				threshold.thresholdOperator,
+			evaluateThresholdWithConvertedValue(
 				value,
-				threshold.thresholdValue,
+				threshold?.thresholdValue,
+				threshold.thresholdOperator,
+				threshold.thresholdUnit,
+				columnUnits,
 			)
 		) {
 			matchingThresholds.push(threshold);

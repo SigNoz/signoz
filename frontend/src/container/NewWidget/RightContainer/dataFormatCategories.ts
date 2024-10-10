@@ -438,3 +438,161 @@ export const dataTypeCategories: DataTypeCategories = [
 export const flattenedCategories = flattenDeep(
 	dataTypeCategories.map((category) => category.formats),
 );
+
+type ConversionFactors = {
+	[key: string]: {
+		[key: string]: number | null;
+	};
+};
+
+const conversionFactors: ConversionFactors = {
+	[CategoryNames.Time]: {
+		[TimeFormats.Hertz]: 1,
+		[TimeFormats.Nanoseconds]: 1e-9,
+		[TimeFormats.Microseconds]: 1e-6,
+		[TimeFormats.Milliseconds]: 1e-3,
+		[TimeFormats.Seconds]: 1,
+		[TimeFormats.Minutes]: 60,
+		[TimeFormats.Hours]: 3600,
+		[TimeFormats.Days]: 86400,
+		[TimeFormats.DurationMs]: 1e-3,
+		[TimeFormats.DurationS]: 1,
+		[TimeFormats.DurationHms]: null, // Requires special handling
+		[TimeFormats.DurationDhms]: null, // Requires special handling
+		[TimeFormats.Timeticks]: null, // Requires special handling
+		[TimeFormats.ClockMs]: 1e-3,
+		[TimeFormats.ClockS]: 1,
+	},
+	[CategoryNames.Throughput]: {
+		[ThroughputFormats.CountsPerSec]: 1,
+		[ThroughputFormats.OpsPerSec]: 1,
+		[ThroughputFormats.RequestsPerSec]: 1,
+		[ThroughputFormats.ReadsPerSec]: 1,
+		[ThroughputFormats.WritesPerSec]: 1,
+		[ThroughputFormats.IOOpsPerSec]: 1,
+		[ThroughputFormats.CountsPerMin]: 1 / 60,
+		[ThroughputFormats.OpsPerMin]: 1 / 60,
+		[ThroughputFormats.ReadsPerMin]: 1 / 60,
+		[ThroughputFormats.WritesPerMin]: 1 / 60,
+	},
+	[CategoryNames.Data]: {
+		[DataFormats.BytesIEC]: 1,
+		[DataFormats.BytesSI]: 1,
+		[DataFormats.BitsIEC]: 0.125,
+		[DataFormats.BitsSI]: 0.125,
+		[DataFormats.KibiBytes]: 1024,
+		[DataFormats.KiloBytes]: 1000,
+		[DataFormats.MebiBytes]: 1048576,
+		[DataFormats.MegaBytes]: 1000000,
+		[DataFormats.GibiBytes]: 1073741824,
+		[DataFormats.GigaBytes]: 1000000000,
+		[DataFormats.TebiBytes]: 1099511627776,
+		[DataFormats.TeraBytes]: 1000000000000,
+		[DataFormats.PebiBytes]: 1125899906842624,
+		[DataFormats.PetaBytes]: 1000000000000000,
+	},
+	[CategoryNames.DataRate]: {
+		[DataRateFormats.PacketsPerSec]: null, // Cannot convert directly to other data rates
+		[DataRateFormats.BytesPerSecIEC]: 1,
+		[DataRateFormats.BytesPerSecSI]: 1,
+		[DataRateFormats.BitsPerSecIEC]: 0.125,
+		[DataRateFormats.BitsPerSecSI]: 0.125,
+		[DataRateFormats.KibiBytesPerSec]: 1024,
+		[DataRateFormats.KibiBitsPerSec]: 128,
+		[DataRateFormats.KiloBytesPerSec]: 1000,
+		[DataRateFormats.KiloBitsPerSec]: 125,
+		[DataRateFormats.MebiBytesPerSec]: 1048576,
+		[DataRateFormats.MebiBitsPerSec]: 131072,
+		[DataRateFormats.MegaBytesPerSec]: 1000000,
+		[DataRateFormats.MegaBitsPerSec]: 125000,
+		[DataRateFormats.GibiBytesPerSec]: 1073741824,
+		[DataRateFormats.GibiBitsPerSec]: 134217728,
+		[DataRateFormats.GigaBytesPerSec]: 1000000000,
+		[DataRateFormats.GigaBitsPerSec]: 125000000,
+		[DataRateFormats.TebiBytesPerSec]: 1099511627776,
+		[DataRateFormats.TebiBitsPerSec]: 137438953472,
+		[DataRateFormats.TeraBytesPerSec]: 1000000000000,
+		[DataRateFormats.TeraBitsPerSec]: 125000000000,
+		[DataRateFormats.PebiBytesPerSec]: 1125899906842624,
+		[DataRateFormats.PebiBitsPerSec]: 140737488355328,
+		[DataRateFormats.PetaBytesPerSec]: 1000000000000000,
+		[DataRateFormats.PetaBitsPerSec]: 125000000000000,
+	},
+	[CategoryNames.Miscellaneous]: {
+		[MiscellaneousFormats.None]: null,
+		[MiscellaneousFormats.String]: null,
+		[MiscellaneousFormats.Short]: null,
+		[MiscellaneousFormats.Percent]: 1,
+		[MiscellaneousFormats.PercentUnit]: 100,
+		[MiscellaneousFormats.Humidity]: 1,
+		[MiscellaneousFormats.Decibel]: null,
+		[MiscellaneousFormats.Hexadecimal0x]: null,
+		[MiscellaneousFormats.Hexadecimal]: null,
+		[MiscellaneousFormats.ScientificNotation]: null,
+		[MiscellaneousFormats.LocaleFormat]: null,
+		[MiscellaneousFormats.Pixels]: null,
+	},
+	[CategoryNames.Boolean]: {
+		[BooleanFormats.TRUE_FALSE]: null, // Not convertible
+		[BooleanFormats.YES_NO]: null, // Not convertible
+		[BooleanFormats.ON_OFF]: null, // Not convertible
+	},
+};
+
+function getConversionFactor(
+	fromUnit: string,
+	toUnit: string,
+	category: CategoryNames,
+): number | null {
+	const categoryFactors = conversionFactors[category];
+	if (!categoryFactors) {
+		return null;
+	}
+	const fromFactor = categoryFactors[fromUnit];
+	const toFactor = categoryFactors[toUnit];
+	if (
+		fromFactor === undefined ||
+		toFactor === undefined ||
+		fromFactor === null ||
+		toFactor === null
+	) {
+		return null;
+	}
+	return fromFactor / toFactor;
+}
+
+export function convertUnit(
+	value: number,
+	fromUnitId?: string,
+	toUnitId?: string,
+): number | null {
+	const category = dataTypeCategories.find((category) =>
+		category.formats.some(
+			(format) => format.id === fromUnitId || format.id === toUnitId,
+		),
+	);
+
+	if (!category) return null;
+
+	const fromUnit = category.formats.find((format) => format.id === fromUnitId)
+		?.id;
+	const toUnit = category.formats.find((format) => format.id === toUnitId)?.id;
+
+	if (!fromUnit || !toUnit) return null;
+
+	const conversionFactor = getConversionFactor(
+		fromUnit,
+		toUnit,
+		category.name as any,
+	);
+	if (conversionFactor === null) return null;
+
+	return value * conversionFactor;
+}
+
+export const getCategoryName = (unitId: string): CategoryNames | null => {
+	const foundCategory = dataTypeCategories.find((category) =>
+		category.formats.some((format) => format.id === unitId),
+	);
+	return foundCategory ? (foundCategory.name as CategoryNames) : null;
+};
