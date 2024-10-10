@@ -2,7 +2,7 @@ package inframetrics
 
 import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
-var NonK8STableListQuery = v3.QueryRangeParamsV3{
+var K8STableListQuery = v3.QueryRangeParamsV3{
 	CompositeQuery: &v3.CompositeQuery{
 		BuilderQueries: map[string]*v3.BuilderQuery{
 			"A": {
@@ -25,20 +25,11 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 							Operator: v3.FilterOperatorNotEqual,
 							Value:    "idle",
 						},
-						{
-							Key: v3.AttributeKey{
-								Key:      "host_name",
-								DataType: v3.AttributeKeyDataTypeString,
-								Type:     v3.AttributeKeyTypeResource,
-							},
-							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
-						},
 					},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
+						Key:      "k8s_node_name",
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -64,21 +55,11 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 				Temporality: v3.Cumulative,
 				Filters: &v3.FilterSet{
 					Operator: "AND",
-					Items: []v3.FilterItem{
-						{
-							Key: v3.AttributeKey{
-								Key:      "host_name",
-								DataType: v3.AttributeKeyDataTypeString,
-								Type:     v3.AttributeKeyTypeResource,
-							},
-							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
-						},
-					},
+					Items:    []v3.FilterItem{},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
+						Key:      "k8s_node_name",
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -119,20 +100,11 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 							Operator: v3.FilterOperatorIn,
 							Value:    []string{"used", "cached"},
 						},
-						{
-							Key: v3.AttributeKey{
-								Key:      "host_name",
-								DataType: v3.AttributeKeyDataTypeString,
-								Type:     v3.AttributeKeyTypeResource,
-							},
-							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
-						},
 					},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
+						Key:      "k8s_node_name",
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -158,21 +130,11 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 				Temporality: v3.Cumulative,
 				Filters: &v3.FilterSet{
 					Operator: "AND",
-					Items: []v3.FilterItem{
-						{
-							Key: v3.AttributeKey{
-								Key:      "host_name",
-								DataType: v3.AttributeKeyDataTypeString,
-								Type:     v3.AttributeKeyTypeResource,
-							},
-							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
-						},
-					},
+					Items:    []v3.FilterItem{},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
+						Key:      "k8s_node_name",
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -213,20 +175,11 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 							Operator: v3.FilterOperatorEqual,
 							Value:    "wait",
 						},
-						{
-							Key: v3.AttributeKey{
-								Key:      "host_name",
-								DataType: v3.AttributeKeyDataTypeString,
-								Type:     v3.AttributeKeyTypeResource,
-							},
-							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
-						},
 					},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
+						Key:      "k8s_node_name",
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -252,21 +205,11 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 				Temporality: v3.Cumulative,
 				Filters: &v3.FilterSet{
 					Operator: "AND",
-					Items: []v3.FilterItem{
-						{
-							Key: v3.AttributeKey{
-								Key:      "host_name",
-								DataType: v3.AttributeKeyDataTypeString,
-								Type:     v3.AttributeKeyTypeResource,
-							},
-							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
-						},
-					},
+					Items:    []v3.FilterItem{},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
+						Key:      "k8s_node_name",
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -297,21 +240,11 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 				Temporality: v3.Unspecified,
 				Filters: &v3.FilterSet{
 					Operator: "AND",
-					Items: []v3.FilterItem{
-						{
-							Key: v3.AttributeKey{
-								Key:      "host_name",
-								DataType: v3.AttributeKeyDataTypeString,
-								Type:     v3.AttributeKeyTypeResource,
-							},
-							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
-						},
-					},
+					Items:    []v3.FilterItem{},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
+						Key:      "k8s_node_name",
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -325,7 +258,6 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 				ReduceTo:         v3.ReduceToOperatorAvg,
 				TimeAggregation:  v3.TimeAggregationAvg,
 				SpaceAggregation: v3.SpaceAggregationSum,
-				Disabled:         false,
 				Legend:           "CPU Load Average (15m)",
 			},
 		},
