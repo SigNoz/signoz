@@ -1,6 +1,7 @@
 import 'uplot/dist/uPlot.min.css';
 import './AnomalyAlertEvaluationView.styles.scss';
 
+import { Checkbox } from 'antd';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUplotChartDataForAnomalyDetection } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getXAxisScale } from 'lib/uPlotLib/utils/getXAxisScale';
@@ -270,31 +271,29 @@ function AnomalyAlertEvaluationView({
 						<h4>Select a series to display evaluation view:</h4>
 						<div className="anomaly-alert-evaluation-view-series-list-items">
 							{allSeries.map((seriesKey) => (
-								<label
+								<Checkbox
 									className="anomaly-alert-evaluation-view-series-list-item"
 									key={seriesKey}
-								>
-									<input
-										type="checkbox"
-										name="series"
-										value={seriesKey}
-										checked={selectedSeries === seriesKey}
-										onChange={(): void => handleSeriesChange(seriesKey)}
-									/>
-									{seriesKey}
-								</label>
-							))}
-
-							<label className="anomaly-alert-evaluation-view-series-list-item">
-								<input
 									type="checkbox"
 									name="series"
-									value="all"
-									checked={selectedSeries === null}
-									onChange={(): void => handleSeriesChange(null)}
-								/>
+									value={seriesKey}
+									checked={selectedSeries === seriesKey}
+									onChange={(): void => handleSeriesChange(seriesKey)}
+								>
+									{seriesKey}
+								</Checkbox>
+							))}
+
+							<Checkbox
+								className="anomaly-alert-evaluation-view-series-list-item"
+								type="checkbox"
+								name="series"
+								value="all"
+								checked={selectedSeries === null}
+								onChange={(): void => handleSeriesChange(null)}
+							>
 								Show All
-							</label>
+							</Checkbox>
 						</div>
 					</div>
 				)}
