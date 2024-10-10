@@ -257,8 +257,7 @@ function VariableItem({
 		if (variableData.name) {
 			if (
 				value === ALL_SELECT_VALUE ||
-				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE)) ||
-				(Array.isArray(value) && value.length === 0)
+				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
 			) {
 				onValueUpdate(variableData.name, variableData.id, optionsData, true);
 			} else {
@@ -324,10 +323,6 @@ function VariableItem({
 			Array.isArray(selectedValueStringified) &&
 			selectedValueStringified.includes(option.toString())
 		) {
-			if (newSelectedValue.length === 0) {
-				handleChange(ALL_SELECT_VALUE);
-				return;
-			}
 			if (newSelectedValue.length === 1) {
 				handleChange(newSelectedValue[0].toString());
 				return;
