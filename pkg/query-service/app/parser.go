@@ -22,6 +22,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -721,6 +722,45 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 	}
 	// Trim spaces from email
 	req.Email = strings.TrimSpace(req.Email)
+	return &req, nil
+}
+
+func isValidRole(role string) bool {
+	switch role {
+	case constants.AdminGroup, constants.EditorGroup, constants.ViewerGroup:
+		return true
+	}
+	return false
+}
+
+func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) {
+	var req model.BulkInviteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	// Validate that the request contains users
+	if len(req.Users) == 0 {
+		return nil, fmt.Errorf("no users provided for invitation")
+	}
+
+	// Trim spaces and validate each user
+	for i := range req.Users {
+		req.Users[i].Email = strings.TrimSpace(req.Users[i].Email)
+		if req.Users[i].Email == "" {
+			return nil, fmt.Errorf("email is required for each user")
+		}
+		if req.Users[i].Name == "" {
+			return nil, fmt.Errorf("name is required for each user")
+		}
+		if req.Users[i].FrontendBaseUrl == "" {
+			return nil, fmt.Errorf("frontendBaseUrl is required for each user")
+		}
+		if !isValidRole(req.Users[i].Role) {
+			return nil, fmt.Errorf("invalid role for user: %s", req.Users[i].Email)
+		}
+	}
+
 	return &req, nil
 }
 
