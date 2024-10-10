@@ -6,6 +6,32 @@
    or add <skip_check_for_incorrect_settings>1</skip_check_for_incorrect_settings> here.
 -->
 <clickhouse>
+    <storage_configuration>
+        <disks>
+            <default>
+                <keep_free_space_bytes>10485760</keep_free_space_bytes>
+            </default>
+            <s3>
+                <type>s3</type>
+                <endpoint>http://signoz-minio-test:9000/test/</endpoint>
+                <access_key_id>ash</access_key_id>
+                <secret_access_key>password</secret_access_key>
+            </s3>
+    </disks>
+    <policies>
+        <tiered>
+            <volumes>
+                    <default>
+                        <disk>default</disk>
+                    </default>
+                    <s3>
+                        <disk>s3</disk>
+                        <perform_ttl_move_on_insert>0</perform_ttl_move_on_insert>
+                    </s3>
+                </volumes>
+            </tiered>
+        </policies>
+    </storage_configuration>
     <logger>
         <!-- Possible levels [1]:
 
