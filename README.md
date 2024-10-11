@@ -139,6 +139,13 @@ Please follow the steps listed [here](https://signoz.io/docs/deployment/helm_cha
 
 <br /><br />
 
+### Self-Host on Elestio
+
+You can deploy Signoz on Elestio using one-click deployment.
+
+[![Deploy on Elestio](https://elest.io/images/logos/deploy-to-elestio-btn.png)](https://elest.io/open-source/signoz)
+
+<br /><br />
 
 ## Comparisons to Familiar Tools
 
