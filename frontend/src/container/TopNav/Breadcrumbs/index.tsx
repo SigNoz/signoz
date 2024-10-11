@@ -16,7 +16,6 @@ const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.VERSION]: 'Status',
 	[ROUTES.ORG_SETTINGS]: 'Organization Settings',
 	[ROUTES.INGESTION_SETTINGS]: 'Ingestion Settings',
-	[ROUTES.MY_SETTINGS]: 'My Settings',
 	[ROUTES.ERROR_DETAIL]: 'Exceptions',
 	[ROUTES.LIST_ALL_ALERT]: 'Alerts',
 	[ROUTES.ALL_DASHBOARD]: 'Dashboard',

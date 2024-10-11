@@ -32,7 +32,6 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.LOGIN]: [QueryParams.resourceAttributes],
 	[ROUTES.LOGS]: [QueryParams.resourceAttributes],
 	[ROUTES.LOGS_BASE]: [QueryParams.resourceAttributes],
-	[ROUTES.MY_SETTINGS]: [QueryParams.resourceAttributes],
 	[ROUTES.NOT_FOUND]: [QueryParams.resourceAttributes],
 	[ROUTES.ORG_SETTINGS]: [QueryParams.resourceAttributes],
 	[ROUTES.PASSWORD_RESET]: [QueryParams.resourceAttributes],
@@ -50,4 +49,5 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.WORKSPACE_LOCKED]: [QueryParams.resourceAttributes],
 	[ROUTES.MESSAGING_QUEUES]: [QueryParams.resourceAttributes],
 	[ROUTES.MESSAGING_QUEUES_DETAIL]: [QueryParams.resourceAttributes],
+	[ROUTES.USER_SETTINGS]: [QueryParams.resourceAttributes],
 };

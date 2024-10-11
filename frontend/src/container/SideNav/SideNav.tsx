@@ -13,12 +13,7 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
 import history from 'lib/history';
-import {
-	AlertTriangle,
-	CheckSquare,
-	RocketIcon,
-	UserCircle,
-} from 'lucide-react';
+import { AlertTriangle, CheckSquare, RocketIcon } from 'lucide-react';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -35,6 +30,7 @@ import defaultMenuItems, {
 	helpSupportMenuItem,
 	inviteMemberMenuItem,
 	manageLicenseMenuItem,
+	settingsMenuItem,
 	shortcutMenuItem,
 	slackSupportMenuItem,
 	trySignozCloudMenuItem,
@@ -60,7 +56,6 @@ function SideNav({
 
 	const { pathname, search } = useLocation();
 	const {
-		user,
 		role,
 		featureResponse,
 		currentVersion,
@@ -69,12 +64,6 @@ function SideNav({
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [licenseTag, setLicenseTag] = useState('');
-
-	const userSettingsMenuItem = {
-		key: ROUTES.MY_SETTINGS,
-		label: user?.name || 'User',
-		icon: <UserCircle size={16} />,
-	};
 
 	const [userManagementMenuItems, setUserManagementMenuItems] = useState<
 		UserManagementMenuItems[]
@@ -466,23 +455,19 @@ function SideNav({
 							/>
 						)}
 
-						{user && (
-							<NavItem
-								key={ROUTES.MY_SETTINGS}
-								item={userSettingsMenuItem}
-								isActive={activeMenuKey === userSettingsMenuItem?.key}
-								onClick={(event: MouseEvent): void => {
-									handleUserManagentMenuItemClick(
-										userSettingsMenuItem?.key as string,
-										event,
-									);
-									logEvent('Sidebar: Menu clicked', {
-										menuRoute: userSettingsMenuItem?.key,
-										menuLabel: 'User',
-									});
-								}}
-							/>
-						)}
+						<NavItem
+							key={ROUTES.SETTINGS}
+							item={settingsMenuItem}
+							isActive={activeMenuKey === settingsMenuItem?.key}
+							onClick={(event: MouseEvent): void => {
+								handleUserManagentMenuItemClick(settingsMenuItem?.key as string, event);
+								logEvent('Sidebar: Menu clicked', {
+									menuRoute: settingsMenuItem?.key,
+									menuLabel: settingsMenuItem?.label,
+								});
+							}}
+						/>
+    
 					</div>
 				</div>
 			</div>
