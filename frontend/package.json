@@ -126,7 +126,7 @@
 		"uplot": "1.6.26",
 		"uuid": "^8.3.2",
 		"web-vitals": "^0.2.4",
-		"webpack": "5.88.2",
+		"webpack": "5.94.0",
 		"webpack-dev-server": "^4.15.1",
 		"webpack-retry-chunk-load-plugin": "3.1.1",
 		"xstate": "^4.31.0"
