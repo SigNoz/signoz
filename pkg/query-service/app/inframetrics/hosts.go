@@ -394,13 +394,6 @@ func (h *HostsRepo) getHostsForQuery(ctx context.Context,
 		records = append(records, record)
 	}
 
-	if req.Offset > 0 {
-		records = records[req.Offset:]
-	}
-	if req.Limit > 0 && len(records) > req.Limit {
-		records = records[:req.Limit]
-	}
-
 	return records, nil
 }
 
@@ -417,6 +410,10 @@ func dedupRecords(records []model.HostListRecord) []model.HostListRecord {
 }
 
 func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) (model.HostListResponse, error) {
+	if req.Limit == 0 {
+		req.Limit = 10
+	}
+
 	resp := model.HostListResponse{
 		Type: "list",
 	}
@@ -435,6 +432,16 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 	// since we added the fix for incorrect host name, it is possible that both host_name and k8s_node_name
 	// are present in the response. we need to dedup the results.
 	records = dedupRecords(records)
+
+	resp.Total = len(records)
+
+	if req.Offset > 0 {
+		records = records[req.Offset:]
+	}
+	if req.Limit > 0 && len(records) > req.Limit {
+		records = records[:req.Limit]
+	}
+	resp.Records = records
 
 	if len(req.GroupBy) > 0 {
 		groups := []model.HostListGroup{}
@@ -505,8 +512,6 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 		resp.Groups = groups
 		resp.Type = "grouped_list"
 	}
-	resp.Records = records
-	resp.Total = len(records)
 
 	return resp, nil
 }
