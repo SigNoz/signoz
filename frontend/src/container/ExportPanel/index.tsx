@@ -1,5 +1,4 @@
-import { Modal } from 'antd';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -9,38 +8,28 @@ function ExportPanel({
 	isLoading,
 	onExport,
 	query,
-}: ExportPanelProps): JSX.Element {
+}: ExportPanelProps): JSX.Element | null {
 	const [isExport, setIsExport] = useState<boolean>(false);
 
-	const onModalToggle = useCallback((value: boolean) => {
-		setIsExport(value);
-	}, []);
-
-	const onCancel = (value: boolean) => (): void => {
-		onModalToggle(value);
+	const onDiscard = (): void => {
+		setIsExport(false);
 	};
 
-	return (
-		<Modal
-			footer={null}
-			onOk={onCancel(false)}
-			onCancel={onCancel(false)}
-			open={isExport}
-			centered
-			destroyOnClose
-		>
-			<ExportPanelContainer
-				query={query}
-				isLoading={isLoading}
-				onExport={onExport}
-			/>
-		</Modal>
-	);
+	return isExport ? (
+		<ExportPanelContainer
+			query={query}
+			isLoading={isLoading}
+			onExport={onExport}
+			onDiscard={onDiscard}
+		/>
+	) : null;
 }
 
 export interface ExportPanelProps {
 	isLoading?: boolean;
 	onExport: (dashboard: Dashboard | null, isNewDashboard?: boolean) => void;
+	// eslint-disable-next-line react/no-unused-prop-types
+	onDiscard: () => void;
 	query: Query | null;
 }
 
