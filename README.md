@@ -57,7 +57,7 @@ Read [more](https://signoz.io/distributed-tracing/).
 
 
 
-### Metrics and Dashbaords
+### Metrics and Dashboards
 
 Ingest metrics from your infrastructure or applications and create customized dashboards to monitor them. Create visualization that suits your needs with a variety of panel types like pie chart, time-series, bar chart, etc.
 
