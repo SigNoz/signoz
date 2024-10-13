@@ -1,9 +1,12 @@
-.anomaly-alert-evaluation-view-container {
+.alert-chart-container {
 	height: 57vh;
 	width: 100%;
 
+	.threshold-alert-uplot-chart-container {
+		height: calc(100% - 24px);
+	}
+
 	.ant-card-body {
-		height: 100%;
 		padding: 12px;
 	}
 

@@ -6,7 +6,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import getAxes from 'lib/uPlotLib/utils/getAxes';
 import { getUplotChartDataForAnomalyDetection } from 'lib/uPlotLib/utils/getUplotChartData';
-import { getXAxisScale } from 'lib/uPlotLib/utils/getXAxisScale';
 import { getYAxisScaleForAnomalyDetection } from 'lib/uPlotLib/utils/getYAxisScale';
 import { LineChart } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -25,15 +24,22 @@ function UplotChart({
 
 	useEffect(() => {
 		if (plotInstance.current) {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
 			plotInstance.current.destroy();
 		}
 
 		if (data && data.length > 0) {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			// eslint-disable-next-line new-cap
 			plotInstance.current = new uPlot(options, data, chartRef.current);
 		}
 
 		return (): void => {
 			if (plotInstance.current) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
 				plotInstance.current.destroy();
 			}
 		};
@@ -44,32 +50,26 @@ function UplotChart({
 
 function AnomalyAlertEvaluationView({
 	data,
-	minTimeScale,
-	maxTimeScale,
 	yAxisUnit,
 }: {
 	data: any;
-	minTimeScale: number | undefined;
-	maxTimeScale: number | undefined;
 	yAxisUnit: string;
 }): JSX.Element {
 	const { spline } = uPlot.paths;
+	// eslint-disable-next-line @typescript-eslint/naming-convention
 	const _spline = spline ? spline() : undefined;
 	const chartRef = useRef<HTMLDivElement>(null);
-
-	// console.log('AnomalyAlertEvaluationView', data);
-
-	const chartData = getUplotChartDataForAnomalyDetection(data);
-	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 	const isDarkMode = useIsDarkMode();
-
-	// Example of dynamic seriesData which can have 0 to N series
-	const [seriesData, setSeriesData] = useState(chartData);
-
+	const [seriesData, setSeriesData] = useState<any>({});
 	const [selectedSeries, setSelectedSeries] = useState<string | null>(null);
 
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
+
+	useEffect(() => {
+		const chartData = getUplotChartDataForAnomalyDetection(data);
+		setSeriesData(chartData);
+	}, [data]);
 
 	useEffect(() => {
 		const seriesKeys = Object.keys(seriesData);
@@ -140,11 +140,8 @@ function AnomalyAlertEvaluationView({
 		: [];
 
 	const options = {
-		title: selectedSeries
-			? `Evaluation View - (${selectedSeries})`
-			: 'Evaluation View - All',
 		width: dimensions.width,
-		height: dimensions.height - 86,
+		height: dimensions.height - 36,
 		plugins: [bandsPlugin],
 		focus: {
 			alpha: 0.3,
@@ -194,7 +191,6 @@ function AnomalyAlertEvaluationView({
 		scales: {
 			x: {
 				time: true,
-				// ...timeScaleProps,
 			},
 			y: {
 				...getYAxisScaleForAnomalyDetection({

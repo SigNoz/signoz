@@ -1,7 +1,6 @@
 import './ChartPreview.styles.scss';
 
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Card } from 'antd';
 import Spinner from 'components/Spinner';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
@@ -200,13 +199,18 @@ function ChartPreview({
 		[dispatch, location.pathname, urlQuery],
 	);
 
+	console.log('containerDimensions', containerDimensions);
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
 				id: 'alert_legend_widget',
 				yAxisUnit,
 				apiResponse: queryResponse?.data?.payload,
-				dimensions: containerDimensions,
+				dimensions: {
+					height: containerDimensions?.height ? containerDimensions.height - 48 : 0,
+					width: containerDimensions?.width,
+				},
 				minTimeScale,
 				maxTimeScale,
 				isDarkMode,
@@ -259,11 +263,11 @@ function ChartPreview({
 
 	return (
 		<>
-			{!isAnomalyDetectionAlert && (
+			<div className="alert-chart-container" ref={graphRef}>
 				<ChartContainer>
 					{headline}
 
-					<div ref={graphRef} style={{ height: '100%' }}>
+					<div className="threshold-alert-uplot-chart-container">
 						{queryResponse.isLoading && (
 							<Spinner size="large" tip="Loading..." height="100%" />
 						)}
@@ -274,7 +278,7 @@ function ChartPreview({
 							</FailedMessageContainer>
 						)}
 
-						{chartDataAvailable && (
+						{chartDataAvailable && !isAnomalyDetectionAlert && (
 							<GridPanelSwitch
 								options={options}
 								panelType={graphType}
@@ -287,11 +291,20 @@ function ChartPreview({
 								yAxisUnit={yAxisUnit}
 							/>
 						)}
+
+						{chartDataAvailable &&
+							isAnomalyDetectionAlert &&
+							queryResponse?.data?.payload?.data?.resultType === 'anomaly' && (
+								<AnomalyAlertEvaluationView
+									data={queryResponse?.data?.payload}
+									yAxisUnit={yAxisUnit}
+								/>
+							)}
 					</div>
 				</ChartContainer>
-			)}
+			</div>
 
-			{isAnomalyDetectionAlert && (
+			{/* {isAnomalyDetectionAlert && (
 				<Card className="anomaly-alert-evaluation-view-container">
 					{queryResponse.isLoading && (
 						<div className="anomaly-alert-evaluation-view-loading-container">
@@ -317,7 +330,7 @@ function ChartPreview({
 							/>
 						)}
 				</Card>
-			)}
+			)} */}
 		</>
 	);
 }
