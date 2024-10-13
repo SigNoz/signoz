@@ -72,7 +72,7 @@ Update your dockerfile to include the environment variables:
 ```bash
 ...
 # Set environment variables
-ENV OTEL_PHP_AUTOLOAD_ENABLED=true \
+ENV OTEL_PHP_AUTOLOAD_ENABLED=false \
     OTEL_SERVICE_NAME={{MYAPP}} \
     OTEL_TRACES_EXPORTER=otlp \
     OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf \

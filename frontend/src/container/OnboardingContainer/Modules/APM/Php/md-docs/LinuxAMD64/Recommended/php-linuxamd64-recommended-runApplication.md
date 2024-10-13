@@ -28,7 +28,7 @@ kill "$(< otel-pid)"
 We will pass environment variables at the runtime: 
 
 ```bash
-env OTEL_PHP_AUTOLOAD_ENABLED=true \
+env OTEL_PHP_AUTOLOAD_ENABLED=false \
     OTEL_SERVICE_NAME=<SERVICE_NAME> \
     OTEL_TRACES_EXPORTER=otlp \
     OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf \
