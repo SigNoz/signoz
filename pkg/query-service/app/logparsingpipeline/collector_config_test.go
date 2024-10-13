@@ -348,7 +348,9 @@ func TestPipelineRouterWorksEvenIfFirstOpIsDisabled(t *testing.T) {
 		[]model.SignozLog{
 			makeTestSignozLog(
 				"test log body",
-				map[string]any{},
+				map[string]any{
+					"method": "GET",
+				},
 			),
 		},
 	)
@@ -357,11 +359,10 @@ func TestPipelineRouterWorksEvenIfFirstOpIsDisabled(t *testing.T) {
 	require.Equal(0, len(collectorWarnAndErrorLogs))
 	require.Equal(1, len(result))
 
-	testAttrValue := result[0].Attributes_string["test2"]
-	require.NotNil(testAttrValue)
 	require.Equal(
-		result[0].Attributes_string, map[string]string{
-			"test2": "val2",
-		},
+		map[string]string{
+			"method": "GET",
+			"test2":  "val2",
+		}, result[0].Attributes_string,
 	)
 }
