@@ -1,9 +1,11 @@
 module go.signoz.io/signoz
 
-go 1.21.3
+go 1.22.0
+
+toolchain go1.22.7
 
 require (
-	github.com/ClickHouse/clickhouse-go/v2 v2.23.2
+	github.com/ClickHouse/clickhouse-go/v2 v2.25.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
 	github.com/SigNoz/signoz-otel-collector v0.102.10
@@ -37,7 +39,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/common v0.55.0
+	github.com/prometheus/common v0.59.1
 	github.com/prometheus/prometheus v2.5.0+incompatible
 	github.com/rs/cors v1.11.0
 	github.com/russellhaering/gosaml2 v0.9.0
@@ -57,41 +59,44 @@ require (
 	go.opentelemetry.io/collector/exporter v0.103.0
 	go.opentelemetry.io/collector/extension v0.103.0
 	go.opentelemetry.io/collector/otelcol v0.103.0
-	go.opentelemetry.io/collector/pdata v1.10.0
+	go.opentelemetry.io/collector/pdata v1.14.1
 	go.opentelemetry.io/collector/processor v0.103.0
 	go.opentelemetry.io/collector/receiver v0.103.0
 	go.opentelemetry.io/collector/service v0.103.0
 	go.opentelemetry.io/contrib/bridges/otelzap v0.0.0-20240820072021-3fab5f5f20fb
 	go.opentelemetry.io/contrib/config v0.8.0
-	go.opentelemetry.io/otel v1.28.0
+	go.opentelemetry.io/otel v1.29.0
 	go.opentelemetry.io/otel/log v0.4.0
-	go.opentelemetry.io/otel/metric v1.28.0
-	go.opentelemetry.io/otel/sdk v1.28.0
-	go.opentelemetry.io/otel/trace v1.28.0
+	go.opentelemetry.io/otel/metric v1.29.0
+	go.opentelemetry.io/otel/sdk v1.29.0
+	go.opentelemetry.io/otel/trace v1.29.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.24.0
+	golang.org/x/crypto v0.26.0
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
-	golang.org/x/net v0.26.0
-	golang.org/x/oauth2 v0.21.0
-	golang.org/x/text v0.16.0
-	google.golang.org/grpc v1.65.0
+	golang.org/x/net v0.28.0
+	golang.org/x/oauth2 v0.23.0
+	golang.org/x/text v0.18.0
+	google.golang.org/grpc v1.66.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/apimachinery v0.29.3
+	k8s.io/apimachinery v0.31.0
 )
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.6.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.8.0 // indirect
+	cloud.google.com/go/auth v0.9.3 // indirect
+	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
+	cloud.google.com/go/compute/metadata v0.5.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.14.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.7.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
 	github.com/ClickHouse/ch-go v0.61.5 // indirect
-	github.com/alecthomas/units v0.0.0-20231202071711-9a357b53e9c9 // indirect
+	github.com/alecthomas/units v0.0.0-20240626203959-61d1e3462e30 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
-	github.com/aws/aws-sdk-go v1.53.16 // indirect
+	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
@@ -117,10 +122,12 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/s2a-go v0.1.8 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/gosimple/unidecode v1.0.0 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -128,7 +135,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
-	github.com/klauspost/compress v1.17.8 // indirect
+	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/klauspost/cpuid v1.2.3 // indirect
 	github.com/knadh/koanf/v2 v2.1.1 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
@@ -153,7 +160,7 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
-	github.com/prometheus/client_golang v1.19.1 // indirect
+	github.com/prometheus/client_golang v1.20.4 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
@@ -181,16 +188,16 @@ require (
 	go.opentelemetry.io/collector/confmap/provider/httpsprovider v0.103.0 // indirect
 	go.opentelemetry.io/collector/confmap/provider/yamlprovider v0.103.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.13.0 // indirect
-	go.opentelemetry.io/collector/semconv v0.103.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.52.0 // indirect
+	go.opentelemetry.io/collector/semconv v0.108.1 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect
 	go.opentelemetry.io/contrib/propagators/b3 v1.27.0 // indirect
 	go.opentelemetry.io/otel/bridge/opencensus v1.27.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.4.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.28.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.28.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.28.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.28.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.28.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.29.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.29.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.29.0 // indirect
 	go.opentelemetry.io/otel/exporters/prometheus v0.50.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.28.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.28.0 // indirect
@@ -198,15 +205,16 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.28.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/time v0.5.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/time v0.6.0 // indirect
 	gonum.org/v1/gonum v0.15.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240701130421-f6361c86f094 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
+	google.golang.org/api v0.195.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240827150818-7e3bb234dfed // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	k8s.io/client-go v0.29.3 // indirect
-	k8s.io/klog/v2 v2.120.1 // indirect
-	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0 // indirect
+	k8s.io/client-go v0.31.0 // indirect
+	k8s.io/klog/v2 v2.130.1 // indirect
+	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
 )
 
-replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.11.1
+replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.12.0
