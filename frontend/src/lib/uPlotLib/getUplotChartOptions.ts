@@ -167,23 +167,7 @@ export const getUPlotChartOptions = ({
 
 	const series = getStackedSeries(apiResponse?.data?.result || []);
 
-	const anomalySeriesBand = [
-		{
-			series: [1, 3],
-			fill: 'rgba(78, 116, 248, 0.1)',
-		},
-		{
-			series: [4, 1],
-			fill: 'rgba(78, 116, 248, 0.1)',
-		},
-	];
-
-	// eslint-disable-next-line no-nested-ternary
-	const bands = isAnomalyRule
-		? anomalySeriesBand
-		: stackBarChart
-		? getBands(series)
-		: null;
+	const bands = stackBarChart ? getBands(series) : null;
 
 	return {
 		id,

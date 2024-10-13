@@ -260,76 +260,46 @@ function ChartPreview({
 		chartData && !queryResponse.isError && !queryResponse.isLoading;
 
 	return (
-		<>
-			<div className="alert-chart-container" ref={graphRef}>
-				<ChartContainer>
-					{headline}
+		<div className="alert-chart-container" ref={graphRef}>
+			<ChartContainer>
+				{headline}
 
-					<div className="threshold-alert-uplot-chart-container">
-						{queryResponse.isLoading && (
-							<Spinner size="large" tip="Loading..." height="100%" />
-						)}
-						{(queryResponse?.isError || queryResponse?.error) && (
-							<FailedMessageContainer color="red" title="Failed to refresh the chart">
-								<InfoCircleOutlined />
-								{queryResponse.error.message || t('preview_chart_unexpected_error')}
-							</FailedMessageContainer>
-						)}
-
-						{chartDataAvailable && !isAnomalyDetectionAlert && (
-							<GridPanelSwitch
-								options={options}
-								panelType={graphType}
-								data={chartData}
-								name={name || 'Chart Preview'}
-								panelData={
-									queryResponse.data?.payload?.data?.newResult?.data?.result || []
-								}
-								query={query || initialQueriesMap.metrics}
-								yAxisUnit={yAxisUnit}
-							/>
-						)}
-
-						{chartDataAvailable &&
-							isAnomalyDetectionAlert &&
-							queryResponse?.data?.payload?.data?.resultType === 'anomaly' && (
-								<AnomalyAlertEvaluationView
-									data={queryResponse?.data?.payload}
-									yAxisUnit={yAxisUnit}
-								/>
-							)}
-					</div>
-				</ChartContainer>
-			</div>
-
-			{/* {isAnomalyDetectionAlert && (
-				<Card className="anomaly-alert-evaluation-view-container">
+				<div className="threshold-alert-uplot-chart-container">
 					{queryResponse.isLoading && (
-						<div className="anomaly-alert-evaluation-view-loading-container">
-							<Spinner size="large" tip="Loading..." height="100%" />
-						</div>
+						<Spinner size="large" tip="Loading..." height="100%" />
 					)}
 					{(queryResponse?.isError || queryResponse?.error) && (
-						<div className="anomaly-alert-evaluation-view-error-container">
-							<FailedMessageContainer color="red" title="Failed to refresh the chart">
-								<InfoCircleOutlined />{' '}
-								{queryResponse.error.message || t('preview_chart_unexpected_error')}
-							</FailedMessageContainer>
-						</div>
+						<FailedMessageContainer color="red" title="Failed to refresh the chart">
+							<InfoCircleOutlined />
+							{queryResponse.error.message || t('preview_chart_unexpected_error')}
+						</FailedMessageContainer>
+					)}
+
+					{chartDataAvailable && !isAnomalyDetectionAlert && (
+						<GridPanelSwitch
+							options={options}
+							panelType={graphType}
+							data={chartData}
+							name={name || 'Chart Preview'}
+							panelData={
+								queryResponse.data?.payload?.data?.newResult?.data?.result || []
+							}
+							query={query || initialQueriesMap.metrics}
+							yAxisUnit={yAxisUnit}
+						/>
 					)}
 
 					{chartDataAvailable &&
+						isAnomalyDetectionAlert &&
 						queryResponse?.data?.payload?.data?.resultType === 'anomaly' && (
 							<AnomalyAlertEvaluationView
 								data={queryResponse?.data?.payload}
-								minTimeScale={minTimeScale}
-								maxTimeScale={maxTimeScale}
 								yAxisUnit={yAxisUnit}
 							/>
 						)}
-				</Card>
-			)} */}
-		</>
+				</div>
+			</ChartContainer>
+		</div>
 	);
 }
 

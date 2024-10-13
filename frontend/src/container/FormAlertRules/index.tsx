@@ -657,42 +657,6 @@ function FormAlertRules({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	// function handleRedirection(option: AlertTypes): void {
-	// 	let url = '';
-	// 	switch (option) {
-	// 		case AlertTypes.ANOMALY_BASED_ALERT:
-	// 			url =
-	// 				'https://signoz.io/docs/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
-	// 			break;
-	// 		case AlertTypes.METRICS_BASED_ALERT:
-	// 			url =
-	// 				'https://signoz.io/docs/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
-	// 			break;
-	// 		case AlertTypes.LOGS_BASED_ALERT:
-	// 			url =
-	// 				'https://signoz.io/docs/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
-	// 			break;
-	// 		case AlertTypes.TRACES_BASED_ALERT:
-	// 			url =
-	// 				'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
-	// 			break;
-	// 		case AlertTypes.EXCEPTIONS_BASED_ALERT:
-	// 			url =
-	// 				'https://signoz.io/docs/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
-	// 			break;
-	// 		default:
-	// 			break;
-	// 	}
-	// 	logEvent('Alert: Check example alert clicked', {
-	// 		dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
-	// 		isNewRule: !ruleId || ruleId === 0,
-	// 		ruleId,
-	// 		queryType: currentQuery.queryType,
-	// 		link: url,
-	// 	});
-	// 	window.open(url, '_blank');
-	// }
-
 	const tabs = [
 		{
 			value: AlertDetectionTypes.THRESHOLD_ALERT,
