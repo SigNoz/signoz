@@ -1,13 +1,23 @@
-.anomaly-alert-evaluation-view-loading-container {
-	height: 500px;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-}
+.anomaly-alert-evaluation-view-container {
+	height: 57vh;
+	width: 100%;
 
-.anomaly-alert-evaluation-view-error-container {
-	height: 500px;
-	display: flex;
-	justify-content: center;
-	align-items: center;
+	.ant-card-body {
+		height: 100%;
+		padding: 12px;
+	}
+
+	.anomaly-alert-evaluation-view-loading-container {
+		height: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.anomaly-alert-evaluation-view-error-container {
+		height: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
 }

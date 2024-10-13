@@ -83,7 +83,10 @@ function CreateRules(): JSX.Element {
 				QueryParams.ruleType,
 				AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
 			);
+		} else {
+			queryParams.set(QueryParams.ruleType, AlertDetectionTypes.THRESHOLD_ALERT);
 		}
+
 		const generatedUrl = `${location.pathname}?${queryParams.toString()}`;
 		history.replace(generatedUrl);
 	};

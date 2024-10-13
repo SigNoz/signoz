@@ -71,7 +71,18 @@ export async function GetMetricQueryRange(
 		);
 	}
 
-	console.log('response', response);
+	if (response.payload?.data?.newResult?.data?.resultType === 'anomaly') {
+		response.payload.data.newResult.data.result = response.payload.data.newResult.data.result.map(
+			(queryData) => {
+				if (legendMap[queryData.queryName]) {
+					queryData.legend = legendMap[queryData.queryName];
+				}
+
+				return queryData;
+			},
+		);
+	}
+
 	return response;
 }
 

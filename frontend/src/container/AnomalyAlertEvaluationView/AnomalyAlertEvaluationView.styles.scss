@@ -4,29 +4,52 @@
 	justify-content: space-between;
 	gap: 8px;
 	width: 100%;
+	height: 100%;
 	background: #121317;
-	padding: 16px;
 
 	.anomaly-alert-evaluation-view-chart-section {
-		height: 500px;
+		// height: 500px;
+		height: 100%;
 		width: 100%;
+
+		display: flex;
+		justify-content: center;
+		align-items: center;
+
+		.anomaly-alert-evaluation-view-no-data-container {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			gap: 8px;
+		}
 	}
 
 	.anomaly-alert-evaluation-view-series-selection {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
-		width: 240px;
+		width: 360px;
+		height: 100%;
 
 		.anomaly-alert-evaluation-view-series-list {
 			display: flex;
 			flex-direction: column;
 			gap: 8px;
+			height: 100%;
+
+			.anomaly-alert-evaluation-view-series-list-title {
+				margin-top: 12px;
+				font-size: 13px !important;
+				font-weight: 400;
+			}
 
 			.anomaly-alert-evaluation-view-series-list-items {
 				display: flex;
 				flex-direction: column;
 				gap: 8px;
+				height: 100%;
+				overflow-y: auto;
 
 				.anomaly-alert-evaluation-view-series-list-item {
 					display: flex;

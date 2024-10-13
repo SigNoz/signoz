@@ -259,33 +259,6 @@ function ChartPreview({
 
 	return (
 		<>
-			{isAnomalyDetectionAlert && (
-				<>
-					{queryResponse.isLoading && (
-						<Card className="anomaly-alert-evaluation-view-loading-container">
-							<Spinner size="large" tip="Loading..." height="100%" />
-						</Card>
-					)}
-					{(queryResponse?.isError || queryResponse?.error) && (
-						<Card className="anomaly-alert-evaluation-view-error-container">
-							<FailedMessageContainer color="red" title="Failed to refresh the chart">
-								<InfoCircleOutlined />{' '}
-								{queryResponse.error.message || t('preview_chart_unexpected_error')}
-							</FailedMessageContainer>
-						</Card>
-					)}
-
-					{chartDataAvailable &&
-						queryResponse?.data?.payload?.data?.resultType === 'anomaly' && (
-							<AnomalyAlertEvaluationView
-								data={queryResponse?.data?.payload}
-								minTimeScale={minTimeScale}
-								maxTimeScale={maxTimeScale}
-							/>
-						)}
-				</>
-			)}
-
 			{!isAnomalyDetectionAlert && (
 				<ChartContainer>
 					{headline}
@@ -316,6 +289,34 @@ function ChartPreview({
 						)}
 					</div>
 				</ChartContainer>
+			)}
+
+			{isAnomalyDetectionAlert && (
+				<Card className="anomaly-alert-evaluation-view-container">
+					{queryResponse.isLoading && (
+						<div className="anomaly-alert-evaluation-view-loading-container">
+							<Spinner size="large" tip="Loading..." height="100%" />
+						</div>
+					)}
+					{(queryResponse?.isError || queryResponse?.error) && (
+						<div className="anomaly-alert-evaluation-view-error-container">
+							<FailedMessageContainer color="red" title="Failed to refresh the chart">
+								<InfoCircleOutlined />{' '}
+								{queryResponse.error.message || t('preview_chart_unexpected_error')}
+							</FailedMessageContainer>
+						</div>
+					)}
+
+					{chartDataAvailable &&
+						queryResponse?.data?.payload?.data?.resultType === 'anomaly' && (
+							<AnomalyAlertEvaluationView
+								data={queryResponse?.data?.payload}
+								minTimeScale={minTimeScale}
+								maxTimeScale={maxTimeScale}
+								yAxisUnit={yAxisUnit}
+							/>
+						)}
+				</Card>
 			)}
 		</>
 	);

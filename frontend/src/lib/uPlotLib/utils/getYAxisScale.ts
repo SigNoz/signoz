@@ -250,17 +250,22 @@ function getMinMax(data: any): { minValue: number; maxValue: number } {
 export const getYAxisScaleForAnomalyDetection = ({
 	seriesData,
 	selectedSeries,
+	initialData,
 }: {
 	seriesData: any;
 	selectedSeries: string | null;
+	initialData: any;
+	yAxisUnit?: string;
 }): { auto?: boolean; range?: uPlot.Scale.Range } => {
-	const selectedSeriesData = seriesData[selectedSeries];
-
-	if (!selectedSeriesData) {
+	if (!selectedSeries && !initialData) {
 		return { auto: true };
 	}
 
-	const { minValue, maxValue } = getMinMax(selectedSeriesData?.data);
+	const selectedSeriesData = selectedSeries
+		? seriesData[selectedSeries]?.data
+		: initialData;
+
+	const { minValue, maxValue } = getMinMax(selectedSeriesData);
 
 	return { auto: false, range: [minValue, maxValue] };
 };

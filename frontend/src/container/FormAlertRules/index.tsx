@@ -18,7 +18,6 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
-import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
@@ -30,13 +29,14 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
-import { cloneDeep, isEqual } from 'lodash-es';
+import { isEqual } from 'lodash-es';
 import { BellDot, ExternalLink } from 'lucide-react';
 import Tabs2 from 'periscope/components/Tabs2';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
@@ -87,6 +87,9 @@ function FormAlertRules({
 
 	const urlQuery = useUrlQuery();
 
+	const location = useLocation();
+	const queryParams = new URLSearchParams(location.search);
+
 	// In case of alert the panel types should always be "Graph" only
 	const panelType = PANEL_TYPES.TIME_SERIES;
 
@@ -118,8 +121,12 @@ function FormAlertRules({
 
 	const alertTypeFromURL = urlQuery.get(QueryParams.ruleType);
 
+	console.log('alertTypeFromURL', alertTypeFromURL);
+
 	const [detectionMethod, setDetectionMethod] = useState<string>(
-		alertTypeFromURL ? 'anomaly_rule' : alertDef.ruleType || 'threshold_rule',
+		alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+			? AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+			: AlertDetectionTypes.THRESHOLD_ALERT,
 	);
 
 	useEffect(() => {
@@ -152,27 +159,6 @@ function FormAlertRules({
 
 	useShareBuilderUrl(sq);
 
-	const findAnomalyQuery = (): {
-		queryData: IBuilderQuery | undefined;
-		index: number | undefined;
-	} => {
-		const selectedQueryIndex = currentQuery?.builder.queryData.findIndex(
-			(query) => query.queryName === alertDef?.condition?.selectedQueryName,
-		);
-
-		if (selectedQueryIndex !== undefined && selectedQueryIndex >= 0) {
-			return {
-				queryData: cloneDeep(currentQuery?.builder.queryData[selectedQueryIndex]),
-				index: selectedQueryIndex,
-			};
-		}
-
-		return {
-			queryData: cloneDeep(currentQuery?.builder.queryData[0]),
-			index: 0,
-		};
-	};
-
 	const updateFunctions = (data: IBuilderQuery): QueryFunctionProps[] => {
 		const anomalyFunction = {
 			name: 'anomaly',
@@ -198,9 +184,9 @@ function FormAlertRules({
 	};
 
 	const updateFunctionsBasedOnAlertType = (): void => {
-		const { queryData, index } = findAnomalyQuery();
+		for (let index = 0; index < currentQuery.builder.queryData.length; index++) {
+			const queryData = currentQuery.builder.queryData[index];
 
-		if (queryData && index !== undefined) {
 			const updatedFunctions = updateFunctions(queryData);
 			queryData.functions = updatedFunctions;
 			handleSetQueryData(index, queryData);
@@ -208,10 +194,9 @@ function FormAlertRules({
 	};
 
 	useEffect(() => {
-		console.log('updateFunctionsBasedOnAlertType', alertDef.ruleType);
 		updateFunctionsBasedOnAlertType();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [detectionMethod, alertDef]);
+	}, [detectionMethod, alertDef, currentQuery.builder.queryData.length]);
 
 	useEffect(() => {
 		const broadcastToSpecificChannels =
@@ -725,6 +710,18 @@ function FormAlertRules({
 			...def,
 			ruleType: value,
 		}));
+
+		if (value === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
+			queryParams.set(
+				QueryParams.ruleType,
+				AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
+			);
+		} else {
+			queryParams.set(QueryParams.ruleType, AlertDetectionTypes.THRESHOLD_ALERT);
+		}
+
+		const generatedUrl = `${location.pathname}?${queryParams.toString()}`;
+		history.replace(generatedUrl);
 
 		setDetectionMethod(value);
 	};

@@ -1,11 +1,14 @@
 import 'uplot/dist/uPlot.min.css';
 import './AnomalyAlertEvaluationView.styles.scss';
 
-import { Checkbox } from 'antd';
+import { Checkbox, Typography } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import getAxes from 'lib/uPlotLib/utils/getAxes';
 import { getUplotChartDataForAnomalyDetection } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getXAxisScale } from 'lib/uPlotLib/utils/getXAxisScale';
 import { getYAxisScaleForAnomalyDetection } from 'lib/uPlotLib/utils/getYAxisScale';
+import { LineChart } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import uPlot from 'uplot';
 
@@ -43,19 +46,22 @@ function AnomalyAlertEvaluationView({
 	data,
 	minTimeScale,
 	maxTimeScale,
+	yAxisUnit,
 }: {
 	data: any;
 	minTimeScale: number | undefined;
 	maxTimeScale: number | undefined;
+	yAxisUnit: string;
 }): JSX.Element {
 	const { spline } = uPlot.paths;
 	const _spline = spline ? spline() : undefined;
 	const chartRef = useRef<HTMLDivElement>(null);
 
-	console.log('AnomalyAlertEvaluationView', data);
+	// console.log('AnomalyAlertEvaluationView', data);
 
 	const chartData = getUplotChartDataForAnomalyDetection(data);
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
+	const isDarkMode = useIsDarkMode();
 
 	// Example of dynamic seriesData which can have 0 to N series
 	const [seriesData, setSeriesData] = useState(chartData);
@@ -81,7 +87,7 @@ function AnomalyAlertEvaluationView({
 	const bandsPlugin = {
 		hooks: {
 			draw: [
-				(u) => {
+				(u: any): void => {
 					if (!selectedSeries) return;
 
 					const { ctx } = u;
@@ -194,62 +200,18 @@ function AnomalyAlertEvaluationView({
 				...getYAxisScaleForAnomalyDetection({
 					seriesData,
 					selectedSeries,
+					initialData,
+					yAxisUnit,
 				}),
 			},
-			// y: {
-			// 	auto: true,
-			// 	range: (u, min, max) => [0, max],
-
-			// range: (u, min, max) => {
-			// 	// Get the y-values for the main series, predicted series, upper band, and lower band
-			// 	const mainSeries = u.series[1].data || [];
-			// 	const predictedSeries = u.series[2]?.data || [];
-			// 	const upperBound = u.series[3]?.data || [];
-			// 	const lowerBound = u.series[4]?.data || [];
-
-			// 	console.log('u', u);
-
-			// 	// Combine all the y-values to find the min and max
-			// 	const allYValues = [
-			// 		...mainSeries,
-			// 		...predictedSeries,
-			// 		...upperBound,
-			// 		...lowerBound,
-			// 	];
-
-			// 	const newMin = Math.min(...allYValues); // Find the minimum value
-			// 	const newMax = Math.max(...allYValues); // Find the maximum value
-
-			// 	return [0, max]; // Return the adjusted range
-			// },
-			// },
 		},
-		axes: [
-			{
-				scale: 'x',
-				stroke: 'white', // Axis line color
-				grid: { stroke: 'rgba(255,255,255,0.1)' }, // Grid lines color
-				// ticks: { stroke: 'white' }, // Tick marks color
-				// font: '12px Arial', // Font for labels
-				// label: 'X-Axis Label',
-				size: 50, // Adjust size as needed
-			},
-			{
-				scale: 'y',
-				stroke: 'white', // Axis line color
-				grid: { stroke: 'rgba(255,255,255,0.1)' }, // Grid lines color
-				// ticks: { stroke: 'white' }, // Tick marks color
-				// font: '12px Arial', // Font for labels
-				// label: 'Y-Axis Label',
-				size: 50, // Adjust size as needed
-			},
-		],
 		grid: {
 			show: true,
 		},
 		legend: {
 			show: true,
 		},
+		axes: getAxes(isDarkMode, yAxisUnit),
 	};
 
 	return (
@@ -262,42 +224,54 @@ function AnomalyAlertEvaluationView({
 						chartRef={chartRef}
 					/>
 				) : (
-					<p>No data available</p>
-				)}
-			</div>
-			<div className="anomaly-alert-evaluation-view-series-selection">
-				{allSeries.length > 1 && (
-					<div className="anomaly-alert-evaluation-view-series-list">
-						<h4>Select a series to display evaluation view:</h4>
-						<div className="anomaly-alert-evaluation-view-series-list-items">
-							{allSeries.map((seriesKey) => (
-								<Checkbox
-									className="anomaly-alert-evaluation-view-series-list-item"
-									key={seriesKey}
-									type="checkbox"
-									name="series"
-									value={seriesKey}
-									checked={selectedSeries === seriesKey}
-									onChange={(): void => handleSeriesChange(seriesKey)}
-								>
-									{seriesKey}
-								</Checkbox>
-							))}
+					<div className="anomaly-alert-evaluation-view-no-data-container">
+						<LineChart size={48} strokeWidth={0.5} />
 
-							<Checkbox
-								className="anomaly-alert-evaluation-view-series-list-item"
-								type="checkbox"
-								name="series"
-								value="all"
-								checked={selectedSeries === null}
-								onChange={(): void => handleSeriesChange(null)}
-							>
-								Show All
-							</Checkbox>
-						</div>
+						<Typography>No Data</Typography>
 					</div>
 				)}
 			</div>
+
+			{allSeries.length > 1 && (
+				<div className="anomaly-alert-evaluation-view-series-selection">
+					{allSeries.length > 1 && (
+						<div className="anomaly-alert-evaluation-view-series-list">
+							<Typography.Title
+								level={5}
+								className="anomaly-alert-evaluation-view-series-list-title"
+							>
+								Select a series
+							</Typography.Title>
+							<div className="anomaly-alert-evaluation-view-series-list-items">
+								<Checkbox
+									className="anomaly-alert-evaluation-view-series-list-item"
+									type="checkbox"
+									name="series"
+									value="all"
+									checked={selectedSeries === null}
+									onChange={(): void => handleSeriesChange(null)}
+								>
+									Show All
+								</Checkbox>
+
+								{allSeries.map((seriesKey) => (
+									<Checkbox
+										className="anomaly-alert-evaluation-view-series-list-item"
+										key={seriesKey}
+										type="checkbox"
+										name="series"
+										value={seriesKey}
+										checked={selectedSeries === seriesKey}
+										onChange={(): void => handleSeriesChange(seriesKey)}
+									>
+										{seriesKey}
+									</Checkbox>
+								))}
+							</div>
+						</div>
+					)}
+				</div>
+			)}
 		</div>
 	);
 }
