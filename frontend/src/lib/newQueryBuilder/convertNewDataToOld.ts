@@ -1,5 +1,4 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import cloneDeep from 'lodash-es/cloneDeep';
 import {
 	MetricRangePayloadProps,
 	MetricRangePayloadV3,
@@ -11,12 +10,6 @@ export const convertNewDataToOld = (
 ): MetricRangePayloadProps => {
 	const { result, resultType } = newData.data;
 	const oldResult: MetricRangePayloadProps['data']['result'] = [];
-
-	console.log(
-		'convertNewDataToOld - newData',
-		cloneDeep(newData),
-		cloneDeep(result),
-	);
 
 	result.forEach((item) => {
 		if (item.series) {

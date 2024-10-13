@@ -212,7 +212,12 @@ function AnomalyAlertEvaluationView({
 
 	return (
 		<div className="anomaly-alert-evaluation-view">
-			<div className="anomaly-alert-evaluation-view-chart-section" ref={graphRef}>
+			<div
+				className={`anomaly-alert-evaluation-view-chart-section ${
+					allSeries.length > 1 ? 'has-multi-series-data' : ''
+				}`}
+				ref={graphRef}
+			>
 				{allSeries.length > 0 ? (
 					<UplotChart
 						data={selectedSeries ? seriesData[selectedSeries].data : initialData}

@@ -8,13 +8,16 @@
 	background: #121317;
 
 	.anomaly-alert-evaluation-view-chart-section {
-		// height: 500px;
 		height: 100%;
 		width: 100%;
 
 		display: flex;
 		justify-content: center;
 		align-items: center;
+
+		&.has-multi-series-data {
+			width: calc(100% - 240px);
+		}
 
 		.anomaly-alert-evaluation-view-no-data-container {
 			display: flex;
@@ -29,7 +32,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
-		width: 360px;
+		width: 240px;
+		padding: 8px;
 		height: 100%;
 
 		.anomaly-alert-evaluation-view-series-list {

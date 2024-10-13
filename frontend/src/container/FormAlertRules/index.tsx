@@ -36,7 +36,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
@@ -87,9 +86,6 @@ function FormAlertRules({
 
 	const urlQuery = useUrlQuery();
 
-	const location = useLocation();
-	const queryParams = new URLSearchParams(location.search);
-
 	// In case of alert the panel types should always be "Graph" only
 	const panelType = PANEL_TYPES.TIME_SERIES;
 
@@ -121,12 +117,8 @@ function FormAlertRules({
 
 	const alertTypeFromURL = urlQuery.get(QueryParams.ruleType);
 
-	console.log('alertTypeFromURL', alertTypeFromURL);
-
 	const [detectionMethod, setDetectionMethod] = useState<string>(
-		alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
-			? AlertDetectionTypes.ANOMALY_DETECTION_ALERT
-			: AlertDetectionTypes.THRESHOLD_ALERT,
+		AlertDetectionTypes.THRESHOLD_ALERT,
 	);
 
 	useEffect(() => {
@@ -205,14 +197,21 @@ function FormAlertRules({
 				initialValue.preferredChannels.length > 0) ||
 			isNewRule;
 
+		let ruleType = AlertDetectionTypes.THRESHOLD_ALERT;
+
+		if (initialValue.ruleType) {
+			ruleType = initialValue.ruleType as AlertDetectionTypes;
+		} else if (alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
+			ruleType = AlertDetectionTypes.ANOMALY_DETECTION_ALERT;
+		}
+
 		setAlertDef({
 			...initialValue,
 			broadcastToAll: !broadcastToSpecificChannels,
-			ruleType:
-				alertTypeFromURL === 'anomaly_rule'
-					? 'anomaly_rule'
-					: initialValue.ruleType,
+			ruleType,
 		});
+
+		setDetectionMethod(ruleType);
 	}, [initialValue, isNewRule, alertTypeFromURL]);
 
 	useEffect(() => {
@@ -711,18 +710,6 @@ function FormAlertRules({
 			ruleType: value,
 		}));
 
-		if (value === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
-			queryParams.set(
-				QueryParams.ruleType,
-				AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
-			);
-		} else {
-			queryParams.set(QueryParams.ruleType, AlertDetectionTypes.THRESHOLD_ALERT);
-		}
-
-		const generatedUrl = `${location.pathname}?${queryParams.toString()}`;
-		history.replace(generatedUrl);
-
 		setDetectionMethod(value);
 	};
 
@@ -784,6 +771,7 @@ function FormAlertRules({
 								<StepHeading> {t('alert_form_step1')}</StepHeading>
 
 								<Tabs2
+									key={detectionMethod}
 									tabs={tabs}
 									initialSelectedTab={detectionMethod}
 									onSelectTab={handleDetectionMethodChange}

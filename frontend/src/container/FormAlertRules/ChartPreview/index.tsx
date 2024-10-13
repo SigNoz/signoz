@@ -199,8 +199,6 @@ function ChartPreview({
 		[dispatch, location.pathname, urlQuery],
 	);
 
-	console.log('containerDimensions', containerDimensions);
-
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
