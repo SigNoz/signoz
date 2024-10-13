@@ -307,6 +307,7 @@ type GetFilteredSpanAggregatesParams struct {
 }
 
 type SearchTraceRequest struct {
+	SpanId           string   `json:"spanId"`
 	UnCollapsedNodes []string `json:"uncollapsedNodes"`
 }
 

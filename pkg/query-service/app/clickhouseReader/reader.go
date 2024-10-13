@@ -1654,7 +1654,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error), req *model.SearchTraceRequest) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error), req *model.SearchTraceRequest) (*[]model.SearchSpanResponseItem, error) {
 
 	var countSpans uint64
 	// count the number of spans in the trace and if it exceeds the limit that has been set we return the error to the client!
@@ -1691,7 +1691,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	// get the raw results from the distributed_signoz_spans table
 	var searchScanResponses []model.SearchSpanDBResponseItem
 
-	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
+	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1 ORDER BY timestamp", r.TraceDB, r.SpansTable)
 
 	start := time.Now()
 
@@ -1707,14 +1707,14 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
 
 	// the current final created response object structure
-	searchSpansResult := []model.SearchSpansResult{{
-		Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
-		Events:    make([][]interface{}, len(searchScanResponses)),
-		IsSubTree: false,
-	},
-	}
+	// searchSpansResult := []model.SearchSpansResult{{
+	// 	Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
+	// 	Events:    make([][]interface{}, len(searchScanResponses)),
+	// 	IsSubTree: false,
+	// },
+	// }
 
-	searchSpanResponses := []model.SearchSpanResponseItem{}
+	// searchSpanResponses := []model.SearchSpanResponseItem{}
 	spanIdSpanResponseMap := map[string]*model.SearchSpanResponseItem{}
 	start = time.Now()
 	// the model field is unmarshalled and the searchSpanResponses array is prepared here!
@@ -1722,7 +1722,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		var jsonItem model.SearchSpanResponseItem
 		easyjson.Unmarshal([]byte(item.Model), &jsonItem)
 		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
-		searchSpanResponses = append(searchSpanResponses, jsonItem)
+		// searchSpanResponses = append(searchSpanResponses, jsonItem)
 
 		_, seen := spanIdSpanResponseMap[jsonItem.SpanID]
 
@@ -1745,7 +1745,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
 
 	// todo[vikrantgupta25]: we do not need to do anything below this now. we have the above array as we want it. now convert that to the tree structure here!
-	start= time.Now()
+	start = time.Now()
 	for _, spanItem := range spanIdSpanResponseMap {
 		for _, reference := range spanItem.References {
 			if reference.RefType == "CHILD_OF" {
@@ -1790,49 +1790,58 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 
 	end = time.Now()
 
-	fmt.Printf("time to construct the tree took %v",end.Sub(start))
+	fmt.Printf("time to construct the tree took %v", end.Sub(start))
 	// spanIdResponseMap should contain the root of the tree only now!
 
 	// next we need to extract the exact traversal of the tree based on collapse and uncollapsed state
 	// recieved in the request payload and return the X points out of the same.
 	uncollapsedNodes := req.UnCollapsedNodes
 
-	preOrderTraversal := getPreOrderTraversal(spanIdSpanResponseMap["c194721de96aecd8ee08c64dd5721f30"], uncollapsedNodes)
+	preOrderTraversal := getPreOrderTraversal(spanIdSpanResponseMap["3fee785568d6dcc7"], uncollapsedNodes)
 
 	fmt.Println(len(preOrderTraversal))
 
-	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
-	smartAlgoEnabled := err == nil
-	// processing for smartAlgo. we won't be using this now.
-	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
-		start = time.Now()
-		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
-		if err != nil {
-			return nil, err
-		}
-		end = time.Now()
-		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
-			data := map[string]interface{}{
-				"traceSize":        len(searchScanResponses),
-				"spansRenderLimit": params.SpansRenderLimit,
-			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
-		}
+	// Get the first 500 items from the preOrderTraversal array
+	var result []model.SearchSpanResponseItem
+	if len(preOrderTraversal) > 500 {
+		result = preOrderTraversal[:500]
 	} else {
-		// add the each individual span to the events array here.
-		for i, item := range searchSpanResponses {
-			// GetValues create the each individual array
-			spanEvents := item.GetValues()
-			searchSpansResult[0].Events[i] = spanEvents
-		}
+		result = preOrderTraversal
 	}
+	return &result, nil
 
-	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
-	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
+	// err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
+	// smartAlgoEnabled := err == nil
+	// // processing for smartAlgo. we won't be using this now.
+	// if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
+	// 	start = time.Now()
+	// 	searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	end = time.Now()
+	// 	zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
+	// 	userEmail, err := auth.GetEmailFromJwt(ctx)
+	// 	if err == nil {
+	// 		data := map[string]interface{}{
+	// 			"traceSize":        len(searchScanResponses),
+	// 			"spansRenderLimit": params.SpansRenderLimit,
+	// 		}
+	// 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
+	// 	}
+	// } else {
+	// 	// add the each individual span to the events array here.
+	// 	for i, item := range searchSpanResponses {
+	// 		// GetValues create the each individual array
+	// 		spanEvents := item.GetValues()
+	// 		searchSpansResult[0].Events[i] = spanEvents
+	// 	}
+	// }
 
-	return &searchSpansResult, nil
+	// searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
+	// searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
+
+	// return &searchSpansResult, nil
 }
 
 func contains(s []string, str string) bool {
@@ -1844,15 +1853,15 @@ func contains(s []string, str string) bool {
 	return false
 }
 
-func getPreOrderTraversal(node *model.SearchSpanResponseItem, uncollapsedNodes []string) []*model.SearchSpanResponseItem {
-	preOrderTraversal := []*model.SearchSpanResponseItem{}
-	preOrderTraversal = append(preOrderTraversal, node)
+func getPreOrderTraversal(node *model.SearchSpanResponseItem, uncollapsedNodes []string) []model.SearchSpanResponseItem {
+	preOrderTraversal := []model.SearchSpanResponseItem{}
+	preOrderTraversal = append(preOrderTraversal, *node)
 	for _, child := range node.Children {
 		if contains(uncollapsedNodes, child.SpanID) {
 			childTraversal := getPreOrderTraversal(child, uncollapsedNodes)
 			preOrderTraversal = append(preOrderTraversal, childTraversal...)
 		} else {
-			preOrderTraversal = append(preOrderTraversal, child)
+			preOrderTraversal = append(preOrderTraversal, *child)
 		}
 	}
 	return preOrderTraversal
