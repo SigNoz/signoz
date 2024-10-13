@@ -1,8 +1,3 @@
-version: "2.4"
-
-include:
-  - test-app-docker-compose.yaml
-
 x-clickhouse-defaults: &clickhouse-defaults
   restart: on-failure
   # addding non LTS version due to this fix https://github.com/ClickHouse/ClickHouse/commit/32caf8716352f45c1b617274c7508c86b7d1afab
@@ -172,7 +167,6 @@ services:
     command:
       [
         "-config=/root/config/prometheus.yml",
-        "-gateway-url=https://api.staging.signoz.cloud",
         "--use-logs-new-schema=true"
       ]
     # ports:
