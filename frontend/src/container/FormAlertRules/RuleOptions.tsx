@@ -1,3 +1,5 @@
+import './RuleOptions.styles.scss';
+
 import {
 	Checkbox,
 	Collapse,
@@ -18,14 +20,17 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useTranslation } from 'react-i18next';
 import {
 	AlertDef,
+	defaultAlgorithm,
 	defaultCompareOp,
 	defaultEvalWindow,
 	defaultFrequency,
 	defaultMatchType,
+	defaultSeasonality,
 } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import { AlertDetectionTypes } from '.';
 import {
 	FormContainer,
 	InlineSelect,
@@ -42,6 +47,8 @@ function RuleOptions({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 	const { currentQuery } = useQueryBuilder();
+
+	const { ruleType } = alertDef;
 
 	const handleMatchOptChange = (value: string | unknown): void => {
 		const m = (value as string) || alertDef.condition?.matchType;
@@ -86,8 +93,19 @@ function RuleOptions({
 		>
 			<Select.Option value="1">{t('option_above')}</Select.Option>
 			<Select.Option value="2">{t('option_below')}</Select.Option>
-			<Select.Option value="3">{t('option_equal')}</Select.Option>
-			<Select.Option value="4">{t('option_notequal')}</Select.Option>
+
+			{/* hide equal and not eqaul in case of analmoy based alert */}
+
+			{ruleType !== 'anomaly_rule' && (
+				<>
+					<Select.Option value="3">{t('option_equal')}</Select.Option>
+					<Select.Option value="4">{t('option_notequal')}</Select.Option>
+				</>
+			)}
+
+			{ruleType === 'anomaly_rule' && (
+				<Select.Option value="5">{t('option_above_below')}</Select.Option>
+			)}
 		</InlineSelect>
 	);
 
@@ -101,9 +119,14 @@ function RuleOptions({
 		>
 			<Select.Option value="1">{t('option_atleastonce')}</Select.Option>
 			<Select.Option value="2">{t('option_allthetimes')}</Select.Option>
-			<Select.Option value="3">{t('option_onaverage')}</Select.Option>
-			<Select.Option value="4">{t('option_intotal')}</Select.Option>
-			<Select.Option value="5">{t('option_last')}</Select.Option>
+
+			{ruleType !== 'anomaly_rule' && (
+				<>
+					<Select.Option value="3">{t('option_onaverage')}</Select.Option>
+					<Select.Option value="4">{t('option_intotal')}</Select.Option>
+					<Select.Option value="5">{t('option_last')}</Select.Option>
+				</>
+			)}
 		</InlineSelect>
 	);
 
@@ -112,6 +135,28 @@ function RuleOptions({
 		setAlertDef({
 			...alertDef,
 			evalWindow: ew,
+		});
+	};
+
+	const onChangeAlgorithm = (value: string | unknown): void => {
+		const alg = (value as string) || alertDef.condition.algorithm;
+		setAlertDef({
+			...alertDef,
+			condition: {
+				...alertDef.condition,
+				algorithm: alg,
+			},
+		});
+	};
+
+	const onChangeSeasonality = (value: string | unknown): void => {
+		const seasonality = (value as string) || alertDef.condition.seasonality;
+		setAlertDef({
+			...alertDef,
+			condition: {
+				...alertDef.condition,
+				seasonality,
+			},
 		});
 	};
 
@@ -146,6 +191,32 @@ function RuleOptions({
 		</InlineSelect>
 	);
 
+	const renderAlgorithms = (): JSX.Element => (
+		<InlineSelect
+			getPopupContainer={popupContainer}
+			defaultValue={defaultAlgorithm}
+			style={{ minWidth: '120px' }}
+			value={alertDef.condition.algorithm}
+			onChange={onChangeAlgorithm}
+		>
+			<Select.Option value="standard">Standard</Select.Option>
+		</InlineSelect>
+	);
+
+	const renderSeasonality = (): JSX.Element => (
+		<InlineSelect
+			getPopupContainer={popupContainer}
+			defaultValue={defaultSeasonality}
+			style={{ minWidth: '120px' }}
+			value={alertDef.condition.seasonality}
+			onChange={onChangeSeasonality}
+		>
+			<Select.Option value="hourly">Hourly</Select.Option>
+			<Select.Option value="daily">Daily</Select.Option>
+			<Select.Option value="weekly">Weekly</Select.Option>
+		</InlineSelect>
+	);
+
 	const renderThresholdRuleOpts = (): JSX.Element => (
 		<Form.Item>
 			<Typography.Text>
@@ -162,6 +233,39 @@ function RuleOptions({
 				<Typography.Text>is</Typography.Text>
 				{renderCompareOps()} {t('text_condition2')} {renderMatchOpts()}{' '}
 				{t('text_condition3')} {renderEvalWindows()}
+			</Typography.Text>
+		</Form.Item>
+	);
+
+	const renderAnomalyRuleOpts = (
+		onChange: InputNumberProps['onChange'],
+	): JSX.Element => (
+		<Form.Item>
+			<Typography.Text className="rule-definition">
+				{t('text_condition1_anomaly')}
+				<InlineSelect
+					getPopupContainer={popupContainer}
+					allowClear
+					showSearch
+					options={queryOptions}
+					placeholder={t('selected_query_placeholder')}
+					value={alertDef.condition.selectedQueryName}
+					onChange={onChangeSelectedQueryName}
+				/>
+				{t('text_condition3')} {renderEvalWindows()}
+				<Typography.Text>is</Typography.Text>
+				<InputNumber
+					value={alertDef?.condition?.target}
+					onChange={onChange}
+					type="number"
+					onWheel={(e): void => e.currentTarget.blur()}
+				/>
+				<Typography.Text>deviations</Typography.Text>
+				{renderCompareOps()}
+				<Typography.Text>the predicted data</Typography.Text>
+				{renderMatchOpts()}
+				using the {renderAlgorithms()} algorithm with {renderSeasonality()}{' '}
+				seasonality
 			</Typography.Text>
 		</Form.Item>
 	);
@@ -245,36 +349,46 @@ function RuleOptions({
 
 	return (
 		<>
-			<StepHeading>{t('alert_form_step2')}</StepHeading>
+			<StepHeading>{t('alert_form_step3')}</StepHeading>
 			<FormContainer>
-				{queryCategory === EQueryType.PROM
-					? renderPromRuleOptions()
-					: renderThresholdRuleOpts()}
+				{queryCategory === EQueryType.PROM && renderPromRuleOptions()}
+				{queryCategory !== EQueryType.PROM &&
+					ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT && (
+						<>{renderAnomalyRuleOpts(onChange)}</>
+					)}
+
+				{queryCategory !== EQueryType.PROM &&
+					ruleType === AlertDetectionTypes.THRESHOLD_ALERT &&
+					renderThresholdRuleOpts()}
 
 				<Space direction="vertical" size="large">
-					<Space direction="horizontal" align="center">
-						<Form.Item noStyle name={['condition', 'target']}>
-							<InputNumber
-								addonBefore={t('field_threshold')}
-								value={alertDef?.condition?.target}
-								onChange={onChange}
-								type="number"
-								onWheel={(e): void => e.currentTarget.blur()}
-							/>
-						</Form.Item>
+					{queryCategory !== EQueryType.PROM &&
+						ruleType !== AlertDetectionTypes.ANOMALY_DETECTION_ALERT && (
+							<Space direction="horizontal" align="center">
+								<Form.Item noStyle name={['condition', 'target']}>
+									<InputNumber
+										addonBefore={t('field_threshold')}
+										value={alertDef?.condition?.target}
+										onChange={onChange}
+										type="number"
+										onWheel={(e): void => e.currentTarget.blur()}
+									/>
+								</Form.Item>
 
-						<Form.Item noStyle>
-							<Select
-								getPopupContainer={popupContainer}
-								allowClear
-								showSearch
-								options={categorySelectOptions}
-								placeholder={t('field_unit')}
-								value={alertDef.condition.targetUnit}
-								onChange={onChangeAlertUnit}
-							/>
-						</Form.Item>
-					</Space>
+								<Form.Item noStyle>
+									<Select
+										getPopupContainer={popupContainer}
+										allowClear
+										showSearch
+										options={categorySelectOptions}
+										placeholder={t('field_unit')}
+										value={alertDef.condition.targetUnit}
+										onChange={onChangeAlertUnit}
+									/>
+								</Form.Item>
+							</Space>
+						)}
+
 					<Collapse>
 						<Collapse.Panel header={t('More options')} key="1">
 							<Space direction="vertical" size="large">
