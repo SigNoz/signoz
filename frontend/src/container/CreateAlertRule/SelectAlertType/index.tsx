@@ -1,6 +1,8 @@
-import { Row, Typography } from 'antd';
+import { Row, Tag, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
+import { FeatureKeys } from 'constants/features';
+import useFeatureFlags from 'hooks/useFeatureFlag';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -12,11 +14,18 @@ import { OptionType } from './types';
 function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 	const { t } = useTranslation(['alerts']);
 
-	const optionList = getOptionList(t);
+	const isAnomalyDetectionEnabled =
+		useFeatureFlags(FeatureKeys.ANOMALY_DETECTION)?.active || false;
+
+	const optionList = getOptionList(t, isAnomalyDetectionEnabled);
 
 	function handleRedirection(option: AlertTypes): void {
 		let url = '';
 		switch (option) {
+			case AlertTypes.ANOMALY_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
+				break;
 			case AlertTypes.METRICS_BASED_ALERT:
 				url =
 					'https://signoz.io/docs/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
@@ -52,6 +61,13 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 					<AlertTypeCard
 						key={option.selection}
 						title={option.title}
+						extra={
+							option.isBeta ? (
+								<Tag bordered={false} color="geekblue">
+									Beta
+								</Tag>
+							) : undefined
+						}
 						onClick={(): void => {
 							onSelect(option.selection);
 						}}
