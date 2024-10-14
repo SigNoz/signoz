@@ -17,6 +17,7 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 		setActiveSelectedId,
 		spanId,
 		intervalUnit,
+		onFocusSelectedSpanHandler,
 	} = props;
 
 	const { globalStart, spread: globalSpread } = traceMetaData;
@@ -58,9 +59,10 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 						...data,
 						globalSpread,
 						globalStart,
-						setActiveSelectedId,
 						activeSelectedId,
+						setActiveSelectedId,
 					}}
+					onFocusSelectedSpanHandler={onFocusSelectedSpanHandler}
 					level={0}
 					isExpandAll={isExpandAll}
 					intervalUnit={intervalUnit}
@@ -87,6 +89,7 @@ export interface GanttChartProps {
 	setActiveSelectedId: Dispatch<SetStateAction<string>>;
 	spanId: string;
 	intervalUnit: IIntervalUnit;
+	onFocusSelectedSpanHandler: () => void;
 }
 
 export default GanttChart;
