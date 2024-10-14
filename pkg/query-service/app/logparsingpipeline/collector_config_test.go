@@ -1,12 +1,14 @@
 package logparsingpipeline
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"gopkg.in/yaml.v3"
 )
@@ -292,4 +294,75 @@ func TestPipelineAliasCollisionsDontResultInDuplicateCollectorProcessors(t *test
 		"collector config should not change across recommendations for same set of pipelines",
 	)
 
+}
+
+func TestPipelineRouterWorksEvenIfFirstOpIsDisabled(t *testing.T) {
+	require := require.New(t)
+
+	testPipelines := []Pipeline{
+		{
+			OrderId: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+			Filter: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "method",
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeTag,
+						},
+						Operator: "=",
+						Value:    "GET",
+					},
+				},
+			},
+			Config: []PipelineOperator{
+				{
+					OrderId: 1,
+					ID:      "add",
+					Type:    "add",
+					Field:   "attributes.test",
+					Value:   "val",
+					Enabled: false,
+					Name:    "test add",
+				},
+				{
+					OrderId: 2,
+					ID:      "add2",
+					Type:    "add",
+					Field:   "attributes.test2",
+					Value:   "val2",
+					Enabled: true,
+					Name:    "test add 2",
+				},
+			},
+		},
+	}
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(),
+		testPipelines,
+		[]model.SignozLog{
+			makeTestSignozLog(
+				"test log body",
+				map[string]any{
+					"method": "GET",
+				},
+			),
+		},
+	)
+
+	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs))
+	require.Equal(1, len(result))
+
+	require.Equal(
+		map[string]string{
+			"method": "GET",
+			"test2":  "val2",
+		}, result[0].Attributes_string,
+	)
 }
