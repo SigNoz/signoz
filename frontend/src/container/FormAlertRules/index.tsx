@@ -23,7 +23,10 @@ import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
+import useFeatureFlag, {
+	MESSAGE,
+	useIsFeatureDisabled,
+} from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
@@ -665,6 +668,7 @@ function FormAlertRules({
 		{
 			value: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
 			label: 'Anomaly Detection Alert',
+			isBeta: true,
 		},
 	];
 
@@ -676,6 +680,9 @@ function FormAlertRules({
 
 		setDetectionMethod(value);
 	};
+
+	const isAnomalyDetectionEnabled =
+		useFeatureFlag(FeatureKeys.ANOMALY_DETECTION)?.active || false;
 
 	return (
 		<>
@@ -730,24 +737,25 @@ function FormAlertRules({
 					</StepContainer>
 
 					<div className="steps-container">
-						{alertDef.alertType === AlertTypes.METRICS_BASED_ALERT && (
-							<div className="detection-method-container">
-								<StepHeading> {t('alert_form_step1')}</StepHeading>
+						{alertDef.alertType === AlertTypes.METRICS_BASED_ALERT &&
+							isAnomalyDetectionEnabled && (
+								<div className="detection-method-container">
+									<StepHeading> {t('alert_form_step1')}</StepHeading>
 
-								<Tabs2
-									key={detectionMethod}
-									tabs={tabs}
-									initialSelectedTab={detectionMethod}
-									onSelectTab={handleDetectionMethodChange}
-								/>
+									<Tabs2
+										key={detectionMethod}
+										tabs={tabs}
+										initialSelectedTab={detectionMethod}
+										onSelectTab={handleDetectionMethodChange}
+									/>
 
-								<div className="detection-method-description">
-									{detectionMethod === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
-										? t('anomaly_detection_alert_desc')
-										: t('threshold_alert_desc')}
+									<div className="detection-method-description">
+										{detectionMethod === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+											? t('anomaly_detection_alert_desc')
+											: t('threshold_alert_desc')}
+									</div>
 								</div>
-							</div>
-						)}
+							)}
 
 						<QuerySection
 							queryCategory={currentQuery.queryType}
