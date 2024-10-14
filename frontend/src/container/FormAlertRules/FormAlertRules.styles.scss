@@ -36,6 +36,20 @@
 		width: 100% !important;
 	}
 }
+.alert-details {
+	&__chart-container {
+		.u-legend {
+			max-height: 84px; // overriding the 30px height of the legend for better interaction
+			min-height: 84px;
+			padding: 16px;
+			text-align: left;
+
+			.darkMode & {
+				background-color: var(--bg-ink-300);
+			}
+		}
+	}
+}
 
 .lightMode {
 	.main-container {
