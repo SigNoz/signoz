@@ -2,7 +2,9 @@ import 'uplot/dist/uPlot.min.css';
 import './AnomalyAlertEvaluationView.styles.scss';
 
 import { Checkbox, Typography } from 'antd';
+import Search from 'antd/es/input/Search';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useResizeObserver } from 'hooks/useDimensions';
 import getAxes from 'lib/uPlotLib/utils/getAxes';
 import { getUplotChartDataForAnomalyDetection } from 'lib/uPlotLib/utils/getUplotChartData';
@@ -63,12 +65,19 @@ function AnomalyAlertEvaluationView({
 	const [seriesData, setSeriesData] = useState<any>({});
 	const [selectedSeries, setSelectedSeries] = useState<string | null>(null);
 
+	const [filteredSeriesKeys, setFilteredSeriesKeys] = useState<string[]>([]);
+	const [allSeries, setAllSeries] = useState<string[]>([]);
+
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
 
 	useEffect(() => {
 		const chartData = getUplotChartDataForAnomalyDetection(data);
 		setSeriesData(chartData);
+
+		setAllSeries(Object.keys(chartData));
+
+		setFilteredSeriesKeys(Object.keys(chartData));
 	}, [data]);
 
 	useEffect(() => {
@@ -129,8 +138,6 @@ function AnomalyAlertEvaluationView({
 			],
 		},
 	};
-
-	const allSeries = Object.keys(seriesData);
 
 	const initialData = allSeries.length
 		? [
@@ -210,6 +217,27 @@ function AnomalyAlertEvaluationView({
 		axes: getAxes(isDarkMode, yAxisUnit),
 	};
 
+	const handleSearch = (searchText: string): void => {
+		if (!searchText || searchText.length === 0) {
+			setFilteredSeriesKeys(allSeries);
+			return;
+		}
+
+		const filteredSeries = allSeries.filter((series) =>
+			series.toLowerCase().includes(searchText.toLowerCase()),
+		);
+
+		setFilteredSeriesKeys(filteredSeries);
+	};
+
+	const handleSearchValueChange = useDebouncedFn((event): void => {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		const value = event?.target?.value || '';
+
+		handleSearch(value);
+	}, 300);
+
 	return (
 		<div className="anomaly-alert-evaluation-view">
 			<div
@@ -237,25 +265,28 @@ function AnomalyAlertEvaluationView({
 				<div className="anomaly-alert-evaluation-view-series-selection">
 					{allSeries.length > 1 && (
 						<div className="anomaly-alert-evaluation-view-series-list">
-							<Typography.Title
-								level={5}
-								className="anomaly-alert-evaluation-view-series-list-title"
-							>
-								Select a series
-							</Typography.Title>
-							<div className="anomaly-alert-evaluation-view-series-list-items">
-								<Checkbox
-									className="anomaly-alert-evaluation-view-series-list-item"
-									type="checkbox"
-									name="series"
-									value="all"
-									checked={selectedSeries === null}
-									onChange={(): void => handleSeriesChange(null)}
-								>
-									Show All
-								</Checkbox>
+							<Search
+								className="anomaly-alert-evaluation-view-series-list-search"
+								placeholder="Search a series"
+								allowClear
+								onChange={handleSearchValueChange}
+							/>
 
-								{allSeries.map((seriesKey) => (
+							<div className="anomaly-alert-evaluation-view-series-list-items">
+								{filteredSeriesKeys.length > 0 && (
+									<Checkbox
+										className="anomaly-alert-evaluation-view-series-list-item"
+										type="checkbox"
+										name="series"
+										value="all"
+										checked={selectedSeries === null}
+										onChange={(): void => handleSeriesChange(null)}
+									>
+										Show All
+									</Checkbox>
+								)}
+
+								{filteredSeriesKeys.map((seriesKey) => (
 									<Checkbox
 										className="anomaly-alert-evaluation-view-series-list-item"
 										key={seriesKey}
@@ -268,6 +299,10 @@ function AnomalyAlertEvaluationView({
 										{seriesKey}
 									</Checkbox>
 								))}
+
+								{filteredSeriesKeys.length === 0 && (
+									<Typography>No series found</Typography>
+								)}
 							</div>
 						</div>
 					)}
