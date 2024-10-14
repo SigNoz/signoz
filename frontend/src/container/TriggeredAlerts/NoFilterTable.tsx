@@ -98,7 +98,7 @@ function NoFilterTable({
 	return (
 		<ResizeTable
 			columns={columns}
-			rowKey="startsAt"
+			rowKey={(record): string => `${record.startsAt}-${record.fingerprint}`}
 			dataSource={filteredAlerts}
 		/>
 	);
