@@ -33,7 +33,7 @@ export default function Function({
 	handleDeleteFunction,
 }: FunctionProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const { showInput } = queryFunctionsTypesConfig[funcData.name];
+	const { showInput, disabled } = queryFunctionsTypesConfig[funcData.name];
 
 	let functionValue;
 
@@ -62,6 +62,7 @@ export default function Function({
 			<Select
 				className={cx('query-function-name-selector', showInput ? 'showInput' : '')}
 				value={funcData.name}
+				disabled={disabled}
 				style={{ minWidth: '100px' }}
 				onChange={(value): void => {
 					handleUpdateFunctionName(funcData, index, value);
