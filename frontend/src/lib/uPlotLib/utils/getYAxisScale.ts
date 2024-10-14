@@ -233,6 +233,43 @@ GetYAxisScale): { auto?: boolean; range?: uPlot.Scale.Range } => {
 	return { auto: false, range: [min, max] };
 };
 
+function getMinMax(data: any): { minValue: number; maxValue: number } {
+	// Exclude the first array
+	const arrays = data.slice(1);
+
+	// Flatten the array and convert all elements to float
+	const flattened = arrays.flat().map(Number);
+
+	// Get min and max, with fallback of 0 for min
+	const minValue = flattened.length ? Math.min(...flattened) : 0;
+	const maxValue = Math.max(...flattened);
+
+	return { minValue, maxValue };
+}
+
+export const getYAxisScaleForAnomalyDetection = ({
+	seriesData,
+	selectedSeries,
+	initialData,
+}: {
+	seriesData: any;
+	selectedSeries: string | null;
+	initialData: any;
+	yAxisUnit?: string;
+}): { auto?: boolean; range?: uPlot.Scale.Range } => {
+	if (!selectedSeries && !initialData) {
+		return { auto: true };
+	}
+
+	const selectedSeriesData = selectedSeries
+		? seriesData[selectedSeries]?.data
+		: initialData;
+
+	const { minValue, maxValue } = getMinMax(selectedSeriesData);
+
+	return { auto: false, range: [minValue, maxValue] };
+};
+
 export type GetYAxisScale = {
 	thresholds?: ThresholdProps[];
 	series?: QueryDataV3[];

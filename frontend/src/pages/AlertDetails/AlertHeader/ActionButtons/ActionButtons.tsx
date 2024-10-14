@@ -15,7 +15,7 @@ import {
 } from 'pages/AlertDetails/hooks';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useAlertRule } from 'providers/Alert';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { CSSProperties } from 'styled-components';
 import { AlertDef } from 'types/api/alerts/def';
 
@@ -32,7 +32,7 @@ function AlertActionButtons({
 	ruleId: string;
 	alertDetails: AlertHeaderProps['alertDetails'];
 }): JSX.Element {
-	const { isAlertRuleDisabled } = useAlertRule();
+	const { alertRuleState, setAlertRuleState } = useAlertRule();
 	const { handleAlertStateToggle } = useAlertRuleStatusToggle({ ruleId });
 
 	const { handleAlertDuplicate } = useAlertRuleDuplicate({
@@ -79,13 +79,32 @@ function AlertActionButtons({
 	);
 	const isDarkMode = useIsDarkMode();
 
+	// state for immediate UI feedback rather than waiting for onSuccess of handleAlertStateTiggle to updating the alertRuleState
+	const [isAlertRuleDisabled, setIsAlertRuleDisabled] = useState<
+		undefined | boolean
+	>(undefined);
+
+	useEffect(() => {
+		if (alertRuleState === undefined) {
+			setAlertRuleState(alertDetails.state);
+			setIsAlertRuleDisabled(alertDetails.state === 'disabled');
+		}
+	}, [setAlertRuleState, alertRuleState, alertDetails.state]);
+
+	// on unmount remove the alert state
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	useEffect(() => (): void => setAlertRuleState(undefined), []);
+
 	return (
 		<div className="alert-action-buttons">
-			<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
+			<Tooltip title={alertRuleState ? 'Enable alert' : 'Disable alert'}>
 				{isAlertRuleDisabled !== undefined && (
 					<Switch
 						size="small"
-						onChange={handleAlertStateToggle}
+						onChange={(): void => {
+							setIsAlertRuleDisabled((prev) => !prev);
+							handleAlertStateToggle();
+						}}
 						checked={!isAlertRuleDisabled}
 					/>
 				)}

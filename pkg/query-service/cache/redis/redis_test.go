@@ -82,8 +82,7 @@ func TestBulkRemove(t *testing.T) {
 	mock.ExpectSet("key2", []byte("value2"), 10*time.Second).RedisNil()
 	c.Store("key2", []byte("value2"), 10*time.Second)
 
-	mock.ExpectDel("key").RedisNil()
-	mock.ExpectDel("key2").RedisNil()
+	mock.ExpectDel("key", "key2").RedisNil()
 	c.BulkRemove([]string{"key", "key2"})
 
 	if err := mock.ExpectationsWereMet(); err != nil {

@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -47,7 +48,7 @@ func (c *cache) Store(cacheKey string, data []byte, ttl time.Duration) error {
 func (c *cache) Retrieve(cacheKey string, allowExpired bool) ([]byte, status.RetrieveStatus, error) {
 	data, err := c.client.Get(context.Background(), cacheKey).Bytes()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			return nil, status.RetrieveStatusKeyMiss, nil
 		}
 		return nil, status.RetrieveStatusError, err
@@ -65,16 +66,13 @@ func (c *cache) SetTTL(cacheKey string, ttl time.Duration) {
 
 // Remove removes the cache entry
 func (c *cache) Remove(cacheKey string) {
-	err := c.client.Del(context.Background(), cacheKey).Err()
-	if err != nil {
-		zap.L().Error("error deleting cache key", zap.String("cacheKey", cacheKey), zap.Error(err))
-	}
+	c.BulkRemove([]string{cacheKey})
 }
 
 // BulkRemove removes the cache entries
 func (c *cache) BulkRemove(cacheKeys []string) {
-	for _, cacheKey := range cacheKeys {
-		c.Remove(cacheKey)
+	if err := c.client.Del(context.Background(), cacheKeys...).Err(); err != nil {
+		zap.L().Error("error deleting cache keys", zap.Strings("cacheKeys", cacheKeys), zap.Error(err))
 	}
 }
 

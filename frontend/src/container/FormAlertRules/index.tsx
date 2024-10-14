@@ -3,7 +3,6 @@ import './FormAlertRules.styles.scss';
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import {
 	Button,
-	Col,
 	FormInstance,
 	Modal,
 	SelectProps,
@@ -13,8 +12,6 @@ import {
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import logEvent from 'api/common/logEvent';
-import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
-import { alertHelpMessage } from 'components/LaunchChatSupport/util';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -33,6 +30,8 @@ import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEqual } from 'lodash-es';
+import { BellDot, ExternalLink } from 'lucide-react';
+import Tabs2 from 'periscope/components/Tabs2';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
@@ -44,7 +43,11 @@ import {
 	defaultEvalWindow,
 	defaultMatchType,
 } from 'types/api/alerts/def';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	Query,
+	QueryFunctionProps,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -56,12 +59,15 @@ import {
 	ActionButton,
 	ButtonContainer,
 	MainFormContainer,
-	PanelContainer,
 	StepContainer,
-	StyledLeftContainer,
+	StepHeading,
 } from './styles';
-import UserGuide from './UserGuide';
 import { getSelectedQueryOptions } from './utils';
+
+export enum AlertDetectionTypes {
+	THRESHOLD_ALERT = 'threshold_rule',
+	ANOMALY_DETECTION_ALERT = 'anomaly_rule',
+}
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function FormAlertRules({
@@ -86,6 +92,7 @@ function FormAlertRules({
 	const {
 		currentQuery,
 		stagedQuery,
+		handleSetQueryData,
 		handleRunQuery,
 		handleSetConfig,
 		initialDataSource,
@@ -107,6 +114,12 @@ function FormAlertRules({
 	// alertDef holds the form values to be posted
 	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
 	const [yAxisUnit, setYAxisUnit] = useState<string>(currentQuery.unit || '');
+
+	const alertTypeFromURL = urlQuery.get(QueryParams.ruleType);
+
+	const [detectionMethod, setDetectionMethod] = useState<string>(
+		AlertDetectionTypes.THRESHOLD_ALERT,
+	);
 
 	useEffect(() => {
 		if (!isEqual(currentQuery.unit, yAxisUnit)) {
@@ -138,6 +151,45 @@ function FormAlertRules({
 
 	useShareBuilderUrl(sq);
 
+	const updateFunctions = (data: IBuilderQuery): QueryFunctionProps[] => {
+		const anomalyFunction = {
+			name: 'anomaly',
+			args: [],
+			namedArgs: { z_score_threshold: 9 },
+		};
+		const functions = data.functions || [];
+
+		if (alertDef.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
+			// Add anomaly if not already present
+			if (!functions.some((func) => func.name === 'anomaly')) {
+				functions.push(anomalyFunction);
+			}
+		} else {
+			// Remove anomaly if present
+			const index = functions.findIndex((func) => func.name === 'anomaly');
+			if (index !== -1) {
+				functions.splice(index, 1);
+			}
+		}
+
+		return functions;
+	};
+
+	const updateFunctionsBasedOnAlertType = (): void => {
+		for (let index = 0; index < currentQuery.builder.queryData.length; index++) {
+			const queryData = currentQuery.builder.queryData[index];
+
+			const updatedFunctions = updateFunctions(queryData);
+			queryData.functions = updatedFunctions;
+			handleSetQueryData(index, queryData);
+		}
+	};
+
+	useEffect(() => {
+		updateFunctionsBasedOnAlertType();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [detectionMethod, alertDef, currentQuery.builder.queryData.length]);
+
 	useEffect(() => {
 		const broadcastToSpecificChannels =
 			(initialValue &&
@@ -145,11 +197,22 @@ function FormAlertRules({
 				initialValue.preferredChannels.length > 0) ||
 			isNewRule;
 
+		let ruleType = AlertDetectionTypes.THRESHOLD_ALERT;
+
+		if (initialValue.ruleType) {
+			ruleType = initialValue.ruleType as AlertDetectionTypes;
+		} else if (alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
+			ruleType = AlertDetectionTypes.ANOMALY_DETECTION_ALERT;
+		}
+
 		setAlertDef({
 			...initialValue,
 			broadcastToAll: !broadcastToSpecificChannels,
+			ruleType,
 		});
-	}, [initialValue, isNewRule]);
+
+		setDetectionMethod(ruleType);
+	}, [initialValue, isNewRule, alertTypeFromURL]);
 
 	useEffect(() => {
 		// Set selectedQueryName based on the length of queryOptions
@@ -300,12 +363,15 @@ function FormAlertRules({
 		const postableAlert: AlertDef = {
 			...alertDef,
 			preferredChannels: alertDef.broadcastToAll ? [] : alertDef.preferredChannels,
-			alertType,
+			alertType:
+				alertType === AlertTypes.ANOMALY_BASED_ALERT
+					? AlertTypes.METRICS_BASED_ALERT
+					: alertType,
 			source: window?.location.toString(),
 			ruleType:
 				currentQuery.queryType === EQueryType.PROM
 					? 'promql_rule'
-					: 'threshold_rule',
+					: alertDef.ruleType,
 			condition: {
 				...alertDef.condition,
 				compositeQuery: {
@@ -322,6 +388,12 @@ function FormAlertRules({
 				},
 			},
 		};
+
+		if (alertDef.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
+			postableAlert.condition.algorithm = alertDef.condition.algorithm;
+			postableAlert.condition.seasonality = alertDef.condition.seasonality;
+		}
+
 		return postableAlert;
 	};
 
@@ -585,63 +657,97 @@ function FormAlertRules({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	function handleRedirection(option: AlertTypes): void {
-		let url = '';
-		switch (option) {
-			case AlertTypes.METRICS_BASED_ALERT:
-				url =
-					'https://signoz.io/docs/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
-				break;
-			case AlertTypes.LOGS_BASED_ALERT:
-				url =
-					'https://signoz.io/docs/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
-				break;
-			case AlertTypes.TRACES_BASED_ALERT:
-				url =
-					'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
-				break;
-			case AlertTypes.EXCEPTIONS_BASED_ALERT:
-				url =
-					'https://signoz.io/docs/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
-				break;
-			default:
-				break;
-		}
-		logEvent('Alert: Check example alert clicked', {
-			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
-			isNewRule: !ruleId || ruleId === 0,
-			ruleId,
-			queryType: currentQuery.queryType,
-			link: url,
-		});
-		window.open(url, '_blank');
-	}
+	const tabs = [
+		{
+			value: AlertDetectionTypes.THRESHOLD_ALERT,
+			label: 'Threshold Alert',
+		},
+		{
+			value: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
+			label: 'Anomaly Detection Alert',
+		},
+	];
+
+	const handleDetectionMethodChange = (value: any): void => {
+		setAlertDef((def) => ({
+			...def,
+			ruleType: value,
+		}));
+
+		setDetectionMethod(value);
+	};
 
 	return (
 		<>
 			{Element}
 
-			<PanelContainer id="top">
-				<StyledLeftContainer flex="5 1 600px" md={18}>
-					<MainFormContainer
-						initialValues={initialValue}
-						layout="vertical"
-						form={formInstance}
-						className="main-container"
-					>
+			<div id="top">
+				<div className="overview-header">
+					<div className="alert-type-container">
+						{isNewRule && (
+							<Typography.Title level={5} className="alert-type-title">
+								<BellDot size={14} />
+
+								{alertDef.alertType === AlertTypes.ANOMALY_BASED_ALERT &&
+									'Anomaly Detection Alert'}
+								{alertDef.alertType === AlertTypes.METRICS_BASED_ALERT &&
+									'Metrics Based Alert'}
+								{alertDef.alertType === AlertTypes.LOGS_BASED_ALERT &&
+									'Logs Based Alert'}
+								{alertDef.alertType === AlertTypes.TRACES_BASED_ALERT &&
+									'Traces Based Alert'}
+								{alertDef.alertType === AlertTypes.EXCEPTIONS_BASED_ALERT &&
+									'Exceptions Based Alert'}
+							</Typography.Title>
+						)}
+					</div>
+
+					<Button className="periscope-btn" icon={<ExternalLink size={14} />}>
+						Alert Setup Guide
+					</Button>
+				</div>
+
+				<MainFormContainer
+					initialValues={initialValue}
+					layout="vertical"
+					form={formInstance}
+					className="main-container"
+				>
+					<div className="chart-preview-container">
 						{currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 							renderQBChartPreview()}
 						{currentQuery.queryType === EQueryType.PROM &&
 							renderPromAndChQueryChartPreview()}
 						{currentQuery.queryType === EQueryType.CLICKHOUSE &&
 							renderPromAndChQueryChartPreview()}
+					</div>
 
-						<StepContainer>
-							<BuilderUnitsFilter
-								onChange={onUnitChangeHandler}
-								yAxisUnit={yAxisUnit}
-							/>
-						</StepContainer>
+					<StepContainer>
+						<BuilderUnitsFilter
+							onChange={onUnitChangeHandler}
+							yAxisUnit={yAxisUnit}
+						/>
+					</StepContainer>
+
+					<div className="steps-container">
+						{alertDef.alertType === AlertTypes.METRICS_BASED_ALERT && (
+							<div className="detection-method-container">
+								<StepHeading> {t('alert_form_step1')}</StepHeading>
+
+								<Tabs2
+									key={detectionMethod}
+									tabs={tabs}
+									initialSelectedTab={detectionMethod}
+									onSelectTab={handleDetectionMethodChange}
+								/>
+
+								<div className="detection-method-description">
+									{detectionMethod === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+										? t('anomaly_detection_alert_desc')
+										: t('threshold_alert_desc')}
+								</div>
+							</div>
+						)}
 
 						<QuerySection
 							queryCategory={currentQuery.queryType}
@@ -662,79 +768,49 @@ function FormAlertRules({
 						/>
 
 						{renderBasicInfo()}
-						<ButtonContainer>
-							<Tooltip title={isAlertAvailableToSave ? MESSAGE.ALERT : ''}>
-								<ActionButton
-									loading={loading || false}
-									type="primary"
-									onClick={onSaveHandler}
-									icon={<SaveOutlined />}
-									disabled={
-										isAlertNameMissing ||
-										isAlertAvailableToSave ||
-										!isChannelConfigurationValid ||
-										queryStatus === 'error'
-									}
-								>
-									{isNewRule ? t('button_createrule') : t('button_savechanges')}
-								</ActionButton>
-							</Tooltip>
-
+					</div>
+					<ButtonContainer>
+						<Tooltip title={isAlertAvailableToSave ? MESSAGE.ALERT : ''}>
 							<ActionButton
 								loading={loading || false}
+								type="primary"
+								onClick={onSaveHandler}
+								icon={<SaveOutlined />}
 								disabled={
 									isAlertNameMissing ||
+									isAlertAvailableToSave ||
 									!isChannelConfigurationValid ||
 									queryStatus === 'error'
 								}
-								type="default"
-								onClick={onTestRuleHandler}
 							>
-								{' '}
-								{t('button_testrule')}
+								{isNewRule ? t('button_createrule') : t('button_savechanges')}
 							</ActionButton>
-							<ActionButton
-								disabled={loading || false}
-								type="default"
-								onClick={onCancelHandler}
-							>
-								{ruleId === 0 && t('button_cancelchanges')}
-								{ruleId > 0 && t('button_discard')}
-							</ActionButton>
-						</ButtonContainer>
-					</MainFormContainer>
-				</StyledLeftContainer>
-				<Col flex="1 1 300px">
-					<UserGuide queryType={currentQuery.queryType} />
-					<div className="info-help-btns">
-						<Button
-							style={{ height: 32 }}
-							onClick={(): void =>
-								handleRedirection(alertDef?.alertType as AlertTypes)
+						</Tooltip>
+
+						<ActionButton
+							loading={loading || false}
+							disabled={
+								isAlertNameMissing ||
+								!isChannelConfigurationValid ||
+								queryStatus === 'error'
 							}
-							className="doc-redirection-btn"
+							type="default"
+							onClick={onTestRuleHandler}
 						>
-							Check an example alert
-						</Button>
-						<LaunchChatSupport
-							attributes={{
-								alert: alertDef?.alert,
-								alertType: alertDef?.alertType,
-								id: ruleId,
-								ruleType: alertDef?.ruleType,
-								state: (alertDef as any)?.state,
-								panelType,
-								screen: isRuleCreated ? 'Edit Alert' : 'New Alert',
-							}}
-							className="facing-issue-btn"
-							eventName="Alert: Facing Issues in alert"
-							buttonText="Need help with this alert?"
-							message={alertHelpMessage(alertDef, ruleId)}
-							onHoverText="Click here to get help with this alert"
-						/>
-					</div>
-				</Col>
-			</PanelContainer>
+							{' '}
+							{t('button_testrule')}
+						</ActionButton>
+						<ActionButton
+							disabled={loading || false}
+							type="default"
+							onClick={onCancelHandler}
+						>
+							{ruleId === 0 && t('button_cancelchanges')}
+							{ruleId > 0 && t('button_discard')}
+						</ActionButton>
+					</ButtonContainer>
+				</MainFormContainer>
+			</div>
 		</>
 	);
 }

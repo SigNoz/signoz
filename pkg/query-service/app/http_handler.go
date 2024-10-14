@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"regexp"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -26,6 +27,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/inframetrics"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
@@ -109,6 +111,8 @@ type APIHandler struct {
 	Upgrader *websocket.Upgrader
 
 	UseLogsNewSchema bool
+
+	hostsRepo *inframetrics.HostsRepo
 }
 
 type APIHandlerOpts struct {
@@ -178,6 +182,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	querier := querier.NewQuerier(querierOpts)
 	querierv2 := querierV2.NewQuerier(querierOptsV2)
 
+	hostsRepo := inframetrics.NewHostsRepo(opts.Reader, querierv2)
+
 	aH := &APIHandler{
 		reader:                        opts.Reader,
 		appDao:                        opts.AppDao,
@@ -195,6 +201,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		querier:                       querier,
 		querierV2:                     querierv2,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
+		hostsRepo:                     hostsRepo,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -341,6 +348,13 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/hosts").Subrouter()
+	subRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getHostAttributeKeys)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getHostAttributeValues)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/list", am.ViewAccess(aH.getHostList)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
@@ -2463,12 +2477,19 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 
 // RegisterMessagingQueuesRoutes adds messaging-queues routes
 func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *AuthMiddleware) {
-	// SubRouter for kafka
-	kafkaSubRouter := router.PathPrefix("/api/v1/messaging-queues/kafka/consumer-lag").Subrouter()
 
-	kafkaSubRouter.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerData)).Methods(http.MethodPost)
-	kafkaSubRouter.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerData)).Methods(http.MethodPost)
-	kafkaSubRouter.HandleFunc("/network-latency", am.ViewAccess(aH.getNetworkData)).Methods(http.MethodPost)
+	// SubRouter for kafka
+	kafkaRouter := router.PathPrefix("/api/v1/messaging-queues/kafka").Subrouter()
+
+	consumerLagRouter := kafkaRouter.PathPrefix("/consumer-lag").Subrouter()
+	consumerLagRouter.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerData)).Methods(http.MethodPost)
+	consumerLagRouter.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerData)).Methods(http.MethodPost)
+	consumerLagRouter.HandleFunc("/network-latency", am.ViewAccess(aH.getNetworkData)).Methods(http.MethodPost)
+
+	onboardingRouter := kafkaRouter.PathPrefix("/onboarding").Subrouter()
+	onboardingRouter.HandleFunc("/producers", am.ViewAccess(aH.onboardProducers)).Methods(http.MethodPost)
+	onboardingRouter.HandleFunc("/consumers", am.ViewAccess(aH.onboardConsumers)).Methods(http.MethodPost)
+	onboardingRouter.HandleFunc("/kafka", am.ViewAccess(aH.onboardKafka)).Methods(http.MethodPost)
 
 	// for other messaging queues, add SubRouters here
 }
@@ -2476,6 +2497,332 @@ func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *Auth
 // not using md5 hashing as the plain string would work
 func uniqueIdentifier(clientID, serviceInstanceID, serviceName, separator string) string {
 	return clientID + separator + serviceInstanceID + separator + serviceName
+}
+
+func (aH *APIHandler) onboardProducers(
+
+	w http.ResponseWriter, r *http.Request,
+
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_producers")
+
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, err)
+		return
+	}
+
+	var entries []mq.OnboardingResponse
+
+	for _, result := range results {
+
+		for key, value := range result.Data {
+			var message, attribute, status string
+
+			intValue := int(*value.(*uint8))
+
+			if key == "entries" {
+				attribute = "telemetry ingestion"
+				if intValue != 0 {
+					entries = nil
+					entry := mq.OnboardingResponse{
+						Attribute: attribute,
+						Message:   "No data available in the given time range",
+						Status:    "0",
+					}
+					entries = append(entries, entry)
+					break
+				} else {
+					status = "1"
+				}
+			} else if key == "queue" {
+				attribute = "messaging.system"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.system attribute is not present or not equal to kafka in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "kind" {
+				attribute = "kind"
+				if intValue != 0 {
+					status = "0"
+					message = "check if your producer spans has kind=4 as attribute"
+				} else {
+					status = "1"
+				}
+			} else if key == "destination" {
+				attribute = "messaging.destination.name"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.destination.name attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "partition" {
+				attribute = "messaging.destination.partition.id"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.destination.partition.id attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			}
+
+			entry := mq.OnboardingResponse{
+				Attribute: attribute,
+				Message:   message,
+				Status:    status,
+			}
+
+			entries = append(entries, entry)
+		}
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Attribute < entries[j].Attribute
+	})
+
+	aH.Respond(w, entries)
+}
+
+func (aH *APIHandler) onboardConsumers(
+
+	w http.ResponseWriter, r *http.Request,
+
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_consumers")
+
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	result, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, err)
+		return
+	}
+
+	var entries []mq.OnboardingResponse
+
+	for _, result := range result {
+		for key, value := range result.Data {
+			var message, attribute, status string
+
+			intValue := int(*value.(*uint8))
+
+			if key == "entries" {
+				attribute = "telemetry ingestion"
+				if intValue != 0 {
+					entries = nil
+					entry := mq.OnboardingResponse{
+						Attribute: attribute,
+						Message:   "No data available in the given time range",
+						Status:    "0",
+					}
+					entries = append(entries, entry)
+					break
+				} else {
+					status = "1"
+				}
+			} else if key == "queue" {
+				attribute = "messaging.system"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.system attribute is not present or not equal to kafka in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "kind" {
+				attribute = "kind"
+				if intValue != 0 {
+					status = "0"
+					message = "check if your consumer spans has kind=5 as attribute"
+				} else {
+					status = "1"
+				}
+			} else if key == "destination" {
+				attribute = "messaging.destination.name"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.destination.name attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "partition" {
+				attribute = "messaging.destination.partition.id"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.destination.partition.id attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "svc" {
+				attribute = "service_name"
+				if intValue != 0 {
+					status = "0"
+					message = "service_name attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "cgroup" {
+				attribute = "messaging.kafka.consumer.group"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.kafka.consumer.group attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "bodysize" {
+				attribute = "messaging.message.body.size"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.message.body.size attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "clientid" {
+				attribute = "messaging.client_id"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.client_id attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "instanceid" {
+				attribute = "service.instance.id"
+				if intValue != 0 {
+					status = "0"
+					message = "service.instance.id attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			}
+
+			entry := mq.OnboardingResponse{
+				Attribute: attribute,
+				Message:   message,
+				Status:    status,
+			}
+			entries = append(entries, entry)
+		}
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Attribute < entries[j].Attribute
+	})
+
+	aH.Respond(w, entries)
+}
+
+func (aH *APIHandler) onboardKafka(
+
+	w http.ResponseWriter, r *http.Request,
+
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_kafka")
+
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	result, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, err)
+		return
+	}
+
+	var entries []mq.OnboardingResponse
+
+	for _, result := range result {
+		for key, value := range result.Data {
+			var message, attribute, status string
+
+			intValue := int(*value.(*uint8))
+
+			if key == "entries" {
+				attribute = "telemetry ingestion"
+				if intValue != 0 {
+					entries = nil
+					entry := mq.OnboardingResponse{
+						Attribute: attribute,
+						Message:   "No data available in the given time range",
+						Status:    "0",
+					}
+					entries = append(entries, entry)
+					break
+				} else {
+					status = "1"
+				}
+			} else if key == "fetchlatency" {
+				attribute = "kafka_consumer_fetch_latency_avg"
+				if intValue != 0 {
+					status = "0"
+					message = "Metric kafka_consumer_fetch_latency_avg is not present in the given time range."
+				} else {
+					status = "1"
+				}
+			} else if key == "grouplag" {
+				attribute = "kafka_consumer_group_lag"
+				if intValue != 0 {
+					status = "0"
+					message = "Metric kafka_consumer_group_lag is not present in the given time range."
+				} else {
+					status = "1"
+				}
+			}
+
+			entry := mq.OnboardingResponse{
+				Attribute: attribute,
+				Message:   message,
+				Status:    status,
+			}
+			entries = append(entries, entry)
+		}
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Attribute < entries[j].Attribute
+	})
+
+	aH.Respond(w, entries)
 }
 
 func (aH *APIHandler) getNetworkData(
@@ -3449,7 +3796,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req)
+		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req, true)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
