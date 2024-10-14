@@ -55,6 +55,62 @@ func buildClickHouseQueryNetwork(messagingQueue *MessagingQueue, queueType strin
 	}, nil
 }
 
+func buildBuilderQueriesProducerBytes(unixMilliStart, unixMilliEnd int64, attributeCache *Clients) (map[string]*v3.BuilderQuery, error) {
+	bq := make(map[string]*v3.BuilderQuery)
+	queryName := fmt.Sprintf("latency")
+
+	chq := &v3.BuilderQuery{
+		QueryName:    queryName,
+		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
+		DataSource:   v3.DataSourceMetrics,
+		AggregateAttribute: v3.AttributeKey{
+			Key: "kafka_producer_byte_rate",
+		},
+		AggregateOperator: v3.AggregateOperatorAvg,
+		Temporality:       v3.Unspecified,
+		TimeAggregation:   v3.TimeAggregationAvg,
+		SpaceAggregation:  v3.SpaceAggregationAvg,
+		Filters: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "service_name",
+						Type:     v3.AttributeKeyTypeTag,
+						DataType: v3.AttributeKeyDataTypeString,
+					},
+					Operator: v3.FilterOperatorIn,
+					Value:    attributeCache.ServiceName,
+				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "topic",
+						Type:     v3.AttributeKeyTypeTag,
+						DataType: v3.AttributeKeyDataTypeString,
+					},
+					Operator: v3.FilterOperatorIn,
+					Value:    attributeCache.TopicName,
+				},
+			},
+		},
+		Expression: queryName,
+		ReduceTo:   v3.ReduceToOperatorAvg,
+		GroupBy: []v3.AttributeKey{{
+			Key:      "service_name",
+			DataType: v3.AttributeKeyDataTypeString,
+			Type:     v3.AttributeKeyTypeTag,
+		},
+			{
+				Key:      "topic",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeTag,
+			},
+		},
+	}
+	bq[queryName] = chq
+	return bq, nil
+}
+
 func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCache *Clients) (map[string]*v3.BuilderQuery, error) {
 	bq := make(map[string]*v3.BuilderQuery)
 	queryName := fmt.Sprintf("latency")
@@ -162,6 +218,16 @@ func BuildQRParamsWithCache(messagingQueue *MessagingQueue, queryContext string,
 		cq, err = buildCompositeQuery(&v3.ClickHouseQuery{
 			Query: query,
 		}, queryContext)
+	} else if queryContext == "producer-throughput-overview-latency" {
+		bhq, err := buildBuilderQueriesProducerBytes(unixMilliStart, unixMilliEnd, attributeCache)
+		if err != nil {
+			return nil, err
+		}
+		cq = &v3.CompositeQuery{
+			QueryType:      v3.QueryTypeBuilder,
+			BuilderQueries: bhq,
+			PanelType:      v3.PanelTypeTable,
+		}
 	}
 
 	queryRangeParams := &v3.QueryRangeParamsV3{
@@ -228,7 +294,7 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 		}
 		query = generateConsumerServiceLatencySQL(start, end, topic, svcName, queueType)
 	} else if queryContext == "producer-consumer-eval" {
-		query = generateProducerConsumerEvalSQL(start, end, queueType)
+		query = generateProducerConsumerEvalSQL(start, end, queueType, messagingQueue.EvalTime)
 	} else if queryContext == "onboard_producers" {
 		query = onboardProducersSQL(start, end, queueType)
 	} else if queryContext == "onboard_consumers" {

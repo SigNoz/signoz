@@ -131,7 +131,7 @@ WITH producer_latency AS (
 
 SELECT
 	topic,
-	serviceName,	
+	serviceName AS service_name,
     p99,
     COALESCE((error_count * 100.0) / total_requests, 0) AS error_rate,
     COALESCE(total_requests / %d, 0) AS throughput
@@ -247,31 +247,52 @@ FROM
 }
 
 // s4
-func generateProducerConsumerEvalSQL(start, end int64, queueType string) string {
+func generateProducerConsumerEvalSQL(start, end int64, queueType string, evalTime int64) string {
 	query := fmt.Sprintf(`
+WITH trace_data AS (
+    SELECT
+        p.serviceName AS producer_service,
+        c.serviceName AS consumer_service,
+        p.traceID,
+        p.timestamp AS producer_timestamp,
+        c.timestamp AS consumer_timestamp,
+        p.durationNano AS durationNano,
+        (toUnixTimestamp64Nano(c.timestamp) - toUnixTimestamp64Nano(p.timestamp)) + p.durationNano AS time_difference
+    FROM
+        signoz_traces.distributed_signoz_index_v2 p
+    INNER JOIN
+        signoz_traces.distributed_signoz_index_v2 c
+            ON p.traceID = c.traceID
+            AND c.parentSpanID = p.spanID
+    WHERE
+        p.kind = 4
+        AND c.kind = 5
+        AND toUnixTimestamp64Nano(p.timestamp) BETWEEN '%d' AND '%d'
+        AND toUnixTimestamp64Nano(c.timestamp) BETWEEN '%d' AND '%d'
+        AND c.msgSystem = '%s'
+        AND p.msgSystem = '%s'
+)
+
 SELECT
-    p.serviceName AS producer_service,
-    c.serviceName AS consumer_service,
-    p.traceID,
-    p.timestamp AS producer_timestamp,
-    c.timestamp AS consumer_timestamp,
-    p.durationNano AS durationNano
-FROM
-    signoz_traces.distributed_signoz_index_v2 p
-INNER JOIN
-    signoz_traces.distributed_signoz_index_v2 c ON
-    p.traceID = c.traceID AND
-    c.parentSpanID = p.spanID
-WHERE
-    p.kind = 4 
-    AND c.kind = 5 
-    AND p.timestamp >= '%d'
-    AND p.timestamp <= '%d'
-    AND c.timestamp >= '%d'
-    AND c.timestamp <= '%d'
-    AND c.msgSystem = '%s'
-    AND p.msgSystem = '%s' ;
-`, start, end, start, end, queueType, queueType)
+    producer_service,
+    consumer_service,
+    COUNT(*) AS total_spans,
+    SUM(time_difference > '%d') AS breached_spans,
+    ((breached_spans) * 100.0) / total_spans AS breach_percentage,
+    arraySlice(
+        arrayMap(x -> x.1,
+            arraySort(
+                x -> -x.2,
+                groupArrayIf((traceID, time_difference), time_difference > '%d')
+            )
+        ),
+        1, 10
+    ) AS top_traceIDs
+FROM trace_data
+GROUP BY
+    producer_service,
+    consumer_service
+`, start, end, start, end, queueType, queueType, evalTime, evalTime)
 	return query
 }
 
