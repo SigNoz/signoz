@@ -5,6 +5,11 @@ import { OptionType } from './types';
 
 export const getOptionList = (t: TFunction): OptionType[] => [
 	{
+		title: t('anomaly_based_alert'),
+		selection: AlertTypes.ANOMALY_BASED_ALERT,
+		description: t('anomaly_based_alert_desc'),
+	},
+	{
 		title: t('metric_based_alert'),
 		selection: AlertTypes.METRICS_BASED_ALERT,
 		description: t('metric_based_alert_desc'),
