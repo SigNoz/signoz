@@ -36,4 +36,5 @@ export enum QueryParams {
 	topic = 'topic',
 	partition = 'partition',
 	selectedTimelineQuery = 'selectedTimelineQuery',
+	ruleType = 'ruleType',
 }

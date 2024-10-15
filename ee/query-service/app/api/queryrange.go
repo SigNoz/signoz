@@ -53,7 +53,11 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 	if anomalyQueryExists {
 		// ensure all queries have metric data source, and there should be only one anomaly query
 		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
-			if query.DataSource != v3.DataSourceMetrics {
+			// What is query.QueryName == query.Expression doing here?
+			// In the current implementation, the way to recognize if a query is a formula is by
+			// checking if the expression is the same as the query name. if the expression is different
+			// then it is a formula. otherwise, it is simple builder query.
+			if query.DataSource != v3.DataSourceMetrics && query.QueryName == query.Expression {
 				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("all queries must have metric data source")}, nil)
 				return
 			}
@@ -99,6 +103,13 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 				anomaly.WithKeyGenerator[*anomaly.HourlyProvider](queryBuilder.NewKeyGenerator()),
 				anomaly.WithReader[*anomaly.HourlyProvider](aH.opts.DataConnector),
 				anomaly.WithFeatureLookup[*anomaly.HourlyProvider](aH.opts.FeatureFlags),
+			)
+		default:
+			provider = anomaly.NewDailyProvider(
+				anomaly.WithCache[*anomaly.DailyProvider](aH.opts.Cache),
+				anomaly.WithKeyGenerator[*anomaly.DailyProvider](queryBuilder.NewKeyGenerator()),
+				anomaly.WithReader[*anomaly.DailyProvider](aH.opts.DataConnector),
+				anomaly.WithFeatureLookup[*anomaly.DailyProvider](aH.opts.FeatureFlags),
 			)
 		}
 		anomalies, err := provider.GetAnomalies(r.Context(), &anomaly.GetAnomaliesRequest{Params: queryRangeParams})
