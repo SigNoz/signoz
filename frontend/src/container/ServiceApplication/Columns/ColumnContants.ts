@@ -6,7 +6,7 @@ export enum ColumnKey {
 }
 
 export const ColumnTitle: Record<ColumnKey, string> = {
-	[ColumnKey.Application]: 'Application',
+	[ColumnKey.Application]: 'Service Name',
 	[ColumnKey.P99]: 'P99 latency',
 	[ColumnKey.ErrorRate]: 'Error Rate (% of total)',
 	[ColumnKey.Operations]: 'Operations Per Second',
@@ -21,4 +21,4 @@ export enum ColumnWidth {
 
 export const SORTING_ORDER = 'descend';
 
-export const SEARCH_PLACEHOLDER = 'Search by service';
+export const SEARCH_PLACEHOLDER = 'Search by service name';
