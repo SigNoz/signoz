@@ -222,7 +222,7 @@ function QuerySection({
 	};
 	return (
 		<>
-			<StepHeading> {t('alert_form_step1')}</StepHeading>
+			<StepHeading> {t('alert_form_step2')}</StepHeading>
 			<FormContainer>
 				<div>{renderTabs(alertType)}</div>
 				{renderQuerySection(currentTab)}

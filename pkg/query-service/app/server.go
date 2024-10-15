@@ -308,6 +308,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterIntegrationRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
+	api.RegisterInfraMetricsRoutes(r, am)
 	api.RegisterWebSocketPaths(r, am)
 	api.RegisterQueryRangeV4Routes(r, am)
 	api.RegisterMessagingQueuesRoutes(r, am)

@@ -373,7 +373,7 @@ var EnterprisePlan = basemodel.FeatureSet{
 	},
 	basemodel.Feature{
 		Name:       basemodel.AnomalyDetection,
-		Active:     true,
+		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",

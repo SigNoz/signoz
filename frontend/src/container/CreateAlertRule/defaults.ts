@@ -7,9 +7,11 @@ import {
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	AlertDef,
+	defaultAlgorithm,
 	defaultCompareOp,
 	defaultEvalWindow,
 	defaultMatchType,
+	defaultSeasonality,
 } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -46,6 +48,8 @@ export const alertDefaults: AlertDef = {
 		},
 		op: defaultCompareOp,
 		matchType: defaultMatchType,
+		algorithm: defaultAlgorithm,
+		seasonality: defaultSeasonality,
 	},
 	labels: {
 		severity: 'warning',
@@ -145,6 +149,7 @@ export const exceptionAlertDefaults: AlertDef = {
 };
 
 export const ALERTS_VALUES_MAP: Record<AlertTypes, AlertDef> = {
+	[AlertTypes.ANOMALY_BASED_ALERT]: alertDefaults,
 	[AlertTypes.METRICS_BASED_ALERT]: alertDefaults,
 	[AlertTypes.LOGS_BASED_ALERT]: logAlertDefaults,
 	[AlertTypes.TRACES_BASED_ALERT]: traceAlertDefaults,
