@@ -32,7 +32,7 @@
 		flex-direction: column;
 		gap: 8px;
 		width: 240px;
-		padding: 8px;
+		padding: 0px 8px;
 		height: 100%;
 
 		.anomaly-alert-evaluation-view-series-list {
@@ -40,6 +40,10 @@
 			flex-direction: column;
 			gap: 8px;
 			height: 100%;
+
+			.anomaly-alert-evaluation-view-series-list-search {
+				margin-bottom: 16px;
+			}
 
 			.anomaly-alert-evaluation-view-series-list-title {
 				margin-top: 12px;
@@ -60,6 +64,20 @@
 					gap: 8px;
 
 					cursor: pointer;
+				}
+
+				&::-webkit-scrollbar {
+					width: 0.1rem;
+				}
+				&::-webkit-scrollbar-corner {
+					background: transparent;
+				}
+				&::-webkit-scrollbar-thumb {
+					background: rgb(136, 136, 136);
+					border-radius: 0.625rem;
+				}
+				&::-webkit-scrollbar-track {
+					background: transparent;
 				}
 			}
 		}
