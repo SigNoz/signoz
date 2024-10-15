@@ -1669,53 +1669,13 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
 		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error), req *model.SearchTraceRequest) (*[]model.BareRequiredTreeResponseItem, error) {
 
-	// var countSpans uint64
-	// // count the number of spans in the trace and if it exceeds the limit that has been set we return the error to the client!
-	// countQuery := fmt.Sprintf("SELECT count() as count from %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
-	// err := r.db.QueryRow(ctx, countQuery, params.TraceID).Scan(&countSpans)
-	// if err != nil {
-	// 	zap.L().Error("Error in processing sql query", zap.Error(err))
-	// 	return nil, fmt.Errorf("error in processing sql query")
-	// }
-
-	// if countSpans > uint64(params.MaxSpansInTrace) {
-	// 	zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
-	// 		zap.Uint64("Count", countSpans))
-	// 	userEmail, err := auth.GetEmailFromJwt(ctx)
-	// 	if err == nil {
-	// 		data := map[string]interface{}{
-	// 			"traceSize":            countSpans,
-	// 			"maxSpansInTraceLimit": params.MaxSpansInTrace,
-	// 		}
-	// 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, userEmail, true, false)
-	// 	}
-	// 	return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
-	// }
-
-	// userEmail, err := auth.GetEmailFromJwt(ctx)
-	// if err == nil {
-	// 	data := map[string]interface{}{
-	// 		"traceSize": countSpans,
-	// 	}
-	// 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
-	// }
-
 	var startTime, endTime, durationNano uint64
-	// get the raw results from the distributed_signoz_spans table
-	// var searchScanResponses []model.SearchSpanDBResponseItem
-
 	var treeRequiredResponseItem []model.BareRequiredTreeDBItem
 
-	// query := fmt.Sprintf("SELECT timestamp, traceID,  FROM %s.%s WHERE traceID=$1 ORDER BY timestamp", r.TraceDB, r.SpansTable)
-
 	query := fmt.Sprintf("SELECT timestamp,traceID,spanID,serviceName,name,durationNano,references FROM %s.%s WHERE traceID=$1 ORDER BY timestamp", r.TraceDB, r.indexTable)
-
 	start := time.Now()
-
 	err := r.db.Select(ctx, &treeRequiredResponseItem, query, params.TraceID)
-
 	zap.L().Info(query)
-
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, fmt.Errorf("error in processing sql query")
@@ -1723,24 +1683,9 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	end := time.Now()
 	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
 
-	// the current final created response object structure
-	// searchSpansResult := []model.SearchSpansResult{{
-	// 	Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
-	// 	Events:    make([][]interface{}, len(searchScanResponses)),
-	// 	IsSubTree: false,
-	// },
-	// }
-
-	// searchSpanResponses := []model.SearchSpanResponseItem{}
 	spanIdSpanResponseMap := map[string]*model.BareRequiredTreeResponseItem{}
 	start = time.Now()
-	// the model field is unmarshalled and the searchSpanResponses array is prepared here!
 	for _, item := range treeRequiredResponseItem {
-		// var jsonItem model.SearchSpanResponseItem
-		// easyjson.Unmarshal([]byte(item.Model), &jsonItem)
-		// jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
-		// searchSpanResponses = append(searchSpanResponses, jsonItem)
-
 		span := model.BareRequiredTreeResponseItem{
 			Timestamp:    uint64(item.Timestamp.UnixMilli()),
 			DurationNano: item.DurationNano,
@@ -1751,17 +1696,13 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		}
 
 		var references []model.OtelSpanRef
-
 		json.Unmarshal([]byte(item.References), &references)
-
 		span.References = references
 
 		_, seen := spanIdSpanResponseMap[item.SpanID]
-
 		if seen {
 			return nil, fmt.Errorf("cannot have duplicate span ids in single trace")
 		}
-
 		spanIdSpanResponseMap[item.SpanID] = &span
 
 		if startTime == 0 || span.Timestamp < startTime {
@@ -1779,7 +1720,6 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 
 	fmt.Printf("getTraceSQLQuery unmarshal took:%v \n", end.Sub(start))
 
-	// todo[vikrantgupta25]: we do not need to do anything below this now. we have the above array as we want it. now convert that to the tree structure here!
 	start = time.Now()
 	for _, spanItem := range spanIdSpanResponseMap {
 		for _, reference := range spanItem.References {
@@ -1818,27 +1758,19 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 
 	}
 
-	fmt.Println(len(spanIdSpanResponseMap))
-
 	for _, spanItem := range spanIdSpanResponseMap {
 		if spanItem.IsProcessed {
 			delete(spanIdSpanResponseMap, spanItem.SpanID)
 		}
 	}
-
 	end = time.Now()
-
 	fmt.Printf("time to construct the tree took %v \n", end.Sub(start))
-	// spanIdResponseMap should contain the root of the tree only now!
 
+	// spanIdResponseMap should contain the root of the tree only now!
 	// next we need to extract the exact traversal of the tree based on collapse and uncollapsed state
 	// recieved in the request payload and return the X points out of the same.
 	uncollapsedNodes := req.UnCollapsedNodes
-
 	preOrderTraversal := getPreOrderTraversal(spanIdSpanResponseMap["a33c42360ef4ea0d"], uncollapsedNodes)
-
-	// fmt.Println(len(preOrderTraversal))
-
 	// Get the first 500 items from the preOrderTraversal array
 	var result []model.BareRequiredTreeResponseItem
 	if len(preOrderTraversal) > 500 {
@@ -1847,39 +1779,6 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		result = preOrderTraversal
 	}
 	return &result, nil
-
-	// err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
-	// smartAlgoEnabled := err == nil
-	// // processing for smartAlgo. we won't be using this now.
-	// if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
-	// 	start = time.Now()
-	// 	searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	end = time.Now()
-	// 	zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
-	// 	userEmail, err := auth.GetEmailFromJwt(ctx)
-	// 	if err == nil {
-	// 		data := map[string]interface{}{
-	// 			"traceSize":        len(searchScanResponses),
-	// 			"spansRenderLimit": params.SpansRenderLimit,
-	// 		}
-	// 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
-	// 	}
-	// } else {
-	// 	// add the each individual span to the events array here.
-	// 	for i, item := range searchSpanResponses {
-	// 		// GetValues create the each individual array
-	// 		spanEvents := item.GetValues()
-	// 		searchSpansResult[0].Events[i] = spanEvents
-	// 	}
-	// }
-
-	// searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
-	// searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
-
-	// return &searchSpansResult, nil
 }
 
 func contains(s []string, str string) bool {
