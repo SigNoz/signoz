@@ -13,6 +13,8 @@ import { LineChart } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import uPlot from 'uplot';
 
+import tooltipPlugin from './tooltipPlugin';
+
 function UplotChart({
 	data,
 	options,
@@ -149,7 +151,7 @@ function AnomalyAlertEvaluationView({
 	const options = {
 		width: dimensions.width,
 		height: dimensions.height - 36,
-		plugins: [bandsPlugin],
+		plugins: [bandsPlugin, tooltipPlugin(isDarkMode)],
 		focus: {
 			alpha: 0.3,
 		},
@@ -287,17 +289,24 @@ function AnomalyAlertEvaluationView({
 								)}
 
 								{filteredSeriesKeys.map((seriesKey) => (
-									<Checkbox
-										className="anomaly-alert-evaluation-view-series-list-item"
-										key={seriesKey}
-										type="checkbox"
-										name="series"
-										value={seriesKey}
-										checked={selectedSeries === seriesKey}
-										onChange={(): void => handleSeriesChange(seriesKey)}
-									>
-										{seriesKey}
-									</Checkbox>
+									<div key={seriesKey}>
+										<Checkbox
+											className="anomaly-alert-evaluation-view-series-list-item"
+											key={seriesKey}
+											type="checkbox"
+											name="series"
+											value={seriesKey}
+											checked={selectedSeries === seriesKey}
+											onChange={(): void => handleSeriesChange(seriesKey)}
+										>
+											<div
+												className="anomaly-alert-evaluation-view-series-list-item-color"
+												style={{ backgroundColor: seriesData[seriesKey].color }}
+											/>
+
+											{seriesKey}
+										</Checkbox>
+									</div>
 								))}
 
 								{filteredSeriesKeys.length === 0 && (
