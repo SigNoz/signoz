@@ -29,7 +29,7 @@ function TraceDetailsV2(): JSX.Element {
 	const { id } = useParams<TraceDetailProps>();
 	const [spans, setSpans] = useState<any[]>([]);
 	const [interestedSpanId, setInterestedSpanId] = useState<string>('');
-	const [uncollapsedNodes] = useState<string[]>(['9d30fde088576adb']);
+	const [uncollapsedNodes] = useState<string[]>(['be8a74f5d02c79ac']);
 
 	const { data: spansData, isLoading: isLoadingTraceDetails } = useQuery({
 		queryFn: () =>

@@ -249,6 +249,30 @@ type Event struct {
 	IsError      bool                   `json:"isError,omitempty"`
 }
 
+type BareRequiredTreeDBItem struct {
+	Timestamp    time.Time `ch:"timestamp"`
+	DurationNano uint64    `ch:"durationNano"`
+	SpanID       string    `ch:"spanID"`
+	TraceID      string    `ch:"traceID"`
+	ServiceName  string    `ch:"serviceName"`
+	Name         string    `ch:"name"`
+	References   string    `ch:"references"`
+}
+
+//easyjson:json
+type BareRequiredTreeResponseItem struct {
+	Timestamp    uint64                          `json:"timestamp"`
+	DurationNano uint64                          `json:"durationNano"`
+	SpanID       string                          `json:"spanID"`
+	TraceID      string                          `json:"traceID"`
+	ServiceName  string                          `json:"serviceName"`
+	Name         string                          `json:"name"`
+	References   []OtelSpanRef                   `json:"references,omitempty"`
+	ParentSpanID string                          `json:"parentSpanID"`
+	Children     []*BareRequiredTreeResponseItem `json:"children"`
+	IsProcessed  bool                            `json:"isProcessed"`
+}
+
 //easyjson:json
 type SearchSpanResponseItem struct {
 	TimeUnixNano     uint64                    `json:"timestamp"`
