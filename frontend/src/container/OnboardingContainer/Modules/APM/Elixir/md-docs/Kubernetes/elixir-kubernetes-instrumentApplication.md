@@ -50,8 +50,9 @@ config :opentelemetry, :processors,
     otel_batch_processor: %{
       exporter: 
       {:opentelemetry_exporter, 
-      %{endpoints: ["http://localhost:4318"]}
+      %{endpoints: ["http://$(Otel-agent-IP):4318"]}
       }
   }
 ```
 
+**Note:** Checkout this [documentation](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/#send-data-from-instrumented-applications) to understand how to get the `Otel-agent-IP`.

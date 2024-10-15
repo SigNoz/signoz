@@ -28,7 +28,7 @@ In your `Program.cs` file, add OpenTelemetry as a service. Here, we are configur
 
 Here’s a sample `Program.cs` file with the configured variables:
 
-```bash
+```cs
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
@@ -44,7 +44,7 @@ builder.Services.AddOpenTelemetry()
         .AddAspNetCoreInstrumentation()
         .AddOtlpExporter(otlpOptions =>
         {
-            otlpOptions.Endpoint = new Uri("http://localhost:4317");
+            otlpOptions.Endpoint = new Uri("$(Otel-agent-IP):4317");
 
             otlpOptions.Protocol = OtlpExportProtocol.Grpc;
         }));
@@ -56,6 +56,10 @@ app.MapGet("/", () => $"Hello World! OpenTelemetry Trace: {Activity.Current?.Id}
 
 app.Run();
 ```
+
+**Note:** Checkout this [documentation](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/#send-data-from-instrumented-applications) to understand how to get the `Otel-agent-IP`.
+
+&nbsp;
 
 The OpenTelemetry.Exporter.Options get or set the target to which the exporter is going to send traces. Here, we’re configuring it to send traces to the OTel Collector agent. The target must be a valid Uri with the scheme (http or https) and host and may contain a port and a path.
 

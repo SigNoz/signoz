@@ -30,7 +30,7 @@ const { Resource } = require('@opentelemetry/resources');
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
 
 const exporterOptions = {
-  url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
+  url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://$(Otel-agent-IP)/v1/traces',
 }
 
 const traceExporter = new OTLPTraceExporter(exporterOptions);
@@ -54,3 +54,5 @@ process.on('SIGTERM', () => {
     .finally(() => process.exit(0));
 });
 ```
+
+**Note:** Checkout this [documentation](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/#send-data-from-instrumented-applications) to understand how to get the `Otel-agent-IP`.
