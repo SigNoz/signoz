@@ -22,14 +22,16 @@ const useUrlQueryData = <T>(
 		(newQueryData: T): void => {
 			const newQuery = JSON.stringify(newQueryData);
 
-			// Create a new URLSearchParams to get the latest URL state
+			// Create a new URLSearchParams object with the current URL's search params
+			// This ensures we're working with the most up-to-date URL state
 			const currentUrlQuery = new URLSearchParams(window.location.search);
 
-			// Update the query parameter
+			// Update or add the specified query parameter with the new serialized data
 			currentUrlQuery.set(queryKey, newQuery);
 
-			// Generate the new URL with updated parameters
+			// Construct the new URL by combining the current pathname with the updated query string
 			const generatedUrl = `${location.pathname}?${currentUrlQuery.toString()}`;
+
 			history.replace(generatedUrl);
 		},
 		[history, location.pathname, queryKey],
