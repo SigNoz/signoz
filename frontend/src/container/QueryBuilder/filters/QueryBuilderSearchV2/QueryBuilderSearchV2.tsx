@@ -319,7 +319,7 @@ function QueryBuilderSearchV2(
 						value: '',
 					}));
 					setCurrentState(DropdownState.OPERATOR);
-					setSearchValue((parsedValue as BaseAutocompleteData)?.key);
+					setSearchValue(`${(parsedValue as BaseAutocompleteData)?.key} `);
 				}
 			} else if (currentState === DropdownState.OPERATOR) {
 				if (isEmpty(value) && currentFilterItem?.key?.key) {
@@ -360,7 +360,7 @@ function QueryBuilderSearchV2(
 						value: '',
 					}));
 					setCurrentState(DropdownState.ATTRIBUTE_VALUE);
-					setSearchValue(`${currentFilterItem?.key?.key} ${value}`);
+					setSearchValue(`${currentFilterItem?.key?.key} ${value} `);
 				}
 			} else if (currentState === DropdownState.ATTRIBUTE_VALUE) {
 				const operatorType =
