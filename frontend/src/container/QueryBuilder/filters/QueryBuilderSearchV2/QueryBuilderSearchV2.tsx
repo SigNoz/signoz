@@ -788,12 +788,6 @@ function QueryBuilderSearchV2(
 
 		if (!isEqual(query.filters, filterTags)) {
 			onChange(filterTags);
-			setTags(
-				filterTags.items.map((tag) => ({
-					...tag,
-					op: getOperatorFromValue(tag.op),
-				})) as ITag[],
-			);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [tags]);
