@@ -512,11 +512,6 @@ function QueryBuilderSearchV2(
 
 	// this useEffect takes care of tokenisation based on the search state
 	useEffect(() => {
-		// if we are still fetching the suggestions then return as we won't know the type / data-type etc for the attribute key
-		if (isFetchingSuggestions) {
-			return;
-		}
-
 		// if there is no search value reset to the default state
 		if (!searchValue) {
 			setCurrentFilterItem(undefined);
