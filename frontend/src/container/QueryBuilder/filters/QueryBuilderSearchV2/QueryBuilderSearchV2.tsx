@@ -766,6 +766,7 @@ function QueryBuilderSearchV2(
 		suggestionsData?.payload?.attributes,
 	]);
 
+	// keep the query in sync with the selected tags in logs explorer page
 	useEffect(() => {
 		const filterTags: IBuilderQuery['filters'] = {
 			op: 'AND',
@@ -792,6 +793,10 @@ function QueryBuilderSearchV2(
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [tags]);
 
+	// keep the use effects pure!
+	// if the tags lacks the ID then the above use effect will add it to query
+	// and then the below use effect will take care of adding it to the tags.
+	// keep the tags in sycn with current query.
 	useEffect(() => {
 		// convert the query and tags to same format before comparison
 		if (!isEqual(getInitTags(query), tags)) {
