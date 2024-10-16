@@ -306,6 +306,11 @@ type GetFilteredSpanAggregatesParams struct {
 	End                *time.Time
 }
 
+type SearchTraceRequest struct {
+	SpanId           string   `json:"spanId"`
+	UnCollapsedNodes []string `json:"uncollapsedNodes"`
+}
+
 type SearchTracesParams struct {
 	TraceID          string `json:"traceId"`
 	LevelUp          int    `json:"levelUp"`
