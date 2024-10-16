@@ -335,3 +335,69 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 	Version:      "v4",
 	FormatForWeb: true,
 }
+
+var ProcessesTableListQuery = v3.QueryRangeParamsV3{
+	CompositeQuery: &v3.CompositeQuery{
+		BuilderQueries: map[string]*v3.BuilderQuery{
+			"A": {
+				QueryName:  "A",
+				DataSource: v3.DataSourceMetrics,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "process_cpu_time",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+				},
+				Temporality: v3.Cumulative,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "process_pid",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+				},
+				Expression:       "A",
+				ReduceTo:         v3.ReduceToOperatorAvg,
+				TimeAggregation:  v3.TimeAggregationRate,
+				SpaceAggregation: v3.SpaceAggregationSum,
+				Disabled:         true,
+			},
+			"F1": {
+				QueryName:  "F1",
+				Expression: "A",
+				Legend:     "Process CPU Usage (%)",
+			},
+			"C": {
+				QueryName:  "C",
+				DataSource: v3.DataSourceMetrics,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "process_memory_usage",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+				},
+				Temporality: v3.Cumulative,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "process_pid",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+				},
+				Expression:       "C",
+				ReduceTo:         v3.ReduceToOperatorAvg,
+				TimeAggregation:  v3.TimeAggregationAvg,
+				SpaceAggregation: v3.SpaceAggregationSum,
+				Disabled:         false,
+			},
+		},
+		PanelType: v3.PanelTypeTable,
+		QueryType: v3.QueryTypeBuilder,
+	},
+	Version:      "v4",
+	FormatForWeb: true,
+}

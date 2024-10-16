@@ -3,6 +3,7 @@ import './ChartPreview.styles.scss';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import Spinner from 'components/Spinner';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
@@ -17,6 +18,7 @@ import {
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import useFeatureFlags from 'hooks/useFeatureFlag';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
@@ -259,6 +261,9 @@ function ChartPreview({
 	const chartDataAvailable =
 		chartData && !queryResponse.isError && !queryResponse.isLoading;
 
+	const isAnomalyDetectionEnabled =
+		useFeatureFlags(FeatureKeys.ANOMALY_DETECTION)?.active || false;
+
 	return (
 		<div className="alert-chart-container" ref={graphRef}>
 			<ChartContainer>
@@ -291,6 +296,7 @@ function ChartPreview({
 
 					{chartDataAvailable &&
 						isAnomalyDetectionAlert &&
+						isAnomalyDetectionEnabled &&
 						queryResponse?.data?.payload?.data?.resultType === 'anomaly' && (
 							<AnomalyAlertEvaluationView
 								data={queryResponse?.data?.payload}
