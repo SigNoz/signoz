@@ -31,6 +31,18 @@ function evaluateCondition(
 	}
 }
 
+/**
+ * Evaluates whether a given value meets a specified threshold condition.
+ * It first converts the value to the appropriate unit if a threshold unit is provided,
+ * and then checks the condition using the specified operator.
+ *
+ * @param value - The value to be evaluated.
+ * @param thresholdValue - The threshold value to compare against.
+ * @param thresholdOperator - The operator used for comparison (e.g., '>', '<', '==').
+ * @param thresholdUnit - The unit to which the value should be converted.
+ * @param columnUnits - The current unit of the value.
+ * @returns A boolean indicating whether the value meets the threshold condition.
+ */
 function evaluateThresholdWithConvertedValue(
 	value: number,
 	thresholdValue: number,

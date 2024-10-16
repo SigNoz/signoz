@@ -445,6 +445,7 @@ type ConversionFactors = {
 	};
 };
 
+// Object containing conversion factors for various categories and formats
 const conversionFactors: ConversionFactors = {
 	[CategoryNames.Time]: {
 		[TimeFormats.Hertz]: 1,
@@ -539,14 +540,16 @@ const conversionFactors: ConversionFactors = {
 	},
 };
 
+// Function to get the conversion factor between two units in a specific category
 function getConversionFactor(
 	fromUnit: string,
 	toUnit: string,
 	category: CategoryNames,
 ): number | null {
+	// Retrieves the conversion factors for the specified category
 	const categoryFactors = conversionFactors[category];
 	if (!categoryFactors) {
-		return null;
+		return null; // Returns null if the category does not exist
 	}
 	const fromFactor = categoryFactors[fromUnit];
 	const toFactor = categoryFactors[toUnit];
@@ -556,16 +559,18 @@ function getConversionFactor(
 		fromFactor === null ||
 		toFactor === null
 	) {
-		return null;
+		return null; // Returns null if either unit does not exist or is not convertible
 	}
-	return fromFactor / toFactor;
+	return fromFactor / toFactor; // Returns the conversion factor ratio
 }
 
+// Function to convert a value from one unit to another
 export function convertUnit(
 	value: number,
 	fromUnitId?: string,
 	toUnitId?: string,
 ): number | null {
+	// Finds the category that contains the specified units
 	const category = dataTypeCategories.find((category) =>
 		category.formats.some(
 			(format) => format.id === fromUnitId || format.id === toUnitId,
@@ -580,17 +585,20 @@ export function convertUnit(
 
 	if (!fromUnit || !toUnit) return null;
 
+	// Gets the conversion factor for the specified units
 	const conversionFactor = getConversionFactor(
 		fromUnit,
 		toUnit,
 		category.name as any,
 	);
-	if (conversionFactor === null) return null;
+	if (conversionFactor === null) return null; // Returns null if conversion is not possible
 
 	return value * conversionFactor;
 }
 
+// Function to get the category name for a given unit ID
 export const getCategoryName = (unitId: string): CategoryNames | null => {
+	// Finds the category that contains the specified unit ID
 	const foundCategory = dataTypeCategories.find((category) =>
 		category.formats.some((format) => format.id === unitId),
 	);

@@ -1,10 +1,5 @@
 import { DefaultOptionType } from 'antd/es/select';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { categoryToSupport } from 'container/QueryBuilder/filters/BuilderUnitsFilter/config';
-import { isEmpty } from 'lodash-es';
-
-import { dataTypeCategories, getCategoryName } from './dataFormatCategories';
-import { CategoryNames } from './types';
 
 export const operatorOptions: DefaultOptionType[] = [
 	{ value: '>', label: '>' },
@@ -12,32 +7,6 @@ export const operatorOptions: DefaultOptionType[] = [
 	{ value: '<', label: '<' },
 	{ value: '<=', label: '<=' },
 ];
-
-export const getCategorySelectOptionByName = (
-	name?: CategoryNames | string,
-): DefaultOptionType[] =>
-	dataTypeCategories
-		.find((category) => category.name === name)
-		?.formats.map((format) => ({
-			label: format.name,
-			value: format.id,
-		})) || [];
-
-export const unitOptions = (columnUnit: string): DefaultOptionType[] => {
-	const category = getCategoryName(columnUnit);
-	if (isEmpty(category)) {
-		return categoryToSupport.map((category) => ({
-			label: category,
-			options: getCategorySelectOptionByName(category),
-		}));
-	}
-	return categoryToSupport
-		.filter((supportedCategory) => supportedCategory === category)
-		.map((filteredCategory) => ({
-			label: filteredCategory,
-			options: getCategorySelectOptionByName(filteredCategory),
-		}));
-};
 
 export const showAsOptions: DefaultOptionType[] = [
 	{ value: 'Text', label: 'Text' },

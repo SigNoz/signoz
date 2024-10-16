@@ -3,6 +3,7 @@ import './Threshold.styles.scss';
 
 import { Button, Input, InputNumber, Select, Space, Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { unitOptions } from 'container/NewWidget/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
@@ -12,7 +13,6 @@ import {
 	operatorOptions,
 	panelTypeVsDragAndDrop,
 	showAsOptions,
-	unitOptions,
 } from '../constants';
 import { convertUnit } from '../dataFormatCategories';
 import ColorSelector from './ColorSelector';
