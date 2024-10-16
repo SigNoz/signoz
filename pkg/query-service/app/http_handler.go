@@ -3404,7 +3404,6 @@ func (aH *APIHandler) getProducerConsumerEval(
 		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
-	result = postprocess.TransformToTableForClickHouseQueries(result)
 
 	resp := v3.QueryRangeResponse{
 		Result: result,

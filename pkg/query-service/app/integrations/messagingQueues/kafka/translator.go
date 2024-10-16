@@ -311,6 +311,6 @@ func buildCompositeQuery(chq *v3.ClickHouseQuery, queryContext string) (*v3.Comp
 	return &v3.CompositeQuery{
 		QueryType:         v3.QueryTypeClickHouseSQL,
 		ClickHouseQueries: map[string]*v3.ClickHouseQuery{queryContext: chq},
-		PanelType:         v3.PanelTypeTable,
+		PanelType:         v3.PanelTypeList,
 	}, nil
 }
