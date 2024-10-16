@@ -308,9 +308,18 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 }
 
 func buildCompositeQuery(chq *v3.ClickHouseQuery, queryContext string) (*v3.CompositeQuery, error) {
+
+	if queryContext == "producer-consumer-eva" {
+		return &v3.CompositeQuery{
+			QueryType:         v3.QueryTypeClickHouseSQL,
+			ClickHouseQueries: map[string]*v3.ClickHouseQuery{queryContext: chq},
+			PanelType:         v3.PanelTypeList,
+		}, nil
+	}
+
 	return &v3.CompositeQuery{
 		QueryType:         v3.QueryTypeClickHouseSQL,
 		ClickHouseQueries: map[string]*v3.ClickHouseQuery{queryContext: chq},
-		PanelType:         v3.PanelTypeList,
+		PanelType:         v3.PanelTypeTable,
 	}, nil
 }
