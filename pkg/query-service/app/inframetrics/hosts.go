@@ -21,23 +21,31 @@ type HostsRepo struct {
 	querierV2 interfaces.Querier
 }
 
-var pointAttrsToIgnore = []string{
-	"state",
-	"cpu",
-	"device",
-	"direction",
-	"mode",
-	"mountpoint",
-	"type",
-	"process.cgroup",
-	"process.command",
-	"process.command_line",
-	"process.executable.name",
-	"process.executable.path",
-	"process.owner",
-	"process.parent_pid",
-	"process.pid",
-}
+var (
+	pointAttrsToIgnore = []string{
+		"state",
+		"cpu",
+		"device",
+		"direction",
+		"mode",
+		"mountpoint",
+		"type",
+		"process_cgroup",
+		"process_command",
+		"process_command_line",
+		"process_executable_name",
+		"process_executable_path",
+		"process_owner",
+		"process_parent_pid",
+		"process_pid",
+	}
+
+	metricToUseForHostAttributes = "system_cpu_load_average_15m"
+
+	hostNameAttrKey = "host_name"
+
+	agentNameToIgnore = "k8s-infra-otel-agent"
+)
 
 func NewHostsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *HostsRepo {
 	return &HostsRepo{reader: reader, querierV2: querierV2}
@@ -46,7 +54,7 @@ func NewHostsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *Hosts
 func (h *HostsRepo) GetHostAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = "system_cpu_load_average_15m"
+	req.AggregateAttribute = metricToUseForHostAttributes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -71,7 +79,7 @@ func (h *HostsRepo) GetHostAttributeKeys(ctx context.Context, req v3.FilterAttri
 
 func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = "system_cpu_load_average_15m"
+	req.AggregateAttribute = metricToUseForHostAttributes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -80,21 +88,21 @@ func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAtt
 	if err != nil {
 		return nil, err
 	}
-	if req.FilterAttributeKey != "host_name" {
+	if req.FilterAttributeKey != hostNameAttrKey {
 		return attributeValuesResponse, nil
 	}
 	hostNames := []string{}
 
 	for _, attributeValue := range attributeValuesResponse.StringAttributeValues {
-		if strings.Contains(attributeValue, "k8s-infra-otel-agent") {
+		if strings.Contains(attributeValue, agentNameToIgnore) {
 			continue
 		}
 		hostNames = append(hostNames, attributeValue)
 	}
 
-	req.FilterAttributeKey = "k8s_node_name"
+	req.FilterAttributeKey = k8sNodeNameAttrKey
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = "system_cpu_load_average_15m"
+	req.AggregateAttribute = metricToUseForHostAttributes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -104,7 +112,7 @@ func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAtt
 		return nil, err
 	}
 	for _, attributeValue := range attributeValuesResponse.StringAttributeValues {
-		if strings.Contains(attributeValue, "k8s-infra-otel-agent") {
+		if strings.Contains(attributeValue, agentNameToIgnore) {
 			continue
 		}
 		hostNames = append(hostNames, attributeValue)
@@ -138,7 +146,7 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context,
 
 	mq := v3.BuilderQuery{
 		AggregateAttribute: v3.AttributeKey{
-			Key:      "system_cpu_load_average_15m",
+			Key:      metricToUseForHostAttributes,
 			DataType: v3.AttributeKeyDataTypeFloat64,
 		},
 		Temporality: v3.Unspecified,
@@ -149,14 +157,7 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context,
 		return nil, err
 	}
 
-	// TODO(srikanthccv): remove this
-	// What is happening here?
-	// The `PrepareTimeseriesFilterQuery` uses the local time series table for sub-query because each fingerprint
-	// goes to same shard.
-	// However, in this case, we are interested in the attributes values across all the shards.
-	// So, we replace the local time series table with the distributed time series table.
-	// See `PrepareTimeseriesFilterQuery` for more details.
-	query = strings.Replace(query, ".time_series_v4", ".distributed_time_series_v4", 1)
+	query = localQueryToDistributedQuery(query)
 
 	attrsListResponse, err := h.reader.GetListResultV3(ctx, query)
 	if err != nil {
@@ -212,7 +213,7 @@ func (h *HostsRepo) getActiveHosts(ctx context.Context,
 					StepInterval: step,
 					DataSource:   v3.DataSourceMetrics,
 					AggregateAttribute: v3.AttributeKey{
-						Key:      "system_cpu_load_average_15m",
+						Key:      metricToUseForHostAttributes,
 						DataType: v3.AttributeKeyDataTypeFloat64,
 					},
 					Temporality:      v3.Unspecified,
@@ -270,10 +271,10 @@ func (h *HostsRepo) getHostsForQuery(ctx context.Context,
 			// what is happening here?
 			// if the filter has host_name and we are querying for k8s host metrics,
 			// we need to replace the host_name with k8s_node_name
-			if hostNameAttrKey == "k8s_node_name" {
+			if hostNameAttrKey == k8sNodeNameAttrKey {
 				for idx, item := range query.Filters.Items {
-					if item.Key.Key == "host_name" {
-						query.Filters.Items[idx].Key.Key = "k8s_node_name"
+					if item.Key.Key == hostNameAttrKey {
+						query.Filters.Items[idx].Key.Key = k8sNodeNameAttrKey
 					}
 				}
 			}
@@ -415,14 +416,14 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 	}
 
 	resp := model.HostListResponse{
-		Type: "list",
+		Type: model.ResponseTypeList,
 	}
 
-	vmRecords, err := h.getHostsForQuery(ctx, req, &NonK8STableListQuery, "host_name")
+	vmRecords, err := h.getHostsForQuery(ctx, req, &NonK8STableListQuery, hostNameAttrKey)
 	if err != nil {
 		return resp, err
 	}
-	k8sRecords, err := h.getHostsForQuery(ctx, req, &K8STableListQuery, "k8s_node_name")
+	k8sRecords, err := h.getHostsForQuery(ctx, req, &K8STableListQuery, k8sNodeNameAttrKey)
 	if err != nil {
 		return resp, err
 	}
@@ -510,7 +511,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 			})
 		}
 		resp.Groups = groups
-		resp.Type = "grouped_list"
+		resp.Type = model.ResponseTypeGroupedList
 	}
 
 	return resp, nil

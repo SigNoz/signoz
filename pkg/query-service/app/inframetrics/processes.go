@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"go.signoz.io/signoz/pkg/query-service/common"
@@ -13,6 +12,16 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 	"golang.org/x/exp/slices"
+)
+
+var (
+	metricToUseForProcesses = "process_memory_usage"
+
+	processAttrsToEnrich  = []string{"process_pid", "process_executable_name", "process_command", "process_command_line"}
+	processIDAttrKey      = "process_pid"
+	processNameAttrKey    = "process_executable_name"
+	processCMDAttrKey     = "process_command"
+	processCMDLineAttrKey = "process_command_line"
 )
 
 type ProcessesRepo struct {
@@ -27,7 +36,7 @@ func NewProcessesRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *P
 func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = "process_memory_usage"
+	req.AggregateAttribute = metricToUseForProcesses
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -52,7 +61,7 @@ func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.Filt
 
 func (p *ProcessesRepo) GetProcessAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = "process_memory_usage"
+	req.AggregateAttribute = metricToUseForProcesses
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -76,8 +85,7 @@ func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 	req model.ProcessListRequest) (map[string]map[string]string, error) {
 	processAttrs := map[string]map[string]string{}
 
-	keysToAdd := []string{"process_pid", "process_executable_name", "process_command", "process_command_line"}
-	for _, key := range keysToAdd {
+	for _, key := range processAttrsToEnrich {
 		hasKey := false
 		for _, groupByKey := range req.GroupBy {
 			if groupByKey.Key == key {
@@ -92,7 +100,7 @@ func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 
 	mq := v3.BuilderQuery{
 		AggregateAttribute: v3.AttributeKey{
-			Key:      "process_memory_usage",
+			Key:      metricToUseForProcesses,
 			DataType: v3.AttributeKeyDataTypeFloat64,
 		},
 		Temporality: v3.Cumulative,
@@ -104,14 +112,7 @@ func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 		return nil, err
 	}
 
-	// TODO(srikanthccv): remove this
-	// What is happening here?
-	// The `PrepareTimeseriesFilterQuery` uses the local time series table for sub-query because each fingerprint
-	// goes to same shard.
-	// However, in this case, we are interested in the attributes values across all the shards.
-	// So, we replace the local time series table with the distributed time series table.
-	// See `PrepareTimeseriesFilterQuery` for more details.
-	query = strings.Replace(query, ".time_series_v4", ".distributed_time_series_v4", 1)
+	query = localQueryToDistributedQuery(query)
 
 	attrsListResponse, err := p.reader.GetListResultV3(ctx, query)
 	if err != nil {
@@ -128,7 +129,7 @@ func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 			}
 		}
 
-		pid := stringData["process_pid"]
+		pid := stringData[processIDAttrKey]
 		if _, ok := processAttrs[pid]; !ok {
 			processAttrs[pid] = map[string]string{}
 		}
@@ -147,7 +148,7 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessLis
 	}
 
 	resp := model.ProcessListResponse{
-		Type: "list",
+		Type: model.ResponseTypeList,
 	}
 
 	step := common.MinAllowedStepInterval(req.Start, req.End)
@@ -191,7 +192,7 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessLis
 
 	for _, result := range queryResponse {
 		for _, series := range result.Series {
-			pid := series.Labels["process_pid"]
+			pid := series.Labels[processIDAttrKey]
 			if _, ok := processTSInfoMap[pid]; !ok {
 				processTSInfoMap[pid] = &processTSInfo{}
 			}
@@ -208,7 +209,7 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessLis
 
 	for _, result := range formulaResult {
 		for _, series := range result.Series {
-			pid := series.Labels["process_pid"]
+			pid := series.Labels[processIDAttrKey]
 			if _, ok := processTSInfoMap[pid]; !ok {
 				processTSInfoMap[pid] = &processTSInfo{}
 			}
@@ -244,7 +245,7 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessLis
 			ProcessMemory: -1,
 		}
 
-		pid, ok := row.Data["process_pid"].(string)
+		pid, ok := row.Data[processIDAttrKey].(string)
 		if ok {
 			record.ProcessID = pid
 		}
@@ -263,9 +264,9 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessLis
 			record.ProcessCPUTimeSeries = processTSInfoMap[record.ProcessID].CpuTimeSeries
 			record.ProcessMemoryTimeSeries = processTSInfoMap[record.ProcessID].MemoryTimeSeries
 		}
-		record.ProcessName = record.Meta["process_executable_name"]
-		record.ProcessCMD = record.Meta["process_command"]
-		record.ProcessCMDLine = record.Meta["process_command_line"]
+		record.ProcessName = record.Meta[processNameAttrKey]
+		record.ProcessCMD = record.Meta[processCMDAttrKey]
+		record.ProcessCMDLine = record.Meta[processCMDLineAttrKey]
 		records = append(records, record)
 	}
 
@@ -327,7 +328,7 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessLis
 			})
 		}
 		resp.Groups = groups
-		resp.Type = "grouped_list"
+		resp.Type = model.ResponseTypeGroupedList
 	}
 
 	return resp, nil

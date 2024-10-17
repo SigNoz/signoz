@@ -114,6 +114,8 @@ type APIHandler struct {
 
 	hostsRepo     *inframetrics.HostsRepo
 	processesRepo *inframetrics.ProcessesRepo
+	podsRepo      *inframetrics.PodsRepo
+	nodesRepo     *inframetrics.NodesRepo
 }
 
 type APIHandlerOpts struct {
@@ -185,6 +187,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
 	hostsRepo := inframetrics.NewHostsRepo(opts.Reader, querierv2)
 	processesRepo := inframetrics.NewProcessesRepo(opts.Reader, querierv2)
+	podsRepo := inframetrics.NewPodsRepo(opts.Reader, querierv2)
+	nodesRepo := inframetrics.NewNodesRepo(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -205,6 +209,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
+		podsRepo:                      podsRepo,
+		nodesRepo:                     nodesRepo,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -363,6 +369,16 @@ func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMid
 	processesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getProcessAttributeKeys)).Methods(http.MethodGet)
 	processesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getProcessAttributeValues)).Methods(http.MethodGet)
 	processesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getProcessList)).Methods(http.MethodPost)
+
+	podsSubRouter := router.PathPrefix("/api/v1/pods").Subrouter()
+	podsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getPodAttributeKeys)).Methods(http.MethodGet)
+	podsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getPodAttributeValues)).Methods(http.MethodGet)
+	podsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getPodList)).Methods(http.MethodPost)
+
+	nodesSubRouter := router.PathPrefix("/api/v1/nodes").Subrouter()
+	nodesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNodeAttributeKeys)).Methods(http.MethodGet)
+	nodesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNodeAttributeValues)).Methods(http.MethodGet)
+	nodesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getNodeList)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
