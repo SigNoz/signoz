@@ -1,5 +1,3 @@
-version: "2.4"
-
 x-clickhouse-defaults: &clickhouse-defaults
   restart: on-failure
   image: clickhouse/clickhouse-server:24.1.2-alpine
@@ -160,9 +158,9 @@ services:
         "-config=/root/config/prometheus.yml",
         "--use-logs-new-schema=true"
       ]
-    # ports:
+    ports:
     #   - "6060:6060"     # pprof port
-    #   - "8080:8080"     # query-service port
+      - "8180:8080"     # query-service port
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
@@ -281,3 +279,8 @@ services:
       LOCUST_OPTS: "--headless -u 10 -r 1"
     volumes:
       - ../common/locust-scripts:/locust
+
+networks:
+  default:
+    name: signoz_test
+    external: true
