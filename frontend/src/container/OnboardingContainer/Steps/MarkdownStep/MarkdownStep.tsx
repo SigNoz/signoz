@@ -10,6 +10,7 @@ import {
 	useOnboardingContext,
 } from 'container/OnboardingContainer/context/OnboardingContext';
 import { ModulesMap } from 'container/OnboardingContainer/OnboardingContainer';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { useEffect, useState } from 'react';
 
 export interface IngestionInfoProps {
@@ -30,6 +31,10 @@ export default function MarkdownStep(): JSX.Element {
 	} = useOnboardingContext();
 
 	const [markdownContent, setMarkdownContent] = useState('');
+
+	const urlQuery = useUrlQuery();
+	const getStartedCaller = urlQuery.get('source');
+	console.log('runstep', getStartedCaller);
 
 	const { step } = activeStep;
 
@@ -54,6 +59,12 @@ export default function MarkdownStep(): JSX.Element {
 
 		path += `_${step?.id}`;
 
+		if (
+			getStartedCaller === 'kafka' &&
+			path === 'APM_java_springBoot_kubernetes_recommendedSteps_runApplication'
+		) {
+			path += `_producer`;
+		}
 		return path;
 	};
 
