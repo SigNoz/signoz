@@ -183,13 +183,8 @@ WITH consumer_latency AS (
         stringTagMap['messaging.destination.name'] AS topic,
         quantile(0.99)(durationNano) / 1000000 AS p99,
         COUNT(*) AS total_requests,
-        SUM(CASE WHEN statusCode = 2 THEN 1 ELSE 0 END) AS error_count,
-        SUM(
-            CASE
-                WHEN has(numberTagMap, 'messaging.message.body.size') THEN numberTagMap['messaging.message.body.size']
-                ELSE 0
-            END
-        ) AS total_bytes
+        sumIf(1, statusCode = 2) AS error_count,
+        SUM(numberTagMap['messaging.message.body.size']) AS total_bytes
     FROM signoz_traces.distributed_signoz_index_v2
     WHERE
         timestamp >= '%d'

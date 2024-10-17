@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"fmt"
+	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
@@ -10,6 +11,9 @@ var defaultStepInterval int64 = 60
 
 func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) (*v3.QueryRangeParamsV3, error) {
 
+	if constants.KafkaSpanEval == "false" {
+		return nil, fmt.Errorf("span evaluation feature is disabled and is experimental")
+	}
 	// ToDo: propagate this through APIs when there are different handlers
 	queueType := KafkaQueue
 
