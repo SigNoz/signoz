@@ -11,6 +11,7 @@ import { useOnboardingContext } from 'container/OnboardingContainer/context/Onbo
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -26,6 +27,10 @@ export default function ConnectionStatus(): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const urlQuery = useUrlQuery();
+	const getStartedCaller = urlQuery.get('source');
+	console.log('connection-test', getStartedCaller);
 
 	const {
 		serviceName,
@@ -192,25 +197,27 @@ export default function ConnectionStatus(): JSX.Element {
 	useEffect(() => {
 		let pollingTimer: string | number | NodeJS.Timer | undefined;
 
-		if (loading) {
-			pollingTimer = setInterval(() => {
-				// Trigger a refetch with the updated parameters
-				const updatedMinTime = (Date.now() - 15 * 60 * 1000) * 1000000;
-				const updatedMaxTime = Date.now() * 1000000;
+		if (getStartedCaller !== 'kafka') {
+			if (loading) {
+				pollingTimer = setInterval(() => {
+					// Trigger a refetch with the updated parameters
+					const updatedMinTime = (Date.now() - 15 * 60 * 1000) * 1000000;
+					const updatedMaxTime = Date.now() * 1000000;
 
-				const payload = {
-					maxTime: updatedMaxTime,
-					minTime: updatedMinTime,
-					selectedTime,
-				};
+					const payload = {
+						maxTime: updatedMaxTime,
+						minTime: updatedMinTime,
+						selectedTime,
+					};
 
-				dispatch({
-					type: UPDATE_TIME_INTERVAL,
-					payload,
-				});
-			}, pollingInterval); // Same interval as pollingInterval
-		} else if (!loading && pollingTimer) {
-			clearInterval(pollingTimer);
+					dispatch({
+						type: UPDATE_TIME_INTERVAL,
+						payload,
+					});
+				}, pollingInterval); // Same interval as pollingInterval
+			} else if (!loading && pollingTimer) {
+				clearInterval(pollingTimer);
+			}
 		}
 
 		// Clean up the interval when the component unmounts
@@ -221,7 +228,9 @@ export default function ConnectionStatus(): JSX.Element {
 	}, [refetch, selectedTags, selectedTime, loading]);
 
 	useEffect(() => {
-		verifyApplicationData(data);
+		if (getStartedCaller !== 'kafka') {
+			verifyApplicationData(data);
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isServiceLoading, data, error, isError]);
 
