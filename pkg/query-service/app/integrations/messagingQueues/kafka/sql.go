@@ -12,7 +12,7 @@ WITH consumer_query AS (
         serviceName,
         quantile(0.99)(durationNano) / 1000000 AS p99,
         COUNT(*) AS total_requests,
-        SUM(CASE WHEN statusCode = 2 THEN 1 ELSE 0 END) AS error_count,
+        sumIf(1, statusCode = 2) AS error_count,
         avg(CASE WHEN has(numberTagMap, 'messaging.message.body.size') THEN numberTagMap['messaging.message.body.size'] ELSE NULL END) AS avg_msg_size
     FROM signoz_traces.distributed_signoz_index_v2
     WHERE
@@ -82,7 +82,7 @@ WITH consumer_pl AS (
         serviceName,
         quantile(0.99)(durationNano) / 1000000 AS p99,
         COUNT(*) AS total_requests,
-        SUM(CASE WHEN statusCode = 2 THEN 1 ELSE 0 END) AS error_count
+        sumIf(1, statusCode = 2) AS error_count
     FROM signoz_traces.distributed_signoz_index_v2
     WHERE
         timestamp >= '%d'
@@ -119,7 +119,7 @@ WITH producer_latency AS (
         quantile(0.99)(durationNano) / 1000000 AS p99,
 		stringTagMap['messaging.destination.name'] AS topic,
         COUNT(*) AS total_requests,
-        SUM(CASE WHEN statusCode = 2 THEN 1 ELSE 0 END) AS error_count
+        sumIf(1, statusCode = 2) AS error_count
     FROM signoz_traces.distributed_signoz_index_v2
     WHERE
         timestamp >= '%d'
@@ -150,7 +150,7 @@ WITH consumer_latency AS (
         quantile(0.99)(durationNano) / 1000000 AS p99,
 		stringTagMap['messaging.destination.partition.id'] AS partition,
         COUNT(*) AS total_requests,
-        SUM(CASE WHEN statusCode = 2 THEN 1 ELSE 0 END) AS error_count
+        sumIf(1, statusCode = 2) AS error_count
     FROM signoz_traces.distributed_signoz_index_v2
     WHERE
         timestamp >= '%d'
@@ -218,7 +218,7 @@ WITH consumer_latency AS (
         quantile(0.99)(durationNano) / 1000000 AS p99,
 		stringTagMap['messaging.destination.partition.id'] AS partition,
         COUNT(*) AS total_requests,
-        SUM(CASE WHEN statusCode = 2 THEN 1 ELSE 0 END) AS error_count
+        sumIf(1, statusCode = 2) AS error_count
     FROM signoz_traces.distributed_signoz_index_v2
     WHERE
         timestamp >= '%d'
@@ -299,7 +299,7 @@ WITH producer_query AS (
         serviceName,
         quantile(0.99)(durationNano) / 1000000 AS p99,
         count(*) AS total_count,
-        SUM(CASE WHEN statusCode = 2 THEN 1 ELSE 0 END) AS error_count
+        sumIf(1, statusCode = 2) AS error_count
     FROM signoz_traces.distributed_signoz_index_v2
     WHERE
         timestamp >= '%d'

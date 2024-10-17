@@ -11,7 +11,7 @@ var defaultStepInterval int64 = 60
 
 func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) (*v3.QueryRangeParamsV3, error) {
 
-	if constants.KafkaSpanEval == "false" {
+	if constants.KafkaSpanEval == "false" && queryContext == "producer-consumer-eval" {
 		return nil, fmt.Errorf("span evaluation feature is disabled and is experimental")
 	}
 	// ToDo: propagate this through APIs when there are different handlers
