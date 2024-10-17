@@ -2516,22 +2516,35 @@ func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *Auth
 	// SubRouter for kafka
 	kafkaRouter := router.PathPrefix("/api/v1/messaging-queues/kafka").Subrouter()
 
-	consumerLagRouter := kafkaRouter.PathPrefix("/consumer-lag").Subrouter()
-	consumerLagRouter.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerData)).Methods(http.MethodPost)
-	consumerLagRouter.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerData)).Methods(http.MethodPost)
-	consumerLagRouter.HandleFunc("/network-latency", am.ViewAccess(aH.getNetworkData)).Methods(http.MethodPost)
-
 	onboardingRouter := kafkaRouter.PathPrefix("/onboarding").Subrouter()
 	onboardingRouter.HandleFunc("/producers", am.ViewAccess(aH.onboardProducers)).Methods(http.MethodPost)
 	onboardingRouter.HandleFunc("/consumers", am.ViewAccess(aH.onboardConsumers)).Methods(http.MethodPost)
 	onboardingRouter.HandleFunc("/kafka", am.ViewAccess(aH.onboardKafka)).Methods(http.MethodPost)
 
+	partitionLatency := kafkaRouter.PathPrefix("/partition-latency").Subrouter()
+	partitionLatency.HandleFunc("/overview", am.ViewAccess(aH.getPartitionOverviewLatencyData)).Methods(http.MethodPost)
+	partitionLatency.HandleFunc("/consumer", am.ViewAccess(aH.getConsumerPartitionLatencyData)).Methods(http.MethodPost)
+
+	consumerLagRouter := kafkaRouter.PathPrefix("/consumer-lag").Subrouter()
+	consumerLagRouter.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerData)).Methods(http.MethodPost)
+	consumerLagRouter.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerData)).Methods(http.MethodPost)
+	consumerLagRouter.HandleFunc("/network-latency", am.ViewAccess(aH.getNetworkData)).Methods(http.MethodPost)
+
+	topicThroughput := kafkaRouter.PathPrefix("/topic-throughput").Subrouter()
+	topicThroughput.HandleFunc("/producer", am.ViewAccess(aH.getProducerThroughputOverview)).Methods(http.MethodPost)
+	topicThroughput.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerThroughputDetails)).Methods(http.MethodPost)
+	topicThroughput.HandleFunc("/consumer", am.ViewAccess(aH.getConsumerThroughputOverview)).Methods(http.MethodPost)
+	topicThroughput.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerThroughputDetails)).Methods(http.MethodPost)
+
+	spanEvaluation := kafkaRouter.PathPrefix("/span").Subrouter()
+	spanEvaluation.HandleFunc("/evaluation", am.ViewAccess(aH.getProducerConsumerEval)).Methods(http.MethodPost)
+
 	// for other messaging queues, add SubRouters here
 }
 
 // not using md5 hashing as the plain string would work
-func uniqueIdentifier(clientID, serviceInstanceID, serviceName, separator string) string {
-	return clientID + separator + serviceInstanceID + separator + serviceName
+func uniqueIdentifier(params []string, separator string) string {
+	return strings.Join(params, separator)
 }
 
 func (aH *APIHandler) onboardProducers(
@@ -2874,7 +2887,7 @@ func (aH *APIHandler) getNetworkData(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQRParamsNetwork(messagingQueue, "throughput", attributeCache)
+	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "throughput", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2901,7 +2914,8 @@ func (aH *APIHandler) getNetworkData(
 			clientID, clientIDOk := series.Labels["client_id"]
 			serviceInstanceID, serviceInstanceIDOk := series.Labels["service_instance_id"]
 			serviceName, serviceNameOk := series.Labels["service_name"]
-			hashKey := uniqueIdentifier(clientID, serviceInstanceID, serviceName, "#")
+			params := []string{clientID, serviceInstanceID, serviceName}
+			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if clientIDOk && serviceInstanceIDOk && serviceNameOk && !ok {
 				attributeCache.Hash[hashKey] = struct{}{}
@@ -2912,7 +2926,7 @@ func (aH *APIHandler) getNetworkData(
 		}
 	}
 
-	queryRangeParams, err = mq.BuildQRParamsNetwork(messagingQueue, "fetch-latency", attributeCache)
+	queryRangeParams, err = mq.BuildQRParamsWithCache(messagingQueue, "fetch-latency", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2938,7 +2952,8 @@ func (aH *APIHandler) getNetworkData(
 			clientID, clientIDOk := series.Labels["client_id"]
 			serviceInstanceID, serviceInstanceIDOk := series.Labels["service_instance_id"]
 			serviceName, serviceNameOk := series.Labels["service_name"]
-			hashKey := uniqueIdentifier(clientID, serviceInstanceID, serviceName, "#")
+			params := []string{clientID, serviceInstanceID, serviceName}
+			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if clientIDOk && serviceInstanceIDOk && serviceNameOk && ok {
 				latencySeries = append(latencySeries, series)
@@ -3033,6 +3048,362 @@ func (aH *APIHandler) getConsumerData(
 		return
 	}
 	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s1
+func (aH *APIHandler) getPartitionOverviewLatencyData(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "partition_latency")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s1
+func (aH *APIHandler) getConsumerPartitionLatencyData(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "consumer_partition_latency")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s3 p overview
+// fetch traces
+// cache attributes
+// fetch byte rate metrics
+func (aH *APIHandler) getProducerThroughputOverview(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	attributeCache := &mq.Clients{
+		Hash: make(map[string]struct{}),
+	}
+
+	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
+	for _, res := range result {
+		for _, series := range res.Series {
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			topicName, topicNameOk := series.Labels["topic"]
+			params := []string{serviceName, topicName}
+			hashKey := uniqueIdentifier(params, "#")
+			_, ok := attributeCache.Hash[hashKey]
+			if topicNameOk && serviceNameOk && !ok {
+				attributeCache.Hash[hashKey] = struct{}{}
+				attributeCache.TopicName = append(attributeCache.TopicName, topicName)
+				attributeCache.ServiceName = append(attributeCache.ServiceName, serviceName)
+			}
+		}
+	}
+
+	queryRangeParams, err = mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-latency", attributeCache)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
+		return
+	}
+
+	latencyColumn := &v3.Result{QueryName: "latency"}
+	var latencySeries []*v3.Series
+	for _, res := range resultFetchLatency {
+		for _, series := range res.Series {
+			topic, topicOk := series.Labels["topic"]
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			params := []string{topic, serviceName}
+			hashKey := uniqueIdentifier(params, "#")
+			_, ok := attributeCache.Hash[hashKey]
+			if topicOk && serviceNameOk && ok {
+				latencySeries = append(latencySeries, series)
+			}
+		}
+	}
+
+	latencyColumn.Series = latencySeries
+	result = append(result, latencyColumn)
+
+	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+
+	resp := v3.QueryRangeResponse{
+		Result: resultFetchLatency,
+	}
+	aH.Respond(w, resp)
+}
+
+// s3 p details
+func (aH *APIHandler) getProducerThroughputDetails(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer-throughput-details")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s3 c overview
+func (aH *APIHandler) getConsumerThroughputOverview(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "consumer-throughput-overview")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s3 c details
+func (aH *APIHandler) getConsumerThroughputDetails(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "consumer-throughput-details")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s4
+// needs logic to parse duration
+// needs logic to get the percentage
+// show 10 traces
+func (aH *APIHandler) getProducerConsumerEval(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
 
 	resp := v3.QueryRangeResponse{
 		Result: result,
