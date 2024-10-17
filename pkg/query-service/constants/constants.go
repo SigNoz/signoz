@@ -80,6 +80,8 @@ var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
 
 var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
 
+var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
+
 func IsDurationSortFeatureEnabled() bool {
 	isDurationSortFeatureEnabledStr := DurationSortFeature
 	isDurationSortFeatureEnabledBool, err := strconv.ParseBool(isDurationSortFeatureEnabledStr)
