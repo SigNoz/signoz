@@ -252,6 +252,7 @@ import APM_java_springBoot_docker_recommendedSteps_runApplication from '../Modul
 import APM_java_springBoot_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Java/md-docs/SpringBoot/Kubernetes/springBoot-kubernetes-installOtelCollector.md';
 import APM_java_springBoot_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Java/md-docs/SpringBoot/Kubernetes/springBoot-kubernetes-instrumentApplication.md';
 import APM_java_springBoot_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Java/md-docs/SpringBoot/Kubernetes/springBoot-kubernetes-runApplication.md';
+import APM_java_springBoot_kubernetes_recommendedSteps_runApplication_producer from '../Modules/APM/Java/md-docs/SpringBoot/Kubernetes/springBoot-kubernetes-runApplication-producer.md';
 // SpringBoot-LinuxAMD64-quickstart
 import APM_java_springBoot_linuxAMD64_quickStart_instrumentApplication from '../Modules/APM/Java/md-docs/SpringBoot/LinuxAMD64/QuickStart/springBoot-linuxamd64-quickStart-instrumentApplication.md';
 import APM_java_springBoot_linuxAMD64_quickStart_runApplication from '../Modules/APM/Java/md-docs/SpringBoot/LinuxAMD64/QuickStart/springBoot-linuxamd64-quickStart-runApplication.md';
@@ -1053,6 +1054,7 @@ export const ApmDocFilePaths = {
 	APM_java_springBoot_kubernetes_recommendedSteps_setupOtelCollector,
 	APM_java_springBoot_kubernetes_recommendedSteps_instrumentApplication,
 	APM_java_springBoot_kubernetes_recommendedSteps_runApplication,
+	APM_java_springBoot_kubernetes_recommendedSteps_runApplication_producer,
 
 	// SpringBoot-LinuxAMD64-recommended
 	APM_java_springBoot_linuxAMD64_recommendedSteps_setupOtelCollector,
