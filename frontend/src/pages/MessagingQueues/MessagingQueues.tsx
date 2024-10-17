@@ -86,7 +86,7 @@ function MessagingQueues(): JSX.Element {
 								type="default"
 								onClick={(): void =>
 									getStartedRedirect(
-										ROUTES.GET_STARTED_APPLICATION_MONITORING,
+										`${ROUTES.GET_STARTED_APPLICATION_MONITORING}?source=kafka`,
 										'Configure Consumer',
 									)
 								}
