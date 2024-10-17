@@ -38,6 +38,23 @@ function RenameModal({
 		},
 	};
 
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent): void => {
+			if (isOpen) {
+				if (e.key === 'Enter') {
+					onNameChangeHandler();
+				} else if (e.key === 'Escape') {
+					setIsOpen(false);
+				}
+			}
+		};
+
+		document.addEventListener('keydown', handleKeyDown);
+
+		return (): void => {
+			document.removeEventListener('keydown', handleKeyDown);
+		};
+	}, [isOpen, onNameChangeHandler, setIsOpen]);
 	return (
 		<Modal
 			open={isOpen}
