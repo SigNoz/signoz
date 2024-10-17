@@ -486,6 +486,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/invite/bulk", am.AdminAccess(aH.inviteUsers)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.getInvite)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/invite/{email}", am.AdminAccess(aH.revokeInvite)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.listPendingInvites)).Methods(http.MethodGet)
@@ -1974,6 +1975,32 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.WriteJSON(w, r, resp)
+}
+
+func (aH *APIHandler) inviteUsers(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	req, err := parseInviteUsersRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	response, err := auth.InviteUsers(ctx, req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	// Check the response status and set the appropriate HTTP status code
+	if response.Status == "failure" {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else if response.Status == "partial_success" {
+		w.WriteHeader(http.StatusPartialContent) // 206 Partial Content
+	} else {
+		w.WriteHeader(http.StatusOK) // 200 OK for success
+	}
+
+	aH.WriteJSON(w, r, response)
 }
 
 // getInvite returns the invite object details for the given invite token. We do not need to
