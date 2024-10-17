@@ -311,6 +311,7 @@ function RightContainer({
 						setThresholds={setThresholds}
 						yAxisUnit={yAxisUnit}
 						selectedGraph={selectedGraph}
+						columnUnits={columnUnits}
 					/>
 				</section>
 			)}
