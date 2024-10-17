@@ -25,6 +25,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	query,
 	onChange,
 	disabled,
+	isInfraMonitoring,
 }: GroupByFilterProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const [searchText, setSearchText] = useState<string>('');
@@ -85,6 +86,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 				setOptionsData(options);
 			},
 		},
+		isInfraMonitoring,
 	);
 
 	const getAttributeKeys = useCallback(async () => {
@@ -96,6 +98,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 					dataSource: query.dataSource,
 					aggregateOperator: query.aggregateOperator,
 					searchText,
+					isInfraMonitoring,
 				}),
 		);
 
@@ -107,6 +110,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 		query.dataSource,
 		queryClient,
 		searchText,
+		isInfraMonitoring,
 	]);
 
 	const handleSearchKeys = (searchText: string): void => {

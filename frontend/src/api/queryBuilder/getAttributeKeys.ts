@@ -1,4 +1,4 @@
-import { ApiV3Instance } from 'api';
+import { ApiBaseInstance, ApiV3Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError, AxiosResponse } from 'axios';
 import { baseAutoCompleteIdKeysOrder } from 'constants/queryBuilder';
@@ -18,20 +18,25 @@ export const getAggregateKeys = async ({
 	dataSource,
 	aggregateAttribute,
 	tagType,
+	isInfraMonitoring,
 }: IGetAttributeKeysPayload): Promise<
 	SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
 > => {
 	try {
+		const endpoint = isInfraMonitoring
+			? `/hosts/attribute_keys?dataSource=metrics&searchText=${searchText || ''}`
+			: `/autocomplete/attribute_keys?${createQueryParams({
+					aggregateOperator,
+					searchText,
+					dataSource,
+					aggregateAttribute,
+			  })}&tagType=${tagType}`;
+
+		const apiInstance = isInfraMonitoring ? ApiBaseInstance : ApiV3Instance;
+
 		const response: AxiosResponse<{
 			data: IQueryAutocompleteResponse;
-		}> = await ApiV3Instance.get(
-			`/autocomplete/attribute_keys?${createQueryParams({
-				aggregateOperator,
-				searchText,
-				dataSource,
-				aggregateAttribute,
-			})}&tagType=${tagType}`,
-		);
+		}> = await apiInstance.get(endpoint);
 
 		const payload: BaseAutocompleteData[] =
 			response.data.data.attributeKeys?.map(({ id: _, ...item }) => ({

@@ -11,7 +11,6 @@ type UseGetAttributeKeys = (
 	options?: UseQueryOptions<
 		SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
 	>,
-	isInfraMonitoring?: boolean,
 ) => UseQueryResult<
 	SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
 >;
@@ -19,22 +18,17 @@ type UseGetAttributeKeys = (
 export const useGetAggregateKeys: UseGetAttributeKeys = (
 	requestData,
 	options,
-	isInfraMonitoring,
 ) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
-			return [
-				QueryBuilderKeys.GET_AGGREGATE_KEYS,
-				...options.queryKey,
-				isInfraMonitoring,
-			];
+			return [QueryBuilderKeys.GET_AGGREGATE_KEYS, ...options.queryKey];
 		}
-		return [QueryBuilderKeys.GET_AGGREGATE_KEYS, requestData, isInfraMonitoring];
-	}, [options?.queryKey, requestData, isInfraMonitoring]);
+		return [QueryBuilderKeys.GET_AGGREGATE_KEYS, requestData];
+	}, [options?.queryKey, requestData]);
 
 	return useQuery<SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse>({
 		queryKey,
-		queryFn: () => getAggregateKeys({ ...requestData, isInfraMonitoring }),
+		queryFn: () => getAggregateKeys(requestData),
 		...options,
 	});
 };
