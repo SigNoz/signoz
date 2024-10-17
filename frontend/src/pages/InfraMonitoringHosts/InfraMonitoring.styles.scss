@@ -1,0 +1,35 @@
+.infra-monitoring-hosts-page {
+	display: flex;
+	height: 100%;
+	.infra-quick-filter-left-section {
+		width: 0%;
+		flex-shrink: 0;
+	}
+
+	.infra-monitoring-right-section {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		.infra-monitoring-query-container {
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+
+			.logs-explorer-views {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+			}
+		}
+	}
+
+	&.filter-visible {
+		.infra-quick-filter-left-section {
+			width: 260px;
+		}
+
+		.infra-monitoring-right-section {
+			width: calc(100% - 260px);
+		}
+	}
+}

@@ -4,5 +4,6 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 export type GroupByFilterProps = {
 	query: IBuilderQuery;
 	onChange: (values: BaseAutocompleteData[]) => void;
-	disabled: boolean;
+	disabled?: boolean;
+	isInfraMonitoring?: boolean;
 };
