@@ -267,3 +267,233 @@ var K8STableListQuery = v3.QueryRangeParamsV3{
 	Version:      "v4",
 	FormatForWeb: true,
 }
+
+var PodsTableListQuery = v3.QueryRangeParamsV3{
+	CompositeQuery: &v3.CompositeQuery{
+		BuilderQueries: map[string]*v3.BuilderQuery{
+			// pod cpu utilization
+			"A": {
+				QueryName:  "A",
+				DataSource: v3.DataSourceMetrics,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "k8s_pod_cpu_utilization",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+				},
+				Temporality: v3.Unspecified,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "k8s_pod_uid",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+				},
+				Expression:       "A",
+				ReduceTo:         v3.ReduceToOperatorAvg,
+				TimeAggregation:  v3.TimeAggregationAvg,
+				SpaceAggregation: v3.SpaceAggregationSum,
+				Disabled:         false,
+			},
+			// pod cpu request utilization
+			"B": {
+				QueryName:  "B",
+				DataSource: v3.DataSourceMetrics,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "k8s_pod_cpu_request_utilization",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+				},
+				Temporality: v3.Unspecified,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "k8s_pod_uid",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+				},
+				Expression:       "B",
+				ReduceTo:         v3.ReduceToOperatorAvg,
+				TimeAggregation:  v3.TimeAggregationAvg,
+				SpaceAggregation: v3.SpaceAggregationSum,
+				Disabled:         false,
+			},
+			// pod cpu limit utilization
+			"C": {
+				QueryName:  "C",
+				DataSource: v3.DataSourceMetrics,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "k8s_pod_cpu_limit_utilization",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+				},
+				Temporality: v3.Unspecified,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "k8s_pod_uid",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+				},
+				Expression:       "C",
+				ReduceTo:         v3.ReduceToOperatorAvg,
+				TimeAggregation:  v3.TimeAggregationAvg,
+				SpaceAggregation: v3.SpaceAggregationSum,
+				Disabled:         false,
+			},
+			// pod memory utilization
+			"D": {
+				QueryName:  "D",
+				DataSource: v3.DataSourceMetrics,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "k8s_pod_memory_usage",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+				},
+				Temporality: v3.Unspecified,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "k8s_pod_uid",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+				},
+				Expression:       "D",
+				ReduceTo:         v3.ReduceToOperatorAvg,
+				TimeAggregation:  v3.TimeAggregationAvg,
+				SpaceAggregation: v3.SpaceAggregationSum,
+				Disabled:         false,
+			},
+			// pod memory request utilization
+			"E": {
+				QueryName:  "E",
+				DataSource: v3.DataSourceMetrics,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "k8s_pod_memory_request_utilization",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+				},
+				Temporality: v3.Unspecified,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "k8s_pod_uid",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+				},
+				Expression:       "E",
+				ReduceTo:         v3.ReduceToOperatorAvg,
+				TimeAggregation:  v3.TimeAggregationAvg,
+				SpaceAggregation: v3.SpaceAggregationSum,
+				Disabled:         false,
+			},
+			// pod memory limit utilization
+			"F": {
+				QueryName:  "F",
+				DataSource: v3.DataSourceMetrics,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "k8s_pod_memory_limit_utilization",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+				},
+				Temporality: v3.Unspecified,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "k8s_pod_uid",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+				},
+				Expression:       "F",
+				ReduceTo:         v3.ReduceToOperatorAvg,
+				TimeAggregation:  v3.TimeAggregationAvg,
+				SpaceAggregation: v3.SpaceAggregationSum,
+				Disabled:         false,
+			},
+		},
+		PanelType: v3.PanelTypeTable,
+		QueryType: v3.QueryTypeBuilder,
+	},
+	Version:      "v4",
+	FormatForWeb: true,
+}
+
+var NodesTableListQuery = v3.QueryRangeParamsV3{
+	CompositeQuery: &v3.CompositeQuery{
+		BuilderQueries: map[string]*v3.BuilderQuery{
+			// node cpu utilization
+			"A": {
+				QueryName:  "A",
+				DataSource: v3.DataSourceMetrics,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "k8s_node_cpu_utilization",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+				},
+				Temporality: v3.Unspecified,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "k8s_node_uid",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+				},
+				Expression:       "A",
+				ReduceTo:         v3.ReduceToOperatorAvg,
+				TimeAggregation:  v3.TimeAggregationAvg,
+				SpaceAggregation: v3.SpaceAggregationSum,
+				Disabled:         false,
+			},
+			// node memory utilization
+			"B": {
+				QueryName:  "B",
+				DataSource: v3.DataSourceMetrics,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "k8s_node_memory_usage",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+				},
+				Temporality: v3.Unspecified,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "k8s_node_uid",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+				},
+				Expression:       "B",
+				ReduceTo:         v3.ReduceToOperatorAvg,
+				TimeAggregation:  v3.TimeAggregationAvg,
+				SpaceAggregation: v3.SpaceAggregationSum,
+				Disabled:         false,
+			},
+		},
+		PanelType: v3.PanelTypeTable,
+		QueryType: v3.QueryTypeBuilder,
+	},
+	Version:      "v4",
+	FormatForWeb: true,
+}
