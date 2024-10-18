@@ -28,4 +28,10 @@ export const WrapperStyled = styled.div`
 			}
 		}
 	}
+	& table {
+		overflow: hidden;
+	}
+	& .ant-table-content::-webkit-scrollbar {
+		display: none;
+	}
 `;
