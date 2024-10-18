@@ -1,5 +1,4 @@
 /* eslint-disable no-nested-ternary */
-import { Color } from '@signozhq/design-tokens';
 import { themeColors } from 'constants/theme';
 import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';
@@ -37,13 +36,12 @@ export const TableCellStyled = styled.td<TableHeaderCellStyledProps>`
 export const TableRowStyled = styled.tr<{
 	$isActiveLog: boolean;
 	$isDarkMode: boolean;
+	$logType: string;
 }>`
 	td {
-		${({ $isActiveLog, $isDarkMode }): string =>
+		${({ $isActiveLog, $isDarkMode, $logType }): string =>
 			$isActiveLog
-				? `background-color: ${
-						$isDarkMode ? Color.BG_SLATE_500 : Color.BG_VANILLA_300
-				  } !important`
+				? getActiveLogBackground($isActiveLog, $isDarkMode, $logType)
 				: ''};
 	}
 
