@@ -68,6 +68,32 @@ func TestListDisks(t *testing.T) {
 	require.JSONEq(t, `[{"name":"default","type":"local"}, {"name":"s3","type":"s3"}]`, string(b))
 }
 
+func waitForMinioObjects(timeout time.Duration) (int, error) {
+	start := time.Now()
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+
+	for time.Since(start) < timeout {
+		count := 0
+		for obj := range minioClient.ListObjects(bucketName, "", false, doneCh) {
+			if obj.Err != nil {
+				fmt.Printf("Error retrieving object: %v\n", obj.Err)
+				return 0, obj.Err
+			}
+			fmt.Printf("Found object: %s\n", obj.Key)
+			count++
+		}
+
+		if count > 0 {
+			return count, nil
+		}
+
+		time.Sleep(2 * time.Second)
+	}
+
+	return 0, fmt.Errorf("timed out waiting for objects in Minio")
+}
+
 func TestSetTTL(t *testing.T) {
 	email := "alice@signoz.io"
 	password := "Password@123"
@@ -85,15 +111,15 @@ func TestSetTTL(t *testing.T) {
 	}{
 		{
 			1, "s3", "traces", "100h", "60h",
-			"Delete TTL should be greater than cold storage move TTL.",
+			`{"data":null,"total":0,"limit":0,"offset":0,"errors":[{"code":400,"msg":"delete TTL should be greater than cold storage move TTL"}]}`,
 		},
 		{
 			2, "s3", "traces", "100", "60s",
-			"Not a valid toCold TTL duration 100",
+			`{"data":null,"total":0,"limit":0,"offset":0,"errors":[{"code":400,"msg":"not a valid toCold TTL duration 100"}]}`,
 		},
 		{
 			3, "s3", "traces", "100s", "100",
-			"Not a valid TTL duration 100",
+			`{"data":null,"total":0,"limit":0,"offset":0,"errors":[{"code":400,"msg":"not a valid TTL duration 100"}]}`,
 		},
 		{
 			4, "s3", "metrics", "1h", "2h",
@@ -111,15 +137,8 @@ func TestSetTTL(t *testing.T) {
 		require.Containsf(t, string(r), tc.expected, "Failed case: %d", tc.caseNo)
 	}
 
-	time.Sleep(20 * time.Second)
-	doneCh := make(chan struct{})
-	defer close(doneCh)
-
-	count := 0
-	for range minioClient.ListObjects(bucketName, "", false, doneCh) {
-		count++
-	}
-
+	count, err := waitForMinioObjects(60 * time.Second)
+	require.NoError(t, err)
 	require.True(t, count > 0, "No objects are present in Minio")
 	fmt.Printf("=== Found %d objects in Minio\n", count)
 }
@@ -206,11 +225,11 @@ func TestGetTTL(t *testing.T) {
 
 	r, err = setTTL("metrics", "s3", "0s", "0s", loginResp.AccessJwt)
 	require.NoError(t, err)
-	require.Contains(t, string(r), "Not a valid TTL duration 0s")
+	require.Contains(t, string(r), `{"data":null,"total":0,"limit":0,"offset":0,"errors":[{"code":400,"msg":"not a valid TTL duration 0s"}]}`)
 
 	r, err = setTTL("traces", "s3", "0s", "0s", loginResp.AccessJwt)
 	require.NoError(t, err)
-	require.Contains(t, string(r), "Not a valid TTL duration 0s")
+	require.Contains(t, string(r), `{"data":null,"total":0,"limit":0,"offset":0,"errors":[{"code":400,"msg":"not a valid TTL duration 0s"}]}`)
 }
 
 func TestMain(m *testing.M) {
