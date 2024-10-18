@@ -84,7 +84,8 @@ function ImportJSON({
 
 			// Add validation for uuid
 			if (dashboardData.uuid !== undefined && dashboardData.uuid.trim() === '') {
-				throw new Error('uuid cannot be an empty string');
+				// silently remove uuid if it is empty
+				delete dashboardData.uuid;
 			}
 
 			if (dashboardData?.layout) {
