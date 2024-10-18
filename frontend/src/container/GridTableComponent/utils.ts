@@ -40,7 +40,7 @@ function evaluateCondition(
  * @param thresholdValue - The threshold value to compare against.
  * @param thresholdOperator - The operator used for comparison (e.g., '>', '<', '==').
  * @param thresholdUnit - The unit to which the value should be converted.
- * @param columnUnits - The current unit of the value.
+ * @param columnUnit - The current unit of the value.
  * @returns A boolean indicating whether the value meets the threshold condition.
  */
 function evaluateThresholdWithConvertedValue(
@@ -48,9 +48,9 @@ function evaluateThresholdWithConvertedValue(
 	thresholdValue: number,
 	thresholdOperator?: string,
 	thresholdUnit?: string,
-	columnUnits?: string,
+	columnUnit?: string,
 ): boolean {
-	const convertedValue = convertUnit(value, columnUnits, thresholdUnit);
+	const convertedValue = convertUnit(value, columnUnit, thresholdUnit);
 
 	if (convertedValue) {
 		return evaluateCondition(thresholdOperator, convertedValue, thresholdValue);
@@ -63,7 +63,7 @@ export function findMatchingThreshold(
 	thresholds: ThresholdProps[],
 	label: string,
 	value: number,
-	columnUnits?: string,
+	columnUnit?: string,
 ): {
 	threshold: ThresholdProps;
 	hasMultipleMatches: boolean;
@@ -80,7 +80,7 @@ export function findMatchingThreshold(
 				threshold?.thresholdValue,
 				threshold.thresholdOperator,
 				threshold.thresholdUnit,
-				columnUnits,
+				columnUnit,
 			)
 		) {
 			matchingThresholds.push(threshold);

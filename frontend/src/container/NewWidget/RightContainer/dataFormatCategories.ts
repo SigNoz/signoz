@@ -570,20 +570,19 @@ export function convertUnit(
 	fromUnitId?: string,
 	toUnitId?: string,
 ): number | null {
-	// Finds the category that contains the specified units
+	let fromUnit: string | undefined;
+	let toUnit: string | undefined;
+
+	// Finds the category that contains the specified units and extracts fromUnit and toUnit using array methods
 	const category = dataTypeCategories.find((category) =>
-		category.formats.some(
-			(format) => format.id === fromUnitId || format.id === toUnitId,
-		),
+		category.formats.some((format) => {
+			if (format.id === fromUnitId) fromUnit = format.id;
+			if (format.id === toUnitId) toUnit = format.id;
+			return fromUnit && toUnit; // Break out early if both units are found
+		}),
 	);
 
-	if (!category) return null;
-
-	const fromUnit = category.formats.find((format) => format.id === fromUnitId)
-		?.id;
-	const toUnit = category.formats.find((format) => format.id === toUnitId)?.id;
-
-	if (!fromUnit || !toUnit) return null;
+	if (!category || !fromUnit || !toUnit) return null; // Return null if category or units are not found
 
 	// Gets the conversion factor for the specified units
 	const conversionFactor = getConversionFactor(
@@ -591,7 +590,7 @@ export function convertUnit(
 		toUnit,
 		category.name as any,
 	);
-	if (conversionFactor === null) return null; // Returns null if conversion is not possible
+	if (conversionFactor === null) return null; // Return null if conversion is not possible
 
 	return value * conversionFactor;
 }
