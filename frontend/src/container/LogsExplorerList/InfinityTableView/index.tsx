@@ -66,8 +66,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			...tableViewProps,
 			onClickExpand: onSetActiveLog,
 			onOpenLogsContext: handleSetActiveContextLog,
-			activeLog,
-			activeContextLog,
 		});
 
 		const { draggedColumns, onDragColumns } = useDragColumns<
