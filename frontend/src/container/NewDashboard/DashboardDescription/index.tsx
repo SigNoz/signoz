@@ -67,7 +67,7 @@ interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
 }
 
-function removeValuesFromVariables(
+function sanitizeDashboardData(
 	selectedData: DashboardData,
 ): Omit<DashboardData, 'uuid'> {
 	if (!selectedData?.variables) {
@@ -436,7 +436,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 										icon={<FileJson size={14} />}
 										onClick={(): void => {
 											downloadObjectAsJson(
-												removeValuesFromVariables(selectedData),
+												sanitizeDashboardData(selectedData),
 												selectedData.title,
 											);
 											setIsDashbordSettingsOpen(false);
@@ -449,7 +449,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 										icon={<ClipboardCopy size={14} />}
 										onClick={(): void => {
 											setCopy(
-												JSON.stringify(removeValuesFromVariables(selectedData), null, 2),
+												JSON.stringify(sanitizeDashboardData(selectedData), null, 2),
 											);
 											setIsDashbordSettingsOpen(false);
 										}}
