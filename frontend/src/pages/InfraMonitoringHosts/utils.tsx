@@ -1,9 +1,8 @@
-import { TabsProps } from 'antd';
+import { Progress, TabsProps, Tag } from 'antd';
 import { ColumnType } from 'antd/es/table';
-import { HostListPayload } from 'api/infraMonitoring/getHostLists';
+import { HostData, HostListPayload } from 'api/infraMonitoring/getHostLists';
 import TabLabel from 'components/TabLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import HostsList from './HostsList';
@@ -13,9 +12,17 @@ import HostsList from './HostsList';
 // 	isFilterApplied: boolean;
 // }
 
+export interface HostRowData {
+	hostName: string;
+	cpu: React.ReactNode;
+	memory: React.ReactNode;
+	load15: number;
+	active: React.ReactNode;
+}
+
 export const getHostListsQuery = (): HostListPayload => ({
-	start: getTimeRange().startTime,
-	end: getTimeRange().endTime,
+	start: getTimeRange().startTime * 1e3,
+	end: getTimeRange().endTime * 1e3,
 	filters: {
 		items: [],
 		op: 'and',
@@ -30,29 +37,67 @@ export const getTabsItems = (): TabsProps['items'] => [
 	},
 ];
 
-export const getHostsListColumns = (): ColumnType<RowData>[] => [
+export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 	{
 		title: 'Hostname',
-		dataIndex: 'hostname',
-		key: 'hostname',
-		width: 200,
+		dataIndex: 'hostName',
+		key: 'hostName',
+		width: 150,
+	},
+	{
+		title: 'Status',
+		dataIndex: 'active',
+		key: 'active',
+		width: 100,
 	},
 	{
 		title: 'CPU Usage',
-		dataIndex: 'cpu_usage',
-		key: 'cpu_usage',
-		width: 150,
+		dataIndex: 'cpu',
+		key: 'cpu',
+		width: 100,
 	},
 	{
 		title: 'Memory Usage',
-		dataIndex: 'memory_usage',
-		key: 'memory_usage',
-		width: 150,
+		dataIndex: 'memory',
+		key: 'memory',
+		width: 100,
 	},
 	{
-		title: 'Disk Usage',
-		dataIndex: 'disk_usage',
-		key: 'disk_usage',
-		width: 150,
+		title: 'Load Avg',
+		dataIndex: 'load15',
+		key: 'load15',
+		width: 100,
 	},
 ];
+
+export const formatDataForTable = (data: HostData[]): HostRowData[] =>
+	data.map((host, index) => ({
+		key: `${host.hostName}-${index}`,
+		hostName: host.hostName || '',
+		active: (
+			<Tag color={host.active ? 'success' : 'default'} bordered>
+				{host.active ? 'ACTIVE' : 'INACTIVE'}
+			</Tag>
+		),
+		cpu: (
+			<div style={{ display: 'flex', alignItems: 'center' }}>
+				<Progress
+					percent={Number((host.cpu * 100).toFixed(1))}
+					size="small"
+					strokeColor="#1890ff"
+					style={{ flex: 1, marginRight: 8 }}
+				/>
+			</div>
+		),
+		memory: (
+			<div style={{ display: 'flex', alignItems: 'center' }}>
+				<Progress
+					percent={Number((host.memory * 100).toFixed(1))}
+					size="small"
+					strokeColor="#faad14"
+					style={{ flex: 1, marginRight: 8 }}
+				/>
+			</div>
+		),
+		load15: host.load15,
+	}));

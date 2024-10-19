@@ -14,18 +14,18 @@ export interface HostListPayload {
 	limit?: number;
 }
 
-interface TimeSeriesValue {
+export interface TimeSeriesValue {
 	timestamp: number;
 	value: string;
 }
 
-interface TimeSeries {
+export interface TimeSeries {
 	labels: Record<string, string>;
 	labelsArray: Array<Record<string, string>>;
 	values: TimeSeriesValue[];
 }
 
-interface HostData {
+export interface HostData {
 	hostName: string;
 	active: boolean;
 	os: string;
