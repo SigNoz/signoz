@@ -75,10 +75,14 @@ func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
 	}
 
 	if end-start < oneDayInMilliseconds {
+		// if we are dealing with delta metrics and interval is greater than 5 minutes, we can use the 5m aggregated table
+		// why would interval be greater than 5 minutes?
+		// we allow people to configure the step interval so we can make use of this
 		if mq.Temporality == v3.Delta && mq.TimeAggregation == v3.TimeAggregationIncrease && mq.StepInterval >= 300 && mq.StepInterval < 1800 {
 			return constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME
 		} else if mq.Temporality == v3.Delta && mq.TimeAggregation == v3.TimeAggregationIncrease && mq.StepInterval >= 1800 {
-			return constants.SIGNOZ_SAMPLES_V4_TABLENAME
+			// if we are dealing with delta metrics and interval is greater than 30 minutes, we can use the 30m aggregated table
+			return constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME
 		}
 		return constants.SIGNOZ_SAMPLES_V4_TABLENAME
 	} else if end-start < oneWeekInMilliseconds {
