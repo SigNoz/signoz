@@ -1,14 +1,13 @@
 import { Typography } from 'antd';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import { ResizeTable } from 'components/ResizeTable';
-import { LOCALSTORAGE } from 'constants/localStorage';
-import { useOptionsMenu } from 'container/OptionsMenu';
+import { HostMetricsLoading } from 'container/HostMetricsLoading/HostMetricsLoading';
+import NoLogs from 'container/NoLogs/NoLogs';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useMemo } from 'react';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 
 import HostsListControls from './HostsListControls';
-// import { Container, ErrorText, tableStyles } from './styles';
 import { getHostListsQuery, getHostsListColumns } from './utils';
 
 interface HostsListProps {
@@ -16,18 +15,14 @@ interface HostsListProps {
 }
 
 function HostsList({ isFilterApplied }: HostsListProps): JSX.Element {
-	const query = getHostListsQuery();
+	const query = useMemo(() => getHostListsQuery(), []);
 	const { data, isFetching, isLoading, isError } = useGetHostList(
 		query as HostListPayload,
+		{
+			queryKey: ['hostList', query],
+			enabled: !!query,
+		},
 	);
-
-	const { options } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.INFRAMONITORING_HOSTS_LIST_OPTIONS,
-		dataSource: DataSource.METRICS,
-		aggregateOperator: StringOperators.NOOP,
-	});
-
-	console.log(options);
 
 	const hostsData = useMemo(() => data?.payload?.data?.records || [], [data]);
 
@@ -41,10 +36,10 @@ function HostsList({ isFilterApplied }: HostsListProps): JSX.Element {
 			<HostsListControls />
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
-			{isLoading && <div>Loading...</div>}
+			{isLoading && <HostMetricsLoading />}
 
 			{isDataPresent && !isFilterApplied && (
-				<div>No hosts found. Try adjusting your query.</div>
+				<NoLogs dataSource={DataSource.METRICS} />
 			)}
 
 			{isDataPresent && isFilterApplied && (
@@ -57,7 +52,6 @@ function HostsList({ isFilterApplied }: HostsListProps): JSX.Element {
 					pagination={false}
 					scroll={{ x: true }}
 					loading={isFetching}
-					// style={tableStyles}
 					dataSource={hostsData}
 					columns={columns}
 				/>

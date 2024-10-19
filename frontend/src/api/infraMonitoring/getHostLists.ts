@@ -55,7 +55,7 @@ export const getHostLists = async (
 	headers?: Record<string, string>,
 ): Promise<SuccessResponse<HostListResponse> | ErrorResponse> => {
 	try {
-		const response = await ApiBaseInstance.post('/hosts', props, {
+		const response = await ApiBaseInstance.post('/hosts/list', props, {
 			signal,
 			headers,
 		});

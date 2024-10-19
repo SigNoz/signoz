@@ -1,28 +1,29 @@
-import { Form } from 'antd';
-import { GroupByFilter } from 'container/QueryBuilder/filters';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 function HostsListControls(): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
-	const updatedCurrentQuery = {
-		...currentQuery,
-		builder: {
-			...currentQuery.builder,
-			queryData: [
-				{
-					...currentQuery.builder.queryData[0],
-					aggregateOperator: 'noop',
-					aggregateAttribute: {
-						...currentQuery.builder.queryData[0].aggregateAttribute,
+	const updatedCurrentQuery = useMemo(
+		() => ({
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: [
+					{
+						...currentQuery.builder.queryData[0],
+						aggregateOperator: 'noop',
+						aggregateAttribute: {
+							...currentQuery.builder.queryData[0].aggregateAttribute,
+						},
 					},
-				},
-			],
-		},
-	};
+				],
+			},
+		}),
+		[currentQuery],
+	);
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 	console.log('currentQuery', updatedCurrentQuery);
 	const { handleChangeQueryData } = useQueryOperations({
@@ -39,27 +40,14 @@ function HostsListControls(): JSX.Element {
 		[handleChangeQueryData],
 	);
 
-	const handleChangeGroupByKeys = useCallback(
-		(value: IBuilderQuery['groupBy']) => {
-			handleChangeQueryData('groupBy', value);
-		},
-		[handleChangeQueryData],
-	);
-
 	return (
-		<Form>
+		<div className="hosts-list-controls">
 			<QueryBuilderSearch
 				query={query}
 				onChange={handleChangeTagFilters}
 				isInfraMonitoring
 			/>
-			<GroupByFilter
-				query={query}
-				onChange={handleChangeGroupByKeys}
-				isInfraMonitoring
-				// disabled={!currentQuery.builder.queryData[0].aggregateAttribute.key}
-			/>
-		</Form>
+		</div>
 	);
 }
 

@@ -28,6 +28,7 @@ export const useAutoComplete = (
 	query: IBuilderQuery,
 	whereClauseConfig?: WhereClauseConfig,
 	shouldUseSuggestions?: boolean,
+	isInfraMonitoring?: boolean,
 ): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [searchKey, setSearchKey] = useState<string>('');
@@ -37,6 +38,7 @@ export const useAutoComplete = (
 		query,
 		searchKey,
 		shouldUseSuggestions,
+		isInfraMonitoring,
 	);
 
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
@@ -170,4 +172,5 @@ interface IAutoComplete {
 	searchKey: string;
 	key: string;
 	exampleQueries: TagFilter[];
+	isInfraMonitoring?: boolean;
 }

@@ -15,6 +15,7 @@ function InfraMonitoringHosts(): JSX.Element {
 					items={getTabsItems()}
 					activeKey={PANEL_TYPES.LIST}
 					defaultActiveKey={PANEL_TYPES.LIST}
+					type="card"
 				/>
 			</div>
 		</Sentry.ErrorBoundary>

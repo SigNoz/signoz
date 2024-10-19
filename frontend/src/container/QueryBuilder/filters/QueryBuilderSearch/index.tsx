@@ -94,7 +94,12 @@ function QueryBuilderSearch({
 		searchKey,
 		key,
 		exampleQueries,
-	} = useAutoComplete(query, whereClauseConfig, isLogsExplorerPage);
+	} = useAutoComplete(
+		query,
+		whereClauseConfig,
+		isLogsExplorerPage,
+		isInfraMonitoring,
+	);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
 	const [dynamicPlacholder, setDynamicPlaceholder] = useState<string>(

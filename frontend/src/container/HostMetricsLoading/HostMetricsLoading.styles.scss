@@ -1,0 +1,19 @@
+.loading-host-metrics {
+	padding: 24px 0;
+	height: 600px;
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	.loading-host-metrics-content {
+		display: flex;
+		align-items: center;
+		flex-direction: column;
+
+		.loading-gif {
+			height: 72px;
+			margin-left: -24px;
+		}
+	}
+}
