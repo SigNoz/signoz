@@ -154,6 +154,7 @@ func TestPrepareTimeseriesFilterQuery(t *testing.T) {
 }
 
 func TestPrepareMetricQueryCumulativeRate(t *testing.T) {
+	t.Setenv("USE_METRICS_PRE_AGGREGATION", "false")
 	testCases := []struct {
 		name                  string
 		builderQuery          *v3.BuilderQuery
@@ -242,6 +243,7 @@ func TestPrepareMetricQueryCumulativeRate(t *testing.T) {
 }
 
 func TestPrepareMetricQueryDeltaRate(t *testing.T) {
+	t.Setenv("USE_METRICS_PRE_AGGREGATION", "false")
 	testCases := []struct {
 		name                  string
 		builderQuery          *v3.BuilderQuery
@@ -308,6 +310,7 @@ func TestPrepareMetricQueryDeltaRate(t *testing.T) {
 }
 
 func TestPrepreMetricQueryCumulativeQuantile(t *testing.T) {
+	t.Setenv("USE_METRICS_PRE_AGGREGATION", "false")
 	testCases := []struct {
 		name                  string
 		builderQuery          *v3.BuilderQuery
@@ -392,6 +395,7 @@ func TestPrepreMetricQueryCumulativeQuantile(t *testing.T) {
 }
 
 func TestPrepreMetricQueryDeltaQuantile(t *testing.T) {
+	t.Setenv("USE_METRICS_PRE_AGGREGATION", "false")
 	testCases := []struct {
 		name                  string
 		builderQuery          *v3.BuilderQuery
@@ -476,6 +480,7 @@ func TestPrepreMetricQueryDeltaQuantile(t *testing.T) {
 }
 
 func TestPrepareMetricQueryGauge(t *testing.T) {
+	t.Setenv("USE_METRICS_PRE_AGGREGATION", "false")
 	testCases := []struct {
 		name                  string
 		builderQuery          *v3.BuilderQuery
