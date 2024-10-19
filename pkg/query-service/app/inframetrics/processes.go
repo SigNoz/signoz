@@ -41,7 +41,7 @@ func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.Filt
 	// distinguish between resource attributes and other attributes.
 	filteredKeys := []v3.AttributeKey{}
 	for _, key := range attributeKeysResponse.AttributeKeys {
-		if slices.Contains(pointAttrsToIgnore, key.Key) {
+		if slices.Contains(hostPointAttrsToIgnore, key.Key) {
 			continue
 		}
 		filteredKeys = append(filteredKeys, key)

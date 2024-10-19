@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
 
@@ -21,23 +23,43 @@ type HostsRepo struct {
 	querierV2 interfaces.Querier
 }
 
-var pointAttrsToIgnore = []string{
-	"state",
-	"cpu",
-	"device",
-	"direction",
-	"mode",
-	"mountpoint",
-	"type",
-	"process.cgroup",
-	"process.command",
-	"process.command_line",
-	"process.executable.name",
-	"process.executable.path",
-	"process.owner",
-	"process.parent_pid",
-	"process.pid",
-}
+var (
+	// we don't have a way to get the resource attributes from the current time series table
+	// but we only want to suggest resource attributes for system metrics,
+	// this is a list of attributes that we skip from all labels as they are data point attributes
+	// TODO(srikanthccv): remove this once we have a way to get resource attributes
+	hostPointAttrsToIgnore = []string{
+		"state",
+		"cpu",
+		"device",
+		"direction",
+		"mode",
+		"mountpoint",
+		"type",
+		"process_cgroup",
+		"process_command",
+		"process_command_line",
+		"process_executable_name",
+		"process_executable_path",
+		"process_owner",
+		"process_parent_pid",
+		"process_pid",
+	}
+
+	queryNamesForTopHosts = map[string][]string{
+		"cpu":    {"A", "B", "F1"},
+		"memory": {"C", "D", "F2"},
+		"wait":   {"E", "F", "F3"},
+		"load15": {"G"},
+	}
+
+	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
+	metricToUseForHostAttributes = "system_cpu_load_average_15m"
+	hostNameAttrKey              = "host_name"
+	// TODO(srikanthccv): remove k8s hacky logic from hosts repo after charts users are migrated
+	k8sNodeNameAttrKey = "k8s_node_name"
+	agentNameToIgnore  = "k8s-infra-otel-agent"
+)
 
 func NewHostsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *HostsRepo {
 	return &HostsRepo{reader: reader, querierV2: querierV2}
@@ -46,7 +68,7 @@ func NewHostsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *Hosts
 func (h *HostsRepo) GetHostAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = "system_cpu_load_average_15m"
+	req.AggregateAttribute = metricToUseForHostAttributes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -60,7 +82,7 @@ func (h *HostsRepo) GetHostAttributeKeys(ctx context.Context, req v3.FilterAttri
 	// distinguish between resource attributes and other attributes.
 	filteredKeys := []v3.AttributeKey{}
 	for _, key := range attributeKeysResponse.AttributeKeys {
-		if slices.Contains(pointAttrsToIgnore, key.Key) {
+		if slices.Contains(hostPointAttrsToIgnore, key.Key) {
 			continue
 		}
 		filteredKeys = append(filteredKeys, key)
@@ -71,7 +93,7 @@ func (h *HostsRepo) GetHostAttributeKeys(ctx context.Context, req v3.FilterAttri
 
 func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = "system_cpu_load_average_15m"
+	req.AggregateAttribute = metricToUseForHostAttributes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -80,21 +102,21 @@ func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAtt
 	if err != nil {
 		return nil, err
 	}
-	if req.FilterAttributeKey != "host_name" {
+	if req.FilterAttributeKey != hostNameAttrKey {
 		return attributeValuesResponse, nil
 	}
 	hostNames := []string{}
 
 	for _, attributeValue := range attributeValuesResponse.StringAttributeValues {
-		if strings.Contains(attributeValue, "k8s-infra-otel-agent") {
+		if strings.Contains(attributeValue, agentNameToIgnore) {
 			continue
 		}
 		hostNames = append(hostNames, attributeValue)
 	}
 
-	req.FilterAttributeKey = "k8s_node_name"
+	req.FilterAttributeKey = k8sNodeNameAttrKey
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = "system_cpu_load_average_15m"
+	req.AggregateAttribute = metricToUseForHostAttributes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -104,7 +126,7 @@ func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAtt
 		return nil, err
 	}
 	for _, attributeValue := range attributeValuesResponse.StringAttributeValues {
-		if strings.Contains(attributeValue, "k8s-infra-otel-agent") {
+		if strings.Contains(attributeValue, agentNameToIgnore) {
 			continue
 		}
 		hostNames = append(hostNames, attributeValue)
@@ -138,7 +160,7 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context,
 
 	mq := v3.BuilderQuery{
 		AggregateAttribute: v3.AttributeKey{
-			Key:      "system_cpu_load_average_15m",
+			Key:      metricToUseForHostAttributes,
 			DataType: v3.AttributeKeyDataTypeFloat64,
 		},
 		Temporality: v3.Unspecified,
@@ -149,14 +171,7 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context,
 		return nil, err
 	}
 
-	// TODO(srikanthccv): remove this
-	// What is happening here?
-	// The `PrepareTimeseriesFilterQuery` uses the local time series table for sub-query because each fingerprint
-	// goes to same shard.
-	// However, in this case, we are interested in the attributes values across all the shards.
-	// So, we replace the local time series table with the distributed time series table.
-	// See `PrepareTimeseriesFilterQuery` for more details.
-	query = strings.Replace(query, ".time_series_v4", ".distributed_time_series_v4", 1)
+	query = localQueryToDistributedQuery(query)
 
 	attrsListResponse, err := h.reader.GetListResultV3(ctx, query)
 	if err != nil {
@@ -185,6 +200,75 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context,
 	return hostAttrs, nil
 }
 
+// getTopHosts returns the top hosts for the given order by column name
+func (h *HostsRepo) getTopHosts(ctx context.Context, req model.HostListRequest, q *v3.QueryRangeParamsV3, hostNameAttrKey string) ([]string, []string, error) {
+	step, timeSeriesTableName, samplesTableName := getParamsForTopHosts(req)
+
+	queryNames := queryNamesForTopHosts[req.OrderBy.ColumnName]
+	topHostsQueryRangeParams := &v3.QueryRangeParamsV3{
+		Start: req.Start,
+		End:   req.End,
+		Step:  step,
+		CompositeQuery: &v3.CompositeQuery{
+			BuilderQueries: map[string]*v3.BuilderQuery{},
+			QueryType:      v3.QueryTypeBuilder,
+			PanelType:      v3.PanelTypeTable,
+		},
+	}
+
+	for _, queryName := range queryNames {
+		query := q.CompositeQuery.BuilderQueries[queryName].Clone()
+		query.StepInterval = step
+		query.MetricTableHints = &v3.MetricTableHints{
+			TimeSeriesTableName: timeSeriesTableName,
+			SamplesTableName:    samplesTableName,
+		}
+		if req.Filters != nil && len(req.Filters.Items) > 0 {
+			if query.Filters == nil {
+				query.Filters = &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}}
+			}
+			query.Filters.Items = append(query.Filters.Items, req.Filters.Items...)
+		}
+		topHostsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
+	}
+
+	queryResponse, _, err := h.querierV2.QueryRange(ctx, topHostsQueryRangeParams)
+	if err != nil {
+		return nil, nil, err
+	}
+	formattedResponse, err := postprocess.PostProcessResult(queryResponse, topHostsQueryRangeParams)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(formattedResponse) == 0 || len(formattedResponse[0].Series) == 0 {
+		return nil, nil, nil
+	}
+
+	if req.OrderBy.Order == v3.DirectionDesc {
+		sort.Slice(formattedResponse[0].Series, func(i, j int) bool {
+			return formattedResponse[0].Series[i].Points[0].Value > formattedResponse[0].Series[j].Points[0].Value
+		})
+	} else {
+		sort.Slice(formattedResponse[0].Series, func(i, j int) bool {
+			return formattedResponse[0].Series[i].Points[0].Value < formattedResponse[0].Series[j].Points[0].Value
+		})
+	}
+
+	paginatedTopHostsSeries := formattedResponse[0].Series[req.Offset : req.Offset+req.Limit]
+
+	topHosts := []string{}
+	for _, series := range paginatedTopHostsSeries {
+		topHosts = append(topHosts, series.Labels[hostNameAttrKey])
+	}
+	allHosts := []string{}
+	for _, series := range formattedResponse[0].Series {
+		allHosts = append(allHosts, series.Labels[hostNameAttrKey])
+	}
+
+	return topHosts, allHosts, nil
+}
+
 func (h *HostsRepo) getActiveHosts(ctx context.Context,
 	req model.HostListRequest, hostNameAttrKey string) (map[string]bool, error) {
 	activeStatus := map[string]bool{}
@@ -202,7 +286,7 @@ func (h *HostsRepo) getActiveHosts(ctx context.Context,
 	}
 
 	params := v3.QueryRangeParamsV3{
-		Start: time.Now().Add(-time.Hour).UTC().UnixMilli(),
+		Start: time.Now().Add(-time.Minute * 10).UTC().UnixMilli(),
 		End:   time.Now().UTC().UnixMilli(),
 		Step:  step,
 		CompositeQuery: &v3.CompositeQuery{
@@ -212,7 +296,7 @@ func (h *HostsRepo) getActiveHosts(ctx context.Context,
 					StepInterval: step,
 					DataSource:   v3.DataSourceMetrics,
 					AggregateAttribute: v3.AttributeKey{
-						Key:      "system_cpu_load_average_15m",
+						Key:      metricToUseForHostAttributes,
 						DataType: v3.AttributeKeyDataTypeFloat64,
 					},
 					Temporality:      v3.Unspecified,
@@ -245,24 +329,33 @@ func (h *HostsRepo) getActiveHosts(ctx context.Context,
 }
 
 func (h *HostsRepo) getHostsForQuery(ctx context.Context,
-	req model.HostListRequest, q *v3.QueryRangeParamsV3, hostNameAttrKey string) ([]model.HostListRecord, error) {
+	req model.HostListRequest, q *v3.QueryRangeParamsV3, hostNameAttrKey string) ([]model.HostListRecord, []string, error) {
 
 	step := common.MinAllowedStepInterval(req.Start, req.End)
 
 	query := q.Clone()
-	if req.OrderBy != nil {
-		for _, q := range query.CompositeQuery.BuilderQueries {
-			q.OrderBy = []v3.OrderBy{*req.OrderBy}
-		}
-	}
 
 	query.Start = req.Start
 	query.End = req.End
 	query.Step = step
 
+	topHosts, allHosts, err := h.getTopHosts(ctx, req, q, hostNameAttrKey)
+	zap.L().Info("topHosts for query", zap.Any("topHosts", topHosts), zap.Any("allHosts", allHosts), zap.Any("req", req))
+	if err != nil {
+		return nil, nil, err
+	}
+
 	for _, query := range query.CompositeQuery.BuilderQueries {
 		query.StepInterval = step
+		// check if the filter has host_name and is either IN or EQUAL operator
+		// if so, we don't need to add the topHosts filter again
+		hasHostNameInOrEqual := false
 		if req.Filters != nil && len(req.Filters.Items) > 0 {
+			for _, item := range req.Filters.Items {
+				if item.Key.Key == hostNameAttrKey && (item.Operator == v3.FilterOperatorIn || item.Operator == v3.FilterOperatorEqual) {
+					hasHostNameInOrEqual = true
+				}
+			}
 			if query.Filters == nil {
 				query.Filters = &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}}
 			}
@@ -270,29 +363,41 @@ func (h *HostsRepo) getHostsForQuery(ctx context.Context,
 			// what is happening here?
 			// if the filter has host_name and we are querying for k8s host metrics,
 			// we need to replace the host_name with k8s_node_name
-			if hostNameAttrKey == "k8s_node_name" {
+			if hostNameAttrKey == k8sNodeNameAttrKey {
 				for idx, item := range query.Filters.Items {
-					if item.Key.Key == "host_name" {
-						query.Filters.Items[idx].Key.Key = "k8s_node_name"
+					if item.Key.Key == hostNameAttrKey {
+						query.Filters.Items[idx].Key.Key = k8sNodeNameAttrKey
 					}
 				}
 			}
+		}
+		if !hasHostNameInOrEqual {
+			if query.Filters == nil {
+				query.Filters = &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}}
+			}
+			query.Filters.Items = append(query.Filters.Items, v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key: hostNameAttrKey,
+				},
+				Value:    topHosts,
+				Operator: v3.FilterOperatorIn,
+			})
 		}
 	}
 
 	hostAttrs, err := h.getMetadataAttributes(ctx, req, hostNameAttrKey)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	activeHosts, err := h.getActiveHosts(ctx, req, hostNameAttrKey)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	queryResponse, _, err := h.querierV2.QueryRange(ctx, query)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	type hostTSInfo struct {
@@ -321,7 +426,7 @@ func (h *HostsRepo) getHostsForQuery(ctx context.Context,
 
 	formulaResult, err := postprocess.PostProcessResult(queryResponse, query)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	for _, result := range formulaResult {
@@ -394,7 +499,7 @@ func (h *HostsRepo) getHostsForQuery(ctx context.Context,
 		records = append(records, record)
 	}
 
-	return records, nil
+	return records, allHosts, nil
 }
 
 func dedupRecords(records []model.HostListRecord) []model.HostListRecord {
@@ -413,34 +518,33 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 	if req.Limit == 0 {
 		req.Limit = 10
 	}
+	if req.OrderBy == nil {
+		req.OrderBy = &v3.OrderBy{ColumnName: "cpu", Order: v3.DirectionDesc}
+	}
 
 	resp := model.HostListResponse{
 		Type: "list",
 	}
 
-	vmRecords, err := h.getHostsForQuery(ctx, req, &NonK8STableListQuery, "host_name")
-	if err != nil {
-		return resp, err
-	}
-	k8sRecords, err := h.getHostsForQuery(ctx, req, &K8STableListQuery, "k8s_node_name")
+	vmRecords, vmAllHosts, err := h.getHostsForQuery(ctx, req, &NonK8STableListQuery, hostNameAttrKey)
 	if err != nil {
 		return resp, err
 	}
 
+	k8sRecords, k8sAllHosts, err := h.getHostsForQuery(ctx, req, &K8STableListQuery, k8sNodeNameAttrKey)
+	if err != nil {
+		return resp, err
+	}
+
+	allHosts := append(vmAllHosts, k8sAllHosts...)
 	records := append(vmRecords, k8sRecords...)
 
 	// since we added the fix for incorrect host name, it is possible that both host_name and k8s_node_name
 	// are present in the response. we need to dedup the results.
 	records = dedupRecords(records)
 
-	resp.Total = len(records)
+	resp.Total = len(allHosts)
 
-	if req.Offset > 0 {
-		records = records[req.Offset:]
-	}
-	if req.Limit > 0 && len(records) > req.Limit {
-		records = records[:req.Limit]
-	}
 	resp.Records = records
 
 	if len(req.GroupBy) > 0 {
