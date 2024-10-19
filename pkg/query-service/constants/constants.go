@@ -82,7 +82,7 @@ var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
 
 // TODO(srikanthccv): remove after backfilling is done
 func UseMetricsPreAggregation() bool {
-	return GetOrDefaultEnv("USE_METRICS_PRE_AGGREGATION", "false") == "true"
+	return GetOrDefaultEnv("USE_METRICS_PRE_AGGREGATION", "true") == "true"
 }
 
 var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
