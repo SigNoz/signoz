@@ -23,6 +23,7 @@ import {
 import AggregateEveryFilter from 'container/QueryBuilder/filters/AggregateEveryFilter';
 import LimitFilter from 'container/QueryBuilder/filters/LimitFilter/LimitFilter';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
+import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 // ** Hooks
@@ -80,6 +81,10 @@ export const Query = memo(function Query({
 		isListViewPanel,
 		entityVersion: version,
 	});
+
+	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
+		pathname,
+	]);
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -328,7 +333,7 @@ export const Query = memo(function Query({
 	const isVersionV4 = version && version === ENTITY_VERSION_V4;
 
 	return (
-		<Row gutter={[0, 12]}>
+		<Row gutter={[0, 12]} className={`query-builder-${version}`}>
 			<QBEntityOptions
 				isMetricsDataSource={isMetricsDataSource}
 				showFunctions={
@@ -348,6 +353,7 @@ export const Query = memo(function Query({
 				onQueryFunctionsUpdates={handleQueryFunctionsUpdates}
 				showDeleteButton={currentQuery.builder.queryData.length > 1}
 				isListViewPanel={isListViewPanel}
+				index={index}
 			/>
 
 			{!isCollapse && (
@@ -451,11 +457,19 @@ export const Query = memo(function Query({
 										</Col>
 									)}
 									<Col flex="1" className="qb-search-container">
-										<QueryBuilderSearch
-											query={query}
-											onChange={handleChangeTagFilters}
-											whereClauseConfig={filterConfigs?.filters}
-										/>
+										{isLogsExplorerPage ? (
+											<QueryBuilderSearchV2
+												query={query}
+												onChange={handleChangeTagFilters}
+												whereClauseConfig={filterConfigs?.filters}
+											/>
+										) : (
+											<QueryBuilderSearch
+												query={query}
+												onChange={handleChangeTagFilters}
+												whereClauseConfig={filterConfigs?.filters}
+											/>
+										)}
 									</Col>
 								</Row>
 							</Col>

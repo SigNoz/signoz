@@ -18,11 +18,11 @@ import (
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
 
-	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -255,7 +255,7 @@ func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error)
 		levelDownStr = "0"
 	}
 	if SpanRenderLimitStr == "" || SpanRenderLimitStr == "null" {
-		SpanRenderLimitStr = constants.SpanRenderLimitStr
+		SpanRenderLimitStr = baseconstants.SpanRenderLimitStr
 	}
 
 	levelUpInt, err := strconv.Atoi(levelUpStr)
@@ -270,7 +270,7 @@ func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error)
 	if err != nil {
 		return nil, err
 	}
-	MaxSpansInTraceInt, err := strconv.Atoi(constants.MaxSpansInTraceStr)
+	MaxSpansInTraceInt, err := strconv.Atoi(baseconstants.MaxSpansInTraceStr)
 	if err != nil {
 		return nil, err
 	}
@@ -725,6 +725,45 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 	return &req, nil
 }
 
+func isValidRole(role string) bool {
+	switch role {
+	case constants.AdminGroup, constants.EditorGroup, constants.ViewerGroup:
+		return true
+	}
+	return false
+}
+
+func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) {
+	var req model.BulkInviteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	// Validate that the request contains users
+	if len(req.Users) == 0 {
+		return nil, fmt.Errorf("no users provided for invitation")
+	}
+
+	// Trim spaces and validate each user
+	for i := range req.Users {
+		req.Users[i].Email = strings.TrimSpace(req.Users[i].Email)
+		if req.Users[i].Email == "" {
+			return nil, fmt.Errorf("email is required for each user")
+		}
+		if req.Users[i].Name == "" {
+			return nil, fmt.Errorf("name is required for each user")
+		}
+		if req.Users[i].FrontendBaseUrl == "" {
+			return nil, fmt.Errorf("frontendBaseUrl is required for each user")
+		}
+		if !isValidRole(req.Users[i].Role) {
+			return nil, fmt.Errorf("invalid role for user: %s", req.Users[i].Email)
+		}
+	}
+
+	return &req, nil
+}
+
 func parseSetApdexScoreRequest(r *http.Request) (*model.ApdexSettings, error) {
 	var req model.ApdexSettings
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -846,15 +885,41 @@ func parseQBFilterSuggestionsRequest(r *http.Request) (
 		return nil, model.BadRequest(err)
 	}
 
-	limit := baseconstants.DefaultFilterSuggestionsLimit
-	limitStr := r.URL.Query().Get("limit")
-	if len(limitStr) > 0 {
-		limit, err := strconv.Atoi(limitStr)
-		if err != nil || limit < 1 {
-			return nil, model.BadRequest(fmt.Errorf(
-				"invalid limit: %s", limitStr,
-			))
+	parsePositiveIntQP := func(
+		queryParam string, defaultValue uint64, maxValue uint64,
+	) (uint64, *model.ApiError) {
+		value := defaultValue
+
+		qpValue := r.URL.Query().Get(queryParam)
+		if len(qpValue) > 0 {
+			value, err := strconv.Atoi(qpValue)
+
+			if err != nil || value < 1 || value > int(maxValue) {
+				return 0, model.BadRequest(fmt.Errorf(
+					"invalid %s: %s", queryParam, qpValue,
+				))
+			}
 		}
+
+		return value, nil
+	}
+
+	attributesLimit, err := parsePositiveIntQP(
+		"attributesLimit",
+		baseconstants.DefaultFilterSuggestionsAttributesLimit,
+		baseconstants.MaxFilterSuggestionsAttributesLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	examplesLimit, err := parsePositiveIntQP(
+		"examplesLimit",
+		baseconstants.DefaultFilterSuggestionsExamplesLimit,
+		baseconstants.MaxFilterSuggestionsExamplesLimit,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	var existingFilter *v3.FilterSet
@@ -875,10 +940,11 @@ func parseQBFilterSuggestionsRequest(r *http.Request) (
 	searchText := r.URL.Query().Get("searchText")
 
 	return &v3.QBFilterSuggestionsRequest{
-		DataSource:     dataSource,
-		Limit:          limit,
-		SearchText:     searchText,
-		ExistingFilter: existingFilter,
+		DataSource:      dataSource,
+		SearchText:      searchText,
+		ExistingFilter:  existingFilter,
+		AttributesLimit: attributesLimit,
+		ExamplesLimit:   examplesLimit,
 	}, nil
 }
 

@@ -5,7 +5,7 @@ import { Button, Dropdown, Flex, MenuProps, Switch } from 'antd';
 import { ColumnGroupType, ColumnType } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
 import logEvent from 'api/common/logEvent';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { SlidersHorizontal } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -96,7 +96,7 @@ function DynamicColumnTable({
 	return (
 		<div className="DynamicColumnTable">
 			<Flex justify="flex-end" align="center" gap={8}>
-				{facingIssueBtn && <FacingIssueBtn {...facingIssueBtn} />}
+				{facingIssueBtn && <LaunchChatSupport {...facingIssueBtn} />}
 				{dynamicColumns && (
 					<Dropdown
 						getPopupContainer={popupContainer}
@@ -107,6 +107,7 @@ function DynamicColumnTable({
 							className="dynamicColumnTable-button filter-btn"
 							size="middle"
 							icon={<SlidersHorizontal size={14} />}
+							data-testid="additional-filters-button"
 						/>
 					</Dropdown>
 				)}

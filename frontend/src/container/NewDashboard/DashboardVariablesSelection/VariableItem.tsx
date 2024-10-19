@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -25,8 +26,11 @@ import { debounce, isArray, isString } from 'lodash-es';
 import map from 'lodash-es/map';
 import { ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { variablePropsToPayloadVariables } from '../utils';
@@ -58,14 +62,14 @@ interface VariableItemProps {
 const getSelectValue = (
 	selectedValue: IDashboardVariable['selectedValue'],
 	variableData: IDashboardVariable,
-): string | string[] => {
+): string | string[] | undefined => {
 	if (Array.isArray(selectedValue)) {
 		if (!variableData.multiSelect && selectedValue.length === 1) {
-			return selectedValue[0]?.toString() || '';
+			return selectedValue[0]?.toString();
 		}
 		return selectedValue.map((item) => item.toString());
 	}
-	return selectedValue?.toString() || '';
+	return selectedValue?.toString();
 };
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -79,6 +83,23 @@ function VariableItem({
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
 		[],
 	);
+
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	useEffect(() => {
+		if (variableData.allSelected && variableData.type === 'QUERY') {
+			setVariablesToGetUpdated((prev) => {
+				const variablesQueue = [...prev.filter((v) => v !== variableData.name)];
+				if (variableData.name) {
+					variablesQueue.push(variableData.name);
+				}
+				return variablesQueue;
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [minTime, maxTime]);
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
@@ -111,7 +132,14 @@ function VariableItem({
 
 		const variableKey = dependentVariablesStr.replace(/\s/g, '');
 
-		return [REACT_QUERY_KEY.DASHBOARD_BY_ID, variableName, variableKey];
+		// added this time dependency for variables query as API respects the passed time range now
+		return [
+			REACT_QUERY_KEY.DASHBOARD_BY_ID,
+			variableName,
+			variableKey,
+			`${minTime}`,
+			`${maxTime}`,
+		];
 	};
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -151,10 +179,14 @@ function VariableItem({
 								valueNotInList = true;
 							}
 						}
+						// variablesData.allSelected is added for the case where on change of options we need to update the
+						// local storage
 						if (
 							variableData.type === 'QUERY' &&
 							variableData.name &&
-							(variablesToGetUpdated.includes(variableData.name) || valueNotInList)
+							(variablesToGetUpdated.includes(variableData.name) ||
+								valueNotInList ||
+								variableData.allSelected)
 						) {
 							let value = variableData.selectedValue;
 							let allSelected = false;
@@ -225,8 +257,7 @@ function VariableItem({
 		if (variableData.name) {
 			if (
 				value === ALL_SELECT_VALUE ||
-				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE)) ||
-				(Array.isArray(value) && value.length === 0)
+				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
 			) {
 				onValueUpdate(variableData.name, variableData.id, optionsData, true);
 			} else {
@@ -268,7 +299,7 @@ function VariableItem({
 		e.stopPropagation();
 		e.preventDefault();
 		const isChecked =
-			variableData.allSelected || selectValue.includes(ALL_SELECT_VALUE);
+			variableData.allSelected || selectValue?.includes(ALL_SELECT_VALUE);
 
 		if (isChecked) {
 			handleChange([]);
@@ -292,10 +323,6 @@ function VariableItem({
 			Array.isArray(selectedValueStringified) &&
 			selectedValueStringified.includes(option.toString())
 		) {
-			if (newSelectedValue.length === 0) {
-				handleChange(ALL_SELECT_VALUE);
-				return;
-			}
 			if (newSelectedValue.length === 1) {
 				handleChange(newSelectedValue[0].toString());
 				return;
@@ -338,8 +365,8 @@ function VariableItem({
 			(Array.isArray(selectValue) && selectValue?.includes(option.toString()));
 
 		if (isChecked) {
-			if (mode === ToggleTagValue.Only) {
-				handleChange(option.toString());
+			if (mode === ToggleTagValue.Only && variableData.multiSelect) {
+				handleChange([option.toString()]);
 			} else if (!variableData.multiSelect) {
 				handleChange(option.toString());
 			} else {
@@ -430,6 +457,7 @@ function VariableItem({
 									<span>+ {omittedValues.length} </span>
 								</Tooltip>
 							)}
+							allowClear
 						>
 							{enableSelectAll && (
 								<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
@@ -468,11 +496,17 @@ function VariableItem({
 											{...retProps(option as string)}
 											onClick={(e): void => handleToggle(e as any, option as string)}
 										>
-											<Tooltip title={option.toString()} placement="bottomRight">
-												<Typography.Text ellipsis className="option-text">
-													{option.toString()}
-												</Typography.Text>
-											</Tooltip>
+											<Typography.Text
+												ellipsis={{
+													tooltip: {
+														placement: variableData.multiSelect ? 'top' : 'right',
+														autoAdjustOverflow: true,
+													},
+												}}
+												className="option-text"
+											>
+												{option.toString()}
+											</Typography.Text>
 
 											{variableData.multiSelect &&
 												optionState.tag === option.toString() &&

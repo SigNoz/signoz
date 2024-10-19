@@ -133,7 +133,7 @@ var buildFilterQueryData = []struct {
 func TestBuildTracesFilterQuery(t *testing.T) {
 	for _, tt := range buildFilterQueryData {
 		Convey("TestBuildTracesFilterQuery", t, func() {
-			query, err := buildTracesFilterQuery(tt.FilterSet, map[string]v3.AttributeKey{})
+			query, err := buildTracesFilterQuery(tt.FilterSet)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedFilter)
 		})
@@ -169,7 +169,7 @@ var handleEmptyValuesInGroupByData = []struct {
 func TestBuildTracesHandleEmptyValuesInGroupBy(t *testing.T) {
 	for _, tt := range handleEmptyValuesInGroupByData {
 		Convey("TestBuildTracesHandleEmptyValuesInGroupBy", t, func() {
-			query, err := handleEmptyValuesInGroupBy(map[string]v3.AttributeKey{}, tt.GroupBy)
+			query, err := handleEmptyValuesInGroupBy(tt.GroupBy)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedFilter)
 		})
@@ -220,8 +220,9 @@ var testColumnName = []struct {
 
 func TestColumnName(t *testing.T) {
 	for _, tt := range testColumnName {
+		tt.AttributeKey = enrichKeyWithMetadata(tt.AttributeKey, map[string]v3.AttributeKey{})
 		Convey("testColumnName", t, func() {
-			Column := getColumnName(tt.AttributeKey, map[string]v3.AttributeKey{})
+			Column := getColumnName(tt.AttributeKey)
 			So(Column, ShouldEqual, tt.ExpectedColumn)
 		})
 	}
@@ -265,7 +266,7 @@ var testGetSelectLabelsData = []struct {
 func TestGetSelectLabels(t *testing.T) {
 	for _, tt := range testGetSelectLabelsData {
 		Convey("testGetSelectLabelsData", t, func() {
-			selectLabels := getSelectLabels(tt.AggregateOperator, tt.GroupByTags, map[string]v3.AttributeKey{})
+			selectLabels := getSelectLabels(tt.AggregateOperator, tt.GroupByTags)
 			So(selectLabels, ShouldEqual, tt.SelectLabels)
 		})
 	}
@@ -304,7 +305,7 @@ var testGetSelectColumnsData = []struct {
 func TestGetSelectColumns(t *testing.T) {
 	for _, tt := range testGetSelectColumnsData {
 		Convey("testGetSelectColumnsData", t, func() {
-			selectColumns := getSelectColumns(tt.sc, map[string]v3.AttributeKey{})
+			selectColumns := getSelectColumns(tt.sc)
 			So(selectColumns, ShouldEqual, tt.SelectColumns)
 		})
 	}
@@ -464,13 +465,15 @@ var testOrderBy = []struct {
 }
 
 func TestOrderBy(t *testing.T) {
+	keys := map[string]v3.AttributeKey{
+		"name":          {Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+		"bytes":         {Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+		"response_time": {Key: "response_time", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: false},
+	}
 	for _, tt := range testOrderBy {
 		Convey("testOrderBy", t, func() {
-			res := orderByAttributeKeyTags(tt.PanelType, tt.Items, tt.Tags, map[string]v3.AttributeKey{
-				"name":          {Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-				"bytes":         {Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-				"response_time": {Key: "response_time", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: false},
-			})
+			tt.Items = enrichOrderBy(tt.Items, keys)
+			res := orderByAttributeKeyTags(tt.PanelType, tt.Items, tt.Tags)
 			So(res, ShouldResemble, tt.Result)
 		})
 	}
@@ -1159,23 +1162,37 @@ var testBuildTracesQueryData = []struct {
 				},
 			},
 		},
-		ExpectedQuery: "WITH subQuery AS (SELECT distinct on (traceID) traceID, durationNano, serviceName," +
-			" name FROM signoz_traces.distributed_signoz_index_v2 WHERE parentSpanID = '' AND (timestamp >= '1680066360726210000' AND " +
-			"timestamp <= '1680066458000000000')  AND stringTagMap['method'] = 'GET' ORDER BY durationNano DESC  LIMIT 100)" +
-			" SELECT subQuery.serviceName, subQuery.name, count() AS span_count, subQuery.durationNano, traceID" +
-			" FROM signoz_traces.distributed_signoz_index_v2 GLOBAL INNER JOIN subQuery ON distributed_signoz_index_v2.traceID" +
-			" = subQuery.traceID GROUP BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName " +
-			"ORDER BY subQuery.durationNano desc;",
+		ExpectedQuery: "SELECT subQuery.serviceName, subQuery.name, count() AS span_count, subQuery.durationNano, subQuery.traceID" +
+			" AS traceID FROM signoz_traces.distributed_signoz_index_v2 INNER JOIN" +
+			" ( SELECT * FROM (SELECT traceID, durationNano, serviceName, name " +
+			"FROM signoz_traces.signoz_index_v2 WHERE parentSpanID = '' AND (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')  " +
+			"AND stringTagMap['method'] = 'GET' ORDER BY durationNano DESC LIMIT 1 BY traceID  LIMIT 100)" +
+			" AS inner_subquery ) AS subQuery " +
+			"ON signoz_traces.distributed_signoz_index_v2.traceID = subQuery.traceID WHERE (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			"GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc LIMIT 1 BY subQuery.traceID;",
 		PanelType: v3.PanelTypeTrace,
 	},
 }
 
 func TestBuildTracesQuery(t *testing.T) {
+	keys := map[string]v3.AttributeKey{
+		"name": {Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+	}
+
 	for _, tt := range testBuildTracesQueryData {
+		tt.BuilderQuery.DataSource = v3.DataSourceTraces
+		params := &v3.QueryRangeParamsV3{
+			Version: "v4",
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": tt.BuilderQuery,
+				},
+			},
+		}
+		Enrich(params, keys)
 		Convey("TestBuildTracesQuery", t, func() {
-			query, err := buildTracesQuery(tt.Start, tt.End, tt.BuilderQuery.StepInterval, tt.BuilderQuery, tt.TableName, map[string]v3.AttributeKey{
-				"name": {Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-			}, tt.PanelType, tt.Options)
+			query, err := buildTracesQuery(tt.Start, tt.End, tt.BuilderQuery.StepInterval, tt.BuilderQuery, tt.TableName, tt.PanelType, tt.Options)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 		})
@@ -1400,7 +1417,7 @@ var testPrepTracesQueryData = []struct {
 func TestPrepareTracesQuery(t *testing.T) {
 	for _, tt := range testPrepTracesQueryData {
 		Convey("TestPrepareTracesQuery", t, func() {
-			query, err := PrepareTracesQuery(tt.Start, tt.End, tt.PanelType, tt.BuilderQuery, tt.Keys, tt.Options)
+			query, err := PrepareTracesQuery(tt.Start, tt.End, tt.PanelType, tt.BuilderQuery, tt.Options)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 		})

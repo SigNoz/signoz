@@ -1,7 +1,6 @@
 import { RocketOutlined } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
 import {
-	AreaChart,
 	BarChart2,
 	BellDot,
 	BugIcon,
@@ -10,6 +9,7 @@ import {
 	FileKey2,
 	Layers2,
 	LayoutGrid,
+	ListMinus,
 	MessageSquare,
 	Receipt,
 	Route,
@@ -87,6 +87,12 @@ const menuItems: SidebarItem[] = [
 		icon: <LayoutGrid size={16} />,
 	},
 	{
+		key: ROUTES.MESSAGING_QUEUES,
+		label: 'Messaging Queues',
+		icon: <ListMinus size={16} />,
+		isBeta: true,
+	},
+	{
 		key: ROUTES.LIST_ALL_ALERT,
 		label: 'Alerts',
 		icon: <BellDot size={16} />,
@@ -106,11 +112,6 @@ const menuItems: SidebarItem[] = [
 		label: 'Service Map',
 		icon: <Route size={16} />,
 		isBeta: true,
-	},
-	{
-		key: ROUTES.USAGE_EXPLORER,
-		label: 'Usage Explorer',
-		icon: <AreaChart size={16} />,
 	},
 	{
 		key: ROUTES.BILLING,

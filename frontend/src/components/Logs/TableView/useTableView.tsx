@@ -3,6 +3,8 @@ import './useTableView.styles.scss';
 import Convert from 'ansi-to-html';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import cx from 'classnames';
+import { unescapeString } from 'container/LogDetailedView/utils';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -31,9 +33,8 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		logs,
 		fields,
 		linesPerRow,
+		fontSize,
 		appendTo = 'center',
-		activeContextLog,
-		activeLog,
 		isListViewPanel,
 	} = props;
 
@@ -57,7 +58,10 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 							: getDefaultCellStyle(isDarkMode),
 					},
 					children: (
-						<Typography.Paragraph ellipsis={{ rows: linesPerRow }}>
+						<Typography.Paragraph
+							ellipsis={{ rows: linesPerRow }}
+							className={cx('paragraph', fontSize)}
+						>
 							{field}
 						</Typography.Paragraph>
 					),
@@ -84,11 +88,9 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 							<div className="table-timestamp">
 								<LogStateIndicator
 									type={getLogIndicatorTypeForTable(item)}
-									isActive={
-										activeLog?.id === item.id || activeContextLog?.id === item.id
-									}
+									fontSize={fontSize}
 								/>
-								<Typography.Paragraph ellipsis className="text">
+								<Typography.Paragraph ellipsis className={cx('text', fontSize)}>
 									{date}
 								</Typography.Paragraph>
 							</div>
@@ -109,11 +111,12 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 						<TableBodyContent
 							dangerouslySetInnerHTML={{
 								__html: convert.toHtml(
-									dompurify.sanitize(field, {
+									dompurify.sanitize(unescapeString(field), {
 										FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 									}),
 								),
 							}}
+							fontSize={fontSize}
 							linesPerRow={linesPerRow}
 							isDarkMode={isDarkMode}
 						/>
@@ -122,15 +125,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 			},
 			...(appendTo === 'end' ? fieldColumns : []),
 		];
-	}, [
-		fields,
-		isListViewPanel,
-		appendTo,
-		isDarkMode,
-		linesPerRow,
-		activeLog?.id,
-		activeContextLog?.id,
-	]);
+	}, [fields, isListViewPanel, appendTo, isDarkMode, linesPerRow, fontSize]);
 
 	return { columns, dataSource: flattenLogData };
 };

@@ -26,7 +26,12 @@ function ServiceTraceTable({
 	const tableColumns = useMemo(() => getColumns(search, false), [search]);
 
 	useEffect(() => {
-		if (!isFetching && licenseData?.payload?.onTrial && isCloudUserVal) {
+		if (
+			!isFetching &&
+			licenseData?.payload?.onTrial &&
+			!licenseData?.payload?.trialConvertedToSubscription &&
+			isCloudUserVal
+		) {
 			if (services.length > 0) {
 				const rps = getTotalRPS(services);
 				setRPS(rps);
@@ -44,10 +49,11 @@ function ServiceTraceTable({
 	return (
 		<>
 			{RPS > MAX_RPS_LIMIT && (
-				<Flex justify="flex-end">
-					<Typography.Text type="warning" style={{ marginTop: 0 }}>
+				<Flex justify="left">
+					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
 						<WarningFilled /> {getText('rps_over_100')}
-					</Typography.Text>
+						<a href="mailto:cloud-support@signoz.io">email</a>
+					</Typography.Title>
 				</Flex>
 			)}
 

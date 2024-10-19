@@ -23,6 +23,9 @@
             [1]: https://github.com/pocoproject/poco/blob/poco-1.9.4-release/Foundation/include/Poco/Logger.h#L105-L114
         -->
         <level>information</level>
+        <formatting>
+            <type>json</type>
+        </formatting>
         <log>/var/log/clickhouse-server/clickhouse-server.log</log>
         <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
         <!-- Rotation policy
@@ -649,12 +652,12 @@
 
          See https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/replication/#creating-replicated-tables
       -->
-    <!--
+    
     <macros>
         <shard>01</shard>
         <replica>example01-01-1</replica>
     </macros>
-    -->
+   
 
 
     <!-- Reloading interval for embedded dictionaries, in seconds. Default: 3600. -->

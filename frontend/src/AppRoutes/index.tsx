@@ -12,6 +12,7 @@ import useAnalytics from 'hooks/analytics/useAnalytics';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
+import useFeatureFlags from 'hooks/useFeatureFlag';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
 import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
@@ -19,6 +20,7 @@ import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
 import { identity, pick, pickBy } from 'lodash-es';
 import posthog from 'posthog-js';
+import AlertRuleProvider from 'providers/Alert';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useEffect, useState } from 'react';
@@ -57,15 +59,13 @@ function App(): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 
+	const isChatSupportEnabled =
+		useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active || false;
+
+	const isPremiumSupportEnabled =
+		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
+
 	const featureResponse = useGetFeatureFlag((allFlags) => {
-		const isOnboardingEnabled =
-			allFlags.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
-			false;
-
-		const isChatSupportEnabled =
-			allFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)?.active ||
-			false;
-
 		dispatch({
 			type: UPDATE_FEATURE_FLAG_RESPONSE,
 			payload: {
@@ -74,22 +74,16 @@ function App(): JSX.Element {
 			},
 		});
 
+		const isOnboardingEnabled =
+			allFlags.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
+			false;
+
 		if (!isOnboardingEnabled || !isCloudUserVal) {
 			const newRoutes = routes.filter(
 				(route) => route?.path !== ROUTES.GET_STARTED,
 			);
 
 			setRoutes(newRoutes);
-		}
-
-		if (isLoggedInState && isChatSupportEnabled) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			window.Intercom('boot', {
-				app_id: process.env.INTERCOM_APP_ID,
-				email: user?.email || '',
-				name: user?.name || '',
-			});
 		}
 	});
 
@@ -128,7 +122,6 @@ function App(): JSX.Element {
 
 		window.analytics.identify(email, sanitizedIdentifyPayload);
 		window.analytics.group(domain, groupTraits);
-		window.clarity('identify', email, name);
 
 		posthog?.identify(email, {
 			email,
@@ -194,6 +187,26 @@ function App(): JSX.Element {
 	}, [pathname]);
 
 	useEffect(() => {
+		const showAddCreditCardModal =
+			!isPremiumSupportEnabled &&
+			!licenseData?.payload?.trialConvertedToSubscription;
+
+		if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
+			window.Intercom('boot', {
+				app_id: process.env.INTERCOM_APP_ID,
+				email: user?.email || '',
+				name: user?.name || '',
+			});
+		}
+	}, [
+		isLoggedInState,
+		isChatSupportEnabled,
+		user,
+		licenseData,
+		isPremiumSupportEnabled,
+	]);
+
+	useEffect(() => {
 		if (user && user?.email && user?.userId && user?.name) {
 			try {
 				const isThemeAnalyticsSent = getLocalStorageApi(
@@ -219,6 +232,10 @@ function App(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [user]);
 
+	useEffect(() => {
+		console.info('We are hiring! https://jobs.gem.com/signoz');
+	}, []);
+
 	return (
 		<ConfigProvider theme={themeConfig}>
 			<Router history={history}>
@@ -228,22 +245,24 @@ function App(): JSX.Element {
 							<QueryBuilderProvider>
 								<DashboardProvider>
 									<KeyboardHotkeysProvider>
-										<AppLayout>
-											<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-												<Switch>
-													{routes.map(({ path, component, exact }) => (
-														<Route
-															key={`${path}`}
-															exact={exact}
-															path={path}
-															component={component}
-														/>
-													))}
+										<AlertRuleProvider>
+											<AppLayout>
+												<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+													<Switch>
+														{routes.map(({ path, component, exact }) => (
+															<Route
+																key={`${path}`}
+																exact={exact}
+																path={path}
+																component={component}
+															/>
+														))}
 
-													<Route path="*" component={NotFound} />
-												</Switch>
-											</Suspense>
-										</AppLayout>
+														<Route path="*" component={NotFound} />
+													</Switch>
+												</Suspense>
+											</AppLayout>
+										</AlertRuleProvider>
 									</KeyboardHotkeysProvider>
 								</DashboardProvider>
 							</QueryBuilderProvider>

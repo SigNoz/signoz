@@ -49,7 +49,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 				Type: "router",
 				Routes: &[]Route{
 					{
-						Output: v.Config[0].ID,
+						Output: operators[0].ID,
 						Expr:   filterExpr,
 					},
 				},

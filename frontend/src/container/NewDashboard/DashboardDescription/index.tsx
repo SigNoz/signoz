@@ -12,8 +12,8 @@ import {
 	Typography,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
-import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { dashboardHelpMessage } from 'components/LaunchChatSupport/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -182,6 +182,15 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const { t } = useTranslation(['dashboard', 'common']);
 
+	// used to set the initial value for the updatedTitle
+	// the context value is sometimes not available during the initial render
+	// due to which the updatedTitle is set to some previous value
+	useEffect(() => {
+		if (selectedDashboard) {
+			setUpdatedTitle(selectedDashboard.data.title);
+		}
+	}, [selectedDashboard]);
+
 	useEffect(() => {
 		if (state.error) {
 			notifications.error({
@@ -294,36 +303,32 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					>
 						Dashboard /
 					</Button>
-					<Button
-						type="text"
-						className="id-btn"
-						icon={
-							// eslint-disable-next-line jsx-a11y/img-redundant-alt
-							<img
-								src={image}
-								alt="dashboard-image"
-								style={{ height: '14px', width: '14px' }}
-							/>
-						}
-					>
+					<Button type="text" className="id-btn dashboard-name-btn">
+						<img
+							src={image}
+							alt="dashboard-icon"
+							style={{ height: '14px', width: '14px' }}
+						/>
 						{title}
 					</Button>
 				</section>
 			</div>
-			<section className="dashbord-details">
+			<section className="dashboard-details">
 				<div className="left-section">
-					<img
-						src={image}
-						alt="dashboard-img"
-						style={{ width: '16px', height: '16px' }}
-					/>
-					<Typography.Text className="dashboard-title" data-testid="dashboard-title">
-						{title}
-					</Typography.Text>
+					<img src={image} alt="dashboard-img" className="dashboard-img" />
+					<Tooltip title={title.length > 30 ? title : ''}>
+						<Typography.Text
+							className="dashboard-title"
+							data-testid="dashboard-title"
+						>
+							{' '}
+							{title}
+						</Typography.Text>
+					</Tooltip>
 					{isDashboardLocked && <LockKeyhole size={14} />}
 				</div>
 				<div className="right-section">
-					<FacingIssueBtn
+					<LaunchChatSupport
 						attributes={{
 							uuid: selectedDashboard?.uuid,
 							title: updatedTitle,

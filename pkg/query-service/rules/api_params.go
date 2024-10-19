@@ -10,10 +10,33 @@ import (
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.uber.org/multierr"
 
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 	yaml "gopkg.in/yaml.v2"
+)
+
+type AlertType string
+
+const (
+	AlertTypeMetric     AlertType = "METRIC_BASED_ALERT"
+	AlertTypeTraces     AlertType = "TRACES_BASED_ALERT"
+	AlertTypeLogs       AlertType = "LOGS_BASED_ALERT"
+	AlertTypeExceptions AlertType = "EXCEPTIONS_BASED_ALERT"
+)
+
+type RuleDataKind string
+
+const (
+	RuleDataKindJson RuleDataKind = "json"
+	RuleDataKindYaml RuleDataKind = "yaml"
+)
+
+var (
+	ErrFailedToParseJSON = errors.New("failed to parse json")
+	ErrFailedToParseYAML = errors.New("failed to parse yaml")
+	ErrInvalidDataType   = errors.New("invalid data type")
 )
 
 // this file contains api request and responses to be
@@ -31,12 +54,12 @@ func newApiErrorBadData(err error) *model.ApiError {
 
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
-	AlertName   string   `yaml:"alert,omitempty" json:"alert,omitempty"`
-	AlertType   string   `yaml:"alertType,omitempty" json:"alertType,omitempty"`
-	Description string   `yaml:"description,omitempty" json:"description,omitempty"`
-	RuleType    RuleType `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
-	EvalWindow  Duration `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
-	Frequency   Duration `yaml:"frequency,omitempty" json:"frequency,omitempty"`
+	AlertName   string    `yaml:"alert,omitempty" json:"alert,omitempty"`
+	AlertType   AlertType `yaml:"alertType,omitempty" json:"alertType,omitempty"`
+	Description string    `yaml:"description,omitempty" json:"description,omitempty"`
+	RuleType    RuleType  `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
+	EvalWindow  Duration  `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
+	Frequency   Duration  `yaml:"frequency,omitempty" json:"frequency,omitempty"`
 
 	RuleCondition *RuleCondition    `yaml:"condition,omitempty" json:"condition,omitempty"`
 	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
@@ -56,31 +79,31 @@ type PostableRule struct {
 	OldYaml string `json:"yaml,omitempty"`
 }
 
-func ParsePostableRule(content []byte) (*PostableRule, []error) {
+func ParsePostableRule(content []byte) (*PostableRule, error) {
 	return parsePostableRule(content, "json")
 }
 
-func parsePostableRule(content []byte, kind string) (*PostableRule, []error) {
+func parsePostableRule(content []byte, kind RuleDataKind) (*PostableRule, error) {
 	return parseIntoRule(PostableRule{}, content, kind)
 }
 
 // parseIntoRule loads the content (data) into PostableRule and also
 // validates the end result
-func parseIntoRule(initRule PostableRule, content []byte, kind string) (*PostableRule, []error) {
+func parseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*PostableRule, error) {
 
 	rule := &initRule
 
 	var err error
-	if kind == "json" {
+	if kind == RuleDataKindJson {
 		if err = json.Unmarshal(content, rule); err != nil {
-			return nil, []error{fmt.Errorf("failed to load json")}
+			return nil, ErrFailedToParseJSON
 		}
-	} else if kind == "yaml" {
+	} else if kind == RuleDataKindYaml {
 		if err = yaml.Unmarshal(content, rule); err != nil {
-			return nil, []error{fmt.Errorf("failed to load yaml")}
+			return nil, ErrFailedToParseYAML
 		}
 	} else {
-		return nil, []error{fmt.Errorf("invalid data type")}
+		return nil, ErrInvalidDataType
 	}
 
 	if rule.RuleCondition == nil && rule.Expr != "" {
@@ -110,7 +133,9 @@ func parseIntoRule(initRule PostableRule, content []byte, kind string) (*Postabl
 
 	if rule.RuleCondition != nil {
 		if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-			rule.RuleType = RuleTypeThreshold
+			if rule.RuleType == "" {
+				rule.RuleType = RuleTypeThreshold
+			}
 		} else if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
 			rule.RuleType = RuleTypeProm
 		}
@@ -122,11 +147,11 @@ func parseIntoRule(initRule PostableRule, content []byte, kind string) (*Postabl
 		}
 	}
 
-	if errs := rule.Validate(); len(errs) > 0 {
-		return nil, errs
+	if err := rule.Validate(); err != nil {
+		return nil, err
 	}
 
-	return rule, []error{}
+	return rule, nil
 }
 
 func isValidLabelName(ln string) bool {
@@ -145,14 +170,60 @@ func isValidLabelValue(v string) bool {
 	return utf8.ValidString(v)
 }
 
-func (r *PostableRule) Validate() (errs []error) {
+func isAllQueriesDisabled(compositeQuery *v3.CompositeQuery) bool {
+	if compositeQuery == nil {
+		return false
+	}
+	if compositeQuery.BuilderQueries == nil && compositeQuery.PromQueries == nil && compositeQuery.ClickHouseQueries == nil {
+		return false
+	}
+	switch compositeQuery.QueryType {
+	case v3.QueryTypeBuilder:
+		if len(compositeQuery.BuilderQueries) == 0 {
+			return false
+		}
+		for _, query := range compositeQuery.BuilderQueries {
+			if !query.Disabled {
+				return false
+			}
+		}
+	case v3.QueryTypePromQL:
+		if len(compositeQuery.PromQueries) == 0 {
+			return false
+		}
+		for _, query := range compositeQuery.PromQueries {
+			if !query.Disabled {
+				return false
+			}
+		}
+	case v3.QueryTypeClickHouseSQL:
+		if len(compositeQuery.ClickHouseQueries) == 0 {
+			return false
+		}
+		for _, query := range compositeQuery.ClickHouseQueries {
+			if !query.Disabled {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (r *PostableRule) Validate() error {
+
+	var errs []error
 
 	if r.RuleCondition == nil {
-		errs = append(errs, errors.Errorf("rule condition is required"))
+		// will get panic if we try to access CompositeQuery, so return here
+		return errors.Errorf("rule condition is required")
 	} else {
 		if r.RuleCondition.CompositeQuery == nil {
 			errs = append(errs, errors.Errorf("composite metric query is required"))
 		}
+	}
+
+	if isAllQueriesDisabled(r.RuleCondition.CompositeQuery) {
+		errs = append(errs, errors.Errorf("all queries are disabled in rule condition"))
 	}
 
 	if r.RuleType == RuleTypeThreshold {
@@ -184,7 +255,7 @@ func (r *PostableRule) Validate() (errs []error) {
 	}
 
 	errs = append(errs, testTemplateParsing(r)...)
-	return errs
+	return multierr.Combine(errs...)
 }
 
 func testTemplateParsing(rl *PostableRule) (errs []error) {
@@ -234,33 +305,11 @@ type GettableRules struct {
 
 // GettableRule has info for an alerting rules.
 type GettableRule struct {
-	Id    string `json:"id"`
-	State string `json:"state"`
+	Id    string           `json:"id"`
+	State model.AlertState `json:"state"`
 	PostableRule
 	CreatedAt *time.Time `json:"createAt"`
 	CreatedBy *string    `json:"createBy"`
 	UpdatedAt *time.Time `json:"updateAt"`
 	UpdatedBy *string    `json:"updateBy"`
-}
-
-type timeRange struct {
-	Start    int64 `json:"start"`
-	End      int64 `json:"end"`
-	PageSize int64 `json:"pageSize"`
-}
-
-type builderQuery struct {
-	QueryData     []v3.BuilderQuery `json:"queryData"`
-	QueryFormulas []string          `json:"queryFormulas"`
-}
-
-type urlShareableCompositeQuery struct {
-	QueryType string       `json:"queryType"`
-	Builder   builderQuery `json:"builder"`
-}
-
-type Options struct {
-	MaxLines      int               `json:"maxLines"`
-	Format        string            `json:"format"`
-	SelectColumns []v3.AttributeKey `json:"selectColumns"`
 }

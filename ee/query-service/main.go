@@ -20,6 +20,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	prommodel "github.com/prometheus/common/model"
+
 	zapotlpencoder "github.com/SigNoz/zap_otlp/zap_otlp_encoder"
 	zapotlpsync "github.com/SigNoz/zap_otlp/zap_otlp_sync"
 
@@ -77,6 +79,10 @@ func initZapLog(enableQueryServiceLogOTLPExport bool) *zap.Logger {
 	return logger
 }
 
+func init() {
+	prommodel.NameValidationScheme = prommodel.UTF8Validation
+}
+
 func main() {
 	var promConfigPath, skipTopLvlOpsPath string
 
@@ -87,6 +93,7 @@ func main() {
 	var ruleRepoURL string
 	var cluster string
 
+	var useLogsNewSchema bool
 	var cacheConfigPath, fluxInterval string
 	var enableQueryServiceLogOTLPExport bool
 	var preferSpanMetrics bool
@@ -96,6 +103,7 @@ func main() {
 	var dialTimeout time.Duration
 	var gatewayUrl string
 
+	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
@@ -134,6 +142,7 @@ func main() {
 		FluxInterval:      fluxInterval,
 		Cluster:           cluster,
 		GatewayUrl:        gatewayUrl,
+		UseLogsNewSchema:  useLogsNewSchema,
 	}
 
 	// Read the jwt secret key

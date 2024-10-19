@@ -28,6 +28,20 @@ const lodsQueryServerRequest = (): void =>
 		),
 	);
 
+jest.mock('uplot', () => {
+	const paths = {
+		spline: jest.fn(),
+		bars: jest.fn(),
+	};
+	const uplotMock = jest.fn(() => ({
+		paths,
+	}));
+	return {
+		paths,
+		default: uplotMock,
+	};
+});
+
 // mocking the graph components in this test as this should be handled separately
 jest.mock(
 	'container/TimeSeriesView/TimeSeriesView',
@@ -45,6 +59,10 @@ jest.mock(
 			return <div>Histogram Chart</div>;
 		},
 );
+
+jest.mock('api/common/getQueryStats', () => ({
+	getQueryStats: jest.fn(),
+}));
 
 jest.mock('constants/panelTypes', () => ({
 	AVAILABLE_EXPORT_PANEL_TYPES: ['graph', 'table'],
@@ -79,6 +97,9 @@ const renderer = (): RenderResult =>
 								<LogsExplorerViews
 									selectedView={SELECTED_VIEWS.SEARCH}
 									showFrequencyChart
+									setIsLoadingQueries={(): void => {}}
+									listQueryKeyRef={{ current: {} }}
+									chartQueryKeyRef={{ current: {} }}
 								/>
 							</VirtuosoMockContext.Provider>
 						</QueryBuilderProvider>

@@ -18,4 +18,6 @@ export type QueryTableProps = Omit<
 	downloadOption?: DownloadOptions;
 	columns?: ColumnsType<RowData>;
 	dataSource?: RowData[];
+	sticky?: TableProps<RowData>['sticky'];
+	searchTerm?: string;
 };

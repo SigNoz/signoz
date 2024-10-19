@@ -69,7 +69,12 @@ function ServiceMetricTable({
 	const [RPS, setRPS] = useState(0);
 
 	useEffect(() => {
-		if (!isFetching && licenseData?.payload?.onTrial && isCloudUserVal) {
+		if (
+			!isFetching &&
+			licenseData?.payload?.onTrial &&
+			!licenseData?.payload?.trialConvertedToSubscription &&
+			isCloudUserVal
+		) {
 			if (services.length > 0) {
 				const rps = getTotalRPS(services);
 				setRPS(rps);
@@ -87,9 +92,10 @@ function ServiceMetricTable({
 	return (
 		<>
 			{RPS > MAX_RPS_LIMIT && (
-				<Flex justify="center">
+				<Flex justify="left">
 					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
 						<WarningFilled /> {getText('rps_over_100')}
+						<a href="mailto:cloud-support@signoz.io">email</a>
 					</Typography.Title>
 				</Flex>
 			)}

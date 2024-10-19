@@ -1,3 +1,5 @@
+import getLabelName from 'lib/getLabelName';
+import { colors } from 'lib/getRandomColor';
 import { cloneDeep, isUndefined } from 'lodash-es';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
@@ -20,7 +22,7 @@ function getXAxisTimestamps(seriesList: QueryData[]): number[] {
 function fillMissingXAxisTimestamps(timestampArr: number[], data: any[]): any {
 	// Generate a set of all timestamps in the range
 	const allTimestampsSet = new Set(timestampArr);
-	const processedData = JSON.parse(JSON.stringify(data));
+	const processedData = cloneDeep(data);
 
 	// Fill missing timestamps with null values
 	processedData.forEach((entry: { values: (number | null)[][] }) => {
@@ -89,4 +91,71 @@ export const getUPlotChartData = (
 			? getStackedSeries(yAxisValuesArr)
 			: yAxisValuesArr),
 	];
+};
+
+const processAnomalyDetectionData = (
+	anomalyDetectionData: any,
+): Record<string, { data: number[][]; color: string }> => {
+	if (!anomalyDetectionData) {
+		return {};
+	}
+
+	const processedData: Record<
+		string,
+		{ data: number[][]; color: string; legendLabel: string }
+	> = {};
+
+	for (
+		let queryIndex = 0;
+		queryIndex < anomalyDetectionData.length;
+		queryIndex++
+	) {
+		const {
+			series,
+			predictedSeries,
+			upperBoundSeries,
+			lowerBoundSeries,
+			queryName,
+			legend,
+		} = anomalyDetectionData[queryIndex];
+
+		for (let index = 0; index < series?.length; index++) {
+			const label = getLabelName(
+				series[index].labels,
+				queryName || '', // query
+				legend || '',
+			);
+
+			const objKey = `${queryName}-${label}`;
+
+			processedData[objKey] = {
+				data: [
+					series[index].values.map((v: { timestamp: number }) => v.timestamp / 1000),
+					series[index].values.map((v: { value: number }) => v.value),
+					predictedSeries[index].values.map((v: { value: number }) => v.value),
+					upperBoundSeries[index].values.map((v: { value: number }) => v.value),
+					lowerBoundSeries[index].values.map((v: { value: number }) => v.value),
+				],
+				color: colors[index],
+				legendLabel: label,
+			};
+		}
+	}
+
+	return processedData;
+};
+
+export const getUplotChartDataForAnomalyDetection = (
+	apiResponse?: MetricRangePayloadProps,
+): Record<
+	string,
+	{
+		[x: string]: any;
+		data: number[][];
+		color: string;
+	}
+> => {
+	const anomalyDetectionData = apiResponse?.data?.newResult?.data?.result;
+
+	return processAnomalyDetectionData(anomalyDetectionData);
 };

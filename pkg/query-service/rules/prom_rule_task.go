@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-kit/log"
 	opentracing "github.com/opentracing/opentracing-go"
 	plabels "github.com/prometheus/prometheus/model/labels"
 	"go.signoz.io/signoz/pkg/query-service/common"
@@ -33,7 +32,7 @@ type PromRuleTask struct {
 	terminated chan struct{}
 
 	pause  bool
-	logger log.Logger
+	logger *zap.Logger
 	notify NotifyFunc
 
 	ruleDB RuleDB
@@ -41,7 +40,7 @@ type PromRuleTask struct {
 
 // newPromRuleTask holds rules that have promql condition
 // and evalutes the rule at a given frequency
-func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *PromRuleTask {
+func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *PromRuleTask {
 	zap.L().Info("Initiating a new rule group", zap.String("name", name), zap.Duration("frequency", frequency))
 
 	if time.Now() == time.Now().Add(frequency) {
@@ -60,7 +59,7 @@ func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, o
 		terminated:           make(chan struct{}),
 		notify:               notify,
 		ruleDB:               ruleDB,
-		logger:               log.With(opts.Logger, "group", name),
+		logger:               opts.Logger,
 	}
 }
 
@@ -193,7 +192,7 @@ func (g *PromRuleTask) HasAlertingRules() bool {
 	defer g.mtx.Unlock()
 
 	for _, rule := range g.rules {
-		if _, ok := rule.(*ThresholdRule); ok {
+		if _, ok := rule.(*PromRule); ok {
 			return true
 		}
 	}
@@ -285,18 +284,19 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 		g.seriesInPreviousEval[i] = from.seriesInPreviousEval[fi]
 		ruleMap[nameAndLabels] = indexes[1:]
 
-		ar, ok := rule.(*ThresholdRule)
+		ar, ok := rule.(*PromRule)
 		if !ok {
 			continue
 		}
-		far, ok := from.rules[fi].(*ThresholdRule)
+		far, ok := from.rules[fi].(*PromRule)
 		if !ok {
 			continue
 		}
 
-		for fp, a := range far.active {
-			ar.active[fp] = a
+		for fp, a := range far.Active {
+			ar.Active[fp] = a
 		}
+		ar.handledRestart = far.handledRestart
 	}
 
 	// Handle deleted and unmatched duplicate rules.
@@ -367,7 +367,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 			}
 			ctx = context.WithValue(ctx, common.LogCommentKey, kvs)
 
-			_, err := rule.Eval(ctx, ts, g.opts.Queriers)
+			_, err := rule.Eval(ctx, ts)
 			if err != nil {
 				rule.SetHealth(HealthBad)
 				rule.SetLastError(err)
