@@ -2,7 +2,6 @@ package querycache_test
 
 import (
 	"encoding/json"
-	"sort"
 	"testing"
 	"time"
 
@@ -233,12 +232,6 @@ func TestFindMissingTimeRanges(t *testing.T) {
 	}
 }
 
-func sortSeries(series []*v3.Series) {
-	sort.Slice(series, func(i, j int) bool {
-		return series[i].Labels["metric"] < series[j].Labels["metric"]
-	})
-}
-
 func TestMergeWithCachedSeriesData(t *testing.T) {
 	// Initialize the mock cache
 	mockCache := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
@@ -322,30 +315,6 @@ func TestMergeWithCachedSeriesData(t *testing.T) {
 	// Call MergeWithCachedSeriesData
 	mergedData := q.MergeWithCachedSeriesData(cacheKey, newData)
 
-	// Sort the series before comparison to avoid flaky test
-	for _, seriesData := range mergedData {
-		sortSeries(seriesData.Data)
-		for _, series := range seriesData.Data {
-			sort.Slice(series.Points, func(i, j int) bool {
-				return series.Points[i].Timestamp < series.Points[j].Timestamp
-			})
-		}
-	}
-
-	for _, seriesData := range expectedMergedData {
-		sortSeries(seriesData.Data)
-		for _, series := range seriesData.Data {
-			sort.Slice(series.Points, func(i, j int) bool {
-				return series.Points[i].Timestamp < series.Points[j].Timestamp
-			})
-		}
-	}
-
-	// Sort expectedMergedData for consistency
-	sort.Slice(expectedMergedData, func(i, j int) bool {
-		return expectedMergedData[i].Start < expectedMergedData[j].Start
-	})
-
 	// Verify the merged data
 	assert.Equal(t, len(expectedMergedData), len(mergedData))
 	for i, expected := range expectedMergedData {
@@ -353,7 +322,6 @@ func TestMergeWithCachedSeriesData(t *testing.T) {
 		assert.Equal(t, expected.Start, actual.Start)
 		assert.Equal(t, expected.End, actual.End)
 		assert.Equal(t, len(expected.Data), len(actual.Data))
-
 		for j, expectedSeries := range expected.Data {
 			actualSeries := actual.Data[j]
 			assert.Equal(t, expectedSeries.Labels, actualSeries.Labels)
