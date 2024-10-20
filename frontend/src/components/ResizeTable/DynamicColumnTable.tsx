@@ -107,6 +107,7 @@ function DynamicColumnTable({
 							className="dynamicColumnTable-button filter-btn"
 							size="middle"
 							icon={<SlidersHorizontal size={14} />}
+							data-testid="additional-filters-button"
 						/>
 					</Dropdown>
 				)}

@@ -80,6 +80,8 @@ var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
 
 var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
 
+var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
+
 func IsDurationSortFeatureEnabled() bool {
 	isDurationSortFeatureEnabledStr := DurationSortFeature
 	isDurationSortFeatureEnabledBool, err := strconv.ParseBool(isDurationSortFeatureEnabledStr)
@@ -346,7 +348,9 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 }
 
 // logsPPLPfx is a short constant for logsPipelinePrefix
-const LogsPPLPfx = "logstransform/pipeline_"
+// TODO(Raj): Remove old prefix after new processor based pipelines have been rolled out
+const LogsPPLPfx = "signozlogspipeline/pipeline_"
+const OldLogsPPLPfx = "logstransform/pipeline_"
 
 const IntegrationPipelineIdPrefix = "integration"
 
