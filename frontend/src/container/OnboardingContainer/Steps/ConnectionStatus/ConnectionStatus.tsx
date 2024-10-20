@@ -8,6 +8,7 @@ import {
 import logEvent from 'api/common/logEvent';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
+import { useOnboardingStatus } from 'hooks/messagingQueue / onboarding/useOnboardingStatus';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
@@ -30,7 +31,6 @@ export default function ConnectionStatus(): JSX.Element {
 
 	const urlQuery = useUrlQuery();
 	const getStartedCaller = urlQuery.get('source');
-	console.log('connection-test', getStartedCaller);
 
 	const {
 		serviceName,
@@ -62,7 +62,40 @@ export default function ConnectionStatus(): JSX.Element {
 		maxTime,
 		selectedTime,
 		selectedTags,
+		options: {
+			enabled: getStartedCaller !== 'kafka',
+		},
 	});
+
+	const [pollInterval, setPollInterval] = useState<number | false>(10000);
+	const {
+		data: onbData,
+		error: onbErr,
+		isFetching: onbFetching,
+	} = useOnboardingStatus({
+		enabled: getStartedCaller === 'kafka',
+		refetchInterval: pollInterval,
+	});
+
+	useEffect(() => {
+		if (retryCount < 0 && getStartedCaller === 'kafka') {
+			setPollInterval(false);
+			setLoading(false);
+		}
+	}, [retryCount, getStartedCaller]);
+
+	useEffect(() => {
+		if (getStartedCaller === 'kafka' && !onbFetching) {
+			setRetryCount((prevCount) => prevCount - 1);
+		}
+	}, [getStartedCaller, onbData, onbFetching]);
+
+	useEffect(() => {
+		if (getStartedCaller === 'kafka' && onbData?.statusCode === 200) {
+			setIsReceivingData(true);
+			setLoading(false);
+		}
+	}, [getStartedCaller, onbData, onbErr, onbFetching, retryCount]);
 
 	const renderDocsReference = (): JSX.Element => {
 		switch (selectedDataSource?.name) {
@@ -235,9 +268,16 @@ export default function ConnectionStatus(): JSX.Element {
 	}, [isServiceLoading, data, error, isError]);
 
 	useEffect(() => {
-		refetch();
+		if (getStartedCaller !== 'kafka') {
+			refetch();
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	const isQueryServiceLoading = useMemo(
+		() => isServiceLoading || loading || onbFetching,
+		[isServiceLoading, loading, onbFetching],
+	);
 
 	return (
 		<div className="connection-status-container">
@@ -259,14 +299,14 @@ export default function ConnectionStatus(): JSX.Element {
 					<div className="label"> Status </div>
 
 					<div className="status">
-						{(loading || isServiceLoading) && <LoadingOutlined />}
-						{!(loading || isServiceLoading) && isReceivingData && (
+						{isQueryServiceLoading && <LoadingOutlined />}
+						{!isQueryServiceLoading && isReceivingData && (
 							<>
 								<CheckCircleTwoTone twoToneColor="#52c41a" />
 								<span> Success </span>
 							</>
 						)}
-						{!(loading || isServiceLoading) && !isReceivingData && (
+						{!isQueryServiceLoading && !isReceivingData && (
 							<>
 								<CloseCircleTwoTone twoToneColor="#e84749" />
 								<span> Failed </span>
@@ -278,11 +318,11 @@ export default function ConnectionStatus(): JSX.Element {
 					<div className="label"> Details </div>
 
 					<div className="details">
-						{(loading || isServiceLoading) && <div> Waiting for Update </div>}
-						{!(loading || isServiceLoading) && isReceivingData && (
+						{isQueryServiceLoading && <div> Waiting for Update </div>}
+						{!isQueryServiceLoading && isReceivingData && (
 							<div> Received data from the application successfully. </div>
 						)}
-						{!(loading || isServiceLoading) && !isReceivingData && (
+						{!isQueryServiceLoading && !isReceivingData && (
 							<div> Could not detect the install </div>
 						)}
 					</div>
