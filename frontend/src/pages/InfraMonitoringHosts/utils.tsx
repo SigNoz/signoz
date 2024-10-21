@@ -1,3 +1,4 @@
+import { Color } from '@signozhq/design-tokens';
 import { Progress, TabsProps, Tag } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import { HostData, HostListPayload } from 'api/infraMonitoring/getHostLists';
@@ -21,6 +22,7 @@ export const getHostListsQuery = (): HostListPayload => ({
 		op: 'and',
 	},
 	groupBy: [],
+	orderBy: { columnName: '', order: 'asc' },
 });
 export const getTabsItems = (): TabsProps['items'] => [
 	{
@@ -48,41 +50,28 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		dataIndex: 'cpu',
 		key: 'cpu',
 		width: 100,
-		sorter: (a, b): number => {
-			const getCpuValue = (cpuElement: React.ReactElement): number =>
-				cpuElement.props.children.props.percent;
-			const aCpu = getCpuValue(a.cpu as React.ReactElement);
-			const bCpu = getCpuValue(b.cpu as React.ReactElement);
-			return aCpu - bCpu;
-		},
+		sorter: true,
 	},
 	{
 		title: 'Memory Usage',
 		dataIndex: 'memory',
 		key: 'memory',
 		width: 100,
-		sorter: (a, b): number => {
-			const getMemoryValue = (memoryElement: React.ReactElement): number =>
-				memoryElement.props.children.props.percent;
-
-			const aMemory = getMemoryValue(a.memory as React.ReactElement);
-			const bMemory = getMemoryValue(b.memory as React.ReactElement);
-			return aMemory - bMemory;
-		},
+		sorter: true,
 	},
 	{
-		title: 'IO Wait',
-		dataIndex: 'ioWait',
-		key: 'ioWait',
+		title: 'IOWait',
+		dataIndex: 'wait',
+		key: 'wait',
 		width: 100,
-		sorter: (a, b): number => a.ioWait - b.ioWait,
+		sorter: true,
 	},
 	{
 		title: 'Load Avg',
 		dataIndex: 'load15',
 		key: 'load15',
 		width: 100,
-		sorter: (a, b): number => a.load15 - b.load15,
+		sorter: true,
 	},
 ];
 
@@ -100,7 +89,12 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 				<Progress
 					percent={Number((host.cpu * 100).toFixed(1))}
 					size="small"
-					strokeColor="#1890ff"
+					strokeColor={((): string => {
+						const cpuPercent = Number((host.cpu * 100).toFixed(1));
+						if (cpuPercent >= 90) return Color.BG_SAKURA_500;
+						if (cpuPercent >= 60) return Color.BG_AMBER_500;
+						return Color.BG_FOREST_500;
+					})()}
 					style={{ flex: 1, marginRight: 8 }}
 				/>
 			</div>
@@ -110,7 +104,12 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 				<Progress
 					percent={Number((host.memory * 100).toFixed(1))}
 					size="small"
-					strokeColor="#faad14"
+					strokeColor={((): string => {
+						const memoryPercent = Number((host.memory * 100).toFixed(1));
+						if (memoryPercent >= 90) return Color.BG_CHERRY_500;
+						if (memoryPercent >= 60) return Color.BG_AMBER_500;
+						return Color.BG_FOREST_500;
+					})()}
 					style={{ flex: 1, marginRight: 8 }}
 				/>
 			</div>

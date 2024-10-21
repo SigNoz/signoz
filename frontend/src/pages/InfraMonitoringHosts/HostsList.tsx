@@ -1,4 +1,5 @@
-import { Table, Typography } from 'antd';
+import { Table, TablePaginationConfig, TableProps, Typography } from 'antd';
+import { SorterResult } from 'antd/es/table/interface';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import { HostMetricsLoading } from 'container/HostMetricsLoading/HostMetricsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
@@ -15,6 +16,7 @@ import {
 	formatDataForTable,
 	getHostListsQuery,
 	getHostsListColumns,
+	HostRowData,
 } from './utils';
 
 function HostsList(): JSX.Element {
@@ -27,6 +29,11 @@ function HostsList(): JSX.Element {
 		op: 'and',
 	});
 
+	const [orderBy, setOrderBy] = useState<{
+		columnName: string;
+		order: 'asc' | 'desc';
+	} | null>(null);
+
 	const pageSize = 10;
 
 	const query = useMemo(() => {
@@ -38,8 +45,9 @@ function HostsList(): JSX.Element {
 			filters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
+			orderBy,
 		};
-	}, [currentPage, filters, minTime, maxTime]);
+	}, [currentPage, filters, minTime, maxTime, orderBy]);
 
 	const { data, isFetching, isLoading, isError } = useGetHostList(
 		query as HostListPayload,
@@ -64,11 +72,27 @@ function HostsList(): JSX.Element {
 	const isDataPresent =
 		!isLoading && !isFetching && !isError && hostMetricsData.length === 0;
 
-	const handleTableChange = (pagination: any): void => {
-		if (pagination.current) {
-			setCurrentPage(pagination.current);
-		}
-	};
+	const handleTableChange: TableProps<HostRowData>['onChange'] = useCallback(
+		(
+			pagination: TablePaginationConfig,
+			_filters: Record<string, (string | number | boolean)[] | null>,
+			sorter: SorterResult<HostRowData> | SorterResult<HostRowData>[],
+		): void => {
+			if (pagination.current) {
+				setCurrentPage(pagination.current);
+			}
+
+			if ('field' in sorter && sorter.order) {
+				setOrderBy({
+					columnName: sorter.field as string,
+					order: sorter.order === 'ascend' ? 'asc' : 'desc',
+				});
+			} else {
+				setOrderBy(null);
+			}
+		},
+		[],
+	);
 
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {

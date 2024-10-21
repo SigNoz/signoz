@@ -10,6 +10,10 @@ export interface HostListPayload {
 	groupBy: BaseAutocompleteData[];
 	offset?: number;
 	limit?: number;
+	orderBy?: {
+		columnName: string;
+		order: 'asc' | 'desc';
+	};
 }
 
 export interface TimeSeriesValue {
