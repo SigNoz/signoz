@@ -49,7 +49,7 @@ OpenTelemetry.registerTracerProvider(tracerProvider:
         .build()
 )
 ```
-- <OTEL_EXPORTER_OTLP_ENDPOINT> - The default value for this is `http://localhost:4317`
+- <OTEL_EXPORTER_OTLP_ENDPOINT> - The default value for this is `http://$(Otel-agent-IP):4317`
 
 
 ### Step 3: Add OpenTelemetry instrumentation
@@ -66,3 +66,7 @@ func doWork() {
 &nbsp;
 
 If you call this `doWork` function, it will add a trace with span name "doWork" and attributes with key-value pair.
+
+&nbsp;
+
+**Note:** Checkout this [documentation](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/#send-data-from-instrumented-applications) to understand how to get the `Otel-agent-IP`.
