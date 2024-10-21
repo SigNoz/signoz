@@ -16,8 +16,30 @@ var (
 	oneWeekInMilliseconds  = oneDayInMilliseconds * 7
 )
 
-// start and end are in milliseconds
-func whichTSTableToUse(start, end int64) (int64, int64, string) {
+func whichTSTableToUse(start, end int64, mq *v3.BuilderQuery) (int64, int64, string) {
+
+	// if we have a hint for the table, we need to use it
+	// the hint will be used to override the default table selection logic
+	if mq.MetricTableHints != nil {
+		if mq.MetricTableHints.TimeSeriesTableName != "" {
+			switch mq.MetricTableHints.TimeSeriesTableName {
+			case constants.SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME:
+				// adjust the start time to nearest 1 hour
+				start = start - (start % (time.Hour.Milliseconds() * 1))
+			case constants.SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME:
+				// adjust the start time to nearest 6 hours
+				start = start - (start % (time.Hour.Milliseconds() * 6))
+			case constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME:
+				// adjust the start time to nearest 1 day
+				start = start - (start % (time.Hour.Milliseconds() * 24))
+			case constants.SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME:
+				// adjust the start time to nearest 1 week
+				start = start - (start % (time.Hour.Milliseconds() * 24 * 7))
+			}
+			return start, end, mq.MetricTableHints.TimeSeriesTableName
+		}
+	}
+
 	// If time range is less than 6 hours, we need to use the `time_series_v4` table
 	// else if time range is less than 1 day and greater than 6 hours, we need to use the `time_series_v4_6hrs` table
 	// else if time range is less than 1 week and greater than 1 day, we need to use the `time_series_v4_1day` table
@@ -57,6 +79,14 @@ func whichTSTableToUse(start, end int64) (int64, int64, string) {
 // 3. distributed_samples_v4_agg_30m - for queries with time range above or equal to 1 week
 // if the `timeAggregation` is `count_distinct` we can't use the aggregated tables because they don't support it
 func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
+
+	// if we have a hint for the table, we need to use it
+	// the hint will be used to override the default table selection logic
+	if mq.MetricTableHints != nil {
+		if mq.MetricTableHints.SamplesTableName != "" {
+			return mq.MetricTableHints.SamplesTableName
+		}
+	}
 
 	// we don't have any aggregated table for sketches (yet)
 	if mq.AggregateAttribute.Type == v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
@@ -234,7 +264,7 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 	conditions = append(conditions, fmt.Sprintf("metric_name = %s", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key)))
 	conditions = append(conditions, fmt.Sprintf("temporality = '%s'", mq.Temporality))
 
-	start, end, tableName := whichTSTableToUse(start, end)
+	start, end, tableName := whichTSTableToUse(start, end, mq)
 
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
 
@@ -314,7 +344,7 @@ func PrepareTimeseriesFilterQueryV3(start, end int64, mq *v3.BuilderQuery) (stri
 	conditions = append(conditions, fmt.Sprintf("metric_name = %s", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key)))
 	conditions = append(conditions, fmt.Sprintf("temporality = '%s'", mq.Temporality))
 
-	start, end, tableName := whichTSTableToUse(start, end)
+	start, end, tableName := whichTSTableToUse(start, end, mq)
 
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
 
