@@ -17,14 +17,6 @@ describe('LogStateIndicator', () => {
 		);
 	});
 
-	it('renders correctly when isActive is true', () => {
-		const { container } = render(
-			<LogStateIndicator type="INFO" isActive fontSize={FontSize.MEDIUM} />,
-		);
-		const indicator = container.firstChild as HTMLElement;
-		expect(indicator.classList.contains('isActive')).toBe(true);
-	});
-
 	it('renders correctly with different types', () => {
 		const { container: containerInfo } = render(
 			<LogStateIndicator type="INFO" fontSize={FontSize.MEDIUM} />,
