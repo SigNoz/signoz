@@ -20,7 +20,7 @@ export const SpanWrapper = styled.div`
 	display: flex;
 	flex-direction: column;
 	margin-left: 0.625rem;
-	width: 10rem;
+	width: 300px;
 `;
 
 export const SpanConnector = styled.div`
