@@ -8,6 +8,7 @@ const ROUTES = {
 	TRACE_DETAIL: '/trace/:id',
 	TRACES_EXPLORER: '/traces-explorer',
 	GET_STARTED: '/get-started',
+	GET_STARTED_V2: '/get-started-v2',
 	GET_STARTED_APPLICATION_MONITORING: '/get-started/application-monitoring',
 	GET_STARTED_LOGS_MANAGEMENT: '/get-started/logs-management',
 	GET_STARTED_INFRASTRUCTURE_MONITORING:
