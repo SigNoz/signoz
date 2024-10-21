@@ -44,3 +44,39 @@ type HostListResponse struct {
 	Groups  []HostListGroup  `json:"groups"`
 	Total   int              `json:"total"`
 }
+
+type ProcessListRequest struct {
+	Start   int64             `json:"start"` // epoch time in ms
+	End     int64             `json:"end"`   // epoch time in ms
+	Filters *v3.FilterSet     `json:"filters"`
+	GroupBy []v3.AttributeKey `json:"groupBy"`
+	OrderBy *v3.OrderBy       `json:"orderBy"`
+	Offset  int               `json:"offset"`
+	Limit   int               `json:"limit"`
+}
+
+type ProcessListResponse struct {
+	Type    string              `json:"type"`
+	Records []ProcessListRecord `json:"records"`
+	Groups  []ProcessListGroup  `json:"groups"`
+	Total   int                 `json:"total"`
+}
+
+type ProcessListRecord struct {
+	ProcessName             string            `json:"processName"`
+	ProcessID               string            `json:"processID"`
+	ProcessCMD              string            `json:"processCMD"`
+	ProcessCMDLine          string            `json:"processCMDLine"`
+	ProcessCPU              float64           `json:"processCPU"`
+	ProcessCPUTimeSeries    *v3.Series        `json:"processCPUTimeSeries"`
+	ProcessMemory           float64           `json:"processMemory"`
+	ProcessMemoryTimeSeries *v3.Series        `json:"processMemoryTimeSeries"`
+	Meta                    map[string]string `json:"-"`
+}
+
+type ProcessListGroup struct {
+	GroupValues    []string `json:"groupValues"`
+	GroupCPUAvg    float64  `json:"groupCPUAvg"`
+	GroupMemoryAvg float64  `json:"groupMemoryAvg"`
+	ProcessNames   []string `json:"processNames"`
+}
