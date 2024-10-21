@@ -3,17 +3,18 @@ import './Threshold.styles.scss';
 
 import { Button, Input, InputNumber, Select, Space, Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { unitOptions } from 'container/NewWidget/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
 
 import {
 	operatorOptions,
 	panelTypeVsDragAndDrop,
 	showAsOptions,
-	unitOptions,
 } from '../constants';
+import { convertUnit } from '../dataFormatCategories';
 import ColorSelector from './ColorSelector';
 import CustomColor from './CustomColor';
 import ShowCaseValue from './ShowCaseValue';
@@ -40,6 +41,7 @@ function Threshold({
 	thresholdLabel = '',
 	tableOptions,
 	thresholdTableOptions = '',
+	columnUnits,
 }: ThresholdProps): JSX.Element {
 	const [isEditMode, setIsEditMode] = useState<boolean>(isEditEnabled);
 	const [operator, setOperator] = useState<string | number>(
@@ -192,6 +194,13 @@ function Threshold({
 
 	const allowDragAndDrop = panelTypeVsDragAndDrop[selectedGraph];
 
+	const isInvalidUnitComparison = useMemo(
+		() =>
+			unit !== 'none' &&
+			convertUnit(value, unit, columnUnits?.[tableSelectedOption]) === null,
+		[unit, value, columnUnits, tableSelectedOption],
+	);
+
 	return (
 		<div
 			ref={allowDragAndDrop ? ref : null}
@@ -303,7 +312,7 @@ function Threshold({
 					{isEditMode ? (
 						<Select
 							defaultValue={unit}
-							options={unitOptions}
+							options={unitOptions(columnUnits?.[tableSelectedOption] || '')}
 							onChange={handleUnitChange}
 							showSearch
 							className="unit-selection"
@@ -339,6 +348,12 @@ function Threshold({
 						</>
 					)}
 				</div>
+				{isInvalidUnitComparison && (
+					<Typography.Text className="invalid-unit">
+						Threshold unit ({unit}) is not valid in comparison with the column unit (
+						{columnUnits?.[tableSelectedOption] || 'none'})
+					</Typography.Text>
+				)}
 				{isEditMode && (
 					<div className="threshold-action-button">
 						<Button
