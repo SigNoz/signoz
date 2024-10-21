@@ -49,7 +49,7 @@ export type OrderByPayload = {
 
 export interface QueryFunctionProps {
 	name: string;
-	args: string[];
+	args: (string | number)[];
 }
 
 // Type for query builder
