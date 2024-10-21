@@ -151,3 +151,26 @@ type NodeListRecord struct {
 	NodeMemoryAllocatable float64           `json:"nodeMemoryAllocatable"`
 	Meta                  map[string]string `json:"meta"`
 }
+
+type NamespaceListRequest struct {
+	Start   int64             `json:"start"` // epoch time in ms
+	End     int64             `json:"end"`   // epoch time in ms
+	Filters *v3.FilterSet     `json:"filters"`
+	GroupBy []v3.AttributeKey `json:"groupBy"`
+	OrderBy *v3.OrderBy       `json:"orderBy"`
+	Offset  int               `json:"offset"`
+	Limit   int               `json:"limit"`
+}
+
+type NamespaceListResponse struct {
+	Type    ResponseType          `json:"type"`
+	Records []NamespaceListRecord `json:"records"`
+	Total   int                   `json:"total"`
+}
+
+type NamespaceListRecord struct {
+	NamespaceName string            `json:"namespaceName"`
+	CPUUsage      float64           `json:"cpuUsage"`
+	MemoryUsage   float64           `json:"memoryUsage"`
+	Meta          map[string]string `json:"meta"`
+}

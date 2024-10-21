@@ -112,10 +112,11 @@ type APIHandler struct {
 
 	UseLogsNewSchema bool
 
-	hostsRepo     *inframetrics.HostsRepo
-	processesRepo *inframetrics.ProcessesRepo
-	podsRepo      *inframetrics.PodsRepo
-	nodesRepo     *inframetrics.NodesRepo
+	hostsRepo      *inframetrics.HostsRepo
+	processesRepo  *inframetrics.ProcessesRepo
+	podsRepo       *inframetrics.PodsRepo
+	nodesRepo      *inframetrics.NodesRepo
+	namespacesRepo *inframetrics.NamespacesRepo
 }
 
 type APIHandlerOpts struct {
@@ -189,6 +190,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	processesRepo := inframetrics.NewProcessesRepo(opts.Reader, querierv2)
 	podsRepo := inframetrics.NewPodsRepo(opts.Reader, querierv2)
 	nodesRepo := inframetrics.NewNodesRepo(opts.Reader, querierv2)
+	namespacesRepo := inframetrics.NewNamespacesRepo(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -211,6 +213,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		processesRepo:                 processesRepo,
 		podsRepo:                      podsRepo,
 		nodesRepo:                     nodesRepo,
+		namespacesRepo:                namespacesRepo,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -379,6 +382,11 @@ func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMid
 	nodesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNodeAttributeKeys)).Methods(http.MethodGet)
 	nodesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNodeAttributeValues)).Methods(http.MethodGet)
 	nodesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getNodeList)).Methods(http.MethodPost)
+
+	namespacesSubRouter := router.PathPrefix("/api/v1/namespaces").Subrouter()
+	namespacesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNamespaceAttributeKeys)).Methods(http.MethodGet)
+	namespacesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNamespaceAttributeValues)).Methods(http.MethodGet)
+	namespacesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getNamespaceList)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {

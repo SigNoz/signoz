@@ -228,3 +228,56 @@ func (aH *APIHandler) getNodeList(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, nodeList)
 }
+
+func (aH *APIHandler) getNamespaceAttributeKeys(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req, err := parseFilterAttributeKeyRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	keys, err := aH.namespacesRepo.GetNamespaceAttributeKeys(ctx, *req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, keys)
+}
+
+func (aH *APIHandler) getNamespaceAttributeValues(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req, err := parseFilterAttributeValueRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	values, err := aH.namespacesRepo.GetNamespaceAttributeValues(ctx, *req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, values)
+}
+
+func (aH *APIHandler) getNamespaceList(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req := model.NamespaceListRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	namespaceList, err := aH.namespacesRepo.GetNamespaceList(ctx, req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, namespaceList)
+}

@@ -2,6 +2,7 @@ package inframetrics
 
 import (
 	"context"
+	"math"
 	"sort"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
@@ -248,7 +249,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 		resp.Type = model.ResponseTypeGroupedList
 	}
 
-	step := common.MinAllowedStepInterval(req.Start, req.End)
+	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
 
 	query := PodsTableListQuery.Clone()
 

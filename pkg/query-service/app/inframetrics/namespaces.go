@@ -15,71 +15,58 @@ import (
 )
 
 var (
-	metricToUseForNodes = "k8s_node_cpu_utilization"
+	metricToUseForNamespaces = "k8s_pod_cpu_utilization"
 
-	nodeAttrsToEnrich = []string{"k8s_node_name", "k8s_node_uid"}
-
-	k8sNodeUIDAttrKey = "k8s_node_uid"
-
-	queryNamesForNodes = map[string][]string{
-		"cpu":                {"A"},
-		"cpu_allocatable":    {"B"},
-		"memory":             {"C"},
-		"memory_allocatable": {"D"},
+	namespaceAttrsToEnrich = []string{
+		"k8s_namespace_name",
+		"k8s_cluster_name",
 	}
-	nodeQueryNames = []string{"A", "B", "C", "D"}
 
-	metricNamesForNodes = map[string]string{
-		"cpu":                "k8s_node_cpu_utilization",
-		"cpu_allocatable":    "k8s_node_allocatable_cpu",
-		"memory":             "k8s_node_memory_usage",
-		"memory_allocatable": "k8s_node_allocatable_memory",
+	queryNamesForNamespaces = map[string][]string{
+		"cpu":    {"A"},
+		"memory": {"D"},
 	}
+	namespaceQueryNames = []string{"A", "D"}
+
+	attributesKeysForNamespaces = []v3.AttributeKey{
+		{Key: "k8s_namespace_name"},
+		{Key: "k8s_cluster_name"},
+	}
+
+	k8sNamespaceNameAttrKey = "k8s_namespace_name"
 )
 
-type NodesRepo struct {
+type NamespacesRepo struct {
 	reader    interfaces.Reader
 	querierV2 interfaces.Querier
 }
 
-func NewNodesRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *NodesRepo {
-	return &NodesRepo{reader: reader, querierV2: querierV2}
+func NewNamespacesRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *NamespacesRepo {
+	return &NamespacesRepo{reader: reader, querierV2: querierV2}
 }
 
-func (n *NodesRepo) GetNodeAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (p *NamespacesRepo) GetNamespaceAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+	return &v3.FilterAttributeKeyResponse{AttributeKeys: attributesKeysForNamespaces}, nil
+}
+
+func (p *NamespacesRepo) GetNamespaceAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = metricToUseForNodes
+	req.AggregateAttribute = metricToUseForNamespaces
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := n.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeValuesResponse, err := p.reader.GetMetricAttributeValues(ctx, &req)
 	if err != nil {
 		return nil, err
 	}
-
-	return attributeKeysResponse, nil
-}
-
-func (n *NodesRepo) GetNodeAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
-	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = metricToUseForNodes
-	if req.Limit == 0 {
-		req.Limit = 50
-	}
-
-	attributeValuesResponse, err := n.reader.GetMetricAttributeValues(ctx, &req)
-	if err != nil {
-		return nil, err
-	}
-
 	return attributeValuesResponse, nil
 }
 
-func (p *NodesRepo) getMetadataAttributes(ctx context.Context, req model.NodeListRequest) (map[string]map[string]string, error) {
-	nodeAttrs := map[string]map[string]string{}
+func (p *NamespacesRepo) getMetadataAttributes(ctx context.Context, req model.NamespaceListRequest) (map[string]map[string]string, error) {
+	namespaceAttrs := map[string]map[string]string{}
 
-	for _, key := range nodeAttrsToEnrich {
+	for _, key := range namespaceAttrsToEnrich {
 		hasKey := false
 		for _, groupByKey := range req.GroupBy {
 			if groupByKey.Key == key {
@@ -95,7 +82,7 @@ func (p *NodesRepo) getMetadataAttributes(ctx context.Context, req model.NodeLis
 	mq := v3.BuilderQuery{
 		DataSource: v3.DataSourceMetrics,
 		AggregateAttribute: v3.AttributeKey{
-			Key:      metricToUseForNodes,
+			Key:      metricToUseForNamespaces,
 			DataType: v3.AttributeKeyDataTypeFloat64,
 		},
 		Temporality: v3.Unspecified,
@@ -124,24 +111,24 @@ func (p *NodesRepo) getMetadataAttributes(ctx context.Context, req model.NodeLis
 			}
 		}
 
-		nodeUID := stringData[k8sNodeUIDAttrKey]
-		if _, ok := nodeAttrs[nodeUID]; !ok {
-			nodeAttrs[nodeUID] = map[string]string{}
+		namespaceName := stringData[k8sNamespaceNameAttrKey]
+		if _, ok := namespaceAttrs[namespaceName]; !ok {
+			namespaceAttrs[namespaceName] = map[string]string{}
 		}
 
 		for _, key := range req.GroupBy {
-			nodeAttrs[nodeUID][key.Key] = stringData[key.Key]
+			namespaceAttrs[namespaceName][key.Key] = stringData[key.Key]
 		}
 	}
 
-	return nodeAttrs, nil
+	return namespaceAttrs, nil
 }
 
-func (p *NodesRepo) getTopNodeGroups(ctx context.Context, req model.NodeListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
-	step, timeSeriesTableName, samplesTableName := getParamsForTopNodes(req)
+func (p *NamespacesRepo) getTopNamespaceGroups(ctx context.Context, req model.NamespaceListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+	step, timeSeriesTableName, samplesTableName := getParamsForTopNamespaces(req)
 
-	queryNames := queryNamesForNodes[req.OrderBy.ColumnName]
-	topNodeGroupsQueryRangeParams := &v3.QueryRangeParamsV3{
+	queryNames := queryNamesForNamespaces[req.OrderBy.ColumnName]
+	topNamespaceGroupsQueryRangeParams := &v3.QueryRangeParamsV3{
 		Start: req.Start,
 		End:   req.End,
 		Step:  step,
@@ -165,14 +152,14 @@ func (p *NodesRepo) getTopNodeGroups(ctx context.Context, req model.NodeListRequ
 			}
 			query.Filters.Items = append(query.Filters.Items, req.Filters.Items...)
 		}
-		topNodeGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
+		topNamespaceGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, topNodeGroupsQueryRangeParams)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, topNamespaceGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
-	formattedResponse, err := postprocess.PostProcessResult(queryResponse, topNodeGroupsQueryRangeParams)
+	formattedResponse, err := postprocess.PostProcessResult(queryResponse, topNamespaceGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -191,24 +178,22 @@ func (p *NodesRepo) getTopNodeGroups(ctx context.Context, req model.NodeListRequ
 		})
 	}
 
-	max := math.Min(float64(req.Offset+req.Limit), float64(len(formattedResponse[0].Series)))
+	paginatedTopNamespaceGroupsSeries := formattedResponse[0].Series[req.Offset : req.Offset+req.Limit]
 
-	paginatedTopNodeGroupsSeries := formattedResponse[0].Series[req.Offset:int(max)]
-
-	topNodeGroups := []map[string]string{}
-	for _, series := range paginatedTopNodeGroupsSeries {
-		topNodeGroups = append(topNodeGroups, series.Labels)
+	topNamespaceGroups := []map[string]string{}
+	for _, series := range paginatedTopNamespaceGroupsSeries {
+		topNamespaceGroups = append(topNamespaceGroups, series.Labels)
 	}
-	allNodeGroups := []map[string]string{}
+	allNamespaceGroups := []map[string]string{}
 	for _, series := range formattedResponse[0].Series {
-		allNodeGroups = append(allNodeGroups, series.Labels)
+		allNamespaceGroups = append(allNamespaceGroups, series.Labels)
 	}
 
-	return topNodeGroups, allNodeGroups, nil
+	return topNamespaceGroups, allNamespaceGroups, nil
 }
 
-func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) (model.NodeListResponse, error) {
-	resp := model.NodeListResponse{}
+func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, req model.NamespaceListRequest) (model.NamespaceListResponse, error) {
+	resp := model.NamespaceListResponse{}
 
 	if req.Limit == 0 {
 		req.Limit = 10
@@ -219,7 +204,7 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 	}
 
 	if req.GroupBy == nil {
-		req.GroupBy = []v3.AttributeKey{{Key: k8sNodeUIDAttrKey}}
+		req.GroupBy = []v3.AttributeKey{{Key: k8sNamespaceNameAttrKey}}
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
@@ -227,36 +212,41 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
 
-	query := NodesTableListQuery.Clone()
+	query := PodsTableListQuery.Clone()
 
 	query.Start = req.Start
 	query.End = req.End
 	query.Step = step
 
-	for _, query := range query.CompositeQuery.BuilderQueries {
-		query.StepInterval = step
-		if req.Filters != nil && len(req.Filters.Items) > 0 {
-			if query.Filters == nil {
-				query.Filters = &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}}
-			}
-			query.Filters.Items = append(query.Filters.Items, req.Filters.Items...)
+	for _, q := range query.CompositeQuery.BuilderQueries {
+
+		if !slices.Contains(namespaceQueryNames, q.QueryName) {
+			delete(query.CompositeQuery.BuilderQueries, q.QueryName)
 		}
-		query.GroupBy = req.GroupBy
+
+		q.StepInterval = step
+		if req.Filters != nil && len(req.Filters.Items) > 0 {
+			if q.Filters == nil {
+				q.Filters = &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}}
+			}
+			q.Filters.Items = append(q.Filters.Items, req.Filters.Items...)
+		}
+		q.GroupBy = req.GroupBy
 	}
 
-	nodeAttrs, err := p.getMetadataAttributes(ctx, req)
+	namespaceAttrs, err := p.getMetadataAttributes(ctx, req)
 	if err != nil {
 		return resp, err
 	}
 
-	topNodeGroups, allNodeGroups, err := p.getTopNodeGroups(ctx, req, query)
+	topNamespaceGroups, allNamespaceGroups, err := p.getTopNamespaceGroups(ctx, req, query)
 	if err != nil {
 		return resp, err
 	}
 
 	groupFilters := map[string][]string{}
-	for _, topNodeGroup := range topNodeGroups {
-		for k, v := range topNodeGroup {
+	for _, topNamespaceGroup := range topNamespaceGroups {
+		for k, v := range topNamespaceGroup {
 			groupFilters[k] = append(groupFilters[k], v)
 		}
 	}
@@ -293,45 +283,35 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 		return resp, err
 	}
 
-	records := []model.NodeListRecord{}
+	records := []model.NamespaceListRecord{}
 
 	for _, result := range formattedResponse {
 		for _, row := range result.Table.Rows {
 
-			record := model.NodeListRecord{
-				NodeCPUUsage:          -1,
-				NodeCPUAllocatable:    -1,
-				NodeMemoryUsage:       -1,
-				NodeMemoryAllocatable: -1,
+			record := model.NamespaceListRecord{
+				CPUUsage:    -1,
+				MemoryUsage: -1,
 			}
 
-			if nodeUID, ok := row.Data[k8sNodeUIDAttrKey].(string); ok {
-				record.NodeUID = nodeUID
+			if name, ok := row.Data[k8sNamespaceNameAttrKey].(string); ok {
+				record.NamespaceName = name
 			}
 
 			if cpu, ok := row.Data["A"].(float64); ok {
-				record.NodeCPUUsage = cpu
-			}
-
-			if cpuAllocatable, ok := row.Data["B"].(float64); ok {
-				record.NodeCPUAllocatable = cpuAllocatable
-			}
-
-			if mem, ok := row.Data["C"].(float64); ok {
-				record.NodeMemoryUsage = mem
+				record.CPUUsage = cpu
 			}
 
 			if memory, ok := row.Data["D"].(float64); ok {
-				record.NodeMemoryAllocatable = memory
+				record.MemoryUsage = memory
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := nodeAttrs[record.NodeUID]; ok {
-				record.Meta = nodeAttrs[record.NodeUID]
+			if _, ok := namespaceAttrs[record.NamespaceName]; ok {
+				record.Meta = namespaceAttrs[record.NamespaceName]
 			}
 
 			for k, v := range row.Data {
-				if slices.Contains(nodeQueryNames, k) {
+				if slices.Contains(namespaceQueryNames, k) {
 					continue
 				}
 				if labelValue, ok := v.(string); ok {
@@ -342,7 +322,7 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 			records = append(records, record)
 		}
 	}
-	resp.Total = len(allNodeGroups)
+	resp.Total = len(allNamespaceGroups)
 	resp.Records = records
 
 	return resp, nil
