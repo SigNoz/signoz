@@ -4,7 +4,11 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { useCallback, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
-function HostsListControls(): JSX.Element {
+function HostsListControls({
+	handleFiltersChange,
+}: {
+	handleFiltersChange: (value: IBuilderQuery['filters']) => void;
+}): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const updatedCurrentQuery = useMemo(
 		() => ({
@@ -25,7 +29,6 @@ function HostsListControls(): JSX.Element {
 		[currentQuery],
 	);
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
-	console.log('currentQuery', updatedCurrentQuery);
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
 		query,
@@ -36,7 +39,9 @@ function HostsListControls(): JSX.Element {
 	const handleChangeTagFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
 			handleChangeQueryData('filters', value);
+			handleFiltersChange(value);
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleChangeQueryData],
 	);
 

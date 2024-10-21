@@ -3,7 +3,8 @@ import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import { HostMetricsLoading } from 'container/HostMetricsLoading/HostMetricsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import HostsListControls from './HostsListControls';
@@ -19,6 +20,11 @@ interface HostsListProps {
 
 function HostsList({ isFilterApplied }: HostsListProps): JSX.Element {
 	const [currentPage, setCurrentPage] = useState(1);
+	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
+		items: [],
+		op: 'and',
+	});
+
 	const pageSize = 10;
 
 	const query = useMemo(() => {
@@ -27,8 +33,9 @@ function HostsList({ isFilterApplied }: HostsListProps): JSX.Element {
 			...baseQuery,
 			limit: pageSize,
 			offset: (currentPage - 1) * pageSize,
+			filters,
 		};
-	}, [currentPage]);
+	}, [currentPage, filters]);
 
 	const { data, isFetching, isLoading, isError } = useGetHostList(
 		query as HostListPayload,
@@ -59,9 +66,16 @@ function HostsList({ isFilterApplied }: HostsListProps): JSX.Element {
 		}
 	};
 
+	const handleFiltersChange = useCallback(
+		(value: IBuilderQuery['filters']): void => {
+			setFilters(value);
+		},
+		[setFilters],
+	);
+
 	return (
 		<div>
-			<HostsListControls />
+			<HostsListControls handleFiltersChange={handleFiltersChange} />
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
 			{isLoading && <HostMetricsLoading />}
