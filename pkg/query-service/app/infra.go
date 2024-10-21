@@ -122,3 +122,56 @@ func (aH *APIHandler) getProcessList(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, hostList)
 }
+
+func (aH *APIHandler) getPodAttributeKeys(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req, err := parseFilterAttributeKeyRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	keys, err := aH.podsRepo.GetPodAttributeKeys(ctx, *req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, keys)
+}
+
+func (aH *APIHandler) getPodAttributeValues(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req, err := parseFilterAttributeValueRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	values, err := aH.podsRepo.GetPodAttributeValues(ctx, *req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, values)
+}
+
+func (aH *APIHandler) getPodList(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req := model.PodListRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	podList, err := aH.podsRepo.GetPodList(ctx, req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, podList)
+}
