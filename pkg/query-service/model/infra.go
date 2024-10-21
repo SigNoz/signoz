@@ -126,3 +126,28 @@ type PodCountByPhase struct {
 	Failed    int `json:"failed"`
 	Unknown   int `json:"unknown"`
 }
+
+type NodeListRequest struct {
+	Start   int64             `json:"start"` // epoch time in ms
+	End     int64             `json:"end"`   // epoch time in ms
+	Filters *v3.FilterSet     `json:"filters"`
+	GroupBy []v3.AttributeKey `json:"groupBy"`
+	OrderBy *v3.OrderBy       `json:"orderBy"`
+	Offset  int               `json:"offset"`
+	Limit   int               `json:"limit"`
+}
+
+type NodeListResponse struct {
+	Type    ResponseType     `json:"type"`
+	Records []NodeListRecord `json:"records"`
+	Total   int              `json:"total"`
+}
+
+type NodeListRecord struct {
+	NodeUID               string            `json:"nodeUID,omitempty"`
+	NodeCPUUsage          float64           `json:"nodeCPUUsage"`
+	NodeCPUAllocatable    float64           `json:"nodeCPUAllocatable"`
+	NodeMemoryUsage       float64           `json:"nodeMemoryUsage"`
+	NodeMemoryAllocatable float64           `json:"nodeMemoryAllocatable"`
+	Meta                  map[string]string `json:"meta"`
+}

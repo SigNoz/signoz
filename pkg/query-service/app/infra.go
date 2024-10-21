@@ -175,3 +175,56 @@ func (aH *APIHandler) getPodList(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, podList)
 }
+
+func (aH *APIHandler) getNodeAttributeKeys(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req, err := parseFilterAttributeKeyRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	keys, err := aH.nodesRepo.GetNodeAttributeKeys(ctx, *req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, keys)
+}
+
+func (aH *APIHandler) getNodeAttributeValues(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req, err := parseFilterAttributeValueRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	values, err := aH.nodesRepo.GetNodeAttributeValues(ctx, *req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, values)
+}
+
+func (aH *APIHandler) getNodeList(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req := model.NodeListRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	nodeList, err := aH.nodesRepo.GetNodeList(ctx, req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, nodeList)
+}
