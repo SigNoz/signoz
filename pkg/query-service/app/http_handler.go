@@ -110,7 +110,8 @@ type APIHandler struct {
 	// Websocket connection upgrader
 	Upgrader *websocket.Upgrader
 
-	UseLogsNewSchema bool
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 
 	hostsRepo     *inframetrics.HostsRepo
 	processesRepo *inframetrics.ProcessesRepo
@@ -152,6 +153,8 @@ type APIHandlerOpts struct {
 
 	// Use Logs New schema
 	UseLogsNewSchema bool
+
+	UseTraceNewSchema bool
 }
 
 // NewAPIHandler returns an APIHandler
@@ -163,21 +166,23 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	querierOpts := querier.QuerierOptions{
-		Reader:           opts.Reader,
-		Cache:            opts.Cache,
-		KeyGenerator:     queryBuilder.NewKeyGenerator(),
-		FluxInterval:     opts.FluxInterval,
-		FeatureLookup:    opts.FeatureFlags,
-		UseLogsNewSchema: opts.UseLogsNewSchema,
+		Reader:            opts.Reader,
+		Cache:             opts.Cache,
+		KeyGenerator:      queryBuilder.NewKeyGenerator(),
+		FluxInterval:      opts.FluxInterval,
+		FeatureLookup:     opts.FeatureFlags,
+		UseLogsNewSchema:  opts.UseLogsNewSchema,
+		UseTraceNewSchema: opts.UseTraceNewSchema,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:           opts.Reader,
-		Cache:            opts.Cache,
-		KeyGenerator:     queryBuilder.NewKeyGenerator(),
-		FluxInterval:     opts.FluxInterval,
-		FeatureLookup:    opts.FeatureFlags,
-		UseLogsNewSchema: opts.UseLogsNewSchema,
+		Reader:            opts.Reader,
+		Cache:             opts.Cache,
+		KeyGenerator:      queryBuilder.NewKeyGenerator(),
+		FluxInterval:      opts.FluxInterval,
+		FeatureLookup:     opts.FeatureFlags,
+		UseLogsNewSchema:  opts.UseLogsNewSchema,
+		UseTraceNewSchema: opts.UseTraceNewSchema,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
@@ -203,6 +208,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		querier:                       querier,
 		querierV2:                     querierv2,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
+		UseTraceNewSchema:             opts.UseTraceNewSchema,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
 	}

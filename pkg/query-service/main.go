@@ -39,6 +39,7 @@ func main() {
 	var disableRules bool
 
 	var useLogsNewSchema bool
+	var useTraceNewSchema bool
 	// the url used to build link in the alert messages in slack and other systems
 	var ruleRepoURL, cacheConfigPath, fluxInterval string
 	var cluster string
@@ -50,6 +51,7 @@ func main() {
 	var dialTimeout time.Duration
 
 	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
+	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", false, "use new schema for traces")
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
@@ -87,6 +89,7 @@ func main() {
 		FluxInterval:      fluxInterval,
 		Cluster:           cluster,
 		UseLogsNewSchema:  useLogsNewSchema,
+		UseTraceNewSchema: useTraceNewSchema,
 	}
 
 	// Read the jwt secret key
