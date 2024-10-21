@@ -142,9 +142,18 @@ func (q *queryCache) mergeSeries(cachedSeries, missedSeries []*v3.Series) []*v3.
 		}
 		seriesesByLabels[h].Points = append(seriesesByLabels[h].Points, series.Points...)
 	}
+
+	hashes := make([]uint64, 0, len(seriesesByLabels))
+	for h := range seriesesByLabels {
+		hashes = append(hashes, h)
+	}
+	sort.Slice(hashes, func(i, j int) bool {
+		return hashes[i] < hashes[j]
+	})
+
 	// Sort the points in each series by timestamp
-	for idx := range seriesesByLabels {
-		series := seriesesByLabels[idx]
+	for _, h := range hashes {
+		series := seriesesByLabels[h]
 		series.SortPoints()
 		series.RemoveDuplicatePoints()
 		mergedSeries = append(mergedSeries, series)
