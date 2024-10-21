@@ -1134,6 +1134,17 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				query.StepInterval = minStep
 			}
 
+			if query.DataSource == v3.DataSourceMetrics && baseconstants.UseMetricsPreAggregation() {
+				// if the time range is greater than 1 day, and less than 1 week set the step interval to be multiple of 5 minutes
+				// if the time range is greater than 1 week, set the step interval to be multiple of 30 mins
+				start, end := queryRangeParams.Start, queryRangeParams.End
+				if end-start >= 24*time.Hour.Milliseconds() && end-start < 7*24*time.Hour.Milliseconds() {
+					query.StepInterval = int64(math.Round(float64(query.StepInterval)/300)) * 300
+				} else if end-start >= 7*24*time.Hour.Milliseconds() {
+					query.StepInterval = int64(math.Round(float64(query.StepInterval)/1800)) * 1800
+				}
+			}
+
 			// Remove the time shift function from the list of functions and set the shift by value
 			var timeShiftBy int64
 			if len(query.Functions) > 0 {
