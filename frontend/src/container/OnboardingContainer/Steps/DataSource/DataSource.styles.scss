@@ -75,3 +75,10 @@ div[class*='-setup-instructions-container'] {
 		color: var(--bg-slate-500);
 	}
 }
+
+.supported-languages-container {
+	.disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+}

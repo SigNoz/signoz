@@ -13,8 +13,10 @@ import {
 	getDataSources,
 	getSupportedFrameworks,
 	hasFrameworks,
+	messagingQueueKakfaSupportedDataSources,
 } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { Blocks, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +34,10 @@ export default function DataSource(): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation(['common']);
 	const history = useHistory();
+
+	const urlQuery = useUrlQuery();
+	const getStartedCaller = urlQuery.get('source');
+	console.log(getStartedCaller);
 
 	const {
 		serviceName,
@@ -150,13 +156,20 @@ export default function DataSource(): JSX.Element {
 						className={cx(
 							'supported-language',
 							selectedDataSource?.name === dataSource.name ? 'selected' : '',
+							!messagingQueueKakfaSupportedDataSources.includes(dataSource?.id || '')
+								? 'disabled'
+								: '',
 						)}
 						key={dataSource.name}
 						onClick={(): void => {
-							updateSelectedFramework(null);
-							updateSelectedEnvironment(null);
-							updateSelectedDataSource(dataSource);
-							form.setFieldsValue({ selectFramework: null });
+							if (
+								messagingQueueKakfaSupportedDataSources.includes(dataSource?.id || '')
+							) {
+								updateSelectedFramework(null);
+								updateSelectedEnvironment(null);
+								updateSelectedDataSource(dataSource);
+								form.setFieldsValue({ selectFramework: null });
+							}
 						}}
 					>
 						<div>
