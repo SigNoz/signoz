@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	"go.signoz.io/signoz/pkg/query-service/app/resource"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
@@ -372,7 +373,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	// build the where clause for resource table
-	resourceSubQuery, err := buildResourceSubQuery(bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
+	resourceSubQuery, err := resource.BuildResourceSubQuery("signoz_logs", DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
 	if err != nil {
 		return "", err
 	}
@@ -463,7 +464,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 	}
 
 	// no values for bucket start and end
-	resourceSubQuery, err := buildResourceSubQuery(0, 0, mq.Filters, mq.GroupBy, mq.AggregateAttribute, true)
+	resourceSubQuery, err := resource.BuildResourceSubQuery("signoz_logs", DISTRIBUTED_LOGS_V2_RESOURCE, 0, 0, mq.Filters, mq.GroupBy, mq.AggregateAttribute, true)
 	if err != nil {
 		return "", err
 	}

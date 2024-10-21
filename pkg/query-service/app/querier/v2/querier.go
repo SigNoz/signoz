@@ -48,10 +48,11 @@ type querier struct {
 	testingMode     bool
 	queriesExecuted []string
 	// tuple of start and end time in milliseconds
-	timeRanges       [][]int
-	returnedSeries   []*v3.Series
-	returnedErr      error
-	UseLogsNewSchema bool
+	timeRanges        [][]int
+	returnedSeries    []*v3.Series
+	returnedErr       error
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 type QuerierOptions struct {
@@ -62,10 +63,11 @@ type QuerierOptions struct {
 	FeatureLookup interfaces.FeatureLookup
 
 	// used for testing
-	TestingMode      bool
-	ReturnedSeries   []*v3.Series
-	ReturnedErr      error
-	UseLogsNewSchema bool
+	TestingMode       bool
+	ReturnedSeries    []*v3.Series
+	ReturnedErr       error
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 func NewQuerier(opts QuerierOptions) interfaces.Querier {

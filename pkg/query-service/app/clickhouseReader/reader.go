@@ -146,6 +146,7 @@ type ClickHouseReader struct {
 	cluster                string
 
 	useLogsNewSchema   bool
+	useTraceNewSchema  bool
 	logsTableName      string
 	logsLocalTableName string
 }
@@ -160,6 +161,7 @@ func NewReader(
 	dialTimeout time.Duration,
 	cluster string,
 	useLogsNewSchema bool,
+	useTraceNewSchema bool,
 ) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
@@ -170,7 +172,7 @@ func NewReader(
 		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
 	}
 
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema)
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema)
 }
 
 func NewReaderFromClickhouseConnection(
@@ -181,6 +183,7 @@ func NewReaderFromClickhouseConnection(
 	featureFlag interfaces.FeatureLookup,
 	cluster string,
 	useLogsNewSchema bool,
+	useTraceNewSchema bool,
 ) *ClickHouseReader {
 	alertManager, err := am.New()
 	if err != nil {
@@ -245,7 +248,8 @@ func NewReaderFromClickhouseConnection(
 		cluster:                 cluster,
 		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
 
-		useLogsNewSchema: useLogsNewSchema,
+		useLogsNewSchema:  useLogsNewSchema,
+		useTraceNewSchema: useTraceNewSchema,
 
 		logsTableV2:              options.primary.LogsTableV2,
 		logsLocalTableV2:         options.primary.LogsLocalTableV2,
