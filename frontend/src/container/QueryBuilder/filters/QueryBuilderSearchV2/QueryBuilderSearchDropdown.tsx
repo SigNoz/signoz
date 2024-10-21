@@ -1,4 +1,6 @@
 /* eslint-disable no-nested-ternary */
+import './QueryBuilderSearchV2.styles.scss';
+
 import { Typography } from 'antd';
 import {
 	ArrowDown,
