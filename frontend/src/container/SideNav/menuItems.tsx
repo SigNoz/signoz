@@ -11,6 +11,7 @@ import {
 	LayoutGrid,
 	ListMinus,
 	MessageSquare,
+	PackagePlus,
 	Receipt,
 	Route,
 	ScrollText,
@@ -117,6 +118,11 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.BILLING,
 		label: 'Billing',
 		icon: <Receipt size={16} />,
+	},
+	{
+		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+		label: 'Infrastructure Monitoring',
+		icon: <PackagePlus size={16} />,
 	},
 	{
 		key: ROUTES.SETTINGS,
