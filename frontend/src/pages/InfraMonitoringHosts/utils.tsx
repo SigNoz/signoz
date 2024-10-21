@@ -3,26 +3,19 @@ import { ColumnType } from 'antd/es/table';
 import { HostData, HostListPayload } from 'api/infraMonitoring/getHostLists';
 import TabLabel from 'components/TabLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { getTimeRange } from 'utils/getTimeRange';
 
 import HostsList from './HostsList';
-
-// interface GetTabsItemsProps {
-// 	isListViewDisabled: boolean;
-// 	isFilterApplied: boolean;
-// }
 
 export interface HostRowData {
 	hostName: string;
 	cpu: React.ReactNode;
 	memory: React.ReactNode;
+	ioWait: number;
 	load15: number;
 	active: React.ReactNode;
 }
 
 export const getHostListsQuery = (): HostListPayload => ({
-	start: getTimeRange().startTime * 1e3,
-	end: getTimeRange().endTime * 1e3,
 	filters: {
 		items: [],
 		op: 'and',
@@ -33,7 +26,7 @@ export const getTabsItems = (): TabsProps['items'] => [
 	{
 		label: <TabLabel label="List View" isDisabled={false} tooltipText="" />,
 		key: PANEL_TYPES.LIST,
-		children: <HostsList isFilterApplied={false} />,
+		children: <HostsList />,
 	},
 ];
 
@@ -55,18 +48,41 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		dataIndex: 'cpu',
 		key: 'cpu',
 		width: 100,
+		sorter: (a, b): number => {
+			const getCpuValue = (cpuElement: React.ReactElement): number =>
+				cpuElement.props.children.props.percent;
+			const aCpu = getCpuValue(a.cpu as React.ReactElement);
+			const bCpu = getCpuValue(b.cpu as React.ReactElement);
+			return aCpu - bCpu;
+		},
 	},
 	{
 		title: 'Memory Usage',
 		dataIndex: 'memory',
 		key: 'memory',
 		width: 100,
+		sorter: (a, b): number => {
+			const getMemoryValue = (memoryElement: React.ReactElement): number =>
+				memoryElement.props.children.props.percent;
+
+			const aMemory = getMemoryValue(a.memory as React.ReactElement);
+			const bMemory = getMemoryValue(b.memory as React.ReactElement);
+			return aMemory - bMemory;
+		},
+	},
+	{
+		title: 'IO Wait',
+		dataIndex: 'ioWait',
+		key: 'ioWait',
+		width: 100,
+		sorter: (a, b): number => a.ioWait - b.ioWait,
 	},
 	{
 		title: 'Load Avg',
 		dataIndex: 'load15',
 		key: 'load15',
 		width: 100,
+		sorter: (a, b): number => a.load15 - b.load15,
 	},
 ];
 
@@ -99,5 +115,6 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 				/>
 			</div>
 		),
+		ioWait: host.wait,
 		load15: host.load15,
 	}));

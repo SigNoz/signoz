@@ -4,8 +4,11 @@ import { HostMetricsLoading } from 'container/HostMetricsLoading/HostMetricsLoad
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useCallback, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import HostsListControls from './HostsListControls';
 import {
@@ -14,11 +17,10 @@ import {
 	getHostsListColumns,
 } from './utils';
 
-interface HostsListProps {
-	isFilterApplied: boolean;
-}
-
-function HostsList({ isFilterApplied }: HostsListProps): JSX.Element {
+function HostsList(): JSX.Element {
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
 		items: [],
@@ -34,8 +36,10 @@ function HostsList({ isFilterApplied }: HostsListProps): JSX.Element {
 			limit: pageSize,
 			offset: (currentPage - 1) * pageSize,
 			filters,
+			start: Math.floor(minTime / 1000000),
+			end: Math.floor(maxTime / 1000000),
 		};
-	}, [currentPage, filters]);
+	}, [currentPage, filters, minTime, maxTime]);
 
 	const { data, isFetching, isLoading, isError } = useGetHostList(
 		query as HostListPayload,
@@ -80,11 +84,11 @@ function HostsList({ isFilterApplied }: HostsListProps): JSX.Element {
 
 			{isLoading && <HostMetricsLoading />}
 
-			{isDataPresent && !isFilterApplied && (
+			{isDataPresent && filters.items.length === 0 && (
 				<NoLogs dataSource={DataSource.METRICS} />
 			)}
 
-			{isDataPresent && isFilterApplied && (
+			{isDataPresent && filters.items.length > 0 && (
 				<div>No hosts match the applied filters.</div>
 			)}
 

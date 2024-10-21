@@ -6,8 +6,6 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface HostListPayload {
-	start: number;
-	end: number;
 	filters: TagFilter;
 	groupBy: BaseAutocompleteData[];
 	offset?: number;
