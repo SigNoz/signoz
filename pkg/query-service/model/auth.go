@@ -27,6 +27,34 @@ type InvitationResponseObject struct {
 	Organization string `json:"organization" db:"organization"`
 }
 
+type BulkInviteRequest struct {
+	Users []InviteRequest `json:"users"`
+}
+
+type BulkInviteResponse struct {
+	Status            string             `json:"status"`
+	Summary           InviteSummary      `json:"summary"`
+	SuccessfulInvites []SuccessfulInvite `json:"successful_invites"`
+	FailedInvites     []FailedInvite     `json:"failed_invites"`
+}
+
+type InviteSummary struct {
+	TotalInvites      int `json:"total_invites"`
+	SuccessfulInvites int `json:"successful_invites"`
+	FailedInvites     int `json:"failed_invites"`
+}
+
+type SuccessfulInvite struct {
+	Email      string `json:"email"`
+	InviteLink string `json:"invite_link"`
+	Status     string `json:"status"`
+}
+
+type FailedInvite struct {
+	Email string `json:"email"`
+	Error string `json:"error"`
+}
+
 type LoginRequest struct {
 	Email        string `json:"email"`
 	Password     string `json:"password"`

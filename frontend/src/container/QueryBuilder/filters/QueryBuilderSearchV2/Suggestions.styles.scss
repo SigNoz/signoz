@@ -13,6 +13,7 @@
 	width: 5px;
 	border-radius: 50%;
 	background-color: var(--bg-slate-300);
+	flex-shrink: 0;
 }
 
 .option {
@@ -206,6 +207,10 @@
 				.data-type {
 					background: var(--bg-vanilla-300);
 				}
+			}
+
+			.value {
+				color: var(--bg-ink-100);
 			}
 		}
 	}

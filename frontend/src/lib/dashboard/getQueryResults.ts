@@ -32,7 +32,6 @@ export async function GetMetricQueryRange(
 		signal,
 		headers,
 	);
-	
 
 	if (response.statusCode >= 400) {
 		let error = `API responded with ${response.statusCode} -  ${response.error} status: ${response.message}`;
@@ -71,6 +70,19 @@ export async function GetMetricQueryRange(
 			},
 		);
 	}
+
+	if (response.payload?.data?.newResult?.data?.resultType === 'anomaly') {
+		response.payload.data.newResult.data.result = response.payload.data.newResult.data.result.map(
+			(queryData) => {
+				if (legendMap[queryData.queryName]) {
+					queryData.legend = legendMap[queryData.queryName];
+				}
+
+				return queryData;
+			},
+		);
+	}
+
 	return response;
 }
 

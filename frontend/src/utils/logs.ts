@@ -1,5 +1,6 @@
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
+import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 
 export const getDefaultLogBackground = (
 	isReadOnly?: boolean,
@@ -17,10 +18,28 @@ export const getDefaultLogBackground = (
 export const getActiveLogBackground = (
 	isActiveLog = true,
 	isDarkMode = true,
+	logType?: string,
 ): string => {
 	if (!isActiveLog) return ``;
-	if (isDarkMode) return `background-color: ${Color.BG_SLATE_200};`;
-	return `background-color: ${Color.BG_VANILLA_300}; color: ${Color.TEXT_SLATE_400}`;
+	if (isDarkMode) {
+		switch (logType) {
+			case LogType.INFO:
+				return `background-color: ${Color.BG_ROBIN_500}10 !important;`;
+			case LogType.WARN:
+				return `background-color: ${Color.BG_AMBER_500}10 !important;`;
+			case LogType.ERROR:
+				return `background-color: ${Color.BG_CHERRY_500}10 !important;`;
+			case LogType.TRACE:
+				return `background-color: ${Color.BG_FOREST_400}10 !important;`;
+			case LogType.DEBUG:
+				return `background-color: ${Color.BG_AQUA_500}10 !important;`;
+			case LogType.FATAL:
+				return `background-color: ${Color.BG_SAKURA_500}10 !important;`;
+			default:
+				return `background-color: ${Color.BG_SLATE_200} !important;`;
+		}
+	}
+	return `background-color: ${Color.BG_VANILLA_300}!important; color: ${Color.TEXT_SLATE_400} !important;`;
 };
 
 export const getHightLightedLogBackground = (
