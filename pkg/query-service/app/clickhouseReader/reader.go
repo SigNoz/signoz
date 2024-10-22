@@ -1677,15 +1677,15 @@ func includes(targetSlice []string, targetElement string) bool {
 
 func getPreOrderTraversal(rootSpan *model.SpanNode, uncollapsedNodes []string, level int64) []model.SpanNode {
 	preOrderTraversal := []model.SpanNode{{
-		Timestamp:    rootSpan.Timestamp,
-		TraceID:      rootSpan.TraceID,
-		SpanID:       rootSpan.SpanID,
-		ParentSpanID: rootSpan.ParentSpanID,
-		Name:         rootSpan.Name,
-		ServiceName:  rootSpan.ServiceName,
-		DurationNano: rootSpan.DurationNano,
-		Level:        level,
-		HasChildren:  len(rootSpan.Children) > 0,
+		Timestamp:     rootSpan.Timestamp,
+		TraceID:       rootSpan.TraceID,
+		SpanID:        rootSpan.SpanID,
+		ParentSpanID:  rootSpan.ParentSpanID,
+		Name:          rootSpan.Name,
+		ServiceName:   rootSpan.ServiceName,
+		DurationNano:  rootSpan.DurationNano,
+		Level:         level,
+		ChildrenCount: int64(len(rootSpan.Children)),
 	}}
 
 	if includes(uncollapsedNodes, rootSpan.SpanID) {
@@ -1746,6 +1746,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 			TraceID:      span.TraceID,
 			SpanID:       span.SpanID,
 			ParentSpanID: span.ParentSpanID,
+			ServiceName:  span.ServiceName,
 			Name:         span.Name,
 			DurationNano: span.DurationNano,
 		}

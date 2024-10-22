@@ -232,18 +232,18 @@ type SearchSpanDBV2ResponseItem struct {
 
 // todo[@vikrantgupta25]: check if the IsProcessed flag can be removed here!
 type SpanNode struct {
-	Timestamp    uint64        `json:"timestamp"`
-	TraceID      string        `json:"traceID"`
-	SpanID       string        `json:"spanID"`
-	ParentSpanID string        `json:"parentSpanID"`
-	ServiceName  string        `json:"serviceName"`
-	Name         string        `json:"name"`
-	DurationNano uint64        `json:"durationNano"`
-	References   []OtelSpanRef `json:"references"`
-	Children     []*SpanNode   `json:"spanNode"`
-	IsProcessed  bool          `json:"isProcessed"`
-	Level        int64         `json:"level"`
-	HasChildren  bool          `json:"hasChildren"`
+	Timestamp     uint64        `json:"timestamp"`
+	TraceID       string        `json:"traceID"`
+	SpanID        string        `json:"spanID"`
+	ParentSpanID  string        `json:"parentSpanID"`
+	ServiceName   string        `json:"serviceName"`
+	Name          string        `json:"name"`
+	DurationNano  uint64        `json:"durationNano"`
+	References    []OtelSpanRef `json:"references"`
+	Children      []*SpanNode   `json:"spanNode"`
+	IsProcessed   bool          `json:"isProcessed"`
+	Level         int64         `json:"level"`
+	ChildrenCount int64         `json:"childrenCount"`
 }
 
 type SearchSpansResult struct {

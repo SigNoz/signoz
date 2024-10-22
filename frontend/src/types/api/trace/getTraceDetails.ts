@@ -23,7 +23,8 @@ export interface SpanItem {
 	serviceName: string;
 	durationNano: number;
 	references: OtelSpanRef[];
-	hasChildren: boolean;
+	level: number;
+	childrenCount: number;
 }
 
 export interface GetTraceDetailsSuccessResponse {

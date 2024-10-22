@@ -1,5 +1,6 @@
 import './TraceDetailsV2.styles.scss';
 
+import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
 import { Typography } from 'antd';
 import TimelineV2 from 'container/TimelineV2/TimelineV2';
 import dayjs from 'dayjs';
@@ -13,20 +14,41 @@ import { LEFT_COL_WIDTH } from './constants';
 
 interface ITraceDetailV2Props {
 	isLoadingTraceDetails: boolean;
+	uncollapsedNodes: string[];
 	setSpanID: React.Dispatch<React.SetStateAction<string>>;
 	setUncollapsedNodes: React.Dispatch<React.SetStateAction<string[]>>;
 	traceDetailsResponse?: GetTraceDetailsSuccessResponse;
 }
 
-function getSpanItemRenderer(index: number, data: SpanItem): JSX.Element {
+function getSpanItemRenderer(
+	index: number,
+	data: SpanItem,
+	uncollapsedNodes: string[],
+): JSX.Element {
 	return (
 		<div key={index} className="span-container">
 			<section
 				className="span-container-details-section"
-				style={{ width: `${LEFT_COL_WIDTH}px` }}
+				style={{ width: `${LEFT_COL_WIDTH}px`, paddingLeft: `${data.level * 5}px` }}
 			>
-				<Typography.Text>{data.name}</Typography.Text>
-				<Typography.Text>{data.serviceName}</Typography.Text>
+				<div className="span-header-row">
+					{data.childrenCount > 0 && (
+						<div className="span-count-collapse">
+							<Typography.Text>{data.childrenCount}</Typography.Text>
+							{uncollapsedNodes.includes(data.spanID) ? (
+								<CaretDownFilled size={14} className="collapse-uncollapse-icon" />
+							) : (
+								<CaretRightFilled size={14} className="collapse-uncollapse-icon" />
+							)}
+						</div>
+					)}
+				</div>
+				<div className="span-description">
+					<Typography.Text className="span-name">{data.name}</Typography.Text>
+					<Typography.Text className="span-service-name">
+						{data.serviceName}
+					</Typography.Text>
+				</div>
 			</section>
 			<section className="span-container-duration-section">
 				<Typography.Text>{data.durationNano}</Typography.Text>
@@ -38,13 +60,14 @@ function getSpanItemRenderer(index: number, data: SpanItem): JSX.Element {
 /**
  * 1. handle the loading gracefully here
  * 2. handle the logic to render the spans based on their level and coloring based on service name
- * 3. handle the timeline properly to show the spans decently
+ * 3. handle the timeline properly to show the spans decently ( timeline can be shown later as well )
  */
 function TraceDetailV2(props: ITraceDetailV2Props): JSX.Element {
 	const {
 		traceDetailsResponse,
 		setUncollapsedNodes,
 		setSpanID,
+		uncollapsedNodes,
 		isLoadingTraceDetails,
 	} = props;
 	console.log({
@@ -80,8 +103,10 @@ function TraceDetailV2(props: ITraceDetailV2Props): JSX.Element {
 			</section>
 			<section className="trace-details-v2-waterfall-model">
 				<Virtuoso
-					data={traceDetailsResponse?.spans}
-					itemContent={getSpanItemRenderer}
+					data={traceDetailsResponse?.spans || []}
+					itemContent={(index, data): React.ReactNode =>
+						getSpanItemRenderer(index, data, uncollapsedNodes)
+					}
 					className="trace-details-v2-span-area"
 				/>
 			</section>
