@@ -72,6 +72,7 @@ function QueryBuilderSearch({
 	className,
 	placeholder,
 	suffixIcon,
+	isInfraMonitoring,
 }: QueryBuilderSearchProps): JSX.Element {
 	const { pathname } = useLocation();
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
@@ -93,7 +94,12 @@ function QueryBuilderSearch({
 		searchKey,
 		key,
 		exampleQueries,
-	} = useAutoComplete(query, whereClauseConfig, isLogsExplorerPage);
+	} = useAutoComplete(
+		query,
+		whereClauseConfig,
+		isLogsExplorerPage,
+		isInfraMonitoring,
+	);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
 	const [dynamicPlacholder, setDynamicPlaceholder] = useState<string>(
@@ -105,6 +111,7 @@ function QueryBuilderSearch({
 		query,
 		searchKey,
 		isLogsExplorerPage,
+		isInfraMonitoring,
 	);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -185,8 +192,8 @@ function QueryBuilderSearch({
 	);
 
 	const isMetricsDataSource = useMemo(
-		() => query.dataSource === DataSource.METRICS,
-		[query.dataSource],
+		() => query.dataSource === DataSource.METRICS && !isInfraMonitoring,
+		[query.dataSource, isInfraMonitoring],
 	);
 
 	const fetchValueDataType = (value: unknown, operator: string): DataTypes => {
@@ -426,6 +433,7 @@ interface QueryBuilderSearchProps {
 	className?: string;
 	placeholder?: string;
 	suffixIcon?: React.ReactNode;
+	isInfraMonitoring?: boolean;
 }
 
 QueryBuilderSearch.defaultProps = {
@@ -433,6 +441,7 @@ QueryBuilderSearch.defaultProps = {
 	className: '',
 	placeholder: PLACEHOLDER,
 	suffixIcon: undefined,
+	isInfraMonitoring: false,
 };
 
 export interface CustomTagProps {

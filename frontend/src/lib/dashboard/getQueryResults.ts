@@ -12,7 +12,7 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
-import { isEmpty, cloneDeep } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -24,6 +24,7 @@ export async function GetMetricQueryRange(
 	version: string,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
+	isInfraMonitoring?: boolean,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
 	const response = await getMetricsQueryRange(
