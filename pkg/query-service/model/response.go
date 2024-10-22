@@ -212,11 +212,11 @@ type ServiceOverviewItem struct {
 
 // todo[@vikrantgupta25]: update the spans to correct types
 type SearchTracesV2Result struct {
-	StartTimestampMillis uint64        `json:"startTimestampMillis"`
-	EndTimestampMillis   uint64        `json:"endTimestampMillis"`
-	Spans                []interface{} `json:"spans"`
-	TotalSpans           int64         `json:"totalSpans"`
-	UncollapsedNodes     []string      `json:"uncollapsedNodes"`
+	StartTimestampMillis uint64     `json:"startTimestampMillis"`
+	EndTimestampMillis   uint64     `json:"endTimestampMillis"`
+	Spans                []SpanNode `json:"spans"`
+	TotalSpans           int64      `json:"totalSpans"`
+	UncollapsedNodes     []string   `json:"uncollapsedNodes"`
 }
 
 type SearchSpanDBV2ResponseItem struct {
@@ -242,6 +242,8 @@ type SpanNode struct {
 	References   []OtelSpanRef `json:"references"`
 	Children     []*SpanNode   `json:"spanNode"`
 	IsProcessed  bool          `json:"isProcessed"`
+	Level        int64         `json:"level"`
+	HasChildren  bool          `json:"hasChildren"`
 }
 
 type SearchSpansResult struct {

@@ -1,0 +1,18 @@
+.trace-details-v2-container {
+	height: 100%;
+
+	.trace-details-v2-span-area {
+		height: 80vh !important;
+
+		.span-container {
+			display: flex;
+			gap: 10px;
+
+			.span-container-details-section {
+			}
+
+			.span-container-duration-section {
+			}
+		}
+	}
+}

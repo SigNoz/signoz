@@ -1675,12 +1675,22 @@ func includes(targetSlice []string, targetElement string) bool {
 	return false
 }
 
-func getPreOrderTraversal(rootSpan *model.SpanNode, uncollapsedNodes []string) []model.SpanNode {
-	preOrderTraversal := []model.SpanNode{*rootSpan}
+func getPreOrderTraversal(rootSpan *model.SpanNode, uncollapsedNodes []string, level int64) []model.SpanNode {
+	preOrderTraversal := []model.SpanNode{{
+		Timestamp:    rootSpan.Timestamp,
+		TraceID:      rootSpan.TraceID,
+		SpanID:       rootSpan.SpanID,
+		ParentSpanID: rootSpan.ParentSpanID,
+		Name:         rootSpan.Name,
+		ServiceName:  rootSpan.ServiceName,
+		DurationNano: rootSpan.DurationNano,
+		Level:        level,
+		HasChildren:  len(rootSpan.Children) > 0,
+	}}
 
 	if includes(uncollapsedNodes, rootSpan.SpanID) {
 		for _, children := range rootSpan.Children {
-			childTraversal := getPreOrderTraversal(children, uncollapsedNodes)
+			childTraversal := getPreOrderTraversal(children, uncollapsedNodes, level+1)
 			preOrderTraversal = append(preOrderTraversal, childTraversal...)
 		}
 	}
@@ -1716,9 +1726,10 @@ func getPathFromRoot(rootSpan *model.SpanNode, targetSpanId string) ([]string, b
 	return path, true
 }
 
-func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesV2Params) (*[]model.SpanNode, error) {
+func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesV2Params) (*model.SearchTracesV2Result, error) {
 	// todo[@vikrantgupta25]: if this is specifically required or not ? calculate the number of spans here and if less than let's say 10k then return the entire response to the client without any manipulations
 
+	var startTime, endTime, durationNano uint64
 	// get all the spans from the clickhouse based on traceID
 	var spans []model.SearchSpanDBV2ResponseItem
 	query := fmt.Sprintf(`SELECT timestamp, traceID, spanID, parentSpanID, serviceName, name, durationNano, references FROM %s.%s WHERE traceID=$1 ORDER BY timestamp;`, r.TraceDB, r.indexTable)
@@ -1746,6 +1757,17 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 		spanNode.References = references
 
 		spanIDNodeMap[span.SpanID] = &spanNode
+
+		if startTime == 0 || startTime > uint64(span.Timestamp.UnixNano()/1000000) {
+			startTime = uint64(span.Timestamp.UnixNano() / 1000000)
+		}
+
+		if endTime == 0 || endTime < uint64(span.Timestamp.UnixNano()/1000000) {
+			endTime = uint64(span.Timestamp.UnixNano() / 1000000)
+		}
+		if durationNano == 0 || uint64(spanNode.DurationNano) > durationNano {
+			durationNano = uint64(spanNode.DurationNano)
+		}
 	}
 
 	var traceRoots []*model.SpanNode
@@ -1798,7 +1820,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	}
 
 	// get the traversal for the trace tree
-	preOrderTraversal := getPreOrderTraversal(traceRoots[0], mergedUncollapsedNodes)
+	preOrderTraversal := getPreOrderTraversal(traceRoots[0], mergedUncollapsedNodes, 0)
 
 	// now based on the spanID of interest send the window containing the spanID
 	spanIndex := -1
@@ -1830,7 +1852,15 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	}
 	selectedSpans := preOrderTraversal[start:end]
 
-	return &selectedSpans, nil
+	responseItem := model.SearchTracesV2Result{
+		Spans:                selectedSpans,
+		UncollapsedNodes:     mergedUncollapsedNodes,
+		StartTimestampMillis: startTime - (durationNano / 1000000),
+		EndTimestampMillis:   endTime + (durationNano / 1000000),
+		TotalSpans:           int64(len(spans)),
+	}
+
+	return &responseItem, nil
 
 }
 
