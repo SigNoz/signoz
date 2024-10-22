@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"go.signoz.io/signoz/ee/query-service/app/db"
@@ -23,7 +24,15 @@ func (ah *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := ah.opts.DataConnector.SearchTraces(r.Context(), searchTracesParams, db.SmartTraceAlgorithm)
+	req := &basemodel.SearchTraceRequest{}
+	err = json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	result, err := ah.opts.DataConnector.SearchTraces(r.Context(), searchTracesParams, db.SmartTraceAlgorithm, req)
 	if ah.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}

@@ -19,7 +19,6 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/google/uuid"
-	"github.com/mailru/easyjson"
 	"github.com/oklog/oklog/pkg/group"
 	"github.com/pkg/errors"
 	"github.com/prometheus/common/promlog"
@@ -1668,111 +1667,141 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
-
-	var countSpans uint64
-	countQuery := fmt.Sprintf("SELECT count() as count from %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
-	err := r.db.QueryRow(ctx, countQuery, params.TraceID).Scan(&countSpans)
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, fmt.Errorf("error in processing sql query")
-	}
-
-	if countSpans > uint64(params.MaxSpansInTrace) {
-		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
-			zap.Uint64("Count", countSpans))
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
-			data := map[string]interface{}{
-				"traceSize":            countSpans,
-				"maxSpansInTraceLimit": params.MaxSpansInTrace,
-			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, userEmail, true, false)
-		}
-		return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
-	}
-
-	userEmail, err := auth.GetEmailFromJwt(ctx)
-	if err == nil {
-		data := map[string]interface{}{
-			"traceSize": countSpans,
-		}
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
-	}
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error), req *model.SearchTraceRequest) (*[]model.BareRequiredTreeResponseItem, error) {
 
 	var startTime, endTime, durationNano uint64
-	var searchScanResponses []model.SearchSpanDBResponseItem
+	var treeRequiredResponseItem []model.BareRequiredTreeDBItem
 
-	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
-
+	query := fmt.Sprintf("SELECT timestamp,traceID,spanID,serviceName,name,durationNano,references FROM %s.%s WHERE traceID=$1 ORDER BY timestamp", r.TraceDB, r.indexTable)
 	start := time.Now()
-
-	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID)
-
+	err := r.db.Select(ctx, &treeRequiredResponseItem, query, params.TraceID)
 	zap.L().Info(query)
-
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, fmt.Errorf("error in processing sql query")
 	}
 	end := time.Now()
 	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
-	searchSpansResult := []model.SearchSpansResult{{
-		Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
-		Events:    make([][]interface{}, len(searchScanResponses)),
-		IsSubTree: false,
-	},
-	}
 
-	searchSpanResponses := []model.SearchSpanResponseItem{}
+	spanIdSpanResponseMap := map[string]*model.BareRequiredTreeResponseItem{}
 	start = time.Now()
-	for _, item := range searchScanResponses {
-		var jsonItem model.SearchSpanResponseItem
-		easyjson.Unmarshal([]byte(item.Model), &jsonItem)
-		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
-		searchSpanResponses = append(searchSpanResponses, jsonItem)
-		if startTime == 0 || jsonItem.TimeUnixNano < startTime {
-			startTime = jsonItem.TimeUnixNano
+	for _, item := range treeRequiredResponseItem {
+		span := model.BareRequiredTreeResponseItem{
+			Timestamp:    uint64(item.Timestamp.UnixMilli()),
+			DurationNano: item.DurationNano,
+			SpanID:       item.SpanID,
+			TraceID:      item.TraceID,
+			ServiceName:  item.ServiceName,
+			Name:         item.Name,
 		}
-		if endTime == 0 || jsonItem.TimeUnixNano > endTime {
-			endTime = jsonItem.TimeUnixNano
+
+		var references []model.OtelSpanRef
+		json.Unmarshal([]byte(item.References), &references)
+		span.References = references
+
+		_, seen := spanIdSpanResponseMap[item.SpanID]
+		if seen {
+			return nil, fmt.Errorf("cannot have duplicate span ids in single trace")
 		}
-		if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
-			durationNano = uint64(jsonItem.DurationNano)
+		spanIdSpanResponseMap[item.SpanID] = &span
+
+		if startTime == 0 || span.Timestamp < startTime {
+			startTime = span.Timestamp
+		}
+		if endTime == 0 || span.Timestamp > endTime {
+			endTime = span.Timestamp
+		}
+		if durationNano == 0 || uint64(item.DurationNano) > durationNano {
+			durationNano = uint64(item.DurationNano)
 		}
 	}
 	end = time.Now()
 	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
 
-	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
-	smartAlgoEnabled := err == nil
-	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
-		start = time.Now()
-		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
-		if err != nil {
-			return nil, err
-		}
-		end = time.Now()
-		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
-			data := map[string]interface{}{
-				"traceSize":        len(searchScanResponses),
-				"spansRenderLimit": params.SpansRenderLimit,
+	fmt.Printf("getTraceSQLQuery unmarshal took:%v \n", end.Sub(start))
+
+	start = time.Now()
+	for _, spanItem := range spanIdSpanResponseMap {
+		for _, reference := range spanItem.References {
+			if reference.RefType == "CHILD_OF" {
+				if reference.SpanId == "" {
+					continue
+				}
+				value, seen := spanIdSpanResponseMap[reference.SpanId]
+				if seen {
+					spanItem.ParentSpanID = reference.SpanId
+					spanItem.IsProcessed = true
+					value.Children = append(value.Children, spanItem)
+					sort.SliceStable(value.Children, func(i, j int) bool {
+						return value.Children[i].Name < value.Children[j].Name
+					})
+					spanIdSpanResponseMap[reference.SpanId] = value
+				} else {
+					// generate missing span here!
+					missingSpan := model.BareRequiredTreeResponseItem{
+						SpanID:       reference.SpanId,
+						Name:         fmt.Sprintf("Missing span (%s)", reference.SpanId),
+						Children:     []*model.BareRequiredTreeResponseItem{},
+						ServiceName:  "",
+						Timestamp:    0,
+						DurationNano: 0,
+						ParentSpanID: "",
+					}
+					spanItem.ParentSpanID = reference.SpanId
+					spanItem.IsProcessed = true
+					missingSpan.Children = append(missingSpan.Children, spanItem)
+					spanIdSpanResponseMap[reference.SpanId] = &missingSpan
+				}
+
 			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
 		}
-	} else {
-		for i, item := range searchSpanResponses {
-			spanEvents := item.GetValues()
-			searchSpansResult[0].Events[i] = spanEvents
-		}
+
 	}
 
-	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
-	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
+	for _, spanItem := range spanIdSpanResponseMap {
+		if spanItem.IsProcessed {
+			delete(spanIdSpanResponseMap, spanItem.SpanID)
+		}
+	}
+	end = time.Now()
+	fmt.Printf("time to construct the tree took %v \n", end.Sub(start))
 
-	return &searchSpansResult, nil
+	// spanIdResponseMap should contain the root of the tree only now!
+	// next we need to extract the exact traversal of the tree based on collapse and uncollapsed state
+	// recieved in the request payload and return the X points out of the same.
+	uncollapsedNodes := req.UnCollapsedNodes
+	preOrderTraversal := getPreOrderTraversal(spanIdSpanResponseMap["a33c42360ef4ea0d"], uncollapsedNodes)
+	// Get the first 500 items from the preOrderTraversal array
+	var result []model.BareRequiredTreeResponseItem
+	if len(preOrderTraversal) > 500 {
+		result = preOrderTraversal[:500]
+	} else {
+		result = preOrderTraversal
+	}
+	return &result, nil
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+	return false
+}
+
+func getPreOrderTraversal(node *model.BareRequiredTreeResponseItem, uncollapsedNodes []string) []model.BareRequiredTreeResponseItem {
+	preOrderTraversal := []model.BareRequiredTreeResponseItem{}
+	preOrderTraversal = append(preOrderTraversal, *node)
+	for _, child := range node.Children {
+		if contains(uncollapsedNodes, child.SpanID) {
+			childTraversal := getPreOrderTraversal(child, uncollapsedNodes)
+			preOrderTraversal = append(preOrderTraversal, childTraversal...)
+		} else {
+			preOrderTraversal = append(preOrderTraversal, *child)
+		}
+	}
+	return preOrderTraversal
 }
 
 func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
