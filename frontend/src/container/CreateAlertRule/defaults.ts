@@ -56,6 +56,7 @@ export const alertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const logAlertDefaults: AlertDef = {
@@ -86,6 +87,7 @@ export const logAlertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const traceAlertDefaults: AlertDef = {
@@ -116,6 +118,7 @@ export const traceAlertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const exceptionAlertDefaults: AlertDef = {
@@ -146,6 +149,7 @@ export const exceptionAlertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const ALERTS_VALUES_MAP: Record<AlertTypes, AlertDef> = {
