@@ -161,11 +161,11 @@ function RuleOptions({
 	};
 
 	const onChangeDeviation = (value: number): void => {
-		const deviation = value || alertDef.condition.deviation || 2;
+		const target = value || alertDef.condition.target || 3;
 
 		setAlertDef({
 			...alertDef,
-			condition: { ...alertDef.condition, deviation: Number(deviation) },
+			condition: { ...alertDef.condition, target: Number(target) },
 		});
 	};
 
@@ -217,7 +217,7 @@ function RuleOptions({
 			getPopupContainer={popupContainer}
 			defaultValue={3}
 			style={{ minWidth: '120px' }}
-			value={alertDef.condition.deviation}
+			value={alertDef.condition.target}
 			onChange={(value: number | unknown): void => {
 				if (typeof value === 'number') {
 					onChangeDeviation(value);

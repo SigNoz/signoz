@@ -50,7 +50,6 @@ export const alertDefaults: AlertDef = {
 		matchType: defaultMatchType,
 		algorithm: defaultAlgorithm,
 		seasonality: defaultSeasonality,
-		deviation: 3,
 	},
 	labels: {
 		severity: 'warning',

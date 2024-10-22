@@ -158,7 +158,7 @@ function FormAlertRules({
 		const anomalyFunction = {
 			name: 'anomaly',
 			args: [],
-			namedArgs: { z_score_threshold: alertDef.condition.deviation },
+			namedArgs: { z_score_threshold: alertDef.condition.target || 3 },
 		};
 		const functions = data.functions || [];
 
@@ -174,7 +174,7 @@ function FormAlertRules({
 				if (anomalyFuncIndex !== -1) {
 					const anomalyFunc = {
 						...functions[anomalyFuncIndex],
-						namedArgs: { z_score_threshold: alertDef.condition.deviation },
+						namedArgs: { z_score_threshold: alertDef.condition.target || 3 },
 					};
 					functions.splice(anomalyFuncIndex, 1);
 					functions.push(anomalyFunc);
@@ -206,7 +206,7 @@ function FormAlertRules({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		detectionMethod,
-		alertDef.condition.deviation,
+		alertDef.condition.target,
 		currentQuery.builder.queryData.length,
 	]);
 
@@ -352,7 +352,11 @@ function FormAlertRules({
 			return false;
 		}
 
-		if (alertDef.condition?.target !== 0 && !alertDef.condition?.target) {
+		if (
+			alertDef.ruleType !== AlertDetectionTypes.ANOMALY_DETECTION_ALERT &&
+			alertDef.condition?.target !== 0 &&
+			!alertDef.condition?.target
+		) {
 			notifications.error({
 				message: 'Error',
 				description: t('target_missing'),
