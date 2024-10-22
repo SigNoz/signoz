@@ -238,7 +238,7 @@ func handleEmptyValuesInGroupBy(groupBy []v3.AttributeKey) (string, error) {
 	return "", nil
 }
 
-func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, panelType v3.PanelType, options Options) (string, error) {
+func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, panelType v3.PanelType, options v3.QBOptions) (string, error) {
 
 	filterSubQuery, err := buildTracesFilterQuery(mq.Filters)
 	if err != nil {
@@ -504,7 +504,7 @@ func addOffsetToQuery(query string, offset uint64) string {
 // PrepareTracesQuery returns the query string for traces
 // start and end are in epoch millisecond
 // step is in seconds
-func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
+func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
 	// adjust the start and end time to the step interval
 	start = start - (start % (mq.StepInterval * 1000))
 	end = end - (end % (mq.StepInterval * 1000))
