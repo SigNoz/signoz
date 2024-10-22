@@ -1773,17 +1773,18 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 	var traceRoots []*model.SpanNode
 	// create the tree from the spans array using the above spanID => spanNode map structure
-	for _, span := range spanIDNodeMap {
+	for _, span := range spans {
+		spanNode := spanIDNodeMap[span.SpanID]
 		if span.ParentSpanID == "" {
-			traceRoots = append(traceRoots, span)
+			traceRoots = append(traceRoots, spanNode)
 			continue
 		}
 		ok, seen := spanIDNodeMap[span.ParentSpanID]
 		// if the parentSpanID is present for the current span
 		if seen {
 			// mark the span as processed true to schedule for removal in the next step
-			span.IsProcessed = true
-			ok.Children = append(ok.Children, span)
+			spanNode.IsProcessed = true
+			ok.Children = append(ok.Children, spanNode)
 		} else {
 			// insert a missing span for the parent with base attributes
 			missingSpan := model.SpanNode{
@@ -1791,9 +1792,9 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 				SpanID:  span.ParentSpanID,
 				Name:    "Missing Span",
 			}
-			span.IsProcessed = true
+			spanNode.IsProcessed = true
 			// insert the current span as the child of the missing span
-			missingSpan.Children = append(missingSpan.Children, span)
+			missingSpan.Children = append(missingSpan.Children, spanNode)
 			spanIDNodeMap[span.ParentSpanID] = &missingSpan
 		}
 	}
@@ -1803,12 +1804,19 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 		return nil, fmt.Errorf("more than one root spans found in a single trace")
 	}
 
-	// get the path from the root of the tree to current spanId and mark them as uncollapsed nodes
-	pathFromRootToCurrentSpanID, found := getPathFromRoot(traceRoots[0], params.SpanID)
-	if !found {
-		return nil, fmt.Errorf("current span id is not found in the trace tree")
-	}
+	// get the path from the root of the tree to current spanId and mark them as uncollapsed nodes only if the uncollapsedNodes length is zero
+	var pathFromRootToCurrentSpanID []string
+	var found bool
 	uniqueNodes := make(map[string]bool)
+	// only get the path from root to the current node if the length of uncollapsedNodes is zero i.e. base case in which the frontend
+	// will rely on the uncollapsed nodes being sent by the query-service
+	if len(params.UncollapsedNodes) == 0 {
+		pathFromRootToCurrentSpanID, found = getPathFromRoot(traceRoots[0], params.SpanID)
+		if !found {
+			return nil, fmt.Errorf("current span id is not found in the trace tree")
+		}
+	}
+
 	for _, node := range pathFromRootToCurrentSpanID {
 		uniqueNodes[node] = true
 	}

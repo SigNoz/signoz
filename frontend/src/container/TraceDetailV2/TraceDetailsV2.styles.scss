@@ -17,7 +17,7 @@
 			gap: 10px;
 
 			.spans-count {
-				color: var(--bg-slate-200);
+				color: var(--bg-vanilla-200);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -42,7 +42,7 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			color: var(--bg-slate-200);
+			color: var(--bg-vanilla-200);
 			font-family: Inter;
 			font-size: 11px;
 			font-style: normal;
@@ -66,6 +66,7 @@
 				.span-container-details-section {
 					display: flex;
 					gap: 10px;
+					flex-shrink: 0;
 					align-items: flex-start;
 					cursor: pointer;
 
@@ -80,6 +81,10 @@
 							gap: 5px;
 							border: 1px solid var(--bg-slate-200);
 							padding: 1px 8px;
+
+							.collapse-uncollapse-icon {
+								color: var(--bg-vanilla-200);
+							}
 						}
 					}
 
@@ -87,17 +92,16 @@
 						display: flex;
 						flex-direction: column;
 						gap: 5px;
-						align-items: center;
 
 						.span-name {
 							display: flex;
 							align-items: center;
 							justify-content: center;
-							color: var(--bg-slate-200);
+							color: var(--bg-vanilla-200);
 							font-family: Inter;
 							font-size: 13px;
 							font-style: normal;
-							font-weight: 600;
+							font-weight: 500;
 							line-height: 18px; /* 163.636% */
 							letter-spacing: 0.88px;
 						}
@@ -106,7 +110,7 @@
 							display: flex;
 							align-items: center;
 							justify-content: center;
-							color: var(--bg-slate-100);
+							color: rgb(172, 172, 172);
 							font-family: Inter;
 							font-size: 10px;
 							font-style: normal;
@@ -118,6 +122,9 @@
 				}
 
 				.span-container-duration-section {
+					width: 100%;
+					.span-bar {
+					}
 				}
 			}
 		}

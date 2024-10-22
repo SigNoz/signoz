@@ -20,13 +20,14 @@ function TraceDetailsV2(): JSX.Element {
 				spanID,
 				uncollapsedNodes,
 			}),
-		queryKey: [spanID, traceID, uncollapsedNodes],
+		queryKey: [spanID, traceID, ...uncollapsedNodes],
 	});
 
 	useEffect(() => {
-		if (spansData?.payload?.uncollapsedNodes) {
+		if (uncollapsedNodes.length === 0 && spansData?.payload?.uncollapsedNodes) {
 			setUncollapsedNodes(spansData?.payload?.uncollapsedNodes);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [spansData]);
 
 	return (
