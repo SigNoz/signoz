@@ -27,5 +27,9 @@ export interface SpanItem {
 }
 
 export interface GetTraceDetailsSuccessResponse {
+	totalSpans: number;
+	startTimestampMillis: number;
+	endTimestampMillis: number;
+	uncollapsedNodes: string[];
 	spans: SpanItem[];
 }

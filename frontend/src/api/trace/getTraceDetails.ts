@@ -19,8 +19,6 @@ const getTraceDetails = async (
 			},
 		);
 
-		console.log(response);
-
 		return {
 			statusCode: 200,
 			error: null,

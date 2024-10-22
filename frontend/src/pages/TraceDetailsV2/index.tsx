@@ -1,6 +1,7 @@
 import getTraceDetails from 'api/trace/getTraceDetails';
 import TraceDetailV2 from 'container/TraceDetailV2/TraceDetailV2';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { defaultTo } from 'lodash-es';
 import { useState } from 'react';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
@@ -24,7 +25,7 @@ function TraceDetailsV2(): JSX.Element {
 
 	return (
 		<TraceDetailV2
-			spans={spansData?.payload?.spans || []}
+			traceDetailsResponse={defaultTo(spansData?.payload, undefined)}
 			isLoadingTraceDetails={isLoadingTraceDetails}
 			setUncollapsedNodes={setUncollapsedNodes}
 			setSpanID={setSpanID}
