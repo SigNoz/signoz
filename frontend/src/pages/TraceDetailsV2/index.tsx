@@ -13,7 +13,7 @@ function TraceDetailsV2(): JSX.Element {
 	const [spanID, setSpanID] = useState<string>(urlQuery.get('spanId') || '');
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
 
-	const { data: spansData, isLoading: isLoadingTraceDetails } = useQuery({
+	const { data: spansData } = useQuery({
 		queryFn: () =>
 			getTraceDetails({
 				traceID,
@@ -33,9 +33,9 @@ function TraceDetailsV2(): JSX.Element {
 	return (
 		<TraceDetailV2
 			traceDetailsResponse={defaultTo(spansData?.payload, undefined)}
-			isLoadingTraceDetails={isLoadingTraceDetails}
 			uncollapsedNodes={uncollapsedNodes}
 			setUncollapsedNodes={setUncollapsedNodes}
+			spanID={spanID}
 			setSpanID={setSpanID}
 		/>
 	);

@@ -4,7 +4,8 @@ import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
 import { Typography } from 'antd';
 import TimelineV2 from 'container/TimelineV2/TimelineV2';
 import dayjs from 'dayjs';
-import { Virtuoso } from 'react-virtuoso';
+import { useEffect, useRef } from 'react';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import {
 	GetTraceDetailsSuccessResponse,
 	SpanItem,
@@ -13,8 +14,8 @@ import {
 import { LEFT_COL_WIDTH } from './constants';
 
 interface ITraceDetailV2Props {
-	isLoadingTraceDetails: boolean;
 	uncollapsedNodes: string[];
+	spanID: string;
 	setSpanID: React.Dispatch<React.SetStateAction<string>>;
 	setUncollapsedNodes: React.Dispatch<React.SetStateAction<string[]>>;
 	traceDetailsResponse?: GetTraceDetailsSuccessResponse;
@@ -95,16 +96,30 @@ function TraceDetailV2(props: ITraceDetailV2Props): JSX.Element {
 		traceDetailsResponse,
 		setUncollapsedNodes,
 		setSpanID,
+		spanID,
 		uncollapsedNodes,
-		isLoadingTraceDetails,
 	} = props;
-
-	console.log(isLoadingTraceDetails);
 
 	const handleEndReached = (index: number): void => {
 		if (traceDetailsResponse?.spans?.[index]?.spanID)
 			setSpanID(traceDetailsResponse.spans[index].spanID);
 	};
+
+	const ref = useRef<VirtuosoHandle>(null);
+
+	useEffect(() => {
+		if (traceDetailsResponse?.spans && traceDetailsResponse.spans.length > 0) {
+			const currentInterestedSpanIndex =
+				traceDetailsResponse?.spans?.findIndex((val) => val.spanID === spanID) || 0;
+
+			setTimeout(() => {
+				ref.current?.scrollToIndex({
+					index: currentInterestedSpanIndex,
+					behavior: 'auto',
+				});
+			}, 10);
+		}
+	}, [spanID, traceDetailsResponse?.spans]);
 
 	return (
 		<div className="trace-details-v2-container">
@@ -133,6 +148,7 @@ function TraceDetailV2(props: ITraceDetailV2Props): JSX.Element {
 			</section>
 			<section className="trace-details-v2-waterfall-model">
 				<Virtuoso
+					ref={ref}
 					data={traceDetailsResponse?.spans || []}
 					endReached={handleEndReached}
 					itemContent={(index, data): React.ReactNode =>
