@@ -161,6 +161,10 @@ function FormAlertRules({
 			ruleType: value,
 		}));
 
+		logEvent(`Alert: Detection method changed`, {
+			detectionMethod: value,
+		});
+
 		setDetectionMethod(value);
 	};
 
@@ -539,6 +543,7 @@ function FormAlertRules({
 			queryType: currentQuery.queryType,
 			alertId: postableAlert?.id,
 			alertName: postableAlert?.alert,
+			ruleType: postableAlert?.ruleType,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
@@ -623,6 +628,7 @@ function FormAlertRules({
 			queryType: currentQuery.queryType,
 			status: statusResponse.status,
 			statusMessage: statusResponse.message,
+			ruleType: postableAlert.ruleType,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [t, isFormValid, memoizedPreparePostData, notifications]);
