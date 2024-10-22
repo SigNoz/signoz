@@ -129,7 +129,8 @@ const processAnomalyDetectionData = (
 				legend || '',
 			);
 
-			const objKey = `${queryName}-${label}`;
+			const objKey =
+				anomalyDetectionData.length > 1 ? `${queryName}-${label}` : label;
 
 			processedData[objKey] = {
 				data: [

@@ -46,6 +46,7 @@ export interface RuleCondition {
 	requiredNumPoints?: number | undefined;
 	algorithm?: string;
 	seasonality?: string;
+	deviation?: number;
 }
 export interface Labels {
 	[key: string]: string;

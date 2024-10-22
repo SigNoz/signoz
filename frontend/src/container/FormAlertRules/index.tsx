@@ -158,7 +158,7 @@ function FormAlertRules({
 		const anomalyFunction = {
 			name: 'anomaly',
 			args: [],
-			namedArgs: { z_score_threshold: 9 },
+			namedArgs: { z_score_threshold: alertDef.condition.deviation },
 		};
 		const functions = data.functions || [];
 
@@ -166,6 +166,19 @@ function FormAlertRules({
 			// Add anomaly if not already present
 			if (!functions.some((func) => func.name === 'anomaly')) {
 				functions.push(anomalyFunction);
+			} else {
+				const anomalyFuncIndex = functions.findIndex(
+					(func) => func.name === 'anomaly',
+				);
+
+				if (anomalyFuncIndex !== -1) {
+					const anomalyFunc = {
+						...functions[anomalyFuncIndex],
+						namedArgs: { z_score_threshold: alertDef.condition.deviation },
+					};
+					functions.splice(anomalyFuncIndex, 1);
+					functions.push(anomalyFunc);
+				}
 			}
 		} else {
 			// Remove anomaly if present
@@ -191,7 +204,11 @@ function FormAlertRules({
 	useEffect(() => {
 		updateFunctionsBasedOnAlertType();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [detectionMethod, alertDef, currentQuery.builder.queryData.length]);
+	}, [
+		detectionMethod,
+		alertDef.condition.deviation,
+		currentQuery.builder.queryData.length,
+	]);
 
 	useEffect(() => {
 		const broadcastToSpecificChannels =

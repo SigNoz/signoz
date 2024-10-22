@@ -105,9 +105,22 @@ export default function QueryFunctions({
 			},
 		];
 
-		setFunctions(updatedFunctionsArr);
+		const functionsCopy = cloneDeep(updatedFunctionsArr);
 
-		onChange(updatedFunctionsArr);
+		const anomalyFuncIndex = functionsCopy.findIndex(
+			(func) => func.name === 'anomaly',
+		);
+
+		if (anomalyFuncIndex !== -1) {
+			const anomalyFunc = functionsCopy[anomalyFuncIndex];
+
+			functionsCopy.splice(anomalyFuncIndex, 1);
+			functionsCopy.push(anomalyFunc);
+		}
+
+		setFunctions(functionsCopy);
+
+		onChange(functionsCopy);
 	};
 
 	const handleDeleteFunction = (

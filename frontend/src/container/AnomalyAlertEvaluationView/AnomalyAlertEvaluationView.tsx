@@ -155,6 +155,34 @@ function AnomalyAlertEvaluationView({
 		focus: {
 			alpha: 0.3,
 		},
+		legend: {
+			show: true,
+			live: false,
+			isolate: true,
+		},
+		cursor: {
+			lock: false,
+			focus: {
+				prox: 1e6,
+				bias: 1,
+			},
+			points: {
+				size: (
+					u: { series: { [x: string]: { points: { size: number } } } },
+					seriesIdx: string | number,
+				): number => u.series[seriesIdx].points.size * 3,
+				width: (u: any, seriesIdx: any, size: number): number => size / 4,
+				stroke: (
+					u: {
+						series: {
+							[x: string]: { points: { stroke: (arg0: any, arg1: any) => any } };
+						};
+					},
+					seriesIdx: string | number,
+				): string => `${u.series[seriesIdx].points.stroke(u, seriesIdx)}90`,
+				fill: (): string => '#fff',
+			},
+		},
 		series: [
 			{
 				label: 'Time',
@@ -167,6 +195,7 @@ function AnomalyAlertEvaluationView({
 							width: 2,
 							show: true,
 							paths: _spline,
+							spanGaps: true,
 						},
 						{
 							label: `Predicted Value`,
@@ -175,18 +204,29 @@ function AnomalyAlertEvaluationView({
 							dash: [2, 2],
 							show: true,
 							paths: _spline,
+							spanGaps: true,
 						},
 						{
 							label: `Upper Band`,
 							stroke: 'transparent',
-							show: false,
+							show: true,
 							paths: _spline,
+							spanGaps: true,
+							points: {
+								show: false,
+								size: 1,
+							},
 						},
 						{
 							label: `Lower Band`,
 							stroke: 'transparent',
-							show: false,
+							show: true,
 							paths: _spline,
+							spanGaps: true,
+							points: {
+								show: false,
+								size: 1,
+							},
 						},
 				  ]
 				: allSeries.map((seriesKey) => ({
@@ -195,11 +235,13 @@ function AnomalyAlertEvaluationView({
 						width: 2,
 						show: true,
 						paths: _spline,
+						spanGaps: true,
 				  }))),
 		],
 		scales: {
 			x: {
 				time: true,
+				spanGaps: true,
 			},
 			y: {
 				...getYAxisScaleForAnomalyDetection({
@@ -211,9 +253,6 @@ function AnomalyAlertEvaluationView({
 			},
 		},
 		grid: {
-			show: true,
-		},
-		legend: {
 			show: true,
 		},
 		axes: getAxes(isDarkMode, yAxisUnit),
