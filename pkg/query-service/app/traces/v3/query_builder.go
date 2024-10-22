@@ -10,11 +10,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-type Options struct {
-	GraphLimitQtype string
-	PreferRPM       bool
-}
-
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
 	v3.AggregateOperatorP05: 0.05,
 	v3.AggregateOperatorP10: 0.10,
