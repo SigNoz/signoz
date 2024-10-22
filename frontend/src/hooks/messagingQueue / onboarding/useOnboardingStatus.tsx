@@ -13,6 +13,7 @@ type UseOnboardingStatus = (
 export const useOnboardingStatus: UseOnboardingStatus = (options) =>
 	useQuery<SuccessResponse<OnboardingStatusResponse> | ErrorResponse>({
 		queryKey: ['onboardingStatus'],
-		queryFn: () => getOnboardingStatus(Date.now() - 15 * 60 * 1000, Date.now()),
+		queryFn: () =>
+			getOnboardingStatus({ start: Date.now() - 15 * 60 * 1000, end: Date.now() }),
 		...options,
 	});
