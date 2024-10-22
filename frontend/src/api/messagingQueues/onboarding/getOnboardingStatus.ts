@@ -1,5 +1,7 @@
+import { ApiBaseInstance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 export interface OnboardingStatusResponse {
@@ -11,21 +13,16 @@ export interface OnboardingStatusResponse {
 	}[];
 }
 
-const getOnboardingStatus = async (
-	start: number,
-	end: number,
-): Promise<SuccessResponse<OnboardingStatusResponse> | ErrorResponse> => {
-	const endpoint = '/messaging-queues/kafka/onboarding/consumers';
-	const payload = {
-		start,
-		end,
-	};
-
+const getOnboardingStatus = async (props: {
+	start: number;
+	end: number;
+}): Promise<SuccessResponse<OnboardingStatusResponse> | ErrorResponse> => {
 	try {
-		const response = await axios.post<OnboardingStatusResponse>(
-			endpoint,
-			payload,
+		const response = await ApiBaseInstance.post(
+			'/messaging-queues/kafka/onboarding/consumers',
+			props,
 		);
+
 		return {
 			statusCode: 200,
 			error: null,
@@ -33,7 +30,7 @@ const getOnboardingStatus = async (
 			payload: response.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		return ErrorResponseHandler((error as AxiosError) || SOMETHING_WENT_WRONG);
 	}
 };
 
