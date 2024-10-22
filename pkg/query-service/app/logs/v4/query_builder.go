@@ -492,7 +492,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 }
 
 // PrepareLogsQuery prepares the query for logs
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.LogQBOptions) (string, error) {
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
 
 	// adjust the start and end time to the step interval
 	// NOTE: Disabling this as it's creating confusion between charts and actual data

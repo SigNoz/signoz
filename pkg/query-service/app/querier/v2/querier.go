@@ -11,6 +11,7 @@ import (
 	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 	"go.signoz.io/signoz/pkg/query-service/querycache"
@@ -76,6 +77,11 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 		logsQueryBuilder = logsV4.PrepareLogsQuery
 	}
 
+	tracesQueryBuilder := tracesV3.PrepareTracesQuery
+	if opts.UseTraceNewSchema {
+		tracesQueryBuilder = tracesV4.PrepareTracesQuery
+	}
+
 	qc := querycache.NewQueryCache(querycache.WithCache(opts.Cache), querycache.WithFluxInterval(opts.FluxInterval))
 
 	return &querier{
@@ -86,7 +92,7 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 		fluxInterval: opts.FluxInterval,
 
 		builder: queryBuilder.NewQueryBuilder(queryBuilder.QueryBuilderOptions{
-			BuildTraceQuery:  tracesV3.PrepareTracesQuery,
+			BuildTraceQuery:  tracesQueryBuilder,
 			BuildLogQuery:    logsQueryBuilder,
 			BuildMetricQuery: metricsV4.PrepareMetricQuery,
 		}, opts.FeatureLookup),

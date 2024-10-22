@@ -315,7 +315,7 @@ func Test_buildTracesQuery(t *testing.T) {
 		step      int64
 		mq        *v3.BuilderQuery
 		panelType v3.PanelType
-		options   Options
+		options   v3.QBOptions
 	}
 	tests := []struct {
 		name    string
@@ -342,7 +342,6 @@ func Test_buildTracesQuery(t *testing.T) {
 					OrderBy: []v3.OrderBy{
 						{ColumnName: "host", Order: "ASC"}},
 				},
-				options: Options{},
 			},
 			want: "SELECT  resources_number['host'] as `host` toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_number['bytes'] > 100 AND " +
@@ -473,7 +472,7 @@ func TestPrepareTracesQuery(t *testing.T) {
 		end       int64
 		panelType v3.PanelType
 		mq        *v3.BuilderQuery
-		options   Options
+		options   v3.QBOptions
 	}
 	tests := []struct {
 		name    string
@@ -495,7 +494,7 @@ func TestPrepareTracesQuery(t *testing.T) {
 					GroupBy:            []v3.AttributeKey{{Key: "serviceName", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 					Limit:              10,
 				},
-				options: Options{
+				options: v3.QBOptions{
 					GraphLimitQtype: constants.FirstQueryGraphLimit,
 				},
 			},
@@ -516,7 +515,7 @@ func TestPrepareTracesQuery(t *testing.T) {
 					GroupBy:            []v3.AttributeKey{{Key: "serviceName", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 					Limit:              10,
 				},
-				options: Options{
+				options: v3.QBOptions{
 					GraphLimitQtype: constants.SecondQueryGraphLimit,
 				},
 			},

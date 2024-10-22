@@ -173,7 +173,7 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name := getColumnName(attr)
 			if item.IsColumn {
-				orderBy = append(orderBy, fmt.Sprintf("`%s` %s", name, item.Order))
+				orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 			} else {
 				orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 			}
@@ -204,7 +204,7 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 	return str
 }
 
-func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.PanelType, options Options) (string, error) {
+func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.PanelType, options v3.QBOptions) (string, error) {
 	tracesStart := utils.GetEpochNanoSecs(start)
 	tracesEnd := utils.GetEpochNanoSecs(end)
 
@@ -223,7 +223,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		filterSubQuery = " AND " + filterSubQuery
 	}
 
-	resourceSubQuery, err := resource.BuildResourceSubQuery("signoz_logs", "distributed_traces_v3_resource", bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
+	resourceSubQuery, err := resource.BuildResourceSubQuery("signoz_traces", "distributed_traces_v3_resource", bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
 	if err != nil {
 		return "", err
 	}
@@ -396,7 +396,7 @@ func enrichOrderBy(items []v3.OrderBy, keys map[string]v3.AttributeKey) []v3.Ord
 // PrepareTracesQuery returns the query string for traces
 // start and end are in epoch millisecond
 // step is in seconds
-func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
+func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
 	// adjust the start and end time to the step interval
 	start = start - (start % (mq.StepInterval * 1000))
 	end = end - (end % (mq.StepInterval * 1000))

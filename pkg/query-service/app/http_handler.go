@@ -39,6 +39,7 @@ import (
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/common"
@@ -218,9 +219,14 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		logsQueryBuilder = logsv4.PrepareLogsQuery
 	}
 
+	tracesQueryBuilder := tracesV3.PrepareTracesQuery
+	if opts.UseTraceNewSchema {
+		tracesQueryBuilder = tracesV4.PrepareTracesQuery
+	}
+
 	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
-		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
+		BuildTraceQuery:  tracesQueryBuilder,
 		BuildLogQuery:    logsQueryBuilder,
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
