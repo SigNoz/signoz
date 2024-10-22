@@ -434,8 +434,6 @@ func Test_buildResourceFiltersFromAggregateAttribute(t *testing.T) {
 
 func Test_buildResourceSubQuery(t *testing.T) {
 	type args struct {
-		database           string
-		table              string
 		bucketStart        int64
 		bucketEnd          int64
 		fs                 *v3.FilterSet
@@ -451,8 +449,6 @@ func Test_buildResourceSubQuery(t *testing.T) {
 		{
 			name: "build sub query",
 			args: args{
-				database:    "signoz_logs",
-				table:       "distributed_logs_v2_resource",
 				bucketStart: 1680064560,
 				bucketEnd:   1680066458,
 				fs: &v3.FilterSet{
@@ -501,7 +497,7 @@ func Test_buildResourceSubQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := BuildResourceSubQuery(tt.args.database, tt.args.table, tt.args.bucketStart, tt.args.bucketEnd, tt.args.fs, tt.args.groupBy, tt.args.aggregateAttribute, false)
+			got, err := BuildResourceSubQuery("signoz_logs", "distributed_logs_v2_resource", tt.args.bucketStart, tt.args.bucketEnd, tt.args.fs, tt.args.groupBy, tt.args.aggregateAttribute, false)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildResourceSubQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return

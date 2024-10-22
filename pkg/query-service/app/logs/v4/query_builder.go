@@ -34,6 +34,7 @@ const (
 	BODY                         = "body"
 	DISTRIBUTED_LOGS_V2          = "distributed_logs_v2"
 	DISTRIBUTED_LOGS_V2_RESOURCE = "distributed_logs_v2_resource"
+	DB_NAME                      = "signoz_logs"
 	NANOSECOND                   = 1000000000
 )
 
@@ -373,7 +374,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	// build the where clause for resource table
-	resourceSubQuery, err := resource.BuildResourceSubQuery("signoz_logs", DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
+	resourceSubQuery, err := resource.BuildResourceSubQuery(DB_NAME, DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
 	if err != nil {
 		return "", err
 	}
@@ -464,7 +465,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 	}
 
 	// no values for bucket start and end
-	resourceSubQuery, err := resource.BuildResourceSubQuery("signoz_logs", DISTRIBUTED_LOGS_V2_RESOURCE, 0, 0, mq.Filters, mq.GroupBy, mq.AggregateAttribute, true)
+	resourceSubQuery, err := resource.BuildResourceSubQuery(DB_NAME, DISTRIBUTED_LOGS_V2_RESOURCE, 0, 0, mq.Filters, mq.GroupBy, mq.AggregateAttribute, true)
 	if err != nil {
 		return "", err
 	}
