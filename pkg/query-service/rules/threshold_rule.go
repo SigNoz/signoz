@@ -58,6 +58,7 @@ func NewThresholdRule(
 	featureFlags interfaces.FeatureLookup,
 	reader interfaces.Reader,
 	useLogsNewSchema bool,
+	useTraceNewSchema bool,
 	opts ...RuleOption,
 ) (*ThresholdRule, error) {
 
@@ -74,19 +75,21 @@ func NewThresholdRule(
 	}
 
 	querierOption := querier.QuerierOptions{
-		Reader:           reader,
-		Cache:            nil,
-		KeyGenerator:     queryBuilder.NewKeyGenerator(),
-		FeatureLookup:    featureFlags,
-		UseLogsNewSchema: useLogsNewSchema,
+		Reader:            reader,
+		Cache:             nil,
+		KeyGenerator:      queryBuilder.NewKeyGenerator(),
+		FeatureLookup:     featureFlags,
+		UseLogsNewSchema:  useLogsNewSchema,
+		UseTraceNewSchema: useTraceNewSchema,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:           reader,
-		Cache:            nil,
-		KeyGenerator:     queryBuilder.NewKeyGenerator(),
-		FeatureLookup:    featureFlags,
-		UseLogsNewSchema: useLogsNewSchema,
+		Reader:            reader,
+		Cache:             nil,
+		KeyGenerator:      queryBuilder.NewKeyGenerator(),
+		FeatureLookup:     featureFlags,
+		UseLogsNewSchema:  useLogsNewSchema,
+		UseTraceNewSchema: useTraceNewSchema,
 	}
 
 	t.querier = querier.NewQuerier(querierOption)
