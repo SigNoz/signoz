@@ -319,7 +319,7 @@ function QueryBuilderSearchV2(
 						value: '',
 					}));
 					setCurrentState(DropdownState.OPERATOR);
-					setSearchValue((parsedValue as BaseAutocompleteData)?.key);
+					setSearchValue(`${(parsedValue as BaseAutocompleteData)?.key} `);
 				}
 			} else if (currentState === DropdownState.OPERATOR) {
 				if (isEmpty(value) && currentFilterItem?.key?.key) {
@@ -360,7 +360,7 @@ function QueryBuilderSearchV2(
 						value: '',
 					}));
 					setCurrentState(DropdownState.ATTRIBUTE_VALUE);
-					setSearchValue(`${currentFilterItem?.key?.key} ${value}`);
+					setSearchValue(`${currentFilterItem?.key?.key} ${value} `);
 				}
 			} else if (currentState === DropdownState.ATTRIBUTE_VALUE) {
 				const operatorType =
@@ -512,11 +512,6 @@ function QueryBuilderSearchV2(
 
 	// this useEffect takes care of tokenisation based on the search state
 	useEffect(() => {
-		// if we are still fetching the suggestions then return as we won't know the type / data-type etc for the attribute key
-		if (isFetchingSuggestions) {
-			return;
-		}
-
 		// if there is no search value reset to the default state
 		if (!searchValue) {
 			setCurrentFilterItem(undefined);
@@ -766,6 +761,7 @@ function QueryBuilderSearchV2(
 		suggestionsData?.payload?.attributes,
 	]);
 
+	// keep the query in sync with the selected tags in logs explorer page
 	useEffect(() => {
 		const filterTags: IBuilderQuery['filters'] = {
 			op: 'AND',
@@ -788,16 +784,14 @@ function QueryBuilderSearchV2(
 
 		if (!isEqual(query.filters, filterTags)) {
 			onChange(filterTags);
-			setTags(
-				filterTags.items.map((tag) => ({
-					...tag,
-					op: getOperatorFromValue(tag.op),
-				})) as ITag[],
-			);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [tags]);
 
+	// keep the use effects pure!
+	// if the tags lacks the ID then the above use effect will add it to query
+	// and then the below use effect will take care of adding it to the tags.
+	// keep the tags in sycn with current query.
 	useEffect(() => {
 		// convert the query and tags to same format before comparison
 		if (!isEqual(getInitTags(query), tags)) {
