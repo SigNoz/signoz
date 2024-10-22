@@ -210,6 +210,40 @@ type ServiceOverviewItem struct {
 	ErrorRate    float64   `json:"errorRate" ch:"errorRate"`
 }
 
+// todo[@vikrantgupta25]: update the spans to correct types
+type SearchTracesV2Result struct {
+	StartTimestampMillis uint64        `json:"startTimestampMillis"`
+	EndTimestampMillis   uint64        `json:"endTimestampMillis"`
+	Spans                []interface{} `json:"spans"`
+	TotalSpans           int64         `json:"totalSpans"`
+	UncollapsedNodes     []string      `json:"uncollapsedNodes"`
+}
+
+type SearchSpanDBV2ResponseItem struct {
+	Timestamp    time.Time `ch:"timestamp"`
+	TraceID      string    `ch:"traceID"`
+	SpanID       string    `ch:"spanID"`
+	ParentSpanID string    `ch:"parentSpanID"`
+	ServiceName  string    `ch:"serviceName"`
+	Name         string    `ch:"name"`
+	DurationNano uint64    `ch:"durationNano"`
+	References   string    `ch:"references"`
+}
+
+// todo[@vikrantgupta25]: check if the IsProcessed flag can be removed here!
+type SpanNode struct {
+	Timestamp    uint64        `json:"timestamp"`
+	TraceID      string        `json:"traceID"`
+	SpanID       string        `json:"spanID"`
+	ParentSpanID string        `json:"parentSpanID"`
+	ServiceName  string        `json:"serviceName"`
+	Name         string        `json:"name"`
+	DurationNano uint64        `json:"durationNano"`
+	References   []OtelSpanRef `json:"references"`
+	Children     []*SpanNode   `json:"spanNode"`
+	IsProcessed  bool          `json:"isProcessed"`
+}
+
 type SearchSpansResult struct {
 	StartTimestampMillis uint64          `json:"startTimestampMillis"`
 	EndTimestampMillis   uint64          `json:"endTimestampMillis"`

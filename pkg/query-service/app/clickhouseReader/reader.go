@@ -1666,6 +1666,174 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
+func includes(targetSlice []string, targetElement string) bool {
+	for _, value := range targetSlice {
+		if value == targetElement {
+			return true
+		}
+	}
+	return false
+}
+
+func getPreOrderTraversal(rootSpan *model.SpanNode, uncollapsedNodes []string) []model.SpanNode {
+	preOrderTraversal := []model.SpanNode{*rootSpan}
+
+	if includes(uncollapsedNodes, rootSpan.SpanID) {
+		for _, children := range rootSpan.Children {
+			childTraversal := getPreOrderTraversal(children, uncollapsedNodes)
+			preOrderTraversal = append(preOrderTraversal, childTraversal...)
+		}
+	}
+
+	return preOrderTraversal
+}
+
+func getPathFromRoot(rootSpan *model.SpanNode, targetSpanId string) ([]string, bool) {
+	path := []string{}
+
+	// if the current span is the target span then push it to the path and return
+	if rootSpan.SpanID == targetSpanId {
+		path = append(path, targetSpanId)
+		return path, true
+	}
+
+	// recursively check the children for the path
+	for _, children := range rootSpan.Children {
+		childPath, found := getPathFromRoot(children, targetSpanId)
+		// if path is found in the children node then push this to the current path
+		if found {
+			path = append(path, childPath...)
+		}
+	}
+
+	// if the target span is not in this subtree then return false
+	if len(path) == 0 {
+		return path, false
+	}
+
+	// else if found in some child tree then push the current span id to the path and return
+	path = append(path, rootSpan.SpanID)
+	return path, true
+}
+
+func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesV2Params) (*[]model.SpanNode, error) {
+	// todo[@vikrantgupta25]: if this is specifically required or not ? calculate the number of spans here and if less than let's say 10k then return the entire response to the client without any manipulations
+
+	// get all the spans from the clickhouse based on traceID
+	var spans []model.SearchSpanDBV2ResponseItem
+	query := fmt.Sprintf(`SELECT timestamp, traceID, spanID, parentSpanID, serviceName, name, durationNano, references FROM %s.%s WHERE traceID=$1 ORDER BY timestamp;`, r.TraceDB, r.indexTable)
+	err := r.db.Select(ctx, &spans, query, params.TraceID)
+	if err != nil {
+		return nil, fmt.Errorf("error in processing sql query: %w", err)
+	}
+
+	// create a spanID to spanNode map for tree construction
+	spanIDNodeMap := map[string]*model.SpanNode{}
+	for _, span := range spans {
+		spanNode := model.SpanNode{
+			Timestamp:    uint64(span.Timestamp.Unix()),
+			TraceID:      span.TraceID,
+			SpanID:       span.SpanID,
+			ParentSpanID: span.ParentSpanID,
+			Name:         span.Name,
+			DurationNano: span.DurationNano,
+		}
+		var references []model.OtelSpanRef
+		err = json.Unmarshal([]byte(span.References), &references)
+		if err != nil {
+			return nil, fmt.Errorf("error in processing span references %w", err)
+		}
+		spanNode.References = references
+
+		spanIDNodeMap[span.SpanID] = &spanNode
+	}
+
+	var traceRoots []*model.SpanNode
+	// create the tree from the spans array using the above spanID => spanNode map structure
+	for _, span := range spanIDNodeMap {
+		if span.ParentSpanID == "" {
+			traceRoots = append(traceRoots, span)
+			continue
+		}
+		ok, seen := spanIDNodeMap[span.ParentSpanID]
+		// if the parentSpanID is present for the current span
+		if seen {
+			// mark the span as processed true to schedule for removal in the next step
+			span.IsProcessed = true
+			ok.Children = append(ok.Children, span)
+		} else {
+			// insert a missing span for the parent with base attributes
+			missingSpan := model.SpanNode{
+				TraceID: span.TraceID,
+				SpanID:  span.ParentSpanID,
+				Name:    "Missing Span",
+			}
+			span.IsProcessed = true
+			// insert the current span as the child of the missing span
+			missingSpan.Children = append(missingSpan.Children, span)
+			spanIDNodeMap[span.ParentSpanID] = &missingSpan
+		}
+	}
+
+	// todo[@vikrantgupta25]: check what to do in this case ?
+	if len(traceRoots) > 1 {
+		return nil, fmt.Errorf("more than one root spans found in a single trace")
+	}
+
+	// get the path from the root of the tree to current spanId and mark them as uncollapsed nodes
+	pathFromRootToCurrentSpanID, found := getPathFromRoot(traceRoots[0], params.SpanID)
+	if !found {
+		return nil, fmt.Errorf("current span id is not found in the trace tree")
+	}
+	uniqueNodes := make(map[string]bool)
+	for _, node := range pathFromRootToCurrentSpanID {
+		uniqueNodes[node] = true
+	}
+	for _, node := range params.UncollapsedNodes {
+		uniqueNodes[node] = true
+	}
+	mergedUncollapsedNodes := make([]string, 0, len(uniqueNodes))
+	for node := range uniqueNodes {
+		mergedUncollapsedNodes = append(mergedUncollapsedNodes, node)
+	}
+
+	// get the traversal for the trace tree
+	preOrderTraversal := getPreOrderTraversal(traceRoots[0], mergedUncollapsedNodes)
+
+	// now based on the spanID of interest send the window containing the spanID
+	spanIndex := -1
+	for i, span := range preOrderTraversal {
+		if span.SpanID == params.SpanID {
+			spanIndex = i
+			break
+		}
+	}
+	if spanIndex == -1 {
+		return nil, fmt.Errorf("spanID not found in preOrderTraversal")
+	}
+	// windowing based on 200 spans before the current one and 300 elements after
+	start := spanIndex - 200
+	end := spanIndex + 300
+	// if there aren't 200 spans before the current one then move the window towards the right
+	if start < 0 {
+		end = end - start
+		start = 0
+	}
+	// if there aren't 300 + x (from the above if) on the right side then move the window left
+	if end > len(preOrderTraversal) {
+		start = start - (end - len(preOrderTraversal))
+		end = len(preOrderTraversal)
+	}
+	// if can't adjust 500 then return all!
+	if start < 0 {
+		start = 0
+	}
+	selectedSpans := preOrderTraversal[start:end]
+
+	return &selectedSpans, nil
+
+}
+
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
 		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
