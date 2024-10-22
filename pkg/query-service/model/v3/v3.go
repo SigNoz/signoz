@@ -789,6 +789,29 @@ type BuilderQuery struct {
 	QueriesUsedInFormula []string
 }
 
+func (b *BuilderQuery) SetShiftByFromFunc() {
+	// Remove the time shift function from the list of functions and set the shift by value
+	var timeShiftBy int64
+	if len(b.Functions) > 0 {
+		for idx := range b.Functions {
+			function := &b.Functions[idx]
+			if function.Name == FunctionNameTimeShift {
+				// move the function to the beginning of the list
+				// so any other function can use the shifted time
+				var fns []Function
+				fns = append(fns, *function)
+				fns = append(fns, b.Functions[:idx]...)
+				fns = append(fns, b.Functions[idx+1:]...)
+				b.Functions = fns
+				timeShiftBy = int64(function.Args[0].(float64))
+				fmt.Println("timeShiftBy", timeShiftBy)
+				break
+			}
+		}
+	}
+	b.ShiftBy = timeShiftBy
+}
+
 func (b *BuilderQuery) Clone() *BuilderQuery {
 	if b == nil {
 		return nil
