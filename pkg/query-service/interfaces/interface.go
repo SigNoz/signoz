@@ -47,6 +47,7 @@ type Reader interface {
 
 	// Search Interfaces
 	SearchTraces(ctx context.Context, params *model.SearchTracesParams, smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error)
+	SearchTracesV2(ctx context.Context, params *model.SearchTracesV2Params) (*[]model.SpanNode, error)
 
 	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)

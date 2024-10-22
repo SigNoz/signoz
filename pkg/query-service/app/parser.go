@@ -238,6 +238,16 @@ func parseGetServicesRequest(r *http.Request) (*model.GetServicesParams, error) 
 	postData.Period = int(postData.End.Unix() - postData.Start.Unix())
 	return postData, nil
 }
+func ParseSearchTracesV2Params(r *http.Request) (*model.SearchTracesV2Params, error) {
+	vars := mux.Vars(r)
+	params := &model.SearchTracesV2Params{}
+	err := json.NewDecoder(r.Body).Decode(params)
+	if err != nil {
+		return nil, err
+	}
+	params.TraceID = vars["traceId"]
+	return params, nil
+}
 
 func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error) {
 	vars := mux.Vars(r)
