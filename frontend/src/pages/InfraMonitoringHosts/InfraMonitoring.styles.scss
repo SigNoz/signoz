@@ -6,4 +6,14 @@
 	.hosts-list-controls {
 		margin: 1rem 0.5rem;
 	}
+	
+	.progress-container {
+		display: flex;
+		align-items: center;
+	  }
+	  
+	  .progress-bar {
+		flex: 1;
+		margin-right: 8px;
+	  }
 }

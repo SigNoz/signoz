@@ -1,3 +1,5 @@
+import './InfraMonitoring.styles.scss';
+
 import { Color } from '@signozhq/design-tokens';
 import { Progress, TabsProps, Tag } from 'antd';
 import { ColumnType } from 'antd/es/table';
@@ -85,7 +87,7 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 			</Tag>
 		),
 		cpu: (
-			<div style={{ display: 'flex', alignItems: 'center' }}>
+			<div className="progress-container">
 				<Progress
 					percent={Number((host.cpu * 100).toFixed(1))}
 					size="small"
@@ -95,12 +97,12 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 						if (cpuPercent >= 60) return Color.BG_AMBER_500;
 						return Color.BG_FOREST_500;
 					})()}
-					style={{ flex: 1, marginRight: 8 }}
+					className="progress-bar"
 				/>
 			</div>
 		),
 		memory: (
-			<div style={{ display: 'flex', alignItems: 'center' }}>
+			<div className="progress-container">
 				<Progress
 					percent={Number((host.memory * 100).toFixed(1))}
 					size="small"
@@ -110,7 +112,7 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 						if (memoryPercent >= 60) return Color.BG_AMBER_500;
 						return Color.BG_FOREST_500;
 					})()}
-					style={{ flex: 1, marginRight: 8 }}
+					className="progress-bar"
 				/>
 			</div>
 		),

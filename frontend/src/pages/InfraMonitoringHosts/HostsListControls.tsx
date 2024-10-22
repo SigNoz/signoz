@@ -41,8 +41,7 @@ function HostsListControls({
 			handleChangeQueryData('filters', value);
 			handleFiltersChange(value);
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[handleChangeQueryData],
+		[handleChangeQueryData, handleFiltersChange],
 	);
 
 	return (

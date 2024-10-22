@@ -98,7 +98,7 @@ function HostsList(): JSX.Element {
 		(value: IBuilderQuery['filters']): void => {
 			setFilters(value);
 		},
-		[setFilters],
+		[],
 	);
 
 	return (
