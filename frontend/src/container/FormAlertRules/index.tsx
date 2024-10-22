@@ -120,9 +120,7 @@ function FormAlertRules({
 
 	const alertTypeFromURL = urlQuery.get(QueryParams.ruleType);
 
-	const [detectionMethod, setDetectionMethod] = useState<string>(
-		AlertDetectionTypes.THRESHOLD_ALERT,
-	);
+	const [detectionMethod, setDetectionMethod] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (!isEqual(currentQuery.unit, yAxisUnit)) {
@@ -153,6 +151,15 @@ function FormAlertRules({
 	const sq = useMemo(() => mapQueryDataFromApi(initQuery), [initQuery]);
 
 	useShareBuilderUrl(sq);
+
+	const handleDetectionMethodChange = (value: string): void => {
+		setAlertDef((def) => ({
+			...def,
+			ruleType: value,
+		}));
+
+		setDetectionMethod(value);
+	};
 
 	const updateFunctions = (data: IBuilderQuery): QueryFunctionProps[] => {
 		const anomalyFunction = {
@@ -693,15 +700,6 @@ function FormAlertRules({
 		},
 	];
 
-	const handleDetectionMethodChange = (value: any): void => {
-		setAlertDef((def) => ({
-			...def,
-			ruleType: value,
-		}));
-
-		setDetectionMethod(value);
-	};
-
 	const isAnomalyDetectionEnabled =
 		useFeatureFlag(FeatureKeys.ANOMALY_DETECTION)?.active || false;
 
@@ -766,7 +764,7 @@ function FormAlertRules({
 									<Tabs2
 										key={detectionMethod}
 										tabs={tabs}
-										initialSelectedTab={detectionMethod}
+										initialSelectedTab={detectionMethod || ''}
 										onSelectTab={handleDetectionMethodChange}
 									/>
 

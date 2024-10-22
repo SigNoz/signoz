@@ -13,6 +13,7 @@ import { AlertDef } from 'types/api/alerts/def';
 import { ALERT_TYPE_VS_SOURCE_MAPPING } from './config';
 import {
 	alertDefaults,
+	anamolyAlertDefaults,
 	exceptionAlertDefaults,
 	logAlertDefaults,
 	traceAlertDefaults,
@@ -58,7 +59,7 @@ function CreateRules(): JSX.Element {
 				break;
 			case AlertTypes.ANOMALY_BASED_ALERT:
 				setInitValues({
-					...alertDefaults,
+					...anamolyAlertDefaults,
 					version: version || ENTITY_VERSION_V4,
 					ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
 				});
