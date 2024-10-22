@@ -39,6 +39,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
@@ -88,6 +89,8 @@ function FormAlertRules({
 	>((state) => state.globalTime);
 
 	const urlQuery = useUrlQuery();
+	const location = useLocation();
+	const queryParams = new URLSearchParams(location.search);
 
 	// In case of alert the panel types should always be "Graph" only
 	const panelType = PANEL_TYPES.TIME_SERIES;
@@ -198,6 +201,20 @@ function FormAlertRules({
 		return functions;
 	};
 
+	useEffect(() => {
+		const ruleType =
+			detectionMethod === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+				? AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+				: AlertDetectionTypes.THRESHOLD_ALERT;
+
+		queryParams.set(QueryParams.ruleType, ruleType);
+
+		const generatedUrl = `${location.pathname}?${queryParams.toString()}`;
+
+		history.replace(generatedUrl);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [detectionMethod]);
+
 	const updateFunctionsBasedOnAlertType = (): void => {
 		for (let index = 0; index < currentQuery.builder.queryData.length; index++) {
 			const queryData = currentQuery.builder.queryData[index];
@@ -239,7 +256,8 @@ function FormAlertRules({
 		});
 
 		setDetectionMethod(ruleType);
-	}, [initialValue, isNewRule, alertTypeFromURL]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [initialValue, isNewRule]);
 
 	useEffect(() => {
 		// Set selectedQueryName based on the length of queryOptions
