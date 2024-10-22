@@ -27,9 +27,10 @@ function CreateRules(): JSX.Element {
 	const queryParams = new URLSearchParams(location.search);
 	const alertTypeFromURL = queryParams.get(QueryParams.ruleType);
 	const version = queryParams.get('version');
-	const alertTypeFromParams = alertTypeFromURL
-		? AlertTypes.ANOMALY_BASED_ALERT
-		: queryParams.get(QueryParams.alertType);
+	const alertTypeFromParams =
+		alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+			? AlertTypes.ANOMALY_BASED_ALERT
+			: queryParams.get(QueryParams.alertType);
 
 	const compositeQuery = useGetCompositeQueryParam();
 	function getAlertTypeFromDataSource(): AlertTypes | null {
