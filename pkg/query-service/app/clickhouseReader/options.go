@@ -45,6 +45,9 @@ const (
 	defaultLogsTableV2              string = "distributed_logs_v2"
 	defaultLogsResourceLocalTableV2 string = "logs_v2_resource"
 	defaultLogsResourceTableV2      string = "distributed_logs_v2_resource"
+
+	defaultTraceIndexTableV3    string = "distributed_signoz_index_v3"
+	defaultTraceResourceTableV3 string = "distributed_traces_v3_resource"
 )
 
 // NamespaceConfig is Clickhouse's internal configuration data
@@ -82,6 +85,9 @@ type namespaceConfig struct {
 	LogsTableV2              string
 	LogsResourceLocalTableV2 string
 	LogsResourceTableV2      string
+
+	TraceIndexTableV3    string
+	TraceResourceTableV3 string
 }
 
 // Connecto defines how to connect to the database
@@ -174,6 +180,9 @@ func NewOptions(
 			LogsLocalTableV2:         defaultLogsLocalTableV2,
 			LogsResourceTableV2:      defaultLogsResourceTableV2,
 			LogsResourceLocalTableV2: defaultLogsResourceLocalTableV2,
+
+			TraceIndexTableV3:    defaultTraceIndexTableV3,
+			TraceResourceTableV3: defaultTraceResourceTableV3,
 		},
 		others: make(map[string]*namespaceConfig, len(otherNamespaces)),
 	}
