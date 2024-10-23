@@ -1,10 +1,9 @@
 import { User } from 'types/reducer/app';
-import { ROLES } from 'types/roles';
 
 export interface UserProps {
 	name: User['name'];
 	email: User['email'];
-	role: ROLES;
+	role: string;
 	frontendBaseUrl: string;
 }
 
