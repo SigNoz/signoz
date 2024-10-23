@@ -5,6 +5,7 @@ import updateProfileAPI from 'api/onboarding/updateProfile';
 import editOrg from 'api/user/editOrg';
 import { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import ROUTES from 'constants/routes';
 import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingInvitesContainer';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -187,7 +188,7 @@ function OnboardingQuestionaire(): JSX.Element {
 	};
 
 	const handleOnboardingComplete = (): void => {
-		history.push('/');
+		history.push(ROUTES.APPLICATION);
 	};
 
 	return (
@@ -222,6 +223,7 @@ function OnboardingQuestionaire(): JSX.Element {
 						setOptimiseSignozDetails={setOptimiseSignozDetails}
 						onBack={(): void => setCurrentStep(2)}
 						onNext={handleUpdateProfile}
+						onWillDoLater={(): void => setCurrentStep(4)} // This is temporary, only to skip gateway api call as it's not setup on staging yet
 					/>
 				)}
 
