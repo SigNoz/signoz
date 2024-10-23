@@ -83,6 +83,31 @@
 					}
 				}
 			}
+
+			&.invite-team-members-form {
+				min-height: calc(420px - 24px);
+				max-height: calc(420px - 24px);
+
+				.invite-team-members-container {
+					max-height: 260px;
+					padding-right: 8px;
+					overflow-y: auto;
+
+					&::-webkit-scrollbar {
+						width: 0.1rem;
+					}
+					&::-webkit-scrollbar-corner {
+						background: transparent;
+					}
+					&::-webkit-scrollbar-thumb {
+						background: rgb(136, 136, 136);
+						border-radius: 0.625rem;
+					}
+					&::-webkit-scrollbar-track {
+						background: transparent;
+					}
+				}
+			}
 		}
 
 		.invite-team-members-container {
@@ -173,6 +198,10 @@
 			font-style: normal;
 			font-weight: 500;
 			line-height: 20px;
+
+			display: flex;
+			align-items: center;
+			gap: 8px;
 		}
 
 		input[type='text'] {
@@ -237,7 +266,8 @@
 		}
 
 		.onboarding-questionaire-button,
-		.add-another-member-button {
+		.add-another-member-button,
+		.remove-team-member-button {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
@@ -270,9 +300,25 @@
 			}
 		}
 
-		.add-another-member-button {
+		.add-another-member-button,
+		.remove-team-member-button {
 			font-size: 12px;
 			height: 32px;
+		}
+
+		.remove-team-member-button {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+
+			border: 1px solid #1d212d;
+			border-top-left-radius: 0px;
+			border-bottom-left-radius: 0px;
+			background-color: #121317;
+
+			border-left: 0px;
+			border-top-left-radius: 0px;
+			border-bottom-left-radius: 0px;
 		}
 
 		.onboarding-questionaire-other-input {
