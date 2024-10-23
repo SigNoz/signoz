@@ -6,6 +6,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Input, Select, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
@@ -35,9 +36,7 @@ export default function DataSource(): JSX.Element {
 	const { t } = useTranslation(['common']);
 	const history = useHistory();
 
-	const urlQuery = useUrlQuery();
-	const getStartedCaller = urlQuery.get('source');
-	console.log(getStartedCaller);
+	const getStartedSource = useUrlQuery().get(QueryParams.getStartedSource);
 
 	const {
 		serviceName,
@@ -156,15 +155,14 @@ export default function DataSource(): JSX.Element {
 						className={cx(
 							'supported-language',
 							selectedDataSource?.name === dataSource.name ? 'selected' : '',
-							!messagingQueueKakfaSupportedDataSources.includes(dataSource?.id || '')
+							getStartedSource === 'kafka' &&
+								!messagingQueueKakfaSupportedDataSources.includes(dataSource?.id || '')
 								? 'disabled'
 								: '',
 						)}
 						key={dataSource.name}
 						onClick={(): void => {
-							if (
-								messagingQueueKakfaSupportedDataSources.includes(dataSource?.id || '')
-							) {
+							if (getStartedSource !== 'kafka') {
 								updateSelectedFramework(null);
 								updateSelectedEnvironment(null);
 								updateSelectedDataSource(dataSource);
