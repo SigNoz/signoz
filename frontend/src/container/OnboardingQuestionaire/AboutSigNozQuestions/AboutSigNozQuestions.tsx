@@ -7,9 +7,16 @@ import logEvent from 'api/common/logEvent';
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+export interface SignozDetails {
+	hearAboutSignoz: string | null;
+	interestInSignoz: string | null;
+	otherInterestInSignoz: string | null;
+	otherAboutSignoz: string | null;
+}
+
 interface AboutSigNozQuestionsProps {
-	signozDetails: any;
-	setSignozDetails: (details: any) => void;
+	signozDetails: SignozDetails;
+	setSignozDetails: (details: SignozDetails) => void;
 	onNext: () => void;
 	onBack: () => void;
 }
@@ -41,11 +48,11 @@ export function AboutSigNozQuestions({
 	const [otherAboutSignoz, setOtherAboutSignoz] = useState<string>(
 		signozDetails?.otherAboutSignoz || '',
 	);
-	const [interestedSignoz, setInterestedSignoz] = useState<string | null>(
-		signozDetails?.interestedSignoz || null,
+	const [interestInSignoz, setInterestInSignoz] = useState<string | null>(
+		signozDetails?.interestInSignoz || null,
 	);
-	const [otherInterest, setOtherInterest] = useState<string>(
-		signozDetails?.otherInterest || '',
+	const [otherInterestInSignoz, setOtherInterestInSignoz] = useState<string>(
+		signozDetails?.otherInterestInSignoz || '',
 	);
 	const [isNextDisabled, setIsNextDisabled] = useState<boolean>(true);
 
@@ -53,28 +60,33 @@ export function AboutSigNozQuestions({
 		if (
 			hearAboutSignoz !== null &&
 			(hearAboutSignoz !== 'Others' || otherAboutSignoz !== '') &&
-			interestedSignoz !== null &&
-			(interestedSignoz !== 'Others' || otherInterest !== '')
+			interestInSignoz !== null &&
+			(interestInSignoz !== 'Others' || otherInterestInSignoz !== '')
 		) {
 			setIsNextDisabled(false);
 		} else {
 			setIsNextDisabled(true);
 		}
-	}, [hearAboutSignoz, otherAboutSignoz, interestedSignoz, otherInterest]);
+	}, [
+		hearAboutSignoz,
+		otherAboutSignoz,
+		interestInSignoz,
+		otherInterestInSignoz,
+	]);
 
 	const handleOnNext = (): void => {
 		setSignozDetails({
 			hearAboutSignoz,
 			otherAboutSignoz,
-			interestedSignoz,
-			otherInterest,
+			interestInSignoz,
+			otherInterestInSignoz,
 		});
 
 		logEvent('Onboarding: SigNoz Questions: Next', {
 			hearAboutSignoz,
 			otherAboutSignoz,
-			interestedSignoz,
-			otherInterest,
+			interestInSignoz,
+			otherInterestInSignoz,
 		});
 
 		onNext();
@@ -84,15 +96,15 @@ export function AboutSigNozQuestions({
 		setSignozDetails({
 			hearAboutSignoz,
 			otherAboutSignoz,
-			interestedSignoz,
-			otherInterest,
+			interestInSignoz,
+			otherInterestInSignoz,
 		});
 
 		logEvent('Onboarding: SigNoz Questions: Back', {
 			hearAboutSignoz,
 			otherAboutSignoz,
-			interestedSignoz,
-			otherInterest,
+			interestInSignoz,
+			otherInterestInSignoz,
 		});
 
 		onBack();
@@ -168,40 +180,40 @@ export function AboutSigNozQuestions({
 									key={option}
 									type="primary"
 									className={`onboarding-questionaire-button ${
-										interestedSignoz === option ? 'active' : ''
+										interestInSignoz === option ? 'active' : ''
 									}`}
-									onClick={(): void => setInterestedSignoz(option)}
+									onClick={(): void => setInterestInSignoz(option)}
 								>
 									{interestedInOptions[option]}
-									{interestedSignoz === option && (
+									{interestInSignoz === option && (
 										<CheckCircle size={12} color={Color.BG_FOREST_500} />
 									)}
 								</Button>
 							))}
 
-							{interestedSignoz === 'Others' ? (
+							{interestInSignoz === 'Others' ? (
 								<Input
 									type="text"
 									className="onboarding-questionaire-other-input"
 									placeholder="Please specify your interest"
-									value={otherInterest}
+									value={otherInterestInSignoz}
 									autoFocus
 									addonAfter={
-										otherInterest !== '' ? (
+										otherInterestInSignoz !== '' ? (
 											<CheckCircle size={12} color={Color.BG_FOREST_500} />
 										) : (
 											''
 										)
 									}
-									onChange={(e): void => setOtherInterest(e.target.value)}
+									onChange={(e): void => setOtherInterestInSignoz(e.target.value)}
 								/>
 							) : (
 								<Button
 									type="primary"
 									className={`onboarding-questionaire-button ${
-										interestedSignoz === 'Others' ? 'active' : ''
+										interestInSignoz === 'Others' ? 'active' : ''
 									}`}
-									onClick={(): void => setInterestedSignoz('Others')}
+									onClick={(): void => setInterestInSignoz('Others')}
 								>
 									Others
 								</Button>

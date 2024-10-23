@@ -1,0 +1,46 @@
+.team-member-container {
+	display: flex;
+	align-items: center;
+
+	.team-member-role-select {
+		width: 20%;
+
+		.ant-select-selector {
+			border: 1px solid #1d212d;
+			border-top-right-radius: 0px;
+			border-bottom-right-radius: 0px;
+
+			border-right: none;
+		}
+	}
+
+	.team-member-email-input {
+		width: 80%;
+
+		border: 1px solid #1d212d;
+		border-top-left-radius: 0px;
+		border-bottom-left-radius: 0px;
+	}
+}
+
+.questions-form-container {
+	.error-message-container {
+		padding: 16px;
+		margin-top: 16px;
+		border-radius: 4px;
+		border: 1px solid var(--bg-slate-500, #161922);
+		background: var(--bg-ink-400, #121317);
+		width: 100%;
+		display: flex;
+		align-items: center;
+
+		.error-message {
+			font-size: 12px;
+			font-weight: 400;
+
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+	}
+}

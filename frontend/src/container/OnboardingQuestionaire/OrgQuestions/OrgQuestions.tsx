@@ -4,27 +4,42 @@ import '../OnboardingQuestionaire.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
+export interface OrgData {
+	id: string;
+	isAnonymous: boolean;
+	name: string;
+}
+
+export interface OrgDetails {
+	organisationName: string;
+	usesObservability: boolean | null;
+	observabilityTool: string | null;
+	otherTool: string | null;
+	familiarity: string | null;
+}
+
 interface OrgQuestionsProps {
-	orgDetails: any;
-	setOrgDetails: (details: any) => void;
+	isLoading: boolean;
+	orgDetails: OrgDetails;
+	setOrgDetails: (details: OrgDetails) => void;
 	onNext: () => void;
 }
 
-const observabilityTools = [
-	'AWS Cloudwatch',
-	'DataDog',
-	'New Relic',
-	'Grafana / Prometheus',
-	'Azure App Monitor',
-	'GCP-native o11y tools',
-	'Honeycomb',
-];
+const observabilityTools = {
+	AWSCloudwatch: 'AWS Cloudwatch',
+	DataDog: 'DataDog',
+	NewRelic: 'New Relic',
+	GrafanaPrometheus: 'Grafana / Prometheus',
+	AzureAppMonitor: 'Azure App Monitor',
+	GCPNativeO11yTools: 'GCP-native o11y tools',
+	Honeycomb: 'Honeycomb',
+};
 
 const o11yFamiliarityOptions: Record<string, string> = {
 	new: "I'm completely new",
@@ -34,10 +49,13 @@ const o11yFamiliarityOptions: Record<string, string> = {
 };
 
 function OrgQuestions({
+	isLoading,
 	orgDetails,
 	setOrgDetails,
 	onNext,
 }: OrgQuestionsProps): JSX.Element {
+	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+
 	const [organisationName, setOrganisationName] = useState<string>(
 		orgDetails?.organisationName || '',
 	);
@@ -55,19 +73,36 @@ function OrgQuestions({
 	);
 	const [isNextDisabled, setIsNextDisabled] = useState<boolean>(true);
 
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	useEffect(() => {
+		setOrganisationName(orgDetails.organisationName);
+	}, [orgDetails.organisationName]);
+
+	const isValidUsesObservability = (): boolean => {
+		if (usesObservability === null) {
+			return false;
+		}
+
+		if (usesObservability && (!observabilityTool || observabilityTool === '')) {
+			return false;
+		}
+
+		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
+		if (usesObservability && observabilityTool === 'Others' && otherTool === '') {
+			return false;
+		}
+
+		return true;
+	};
 
 	useEffect(() => {
-		if (
-			organisationName !== '' &&
-			usesObservability !== null &&
-			familiarity !== null &&
-			(observabilityTool !== 'Others' || (usesObservability && otherTool !== ''))
-		) {
+		const isValidObservability = isValidUsesObservability();
+
+		if (organisationName !== '' && familiarity !== null && isValidObservability) {
 			setIsNextDisabled(false);
 		} else {
 			setIsNextDisabled(true);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		organisationName,
 		usesObservability,
@@ -115,7 +150,7 @@ function OrgQuestions({
 						<input
 							type="text"
 							name="organisationName"
-							id="organisation"
+							id="organisationName"
 							placeholder="For eg. Simpsonville..."
 							autoComplete="off"
 							value={organisationName}
@@ -169,7 +204,7 @@ function OrgQuestions({
 								Which observability tool do you currently use?
 							</label>
 							<div className="two-column-grid">
-								{observabilityTools.map((tool) => (
+								{Object.keys(observabilityTools).map((tool) => (
 									<Button
 										key={tool}
 										type="primary"
@@ -178,7 +213,7 @@ function OrgQuestions({
 										}`}
 										onClick={(): void => setObservabilityTool(tool)}
 									>
-										{tool}
+										{observabilityTools[tool as keyof typeof observabilityTools]}
 
 										{observabilityTool === tool && (
 											<CheckCircle size={12} color={Color.BG_FOREST_500} />
@@ -191,10 +226,10 @@ function OrgQuestions({
 										type="text"
 										className="onboarding-questionaire-other-input"
 										placeholder="Please specify the tool"
-										value={otherTool}
+										value={otherTool || ''}
 										autoFocus
 										addonAfter={
-											otherTool !== '' ? (
+											otherTool && otherTool !== '' ? (
 												<CheckCircle size={12} color={Color.BG_FOREST_500} />
 											) : (
 												''
@@ -249,7 +284,11 @@ function OrgQuestions({
 						disabled={isNextDisabled}
 					>
 						Next
-						<ArrowRight size={14} />
+						{isLoading ? (
+							<Loader2 className="animate-spin" />
+						) : (
+							<ArrowRight size={14} />
+						)}
 					</Button>
 				</div>
 			</div>

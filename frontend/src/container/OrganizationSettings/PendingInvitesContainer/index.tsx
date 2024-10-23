@@ -236,7 +236,9 @@ function PendingInvitesContainer(): JSX.Element {
 export interface InviteTeamMembersProps {
 	email: string;
 	name: string;
-	role: ROLES;
+	role: string;
+	id: string;
+	frontendBaseUrl: string;
 }
 
 interface DataProps {
