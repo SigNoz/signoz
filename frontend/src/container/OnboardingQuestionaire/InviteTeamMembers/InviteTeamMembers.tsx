@@ -2,6 +2,8 @@ import './InviteTeamMembers.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Select, Typography } from 'antd';
+import inviteUsers from 'api/user/inviteUsers';
+import { AxiosError } from 'axios';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
 import {
 	ArrowLeft,
@@ -11,6 +13,8 @@ import {
 	TriangleAlert,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useMutation } from 'react-query';
+import { ErrorResponse } from 'types/api';
 import { v4 as uuid } from 'uuid';
 
 interface TeamMember {
@@ -37,18 +41,17 @@ function InviteTeamMembers({
 	const [teamMembersToInvite, setTeamMembersToInvite] = useState<
 		TeamMember[] | null
 	>(teamMembers);
-
 	const [emailValidity, setEmailValidity] = useState<Record<string, boolean>>(
 		{},
 	);
-
 	const [hasInvalidEmails, setHasInvalidEmails] = useState<boolean>(false);
+	const [error, setError] = useState<string | null>(null);
 
 	const defaultTeamMember: TeamMember = {
 		email: '',
 		role: 'EDITOR',
 		name: '',
-		frontendBaseUrl: '',
+		frontendBaseUrl: window.location.origin,
 		id: '',
 	};
 
@@ -65,7 +68,10 @@ function InviteTeamMembers({
 	}, [teamMembers]);
 
 	const handleAddTeamMember = (): void => {
-		const newTeamMember = { ...defaultTeamMember, id: uuid() };
+		const newTeamMember = {
+			...defaultTeamMember,
+			id: uuid(),
+		};
 		setTeamMembersToInvite((prev) => [...(prev || []), newTeamMember]);
 	};
 
@@ -89,10 +95,34 @@ function InviteTeamMembers({
 		return isValid;
 	};
 
+	const handleError = (error: AxiosError): void => {
+		const errorMessage = error.response?.data as ErrorResponse;
+
+		setError(errorMessage.error);
+	};
+
+	const { mutate: sendInvites, isLoading: isSendingInvites } = useMutation(
+		inviteUsers,
+		{
+			onSuccess: (): void => {
+				onNext();
+			},
+			onError: (error): void => {
+				handleError(error as AxiosError);
+			},
+		},
+	);
+
 	const handleNext = (): void => {
 		if (validateAllUsers()) {
 			setTeamMembers(teamMembersToInvite || []);
-			onNext();
+
+			setError(null);
+			setHasInvalidEmails(false);
+
+			sendInvites({
+				users: teamMembersToInvite || [],
+			});
 		}
 	};
 
@@ -127,6 +157,10 @@ function InviteTeamMembers({
 			memberToUpdate.role = role;
 			setTeamMembersToInvite(updatedMembers);
 		}
+	};
+
+	const handleDoLater = (): void => {
+		onNext();
 	};
 
 	return (
@@ -209,20 +243,33 @@ function InviteTeamMembers({
 					</div>
 				)}
 
+				{error && (
+					<div className="error-message-container">
+						<Typography.Text className="error-message" type="danger">
+							<TriangleAlert size={14} /> {error}
+						</Typography.Text>
+					</div>
+				)}
+
 				<div className="next-prev-container">
 					<Button type="default" className="next-button" onClick={onBack}>
 						<ArrowLeft size={14} />
 						Back
 					</Button>
 
-					<Button type="primary" className="next-button" onClick={handleNext}>
+					<Button
+						type="primary"
+						className="next-button"
+						onClick={handleNext}
+						loading={isSendingInvites}
+					>
 						Send Invites
 						<ArrowRight size={14} />
 					</Button>
 				</div>
 
 				<div className="do-later-container">
-					<Button type="link" onClick={onNext}>
+					<Button type="link" onClick={handleDoLater}>
 						I&apos;ll do this later
 					</Button>
 				</div>
