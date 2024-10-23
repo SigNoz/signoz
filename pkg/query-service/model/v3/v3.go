@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 type DataSource string
@@ -803,8 +804,17 @@ func (b *BuilderQuery) SetShiftByFromFunc() {
 				fns = append(fns, b.Functions[:idx]...)
 				fns = append(fns, b.Functions[idx+1:]...)
 				b.Functions = fns
-				timeShiftBy = int64(function.Args[0].(float64))
-				fmt.Println("timeShiftBy", timeShiftBy)
+				if len(function.Args) > 0 {
+					if shift, ok := function.Args[0].(float64); ok {
+						timeShiftBy = int64(shift)
+					} else if shift, ok := function.Args[0].(string); ok {
+						shiftBy, err := strconv.ParseFloat(shift, 64)
+						if err != nil {
+							zap.L().Error("failed to parse time shift by", zap.String("shift", shift), zap.Error(err))
+						}
+						timeShiftBy = int64(shiftBy)
+					}
+				}
 				break
 			}
 		}
