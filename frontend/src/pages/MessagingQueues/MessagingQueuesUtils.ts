@@ -1,3 +1,4 @@
+import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
@@ -342,5 +343,41 @@ export const getMetaDataAndAPIPerView = (
 			},
 			tableApi: getTopicThroughputDetails,
 		},
+	};
+};
+
+interface OnboardingStatusAttributeData {
+	overallStatus: string;
+	allAvailableAttributes: string[];
+	attributeDataWithError: { attributeName: string; errorMsg: string }[];
+}
+
+export const getAttributeDataFromOnboardingStatus = (
+	onboardingStatus?: OnboardingStatusResponse | null,
+): OnboardingStatusAttributeData => {
+	const allAvailableAttributes: string[] = [];
+	const attributeDataWithError: {
+		attributeName: string;
+		errorMsg: string;
+	}[] = [];
+
+	if (onboardingStatus?.data && !isEmpty(onboardingStatus?.data)) {
+		onboardingStatus.data.forEach((status) => {
+			if (status.attribute) {
+				allAvailableAttributes.push(status.attribute);
+				if (status.status === '0') {
+					attributeDataWithError.push({
+						attributeName: status.attribute,
+						errorMsg: status.error_message || '',
+					});
+				}
+			}
+		});
+	}
+
+	return {
+		overallStatus: attributeDataWithError.length ? 'error' : 'success',
+		allAvailableAttributes,
+		attributeDataWithError,
 	};
 };
