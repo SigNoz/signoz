@@ -74,13 +74,13 @@ function AnomalyAlertEvaluationView({
 	const dimensions = useResizeObserver(graphRef);
 
 	useEffect(() => {
-		const chartData = getUplotChartDataForAnomalyDetection(data);
+		const chartData = getUplotChartDataForAnomalyDetection(data, isDarkMode);
 		setSeriesData(chartData);
 
 		setAllSeries(Object.keys(chartData));
 
 		setFilteredSeriesKeys(Object.keys(chartData));
-	}, [data]);
+	}, [data, isDarkMode]);
 
 	useEffect(() => {
 		const seriesKeys = Object.keys(seriesData);
