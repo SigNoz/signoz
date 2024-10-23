@@ -13,6 +13,7 @@ import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { getAttributeDataFromOnboardingStatus } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -77,6 +78,36 @@ export default function ConnectionStatus(): JSX.Element {
 		refetchInterval: pollInterval,
 	});
 
+	const [
+		shouldRetryOnboardingCall,
+		setShouldRetryOnboardingCall,
+	] = useState<boolean>(false);
+
+	useEffect(() => {
+		if (getStartedCaller === 'kafka') {
+			if (onbData?.statusCode !== 200) {
+				setShouldRetryOnboardingCall(true);
+			} else if (onbData?.payload?.status === 'success') {
+				const attributeData = getAttributeDataFromOnboardingStatus(
+					onbData?.payload,
+				);
+				if (attributeData.overallStatus === 'success') {
+					setLoading(false);
+					setIsReceivingData(true);
+					setPollInterval(false);
+				} else {
+					setShouldRetryOnboardingCall(true);
+				}
+			}
+		}
+	}, [
+		shouldRetryOnboardingCall,
+		onbData,
+		onbErr,
+		onbFetching,
+		getStartedCaller,
+	]);
+
 	useEffect(() => {
 		if (retryCount < 0 && getStartedCaller === 'kafka') {
 			setPollInterval(false);
@@ -89,13 +120,6 @@ export default function ConnectionStatus(): JSX.Element {
 			setRetryCount((prevCount) => prevCount - 1);
 		}
 	}, [getStartedCaller, onbData, onbFetching]);
-
-	useEffect(() => {
-		if (getStartedCaller === 'kafka' && onbData?.statusCode === 200) {
-			setIsReceivingData(true);
-			setLoading(false);
-		}
-	}, [getStartedCaller, onbData, onbErr, onbFetching, retryCount]);
 
 	const renderDocsReference = (): JSX.Element => {
 		switch (selectedDataSource?.name) {
