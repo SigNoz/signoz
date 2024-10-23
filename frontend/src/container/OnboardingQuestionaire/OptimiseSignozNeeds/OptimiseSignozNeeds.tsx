@@ -14,6 +14,7 @@ interface OptimiseSignozNeedsProps {
 	setOptimiseSignozDetails: (details: OptimiseSignozDetails) => void;
 	onNext: () => void;
 	onBack: () => void;
+	onWillDoLater: () => void;
 	isUpdatingProfile: boolean;
 }
 
@@ -48,6 +49,7 @@ function OptimiseSignozNeeds({
 	setOptimiseSignozDetails,
 	onNext,
 	onBack,
+	onWillDoLater,
 }: OptimiseSignozNeedsProps): JSX.Element {
 	const [logsPerDay, setLogsPerDay] = useState<number>(
 		optimiseSignozDetails?.logsPerDay || 25,
@@ -94,6 +96,8 @@ function OptimiseSignozNeeds({
 			hostsPerDay: 0,
 			services: 0,
 		});
+
+		onWillDoLater();
 
 		logEvent('Onboarding: Optimise SigNoz Needs: Will do later', {
 			logsPerDay: 0,
