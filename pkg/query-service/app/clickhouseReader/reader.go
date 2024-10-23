@@ -473,9 +473,13 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 }
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
+	indexTable := r.indexTable
+	if r.useTraceNewSchema {
+		indexTable = r.traceIndexTableV3
+	}
 
 	services := []string{}
-	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.indexTable)
+	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now()) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, indexTable)
 
 	rows, err := r.db.Query(ctx, query)
 
@@ -537,6 +541,10 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 }
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
+	indexTable := r.indexTable
+	if r.useTraceNewSchema {
+		indexTable = r.traceIndexTableV3
+	}
 
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
@@ -584,14 +592,14 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 					count(*) as numCalls
 				FROM %s.%s
 				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
-				r.TraceDB, r.indexTable,
+				r.TraceDB, indexTable,
 			)
 			errorQuery := fmt.Sprintf(
 				`SELECT
 					count(*) as numErrors
 				FROM %s.%s
 				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
-				r.TraceDB, r.indexTable,
+				r.TraceDB, indexTable,
 			)
 
 			args := []interface{}{}
@@ -601,6 +609,17 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				clickhouse.Named("serviceName", svc),
 				clickhouse.Named("names", ops),
 			)
+
+			if r.useTraceNewSchema {
+				bFilter := " AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket"
+				query += bFilter
+				errorQuery += bFilter
+				args = append(args,
+					clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
+					clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
+				)
+			}
+
 			// create TagQuery from TagQueryParams
 			tags := createTagQueryFromTagQueryParams(queryParams.Tags)
 			subQuery, argsSubQuery, errStatus := buildQueryWithTagParams(ctx, tags)
