@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { QueryParams } from 'constants/query';
 import { ApmDocFilePaths } from 'container/OnboardingContainer/constants/apmDocFilePaths';
 import { AwsMonitoringDocFilePaths } from 'container/OnboardingContainer/constants/awsMonitoringDocFilePaths';
 import { AzureMonitoringDocFilePaths } from 'container/OnboardingContainer/constants/azureMonitoringDocFilePaths';
@@ -33,8 +34,10 @@ export default function MarkdownStep(): JSX.Element {
 	const [markdownContent, setMarkdownContent] = useState('');
 
 	const urlQuery = useUrlQuery();
-	const getStartedCaller = urlQuery.get('source');
-	console.log('runstep', getStartedCaller);
+	const getStartedSource = urlQuery.get(QueryParams.getStartedSource);
+	const getStartedSourceService = urlQuery.get(
+		QueryParams.getStartedSourceService,
+	);
 
 	const { step } = activeStep;
 
@@ -60,10 +63,10 @@ export default function MarkdownStep(): JSX.Element {
 		path += `_${step?.id}`;
 
 		if (
-			getStartedCaller === 'kafka' &&
-			path === 'APM_java_springBoot_kubernetes_recommendedSteps_runApplication'
+			getStartedSource === 'kafka' &&
+			path === 'APM_java_springBoot_kubernetes_recommendedSteps_runApplication' // todo: Sagar - Make this generic logic in followup PRs
 		) {
-			path += `_producer`;
+			path += `_${getStartedSourceService}`;
 		}
 		return path;
 	};
