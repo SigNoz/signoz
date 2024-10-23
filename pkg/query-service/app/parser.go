@@ -750,9 +750,6 @@ func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) 
 		if req.Users[i].Email == "" {
 			return nil, fmt.Errorf("email is required for each user")
 		}
-		if req.Users[i].Name == "" {
-			return nil, fmt.Errorf("name is required for each user")
-		}
 		if req.Users[i].FrontendBaseUrl == "" {
 			return nil, fmt.Errorf("frontendBaseUrl is required for each user")
 		}
