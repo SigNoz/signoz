@@ -7,19 +7,24 @@
 
 		.ant-select-selector {
 			border: 1px solid #1d212d;
-			border-top-right-radius: 0px;
-			border-bottom-right-radius: 0px;
-
-			border-right: none;
+			border-top-left-radius: 0px;
+			border-bottom-left-radius: 0px;
 		}
 	}
 
 	.team-member-email-input {
 		width: 80%;
+		background-color: #121317;
+		border-top-right-radius: 0px;
+		border-bottom-right-radius: 0px;
 
-		border: 1px solid #1d212d;
-		border-top-left-radius: 0px;
-		border-bottom-left-radius: 0px;
+		.ant-input,
+		.ant-input-group-addon {
+			background-color: #121317 !important;
+			border-right: 0px;
+			border-top-right-radius: 0px;
+			border-bottom-right-radius: 0px;
+		}
 	}
 }
 
