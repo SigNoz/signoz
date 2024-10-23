@@ -195,21 +195,20 @@ function ListLogView({
 	return (
 		<>
 			<Container
-				$isActiveLog={isHighlighted}
+				$isActiveLog={
+					isHighlighted ||
+					activeLog?.id === logData.id ||
+					activeContextLog?.id === logData.id
+				}
 				$isDarkMode={isDarkMode}
+				$logType={logType}
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 				onClick={handleDetailedView}
 				fontSize={fontSize}
 			>
 				<div className="log-line">
-					<LogStateIndicator
-						type={logType}
-						isActive={
-							activeLog?.id === logData.id || activeContextLog?.id === logData.id
-						}
-						fontSize={fontSize}
-					/>
+					<LogStateIndicator type={logType} fontSize={fontSize} />
 					<div>
 						<LogContainer fontSize={fontSize}>
 							<LogGeneralField

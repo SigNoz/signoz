@@ -22,6 +22,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -724,6 +725,45 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 	return &req, nil
 }
 
+func isValidRole(role string) bool {
+	switch role {
+	case constants.AdminGroup, constants.EditorGroup, constants.ViewerGroup:
+		return true
+	}
+	return false
+}
+
+func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) {
+	var req model.BulkInviteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	// Validate that the request contains users
+	if len(req.Users) == 0 {
+		return nil, fmt.Errorf("no users provided for invitation")
+	}
+
+	// Trim spaces and validate each user
+	for i := range req.Users {
+		req.Users[i].Email = strings.TrimSpace(req.Users[i].Email)
+		if req.Users[i].Email == "" {
+			return nil, fmt.Errorf("email is required for each user")
+		}
+		if req.Users[i].Name == "" {
+			return nil, fmt.Errorf("name is required for each user")
+		}
+		if req.Users[i].FrontendBaseUrl == "" {
+			return nil, fmt.Errorf("frontendBaseUrl is required for each user")
+		}
+		if !isValidRole(req.Users[i].Role) {
+			return nil, fmt.Errorf("invalid role for user: %s", req.Users[i].Email)
+		}
+	}
+
+	return &req, nil
+}
+
 func parseSetApdexScoreRequest(r *http.Request) (*model.ApdexSettings, error) {
 	var req model.ApdexSettings
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -1092,6 +1132,17 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			// If the step interval is less than the minimum allowed step interval, set it to the minimum allowed step interval
 			if minStep := common.MinAllowedStepInterval(queryRangeParams.Start, queryRangeParams.End); query.StepInterval < minStep {
 				query.StepInterval = minStep
+			}
+
+			if query.DataSource == v3.DataSourceMetrics && baseconstants.UseMetricsPreAggregation() {
+				// if the time range is greater than 1 day, and less than 1 week set the step interval to be multiple of 5 minutes
+				// if the time range is greater than 1 week, set the step interval to be multiple of 30 mins
+				start, end := queryRangeParams.Start, queryRangeParams.End
+				if end-start >= 24*time.Hour.Milliseconds() && end-start < 7*24*time.Hour.Milliseconds() {
+					query.StepInterval = int64(math.Round(float64(query.StepInterval)/300)) * 300
+				} else if end-start >= 7*24*time.Hour.Milliseconds() {
+					query.StepInterval = int64(math.Round(float64(query.StepInterval)/1800)) * 1800
+				}
 			}
 
 			// Remove the time shift function from the list of functions and set the shift by value
