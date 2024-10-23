@@ -6,6 +6,7 @@ import {
 	LoadingOutlined,
 } from '@ant-design/icons';
 import logEvent from 'api/common/logEvent';
+import { QueryParams } from 'constants/query';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import { useOnboardingStatus } from 'hooks/messagingQueue / onboarding/useOnboardingStatus';
@@ -31,7 +32,7 @@ export default function ConnectionStatus(): JSX.Element {
 	>((state) => state.globalTime);
 
 	const urlQuery = useUrlQuery();
-	const getStartedCaller = urlQuery.get('source');
+	const getStartedSource = urlQuery.get(QueryParams.getStartedSource);
 
 	const {
 		serviceName,
@@ -64,7 +65,7 @@ export default function ConnectionStatus(): JSX.Element {
 		selectedTime,
 		selectedTags,
 		options: {
-			enabled: getStartedCaller !== 'kafka',
+			enabled: getStartedSource !== 'kafka',
 		},
 	});
 
@@ -74,7 +75,7 @@ export default function ConnectionStatus(): JSX.Element {
 		error: onbErr,
 		isFetching: onbFetching,
 	} = useOnboardingStatus({
-		enabled: getStartedCaller === 'kafka',
+		enabled: getStartedSource === 'kafka',
 		refetchInterval: pollInterval,
 	});
 
@@ -84,7 +85,7 @@ export default function ConnectionStatus(): JSX.Element {
 	] = useState<boolean>(false);
 
 	useEffect(() => {
-		if (getStartedCaller === 'kafka') {
+		if (getStartedSource === 'kafka') {
 			if (onbData?.statusCode !== 200) {
 				setShouldRetryOnboardingCall(true);
 			} else if (onbData?.payload?.status === 'success') {
@@ -105,21 +106,21 @@ export default function ConnectionStatus(): JSX.Element {
 		onbData,
 		onbErr,
 		onbFetching,
-		getStartedCaller,
+		getStartedSource,
 	]);
 
 	useEffect(() => {
-		if (retryCount < 0 && getStartedCaller === 'kafka') {
+		if (retryCount < 0 && getStartedSource === 'kafka') {
 			setPollInterval(false);
 			setLoading(false);
 		}
-	}, [retryCount, getStartedCaller]);
+	}, [retryCount, getStartedSource]);
 
 	useEffect(() => {
-		if (getStartedCaller === 'kafka' && !onbFetching) {
+		if (getStartedSource === 'kafka' && !onbFetching) {
 			setRetryCount((prevCount) => prevCount - 1);
 		}
-	}, [getStartedCaller, onbData, onbFetching]);
+	}, [getStartedSource, onbData, onbFetching]);
 
 	const renderDocsReference = (): JSX.Element => {
 		switch (selectedDataSource?.name) {
@@ -254,7 +255,7 @@ export default function ConnectionStatus(): JSX.Element {
 	useEffect(() => {
 		let pollingTimer: string | number | NodeJS.Timer | undefined;
 
-		if (getStartedCaller !== 'kafka') {
+		if (getStartedSource !== 'kafka') {
 			if (loading) {
 				pollingTimer = setInterval(() => {
 					// Trigger a refetch with the updated parameters
@@ -285,14 +286,14 @@ export default function ConnectionStatus(): JSX.Element {
 	}, [refetch, selectedTags, selectedTime, loading]);
 
 	useEffect(() => {
-		if (getStartedCaller !== 'kafka') {
+		if (getStartedSource !== 'kafka') {
 			verifyApplicationData(data);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isServiceLoading, data, error, isError]);
 
 	useEffect(() => {
-		if (getStartedCaller !== 'kafka') {
+		if (getStartedSource !== 'kafka') {
 			refetch();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
