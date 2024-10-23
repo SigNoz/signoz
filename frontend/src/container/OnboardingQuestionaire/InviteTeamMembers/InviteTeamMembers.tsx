@@ -11,6 +11,7 @@ import {
 	CheckCircle,
 	Plus,
 	TriangleAlert,
+	X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
@@ -73,6 +74,10 @@ function InviteTeamMembers({
 			id: uuid(),
 		};
 		setTeamMembersToInvite((prev) => [...(prev || []), newTeamMember]);
+	};
+
+	const handleRemoveTeamMember = (id: string): void => {
+		setTeamMembersToInvite((prev) => (prev || []).filter((m) => m.id !== id));
 	};
 
 	// Validation function to check all users
@@ -174,7 +179,7 @@ function InviteTeamMembers({
 			</Typography.Paragraph>
 
 			<div className="questions-form-container">
-				<div className="questions-form">
+				<div className="questions-form invite-team-members-form">
 					<div className="form-group">
 						<div className="question-label">
 							Collaborate with your team
@@ -186,15 +191,6 @@ function InviteTeamMembers({
 						<div className="invite-team-members-container">
 							{teamMembersToInvite?.map((member) => (
 								<div className="team-member-container" key={member.id}>
-									<Select
-										defaultValue={member.role}
-										onChange={(value): void => handleRoleChange(value, member)}
-										className="team-member-role-select"
-									>
-										<Select.Option value="VIEWER">Viewer</Select.Option>
-										<Select.Option value="EDITOR">Editor</Select.Option>
-										<Select.Option value="ADMIN">Admin</Select.Option>
-									</Select>
 									<Input
 										placeholder="your-teammate@org.com"
 										value={member.email}
@@ -217,6 +213,24 @@ function InviteTeamMembers({
 											)
 										}
 									/>
+									<Select
+										defaultValue={member.role}
+										onChange={(value): void => handleRoleChange(value, member)}
+										className="team-member-role-select"
+									>
+										<Select.Option value="VIEWER">Viewer</Select.Option>
+										<Select.Option value="EDITOR">Editor</Select.Option>
+										<Select.Option value="ADMIN">Admin</Select.Option>
+									</Select>
+
+									{teamMembersToInvite?.length > 1 && (
+										<Button
+											type="primary"
+											className="remove-team-member-button"
+											icon={<X size={14} />}
+											onClick={(): void => handleRemoveTeamMember(member.id)}
+										/>
+									)}
 								</div>
 							))}
 						</div>
