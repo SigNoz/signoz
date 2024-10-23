@@ -14,6 +14,9 @@ export const useOnboardingStatus: UseOnboardingStatus = (options) =>
 	useQuery<SuccessResponse<OnboardingStatusResponse> | ErrorResponse>({
 		queryKey: ['onboardingStatus'],
 		queryFn: () =>
-			getOnboardingStatus({ start: Date.now() - 15 * 60 * 1000, end: Date.now() }),
+			getOnboardingStatus({
+				start: (Date.now() - 15 * 60 * 1000) * 1_000_000,
+				end: Date.now() * 1_000_000,
+			}),
 		...options,
 	});
