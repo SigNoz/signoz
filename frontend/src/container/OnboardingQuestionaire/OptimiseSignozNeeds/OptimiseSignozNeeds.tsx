@@ -1,13 +1,20 @@
 import { Button, Slider, SliderSingleProps, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { ArrowLeft, ArrowRight, Minus } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, ArrowRight, Loader2, Minus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+export interface OptimiseSignozDetails {
+	logsPerDay: number;
+	hostsPerDay: number;
+	services: number;
+}
 
 interface OptimiseSignozNeedsProps {
-	optimiseSignozDetails: Record<string, number> | null;
-	setOptimiseSignozDetails: (details: Record<string, number> | null) => void;
+	optimiseSignozDetails: OptimiseSignozDetails;
+	setOptimiseSignozDetails: (details: OptimiseSignozDetails) => void;
 	onNext: () => void;
 	onBack: () => void;
+	isUpdatingProfile: boolean;
 }
 
 const logMarks: SliderSingleProps['marks'] = {
@@ -36,6 +43,7 @@ const serviceMarks: SliderSingleProps['marks'] = {
 };
 
 function OptimiseSignozNeeds({
+	isUpdatingProfile,
 	optimiseSignozDetails,
 	setOptimiseSignozDetails,
 	onNext,
@@ -51,13 +59,16 @@ function OptimiseSignozNeeds({
 		optimiseSignozDetails?.services || 10,
 	);
 
-	const handleOnNext = (): void => {
+	useEffect(() => {
 		setOptimiseSignozDetails({
 			logsPerDay,
 			hostsPerDay,
 			services,
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [services, hostsPerDay, logsPerDay]);
 
+	const handleOnNext = (): void => {
 		logEvent('Onboarding: Optimise SigNoz Needs: Next', {
 			logsPerDay,
 			hostsPerDay,
@@ -68,12 +79,6 @@ function OptimiseSignozNeeds({
 	};
 
 	const handleOnBack = (): void => {
-		setOptimiseSignozDetails({
-			logsPerDay,
-			hostsPerDay,
-			services,
-		});
-
 		logEvent('Onboarding: Optimise SigNoz Needs: Back', {
 			logsPerDay,
 			hostsPerDay,
@@ -95,8 +100,6 @@ function OptimiseSignozNeeds({
 			hostsPerDay: 0,
 			services: 0,
 		});
-
-		onNext();
 	};
 
 	return (
@@ -122,7 +125,7 @@ function OptimiseSignozNeeds({
 							<Slider
 								marks={logMarks}
 								defaultValue={logsPerDay}
-								onChange={(value): void => setLogsPerDay(value)}
+								onAfterChange={(value): void => setLogsPerDay(value)}
 								styles={{
 									track: {
 										background: '#4E74F8',
@@ -140,7 +143,7 @@ function OptimiseSignozNeeds({
 							<Slider
 								marks={hostMarks}
 								defaultValue={hostsPerDay}
-								onChange={(value): void => setHostsPerDay(value)}
+								onAfterChange={(value: number): void => setHostsPerDay(value)}
 								styles={{
 									track: {
 										background: '#4E74F8',
@@ -158,7 +161,7 @@ function OptimiseSignozNeeds({
 							<Slider
 								marks={serviceMarks}
 								defaultValue={services}
-								onChange={(value): void => setServices(value)}
+								onAfterChange={(value): void => setServices(value)}
 								styles={{
 									track: {
 										background: '#4E74F8',
@@ -170,14 +173,28 @@ function OptimiseSignozNeeds({
 				</div>
 
 				<div className="next-prev-container">
-					<Button type="default" className="next-button" onClick={handleOnBack}>
+					<Button
+						type="default"
+						className="next-button"
+						onClick={handleOnBack}
+						disabled={isUpdatingProfile}
+					>
 						<ArrowLeft size={14} />
 						Back
 					</Button>
 
-					<Button type="primary" className="next-button" onClick={handleOnNext}>
-						Next
-						<ArrowRight size={14} />
+					<Button
+						type="primary"
+						className="next-button"
+						onClick={handleOnNext}
+						disabled={isUpdatingProfile}
+					>
+						Next{' '}
+						{isUpdatingProfile ? (
+							<Loader2 className="animate-spin" />
+						) : (
+							<ArrowRight size={14} />
+						)}
 					</Button>
 				</div>
 

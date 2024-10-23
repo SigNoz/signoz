@@ -1,5 +1,8 @@
+import './InviteTeamMembers.styles.scss';
+
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Select, Typography } from 'antd';
+import { cloneDeep, debounce, isEmpty } from 'lodash-es';
 import {
 	ArrowLeft,
 	ArrowRight,
@@ -7,22 +10,23 @@ import {
 	Plus,
 	TriangleAlert,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { v4 as uuid } from 'uuid';
+
+interface TeamMember {
+	email: string;
+	role: string;
+	name: string;
+	frontendBaseUrl: string;
+	id: string;
+}
 
 interface InviteTeamMembersProps {
-	teamMembers: string[];
-	setTeamMembers: (teamMembers: string[]) => void;
+	teamMembers: TeamMember[] | null;
+	setTeamMembers: (teamMembers: TeamMember[]) => void;
 	onNext: () => void;
 	onBack: () => void;
 }
-
-const userRolesOptions = (
-	<Select defaultValue="editor">
-		<Select.Option value="viewer">Viewer</Select.Option>
-		<Select.Option value="editor">Editor</Select.Option>
-		<Select.Option value="Admin">Admin</Select.Option>
-	</Select>
-);
 
 function InviteTeamMembers({
 	teamMembers,
@@ -30,32 +34,99 @@ function InviteTeamMembers({
 	onNext,
 	onBack,
 }: InviteTeamMembersProps): JSX.Element {
-	const [teamMembersToInvite, setTeamMembersToInvite] = useState<string[]>(
-		teamMembers || [''],
+	const [teamMembersToInvite, setTeamMembersToInvite] = useState<
+		TeamMember[] | null
+	>(teamMembers);
+
+	const [emailValidity, setEmailValidity] = useState<Record<string, boolean>>(
+		{},
 	);
 
+	const [hasInvalidEmails, setHasInvalidEmails] = useState<boolean>(false);
+
+	const defaultTeamMember: TeamMember = {
+		email: '',
+		role: 'EDITOR',
+		name: '',
+		frontendBaseUrl: '',
+		id: '',
+	};
+
+	useEffect(() => {
+		if (isEmpty(teamMembers)) {
+			const teamMember = {
+				...defaultTeamMember,
+				id: uuid(),
+			};
+
+			setTeamMembersToInvite([teamMember]);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [teamMembers]);
+
 	const handleAddTeamMember = (): void => {
-		setTeamMembersToInvite([...teamMembersToInvite, '']);
+		const newTeamMember = { ...defaultTeamMember, id: uuid() };
+		setTeamMembersToInvite((prev) => [...(prev || []), newTeamMember]);
+	};
+
+	// Validation function to check all users
+	const validateAllUsers = (): boolean => {
+		let isValid = true;
+
+		const updatedValidity: Record<string, boolean> = {};
+
+		teamMembersToInvite?.forEach((member) => {
+			const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email);
+			if (!emailValid || !member.email) {
+				isValid = false;
+				setHasInvalidEmails(true);
+			}
+			updatedValidity[member.id!] = emailValid;
+		});
+
+		setEmailValidity(updatedValidity);
+
+		return isValid;
 	};
 
 	const handleNext = (): void => {
-		console.log(teamMembersToInvite);
-		setTeamMembers(teamMembersToInvite);
-		onNext();
+		if (validateAllUsers()) {
+			setTeamMembers(teamMembersToInvite || []);
+			onNext();
+		}
 	};
 
-	const handleOnChange = (
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	const debouncedValidateEmail = useCallback(
+		debounce((email: string, memberId: string) => {
+			const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+			setEmailValidity((prev) => ({ ...prev, [memberId]: isValid }));
+		}, 500),
+		[],
+	);
+
+	const handleEmailChange = (
 		e: React.ChangeEvent<HTMLInputElement>,
-		index: number,
+		member: TeamMember,
 	): void => {
-		const newTeamMembers = [...teamMembersToInvite];
-		newTeamMembers[index] = e.target.value;
-		setTeamMembersToInvite(newTeamMembers);
+		const { value } = e.target;
+		const updatedMembers = cloneDeep(teamMembersToInvite || []);
+
+		const memberToUpdate = updatedMembers.find((m) => m.id === member.id);
+		if (memberToUpdate) {
+			memberToUpdate.email = value;
+			setTeamMembersToInvite(updatedMembers);
+			debouncedValidateEmail(value, member.id!);
+		}
 	};
 
-	const isValidEmail = (email: string): boolean => {
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		return emailRegex.test(email);
+	const handleRoleChange = (role: string, member: TeamMember): void => {
+		const updatedMembers = cloneDeep(teamMembersToInvite || []);
+		const memberToUpdate = updatedMembers.find((m) => m.id === member.id);
+		if (memberToUpdate) {
+			memberToUpdate.role = role;
+			setTeamMembersToInvite(updatedMembers);
+		}
 	};
 
 	return (
@@ -79,29 +150,37 @@ function InviteTeamMembers({
 						</div>
 
 						<div className="invite-team-members-container">
-							{teamMembersToInvite.map((member, index) => (
-								// eslint-disable-next-line react/no-array-index-key
-								<div className="team-member-container" key={`${member}-${index}`}>
+							{teamMembersToInvite?.map((member) => (
+								<div className="team-member-container" key={member.id}>
+									<Select
+										defaultValue={member.role}
+										onChange={(value): void => handleRoleChange(value, member)}
+										className="team-member-role-select"
+									>
+										<Select.Option value="VIEWER">Viewer</Select.Option>
+										<Select.Option value="EDITOR">Editor</Select.Option>
+										<Select.Option value="ADMIN">Admin</Select.Option>
+									</Select>
 									<Input
-										addonBefore={userRolesOptions}
-										addonAfter={
-											// eslint-disable-next-line no-nested-ternary
-											member.length > 0 ? (
-												isValidEmail(member) ? (
-													<CheckCircle size={14} color={Color.BG_FOREST_500} />
-												) : (
-													<TriangleAlert size={14} color={Color.BG_SIENNA_500} />
-												)
-											) : null
-										}
 										placeholder="your-teammate@org.com"
-										value={member}
+										value={member.email}
 										type="email"
 										required
 										autoFocus
 										autoComplete="off"
+										className="team-member-email-input"
 										onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-											handleOnChange(e, index)
+											handleEmailChange(e, member)
+										}
+										addonAfter={
+											// eslint-disable-next-line no-nested-ternary
+											emailValidity[member.id!] === undefined ? null : emailValidity[
+													member.id!
+											  ] ? (
+												<CheckCircle size={14} color={Color.BG_FOREST_500} />
+											) : (
+												<TriangleAlert size={14} color={Color.BG_SIENNA_500} />
+											)
 										}
 									/>
 								</div>
@@ -120,6 +199,15 @@ function InviteTeamMembers({
 						</div>
 					</div>
 				</div>
+
+				{hasInvalidEmails && (
+					<div className="error-message-container">
+						<Typography.Text className="error-message" type="danger">
+							<TriangleAlert size={14} /> Please enter valid emails for all team
+							members
+						</Typography.Text>
+					</div>
+				)}
 
 				<div className="next-prev-container">
 					<Button type="default" className="next-button" onClick={onBack}>
