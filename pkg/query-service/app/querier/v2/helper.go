@@ -11,6 +11,7 @@ import (
 	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -158,11 +159,16 @@ func (q *querier) runBuilderQuery(
 
 	if builderQuery.DataSource == v3.DataSourceTraces {
 
+		tracesQueryBuilder := tracesV3.PrepareTracesQuery
+		if q.UseTraceNewSchema {
+			tracesQueryBuilder = tracesV4.PrepareTracesQuery
+		}
+
 		var query string
 		var err error
 		// for ts query with group by and limit form two queries
 		if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
-			limitQuery, err := tracesV3.PrepareTracesQuery(
+			limitQuery, err := tracesQueryBuilder(
 				start,
 				end,
 				params.CompositeQuery.PanelType,
@@ -173,7 +179,7 @@ func (q *querier) runBuilderQuery(
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
 				return
 			}
-			placeholderQuery, err := tracesV3.PrepareTracesQuery(
+			placeholderQuery, err := tracesQueryBuilder(
 				start,
 				end,
 				params.CompositeQuery.PanelType,
@@ -186,7 +192,7 @@ func (q *querier) runBuilderQuery(
 			}
 			query = fmt.Sprintf(placeholderQuery, limitQuery)
 		} else {
-			query, err = tracesV3.PrepareTracesQuery(
+			query, err = tracesQueryBuilder(
 				start,
 				end,
 				params.CompositeQuery.PanelType,
