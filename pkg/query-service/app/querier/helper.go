@@ -45,7 +45,7 @@ func prepareLogsQuery(_ context.Context,
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
-			v3.LogQBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
+			v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
 		)
 		if err != nil {
 			return query, err
@@ -56,7 +56,7 @@ func prepareLogsQuery(_ context.Context,
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
-			v3.LogQBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
+			v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
 		)
 		if err != nil {
 			return query, err
@@ -71,7 +71,7 @@ func prepareLogsQuery(_ context.Context,
 		params.CompositeQuery.QueryType,
 		params.CompositeQuery.PanelType,
 		builderQuery,
-		v3.LogQBOptions{PreferRPM: preferRPM},
+		v3.QBOptions{PreferRPM: preferRPM},
 	)
 	if err != nil {
 		return query, err
@@ -167,7 +167,7 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				tracesV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
+				v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
 			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
@@ -178,7 +178,7 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				tracesV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
+				v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
 			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
@@ -191,7 +191,7 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				tracesV3.Options{PreferRPM: preferRPM},
+				v3.QBOptions{PreferRPM: preferRPM},
 			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}

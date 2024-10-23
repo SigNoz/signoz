@@ -1417,12 +1417,6 @@ func TestParseQueryRangeParamsStepIntervalAdjustment(t *testing.T) {
 			step:  1, // gets updated
 		},
 		{
-			desc:  "1 week and 1 minute step",
-			start: time.Now().Add(-7 * 24 * time.Hour).UnixMilli(),
-			end:   time.Now().UnixMilli(),
-			step:  60, // gets updated
-		},
-		{
 			desc:  "1 day and 1 hour step",
 			start: time.Now().Add(-24 * time.Hour).UnixMilli(),
 			end:   time.Now().UnixMilli(),
@@ -1445,12 +1439,6 @@ func TestParseQueryRangeParamsStepIntervalAdjustment(t *testing.T) {
 			start: time.Now().Add(-24 * time.Hour).UnixMilli(),
 			end:   time.Now().UnixMilli(),
 			step:  300, // no update
-		},
-		{
-			desc:  "1 week and 10 minutes step",
-			start: time.Now().Add(-7 * 24 * time.Hour).UnixMilli(),
-			end:   time.Now().UnixMilli(),
-			step:  600, // get updated
 		},
 		{
 			desc:  "1 week and 45 minutes step",

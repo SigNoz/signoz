@@ -159,6 +159,8 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 
 	cacheKeys := q.keyGenerator.GenerateKeys(params)
 
+	now := time.Now()
+
 	ch := make(chan channelResult, len(params.CompositeQuery.BuilderQueries))
 	var wg sync.WaitGroup
 
@@ -171,6 +173,7 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 
 	wg.Wait()
 	close(ch)
+	zap.L().Info("time taken to run builder queries", zap.Duration("multiQueryDuration", time.Since(now)), zap.Int("num_queries", len(params.CompositeQuery.BuilderQueries)))
 
 	results := make([]*v3.Result, 0)
 	errQueriesByName := make(map[string]error)
@@ -378,7 +381,15 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 		}
 	}
 
-	queries, err := q.builder.PrepareQueries(params)
+	queries := make(map[string]string)
+	var err error
+	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		queries, err = q.builder.PrepareQueries(params)
+	} else if params.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+		for name, chQuery := range params.CompositeQuery.ClickHouseQueries {
+			queries[name] = chQuery.Query
+		}
+	}
 
 	if err != nil {
 		return nil, nil, err
@@ -449,7 +460,11 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3)
 		case v3.QueryTypePromQL:
 			results, errQueriesByName, err = q.runPromQueries(ctx, params)
 		case v3.QueryTypeClickHouseSQL:
-			results, errQueriesByName, err = q.runClickHouseQueries(ctx, params)
+			if params.CompositeQuery.PanelType == v3.PanelTypeList || params.CompositeQuery.PanelType == v3.PanelTypeTrace {
+				results, errQueriesByName, err = q.runBuilderListQueries(ctx, params)
+			} else {
+				results, errQueriesByName, err = q.runClickHouseQueries(ctx, params)
+			}
 		default:
 			err = fmt.Errorf("invalid query type")
 		}

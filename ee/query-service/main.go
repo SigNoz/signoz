@@ -20,6 +20,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	prommodel "github.com/prometheus/common/model"
+
 	zapotlpencoder "github.com/SigNoz/zap_otlp/zap_otlp_encoder"
 	zapotlpsync "github.com/SigNoz/zap_otlp/zap_otlp_sync"
 
@@ -75,6 +77,10 @@ func initZapLog(enableQueryServiceLogOTLPExport bool) *zap.Logger {
 	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
 
 	return logger
+}
+
+func init() {
+	prommodel.NameValidationScheme = prommodel.UTF8Validation
 }
 
 func main() {
