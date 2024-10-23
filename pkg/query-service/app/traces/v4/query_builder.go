@@ -375,24 +375,6 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	}
 }
 
-func enrichOrderBy(items []v3.OrderBy, keys map[string]v3.AttributeKey) []v3.OrderBy {
-	enrichedItems := []v3.OrderBy{}
-	for i := 0; i < len(items); i++ {
-		attributeKey := enrichKeyWithMetadata(v3.AttributeKey{
-			Key: items[i].ColumnName,
-		}, keys)
-		enrichedItems = append(enrichedItems, v3.OrderBy{
-			ColumnName: items[i].ColumnName,
-			Order:      items[i].Order,
-			Key:        attributeKey.Key,
-			DataType:   attributeKey.DataType,
-			Type:       attributeKey.Type,
-			IsColumn:   attributeKey.IsColumn,
-		})
-	}
-	return enrichedItems
-}
-
 // PrepareTracesQuery returns the query string for traces
 // start and end are in epoch millisecond
 // step is in seconds
