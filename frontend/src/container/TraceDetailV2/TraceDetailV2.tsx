@@ -83,7 +83,7 @@ function getSpanItemRenderer(
 						width: `${currentSpanShare}%`,
 						left: `${currentSpanLeftOffsert}%`,
 						border: '1px solid white',
-						position: 'fixed',
+						position: 'relative',
 					}}
 				/>
 			</section>
