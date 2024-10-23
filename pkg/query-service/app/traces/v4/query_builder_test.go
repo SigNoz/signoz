@@ -345,7 +345,7 @@ func Test_buildTracesQuery(t *testing.T) {
 			},
 			want: "SELECT  resources_number['host'] as `host` toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_number['bytes'] > 100 AND " +
-				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND " +
+				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND " +
 				"(seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name%myService%' AND " +
 				"( (simpleJSONHas(labels, 'host') AND labels like '%host%') ))) " +
 				"group by `host` order by `host` ASC",
@@ -383,7 +383,7 @@ func Test_buildTracesQuery(t *testing.T) {
 			},
 			want: "SELECT subQuery.serviceName, subQuery.name, count() AS span_count, subQuery.durationNano, subQuery.traceID AS traceID FROM signoz_traces.distributed_signoz_index_v3 INNER JOIN " +
 				"( SELECT * FROM (SELECT traceID, durationNano, serviceName, name FROM signoz_traces.signoz_index_v3 WHERE parentSpanID = '' AND (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND " +
-				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND attributes_string['method'] = 'GET' AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_traces_v3_resource " +
+				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND attributes_string['method'] = 'GET' AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource " +
 				"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name%myService%')) " +
 				"ORDER BY durationNano DESC LIMIT 1 BY traceID  LIMIT 100) AS inner_subquery ) AS subQuery ON signoz_traces.distributed_signoz_index_v3.traceID = subQuery.traceID WHERE (timestamp >= '1680066360726210000' AND " +
 				"timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY " +
