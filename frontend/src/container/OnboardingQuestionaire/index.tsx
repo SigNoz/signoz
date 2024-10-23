@@ -3,6 +3,7 @@ import './OnboardingQuestionaire.styles.scss';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import updateProfileAPI from 'api/onboarding/updateProfile';
 import editOrg from 'api/user/editOrg';
+import getOrgUser from 'api/user/getOrgUser';
 import { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
@@ -11,7 +12,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { Dispatch, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMutation } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -78,6 +79,17 @@ function OnboardingQuestionaire(): JSX.Element {
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const { data: orgUsers, isLoading: isLoadingOrgUsers } = useQuery({
+		queryFn: () =>
+			getOrgUser({
+				orgId: (org || [])[0].id,
+			}),
+		queryKey: ['getOrgUser', org?.[0].id],
+	});
+
+	console.log('orgUsers', orgUsers, isLoadingOrgUsers);
+
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [orgData, setOrgData] = useState<OrgData | null>(null);
 
@@ -188,7 +200,7 @@ function OnboardingQuestionaire(): JSX.Element {
 	};
 
 	const handleOnboardingComplete = (): void => {
-		history.push(ROUTES.APPLICATION);
+		history.push(ROUTES.GET_STARTED);
 	};
 
 	return (
