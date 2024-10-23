@@ -5,7 +5,7 @@ import { Typography } from 'antd';
 import TimelineV2 from 'container/TimelineV2/TimelineV2';
 import dayjs from 'dayjs';
 import { useEffect, useRef } from 'react';
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import { ListRange, Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import {
 	GetTraceDetailsSuccessResponse,
 	SpanItem,
@@ -99,10 +99,27 @@ function TraceDetailV2(props: ITraceDetailV2Props): JSX.Element {
 		spanID,
 		uncollapsedNodes,
 	} = props;
-
+	const isInitialLoad = useRef(true);
 	const handleEndReached = (index: number): void => {
 		if (traceDetailsResponse?.spans?.[index]?.spanID)
 			setSpanID(traceDetailsResponse.spans[index].spanID);
+	};
+	const handleRangeChanged = (range: ListRange): void => {
+		const { startIndex } = range;
+
+		// Only trigger the function after the initial load
+		if (isInitialLoad.current && startIndex > 0) {
+			isInitialLoad.current = false;
+			return;
+		}
+
+		if (
+			!isInitialLoad.current &&
+			startIndex === 0 &&
+			traceDetailsResponse?.spans?.[0]?.spanID
+		) {
+			setSpanID(traceDetailsResponse.spans[0].spanID);
+		}
 	};
 
 	const ref = useRef<VirtuosoHandle>(null);
@@ -149,6 +166,7 @@ function TraceDetailV2(props: ITraceDetailV2Props): JSX.Element {
 			<section className="trace-details-v2-waterfall-model">
 				<Virtuoso
 					ref={ref}
+					rangeChanged={handleRangeChanged}
 					data={traceDetailsResponse?.spans || []}
 					endReached={handleEndReached}
 					itemContent={(index, data): React.ReactNode =>

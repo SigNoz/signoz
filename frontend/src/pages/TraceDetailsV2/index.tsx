@@ -21,6 +21,7 @@ function TraceDetailsV2(): JSX.Element {
 				uncollapsedNodes,
 			}),
 		queryKey: [spanID, traceID, ...uncollapsedNodes],
+		keepPreviousData: true,
 	});
 
 	useEffect(() => {

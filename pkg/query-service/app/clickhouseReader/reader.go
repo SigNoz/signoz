@@ -1799,6 +1799,12 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 		}
 	}
 
+	// for _, span := range spanIDNodeMap {
+	// 	if !span.IsProcessed {
+	// 		traceRoots = append(traceRoots, span)
+	// 	}
+	// }
+
 	// todo[@vikrantgupta25]: check what to do in this case ?
 	if len(traceRoots) > 1 {
 		return nil, fmt.Errorf("more than one root spans found in a single trace")
