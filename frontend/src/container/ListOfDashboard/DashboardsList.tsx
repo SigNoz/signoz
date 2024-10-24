@@ -79,6 +79,7 @@ import { isCloudUser } from 'utils/app';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
+import { RequestDashboardBtn } from './RequestDashboardBtn';
 import { DeleteButton } from './TableComponents/DeleteButton';
 import {
 	DashboardDynamicColumns,
@@ -826,6 +827,13 @@ function DashboardsList(): JSX.Element {
 								</Dropdown>
 							)}
 						</div>
+						{isCloudUser() && (
+							<div className="integrations-container">
+								<div className="integrations-content">
+									<RequestDashboardBtn />
+								</div>
+							</div>
+						)}
 
 						{dashboards?.length === 0 ? (
 							<div className="no-search">

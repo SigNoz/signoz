@@ -5,6 +5,17 @@
 	justify-content: center;
 	width: 100%;
 
+	// overridding the request integration style to fix the spacing for dashboard list
+	.request-entity-container {
+		margin-bottom: 16px !important;
+		margin-top: 0 !important;
+	}
+
+	.integrations-content {
+		max-width: 100% !important;
+		width: 100% !important;
+	}
+
 	.dashboards-list-view-content {
 		width: calc(100% - 30px);
 		max-width: 836px;
