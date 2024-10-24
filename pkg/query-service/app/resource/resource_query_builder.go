@@ -1,4 +1,4 @@
-package v4
+package resource
 
 import (
 	"fmt"
@@ -211,7 +211,7 @@ func buildResourceFiltersFromAggregateAttribute(aggregateAttribute v3.AttributeK
 	return ""
 }
 
-func buildResourceSubQuery(bucketStart, bucketEnd int64, fs *v3.FilterSet, groupBy []v3.AttributeKey, aggregateAttribute v3.AttributeKey, isLiveTail bool) (string, error) {
+func BuildResourceSubQuery(dbName, tableName string, bucketStart, bucketEnd int64, fs *v3.FilterSet, groupBy []v3.AttributeKey, aggregateAttribute v3.AttributeKey, isLiveTail bool) (string, error) {
 
 	// BUILD THE WHERE CLAUSE
 	var conditions []string
@@ -242,10 +242,10 @@ func buildResourceSubQuery(bucketStart, bucketEnd int64, fs *v3.FilterSet, group
 	// BUILD THE FINAL QUERY
 	var query string
 	if isLiveTail {
-		query = fmt.Sprintf("SELECT fingerprint FROM signoz_logs.%s WHERE ", DISTRIBUTED_LOGS_V2_RESOURCE)
+		query = fmt.Sprintf("SELECT fingerprint FROM %s.%s WHERE ", dbName, tableName)
 		query = "(" + query + conditionStr
 	} else {
-		query = fmt.Sprintf("SELECT fingerprint FROM signoz_logs.%s WHERE (seen_at_ts_bucket_start >= %d) AND (seen_at_ts_bucket_start <= %d) AND ", DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd)
+		query = fmt.Sprintf("SELECT fingerprint FROM %s.%s WHERE (seen_at_ts_bucket_start >= %d) AND (seen_at_ts_bucket_start <= %d) AND ", dbName, tableName, bucketStart, bucketEnd)
 		query = "(" + query + conditionStr + ")"
 	}
 
