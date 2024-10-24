@@ -2,6 +2,15 @@ package model
 
 import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
+type (
+	ResponseType string
+)
+
+const (
+	ResponseTypeList        ResponseType = "list"
+	ResponseTypeGroupedList ResponseType = "grouped_list"
+)
+
 type HostListRequest struct {
 	Start   int64             `json:"start"` // epoch time in ms
 	End     int64             `json:"end"`   // epoch time in ms
@@ -79,4 +88,41 @@ type ProcessListGroup struct {
 	GroupCPUAvg    float64  `json:"groupCPUAvg"`
 	GroupMemoryAvg float64  `json:"groupMemoryAvg"`
 	ProcessNames   []string `json:"processNames"`
+}
+
+type PodListRequest struct {
+	Start   int64             `json:"start"` // epoch time in ms
+	End     int64             `json:"end"`   // epoch time in ms
+	Filters *v3.FilterSet     `json:"filters"`
+	GroupBy []v3.AttributeKey `json:"groupBy"`
+	OrderBy *v3.OrderBy       `json:"orderBy"`
+	Offset  int               `json:"offset"`
+	Limit   int               `json:"limit"`
+}
+
+type PodListResponse struct {
+	Type    ResponseType    `json:"type"`
+	Records []PodListRecord `json:"records"`
+	Total   int             `json:"total"`
+}
+
+type PodListRecord struct {
+	PodUID           string            `json:"podUID,omitempty"`
+	PodCPU           float64           `json:"podCPU"`
+	PodCPURequest    float64           `json:"podCPURequest"`
+	PodCPULimit      float64           `json:"podCPULimit"`
+	PodMemory        float64           `json:"podMemory"`
+	PodMemoryRequest float64           `json:"podMemoryRequest"`
+	PodMemoryLimit   float64           `json:"podMemoryLimit"`
+	RestartCount     int               `json:"restartCount"`
+	Meta             map[string]string `json:"meta"`
+	CountByPhase     PodCountByPhase   `json:"countByPhase"`
+}
+
+type PodCountByPhase struct {
+	Pending   int `json:"pending"`
+	Running   int `json:"running"`
+	Succeeded int `json:"succeeded"`
+	Failed    int `json:"failed"`
+	Unknown   int `json:"unknown"`
 }
