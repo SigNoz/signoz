@@ -315,6 +315,12 @@ type SearchTracesParams struct {
 	MaxSpansInTrace  int    `json:"maxSpansInTrace"`
 }
 
+type SearchTracesV2Params struct {
+	TraceID          string   `json:"traceId"`
+	SpanID           string   `json:"spanId"`
+	UncollapsedNodes []string `json:"uncollapsedNodes"`
+}
+
 type SpanFilterParams struct {
 	TraceID            []string `json:"traceID"`
 	Status             []string `json:"status"`
