@@ -38,7 +38,8 @@ type PrepareTaskOptions struct {
 	ManagerOpts *ManagerOptions
 	NotifyFunc  NotifyFunc
 
-	UseLogsNewSchema bool
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 const taskNamesuffix = "webAppEditor"
@@ -81,7 +82,8 @@ type ManagerOptions struct {
 
 	PrepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
 
-	UseLogsNewSchema bool
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 // The Manager manages recording and alerting rules.
@@ -104,7 +106,8 @@ type Manager struct {
 	cache           cache.Cache
 	prepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
 
-	UseLogsNewSchema bool
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -140,6 +143,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			opts.FF,
 			opts.Reader,
 			opts.UseLogsNewSchema,
+			opts.UseTraceNewSchema,
 			WithEvalDelay(opts.ManagerOpts.EvalDelay),
 		)
 
@@ -351,7 +355,8 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
 
-		UseLogsNewSchema: m.opts.UseLogsNewSchema,
+		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
+		UseTraceNewSchema: m.opts.UseTraceNewSchema,
 	})
 
 	if err != nil {
@@ -473,7 +478,8 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
 
-		UseLogsNewSchema: m.opts.UseLogsNewSchema,
+		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
+		UseTraceNewSchema: m.opts.UseTraceNewSchema,
 	})
 
 	if err != nil {
@@ -817,6 +823,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 			m.featureFlags,
 			m.reader,
 			m.opts.UseLogsNewSchema,
+			m.opts.UseTraceNewSchema,
 			WithSendAlways(),
 			WithSendUnmatched(),
 		)

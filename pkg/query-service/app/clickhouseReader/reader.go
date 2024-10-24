@@ -146,8 +146,12 @@ type ClickHouseReader struct {
 	cluster                string
 
 	useLogsNewSchema   bool
+	useTraceNewSchema  bool
 	logsTableName      string
 	logsLocalTableName string
+
+	traceIndexTableV3    string
+	traceResourceTableV3 string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -160,6 +164,7 @@ func NewReader(
 	dialTimeout time.Duration,
 	cluster string,
 	useLogsNewSchema bool,
+	useTraceNewSchema bool,
 ) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
@@ -170,7 +175,7 @@ func NewReader(
 		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
 	}
 
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema)
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema)
 }
 
 func NewReaderFromClickhouseConnection(
@@ -181,6 +186,7 @@ func NewReaderFromClickhouseConnection(
 	featureFlag interfaces.FeatureLookup,
 	cluster string,
 	useLogsNewSchema bool,
+	useTraceNewSchema bool,
 ) *ClickHouseReader {
 	alertManager, err := am.New()
 	if err != nil {
@@ -245,7 +251,8 @@ func NewReaderFromClickhouseConnection(
 		cluster:                 cluster,
 		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
 
-		useLogsNewSchema: useLogsNewSchema,
+		useLogsNewSchema:  useLogsNewSchema,
+		useTraceNewSchema: useTraceNewSchema,
 
 		logsTableV2:              options.primary.LogsTableV2,
 		logsLocalTableV2:         options.primary.LogsLocalTableV2,
@@ -253,6 +260,9 @@ func NewReaderFromClickhouseConnection(
 		logsResourceLocalTableV2: options.primary.LogsResourceLocalTableV2,
 		logsTableName:            logsTableName,
 		logsLocalTableName:       logsLocalTableName,
+
+		traceIndexTableV3:    options.primary.TraceIndexTableV3,
+		traceResourceTableV3: options.primary.TraceResourceTableV3,
 	}
 }
 
@@ -463,9 +473,13 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 }
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
+	indexTable := r.indexTable
+	if r.useTraceNewSchema {
+		indexTable = r.traceIndexTableV3
+	}
 
 	services := []string{}
-	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.indexTable)
+	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now()) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, indexTable)
 
 	rows, err := r.db.Query(ctx, query)
 
@@ -527,6 +541,10 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 }
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
+	indexTable := r.indexTable
+	if r.useTraceNewSchema {
+		indexTable = r.traceIndexTableV3
+	}
 
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
@@ -574,14 +592,14 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 					count(*) as numCalls
 				FROM %s.%s
 				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
-				r.TraceDB, r.indexTable,
+				r.TraceDB, indexTable,
 			)
 			errorQuery := fmt.Sprintf(
 				`SELECT
 					count(*) as numErrors
 				FROM %s.%s
 				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
-				r.TraceDB, r.indexTable,
+				r.TraceDB, indexTable,
 			)
 
 			args := []interface{}{}
@@ -591,6 +609,17 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				clickhouse.Named("serviceName", svc),
 				clickhouse.Named("names", ops),
 			)
+
+			if r.useTraceNewSchema {
+				bFilter := " AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket"
+				query += bFilter
+				errorQuery += bFilter
+				args = append(args,
+					clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
+					clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
+				)
+			}
+
 			// create TagQuery from TagQueryParams
 			tags := createTagQueryFromTagQueryParams(queryParams.Tags)
 			subQuery, argsSubQuery, errStatus := buildQueryWithTagParams(ctx, tags)
@@ -1666,9 +1695,124 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
+func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams) (*[]model.SearchSpansResult, error) {
+	var countSpans uint64
+	// TODO(nitya): check if we can use timestamp filter here
+	countQuery := fmt.Sprintf("SELECT count() as count from %s.%s WHERE traceID=$1", r.TraceDB, r.traceIndexTableV3)
+	err := r.db.QueryRow(ctx, countQuery, params.TraceID).Scan(&countSpans)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, fmt.Errorf("error in processing sql query")
+	}
+
+	if countSpans > uint64(params.MaxSpansInTrace) {
+		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
+			zap.Uint64("Count", countSpans))
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			data := map[string]interface{}{
+				"traceSize":            countSpans,
+				"maxSpansInTraceLimit": params.MaxSpansInTrace,
+			}
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, userEmail, true, false)
+		}
+		return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
+	}
+
+	userEmail, err := auth.GetEmailFromJwt(ctx)
+	if err == nil {
+		data := map[string]interface{}{
+			"traceSize": countSpans,
+		}
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
+	}
+
+	var startTime, endTime, durationNano uint64
+	var searchScanResponses []model.SearchSpanResponseItemV2
+
+	query := fmt.Sprintf("SELECT timestamp, durationNano, spanID, traceID, hasError, kind, serviceName, name, references, attributes_string, events, statusMessage, statusCodeString, spanKind FROM %s.%s WHERE traceID=$1", r.TraceDB, r.traceIndexTableV3)
+
+	start := time.Now()
+
+	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID)
+
+	zap.L().Info(query)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, fmt.Errorf("error in processing sql query")
+	}
+	end := time.Now()
+	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
+	searchSpansResult := []model.SearchSpansResult{
+		{
+			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
+			Events:    make([][]interface{}, len(searchScanResponses)),
+			IsSubTree: false,
+		},
+	}
+
+	searchSpanResponses := []model.SearchSpanResponseItem{}
+	start = time.Now()
+	for _, item := range searchScanResponses {
+		ref := []model.OtelSpanRef{}
+		err := json.Unmarshal([]byte(item.References), &ref)
+		if err != nil {
+			zap.L().Error("Error unmarshalling references", zap.Error(err))
+			return nil, err
+		}
+
+		// TODO(nitya): add attributes_number and attributes_bool and resources_string to this
+		jsonItem := model.SearchSpanResponseItem{
+			SpanID:           item.SpanID,
+			TraceID:          item.TraceID,
+			ServiceName:      item.ServiceName,
+			Name:             item.Name,
+			Kind:             int32(item.Kind),
+			DurationNano:     int64(item.DurationNano),
+			HasError:         item.HasError,
+			StatusMessage:    item.StatusMessage,
+			StatusCodeString: item.StatusCodeString,
+			SpanKind:         item.SpanKind,
+			References:       ref,
+			Events:           item.Events,
+			TagMap:           item.TagMap,
+		}
+
+		jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)
+
+		searchSpanResponses = append(searchSpanResponses, jsonItem)
+		if startTime == 0 || jsonItem.TimeUnixNano < startTime {
+			startTime = jsonItem.TimeUnixNano
+		}
+		if endTime == 0 || jsonItem.TimeUnixNano > endTime {
+			endTime = jsonItem.TimeUnixNano
+		}
+		if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
+			durationNano = uint64(jsonItem.DurationNano)
+		}
+	}
+	end = time.Now()
+	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
+
+	for i, item := range searchSpanResponses {
+		spanEvents := item.GetValues()
+		searchSpansResult[0].Events[i] = spanEvents
+	}
+
+	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
+	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
+
+	return &searchSpansResult, nil
+}
+
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
 		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+
+	if r.useTraceNewSchema {
+		return r.SearchTracesV2(ctx, params)
+	}
 
 	var countSpans uint64
 	countQuery := fmt.Sprintf("SELECT count() as count from %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
@@ -1746,6 +1890,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 
 	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
 	smartAlgoEnabled := err == nil
+	// TODO(nitya): this will never run remove it
 	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
 		start = time.Now()
 		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)

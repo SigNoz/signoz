@@ -11,6 +11,7 @@ import (
 	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 	"go.signoz.io/signoz/pkg/query-service/querycache"
@@ -48,10 +49,11 @@ type querier struct {
 	testingMode     bool
 	queriesExecuted []string
 	// tuple of start and end time in milliseconds
-	timeRanges       [][]int
-	returnedSeries   []*v3.Series
-	returnedErr      error
-	UseLogsNewSchema bool
+	timeRanges        [][]int
+	returnedSeries    []*v3.Series
+	returnedErr       error
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 type QuerierOptions struct {
@@ -62,16 +64,22 @@ type QuerierOptions struct {
 	FeatureLookup interfaces.FeatureLookup
 
 	// used for testing
-	TestingMode      bool
-	ReturnedSeries   []*v3.Series
-	ReturnedErr      error
-	UseLogsNewSchema bool
+	TestingMode       bool
+	ReturnedSeries    []*v3.Series
+	ReturnedErr       error
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 func NewQuerier(opts QuerierOptions) interfaces.Querier {
 	logsQueryBuilder := logsV3.PrepareLogsQuery
 	if opts.UseLogsNewSchema {
 		logsQueryBuilder = logsV4.PrepareLogsQuery
+	}
+
+	tracesQueryBuilder := tracesV3.PrepareTracesQuery
+	if opts.UseTraceNewSchema {
+		tracesQueryBuilder = tracesV4.PrepareTracesQuery
 	}
 
 	qc := querycache.NewQueryCache(querycache.WithCache(opts.Cache), querycache.WithFluxInterval(opts.FluxInterval))
@@ -84,7 +92,7 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 		fluxInterval: opts.FluxInterval,
 
 		builder: queryBuilder.NewQueryBuilder(queryBuilder.QueryBuilderOptions{
-			BuildTraceQuery:  tracesV3.PrepareTracesQuery,
+			BuildTraceQuery:  tracesQueryBuilder,
 			BuildLogQuery:    logsQueryBuilder,
 			BuildMetricQuery: metricsV4.PrepareMetricQuery,
 		}, opts.FeatureLookup),
