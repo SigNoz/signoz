@@ -632,6 +632,7 @@ github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.111.0 h1
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.111.0/go.mod h1:l0CUp7vTH+Wv0tF5PYaHpPn1dLiVuMRAMqbBgXFpz54=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/logstransformprocessor v0.102.0 h1:XOoV42CE0BJUsKJQ7+Fie2jusw0MBzzOc79IoQONJAk=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/logstransformprocessor v0.102.0/go.mod h1:nCpPHY7XLM+zbJxKxP132IuV0xHCu5E6oa3ZLpmBPl4=
+github.com/open-telemetry/opentelemetry-collector-contrib/processor/logstransformprocessor v0.111.0 h1:60NMfD7WMOHKCkV+GVM8HRqWMB4EAbqEY5sF9gYUG1Y=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/logstransformprocessor v0.111.0/go.mod h1:/qECmbWAqic6qoYp3oBmAFRpnKbJdGuk9iDdMhwHYfw=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
