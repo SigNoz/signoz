@@ -2,6 +2,7 @@ package logparsingpipeline
 
 import (
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -17,8 +18,13 @@ const (
 	NOOP = "noop"
 )
 
+// To ensure names used in generated collector config are never judged invalid,
+// only alphabets, digits and `-` are used when translating pipeline identifiers
+var badCharsForCollectorConfName = regexp.MustCompile("[^a-zA-Z0-9-]")
+
 func CollectorConfProcessorName(p Pipeline) string {
-	return constants.LogsPPLPfx + p.Alias
+	normalizedAlias := badCharsForCollectorConfName.ReplaceAllString(p.Alias, "-")
+	return constants.LogsPPLPfx + normalizedAlias
 }
 
 func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []string, error) {
