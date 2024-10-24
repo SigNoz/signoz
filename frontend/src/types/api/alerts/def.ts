@@ -19,7 +19,7 @@ export const defaultSeasonality = 'hourly';
 export interface AlertDef {
 	id?: number;
 	alertType?: string;
-	alert?: string;
+	alert: string;
 	ruleType?: string;
 	frequency?: string;
 	condition: RuleCondition;
