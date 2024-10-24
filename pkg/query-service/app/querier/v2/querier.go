@@ -98,10 +98,11 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 		}, opts.FeatureLookup),
 		featureLookUp: opts.FeatureLookup,
 
-		testingMode:      opts.TestingMode,
-		returnedSeries:   opts.ReturnedSeries,
-		returnedErr:      opts.ReturnedErr,
-		UseLogsNewSchema: opts.UseLogsNewSchema,
+		testingMode:       opts.TestingMode,
+		returnedSeries:    opts.ReturnedSeries,
+		returnedErr:       opts.ReturnedErr,
+		UseLogsNewSchema:  opts.UseLogsNewSchema,
+		UseTraceNewSchema: opts.UseTraceNewSchema,
 	}
 }
 
