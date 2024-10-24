@@ -117,6 +117,7 @@ type APIHandler struct {
 	podsRepo       *inframetrics.PodsRepo
 	nodesRepo      *inframetrics.NodesRepo
 	namespacesRepo *inframetrics.NamespacesRepo
+	clustersRepo   *inframetrics.ClustersRepo
 }
 
 type APIHandlerOpts struct {
@@ -191,6 +192,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	podsRepo := inframetrics.NewPodsRepo(opts.Reader, querierv2)
 	nodesRepo := inframetrics.NewNodesRepo(opts.Reader, querierv2)
 	namespacesRepo := inframetrics.NewNamespacesRepo(opts.Reader, querierv2)
+	clustersRepo := inframetrics.NewClustersRepo(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -214,6 +216,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		podsRepo:                      podsRepo,
 		nodesRepo:                     nodesRepo,
 		namespacesRepo:                namespacesRepo,
+		clustersRepo:                  clustersRepo,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -387,6 +390,11 @@ func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMid
 	namespacesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNamespaceAttributeKeys)).Methods(http.MethodGet)
 	namespacesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNamespaceAttributeValues)).Methods(http.MethodGet)
 	namespacesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getNamespaceList)).Methods(http.MethodPost)
+
+	clustersSubRouter := router.PathPrefix("/api/v1/clusters").Subrouter()
+	clustersSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getClusterAttributeKeys)).Methods(http.MethodGet)
+	clustersSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getClusterAttributeValues)).Methods(http.MethodGet)
+	clustersSubRouter.HandleFunc("/list", am.ViewAccess(aH.getClusterList)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
