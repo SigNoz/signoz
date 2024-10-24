@@ -501,11 +501,11 @@ func addOffsetToQuery(query string, offset uint64) string {
 // step is in seconds
 func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
 	// adjust the start and end time to the step interval
-	start = start - (start % (mq.StepInterval * 1000))
-	end = end - (end % (mq.StepInterval * 1000))
+	startForGraphQuery := start - (start % (mq.StepInterval * 1000))
+	endForGraphQuery := end - (end % (mq.StepInterval * 1000))
 	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the group by names
-		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, panelType, options)
+		query, err := buildTracesQuery(startForGraphQuery, endForGraphQuery, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, panelType, options)
 		if err != nil {
 			return "", err
 		}
@@ -513,7 +513,7 @@ func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 
 		return query, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, panelType, options)
+		query, err := buildTracesQuery(startForGraphQuery, endForGraphQuery, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, panelType, options)
 		if err != nil {
 			return "", err
 		}
