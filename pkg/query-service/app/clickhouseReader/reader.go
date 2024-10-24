@@ -3560,7 +3560,7 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 }
 
 func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error) {
-	var result model.DashboardVar
+	var result = model.DashboardVar{VariableValues: make([]interface{}, 0)}
 	rows, err := r.db.Query(ctx, query)
 
 	zap.L().Info(query)
