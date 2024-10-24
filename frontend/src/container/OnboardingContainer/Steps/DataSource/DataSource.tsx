@@ -9,7 +9,10 @@ import cx from 'classnames';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
-import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
+import {
+	ModulesMap,
+	useCases,
+} from 'container/OnboardingContainer/OnboardingContainer';
 import {
 	getDataSources,
 	getSupportedFrameworks,
@@ -48,6 +51,9 @@ export default function DataSource(): JSX.Element {
 		updateServiceName,
 		updateSelectedFramework,
 	} = useOnboardingContext();
+
+	const isKafkaAPM =
+		getStartedSource === 'kafka' && selectedModule?.id === ModulesMap.APM;
 
 	const [supportedDataSources, setSupportedDataSources] = useState<
 		DataSourceType[]
@@ -155,14 +161,14 @@ export default function DataSource(): JSX.Element {
 						className={cx(
 							'supported-language',
 							selectedDataSource?.name === dataSource.name ? 'selected' : '',
-							getStartedSource === 'kafka' &&
+							isKafkaAPM &&
 								!messagingQueueKakfaSupportedDataSources.includes(dataSource?.id || '')
 								? 'disabled'
 								: '',
 						)}
 						key={dataSource.name}
 						onClick={(): void => {
-							if (getStartedSource !== 'kafka') {
+							if (!isKafkaAPM) {
 								updateSelectedFramework(null);
 								updateSelectedEnvironment(null);
 								updateSelectedDataSource(dataSource);
