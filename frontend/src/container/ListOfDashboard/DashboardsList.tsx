@@ -705,6 +705,13 @@ function DashboardsList(): JSX.Element {
 							intercomMessageDisabled
 						/>
 					</Flex>
+					{isCloudUser() && (
+						<div className="integrations-container">
+							<div className="integrations-content">
+								<RequestDashboardBtn />
+							</div>
+						</div>
+					)}
 				</div>
 
 				{isDashboardListLoading ||
@@ -827,13 +834,6 @@ function DashboardsList(): JSX.Element {
 								</Dropdown>
 							)}
 						</div>
-						{isCloudUser() && (
-							<div className="integrations-container">
-								<div className="integrations-content">
-									<RequestDashboardBtn />
-								</div>
-							</div>
-						)}
 
 						{dashboards?.length === 0 ? (
 							<div className="no-search">
