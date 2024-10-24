@@ -12,8 +12,6 @@ import {
 	Typography,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
-import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
-import { dashboardHelpMessage } from 'components/LaunchChatSupport/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -356,18 +354,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					{isDashboardLocked && <LockKeyhole size={14} />}
 				</div>
 				<div className="right-section">
-					<LaunchChatSupport
-						attributes={{
-							uuid: selectedDashboard?.uuid,
-							title: updatedTitle,
-							screen: 'Dashboard Details',
-						}}
-						eventName="Dashboard: Facing Issues in dashboard"
-						message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
-						buttonText="Need help with this dashboard?"
-						onHoverText="Click here to get help with dashboard"
-						intercomMessageDisabled
-					/>
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					<Popover
 						open={isDashboardSettingsOpen}
