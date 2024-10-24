@@ -1,8 +1,10 @@
+import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
-import { colors } from 'lib/getRandomColor';
 import { cloneDeep, isUndefined } from 'lodash-es';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
+
+import { generateColor } from './generateColor';
 
 function getXAxisTimestamps(seriesList: QueryData[]): number[] {
 	const timestamps = new Set();
@@ -95,6 +97,7 @@ export const getUPlotChartData = (
 
 const processAnomalyDetectionData = (
 	anomalyDetectionData: any,
+	isDarkMode: boolean,
 ): Record<string, { data: number[][]; color: string }> => {
 	if (!anomalyDetectionData) {
 		return {};
@@ -126,7 +129,8 @@ const processAnomalyDetectionData = (
 				legend || '',
 			);
 
-			const objKey = `${queryName}-${label}`;
+			const objKey =
+				anomalyDetectionData.length > 1 ? `${queryName}-${label}` : label;
 
 			processedData[objKey] = {
 				data: [
@@ -136,7 +140,10 @@ const processAnomalyDetectionData = (
 					upperBoundSeries[index].values.map((v: { value: number }) => v.value),
 					lowerBoundSeries[index].values.map((v: { value: number }) => v.value),
 				],
-				color: colors[index],
+				color: generateColor(
+					objKey,
+					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+				),
 				legendLabel: label,
 			};
 		}
@@ -146,7 +153,8 @@ const processAnomalyDetectionData = (
 };
 
 export const getUplotChartDataForAnomalyDetection = (
-	apiResponse?: MetricRangePayloadProps,
+	apiResponse: MetricRangePayloadProps,
+	isDarkMode: boolean,
 ): Record<
 	string,
 	{
@@ -156,6 +164,5 @@ export const getUplotChartDataForAnomalyDetection = (
 	}
 > => {
 	const anomalyDetectionData = apiResponse?.data?.newResult?.data?.result;
-
-	return processAnomalyDetectionData(anomalyDetectionData);
+	return processAnomalyDetectionData(anomalyDetectionData, isDarkMode);
 };

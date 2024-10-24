@@ -233,6 +233,47 @@ GetYAxisScale): { auto?: boolean; range?: uPlot.Scale.Range } => {
 	return { auto: false, range: [min, max] };
 };
 
+function adjustMinMax(
+	min: number,
+	max: number,
+): {
+	adjustedMin: number;
+	adjustedMax: number;
+} {
+	// Ensure min and max are valid
+	if (min === -Infinity && max === Infinity) {
+		return { adjustedMin: -Infinity, adjustedMax: Infinity };
+	}
+
+	const range = max - min;
+	const adjustment = range * 0.1;
+
+	let adjustedMin: number;
+	let adjustedMax: number;
+
+	// Handle the case for -Infinity
+	if (min === -Infinity) {
+		adjustedMin = -Infinity;
+	} else if (min === 0) {
+		adjustedMin = min - adjustment; // Special case for when min is 0
+	} else if (min < 0) {
+		// For negative min, add 10% of the range to bring closer to zero
+		adjustedMin = min - range * 0.1;
+	} else {
+		// For positive min, subtract 10% from min itself
+		adjustedMin = min - min * 0.1;
+	}
+
+	// Handle the case for Infinity
+	if (max === Infinity) {
+		adjustedMax = Infinity;
+	} else {
+		adjustedMax = max * 1.1; // Regular case for finite max
+	}
+
+	return { adjustedMin, adjustedMax };
+}
+
 function getMinMax(data: any): { minValue: number; maxValue: number } {
 	// Exclude the first array
 	const arrays = data.slice(1);
@@ -244,7 +285,9 @@ function getMinMax(data: any): { minValue: number; maxValue: number } {
 	const minValue = flattened.length ? Math.min(...flattened) : 0;
 	const maxValue = Math.max(...flattened);
 
-	return { minValue, maxValue };
+	const { adjustedMin, adjustedMax } = adjustMinMax(minValue, maxValue);
+
+	return { minValue: adjustedMin, maxValue: adjustedMax };
 }
 
 export const getYAxisScaleForAnomalyDetection = ({

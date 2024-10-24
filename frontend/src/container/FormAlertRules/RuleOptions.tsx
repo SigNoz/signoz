@@ -160,6 +160,15 @@ function RuleOptions({
 		});
 	};
 
+	const onChangeDeviation = (value: number): void => {
+		const target = value || alertDef.condition.target || 3;
+
+		setAlertDef({
+			...alertDef,
+			condition: { ...alertDef.condition, target: Number(target) },
+		});
+	};
+
 	const renderEvalWindows = (): JSX.Element => (
 		<InlineSelect
 			getPopupContainer={popupContainer}
@@ -203,6 +212,28 @@ function RuleOptions({
 		</InlineSelect>
 	);
 
+	const renderDeviationOpts = (): JSX.Element => (
+		<InlineSelect
+			getPopupContainer={popupContainer}
+			defaultValue={3}
+			style={{ minWidth: '120px' }}
+			value={alertDef.condition.target}
+			onChange={(value: number | unknown): void => {
+				if (typeof value === 'number') {
+					onChangeDeviation(value);
+				}
+			}}
+		>
+			<Select.Option value={1}>1</Select.Option>
+			<Select.Option value={2}>2</Select.Option>
+			<Select.Option value={3}>3</Select.Option>
+			<Select.Option value={4}>4</Select.Option>
+			<Select.Option value={5}>5</Select.Option>
+			<Select.Option value={6}>6</Select.Option>
+			<Select.Option value={7}>7</Select.Option>
+		</InlineSelect>
+	);
+
 	const renderSeasonality = (): JSX.Element => (
 		<InlineSelect
 			getPopupContainer={popupContainer}
@@ -233,39 +264,6 @@ function RuleOptions({
 				<Typography.Text>is</Typography.Text>
 				{renderCompareOps()} {t('text_condition2')} {renderMatchOpts()}{' '}
 				{t('text_condition3')} {renderEvalWindows()}
-			</Typography.Text>
-		</Form.Item>
-	);
-
-	const renderAnomalyRuleOpts = (
-		onChange: InputNumberProps['onChange'],
-	): JSX.Element => (
-		<Form.Item>
-			<Typography.Text className="rule-definition">
-				{t('text_condition1_anomaly')}
-				<InlineSelect
-					getPopupContainer={popupContainer}
-					allowClear
-					showSearch
-					options={queryOptions}
-					placeholder={t('selected_query_placeholder')}
-					value={alertDef.condition.selectedQueryName}
-					onChange={onChangeSelectedQueryName}
-				/>
-				{t('text_condition3')} {renderEvalWindows()}
-				<Typography.Text>is</Typography.Text>
-				<InputNumber
-					value={alertDef?.condition?.target}
-					onChange={onChange}
-					type="number"
-					onWheel={(e): void => e.currentTarget.blur()}
-				/>
-				<Typography.Text>deviations</Typography.Text>
-				{renderCompareOps()}
-				<Typography.Text>the predicted data</Typography.Text>
-				{renderMatchOpts()}
-				using the {renderAlgorithms()} algorithm with {renderSeasonality()}{' '}
-				seasonality
 			</Typography.Text>
 		</Form.Item>
 	);
@@ -320,6 +318,32 @@ function RuleOptions({
 		});
 	};
 
+	const renderAnomalyRuleOpts = (): JSX.Element => (
+		<Form.Item>
+			<Typography.Text className="rule-definition">
+				{t('text_condition1_anomaly')}
+				<InlineSelect
+					getPopupContainer={popupContainer}
+					allowClear
+					showSearch
+					options={queryOptions}
+					placeholder={t('selected_query_placeholder')}
+					value={alertDef.condition.selectedQueryName}
+					onChange={onChangeSelectedQueryName}
+				/>
+				{t('text_condition3')} {renderEvalWindows()}
+				<Typography.Text>is</Typography.Text>
+				{renderDeviationOpts()}
+				<Typography.Text>deviations</Typography.Text>
+				{renderCompareOps()}
+				<Typography.Text>the predicted data</Typography.Text>
+				{renderMatchOpts()}
+				using the {renderAlgorithms()} algorithm with {renderSeasonality()}{' '}
+				seasonality
+			</Typography.Text>
+		</Form.Item>
+	);
+
 	const renderFrequency = (): JSX.Element => (
 		<InlineSelect
 			getPopupContainer={popupContainer}
@@ -354,7 +378,7 @@ function RuleOptions({
 				{queryCategory === EQueryType.PROM && renderPromRuleOptions()}
 				{queryCategory !== EQueryType.PROM &&
 					ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT && (
-						<>{renderAnomalyRuleOpts(onChange)}</>
+						<>{renderAnomalyRuleOpts()}</>
 					)}
 
 				{queryCategory !== EQueryType.PROM &&
