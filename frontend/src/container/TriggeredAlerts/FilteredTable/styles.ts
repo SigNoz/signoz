@@ -1,5 +1,13 @@
-import { Card } from 'antd';
+import { Card, Tag as AntTag } from 'antd';
 import styled from 'styled-components';
+
+export const EllipsisTag = styled(AntTag)`
+	max-width: 600px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	display: inline-block;
+`;
 
 export const TableHeader = styled(Card)`
 	&&& {

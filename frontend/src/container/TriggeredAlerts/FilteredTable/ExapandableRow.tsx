@@ -1,4 +1,5 @@
-import { Tag, Typography } from 'antd';
+import { Typography } from 'antd';
+import LabelColumn from 'components/TableRenderer/LabelColumn';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
 import { Alerts } from 'types/api/alerts/getTriggered';
@@ -46,11 +47,7 @@ function ExapandableRow({ allAlerts }: ExapandableRowProps): JSX.Element {
 						</TableCell>
 
 						<TableCell>
-							<div>
-								{tags.map((e) => (
-									<Tag key={e}>{`${e}:${labels[e]}`}</Tag>
-								))}
-							</div>
+							<LabelColumn labels={tags} value={labels} color="magenta" />
 						</TableCell>
 
 						{/* <TableCell>
