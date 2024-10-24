@@ -297,6 +297,8 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 		compositeQuery v3.CompositeQuery
 		expectErr      bool
 		errMsg         string
+		hasShiftBy     bool
+		shiftBy        int64
 	}{
 		{
 			desc: "no query in request",
@@ -496,6 +498,56 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 			expectErr: true,
 			errMsg:    "builder query A is invalid: group by is invalid",
 		},
+		{
+			desc: "builder query with shift by",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         "logs",
+						AggregateOperator:  "sum",
+						AggregateAttribute: v3.AttributeKey{Key: "attribute"},
+						GroupBy:            []v3.AttributeKey{{Key: "group_key"}},
+						Expression:         "A",
+						Functions: []v3.Function{
+							{
+								Name: v3.FunctionNameTimeShift,
+								Args: []interface{}{float64(10)},
+							},
+						},
+					},
+				},
+			},
+			hasShiftBy: true,
+			shiftBy:    10,
+		},
+		{
+			desc: "builder query with shift by as string",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         "logs",
+						AggregateOperator:  "sum",
+						AggregateAttribute: v3.AttributeKey{Key: "attribute"},
+						GroupBy:            []v3.AttributeKey{{Key: "group_key"}},
+						Expression:         "A",
+						Functions: []v3.Function{
+							{
+								Name: v3.FunctionNameTimeShift,
+								Args: []interface{}{"3600"},
+							},
+						},
+					},
+				},
+			},
+			hasShiftBy: true,
+			shiftBy:    3600,
+		},
 	}
 
 	for _, tc := range reqCases {
@@ -514,12 +566,15 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 			require.NoError(t, err)
 			req := httptest.NewRequest(http.MethodPost, "/api/v3/query_range", body)
 
-			_, apiErr := ParseQueryRangeParams(req)
+			params, apiErr := ParseQueryRangeParams(req)
 			if tc.expectErr {
 				require.Error(t, apiErr)
 				require.Contains(t, apiErr.Error(), tc.errMsg)
 			} else {
 				require.Nil(t, apiErr)
+			}
+			if tc.hasShiftBy {
+				require.Equal(t, tc.shiftBy, params.CompositeQuery.BuilderQueries["A"].ShiftBy)
 			}
 		})
 	}
