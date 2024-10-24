@@ -63,6 +63,16 @@
 					flex-direction: row;
 					gap: 8px;
 
+					.anomaly-alert-evaluation-view-series-list-item-color {
+						width: 6px;
+						height: 6px;
+						border-radius: 50%;
+
+						display: inline-flex;
+						margin-right: 8px;
+						vertical-align: middle;
+					}
+
 					cursor: pointer;
 				}
 
@@ -107,4 +117,64 @@
 			}
 		}
 	}
+}
+
+.uplot-tooltip {
+	background-color: rgba(0, 0, 0, 0.9);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	color: #ddd;
+	font-size: 13px;
+	line-height: 1.4;
+	padding: 8px 12px;
+	pointer-events: none;
+	position: absolute;
+	z-index: 100;
+	max-height: 500px;
+	width: 280px;
+	overflow-y: auto;
+	display: none; /* Hide tooltip by default */
+
+	&::-webkit-scrollbar {
+		width: 0.3rem;
+	}
+	&::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+	&::-webkit-scrollbar-thumb {
+		background: rgb(136, 136, 136);
+		border-radius: 0.625rem;
+	}
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+}
+
+.uplot-tooltip-title {
+	font-weight: bold;
+	margin-bottom: 4px;
+}
+
+.uplot-tooltip-series {
+	display: flex;
+	gap: 4px;
+	padding: 4px 0px;
+	align-items: center;
+}
+
+.uplot-tooltip-series-name {
+	margin-right: 4px;
+}
+
+.uplot-tooltip-band {
+	font-style: italic;
+	color: #666;
+}
+
+.uplot-tooltip-marker {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	margin-right: 8px;
+	vertical-align: middle;
 }

@@ -13,6 +13,7 @@ import { AlertDef } from 'types/api/alerts/def';
 import { ALERT_TYPE_VS_SOURCE_MAPPING } from './config';
 import {
 	alertDefaults,
+	anamolyAlertDefaults,
 	exceptionAlertDefaults,
 	logAlertDefaults,
 	traceAlertDefaults,
@@ -24,8 +25,12 @@ function CreateRules(): JSX.Element {
 
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
+	const alertTypeFromURL = queryParams.get(QueryParams.ruleType);
 	const version = queryParams.get('version');
-	const alertTypeFromParams = queryParams.get(QueryParams.alertType);
+	const alertTypeFromParams =
+		alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+			? AlertTypes.ANOMALY_BASED_ALERT
+			: queryParams.get(QueryParams.alertType);
 
 	const compositeQuery = useGetCompositeQueryParam();
 	function getAlertTypeFromDataSource(): AlertTypes | null {
@@ -58,7 +63,7 @@ function CreateRules(): JSX.Element {
 				break;
 			case AlertTypes.ANOMALY_BASED_ALERT:
 				setInitValues({
-					...alertDefaults,
+					...anamolyAlertDefaults,
 					version: version || ENTITY_VERSION_V4,
 					ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
 				});
@@ -78,7 +83,10 @@ function CreateRules(): JSX.Element {
 				: typ,
 		);
 
-		if (typ === AlertTypes.ANOMALY_BASED_ALERT) {
+		if (
+			typ === AlertTypes.ANOMALY_BASED_ALERT ||
+			alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+		) {
 			queryParams.set(
 				QueryParams.ruleType,
 				AlertDetectionTypes.ANOMALY_DETECTION_ALERT,

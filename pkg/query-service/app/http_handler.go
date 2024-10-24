@@ -1993,7 +1993,7 @@ func (aH *APIHandler) inviteUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	// Check the response status and set the appropriate HTTP status code
 	if response.Status == "failure" {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest) // 400 Bad Request for failure
 	} else if response.Status == "partial_success" {
 		w.WriteHeader(http.StatusPartialContent) // 206 Partial Content
 	} else {
