@@ -4,6 +4,7 @@ import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Modal } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { Calendar, ListMinus } from 'lucide-react';
@@ -12,8 +13,10 @@ import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { isCloudUser } from 'utils/app';
 
+import MessagingQueueHealthCheck from './MessagingQueueHealthCheck/MessagingQueueHealthCheck';
 import {
 	KAFKA_SETUP_DOC_LINK,
+	MessagingQueueHealthCheckService,
 	MessagingQueuesViewType,
 } from './MessagingQueuesUtils';
 import { ComingSoon } from './MQCommon/MQCommon';
@@ -69,7 +72,16 @@ function MessagingQueues(): JSX.Element {
 				{t('breadcrumb')}
 			</div>
 			<div className="messaging-header">
-				<div className="header-config">{t('header')}</div>
+				<div className="header-content">
+					<div className="header-config">{t('header')}</div>
+					<MessagingQueueHealthCheck
+						serviceToInclude={[
+							MessagingQueueHealthCheckService.Consumers,
+							MessagingQueueHealthCheckService.Producers,
+							MessagingQueueHealthCheckService.Kafka,
+						]}
+					/>
+				</div>
 				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
 			<div className="messaging-overview">
@@ -86,7 +98,7 @@ function MessagingQueues(): JSX.Element {
 								type="default"
 								onClick={(): void =>
 									getStartedRedirect(
-										ROUTES.GET_STARTED_APPLICATION_MONITORING,
+										`${ROUTES.GET_STARTED_APPLICATION_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Consumers}`,
 										'Configure Consumer',
 									)
 								}
@@ -105,7 +117,7 @@ function MessagingQueues(): JSX.Element {
 								type="default"
 								onClick={(): void =>
 									getStartedRedirect(
-										ROUTES.GET_STARTED_APPLICATION_MONITORING,
+										`${ROUTES.GET_STARTED_APPLICATION_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Producers}`,
 										'Configure Producer',
 									)
 								}
@@ -124,7 +136,7 @@ function MessagingQueues(): JSX.Element {
 								type="default"
 								onClick={(): void =>
 									getStartedRedirect(
-										ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING,
+										`${ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Kafka}`,
 										'Monitor kafka',
 									)
 								}
