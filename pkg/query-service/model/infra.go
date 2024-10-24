@@ -126,3 +126,76 @@ type PodCountByPhase struct {
 	Failed    int `json:"failed"`
 	Unknown   int `json:"unknown"`
 }
+
+type NodeListRequest struct {
+	Start   int64             `json:"start"` // epoch time in ms
+	End     int64             `json:"end"`   // epoch time in ms
+	Filters *v3.FilterSet     `json:"filters"`
+	GroupBy []v3.AttributeKey `json:"groupBy"`
+	OrderBy *v3.OrderBy       `json:"orderBy"`
+	Offset  int               `json:"offset"`
+	Limit   int               `json:"limit"`
+}
+
+type NodeListResponse struct {
+	Type    ResponseType     `json:"type"`
+	Records []NodeListRecord `json:"records"`
+	Total   int              `json:"total"`
+}
+
+type NodeListRecord struct {
+	NodeUID               string            `json:"nodeUID,omitempty"`
+	NodeCPUUsage          float64           `json:"nodeCPUUsage"`
+	NodeCPUAllocatable    float64           `json:"nodeCPUAllocatable"`
+	NodeMemoryUsage       float64           `json:"nodeMemoryUsage"`
+	NodeMemoryAllocatable float64           `json:"nodeMemoryAllocatable"`
+	Meta                  map[string]string `json:"meta"`
+}
+
+type NamespaceListRequest struct {
+	Start   int64             `json:"start"` // epoch time in ms
+	End     int64             `json:"end"`   // epoch time in ms
+	Filters *v3.FilterSet     `json:"filters"`
+	GroupBy []v3.AttributeKey `json:"groupBy"`
+	OrderBy *v3.OrderBy       `json:"orderBy"`
+	Offset  int               `json:"offset"`
+	Limit   int               `json:"limit"`
+}
+
+type NamespaceListResponse struct {
+	Type    ResponseType          `json:"type"`
+	Records []NamespaceListRecord `json:"records"`
+	Total   int                   `json:"total"`
+}
+
+type NamespaceListRecord struct {
+	NamespaceName string            `json:"namespaceName"`
+	CPUUsage      float64           `json:"cpuUsage"`
+	MemoryUsage   float64           `json:"memoryUsage"`
+	Meta          map[string]string `json:"meta"`
+}
+
+type ClusterListRequest struct {
+	Start   int64             `json:"start"` // epoch time in ms
+	End     int64             `json:"end"`   // epoch time in ms
+	Filters *v3.FilterSet     `json:"filters"`
+	GroupBy []v3.AttributeKey `json:"groupBy"`
+	OrderBy *v3.OrderBy       `json:"orderBy"`
+	Offset  int               `json:"offset"`
+	Limit   int               `json:"limit"`
+}
+
+type ClusterListResponse struct {
+	Type    ResponseType        `json:"type"`
+	Records []ClusterListRecord `json:"records"`
+	Total   int                 `json:"total"`
+}
+
+type ClusterListRecord struct {
+	ClusterUID        string            `json:"clusterUID"`
+	CPUUsage          float64           `json:"cpuUsage"`
+	CPUAllocatable    float64           `json:"cpuAllocatable"`
+	MemoryUsage       float64           `json:"memoryUsage"`
+	MemoryAllocatable float64           `json:"memoryAllocatable"`
+	Meta              map[string]string `json:"meta"`
+}
