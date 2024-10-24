@@ -136,3 +136,30 @@
 	align-items: center;
 	gap: 8px;
 }
+
+.config-btn {
+	display: flex;
+	align-items: center;
+	height: 28px;
+	border-radius: 2px;
+	border: none;
+	box-shadow: none;
+	background: var(--bg-slate-500);
+
+	&.missing-config-btn {
+		background: rgba(255, 205, 86, 0.1);
+		color: var(--bg-amber-400);
+
+		&:hover {
+			color: var(--bg-amber-300) !important;
+		}
+	}
+
+	.config-btn-content {
+		display: flex;
+		align-items: center;
+		margin-right: 8px;
+		border-right: 1px solid rgba(255, 215, 120, 0.1);
+		padding-right: 8px;
+	}
+}
