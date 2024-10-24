@@ -763,6 +763,11 @@ type Function struct {
 	NamedArgs map[string]interface{} `json:"namedArgs,omitempty"`
 }
 
+type MetricTableHints struct {
+	TimeSeriesTableName string
+	SamplesTableName    string
+}
+
 type BuilderQuery struct {
 	QueryName            string            `json:"queryName"`
 	StepInterval         int64             `json:"stepInterval"`
@@ -788,6 +793,7 @@ type BuilderQuery struct {
 	ShiftBy              int64
 	IsAnomaly            bool
 	QueriesUsedInFormula []string
+	MetricTableHints     *MetricTableHints `json:"-"`
 }
 
 func (b *BuilderQuery) SetShiftByFromFunc() {
@@ -1108,9 +1114,16 @@ func (f *FilterItem) CacheKey() string {
 	return fmt.Sprintf("key:%s,op:%s,value:%v", f.Key.CacheKey(), f.Operator, f.Value)
 }
 
+type Direction string
+
+const (
+	DirectionAsc  Direction = "asc"
+	DirectionDesc Direction = "desc"
+)
+
 type OrderBy struct {
 	ColumnName string               `json:"columnName"`
-	Order      string               `json:"order"`
+	Order      Direction            `json:"order"`
 	Key        string               `json:"-"`
 	DataType   AttributeKeyDataType `json:"-"`
 	Type       AttributeKeyType     `json:"-"`
