@@ -15,97 +15,71 @@ import (
 )
 
 var (
-	metricToUseForPods = "k8s_pod_cpu_utilization"
+	metricToUseForNodes = "k8s_node_cpu_utilization"
 
-	podAttrsToEnrich = []string{
-		"k8s_pod_uid",
-		"k8s_pod_name",
-		"k8s_namespace_name",
-		"k8s_node_name",
-		"k8s_deployment_name",
-		"k8s_statefulset_name",
-		"k8s_daemonset_name",
-		"k8s_job_name",
-		"k8s_cronjob_name",
+	nodeAttrsToEnrich = []string{"k8s_node_name", "k8s_node_uid"}
+
+	k8sNodeUIDAttrKey = "k8s_node_uid"
+
+	queryNamesForNodes = map[string][]string{
+		"cpu":                {"A"},
+		"cpu_allocatable":    {"B"},
+		"memory":             {"C"},
+		"memory_allocatable": {"D"},
 	}
+	nodeQueryNames = []string{"A", "B", "C", "D"}
 
-	k8sPodUIDAttrKey = "k8s_pod_uid"
-
-	queryNamesForPods = map[string][]string{
-		"cpu":            {"A"},
-		"cpu_request":    {"B", "A"},
-		"cpu_limit":      {"C", "A"},
-		"memory":         {"D"},
-		"memory_request": {"E", "D"},
-		"memory_limit":   {"F", "D"},
-		"restarts":       {"G", "A"},
-	}
-	podQueryNames = []string{"A", "B", "C", "D", "E", "F", "G"}
-
-	metricNamesForPods = map[string]string{
-		"cpu":            "k8s_pod_cpu_utilization",
-		"cpu_request":    "k8s_pod_cpu_request_utilization",
-		"cpu_limit":      "k8s_pod_cpu_limit_utilization",
-		"memory":         "k8s_pod_memory_usage",
-		"memory_request": "k8s_pod_memory_request_utilization",
-		"memory_limit":   "k8s_pod_memory_limit_utilization",
-		"restarts":       "k8s_container_restarts",
+	metricNamesForNodes = map[string]string{
+		"cpu":                "k8s_node_cpu_utilization",
+		"cpu_allocatable":    "k8s_node_allocatable_cpu",
+		"memory":             "k8s_node_memory_usage",
+		"memory_allocatable": "k8s_node_allocatable_memory",
 	}
 )
 
-type PodsRepo struct {
+type NodesRepo struct {
 	reader    interfaces.Reader
 	querierV2 interfaces.Querier
 }
 
-func NewPodsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *PodsRepo {
-	return &PodsRepo{reader: reader, querierV2: querierV2}
+func NewNodesRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *NodesRepo {
+	return &NodesRepo{reader: reader, querierV2: querierV2}
 }
 
-func (p *PodsRepo) GetPodAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
-	// TODO(srikanthccv): remove hardcoded metric name and support keys from any pod metric
+func (n *NodesRepo) GetNodeAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = metricToUseForPods
+	req.AggregateAttribute = metricToUseForNodes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeKeysResponse, err := p.reader.GetMetricAttributeKeys(ctx, &req)
+	attributeKeysResponse, err := n.reader.GetMetricAttributeKeys(ctx, &req)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO(srikanthccv): only return resource attributes when we have a way to
-	// distinguish between resource attributes and other attributes.
-	filteredKeys := []v3.AttributeKey{}
-	for _, key := range attributeKeysResponse.AttributeKeys {
-		if slices.Contains(pointAttrsToIgnore, key.Key) {
-			continue
-		}
-		filteredKeys = append(filteredKeys, key)
-	}
-
-	return &v3.FilterAttributeKeyResponse{AttributeKeys: filteredKeys}, nil
+	return attributeKeysResponse, nil
 }
 
-func (p *PodsRepo) GetPodAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (n *NodesRepo) GetNodeAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = metricToUseForPods
+	req.AggregateAttribute = metricToUseForNodes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
 
-	attributeValuesResponse, err := p.reader.GetMetricAttributeValues(ctx, &req)
+	attributeValuesResponse, err := n.reader.GetMetricAttributeValues(ctx, &req)
 	if err != nil {
 		return nil, err
 	}
+
 	return attributeValuesResponse, nil
 }
 
-func (p *PodsRepo) getMetadataAttributes(ctx context.Context, req model.PodListRequest) (map[string]map[string]string, error) {
-	podAttrs := map[string]map[string]string{}
+func (p *NodesRepo) getMetadataAttributes(ctx context.Context, req model.NodeListRequest) (map[string]map[string]string, error) {
+	nodeAttrs := map[string]map[string]string{}
 
-	for _, key := range podAttrsToEnrich {
+	for _, key := range nodeAttrsToEnrich {
 		hasKey := false
 		for _, groupByKey := range req.GroupBy {
 			if groupByKey.Key == key {
@@ -121,7 +95,7 @@ func (p *PodsRepo) getMetadataAttributes(ctx context.Context, req model.PodListR
 	mq := v3.BuilderQuery{
 		DataSource: v3.DataSourceMetrics,
 		AggregateAttribute: v3.AttributeKey{
-			Key:      metricToUseForPods,
+			Key:      metricToUseForNodes,
 			DataType: v3.AttributeKeyDataTypeFloat64,
 		},
 		Temporality: v3.Unspecified,
@@ -150,24 +124,24 @@ func (p *PodsRepo) getMetadataAttributes(ctx context.Context, req model.PodListR
 			}
 		}
 
-		podName := stringData[k8sPodUIDAttrKey]
-		if _, ok := podAttrs[podName]; !ok {
-			podAttrs[podName] = map[string]string{}
+		nodeUID := stringData[k8sNodeUIDAttrKey]
+		if _, ok := nodeAttrs[nodeUID]; !ok {
+			nodeAttrs[nodeUID] = map[string]string{}
 		}
 
 		for _, key := range req.GroupBy {
-			podAttrs[podName][key.Key] = stringData[key.Key]
+			nodeAttrs[nodeUID][key.Key] = stringData[key.Key]
 		}
 	}
 
-	return podAttrs, nil
+	return nodeAttrs, nil
 }
 
-func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
-	step, timeSeriesTableName, samplesTableName := getParamsForTopPods(req)
+func (p *NodesRepo) getTopNodeGroups(ctx context.Context, req model.NodeListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+	step, timeSeriesTableName, samplesTableName := getParamsForTopNodes(req)
 
-	queryNames := queryNamesForPods[req.OrderBy.ColumnName]
-	topPodGroupsQueryRangeParams := &v3.QueryRangeParamsV3{
+	queryNames := queryNamesForNodes[req.OrderBy.ColumnName]
+	topNodeGroupsQueryRangeParams := &v3.QueryRangeParamsV3{
 		Start: req.Start,
 		End:   req.End,
 		Step:  step,
@@ -191,14 +165,14 @@ func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest
 			}
 			query.Filters.Items = append(query.Filters.Items, req.Filters.Items...)
 		}
-		topPodGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
+		topNodeGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, topPodGroupsQueryRangeParams)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, topNodeGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
-	formattedResponse, err := postprocess.PostProcessResult(queryResponse, topPodGroupsQueryRangeParams)
+	formattedResponse, err := postprocess.PostProcessResult(queryResponse, topNodeGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -217,22 +191,24 @@ func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest
 		})
 	}
 
-	paginatedTopPodGroupsSeries := formattedResponse[0].Series[req.Offset : req.Offset+req.Limit]
+	max := math.Min(float64(req.Offset+req.Limit), float64(len(formattedResponse[0].Series)))
 
-	topPodGroups := []map[string]string{}
-	for _, series := range paginatedTopPodGroupsSeries {
-		topPodGroups = append(topPodGroups, series.Labels)
+	paginatedTopNodeGroupsSeries := formattedResponse[0].Series[req.Offset:int(max)]
+
+	topNodeGroups := []map[string]string{}
+	for _, series := range paginatedTopNodeGroupsSeries {
+		topNodeGroups = append(topNodeGroups, series.Labels)
 	}
-	allPodGroups := []map[string]string{}
+	allNodeGroups := []map[string]string{}
 	for _, series := range formattedResponse[0].Series {
-		allPodGroups = append(allPodGroups, series.Labels)
+		allNodeGroups = append(allNodeGroups, series.Labels)
 	}
 
-	return topPodGroups, allPodGroups, nil
+	return topNodeGroups, allNodeGroups, nil
 }
 
-func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (model.PodListResponse, error) {
-	resp := model.PodListResponse{}
+func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) (model.NodeListResponse, error) {
+	resp := model.NodeListResponse{}
 
 	if req.Limit == 0 {
 		req.Limit = 10
@@ -243,7 +219,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 	}
 
 	if req.GroupBy == nil {
-		req.GroupBy = []v3.AttributeKey{{Key: k8sPodUIDAttrKey}}
+		req.GroupBy = []v3.AttributeKey{{Key: k8sNodeUIDAttrKey}}
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
@@ -251,7 +227,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
 
-	query := PodsTableListQuery.Clone()
+	query := NodesTableListQuery.Clone()
 
 	query.Start = req.Start
 	query.End = req.End
@@ -268,19 +244,19 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 		query.GroupBy = req.GroupBy
 	}
 
-	podAttrs, err := p.getMetadataAttributes(ctx, req)
+	nodeAttrs, err := p.getMetadataAttributes(ctx, req)
 	if err != nil {
 		return resp, err
 	}
 
-	topPodGroups, allPodGroups, err := p.getTopPodGroups(ctx, req, query)
+	topNodeGroups, allNodeGroups, err := p.getTopNodeGroups(ctx, req, query)
 	if err != nil {
 		return resp, err
 	}
 
 	groupFilters := map[string][]string{}
-	for _, topPodGroup := range topPodGroups {
-		for k, v := range topPodGroup {
+	for _, topNodeGroup := range topNodeGroups {
+		for k, v := range topNodeGroup {
 			groupFilters[k] = append(groupFilters[k], v)
 		}
 	}
@@ -317,59 +293,45 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 		return resp, err
 	}
 
-	records := []model.PodListRecord{}
+	records := []model.NodeListRecord{}
 
 	for _, result := range formattedResponse {
 		for _, row := range result.Table.Rows {
 
-			record := model.PodListRecord{
-				PodCPU:           -1,
-				PodCPURequest:    -1,
-				PodCPULimit:      -1,
-				PodMemory:        -1,
-				PodMemoryRequest: -1,
-				PodMemoryLimit:   -1,
-				RestartCount:     -1,
+			record := model.NodeListRecord{
+				NodeCPUUsage:          -1,
+				NodeCPUAllocatable:    -1,
+				NodeMemoryUsage:       -1,
+				NodeMemoryAllocatable: -1,
 			}
 
-			if podUID, ok := row.Data[k8sPodUIDAttrKey].(string); ok {
-				record.PodUID = podUID
+			if nodeUID, ok := row.Data[k8sNodeUIDAttrKey].(string); ok {
+				record.NodeUID = nodeUID
 			}
 
 			if cpu, ok := row.Data["A"].(float64); ok {
-				record.PodCPU = cpu
-			}
-			if cpuRequest, ok := row.Data["B"].(float64); ok {
-				record.PodCPURequest = cpuRequest
+				record.NodeCPUUsage = cpu
 			}
 
-			if cpuLimit, ok := row.Data["C"].(float64); ok {
-				record.PodCPULimit = cpuLimit
+			if cpuAllocatable, ok := row.Data["B"].(float64); ok {
+				record.NodeCPUAllocatable = cpuAllocatable
+			}
+
+			if mem, ok := row.Data["C"].(float64); ok {
+				record.NodeMemoryUsage = mem
 			}
 
 			if memory, ok := row.Data["D"].(float64); ok {
-				record.PodMemory = memory
-			}
-
-			if memoryRequest, ok := row.Data["E"].(float64); ok {
-				record.PodMemoryRequest = memoryRequest
-			}
-
-			if memoryLimit, ok := row.Data["F"].(float64); ok {
-				record.PodMemoryLimit = memoryLimit
-			}
-
-			if restarts, ok := row.Data["G"].(float64); ok {
-				record.RestartCount = int(restarts)
+				record.NodeMemoryAllocatable = memory
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := podAttrs[record.PodUID]; ok {
-				record.Meta = podAttrs[record.PodUID]
+			if _, ok := nodeAttrs[record.NodeUID]; ok {
+				record.Meta = nodeAttrs[record.NodeUID]
 			}
 
 			for k, v := range row.Data {
-				if slices.Contains(podQueryNames, k) {
+				if slices.Contains(nodeQueryNames, k) {
 					continue
 				}
 				if labelValue, ok := v.(string); ok {
@@ -380,7 +342,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 			records = append(records, record)
 		}
 	}
-	resp.Total = len(allPodGroups)
+	resp.Total = len(allNodeGroups)
 	resp.Records = records
 
 	return resp, nil
