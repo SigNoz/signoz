@@ -8,11 +8,12 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { Calendar, ListMinus } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { isCloudUser } from 'utils/app';
 
+import MessagingQueueHealthCheck from './MessagingQueueHealthCheck/MessagingQueueHealthCheck';
 import {
 	KAFKA_SETUP_DOC_LINK,
 	MessagingQueuesViewType,
@@ -63,6 +64,8 @@ function MessagingQueues(): JSX.Element {
 		logEvent('Messaging Queues: Overview page visited', {});
 	}, []);
 
+	const [checkListOpen, setCheckListOpen] = useState(false);
+
 	return (
 		<div className="messaging-queue-container">
 			<div className="messaging-breadcrumb">
@@ -71,6 +74,7 @@ function MessagingQueues(): JSX.Element {
 			</div>
 			<div className="messaging-header">
 				<div className="header-config">{t('header')}</div>
+				<Button onClick={(): void => setCheckListOpen(true)}>Open</Button>
 				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
 			<div className="messaging-overview">
@@ -188,6 +192,12 @@ function MessagingQueues(): JSX.Element {
 					</div>
 				</div>
 			</div>
+			{checkListOpen && (
+				<MessagingQueueHealthCheck
+					visible={checkListOpen}
+					onClose={(): void => setCheckListOpen(false)}
+				/>
+			)}
 		</div>
 	);
 }
