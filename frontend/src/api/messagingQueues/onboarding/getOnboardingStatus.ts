@@ -18,10 +18,11 @@ const getOnboardingStatus = async (props: {
 	end: number;
 	endpointService?: string;
 }): Promise<SuccessResponse<OnboardingStatusResponse> | ErrorResponse> => {
+	const { endpointService, ...rest } = props;
 	try {
 		const response = await ApiBaseInstance.post(
-			`/messaging-queues/kafka/onboarding/${props.endpointService || 'consumers'}`,
-			props,
+			`/messaging-queues/kafka/onboarding/${endpointService || 'consumers'}`,
+			rest,
 		);
 
 		return {
