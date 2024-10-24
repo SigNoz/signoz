@@ -179,8 +179,9 @@ func GenerateCollectorConfigWithPipelines(
 		))
 	}
 
-	// Escape any `$`s as `$$` in config generated for pipelines, to ensure any occurrences
+	// Escape any `$`s as `$$$` in config generated for pipelines, to ensure any occurrences
 	// like $data do not end up being treated as env vars when loading collector config.
+	// otel-collector-contrib versions 0.111 and above require using $$$ as escaped dollar (and not $$)
 	for _, procName := range signozPipelineProcNames {
 		procConf := signozPipelineProcessors[procName]
 		serializedProcConf, err := yaml.Marshal(procConf)
@@ -190,7 +191,7 @@ func GenerateCollectorConfigWithPipelines(
 			))
 		}
 		escapedSerializedConf := strings.ReplaceAll(
-			string(serializedProcConf), "$", "$$",
+			string(serializedProcConf), "$", "$$$",
 		)
 
 		var escapedConf map[string]interface{}

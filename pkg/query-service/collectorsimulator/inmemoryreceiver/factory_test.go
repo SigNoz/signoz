@@ -22,7 +22,7 @@ func TestCreateLogsReceiver(t *testing.T) {
 	cfg := factory.CreateDefaultConfig()
 
 	te, err := factory.CreateLogsReceiver(
-		context.Background(), receiver.CreateSettings{}, cfg, consumertest.NewNop(),
+		context.Background(), receiver.Settings{}, cfg, consumertest.NewNop(),
 	)
 	assert.NoError(t, err)
 	assert.NotNil(t, te)
