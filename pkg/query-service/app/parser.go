@@ -750,9 +750,6 @@ func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) 
 		if req.Users[i].Email == "" {
 			return nil, fmt.Errorf("email is required for each user")
 		}
-		if req.Users[i].Name == "" {
-			return nil, fmt.Errorf("name is required for each user")
-		}
 		if req.Users[i].FrontendBaseUrl == "" {
 			return nil, fmt.Errorf("frontendBaseUrl is required for each user")
 		}
@@ -1145,25 +1142,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				}
 			}
 
-			// Remove the time shift function from the list of functions and set the shift by value
-			var timeShiftBy int64
-			if len(query.Functions) > 0 {
-				for idx := range query.Functions {
-					function := &query.Functions[idx]
-					if function.Name == v3.FunctionNameTimeShift {
-						// move the function to the beginning of the list
-						// so any other function can use the shifted time
-						var fns []v3.Function
-						fns = append(fns, *function)
-						fns = append(fns, query.Functions[:idx]...)
-						fns = append(fns, query.Functions[idx+1:]...)
-						query.Functions = fns
-						timeShiftBy = int64(function.Args[0].(float64))
-						break
-					}
-				}
-			}
-			query.ShiftBy = timeShiftBy
+			query.SetShiftByFromFunc()
 
 			if query.Filters == nil || len(query.Filters.Items) == 0 {
 				continue
