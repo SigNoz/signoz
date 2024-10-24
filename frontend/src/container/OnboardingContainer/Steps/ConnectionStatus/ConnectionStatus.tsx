@@ -74,10 +74,13 @@ export default function ConnectionStatus(): JSX.Element {
 		data: onbData,
 		error: onbErr,
 		isFetching: onbFetching,
-	} = useOnboardingStatus({
-		enabled: getStartedSource === 'kafka',
-		refetchInterval: pollInterval,
-	});
+	} = useOnboardingStatus(
+		{
+			enabled: getStartedSource === 'kafka',
+			refetchInterval: pollInterval,
+		},
+		'Consumers',
+	);
 
 	const [
 		shouldRetryOnboardingCall,
