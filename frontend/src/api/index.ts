@@ -15,6 +15,7 @@ import apiV1, {
 	apiV3,
 	apiV4,
 	gatewayApiV1,
+	gatewayApiV2,
 } from './apiV1';
 import { Logout } from './utils';
 
@@ -159,6 +160,19 @@ ApiBaseInstance.interceptors.request.use(interceptorsRequestResponse);
 // gateway Api V1
 export const GatewayApiV1Instance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${gatewayApiV1}`,
+});
+
+GatewayApiV1Instance.interceptors.response.use(
+	interceptorsResponse,
+	interceptorRejected,
+);
+
+GatewayApiV1Instance.interceptors.request.use(interceptorsRequestResponse);
+//
+
+// gateway Api V2
+export const GatewayApiV2Instance = axios.create({
+	baseURL: `${ENVIRONMENT.baseURL}${gatewayApiV2}`,
 });
 
 GatewayApiV1Instance.interceptors.response.use(

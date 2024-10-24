@@ -31,6 +31,7 @@ import {
 	NewDashboardPage,
 	OldLogsExplorer,
 	Onboarding,
+	OnboardingV2,
 	OrganizationSettings,
 	PasswordReset,
 	PipelinePage,
@@ -67,6 +68,13 @@ const routes: AppRoutes[] = [
 		component: Onboarding,
 		isPrivate: true,
 		key: 'GET_STARTED',
+	},
+	{
+		path: ROUTES.ONBOARDING,
+		exact: false,
+		component: OnboardingV2,
+		isPrivate: true,
+		key: 'ONBOARDING',
 	},
 	{
 		component: LogsIndexToFields,
