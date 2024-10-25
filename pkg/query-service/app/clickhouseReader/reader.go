@@ -152,6 +152,7 @@ type ClickHouseReader struct {
 
 	traceIndexTableV3    string
 	traceResourceTableV3 string
+	traceSummaryTable    string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -263,6 +264,7 @@ func NewReaderFromClickhouseConnection(
 
 		traceIndexTableV3:    options.primary.TraceIndexTableV3,
 		traceResourceTableV3: options.primary.TraceResourceTableV3,
+		traceSummaryTable:    options.primary.TraceSummaryTable,
 	}
 }
 
@@ -1734,7 +1736,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	}
 
 	var traceSummary model.TraceSummary
-	summaryQuery := fmt.Sprintf("SELECT * from %s.%s WHERE traceID=$1", r.TraceDB, "distributed_trace_summary")
+	summaryQuery := fmt.Sprintf("SELECT * from %s.%s WHERE traceID=$1", r.TraceDB, r.traceSummaryTable)
 	err := r.db.QueryRow(ctx, summaryQuery, params.TraceID).Scan(&traceSummary.TraceID, &traceSummary.FirstReported, &traceSummary.LastReported, &traceSummary.NumSpans)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -1796,7 +1798,14 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 			return nil, err
 		}
 
-		// TODO(nitya): add attributes_number and attributes_bool and resources_string to this
+		// merge attributes_number and attributes_bool to attributes_string
+		for k, v := range item.Attributes_bool {
+			item.Attributes_string[k] = fmt.Sprintf("%v", v)
+		}
+		for k, v := range item.Attributes_number {
+			item.Attributes_string[k] = fmt.Sprintf("%v", v)
+		}
+
 		jsonItem := model.SearchSpanResponseItem{
 			SpanID:           item.SpanID,
 			TraceID:          item.TraceID,
@@ -1810,7 +1819,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 			SpanKind:         item.SpanKind,
 			References:       ref,
 			Events:           item.Events,
-			TagMap:           item.TagMap,
+			TagMap:           item.Attributes_string,
 		}
 
 		jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)

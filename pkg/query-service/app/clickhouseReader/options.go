@@ -48,6 +48,7 @@ const (
 
 	defaultTraceIndexTableV3    string = "distributed_signoz_index_v3"
 	defaultTraceResourceTableV3 string = "distributed_traces_v3_resource"
+	defaultTraceSummaryTable    string = "distributed_trace_summary"
 )
 
 // NamespaceConfig is Clickhouse's internal configuration data
@@ -88,6 +89,7 @@ type namespaceConfig struct {
 
 	TraceIndexTableV3    string
 	TraceResourceTableV3 string
+	TraceSummaryTable    string
 }
 
 // Connecto defines how to connect to the database
@@ -183,6 +185,7 @@ func NewOptions(
 
 			TraceIndexTableV3:    defaultTraceIndexTableV3,
 			TraceResourceTableV3: defaultTraceResourceTableV3,
+			TraceSummaryTable:    defaultTraceSummaryTable,
 		},
 		others: make(map[string]*namespaceConfig, len(otherNamespaces)),
 	}

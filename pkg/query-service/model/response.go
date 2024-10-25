@@ -270,20 +270,22 @@ type SearchSpanResponseItem struct {
 }
 
 type SearchSpanResponseItemV2 struct {
-	TimeUnixNano     time.Time         `json:"timestamp" ch:"timestamp"`
-	DurationNano     uint64            `json:"durationNano" ch:"durationNano"`
-	SpanID           string            `json:"spanId" ch:"spanID"`
-	TraceID          string            `json:"traceId" ch:"traceID"`
-	HasError         bool              `json:"hasError" ch:"hasError"`
-	Kind             int8              `json:"kind" ch:"kind"`
-	ServiceName      string            `json:"serviceName" ch:"serviceName"`
-	Name             string            `json:"name" ch:"name"`
-	References       string            `json:"references,omitempty" ch:"references"`
-	TagMap           map[string]string `json:"tagMap" ch:"attributes_string"`
-	Events           []string          `json:"event" ch:"events"`
-	StatusMessage    string            `json:"statusMessage" ch:"statusMessage"`
-	StatusCodeString string            `json:"statusCodeString" ch:"statusCodeString"`
-	SpanKind         string            `json:"spanKind" ch:"spanKind"`
+	TimeUnixNano      time.Time          `json:"timestamp" ch:"timestamp"`
+	DurationNano      uint64             `json:"durationNano" ch:"durationNano"`
+	SpanID            string             `json:"spanId" ch:"spanID"`
+	TraceID           string             `json:"traceId" ch:"traceID"`
+	HasError          bool               `json:"hasError" ch:"hasError"`
+	Kind              int8               `json:"kind" ch:"kind"`
+	ServiceName       string             `json:"serviceName" ch:"serviceName"`
+	Name              string             `json:"name" ch:"name"`
+	References        string             `json:"references,omitempty" ch:"references"`
+	Attributes_string map[string]string  `json:"attributes_string" ch:"attributes_string"`
+	Attributes_number map[string]float64 `json:"attributes_number" ch:"attributes_number"`
+	Attributes_bool   map[string]bool    `json:"attributes_bool" ch:"attributes_bool"`
+	Events            []string           `json:"event" ch:"events"`
+	StatusMessage     string             `json:"statusMessage" ch:"statusMessage"`
+	StatusCodeString  string             `json:"statusCodeString" ch:"statusCodeString"`
+	SpanKind          string             `json:"spanKind" ch:"spanKind"`
 }
 
 type TraceSummary struct {
