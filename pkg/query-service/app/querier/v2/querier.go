@@ -317,7 +317,7 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	return results, errQueriesByName, err
 }
 
-func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangeParamsV3, tsRanges []utils.LogsListTsRange) ([]*v3.Result, map[string]error, error) {
+func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryRangeParamsV3, tsRanges []utils.LogsListTsRange) ([]*v3.Result, map[string]error, error) {
 	res := make([]*v3.Result, 0)
 	qName := ""
 	pageSize := uint64(0)
@@ -378,14 +378,18 @@ func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangePar
 
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 	// List query has support for only one query.
-	if q.UseLogsNewSchema && params.CompositeQuery != nil && len(params.CompositeQuery.BuilderQueries) == 1 {
+	if q.UseLogsNewSchema && params.CompositeQuery != nil &&
+		len(params.CompositeQuery.BuilderQueries) == 1 &&
+		params.CompositeQuery.PanelType != v3.PanelTypeTrace {
 		for _, v := range params.CompositeQuery.BuilderQueries {
 			// only allow of logs queries with timestamp ordering desc
-			if v.DataSource == v3.DataSourceLogs && len(v.OrderBy) == 1 && v.OrderBy[0].ColumnName == "timestamp" && v.OrderBy[0].Order == "desc" {
+			// TODO(nitya): allow for timestamp asc
+			if (v.DataSource == v3.DataSourceLogs || v.DataSource == v3.DataSourceTraces) &&
+				len(v.OrderBy) == 1 &&
+				v.OrderBy[0].ColumnName == "timestamp" &&
+				v.OrderBy[0].Order == "desc" {
 				startEndArr := utils.GetLogsListTsRanges(params.Start, params.End)
-				if len(startEndArr) > 0 {
-					return q.runLogsListQuery(ctx, params, startEndArr)
-				}
+				return q.runWindowBasedListQuery(ctx, params, startEndArr)
 			}
 		}
 	}

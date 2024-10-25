@@ -35,6 +35,8 @@ func GetLogsListTsRanges(start, end int64) []LogsListTsRange {
 				tStartNano = startNano
 			}
 		}
+	} else {
+		result = append(result, LogsListTsRange{Start: startNano, End: endNano})
 	}
 	return result
 }
