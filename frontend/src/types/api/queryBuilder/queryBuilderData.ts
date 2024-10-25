@@ -50,6 +50,7 @@ export type OrderByPayload = {
 export interface QueryFunctionProps {
 	name: string;
 	args: string[];
+	namedArgs?: Record<string, any>;
 }
 
 // Type for query builder

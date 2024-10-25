@@ -114,8 +114,12 @@ type APIHandler struct {
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
 
-	hostsRepo     *inframetrics.HostsRepo
-	processesRepo *inframetrics.ProcessesRepo
+	hostsRepo      *inframetrics.HostsRepo
+	processesRepo  *inframetrics.ProcessesRepo
+	podsRepo       *inframetrics.PodsRepo
+	nodesRepo      *inframetrics.NodesRepo
+	namespacesRepo *inframetrics.NamespacesRepo
+	clustersRepo   *inframetrics.ClustersRepo
 }
 
 type APIHandlerOpts struct {
@@ -191,6 +195,10 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
 	hostsRepo := inframetrics.NewHostsRepo(opts.Reader, querierv2)
 	processesRepo := inframetrics.NewProcessesRepo(opts.Reader, querierv2)
+	podsRepo := inframetrics.NewPodsRepo(opts.Reader, querierv2)
+	nodesRepo := inframetrics.NewNodesRepo(opts.Reader, querierv2)
+	namespacesRepo := inframetrics.NewNamespacesRepo(opts.Reader, querierv2)
+	clustersRepo := inframetrics.NewClustersRepo(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -212,6 +220,10 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		UseTraceNewSchema:             opts.UseTraceNewSchema,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
+		podsRepo:                      podsRepo,
+		nodesRepo:                     nodesRepo,
+		namespacesRepo:                namespacesRepo,
+		clustersRepo:                  clustersRepo,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -375,6 +387,26 @@ func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMid
 	processesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getProcessAttributeKeys)).Methods(http.MethodGet)
 	processesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getProcessAttributeValues)).Methods(http.MethodGet)
 	processesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getProcessList)).Methods(http.MethodPost)
+
+	podsSubRouter := router.PathPrefix("/api/v1/pods").Subrouter()
+	podsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getPodAttributeKeys)).Methods(http.MethodGet)
+	podsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getPodAttributeValues)).Methods(http.MethodGet)
+	podsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getPodList)).Methods(http.MethodPost)
+
+	nodesSubRouter := router.PathPrefix("/api/v1/nodes").Subrouter()
+	nodesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNodeAttributeKeys)).Methods(http.MethodGet)
+	nodesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNodeAttributeValues)).Methods(http.MethodGet)
+	nodesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getNodeList)).Methods(http.MethodPost)
+
+	namespacesSubRouter := router.PathPrefix("/api/v1/namespaces").Subrouter()
+	namespacesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNamespaceAttributeKeys)).Methods(http.MethodGet)
+	namespacesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNamespaceAttributeValues)).Methods(http.MethodGet)
+	namespacesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getNamespaceList)).Methods(http.MethodPost)
+
+	clustersSubRouter := router.PathPrefix("/api/v1/clusters").Subrouter()
+	clustersSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getClusterAttributeKeys)).Methods(http.MethodGet)
+	clustersSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getClusterAttributeValues)).Methods(http.MethodGet)
+	clustersSubRouter.HandleFunc("/list", am.ViewAccess(aH.getClusterList)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
@@ -2005,7 +2037,7 @@ func (aH *APIHandler) inviteUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	// Check the response status and set the appropriate HTTP status code
 	if response.Status == "failure" {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest) // 400 Bad Request for failure
 	} else if response.Status == "partial_success" {
 		w.WriteHeader(http.StatusPartialContent) // 206 Partial Content
 	} else {
