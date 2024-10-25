@@ -286,6 +286,13 @@ type SearchSpanResponseItemV2 struct {
 	SpanKind         string            `json:"spanKind" ch:"spanKind"`
 }
 
+type TraceSummary struct {
+	TraceID       string    `json:"traceID" ch:"traceID"`
+	FirstReported time.Time `json:"firstReported" ch:"first_reported"`
+	LastReported  time.Time `json:"lastReported" ch:"last_reported"`
+	NumSpans      uint64    `json:"numSpans" ch:"num_spans"`
+}
+
 type OtelSpanRef struct {
 	TraceId string `json:"traceId,omitempty"`
 	SpanId  string `json:"spanId,omitempty"`

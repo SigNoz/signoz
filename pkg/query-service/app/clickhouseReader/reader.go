@@ -1725,22 +1725,32 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 }
 
 func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams) (*[]model.SearchSpansResult, error) {
-	var countSpans uint64
-	// TODO(nitya): check if we can use timestamp filter here
-	countQuery := fmt.Sprintf("SELECT count() as count from %s.%s WHERE traceID=$1", r.TraceDB, r.traceIndexTableV3)
-	err := r.db.QueryRow(ctx, countQuery, params.TraceID).Scan(&countSpans)
+	searchSpansResult := []model.SearchSpansResult{
+		{
+			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
+			IsSubTree: false,
+			Events:    make([][]interface{}, 0),
+		},
+	}
+
+	var traceSummary model.TraceSummary
+	summaryQuery := fmt.Sprintf("SELECT * from %s.%s WHERE traceID=$1", r.TraceDB, "distributed_trace_summary")
+	err := r.db.QueryRow(ctx, summaryQuery, params.TraceID).Scan(&traceSummary.TraceID, &traceSummary.FirstReported, &traceSummary.LastReported, &traceSummary.NumSpans)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return &searchSpansResult, nil
+		}
 		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, fmt.Errorf("error in processing sql query")
 	}
 
-	if countSpans > uint64(params.MaxSpansInTrace) {
+	if traceSummary.NumSpans > uint64(params.MaxSpansInTrace) {
 		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
-			zap.Uint64("Count", countSpans))
+			zap.Uint64("Count", traceSummary.NumSpans))
 		userEmail, err := auth.GetEmailFromJwt(ctx)
 		if err == nil {
 			data := map[string]interface{}{
-				"traceSize":            countSpans,
+				"traceSize":            traceSummary.NumSpans,
 				"maxSpansInTraceLimit": params.MaxSpansInTrace,
 			}
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, userEmail, true, false)
@@ -1751,7 +1761,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	userEmail, err := auth.GetEmailFromJwt(ctx)
 	if err == nil {
 		data := map[string]interface{}{
-			"traceSize": countSpans,
+			"traceSize": traceSummary.NumSpans,
 		}
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
 	}
@@ -1759,11 +1769,11 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	var startTime, endTime, durationNano uint64
 	var searchScanResponses []model.SearchSpanResponseItemV2
 
-	query := fmt.Sprintf("SELECT timestamp, durationNano, spanID, traceID, hasError, kind, serviceName, name, references, attributes_string, events, statusMessage, statusCodeString, spanKind FROM %s.%s WHERE traceID=$1", r.TraceDB, r.traceIndexTableV3)
+	query := fmt.Sprintf("SELECT timestamp, durationNano, spanID, traceID, hasError, kind, serviceName, name, references, attributes_string, events, statusMessage, statusCodeString, spanKind FROM %s.%s WHERE traceID=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceIndexTableV3)
 
 	start := time.Now()
 
-	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID)
+	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID, strconv.FormatInt(traceSummary.FirstReported.Unix()-1800, 10), strconv.FormatInt(traceSummary.LastReported.Unix(), 10))
 
 	zap.L().Info(query)
 
@@ -1773,13 +1783,8 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	}
 	end := time.Now()
 	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
-	searchSpansResult := []model.SearchSpansResult{
-		{
-			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
-			Events:    make([][]interface{}, len(searchScanResponses)),
-			IsSubTree: false,
-		},
-	}
+
+	searchSpansResult[0].Events = make([][]interface{}, len(searchScanResponses))
 
 	searchSpanResponses := []model.SearchSpanResponseItem{}
 	start = time.Now()
