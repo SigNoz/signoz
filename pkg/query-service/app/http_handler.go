@@ -3099,7 +3099,7 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "partition_latency")
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer-topic-throughput")
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
