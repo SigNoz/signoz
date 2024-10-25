@@ -1,6 +1,7 @@
 import { Table, TablePaginationConfig, TableProps, Typography } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
+import HostMetricDetail from 'components/HostMetricsDetail';
 import { HostMetricsLoading } from 'container/HostMetricsLoading/HostMetricsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
@@ -33,6 +34,8 @@ function HostsList(): JSX.Element {
 		columnName: string;
 		order: 'asc' | 'desc';
 	} | null>(null);
+
+	const [selectedHostName, setSelectedHostName] = useState<string | null>(null);
 
 	const pageSize = 10;
 
@@ -101,6 +104,21 @@ function HostsList(): JSX.Element {
 		[],
 	);
 
+	const selectedHostData = useMemo(() => {
+		if (!selectedHostName) return null;
+		return (
+			hostMetricsData.find((host) => host.hostName === selectedHostName) || null
+		);
+	}, [selectedHostName, hostMetricsData]);
+
+	const handleRowClick = (record: HostRowData): void => {
+		setSelectedHostName(record.hostName);
+	};
+
+	const handleCloseHostDetail = (): void => {
+		setSelectedHostName(null);
+	};
+
 	return (
 		<div>
 			<HostsListControls handleFiltersChange={handleFiltersChange} />
@@ -132,8 +150,13 @@ function HostsList(): JSX.Element {
 					tableLayout="fixed"
 					rowKey={(record): string => record.hostName}
 					onChange={handleTableChange}
+					onRow={(record): { onClick: () => void; className: string } => ({
+						onClick: (): void => handleRowClick(record),
+						className: 'clickable-row',
+					})}
 				/>
 			)}
+			<HostMetricDetail host={selectedHostData} onClose={handleCloseHostDetail} />
 		</div>
 	);
 }

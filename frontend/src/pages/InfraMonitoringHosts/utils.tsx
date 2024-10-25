@@ -13,7 +13,7 @@ export interface HostRowData {
 	hostName: string;
 	cpu: React.ReactNode;
 	memory: React.ReactNode;
-	ioWait: number;
+	wait: number;
 	load15: number;
 	active: React.ReactNode;
 }
@@ -116,6 +116,6 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 				/>
 			</div>
 		),
-		ioWait: host.wait,
+		wait: host.wait,
 		load15: host.load15,
 	}));
