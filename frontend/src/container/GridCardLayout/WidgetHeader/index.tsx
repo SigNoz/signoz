@@ -82,7 +82,7 @@ function WidgetHeader({
 			QueryParams.compositeQuery,
 			encodeURIComponent(JSON.stringify(widget.query)),
 		);
-		const generatedUrl = `${window.location.pathname}?${urlQuery}`;
+		const generatedUrl = `${window.location.pathname}/new?${urlQuery}`;
 		history.push(generatedUrl);
 	}, [urlQuery, widget.id, widget.panelTypes, widget.query]);
 
