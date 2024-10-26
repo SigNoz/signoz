@@ -77,6 +77,7 @@ import { isCloudUser } from 'utils/app';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
+import { RequestDashboardBtn } from './RequestDashboardBtn';
 import { DeleteButton } from './TableComponents/DeleteButton';
 import {
 	DashboardDynamicColumns,
@@ -692,6 +693,13 @@ function DashboardsList(): JSX.Element {
 							Create and manage dashboards for your workspace.
 						</Typography.Text>
 					</Flex>
+					{isCloudUser() && (
+						<div className="integrations-container">
+							<div className="integrations-content">
+								<RequestDashboardBtn />
+							</div>
+						</div>
+					)}
 				</div>
 
 				{isDashboardListLoading ||

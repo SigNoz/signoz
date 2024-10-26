@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	RoutePrefix   string = "/api/gateway"
-	AllowedPrefix []string = []string{"/v1/workspaces/me", "/v2/profiles/me"}
+	RoutePrefix   string   = "/api/gateway"
+	AllowedPrefix []string = []string{"/v1/workspaces/me", "/v2/profiles/me", "/v2/deployments/me"}
 )
 
 type proxy struct {
