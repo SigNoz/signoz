@@ -2,10 +2,10 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { ConsumerLagDetailType } from 'pages/MessagingQueues/MessagingQueuesUtils';
+import { MessagingQueueServiceDetailType } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
-export interface ConsumerLagPayload {
+export interface MessagingQueueServicePayload {
 	start?: number | string;
 	end?: number | string;
 	variables: {
@@ -13,7 +13,7 @@ export interface ConsumerLagPayload {
 		topic?: string;
 		consumer_group?: string;
 	};
-	detailType?: ConsumerLagDetailType;
+	detailType?: MessagingQueueServiceDetailType;
 }
 
 export interface MessagingQueuesPayloadProps {
@@ -36,7 +36,7 @@ export interface MessagingQueuesPayloadProps {
 }
 
 export const getConsumerLagDetails = async (
-	props: ConsumerLagPayload,
+	props: MessagingQueueServicePayload,
 ): Promise<
 	SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
 > => {
