@@ -24,14 +24,17 @@ export type RowData = {
 	[key: string]: string | number;
 };
 
-export enum ConsumerLagDetailType {
+export enum MessagingQueueServiceDetailType {
 	ConsumerDetails = 'consumer-details',
 	ProducerDetails = 'producer-details',
 	NetworkLatency = 'network-latency',
 	PartitionHostMetrics = 'partition-host-metric',
 }
 
-export const ConsumerLagDetailTitle: Record<ConsumerLagDetailType, string> = {
+export const ConsumerLagDetailTitle: Record<
+	MessagingQueueServiceDetailType,
+	string
+> = {
 	'consumer-details': 'Consumer Groups Details',
 	'producer-details': 'Producer Details',
 	'network-latency': 'Network Latency',
