@@ -26,6 +26,7 @@ import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, Router, Switch } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -239,36 +240,38 @@ function App(): JSX.Element {
 	return (
 		<ConfigProvider theme={themeConfig}>
 			<Router history={history}>
-				<NotificationProvider>
-					<PrivateRoute>
-						<ResourceProvider>
-							<QueryBuilderProvider>
-								<DashboardProvider>
-									<KeyboardHotkeysProvider>
-										<AlertRuleProvider>
-											<AppLayout>
-												<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-													<Switch>
-														{routes.map(({ path, component, exact }) => (
-															<Route
-																key={`${path}`}
-																exact={exact}
-																path={path}
-																component={component}
-															/>
-														))}
+				<CompatRouter>
+					<NotificationProvider>
+						<PrivateRoute>
+							<ResourceProvider>
+								<QueryBuilderProvider>
+									<DashboardProvider>
+										<KeyboardHotkeysProvider>
+											<AlertRuleProvider>
+												<AppLayout>
+													<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+														<Switch>
+															{routes.map(({ path, component, exact }) => (
+																<Route
+																	key={`${path}`}
+																	exact={exact}
+																	path={path}
+																	component={component}
+																/>
+															))}
 
-														<Route path="*" component={NotFound} />
-													</Switch>
-												</Suspense>
-											</AppLayout>
-										</AlertRuleProvider>
-									</KeyboardHotkeysProvider>
-								</DashboardProvider>
-							</QueryBuilderProvider>
-						</ResourceProvider>
-					</PrivateRoute>
-				</NotificationProvider>
+															<Route path="*" component={NotFound} />
+														</Switch>
+													</Suspense>
+												</AppLayout>
+											</AlertRuleProvider>
+										</KeyboardHotkeysProvider>
+									</DashboardProvider>
+								</QueryBuilderProvider>
+							</ResourceProvider>
+						</PrivateRoute>
+					</NotificationProvider>
+				</CompatRouter>
 			</Router>
 		</ConfigProvider>
 	);
