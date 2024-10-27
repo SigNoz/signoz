@@ -251,3 +251,8 @@ export function setConfigDetail(
 	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 	history.replace(generatedUrl);
 }
+
+export enum ProducerLatencyOptions {
+	Producers = 'Producers',
+	Consumers = 'Consumers',
+}
