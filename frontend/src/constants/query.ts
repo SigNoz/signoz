@@ -39,4 +39,5 @@ export enum QueryParams {
 	ruleType = 'ruleType',
 	getStartedSource = 'getStartedSource',
 	getStartedSourceService = 'getStartedSourceService',
+	configDetail = 'configDetail',
 }
