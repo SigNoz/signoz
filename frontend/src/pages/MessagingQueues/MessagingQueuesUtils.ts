@@ -223,3 +223,28 @@ export const MessagingQueuesViewType = {
 		value: 'consumerLatency',
 	},
 };
+
+export function setConfigDetail(
+	urlQuery: URLSearchParams,
+	location: Location<unknown>,
+	history: History<unknown>,
+	paramsToSet?: {
+		[key: string]: string;
+	},
+): void {
+	// remove "key" and its value from the paramsToSet object
+	const { key, ...restParamsToSet } = paramsToSet || {};
+	console.log(restParamsToSet);
+
+	if (!isEmpty(restParamsToSet)) {
+		const configDetail = {
+			...restParamsToSet,
+		};
+		urlQuery.set(
+			QueryParams.configDetail,
+			encodeURIComponent(JSON.stringify(configDetail)),
+		);
+	}
+	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+	history.replace(generatedUrl);
+}
