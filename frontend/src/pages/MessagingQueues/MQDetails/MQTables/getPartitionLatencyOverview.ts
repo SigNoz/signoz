@@ -5,12 +5,12 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 import {
-	ConsumerLagPayload,
+	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
 } from './getConsumerLagDetails';
 
 export const getPartitionLatencyOverview = async (
-	props: Omit<ConsumerLagPayload, 'detailType' | 'variables'>,
+	props: Omit<MessagingQueueServicePayload, 'detailType' | 'variables'>,
 ): Promise<
 	SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
 > => {
