@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { ConsumerLagPayload } from './MQTables/getConsumerLagDetails';
+import { MessagingQueueServicePayload } from './MQTables/getConsumerLagDetails';
 import { getPartitionLatencyOverview } from './MQTables/getPartitionLatencyOverview';
 import MessagingQueuesTable from './MQTables/MQTables';
 
@@ -15,7 +15,7 @@ function MessagingQueueOverview({
 		(state) => state.globalTime,
 	);
 
-	const tableApiPayload: ConsumerLagPayload = {
+	const tableApiPayload: MessagingQueueServicePayload = {
 		variables: {},
 		start: minTime,
 		end: maxTime,
@@ -26,7 +26,7 @@ function MessagingQueueOverview({
 				selectedView={selectedView}
 				tableApiPayload={tableApiPayload}
 				tableApi={getPartitionLatencyOverview}
-				type="Main"
+				validConfigPresent
 			/>
 		</div>
 	);
