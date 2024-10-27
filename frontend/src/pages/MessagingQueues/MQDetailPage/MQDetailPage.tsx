@@ -8,7 +8,10 @@ import { ListMinus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { MessagingQueuesViewType } from '../MessagingQueuesUtils';
+import {
+	MessagingQueuesViewType,
+	ProducerLatencyOptions,
+} from '../MessagingQueuesUtils';
 import { SelectLabelWithComingSoon } from '../MQCommon/MQCommon';
 import MessagingQueueOverview from '../MQDetails/MessagingQueueOverview';
 import MessagingQueuesDetails from '../MQDetails/MQDetails';
@@ -20,6 +23,11 @@ function MQDetailPage(): JSX.Element {
 	const [selectedView, setSelectedView] = useState<string>(
 		MessagingQueuesViewType.consumerLag.value,
 	);
+
+	const [
+		producerLatencyOption,
+		setproducerLatencyOption,
+	] = useState<ProducerLatencyOptions>(ProducerLatencyOptions.Producers);
 
 	useEffect(() => {
 		logEvent('Messaging Queues: Detail page visited', {});
@@ -54,13 +62,8 @@ function MQDetailPage(): JSX.Element {
 								value: MessagingQueuesViewType.partitionLatency.value,
 							},
 							{
-								label: (
-									<SelectLabelWithComingSoon
-										label={MessagingQueuesViewType.producerLatency.label}
-									/>
-								),
+								label: MessagingQueuesViewType.producerLatency.label,
 								value: MessagingQueuesViewType.producerLatency.value,
-								disabled: true,
 							},
 							{
 								label: (
@@ -81,11 +84,18 @@ function MQDetailPage(): JSX.Element {
 				{selectedView === MessagingQueuesViewType.consumerLag.value ? (
 					<MessagingQueuesGraph />
 				) : (
-					<MessagingQueueOverview selectedView={selectedView} />
+					<MessagingQueueOverview
+						selectedView={selectedView}
+						option={producerLatencyOption}
+						setOption={setproducerLatencyOption}
+					/>
 				)}
 			</div>
 			<div className="messaging-queue-details">
-				<MessagingQueuesDetails selectedView={selectedView} />
+				<MessagingQueuesDetails
+					selectedView={selectedView}
+					producerLatencyOption={producerLatencyOption}
+				/>
 			</div>
 		</div>
 	);
