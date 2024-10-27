@@ -1,3 +1,4 @@
+/* eslint-disable react/require-default-props */
 import './MQTables.styles.scss';
 
 import { Skeleton, Table, Typography } from 'antd';
@@ -15,25 +16,32 @@ import {
 	ConsumerLagDetailTitle,
 	ConsumerLagDetailType,
 	convertToTitleCase,
+	MessagingQueuesViewType,
 	RowData,
 	SelectedTimelineQuery,
+	setConfigDetail,
+	setSelectedTimelineQuery,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useHistory } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
+import { AppState } from 'store/reducers';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
 	ConsumerLagPayload,
 	getConsumerLagDetails,
 	MessagingQueuesPayloadProps,
 } from './getConsumerLagDetails';
+import { getPartitionLatencyDetails } from './getPartitionLatencyDetails';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function getColumns(
 	data: MessagingQueuesPayloadProps['payload'],
 	history: History<unknown>,
 ): RowData[] {
-	console.log(data);
 	if (data?.result?.length === 0) {
 		return [];
 	}
@@ -107,8 +115,20 @@ const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 
 function MessagingQueuesTable({
 	currentTab,
+	selectedView,
+	tableApiPayload,
+	tableApi,
+	type = 'Main',
 }: {
-	currentTab: ConsumerLagDetailType;
+	currentTab?: ConsumerLagDetailType;
+	selectedView: string;
+	tableApiPayload?: ConsumerLagPayload;
+	tableApi?: (
+		props: ConsumerLagPayload,
+	) => Promise<
+		SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
+	>;
+	type?: 'Main' | 'Detail';
 }): JSX.Element {
 	const [columns, setColumns] = useState<any[]>([]);
 	const [tableData, setTableData] = useState<any[]>([]);
@@ -118,9 +138,14 @@ function MessagingQueuesTable({
 	const timelineQuery = decodeURIComponent(
 		urlQuery.get(QueryParams.selectedTimelineQuery) || '',
 	);
+
 	const timelineQueryData: SelectedTimelineQuery = useMemo(
 		() => (timelineQuery ? JSON.parse(timelineQuery) : {}),
 		[timelineQuery],
+	);
+
+	const { minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
 	);
 
 	const paginationConfig = useMemo(
@@ -154,21 +179,27 @@ function MessagingQueuesTable({
 		});
 	};
 
-	const { mutate: getConsumerDetails, isLoading } = useMutation(
-		getConsumerLagDetails,
-		{
-			onSuccess: (data) => {
-				if (data.payload) {
-					setColumns(getColumns(data?.payload, history));
-					setTableData(getTableData(data?.payload));
-				}
-			},
-			onError: handleConsumerDetailsOnError,
-		},
-	);
+	const selectedViewAPI = useMemo(() => {
+		if (tableApi) {
+			return tableApi;
+		}
+		if (selectedView === MessagingQueuesViewType.partitionLatency.value) {
+			return getPartitionLatencyDetails;
+		}
+		return getConsumerLagDetails;
+	}, [selectedView, tableApi]);
 
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(() => getConsumerDetails(props), [currentTab, props]);
+	const { mutate: getViewDetails, isLoading } = useMutation(selectedViewAPI, {
+		onSuccess: (data) => {
+			if (data.payload) {
+				setColumns(getColumns(data?.payload, history));
+				setTableData(getTableData(data?.payload));
+			}
+		},
+		onError: handleConsumerDetailsOnError,
+	});
+
+	const location = useLocation();
 
 	const isLogEventCalled = useRef<boolean>(false);
 
@@ -179,7 +210,7 @@ function MessagingQueuesTable({
 				!timelineQueryData?.topic &&
 				!timelineQueryData?.partition);
 
-		if (!isEmptyDetail && !isLogEventCalled.current) {
+		if (!isEmptyDetail && !isLogEventCalled.current && currentTab) {
 			logEvent('Messaging Queues: More details viewed', {
 				'tab-option': ConsumerLagDetailTitle[currentTab],
 				variables: {
@@ -193,23 +224,66 @@ function MessagingQueuesTable({
 		return isEmptyDetail;
 	};
 
+	useEffect(
+		() => {
+			if (tableApiPayload) {
+				getViewDetails(tableApiPayload);
+			}
+			if (!tableApiPayload && !isEmptyDetails(timelineQueryData)) {
+				getViewDetails(props);
+			}
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[currentTab, props, selectedView, tableApiPayload],
+	);
+
+	const [selectedRowKey, setSelectedRowKey] = useState<React.Key>();
+	const [, setSelectedRows] = useState<any>();
+
+	const onRowClick = (record: { [key: string]: string }): void => {
+		const selectedKey = record.key;
+
+		if (selectedKey === selectedRowKey) {
+			setSelectedRowKey(undefined);
+			setSelectedRows({});
+		} else {
+			setSelectedRowKey(selectedKey);
+			setSelectedRows(record);
+
+			if (!isEmpty(record)) {
+				setConfigDetail(urlQuery, location, history, record);
+				setSelectedTimelineQuery(
+					urlQuery,
+					minTime / 1e9,
+					location,
+					history,
+					record,
+				);
+			}
+		}
+	};
+
 	return (
 		<div className="mq-tables-container">
-			{isEmptyDetails(timelineQueryData) ? (
+			{isEmptyDetails(timelineQueryData) && type !== 'Main' ? (
 				<div className="no-data-style">
 					<Typography.Text>
-						Click on a co-ordinate above to see the details
+						{selectedView === MessagingQueuesViewType.consumerLag.value
+							? 'Click on a co-ordinate above to see the details'
+							: 'Click on a row above to see the details'}
 					</Typography.Text>
 					<Skeleton />
 				</div>
 			) : (
 				<>
-					<div className="mq-table-title">
-						{ConsumerLagDetailTitle[currentTab]}
-						<div className="mq-table-subtitle">{`${timelineQueryData?.group || ''} ${
-							timelineQueryData?.topic || ''
-						} ${timelineQueryData?.partition || ''}`}</div>
-					</div>
+					{currentTab && type === 'Detail' && (
+						<div className="mq-table-title">
+							{ConsumerLagDetailTitle[currentTab]}
+							<div className="mq-table-subtitle">{`${timelineQueryData?.group || ''} ${
+								timelineQueryData?.topic || ''
+							} ${timelineQueryData?.partition || ''}`}</div>
+						</div>
+					)}
 					<Table
 						className="mq-table"
 						pagination={paginationConfig}
@@ -218,6 +292,16 @@ function MessagingQueuesTable({
 						dataSource={tableData}
 						bordered={false}
 						loading={isLoading}
+						onRow={(record): any =>
+							type !== 'Detail'
+								? {
+										onClick: (): void => onRowClick(record),
+								  }
+								: {}
+						}
+						rowClassName={(record): any =>
+							record.key === selectedRowKey ? 'ant-table-row-selected' : ''
+						}
 					/>
 				</>
 			)}
