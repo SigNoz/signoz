@@ -135,8 +135,6 @@ function MessagingQueuesTable({
 		[timelineQuery],
 	);
 
-	console.log(tableApi, tableApiPayload, validConfigPresent);
-
 	const paginationConfig = useMemo(
 		() =>
 			tableData?.length > 20 && {

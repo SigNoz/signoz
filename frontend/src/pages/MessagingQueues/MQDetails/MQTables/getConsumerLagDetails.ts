@@ -12,8 +12,9 @@ export interface MessagingQueueServicePayload {
 		partition?: string;
 		topic?: string;
 		consumer_group?: string;
+		service_name?: string;
 	};
-	detailType?: MessagingQueueServiceDetailType;
+	detailType?: MessagingQueueServiceDetailType | 'producer' | 'consumer';
 }
 
 export interface MessagingQueuesPayloadProps {
