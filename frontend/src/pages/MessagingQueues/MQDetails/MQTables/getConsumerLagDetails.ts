@@ -13,7 +13,7 @@ export interface ConsumerLagPayload {
 		topic?: string;
 		consumer_group?: string;
 	};
-	detailType: ConsumerLagDetailType;
+	detailType?: ConsumerLagDetailType;
 }
 
 export interface MessagingQueuesPayloadProps {
