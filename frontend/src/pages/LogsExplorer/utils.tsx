@@ -68,7 +68,7 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 		attributeKey: {
 			key: 'hostname',
 			dataType: DataTypes.String,
-			type: 'tag',
+			type: 'resource',
 			isColumn: false,
 			isJSON: false,
 		},
