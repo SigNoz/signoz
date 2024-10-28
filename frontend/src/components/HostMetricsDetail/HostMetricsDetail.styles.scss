@@ -3,6 +3,10 @@
 	background: var(--bg-ink-400);
 	box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 
+	.ant-drawer-title {
+		margin-left: .5rem;
+	}
+
 	.ant-drawer-header {
 		padding: 8px 16px;
 		border-bottom: none;
@@ -25,11 +29,11 @@
 
 	.title {
 		color: var(--text-vanilla-400);
-		font-family: Inter;
+		font-family: 'Inter';
 		font-size: var(--font-size-sm);
 		font-style: normal;
 		font-weight: var(--font-weight-normal);
-		line-height: 20px; /* 142.857% */
+		line-height: 20px; 
 		letter-spacing: -0.07px;
 	}
 
@@ -44,15 +48,14 @@
 	}
 
 	.host-detail-drawer__host {
-		padding: 16px 24px;
-		border-bottom: 1px solid var(--bg-ink-200);
+		padding: 2px;
 		
 		.host-details-grid {
 			.labels-row,
 			.values-row {
 				display: grid;
 				grid-template-columns: 1fr 1.5fr 1.5fr 1.5fr;
-				gap: 16px;
+				gap: 30px;
 				align-items: center;
 			}
 
@@ -107,6 +110,7 @@
 
 	.views-tabs {
 		color: var(--text-vanilla-400);
+		margin-top: 2rem;
 
 		.view-title {
 			display: flex;
@@ -140,6 +144,11 @@
 
 	.ant-drawer-close {
 		padding: 0px;
+	}
+
+	.infra-monitoring-tags {
+		border-radius: 10px;
+		width: fit-content;
 	}
 }
 

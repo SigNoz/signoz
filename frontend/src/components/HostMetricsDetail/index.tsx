@@ -15,7 +15,9 @@ import {
 import { useState } from 'react';
 
 import { VIEW_TYPES, VIEWS } from './constants';
+import Containers from './Containers';
 import { HostDetailProps } from './HostMetricDetail.interfaces';
+import Processes from './Processes';
 
 // import Metrics from './Metrics';
 // import Overview from './Overview';
@@ -54,26 +56,40 @@ function HostMetricDetail({ host, onClose }: HostDetailProps): JSX.Element {
 								<Typography.Text type="secondary">MEMORY USAGE</Typography.Text>
 							</div>
 							<div className="values-row">
-								<Tag className={`status-tag ${host.active ? 'active' : 'inactive'}`}>
-									{host.active ? 'Active' : 'Inactive'}
+								<Tag
+									color={host.active ? 'success' : 'default'}
+									bordered
+									className="infra-monitoring-tags"
+								>
+									{host.active ? 'ACTIVE' : 'INACTIVE'}
 								</Tag>
-								<Tag>{host.os}</Tag>
-								<div className="progress-wrapper">
+								<Tag className="infra-monitoring-tags" bordered>
+									{host.os}
+								</Tag>
+								<div className="progress-container">
 									<Progress
-										percent={Math.round(host.cpu * 100)}
+										percent={Number((host.cpu * 100).toFixed(1))}
 										size="small"
-										strokeColor={
-											host.cpu > 0.8 ? 'var(--error-500)' : 'var(--success-500)'
-										}
+										strokeColor={((): string => {
+											const cpuPercent = Number((host.cpu * 100).toFixed(1));
+											if (cpuPercent >= 90) return Color.BG_SAKURA_500;
+											if (cpuPercent >= 60) return Color.BG_AMBER_500;
+											return Color.BG_FOREST_500;
+										})()}
+										className="progress-bar"
 									/>
 								</div>
-								<div className="progress-wrapper">
+								<div className="progress-container">
 									<Progress
-										percent={Math.round(host.memory * 100)}
+										percent={Number((host.memory * 100).toFixed(1))}
 										size="small"
-										strokeColor={
-											host.memory > 0.8 ? 'var(--error-500)' : 'var(--success-500)'
-										}
+										strokeColor={((): string => {
+											const memoryPercent = Number((host.memory * 100).toFixed(1));
+											if (memoryPercent >= 90) return Color.BG_CHERRY_500;
+											if (memoryPercent >= 60) return Color.BG_AMBER_500;
+											return Color.BG_FOREST_500;
+										})()}
+										className="progress-bar"
 									/>
 								</div>
 							</div>
@@ -143,8 +159,8 @@ function HostMetricDetail({ host, onClose }: HostDetailProps): JSX.Element {
 						</Radio.Button>
 					</Radio.Group>
 
-					{/* {selectedView === VIEW_TYPES.OVERVIEW && <Overview host={host} />} */}
-					{/* {selectedView === VIEW_TYPES.METRICS && <Metrics host={host} />} */}
+					{selectedView === VIEW_TYPES.CONTAINERS && <Containers />}
+					{selectedView === VIEW_TYPES.PROCESSES && <Processes />}
 				</>
 			)}
 		</Drawer>

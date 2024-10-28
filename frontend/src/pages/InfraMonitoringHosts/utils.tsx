@@ -82,7 +82,11 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 		key: `${host.hostName}-${index}`,
 		hostName: host.hostName || '',
 		active: (
-			<Tag color={host.active ? 'success' : 'default'} bordered>
+			<Tag
+				color={host.active ? 'success' : 'default'}
+				bordered
+				className="infra-monitoring-tags"
+			>
 				{host.active ? 'ACTIVE' : 'INACTIVE'}
 			</Tag>
 		),
