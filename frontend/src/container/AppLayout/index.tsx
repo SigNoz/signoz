@@ -211,6 +211,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [licenseData, isFetching]);
 
+	useEffect(() => {
+		// after logging out hide the trial expiry banner
+		if (!isLoggedIn) {
+			setShowTrialExpiryBanner(false);
+		}
+	}, [isLoggedIn]);
+
 	const handleUpgrade = (): void => {
 		if (role === 'ADMIN') {
 			history.push(ROUTES.BILLING);

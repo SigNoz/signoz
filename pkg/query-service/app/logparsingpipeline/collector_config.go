@@ -19,24 +19,28 @@ var lockLogsPipelineSpec sync.RWMutex
 // check if the processors already exist
 // if yes then update the processor.
 // if something doesn't exists then remove it.
-func buildLogParsingProcessors(agentConf, parsingProcessors map[string]interface{}) error {
+func updateProcessorConfigsInCollectorConf(
+	collectorConf map[string]interface{},
+	signozPipelineProcessors map[string]interface{},
+) error {
 	agentProcessors := map[string]interface{}{}
-	if agentConf["processors"] != nil {
-		agentProcessors = (agentConf["processors"]).(map[string]interface{})
+	if collectorConf["processors"] != nil {
+		agentProcessors = (collectorConf["processors"]).(map[string]interface{})
 	}
 
 	exists := map[string]struct{}{}
-	for key, params := range parsingProcessors {
+	for key, params := range signozPipelineProcessors {
 		agentProcessors[key] = params
 		exists[key] = struct{}{}
 	}
-	// remove the old unwanted processors
+	// remove the old unwanted pipeline processors
 	for k := range agentProcessors {
-		if _, ok := exists[k]; !ok && strings.HasPrefix(k, constants.LogsPPLPfx) {
+		_, isInDesiredPipelineProcs := exists[k]
+		if hasSignozPipelineProcessorPrefix(k) && !isInDesiredPipelineProcs {
 			delete(agentProcessors, k)
 		}
 	}
-	agentConf["processors"] = agentProcessors
+	collectorConf["processors"] = agentProcessors
 	return nil
 }
 
@@ -65,21 +69,24 @@ func getOtelPipelineFromConfig(config map[string]interface{}) (*otelPipeline, er
 	return &p, nil
 }
 
-func buildLogsProcessors(current []string, logsParserPipeline []string) ([]string, error) {
+func buildCollectorPipelineProcessorsList(
+	currentCollectorProcessors []string,
+	signozPipelineProcessorNames []string,
+) ([]string, error) {
 	lockLogsPipelineSpec.Lock()
 	defer lockLogsPipelineSpec.Unlock()
 
 	exists := map[string]struct{}{}
-	for _, v := range logsParserPipeline {
+	for _, v := range signozPipelineProcessorNames {
 		exists[v] = struct{}{}
 	}
 
 	// removed the old processors which are not used
 	var pipeline []string
-	for _, v := range current {
-		k := v
-		if _, ok := exists[k]; ok || !strings.HasPrefix(k, constants.LogsPPLPfx) {
-			pipeline = append(pipeline, v)
+	for _, procName := range currentCollectorProcessors {
+		_, isInDesiredPipelineProcs := exists[procName]
+		if isInDesiredPipelineProcs || !hasSignozPipelineProcessorPrefix(procName) {
+			pipeline = append(pipeline, procName)
 		}
 	}
 
@@ -96,7 +103,7 @@ func buildLogsProcessors(current []string, logsParserPipeline []string) ([]strin
 	existingVsSpec := map[int]int{}
 
 	// go through plan and map its elements to current positions in effective config
-	for i, m := range logsParserPipeline {
+	for i, m := range signozPipelineProcessorNames {
 		if loc, ok := existing[m]; ok {
 			specVsExistingMap[i] = loc
 			existingVsSpec[loc] = i
@@ -106,11 +113,11 @@ func buildLogsProcessors(current []string, logsParserPipeline []string) ([]strin
 	lastMatched := 0
 	newPipeline := []string{}
 
-	for i := 0; i < len(logsParserPipeline); i++ {
-		m := logsParserPipeline[i]
+	for i := 0; i < len(signozPipelineProcessorNames); i++ {
+		m := signozPipelineProcessorNames[i]
 		if loc, ok := specVsExistingMap[i]; ok {
 			for j := lastMatched; j < loc; j++ {
-				if strings.HasPrefix(pipeline[j], constants.LogsPPLPfx) {
+				if hasSignozPipelineProcessorPrefix(pipeline[j]) {
 					delete(specVsExistingMap, existingVsSpec[j])
 				} else {
 					newPipeline = append(newPipeline, pipeline[j])
@@ -159,23 +166,24 @@ func GenerateCollectorConfigWithPipelines(
 	config []byte,
 	pipelines []Pipeline,
 ) ([]byte, *coreModel.ApiError) {
-	var c map[string]interface{}
-	err := yaml.Unmarshal([]byte(config), &c)
+	var collectorConf map[string]interface{}
+	err := yaml.Unmarshal([]byte(config), &collectorConf)
 	if err != nil {
 		return nil, coreModel.BadRequest(err)
 	}
 
-	processors, procNames, err := PreparePipelineProcessor(pipelines)
+	signozPipelineProcessors, signozPipelineProcNames, err := PreparePipelineProcessor(pipelines)
 	if err != nil {
 		return nil, coreModel.BadRequest(errors.Wrap(
 			err, "could not prepare otel collector processors for log pipelines",
 		))
 	}
 
-	// Escape any `$`s as `$$` in config generated for pipelines, to ensure any occurrences
+	// Escape any `$`s as `$$$` in config generated for pipelines, to ensure any occurrences
 	// like $data do not end up being treated as env vars when loading collector config.
-	for _, procName := range procNames {
-		procConf := processors[procName]
+	// otel-collector-contrib versions 0.111 and above require using $$$ as escaped dollar (and not $$)
+	for _, procName := range signozPipelineProcNames {
+		procConf := signozPipelineProcessors[procName]
 		serializedProcConf, err := yaml.Marshal(procConf)
 		if err != nil {
 			return nil, coreModel.InternalError(fmt.Errorf(
@@ -183,7 +191,7 @@ func GenerateCollectorConfigWithPipelines(
 			))
 		}
 		escapedSerializedConf := strings.ReplaceAll(
-			string(serializedProcConf), "$", "$$",
+			string(serializedProcConf), "$", "$$$",
 		)
 
 		var escapedConf map[string]interface{}
@@ -194,14 +202,14 @@ func GenerateCollectorConfigWithPipelines(
 			))
 		}
 
-		processors[procName] = escapedConf
+		signozPipelineProcessors[procName] = escapedConf
 	}
 
 	// Add processors to unmarshaled collector config `c`
-	buildLogParsingProcessors(c, processors)
+	updateProcessorConfigsInCollectorConf(collectorConf, signozPipelineProcessors)
 
 	// build the new processor list in service.pipelines.logs
-	p, err := getOtelPipelineFromConfig(c)
+	p, err := getOtelPipelineFromConfig(collectorConf)
 	if err != nil {
 		return nil, coreModel.BadRequest(err)
 	}
@@ -211,16 +219,20 @@ func GenerateCollectorConfigWithPipelines(
 		))
 	}
 
-	updatedProcessorList, _ := buildLogsProcessors(p.Pipelines.Logs.Processors, procNames)
+	updatedProcessorList, _ := buildCollectorPipelineProcessorsList(p.Pipelines.Logs.Processors, signozPipelineProcNames)
 	p.Pipelines.Logs.Processors = updatedProcessorList
 
 	// add the new processor to the data ( no checks required as the keys will exists)
-	c["service"].(map[string]interface{})["pipelines"].(map[string]interface{})["logs"] = p.Pipelines.Logs
+	collectorConf["service"].(map[string]interface{})["pipelines"].(map[string]interface{})["logs"] = p.Pipelines.Logs
 
-	updatedConf, err := yaml.Marshal(c)
+	updatedConf, err := yaml.Marshal(collectorConf)
 	if err != nil {
 		return nil, coreModel.BadRequest(err)
 	}
 
 	return updatedConf, nil
+}
+
+func hasSignozPipelineProcessorPrefix(procName string) bool {
+	return strings.HasPrefix(procName, constants.LogsPPLPfx) || strings.HasPrefix(procName, constants.OldLogsPPLPfx)
 }

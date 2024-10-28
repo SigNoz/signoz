@@ -13,7 +13,7 @@ import {
 	IBuilderQuery,
 	QueryFunctionProps,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
 
 interface FunctionProps {
 	query: IBuilderQuery;
@@ -33,7 +33,7 @@ export default function Function({
 	handleDeleteFunction,
 }: FunctionProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const { showInput } = queryFunctionsTypesConfig[funcData.name];
+	const { showInput, disabled } = queryFunctionsTypesConfig[funcData.name];
 
 	let functionValue;
 
@@ -57,11 +57,19 @@ export default function Function({
 			? logsQueryFunctionOptions
 			: metricQueryFunctionOptions;
 
+	const disableRemoveFunction = funcData.name === QueryFunctionsTypes.ANOMALY;
+
+	if (funcData.name === QueryFunctionsTypes.ANOMALY) {
+		// eslint-disable-next-line react/jsx-no-useless-fragment
+		return <></>;
+	}
+
 	return (
 		<Flex className="query-function">
 			<Select
 				className={cx('query-function-name-selector', showInput ? 'showInput' : '')}
 				value={funcData.name}
+				disabled={disabled}
 				style={{ minWidth: '100px' }}
 				onChange={(value): void => {
 					handleUpdateFunctionName(funcData, index, value);
@@ -91,6 +99,7 @@ export default function Function({
 
 			<Button
 				className="periscope-btn query-function-delete-btn"
+				disabled={disableRemoveFunction}
 				onClick={(): void => {
 					handleDeleteFunction(funcData, index);
 				}}

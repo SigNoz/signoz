@@ -80,6 +80,13 @@ var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
 
 var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
 
+// TODO(srikanthccv): remove after backfilling is done
+func UseMetricsPreAggregation() bool {
+	return GetOrDefaultEnv("USE_METRICS_PRE_AGGREGATION", "true") == "true"
+}
+
+var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
+
 func IsDurationSortFeatureEnabled() bool {
 	isDurationSortFeatureEnabledStr := DurationSortFeature
 	isDurationSortFeatureEnabledBool, err := strconv.ParseBool(isDurationSortFeatureEnabledStr)
@@ -220,14 +227,19 @@ var GroupByColMap = map[string]struct{}{
 }
 
 const (
-	SIGNOZ_METRIC_DBNAME                      = "signoz_metrics"
-	SIGNOZ_SAMPLES_V4_TABLENAME               = "distributed_samples_v4"
-	SIGNOZ_TRACE_DBNAME                       = "signoz_traces"
-	SIGNOZ_SPAN_INDEX_TABLENAME               = "distributed_signoz_index_v2"
-	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME      = "time_series_v4"
-	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME = "time_series_v4_6hrs"
-	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME = "time_series_v4_1day"
-	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME       = "distributed_time_series_v4_1day"
+	SIGNOZ_METRIC_DBNAME                       = "signoz_metrics"
+	SIGNOZ_SAMPLES_V4_TABLENAME                = "distributed_samples_v4"
+	SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME         = "distributed_samples_v4_agg_5m"
+	SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME        = "distributed_samples_v4_agg_30m"
+	SIGNOZ_EXP_HISTOGRAM_TABLENAME             = "distributed_exp_hist"
+	SIGNOZ_TRACE_DBNAME                        = "signoz_traces"
+	SIGNOZ_SPAN_INDEX_TABLENAME                = "distributed_signoz_index_v2"
+	SIGNOZ_SPAN_INDEX_LOCAL_TABLENAME          = "signoz_index_v2"
+	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME       = "time_series_v4"
+	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME  = "time_series_v4_6hrs"
+	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME  = "time_series_v4_1day"
+	SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME = "time_series_v4_1week"
+	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME        = "distributed_time_series_v4_1day"
 )
 
 var TimeoutExcludedRoutes = map[string]bool{
@@ -322,8 +334,12 @@ const (
 		"attributes_number, " +
 		"attributes_bool, " +
 		"resources_string "
-	TracesExplorerViewSQLSelectWithSubQuery = "WITH subQuery AS (SELECT distinct on (traceID) traceID, durationNano, " +
-		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s %s ORDER BY durationNano DESC "
+	TracesExplorerViewSQLSelectWithSubQuery = "(SELECT traceID, durationNano, " +
+		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s %s ORDER BY durationNano DESC LIMIT 1 BY traceID "
+	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
+		"span_count, subQuery.durationNano, subQuery.traceID AS traceID FROM %s.%s INNER JOIN ( SELECT * FROM "
+	TracesExplorerViewSQLSelectAfterSubQuery = "AS inner_subquery ) AS subQuery ON %s.%s.traceID = subQuery.traceID WHERE %s " +
+		"GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc LIMIT 1 BY subQuery.traceID;"
 	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
 		"span_count, subQuery.durationNano, traceID FROM %s.%s GLOBAL INNER JOIN subQuery ON %s.traceID = subQuery.traceID GROUP " +
 		"BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc;"
@@ -341,7 +357,9 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 }
 
 // logsPPLPfx is a short constant for logsPipelinePrefix
-const LogsPPLPfx = "logstransform/pipeline_"
+// TODO(Raj): Remove old prefix after new processor based pipelines have been rolled out
+const LogsPPLPfx = "signozlogspipeline/pipeline_"
+const OldLogsPPLPfx = "logstransform/pipeline_"
 
 const IntegrationPipelineIdPrefix = "integration"
 

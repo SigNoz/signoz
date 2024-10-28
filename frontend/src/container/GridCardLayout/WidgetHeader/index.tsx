@@ -18,6 +18,7 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import useComponentPermission from 'hooks/useComponentPermission';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
@@ -72,16 +73,18 @@ function WidgetHeader({
 	tableProcessedDataRef,
 	setSearchTerm,
 }: IWidgetHeaderProps): JSX.Element | null {
+	const urlQuery = useUrlQuery();
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
-		history.push(
-			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${
-				widget.panelTypes
-			}&${QueryParams.compositeQuery}=${encodeURIComponent(
-				JSON.stringify(widget.query),
-			)}`,
+		urlQuery.set(QueryParams.widgetId, widgetId);
+		urlQuery.set(QueryParams.graphType, widget.panelTypes);
+		urlQuery.set(
+			QueryParams.compositeQuery,
+			encodeURIComponent(JSON.stringify(widget.query)),
 		);
-	}, [widget.id, widget.panelTypes, widget.query]);
+		const generatedUrl = `${window.location.pathname}/new?${urlQuery}`;
+		history.push(generatedUrl);
+	}, [urlQuery, widget.id, widget.panelTypes, widget.query]);
 
 	const onCreateAlertsHandler = useCreateAlerts(widget, 'dashboardView');
 

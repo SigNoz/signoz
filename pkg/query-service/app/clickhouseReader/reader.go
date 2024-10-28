@@ -3560,7 +3560,7 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 }
 
 func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error) {
-	var result model.DashboardVar
+	var result = model.DashboardVar{VariableValues: make([]interface{}, 0)}
 	rows, err := r.db.Query(ctx, query)
 
 	zap.L().Info(query)
@@ -3595,7 +3595,11 @@ func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string)
 	return &result, nil
 }
 
-func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+func (r *ClickHouseReader) GetMetricAggregateAttributes(
+	ctx context.Context,
+	req *v3.AggregateAttributeRequest,
+	skipDotNames bool,
+) (*v3.AggregateAttributeResponse, error) {
 
 	var query string
 	var err error
@@ -3622,6 +3626,10 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 		if err := rows.Scan(&metricName, &typ, &isMonotonic, &temporality); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+		if skipDotNames && strings.Contains(metricName, ".") {
+			continue
+		}
+
 		// Non-monotonic cumulative sums are treated as gauges
 		if typ == "Sum" && !isMonotonic && temporality == string(v3.Cumulative) {
 			typ = "Gauge"

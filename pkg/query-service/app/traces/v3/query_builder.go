@@ -10,11 +10,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-type Options struct {
-	GraphLimitQtype string
-	PreferRPM       bool
-}
-
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
 	v3.AggregateOperatorP05: 0.05,
 	v3.AggregateOperatorP10: 0.10,
@@ -238,7 +233,7 @@ func handleEmptyValuesInGroupBy(groupBy []v3.AttributeKey) (string, error) {
 	return "", nil
 }
 
-func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, panelType v3.PanelType, options Options) (string, error) {
+func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, panelType v3.PanelType, options v3.QBOptions) (string, error) {
 
 	filterSubQuery, err := buildTracesFilterQuery(mq.Filters)
 	if err != nil {
@@ -358,12 +353,13 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, pan
 	case v3.AggregateOperatorNoOp:
 		var query string
 		if panelType == v3.PanelTypeTrace {
-			withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME, spanIndexTableTimeFilter, filterSubQuery)
+			withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_LOCAL_TABLENAME, spanIndexTableTimeFilter, filterSubQuery)
 			withSubQuery = addLimitToQuery(withSubQuery, mq.Limit)
 			if mq.Offset != 0 {
 				withSubQuery = addOffsetToQuery(withSubQuery, mq.Offset)
 			}
-			query = withSubQuery + ") " + fmt.Sprintf(constants.TracesExplorerViewSQLSelectQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME)
+			// query = withSubQuery + ") " + fmt.Sprintf(constants.TracesExplorerViewSQLSelectQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME)
+			query = fmt.Sprintf(constants.TracesExplorerViewSQLSelectBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME) + withSubQuery + ") " + fmt.Sprintf(constants.TracesExplorerViewSQLSelectAfterSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME, spanIndexTableTimeFilter)
 		} else if panelType == v3.PanelTypeList {
 			if len(mq.SelectColumns) == 0 {
 				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
@@ -503,7 +499,7 @@ func addOffsetToQuery(query string, offset uint64) string {
 // PrepareTracesQuery returns the query string for traces
 // start and end are in epoch millisecond
 // step is in seconds
-func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
+func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
 	// adjust the start and end time to the step interval
 	start = start - (start % (mq.StepInterval * 1000))
 	end = end - (end % (mq.StepInterval * 1000))
