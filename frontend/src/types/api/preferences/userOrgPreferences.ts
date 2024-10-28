@@ -19,12 +19,12 @@ export interface GetAllUserPreferencesResponseProps {
 }
 
 export interface UpdateOrgPreferenceProps {
-	key: string;
+	preferenceID: string;
 	value: unknown;
 }
 
 export interface UpdateUserPreferenceProps {
-	key: string;
+	preferenceID: string;
 	value: unknown;
 }
 

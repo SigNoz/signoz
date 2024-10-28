@@ -1,7 +1,10 @@
 import './OnboardingQuestionaire.styles.scss';
 
+import { Skeleton } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import updateProfileAPI from 'api/onboarding/updateProfile';
+import getOrgPreference from 'api/preferences/getOrgPreference';
+import updateOrgPreferenceAPI from 'api/preferences/updateOrgPreference';
 import editOrg from 'api/user/editOrg';
 import getOrgUser from 'api/user/getOrgUser';
 import { AxiosError } from 'axios';
@@ -10,6 +13,7 @@ import ROUTES from 'constants/routes';
 import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingInvitesContainer';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { isEmpty } from 'lodash-es';
 import { Dispatch, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
@@ -56,9 +60,9 @@ const INITIAL_SIGNOZ_DETAILS: SignozDetails = {
 };
 
 const INITIAL_OPTIMISE_SIGNOZ_DETAILS: OptimiseSignozDetails = {
-	logsPerDay: 25,
-	hostsPerDay: 40,
-	services: 10,
+	logsPerDay: 0,
+	hostsPerDay: 0,
+	services: 0,
 };
 
 function OnboardingQuestionaire(): JSX.Element {
@@ -92,6 +96,44 @@ function OnboardingQuestionaire(): JSX.Element {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [orgData, setOrgData] = useState<OrgData | null>(null);
+	const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(
+		false,
+	);
+
+	const { data: orgPreferences, isLoading: isLoadingOrgPreferences } = useQuery({
+		queryFn: () => getOrgPreference({ preferenceID: 'ORG_ONBOARDING' }),
+		queryKey: ['getOrgPreferences', 'ORG_ONBOARDING'],
+	});
+
+	useEffect(() => {
+		if (!isLoadingOrgPreferences && !isEmpty(orgPreferences?.payload?.data)) {
+			const preferenceId = orgPreferences?.payload?.data?.preference_id;
+			const preferenceValue = orgPreferences?.payload?.data?.preference_value;
+
+			if (preferenceId === 'ORG_ONBOARDING') {
+				setIsOnboardingComplete(preferenceValue as boolean);
+			}
+		}
+	}, [orgPreferences, isLoadingOrgPreferences]);
+
+	const checkFirstTimeUser = (): boolean => {
+		const users = orgUsers?.payload || [];
+
+		const remainingUsers = users.filter(
+			(user) => user.email !== 'admin@signoz.cloud',
+		);
+
+		return remainingUsers.length === 1;
+	};
+
+	useEffect(() => {
+		const isFirstUser = checkFirstTimeUser();
+
+		if (isOnboardingComplete || !isFirstUser) {
+			history.push(ROUTES.GET_STARTED);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isOnboardingComplete, orgUsers]);
 
 	useEffect(() => {
 		if (org) {
@@ -104,6 +146,11 @@ function OnboardingQuestionaire(): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [org]);
+
+	const isNextDisabled =
+		optimiseSignozDetails.logsPerDay === 0 ||
+		optimiseSignozDetails.hostsPerDay === 0 ||
+		optimiseSignozDetails.services === 0;
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -164,9 +211,7 @@ function OnboardingQuestionaire(): JSX.Element {
 	const { mutate: updateProfile, isLoading: isUpdatingProfile } = useMutation(
 		updateProfileAPI,
 		{
-			onSuccess: (data) => {
-				console.log('data', data);
-
+			onSuccess: () => {
 				setCurrentStep(4);
 			},
 			onError: (error) => {
@@ -174,6 +219,15 @@ function OnboardingQuestionaire(): JSX.Element {
 			},
 		},
 	);
+
+	const { mutate: updateOrgPreference } = useMutation(updateOrgPreferenceAPI, {
+		onSuccess: () => {
+			setIsOnboardingComplete(true);
+		},
+		onError: (error) => {
+			showErrorNotification(notifications, error as AxiosError);
+		},
+	});
 
 	const handleUpdateProfile = (): void => {
 		updateProfile({
@@ -200,7 +254,10 @@ function OnboardingQuestionaire(): JSX.Element {
 	};
 
 	const handleOnboardingComplete = (): void => {
-		history.push(ROUTES.GET_STARTED);
+		updateOrgPreference({
+			preferenceID: 'ORG_ONBOARDING',
+			value: true,
+		});
 	};
 
 	return (
@@ -210,42 +267,53 @@ function OnboardingQuestionaire(): JSX.Element {
 			</div>
 
 			<div className="onboarding-questionaire-content">
-				{currentStep === 1 && (
-					<OrgQuestions
-						isLoading={isLoading}
-						orgDetails={orgDetails}
-						setOrgDetails={setOrgDetails}
-						onNext={handleOrgDetailsUpdate}
-					/>
+				{(isLoadingOrgPreferences || isLoadingOrgUsers) && (
+					<div className="onboarding-questionaire-loading-container">
+						<Skeleton />
+					</div>
 				)}
 
-				{currentStep === 2 && (
-					<AboutSigNozQuestions
-						signozDetails={signozDetails}
-						setSignozDetails={setSignozDetails}
-						onBack={(): void => setCurrentStep(1)}
-						onNext={(): void => setCurrentStep(3)}
-					/>
-				)}
+				{!isLoadingOrgPreferences && !isLoadingOrgUsers && (
+					<>
+						{currentStep === 1 && (
+							<OrgQuestions
+								isLoading={isLoading}
+								orgDetails={orgDetails}
+								setOrgDetails={setOrgDetails}
+								onNext={handleOrgDetailsUpdate}
+							/>
+						)}
 
-				{currentStep === 3 && (
-					<OptimiseSignozNeeds
-						isUpdatingProfile={isUpdatingProfile}
-						optimiseSignozDetails={optimiseSignozDetails}
-						setOptimiseSignozDetails={setOptimiseSignozDetails}
-						onBack={(): void => setCurrentStep(2)}
-						onNext={handleUpdateProfile}
-						onWillDoLater={(): void => setCurrentStep(4)} // This is temporary, only to skip gateway api call as it's not setup on staging yet
-					/>
-				)}
+						{currentStep === 2 && (
+							<AboutSigNozQuestions
+								signozDetails={signozDetails}
+								setSignozDetails={setSignozDetails}
+								onBack={(): void => setCurrentStep(1)}
+								onNext={(): void => setCurrentStep(3)}
+							/>
+						)}
 
-				{currentStep === 4 && (
-					<InviteTeamMembers
-						teamMembers={teamMembers}
-						setTeamMembers={setTeamMembers}
-						onBack={(): void => setCurrentStep(3)}
-						onNext={handleOnboardingComplete}
-					/>
+						{currentStep === 3 && (
+							<OptimiseSignozNeeds
+								isNextDisabled={isNextDisabled}
+								isUpdatingProfile={isUpdatingProfile}
+								optimiseSignozDetails={optimiseSignozDetails}
+								setOptimiseSignozDetails={setOptimiseSignozDetails}
+								onBack={(): void => setCurrentStep(2)}
+								onNext={handleUpdateProfile}
+								onWillDoLater={(): void => setCurrentStep(4)} // This is temporary, only to skip gateway api call as it's not setup on staging yet
+							/>
+						)}
+
+						{currentStep === 4 && (
+							<InviteTeamMembers
+								teamMembers={teamMembers}
+								setTeamMembers={setTeamMembers}
+								onBack={(): void => setCurrentStep(3)}
+								onNext={handleOnboardingComplete}
+							/>
+						)}
+					</>
 				)}
 			</div>
 

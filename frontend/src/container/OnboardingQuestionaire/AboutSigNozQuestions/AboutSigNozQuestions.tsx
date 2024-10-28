@@ -22,7 +22,7 @@ interface AboutSigNozQuestionsProps {
 }
 
 const hearAboutSignozOptions: Record<string, string> = {
-	blog: 'Blog',
+	search: 'Google / Search',
 	hackerNews: 'Hacker News',
 	linkedin: 'LinkedIn',
 	twitter: 'Twitter',
@@ -144,7 +144,7 @@ export function AboutSigNozQuestions({
 								<Input
 									type="text"
 									className="onboarding-questionaire-other-input"
-									placeholder="Please specify your interest"
+									placeholder="Tell us how you got to know about us"
 									value={otherAboutSignoz}
 									autoFocus
 									addonAfter={
@@ -171,9 +171,7 @@ export function AboutSigNozQuestions({
 					</div>
 
 					<div className="form-group">
-						<div className="question">
-							What are you interested in doing with SigNoz?
-						</div>
+						<div className="question">What got you interested in SigNoz?</div>
 						<div className="two-column-grid">
 							{Object.keys(interestedInOptions).map((option: string) => (
 								<Button
