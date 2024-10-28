@@ -16,10 +16,11 @@ interface OptimiseSignozNeedsProps {
 	onBack: () => void;
 	onWillDoLater: () => void;
 	isUpdatingProfile: boolean;
+	isNextDisabled: boolean;
 }
 
 const logMarks: SliderSingleProps['marks'] = {
-	0: '2 GB',
+	0: '0 GB',
 	25: '25 GB',
 	50: '50 GB',
 	100: '100 GB',
@@ -50,15 +51,16 @@ function OptimiseSignozNeeds({
 	onNext,
 	onBack,
 	onWillDoLater,
+	isNextDisabled,
 }: OptimiseSignozNeedsProps): JSX.Element {
 	const [logsPerDay, setLogsPerDay] = useState<number>(
-		optimiseSignozDetails?.logsPerDay || 25,
+		optimiseSignozDetails?.logsPerDay || 0,
 	);
 	const [hostsPerDay, setHostsPerDay] = useState<number>(
-		optimiseSignozDetails?.hostsPerDay || 40,
+		optimiseSignozDetails?.hostsPerDay || 0,
 	);
 	const [services, setServices] = useState<number>(
-		optimiseSignozDetails?.services || 10,
+		optimiseSignozDetails?.services || 0,
 	);
 
 	useEffect(() => {
@@ -191,7 +193,7 @@ function OptimiseSignozNeeds({
 						type="primary"
 						className="next-button"
 						onClick={handleOnNext}
-						disabled={isUpdatingProfile}
+						disabled={isUpdatingProfile || isNextDisabled}
 					>
 						Next{' '}
 						{isUpdatingProfile ? (
@@ -204,7 +206,7 @@ function OptimiseSignozNeeds({
 
 				<div className="do-later-container">
 					<Button type="link" onClick={handleWillDoLater}>
-						I&apos;ll do this later
+						Skip for now
 					</Button>
 				</div>
 			</div>
