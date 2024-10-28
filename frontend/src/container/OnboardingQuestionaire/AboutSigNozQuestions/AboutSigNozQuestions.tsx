@@ -33,7 +33,7 @@ const hearAboutSignozOptions: Record<string, string> = {
 const interestedInOptions: Record<string, string> = {
 	savingCosts: 'Saving costs',
 	otelNativeStack: 'Interested in Otel-native stack',
-	allInOne: 'All in one',
+	allInOne: 'All in one (Logs, Metrics & Traces)',
 };
 
 export function AboutSigNozQuestions({
@@ -144,7 +144,7 @@ export function AboutSigNozQuestions({
 								<Input
 									type="text"
 									className="onboarding-questionaire-other-input"
-									placeholder="Tell us how you got to know about us"
+									placeholder="How you got to know about us"
 									value={otherAboutSignoz}
 									autoFocus
 									addonAfter={
