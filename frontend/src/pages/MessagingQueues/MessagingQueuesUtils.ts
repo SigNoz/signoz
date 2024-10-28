@@ -280,7 +280,6 @@ export function setConfigDetail(
 ): void {
 	// remove "key" and its value from the paramsToSet object
 	const { key, ...restParamsToSet } = paramsToSet || {};
-	console.log(restParamsToSet);
 
 	if (!isEmpty(restParamsToSet)) {
 		const configDetail = {
@@ -290,6 +289,8 @@ export function setConfigDetail(
 			QueryParams.configDetail,
 			encodeURIComponent(JSON.stringify(configDetail)),
 		);
+	} else {
+		urlQuery.delete(QueryParams.configDetail);
 	}
 	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 	history.replace(generatedUrl);

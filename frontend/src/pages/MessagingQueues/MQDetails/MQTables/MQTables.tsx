@@ -4,12 +4,14 @@ import './MQTables.styles.scss';
 import { Skeleton, Table, Typography } from 'antd';
 import axios from 'axios';
 import { isNumber } from 'chart.js/helpers';
+import cx from 'classnames';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { History } from 'history';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { isEmpty } from 'lodash-es';
 import {
 	ConsumerLagDetailTitle,
 	convertToTitleCase,
@@ -17,10 +19,11 @@ import {
 	MessagingQueuesViewType,
 	RowData,
 	SelectedTimelineQuery,
+	setConfigDetail,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 import {
@@ -104,12 +107,14 @@ const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 	</>
 );
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function MessagingQueuesTable({
 	currentTab,
 	selectedView,
 	tableApiPayload,
 	tableApi,
 	validConfigPresent = false,
+	type = 'Detail',
 }: {
 	currentTab?: MessagingQueueServiceDetailType;
 	selectedView: string;
@@ -120,6 +125,7 @@ function MessagingQueuesTable({
 		SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
 	>;
 	validConfigPresent?: boolean;
+	type?: 'Detail' | 'Overview';
 }): JSX.Element {
 	const [columns, setColumns] = useState<any[]>([]);
 	const [tableData, setTableData] = useState<any[]>([]);
@@ -134,6 +140,16 @@ function MessagingQueuesTable({
 		() => (timelineQuery ? JSON.parse(timelineQuery) : {}),
 		[timelineQuery],
 	);
+
+	const configDetails = decodeURIComponent(
+		urlQuery.get(QueryParams.configDetail) || '',
+	);
+
+	const configDetailQueryData: {
+		[key: string]: string;
+	} = useMemo(() => (configDetails ? JSON.parse(configDetails) : {}), [
+		configDetails,
+	]);
 
 	const paginationConfig = useMemo(
 		() =>
@@ -172,6 +188,36 @@ function MessagingQueuesTable({
 		[currentTab, selectedView, tableApiPayload],
 	);
 
+	const [selectedRowKey, setSelectedRowKey] = useState<React.Key>();
+	const [, setSelectedRows] = useState<any>();
+	const location = useLocation();
+
+	const onRowClick = (record: { [key: string]: string }): void => {
+		const selectedKey = record.key;
+
+		if (`${selectedKey}_${selectedView}` === selectedRowKey) {
+			setSelectedRowKey(undefined);
+			setSelectedRows({});
+			setConfigDetail(urlQuery, location, history, {});
+		} else {
+			setSelectedRowKey(`${selectedKey}_${selectedView}`);
+			setSelectedRows(record);
+
+			if (!isEmpty(record)) {
+				setConfigDetail(urlQuery, location, history, record);
+			}
+		}
+	};
+
+	const subtitle =
+		selectedView === MessagingQueuesViewType.consumerLag.value
+			? `${timelineQueryData?.group || ''} ${timelineQueryData?.topic || ''} ${
+					timelineQueryData?.partition || ''
+			  }`
+			: `${configDetailQueryData?.service_name || ''} ${
+					configDetailQueryData?.topic || ''
+			  } ${configDetailQueryData?.partition || ''}`;
+
 	return (
 		<div className="mq-tables-container">
 			{!validConfigPresent ? (
@@ -188,19 +234,32 @@ function MessagingQueuesTable({
 					{currentTab && (
 						<div className="mq-table-title">
 							{ConsumerLagDetailTitle[currentTab]}
-							<div className="mq-table-subtitle">{`${timelineQueryData?.group || ''} ${
-								timelineQueryData?.topic || ''
-							} ${timelineQueryData?.partition || ''}`}</div>
+							<div className="mq-table-subtitle">{subtitle}</div>
 						</div>
 					)}
 					<Table
-						className="mq-table"
+						className={cx(
+							'mq-table',
+							type !== 'Detail' ? 'mq-overview-row-clickable' : '',
+						)}
 						pagination={paginationConfig}
 						size="middle"
 						columns={columns}
 						dataSource={tableData}
 						bordered={false}
 						loading={isLoading}
+						onRow={(record): any =>
+							type !== 'Detail'
+								? {
+										onClick: (): void => onRowClick(record),
+								  }
+								: {}
+						}
+						rowClassName={(record): any =>
+							`${record.key}_${selectedView}` === selectedRowKey
+								? 'ant-table-row-selected'
+								: ''
+						}
 					/>
 				</>
 			)}
