@@ -238,9 +238,9 @@ export const MessagingQueuesViewType = {
 		label: 'Producer Latency view',
 		value: MessagingQueuesViewTypeOptions.ProducerLatency,
 	},
-	consumerLatency: {
-		label: 'Consumer latency view',
-		value: MessagingQueuesViewTypeOptions.ConsumerLatency,
+	dropRate: {
+		label: 'Drop Rate',
+		value: 'dropRate',
 	},
 };
 
