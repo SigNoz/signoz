@@ -653,8 +653,8 @@ func TestV2QueryRangePanelGraph(t *testing.T) {
 		// second query uses the cached data from the first query
 		fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", 1675115580000+120*60*1000, 1675115580000+180*60*1000), // 31st Jan, 05:23:00 to 31st Jan, 06:23:00
 		// No caching for traces yet
-		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", 1675115596722*1000000, (1675115596722+120*60*1000)*int64(1000000)),                     // 31st Jan, 03:23:00 to 31st Jan, 05:23:00
-		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675115596722+60*60*1000)*int64(1000000), (1675115596722+180*60*1000)*int64(1000000)), // 31st Jan, 04:23:00 to 31st Jan, 06:23:00
+		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", 1675115580000*1000000, (1675115580000+120*60*1000)*int64(1000000)),                     // 31st Jan, 03:23:00 to 31st Jan, 05:23:00
+		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675115580000+60*60*1000)*int64(1000000), (1675115580000+180*60*1000)*int64(1000000)), // 31st Jan, 04:23:00 to 31st Jan, 06:23:00
 	}
 
 	for i, param := range params {
