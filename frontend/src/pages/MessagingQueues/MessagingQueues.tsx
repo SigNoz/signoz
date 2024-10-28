@@ -187,7 +187,7 @@ function MessagingQueues(): JSX.Element {
 					</div>
 					<div className="summary-card coming-soon-card">
 						<div className="summary-title">
-							<p>{MessagingQueuesViewType.consumerLatency.label}</p>
+							<p>{MessagingQueuesViewType.dropRate.label}</p>
 							<div className="time-value">
 								<Calendar size={14} color={Color.BG_SLATE_200} />
 								<p className="time-value">1D</p>
