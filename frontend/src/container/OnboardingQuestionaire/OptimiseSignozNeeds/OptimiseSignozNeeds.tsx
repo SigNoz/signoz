@@ -31,6 +31,18 @@ const linearToExponential = (
 	return Math.round(expValue);
 };
 
+const exponentialToLinear = (
+	expValue: number,
+	min: number,
+	max: number,
+): number => {
+	const expMin = Math.log10(min);
+	const expMax = Math.log10(max);
+	const linearValue =
+		((Math.log10(expValue) - expMin) / (expMax - expMin)) * 100;
+	return Math.round(linearValue); // Round to get a whole number within the 0-100 range
+};
+
 interface OptimiseSignozNeedsProps {
 	optimiseSignozDetails: OptimiseSignozDetails;
 	setOptimiseSignozDetails: (details: OptimiseSignozDetails) => void;
@@ -84,6 +96,22 @@ function OptimiseSignozNeeds({
 		optimiseSignozDetails?.services || 0,
 	);
 
+	// Internal state for the linear slider
+	const [sliderValues, setSliderValues] = useState({
+		logsPerDay: 0,
+		hostsPerDay: 0,
+		services: 0,
+	});
+
+	useEffect(() => {
+		setSliderValues({
+			logsPerDay: exponentialToLinear(logsPerDay, logsMin, logsMax),
+			hostsPerDay: exponentialToLinear(hostsPerDay, hostsMin, hostsMax),
+			services: exponentialToLinear(services, servicesMin, servicesMax),
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	useEffect(() => {
 		setOptimiseSignozDetails({
 			logsPerDay,
@@ -129,15 +157,7 @@ function OptimiseSignozNeeds({
 		});
 	};
 
-	// Internal state for the linear slider
-	const [sliderValues, setSliderValues] = useState({
-		logsPerDay: 0,
-		hostsPerDay: 0,
-		services: 0,
-	});
-
 	const handleSliderChange = (key: string, value: number): void => {
-		console.log('value', value);
 		setSliderValues({
 			...sliderValues,
 			[key]: value,
@@ -145,13 +165,13 @@ function OptimiseSignozNeeds({
 
 		switch (key) {
 			case 'logsPerDay':
-				setLogsPerDay(value);
+				setLogsPerDay(linearToExponential(value, logsMin, logsMax));
 				break;
 			case 'hostsPerDay':
-				setHostsPerDay(value);
+				setHostsPerDay(linearToExponential(value, hostsMin, hostsMax));
 				break;
 			case 'services':
-				setServices(value);
+				setServices(linearToExponential(value, servicesMin, servicesMax));
 				break;
 			default:
 				break;
