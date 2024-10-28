@@ -12,9 +12,7 @@ import (
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
-	"go.opentelemetry.io/collector/connector"
 	"go.opentelemetry.io/collector/exporter"
-	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/receiver"
@@ -143,11 +141,21 @@ func NewCollectorSimulator(
 	// Build and start collector service.
 	collectorErrChan := make(chan error)
 	svcSettings := service.Settings{
-		Receivers:         receiver.NewBuilder(collectorCfg.Receivers, factories.Receivers),
-		Processors:        processor.NewBuilder(collectorCfg.Processors, factories.Processors),
-		Exporters:         exporter.NewBuilder(collectorCfg.Exporters, factories.Exporters),
-		Connectors:        connector.NewBuilder(collectorCfg.Connectors, factories.Connectors),
-		Extensions:        extension.NewBuilder(collectorCfg.Extensions, factories.Extensions),
+		ReceiversConfigs:   collectorCfg.Receivers,
+		ReceiversFactories: factories.Receivers,
+
+		ProcessorsConfigs:   collectorCfg.Processors,
+		ProcessorsFactories: factories.Processors,
+
+		ExportersConfigs:   collectorCfg.Exporters,
+		ExportersFactories: factories.Exporters,
+
+		ConnectorsConfigs:   collectorCfg.Connectors,
+		ConnectorsFactories: factories.Connectors,
+
+		ExtensionsConfigs:   collectorCfg.Extensions,
+		ExtensionsFactories: factories.Extensions,
+
 		AsyncErrorChannel: collectorErrChan,
 	}
 
