@@ -131,7 +131,6 @@ processors:
 exporters:
   clickhousetraces:
     datasource: tcp://clickhouse:9000/signoz_traces
-    docker_multi_node_cluster: ${env:DOCKER_MULTI_NODE_CLUSTER}
     low_cardinal_exception_grouping: ${env:LOW_CARDINAL_EXCEPTION_GROUPING}
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/signoz_metrics
@@ -142,7 +141,6 @@ exporters:
   # logging: {}
   clickhouselogsexporter:
     dsn: tcp://clickhouse:9000/signoz_logs
-    docker_multi_node_cluster: ${env:DOCKER_MULTI_NODE_CLUSTER}
     timeout: 10s
     use_new_schema: true
 extensions:
