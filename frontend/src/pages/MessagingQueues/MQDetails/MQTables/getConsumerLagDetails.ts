@@ -8,13 +8,14 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 export interface MessagingQueueServicePayload {
 	start?: number | string;
 	end?: number | string;
-	variables: {
+	variables?: {
 		partition?: string;
 		topic?: string;
 		consumer_group?: string;
 		service_name?: string;
 	};
 	detailType?: MessagingQueueServiceDetailType | 'producer' | 'consumer';
+	evalTime?: number;
 }
 
 export interface MessagingQueuesPayloadProps {
