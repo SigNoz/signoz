@@ -64,14 +64,16 @@
 }
 
 .mq-table {
-	.ant-table-row {
-		background-color: var(--bg-ink-400);
+	&.mq-overview-row-clickable {
+		.ant-table-row {
+			background-color: var(--bg-ink-400);
 
-		&:hover {
-			cursor: pointer;
-			background-color: var(--bg-slate-400) !important;
-			color: var(--bg-vanilla-400);
-			transition: background-color 0.3s ease, color 0.3s ease;
+			&:hover {
+				cursor: pointer;
+				background-color: var(--bg-slate-400) !important;
+				color: var(--bg-vanilla-400);
+				transition: background-color 0.3s ease, color 0.3s ease;
+			}
 		}
 	}
 }
