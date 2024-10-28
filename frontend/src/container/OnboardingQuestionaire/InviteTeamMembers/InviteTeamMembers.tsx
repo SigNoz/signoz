@@ -171,7 +171,7 @@ function InviteTeamMembers({
 	return (
 		<div className="questions-container">
 			<Typography.Title level={3} className="title">
-				Observability made collaborative
+				Invite your team members
 			</Typography.Title>
 			<Typography.Paragraph className="sub-title">
 				The more your team uses SigNoz, the stronger your observability. Share

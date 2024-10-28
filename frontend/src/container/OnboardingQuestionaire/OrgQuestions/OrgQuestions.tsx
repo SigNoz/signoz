@@ -42,10 +42,10 @@ const observabilityTools = {
 };
 
 const o11yFamiliarityOptions: Record<string, string> = {
-	new: "I'm completely new",
-	builtStack: "I've built a stack before",
-	experienced: 'I have some experience',
-	dontKnow: "I don't know what it is",
+	beginner: 'Basic Understanding',
+	intermediate: 'Somewhat Familiar',
+	expert: 'Very Familiar',
+	notFamiliar: "I'm not familiar with it",
 };
 
 function OrgQuestions({
@@ -254,7 +254,7 @@ function OrgQuestions({
 
 					<div className="form-group">
 						<div className="question">
-							Are you familiar with observability (o11y)?
+							Are you familiar with setting upobservability (o11y)?
 						</div>
 						<div className="two-column-grid">
 							{Object.keys(o11yFamiliarityOptions).map((option: string) => (
