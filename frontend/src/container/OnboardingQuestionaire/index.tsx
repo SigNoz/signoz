@@ -28,7 +28,6 @@ import {
 	SignozDetails,
 } from './AboutSigNozQuestions/AboutSigNozQuestions';
 import InviteTeamMembers from './InviteTeamMembers/InviteTeamMembers';
-import { OnboardingFooter } from './OnboardingFooter/OnboardingFooter';
 import { OnboardingHeader } from './OnboardingHeader/OnboardingHeader';
 import OptimiseSignozNeeds, {
 	OptimiseSignozDetails,
@@ -148,8 +147,8 @@ function OnboardingQuestionaire(): JSX.Element {
 	}, [org]);
 
 	const isNextDisabled =
-		optimiseSignozDetails.logsPerDay === 0 ||
-		optimiseSignozDetails.hostsPerDay === 0 ||
+		optimiseSignozDetails.logsPerDay === 0 &&
+		optimiseSignozDetails.hostsPerDay === 0 &&
 		optimiseSignozDetails.services === 0;
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -315,10 +314,6 @@ function OnboardingQuestionaire(): JSX.Element {
 						)}
 					</>
 				)}
-			</div>
-
-			<div className="onboarding-questionaire-footer">
-				<OnboardingFooter />
 			</div>
 		</div>
 	);
