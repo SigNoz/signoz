@@ -175,12 +175,12 @@ export const GatewayApiV2Instance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${gatewayApiV2}`,
 });
 
-GatewayApiV1Instance.interceptors.response.use(
+GatewayApiV2Instance.interceptors.response.use(
 	interceptorsResponse,
 	interceptorRejected,
 );
 
-GatewayApiV1Instance.interceptors.request.use(interceptorsRequestResponse);
+GatewayApiV2Instance.interceptors.request.use(interceptorsRequestResponse);
 //
 
 AxiosAlertManagerInstance.interceptors.response.use(
