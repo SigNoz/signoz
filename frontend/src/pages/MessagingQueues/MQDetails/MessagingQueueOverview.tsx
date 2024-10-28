@@ -11,6 +11,7 @@ import {
 	ProducerLatencyOptions,
 } from '../MessagingQueuesUtils';
 import { MessagingQueueServicePayload } from './MQTables/getConsumerLagDetails';
+import { getKafkaSpanEval } from './MQTables/getKafkaSpanEval';
 import { getPartitionLatencyOverview } from './MQTables/getPartitionLatencyOverview';
 import { getTopicThroughputOverview } from './MQTables/getTopicThroughputOverview';
 import MessagingQueuesTable from './MQTables/MQTables';
@@ -50,6 +51,9 @@ const getTableApi = (selectedView: string): any => {
 	if (selectedView === MessagingQueuesViewType.producerLatency.value) {
 		return getTopicThroughputOverview;
 	}
+	if (selectedView === MessagingQueuesViewType.dropRate.value) {
+		return getKafkaSpanEval;
+	}
 	return getPartitionLatencyOverview;
 };
 
@@ -76,6 +80,10 @@ function MessagingQueueOverview({
 				? option === ProducerLatencyOptions.Producers
 					? 'producer'
 					: 'consumer'
+				: undefined,
+		evalTime:
+			selectedView === MessagingQueuesViewType.dropRate.value
+				? 2363404
 				: undefined,
 	};
 

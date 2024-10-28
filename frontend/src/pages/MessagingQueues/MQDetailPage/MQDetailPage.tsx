@@ -12,7 +12,6 @@ import {
 	MessagingQueuesViewType,
 	ProducerLatencyOptions,
 } from '../MessagingQueuesUtils';
-import { SelectLabelWithComingSoon } from '../MQCommon/MQCommon';
 import MessagingQueueOverview from '../MQDetails/MessagingQueueOverview';
 import MessagingQueuesDetails from '../MQDetails/MQDetails';
 import MessagingQueuesConfigOptions from '../MQGraph/MQConfigOptions';
@@ -66,13 +65,8 @@ function MQDetailPage(): JSX.Element {
 								value: MessagingQueuesViewType.producerLatency.value,
 							},
 							{
-								label: (
-									<SelectLabelWithComingSoon
-										label={MessagingQueuesViewType.consumerLatency.label}
-									/>
-								),
-								value: MessagingQueuesViewType.consumerLatency.value,
-								disabled: true,
+								label: MessagingQueuesViewType.dropRate.label,
+								value: MessagingQueuesViewType.dropRate.value,
 							},
 						]}
 					/>
@@ -92,10 +86,12 @@ function MQDetailPage(): JSX.Element {
 				)}
 			</div>
 			<div className="messaging-queue-details">
-				<MessagingQueuesDetails
-					selectedView={selectedView}
-					producerLatencyOption={producerLatencyOption}
-				/>
+				{selectedView !== MessagingQueuesViewType.dropRate.value && (
+					<MessagingQueuesDetails
+						selectedView={selectedView}
+						producerLatencyOption={producerLatencyOption}
+					/>
+				)}
 			</div>
 		</div>
 	);

@@ -161,11 +161,6 @@ export const getMetaDataAndAPIPerView = (
 					partition: configDetails?.partition,
 					topic: configDetails?.topic,
 					consumer_group: configDetails?.group,
-
-					// todo-sagar: look at above props
-					// partition: selectedTimelineQuery?.partition,
-					// topic: selectedTimelineQuery?.topic,
-					// consumer_group: selectedTimelineQuery?.group,
 				},
 				detailType,
 			},
@@ -179,11 +174,6 @@ export const getMetaDataAndAPIPerView = (
 					partition: configDetails?.partition,
 					topic: configDetails?.topic,
 					service_name: configDetails?.service_name,
-
-					// // todo-sagar: look at above props
-					// partition: selectedTimelineQuery?.partition,
-					// topic: selectedTimelineQuery?.topic,
-					// service_name: 'consumer-svc-1', // todo-sagar remove hardcode
 				},
 				detailType,
 			},
@@ -238,7 +228,7 @@ const checkValidityOfDetailConfigs = (
 		return Boolean(configDetails?.topic && configDetails?.service_name);
 	}
 
-	return false;
+	return selectedView === MessagingQueuesViewType.dropRate.value;
 };
 
 function MessagingQueuesDetails({
@@ -312,14 +302,14 @@ function MessagingQueuesDetails({
 			<MessagingQueuesTable
 				currentTab={currentTab}
 				selectedView={selectedView}
-				tableApi={serviceConfigDetails[selectedView].tableApi}
+				tableApi={serviceConfigDetails[selectedView]?.tableApi}
 				validConfigPresent={checkValidityOfDetailConfigs(
 					timelineQueryData,
 					selectedView,
 					currentTab,
 					configDetailQueryData,
 				)}
-				tableApiPayload={serviceConfigDetails[selectedView].tableApiPayload}
+				tableApiPayload={serviceConfigDetails[selectedView]?.tableApiPayload}
 			/>
 		</div>
 	);
