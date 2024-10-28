@@ -137,7 +137,7 @@ export const getMetaDataAndAPIPerView = (
 		minTime,
 		maxTime,
 		selectedTimelineQuery,
-		// configDetails,
+		configDetails,
 	} = metaDataProps;
 	return {
 		[MessagingQueuesViewType.consumerLag.value]: {
@@ -158,14 +158,14 @@ export const getMetaDataAndAPIPerView = (
 				start: minTime,
 				end: maxTime,
 				variables: {
-					// partition: configDetails?.partition,
-					// topic: configDetails?.topic,
-					// consumer_group: configDetails?.group,
+					partition: configDetails?.partition,
+					topic: configDetails?.topic,
+					consumer_group: configDetails?.group,
 
 					// todo-sagar: look at above props
-					partition: selectedTimelineQuery?.partition,
-					topic: selectedTimelineQuery?.topic,
-					consumer_group: selectedTimelineQuery?.group,
+					// partition: selectedTimelineQuery?.partition,
+					// topic: selectedTimelineQuery?.topic,
+					// consumer_group: selectedTimelineQuery?.group,
 				},
 				detailType,
 			},
@@ -176,14 +176,14 @@ export const getMetaDataAndAPIPerView = (
 				start: minTime,
 				end: maxTime,
 				variables: {
-					// partition: configDetails?.partition,
-					// topic: configDetails?.topic,
-					// service_name: configDetails?.service_name,
+					partition: configDetails?.partition,
+					topic: configDetails?.topic,
+					service_name: configDetails?.service_name,
 
-					// todo-sagar: look at above props
-					partition: selectedTimelineQuery?.partition,
-					topic: selectedTimelineQuery?.topic,
-					service_name: 'consumer-svc-1', // todo-sagar remove hardcode
+					// // todo-sagar: look at above props
+					// partition: selectedTimelineQuery?.partition,
+					// topic: selectedTimelineQuery?.topic,
+					// service_name: 'consumer-svc-1', // todo-sagar remove hardcode
 				},
 				detailType,
 			},
@@ -196,9 +196,9 @@ const checkValidityOfDetailConfigs = (
 	selectedTimelineQuery: SelectedTimelineQuery,
 	selectedView: string,
 	currentTab: MessagingQueueServiceDetailType,
-	// configDetails?: {
-	// 	[key: string]: string;
-	// },
+	configDetails?: {
+		[key: string]: string;
+	},
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): boolean => {
 	if (selectedView === MessagingQueuesViewType.consumerLag.value) {
@@ -211,35 +211,31 @@ const checkValidityOfDetailConfigs = (
 	}
 
 	if (selectedView === MessagingQueuesViewType.partitionLatency.value) {
-		// todo-sagar - change to configdetails
-		if (isEmpty(selectedTimelineQuery)) {
+		if (isEmpty(configDetails)) {
 			return false;
 		}
 
 		if (currentTab === MessagingQueueServiceDetailType.ConsumerDetails) {
-			return Boolean(
-				selectedTimelineQuery?.topic && selectedTimelineQuery?.partition,
-			);
+			return Boolean(configDetails?.topic && configDetails?.partition);
 		}
 		return Boolean(
-			selectedTimelineQuery?.group &&
-				selectedTimelineQuery?.topic &&
-				selectedTimelineQuery?.partition,
+			configDetails?.group && configDetails?.topic && configDetails?.partition,
 		);
 	}
 
 	if (selectedView === MessagingQueuesViewType.producerLatency.value) {
-		// todo-sagar - change to configdetails and add service_name
-		if (isEmpty(selectedTimelineQuery)) {
+		if (isEmpty(configDetails)) {
 			return false;
 		}
 
 		if (currentTab === MessagingQueueServiceDetailType.ProducerDetails) {
 			return Boolean(
-				selectedTimelineQuery?.topic && selectedTimelineQuery?.partition,
+				configDetails?.topic &&
+					configDetails?.partition &&
+					configDetails?.service_name,
 			);
 		}
-		return Boolean(selectedTimelineQuery?.topic);
+		return Boolean(configDetails?.topic && configDetails?.service_name);
 	}
 
 	return false;
@@ -321,7 +317,7 @@ function MessagingQueuesDetails({
 					timelineQueryData,
 					selectedView,
 					currentTab,
-					// configDetailQueryData,
+					configDetailQueryData,
 				)}
 				tableApiPayload={serviceConfigDetails[selectedView].tableApiPayload}
 			/>

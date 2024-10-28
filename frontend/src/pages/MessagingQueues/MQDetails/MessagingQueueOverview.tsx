@@ -93,6 +93,7 @@ function MessagingQueueOverview({
 				tableApiPayload={tableApiPayload}
 				tableApi={getTableApi(selectedView)}
 				validConfigPresent
+				type="Overview"
 			/>
 		</div>
 	);
