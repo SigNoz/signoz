@@ -122,7 +122,7 @@ function OptimiseSignozNeeds({
 	}, [services, hostsPerDay, logsPerDay]);
 
 	const handleOnNext = (): void => {
-		logEvent('Onboarding: Optimise SigNoz Needs: Next', {
+		logEvent('User Onboarding: Optimise SigNoz Needs Answered', {
 			logsPerDay,
 			hostsPerDay,
 			services,
@@ -132,12 +132,6 @@ function OptimiseSignozNeeds({
 	};
 
 	const handleOnBack = (): void => {
-		logEvent('Onboarding: Optimise SigNoz Needs: Back', {
-			logsPerDay,
-			hostsPerDay,
-			services,
-		});
-
 		onBack();
 	};
 
@@ -150,7 +144,7 @@ function OptimiseSignozNeeds({
 
 		onWillDoLater();
 
-		logEvent('Onboarding: Optimise SigNoz Needs: Will do later', {
+		logEvent('User Onboarding: Optimise SigNoz Needs Skipped', {
 			logsPerDay: 0,
 			hostsPerDay: 0,
 			services: 0,

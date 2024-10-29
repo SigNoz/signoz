@@ -120,7 +120,7 @@ function OrgQuestions({
 			familiarity,
 		});
 
-		logEvent('Onboarding: Org Questions: Next', {
+		logEvent('User Onboarding: Org Questions Answered', {
 			organisationName,
 			usesObservability,
 			observabilityTool,
