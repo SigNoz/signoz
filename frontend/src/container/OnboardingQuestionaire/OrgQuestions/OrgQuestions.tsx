@@ -4,10 +4,15 @@ import '../OnboardingQuestionaire.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import editOrg from 'api/user/editOrg';
+import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { Dispatch, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import { UPDATE_ORG_NAME } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
 export interface OrgData {
@@ -25,10 +30,9 @@ export interface OrgDetails {
 }
 
 interface OrgQuestionsProps {
-	isLoading: boolean;
+	currentOrgData: OrgData | null;
 	orgDetails: OrgDetails;
-	setOrgDetails: (details: OrgDetails) => void;
-	onNext: () => void;
+	onNext: (details: OrgDetails) => void;
 }
 
 const observabilityTools = {
@@ -49,12 +53,15 @@ const o11yFamiliarityOptions: Record<string, string> = {
 };
 
 function OrgQuestions({
-	isLoading,
+	currentOrgData,
 	orgDetails,
-	setOrgDetails,
 	onNext,
 }: OrgQuestionsProps): JSX.Element {
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { notifications } = useNotifications();
+	const dispatch = useDispatch<Dispatch<AppActions>>();
+
+	const { t } = useTranslation(['organizationsettings', 'common']);
 
 	const [organisationName, setOrganisationName] = useState<string>(
 		orgDetails?.organisationName || '',
@@ -76,6 +83,78 @@ function OrgQuestions({
 	useEffect(() => {
 		setOrganisationName(orgDetails.organisationName);
 	}, [orgDetails.organisationName]);
+
+	const [isLoading, setIsLoading] = useState<boolean>(false);
+
+	const handleOrgNameUpdate = async (): Promise<void> => {
+		/* Early bailout if orgData is not set or if the organisation name is not set or if the organisation name is empty or if the organisation name is the same as the one in the orgData */
+		if (
+			!currentOrgData ||
+			!organisationName ||
+			organisationName === '' ||
+			orgDetails.organisationName === organisationName
+		) {
+			onNext({
+				organisationName,
+				usesObservability,
+				observabilityTool,
+				otherTool,
+				familiarity,
+			});
+
+			return;
+		}
+
+		try {
+			setIsLoading(true);
+			const { statusCode, error } = await editOrg({
+				isAnonymous: currentOrgData.isAnonymous,
+				name: organisationName,
+				orgId: currentOrgData.id,
+			});
+			if (statusCode === 200) {
+				dispatch({
+					type: UPDATE_ORG_NAME,
+					payload: {
+						orgId: currentOrgData?.id,
+						name: orgDetails.organisationName,
+					},
+				});
+
+				logEvent('User Onboarding: Org Name Updated', {
+					organisationName: orgDetails.organisationName,
+				});
+
+				onNext({
+					organisationName,
+					usesObservability,
+					observabilityTool,
+					otherTool,
+					familiarity,
+				});
+			} else {
+				logEvent('User Onboarding: Org Name Update Failed', {
+					organisationName: orgDetails.organisationName,
+				});
+
+				notifications.error({
+					message:
+						error ||
+						t('something_went_wrong', {
+							ns: 'common',
+						}),
+				});
+			}
+			setIsLoading(false);
+		} catch (error) {
+			setIsLoading(false);
+			notifications.error({
+				message: t('something_went_wrong', {
+					ns: 'common',
+				}),
+			});
+		}
+	};
 
 	const isValidUsesObservability = (): boolean => {
 		if (usesObservability === null) {
@@ -112,23 +191,7 @@ function OrgQuestions({
 	]);
 
 	const handleOnNext = (): void => {
-		setOrgDetails({
-			organisationName,
-			usesObservability,
-			observabilityTool,
-			otherTool,
-			familiarity,
-		});
-
-		logEvent('User Onboarding: Org Questions Answered', {
-			organisationName,
-			usesObservability,
-			observabilityTool,
-			otherTool,
-			familiarity,
-		});
-
-		onNext();
+		handleOrgNameUpdate();
 	};
 
 	return (

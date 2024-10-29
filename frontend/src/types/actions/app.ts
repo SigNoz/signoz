@@ -25,7 +25,10 @@ export const UPDATE_ORG_NAME = 'UPDATE_ORG_NAME';
 export const UPDATE_ORG = 'UPDATE_ORG';
 export const UPDATE_CONFIGS = 'UPDATE_CONFIGS';
 export const UPDATE_USER_FLAG = 'UPDATE_USER_FLAG';
+export const UPDATE_ORG_PREFERENCES = 'UPDATE_ORG_PREFERENCES';
 export const UPDATE_FEATURE_FLAG_RESPONSE = 'UPDATE_FEATURE_FLAG_RESPONSE';
+export const UPDATE_IS_FETCHING_ORG_PREFERENCES =
+	'UPDATE_IS_FETCHING_ORG_PREFERENCES';
 
 export interface LoggedInUser {
 	type: typeof LOGGED_IN;
@@ -130,6 +133,20 @@ export interface UpdateFeatureFlag {
 	};
 }
 
+export interface UpdateOrgPreferences {
+	type: typeof UPDATE_ORG_PREFERENCES;
+	payload: {
+		orgPreferences: AppReducer['orgPreferences'];
+	};
+}
+
+export interface UpdateIsFetchingOrgPreferences {
+	type: typeof UPDATE_IS_FETCHING_ORG_PREFERENCES;
+	payload: {
+		isFetchingOrgPreferences: AppReducer['isFetchingOrgPreferences'];
+	};
+}
+
 export type AppAction =
 	| LoggedInUser
 	| UpdateAppVersion
@@ -143,4 +160,6 @@ export type AppAction =
 	| UpdateOrg
 	| UpdateConfigs
 	| UpdateUserFlag
-	| UpdateFeatureFlag;
+	| UpdateFeatureFlag
+	| UpdateOrgPreferences
+	| UpdateIsFetchingOrgPreferences;
