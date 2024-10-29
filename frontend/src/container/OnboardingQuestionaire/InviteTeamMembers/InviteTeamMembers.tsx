@@ -2,6 +2,7 @@ import './InviteTeamMembers.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Select, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/user/inviteUsers';
 import { AxiosError } from 'axios';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
@@ -15,7 +16,12 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { ErrorResponse } from 'types/api';
+import { SuccessResponse } from 'types/api';
+import {
+	FailedInvite,
+	InviteUsersResponse,
+	SuccessfulInvite,
+} from 'types/api/user/inviteUsers';
 import { v4 as uuid } from 'uuid';
 
 interface TeamMember {
@@ -46,7 +52,22 @@ function InviteTeamMembers({
 		{},
 	);
 	const [hasInvalidEmails, setHasInvalidEmails] = useState<boolean>(false);
+
+	const [hasErrors, setHasErrors] = useState<boolean>(true);
+
 	const [error, setError] = useState<string | null>(null);
+
+	const [inviteUsersErrorResponse, setInviteUsersErrorResponse] = useState<
+		string[] | null
+	>(null);
+
+	const [inviteUsersSuccessResponse, setInviteUsersSuccessResponse] = useState<
+		string[] | null
+	>(null);
+
+	const [disableNextButton, setDisableNextButton] = useState<boolean>(false);
+
+	const [allInvitesSent, setAllInvitesSent] = useState<boolean>(false);
 
 	const defaultTeamMember: TeamMember = {
 		email: '',
@@ -100,30 +121,100 @@ function InviteTeamMembers({
 		return isValid;
 	};
 
-	const handleError = (error: AxiosError): void => {
-		const errorMessage = error.response?.data as ErrorResponse;
+	const parseInviteUsersSuccessResponse = (
+		response: SuccessfulInvite[],
+	): string[] => response.map((invite) => `${invite.email} - Invite Sent`);
 
-		setError(errorMessage.error);
+	const parseInviteUsersErrorResponse = (response: FailedInvite[]): string[] =>
+		response.map((invite) => `${invite.email} - ${invite.error}`);
+
+	const handleError = (error: AxiosError): void => {
+		const errorMessage = error.response?.data as InviteUsersResponse;
+
+		if (errorMessage?.status === 'failure') {
+			setHasErrors(true);
+
+			const failedInvitesErrorResponse = parseInviteUsersErrorResponse(
+				errorMessage.failed_invites,
+			);
+
+			setInviteUsersErrorResponse(failedInvitesErrorResponse);
+		}
 	};
 
-	const { mutate: sendInvites, isLoading: isSendingInvites } = useMutation(
-		inviteUsers,
-		{
-			onSuccess: (): void => {
+	const handleInviteUsersSuccess = (
+		response: SuccessResponse<InviteUsersResponse>,
+	): void => {
+		const inviteUsersResponse = response.payload as InviteUsersResponse;
+
+		if (inviteUsersResponse?.status === 'success') {
+			const successfulInvites = parseInviteUsersSuccessResponse(
+				inviteUsersResponse.successful_invites,
+			);
+
+			setDisableNextButton(true);
+
+			setError(null);
+			setHasErrors(false);
+			setInviteUsersErrorResponse(null);
+			setAllInvitesSent(true);
+
+			setInviteUsersSuccessResponse(successfulInvites);
+
+			setTimeout(() => {
+				setDisableNextButton(false);
 				onNext();
-			},
-			onError: (error): void => {
-				handleError(error as AxiosError);
-			},
+			}, 1000);
+		} else if (inviteUsersResponse?.status === 'partial_success') {
+			const successfulInvites = parseInviteUsersSuccessResponse(
+				inviteUsersResponse.successful_invites,
+			);
+
+			setInviteUsersSuccessResponse(successfulInvites);
+
+			if (inviteUsersResponse.failed_invites.length > 0) {
+				setHasErrors(true);
+
+				setInviteUsersErrorResponse(
+					parseInviteUsersErrorResponse(inviteUsersResponse.failed_invites),
+				);
+			}
+		}
+	};
+
+	const {
+		mutate: sendInvites,
+		isLoading: isSendingInvites,
+		data: inviteUsersApiResponseData,
+	} = useMutation(inviteUsers, {
+		onSuccess: (response: SuccessResponse<InviteUsersResponse>): void => {
+			logEvent('User Onboarding: Invite Team Members Sent', {
+				teamMembers: teamMembersToInvite,
+			});
+
+			handleInviteUsersSuccess(response);
 		},
-	);
+		onError: (error: AxiosError): void => {
+			console.log('error', error);
+
+			logEvent('User Onboarding: Invite Team Members Failed', {
+				teamMembers: teamMembersToInvite,
+				error,
+			});
+
+			handleError(error);
+		},
+	});
 
 	const handleNext = (): void => {
 		if (validateAllUsers()) {
 			setTeamMembers(teamMembersToInvite || []);
 
-			setError(null);
 			setHasInvalidEmails(false);
+			setError(null);
+			setHasErrors(false);
+			setInviteUsersErrorResponse(null);
+			setInviteUsersSuccessResponse(null);
 
 			sendInvites({
 				users: teamMembersToInvite || [],
@@ -165,6 +256,11 @@ function InviteTeamMembers({
 	};
 
 	const handleDoLater = (): void => {
+		logEvent('User Onboarding: Invite Team Members Skipped', {
+			teamMembers: teamMembersToInvite,
+			apiResponse: inviteUsersApiResponseData,
+		});
+
 		onNext();
 	};
 
@@ -246,21 +342,65 @@ function InviteTeamMembers({
 							</Button>
 						</div>
 					</div>
+
+					{hasInvalidEmails && (
+						<div className="error-message-container">
+							<Typography.Text className="error-message" type="danger">
+								<TriangleAlert size={14} /> Please enter valid emails for all team
+								members
+							</Typography.Text>
+						</div>
+					)}
+
+					{error && (
+						<div className="error-message-container">
+							<Typography.Text className="error-message" type="danger">
+								<TriangleAlert size={14} /> {error}
+							</Typography.Text>
+						</div>
+					)}
+
+					{inviteUsersSuccessResponse && (
+						<div className="success-message-container invite-users-success-message-container">
+							{inviteUsersSuccessResponse?.map((success, index) => (
+								<Typography.Text
+									className="success-message"
+									// eslint-disable-next-line react/no-array-index-key
+									key={`${success}-${index}`}
+								>
+									<CheckCircle size={14} /> {success}
+								</Typography.Text>
+							))}
+						</div>
+					)}
+
+					{hasErrors && (
+						<div className="error-message-container invite-users-error-message-container">
+							{inviteUsersErrorResponse?.map((error, index) => (
+								<Typography.Text
+									className="error-message"
+									type="danger"
+									// eslint-disable-next-line react/no-array-index-key
+									key={`${error}-${index}`}
+								>
+									<TriangleAlert size={14} /> {error}
+								</Typography.Text>
+							))}
+						</div>
+					)}
 				</div>
 
-				{hasInvalidEmails && (
-					<div className="error-message-container">
-						<Typography.Text className="error-message" type="danger">
-							<TriangleAlert size={14} /> Please enter valid emails for all team
-							members
+				{/* Partially sent invites */}
+				{inviteUsersSuccessResponse && inviteUsersErrorResponse && (
+					<div className="partially-sent-invites-container">
+						<Typography.Text className="partially-sent-invites-message">
+							<TriangleAlert size={14} />
+							Some invites were sent successfully. Please fix the errors above and
+							resend invites.
 						</Typography.Text>
-					</div>
-				)}
 
-				{error && (
-					<div className="error-message-container">
-						<Typography.Text className="error-message" type="danger">
-							<TriangleAlert size={14} /> {error}
+						<Typography.Text className="partially-sent-invites-message">
+							You can click on I&apos;ll do this later to go to next step.
 						</Typography.Text>
 					</div>
 				)}
@@ -275,10 +415,11 @@ function InviteTeamMembers({
 						type="primary"
 						className="next-button"
 						onClick={handleNext}
-						loading={isSendingInvites}
+						loading={isSendingInvites || disableNextButton}
 					>
-						Send Invites
-						<ArrowRight size={14} />
+						{allInvitesSent ? 'Invites Sent' : 'Send Invites'}
+
+						{allInvitesSent ? <CheckCircle size={14} /> : <ArrowRight size={14} />}
 					</Button>
 				</div>
 

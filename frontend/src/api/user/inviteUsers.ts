@@ -1,10 +1,10 @@
 import axios from 'api';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, UsersProps } from 'types/api/user/inviteUsers';
+import { SuccessResponse } from 'types/api';
+import { InviteUsersResponse, UsersProps } from 'types/api/user/inviteUsers';
 
 const inviteUsers = async (
 	users: UsersProps,
-): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
+): Promise<SuccessResponse<InviteUsersResponse>> => {
 	const response = await axios.post(`/invite/bulk`, users);
 
 	return {
