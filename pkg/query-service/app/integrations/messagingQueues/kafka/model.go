@@ -5,7 +5,7 @@ const KafkaQueue = "kafka"
 type MessagingQueue struct {
 	Start     int64             `json:"start"`
 	End       int64             `json:"end"`
-	EvalTime  int64             `json:"eval_time"`
+	EvalTime  int64             `json:"eval_time,omitempty"`
 	Variables map[string]string `json:"variables,omitempty"`
 }
 

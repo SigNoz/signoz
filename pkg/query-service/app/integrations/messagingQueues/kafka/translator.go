@@ -254,7 +254,6 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 	if queryContext == "producer" ||
 		queryContext == "consumer" ||
 		queryContext == "consumer_partition_latency" ||
-		queryContext == "producer-topic-throughput" ||
 		queryContext == "producer-throughput-details" ||
 		queryContext == "consumer-throughput-details" {
 		var ok bool

@@ -5,7 +5,6 @@ import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
 import DropDown from 'components/DropDown/DropDown';
-import { listAlertMessage } from 'components/LaunchChatSupport/util';
 import {
 	DynamicColumnsKey,
 	TableDataSource,
@@ -397,15 +396,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				dynamicColumns={dynamicColumns}
 				onChange={handleChange}
 				pagination={paginationConfig}
-				facingIssueBtn={{
-					attributes: {
-						screen: 'Alert list page',
-					},
-					eventName: 'Alert: Facing Issues in alert',
-					buttonText: 'Facing issues with alerts?',
-					message: listAlertMessage,
-					onHoverText: 'Click here to get help with alerts',
-				}}
 			/>
 		</>
 	);

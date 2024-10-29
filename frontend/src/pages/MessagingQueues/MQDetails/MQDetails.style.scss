@@ -4,3 +4,42 @@
 	flex-direction: column;
 	gap: 24px;
 }
+
+.mq-overview-container {
+	display: flex;
+	padding: 24px;
+	flex-direction: column;
+	align-items: start;
+	gap: 16px;
+
+	border-radius: 6px;
+	border: 1px solid var(--bg-slate-500);
+	background: var(--bg-ink-500);
+
+	.mq-overview-title {
+		color: var(--bg-vanilla-200);
+
+		font-family: Inter;
+		font-size: 18px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 28px;
+	}
+
+	.mq-details-options {
+		letter-spacing: -0.06px;
+		cursor: pointer;
+
+		.ant-radio-button-wrapper {
+			border-color: var(--bg-slate-400);
+			color: var(--bg-vanilla-400);
+		}
+		.ant-radio-button-wrapper-checked {
+			background: var(--bg-slate-400);
+			color: var(--bg-vanilla-100);
+		}
+		.ant-radio-button-wrapper::before {
+			width: 0px;
+		}
+	}
+}

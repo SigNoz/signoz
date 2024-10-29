@@ -25,14 +25,17 @@ export type RowData = {
 	[key: string]: string | number;
 };
 
-export enum ConsumerLagDetailType {
+export enum MessagingQueueServiceDetailType {
 	ConsumerDetails = 'consumer-details',
 	ProducerDetails = 'producer-details',
 	NetworkLatency = 'network-latency',
 	PartitionHostMetrics = 'partition-host-metric',
 }
 
-export const ConsumerLagDetailTitle: Record<ConsumerLagDetailType, string> = {
+export const ConsumerLagDetailTitle: Record<
+	MessagingQueueServiceDetailType,
+	string
+> = {
 	'consumer-details': 'Consumer Groups Details',
 	'producer-details': 'Producer Details',
 	'network-latency': 'Network Latency',
@@ -219,9 +222,9 @@ export const MessagingQueuesViewType = {
 		label: 'Producer Latency view',
 		value: 'producerLatency',
 	},
-	consumerLatency: {
-		label: 'Consumer latency view',
-		value: 'consumerLatency',
+	dropRate: {
+		label: 'Drop Rate',
+		value: 'dropRate',
 	},
 };
 
@@ -265,4 +268,35 @@ export enum MessagingQueueHealthCheckService {
 	Consumers = 'consumers',
 	Producers = 'producers',
 	Kafka = 'kafka',
+}
+
+export function setConfigDetail(
+	urlQuery: URLSearchParams,
+	location: Location<unknown>,
+	history: History<unknown>,
+	paramsToSet?: {
+		[key: string]: string;
+	},
+): void {
+	// remove "key" and its value from the paramsToSet object
+	const { key, ...restParamsToSet } = paramsToSet || {};
+
+	if (!isEmpty(restParamsToSet)) {
+		const configDetail = {
+			...restParamsToSet,
+		};
+		urlQuery.set(
+			QueryParams.configDetail,
+			encodeURIComponent(JSON.stringify(configDetail)),
+		);
+	} else {
+		urlQuery.delete(QueryParams.configDetail);
+	}
+	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+	history.replace(generatedUrl);
+}
+
+export enum ProducerLatencyOptions {
+	Producers = 'Producers',
+	Consumers = 'Consumers',
 }

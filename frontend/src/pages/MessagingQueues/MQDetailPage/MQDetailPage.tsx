@@ -5,17 +5,28 @@ import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { ListMinus } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { MessagingQueuesViewType } from '../MessagingQueuesUtils';
-import { SelectLabelWithComingSoon } from '../MQCommon/MQCommon';
+import {
+	MessagingQueuesViewType,
+	ProducerLatencyOptions,
+} from '../MessagingQueuesUtils';
+import MessagingQueueOverview from '../MQDetails/MessagingQueueOverview';
 import MessagingQueuesDetails from '../MQDetails/MQDetails';
 import MessagingQueuesConfigOptions from '../MQGraph/MQConfigOptions';
 import MessagingQueuesGraph from '../MQGraph/MQGraph';
 
 function MQDetailPage(): JSX.Element {
 	const history = useHistory();
+	const [selectedView, setSelectedView] = useState<string>(
+		MessagingQueuesViewType.consumerLag.value,
+	);
+
+	const [
+		producerLatencyOption,
+		setproducerLatencyOption,
+	] = useState<ProducerLatencyOptions>(ProducerLatencyOptions.Producers);
 
 	useEffect(() => {
 		logEvent('Messaging Queues: Detail page visited', {});
@@ -39,37 +50,23 @@ function MQDetailPage(): JSX.Element {
 						className="messaging-queue-options"
 						defaultValue={MessagingQueuesViewType.consumerLag.value}
 						popupClassName="messaging-queue-options-popup"
+						onChange={(value): void => setSelectedView(value)}
 						options={[
 							{
 								label: MessagingQueuesViewType.consumerLag.label,
 								value: MessagingQueuesViewType.consumerLag.value,
 							},
 							{
-								label: (
-									<SelectLabelWithComingSoon
-										label={MessagingQueuesViewType.partitionLatency.label}
-									/>
-								),
+								label: MessagingQueuesViewType.partitionLatency.label,
 								value: MessagingQueuesViewType.partitionLatency.value,
-								disabled: true,
 							},
 							{
-								label: (
-									<SelectLabelWithComingSoon
-										label={MessagingQueuesViewType.producerLatency.label}
-									/>
-								),
+								label: MessagingQueuesViewType.producerLatency.label,
 								value: MessagingQueuesViewType.producerLatency.value,
-								disabled: true,
 							},
 							{
-								label: (
-									<SelectLabelWithComingSoon
-										label={MessagingQueuesViewType.consumerLatency.label}
-									/>
-								),
-								value: MessagingQueuesViewType.consumerLatency.value,
-								disabled: true,
+								label: MessagingQueuesViewType.dropRate.label,
+								value: MessagingQueuesViewType.dropRate.value,
 							},
 						]}
 					/>
@@ -78,10 +75,23 @@ function MQDetailPage(): JSX.Element {
 			</div>
 			<div className="messaging-queue-main-graph">
 				<MessagingQueuesConfigOptions />
-				<MessagingQueuesGraph />
+				{selectedView === MessagingQueuesViewType.consumerLag.value ? (
+					<MessagingQueuesGraph />
+				) : (
+					<MessagingQueueOverview
+						selectedView={selectedView}
+						option={producerLatencyOption}
+						setOption={setproducerLatencyOption}
+					/>
+				)}
 			</div>
 			<div className="messaging-queue-details">
-				<MessagingQueuesDetails />
+				{selectedView !== MessagingQueuesViewType.dropRate.value && (
+					<MessagingQueuesDetails
+						selectedView={selectedView}
+						producerLatencyOption={producerLatencyOption}
+					/>
+				)}
 			</div>
 		</div>
 	);
