@@ -8,10 +8,12 @@ import {
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
 	UPDATE_FEATURE_FLAG_RESPONSE,
+	UPDATE_IS_FETCHING_ORG_PREFERENCES,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 	UPDATE_ORG,
 	UPDATE_ORG_NAME,
+	UPDATE_ORG_PREFERENCES,
 	UPDATE_USER,
 	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
 	UPDATE_USER_FLAG,
@@ -59,6 +61,8 @@ const InitialValue: InitialValueTypes = {
 	userFlags: {},
 	ee: 'Y',
 	setupCompleted: true,
+	orgPreferences: null,
+	isFetchingOrgPreferences: true,
 };
 
 const appReducer = (
@@ -70,6 +74,17 @@ const appReducer = (
 			return {
 				...state,
 				isLoggedIn: action.payload.isLoggedIn,
+			};
+		}
+
+		case UPDATE_ORG_PREFERENCES: {
+			return { ...state, orgPreferences: action.payload.orgPreferences };
+		}
+
+		case UPDATE_IS_FETCHING_ORG_PREFERENCES: {
+			return {
+				...state,
+				isFetchingOrgPreferences: action.payload.isFetchingOrgPreferences,
 			};
 		}
 
