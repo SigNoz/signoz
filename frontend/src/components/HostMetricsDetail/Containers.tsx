@@ -11,7 +11,12 @@ function Containers(): JSX.Element {
 	return (
 		<Space
 			direction="vertical"
-			style={{ maxWidth: '600px', margin: '64px auto', padding: '0 16px' }}
+			style={{
+				maxWidth: '600px',
+				margin: '64px auto',
+				padding: '0 16px',
+				alignItems: 'center',
+			}}
 			size={24}
 		>
 			<div className="infra-container-card">

@@ -3,10 +3,6 @@
 	background: var(--bg-ink-400);
 	box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 
-	.ant-drawer-title {
-		margin-left: .5rem;
-	}
-
 	.ant-drawer-header {
 		padding: 8px 16px;
 		border-bottom: none;
@@ -48,8 +44,6 @@
 	}
 
 	.host-detail-drawer__host {
-		padding: 2px;
-		
 		.host-details-grid {
 			.labels-row,
 			.values-row {
