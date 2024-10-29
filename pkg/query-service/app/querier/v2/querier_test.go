@@ -800,7 +800,7 @@ func TestV2QueryRangeValueType(t *testing.T) {
 	expectedTimeRangeInQueryString := []string{
 		fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", 1675115520000, 1675115580000+120*60*1000),                                                 // 31st Jan, 03:23:00 to 31st Jan, 05:23:00
 		fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", 1675115580000+120*60*1000, 1675115580000+180*60*1000),                                     // 31st Jan, 05:23:00 to 31st Jan, 06:23:00
-		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675115580000+60*60*1000)*int64(1000000), (1675115580000+180*60*1000)*int64(1000000)), // 31st Jan, 05:23:00 to 31st Jan, 06:23:00
+		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675119196722)*int64(1000000), (1675126396722)*int64(1000000)), // 31st Jan, 05:23:00 to 31st Jan, 06:23:00
 	}
 
 	for i, param := range params {

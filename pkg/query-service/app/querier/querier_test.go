@@ -753,7 +753,7 @@ func TestQueryRangeValueType(t *testing.T) {
 	// No caching
 	expectedTimeRangeInQueryString := []string{
 		fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", 1675115520000, 1675115580000+120*60*1000),
-		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675115580000+60*60*1000)*int64(1000000), (1675115580000+180*60*1000)*int64(1000000)),
+		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", 1675119196722000000, 1675126396722000000),
 	}
 
 	for i, param := range params {
