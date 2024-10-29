@@ -82,7 +82,7 @@ export function AboutSigNozQuestions({
 			otherInterestInSignoz,
 		});
 
-		logEvent('Onboarding: SigNoz Questions: Next', {
+		logEvent('User Onboarding: About SigNoz Questions Answered', {
 			hearAboutSignoz,
 			otherAboutSignoz,
 			interestInSignoz,
@@ -94,13 +94,6 @@ export function AboutSigNozQuestions({
 
 	const handleOnBack = (): void => {
 		setSignozDetails({
-			hearAboutSignoz,
-			otherAboutSignoz,
-			interestInSignoz,
-			otherInterestInSignoz,
-		});
-
-		logEvent('Onboarding: SigNoz Questions: Back', {
 			hearAboutSignoz,
 			otherAboutSignoz,
 			interestInSignoz,

@@ -2,6 +2,7 @@ import './OnboardingQuestionaire.styles.scss';
 
 import { Skeleton } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
+import logEvent from 'api/common/logEvent';
 import updateProfileAPI from 'api/onboarding/updateProfile';
 import getOrgPreference from 'api/preferences/getOrgPreference';
 import updateOrgPreferenceAPI from 'api/preferences/updateOrgPreference';
@@ -67,7 +68,7 @@ const INITIAL_OPTIMISE_SIGNOZ_DETAILS: OptimiseSignozDetails = {
 function OnboardingQuestionaire(): JSX.Element {
 	const { notifications } = useNotifications();
 
-	const [currentStep, setCurrentStep] = useState<number>(1);
+	const [currentStep, setCurrentStep] = useState<number>(4);
 	const [orgDetails, setOrgDetails] = useState<OrgDetails>(INITIAL_ORG_DETAILS);
 	const [signozDetails, setSignozDetails] = useState<SignozDetails>(
 		INITIAL_SIGNOZ_DETAILS,
@@ -90,8 +91,6 @@ function OnboardingQuestionaire(): JSX.Element {
 			}),
 		queryKey: ['getOrgUser', org?.[0].id],
 	});
-
-	console.log('orgUsers', orgUsers, isLoadingOrgUsers);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [orgData, setOrgData] = useState<OrgData | null>(null);
@@ -126,13 +125,29 @@ function OnboardingQuestionaire(): JSX.Element {
 	};
 
 	useEffect(() => {
-		const isFirstUser = checkFirstTimeUser();
+		// Only run this effect if the org users and preferences are loaded
+		if (!isLoadingOrgUsers && !isLoadingOrgPreferences) {
+			const isFirstUser = checkFirstTimeUser();
 
-		if (isOnboardingComplete || !isFirstUser) {
-			history.push(ROUTES.GET_STARTED);
+			// Redirect to get started if it's not the first user or if the onboarding is complete
+			if (!isFirstUser || isOnboardingComplete) {
+				history.push(ROUTES.GET_STARTED);
+
+				logEvent('User Onboarding: Redirected to Get Started', {
+					isFirstUser,
+					isOnboardingComplete,
+				});
+			} else {
+				logEvent('User Onboarding: Started', {});
+			}
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isOnboardingComplete, orgUsers]);
+	}, [
+		isLoadingOrgUsers,
+		isLoadingOrgPreferences,
+		isOnboardingComplete,
+		orgUsers,
+	]);
 
 	useEffect(() => {
 		if (org) {
@@ -182,8 +197,16 @@ function OnboardingQuestionaire(): JSX.Element {
 					},
 				});
 
+				logEvent('User Onboarding: Org Name Updated', {
+					organisationName: orgDetails.organisationName,
+				});
+
 				setCurrentStep(2);
 			} else {
+				logEvent('User Onboarding: Org Name Update Failed', {
+					organisationName: orgDetails.organisationName,
+				});
+
 				notifications.error({
 					message:
 						error ||
