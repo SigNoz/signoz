@@ -4,9 +4,9 @@ import { Skeleton } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
 import updateProfileAPI from 'api/onboarding/updateProfile';
+import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
 import getOrgPreference from 'api/preferences/getOrgPreference';
 import updateOrgPreferenceAPI from 'api/preferences/updateOrgPreference';
-import editOrg from 'api/user/editOrg';
 import getOrgUser from 'api/user/getOrgUser';
 import { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -16,12 +16,14 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { Dispatch, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_ORG_NAME } from 'types/actions/app';
+import {
+	UPDATE_IS_FETCHING_ORG_PREFERENCES,
+	UPDATE_ORG_PREFERENCES,
+} from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
 import {
@@ -67,8 +69,8 @@ const INITIAL_OPTIMISE_SIGNOZ_DETAILS: OptimiseSignozDetails = {
 
 function OnboardingQuestionaire(): JSX.Element {
 	const { notifications } = useNotifications();
-
-	const [currentStep, setCurrentStep] = useState<number>(4);
+	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+	const [currentStep, setCurrentStep] = useState<number>(1);
 	const [orgDetails, setOrgDetails] = useState<OrgDetails>(INITIAL_ORG_DETAILS);
 	const [signozDetails, setSignozDetails] = useState<SignozDetails>(
 		INITIAL_SIGNOZ_DETAILS,
@@ -81,9 +83,6 @@ function OnboardingQuestionaire(): JSX.Element {
 		InviteTeamMembersProps[] | null
 	>(null);
 
-	const { t } = useTranslation(['organizationsettings', 'common']);
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
-
 	const { data: orgUsers, isLoading: isLoadingOrgUsers } = useQuery({
 		queryFn: () =>
 			getOrgUser({
@@ -93,26 +92,57 @@ function OnboardingQuestionaire(): JSX.Element {
 	});
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
-	const [orgData, setOrgData] = useState<OrgData | null>(null);
+	const [currentOrgData, setCurrentOrgData] = useState<OrgData | null>(null);
 	const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(
 		false,
 	);
 
-	const { data: orgPreferences, isLoading: isLoadingOrgPreferences } = useQuery({
+	const {
+		data: onboardingPreferenceData,
+		isLoading: isLoadingOnboardingPreference,
+	} = useQuery({
 		queryFn: () => getOrgPreference({ preferenceID: 'ORG_ONBOARDING' }),
 		queryKey: ['getOrgPreferences', 'ORG_ONBOARDING'],
 	});
 
+	const { data: orgPreferences, isLoading: isLoadingOrgPreferences } = useQuery({
+		queryFn: () => getAllOrgPreferences(),
+		queryKey: ['getOrgPreferences'],
+		enabled: isOnboardingComplete,
+	});
+
 	useEffect(() => {
-		if (!isLoadingOrgPreferences && !isEmpty(orgPreferences?.payload?.data)) {
-			const preferenceId = orgPreferences?.payload?.data?.preference_id;
-			const preferenceValue = orgPreferences?.payload?.data?.preference_value;
+		if (orgPreferences && !isLoadingOrgPreferences) {
+			dispatch({
+				type: UPDATE_IS_FETCHING_ORG_PREFERENCES,
+				payload: {
+					isFetchingOrgPreferences: false,
+				},
+			});
+
+			dispatch({
+				type: UPDATE_ORG_PREFERENCES,
+				payload: {
+					orgPreferences: orgPreferences.payload?.data || null,
+				},
+			});
+		}
+	}, [orgPreferences, dispatch, isLoadingOrgPreferences]);
+
+	useEffect(() => {
+		if (
+			!isLoadingOnboardingPreference &&
+			!isEmpty(onboardingPreferenceData?.payload?.data)
+		) {
+			const preferenceId = onboardingPreferenceData?.payload?.data?.preference_id;
+			const preferenceValue =
+				onboardingPreferenceData?.payload?.data?.preference_value;
 
 			if (preferenceId === 'ORG_ONBOARDING') {
 				setIsOnboardingComplete(preferenceValue as boolean);
 			}
 		}
-	}, [orgPreferences, isLoadingOrgPreferences]);
+	}, [onboardingPreferenceData, isLoadingOnboardingPreference]);
 
 	const checkFirstTimeUser = (): boolean => {
 		const users = orgUsers?.payload || [];
@@ -126,7 +156,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 	useEffect(() => {
 		// Only run this effect if the org users and preferences are loaded
-		if (!isLoadingOrgUsers && !isLoadingOrgPreferences) {
+		if (!isLoadingOrgUsers && !isLoadingOnboardingPreference) {
 			const isFirstUser = checkFirstTimeUser();
 
 			// Redirect to get started if it's not the first user or if the onboarding is complete
@@ -144,14 +174,14 @@ function OnboardingQuestionaire(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isLoadingOrgUsers,
-		isLoadingOrgPreferences,
+		isLoadingOnboardingPreference,
 		isOnboardingComplete,
 		orgUsers,
 	]);
 
 	useEffect(() => {
 		if (org) {
-			setOrgData(org[0]);
+			setCurrentOrgData(org[0]);
 
 			setOrgDetails({
 				...orgDetails,
@@ -165,70 +195,6 @@ function OnboardingQuestionaire(): JSX.Element {
 		optimiseSignozDetails.logsPerDay === 0 &&
 		optimiseSignozDetails.hostsPerDay === 0 &&
 		optimiseSignozDetails.services === 0;
-
-	const [isLoading, setIsLoading] = useState<boolean>(false);
-
-	const handleOrgNameUpdate = async (): Promise<void> => {
-		/* Early bailout if orgData is not set or if the organisation name is not set or if the organisation name is empty or if the organisation name is the same as the one in the orgData */
-		if (
-			!orgData ||
-			!orgDetails.organisationName ||
-			orgDetails.organisationName === '' ||
-			orgData.name === orgDetails.organisationName
-		) {
-			setCurrentStep(2);
-
-			return;
-		}
-
-		try {
-			setIsLoading(true);
-			const { statusCode, error } = await editOrg({
-				isAnonymous: orgData?.isAnonymous,
-				name: orgDetails.organisationName,
-				orgId: orgData?.id,
-			});
-			if (statusCode === 200) {
-				dispatch({
-					type: UPDATE_ORG_NAME,
-					payload: {
-						orgId: orgData?.id,
-						name: orgDetails.organisationName,
-					},
-				});
-
-				logEvent('User Onboarding: Org Name Updated', {
-					organisationName: orgDetails.organisationName,
-				});
-
-				setCurrentStep(2);
-			} else {
-				logEvent('User Onboarding: Org Name Update Failed', {
-					organisationName: orgDetails.organisationName,
-				});
-
-				notifications.error({
-					message:
-						error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			}
-			setIsLoading(false);
-		} catch (error) {
-			setIsLoading(false);
-			notifications.error({
-				message: t('something_went_wrong', {
-					ns: 'common',
-				}),
-			});
-		}
-	};
-
-	const handleOrgDetailsUpdate = (): void => {
-		handleOrgNameUpdate();
-	};
 
 	const { mutate: updateProfile, isLoading: isUpdatingProfile } = useMutation(
 		updateProfileAPI,
@@ -289,20 +255,22 @@ function OnboardingQuestionaire(): JSX.Element {
 			</div>
 
 			<div className="onboarding-questionaire-content">
-				{(isLoadingOrgPreferences || isLoadingOrgUsers) && (
+				{(isLoadingOnboardingPreference || isLoadingOrgUsers) && (
 					<div className="onboarding-questionaire-loading-container">
 						<Skeleton />
 					</div>
 				)}
 
-				{!isLoadingOrgPreferences && !isLoadingOrgUsers && (
+				{!isLoadingOnboardingPreference && !isLoadingOrgUsers && (
 					<>
 						{currentStep === 1 && (
 							<OrgQuestions
-								isLoading={isLoading}
+								currentOrgData={currentOrgData}
 								orgDetails={orgDetails}
-								setOrgDetails={setOrgDetails}
-								onNext={handleOrgDetailsUpdate}
+								onNext={(orgDetails: OrgDetails): void => {
+									setOrgDetails(orgDetails);
+									setCurrentStep(2);
+								}}
 							/>
 						)}
 

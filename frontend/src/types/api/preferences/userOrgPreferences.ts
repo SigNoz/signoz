@@ -1,3 +1,5 @@
+import { OrgPreference } from 'types/reducer/app';
+
 export interface GetOrgPreferenceResponseProps {
 	status: string;
 	data: Record<string, unknown>;
@@ -10,7 +12,7 @@ export interface GetUserPreferenceResponseProps {
 
 export interface GetAllOrgPreferencesResponseProps {
 	status: string;
-	data: Record<string, unknown>;
+	data: OrgPreference[];
 }
 
 export interface GetAllUserPreferencesResponseProps {
