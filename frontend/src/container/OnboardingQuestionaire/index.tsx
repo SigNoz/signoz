@@ -25,6 +25,7 @@ import {
 	UPDATE_ORG_PREFERENCES,
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
 
 import {
 	AboutSigNozQuestions,
@@ -69,7 +70,10 @@ const INITIAL_OPTIMISE_SIGNOZ_DETAILS: OptimiseSignozDetails = {
 
 function OnboardingQuestionaire(): JSX.Element {
 	const { notifications } = useNotifications();
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { org, role, isLoggedIn: isLoggedInState } = useSelector<
+		AppState,
+		AppReducer
+	>((state) => state.app);
 	const [currentStep, setCurrentStep] = useState<number>(1);
 	const [orgDetails, setOrgDetails] = useState<OrgDetails>(INITIAL_ORG_DETAILS);
 	const [signozDetails, setSignozDetails] = useState<SignozDetails>(
@@ -103,12 +107,13 @@ function OnboardingQuestionaire(): JSX.Element {
 	} = useQuery({
 		queryFn: () => getOrgPreference({ preferenceID: 'ORG_ONBOARDING' }),
 		queryKey: ['getOrgPreferences', 'ORG_ONBOARDING'],
+		enabled: role === USER_ROLES.ADMIN,
 	});
 
 	const { data: orgPreferences, isLoading: isLoadingOrgPreferences } = useQuery({
 		queryFn: () => getAllOrgPreferences(),
 		queryKey: ['getOrgPreferences'],
-		enabled: isOnboardingComplete,
+		enabled: isOnboardingComplete && role === USER_ROLES.ADMIN,
 	});
 
 	useEffect(() => {
@@ -128,6 +133,17 @@ function OnboardingQuestionaire(): JSX.Element {
 			});
 		}
 	}, [orgPreferences, dispatch, isLoadingOrgPreferences]);
+
+	useEffect(() => {
+		if (isLoggedInState && role !== USER_ROLES.ADMIN) {
+			dispatch({
+				type: UPDATE_IS_FETCHING_ORG_PREFERENCES,
+				payload: {
+					isFetchingOrgPreferences: false,
+				},
+			});
+		}
+	}, [isLoggedInState, role, dispatch]);
 
 	useEffect(() => {
 		if (
