@@ -31,8 +31,8 @@ import {
 	NewDashboardPage,
 	OldLogsExplorer,
 	Onboarding,
-	OnboardingV2,
 	OrganizationSettings,
+	OrgOnboarding,
 	PasswordReset,
 	PipelinePage,
 	ServiceMapPage,
@@ -72,7 +72,7 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.ONBOARDING,
 		exact: false,
-		component: OnboardingV2,
+		component: OrgOnboarding,
 		isPrivate: true,
 		key: 'ONBOARDING',
 	},

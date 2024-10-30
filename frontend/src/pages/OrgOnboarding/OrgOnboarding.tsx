@@ -1,6 +1,6 @@
 import OnboardingQuestionaire from 'container/OnboardingQuestionaire';
 
-function OnboardingPageV2(): JSX.Element {
+function OrgOnboarding(): JSX.Element {
 	return (
 		<div className="onboarding-v2">
 			<OnboardingQuestionaire />
@@ -8,4 +8,4 @@ function OnboardingPageV2(): JSX.Element {
 	);
 }
 
-export default OnboardingPageV2;
+export default OrgOnboarding;
