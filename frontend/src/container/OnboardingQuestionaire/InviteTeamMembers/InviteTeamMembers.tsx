@@ -195,8 +195,6 @@ function InviteTeamMembers({
 			handleInviteUsersSuccess(response);
 		},
 		onError: (error: AxiosError): void => {
-			console.log('error', error);
-
 			logEvent('User Onboarding: Invite Team Members Failed', {
 				teamMembers: teamMembersToInvite,
 				error,
