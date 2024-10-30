@@ -223,7 +223,7 @@ export const MessagingQueuesViewType = {
 		value: 'producerLatency',
 	},
 	dropRate: {
-		label: 'Drop Rate',
+		label: 'Drop Rate view',
 		value: 'dropRate',
 	},
 };

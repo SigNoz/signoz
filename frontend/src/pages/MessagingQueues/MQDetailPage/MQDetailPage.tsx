@@ -2,8 +2,10 @@ import '../MessagingQueues.styles.scss';
 
 import { Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { ListMinus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
@@ -28,6 +30,8 @@ function MQDetailPage(): JSX.Element {
 		setproducerLatencyOption,
 	] = useState<ProducerLatencyOptions>(ProducerLatencyOptions.Producers);
 
+	const mqServiceView = useUrlQuery().get(QueryParams.mqServiceView);
+
 	useEffect(() => {
 		logEvent('Messaging Queues: Detail page visited', {});
 	}, []);
@@ -51,6 +55,7 @@ function MQDetailPage(): JSX.Element {
 						defaultValue={MessagingQueuesViewType.consumerLag.value}
 						popupClassName="messaging-queue-options-popup"
 						onChange={(value): void => setSelectedView(value)}
+						value={mqServiceView}
 						options={[
 							{
 								label: MessagingQueuesViewType.consumerLag.label,
