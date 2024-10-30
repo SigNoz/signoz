@@ -20,8 +20,8 @@
 }
 
 .header-container .logo-text {
-	font-family: 'Satoshi', sans-serif;
-	color: #fff;
+	font-family: 'Work Sans', sans-serif;
+	color: var(--bg-vanilla-100);
 	font-size: 15.4px;
 	font-style: normal;
 	font-weight: 500;
@@ -38,8 +38,8 @@
 	gap: 6px;
 	flex-shrink: 0;
 	border-radius: 2px;
-	border: 1px solid var(--Greyscale-Slate-400, #1d212d);
-	background: var(--Ink-300, #16181d);
+	border: 1px solid var(--bg-slate-400);
+	background: var(--bg-ink-300);
 	box-shadow: none;
 }
 
@@ -50,10 +50,16 @@
 }
 
 .header-container .get-help-text {
-	color: var(--Vanilla-400, var(--Greyscale-Vanilla-400, #c0c1c3));
+	color: var(--bg-vanilla-400);
 	font-size: 12px;
 	font-style: normal;
 	font-weight: 400;
 	line-height: 10px;
 	letter-spacing: 0.12px;
+}
+
+.lightMode {
+	.header-container .logo-text {
+		color: var(--bg-slate-300);
+	}
 }
