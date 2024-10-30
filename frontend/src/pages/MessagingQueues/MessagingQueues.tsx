@@ -1,13 +1,13 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import './MessagingQueues.styles.scss';
 
-import { ExclamationCircleFilled } from '@ant-design/icons';
-import { Color } from '@signozhq/design-tokens';
-import { Button, Modal } from 'antd';
+import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
+import cx from 'classnames';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { Calendar, ListMinus } from 'lucide-react';
+import { ListMinus } from 'lucide-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
@@ -19,32 +19,20 @@ import {
 	MessagingQueueHealthCheckService,
 	MessagingQueuesViewType,
 } from './MessagingQueuesUtils';
-import { ComingSoon } from './MQCommon/MQCommon';
 
 function MessagingQueues(): JSX.Element {
 	const history = useHistory();
 	const { t } = useTranslation('messagingQueuesKafkaOverview');
 
-	const { confirm } = Modal;
-
-	const showConfirm = (): void => {
+	const redirectToDetailsPage = (callerView?: string): void => {
 		logEvent('Messaging Queues: View details clicked', {
 			page: 'Messaging Queues Overview',
-			source: 'Consumer Latency view',
+			source: callerView,
 		});
 
-		confirm({
-			icon: <ExclamationCircleFilled />,
-			content: t('confirmModal.content'),
-			className: 'overview-confirm-modal',
-			onOk() {
-				logEvent('Messaging Queues: Proceed button clicked', {
-					page: 'Messaging Queues Overview',
-				});
-				history.push(ROUTES.MESSAGING_QUEUES_DETAIL);
-			},
-			okText: t('confirmModal.okText'),
-		});
+		history.push(
+			`${ROUTES.MESSAGING_QUEUES_DETAIL}?${QueryParams.mqServiceView}=${callerView}`,
+		);
 	};
 
 	const isCloudUserVal = isCloudUser();
@@ -146,55 +134,80 @@ function MessagingQueues(): JSX.Element {
 						</div>
 					</div>
 				</div>
-				<div className="summary-section">
-					<div className="summary-card">
-						<div className="summary-title">
-							<p>{MessagingQueuesViewType.consumerLag.label}</p>
-							<div className="time-value">
-								<Calendar size={14} color={Color.BG_SLATE_200} />
-								<p className="time-value">1D</p>
-							</div>
+
+				<p className="overview-text">{t('overviewSummarySection.title')}</p>
+				<p className="overview-subtext">{t('overviewSummarySection.subtitle')}</p>
+				<div className={cx('overview-doc-area', 'summary-section')}>
+					<div className="overview-info-card">
+						<div>
+							<p className="card-title">{t('summarySection.consumer.title')}</p>
+							<p className="card-info-text">
+								{t('summarySection.consumer.description')}
+							</p>
 						</div>
-						<div className="view-detail-btn">
-							<Button type="primary" onClick={showConfirm}>
+						<div className="button-grp">
+							<Button
+								type="default"
+								onClick={(): void =>
+									redirectToDetailsPage(MessagingQueuesViewType.consumerLag.value)
+								}
+							>
 								{t('summarySection.viewDetailsButton')}
 							</Button>
 						</div>
 					</div>
-					<div className="summary-card coming-soon-card">
-						<div className="summary-title">
-							<p>{MessagingQueuesViewType.partitionLatency.label}</p>
-							<div className="time-value">
-								<Calendar size={14} color={Color.BG_SLATE_200} />
-								<p className="time-value">1D</p>
-							</div>
+					<div className="overview-info-card middle-card">
+						<div>
+							<p className="card-title">{t('summarySection.producer.title')}</p>
+							<p className="card-info-text">
+								{t('summarySection.producer.description')}
+							</p>
 						</div>
-						<div className="view-detail-btn">
-							<ComingSoon />
-						</div>
-					</div>
-					<div className="summary-card coming-soon-card">
-						<div className="summary-title">
-							<p>{MessagingQueuesViewType.producerLatency.label}</p>
-							<div className="time-value">
-								<Calendar size={14} color={Color.BG_SLATE_200} />
-								<p className="time-value">1D</p>
-							</div>
-						</div>
-						<div className="view-detail-btn">
-							<ComingSoon />
+						<div className="button-grp">
+							<Button
+								type="default"
+								onClick={(): void =>
+									redirectToDetailsPage(MessagingQueuesViewType.producerLatency.value)
+								}
+							>
+								{t('summarySection.viewDetailsButton')}
+							</Button>
 						</div>
 					</div>
-					<div className="summary-card coming-soon-card">
-						<div className="summary-title">
-							<p>{MessagingQueuesViewType.dropRate.label}</p>
-							<div className="time-value">
-								<Calendar size={14} color={Color.BG_SLATE_200} />
-								<p className="time-value">1D</p>
-							</div>
+					<div className="overview-info-card middle-card">
+						<div>
+							<p className="card-title">{t('summarySection.partition.title')}</p>
+							<p className="card-info-text">
+								{t('summarySection.partition.description')}
+							</p>
 						</div>
-						<div className="view-detail-btn">
-							<ComingSoon />
+						<div className="button-grp">
+							<Button
+								type="default"
+								onClick={(): void =>
+									redirectToDetailsPage(MessagingQueuesViewType.partitionLatency.value)
+								}
+							>
+								{t('summarySection.viewDetailsButton')}
+							</Button>
+						</div>
+					</div>
+					<div className="overview-info-card">
+						<div>
+							<p className="card-title">{t('summarySection.dropRate.title')}</p>
+							<p className="card-info-text">
+								{t('summarySection.dropRate.description')}
+							</p>
+						</div>
+						<div className="button-grp">
+							<Button
+								type="default"
+								onClick={(): void =>
+									redirectToDetailsPage(MessagingQueuesViewType.dropRate.value)
+								}
+							>
+								{t('summarySection.viewDetailsButton')}
+							</Button>
 						</div>
 					</div>
 				</div>

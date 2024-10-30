@@ -40,4 +40,5 @@ export enum QueryParams {
 	getStartedSource = 'getStartedSource',
 	getStartedSourceService = 'getStartedSourceService',
 	configDetail = 'configDetail',
+	mqServiceView = 'mqServiceView',
 }
