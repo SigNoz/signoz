@@ -60,8 +60,8 @@ function MessagingQueues(): JSX.Element {
 				{t('breadcrumb')}
 			</div>
 			<div className="messaging-header">
-				<div className="header-content">
-					<div className="header-config">{t('header')}</div>
+				<div className="header-config">
+					{t('header')} /
 					<MessagingQueueHealthCheck
 						serviceToInclude={[
 							MessagingQueueHealthCheckService.Consumers,

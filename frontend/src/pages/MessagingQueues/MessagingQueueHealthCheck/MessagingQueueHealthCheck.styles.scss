@@ -68,6 +68,8 @@
 
 			.ant-tree {
 				.ant-tree-title {
+					cursor: default;
+
 					.attribute-error-title {
 						display: flex;
 						align-items: center;
@@ -88,6 +90,7 @@
 							font-style: normal;
 							font-weight: 400;
 							line-height: 16px;
+							cursor: pointer;
 						}
 					}
 
