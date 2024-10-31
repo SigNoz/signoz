@@ -153,8 +153,8 @@ function MessagingQueuesTable({
 
 	const paginationConfig = useMemo(
 		() =>
-			tableData?.length > 20 && {
-				pageSize: 20,
+			tableData?.length > 10 && {
+				pageSize: 10,
 				showTotal: showPaginationItem,
 				showSizeChanger: false,
 				hideOnSinglePage: true,
