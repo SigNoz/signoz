@@ -103,28 +103,26 @@ function MQDetailPage(): JSX.Element {
 				</div>
 				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
-			<div className="messaging-queue-main-graph">
-				{selectedView === MessagingQueuesViewType.consumerLag.value ? (
-					<>
-						<MessagingQueuesConfigOptions />
-						<MessagingQueuesGraph />
-					</>
-				) : (
-					<MessagingQueueOverview
-						selectedView={selectedView}
-						option={producerLatencyOption}
-						setOption={setproducerLatencyOption}
-					/>
-				)}
-			</div>
-			<div className="messaging-queue-details">
-				{selectedView !== MessagingQueuesViewType.dropRate.value && (
+			{selectedView === MessagingQueuesViewType.consumerLag.value ? (
+				<div className="messaging-queue-main-graph">
+					<MessagingQueuesConfigOptions />
+					<MessagingQueuesGraph />
+				</div>
+			) : (
+				<MessagingQueueOverview
+					selectedView={selectedView}
+					option={producerLatencyOption}
+					setOption={setproducerLatencyOption}
+				/>
+			)}
+			{selectedView !== MessagingQueuesViewType.dropRate.value && (
+				<div className="messaging-queue-details">
 					<MessagingQueuesDetails
 						selectedView={selectedView}
 						producerLatencyOption={producerLatencyOption}
 					/>
-				)}
-			</div>
+				</div>
+			)}
 		</div>
 	);
 }
