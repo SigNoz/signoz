@@ -104,9 +104,11 @@ function MQDetailPage(): JSX.Element {
 				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
 			<div className="messaging-queue-main-graph">
-				<MessagingQueuesConfigOptions />
 				{selectedView === MessagingQueuesViewType.consumerLag.value ? (
-					<MessagingQueuesGraph />
+					<>
+						<MessagingQueuesConfigOptions />
+						<MessagingQueuesGraph />
+					</>
 				) : (
 					<MessagingQueueOverview
 						selectedView={selectedView}
