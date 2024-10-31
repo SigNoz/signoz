@@ -36,6 +36,22 @@ function MQDetailPage(): JSX.Element {
 		logEvent('Messaging Queues: Detail page visited', {});
 	}, []);
 
+	useEffect(() => {
+		if (mqServiceView) {
+			setSelectedView(mqServiceView);
+		}
+	}, [mqServiceView]);
+
+	const updateUrlQuery = (query: Record<string, string | number>): void => {
+		const searchParams = new URLSearchParams(history.location.search);
+		Object.keys(query).forEach((key) => {
+			searchParams.set(key, query[key].toString());
+		});
+		history.push({
+			search: searchParams.toString(),
+		});
+	};
+
 	return (
 		<div className="messaging-queue-container">
 			<div className="messaging-breadcrumb">
@@ -54,7 +70,10 @@ function MQDetailPage(): JSX.Element {
 						className="messaging-queue-options"
 						defaultValue={MessagingQueuesViewType.consumerLag.value}
 						popupClassName="messaging-queue-options-popup"
-						onChange={(value): void => setSelectedView(value)}
+						onChange={(value): void => {
+							setSelectedView(value);
+							updateUrlQuery({ [QueryParams.mqServiceView]: value });
+						}}
 						value={mqServiceView}
 						options={[
 							{
