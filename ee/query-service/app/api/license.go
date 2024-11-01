@@ -88,6 +88,30 @@ func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 	ah.Respond(w, license)
 }
 
+func (ah *APIHandler) listLicensesV3(w http.ResponseWriter, r *http.Request) {}
+
+func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
+	var license model.LicenseV3
+
+	if err := json.NewDecoder(r.Body).Decode(&license); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	if license.Key == "" {
+		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
+		return
+	}
+
+	l, apiError := ah.LM().ActivateV3(r.Context(), &license)
+	if apiError != nil {
+		RespondError(w, apiError, nil)
+		return
+	}
+
+	ah.Respond(w, l)
+}
+
 func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 
 	type checkoutResponse struct {

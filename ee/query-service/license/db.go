@@ -3,6 +3,7 @@ package license
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -96,6 +97,45 @@ func (r *Repo) InsertLicense(ctx context.Context, l *model.License) error {
 		l.PlanDetails,
 		l.ActivationId,
 		l.ValidationMessage)
+
+	if err != nil {
+		zap.L().Error("error in inserting license data: ", zap.Error(err))
+		return fmt.Errorf("failed to insert license in db: %v", err)
+	}
+
+	return nil
+}
+
+// InsertLicenseV3 inserts a new license v3 in db
+func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
+
+	if l.Key == "" {
+		return fmt.Errorf("insert license failed: license key is required")
+	}
+	query := `INSERT INTO licenses_v3
+						(id, category, key, validFrom,validUntil,status,createdAt,updatedAt,planId,user_email,plan) 
+						VALUES ($1, $2, $3, $4,$5,$6,$7,$8,$9,$10,$11)`
+
+	planDetails, err := json.Marshal(l.Plan)
+	if err != nil {
+		zap.L().Error("error in marshal license plan data: ", zap.Error(err))
+		return fmt.Errorf("error in marshal license plan data: %v", err)
+	}
+
+	_, err = r.db.ExecContext(ctx,
+		query,
+		l.ID,
+		l.Category,
+		l.Key,
+		l.ValidFrom,
+		l.ValidUntil,
+		l.Status,
+		l.CreatedAt,
+		l.UpdatedAt,
+		l.PlanID,
+		l.User.Email,
+		string(planDetails),
+	)
 
 	if err != nil {
 		zap.L().Error("error in inserting license data: ", zap.Error(err))

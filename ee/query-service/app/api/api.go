@@ -120,6 +120,15 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 		am.AdminAccess(ah.applyLicense)).
 		Methods(http.MethodPost)
 
+	// v3 because get license for v2 is already used!
+	router.HandleFunc("/api/v3/licenses",
+		am.AdminAccess(ah.listLicensesV3)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v3/licenses",
+		am.AdminAccess(ah.applyLicenseV3)).
+		Methods(http.MethodPost)
+
 	router.HandleFunc("/api/v1/featureFlags",
 		am.OpenAccess(ah.getFeatureFlags)).
 		Methods(http.MethodGet)

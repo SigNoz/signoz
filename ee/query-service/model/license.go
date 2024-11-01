@@ -104,3 +104,32 @@ type SubscriptionServerResp struct {
 	Status string   `json:"status"`
 	Data   Licenses `json:"data"`
 }
+
+type LicenseUserResModel struct {
+	Email string `json:"email"`
+}
+
+type PlanResModel struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Platform    string    `json:"platform"`
+	Description string    `json:"description"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type LicenseV3 struct {
+	ID         string               `json:"id"`
+	Category   string               `json:"category"`
+	Key        string               `json:"key"`
+	ValidFrom  int64                `json:"valid_from"`
+	ValidUntil int64                `json:"valid_until"`
+	Status     string               `json:"status"`
+	CreatedAt  time.Time            `json:"created_at"`
+	UpdatedAt  time.Time            `json:"updated_at"`
+	PlanID     string               `json:"plan_id"`
+	User       LicenseUserResModel  `json:"user"`
+	Plan       PlanResModel         `json:"plan"`
+	Features   basemodel.FeatureSet `json:"features"`
+}

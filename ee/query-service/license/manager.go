@@ -45,8 +45,9 @@ type Manager struct {
 	failedAttempts uint64
 
 	// keep track of active license and features
-	activeLicense  *model.License
-	activeFeatures basemodel.FeatureSet
+	activeLicense   *model.License
+	activeLicenseV3 *model.LicenseV3
+	activeFeatures  basemodel.FeatureSet
 }
 
 func StartManager(dbType string, db *sqlx.DB, features ...basemodel.Feature) (*Manager, error) {
@@ -94,6 +95,31 @@ func (lm *Manager) SetActive(l *model.License, features ...basemodel.Feature) {
 
 	lm.activeLicense = l
 	lm.activeFeatures = append(l.FeatureSet, features...)
+	// set default features
+	setDefaultFeatures(lm)
+
+	err := lm.InitFeatures(lm.activeFeatures)
+	if err != nil {
+		zap.L().Panic("Couldn't activate features", zap.Error(err))
+	}
+	if !lm.validatorRunning {
+		// we want to make sure only one validator runs,
+		// we already have lock() so good to go
+		lm.validatorRunning = true
+		go lm.Validator(context.Background())
+	}
+
+}
+func (lm *Manager) SetActiveV3(l *model.LicenseV3, features ...basemodel.Feature) {
+	lm.mutex.Lock()
+	defer lm.mutex.Unlock()
+
+	if l == nil {
+		return
+	}
+
+	lm.activeLicenseV3 = l
+	lm.activeFeatures = append(l.Features, features...)
 	// set default features
 	setDefaultFeatures(lm)
 
@@ -296,6 +322,28 @@ func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *m
 	// license is valid, activate it
 	lm.SetActive(l)
 	return l, nil
+}
+
+func (lm *Manager) ActivateV3(ctx context.Context, license *model.LicenseV3) (licenseResponse *model.LicenseV3, errResponse *model.ApiError) {
+	defer func() {
+		if errResponse != nil {
+			userEmail, err := auth.GetEmailFromJwt(ctx)
+			if err == nil {
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_ACT_FAILED,
+					map[string]interface{}{"err": errResponse.Err.Error()}, userEmail, true, false)
+			}
+		}
+	}()
+
+	err := lm.repo.InsertLicenseV3(ctx, license)
+	if err != nil {
+		zap.L().Error("failed to activate license", zap.Error(err))
+		return nil, model.InternalError(err)
+	}
+
+	// license is valid, activate it
+	lm.SetActiveV3(license)
+	return license, nil
 }
 
 // CheckFeature will be internally used by backend routines
