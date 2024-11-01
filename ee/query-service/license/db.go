@@ -80,6 +80,42 @@ func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel
 	return active, nil
 }
 
+func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3, *basemodel.ApiError) {
+	var err error
+	licensesString := []string{}
+
+	query := "SELECT data FROM licenses_v3"
+
+	err = r.db.Select(&licensesString, query)
+	if err != nil {
+		return nil, basemodel.InternalError(fmt.Errorf("failed to get active licenses from db: %v", err))
+	}
+
+	var active *model.LicenseV3
+	for _, l := range licensesString {
+
+		license := model.LicenseV3{}
+
+		err = json.Unmarshal([]byte(l), &license)
+		if err != nil {
+			return nil, basemodel.InternalError(fmt.Errorf("failed to unmarshal licenses from db: %v", err))
+		}
+
+		if active == nil &&
+			(license.ValidFrom != 0) &&
+			(license.ValidUntil == -1 || license.ValidUntil > time.Now().Unix()) {
+			active = &license
+		}
+		if active != nil &&
+			license.ValidFrom > active.ValidFrom &&
+			(license.ValidUntil == -1 || license.ValidUntil > time.Now().Unix()) {
+			active = &license
+		}
+	}
+
+	return active, nil
+}
+
 // InsertLicense inserts a new license in db
 func (r *Repo) InsertLicense(ctx context.Context, l *model.License) error {
 

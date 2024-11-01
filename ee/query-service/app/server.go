@@ -78,6 +78,7 @@ type ServerOptions struct {
 	Cluster           string
 	GatewayUrl        string
 	UseLogsNewSchema  bool
+	UseLicensesV3     bool
 }
 
 // Server runs HTTP api service
@@ -134,7 +135,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", localDB)
+	lm, err := licensepkg.StartManager("sqlite", localDB, serverOptions.UseLicensesV3)
 	if err != nil {
 		return nil, err
 	}

@@ -51,7 +51,7 @@ type Manager struct {
 	activeFeatures  basemodel.FeatureSet
 }
 
-func StartManager(dbType string, db *sqlx.DB, features ...basemodel.Feature) (*Manager, error) {
+func StartManager(dbType string, db *sqlx.DB, useLicensesV3 bool, features ...basemodel.Feature) (*Manager, error) {
 	if LM != nil {
 		return LM, nil
 	}
@@ -67,7 +67,7 @@ func StartManager(dbType string, db *sqlx.DB, features ...basemodel.Feature) (*M
 		repo: &repo,
 	}
 
-	if err := m.start(features...); err != nil {
+	if err := m.start(useLicensesV3, features...); err != nil {
 		return m, err
 	}
 	LM = m
@@ -75,10 +75,14 @@ func StartManager(dbType string, db *sqlx.DB, features ...basemodel.Feature) (*M
 }
 
 // start loads active license in memory and initiates validator
-func (lm *Manager) start(features ...basemodel.Feature) error {
+func (lm *Manager) start(useLicensesV3 bool, features ...basemodel.Feature) error {
 
-	// handle the licenses v3 table bootstrap here!
-	err := lm.LoadActiveLicense(features...)
+	var err error
+	if useLicensesV3 {
+		err = lm.LoadActiveLicenseV3(features...)
+	} else {
+		err = lm.LoadActiveLicense(features...)
+	}
 
 	return err
 }
@@ -151,6 +155,28 @@ func (lm *Manager) LoadActiveLicense(features ...basemodel.Feature) error {
 	}
 	if active != nil {
 		lm.SetActive(active, features...)
+	} else {
+		zap.L().Info("No active license found, defaulting to basic plan")
+		// if no active license is found, we default to basic(free) plan with all default features
+		lm.activeFeatures = model.BasicPlan
+		setDefaultFeatures(lm)
+		err := lm.InitFeatures(lm.activeFeatures)
+		if err != nil {
+			zap.L().Error("Couldn't initialize features", zap.Error(err))
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (lm *Manager) LoadActiveLicenseV3(features ...basemodel.Feature) error {
+	active, err := lm.repo.GetActiveLicenseV3(context.Background())
+	if err != nil {
+		return err
+	}
+	if active != nil {
+		lm.SetActiveV3(active, features...)
 	} else {
 		zap.L().Info("No active license found, defaulting to basic plan")
 		// if no active license is found, we default to basic(free) plan with all default features
