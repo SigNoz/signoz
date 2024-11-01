@@ -22,35 +22,19 @@ type HostListRequest struct {
 }
 
 type HostListRecord struct {
-	HostName         string            `json:"hostName"`
-	Active           bool              `json:"active"`
-	OS               string            `json:"os"`
-	CPU              float64           `json:"cpu"`
-	CPUTimeSeries    *v3.Series        `json:"cpuTimeSeries"`
-	Memory           float64           `json:"memory"`
-	MemoryTimeSeries *v3.Series        `json:"memoryTimeSeries"`
-	Wait             float64           `json:"wait"`
-	WaitTimeSeries   *v3.Series        `json:"waitTimeSeries"`
-	Load15           float64           `json:"load15"`
-	Load15TimeSeries *v3.Series        `json:"load15TimeSeries"`
-	Meta             map[string]string `json:"-"`
-}
-
-type HostListGroup struct {
-	GroupValues    []string `json:"groupValues"`
-	Active         int      `json:"active"`
-	Inactive       int      `json:"inactive"`
-	GroupCPUAvg    float64  `json:"groupCPUAvg"`
-	GroupMemoryAvg float64  `json:"groupMemoryAvg"`
-	GroupWaitAvg   float64  `json:"groupWaitAvg"`
-	GroupLoad15Avg float64  `json:"groupLoad15Avg"`
-	HostNames      []string `json:"hostNames"`
+	HostName string            `json:"hostName"`
+	Active   bool              `json:"active"`
+	OS       string            `json:"os"`
+	CPU      float64           `json:"cpu"`
+	Memory   float64           `json:"memory"`
+	Wait     float64           `json:"wait"`
+	Load15   float64           `json:"load15"`
+	Meta     map[string]string `json:"meta"`
 }
 
 type HostListResponse struct {
-	Type    string           `json:"type"`
+	Type    ResponseType     `json:"type"`
 	Records []HostListRecord `json:"records"`
-	Groups  []HostListGroup  `json:"groups"`
 	Total   int              `json:"total"`
 }
 
@@ -65,29 +49,19 @@ type ProcessListRequest struct {
 }
 
 type ProcessListResponse struct {
-	Type    string              `json:"type"`
+	Type    ResponseType        `json:"type"`
 	Records []ProcessListRecord `json:"records"`
-	Groups  []ProcessListGroup  `json:"groups"`
 	Total   int                 `json:"total"`
 }
 
 type ProcessListRecord struct {
-	ProcessName             string            `json:"processName"`
-	ProcessID               string            `json:"processID"`
-	ProcessCMD              string            `json:"processCMD"`
-	ProcessCMDLine          string            `json:"processCMDLine"`
-	ProcessCPU              float64           `json:"processCPU"`
-	ProcessCPUTimeSeries    *v3.Series        `json:"processCPUTimeSeries"`
-	ProcessMemory           float64           `json:"processMemory"`
-	ProcessMemoryTimeSeries *v3.Series        `json:"processMemoryTimeSeries"`
-	Meta                    map[string]string `json:"-"`
-}
-
-type ProcessListGroup struct {
-	GroupValues    []string `json:"groupValues"`
-	GroupCPUAvg    float64  `json:"groupCPUAvg"`
-	GroupMemoryAvg float64  `json:"groupMemoryAvg"`
-	ProcessNames   []string `json:"processNames"`
+	ProcessName    string            `json:"processName"`
+	ProcessID      string            `json:"processID"`
+	ProcessCMD     string            `json:"processCMD"`
+	ProcessCMDLine string            `json:"processCMDLine"`
+	ProcessCPU     float64           `json:"processCPU"`
+	ProcessMemory  float64           `json:"processMemory"`
+	Meta           map[string]string `json:"meta"`
 }
 
 type PodListRequest struct {
