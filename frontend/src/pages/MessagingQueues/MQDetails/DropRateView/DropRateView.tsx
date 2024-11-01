@@ -79,7 +79,7 @@ export function getColumns(
 			if (Array.isArray(text)) {
 				const visibleCount = visibleCounts[index] || 4;
 				const visibleItems = text.slice(0, visibleCount);
-				const remainingCount = text.length - visibleCount;
+				const remainingCount = (text || []).length - visibleCount;
 
 				return (
 					<div>
@@ -213,7 +213,7 @@ function DropRateView(): JSX.Element {
 	});
 
 	useEffect(() => {
-		if (data.length > 0) {
+		if (data?.length > 0) {
 			setColumns(getColumns(data, visibleCounts, handleShowMore));
 			setTableData(getTableData(data));
 		}
