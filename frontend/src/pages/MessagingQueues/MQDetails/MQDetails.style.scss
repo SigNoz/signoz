@@ -43,3 +43,49 @@
 		}
 	}
 }
+
+.droprate-view {
+	.mq-table {
+		width: 100%;
+
+		.ant-table-content {
+			border-radius: 6px;
+			border: 1px solid var(--bg-slate-500);
+			box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.1);
+		}
+
+		.ant-table-tbody {
+			.ant-table-cell {
+				max-width: 250px;
+				border-bottom: none;
+			}
+		}
+
+		.ant-table-thead {
+			.ant-table-cell {
+				background-color: var(--bg-ink-500);
+				border-bottom: 1px solid var(--bg-slate-500);
+			}
+		}
+	}
+
+	.trace-id-list {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		width: max-content;
+
+		.traceid-style {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+
+			.traceid-text {
+				border-radius: 2px;
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-slate-400);
+				padding: 2px;
+			}
+		}
+	}
+}
