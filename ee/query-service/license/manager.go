@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 
 	"sync"
 
@@ -333,6 +334,36 @@ func (lm *Manager) Validate(ctx context.Context) (reterr error) {
 	return nil
 }
 
+func (lm *Manager) RefreshLicense(ctx context.Context, license *model.LicenseV3) (*model.LicenseV3, *model.ApiError) {
+	currentLicense, err := json.Marshal(lm.activeLicenseV3)
+	if err != nil {
+		return nil, model.BadRequest(errors.Wrap(err, "failed to marshal the current license"))
+	}
+
+	newLicense, err := json.Marshal(license)
+	if err != nil {
+		return nil, model.BadRequest(errors.Wrap(err, "failed to marshal the new refresh license"))
+	}
+
+	if string(currentLicense) == string(newLicense) {
+		// license hasn't changed, nothing to do
+		return nil, nil
+	}
+
+	if string(newLicense) != "" {
+
+		license.ParseFeaturesV3()
+		err = lm.repo.UpdateLicenseV3(ctx, license)
+		if err != nil {
+			return nil, model.BadRequest(errors.Wrap(err, "failed to update the new license"))
+		}
+
+		lm.SetActiveV3(license)
+	}
+
+	return license, nil
+}
+
 func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 	zap.L().Info("License validation started")
 	if lm.activeLicenseV3 == nil {
@@ -361,33 +392,8 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 		return apiError.Err
 	}
 
-	currentLicense, err := json.Marshal(lm.activeLicenseV3)
-	if err != nil {
-		return err
-	}
-
-	newLicense, err := json.Marshal(response)
-	if err != nil {
-		return err
-	}
-
-	if string(currentLicense) == string(newLicense) {
-		// license hasn't changed, nothing to do
-		return nil
-	}
-
-	if string(newLicense) != "" {
-
-		response.ParseFeaturesV3()
-		err = lm.repo.UpdateLicenseV3(ctx, response)
-		if err != nil {
-			return err
-		}
-
-		lm.SetActiveV3(response)
-	}
-
-	return nil
+	_, err := lm.RefreshLicense(ctx, response)
+	return err
 }
 
 // Activate activates a license key with signoz server
