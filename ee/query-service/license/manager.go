@@ -361,7 +361,7 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 		return apiError.Err
 	}
 
-	currenLicense, err := json.Marshal(lm.activeLicenseV3)
+	currentLicense, err := json.Marshal(lm.activeLicenseV3)
 	if err != nil {
 		return err
 	}
@@ -371,7 +371,7 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 		return err
 	}
 
-	if string(currenLicense) == string(newLicense) {
+	if string(currentLicense) == string(newLicense) {
 		// license hasn't changed, nothing to do
 		return nil
 	}
