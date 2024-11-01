@@ -31,6 +31,7 @@ jobs:
           GCP_ZONE: ${{ secrets.GCP_ZONE }}
           GCP_INSTANCE: ${{ secrets.GCP_INSTANCE }}
           CLOUDSDK_CORE_DISABLE_PROMPTS: 1
+          KAFKA_SPAN_EVAL: true
         run: |
           read -r -d '' COMMAND <<EOF || true
           echo "GITHUB_BRANCH: ${GITHUB_BRANCH}"

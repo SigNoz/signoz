@@ -1,0 +1,65 @@
+.header-container {
+	width: 100%;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px 0px;
+
+	box-sizing: border-box;
+}
+
+.header-container .logo-container {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.header-container .logo-container img {
+	height: 17.5px;
+	width: 17.5px;
+}
+
+.header-container .logo-text {
+	font-family: 'Work Sans', sans-serif;
+	color: var(--bg-vanilla-100);
+	font-size: 15.4px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 17.5px;
+}
+
+.header-container .get-help-container {
+	display: flex;
+	width: 113px;
+	height: 32px;
+	padding: 6px;
+	justify-content: center;
+	align-items: center;
+	gap: 6px;
+	flex-shrink: 0;
+	border-radius: 2px;
+	border: 1px solid var(--bg-slate-400);
+	background: var(--bg-ink-300);
+	box-shadow: none;
+}
+
+.header-container .get-help-container img {
+	width: 12px;
+	height: 12px;
+	flex-shrink: 0;
+}
+
+.header-container .get-help-text {
+	color: var(--bg-vanilla-400);
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 10px;
+	letter-spacing: 0.12px;
+}
+
+.lightMode {
+	.header-container .logo-text {
+		color: var(--bg-slate-300);
+	}
+}
