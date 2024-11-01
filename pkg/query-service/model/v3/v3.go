@@ -229,13 +229,14 @@ type AggregateAttributeRequest struct {
 type TagType string
 
 const (
-	TagTypeTag      TagType = "tag"
-	TagTypeResource TagType = "resource"
+	TagTypeTag                  TagType = "tag"
+	TagTypeResource             TagType = "resource"
+	TagTypeInstrumentationScope TagType = "scope"
 )
 
 func (q TagType) Validate() error {
 	switch q {
-	case TagTypeTag, TagTypeResource:
+	case TagTypeTag, TagTypeResource, TagTypeInstrumentationScope:
 		return nil
 	default:
 		return fmt.Errorf("invalid tag type: %s", q)
@@ -317,9 +318,10 @@ type FilterAttributeKeyResponse struct {
 type AttributeKeyType string
 
 const (
-	AttributeKeyTypeUnspecified AttributeKeyType = ""
-	AttributeKeyTypeTag         AttributeKeyType = "tag"
-	AttributeKeyTypeResource    AttributeKeyType = "resource"
+	AttributeKeyTypeUnspecified          AttributeKeyType = ""
+	AttributeKeyTypeTag                  AttributeKeyType = "tag"
+	AttributeKeyTypeResource             AttributeKeyType = "resource"
+	AttributeKeyTypeInstrumentationScope AttributeKeyType = "scope"
 )
 
 func (t AttributeKeyType) String() string {
@@ -348,7 +350,7 @@ func (a AttributeKey) Validate() error {
 
 	if a.IsColumn {
 		switch a.Type {
-		case AttributeKeyTypeResource, AttributeKeyTypeTag, AttributeKeyTypeUnspecified:
+		case AttributeKeyTypeResource, AttributeKeyTypeTag, AttributeKeyTypeUnspecified, AttributeKeyTypeInstrumentationScope:
 			break
 		default:
 			return fmt.Errorf("invalid attribute type: %s", a.Type)
