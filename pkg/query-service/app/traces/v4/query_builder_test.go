@@ -333,6 +333,27 @@ func Test_buildTracesQuery(t *testing.T) {
 				mq: &v3.BuilderQuery{
 					AggregateOperator: v3.AggregateOperatorCount,
 					Filters: &v3.FilterSet{
+						Items: []v3.FilterItem{},
+					},
+					GroupBy: []v3.AttributeKey{{Key: "http.method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+					OrderBy: []v3.OrderBy{
+						{ColumnName: "http.method", Order: "ASC"}},
+				},
+			},
+			want: "SELECT  attributes_string['http.method'] as `http.method`, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v3 " +
+				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
+				"AND mapContains(attributes_string, 'http.method') group by `http.method` order by `http.method` ASC",
+		},
+		{
+			name: "Test buildTracesQuery",
+			args: args{
+				panelType: v3.PanelTypeTable,
+				start:     1680066360726210000,
+				end:       1680066458000000000,
+				step:      1000,
+				mq: &v3.BuilderQuery{
+					AggregateOperator: v3.AggregateOperatorCount,
+					Filters: &v3.FilterSet{
 						Items: []v3.FilterItem{
 							{Key: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeInt64}, Value: 100, Operator: ">"},
 							{Key: v3.AttributeKey{Key: "service.name", Type: v3.AttributeKeyTypeResource, DataType: v3.AttributeKeyDataTypeString}, Value: "myService", Operator: "="},

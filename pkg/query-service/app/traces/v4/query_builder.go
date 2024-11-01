@@ -219,6 +219,12 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		return "", err
 	}
 
+	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(mq.GroupBy)
+	if err != nil {
+		return "", err
+	}
+	filterSubQuery += emptyValuesInGroupByFilter
+
 	if filterSubQuery != "" {
 		filterSubQuery = " AND " + filterSubQuery
 	}
@@ -309,12 +315,6 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		queryTmpl = "SELECT " + tracesV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + queryTmpl + ")"
 	}
-
-	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(mq.GroupBy)
-	if err != nil {
-		return "", err
-	}
-	filterSubQuery += emptyValuesInGroupByFilter
 
 	if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
 		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", tracesV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
