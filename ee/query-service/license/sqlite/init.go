@@ -50,16 +50,8 @@ func InitDB(db *sqlx.DB) error {
 
 	table_schema = `CREATE TABLE IF NOT EXISTS licenses_v3 (
 		id TEXT PRIMARY KEY,
-		category TEXT,
 		key TEXT,
-		validFrom TIMESTAMP,
-		validUntil TIMESTAMP,
-		status TEXT,
-		createdAt TIMESTAMP,
-		updatedAt TIMESTAMP,
-		planId TEXT,
-		user_email TEXT,
-		plan TEXT
+		data TEXT
 	);`
 
 	_, err = db.Exec(table_schema)

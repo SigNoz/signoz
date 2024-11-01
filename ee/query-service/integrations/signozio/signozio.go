@@ -23,12 +23,14 @@ const (
 )
 
 type Client struct {
-	Prefix string
+	Prefix     string
+	GatewayUrl string
 }
 
 func New() *Client {
 	return &Client{
-		Prefix: constants.LicenseSignozIo,
+		Prefix:     constants.LicenseSignozIo,
+		GatewayUrl: constants.ZeusFeaturesURL,
 	}
 }
 
@@ -106,6 +108,39 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 			return nil, model.BadRequest(errors.Wrap(err, "failed to marshal license validation response"))
 		}
 		return a.Data, nil
+	case 400, 401:
+		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
+			"bad request error received from license.signoz.io"))
+	default:
+		return nil, model.InternalError(errors.Wrap(fmt.Errorf(string(body)),
+			"internal error received from license.signoz.io"))
+	}
+
+}
+
+func ValidateLicenseV3() (*model.LicenseV3, *model.ApiError) {
+
+	response, err := http.Get(C.GatewayUrl + "/licenses/me")
+
+	if err != nil {
+		return nil, model.BadRequest(errors.Wrap(err, fmt.Sprintf("unable to connect with %v, please check your network connection", C.GatewayUrl)))
+	}
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, model.BadRequest(errors.Wrap(err, fmt.Sprintf("failed to read validation response from %v", C.GatewayUrl)))
+	}
+
+	defer response.Body.Close()
+
+	switch response.StatusCode {
+	case 200, 201:
+		a := model.LicenseV3{}
+		err = json.Unmarshal(body, &a)
+		if err != nil {
+			return nil, model.BadRequest(errors.Wrap(err, "failed to marshal license validation response"))
+		}
+		return &a, nil
 	case 400, 401:
 		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
 			"bad request error received from license.signoz.io"))

@@ -113,28 +113,18 @@ func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 		return fmt.Errorf("insert license failed: license key is required")
 	}
 	query := `INSERT INTO licenses_v3
-						(id, category, key, validFrom,validUntil,status,createdAt,updatedAt,planId,user_email,plan) 
-						VALUES ($1, $2, $3, $4,$5,$6,$7,$8,$9,$10,$11)`
+						(id, key, data) 
+						VALUES ($1, $2, $3)`
 
-	planDetails, err := json.Marshal(l.Plan)
+	license, err := json.Marshal(l)
 	if err != nil {
-		zap.L().Error("error in marshal license plan data: ", zap.Error(err))
-		return fmt.Errorf("error in marshal license plan data: %v", err)
+		return fmt.Errorf("insert license failed: license marshal error")
 	}
-
 	_, err = r.db.ExecContext(ctx,
 		query,
 		l.ID,
-		l.Category,
 		l.Key,
-		l.ValidFrom,
-		l.ValidUntil,
-		l.Status,
-		l.CreatedAt,
-		l.UpdatedAt,
-		l.PlanID,
-		l.User.Email,
-		string(planDetails),
+		string(license),
 	)
 
 	if err != nil {

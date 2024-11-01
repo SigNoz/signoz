@@ -120,15 +120,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 		am.AdminAccess(ah.applyLicense)).
 		Methods(http.MethodPost)
 
-	// v3 because get license for v2 is already used!
-	router.HandleFunc("/api/v3/licenses",
-		am.AdminAccess(ah.listLicensesV3)).
-		Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v3/licenses",
-		am.AdminAccess(ah.applyLicenseV3)).
-		Methods(http.MethodPost)
-
 	router.HandleFunc("/api/v1/featureFlags",
 		am.OpenAccess(ah.getFeatureFlags)).
 		Methods(http.MethodGet)
@@ -182,10 +173,21 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v1/dashboards/{uuid}/lock", am.EditAccess(ah.lockDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}/unlock", am.EditAccess(ah.unlockDashboard)).Methods(http.MethodPut)
 
+	// v2
 	router.HandleFunc("/api/v2/licenses",
 		am.ViewAccess(ah.listLicensesV2)).
 		Methods(http.MethodGet)
 
+	// v3
+	router.HandleFunc("/api/v3/licenses",
+		am.AdminAccess(ah.listLicensesV3)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v3/licenses",
+		am.AdminAccess(ah.applyLicenseV3)).
+		Methods(http.MethodPost)
+
+	// v4
 	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)
 
 	// Gateway
