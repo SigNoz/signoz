@@ -349,7 +349,13 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 	}
 
 	if string(newLicense) != "" {
-		// todo update the db here!
+
+		response.ParseFeaturesV3()
+		err = lm.repo.UpdateLicenseV3(ctx, response)
+		if err != nil {
+			return err
+		}
+
 		lm.SetActiveV3(response)
 	}
 
@@ -411,9 +417,9 @@ func (lm *Manager) ActivateV3(ctx context.Context, license *model.LicenseV3) (li
 		}
 	}()
 
-	err := lm.repo.InsertLicenseV3(ctx, license)
+	license.ParseFeaturesV3()
 
-	// todo open up the featurset here for given plan!
+	err := lm.repo.InsertLicenseV3(ctx, license)
 	if err != nil {
 		zap.L().Error("failed to activate license", zap.Error(err))
 		return nil, model.InternalError(err)

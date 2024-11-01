@@ -133,3 +133,14 @@ type LicenseV3 struct {
 	Plan       PlanResModel         `json:"plan"`
 	Features   basemodel.FeatureSet `json:"features"`
 }
+
+func (l *LicenseV3) ParseFeaturesV3() {
+	switch l.Plan.Name {
+	case PlanNameTeams:
+		l.Features = append(l.Features, ProPlan...)
+	case PlanNameEnterprise:
+		l.Features = append(l.Features, EnterprisePlan...)
+	default:
+		l.Features = append(l.Features, BasicPlan...)
+	}
+}

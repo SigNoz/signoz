@@ -8,6 +8,12 @@ const SSO = "SSO"
 const Basic = "BASIC_PLAN"
 const Pro = "PRO_PLAN"
 const Enterprise = "ENTERPRISE_PLAN"
+
+var (
+	PlanNameEnterprise = "ENTERPRISE"
+	PlanNameTeams      = "TEAMS"
+)
+
 const DisableUpsell = "DISABLE_UPSELL"
 const Onboarding = "ONBOARDING"
 const ChatSupport = "CHAT_SUPPORT"

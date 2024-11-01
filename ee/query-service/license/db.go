@@ -106,35 +106,6 @@ func (r *Repo) InsertLicense(ctx context.Context, l *model.License) error {
 	return nil
 }
 
-// InsertLicenseV3 inserts a new license v3 in db
-func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
-
-	if l.Key == "" {
-		return fmt.Errorf("insert license failed: license key is required")
-	}
-	query := `INSERT INTO licenses_v3
-						(id, key, data) 
-						VALUES ($1, $2, $3)`
-
-	license, err := json.Marshal(l)
-	if err != nil {
-		return fmt.Errorf("insert license failed: license marshal error")
-	}
-	_, err = r.db.ExecContext(ctx,
-		query,
-		l.ID,
-		l.Key,
-		string(license),
-	)
-
-	if err != nil {
-		zap.L().Error("error in inserting license data: ", zap.Error(err))
-		return fmt.Errorf("failed to insert license in db: %v", err)
-	}
-
-	return nil
-}
-
 // UpdatePlanDetails writes new plan details to the db
 func (r *Repo) UpdatePlanDetails(ctx context.Context,
 	key,
@@ -232,5 +203,61 @@ func (r *Repo) InitFeatures(req basemodel.FeatureSet) error {
 			return err
 		}
 	}
+	return nil
+}
+
+// InsertLicenseV3 inserts a new license v3 in db
+func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
+
+	if l.Key == "" {
+		return fmt.Errorf("insert license failed: license key is required")
+	}
+	query := `INSERT INTO licenses_v3
+						(id, key, data) 
+						VALUES ($1, $2, $3)`
+
+	license, err := json.Marshal(l)
+	if err != nil {
+		return fmt.Errorf("insert license failed: license marshal error")
+	}
+	_, err = r.db.ExecContext(ctx,
+		query,
+		l.ID,
+		l.Key,
+		string(license),
+	)
+
+	if err != nil {
+		zap.L().Error("error in inserting license data: ", zap.Error(err))
+		return fmt.Errorf("failed to insert license in db: %v", err)
+	}
+
+	return nil
+}
+
+// UpdateLicenseV3 updates a new license v3 in db
+func (r *Repo) UpdateLicenseV3(ctx context.Context, l *model.LicenseV3) error {
+
+	if l.Key == "" {
+		return fmt.Errorf("update license failed: license key is required")
+	}
+
+	query := `UPDATE licenses_v3 SET data=$1 WHERE id=$2;`
+
+	license, err := json.Marshal(l)
+	if err != nil {
+		return fmt.Errorf("insert license failed: license marshal error")
+	}
+	_, err = r.db.ExecContext(ctx,
+		query,
+		license,
+		l.ID,
+	)
+
+	if err != nil {
+		zap.L().Error("error in inserting license data: ", zap.Error(err))
+		return fmt.Errorf("failed to insert license in db: %v", err)
+	}
+
 	return nil
 }
