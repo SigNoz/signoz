@@ -5,8 +5,9 @@ import { Table, Typography } from 'antd';
 import axios from 'axios';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-// import useUrlQuery from 'hooks/useUrlQuery';
+import { isNumber } from 'lodash-es';
 import {
 	convertToTitleCase,
 	MessagingQueuesViewType,
@@ -15,93 +16,17 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
-// import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { MessagingQueueServicePayload } from '../MQTables/getConsumerLagDetails';
 import { getKafkaSpanEval } from '../MQTables/getKafkaSpanEval';
-
-const dummyData = [
-	{
-		timestamp: '0001-01-01T00:00:00Z',
-		data: {
-			breach_percentage: 60.24912135621253,
-			breached_spans: 11657,
-			consumer_service: 'consumer-svc2',
-			producer_service: 'producer-svc2',
-			top_traceIDs: [
-				'c07c13ef66cc07a9937aed42af37c904',
-				'fa58706f5c7f76094380d7aa9043c764',
-				'cbb9a59066c274af611c0f66a994d340',
-				'9e36db8953e97706032e99b75ad04ca6',
-				'a92ea5cf3f7e076e7434892df670e3a0',
-				'6664e5d772295cf89f80db198679052c',
-				'787c0134cd5a20201b7e0ab6eed4f5b2',
-				'213a7e98a157a95fea101c80c8648eea',
-				'5f671e043caf05abf22791199c2870ed',
-				'3121cf93dcdfe1e9f4934db4f8685d99',
-			],
-			total_spans: 19348,
-		},
-	},
-	{
-		timestamp: '0001-01-01T00:00:00Z',
-		data: {
-			breach_percentage: 60.24912135621253,
-			breached_spans: 11657,
-			consumer_service: 'consumer-svc2',
-			producer_service: 'producer-svc2',
-			top_traceIDs: [
-				'c07c13ef66cc07a9937aed42af37c904',
-				'fa58706f5c7f76094380d7aa9043c764',
-				'cbb9a59066c274af611c0f66a994d340',
-				'9e36db8953e97706032e99b75ad04ca6',
-				'a92ea5cf3f7e076e7434892df670e3a0',
-				'6664e5d772295cf89f80db198679052c',
-				'787c0134cd5a20201b7e0ab6eed4f5b2',
-				'213a7e98a157a95fea101c80c8648eea',
-				'5f671e043caf05abf22791199c2870ed',
-				'3121cf93dcdfe1e9f4934db4f8685d99',
-			],
-			total_spans: 19348,
-		},
-	},
-	{
-		timestamp: '0001-01-01T00:00:00Z',
-		data: {
-			breach_percentage: 60.24912135621253,
-			breached_spans: 11657,
-			consumer_service: 'consumer-svc2',
-			producer_service: 'producer-svc2',
-			top_traceIDs: [
-				'c07c13ef66cc07a9937aed42af37c904',
-				'fa58706f5c7f76094380d7aa9043c764',
-				'cbb9a59066c274af611c0f66a994d340',
-				'9e36db8953e97706032e99b75ad04ca6',
-				'a92ea5cf3f7e076e7434892df670e3a0',
-				'6664e5d772295cf89f80db198679052c',
-				'787c0134cd5a20201b7e0ab6eed4f5b2',
-				'213a7e98a157a95fea101c80c8648eea',
-				'5f671e043caf05abf22791199c2870ed',
-				'3121cf93dcdfe1e9f4934db4f8685d99',
-			],
-			total_spans: 19348,
-		},
-	},
-];
-
-interface DropRateResponse {
-	timestamp: string;
-	data: {
-		breach_percentage: number;
-		breached_spans: number;
-		consumer_service: string;
-		producer_service: string;
-		top_traceIDs: string[];
-		total_spans: number;
-	};
-}
+import {
+	convertToMilliseconds,
+	DropRateAPIResponse,
+	DropRateResponse,
+} from './dropRateViewUtils';
+import EvaluationTimeSelector from './EvaluationTimeSelector';
 
 export function getTableData(data: DropRateResponse[]): RowData[] {
 	if (data?.length === 0) {
@@ -119,6 +44,7 @@ export function getTableData(data: DropRateResponse[]): RowData[] {
 	return tableData;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function getColumns(
 	data: DropRateResponse[],
 	visibleCounts: Record<number, number>,
@@ -128,11 +54,20 @@ export function getColumns(
 		return [];
 	}
 
+	const columnsOrder = [
+		'producer_service',
+		'consumer_service',
+		'breach_percentage',
+		'top_traceIDs',
+		'breached_spans',
+		'total_spans',
+	];
+
 	const columns: {
 		title: string;
 		dataIndex: string;
 		key: string;
-	}[] = Object.keys(data[0].data).map((column) => ({
+	}[] = columnsOrder.map((column) => ({
 		title: convertToTitleCase(column),
 		dataIndex: column,
 		key: column,
@@ -146,8 +81,6 @@ export function getColumns(
 				const visibleItems = text.slice(0, visibleCount);
 				const remainingCount = text.length - visibleCount;
 
-				console.log(visibleCount, visibleItems, remainingCount);
-
 				return (
 					<div>
 						<div className="trace-id-list">
@@ -155,19 +88,52 @@ export function getColumns(
 								const shouldShowMore = remainingCount > 0 && idx === visibleCount - 1;
 								return (
 									<div key={item} className="traceid-style">
-										<Typography.Text key={item} className="traceid-text">
+										<Typography.Text
+											key={item}
+											className="traceid-text"
+											onClick={(): void => {
+												window.open(`${ROUTES.TRACE}/${item}`, '_blank');
+											}}
+										>
 											{item}
 										</Typography.Text>
 										{shouldShowMore && (
-											<Typography.Link onClick={(): void => handleShowMore(index)}>
+											<Typography
+												onClick={(): void => handleShowMore(index)}
+												className="remaing-count"
+											>
 												+ {remainingCount} more
-											</Typography.Link>
+											</Typography>
 										)}
 									</div>
 								);
 							})}
 						</div>
 					</div>
+				);
+			}
+
+			if (column === 'consumer_service' || column === 'producer_service') {
+				return (
+					<Typography.Link
+						onClick={(e): void => {
+							e.preventDefault();
+							e.stopPropagation();
+							window.open(`/services/${encodeURIComponent(text)}`, '_blank');
+						}}
+					>
+						{text}
+					</Typography.Link>
+				);
+			}
+
+			if (column === 'breach_percentage' && text) {
+				if (!isNumber(text))
+					return <Typography.Text>{text.toString()}</Typography.Text>;
+				return (
+					<Typography.Text>
+						{(typeof text === 'string' ? parseFloat(text) : text).toFixed(2)} %
+					</Typography.Text>
 				);
 			}
 
@@ -194,12 +160,12 @@ function DropRateView(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const [data, setData] = useState<DropRateResponse[]>([]);
+	const [data, setData] = useState<
+		DropRateAPIResponse['data']['result'][0]['list']
+	>([]);
+	const [interval, setInterval] = useState<string>('');
 
 	const [visibleCounts, setVisibleCounts] = useState<Record<number, number>>({});
-
-	// const urlQuery = useUrlQuery();
-	// const history = useHistory();
 
 	const paginationConfig = useMemo(
 		() =>
@@ -212,11 +178,17 @@ function DropRateView(): JSX.Element {
 		[tableData],
 	);
 
-	const tableApiPayload: MessagingQueueServicePayload = {
-		start: minTime,
-		end: maxTime,
-		evalTime: 2363404,
-	};
+	const evaluationTime = useMemo(() => convertToMilliseconds(interval), [
+		interval,
+	]);
+	const tableApiPayload: MessagingQueueServicePayload = useMemo(
+		() => ({
+			start: minTime,
+			end: maxTime,
+			evalTime: evaluationTime * 1e6,
+		}),
+		[evaluationTime, maxTime, minTime],
+	);
 
 	const handleOnError = (error: Error): void => {
 		notifications.error({
@@ -234,7 +206,7 @@ function DropRateView(): JSX.Element {
 	const { mutate: getViewDetails, isLoading } = useMutation(getKafkaSpanEval, {
 		onSuccess: (data) => {
 			if (data.payload) {
-				setData(dummyData);
+				setData(data.payload.result[0].list);
 			}
 		},
 		onError: handleOnError,
@@ -245,18 +217,26 @@ function DropRateView(): JSX.Element {
 			setColumns(getColumns(data, visibleCounts, handleShowMore));
 			setTableData(getTableData(data));
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data, visibleCounts]);
 
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(() => getViewDetails(tableApiPayload), [minTime, maxTime]);
+	useEffect(() => {
+		if (evaluationTime) {
+			getViewDetails(tableApiPayload);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [minTime, maxTime, evaluationTime]);
 
 	return (
 		<div className={cx('mq-overview-container', 'droprate-view')}>
 			<div className="mq-overview-title">
-				{MessagingQueuesViewType.dropRate.label}
+				<div className="drop-rat-title">
+					{MessagingQueuesViewType.dropRate.label}
+				</div>
+				<EvaluationTimeSelector setInterval={setInterval} />
 			</div>
 			<Table
-				className="mq-table"
+				className={cx('mq-table', 'pagination-left')}
 				pagination={paginationConfig}
 				size="middle"
 				columns={columns}
