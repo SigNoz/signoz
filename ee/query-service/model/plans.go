@@ -1,6 +1,7 @@
 package model
 
 import (
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -134,6 +135,13 @@ var BasicPlan = basemodel.FeatureSet{
 		UsageLimit: -1,
 		Route:      "",
 	},
+	basemodel.Feature{
+		Name:       basemodel.HostsInfraMonitoring,
+		Active:     constants.EnableHostsInfraMonitoring(),
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
 }
 
 var ProPlan = basemodel.FeatureSet{
@@ -245,6 +253,13 @@ var ProPlan = basemodel.FeatureSet{
 	basemodel.Feature{
 		Name:       basemodel.AnomalyDetection,
 		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
+		Name:       basemodel.HostsInfraMonitoring,
+		Active:     constants.EnableHostsInfraMonitoring(),
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -374,6 +389,13 @@ var EnterprisePlan = basemodel.FeatureSet{
 	basemodel.Feature{
 		Name:       basemodel.AnomalyDetection,
 		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
+		Name:       basemodel.HostsInfraMonitoring,
+		Active:     constants.EnableHostsInfraMonitoring(),
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
