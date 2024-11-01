@@ -1,57 +1,97 @@
 package v4
 
 import (
+	"reflect"
+	"testing"
+
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-var testColumnName = []struct {
-	Name           string
-	AttributeKey   v3.AttributeKey
-	ExpectedColumn string
-}{
-	{
-		Name:           "resource",
-		AttributeKey:   v3.AttributeKey{Key: "collector_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource, IsColumn: false},
-		ExpectedColumn: "resourceTagsMap['collector_id']",
-	},
-	{
-		Name:           "stringAttribute",
-		AttributeKey:   v3.AttributeKey{Key: "customer_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: false},
-		ExpectedColumn: "stringTagMap['customer_id']",
-	},
-	{
-		Name:           "boolAttribute",
-		AttributeKey:   v3.AttributeKey{Key: "has_error", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag, IsColumn: false},
-		ExpectedColumn: "boolTagMap['has_error']",
-	},
-	{
-		Name:           "float64Attribute",
-		AttributeKey:   v3.AttributeKey{Key: "count", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: false},
-		ExpectedColumn: "numberTagMap['count']",
-	},
-	{
-		Name:           "int64Attribute",
-		AttributeKey:   v3.AttributeKey{Key: "count", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag, IsColumn: false},
-		ExpectedColumn: "numberTagMap['count']",
-	},
-	{
-		Name:           "column",
-		AttributeKey:   v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-		ExpectedColumn: "name",
-	},
-	{
-		Name:           "missing key",
-		AttributeKey:   v3.AttributeKey{Key: "xyz"},
-		ExpectedColumn: "stringTagMap['xyz']",
-	},
+func TestEnrichTracesQuery(t *testing.T) {
+	type args struct {
+		query *v3.BuilderQuery
+		keys  map[string]v3.AttributeKey
+		want  *v3.BuilderQuery
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "test 1",
+			args: args{
+				query: &v3.BuilderQuery{
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag}, Value: 100, Operator: ">"},
+						},
+					},
+				},
+				keys: map[string]v3.AttributeKey{
+					"bytes": {Key: "bytes", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag},
+				},
+				want: &v3.BuilderQuery{
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeInt64}, Value: 100, Operator: ">"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "test service name",
+			args: args{
+				query: &v3.BuilderQuery{
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "serviceName", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "myservice", Operator: "="},
+						},
+					},
+				},
+				keys: map[string]v3.AttributeKey{},
+				want: &v3.BuilderQuery{
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "service.name", Type: v3.AttributeKeyTypeResource, DataType: v3.AttributeKeyDataTypeString}, Value: "myservice", Operator: "="},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "test mat attrs",
+			args: args{
+				query: &v3.BuilderQuery{
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "http.route", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "/api", Operator: "="},
+						},
+					},
+				},
+				keys: map[string]v3.AttributeKey{},
+				want: &v3.BuilderQuery{
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "httpRoute", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "/api", Operator: "="},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			EnrichTracesQuery(tt.args.query, tt.args.keys)
+			if !reflect.DeepEqual(tt.args.query.Filters.Items[0].Key, tt.args.want.Filters.Items[0].Key) {
+				t.Errorf("EnrichTracesQuery() = %v, want %v", tt.args.query, tt.args.want)
+			}
+		})
+	}
 }
-
-// func TestColumnName(t *testing.T) {
-// 	for _, tt := range testColumnName {
-// 		tt.AttributeKey = enrichKeyWithMetadata(tt.AttributeKey, map[string]v3.AttributeKey{})
-// 		Convey("testColumnName", t, func() {
-// 			Column := getColumnName(tt.AttributeKey)
-// 			So(Column, ShouldEqual, tt.ExpectedColumn)
-// 		})
-// 	}
-// }

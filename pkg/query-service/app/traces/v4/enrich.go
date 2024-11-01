@@ -2,8 +2,55 @@ package v4
 
 import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
+// we could have created aliases but as of now we are sticking to this as alias are not dynamic in nature
+// Note: ALTER TABLE doesn't support adding an alias directly, so you may need to create the table with aliases from the start.
+var attributeMatColsMapping = map[string]v3.AttributeKey{
+	"http.route": {
+		Key:      "httpRoute",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"messaging.system": {
+		Key:      "msgSystem",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"messaging.peration": {
+		Key:      "msgOperation",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"db.system": {
+		Key:      "dbSystem",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"rpc.system": {
+		Key:      "rpcSystem",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"rpc.service": {
+		Key:      "rpcService",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"rpc.method": {
+		Key:      "rpcMethod",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"peer.service": {
+		Key:      "peerService",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+}
+
 func enrichKeyWithMetadata(key v3.AttributeKey, keys map[string]v3.AttributeKey) v3.AttributeKey {
-	// TODO(nitya) : update logic similar to logs
+	if matCol, ok := attributeMatColsMapping[key.Key]; ok {
+		return matCol
+	}
 	if key.Type == "" || key.DataType == "" {
 		// check if the key is present in the keys map
 		if existingKey, ok := keys[key.Key]; ok {
@@ -39,18 +86,13 @@ func EnrichTracesQuery(query *v3.BuilderQuery, keys map[string]v3.AttributeKey) 
 			query.Filters.Items[idx].Key = enrichKeyWithMetadata(filter.Key, keys)
 			// if the serviceName column is used, use the corresponding resource attribute as well during filtering
 			if filter.Key.Key == "serviceName" && filter.Key.IsColumn {
-				query.Filters.Items = append(query.Filters.Items, v3.FilterItem{
-					Key: v3.AttributeKey{
-						Key:      "service.name",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-						IsColumn: false,
-					},
-					Operator: filter.Operator,
-					Value:    filter.Value,
-				})
+				query.Filters.Items[idx].Key = v3.AttributeKey{
+					Key:      "service.name",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeResource,
+					IsColumn: false,
+				}
 			}
-
 		}
 	}
 	// enrich group by

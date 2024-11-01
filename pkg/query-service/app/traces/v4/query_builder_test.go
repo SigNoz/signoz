@@ -343,7 +343,7 @@ func Test_buildTracesQuery(t *testing.T) {
 						{ColumnName: "host", Order: "ASC"}},
 				},
 			},
-			want: "SELECT  resources_number['host'] as `host` toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			want: "SELECT  resources_number['host'] as `host`, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_number['bytes'] > 100 AND " +
 				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND " +
 				"(seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name%myService%' AND " +
@@ -498,8 +498,8 @@ func TestPrepareTracesQuery(t *testing.T) {
 					GraphLimitQtype: constants.FirstQueryGraphLimit,
 				},
 			},
-			want: "SELECT `serviceName` from (SELECT `serviceName` as `serviceName` toFloat64(count(distinct(`name`))) as value from signoz_traces.distributed_signoz_index_v3 " +
-				"where (timestamp >= '1680066360726180000' AND timestamp <= '1680066457999980000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066457) group by `serviceName`) LIMIT 10",
+			want: "SELECT `serviceName` from (SELECT `serviceName` as `serviceName`, toFloat64(count(distinct(`name`))) as value from signoz_traces.distributed_signoz_index_v3 " +
+				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) group by `serviceName`) LIMIT 10",
 		},
 		{
 			name: "test with limit - second",
@@ -519,8 +519,8 @@ func TestPrepareTracesQuery(t *testing.T) {
 					GraphLimitQtype: constants.SecondQueryGraphLimit,
 				},
 			},
-			want: "SELECT  `serviceName` as `serviceName` toFloat64(count(distinct(`name`))) as value from signoz_traces.distributed_signoz_index_v3 where " +
-				"(timestamp >= '1680066360726180000' AND timestamp <= '1680066457999980000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066457) AND (`serviceName`) GLOBAL IN (%s) group by `serviceName`",
+			want: "SELECT  `serviceName` as `serviceName`, toFloat64(count(distinct(`name`))) as value from signoz_traces.distributed_signoz_index_v3 where " +
+				"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND (`serviceName`) GLOBAL IN (%s) group by `serviceName`",
 		},
 	}
 
