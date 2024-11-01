@@ -88,7 +88,9 @@ func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 	ah.Respond(w, license)
 }
 
-func (ah *APIHandler) listLicensesV3(w http.ResponseWriter, r *http.Request) {}
+func (ah *APIHandler) listLicensesV3(w http.ResponseWriter, r *http.Request) {
+	// return the licenses from DB here!
+}
 
 func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
 	var license model.LicenseV3

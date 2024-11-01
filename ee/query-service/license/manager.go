@@ -76,6 +76,8 @@ func StartManager(dbType string, db *sqlx.DB, features ...basemodel.Feature) (*M
 
 // start loads active license in memory and initiates validator
 func (lm *Manager) start(features ...basemodel.Feature) error {
+
+	// handle the licenses v3 table bootstrap here!
 	err := lm.LoadActiveLicense(features...)
 
 	return err
