@@ -191,6 +191,7 @@ services:
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-standalone-amd
+      - KAFKA_SPAN_EVAL=${KAFKA_SPAN_EVAL:-false}
     restart: on-failure
     healthcheck:
       test:
