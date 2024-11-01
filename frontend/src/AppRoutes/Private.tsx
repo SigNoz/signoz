@@ -9,7 +9,7 @@ import ROUTES from 'constants/routes';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { isEmpty } from 'lodash-es';
+import { isEmpty, isNull } from 'lodash-es';
 import { ReactChild, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -35,13 +35,18 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const location = useLocation();
 	const { pathname } = location;
 
-	const { org, orgPreferences } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const [isLoading, setIsLoading] = useState<boolean>(true);
 
-	const [isOnboardingComplete, setIsOnboardingComplete] = useState<
-		boolean | null
-	>(null);
+	const {
+		org,
+		orgPreferences,
+		user,
+		role,
+		isUserFetching,
+		isUserFetchingError,
+		isLoggedIn: isLoggedInState,
+		isFetchingOrgPreferences,
+	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const mapRoutes = useMemo(
 		() =>
@@ -56,29 +61,18 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		[pathname],
 	);
 
-	useEffect(() => {
-		if (orgPreferences && !isEmpty(orgPreferences)) {
-			const onboardingPreference = orgPreferences?.find(
+	const isOnboardingComplete = useMemo(
+		() =>
+			orgPreferences?.find(
 				(preference: Record<string, any>) => preference.key === 'ORG_ONBOARDING',
-			);
-
-			if (onboardingPreference) {
-				setIsOnboardingComplete(onboardingPreference.value);
-			}
-		}
-	}, [orgPreferences]);
+			)?.value,
+		[orgPreferences],
+	);
 
 	const {
 		data: licensesData,
 		isFetching: isFetchingLicensesData,
 	} = useLicense();
-
-	const {
-		isUserFetching,
-		isUserFetchingError,
-		isLoggedIn: isLoggedInState,
-		isFetchingOrgPreferences,
-	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const { t } = useTranslation(['common']);
 
@@ -135,7 +129,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	// Check if the onboarding should be shown based on the org users and onboarding completion status, wait for org users and preferences to load
 	const shouldShowOnboarding = (): boolean => {
 		// Only run this effect if the org users and preferences are loaded
-		if (!isLoadingOrgUsers) {
+
+		if (!isLoadingOrgUsers && !isFetchingOrgPreferences) {
 			const isFirstUser = checkFirstTimeUser();
 
 			// Redirect to get started if it's not the first user or if the onboarding is complete
@@ -143,6 +138,26 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		}
 
 		return false;
+	};
+
+	const handleRedirectForOrgOnboarding = (key: string): void => {
+		if (
+			isLoggedInState &&
+			!isFetchingOrgPreferences &&
+			!isLoadingOrgUsers &&
+			!isEmpty(orgUsers?.payload) &&
+			!isNull(orgPreferences)
+		) {
+			if (key === 'ONBOARDING' && isOnboardingComplete) {
+				history.push(ROUTES.APPLICATION);
+			}
+
+			const isFirstTimeUser = checkFirstTimeUser();
+
+			if (isFirstTimeUser && !isOnboardingComplete) {
+				history.push(ROUTES.ONBOARDING);
+			}
+		}
 	};
 
 	const handleUserLoginIfTokenPresent = async (
@@ -166,15 +181,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 					response.payload.refreshJwt,
 				);
 
-				const showOnboarding = shouldShowOnboarding();
-
-				if (
-					userResponse &&
-					showOnboarding &&
-					userResponse.payload.role === 'ADMIN'
-				) {
-					history.push(ROUTES.ONBOARDING);
-				}
+				handleRedirectForOrgOnboarding(key);
 
 				if (
 					userResponse &&
@@ -203,7 +210,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		) {
 			handleUserLoginIfTokenPresent(key);
 		} else {
-			// user does have localstorage values
+			handleRedirectForOrgOnboarding(key);
 
 			navigateToLoginIfNotLoggedIn(isLocalStorageLoggedIn);
 		}
@@ -241,9 +248,9 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	}, [org]);
 
 	const handleRouting = (): void => {
-		const showOnboarding = shouldShowOnboarding();
+		const showOrgOnboarding = shouldShowOnboarding();
 
-		if (showOnboarding) {
+		if (showOrgOnboarding && !isOnboardingComplete) {
 			history.push(ROUTES.ONBOARDING);
 		} else {
 			history.push(ROUTES.APPLICATION);
@@ -251,17 +258,27 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	};
 
 	useEffect(() => {
-		// Only run this effect if the org users and preferences are loaded
-		if (!isLoadingOrgUsers && isOnboardingComplete !== null) {
-			const isFirstUser = checkFirstTimeUser();
+		const { isPrivate } = currentRoute || {
+			isPrivate: false,
+		};
 
-			// Redirect to get started if it's not the first user or if the onboarding is complete
-			if (isFirstUser && !isOnboardingComplete) {
-				history.push(ROUTES.ONBOARDING);
-			}
+		if (isLoggedInState && role && role !== 'ADMIN') {
+			setIsLoading(false);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isLoadingOrgUsers, isOnboardingComplete, orgUsers]);
+
+		if (!isPrivate) {
+			setIsLoading(false);
+		}
+
+		if (
+			!isEmpty(user) &&
+			!isFetchingOrgPreferences &&
+			!isEmpty(orgUsers?.payload) &&
+			!isNull(orgPreferences)
+		) {
+			setIsLoading(false);
+		}
+	}, [currentRoute, user, role, orgUsers, orgPreferences]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
@@ -284,7 +301,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 						handlePrivateRoutes(key);
 					} else {
 						// no need to fetch the user and make user fetching false
-
 						if (getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true') {
 							handleRouting();
 						}
@@ -311,13 +327,20 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				history.push(ROUTES.SOMETHING_WENT_WRONG);
 			}
 		})();
-	}, [dispatch, isLoggedInState, currentRoute, licensesData]);
+	}, [
+		dispatch,
+		isLoggedInState,
+		currentRoute,
+		licensesData,
+		orgUsers,
+		orgPreferences,
+	]);
 
 	if (isUserFetchingError) {
 		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
 	}
 
-	if (isUserFetching || (isLoggedInState && isFetchingOrgPreferences)) {
+	if (isUserFetching || isLoading) {
 		return <Spinner tip="Loading..." />;
 	}
 
