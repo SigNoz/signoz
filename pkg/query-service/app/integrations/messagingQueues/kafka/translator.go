@@ -185,6 +185,60 @@ func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCac
 	return bq, nil
 }
 
+func BuildBuilderQueriesKafkaOnboarding(messagingQueue *MessagingQueue) (*v3.QueryRangeParamsV3, error) {
+	bq := make(map[string]*v3.BuilderQuery)
+
+	unixMilliStart := messagingQueue.Start / 1000000
+	unixMilliEnd := messagingQueue.End / 1000000
+
+	buiderQuery := &v3.BuilderQuery{
+		QueryName:    "fetch_latency",
+		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
+		DataSource:   v3.DataSourceMetrics,
+		AggregateAttribute: v3.AttributeKey{
+			Key: "kafka_consumer_fetch_latency_avg",
+		},
+		AggregateOperator: v3.AggregateOperatorCount,
+		Temporality:       v3.Unspecified,
+		TimeAggregation:   v3.TimeAggregationCount,
+		SpaceAggregation:  v3.SpaceAggregationSum,
+		Expression:        "fetch_latency",
+	}
+	bq["fetch_latency"] = buiderQuery
+
+	buiderQuery = &v3.BuilderQuery{
+		QueryName:    "consumer_lag",
+		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
+		DataSource:   v3.DataSourceMetrics,
+		AggregateAttribute: v3.AttributeKey{
+			Key: "kafka_consumer_group_lag",
+		},
+		AggregateOperator: v3.AggregateOperatorCount,
+		Temporality:       v3.Unspecified,
+		TimeAggregation:   v3.TimeAggregationCount,
+		SpaceAggregation:  v3.SpaceAggregationSum,
+		Expression:        "consumer_lag",
+	}
+	bq["consumer_lag"] = buiderQuery
+
+	cq := &v3.CompositeQuery{
+		QueryType:      v3.QueryTypeBuilder,
+		BuilderQueries: bq,
+		PanelType:      v3.PanelTypeTable,
+	}
+
+	queryRangeParams := &v3.QueryRangeParamsV3{
+		Start:          unixMilliStart,
+		End:            unixMilliEnd,
+		Step:           defaultStepInterval,
+		CompositeQuery: cq,
+		Version:        "v4",
+		FormatForWeb:   true,
+	}
+
+	return queryRangeParams, nil
+}
+
 func BuildQRParamsWithCache(messagingQueue *MessagingQueue, queryContext string, attributeCache *Clients) (*v3.QueryRangeParamsV3, error) {
 
 	queueType := KafkaQueue
@@ -302,8 +356,6 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 		query = onboardProducersSQL(start, end, queueType)
 	} else if queryContext == "onboard_consumers" {
 		query = onboardConsumerSQL(start, end, queueType)
-	} else if queryContext == "onboard_kafka" {
-		query = onboardKafkaSQL(start, end)
 	}
 	return &v3.ClickHouseQuery{
 		Query: query,
@@ -312,7 +364,7 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 
 func buildCompositeQuery(chq *v3.ClickHouseQuery, queryContext string) (*v3.CompositeQuery, error) {
 
-	if queryContext == "producer-consumer-eva" {
+	if queryContext == "producer-consumer-eval" {
 		return &v3.CompositeQuery{
 			QueryType:         v3.QueryTypeClickHouseSQL,
 			ClickHouseQueries: map[string]*v3.ClickHouseQuery{queryContext: chq},

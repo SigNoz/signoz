@@ -2,9 +2,8 @@ package inframetrics
 
 import (
 	"context"
-	"fmt"
 	"math"
-	"strings"
+	"sort"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"go.signoz.io/signoz/pkg/query-service/common"
@@ -13,6 +12,23 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 	"golang.org/x/exp/slices"
+)
+
+var (
+	queryNamesForTopProcesses = map[string][]string{
+		"cpu":    {"A"},
+		"memory": {"C"},
+	}
+
+	processPIDAttrKey       = "process_pid"
+	metricNamesForProcesses = map[string]string{
+		"cpu":    "process_cpu_time",
+		"memory": "process_memory_usage",
+	}
+	metricToUseForProcessAttributes = "process_memory_usage"
+	processNameAttrKey              = "process_executable_name"
+	processCMDAttrKey               = "process_command"
+	processCMDLineAttrKey           = "process_command_line"
 )
 
 type ProcessesRepo struct {
@@ -64,14 +80,6 @@ func (p *ProcessesRepo) GetProcessAttributeValues(ctx context.Context, req v3.Fi
 	return attributeValuesResponse, nil
 }
 
-func getGroupKeyForProcesses(record model.ProcessListRecord, groupBy []v3.AttributeKey) string {
-	groupKey := ""
-	for _, key := range groupBy {
-		groupKey += fmt.Sprintf("%s=%s,", key.Key, record.Meta[key.Key])
-	}
-	return groupKey
-}
-
 func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 	req model.ProcessListRequest) (map[string]map[string]string, error) {
 	processAttrs := map[string]map[string]string{}
@@ -92,7 +100,7 @@ func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 
 	mq := v3.BuilderQuery{
 		AggregateAttribute: v3.AttributeKey{
-			Key:      "process_memory_usage",
+			Key:      metricToUseForProcessAttributes,
 			DataType: v3.AttributeKeyDataTypeFloat64,
 		},
 		Temporality: v3.Cumulative,
@@ -104,14 +112,7 @@ func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 		return nil, err
 	}
 
-	// TODO(srikanthccv): remove this
-	// What is happening here?
-	// The `PrepareTimeseriesFilterQuery` uses the local time series table for sub-query because each fingerprint
-	// goes to same shard.
-	// However, in this case, we are interested in the attributes values across all the shards.
-	// So, we replace the local time series table with the distributed time series table.
-	// See `PrepareTimeseriesFilterQuery` for more details.
-	query = strings.Replace(query, ".time_series_v4", ".distributed_time_series_v4", 1)
+	query = localQueryToDistributedQuery(query)
 
 	attrsListResponse, err := p.reader.GetListResultV3(ctx, query)
 	if err != nil {
@@ -128,36 +129,108 @@ func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 			}
 		}
 
-		pid := stringData["process_pid"]
-		if _, ok := processAttrs[pid]; !ok {
-			processAttrs[pid] = map[string]string{}
+		processID := stringData[processPIDAttrKey]
+		if _, ok := processAttrs[processID]; !ok {
+			processAttrs[processID] = map[string]string{}
 		}
 
 		for _, key := range req.GroupBy {
-			processAttrs[pid][key.Key] = stringData[key.Key]
+			processAttrs[processID][key.Key] = stringData[key.Key]
 		}
 	}
 
 	return processAttrs, nil
 }
 
+func (p *ProcessesRepo) getTopProcessGroups(ctx context.Context, req model.ProcessListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+	step, timeSeriesTableName, samplesTableName := getParamsForTopProcesses(req)
+
+	queryNames := queryNamesForTopProcesses[req.OrderBy.ColumnName]
+	topProcessGroupsQueryRangeParams := &v3.QueryRangeParamsV3{
+		Start: req.Start,
+		End:   req.End,
+		Step:  step,
+		CompositeQuery: &v3.CompositeQuery{
+			BuilderQueries: map[string]*v3.BuilderQuery{},
+			QueryType:      v3.QueryTypeBuilder,
+			PanelType:      v3.PanelTypeTable,
+		},
+	}
+
+	for _, queryName := range queryNames {
+		query := q.CompositeQuery.BuilderQueries[queryName].Clone()
+		query.StepInterval = step
+		query.MetricTableHints = &v3.MetricTableHints{
+			TimeSeriesTableName: timeSeriesTableName,
+			SamplesTableName:    samplesTableName,
+		}
+		if req.Filters != nil && len(req.Filters.Items) > 0 {
+			query.Filters.Items = append(query.Filters.Items, req.Filters.Items...)
+		}
+		topProcessGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
+	}
+
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, topProcessGroupsQueryRangeParams)
+	if err != nil {
+		return nil, nil, err
+	}
+	formattedResponse, err := postprocess.PostProcessResult(queryResponse, topProcessGroupsQueryRangeParams)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(formattedResponse) == 0 || len(formattedResponse[0].Series) == 0 {
+		return nil, nil, nil
+	}
+
+	if req.OrderBy.Order == v3.DirectionDesc {
+		sort.Slice(formattedResponse[0].Series, func(i, j int) bool {
+			return formattedResponse[0].Series[i].Points[0].Value > formattedResponse[0].Series[j].Points[0].Value
+		})
+	} else {
+		sort.Slice(formattedResponse[0].Series, func(i, j int) bool {
+			return formattedResponse[0].Series[i].Points[0].Value < formattedResponse[0].Series[j].Points[0].Value
+		})
+	}
+
+	limit := math.Min(float64(req.Offset+req.Limit), float64(len(formattedResponse[0].Series)))
+
+	paginatedTopProcessGroupsSeries := formattedResponse[0].Series[req.Offset:int(limit)]
+
+	topProcessGroups := []map[string]string{}
+	for _, series := range paginatedTopProcessGroupsSeries {
+		topProcessGroups = append(topProcessGroups, series.Labels)
+	}
+	allProcessGroups := []map[string]string{}
+	for _, series := range formattedResponse[0].Series {
+		allProcessGroups = append(allProcessGroups, series.Labels)
+	}
+
+	return topProcessGroups, allProcessGroups, nil
+}
+
 func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessListRequest) (model.ProcessListResponse, error) {
+	resp := model.ProcessListResponse{}
 	if req.Limit == 0 {
 		req.Limit = 10
 	}
 
-	resp := model.ProcessListResponse{
-		Type: "list",
+	// default to cpu order by
+	if req.OrderBy == nil {
+		req.OrderBy = &v3.OrderBy{ColumnName: "cpu", Order: v3.DirectionDesc}
 	}
 
-	step := common.MinAllowedStepInterval(req.Start, req.End)
+	// default to process pid group by
+	if len(req.GroupBy) == 0 {
+		req.GroupBy = []v3.AttributeKey{{Key: processPIDAttrKey}}
+		resp.Type = model.ResponseTypeList
+	} else {
+		resp.Type = model.ResponseTypeGroupedList
+	}
+
+	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
 
 	query := ProcessesTableListQuery.Clone()
-	if req.OrderBy != nil {
-		for _, q := range query.CompositeQuery.BuilderQueries {
-			q.OrderBy = []v3.OrderBy{*req.OrderBy}
-		}
-	}
 
 	query.Start = req.Start
 	query.End = req.End
@@ -166,11 +239,9 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessLis
 	for _, query := range query.CompositeQuery.BuilderQueries {
 		query.StepInterval = step
 		if req.Filters != nil && len(req.Filters.Items) > 0 {
-			if query.Filters == nil {
-				query.Filters = &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}}
-			}
 			query.Filters.Items = append(query.Filters.Items, req.Filters.Items...)
 		}
+		query.GroupBy = req.GroupBy
 	}
 
 	processAttrs, err := p.getMetadataAttributes(ctx, req)
@@ -178,157 +249,83 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessLis
 		return resp, err
 	}
 
+	topProcessGroups, allProcessGroups, err := p.getTopProcessGroups(ctx, req, query)
+	if err != nil {
+		return resp, err
+	}
+
+	groupFilters := map[string][]string{}
+	for _, topProcessGroup := range topProcessGroups {
+		for k, v := range topProcessGroup {
+			groupFilters[k] = append(groupFilters[k], v)
+		}
+	}
+
+	for groupKey, groupValues := range groupFilters {
+		hasGroupFilter := false
+		if req.Filters != nil && len(req.Filters.Items) > 0 {
+			for _, filter := range req.Filters.Items {
+				if filter.Key.Key == groupKey {
+					hasGroupFilter = true
+					break
+				}
+			}
+		}
+
+		if !hasGroupFilter {
+			for _, query := range query.CompositeQuery.BuilderQueries {
+				query.Filters.Items = append(query.Filters.Items, v3.FilterItem{
+					Key:      v3.AttributeKey{Key: groupKey},
+					Value:    groupValues,
+					Operator: v3.FilterOperatorIn,
+				})
+			}
+		}
+	}
+
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, query)
 	if err != nil {
 		return resp, err
 	}
-
-	type processTSInfo struct {
-		CpuTimeSeries    *v3.Series `json:"cpu_time_series"`
-		MemoryTimeSeries *v3.Series `json:"memory_time_series"`
-	}
-	processTSInfoMap := map[string]*processTSInfo{}
-
-	for _, result := range queryResponse {
-		for _, series := range result.Series {
-			pid := series.Labels["process_pid"]
-			if _, ok := processTSInfoMap[pid]; !ok {
-				processTSInfoMap[pid] = &processTSInfo{}
-			}
-		}
-	}
-
-	query.FormatForWeb = false
-	query.CompositeQuery.PanelType = v3.PanelTypeGraph
-
-	formulaResult, err := postprocess.PostProcessResult(queryResponse, query)
-	if err != nil {
-		return resp, err
-	}
-
-	for _, result := range formulaResult {
-		for _, series := range result.Series {
-			pid := series.Labels["process_pid"]
-			if _, ok := processTSInfoMap[pid]; !ok {
-				processTSInfoMap[pid] = &processTSInfo{}
-			}
-			loadSeries := *series
-			if result.QueryName == "F1" {
-				processTSInfoMap[pid].CpuTimeSeries = &loadSeries
-			} else if result.QueryName == "C" {
-				processTSInfoMap[pid].MemoryTimeSeries = &loadSeries
-			}
-		}
-	}
-
-	query.FormatForWeb = true
-	query.CompositeQuery.PanelType = v3.PanelTypeTable
 
 	formattedResponse, err := postprocess.PostProcessResult(queryResponse, query)
 	if err != nil {
 		return resp, err
 	}
 
-	if len(formattedResponse) == 0 {
-		return resp, nil
-	}
-
 	records := []model.ProcessListRecord{}
 
-	// there should be only one result in the response
-	processInfo := formattedResponse[0]
+	for _, result := range formattedResponse {
+		for _, row := range result.Table.Rows {
+			record := model.ProcessListRecord{
+				ProcessCPU:    -1,
+				ProcessMemory: -1,
+			}
 
-	for _, row := range processInfo.Table.Rows {
-		record := model.ProcessListRecord{
-			ProcessCPU:    -1,
-			ProcessMemory: -1,
-		}
+			pid, ok := row.Data[processPIDAttrKey].(string)
+			if ok {
+				record.ProcessID = pid
+			}
 
-		pid, ok := row.Data["process_pid"].(string)
-		if ok {
-			record.ProcessID = pid
-		}
+			processCPU, ok := row.Data["F1"].(float64)
+			if ok {
+				record.ProcessCPU = processCPU
+			}
 
-		processCPU, ok := row.Data["F1"].(float64)
-		if ok {
-			record.ProcessCPU = processCPU
+			processMemory, ok := row.Data["C"].(float64)
+			if ok {
+				record.ProcessMemory = processMemory
+			}
+			record.Meta = processAttrs[record.ProcessID]
+			record.ProcessName = record.Meta[processNameAttrKey]
+			record.ProcessCMD = record.Meta[processCMDAttrKey]
+			record.ProcessCMDLine = record.Meta[processCMDLineAttrKey]
+			records = append(records, record)
 		}
-
-		processMemory, ok := row.Data["C"].(float64)
-		if ok {
-			record.ProcessMemory = processMemory
-		}
-		record.Meta = processAttrs[record.ProcessID]
-		if processTSInfoMap[record.ProcessID] != nil {
-			record.ProcessCPUTimeSeries = processTSInfoMap[record.ProcessID].CpuTimeSeries
-			record.ProcessMemoryTimeSeries = processTSInfoMap[record.ProcessID].MemoryTimeSeries
-		}
-		record.ProcessName = record.Meta["process_executable_name"]
-		record.ProcessCMD = record.Meta["process_command"]
-		record.ProcessCMDLine = record.Meta["process_command_line"]
-		records = append(records, record)
 	}
 
-	resp.Total = len(records)
-
-	if req.Offset > 0 {
-		records = records[req.Offset:]
-	}
-	if req.Limit > 0 && len(records) > req.Limit {
-		records = records[:req.Limit]
-	}
+	resp.Total = len(allProcessGroups)
 	resp.Records = records
-
-	if len(req.GroupBy) > 0 {
-		groups := []model.ProcessListGroup{}
-
-		groupMap := make(map[string][]model.ProcessListRecord)
-		for _, record := range records {
-			groupKey := getGroupKeyForProcesses(record, req.GroupBy)
-			if _, ok := groupMap[groupKey]; !ok {
-				groupMap[groupKey] = []model.ProcessListRecord{record}
-			} else {
-				groupMap[groupKey] = append(groupMap[groupKey], record)
-			}
-		}
-
-		for _, records := range groupMap {
-			var avgCPU, avgMemory float64
-			var validCPU, validMemory int
-			for _, record := range records {
-				if !math.IsNaN(record.ProcessCPU) {
-					avgCPU += record.ProcessCPU
-					validCPU++
-				}
-				if !math.IsNaN(record.ProcessMemory) {
-					avgMemory += record.ProcessMemory
-					validMemory++
-				}
-			}
-			avgCPU /= float64(validCPU)
-			avgMemory /= float64(validMemory)
-
-			// take any record and make it as the group meta
-			firstRecord := records[0]
-			var groupValues []string
-			for _, key := range req.GroupBy {
-				groupValues = append(groupValues, firstRecord.Meta[key.Key])
-			}
-			processNames := []string{}
-			for _, record := range records {
-				processNames = append(processNames, record.ProcessName)
-			}
-
-			groups = append(groups, model.ProcessListGroup{
-				GroupValues:    groupValues,
-				GroupCPUAvg:    avgCPU,
-				GroupMemoryAvg: avgMemory,
-				ProcessNames:   processNames,
-			})
-		}
-		resp.Groups = groups
-		resp.Type = "grouped_list"
-	}
 
 	return resp, nil
 }

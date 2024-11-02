@@ -10,6 +10,7 @@ import {
 	ArrowLeft,
 	ArrowRight,
 	CheckCircle,
+	Loader2,
 	Plus,
 	TriangleAlert,
 	X,
@@ -33,6 +34,7 @@ interface TeamMember {
 }
 
 interface InviteTeamMembersProps {
+	isLoading: boolean;
 	teamMembers: TeamMember[] | null;
 	setTeamMembers: (teamMembers: TeamMember[]) => void;
 	onNext: () => void;
@@ -40,6 +42,7 @@ interface InviteTeamMembersProps {
 }
 
 function InviteTeamMembers({
+	isLoading,
 	teamMembers,
 	setTeamMembers,
 	onNext,
@@ -66,8 +69,6 @@ function InviteTeamMembers({
 	>(null);
 
 	const [disableNextButton, setDisableNextButton] = useState<boolean>(false);
-
-	const [allInvitesSent, setAllInvitesSent] = useState<boolean>(false);
 
 	const defaultTeamMember: TeamMember = {
 		email: '',
@@ -157,7 +158,6 @@ function InviteTeamMembers({
 			setError(null);
 			setHasErrors(false);
 			setInviteUsersErrorResponse(null);
-			setAllInvitesSent(true);
 
 			setInviteUsersSuccessResponse(successfulInvites);
 
@@ -358,33 +358,36 @@ function InviteTeamMembers({
 						</div>
 					)}
 
-					{inviteUsersSuccessResponse && (
-						<div className="success-message-container invite-users-success-message-container">
-							{inviteUsersSuccessResponse?.map((success, index) => (
-								<Typography.Text
-									className="success-message"
-									// eslint-disable-next-line react/no-array-index-key
-									key={`${success}-${index}`}
-								>
-									<CheckCircle size={14} /> {success}
-								</Typography.Text>
-							))}
-						</div>
-					)}
-
 					{hasErrors && (
-						<div className="error-message-container invite-users-error-message-container">
-							{inviteUsersErrorResponse?.map((error, index) => (
-								<Typography.Text
-									className="error-message"
-									type="danger"
-									// eslint-disable-next-line react/no-array-index-key
-									key={`${error}-${index}`}
-								>
-									<TriangleAlert size={14} /> {error}
-								</Typography.Text>
-							))}
-						</div>
+						<>
+							{/* show only when invites are sent successfully & partial error is present */}
+							{inviteUsersSuccessResponse && inviteUsersErrorResponse && (
+								<div className="success-message-container invite-users-success-message-container">
+									{inviteUsersSuccessResponse?.map((success, index) => (
+										<Typography.Text
+											className="success-message"
+											// eslint-disable-next-line react/no-array-index-key
+											key={`${success}-${index}`}
+										>
+											<CheckCircle size={14} /> {success}
+										</Typography.Text>
+									))}
+								</div>
+							)}
+
+							<div className="error-message-container invite-users-error-message-container">
+								{inviteUsersErrorResponse?.map((error, index) => (
+									<Typography.Text
+										className="error-message"
+										type="danger"
+										// eslint-disable-next-line react/no-array-index-key
+										key={`${error}-${index}`}
+									>
+										<TriangleAlert size={14} /> {error}
+									</Typography.Text>
+								))}
+							</div>
+						</>
 					)}
 				</div>
 
@@ -413,17 +416,23 @@ function InviteTeamMembers({
 						type="primary"
 						className="next-button"
 						onClick={handleNext}
-						loading={isSendingInvites || disableNextButton}
+						loading={isSendingInvites || isLoading || disableNextButton}
 					>
-						{allInvitesSent ? 'Invites Sent' : 'Send Invites'}
-
-						{allInvitesSent ? <CheckCircle size={14} /> : <ArrowRight size={14} />}
+						Send Invites
+						<ArrowRight size={14} />
 					</Button>
 				</div>
 
 				<div className="do-later-container">
-					<Button type="link" onClick={handleDoLater}>
-						I&apos;ll do this later
+					<Button
+						type="link"
+						className="do-later-button"
+						onClick={handleDoLater}
+						disabled={isSendingInvites || disableNextButton}
+					>
+						{isLoading && <Loader2 className="animate-spin" size={16} />}
+
+						<span>I&apos;ll do this later</span>
 					</Button>
 				</div>
 			</div>

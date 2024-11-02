@@ -37,6 +37,7 @@ import {
 	UPDATE_ORG_PREFERENCES,
 } from 'types/actions/app';
 import AppReducer, { User } from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
 import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
 
 import PrivateRoute from './Private';
@@ -74,7 +75,7 @@ function App(): JSX.Element {
 	const { data: orgPreferences, isLoading: isLoadingOrgPreferences } = useQuery({
 		queryFn: () => getAllOrgPreferences(),
 		queryKey: ['getOrgPreferences'],
-		enabled: isLoggedInState,
+		enabled: isLoggedInState && role === USER_ROLES.ADMIN,
 	});
 
 	useEffect(() => {
@@ -94,6 +95,17 @@ function App(): JSX.Element {
 			});
 		}
 	}, [orgPreferences, dispatch, isLoadingOrgPreferences]);
+
+	useEffect(() => {
+		if (isLoggedInState && role !== USER_ROLES.ADMIN) {
+			dispatch({
+				type: UPDATE_IS_FETCHING_ORG_PREFERENCES,
+				payload: {
+					isFetchingOrgPreferences: false,
+				},
+			});
+		}
+	}, [isLoggedInState, role, dispatch]);
 
 	const featureResponse = useGetFeatureFlag((allFlags) => {
 		dispatch({
