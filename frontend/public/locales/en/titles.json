@@ -10,6 +10,7 @@
 	"GET_STARTED_INFRASTRUCTURE_MONITORING": "SigNoz | Get Started | Infrastructure",
 	"GET_STARTED_AWS_MONITORING": "SigNoz | Get Started | AWS",
 	"GET_STARTED_AZURE_MONITORING": "SigNoz | Get Started | AZURE",
+	"GET_STARTED_V2": "SigNoz | Get Started with SigNoz Cloud",
 	"TRACE": "SigNoz | Trace",
 	"TRACE_DETAIL": "SigNoz | Trace Detail",
 	"TRACES_EXPLORER": "SigNoz | Traces Explorer",

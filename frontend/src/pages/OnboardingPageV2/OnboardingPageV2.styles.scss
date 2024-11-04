@@ -5,7 +5,7 @@
 	&__header {
 		background: rgba(11, 12, 14, 0.7);
 		backdrop-filter: blur(20px);
-		padding: 16px 0px 0px 0px;
+		padding: 16px 0px;
 
 		&--sticky {
 			display: flex;
@@ -411,6 +411,7 @@
 .onboarding-footer {
 	display: flex;
 	gap: 16px;
+	margin-bottom: 16px;
 
 	.ant-btn {
 		width: 120px;
