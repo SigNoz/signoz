@@ -193,7 +193,11 @@ function HostMetricDetail({
 					{selectedView === VIEW_TYPES.CONTAINERS && <Containers />}
 					{selectedView === VIEW_TYPES.PROCESSES && <Processes />}
 					{selectedView === VIEW_TYPES.METRICS && (
-						<Metrics hostName={host.hostName} />
+						<Metrics
+							hostName={host.hostName}
+							timeRange={timeRange}
+							isModalTimeSelection={isModalTimeSelection}
+						/>
 					)}
 					{selectedView === VIEW_TYPES.LOGS && (
 						<HostMetricLogsDetailedView
