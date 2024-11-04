@@ -1,11 +1,7 @@
-import OnboardingAddDataSource from './OnboardingAddDataSource';
+import OnboardingAddDataSource from '../../container/OnboardingV2Container/AddDataSource/AddDataSource';
 
 function OnboardingPageV2(): JSX.Element {
-	return (
-		<div className="onboarding-v2">
-			<OnboardingAddDataSource />
-		</div>
-	);
+	return <OnboardingAddDataSource />;
 }
 
 export default OnboardingPageV2;

@@ -2,7 +2,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import { Avatar, Button, Flex, Input, Typography } from 'antd';
 import React, { useState } from 'react';
 
-import { Question } from './OnboardingAddDataSource'; // Adjust the import path as necessary
+import { Question } from '../AddDataSource/AddDataSource'; // Adjust the import path as necessary
 
 const { Title, Paragraph, Text } = Typography;
 

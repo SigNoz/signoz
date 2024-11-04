@@ -30,7 +30,6 @@ import {
 	MySettings,
 	NewDashboardPage,
 	OldLogsExplorer,
-	Onboarding,
 	OnboardingV2,
 	OrganizationSettings,
 	OrgOnboarding,
@@ -66,7 +65,7 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.GET_STARTED,
 		exact: false,
-		component: Onboarding,
+		component: OnboardingV2,
 		isPrivate: true,
 		key: 'GET_STARTED',
 	},
@@ -76,13 +75,6 @@ const routes: AppRoutes[] = [
 		component: OrgOnboarding,
 		isPrivate: true,
 		key: 'ONBOARDING',
-	},
-	{
-		path: ROUTES.GET_STARTED_V2,
-		exact: false,
-		component: OnboardingV2,
-		isPrivate: true,
-		key: 'GET_STARTED_V2',
 	},
 	{
 		component: LogsIndexToFields,
