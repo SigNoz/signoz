@@ -94,7 +94,7 @@ function OnboardingAddDataSource(): JSX.Element {
 	] = useState<boolean>(false);
 
 	const [docsUrl, setDocsUrl] = useState<string>(
-		'http://localhost:3000/docs/instrumentation/springboot#send-traces-to-signoz-cloud',
+		'https://signoz.io/docs/instrumentation/',
 	);
 
 	const [selectedDataSource, setSelectedDataSource] = useState<Entity | null>(
