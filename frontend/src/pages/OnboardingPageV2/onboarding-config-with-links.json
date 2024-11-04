@@ -4,7 +4,7 @@
 		"entityID": "dataSource",
 		"label": "Java",
 		"id": "java",
-		"imgUrl": "/Logos/java.png",
+		"imgUrl": "/Logos/java.svg",
 		"tags": ["apm"],
 		"question": {
 			"desc": "Which Java framework do you use?",
@@ -14,8 +14,8 @@
 				{
 					"key": "springboot",
 					"label": "Spring Boot",
-					"imgUrl": "/Logos/java.png",
-					"link": "http://localhost:3000/docs/instrumentation/springboot/#send-traces-to-signoz-cloud",
+					"imgUrl": "/Logos/springboot.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -24,20 +24,17 @@
 							{
 								"key": "vm",
 								"label": "VM",
-								"imgUrl": "/Logos/cmd-terminal.svg",
-								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
-								"imgUrl": "/Logos/java.png",
-								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -45,8 +42,8 @@
 				{
 					"key": "tomcat",
 					"label": "Tomcat",
-					"imgUrl": "/Logos/java.png",
-					"link": "http://localhost:3000/docs/instrumentation/tomcat/#send-traces-to-signoz-cloud",
+					"imgUrl": "/Logos/tomcat.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -55,32 +52,17 @@
 							{
 								"key": "vm",
 								"label": "VM",
-								"imgUrl": "/Logos/cmd-terminal.svg",
-								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
-								"imgUrl": "/Logos/java.png",
-								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
-							},
-							{
-								"key": "macos",
-								"label": "MacOS",
-								"imgUrl": "/Logos/java.png",
-								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
-							},
-							{
-								"key": "linux",
-								"label": "Linux",
-								"imgUrl": "/Logos/java.png",
-								"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -88,14 +70,58 @@
 				{
 					"key": "jboss",
 					"label": "JBoss",
-					"imgUrl": "/Logos/java.png",
-					"link": "http://localhost:3000/docs/instrumentation/jboss/#send-traces-to-signoz-cloud"
+					"imgUrl": "/Logos/jboss.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				},
 				{
-					"key": "others",
+					"key": "Others",
 					"label": "Others",
-					"imgUrl": "/Logos/java.png",
-					"link": "http://localhost:3000/docs/instrumentation/java/#send-traces-to-signoz-cloud"
+					"imgUrl": "/Logos/java-others.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				}
 			]
 		}
@@ -103,7 +129,7 @@
 	{
 		"dataSource": "python",
 		"label": "Python",
-		"imgUrl": "/Logos/python.png",
+		"imgUrl": "/Logos/python.svg",
 		"tags": ["apm"],
 		"id": "python",
 		"question": {
@@ -114,26 +140,142 @@
 				{
 					"key": "flask",
 					"label": "Flask",
-					"imgUrl": "/Logos/python.png",
-					"link": "http://localhost:3000/docs/instrumentation/flask/#send-traces-to-signoz-cloud"
+					"imgUrl": "/Logos/flask.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				},
 				{
 					"key": "django",
 					"label": "Django",
-					"imgUrl": "/Logos/python.png",
-					"link": "http://localhost:3000/docs/instrumentation/django/#send-traces-to-signoz-cloud"
+					"imgUrl": "/Logos/django.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				},
 				{
 					"key": "fastapi",
 					"label": "FastAPI",
-					"imgUrl": "/Logos/python.png",
-					"link": "http://localhost:3000/docs/instrumentation/fastapi/#send-traces-to-signoz-cloud"
+					"imgUrl": "/Logos/fastapi.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				},
 				{
 					"key": "falcon",
 					"label": "Falcon",
-					"imgUrl": "/Logos/python.png",
-					"link": "http://localhost:3000/docs/instrumentation/falcon/#send-traces-to-signoz-cloud"
+					"imgUrl": "/Logos/falcon.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
+				},
+				{
+					"key": "others",
+					"label": "Others",
+					"imgUrl": "/Logos/python-others.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				}
 			]
 		}
@@ -143,7 +285,7 @@
 		"label": "JavaScript",
 		"tags": ["apm"],
 		"id": "javascript",
-		"imgUrl": "/Logos/javascript.png",
+		"imgUrl": "/Logos/javascript.svg",
 		"question": {
 			"desc": "Which JavaScript framework do you use?",
 			"type": "select",
@@ -152,32 +294,142 @@
 				{
 					"key": "nodejs",
 					"label": "NodeJs",
-					"imgUrl": "/Logos/node-js.svg",
-					"link": "http://localhost:3000/docs/instrumentation/javascript/#send-traces-to-signoz-cloud"
+					"imgUrl": "/Logos/nodejs.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				},
 				{
 					"key": "express",
 					"label": "Express",
-					"imgUrl": "/Logos/node-js.svg",
-					"link": "http://localhost:3000/docs/instrumentation/express/#send-traces-to-signoz-cloud"
+					"imgUrl": "/Logos/express.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				},
 				{
 					"key": "nestjs",
 					"label": "NestJS",
-					"imgUrl": "/Logos/node-js.svg",
-					"link": "http://localhost:3000/docs/instrumentation/nestjs/#send-traces-to-signoz-cloud"
+					"imgUrl": "/Logos/nestjs.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				},
 				{
 					"key": "angular",
 					"label": "Angular",
-					"imgUrl": "/Logos/node-js.svg",
-					"link": "http://localhost:3000/docs/instrumentation/angular/#send-traces-to-signoz-cloud"
+					"imgUrl": "/Logos/angular.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				},
 				{
 					"key": "nextjs",
 					"label": "NextJS",
-					"imgUrl": "/Logos/node-js.svg",
-					"link": "http://localhost:3000/docs/instrumentation/nextjs/#send-traces-to-signoz-cloud"
+					"imgUrl": "/Logos/nextjs.svg",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
+							}
+						]
+					}
 				}
 			]
 		}
@@ -185,58 +437,212 @@
 	{
 		"dataSource": "golang",
 		"label": "Golang",
-		"imgUrl": "/Logos/go.png",
+		"imgUrl": "/Logos/go.svg",
 		"tags": ["apm"],
 		"id": "golang",
-		"link": "http://localhost:3000/docs/instrumentation/golang/#send-traces-to-signoz-cloud"
+		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "php",
 		"label": "PHP",
-		"imgUrl": "/Logos/php.png",
+		"imgUrl": "/Logos/php.svg",
 		"tags": ["apm"],
 		"id": "php",
-		"link": "http://localhost:3000/docs/instrumentation/php/#send-traces-to-signoz-cloud"
+		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "dotnet",
 		"label": ".NET",
-		"imgUrl": "/Logos/dotnet.png",
+		"imgUrl": "/Logos/dotnet.svg",
 		"tags": ["apm"],
 		"id": "dotnet",
-		"link": "http://localhost:3000/docs/instrumentation/dotnet/#send-traces-to-signoz-cloud"
+		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "ruby-on-rails",
 		"label": "Ruby on Rails",
-		"imgUrl": "/Logos/rails.png",
+		"imgUrl": "/Logos/ruby-on-rails.svg",
 		"tags": ["apm"],
 		"id": "ruby-on-rails",
-		"link": "http://localhost:3000/docs/instrumentation/ruby-on-rails/#send-traces-to-signoz-cloud"
+		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "elixir",
 		"label": "Elixir",
-		"imgUrl": "/Logos/elixir.png",
+		"imgUrl": "/Logos/elixir.svg",
 		"tags": ["apm"],
 		"id": "elixir",
-		"link": "http://localhost:3000/docs/instrumentation/elixir/#send-traces-to-signoz-cloud"
+		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "rust",
 		"label": "Rust",
-		"imgUrl": "/Logos/rust.png",
+		"imgUrl": "/Logos/rust.svg",
 		"tags": ["apm"],
 		"id": "rust",
-		"link": "http://localhost:3000/docs/instrumentation/rust/#send-traces-to-signoz-cloud"
+		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "swift",
 		"label": "Swift",
-		"imgUrl": "/Logos/swift.png",
+		"imgUrl": "/Logos/swift.svg",
 		"tags": ["apm"],
 		"id": "swift",
-		"link": "http://localhost:3000/docs/instrumentation/swift/#send-traces-to-signoz-cloud"
+		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "kubernetes-pod-logs",
@@ -256,42 +662,42 @@
 	{
 		"dataSource": "vercel-logs",
 		"label": "Vercel logs",
-		"imgUrl": "/Logos/vercel.png",
+		"imgUrl": "/Logos/vercel.svg",
 		"tags": ["logs"],
 		"link": "http://localhost:3000/docs/userguide/vercel_logs_to_signoz/#stream-vercel-logs-to-signoz-in-signoz-cloud"
 	},
 	{
 		"dataSource": "heroku-logs",
 		"label": "Heroku logs",
-		"imgUrl": "/Logos/heroku.png",
+		"imgUrl": "/Logos/heroku.svg",
 		"tags": ["logs"],
 		"link": "http://localhost:3000/docs/userguide/heroku_logs_to_signoz/#stream-heroku-logs-to-signoz-in-signoz-cloud"
 	},
 	{
 		"dataSource": "http-logs",
 		"label": "HTTP logs",
-		"imgUrl": "/Logos/http.png",
+		"imgUrl": "/Logos/http.svg",
 		"tags": ["logs"],
 		"link": "http://localhost:3000/docs/userguide/send-logs-http/#send-logs-to-signoz-cloud"
 	},
 	{
 		"dataSource": "syslogs",
 		"label": "Syslogs",
-		"imgUrl": "/Logos/syslog.png",
+		"imgUrl": "/Logos/syslogs.svg",
 		"tags": ["logs"],
 		"link": "http://localhost:3000/docs/userguide/collecting_syslogs/#collect-syslogs-in-signoz-cloud"
 	},
 	{
 		"dataSource": "fluentd",
 		"label": "FluentD",
-		"imgUrl": "/Logos/fluentd.png",
+		"imgUrl": "/Logos/fluentd.svg",
 		"tags": ["logs"],
 		"link": "http://localhost:3000/docs/userguide/fluentd_to_signoz/#collect-logs-using-fluentd-in-signoz-cloud"
 	},
 	{
 		"dataSource": "fluentbit",
 		"label": "FluentBit",
-		"imgUrl": "/Logos/fluent-bit.png",
+		"imgUrl": "/Logos/fluentbit.svg",
 		"tags": ["logs"],
 		"link": "http://localhost:3000/docs/userguide/fluentbit_to_signoz/#collect-logs-using-fluentbit-in-signoz-cloud"
 	},
@@ -305,39 +711,42 @@
 	{
 		"dataSource": "tomcat-logs",
 		"label": "Tomcat logs",
+		"imgUrl": "/Logos/tomcat-logs.svg",
 		"tags": ["logs"],
 		"link": "http://localhost:3000/docs/logs-management/send-logs/collect-tomcat-access-and-garbage-collector-logs/#collect-logs-in-signoz-cloud"
 	},
 	{
 		"dataSource": "vector-logs",
 		"label": "Vector Logs",
+		"imgUrl": "/Logos/vector.svg",
 		"tags": ["logs"],
 		"link": "http://localhost:3000/docs/logs-management/send-logs/vector-logs-to-signoz/#send-logs-from-vector-to-signoz-in-signoz-cloud"
 	},
 	{
 		"dataSource": "windows-events-logs",
 		"label": "Windows Events logs",
+		"imgUrl": "/Logos/windows-events-logs.svg",
 		"tags": ["logs"],
 		"link": "http://localhost:3000/docs/logs-management/send-logs/windows-events-log/#prerequisites"
 	},
 	{
 		"dataSource": "cloudwatch-logs",
 		"label": "Cloudwatch logs",
-		"imgUrl": "/Logos/ec2.svg",
+		"imgUrl": "/Logos/cloudwatch-logs.svg",
 		"tags": ["logs"],
 		"link": "http://localhost:3000/docs/userguide/send-cloudwatch-logs-to-signoz/#setup"
 	},
 	{
 		"dataSource": "nodejs-winston-logs",
 		"label": "NodeJs winston logs",
-		"imgUrl": "/Logos/node-js.svg",
+		"imgUrl": "/Logos/nodejs.svg",
 		"tags": ["logs"],
 		"link": "http://localhost:3000/docs/userguide/send-cloudwatch-logs-to-signoz/#setup"
 	},
 	{
 		"dataSource": "application-logs",
 		"label": "Application Logs",
-		"imgUrl": "/Logos/node-js.svg",
+		"imgUrl": "/Logos/application-logs.svg",
 		"tags": ["logs"],
 		"question": {
 			"desc": "Where do you want to collect your application logs from?",
@@ -346,31 +755,31 @@
 				{
 					"key": "from-log-file",
 					"label": "From log file",
-					"imgUrl": "/Logos/node-js.svg",
+					"imgUrl": "/Logos/from-log-file.svg",
 					"link": "http://localhost:3000/docs/userguide/collect_logs_from_file/#collect-logs-in-signoz-cloud"
 				},
 				{
 					"key": "aws-lambda-nodejs-logs",
 					"label": "AWS Lambda NodeJS logs",
-					"imgUrl": "/Logos/node-js.svg",
+					"imgUrl": "/Logos/lambda.svg",
 					"link": "http://localhost:3000/docs/logs-management/send-logs/aws-lambda-nodejs/"
 				},
 				{
 					"key": "otel-python-sdk",
 					"label": "OTel Python SDK",
-					"imgUrl": "/Logos/python.png",
+					"imgUrl": "/Logos/python.svg",
 					"link": "http://localhost:3000/docs/userguide/collecting_application_logs_otel_sdk_python/"
 				},
 				{
 					"key": "otel-java-sdk",
 					"label": "OTel Java SDK",
-					"imgUrl": "/Logos/java.png",
+					"imgUrl": "/Logos/java.svg",
 					"link": "http://localhost:3000/docs/userguide/collecting_application_logs_otel_sdk_java/#collecting-application-logs-using-otel-java-agent"
 				},
 				{
 					"key": "python-logs-auto-instrumentation",
 					"label": "Python logs auto-instrumentation",
-					"imgUrl": "/Logos/python.png",
+					"imgUrl": "/Logos/python.svg",
 					"link": "http://localhost:3000/docs/userguide/python-logs-auto-instrumentation/#collecting-python-application-logs-using-auto-instrumentation"
 				}
 			]
@@ -387,14 +796,14 @@
 		"dataSource": "hostmetrics",
 		"label": "Hostmetrics",
 		"tags": ["infrastructure monitoring"],
-		"imgUrl": "/Logos/cmd-terminal.svg",
+		"imgUrl": "/Logos/hostmetrics.svg",
 		"link": "http://localhost:3000/docs/userguide/hostmetrics/"
 	},
 	{
 		"dataSource": "other-metrics",
 		"label": "Other Metrics",
 		"tags": ["infrastructure monitoring"],
-		"imgUrl": "/Logos/cmd-terminal.svg",
+		"imgUrl": "/Logos/other-metrics.svg",
 		"link": "http://localhost:3000/docs/userguide/send-metrics-cloud/"
 	},
 	{
@@ -415,49 +824,56 @@
 		"dataSource": "ecs-ec2",
 		"label": "ECS EC2",
 		"tags": ["AWS"],
-		"imgUrl": "/Logos/ec2.svg",
+		"imgUrl": "/Logos/ecs.svg",
 		"link": "http://localhost:3000/docs/userguide/collecting-ecs-logs-and-metrics/"
 	},
 	{
 		"dataSource": "ecs-external",
 		"label": "ECS External",
 		"tags": ["AWS"],
-		"imgUrl": "/Logos/ec2.svg",
+		"imgUrl": "/Logos/ecs.svg",
 		"link": "http://localhost:3000/docs/userguide/collecting-ecs-logs-and-metrics/"
 	},
 	{
 		"dataSource": "ecs-fargate",
 		"label": "ECS Fargate",
 		"tags": ["AWS"],
-		"imgUrl": "/Logos/ec2.svg",
+		"imgUrl": "/Logos/ecs.svg",
 		"link": "http://localhost:3000/docs/userguide/collecting-ecs-sidecar-infra/"
+	},
+	{
+		"dataSource": "eks",
+		"label": "EKS",
+		"tags": ["AWS", "logs"],
+		"imgUrl": "/Logos/eks.svg",
+		"link": "http://localhost:3000/docs/aws-monitoring/rds-logs/"
 	},
 	{
 		"dataSource": "elb-logs",
 		"label": "ELB Logs",
 		"tags": ["AWS", "logs"],
-		"imgUrl": "/Logos/ec2.svg",
+		"imgUrl": "/Logos/elb.svg",
 		"link": "http://localhost:3000/docs/aws-monitoring/elb-logs/"
 	},
 	{
 		"dataSource": "vpc-logs",
 		"label": "VPC Logs",
 		"tags": ["AWS", "logs"],
-		"imgUrl": "/Logos/ec2.svg",
+		"imgUrl": "/Logos/vpc.svg",
 		"link": "http://localhost:3000/docs/aws-monitoring/vpc-logs/"
 	},
 	{
 		"dataSource": "rds-logs",
 		"label": "RDS Logs",
 		"tags": ["AWS", "logs"],
-		"imgUrl": "/Logos/ec2.svg",
+		"imgUrl": "/Logos/rds.svg",
 		"link": "http://localhost:3000/docs/aws-monitoring/rds-logs/"
 	},
 	{
 		"dataSource": "aws-lambda",
 		"label": "Lambda Logs",
 		"tags": ["AWS", "logs"],
-		"imgUrl": "/Logos/ec2.svg",
+		"imgUrl": "/Logos/lambda.svg",
 		"link": "http://localhost:3000/docs/aws-monitoring/lambda-logs/"
 	},
 	{
@@ -478,21 +894,21 @@
 		"dataSource": "aks",
 		"label": "Azure Kubernetes Service",
 		"tags": ["Azure"],
-		"imgUrl": "/Logos/azure-vm.svg",
+		"imgUrl": "/Logos/azure-app-service.svg",
 		"link": "http://localhost:3000/docs/azure-monitoring/aks/"
 	},
 	{
 		"dataSource": "azure-container-apps",
 		"label": "Container Apps",
 		"tags": ["Azure"],
-		"imgUrl": "/Logos/azure-vm.svg",
+		"imgUrl": "/Logos/azure-container-apps.svg",
 		"link": "http://localhost:3000/docs/azure-monitoring/az-container-app/"
 	},
 	{
 		"dataSource": "azure-functions",
 		"label": "Azure Functions",
 		"tags": ["Azure"],
-		"imgUrl": "/Logos/azure-vm.svg",
+		"imgUrl": "/Logos/azure-functions.svg",
 		"link": "http://localhost:3000/docs/azure-monitoring/az-fns/"
 	},
 	{
@@ -513,92 +929,105 @@
 		"dataSource": "cloud-functions",
 		"label": "GCP Cloud functions",
 		"tags": ["GCP"],
-		"imgUrl": "/Logos/software-window.svg",
+		"imgUrl": "/Logos/gcp-cloud-functions.svg",
 		"link": "http://localhost:3000/docs/gcp-monitoring/gcp-fns/"
 	},
 	{
 		"dataSource": "app-engine",
 		"label": "GCP App Engine",
 		"tags": ["GCP"],
-		"imgUrl": "/Logos/software-window.svg",
+		"imgUrl": "/Logos/gcp-app-engine.svg",
 		"link": "http://localhost:3000/docs/gcp-monitoring/app-engine/"
 	},
 	{
 		"dataSource": "compute-engine",
 		"label": "GCP Compute Engine",
+		"imgUrl": "/Logos/gcp-compute-engine.svg",
 		"tags": ["GCP"],
 		"link": "http://localhost:3000/docs/gcp-monitoring/compute-engine/"
 	},
 	{
 		"dataSource": "cloud-storage",
 		"label": "GCP Cloud Storage",
+		"imgUrl": "/Logos/gcp-cloud-storage.svg",
 		"tags": ["GCP"],
 		"link": "http://localhost:3000/docs/gcp-monitoring/gcs/"
 	},
 	{
 		"dataSource": "cloud-sql",
 		"label": "GCP Cloud SQL",
+		"imgUrl": "/Logos/gcp-cloud-sql.svg",
 		"tags": ["GCP"],
 		"link": "http://localhost:3000/docs/gcp-monitoring/cloud-sql/"
 	},
 	{
-		"dataSource": "cloud-load-balance",
+		"dataSource": "cloud-load-balancer",
 		"label": "GCP Cloud Load Balancer",
+		"imgUrl": "/Logos/gcp-load-balancer.svg",
 		"tags": ["GCP"],
 		"link": "http://localhost:3000/docs/gcp-monitoring/gcp-clb/"
 	},
 	{
 		"dataSource": "vpc",
 		"label": "GCP VPC",
+		"imgUrl": "/Logos/gcp-vpc.svg",
 		"tags": ["GCP"],
 		"link": "http://localhost:3000/docs/gcp-monitoring/vpc/"
 	},
 	{
 		"dataSource": "gke",
 		"label": "Google Kubernetes Engine",
+		"imgUrl": "/Logos/gcp-gke.svg",
 		"tags": ["GCP"],
 		"link": "http://localhost:3000/docs/gcp-monitoring/gke/"
 	},
 	{
 		"dataSource": "cloud-run",
 		"label": "GCP Cloud Run",
+		"imgUrl": "/Logos/gcp-cloud-run.svg",
 		"tags": ["GCP"],
 		"link": "http://localhost:3000/docs/gcp-monitoring/cloud-run/"
 	},
 	{
 		"dataSource": "cloud-monitoring",
 		"label": "GCP Cloud Monitoring",
+		"imgUrl": "/Logos/gcp-cloud-monitoring.svg",
 		"tags": ["GCP"],
 		"link": "http://localhost:3000/docs/gcp-monitoring/cloud-monitoring/"
 	},
 	{
 		"dataSource": "llm-monitoring",
 		"label": "LLM Monitoring",
+		"imgUrl": "/Logos/llm-monitoring.svg",
 		"tags": ["LLM Monitoring"],
 		"link": "http://localhost:3000/docs/community/llm-monitoring/"
 	},
 	{
 		"dataSource": "android-java",
 		"label": "Android Java",
+		"imgUrl": "/Logos/android-java-monitoring.svg",
 		"tags": ["mobile app monitoring"],
-		"link": "https://example.com"
+		"link": "http://localhost:3000/instrumentation/mobile-instrumentation/opentelemetry-java/"
 	},
 	{
 		"dataSource": "android-kotlin",
 		"label": "Android Kotlin",
+		"imgUrl": "/Logos/android-kotlin-monitoring.svg",
 		"tags": ["mobile app monitoring"],
-		"link": "https://example.com"
+		"link": "http://localhost:3000/instrumentation/mobile-instrumentation/opentelemetry-kotlin/"
 	},
 	{
 		"dataSource": "flutter",
 		"label": "Flutter",
+		"imgUrl": "/Logos/flutter-monitoring.svg",
 		"tags": ["mobile app monitoring"],
-		"link": "https://example.com"
+		"link": "http://localhost:3000/instrumentation/mobile-instrumentation/opentelemetry-flutter/"
 	},
 	{
 		"dataSource": "swift",
 		"label": "iOS Swift",
+		"imgUrl": "/Logos/swift-monitoring.svg",
 		"tags": ["mobile app monitoring"],
-		"link": "https://example.com"
+		"link": "http://localhost:3000/instrumentation/mobile-instrumentation/opentelemetry-swiftui/"
 	}
 ]
