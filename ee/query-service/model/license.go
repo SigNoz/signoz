@@ -132,6 +132,8 @@ type LicenseV3 struct {
 	User       LicenseUserResModel  `json:"user"`
 	Plan       PlanResModel         `json:"plan"`
 	Features   basemodel.FeatureSet `json:"features"`
+	// used only for sending details to front-end
+	IsCurrent bool `json:"isCurrent"`
 }
 
 func (l *LicenseV3) ParseFeaturesV3() {

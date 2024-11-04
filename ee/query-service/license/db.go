@@ -49,6 +49,32 @@ func (r *Repo) GetLicenses(ctx context.Context) ([]model.License, error) {
 	return licenses, nil
 }
 
+func (r *Repo) GetLicensesV3(ctx context.Context) ([]model.LicenseV3, error) {
+	licensesData := []string{}
+
+	query := "SELECT data FROM licenses_v3"
+
+	err := r.db.Select(&licensesData, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get licenses from db: %v", err)
+	}
+
+	licenses := []model.LicenseV3{}
+
+	for _, l := range licensesData {
+		var license model.LicenseV3
+
+		err = json.Unmarshal([]byte(l), &license)
+		if err != nil {
+			return nil, basemodel.InternalError(fmt.Errorf("failed to unmarshal licenses from db: %v", err))
+		}
+
+		licenses = append(licenses, license)
+	}
+
+	return licenses, nil
+}
+
 // GetActiveLicense fetches the latest active license from DB.
 // If the license is not present, expect a nil license and a nil error in the output.
 func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel.ApiError) {

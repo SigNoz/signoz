@@ -89,7 +89,14 @@ func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) listLicensesV3(w http.ResponseWriter, r *http.Request) {
-	// return the licenses from DB here!
+	licenses, apiError := ah.LM().GetLicensesV3(r.Context())
+
+	if apiError != nil {
+		RespondError(w, apiError, nil)
+		return
+	}
+
+	ah.Respond(w, licenses)
 }
 
 // this function is called by zeus when inserting licenses in the query-service

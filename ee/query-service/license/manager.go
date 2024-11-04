@@ -219,6 +219,27 @@ func (lm *Manager) GetLicenses(ctx context.Context) (response []model.License, a
 	return
 }
 
+func (lm *Manager) GetLicensesV3(ctx context.Context) (response []model.LicenseV3, apiError *model.ApiError) {
+
+	licenses, err := lm.repo.GetLicensesV3(ctx)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	for _, l := range licenses {
+
+		l.ParseFeaturesV3()
+
+		if lm.activeLicenseV3 != nil && l.Key == lm.activeLicenseV3.Key {
+			l.IsCurrent = true
+		}
+
+		response = append(response, l)
+	}
+
+	return
+}
+
 // Validator validates license after an epoch of time
 func (lm *Manager) Validator(ctx context.Context) {
 	defer close(lm.terminated)
