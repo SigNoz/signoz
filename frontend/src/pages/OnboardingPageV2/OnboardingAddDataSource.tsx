@@ -277,6 +277,7 @@ function OnboardingAddDataSource(): JSX.Element {
 					...setupStepItemsBase[1],
 					description: `${selectedDataSource?.label} ${
 						selectedFramework?.label ? `- ${selectedFramework?.label}` : ''
+						// eslint-disable-next-line sonarjs/no-nested-template-literals
 					} ${selectedEnvironment?.label ? `- ${selectedEnvironment?.label}` : ''}`,
 				},
 				...setupStepItemsBase.slice(2),
@@ -366,13 +367,12 @@ function OnboardingAddDataSource(): JSX.Element {
 																type="primary"
 																onClick={(): void => handleSelectDataSource(dataSource)}
 															>
-																{/* {dataSource.imgUrl && ( */}
 																<img
-																	src={dataSource.imgUrl || '/Logos/signoz-brand-logo-new.svg'}
+																	src={dataSource.imgUrl}
 																	alt={dataSource.label}
 																	className="onboarding-data-source-button-img"
 																/>
-																{/* )} */}
+
 																{dataSource.label}
 															</Button>
 														))}
