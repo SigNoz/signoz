@@ -132,9 +132,9 @@ function SideNav(): JSX.Element {
 			menuLabel: 'Get Started',
 		});
 		if (isCtrlMetaKey(event)) {
-			openInNewTab('/get-started');
+			openInNewTab(ROUTES.GET_STARTED);
 		} else {
-			history.push(`/get-started`);
+			history.push(ROUTES.GET_STARTED);
 		}
 	};
 
