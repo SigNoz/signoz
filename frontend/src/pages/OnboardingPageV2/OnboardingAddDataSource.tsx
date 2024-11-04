@@ -66,9 +66,6 @@ const setupStepItemsBase = [
 	{
 		title: 'Configure Your Product',
 	},
-	{
-		title: 'Preview',
-	},
 ];
 
 function OnboardingAddDataSource(): JSX.Element {
