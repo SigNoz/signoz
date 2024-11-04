@@ -27,7 +27,6 @@ export async function GetMetricQueryRange(
 	isInfraMonitoring?: boolean,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
-	console.log('Query Payload:', props);
 	const response = await getMetricsQueryRange(
 		queryPayload,
 		version || 'v3',
