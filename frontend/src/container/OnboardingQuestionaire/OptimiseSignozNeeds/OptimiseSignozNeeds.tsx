@@ -314,7 +314,7 @@ function OptimiseSignozNeeds({
 
 				<div className="do-later-container">
 					<Button type="link" onClick={handleWillDoLater}>
-						Skip for now
+						I&apos;ll do this later
 					</Button>
 				</div>
 			</div>
