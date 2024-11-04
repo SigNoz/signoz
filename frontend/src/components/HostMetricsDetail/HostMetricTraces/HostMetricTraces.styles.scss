@@ -1,0 +1,30 @@
+.host-metric-traces {
+    .ant-table {
+        background: #121212;
+        color: #fff;
+
+        .ant-table-thead>tr>th {
+            background: #121212;
+            color: #fff;
+            border-bottom: 1px solid #303030;
+        }
+
+        .ant-table-tbody>tr>td {
+            background: #121212;
+            color: #fff;
+            border-bottom: 1px solid #303030;
+        }
+
+        .ant-table-tbody>tr:hover>td {
+            background: #1a1a1a;
+        }
+    }
+
+    .duration-cell {
+        display: inline-block;
+        padding: 2px 8px;
+        background: #d64937;
+        border-radius: 4px;
+        color: #fff;
+    }
+}

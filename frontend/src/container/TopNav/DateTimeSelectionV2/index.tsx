@@ -68,6 +68,8 @@ function DateTimeSelection({
 	showResetButton = false,
 	showOldExplorerCTA = false,
 	defaultRelativeTime = RelativeTimeMap['6hr'] as Time,
+	isModalTimeSelection = false,
+	onTimeChange,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
@@ -210,14 +212,14 @@ function DateTimeSelection({
 	};
 
 	useEffect(() => {
-		if (selectedTime === 'custom') {
+		if (selectedTime === 'custom' || isModalTimeSelection) {
 			setRefreshButtonHidden(true);
 			setCustomDTPickerVisible(true);
 		} else {
 			setRefreshButtonHidden(false);
 			setCustomDTPickerVisible(false);
 		}
-	}, [selectedTime]);
+	}, [selectedTime, isModalTimeSelection]);
 
 	const getDefaultTime = (pathName: string): Time => {
 		const defaultSelectedOption = getDefaultOption(pathName);
@@ -306,6 +308,10 @@ function DateTimeSelection({
 
 	const onSelectHandler = useCallback(
 		(value: Time | CustomTimeType): void => {
+			if (isModalTimeSelection) {
+				onTimeChange?.(value);
+				return;
+			}
 			if (value !== 'custom') {
 				setIsOpen(false);
 				updateTimeInterval(value);
@@ -345,7 +351,9 @@ function DateTimeSelection({
 		[
 			initQueryBuilderData,
 			isLogsExplorerPage,
+			isModalTimeSelection,
 			location.pathname,
+			onTimeChange,
 			refreshButtonHidden,
 			stagedQuery,
 			updateLocalStorageForRoutes,
@@ -367,6 +375,13 @@ function DateTimeSelection({
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
+			if (isModalTimeSelection) {
+				onTimeChange?.(selectedTime, [
+					startTimeMoment?.toDate().getTime() || 0,
+					endTimeMoment?.toDate().getTime() || 0,
+				]);
+				return;
+			}
 			if (startTimeMoment && endTimeMoment) {
 				const startTime = startTimeMoment;
 				const endTime = endTimeMoment;
@@ -397,6 +412,10 @@ function DateTimeSelection({
 	};
 
 	const onValidCustomDateHandler = (dateTimeStr: CustomTimeType): void => {
+		if (isModalTimeSelection) {
+			onTimeChange?.(dateTimeStr);
+			return;
+		}
 		setIsOpen(false);
 		updateTimeInterval(dateTimeStr);
 		updateLocalStorageForRoutes(dateTimeStr);
@@ -722,6 +741,11 @@ interface DateTimeSelectionV2Props {
 	showOldExplorerCTA?: boolean;
 	showResetButton?: boolean;
 	defaultRelativeTime?: Time;
+	isModalTimeSelection?: boolean;
+	onTimeChange?: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	) => void;
 }
 
 DateTimeSelection.defaultProps = {
@@ -730,6 +754,8 @@ DateTimeSelection.defaultProps = {
 	showRefreshText: true,
 	showResetButton: false,
 	defaultRelativeTime: RelativeTimeMap['6hr'] as Time,
+	isModalTimeSelection: false,
+	onTimeChange: (): void => {},
 };
 interface DispatchProps {
 	updateTimeInterval: (
@@ -741,8 +767,20 @@ interface DispatchProps {
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+	{ isModalTimeSelection }: DateTimeSelectionV2Props,
 ): DispatchProps => ({
-	updateTimeInterval: bindActionCreators(UpdateTimeInterval, dispatch),
+	updateTimeInterval: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	): ((dispatch: Dispatch<AppActions>) => void) => {
+		if (!isModalTimeSelection) {
+			return bindActionCreators(UpdateTimeInterval, dispatch)(
+				interval,
+				dateTimeRange,
+			);
+		}
+		return (): void => {};
+	},
 	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 });
 
