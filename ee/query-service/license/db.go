@@ -295,8 +295,8 @@ func (r *Repo) UpdateLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 	)
 
 	if err != nil {
-		zap.L().Error("error in inserting license data: ", zap.Error(err))
-		return fmt.Errorf("failed to insert license in db: %v", err)
+		zap.L().Error("error in updating license data: ", zap.Error(err))
+		return fmt.Errorf("failed to update license in db: %v", err)
 	}
 
 	return nil
