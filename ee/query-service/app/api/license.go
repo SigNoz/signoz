@@ -92,6 +92,7 @@ func (ah *APIHandler) listLicensesV3(w http.ResponseWriter, r *http.Request) {
 	// return the licenses from DB here!
 }
 
+// this function is called by zeus when inserting licenses in the query-service
 func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
 	var license model.LicenseV3
 

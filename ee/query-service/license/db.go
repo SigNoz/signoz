@@ -93,13 +93,15 @@ func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3, *basem
 
 	var active *model.LicenseV3
 	for _, l := range licensesString {
-
 		license := model.LicenseV3{}
 
 		err = json.Unmarshal([]byte(l), &license)
 		if err != nil {
 			return nil, basemodel.InternalError(fmt.Errorf("failed to unmarshal licenses from db: %v", err))
 		}
+
+		// insert all the features to the license based on the plan!
+		license.ParseFeaturesV3()
 
 		if active == nil &&
 			(license.ValidFrom != 0) &&
@@ -252,6 +254,7 @@ func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 						(id, key, data) 
 						VALUES ($1, $2, $3)`
 
+	// licsense is the entity of zeus so putting the entire license here without defining schema
 	license, err := json.Marshal(l)
 	if err != nil {
 		return fmt.Errorf("insert license failed: license marshal error")
@@ -278,6 +281,7 @@ func (r *Repo) UpdateLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 		return fmt.Errorf("update license failed: license key is required")
 	}
 
+	// the key and id for the license can't change so only update the data here!
 	query := `UPDATE licenses_v3 SET data=$1 WHERE id=$2;`
 
 	license, err := json.Marshal(l)

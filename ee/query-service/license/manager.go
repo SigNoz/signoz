@@ -345,19 +345,18 @@ func (lm *Manager) RefreshLicense(ctx context.Context, license *model.LicenseV3)
 		return nil, model.BadRequest(errors.Wrap(err, "failed to marshal the new refresh license"))
 	}
 
+	// license hasn't changed, nothing to do
 	if string(currentLicense) == string(newLicense) {
-		// license hasn't changed, nothing to do
 		return nil, nil
 	}
 
+	// case - license has been updated!
 	if string(newLicense) != "" {
-
-		license.ParseFeaturesV3()
 		err = lm.repo.UpdateLicenseV3(ctx, license)
 		if err != nil {
 			return nil, model.BadRequest(errors.Wrap(err, "failed to update the new license"))
 		}
-
+		license.ParseFeaturesV3()
 		lm.SetActiveV3(license)
 	}
 
@@ -451,13 +450,15 @@ func (lm *Manager) ActivateV3(ctx context.Context, license *model.LicenseV3) (li
 		}
 	}()
 
-	license.ParseFeaturesV3()
-
+	// insert the new license to the sqlite db
 	err := lm.repo.InsertLicenseV3(ctx, license)
 	if err != nil {
 		zap.L().Error("failed to activate license", zap.Error(err))
 		return nil, model.InternalError(err)
 	}
+
+	// update the features array for the license based on the plan along with other features sent by zeus!
+	license.ParseFeaturesV3()
 
 	// license is valid, activate it
 	lm.SetActiveV3(license)
