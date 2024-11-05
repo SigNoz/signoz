@@ -104,23 +104,51 @@ type SubscriptionServerResp struct {
 	Status string   `json:"status"`
 	Data   Licenses `json:"data"`
 }
-
-// ID and Key are the constant fields where as the entire entity can change based on decisions in control plane!
 type LicenseV3 struct {
-	ID   string                 `json:"id"`
-	Key  string                 `json:"key"`
-	Data map[string]interface{} `json:"data"`
+	ID        string                 `json:"id"`
+	Key       string                 `json:"key"`
+	Data      map[string]interface{} `json:"data"`
+	Features  basemodel.FeatureSet   `json:"features"`
+	IsCurrent bool                   `json:"isCurrent"`
 }
 
-type LicenseV3Aggreagate struct {
-	License   LicenseV3            `json:"license"`
-	Features  basemodel.FeatureSet `json:"features"`
-	IsCurrent bool                 `json:"isCurrent"`
+func NewLicenseV3(data map[string]interface{}) *LicenseV3 {
+	var licenseID, licenseKey string
+	var licenseData = data
+
+	// extract id from data
+	if _licenseId, ok := data["id"]; ok {
+		if licenseId, ok := _licenseId.(string); ok {
+			licenseID = licenseId
+		}
+		// if id is present then delete id from licenseData field
+		delete(licenseData, "id")
+	}
+
+	// extract key from data
+	if _licenseKey, ok := data["key"]; ok {
+		if licenseKey, ok := _licenseKey.(string); ok {
+			licenseID = licenseKey
+		}
+		// if key is present then delete id from licenseData field
+		delete(licenseData, "key")
+	}
+
+	l := &LicenseV3{
+		ID:   licenseID,
+		Key:  licenseKey,
+		Data: licenseData,
+	}
+	// parse the features here!
+	l.ParseFeaturesV3()
+
+	return l
+
 }
 
-func (l *LicenseV3Aggreagate) ParseFeaturesV3() {
+func (l *LicenseV3) ParseFeaturesV3() {
 	var planKey string
-	if _plan, ok := l.License.Data["plan"]; ok {
+	if _plan, ok := l.Data["plan"]; ok {
 		if plan, ok := _plan.(map[string]interface{}); ok {
 			if _planName, ok := plan["name"]; ok {
 				if planName, ok := _planName.(string); ok {
@@ -133,7 +161,7 @@ func (l *LicenseV3Aggreagate) ParseFeaturesV3() {
 	}
 
 	featuresFromZeus := new(basemodel.FeatureSet)
-	if features, ok := l.License.Data["features"]; ok {
+	if features, ok := l.Data["features"]; ok {
 		if val, ok := features.(basemodel.FeatureSet); ok {
 			featuresFromZeus = &val
 		}
@@ -149,8 +177,4 @@ func (l *LicenseV3Aggreagate) ParseFeaturesV3() {
 	default:
 		l.Features = append(l.Features, BasicPlan...)
 	}
-}
-
-type RefreshLicensesV3 struct {
-	LicenseKey string `json:"licenseKey"`
 }

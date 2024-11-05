@@ -59,6 +59,10 @@ type billingDetails struct {
 	} `json:"data"`
 }
 
+type ApplyLicenseRequest struct {
+	LicenseKey string `json:"key"`
+}
+
 func (ah *APIHandler) listLicenses(w http.ResponseWriter, r *http.Request) {
 	licenses, apiError := ah.LM().GetLicenses(context.Background())
 	if apiError != nil {
@@ -101,24 +105,19 @@ func (ah *APIHandler) listLicensesV3(w http.ResponseWriter, r *http.Request) {
 
 // this function is called by zeus when inserting licenses in the query-service
 func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
-	var license model.LicenseV3
+	var licenseKey ApplyLicenseRequest
 
-	if err := json.NewDecoder(r.Body).Decode(&license); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&licenseKey); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	if license.Key == "" {
+	if licenseKey.LicenseKey == "" {
 		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
 		return
 	}
 
-	if license.ID == "" {
-		RespondError(w, model.BadRequest(fmt.Errorf("license id is required")), nil)
-		return
-	}
-
-	l, apiError := ah.LM().ActivateV3(r.Context(), &license)
+	l, apiError := ah.LM().ActivateV3(r.Context(), licenseKey.LicenseKey)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -128,19 +127,8 @@ func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) refreshLicensesV3(w http.ResponseWriter, r *http.Request) {
-	var license model.RefreshLicensesV3
 
-	if err := json.NewDecoder(r.Body).Decode(&license); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	if license.LicenseKey == "" {
-		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
-		return
-	}
-
-	apiError := ah.LM().RefreshLicense(r.Context(), license.LicenseKey)
+	apiError := ah.LM().RefreshLicense(r.Context())
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return

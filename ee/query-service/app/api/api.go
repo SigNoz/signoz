@@ -180,7 +180,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 
 	// v3
 	router.HandleFunc("/api/v3/licenses",
-		am.AdminAccess(ah.listLicensesV3)).
+		am.ViewAccess(ah.listLicensesV3)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v3/licenses",

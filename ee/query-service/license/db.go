@@ -52,7 +52,7 @@ func (r *Repo) GetLicenses(ctx context.Context) ([]model.License, error) {
 func (r *Repo) GetLicensesV3(ctx context.Context) ([]model.LicenseV3, error) {
 	licensesData := []model.LicenseV3{}
 
-	query := "SELECT id,key,data FROM licenses_v3"
+	query := "SELECT id,data FROM licenses_v3"
 
 	err := r.db.Select(&licensesData, query)
 	if err != nil {
@@ -93,7 +93,7 @@ func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel
 	return active, nil
 }
 
-func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3Aggreagate, *basemodel.ApiError) {
+func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3, *basemodel.ApiError) {
 	var err error
 	licenses := []model.LicenseV3{}
 
@@ -104,31 +104,28 @@ func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3Aggreaga
 		return nil, basemodel.InternalError(fmt.Errorf("failed to get active licenses from db: %v", err))
 	}
 
-	var active *model.LicenseV3Aggreagate
+	var active *model.LicenseV3
 	for _, l := range licenses {
-		license := model.LicenseV3Aggreagate{
-			License: l,
-		}
 		// insert all the features to the license based on the plan!
-		license.ParseFeaturesV3()
+		l.ParseFeaturesV3()
 
 		var validFrom, validUntil, activeLicenseValidFrom int64
 
-		if _value, ok := license.License.Data["valid_from"]; ok {
+		if _value, ok := l.Data["valid_from"]; ok {
 			if val, ok := _value.(int64); ok {
 				validFrom = val
 			}
 		}
 
 		if active != nil {
-			if _value, ok := active.License.Data["valid_from"]; ok {
+			if _value, ok := active.Data["valid_from"]; ok {
 				if val, ok := _value.(int64); ok {
 					activeLicenseValidFrom = val
 				}
 			}
 		}
 
-		if _value, ok := license.License.Data["valid_until"]; ok {
+		if _value, ok := l.Data["valid_until"]; ok {
 			if val, ok := _value.(int64); ok {
 				validUntil = val
 			}
@@ -137,12 +134,12 @@ func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3Aggreaga
 		if active == nil &&
 			(validFrom != 0) &&
 			(validUntil == -1 || validUntil > time.Now().Unix()) {
-			active = &license
+			active = &l
 		}
 		if active != nil &&
 			validFrom > activeLicenseValidFrom &&
 			(validUntil == -1 || validUntil > time.Now().Unix()) {
-			active = &license
+			active = &l
 		}
 	}
 
