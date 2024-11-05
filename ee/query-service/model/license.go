@@ -105,11 +105,13 @@ type SubscriptionServerResp struct {
 	Data   Licenses `json:"data"`
 }
 
+// ID and Key are the constant fields where as the entire entity can change based on decisions in control plane!
 type LicenseV3 struct {
 	ID   string                 `json:"id"`
 	Key  string                 `json:"key"`
 	Data map[string]interface{} `json:"data"`
 }
+
 type LicenseV3Aggreagate struct {
 	License   LicenseV3            `json:"license"`
 	Features  basemodel.FeatureSet `json:"features"`
@@ -118,15 +120,20 @@ type LicenseV3Aggreagate struct {
 
 func (l *LicenseV3Aggreagate) ParseFeaturesV3() {
 	var planKey string
-	if plan, ok := l.License.Data["plan"]; ok {
-		if planName, ok := plan.(map[string]interface{})["name"]; ok {
-			planKey = planName.(string)
+	if _plan, ok := l.License.Data["plan"]; ok {
+		if plan, ok := _plan.(map[string]interface{}); ok {
+			if _planName, ok := plan["name"]; ok {
+				if planName, ok := _planName.(string); ok {
+					planKey = planName
+				}
+
+			}
 		}
+
 	}
 
 	featuresFromZeus := new(basemodel.FeatureSet)
 	if features, ok := l.License.Data["features"]; ok {
-
 		if val, ok := features.(basemodel.FeatureSet); ok {
 			featuresFromZeus = &val
 		}

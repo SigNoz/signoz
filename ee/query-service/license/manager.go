@@ -357,7 +357,8 @@ func (lm *Manager) Validate(ctx context.Context) (reterr error) {
 	return nil
 }
 
-func (lm *Manager) RefreshLicense(ctx context.Context, licenseID string) *model.ApiError {
+// todo[vikrantgupta25]: check the comparison here between old and new license!
+func (lm *Manager) RefreshLicense(ctx context.Context, licenseKey string) *model.ApiError {
 	currentLicense, err := json.Marshal(lm.activeLicenseV3.License.Data)
 	if err != nil {
 		return model.BadRequest(errors.Wrap(err, "failed to marshal the current license"))

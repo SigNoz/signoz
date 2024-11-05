@@ -293,6 +293,7 @@ func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 	if err != nil {
 		return fmt.Errorf("insert license failed: license marshal error")
 	}
+
 	_, err = r.db.ExecContext(ctx,
 		query,
 		l.ID,
@@ -311,14 +312,14 @@ func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 // UpdateLicenseV3 updates a new license v3 in db
 func (r *Repo) UpdateLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 
-	if l.Key == "" {
-		return fmt.Errorf("update license failed: license key is required")
+	if l.ID == "" {
+		return fmt.Errorf("update license failed: license id is required")
 	}
 
 	// the key and id for the license can't change so only update the data here!
 	query := `UPDATE licenses_v3 SET data=$1 WHERE id=$2;`
 
-	license, err := json.Marshal(l)
+	license, err := json.Marshal(l.Data)
 	if err != nil {
 		return fmt.Errorf("insert license failed: license marshal error")
 	}
