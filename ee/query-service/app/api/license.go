@@ -9,6 +9,7 @@ import (
 
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
+	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
@@ -63,6 +64,30 @@ type ApplyLicenseRequest struct {
 	LicenseKey string `json:"key"`
 }
 
+type ListLicenseResponse struct {
+	ID        string                 `json:"id"`
+	Data      map[string]interface{} `json:"data"`
+	Features  basemodel.FeatureSet   `json:"features"`
+	Plan      model.Plan             `json:"plan"`
+	IsCurrent bool                   `json:"isCurrent"`
+}
+
+func convertLicenseV3ToListLicenseResponse(licensesV3 []model.LicenseV3) []ListLicenseResponse {
+	listLicenses := []ListLicenseResponse{}
+
+	for _, license := range licensesV3 {
+		listLicense := ListLicenseResponse{
+			ID:        license.ID,
+			Data:      license.Data,
+			Features:  license.Features,
+			Plan:      license.Plan,
+			IsCurrent: license.IsCurrent,
+		}
+		listLicenses = append(listLicenses, listLicense)
+	}
+	return listLicenses
+}
+
 func (ah *APIHandler) listLicenses(w http.ResponseWriter, r *http.Request) {
 	licenses, apiError := ah.LM().GetLicenses(context.Background())
 	if apiError != nil {
@@ -100,7 +125,7 @@ func (ah *APIHandler) listLicensesV3(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ah.Respond(w, licenses)
+	ah.Respond(w, convertLicenseV3ToListLicenseResponse(licenses))
 }
 
 // this function is called by zeus when inserting licenses in the query-service

@@ -50,16 +50,25 @@ func (r *Repo) GetLicenses(ctx context.Context) ([]model.License, error) {
 }
 
 func (r *Repo) GetLicensesV3(ctx context.Context) ([]model.LicenseV3, error) {
-	licensesData := []model.LicenseV3{}
+	licensesData := []model.LicenseDB{}
+	licenseV3Data := []model.LicenseV3{}
 
-	query := "SELECT id,data FROM licenses_v3"
+	query := "SELECT id,key,data FROM licenses_v3"
 
 	err := r.db.Select(&licensesData, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get licenses from db: %v", err)
 	}
 
-	return licensesData, nil
+	for _, l := range licensesData {
+		license, err := model.NewLicenseV3WithIDAndKey(l.ID, l.Key, l.Data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get licenses v3 schema : %v", err)
+		}
+		licenseV3Data = append(licenseV3Data, *license)
+	}
+
+	return licenseV3Data, nil
 }
 
 // GetActiveLicense fetches the latest active license from DB.
@@ -93,9 +102,9 @@ func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel
 	return active, nil
 }
 
-func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3, *basemodel.ApiError) {
+func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3, error) {
 	var err error
-	licenses := []model.LicenseV3{}
+	licenses := []model.LicenseDB{}
 
 	query := "SELECT id,key,data FROM licenses_v3"
 
@@ -106,40 +115,20 @@ func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3, *basem
 
 	var active *model.LicenseV3
 	for _, l := range licenses {
-		// insert all the features to the license based on the plan!
-		l.ParseFeaturesV3()
-
-		var validFrom, validUntil, activeLicenseValidFrom int64
-
-		if _value, ok := l.Data["valid_from"]; ok {
-			if val, ok := _value.(int64); ok {
-				validFrom = val
-			}
-		}
-
-		if active != nil {
-			if _value, ok := active.Data["valid_from"]; ok {
-				if val, ok := _value.(int64); ok {
-					activeLicenseValidFrom = val
-				}
-			}
-		}
-
-		if _value, ok := l.Data["valid_until"]; ok {
-			if val, ok := _value.(int64); ok {
-				validUntil = val
-			}
+		license, err := model.NewLicenseV3WithIDAndKey(l.ID, l.Key, l.Data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get licenses v3 schema : %v", err)
 		}
 
 		if active == nil &&
-			(validFrom != 0) &&
-			(validUntil == -1 || validUntil > time.Now().Unix()) {
-			active = &l
+			(license.ValidFrom != 0) &&
+			(license.ValidUntil == -1 || license.ValidUntil > time.Now().Unix()) {
+			active = license
 		}
 		if active != nil &&
-			validFrom > activeLicenseValidFrom &&
-			(validUntil == -1 || validUntil > time.Now().Unix()) {
-			active = &l
+			license.ValidFrom > active.ValidFrom &&
+			(license.ValidUntil == -1 || license.ValidUntil > time.Now().Unix()) {
+			active = license
 		}
 	}
 
@@ -275,14 +264,6 @@ func (r *Repo) InitFeatures(req basemodel.FeatureSet) error {
 // InsertLicenseV3 inserts a new license v3 in db
 func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 
-	if l.Key == "" {
-		return fmt.Errorf("insert license failed: license key is required")
-	}
-
-	if l.ID == "" {
-		return fmt.Errorf("insert license failed: license id is required")
-	}
-
 	query := `INSERT INTO licenses_v3 (id, key, data) VALUES ($1, $2, $3)`
 
 	// licsense is the entity of zeus so putting the entire license here without defining schema
@@ -308,10 +289,6 @@ func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 
 // UpdateLicenseV3 updates a new license v3 in db
 func (r *Repo) UpdateLicenseV3(ctx context.Context, l *model.LicenseV3) error {
-
-	if l.ID == "" {
-		return fmt.Errorf("update license failed: license id is required")
-	}
 
 	// the key and id for the license can't change so only update the data here!
 	query := `UPDATE licenses_v3 SET data=$1 WHERE id=$2;`

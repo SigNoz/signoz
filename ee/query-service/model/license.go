@@ -104,17 +104,33 @@ type SubscriptionServerResp struct {
 	Status string   `json:"status"`
 	Data   Licenses `json:"data"`
 }
-type LicenseV3 struct {
-	ID        string                 `json:"id"`
-	Key       string                 `json:"key"`
-	Data      map[string]interface{} `json:"data"`
-	Features  basemodel.FeatureSet   `json:"features"`
-	IsCurrent bool                   `json:"isCurrent"`
+
+type Plan struct {
+	Name string `json:"name"`
 }
 
-func NewLicenseV3(data map[string]interface{}) *LicenseV3 {
+type LicenseDB struct {
+	ID   string                 `json:"id"`
+	Key  string                 `json:"key"`
+	Data map[string]interface{} `json:"data"`
+}
+type LicenseV3 struct {
+	ID         string                 `json:"id"`
+	Key        string                 `json:"key"`
+	Data       map[string]interface{} `json:"data"`
+	Plan       Plan                   `json:"plan"`
+	Features   basemodel.FeatureSet   `json:"features"`
+	IsCurrent  bool                   `json:"isCurrent"`
+	ValidFrom  int64                  `json:"ValidFrom"`
+	ValidUntil int64                  `json:"ValidUntil"`
+}
+
+func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	var licenseID, licenseKey string
+	var plan Plan
 	var licenseData = data
+	var features basemodel.FeatureSet
+	var validFrom, validUntil int64
 
 	// extract id from data
 	if _licenseId, ok := data["id"]; ok {
@@ -123,6 +139,8 @@ func NewLicenseV3(data map[string]interface{}) *LicenseV3 {
 		}
 		// if id is present then delete id from licenseData field
 		delete(licenseData, "id")
+	} else {
+		return nil, errors.New("license id is missing!")
 	}
 
 	// extract key from data
@@ -132,49 +150,60 @@ func NewLicenseV3(data map[string]interface{}) *LicenseV3 {
 		}
 		// if key is present then delete id from licenseData field
 		delete(licenseData, "key")
+	} else {
+		return nil, errors.New("license key is missing!")
 	}
 
-	l := &LicenseV3{
-		ID:   licenseID,
-		Key:  licenseKey,
-		Data: licenseData,
-	}
-	// parse the features here!
-	l.ParseFeaturesV3()
-
-	return l
-
-}
-
-func (l *LicenseV3) ParseFeaturesV3() {
-	var planKey string
-	if _plan, ok := l.Data["plan"]; ok {
-		if plan, ok := _plan.(map[string]interface{}); ok {
-			if _planName, ok := plan["name"]; ok {
-				if planName, ok := _planName.(string); ok {
-					planKey = planName
-				}
-
-			}
+	if _plan, ok := licenseData["plan"]; ok {
+		if parsedPlan, ok := _plan.(Plan); ok {
+			plan = parsedPlan
 		}
-
 	}
 
 	featuresFromZeus := new(basemodel.FeatureSet)
-	if features, ok := l.Data["features"]; ok {
+	if features, ok := licenseData["features"]; ok {
 		if val, ok := features.(basemodel.FeatureSet); ok {
 			featuresFromZeus = &val
 		}
 	}
+	features = append(features, *featuresFromZeus...)
 
-	l.Features = append(l.Features, *featuresFromZeus...)
-
-	switch planKey {
+	switch plan.Name {
 	case PlanNameTeams:
-		l.Features = append(l.Features, ProPlan...)
+		features = append(features, ProPlan...)
 	case PlanNameEnterprise:
-		l.Features = append(l.Features, EnterprisePlan...)
+		features = append(features, EnterprisePlan...)
 	default:
-		l.Features = append(l.Features, BasicPlan...)
+		features = append(features, BasicPlan...)
 	}
+
+	if _value, ok := licenseData["valid_from"]; ok {
+		if val, ok := _value.(int64); ok {
+			validFrom = val
+		}
+	}
+
+	if _value, ok := licenseData["valid_until"]; ok {
+		if val, ok := _value.(int64); ok {
+			validUntil = val
+		}
+	}
+
+	return &LicenseV3{
+		ID:         licenseID,
+		Key:        licenseKey,
+		Data:       licenseData,
+		Plan:       plan,
+		Features:   features,
+		ValidFrom:  validFrom,
+		ValidUntil: validUntil,
+	}, nil
+
+}
+
+func NewLicenseV3WithIDAndKey(id string, key string, data map[string]interface{}) (*LicenseV3, error) {
+	licenseDataWithIdAndKey := data
+	licenseDataWithIdAndKey["id"] = id
+	licenseDataWithIdAndKey["key"] = key
+	return NewLicenseV3(licenseDataWithIdAndKey)
 }

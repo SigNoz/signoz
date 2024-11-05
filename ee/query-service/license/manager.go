@@ -226,7 +226,6 @@ func (lm *Manager) GetLicensesV3(ctx context.Context) (response []model.LicenseV
 	}
 
 	for _, l := range licenses {
-		l.ParseFeaturesV3()
 		if lm.activeLicenseV3 != nil && l.Key == lm.activeLicenseV3.Key {
 			l.IsCurrent = true
 		}
@@ -354,19 +353,17 @@ func (lm *Manager) Validate(ctx context.Context) (reterr error) {
 // todo[vikrantgupta25]: check the comparison here between old and new license!
 func (lm *Manager) RefreshLicense(ctx context.Context) *model.ApiError {
 
-	response, apiError := validate.ValidateLicenseV3()
+	license, apiError := validate.ValidateLicenseV3(lm.activeLicenseV3.Key)
 	if apiError != nil {
 		zap.L().Error("failed to validate license", zap.Error(apiError.Err))
 		return apiError
 	}
 
-	newLicense := model.NewLicenseV3(*response)
-
-	err := lm.repo.UpdateLicenseV3(ctx, newLicense)
+	err := lm.repo.UpdateLicenseV3(ctx, license)
 	if err != nil {
 		return model.BadRequest(errors.Wrap(err, "failed to update the new license"))
 	}
-	lm.SetActiveV3(newLicense)
+	lm.SetActiveV3(license)
 
 	return nil
 }
@@ -452,19 +449,10 @@ func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (licenseRe
 		}
 	}()
 
-	response, apiError := validate.ValidateLicenseV3()
+	license, apiError := validate.ValidateLicenseV3(licenseKey)
 	if apiError != nil {
 		zap.L().Error("failed to get the license", zap.Error(apiError.Err))
 		return nil, apiError
-	}
-
-	license := model.NewLicenseV3(*response)
-
-	if license.ID == "" {
-		return nil, model.BadRequest(errors.New("license id is not present in the validate call"))
-	}
-	if license.Key == "" {
-		return nil, model.BadRequest(errors.New("license key is not present in the validate call"))
 	}
 
 	// insert the new license to the sqlite db

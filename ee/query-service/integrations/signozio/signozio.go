@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -118,12 +119,25 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 
 }
 
-func ValidateLicenseV3() (*map[string]interface{}, *model.ApiError) {
+func ValidateLicenseV3(licenseKey string) (*model.LicenseV3, *model.ApiError) {
 
-	response, err := http.Get(C.GatewayUrl + "/licenses/me")
-
+	// Creating an HTTP client with a timeout for better control
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	// Creating a new POST request
+	req, err := http.NewRequest("POST", C.GatewayUrl+"/licenses/me", nil)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, fmt.Sprintf("unable to connect with %v, please check your network connection", C.GatewayUrl)))
+		return nil, model.BadRequest(errors.Wrap(err, fmt.Sprintf("failed to create request: %w", err)))
+	}
+
+	// Setting the custom header
+	req.Header.Set("X-Signoz-Cloud-Api-Key", licenseKey)
+
+	// Making the POST request
+	response, err := client.Do(req)
+	if err != nil {
+		return nil, model.BadRequest(errors.Wrap(err, fmt.Sprintf("failed to make post request: %w", err)))
 	}
 
 	body, err := io.ReadAll(response.Body)
@@ -140,7 +154,13 @@ func ValidateLicenseV3() (*map[string]interface{}, *model.ApiError) {
 		if err != nil {
 			return nil, model.BadRequest(errors.Wrap(err, "failed to marshal license validation response"))
 		}
-		return &a, nil
+
+		license, err := model.NewLicenseV3(a)
+		if err != nil {
+			return nil, model.BadRequest(errors.Wrap(err, "failed to generate new license v3"))
+		}
+
+		return license, nil
 	case 400, 401:
 		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
 			"bad request error received from license.signoz.io"))
