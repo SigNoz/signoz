@@ -127,8 +127,8 @@ func NewLicenseV3(data map[string]interface{}) *LicenseV3 {
 
 	// extract key from data
 	if _licenseKey, ok := data["key"]; ok {
-		if licenseKey, ok := _licenseKey.(string); ok {
-			licenseID = licenseKey
+		if licensekey, ok := _licenseKey.(string); ok {
+			licenseKey = licensekey
 		}
 		// if key is present then delete id from licenseData field
 		delete(licenseData, "key")
