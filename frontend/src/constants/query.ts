@@ -38,4 +38,6 @@ export enum QueryParams {
 	selectedTimelineQuery = 'selectedTimelineQuery',
 	ruleType = 'ruleType',
 	configDetail = 'configDetail',
+	getStartedSource = 'getStartedSource',
+	getStartedSourceService = 'getStartedSourceService',
 }
