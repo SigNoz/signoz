@@ -159,8 +159,14 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	}
 
 	if _plan, ok := licenseData["plan"]; ok {
-		if parsedPlan, ok := _plan.(Plan); ok {
-			plan = parsedPlan
+		if parsedPlan, ok := _plan.(map[string]interface{}); ok {
+			if planName, ok := parsedPlan["name"]; ok {
+				if pName, ok := planName.(string); ok {
+					plan = Plan{
+						Name: pName,
+					}
+				}
+			}
 		} else {
 			plan = Plan{
 				Name: PlanNameBasic,
@@ -192,14 +198,32 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	}
 
 	if _value, ok := licenseData["valid_from"]; ok {
-		if val, ok := _value.(int64); ok {
+		val, ok := _value.(int64)
+		if ok {
 			validFrom = val
+		} else {
+			floatVal, ok := _value.(float64)
+			if !ok || floatVal != float64(int64(floatVal)) {
+				// if the validFrom is float value default it to 0
+				validFrom = 0
+			} else {
+				validFrom = int64(floatVal)
+			}
+
 		}
 	}
 
 	if _value, ok := licenseData["valid_until"]; ok {
-		if val, ok := _value.(int64); ok {
+		val, ok := _value.(int64)
+		if ok {
 			validUntil = val
+		} else {
+			floatVal, ok := _value.(float64)
+			if !ok || floatVal != float64(int64(floatVal)) {
+				// if the validFrom is float value default it to 0
+				validUntil = 0
+			}
+			validUntil = int64(floatVal)
 		}
 	}
 

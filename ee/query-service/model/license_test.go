@@ -37,47 +37,47 @@ func TestNewLicenseV3(t *testing.T) {
 				Features:   model.FeatureSet{},
 			},
 		},
-		// {
-		// 	name: "parse the plan properly!",
-		// 	data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","plan":{"name":"TEAMS"}}`),
-		// 	pass: true,
-		// 	expected: &LicenseV3{
-		// 		ID:  "does-not-matter",
-		// 		Key: "does-not-matter-key",
-		// 		Data: map[string]interface{}{
-		// 			"plan": map[string]interface{}{
-		// 				"name": "TEAMS",
-		// 			},
-		// 		},
-		// 		Plan: Plan{
-		// 			Name: PlanNameTeams,
-		// 		},
-		// 		ValidFrom:  0,
-		// 		ValidUntil: 0,
-		// 		IsCurrent:  false,
-		// 		Features:   model.FeatureSet{},
-		// 	},
-		// },
-		// {
-		// 	name: "parse the validFrom and validUntil",
-		// 	data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","valid_from":1234,"valid_until":5678}`),
-		// 	pass: true,
-		// 	expected: &LicenseV3{
-		// 		ID:  "does-not-matter",
-		// 		Key: "does-not-matter-key",
-		// 		Data: map[string]interface{}{
-		// 			"valid_from":  int64(1234),
-		// 			"valid_until": int64(5678),
-		// 		},
-		// 		Plan: Plan{
-		// 			Name: PlanNameBasic,
-		// 		},
-		// 		ValidFrom:  1234,
-		// 		ValidUntil: 5678,
-		// 		IsCurrent:  false,
-		// 		Features:   model.FeatureSet{},
-		// 	},
-		// },
+		{
+			name: "parse the plan properly!",
+			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","plan":{"name":"TEAMS"}}`),
+			pass: true,
+			expected: &LicenseV3{
+				ID:  "does-not-matter",
+				Key: "does-not-matter-key",
+				Data: map[string]interface{}{
+					"plan": map[string]interface{}{
+						"name": "TEAMS",
+					},
+				},
+				Plan: Plan{
+					Name: PlanNameTeams,
+				},
+				ValidFrom:  0,
+				ValidUntil: 0,
+				IsCurrent:  false,
+				Features:   model.FeatureSet{},
+			},
+		},
+		{
+			name: "parse the validFrom and validUntil",
+			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","valid_from":1234,"valid_until":5678}`),
+			pass: true,
+			expected: &LicenseV3{
+				ID:  "does-not-matter",
+				Key: "does-not-matter-key",
+				Data: map[string]interface{}{
+					"valid_from":  float64(1234),
+					"valid_until": float64(5678),
+				},
+				Plan: Plan{
+					Name: PlanNameBasic,
+				},
+				ValidFrom:  1234,
+				ValidUntil: 5678,
+				IsCurrent:  false,
+				Features:   model.FeatureSet{},
+			},
+		},
 		{
 			name:  "Error for missing license id",
 			data:  []byte(`{}`),
