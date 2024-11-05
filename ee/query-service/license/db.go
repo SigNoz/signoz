@@ -50,29 +50,16 @@ func (r *Repo) GetLicenses(ctx context.Context) ([]model.License, error) {
 }
 
 func (r *Repo) GetLicensesV3(ctx context.Context) ([]model.LicenseV3, error) {
-	licensesData := []string{}
+	licensesData := []model.LicenseV3{}
 
-	query := "SELECT data FROM licenses_v3"
+	query := "SELECT id,key,data FROM licenses_v3"
 
 	err := r.db.Select(&licensesData, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get licenses from db: %v", err)
 	}
 
-	licenses := []model.LicenseV3{}
-
-	for _, l := range licensesData {
-		var license model.LicenseV3
-
-		err = json.Unmarshal([]byte(l), &license)
-		if err != nil {
-			return nil, basemodel.InternalError(fmt.Errorf("failed to unmarshal licenses from db: %v", err))
-		}
-
-		licenses = append(licenses, license)
-	}
-
-	return licenses, nil
+	return licensesData, nil
 }
 
 // GetActiveLicense fetches the latest active license from DB.
@@ -106,37 +93,53 @@ func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel
 	return active, nil
 }
 
-func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3, *basemodel.ApiError) {
+func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3Aggreagate, *basemodel.ApiError) {
 	var err error
-	licensesString := []string{}
+	licenses := []model.LicenseV3{}
 
-	query := "SELECT data FROM licenses_v3"
+	query := "SELECT id,key,data FROM licenses_v3"
 
-	err = r.db.Select(&licensesString, query)
+	err = r.db.Select(&licenses, query)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("failed to get active licenses from db: %v", err))
 	}
 
-	var active *model.LicenseV3
-	for _, l := range licensesString {
-		license := model.LicenseV3{}
-
-		err = json.Unmarshal([]byte(l), &license)
-		if err != nil {
-			return nil, basemodel.InternalError(fmt.Errorf("failed to unmarshal licenses from db: %v", err))
+	var active *model.LicenseV3Aggreagate
+	for _, l := range licenses {
+		license := model.LicenseV3Aggreagate{
+			License: l,
 		}
-
 		// insert all the features to the license based on the plan!
 		license.ParseFeaturesV3()
 
+		var validFrom, validUntil, activeLicenseValidFrom int64
+
+		if _value, ok := license.License.Data["valid_from"]; ok {
+			if val, ok := _value.(int64); ok {
+				validFrom = val
+			}
+		}
+
+		if _value, ok := active.License.Data["valid_from"]; ok {
+			if val, ok := _value.(int64); ok {
+				validFrom = val
+			}
+		}
+
+		if _value, ok := license.License.Data["valid_until"]; ok {
+			if val, ok := _value.(int64); ok {
+				validUntil = val
+			}
+		}
+
 		if active == nil &&
-			(license.ValidFrom != 0) &&
-			(license.ValidUntil == -1 || license.ValidUntil > time.Now().Unix()) {
+			(validFrom != 0) &&
+			(validUntil == -1 || validUntil > time.Now().Unix()) {
 			active = &license
 		}
 		if active != nil &&
-			license.ValidFrom > active.ValidFrom &&
-			(license.ValidUntil == -1 || license.ValidUntil > time.Now().Unix()) {
+			validFrom > activeLicenseValidFrom &&
+			(validUntil == -1 || validUntil > time.Now().Unix()) {
 			active = &license
 		}
 	}
@@ -276,12 +279,15 @@ func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 	if l.Key == "" {
 		return fmt.Errorf("insert license failed: license key is required")
 	}
-	query := `INSERT INTO licenses_v3
-						(id, key, data) 
-						VALUES ($1, $2, $3)`
+
+	if l.ID == "" {
+		return fmt.Errorf("insert license failed: license id is required")
+	}
+
+	query := `INSERT INTO licenses_v3 (id, key, data) VALUES ($1, $2, $3)`
 
 	// licsense is the entity of zeus so putting the entire license here without defining schema
-	license, err := json.Marshal(l)
+	licenseData, err := json.Marshal(l.Data)
 	if err != nil {
 		return fmt.Errorf("insert license failed: license marshal error")
 	}
@@ -289,7 +295,7 @@ func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 		query,
 		l.ID,
 		l.Key,
-		string(license),
+		string(licenseData),
 	)
 
 	if err != nil {

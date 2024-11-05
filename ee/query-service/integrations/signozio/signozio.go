@@ -118,7 +118,7 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 
 }
 
-func ValidateLicenseV3() (*model.LicenseV3, *model.ApiError) {
+func ValidateLicenseV3() (*map[string]interface{}, *model.ApiError) {
 
 	response, err := http.Get(C.GatewayUrl + "/licenses/me")
 
@@ -135,7 +135,7 @@ func ValidateLicenseV3() (*model.LicenseV3, *model.ApiError) {
 
 	switch response.StatusCode {
 	case 200, 201:
-		a := model.LicenseV3{}
+		a := map[string]interface{}{}
 		err = json.Unmarshal(body, &a)
 		if err != nil {
 			return nil, model.BadRequest(errors.Wrap(err, "failed to marshal license validation response"))

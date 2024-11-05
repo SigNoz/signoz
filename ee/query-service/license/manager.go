@@ -48,7 +48,7 @@ type Manager struct {
 
 	// keep track of active license and features
 	activeLicense   *model.License
-	activeLicenseV3 *model.LicenseV3
+	activeLicenseV3 *model.LicenseV3Aggreagate
 	activeFeatures  basemodel.FeatureSet
 }
 
@@ -118,7 +118,7 @@ func (lm *Manager) SetActive(l *model.License, features ...basemodel.Feature) {
 	}
 
 }
-func (lm *Manager) SetActiveV3(l *model.LicenseV3, features ...basemodel.Feature) {
+func (lm *Manager) SetActiveV3(l *model.LicenseV3Aggreagate, features ...basemodel.Feature) {
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
 
@@ -219,7 +219,7 @@ func (lm *Manager) GetLicenses(ctx context.Context) (response []model.License, a
 	return
 }
 
-func (lm *Manager) GetLicensesV3(ctx context.Context) (response []model.LicenseV3, apiError *model.ApiError) {
+func (lm *Manager) GetLicensesV3(ctx context.Context) (response []model.LicenseV3Aggreagate, apiError *model.ApiError) {
 
 	licenses, err := lm.repo.GetLicensesV3(ctx)
 	if err != nil {
@@ -227,14 +227,16 @@ func (lm *Manager) GetLicensesV3(ctx context.Context) (response []model.LicenseV
 	}
 
 	for _, l := range licenses {
+		licenseAggregate := model.LicenseV3Aggreagate{
+			License: l,
+		}
+		licenseAggregate.ParseFeaturesV3()
 
-		l.ParseFeaturesV3()
-
-		if lm.activeLicenseV3 != nil && l.Key == lm.activeLicenseV3.Key {
-			l.IsCurrent = true
+		if lm.activeLicenseV3 != nil && l.Key == lm.activeLicenseV3.License.Key {
+			licenseAggregate.IsCurrent = true
 		}
 
-		response = append(response, l)
+		response = append(response, licenseAggregate)
 	}
 
 	return
@@ -355,33 +357,45 @@ func (lm *Manager) Validate(ctx context.Context) (reterr error) {
 	return nil
 }
 
-func (lm *Manager) RefreshLicense(ctx context.Context, license *model.LicenseV3) (*model.LicenseV3, *model.ApiError) {
-	currentLicense, err := json.Marshal(lm.activeLicenseV3)
+func (lm *Manager) RefreshLicense(ctx context.Context, licenseID string) *model.ApiError {
+	currentLicense, err := json.Marshal(lm.activeLicenseV3.License.Data)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "failed to marshal the current license"))
+		return model.BadRequest(errors.Wrap(err, "failed to marshal the current license"))
 	}
 
-	newLicense, err := json.Marshal(license)
+	response, apiError := validate.ValidateLicenseV3()
+	if apiError != nil {
+		zap.L().Error("failed to validate license", zap.Error(apiError.Err))
+		return apiError
+	}
+
+	newLicense, err := json.Marshal(response)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "failed to marshal the new refresh license"))
+		return model.BadRequest(errors.Wrap(err, "failed to marshal the new refresh license"))
 	}
 
 	// license hasn't changed, nothing to do
 	if string(currentLicense) == string(newLicense) {
-		return nil, nil
+		return nil
 	}
 
 	// case - license has been updated!
 	if string(newLicense) != "" {
-		err = lm.repo.UpdateLicenseV3(ctx, license)
-		if err != nil {
-			return nil, model.BadRequest(errors.Wrap(err, "failed to update the new license"))
+		licenseAggregate := model.LicenseV3Aggreagate{
+			License: model.LicenseV3{
+				Data: *response,
+				ID:   lm.activeLicenseV3.License.ID,
+				Key:  lm.activeLicenseV3.License.Key},
 		}
-		license.ParseFeaturesV3()
-		lm.SetActiveV3(license)
+		err = lm.repo.UpdateLicenseV3(ctx, &licenseAggregate.License)
+		if err != nil {
+			return model.BadRequest(errors.Wrap(err, "failed to update the new license"))
+		}
+		licenseAggregate.ParseFeaturesV3()
+		lm.SetActiveV3(&licenseAggregate)
 	}
 
-	return license, nil
+	return nil
 }
 
 func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
@@ -406,13 +420,7 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 		lm.mutex.Unlock()
 	}()
 
-	response, apiError := validate.ValidateLicenseV3()
-	if apiError != nil {
-		zap.L().Error("failed to validate license", zap.Error(apiError.Err))
-		return apiError.Err
-	}
-
-	_, err := lm.RefreshLicense(ctx, response)
+	err := lm.RefreshLicense(ctx, lm.activeLicenseV3.License.Key)
 	return err
 }
 
@@ -478,11 +486,15 @@ func (lm *Manager) ActivateV3(ctx context.Context, license *model.LicenseV3) (li
 		return nil, model.InternalError(err)
 	}
 
+	licenseAggregate := model.LicenseV3Aggreagate{
+		License: *license,
+	}
+
 	// update the features array for the license based on the plan along with other features sent by zeus!
-	license.ParseFeaturesV3()
+	licenseAggregate.ParseFeaturesV3()
 
 	// license is valid, activate it
-	lm.SetActiveV3(license)
+	lm.SetActiveV3(&licenseAggregate)
 	return license, nil
 }
 

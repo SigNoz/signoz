@@ -105,39 +105,36 @@ type SubscriptionServerResp struct {
 	Data   Licenses `json:"data"`
 }
 
-type LicenseUserResModel struct {
-	Email string `json:"email"`
-}
-
-type PlanResModel struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Platform    string    `json:"platform"`
-	Description string    `json:"description"`
-	IsActive    bool      `json:"is_active"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-}
-
 type LicenseV3 struct {
-	ID         string               `json:"id"`
-	Category   string               `json:"category"`
-	Key        string               `json:"key"`
-	ValidFrom  int64                `json:"valid_from"`
-	ValidUntil int64                `json:"valid_until"`
-	Status     string               `json:"status"`
-	CreatedAt  time.Time            `json:"created_at"`
-	UpdatedAt  time.Time            `json:"updated_at"`
-	PlanID     string               `json:"plan_id"`
-	User       LicenseUserResModel  `json:"user"`
-	Plan       PlanResModel         `json:"plan"`
-	Features   basemodel.FeatureSet `json:"features"`
-	// used only for sending details to front-end
-	IsCurrent bool `json:"isCurrent"`
+	ID   string                 `json:"id"`
+	Key  string                 `json:"key"`
+	Data map[string]interface{} `json:"data"`
+}
+type LicenseV3Aggreagate struct {
+	License   LicenseV3            `json:"license"`
+	Features  basemodel.FeatureSet `json:"features"`
+	IsCurrent bool                 `json:"isCurrent"`
 }
 
-func (l *LicenseV3) ParseFeaturesV3() {
-	switch l.Plan.Name {
+func (l *LicenseV3Aggreagate) ParseFeaturesV3() {
+	var planKey string
+	if plan, ok := l.License.Data["plan"]; ok {
+		if planName, ok := plan.(map[string]interface{})["name"]; ok {
+			planKey = planName.(string)
+		}
+	}
+
+	featuresFromZeus := new(basemodel.FeatureSet)
+	if features, ok := l.License.Data["features"]; ok {
+
+		if val, ok := features.(basemodel.FeatureSet); ok {
+			featuresFromZeus = &val
+		}
+	}
+
+	l.Features = append(l.Features, *featuresFromZeus...)
+
+	switch planKey {
 	case PlanNameTeams:
 		l.Features = append(l.Features, ProPlan...)
 	case PlanNameEnterprise:
@@ -145,4 +142,8 @@ func (l *LicenseV3) ParseFeaturesV3() {
 	default:
 		l.Features = append(l.Features, BasicPlan...)
 	}
+}
+
+type RefreshLicensesV3 struct {
+	LicenseKey string `json:"licenseKey"`
 }

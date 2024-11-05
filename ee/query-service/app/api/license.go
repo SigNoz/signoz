@@ -113,6 +113,11 @@ func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if license.ID == "" {
+		RespondError(w, model.BadRequest(fmt.Errorf("license id is required")), nil)
+		return
+	}
+
 	l, apiError := ah.LM().ActivateV3(r.Context(), &license)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
@@ -123,25 +128,25 @@ func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) refreshLicensesV3(w http.ResponseWriter, r *http.Request) {
-	var license model.LicenseV3
+	var license model.RefreshLicensesV3
 
 	if err := json.NewDecoder(r.Body).Decode(&license); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	if license.Key == "" {
+	if license.LicenseKey == "" {
 		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
 		return
 	}
 
-	l, apiError := ah.LM().RefreshLicense(r.Context(), &license)
+	apiError := ah.LM().RefreshLicense(r.Context(), license.LicenseKey)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
 	}
 
-	ah.Respond(w, l)
+	ah.Respond(w, nil)
 }
 
 func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
