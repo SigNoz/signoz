@@ -85,6 +85,7 @@ export default function ConnectionStatus(): JSX.Element {
 	] = useState<boolean>(false);
 
 	useEffect(() => {
+		// runs only when the caller is coming from 'kafka' i.e. coming from Messaging Queues - setup helper
 		if (getStartedSource === 'kafka') {
 			if (onbData?.statusCode !== 200) {
 				setShouldRetryOnboardingCall(true);
