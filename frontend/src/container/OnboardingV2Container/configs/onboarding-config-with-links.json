@@ -24,32 +24,20 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/windows.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -67,32 +55,20 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/windows.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -110,32 +86,20 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/windows.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -153,27 +117,14 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud"
-							},
-							{
-								"key": "windows",
-								"label": "Windows",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -205,27 +156,14 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud"
-							},
-							{
-								"key": "windows",
-								"label": "Windows",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -243,27 +181,14 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud"
-							},
-							{
-								"key": "windows",
-								"label": "Windows",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -281,27 +206,14 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud"
-							},
-							{
-								"key": "windows",
-								"label": "Windows",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -319,27 +231,14 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud"
-							},
-							{
-								"key": "windows",
-								"label": "Windows",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -357,27 +256,14 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud"
-							},
-							{
-								"key": "windows",
-								"label": "Windows",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -409,32 +295,20 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/windows.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -452,32 +326,20 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/windows.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -495,32 +357,20 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/windows.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -538,32 +388,20 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/windows.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -581,32 +419,20 @@
 							{
 								"key": "vm",
 								"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/vm.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/kubernetes.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
-=======
 								"imgUrl": "/Logos/windows.svg",
 								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 							}
 						]
 					}
@@ -629,32 +455,20 @@
 				{
 					"key": "vm",
 					"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/vm.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/kubernetes.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/windows.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				}
 			]
 		}
@@ -674,32 +488,20 @@
 				{
 					"key": "vm",
 					"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/vm.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/kubernetes.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/windows.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				}
 			]
 		}
@@ -719,32 +521,20 @@
 				{
 					"key": "vm",
 					"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/vm.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/kubernetes.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/windows.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				}
 			]
 		}
@@ -764,32 +554,20 @@
 				{
 					"key": "vm",
 					"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/vm.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/kubernetes.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/windows.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				}
 			]
 		}
@@ -809,32 +587,20 @@
 				{
 					"key": "vm",
 					"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/vm.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/kubernetes.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/windows.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				}
 			]
 		}
@@ -854,32 +620,20 @@
 				{
 					"key": "vm",
 					"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/vm.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/kubernetes.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/windows.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				}
 			]
 		}
@@ -899,32 +653,20 @@
 				{
 					"key": "vm",
 					"label": "VM",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/vm.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/kubernetes.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
-=======
 					"imgUrl": "/Logos/windows.svg",
 					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 				}
 			]
 		}
@@ -1131,11 +873,7 @@
 		"label": "EKS",
 		"tags": ["AWS", "logs"],
 		"imgUrl": "/Logos/eks.svg",
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-		"link": "https://signoz.io/docs/aws-monitoring/rds-logs/"
-=======
 		"link": "http://localhost:3000/docs/aws-monitoring/eks/"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 	},
 	{
 		"dataSource": "elb-logs",
@@ -1296,43 +1034,27 @@
 		"label": "Android Java",
 		"imgUrl": "/Logos/android-java-monitoring.svg",
 		"tags": ["mobile app monitoring"],
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-		"link": "https://signoz.io/instrumentation/mobile-instrumentation/opentelemetry-java/"
-=======
 		"link": "http://localhost:3000/docs/instrumentation/mobile-instrumentation/opentelemetry-java/"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 	},
 	{
 		"dataSource": "android-kotlin",
 		"label": "Android Kotlin",
 		"imgUrl": "/Logos/android-kotlin-monitoring.svg",
 		"tags": ["mobile app monitoring"],
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-		"link": "https://signoz.io/instrumentation/mobile-instrumentation/opentelemetry-kotlin/"
-=======
 		"link": "http://localhost:3000/docs/instrumentation/mobile-instrumentation/opentelemetry-kotlin/"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 	},
 	{
 		"dataSource": "flutter",
 		"label": "Flutter",
 		"imgUrl": "/Logos/flutter-monitoring.svg",
 		"tags": ["mobile app monitoring"],
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-		"link": "https://signoz.io/instrumentation/mobile-instrumentation/opentelemetry-flutter/"
-=======
 		"link": "http://localhost:3000/docs/instrumentation/mobile-instrumentation/opentelemetry-flutter/"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 	},
 	{
 		"dataSource": "swift",
 		"label": "iOS Swift",
 		"imgUrl": "/Logos/swift-monitoring.svg",
 		"tags": ["mobile app monitoring"],
-<<<<<<< Updated upstream:frontend/src/container/OnboardingV2Container/configs/onboarding-config-with-links.json
-		"link": "https://signoz.io/instrumentation/mobile-instrumentation/opentelemetry-swiftui/"
-=======
 		"link": "http://localhost:3000/docs/instrumentation/mobile-instrumentation/opentelemetry-swiftui/"
->>>>>>> Stashed changes:frontend/src/pages/OnboardingPageV2/onboarding-config-with-links.json
 	}
 ]
