@@ -120,9 +120,11 @@ func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3Aggreaga
 			}
 		}
 
-		if _value, ok := active.License.Data["valid_from"]; ok {
-			if val, ok := _value.(int64); ok {
-				validFrom = val
+		if active != nil {
+			if _value, ok := active.License.Data["valid_from"]; ok {
+				if val, ok := _value.(int64); ok {
+					activeLicenseValidFrom = val
+				}
 			}
 		}
 
