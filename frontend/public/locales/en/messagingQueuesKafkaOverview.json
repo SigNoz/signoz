@@ -37,6 +37,10 @@
 		"dropRate": {
 			"title": "Drop Rate view",
 			"description": "Connect and Monitor Your Data Streams"
+		},
+		"metricPage": {
+			"title": "Metric View",
+			"description": "Connect and Monitor Your Data Streams"
 		}
 	},
 	"confirmModal": {

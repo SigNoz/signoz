@@ -17,6 +17,7 @@ import {
 } from '../MessagingQueuesUtils';
 import DropRateView from '../MQDetails/DropRateView/DropRateView';
 import MessagingQueueOverview from '../MQDetails/MessagingQueueOverview';
+import MetricPage from '../MQDetails/MetricPage/MetricPage';
 import MessagingQueuesDetails from '../MQDetails/MQDetails';
 import MessagingQueuesConfigOptions from '../MQGraph/MQConfigOptions';
 import MessagingQueuesGraph from '../MQGraph/MQGraph';
@@ -94,6 +95,10 @@ function MQDetailPage(): JSX.Element {
 								label: MessagingQueuesViewType.dropRate.label,
 								value: MessagingQueuesViewType.dropRate.value,
 							},
+							{
+								label: MessagingQueuesViewType.metricPage.label,
+								value: MessagingQueuesViewType.metricPage.value,
+							},
 						]}
 					/>
 				</div>
@@ -106,6 +111,8 @@ function MQDetailPage(): JSX.Element {
 				</div>
 			) : selectedView === MessagingQueuesViewType.dropRate.value ? (
 				<DropRateView />
+			) : selectedView === MessagingQueuesViewType.metricPage.value ? (
+				<MetricPage />
 			) : (
 				<MessagingQueueOverview
 					selectedView={selectedView}
@@ -113,14 +120,15 @@ function MQDetailPage(): JSX.Element {
 					setOption={setproducerLatencyOption}
 				/>
 			)}
-			{selectedView !== MessagingQueuesViewType.dropRate.value && (
-				<div className="messaging-queue-details">
-					<MessagingQueuesDetails
-						selectedView={selectedView}
-						producerLatencyOption={producerLatencyOption}
-					/>
-				</div>
-			)}
+			{selectedView !== MessagingQueuesViewType.dropRate.value &&
+				selectedView !== MessagingQueuesViewType.metricPage.value && (
+					<div className="messaging-queue-details">
+						<MessagingQueuesDetails
+							selectedView={selectedView}
+							producerLatencyOption={producerLatencyOption}
+						/>
+					</div>
+				)}
 		</div>
 	);
 }
