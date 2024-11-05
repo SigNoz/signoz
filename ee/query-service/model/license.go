@@ -121,8 +121,8 @@ type LicenseV3 struct {
 	Plan       Plan                   `json:"plan"`
 	Features   basemodel.FeatureSet   `json:"features"`
 	IsCurrent  bool                   `json:"isCurrent"`
-	ValidFrom  int64                  `json:"ValidFrom"`
-	ValidUntil int64                  `json:"ValidUntil"`
+	ValidFrom  int64                  `json:"validFrom"`
+	ValidUntil int64                  `json:"validUntil"`
 }
 
 func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {

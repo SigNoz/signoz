@@ -70,8 +70,8 @@ type ListLicenseResponse struct {
 	Features   basemodel.FeatureSet   `json:"features"`
 	Plan       model.Plan             `json:"plan"`
 	IsCurrent  bool                   `json:"isCurrent"`
-	ValidFrom  int64                  `json:"ValidFrom"`
-	ValidUntil int64                  `json:"ValidUntil"`
+	ValidFrom  int64                  `json:"validFrom"`
+	ValidUntil int64                  `json:"validUntil"`
 }
 
 func convertLicenseV3ToListLicenseResponse(licensesV3 []model.LicenseV3) []ListLicenseResponse {
