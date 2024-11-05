@@ -145,12 +145,14 @@ type ClickHouseReader struct {
 	liveTailRefreshSeconds int
 	cluster                string
 
-	useLogsNewSchema   bool
-	useTraceNewSchema  bool
+	useLogsNewSchema  bool
+	useTraceNewSchema bool
+
 	logsTableName      string
 	logsLocalTableName string
 
-	traceIndexTableV3    string
+	traceTableName       string
+	traceLocalTableName  string
 	traceResourceTableV3 string
 	traceSummaryTable    string
 }
@@ -225,6 +227,13 @@ func NewReaderFromClickhouseConnection(
 		logsLocalTableName = options.primary.LogsLocalTableV2
 	}
 
+	traceTableName := options.primary.IndexTable
+	traceLocalTableName := options.primary.LocalIndexTable
+	if useTraceNewSchema {
+		traceTableName = options.primary.TraceIndexTableV3
+		traceLocalTableName = options.primary.TraceLocalTableNameV3
+	}
+
 	return &ClickHouseReader{
 		db:                      wrap,
 		localDB:                 localDB,
@@ -262,7 +271,8 @@ func NewReaderFromClickhouseConnection(
 		logsTableName:            logsTableName,
 		logsLocalTableName:       logsLocalTableName,
 
-		traceIndexTableV3:    options.primary.TraceIndexTableV3,
+		traceLocalTableName:  traceLocalTableName,
+		traceTableName:       traceTableName,
 		traceResourceTableV3: options.primary.TraceResourceTableV3,
 		traceSummaryTable:    options.primary.TraceSummaryTable,
 	}
@@ -475,13 +485,8 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 }
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
-	indexTable := r.indexTable
-	if r.useTraceNewSchema {
-		indexTable = r.traceIndexTableV3
-	}
-
 	services := []string{}
-	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now()) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, indexTable)
+	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now()) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceLocalTableName)
 
 	rows, err := r.db.Query(ctx, query)
 
@@ -543,10 +548,6 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 }
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
-	indexTable := r.indexTable
-	if r.useTraceNewSchema {
-		indexTable = r.traceIndexTableV3
-	}
 
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
@@ -594,14 +595,14 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 					count(*) as numCalls
 				FROM %s.%s
 				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
-				r.TraceDB, indexTable,
+				r.TraceDB, r.traceTableName,
 			)
 			errorQuery := fmt.Sprintf(
 				`SELECT
 					count(*) as numErrors
 				FROM %s.%s
 				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
-				r.TraceDB, indexTable,
+				r.TraceDB, r.traceTableName,
 			)
 
 			args := []interface{}{}
@@ -676,11 +677,6 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams, skipConfig *model.SkipConfig) (*[]model.ServiceOverviewItem, *model.ApiError) {
 
-	indexTable := r.indexTable
-	if r.useTraceNewSchema {
-		indexTable = r.traceIndexTableV3
-	}
-
 	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig, *queryParams.Start, *queryParams.End, nil)
 	if apiErr != nil {
 		return nil, apiErr
@@ -709,7 +705,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 			count(*) as numCalls
 		FROM %s.%s
 		WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
-		r.TraceDB, indexTable,
+		r.TraceDB, r.traceTableName,
 	)
 	args := []interface{}{}
 	args = append(args, namedArgs...)
@@ -740,7 +736,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 			count(*) as numErrors
 		FROM %s.%s
 		WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
-		r.TraceDB, indexTable,
+		r.TraceDB, r.traceTableName,
 	)
 	args = []interface{}{}
 	args = append(args, namedArgs...)
@@ -803,11 +799,6 @@ func buildFilterArrayQuery(_ context.Context, excludeMap map[string]struct{}, pa
 }
 
 func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError) {
-
-	indexTable := r.indexTable
-	if r.useTraceNewSchema {
-		indexTable = r.traceIndexTableV3
-	}
 
 	var query string
 	excludeMap := make(map[string]struct{})
@@ -882,7 +873,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 		case constants.TraceID:
 			continue
 		case constants.ServiceName:
-			finalQuery := fmt.Sprintf("SELECT serviceName, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, indexTable)
+			finalQuery := fmt.Sprintf("SELECT serviceName, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.traceTableName)
 			finalQuery += query
 			finalQuery += " GROUP BY serviceName"
 			var dBResponse []model.DBResponseServiceName
@@ -899,7 +890,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				}
 			}
 		case constants.HttpRoute:
-			finalQuery := fmt.Sprintf("SELECT httpRoute, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, indexTable)
+			finalQuery := fmt.Sprintf("SELECT httpRoute, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.traceTableName)
 			finalQuery += query
 			finalQuery += " GROUP BY httpRoute"
 			var dBResponse []model.DBResponseHttpRoute
@@ -916,7 +907,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				}
 			}
 		case constants.HttpUrl:
-			finalQuery := fmt.Sprintf("SELECT httpUrl, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, indexTable)
+			finalQuery := fmt.Sprintf("SELECT httpUrl, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.traceTableName)
 			finalQuery += query
 			finalQuery += " GROUP BY httpUrl"
 			var dBResponse []model.DBResponseHttpUrl
@@ -933,7 +924,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				}
 			}
 		case constants.HttpMethod:
-			finalQuery := fmt.Sprintf("SELECT httpMethod, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, indexTable)
+			finalQuery := fmt.Sprintf("SELECT httpMethod, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.traceTableName)
 			finalQuery += query
 			finalQuery += " GROUP BY httpMethod"
 			var dBResponse []model.DBResponseHttpMethod
@@ -950,7 +941,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				}
 			}
 		case constants.HttpHost:
-			finalQuery := fmt.Sprintf("SELECT httpHost, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, indexTable)
+			finalQuery := fmt.Sprintf("SELECT httpHost, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.traceTableName)
 			finalQuery += query
 			finalQuery += " GROUP BY httpHost"
 			var dBResponse []model.DBResponseHttpHost
@@ -967,7 +958,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				}
 			}
 		case constants.OperationRequest:
-			finalQuery := fmt.Sprintf("SELECT name, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, indexTable)
+			finalQuery := fmt.Sprintf("SELECT name, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.traceTableName)
 			finalQuery += query
 			finalQuery += " GROUP BY name"
 			var dBResponse []model.DBResponseOperation
@@ -984,7 +975,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				}
 			}
 		case constants.Status:
-			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU AND hasError = true", r.TraceDB, indexTable)
+			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU AND hasError = true", r.TraceDB, r.traceTableName)
 			finalQuery += query
 			var dBResponse []model.DBResponseTotal
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
@@ -995,7 +986,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query: %s", err)}
 			}
 
-			finalQuery2 := fmt.Sprintf("SELECT COUNT(*) as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU AND hasError = false", r.TraceDB, indexTable)
+			finalQuery2 := fmt.Sprintf("SELECT COUNT(*) as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU AND hasError = false", r.TraceDB, r.traceTableName)
 			finalQuery2 += query
 			var dBResponse2 []model.DBResponseTotal
 			err = r.db.Select(ctx, &dBResponse2, finalQuery2, args...)
@@ -1020,7 +1011,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery := ""
 			if !durationSortEnabled {
 				// if duration sort is not enabled, we need to get the min and max duration from the index table
-				finalQuery = fmt.Sprintf("SELECT min(durationNano) as min, max(durationNano) as max FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, indexTable)
+				finalQuery = fmt.Sprintf("SELECT min(durationNano) as min, max(durationNano) as max FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.traceTableName)
 				finalQuery += query
 				var dBResponse []model.DBResponseMinMax
 				err = r.db.Select(ctx, &dBResponse, finalQuery, args...)
@@ -1065,7 +1056,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				}
 			}
 		case constants.RPCMethod:
-			finalQuery := fmt.Sprintf("SELECT rpcMethod, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, indexTable)
+			finalQuery := fmt.Sprintf("SELECT rpcMethod, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.traceTableName)
 			finalQuery += query
 			finalQuery += " GROUP BY rpcMethod"
 			var dBResponse []model.DBResponseRPCMethod
@@ -1083,7 +1074,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			}
 
 		case constants.ResponseStatusCode:
-			finalQuery := fmt.Sprintf("SELECT responseStatusCode, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, indexTable)
+			finalQuery := fmt.Sprintf("SELECT responseStatusCode, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.traceTableName)
 			finalQuery += query
 			finalQuery += " GROUP BY responseStatusCode"
 			var dBResponse []model.DBResponseStatusCodeMethod
@@ -1131,12 +1122,7 @@ func getStatusFilters(query string, statusParams []string, excludeMap map[string
 
 func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *model.GetFilteredSpansParams) (*model.GetFilterSpansResponse, *model.ApiError) {
 
-	indexTable := r.indexTable
-	if r.useTraceNewSchema {
-		indexTable = r.traceIndexTableV3
-	}
-
-	queryTable := fmt.Sprintf("%s.%s", r.TraceDB, indexTable)
+	queryTable := fmt.Sprintf("%s.%s", r.TraceDB, r.traceTableName)
 
 	excludeMap := make(map[string]struct{})
 	for _, e := range queryParams.Exclude {
@@ -1427,11 +1413,6 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 
 func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model.TagFilterParams) (*model.TagFilters, *model.ApiError) {
 
-	indexTable := r.indexTable
-	if r.useTraceNewSchema {
-		indexTable = r.traceIndexTableV3
-	}
-
 	excludeMap := make(map[string]struct{})
 	for _, e := range queryParams.Exclude {
 		if e == constants.OperationRequest {
@@ -1488,7 +1469,7 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	tagFilters := []model.TagFilters{}
 
 	// Alternative finalQuery := fmt.Sprintf(`SELECT DISTINCT arrayJoin(tagMap.keys) as tagKeys FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.TraceDB, indexTable)
-	finalQuery := fmt.Sprintf(`SELECT groupUniqArrayArray(mapKeys(stringTagMap)) as stringTagKeys, groupUniqArrayArray(mapKeys(numberTagMap)) as numberTagKeys, groupUniqArrayArray(mapKeys(boolTagMap)) as boolTagKeys FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.TraceDB, indexTable)
+	finalQuery := fmt.Sprintf(`SELECT groupUniqArrayArray(mapKeys(stringTagMap)) as stringTagKeys, groupUniqArrayArray(mapKeys(numberTagMap)) as numberTagKeys, groupUniqArrayArray(mapKeys(boolTagMap)) as boolTagKeys FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.TraceDB, r.traceTableName)
 	finalQuery += query
 	err := r.db.Select(ctx, &tagFilters, finalQuery, args...)
 
@@ -1535,11 +1516,6 @@ func excludeTags(_ context.Context, tags []string) []string {
 }
 
 func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.TagFilterParams) (*model.TagValues, *model.ApiError) {
-
-	indexTable := r.indexTable
-	if r.useTraceNewSchema {
-		indexTable = r.traceIndexTableV3
-	}
 
 	if queryParams.TagKey.Type == model.TagTypeNumber {
 		return &model.TagValues{
@@ -1604,7 +1580,7 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 
 	tagValues := []model.TagValues{}
 
-	finalQuery := fmt.Sprintf(`SELECT groupArray(DISTINCT attributes_string[@key]) as stringTagValues FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.TraceDB, indexTable)
+	finalQuery := fmt.Sprintf(`SELECT groupArray(DISTINCT attributes_string[@key]) as stringTagValues FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.TraceDB, r.traceTableName)
 	finalQuery += query
 	finalQuery += " LIMIT @limit"
 
@@ -1636,10 +1612,6 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 }
 
 func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
-	indexTable := r.indexTable
-	if r.useTraceNewSchema {
-		indexTable = r.traceIndexTableV3
-	}
 
 	namedArgs := []interface{}{
 		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
@@ -1659,7 +1631,7 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 			name
 		FROM %s.%s
 		WHERE serviceName = @serviceName AND timestamp>= @start AND timestamp<= @end`,
-		r.TraceDB, indexTable,
+		r.TraceDB, r.traceTableName,
 	)
 	args := []interface{}{}
 	args = append(args, namedArgs...)
@@ -1771,7 +1743,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	var startTime, endTime, durationNano uint64
 	var searchScanResponses []model.SearchSpanResponseItemV2
 
-	query := fmt.Sprintf("SELECT timestamp, durationNano, spanID, traceID, hasError, kind, serviceName, name, references, attributes_string, events, statusMessage, statusCodeString, spanKind FROM %s.%s WHERE traceID=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceIndexTableV3)
+	query := fmt.Sprintf("SELECT timestamp, durationNano, spanID, traceID, hasError, kind, serviceName, name, references, attributes_string, events, statusMessage, statusCodeString, spanKind FROM %s.%s WHERE traceID=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceTableName)
 
 	start := time.Now()
 
@@ -2012,12 +1984,6 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 }
 
 func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, queryParams *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError) {
-
-	indexTable := r.indexTable
-	if r.useTraceNewSchema {
-		indexTable = r.traceIndexTableV3
-	}
-
 	excludeMap := make(map[string]struct{})
 	for _, e := range queryParams.Exclude {
 		if e == constants.OperationRequest {
@@ -2063,7 +2029,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	// Using %s for groupBy params as it can be a custom column and custom columns are not supported by clickhouse-go yet:
 	// issue link: https://github.com/ClickHouse/clickhouse-go/issues/870
 	if queryParams.GroupBy != "" && columnExists {
-		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, queryParams.GroupBy, aggregation_query, r.TraceDB, indexTable)
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, queryParams.GroupBy, aggregation_query, r.TraceDB, r.traceTableName)
 		args = append(args, clickhouse.Named("groupByVar", queryParams.GroupBy))
 	} else if queryParams.GroupBy != "" {
 		customStr = strings.Split(queryParams.GroupBy, ".(")
@@ -2071,17 +2037,17 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("GroupBy: %s not supported", queryParams.GroupBy)}
 		}
 		if customStr[1] == string(model.TagTypeString)+")" {
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, stringTagMap['%s'] as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, customStr[0], aggregation_query, r.TraceDB, indexTable)
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, stringTagMap['%s'] as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, customStr[0], aggregation_query, r.TraceDB, r.traceTableName)
 		} else if customStr[1] == string(model.TagTypeNumber)+")" {
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, toString(numberTagMap['%s']) as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, customStr[0], aggregation_query, r.TraceDB, indexTable)
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, toString(numberTagMap['%s']) as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, customStr[0], aggregation_query, r.TraceDB, r.traceTableName)
 		} else if customStr[1] == string(model.TagTypeBool)+")" {
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, toString(boolTagMap['%s']) as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, customStr[0], aggregation_query, r.TraceDB, indexTable)
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, toString(boolTagMap['%s']) as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, customStr[0], aggregation_query, r.TraceDB, r.traceTableName)
 		} else {
 			// return error for unsupported group by
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("GroupBy: %s not supported", queryParams.GroupBy)}
 		}
 	} else {
-		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, indexTable)
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.traceTableName)
 	}
 
 	if len(queryParams.TraceID) > 0 {
@@ -3249,15 +3215,10 @@ func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Contex
 }
 
 func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (*model.TagsInfo, error) {
-	indexTable := r.indexTable
-	if r.useTraceNewSchema {
-		indexTable = r.traceIndexTableV3
-	}
-
 	queryStr := fmt.Sprintf(`select serviceName, stringTagMap['deployment.environment'] as env, 
 	stringTagMap['telemetry.sdk.language'] as language from %s.%s 
 	where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))
-	group by serviceName, env, language;`, r.TraceDB, indexTable, int(interval.Minutes()))
+	group by serviceName, env, language;`, r.TraceDB, r.traceTableName, int(interval.Minutes()))
 
 	tagTelemetryDataList := []model.TagTelemetryData{}
 	err := r.db.Select(ctx, &tagTelemetryDataList, queryStr)
@@ -4772,8 +4733,6 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
-		// TODO: Remove this once the column name are updated in the table
-		tagKey = tempHandleFixedColumns(tagKey)
 		key := v3.AttributeKey{
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
@@ -4813,8 +4772,6 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
-		// TODO: Remove this once the column name are updated in the table
-		tagKey = tempHandleFixedColumns(tagKey)
 		key := v3.AttributeKey{
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
@@ -4824,19 +4781,6 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 	return &response, nil
-}
-
-// tempHandleFixedColumns is a temporary function to handle the fixed columns whose name has been changed in AttributeKeys Table
-func tempHandleFixedColumns(tagKey string) string {
-	switch {
-	case tagKey == "traceId":
-		tagKey = "traceID"
-	case tagKey == "spanId":
-		tagKey = "spanID"
-	case tagKey == "parentSpanId":
-		tagKey = "parentSpanID"
-	}
-	return tagKey
 }
 
 func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
@@ -4899,31 +4843,38 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 	var rows driver.Rows
 	response := map[string]v3.AttributeKey{}
 
-	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM %s.%s", r.TraceDB, r.spanAttributesKeysTable)
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType FROM %s.%s", r.TraceDB, r.spanAttributesKeysTable)
 
 	rows, err = r.db.Query(ctx, query)
-
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
 
+	statements := []model.ShowCreateTableStatement{}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.TraceDB, r.traceTableName)
+	err = r.db.Select(ctx, &statements, query)
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
+	}
+
 	var tagKey string
 	var dataType string
 	var tagType string
-	var isColumn bool
 	for rows.Next() {
-		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
+		if err := rows.Scan(&tagKey, &tagType, &dataType); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
 		key := v3.AttributeKey{
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
 			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn,
+			IsColumn: isColumn(r.useLogsNewSchema, statements[0].Statement, tagType, tagKey, dataType),
 		}
-		response[tagKey] = key
+
+		name := tagKey + "##" + tagType + "##" + strings.ToLower(dataType)
+		response[name] = key
 	}
 	return response, nil
 }

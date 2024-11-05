@@ -142,7 +142,7 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 	}
 
 	// check if the field is present in the fields map
-	for _, key := range utils.GenerateLogEnrichmentKeys(field) {
+	for _, key := range utils.GenerateEnrichmentKeys(field) {
 		if val, ok := fields[key]; ok {
 			return val
 		}

@@ -53,15 +53,24 @@ func getClickHouseTracesColumnDataType(columnDataType v3.AttributeKeyDataType) s
 }
 
 func getColumnName(key v3.AttributeKey) string {
-	// TODO (nitya):
-	// consider routing things like serviceName col to service.name resource attribute for filtering
-	// consider using static details for some columns
-	if key.IsColumn {
-		return "`" + key.Key + "`"
+	if !key.IsColumn {
+		keyType := getClickHouseTracesColumnType(key.Type)
+		keyDType := getClickHouseTracesColumnDataType(key.DataType)
+		return fmt.Sprintf("%s_%s['%s']", keyType, keyDType, key.Key)
 	}
-	keyType := getClickHouseTracesColumnType(key.Type)
-	keyDType := getClickHouseTracesColumnDataType(key.DataType)
-	return fmt.Sprintf("%s_%s['%s']", keyType, keyDType, key.Key)
+
+	// check if it is a static field
+	if key.Type == v3.AttributeKeyTypeUnspecified {
+		// name is the column name
+		return key.Key
+	}
+
+	// if key present in static return as it is
+	if _, ok := constants.StaticFieldsTraces[key.Key]; ok {
+		return key.Key
+	}
+
+	return utils.GetClickhouseColumnName(string(key.Type), string(key.DataType), key.Key)
 }
 
 // getSelectLabels returns the select labels for the query based on groupBy and aggregateOperator

@@ -1,68 +1,46 @@
 package v4
 
-import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+import (
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
+)
 
-// we could have created aliases but as of now we are sticking to this as alias are not dynamic in nature
-// Note: ALTER TABLE doesn't support adding an alias directly, so you may need to create the table with aliases from the start.
-var attributeMatColsMapping = map[string]v3.AttributeKey{
-	"http.route": {
-		Key:      "httpRoute",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"messaging.system": {
-		Key:      "msgSystem",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"messaging.peration": {
-		Key:      "msgOperation",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"db.system": {
-		Key:      "dbSystem",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"rpc.system": {
-		Key:      "rpcSystem",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"rpc.service": {
-		Key:      "rpcService",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"rpc.method": {
-		Key:      "rpcMethod",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"peer.service": {
-		Key:      "peerService",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
+func isEnriched(field v3.AttributeKey) bool {
+	// if it is timestamp/id dont check
+	if field.Key == "timestamp" || field.Key == "id" || field.Key == constants.SigNozOrderByValue {
+		return true
+	}
+
+	// don't need to enrich the static fields as they will be always used a column
+	if _, ok := constants.StaticFieldsTraces[field.Key]; ok && field.IsColumn {
+		return true
+	}
+
+	return false
 }
 
 func enrichKeyWithMetadata(key v3.AttributeKey, keys map[string]v3.AttributeKey) v3.AttributeKey {
-	if matCol, ok := attributeMatColsMapping[key.Key]; ok {
-		return matCol
+	if isEnriched(key) {
+		return key
 	}
-	if key.Type == "" || key.DataType == "" {
-		// check if the key is present in the keys map
-		if existingKey, ok := keys[key.Key]; ok {
-			key.IsColumn = existingKey.IsColumn
-			key.Type = existingKey.Type
-			key.DataType = existingKey.DataType
-		} else { // if not present then set the default values
-			key.Type = v3.AttributeKeyTypeTag
-			key.DataType = v3.AttributeKeyDataTypeString
-			key.IsColumn = false
-			return key
+
+	if v, ok := constants.StaticFieldsTraces[key.Key]; ok {
+		return v
+	}
+
+	for _, key := range utils.GenerateEnrichmentKeys(key) {
+		if val, ok := keys[key]; ok {
+			return val
 		}
+	}
+
+	// enrich with default values if metadata is not found
+	if key.Type == "" {
+		key.Type = v3.AttributeKeyTypeTag
+	}
+	if key.DataType == "" {
+		key.DataType = v3.AttributeKeyDataTypeString
 	}
 	return key
 }
