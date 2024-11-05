@@ -168,6 +168,7 @@ func (q *querier) runBuilderQuery(
 				params.CompositeQuery.PanelType,
 				builderQuery,
 				v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
+				params.FilterBy,
 			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
@@ -179,6 +180,7 @@ func (q *querier) runBuilderQuery(
 				params.CompositeQuery.PanelType,
 				builderQuery,
 				v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
+				params.FilterBy,
 			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
@@ -192,6 +194,7 @@ func (q *querier) runBuilderQuery(
 				params.CompositeQuery.PanelType,
 				builderQuery,
 				v3.QBOptions{PreferRPM: preferRPM},
+				params.FilterBy,
 			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}

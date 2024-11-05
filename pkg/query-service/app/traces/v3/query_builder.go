@@ -233,7 +233,7 @@ func handleEmptyValuesInGroupBy(groupBy []v3.AttributeKey) (string, error) {
 	return "", nil
 }
 
-func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, panelType v3.PanelType, options v3.QBOptions) (string, error) {
+func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, panelType v3.PanelType, options v3.QBOptions, filterBy string) (string, error) {
 
 	filterSubQuery, err := buildTracesFilterQuery(mq.Filters)
 	if err != nil {
@@ -499,7 +499,7 @@ func addOffsetToQuery(query string, offset uint64) string {
 // PrepareTracesQuery returns the query string for traces
 // start and end are in epoch millisecond
 // step is in seconds
-func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
+func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions, filterBy string) (string, error) {
 	// adjust the start and end time to the step interval
 	if panelType == v3.PanelTypeGraph {
 		// adjust the start and end time to the step interval for graph panel types
@@ -509,7 +509,7 @@ func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 
 	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the group by names
-		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, panelType, options)
+		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, panelType, options, filterBy)
 		if err != nil {
 			return "", err
 		}
@@ -517,14 +517,14 @@ func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 
 		return query, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, panelType, options)
+		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, panelType, options, filterBy)
 		if err != nil {
 			return "", err
 		}
 		return query, nil
 	}
 
-	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, panelType, options)
+	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, panelType, options, filterBy)
 	if err != nil {
 		return "", err
 	}
