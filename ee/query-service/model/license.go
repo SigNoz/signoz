@@ -136,6 +136,8 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	if _licenseId, ok := data["id"]; ok {
 		if licenseId, ok := _licenseId.(string); ok {
 			licenseID = licenseId
+		} else {
+			return nil, errors.New("license id is not a valid string!")
 		}
 		// if id is present then delete id from licenseData field
 		delete(licenseData, "id")
@@ -147,6 +149,8 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	if _licenseKey, ok := data["key"]; ok {
 		if licensekey, ok := _licenseKey.(string); ok {
 			licenseKey = licensekey
+		} else {
+			return nil, errors.New("license key is not a valid string!")
 		}
 		// if key is present then delete id from licenseData field
 		delete(licenseData, "key")
@@ -157,6 +161,14 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	if _plan, ok := licenseData["plan"]; ok {
 		if parsedPlan, ok := _plan.(Plan); ok {
 			plan = parsedPlan
+		} else {
+			plan = Plan{
+				Name: PlanNameBasic,
+			}
+		}
+	} else {
+		plan = Plan{
+			Name: PlanNameBasic,
 		}
 	}
 
@@ -173,6 +185,8 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		features = append(features, ProPlan...)
 	case PlanNameEnterprise:
 		features = append(features, EnterprisePlan...)
+	case PlanNameBasic:
+		features = append(features, BasicPlan...)
 	default:
 		features = append(features, BasicPlan...)
 	}

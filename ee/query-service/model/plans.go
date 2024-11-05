@@ -13,6 +13,7 @@ const Enterprise = "ENTERPRISE_PLAN"
 var (
 	PlanNameEnterprise = "ENTERPRISE"
 	PlanNameTeams      = "TEAMS"
+	PlanNameBasic      = "BASIC"
 )
 
 const DisableUpsell = "DISABLE_UPSELL"

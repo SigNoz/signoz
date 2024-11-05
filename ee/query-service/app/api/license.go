@@ -65,11 +65,13 @@ type ApplyLicenseRequest struct {
 }
 
 type ListLicenseResponse struct {
-	ID        string                 `json:"id"`
-	Data      map[string]interface{} `json:"data"`
-	Features  basemodel.FeatureSet   `json:"features"`
-	Plan      model.Plan             `json:"plan"`
-	IsCurrent bool                   `json:"isCurrent"`
+	ID         string                 `json:"id"`
+	Data       map[string]interface{} `json:"data"`
+	Features   basemodel.FeatureSet   `json:"features"`
+	Plan       model.Plan             `json:"plan"`
+	IsCurrent  bool                   `json:"isCurrent"`
+	ValidFrom  int64                  `json:"ValidFrom"`
+	ValidUntil int64                  `json:"ValidUntil"`
 }
 
 func convertLicenseV3ToListLicenseResponse(licensesV3 []model.LicenseV3) []ListLicenseResponse {
@@ -77,11 +79,13 @@ func convertLicenseV3ToListLicenseResponse(licensesV3 []model.LicenseV3) []ListL
 
 	for _, license := range licensesV3 {
 		listLicense := ListLicenseResponse{
-			ID:        license.ID,
-			Data:      license.Data,
-			Features:  license.Features,
-			Plan:      license.Plan,
-			IsCurrent: license.IsCurrent,
+			ID:         license.ID,
+			Data:       license.Data,
+			Features:   license.Features,
+			Plan:       license.Plan,
+			IsCurrent:  license.IsCurrent,
+			ValidFrom:  license.ValidFrom,
+			ValidUntil: license.ValidUntil,
 		}
 		listLicenses = append(listLicenses, listLicense)
 	}
