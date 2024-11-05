@@ -3,11 +3,20 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
 import { History, Location } from 'history';
 import { isEmpty } from 'lodash-es';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
+
+import {
+	getConsumerLagDetails,
+	MessagingQueueServicePayload,
+	MessagingQueuesPayloadProps,
+} from './MQDetails/MQTables/getConsumerLagDetails';
+import { getPartitionLatencyDetails } from './MQDetails/MQTables/getPartitionLatencyDetails';
+import { getTopicThroughputDetails } from './MQDetails/MQTables/getTopicThroughputDetails';
 
 export const KAFKA_SETUP_DOC_LINK =
 	'https://signoz.io/docs/messaging-queues/kafka?utm_source=product&utm_medium=kafka-get-started';
@@ -208,22 +217,29 @@ export function setSelectedTimelineQuery(
 	history.replace(generatedUrl);
 }
 
+export enum MessagingQueuesViewTypeOptions {
+	ConsumerLag = 'consumerLag',
+	PartitionLatency = 'partitionLatency',
+	ProducerLatency = 'producerLatency',
+	ConsumerLatency = 'consumerLatency',
+}
+
 export const MessagingQueuesViewType = {
 	consumerLag: {
 		label: 'Consumer Lag view',
-		value: 'consumerLag',
+		value: MessagingQueuesViewTypeOptions.ConsumerLag,
 	},
 	partitionLatency: {
 		label: 'Partition Latency view',
-		value: 'partitionLatency',
+		value: MessagingQueuesViewTypeOptions.PartitionLatency,
 	},
 	producerLatency: {
 		label: 'Producer Latency view',
-		value: 'producerLatency',
+		value: MessagingQueuesViewTypeOptions.ProducerLatency,
 	},
 	consumerLatency: {
 		label: 'Consumer latency view',
-		value: 'consumerLatency',
+		value: MessagingQueuesViewTypeOptions.ConsumerLatency,
 	},
 };
 
@@ -257,3 +273,74 @@ export enum ProducerLatencyOptions {
 	Producers = 'Producers',
 	Consumers = 'Consumers',
 }
+
+interface MetaDataAndAPI {
+	tableApiPayload: MessagingQueueServicePayload;
+	tableApi: (
+		props: MessagingQueueServicePayload,
+	) => Promise<
+		SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
+	>;
+}
+interface MetaDataAndAPIPerView {
+	detailType: MessagingQueueServiceDetailType;
+	selectedTimelineQuery: SelectedTimelineQuery;
+	configDetails?: {
+		[key: string]: string;
+	};
+	minTime: number;
+	maxTime: number;
+}
+
+export const getMetaDataAndAPIPerView = (
+	metaDataProps: MetaDataAndAPIPerView,
+): Record<string, MetaDataAndAPI> => {
+	const {
+		detailType,
+		minTime,
+		maxTime,
+		selectedTimelineQuery,
+		configDetails,
+	} = metaDataProps;
+	return {
+		[MessagingQueuesViewType.consumerLag.value]: {
+			tableApiPayload: {
+				start: (selectedTimelineQuery?.start || 0) * 1e9,
+				end: (selectedTimelineQuery?.end || 0) * 1e9,
+				variables: {
+					partition: selectedTimelineQuery?.partition,
+					topic: selectedTimelineQuery?.topic,
+					consumer_group: selectedTimelineQuery?.group,
+				},
+				detailType,
+			},
+			tableApi: getConsumerLagDetails,
+		},
+		[MessagingQueuesViewType.partitionLatency.value]: {
+			tableApiPayload: {
+				start: minTime,
+				end: maxTime,
+				variables: {
+					partition: configDetails?.partition,
+					topic: configDetails?.topic,
+					consumer_group: configDetails?.group,
+				},
+				detailType,
+			},
+			tableApi: getPartitionLatencyDetails,
+		},
+		[MessagingQueuesViewType.producerLatency.value]: {
+			tableApiPayload: {
+				start: minTime,
+				end: maxTime,
+				variables: {
+					partition: configDetails?.partition,
+					topic: configDetails?.topic,
+					service_name: configDetails?.service_name,
+				},
+				detailType,
+			},
+			tableApi: getTopicThroughputDetails,
+		},
+	};
+};

@@ -7,31 +7,23 @@ import { isEmpty } from 'lodash-es';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
 	ConsumerLagDetailTitle,
+	getMetaDataAndAPIPerView,
 	MessagingQueueServiceDetailType,
 	MessagingQueuesViewType,
+	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 	SelectedTimelineQuery,
 } from '../MessagingQueuesUtils';
 import { ComingSoon } from '../MQCommon/MQCommon';
-import {
-	getConsumerLagDetails,
-	MessagingQueueServicePayload,
-	MessagingQueuesPayloadProps,
-} from './MQTables/getConsumerLagDetails';
-import { getPartitionLatencyDetails } from './MQTables/getPartitionLatencyDetails';
-import { getTopicThroughputDetails } from './MQTables/getTopicThroughputDetails';
 import MessagingQueuesTable from './MQTables/MQTables';
 
 const MQServiceDetailTypePerView = (
 	producerLatencyOption: ProducerLatencyOptions,
-): {
-	[x: string]: MessagingQueueServiceDetailType[];
-} => ({
+): Record<string, MessagingQueueServiceDetailType[]> => ({
 	[MessagingQueuesViewType.consumerLag.value]: [
 		MessagingQueueServiceDetailType.ConsumerDetails,
 		MessagingQueueServiceDetailType.ProducerDetails,
@@ -52,7 +44,7 @@ const MQServiceDetailTypePerView = (
 interface MessagingQueuesOptionsProps {
 	currentTab: MessagingQueueServiceDetailType;
 	setCurrentTab: Dispatch<SetStateAction<MessagingQueueServiceDetailType>>;
-	selectedView: string;
+	selectedView: MessagingQueuesViewTypeOptions;
 	producerLatencyOption: ProducerLatencyOptions;
 }
 
@@ -62,16 +54,7 @@ function MessagingQueuesOptions({
 	selectedView,
 	producerLatencyOption,
 }: MessagingQueuesOptionsProps): JSX.Element {
-	const [option, setOption] = useState<MessagingQueueServiceDetailType>(
-		currentTab,
-	);
-
-	useEffect(() => {
-		setOption(currentTab);
-	}, [currentTab]);
-
 	const handleChange = (value: MessagingQueueServiceDetailType): void => {
-		setOption(value);
 		setCurrentTab(value);
 	};
 
@@ -102,7 +85,7 @@ function MessagingQueuesOptions({
 	return (
 		<Radio.Group
 			onChange={(e): void => handleChange(e.target.value)}
-			value={option}
+			value={currentTab}
 			className="mq-details-options"
 		>
 			{renderRadioButtons()}
@@ -110,91 +93,9 @@ function MessagingQueuesOptions({
 	);
 }
 
-interface MetaDataAndAPI {
-	tableApiPayload: MessagingQueueServicePayload;
-	tableApi: (
-		props: MessagingQueueServicePayload,
-	) => Promise<
-		SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
-	>;
-}
-
-interface MetaDataAndAPIPerView {
-	detailType: MessagingQueueServiceDetailType;
-	selectedTimelineQuery: SelectedTimelineQuery;
-	configDetails?: {
-		[key: string]: string;
-	};
-	minTime: number;
-	maxTime: number;
-}
-
-export const getMetaDataAndAPIPerView = (
-	metaDataProps: MetaDataAndAPIPerView,
-): Record<string, MetaDataAndAPI> => {
-	const {
-		detailType,
-		minTime,
-		maxTime,
-		selectedTimelineQuery,
-		configDetails,
-	} = metaDataProps;
-	return {
-		[MessagingQueuesViewType.consumerLag.value]: {
-			tableApiPayload: {
-				start: (selectedTimelineQuery?.start || 0) * 1e9,
-				end: (selectedTimelineQuery?.end || 0) * 1e9,
-				variables: {
-					partition: selectedTimelineQuery?.partition,
-					topic: selectedTimelineQuery?.topic,
-					consumer_group: selectedTimelineQuery?.group,
-				},
-				detailType,
-			},
-			tableApi: getConsumerLagDetails,
-		},
-		[MessagingQueuesViewType.partitionLatency.value]: {
-			tableApiPayload: {
-				start: minTime,
-				end: maxTime,
-				variables: {
-					partition: configDetails?.partition,
-					topic: configDetails?.topic,
-					consumer_group: configDetails?.group,
-
-					// todo-sagar: look at above props
-					// partition: selectedTimelineQuery?.partition,
-					// topic: selectedTimelineQuery?.topic,
-					// consumer_group: selectedTimelineQuery?.group,
-				},
-				detailType,
-			},
-			tableApi: getPartitionLatencyDetails,
-		},
-		[MessagingQueuesViewType.producerLatency.value]: {
-			tableApiPayload: {
-				start: minTime,
-				end: maxTime,
-				variables: {
-					partition: configDetails?.partition,
-					topic: configDetails?.topic,
-					service_name: configDetails?.service_name,
-
-					// // todo-sagar: look at above props
-					// partition: selectedTimelineQuery?.partition,
-					// topic: selectedTimelineQuery?.topic,
-					// service_name: 'consumer-svc-1', // todo-sagar remove hardcode
-				},
-				detailType,
-			},
-			tableApi: getTopicThroughputDetails,
-		},
-	};
-};
-
 const checkValidityOfDetailConfigs = (
 	selectedTimelineQuery: SelectedTimelineQuery,
-	selectedView: string,
+	selectedView: MessagingQueuesViewTypeOptions,
 	currentTab: MessagingQueueServiceDetailType,
 	configDetails?: {
 		[key: string]: string;
@@ -245,7 +146,7 @@ function MessagingQueuesDetails({
 	selectedView,
 	producerLatencyOption,
 }: {
-	selectedView: string;
+	selectedView: MessagingQueuesViewTypeOptions;
 	producerLatencyOption: ProducerLatencyOptions;
 }): JSX.Element {
 	const [currentTab, setCurrentTab] = useState<MessagingQueueServiceDetailType>(

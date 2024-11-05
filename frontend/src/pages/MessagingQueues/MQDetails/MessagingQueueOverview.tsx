@@ -8,6 +8,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
 	MessagingQueuesViewType,
+	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 } from '../MessagingQueuesUtils';
 import { MessagingQueueServicePayload } from './MQTables/getConsumerLagDetails';
@@ -46,7 +47,7 @@ function PartitionLatencyTabs({
 	);
 }
 
-const getTableApi = (selectedView: string): any => {
+const getTableApi = (selectedView: MessagingQueuesViewTypeOptions): any => {
 	if (selectedView === MessagingQueuesViewType.producerLatency.value) {
 		return getTopicThroughputOverview;
 	}
@@ -58,7 +59,7 @@ function MessagingQueueOverview({
 	option,
 	setOption,
 }: {
-	selectedView: string;
+	selectedView: MessagingQueuesViewTypeOptions;
 	option: ProducerLatencyOptions;
 	setOption: Dispatch<SetStateAction<ProducerLatencyOptions>>;
 }): JSX.Element {

@@ -17,6 +17,7 @@ import {
 	convertToTitleCase,
 	MessagingQueueServiceDetailType,
 	MessagingQueuesViewType,
+	MessagingQueuesViewTypeOptions,
 	RowData,
 	SelectedTimelineQuery,
 	setConfigDetail,
@@ -117,7 +118,7 @@ function MessagingQueuesTable({
 	type = 'Detail',
 }: {
 	currentTab?: MessagingQueueServiceDetailType;
-	selectedView: string;
+	selectedView: MessagingQueuesViewTypeOptions;
 	tableApiPayload?: MessagingQueueServicePayload;
 	tableApi: (
 		props: MessagingQueueServicePayload,

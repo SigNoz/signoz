@@ -10,6 +10,7 @@ import { useHistory } from 'react-router-dom';
 
 import {
 	MessagingQueuesViewType,
+	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 } from '../MessagingQueuesUtils';
 import { SelectLabelWithComingSoon } from '../MQCommon/MQCommon';
@@ -20,7 +21,10 @@ import MessagingQueuesGraph from '../MQGraph/MQGraph';
 
 function MQDetailPage(): JSX.Element {
 	const history = useHistory();
-	const [selectedView, setSelectedView] = useState<string>(
+	const [
+		selectedView,
+		setSelectedView,
+	] = useState<MessagingQueuesViewTypeOptions>(
 		MessagingQueuesViewType.consumerLag.value,
 	);
 
