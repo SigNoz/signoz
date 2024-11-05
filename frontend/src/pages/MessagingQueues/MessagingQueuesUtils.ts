@@ -226,6 +226,10 @@ export const MessagingQueuesViewType = {
 		label: 'Drop Rate view',
 		value: 'dropRate',
 	},
+	metricPage: {
+		label: 'Metric Page',
+		value: 'metricPage',
+	},
 };
 
 interface OnboardingStatusAttributeData {
