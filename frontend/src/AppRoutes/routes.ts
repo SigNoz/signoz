@@ -32,6 +32,7 @@ import {
 	OldLogsExplorer,
 	Onboarding,
 	OrganizationSettings,
+	OrgOnboarding,
 	PasswordReset,
 	PipelinePage,
 	ServiceMapPage,
@@ -67,6 +68,13 @@ const routes: AppRoutes[] = [
 		component: Onboarding,
 		isPrivate: true,
 		key: 'GET_STARTED',
+	},
+	{
+		path: ROUTES.ONBOARDING,
+		exact: false,
+		component: OrgOnboarding,
+		isPrivate: true,
+		key: 'ONBOARDING',
 	},
 	{
 		component: LogsIndexToFields,

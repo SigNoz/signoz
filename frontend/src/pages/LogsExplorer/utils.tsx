@@ -66,9 +66,9 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 		type: FiltersType.CHECKBOX,
 		title: 'Hostname',
 		attributeKey: {
-			key: 'hostname',
+			key: 'host.name',
 			dataType: DataTypes.String,
-			type: 'tag',
+			type: 'resource',
 			isColumn: false,
 			isJSON: false,
 		},

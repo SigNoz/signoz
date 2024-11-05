@@ -1,0 +1,597 @@
+.onboarding-questionaire-container {
+	width: 100%;
+	display: flex;
+	margin: 0 auto;
+	align-items: center;
+	flex-direction: column;
+	height: 100vh;
+	max-width: 1176px;
+
+	.onboarding-questionaire-header {
+		width: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+
+		height: 56px;
+	}
+
+	.onboarding-questionaire-content {
+		height: calc(100vh - 56px - 60px);
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		overflow-y: auto;
+
+		.questions-container {
+			color: var(--bg-vanilla-100, #fff);
+			font-family: Inter;
+			font-size: 24px;
+			font-style: normal;
+			font-weight: 600;
+			line-height: 32px;
+			max-width: 600px;
+			margin: 0 auto;
+			border-radius: 8px;
+			max-height: 100%;
+		}
+
+		.title {
+			color: var(--bg-vanilla-100) !important;
+			font-size: 24px !important;
+			line-height: 32px !important;
+			margin-bottom: 8px !important;
+		}
+
+		.sub-title {
+			color: var(--bg-vanilla-400) !important;
+			font-size: 14px !important;
+			font-style: normal;
+			font-weight: 400 !important;
+			line-height: 24px !important;
+			margin-top: 0px !important;
+			margin-bottom: 24px !important;
+		}
+
+		.questions-form-container {
+			max-width: 600px;
+			width: 600px;
+			margin: 0 auto;
+		}
+
+		.questions-form {
+			width: 100%;
+			display: flex;
+			min-height: 420px;
+			padding: 20px 24px 24px 24px;
+			flex-direction: column;
+			align-items: center;
+			gap: 24px;
+			border-radius: 4px;
+			border: 1px solid var(--bg-slate-500);
+			background: var(--bg-ink-400);
+
+			.ant-form-item {
+				margin-bottom: 0px !important;
+
+				.ant-form-item-label {
+					label {
+						color: var(--bg-vanilla-100) !important;
+						font-size: 13px !important;
+						font-weight: 500;
+						line-height: 20px;
+					}
+				}
+			}
+
+			&.invite-team-members-form {
+				min-height: calc(420px - 24px);
+				max-height: calc(420px - 24px);
+
+				.invite-team-members-container {
+					max-height: 260px;
+					overflow-y: auto;
+
+					&::-webkit-scrollbar {
+						width: 0.1rem;
+					}
+					&::-webkit-scrollbar-corner {
+						background: transparent;
+					}
+					&::-webkit-scrollbar-thumb {
+						background: rgb(136, 136, 136);
+						border-radius: 0.625rem;
+					}
+					&::-webkit-scrollbar-track {
+						background: transparent;
+					}
+				}
+			}
+		}
+
+		.invite-team-members-container {
+			display: flex;
+			width: 100%;
+			flex-direction: column;
+			gap: 12px;
+
+			.ant-input-group {
+				width: 100%;
+
+				.ant-input {
+					font-size: 12px;
+
+					height: 32px;
+					background: var(--Ink-300, #16181d);
+					border: 1px solid var(--bg-slate-400);
+					color: var(--bg-vanilla-400);
+				}
+
+				.ant-input-group-addon {
+					font-size: 11px;
+					height: 32px;
+					min-width: 80px;
+					background: var(--Ink-300, #16181d);
+					border: 1px solid var(--Greyscale-Slate-400, #1d212d);
+					border-left: 0px;
+					color: var(--bg-vanilla-400);
+				}
+			}
+		}
+
+		.question-label {
+			color: var(--bg-vanilla-100);
+			font-size: 13px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 20px;
+		}
+
+		.question-sub-label {
+			color: var(--bg-vanilla-400);
+			font-size: 11px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 16px;
+		}
+
+		.next-prev-container {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 10px;
+			margin-bottom: 24px;
+
+			.ant-btn {
+				flex: 1;
+			}
+		}
+
+		.form-group {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 8px;
+			align-self: stretch;
+		}
+
+		.slider-container {
+			width: 100%;
+
+			.ant-slider .ant-slider-mark {
+				font-size: 10px;
+			}
+		}
+
+		.do-later-container {
+			width: 100%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			margin-top: 24px;
+
+			.do-later-button {
+				font-size: 12px;
+
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				gap: 8px;
+			}
+		}
+
+		.question {
+			color: var(--bg-vanilla-100);
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 20px;
+
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		input[type='text'] {
+			width: 100%;
+			padding: 12px;
+			border-radius: 2px;
+			font-size: 14px;
+			height: 40px;
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-300);
+			color: var(--bg-vanilla-100);
+
+			&:focus-visible {
+				outline: none;
+			}
+		}
+
+		.radio-group,
+		.grid,
+		.tool-grid {
+			display: flex;
+			align-items: flex-start;
+			align-content: flex-start;
+			gap: 10px;
+			align-self: stretch;
+			flex-wrap: wrap;
+		}
+
+		.radio-button,
+		.grid-button,
+		.tool-button {
+			border-radius: 4px;
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-300);
+			padding: 12px;
+			color: var(--bg-vanilla-400);
+			font-size: 14px;
+			font-style: normal;
+			text-align: left;
+			font-weight: 400;
+			transition: background-color 0.3s ease;
+			min-width: 258px;
+			cursor: pointer;
+			box-sizing: border-box;
+		}
+
+		.radio-button.active,
+		.grid-button.active,
+		.tool-button.active,
+		.radio-button:hover,
+		.grid-button:hover,
+		.tool-button:hover {
+			border: 1px solid rgba(78, 116, 248, 0.4);
+			background: rgba(78, 116, 248, 0.2);
+		}
+
+		.two-column-grid {
+			width: 100%;
+			display: grid;
+			grid-template-columns: 1fr 1fr; /* Two equal columns */
+			gap: 10px;
+		}
+
+		.onboarding-questionaire-button,
+		.add-another-member-button,
+		.remove-team-member-button {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			border-radius: 2px;
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-300);
+			color: var(--bg-vanilla-400);
+			box-shadow: none;
+			font-size: 14px;
+			font-style: normal;
+			text-align: left;
+			font-weight: 400;
+			transition: background-color 0.3s ease;
+			cursor: pointer;
+			height: 40px;
+			box-sizing: border-box;
+
+			&:hover {
+				border: 1px solid rgba(78, 116, 248, 0.4);
+				background: rgba(78, 116, 248, 0.2);
+			}
+
+			&:focus-visible {
+				outline: none;
+			}
+
+			&.active {
+				border: 1px solid rgba(78, 116, 248, 0.4);
+				background: rgba(78, 116, 248, 0.2);
+			}
+		}
+
+		.add-another-member-button,
+		.remove-team-member-button {
+			font-size: 12px;
+			height: 32px;
+		}
+
+		.remove-team-member-button {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+
+			border: 1px solid var(--bg-slate-400);
+			border-top-left-radius: 0px;
+			border-bottom-left-radius: 0px;
+			background-color: var(--bg-ink-300);
+
+			border-left: 0px;
+			border-top-left-radius: 0px;
+			border-bottom-left-radius: 0px;
+		}
+
+		.onboarding-questionaire-other-input {
+			.ant-input-group {
+				.ant-input {
+					border-top-right-radius: 0px !important;
+					border-bottom-right-radius: 0px !important;
+				}
+			}
+		}
+
+		.tool-grid {
+			grid-template-columns: repeat(4, 1fr);
+		}
+
+		.input-field {
+			flex: 0;
+			padding: 12px;
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-300);
+			color: var(--bg-vanilla-100);
+			border-radius: 4px;
+			font-size: 14px;
+			min-width: 258px;
+		}
+
+		.next-button {
+			display: flex;
+			height: 40px;
+			padding: 8px 12px 8px 16px;
+			justify-content: center;
+			align-items: center;
+			gap: 6px;
+			align-self: stretch;
+			border: 0px;
+			border-radius: 50px;
+			margin-top: 24px;
+			cursor: pointer;
+		}
+
+		.next-button.disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+			pointer-events: none;
+		}
+
+		.arrow {
+			font-size: 18px;
+			color: var(--bg-vanilla-100);
+		}
+	}
+
+	.onboarding-questionaire-footer {
+		width: 100%;
+		height: 60px;
+		padding: 12px 24px;
+		box-sizing: border-box;
+	}
+
+	.invite-team-members-add-another-member-container {
+		width: 100%;
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		margin-top: 12px;
+	}
+}
+
+.onboarding-questionaire-loading-container {
+	width: 100%;
+	display: flex;
+	height: 100vh;
+	max-width: 600px;
+	justify-content: center;
+	align-items: center;
+	margin: 0 auto;
+}
+
+.lightMode {
+	.onboarding-questionaire-container {
+		.onboarding-questionaire-content {
+			.questions-container {
+				color: var(--bg-slate-300);
+			}
+
+			.title {
+				color: var(--bg-slate-300) !important;
+			}
+
+			.sub-title {
+				color: var(--bg-slate-400) !important;
+			}
+
+			.questions-form {
+				width: 100%;
+				display: flex;
+				min-height: 420px;
+				padding: 20px 24px 24px 24px;
+				flex-direction: column;
+				align-items: center;
+				gap: 24px;
+				border-radius: 4px;
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+
+				.ant-form-item {
+					margin-bottom: 0px !important;
+
+					.ant-form-item-label {
+						label {
+							color: var(--bg-slate-300) !important;
+							font-size: 13px;
+							font-weight: 500;
+							line-height: 20px;
+						}
+					}
+				}
+
+				&.invite-team-members-form {
+					.invite-team-members-container {
+						max-height: 260px;
+						overflow-y: auto;
+
+						&::-webkit-scrollbar {
+							width: 0.1rem;
+						}
+						&::-webkit-scrollbar-corner {
+							background: transparent;
+						}
+						&::-webkit-scrollbar-thumb {
+							background: rgb(136, 136, 136);
+							border-radius: 0.625rem;
+						}
+						&::-webkit-scrollbar-track {
+							background: transparent;
+						}
+					}
+				}
+			}
+
+			.invite-team-members-container {
+				.ant-input-group {
+					.ant-input {
+						background: var(--bg-vanilla-100);
+						border: 1px solid var(--bg-vanilla-300);
+						color: var(--bg-slate-300);
+					}
+
+					.ant-input-group-addon {
+						font-size: 11px;
+						height: 32px;
+						min-width: 80px;
+						background: var(--bg-vanilla-100);
+						border: 1px solid var(--bg-vanilla-300);
+						border-left: 0px;
+						color: var(--bg-slate-300);
+					}
+				}
+			}
+
+			.question-label {
+				color: var(--bg-slate-300);
+			}
+
+			.question-sub-label {
+				color: var(--bg-slate-400);
+			}
+
+			.question {
+				color: var(--bg-slate-300);
+			}
+
+			input[type='text'] {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+				color: var(--text-ink-300);
+			}
+
+			.radio-button,
+			.grid-button,
+			.tool-button {
+				border-radius: 4px;
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+				padding: 12px;
+				color: var(--bg-slate-300);
+				font-size: 14px;
+				font-style: normal;
+				text-align: left;
+				font-weight: 400;
+				transition: background-color 0.3s ease;
+				min-width: 258px;
+				cursor: pointer;
+				box-sizing: border-box;
+			}
+
+			.radio-button.active,
+			.grid-button.active,
+			.tool-button.active,
+			.radio-button:hover,
+			.grid-button:hover,
+			.tool-button:hover {
+				border: 1px solid rgba(78, 116, 248, 0.4);
+				background: rgba(78, 116, 248, 0.2);
+			}
+
+			.onboarding-questionaire-button,
+			.add-another-member-button,
+			.remove-team-member-button {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				border-radius: 2px;
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+				color: var(--bg-ink-300);
+				box-shadow: none;
+				font-size: 14px;
+				font-style: normal;
+				text-align: left;
+				font-weight: 400;
+				transition: background-color 0.3s ease;
+				cursor: pointer;
+				height: 40px;
+				box-sizing: border-box;
+
+				&:hover {
+					border: 1px solid rgba(78, 116, 248, 0.4);
+					background: rgba(78, 116, 248, 0.2);
+				}
+
+				&:focus-visible {
+					outline: none;
+				}
+
+				&.active {
+					border: 1px solid rgba(78, 116, 248, 0.4);
+					background: rgba(78, 116, 248, 0.2);
+				}
+			}
+
+			.remove-team-member-button {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+
+				border: 1px solid var(--bg-vanilla-300);
+				border-top-left-radius: 0px;
+				border-bottom-left-radius: 0px;
+				background-color: var(--bg-vanilla-100);
+
+				border-left: 0px;
+				border-top-left-radius: 0px;
+				border-bottom-left-radius: 0px;
+			}
+
+			.input-field {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+				color: var(--text-ink-300);
+			}
+
+			.arrow {
+				color: var(--bg-slate-300);
+			}
+		}
+	}
+}
