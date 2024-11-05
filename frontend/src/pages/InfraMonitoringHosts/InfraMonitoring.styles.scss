@@ -56,18 +56,4 @@
 		border-radius: 10px;
 		width: fit-content;
 	  }
-
-	  .hosts-map-view {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		height: 400px;  // or use calc(100vh - [header-height])
-		width: 100%;
-		background: var(--bg-slate-900);
-		border-radius: 4px;
-	
-		h3.ant-typography {
-			color: var(--text-slate-400);
-		}
-	}
 }
