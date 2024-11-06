@@ -227,6 +227,23 @@
 				}
 			}
 		}
+
+		&.summary-section {
+			.overview-info-card {
+				min-height: 144px;
+
+				.card-title {
+					color: var(--bg-vanilla-400);
+					font-family: Inter;
+					font-size: 13px;
+					font-style: normal;
+					font-weight: 500;
+					line-height: 22px;
+					letter-spacing: 0.52px;
+					text-transform: uppercase;
+				}
+			}
+		}
 	}
 
 	.summary-section {
