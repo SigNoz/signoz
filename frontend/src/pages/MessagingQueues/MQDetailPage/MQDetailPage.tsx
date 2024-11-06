@@ -34,11 +34,29 @@ function MQDetailPage(): JSX.Element {
 		setproducerLatencyOption,
 	] = useState<ProducerLatencyOptions>(ProducerLatencyOptions.Producers);
 
-	const mqServiceView = useUrlQuery().get(QueryParams.mqServiceView);
+	const mqServiceView = useUrlQuery().get(
+		QueryParams.mqServiceView,
+	) as MessagingQueuesViewTypeOptions;
 
 	useEffect(() => {
 		logEvent('Messaging Queues: Detail page visited', {});
 	}, []);
+
+	useEffect(() => {
+		if (mqServiceView) {
+			setSelectedView(mqServiceView);
+		}
+	}, [mqServiceView]);
+
+	const updateUrlQuery = (query: Record<string, string | number>): void => {
+		const searchParams = new URLSearchParams(history.location.search);
+		Object.keys(query).forEach((key) => {
+			searchParams.set(key, query[key].toString());
+		});
+		history.push({
+			search: searchParams.toString(),
+		});
+	};
 
 	return (
 		<div className="messaging-queue-container">
@@ -58,10 +76,11 @@ function MQDetailPage(): JSX.Element {
 						className="messaging-queue-options"
 						defaultValue={MessagingQueuesViewType.consumerLag.value}
 						popupClassName="messaging-queue-options-popup"
-						onChange={(value: MessagingQueuesViewTypeOptions): void =>
-							setSelectedView(value)
-						}
-						value={mqServiceView as MessagingQueuesViewTypeOptions}
+						onChange={(value): void => {
+							setSelectedView(value);
+							updateUrlQuery({ [QueryParams.mqServiceView]: value });
+						}}
+						value={mqServiceView}
 						options={[
 							{
 								label: MessagingQueuesViewType.consumerLag.label,
