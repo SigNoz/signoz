@@ -64,7 +64,6 @@ function TableView({
 	onGroupByAttribute,
 	listViewPanelSelectedFields,
 }: Props): JSX.Element | null {
-	console.log(logData);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
 	const [isfilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
@@ -179,8 +178,6 @@ function TableView({
 	if (!dataSource) {
 		return null;
 	}
-
-	console.log(dataSource);
 
 	const columns: ColumnsType<DataType> = [
 		{
