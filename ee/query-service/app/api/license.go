@@ -72,6 +72,8 @@ type ListLicenseResponse struct {
 	IsCurrent  bool                   `json:"isCurrent"`
 	ValidFrom  int64                  `json:"validFrom"`
 	ValidUntil int64                  `json:"validUntil"`
+	Category   string                 `json:"category"`
+	Status     string                 `json:"status"`
 }
 
 func convertLicenseV3ToListLicenseResponse(licensesV3 []model.LicenseV3) []ListLicenseResponse {
@@ -86,6 +88,8 @@ func convertLicenseV3ToListLicenseResponse(licensesV3 []model.LicenseV3) []ListL
 			IsCurrent:  license.IsCurrent,
 			ValidFrom:  license.ValidFrom,
 			ValidUntil: license.ValidUntil,
+			Category:   license.Category,
+			Status:     license.Status,
 		}
 		listLicenses = append(listLicenses, listLicense)
 	}

@@ -16,6 +16,19 @@ var (
 	PlanNameBasic      = "BASIC"
 )
 
+var (
+	LicenseCategoryFree = "FREE"
+	LicenseCategoryPaid = "PAID"
+)
+
+var (
+	LicenseStatusIssued    = "ISSUED"
+	LicenseStatusActive    = "ACTIVE"
+	LicenseStatusSuspended = "SUSPENDED"
+	LicenseStatusHibernate = "HIBERNATE"
+	LicenseStatusInactive  = "INACTIVE"
+)
+
 const DisableUpsell = "DISABLE_UPSELL"
 const Onboarding = "ONBOARDING"
 const ChatSupport = "CHAT_SUPPORT"

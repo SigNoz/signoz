@@ -120,13 +120,15 @@ type LicenseV3 struct {
 	Data       map[string]interface{} `json:"data"`
 	Plan       Plan                   `json:"plan"`
 	Features   basemodel.FeatureSet   `json:"features"`
+	Category   string                 `json:"category"`
+	Status     string                 `json:"status"`
 	IsCurrent  bool                   `json:"isCurrent"`
 	ValidFrom  int64                  `json:"validFrom"`
 	ValidUntil int64                  `json:"validUntil"`
 }
 
 func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
-	var licenseID, licenseKey string
+	var licenseID, licenseKey, category, status string
 	var validFrom, validUntil int64
 	var licenseData = data
 	var features basemodel.FeatureSet
@@ -158,6 +160,26 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		return nil, errors.New("license key is missing!")
 	}
 
+	// extract category from data
+	if _licenseCategory, ok := data["category"]; ok {
+		if licenseCategory, ok := _licenseCategory.(string); ok {
+			category = licenseCategory
+		}
+	}
+	if category == "" {
+		category = LicenseCategoryFree
+	}
+
+	// extract status from data
+	if _licenseStatus, ok := data["status"]; ok {
+		if licenseStatus, ok := _licenseStatus.(string); ok {
+			status = licenseStatus
+		}
+	}
+	if status == "" {
+		status = LicenseStatusInactive
+	}
+
 	if _plan, ok := licenseData["plan"]; ok {
 		if parsedPlan, ok := _plan.(map[string]interface{}); ok {
 			if planName, ok := parsedPlan["name"]; ok {
@@ -167,8 +189,8 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 			}
 		}
 	}
-	// if unable to parse the plan then default it to basic!
-	if plan.Name == "" {
+	// if unable to parse the plan or license is inactive then default it to basic
+	if plan.Name == "" || status == LicenseStatusInactive {
 		plan.Name = PlanNameBasic
 	}
 
@@ -231,6 +253,8 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		Features:   features,
 		ValidFrom:  validFrom,
 		ValidUntil: validUntil,
+		Category:   category,
+		Status:     status,
 	}, nil
 
 }
