@@ -1,7 +1,4 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { MessagingQueueServiceDetailType } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
@@ -43,21 +40,17 @@ export const getConsumerLagDetails = async (
 	SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
 > => {
 	const { detailType, ...restProps } = props;
-	try {
-		const response = await axios.post(
-			`/messaging-queues/kafka/consumer-lag/${props.detailType}`,
-			{
-				...restProps,
-			},
-		);
+	const response = await axios.post(
+		`/messaging-queues/kafka/consumer-lag/${props.detailType}`,
+		{
+			...restProps,
+		},
+	);
 
-		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data.data,
-		};
-	} catch (error) {
-		return ErrorResponseHandler((error as AxiosError) || SOMETHING_WENT_WRONG);
-	}
+	return {
+		statusCode: 200,
+		error: null,
+		message: response.data.status,
+		payload: response.data.data,
+	};
 };
