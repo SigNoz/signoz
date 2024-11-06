@@ -58,7 +58,10 @@ function MQDetailPage(): JSX.Element {
 						className="messaging-queue-options"
 						defaultValue={MessagingQueuesViewType.consumerLag.value}
 						popupClassName="messaging-queue-options-popup"
-						value={mqServiceView}
+						onChange={(value: MessagingQueuesViewTypeOptions): void =>
+							setSelectedView(value)
+						}
+						value={mqServiceView as MessagingQueuesViewTypeOptions}
 						options={[
 							{
 								label: MessagingQueuesViewType.consumerLag.label,
