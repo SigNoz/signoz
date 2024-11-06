@@ -189,6 +189,15 @@
 			justify-content: center;
 			align-items: center;
 			margin-top: 24px;
+
+			.do-later-button {
+				font-size: 12px;
+
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				gap: 8px;
+			}
 		}
 
 		.question {

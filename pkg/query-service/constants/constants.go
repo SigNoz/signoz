@@ -85,6 +85,10 @@ func UseMetricsPreAggregation() bool {
 	return GetOrDefaultEnv("USE_METRICS_PRE_AGGREGATION", "true") == "true"
 }
 
+func EnableHostsInfraMonitoring() bool {
+	return GetOrDefaultEnv("ENABLE_INFRA_METRICS", "true") == "true"
+}
+
 var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
 
 func IsDurationSortFeatureEnabled() bool {

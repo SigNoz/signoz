@@ -261,7 +261,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						values,
 						async (): Promise<void> => {
 							if (isOnboardingEnabled && isCloudUser()) {
-								history.push(ROUTES.ONBOARDING);
+								history.push(ROUTES.GET_STARTED);
 							} else {
 								history.push(ROUTES.APPLICATION);
 							}
