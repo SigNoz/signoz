@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable react/require-default-props */
 import './MQTables.styles.scss';
 
@@ -169,15 +170,18 @@ function MessagingQueuesTable({
 		});
 	};
 
-	const { mutate: getViewDetails, isLoading } = useMutation(tableApi, {
-		onSuccess: (data) => {
-			if (data.payload) {
-				setColumns(getColumns(data?.payload, history));
-				setTableData(getTableData(data?.payload));
-			}
+	const { mutate: getViewDetails, isLoading, error, isError } = useMutation(
+		tableApi,
+		{
+			onSuccess: (data) => {
+				if (data.payload) {
+					setColumns(getColumns(data?.payload, history));
+					setTableData(getTableData(data?.payload));
+				}
+			},
+			onError: handleConsumerDetailsOnError,
 		},
-		onError: handleConsumerDetailsOnError,
-	});
+	);
 
 	useEffect(
 		() => {
@@ -229,6 +233,10 @@ function MessagingQueuesTable({
 							: 'Click on a row above to see the details'}
 					</Typography.Text>
 					<Skeleton />
+				</div>
+			) : isError ? (
+				<div className="no-data-style">
+					<Typography.Text>{error?.message || SOMETHING_WENT_WRONG}</Typography.Text>
 				</div>
 			) : (
 				<>

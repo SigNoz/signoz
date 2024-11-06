@@ -1,7 +1,4 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 import {
@@ -16,18 +13,14 @@ export const getTopicThroughputDetails = async (
 > => {
 	const { detailType, ...rest } = props;
 	const endpoint = `/messaging-queues/kafka/topic-throughput/${detailType}`;
-	try {
-		const response = await axios.post(endpoint, {
-			...rest,
-		});
+	const response = await axios.post(endpoint, {
+		...rest,
+	});
 
-		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data.data,
-		};
-	} catch (error) {
-		return ErrorResponseHandler((error as AxiosError) || SOMETHING_WENT_WRONG);
-	}
+	return {
+		statusCode: 200,
+		error: null,
+		message: response.data.status,
+		payload: response.data.data,
+	};
 };

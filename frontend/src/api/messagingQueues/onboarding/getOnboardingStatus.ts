@@ -16,11 +16,13 @@ export interface OnboardingStatusResponse {
 const getOnboardingStatus = async (props: {
 	start: number;
 	end: number;
+	endpointService?: string;
 }): Promise<SuccessResponse<OnboardingStatusResponse> | ErrorResponse> => {
+	const { endpointService, ...rest } = props;
 	try {
 		const response = await ApiBaseInstance.post(
-			'/messaging-queues/kafka/onboarding/consumers',
-			props,
+			`/messaging-queues/kafka/onboarding/${endpointService || 'consumers'}`,
+			rest,
 		);
 
 		return {
