@@ -1,6 +1,6 @@
 &nbsp;
 
-Once you are done intrumenting your Java application, you can run it using the below commands
+Once you are done instrumenting your Java application, you can run it using the below commands
 
 **Note:**
 - Ensure you have Java and Maven installed. Compile your Java producer applications: Ensure your producer apps are compiled and ready to run.
