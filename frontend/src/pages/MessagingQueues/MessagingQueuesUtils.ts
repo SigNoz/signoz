@@ -381,3 +381,9 @@ export const getAttributeDataFromOnboardingStatus = (
 		attributeDataWithError,
 	};
 };
+
+export enum MessagingQueueHealthCheckService {
+	Consumers = 'consumers',
+	Producers = 'producers',
+	Kafka = 'kafka',
+}

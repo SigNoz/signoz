@@ -8,15 +8,22 @@ type UseOnboardingStatus = (
 	options?: UseQueryOptions<
 		SuccessResponse<OnboardingStatusResponse> | ErrorResponse
 	>,
+	endpointService?: string,
+	queryKey?: string,
 ) => UseQueryResult<SuccessResponse<OnboardingStatusResponse> | ErrorResponse>;
 
-export const useOnboardingStatus: UseOnboardingStatus = (options) =>
+export const useOnboardingStatus: UseOnboardingStatus = (
+	options,
+	endpointService,
+	queryKey,
+) =>
 	useQuery<SuccessResponse<OnboardingStatusResponse> | ErrorResponse>({
-		queryKey: ['onboardingStatus'],
+		queryKey: [queryKey || `onboardingStatus-${endpointService}`],
 		queryFn: () =>
 			getOnboardingStatus({
 				start: (Date.now() - 15 * 60 * 1000) * 1_000_000,
 				end: Date.now() * 1_000_000,
+				endpointService,
 			}),
 		...options,
 	});
