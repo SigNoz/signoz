@@ -25,7 +25,7 @@ import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentation
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import * as opentelemetry from '@opentelemetry/sdk-node';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
 // Configure the SDK to export telemetry data to the console
 // Enable all auto-instrumentations from the meta package
@@ -38,7 +38,7 @@ const sdk = new opentelemetry.NodeSDK({
   traceExporter,
   instrumentations: [getNodeAutoInstrumentations()],
   resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: '{{MYAPP}}',
+    [ATTR_SERVICE_NAME]: '{{MYAPP}}',
   }),
 });
 
