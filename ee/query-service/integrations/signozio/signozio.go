@@ -31,7 +31,7 @@ type Client struct {
 func New() *Client {
 	return &Client{
 		Prefix:     constants.LicenseSignozIo,
-		GatewayUrl: constants.ZeusFeaturesURL,
+		GatewayUrl: constants.ZeusURL,
 	}
 }
 
