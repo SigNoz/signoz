@@ -5,6 +5,7 @@ import { Button, Flex, Input, Layout, Modal, Steps, Typography } from 'antd';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
+import { isEmpty } from 'lodash-es';
 import { ArrowRight, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -43,6 +44,7 @@ interface Entity {
 	label: string;
 	dataSource: string;
 	entityID: string;
+	module: string;
 	question?: {
 		desc: string;
 		options: Option[];
@@ -158,13 +160,7 @@ function OnboardingAddDataSource(): JSX.Element {
 
 			updateUrl(dataSource?.link || '', null);
 
-			setTimeout(() => {
-				question4Ref.current?.scrollIntoView({
-					behavior: 'smooth',
-					block: 'start',
-					inline: 'nearest',
-				});
-			}, 100);
+			handleScrollToStep(question4Ref);
 		}
 	};
 
@@ -182,6 +178,8 @@ function OnboardingAddDataSource(): JSX.Element {
 		} else {
 			updateUrl(option.link, null);
 			setHasMoreQuestions(false);
+
+			handleScrollToStep(question4Ref);
 		}
 	};
 
@@ -272,6 +270,17 @@ function OnboardingAddDataSource(): JSX.Element {
 	const handleUpdateCurrentStep = (step: number): void => {
 		setCurrentStep(step);
 
+		if (step === 1) {
+			setSetupStepItems([
+				...setupStepItemsBase.slice(0, 1),
+				{
+					...setupStepItemsBase[1],
+					description: '',
+				},
+				...setupStepItemsBase.slice(2),
+			]);
+		}
+
 		if (step === 2) {
 			setSetupStepItems([
 				...setupStepItemsBase.slice(0, 1),
@@ -279,15 +288,26 @@ function OnboardingAddDataSource(): JSX.Element {
 					...setupStepItemsBase[1],
 					description: `${selectedDataSource?.label} ${
 						selectedFramework?.label ? `- ${selectedFramework?.label}` : ''
-						// eslint-disable-next-line sonarjs/no-nested-template-literals
-					} ${selectedEnvironment?.label ? `- ${selectedEnvironment?.label}` : ''}`,
+					}`,
 				},
 				...setupStepItemsBase.slice(2),
 			]);
 		}
 
 		if (step === 3) {
-			history.push(ROUTES.APPLICATION);
+			switch (selectedDataSource?.module) {
+				case 'apm':
+					history.push(ROUTES.APPLICATION);
+					break;
+				case 'logs':
+					history.push(ROUTES.LOGS);
+					break;
+				case 'metrics':
+					history.push(ROUTES.ALL_DASHBOARD);
+					break;
+				default:
+					history.push(ROUTES.APPLICATION);
+			}
 		}
 	};
 
@@ -449,100 +469,86 @@ function OnboardingAddDataSource(): JSX.Element {
 											</div>
 										</div>
 
-										{selectedDataSource && (
-											<div
-												className={`question-2 ${
-													hasMoreQuestions ? 'full-viewport-height' : ''
-												}`}
-												ref={question2Ref}
-											>
-												{selectedDataSource?.question?.desc && (
-													<>
-														<div className="question-title-container">
-															<Typography.Title
-																level={3}
-																className="question-title onboarding-text"
-															>
-																{selectedDataSource?.question?.desc}
-															</Typography.Title>
-															<Typography.Text className="question-sub-title">
-																Select from a host of services to start sending data to SigNoz
-															</Typography.Text>
-														</div>
-
-														<div className="onboarding-data-source-options">
-															{selectedDataSource?.question?.options.map((option) => (
-																<Button
-																	key={option.label}
-																	className={`onboarding-data-source-button ${
-																		selectedFramework?.label === option.label ? 'selected' : ''
-																	}`}
-																	type="primary"
-																	onClick={(): void => handleSelectFramework(option)}
+										{selectedDataSource &&
+											selectedDataSource?.question &&
+											!isEmpty(selectedDataSource?.question) && (
+												<div className="question-2" ref={question2Ref}>
+													{selectedDataSource?.question?.desc && (
+														<>
+															<div className="question-title-container">
+																<Typography.Title
+																	level={3}
+																	className="question-title onboarding-text"
 																>
-																	{option.imgUrl && (
+																	{selectedDataSource?.question?.desc}
+																</Typography.Title>
+															</div>
+
+															<div className="onboarding-data-source-options">
+																{selectedDataSource?.question?.options.map((option) => (
+																	<Button
+																		key={option.label}
+																		className={`onboarding-data-source-button ${
+																			selectedFramework?.label === option.label ? 'selected' : ''
+																		}`}
+																		type="primary"
+																		onClick={(): void => handleSelectFramework(option)}
+																	>
+																		{option.imgUrl && (
+																			<img
+																				src={option.imgUrl || '/Logos/signoz-brand-logo-new.svg'}
+																				alt={option.label}
+																				className="onboarding-data-source-button-img"
+																			/>
+																		)}
+
+																		{option.label}
+																	</Button>
+																))}
+															</div>
+														</>
+													)}
+												</div>
+											)}
+
+										{selectedFramework &&
+											selectedFramework?.question &&
+											!isEmpty(selectedFramework?.question) && (
+												<div className="question-3" ref={question3Ref}>
+													{selectedFramework?.question?.desc && (
+														<>
+															<div className="question-title-container">
+																<Typography.Title
+																	level={3}
+																	className="question-title onboarding-text"
+																>
+																	{selectedFramework?.question?.desc}
+																</Typography.Title>
+															</div>
+
+															<div className="onboarding-data-source-options">
+																{selectedFramework?.question?.options.map((option) => (
+																	<Button
+																		key={option.label}
+																		className={`onboarding-data-source-button ${
+																			selectedEnvironment?.label === option.label ? 'selected' : ''
+																		}`}
+																		type="primary"
+																		onClick={(): void => handleSelectEnvironment(option)}
+																	>
 																		<img
 																			src={option.imgUrl || '/Logos/signoz-brand-logo-new.svg'}
 																			alt={option.label}
 																			className="onboarding-data-source-button-img"
 																		/>
-																	)}
-
-																	{option.label}
-																</Button>
-															))}
-														</div>
-													</>
-												)}
-											</div>
-										)}
-
-										{selectedFramework && (
-											<div
-												className={`question-3 ${
-													hasMoreQuestions ? 'full-viewport-height' : ''
-												}`}
-												ref={question3Ref}
-											>
-												{selectedFramework?.question?.desc && (
-													<>
-														<div className="question-title-container">
-															<Typography.Title
-																level={3}
-																className="question-title onboarding-text"
-															>
-																{selectedFramework?.question?.desc}
-															</Typography.Title>
-															<Typography.Text className="question-sub-title">
-																Select from a host of services to start sending data to SigNoz
-															</Typography.Text>
-														</div>
-
-														<div className="onboarding-data-source-options">
-															{selectedFramework?.question?.options.map((option) => (
-																<Button
-																	key={option.label}
-																	className={`onboarding-data-source-button ${
-																		selectedEnvironment?.label === option.label ? 'selected' : ''
-																	}`}
-																	type="primary"
-																	onClick={(): void => handleSelectEnvironment(option)}
-																>
-																	{/* {option.imgUrl && ( */}
-																	<img
-																		src={option.imgUrl || '/Logos/signoz-brand-logo-new.svg'}
-																		alt={option.label}
-																		className="onboarding-data-source-button-img"
-																	/>
-																	{/* )}{' '} */}
-																	{option.label}
-																</Button>
-															))}
-														</div>
-													</>
-												)}
-											</div>
-										)}
+																		{option.label}
+																	</Button>
+																))}
+															</div>
+														</>
+													)}
+												</div>
+											)}
 
 										{!hasMoreQuestions && (
 											<div className="question-4" ref={question4Ref}>
