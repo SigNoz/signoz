@@ -1,7 +1,38 @@
-.infra-monitoring-hosts-page {
+.infra-monitoring-container {
 	display: flex;
 	height: 100%;
 	margin-top: 1rem;
+
+	.time-selector {
+        position: absolute;
+        top: 9px;
+        right: 0;
+		padding: 0 1.5rem;
+    }
+
+	.infra-monitoring-header {
+		display: flex;
+		justify-content: space-between;
+		width: 100%;
+		margin-bottom: 16px;
+
+		.tabs-wrapper {
+			flex: 1;
+			margin-right: 24px;
+
+			.infra-monitoring-tabs {
+				width: 100%;
+
+				:global(.ant-tabs-nav) {
+					margin: 0;
+				}
+			}
+		}
+
+		.time-selector {
+			flex-shrink: 0;
+		}
+	}
 
 	.hosts-list-controls {
 		margin: 1rem 0.5rem;
@@ -15,5 +46,14 @@
 	  .progress-bar {
 		flex: 1;
 		margin-right: 8px;
+	  }
+	  
+	  .clickable-row {
+		cursor: pointer;
+	  }
+
+	  .infra-monitoring-tags {
+		border-radius: 10px;
+		width: fit-content;
 	  }
 }
