@@ -125,8 +125,8 @@ func ValidateLicenseV3(licenseKey string) (*model.LicenseV3, *model.ApiError) {
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
-	// Creating a new POST request
-	req, err := http.NewRequest("POST", C.GatewayUrl+"/licenses/me", nil)
+
+	req, err := http.NewRequest("GET", C.GatewayUrl+"/v2/licenses/me", nil)
 	if err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, fmt.Sprintf("failed to create request: %w", err)))
 	}
@@ -134,7 +134,6 @@ func ValidateLicenseV3(licenseKey string) (*model.LicenseV3, *model.ApiError) {
 	// Setting the custom header
 	req.Header.Set("X-Signoz-Cloud-Api-Key", licenseKey)
 
-	// Making the POST request
 	response, err := client.Do(req)
 	if err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, fmt.Sprintf("failed to make post request: %w", err)))
@@ -149,13 +148,13 @@ func ValidateLicenseV3(licenseKey string) (*model.LicenseV3, *model.ApiError) {
 
 	switch response.StatusCode {
 	case 200, 201:
-		a := map[string]interface{}{}
+		a := ValidateLicenseResponse{}
 		err = json.Unmarshal(body, &a)
 		if err != nil {
 			return nil, model.BadRequest(errors.Wrap(err, "failed to marshal license validation response"))
 		}
 
-		license, err := model.NewLicenseV3(a)
+		license, err := model.NewLicenseV3(a.Data)
 		if err != nil {
 			return nil, model.BadRequest(errors.Wrap(err, "failed to generate new license v3"))
 		}

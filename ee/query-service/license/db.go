@@ -61,7 +61,13 @@ func (r *Repo) GetLicensesV3(ctx context.Context) ([]model.LicenseV3, error) {
 	}
 
 	for _, l := range licensesData {
-		license, err := model.NewLicenseV3WithIDAndKey(l.ID, l.Key, l.Data)
+		var licenseData map[string]interface{}
+		err := json.Unmarshal([]byte(l.Data), &licenseData)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal data into licenseData : %v", err)
+		}
+
+		license, err := model.NewLicenseV3WithIDAndKey(l.ID, l.Key, licenseData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get licenses v3 schema : %v", err)
 		}
@@ -115,7 +121,13 @@ func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3, error)
 
 	var active *model.LicenseV3
 	for _, l := range licenses {
-		license, err := model.NewLicenseV3WithIDAndKey(l.ID, l.Key, l.Data)
+		var licenseData map[string]interface{}
+		err := json.Unmarshal([]byte(l.Data), &licenseData)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal data into licenseData : %v", err)
+		}
+
+		license, err := model.NewLicenseV3WithIDAndKey(l.ID, l.Key, licenseData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get licenses v3 schema : %v", err)
 		}

@@ -110,9 +110,9 @@ type Plan struct {
 }
 
 type LicenseDB struct {
-	ID   string                 `json:"id"`
-	Key  string                 `json:"key"`
-	Data map[string]interface{} `json:"data"`
+	ID   string `json:"id"`
+	Key  string `json:"key"`
+	Data string `json:"data"`
 }
 type LicenseV3 struct {
 	ID         string                 `json:"id"`
@@ -172,13 +172,15 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		plan.Name = PlanNameBasic
 	}
 
-	featuresFromZeus := new(basemodel.FeatureSet)
+	featuresFromZeus := basemodel.FeatureSet{}
 	if features, ok := licenseData["features"]; ok {
 		if val, ok := features.(basemodel.FeatureSet); ok {
-			featuresFromZeus = &val
+			featuresFromZeus = val
 		}
 	}
-	features = append(features, *featuresFromZeus...)
+	if len(featuresFromZeus) > 0 {
+		features = append(features, featuresFromZeus...)
+	}
 
 	switch plan.Name {
 	case PlanNameTeams:

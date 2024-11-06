@@ -391,7 +391,11 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 	}()
 
 	err := lm.RefreshLicense(ctx)
-	return err
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Activate activates a license key with signoz server
