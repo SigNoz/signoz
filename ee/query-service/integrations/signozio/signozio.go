@@ -166,7 +166,7 @@ func ValidateLicenseV3(licenseKey string) (*model.LicenseV3, *model.ApiError) {
 			fmt.Sprintf("bad request error received from %v", C.GatewayUrl)))
 	default:
 		return nil, model.InternalError(errors.Wrap(fmt.Errorf(string(body)),
-			fmt.Sprintf("bad request error received from %v", C.GatewayUrl)))
+			fmt.Sprintf("internal request error received from %v", C.GatewayUrl)))
 	}
 
 }
