@@ -12,15 +12,43 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { VIEW_TYPES, VIEWS } from './constants';
 import Containers from './Containers';
 import { HostDetailProps } from './HostMetricDetail.interfaces';
+import HostMetricLogsDetailedView from './HostMetricsLogs/HostMetricLogsDetailedView';
+import HostMetricTraces from './HostMetricTraces/HostMetricTraces';
 import Metrics from './Metrics/Metrics';
 import Processes from './Processes';
 
-function HostMetricDetail({ host, onClose }: HostDetailProps): JSX.Element {
+function HostMetricDetail({
+	host,
+	onClose,
+	isModalTimeSelection,
+}: HostDetailProps): JSX.Element {
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
+		minTime,
+	]);
+	const endMs = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [
+		maxTime,
+	]);
+
+	const timeRange = useMemo(
+		() => ({
+			startTime: startMs * 1000,
+			endTime: endMs * 1000,
+		}),
+		[startMs, endMs],
+	);
+
 	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.CONTAINERS);
 	const isDarkMode = useIsDarkMode();
 
@@ -30,7 +58,7 @@ function HostMetricDetail({ host, onClose }: HostDetailProps): JSX.Element {
 
 	return (
 		<Drawer
-			width="55%"
+			width="70%"
 			title={
 				<>
 					<Divider type="vertical" />
@@ -165,7 +193,21 @@ function HostMetricDetail({ host, onClose }: HostDetailProps): JSX.Element {
 					{selectedView === VIEW_TYPES.CONTAINERS && <Containers />}
 					{selectedView === VIEW_TYPES.PROCESSES && <Processes />}
 					{selectedView === VIEW_TYPES.METRICS && (
-						<Metrics hostName={host.hostName} />
+						<Metrics
+							hostName={host.hostName}
+							timeRange={timeRange}
+							isModalTimeSelection={isModalTimeSelection}
+						/>
+					)}
+					{selectedView === VIEW_TYPES.LOGS && (
+						<HostMetricLogsDetailedView
+							hostName={host.hostName}
+							timeRange={timeRange}
+							isModalTimeSelection={isModalTimeSelection}
+						/>
+					)}
+					{selectedView === VIEW_TYPES.TRACES && (
+						<HostMetricTraces hostName={host.hostName} timeRange={timeRange} />
 					)}
 				</>
 			)}

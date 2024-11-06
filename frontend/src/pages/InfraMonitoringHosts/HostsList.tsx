@@ -157,7 +157,11 @@ function HostsList(): JSX.Element {
 					})}
 				/>
 			)}
-			<HostMetricDetail host={selectedHostData} onClose={handleCloseHostDetail} />
+			<HostMetricDetail
+				host={selectedHostData}
+				isModalTimeSelection
+				onClose={handleCloseHostDetail}
+			/>
 		</div>
 	);
 }

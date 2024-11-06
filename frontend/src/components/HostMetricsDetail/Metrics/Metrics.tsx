@@ -8,33 +8,64 @@ import {
 	getHostQueryPayload,
 	hostWidgetInfo,
 } from 'container/LogDetailedView/InfraMetrics/constants';
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import {
+	CustomTimeType,
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/config';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
+import GetMinMax from 'lib/getMinMax';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useQueries, UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
-function Metrics({ hostName }: { hostName: string }): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
+function Metrics({
+	hostName,
+	timeRange,
+	isModalTimeSelection,
+}: {
+	hostName: string;
+	timeRange: { startTime: number; endTime: number };
+	isModalTimeSelection: boolean;
+}): JSX.Element {
+	const [modalTimeRange, setModalTimeRange] = useState({
+		startTime: timeRange.startTime / 1000,
+		endTime: timeRange.endTime / 1000,
+	});
+	const [, setSelectedInterval] = useState<Time>('5m');
+
+	const handleTimeChange = useCallback(
+		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
+			setSelectedInterval(interval as Time);
+			if (interval === 'custom' && dateTimeRange) {
+				setModalTimeRange({
+					startTime: dateTimeRange[0],
+					endTime: dateTimeRange[1],
+				});
+			} else {
+				const { maxTime, minTime } = GetMinMax(interval);
+				setModalTimeRange({
+					startTime: minTime / 1000000000,
+					endTime: maxTime / 1000000000,
+				});
+			}
+		},
+		[],
 	);
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
-		minTime,
-	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [
-		maxTime,
-	]);
 	const queryPayloads = useMemo(
-		() => getHostQueryPayload(hostName, startMs, endMs),
-		[hostName, startMs, endMs],
+		() =>
+			getHostQueryPayload(
+				hostName,
+				modalTimeRange.startTime,
+				modalTimeRange.endTime,
+			),
+		[hostName, modalTimeRange.startTime, modalTimeRange.endTime],
 	);
 
 	const queries = useQueries(
@@ -65,11 +96,17 @@ function Metrics({ hostName }: { hostName: string }): JSX.Element {
 					yAxisUnit: hostWidgetInfo[idx].yAxisUnit,
 					softMax: null,
 					softMin: null,
-					minTimeScale: startMs,
-					maxTimeScale: endMs,
+					minTimeScale: modalTimeRange.startTime,
+					maxTimeScale: modalTimeRange.endTime,
 				}),
 			),
-		[queries, isDarkMode, dimensions, startMs, endMs],
+		[
+			queries,
+			isDarkMode,
+			dimensions,
+			modalTimeRange.startTime,
+			modalTimeRange.endTime,
+		],
 	);
 
 	const renderCardContent = (
@@ -98,16 +135,28 @@ function Metrics({ hostName }: { hostName: string }): JSX.Element {
 	};
 
 	return (
-		<Row gutter={24} className="host-metrics-container">
-			{queries.map((query, idx) => (
-				<Col span={12} key={hostWidgetInfo[idx].title}>
-					<Typography.Text>{hostWidgetInfo[idx].title}</Typography.Text>
-					<Card bordered className="host-metrics-card" ref={graphRef}>
-						{renderCardContent(query, idx)}
-					</Card>
-				</Col>
-			))}
-		</Row>
+		<>
+			<div className="metrics-datetime-section">
+				<DateTimeSelectionV2
+					showAutoRefresh={false}
+					showRefreshText={false}
+					hideShareModal
+					onTimeChange={handleTimeChange}
+					defaultRelativeTime="5m"
+					isModalTimeSelection={isModalTimeSelection}
+				/>
+			</div>
+			<Row gutter={24} className="host-metrics-container">
+				{queries.map((query, idx) => (
+					<Col span={12} key={hostWidgetInfo[idx].title}>
+						<Typography.Text>{hostWidgetInfo[idx].title}</Typography.Text>
+						<Card bordered className="host-metrics-card" ref={graphRef}>
+							{renderCardContent(query, idx)}
+						</Card>
+					</Col>
+				))}
+			</Row>
+		</>
 	);
 }
 
