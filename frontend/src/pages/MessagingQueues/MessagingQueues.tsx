@@ -4,6 +4,7 @@ import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Modal } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { Calendar, ListMinus } from 'lucide-react';
@@ -86,7 +87,7 @@ function MessagingQueues(): JSX.Element {
 								type="default"
 								onClick={(): void =>
 									getStartedRedirect(
-										ROUTES.GET_STARTED_APPLICATION_MONITORING,
+										`${ROUTES.GET_STARTED_APPLICATION_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=consumer`,
 										'Configure Consumer',
 									)
 								}
@@ -105,7 +106,7 @@ function MessagingQueues(): JSX.Element {
 								type="default"
 								onClick={(): void =>
 									getStartedRedirect(
-										ROUTES.GET_STARTED_APPLICATION_MONITORING,
+										`${ROUTES.GET_STARTED_APPLICATION_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=producer`,
 										'Configure Producer',
 									)
 								}
@@ -124,7 +125,7 @@ function MessagingQueues(): JSX.Element {
 								type="default"
 								onClick={(): void =>
 									getStartedRedirect(
-										ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING,
+										`${ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=kafka`,
 										'Monitor kafka',
 									)
 								}
