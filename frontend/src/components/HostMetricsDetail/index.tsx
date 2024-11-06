@@ -1,7 +1,7 @@
 import './HostMetricsDetail.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Drawer, Progress, Radio, Tag, Typography } from 'antd';
+import { Divider, Drawer, Progress, Radio, Tag, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
@@ -17,10 +17,8 @@ import { useState } from 'react';
 import { VIEW_TYPES, VIEWS } from './constants';
 import Containers from './Containers';
 import { HostDetailProps } from './HostMetricDetail.interfaces';
+import Metrics from './Metrics/Metrics';
 import Processes from './Processes';
-
-// import Metrics from './Metrics';
-// import Overview from './Overview';
 
 function HostMetricDetail({ host, onClose }: HostDetailProps): JSX.Element {
 	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.CONTAINERS);
@@ -32,8 +30,13 @@ function HostMetricDetail({ host, onClose }: HostDetailProps): JSX.Element {
 
 	return (
 		<Drawer
-			width="50%"
-			title={<Typography.Text className="title">{host?.hostName}</Typography.Text>}
+			width="55%"
+			title={
+				<>
+					<Divider type="vertical" />
+					<Typography.Text className="title">{host?.hostName}</Typography.Text>
+				</>
+			}
 			placement="right"
 			onClose={onClose}
 			open={!!host}
@@ -161,6 +164,9 @@ function HostMetricDetail({ host, onClose }: HostDetailProps): JSX.Element {
 
 					{selectedView === VIEW_TYPES.CONTAINERS && <Containers />}
 					{selectedView === VIEW_TYPES.PROCESSES && <Processes />}
+					{selectedView === VIEW_TYPES.METRICS && (
+						<Metrics hostName={host.hostName} />
+					)}
 				</>
 			)}
 		</Drawer>

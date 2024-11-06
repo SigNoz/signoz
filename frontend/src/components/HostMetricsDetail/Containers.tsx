@@ -9,11 +9,7 @@ const { Text } = Typography;
 
 function Containers(): JSX.Element {
 	return (
-		<Space
-			direction="vertical"
-			style={{ maxWidth: '600px', margin: '64px auto', padding: '0 16px' }}
-			size={24}
-		>
+		<Space direction="vertical" className="host-containers" size={24}>
 			<div className="infra-container-card">
 				<img
 					src="/Icons/infraContainers.svg"

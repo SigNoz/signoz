@@ -24,6 +24,7 @@ function HostsList(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+
 	const [currentPage, setCurrentPage] = useState(1);
 	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
 		items: [],
