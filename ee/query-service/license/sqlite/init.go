@@ -50,7 +50,7 @@ func InitDB(db *sqlx.DB) error {
 
 	table_schema = `CREATE TABLE IF NOT EXISTS licenses_v3 (
 		id TEXT PRIMARY KEY,
-		key TEXT UNIQUE,
+		key TEXT NOT NULL UNIQUE,
 		data TEXT
 	);`
 
