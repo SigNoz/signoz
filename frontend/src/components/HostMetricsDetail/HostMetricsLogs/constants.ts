@@ -4,6 +4,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
+import { v4 as uuidv4 } from 'uuid';
 
 export const getHostLogsQueryPayload = (
 	start: number,
@@ -13,22 +14,8 @@ export const getHostLogsQueryPayload = (
 	graphType: PANEL_TYPES.LIST,
 	selectedTime: 'GLOBAL_TIME',
 	query: {
-		clickhouse_sql: [
-			{
-				name: 'A',
-				legend: '',
-				disabled: false,
-				query: '',
-			},
-		],
-		promql: [
-			{
-				name: 'A',
-				query: '',
-				legend: '',
-				disabled: false,
-			},
-		],
+		clickhouse_sql: [],
+		promql: [],
 		builder: {
 			queryData: [
 				{
@@ -67,7 +54,7 @@ export const getHostLogsQueryPayload = (
 			],
 			queryFormulas: [],
 		},
-		id: '5d94d1e7-6b88-449c-a4b8-af3c27663754',
+		id: uuidv4(),
 		queryType: EQueryType.QUERY_BUILDER,
 	},
 	params: {

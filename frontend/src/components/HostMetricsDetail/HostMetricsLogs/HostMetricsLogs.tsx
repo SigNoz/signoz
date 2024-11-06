@@ -160,14 +160,7 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 				order={ORDERBY_FILTERS.ASC}
 				onClick={handlePreviousLogsShowNextLine}
 			/>
-			{isPrevLoading && (
-				<Skeleton
-					style={{
-						height: '100%',
-						padding: '16px',
-					}}
-				/>
-			)}
+			{isPrevLoading && <Skeleton className="skeleton-container" />}
 			<OverlayScrollbar isVirtuoso>
 				<Virtuoso
 					className="virtuoso-list"
@@ -177,14 +170,7 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 					style={{ height: '400px' }}
 				/>
 			</OverlayScrollbar>
-			{isAfterLoading && (
-				<Skeleton
-					style={{
-						height: '100%',
-						padding: '16px',
-					}}
-				/>
-			)}
+			{isAfterLoading && <Skeleton className="skeleton-container" />}
 			<ShowButton
 				isLoading={isAfterLoading}
 				isDisabled={false}
