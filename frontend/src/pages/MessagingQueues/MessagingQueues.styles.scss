@@ -45,22 +45,28 @@
 
 		border-bottom: 1px solid var(--bg-slate-500);
 
-		.header-config {
+		.header-content {
 			display: flex;
-			gap: 10px;
+			gap: 12px;
 			align-items: center;
 
-			.messaging-queue-options {
-				.ant-select-selector {
-					display: flex;
-					height: 32px;
-					padding: 6px 6px 6px 8px;
-					align-items: center;
-					gap: 4px;
+			.header-config {
+				display: flex;
+				gap: 10px;
+				align-items: center;
 
-					border-radius: 2px;
-					border: 1px solid var(--bg-slate-400);
-					background: var(--bg-ink-300);
+				.messaging-queue-options {
+					.ant-select-selector {
+						display: flex;
+						height: 32px;
+						padding: 6px 6px 6px 8px;
+						align-items: center;
+						gap: 4px;
+
+						border-radius: 2px;
+						border: 1px solid var(--bg-slate-400);
+						background: var(--bg-ink-300);
+					}
 				}
 			}
 		}

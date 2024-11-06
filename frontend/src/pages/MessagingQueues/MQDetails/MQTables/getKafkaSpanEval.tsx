@@ -6,19 +6,17 @@ import {
 	MessagingQueuesPayloadProps,
 } from './getConsumerLagDetails';
 
-export const getTopicThroughputOverview = async (
-	props: Omit<MessagingQueueServicePayload, 'variables'>,
+export const getKafkaSpanEval = async (
+	props: Omit<MessagingQueueServicePayload, 'detailType' | 'variables'>,
 ): Promise<
 	SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
 > => {
-	const { detailType, start, end } = props;
-	const response = await axios.post(
-		`messaging-queues/kafka/topic-throughput/${detailType}`,
-		{
-			start,
-			end,
-		},
-	);
+	const { start, end, evalTime } = props;
+	const response = await axios.post(`messaging-queues/kafka/span/evaluation`, {
+		start,
+		end,
+		eval_time: evalTime,
+	});
 
 	return {
 		statusCode: 200,
