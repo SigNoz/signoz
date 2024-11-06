@@ -59,13 +59,6 @@ function HostMetricLogsDetailedView({
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
-	// const { handleChangeQueryData } = useQueryOperations({
-	//     index: 0,
-	//     query,
-	//     isListViewPanel: true,
-	//     entityVersion: '',
-	// });
-
 	const handleChangeTagFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
 			setFilters({

@@ -1,6 +1,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -11,14 +12,14 @@ export const columns = [
 		dataIndex: 'timestamp',
 		key: 'timestamp',
 		title: 'Timestamp',
-		width: 145,
+		width: 200,
 		render: (timestamp: string): string => new Date(timestamp).toLocaleString(),
 	},
 	{
 		title: 'Service Name',
 		dataIndex: ['data', 'serviceName'],
 		key: 'serviceName-string-tag',
-		width: 145,
+		width: 150,
 	},
 	{
 		title: 'Name',
@@ -48,10 +49,10 @@ export const columns = [
 ];
 
 export const getHostTracesQueryPayload = (
-	hostName: string,
 	start: number,
 	end: number,
 	offset = 0,
+	filters: IBuilderQuery['filters'],
 ): GetQueryResultsProps => ({
 	query: {
 		promql: [],
@@ -73,24 +74,7 @@ export const getHostTracesQueryPayload = (
 					timeAggregation: 'rate',
 					spaceAggregation: 'sum',
 					functions: [],
-					filters: {
-						items: [
-							{
-								id: 'host-filter',
-								key: {
-									key: 'host.name',
-									dataType: DataTypes.String,
-									type: 'resource',
-									isColumn: false,
-									isJSON: false,
-									id: 'host.name--string--resource--false',
-								},
-								op: '=',
-								value: hostName,
-							},
-						],
-						op: 'AND',
-					},
+					filters,
 					expression: 'A',
 					disabled: false,
 					stepInterval: 60,

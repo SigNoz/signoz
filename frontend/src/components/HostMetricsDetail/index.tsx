@@ -207,7 +207,11 @@ function HostMetricDetail({
 						/>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (
-						<HostMetricTraces hostName={host.hostName} timeRange={timeRange} />
+						<HostMetricTraces
+							hostName={host.hostName}
+							timeRange={timeRange}
+							isModalTimeSelection={isModalTimeSelection}
+						/>
 					)}
 				</>
 			)}
