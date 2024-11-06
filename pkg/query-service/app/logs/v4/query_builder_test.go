@@ -520,14 +520,16 @@ func Test_orderByAttributeKeyTags(t *testing.T) {
 					{
 						ColumnName: "bytes",
 						Order:      "asc",
+						IsColumn:   true,
+						Type:       v3.AttributeKeyTypeTag,
+						DataType:   v3.AttributeKeyDataTypeString,
 					},
 				},
 				tags: []v3.AttributeKey{
 					{Key: "name"},
-					{Key: "bytes"},
 				},
 			},
-			want: "`name` asc,value asc,`bytes` asc",
+			want: "`name` asc,value asc,`attribute_string_bytes` asc",
 		},
 		{
 			name: "test 4",
