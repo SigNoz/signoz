@@ -127,10 +127,10 @@ type LicenseV3 struct {
 
 func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	var licenseID, licenseKey string
-	var plan Plan
+	var validFrom, validUntil int64
 	var licenseData = data
 	var features basemodel.FeatureSet
-	var validFrom, validUntil int64
+	plan := new(Plan)
 
 	// extract id from data
 	if _licenseId, ok := data["id"]; ok {
@@ -162,20 +162,14 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		if parsedPlan, ok := _plan.(map[string]interface{}); ok {
 			if planName, ok := parsedPlan["name"]; ok {
 				if pName, ok := planName.(string); ok {
-					plan = Plan{
-						Name: pName,
-					}
+					plan.Name = pName
 				}
 			}
-		} else {
-			plan = Plan{
-				Name: PlanNameBasic,
-			}
 		}
-	} else {
-		plan = Plan{
-			Name: PlanNameBasic,
-		}
+	}
+	// if unable to parse the plan then default it to basic!
+	if plan.Name == "" {
+		plan.Name = PlanNameBasic
 	}
 
 	featuresFromZeus := new(basemodel.FeatureSet)
@@ -220,8 +214,8 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		} else {
 			floatVal, ok := _value.(float64)
 			if !ok || floatVal != float64(int64(floatVal)) {
-				// if the validFrom is float value default it to 0
-				validUntil = 0
+				// if the validFrom is float value default it to -1
+				validUntil = -1
 			}
 			validUntil = int64(floatVal)
 		}
@@ -231,7 +225,7 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		ID:         licenseID,
 		Key:        licenseKey,
 		Data:       licenseData,
-		Plan:       plan,
+		Plan:       *plan,
 		Features:   features,
 		ValidFrom:  validFrom,
 		ValidUntil: validUntil,

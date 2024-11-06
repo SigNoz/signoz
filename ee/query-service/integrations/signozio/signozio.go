@@ -163,10 +163,10 @@ func ValidateLicenseV3(licenseKey string) (*model.LicenseV3, *model.ApiError) {
 		return license, nil
 	case 400, 401:
 		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
-			"bad request error received from license.signoz.io"))
+			fmt.Sprintf("bad request error received from %v", C.GatewayUrl)))
 	default:
 		return nil, model.InternalError(errors.Wrap(fmt.Errorf(string(body)),
-			"internal error received from license.signoz.io"))
+			fmt.Sprintf("bad request error received from %v", C.GatewayUrl)))
 	}
 
 }
