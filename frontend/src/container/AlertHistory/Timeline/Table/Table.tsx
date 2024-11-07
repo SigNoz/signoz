@@ -1,13 +1,15 @@
 import './Table.styles.scss';
 
 import { Table } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { initialFilters } from 'constants/queryBuilder';
 import {
 	useGetAlertRuleDetailsTimelineTable,
 	useTimelineTable,
 } from 'pages/AlertDetails/hooks';
-import { useMemo, useState } from 'react';
+import { HTMLAttributes, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { timelineTableColumns } from './useTimelineTable';
@@ -43,6 +45,17 @@ function TimelineTable(): JSX.Element {
 		return <div>{t('something_went_wrong')}</div>;
 	}
 
+	const handleRowClick = (
+		record: AlertRuleTimelineTableResponse,
+	): HTMLAttributes<AlertRuleTimelineTableResponse> => ({
+		onClick: (): void => {
+			logEvent('Alert history: Timeline table row: Clicked', {
+				ruleId: record.ruleID,
+				labels: record.labels,
+			});
+		},
+	});
+
 	return (
 		<div className="timeline-table">
 			<Table
@@ -52,6 +65,7 @@ function TimelineTable(): JSX.Element {
 					labels: labels ?? {},
 					setFilters,
 				})}
+				onRow={handleRowClick}
 				dataSource={timelineData}
 				pagination={paginationConfig}
 				size="middle"
