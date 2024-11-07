@@ -238,9 +238,9 @@ export const MessagingQueuesViewType = {
 		label: 'Producer Latency view',
 		value: MessagingQueuesViewTypeOptions.ProducerLatency,
 	},
-	consumerLatency: {
-		label: 'Consumer latency view',
-		value: MessagingQueuesViewTypeOptions.ConsumerLatency,
+	dropRate: {
+		label: 'Drop Rate view',
+		value: 'dropRate',
 	},
 };
 
@@ -381,3 +381,9 @@ export const getAttributeDataFromOnboardingStatus = (
 		attributeDataWithError,
 	};
 };
+
+export enum MessagingQueueHealthCheckService {
+	Consumers = 'consumers',
+	Producers = 'producers',
+	Kafka = 'kafka',
+}

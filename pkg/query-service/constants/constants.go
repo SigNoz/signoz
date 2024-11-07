@@ -329,18 +329,20 @@ var StaticSelectedLogFields = []model.LogField{
 
 const (
 	LogsSQLSelect = "SELECT " +
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body," +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body," +
 		"CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
 		"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64," +
 		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
 		"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool," +
-		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "
+		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string," +
+		"CAST((scope_string_key, scope_string_value), 'Map(String, String)') as scope "
 	LogsSQLSelectV2 = "SELECT " +
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, " +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, " +
 		"attributes_string, " +
 		"attributes_number, " +
 		"attributes_bool, " +
-		"resources_string "
+		"resources_string, " +
+		"scope_string "
 	TracesExplorerViewSQLSelectWithSubQuery = "(SELECT traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s %s ORDER BY durationNano DESC LIMIT 1 BY traceID "
 	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
@@ -414,6 +416,18 @@ var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
 	},
 	"__attrs": {
 		Key:      "__attrs",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
+	"scope_name": {
+		Key:      "scope_name",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
+	"scope_version": {
+		Key:      "scope_version",
 		DataType: v3.AttributeKeyDataTypeString,
 		Type:     v3.AttributeKeyTypeUnspecified,
 		IsColumn: true,
