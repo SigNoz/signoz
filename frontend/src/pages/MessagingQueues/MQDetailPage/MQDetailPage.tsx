@@ -83,7 +83,7 @@ function MQDetailPage(): JSX.Element {
 							setSelectedView(value);
 							updateUrlQuery({ [QueryParams.mqServiceView]: value });
 						}}
-						value={mqServiceView}
+						value={selectedView}
 						options={[
 							{
 								label: MessagingQueuesViewType.consumerLag.label,

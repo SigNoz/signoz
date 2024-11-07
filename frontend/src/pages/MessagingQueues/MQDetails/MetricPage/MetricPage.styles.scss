@@ -26,12 +26,6 @@
 			}
 		}
 
-		@media (max-width: 1440px) {
-			.metric-page-grid {
-				grid-template-columns: repeat(2, 1fr);
-			}
-		}
-
 		@media (max-width: 768px) {
 			.metric-page-grid {
 				grid-template-columns: 1fr;
@@ -107,12 +101,6 @@
 					box-sizing: border-box;
 				}
 			}
-		}
-	}
-
-	@media (max-width: 1440px) {
-		.metric-column-graph-container {
-			grid-template-columns: repeat(2, 1fr);
 		}
 	}
 
