@@ -13,6 +13,7 @@ import {
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
 
 import Function from './Function';
+import { toFloat64 } from './utils';
 
 const defaultMetricFunctionStruct: QueryFunctionProps = {
 	name: QueryFunctionsTypes.CUTOFF_MIN,
@@ -158,7 +159,13 @@ export default function QueryFunctions({
 		const updateFunctions = cloneDeep(functions);
 
 		if (updateFunctions && updateFunctions.length > 0 && updateFunctions[index]) {
-			updateFunctions[index].args = [value];
+			updateFunctions[index].args = [
+				// timeShift expects a float64 value, so we convert the string to a number
+				// For other functions, we keep the value as a string
+				updateFunctions[index].name === QueryFunctionsTypes.TIME_SHIFT
+					? toFloat64(value)
+					: value,
+			];
 			setFunctions(updateFunctions);
 			onChange(updateFunctions);
 		}

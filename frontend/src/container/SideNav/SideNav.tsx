@@ -113,7 +113,9 @@ function SideNav({
 		if (!isOnboardingEnabled || !isCloudUser()) {
 			let items = [...menuItems];
 
-			items = items.filter((item) => item.key !== ROUTES.GET_STARTED);
+			items = items.filter(
+				(item) => item.key !== ROUTES.GET_STARTED && item.key !== ROUTES.ONBOARDING,
+			);
 
 			setMenuItems(items);
 		}

@@ -74,6 +74,19 @@ export enum AlertDetectionTypes {
 	ANOMALY_DETECTION_ALERT = 'anomaly_rule',
 }
 
+const ALERT_SETUP_GUIDE_URLS: Record<AlertTypes, string> = {
+	[AlertTypes.METRICS_BASED_ALERT]:
+		'https://signoz.io/docs/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
+	[AlertTypes.LOGS_BASED_ALERT]:
+		'https://signoz.io/docs/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
+	[AlertTypes.TRACES_BASED_ALERT]:
+		'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
+	[AlertTypes.EXCEPTIONS_BASED_ALERT]:
+		'https://signoz.io/docs/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
+	[AlertTypes.ANOMALY_BASED_ALERT]:
+		'https://signoz.io/docs/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
+};
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function FormAlertRules({
 	alertType,
@@ -707,6 +720,29 @@ function FormAlertRules({
 
 	const isRuleCreated = !ruleId || ruleId === 0;
 
+	function handleRedirection(option: AlertTypes): void {
+		let url;
+		if (
+			option === AlertTypes.METRICS_BASED_ALERT &&
+			alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+		) {
+			url = ALERT_SETUP_GUIDE_URLS[AlertTypes.ANOMALY_BASED_ALERT];
+		} else {
+			url = ALERT_SETUP_GUIDE_URLS[option];
+		}
+
+		if (url) {
+			logEvent('Alert: Check example alert clicked', {
+				dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
+				isNewRule: !ruleId || ruleId === 0,
+				ruleId,
+				queryType: currentQuery.queryType,
+				link: url,
+			});
+			window.open(url, '_blank');
+		}
+	}
+
 	useEffect(() => {
 		if (!isRuleCreated) {
 			logEvent('Alert: Edit page visited', {
@@ -757,7 +793,11 @@ function FormAlertRules({
 						)}
 					</div>
 
-					<Button className="periscope-btn" icon={<ExternalLink size={14} />}>
+					<Button
+						className="periscope-btn"
+						onClick={(): void => handleRedirection(alertDef.alertType as AlertTypes)}
+						icon={<ExternalLink size={14} />}
+					>
 						Alert Setup Guide
 					</Button>
 				</div>

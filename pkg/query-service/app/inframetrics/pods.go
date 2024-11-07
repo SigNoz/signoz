@@ -217,7 +217,9 @@ func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest
 		})
 	}
 
-	paginatedTopPodGroupsSeries := formattedResponse[0].Series[req.Offset : req.Offset+req.Limit]
+	limit := math.Min(float64(req.Offset+req.Limit), float64(len(formattedResponse[0].Series)))
+
+	paginatedTopPodGroupsSeries := formattedResponse[0].Series[req.Offset:int(limit)]
 
 	topPodGroups := []map[string]string{}
 	for _, series := range paginatedTopPodGroupsSeries {

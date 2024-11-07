@@ -94,6 +94,25 @@
 						letter-spacing: -0.06px;
 					}
 				}
+
+				&.scope {
+					border-radius: 50px;
+					background: rgba(113, 144, 249, 0.1) !important;
+					color: var(--bg-robin-400) !important;
+
+					.dot {
+						background-color: var(--bg-robin-400);
+					}
+					.text {
+						color: var(--bg-robin-400);
+						font-family: Inter;
+						font-size: 12px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: 18px; /* 150% */
+						letter-spacing: -0.06px;
+					}
+				}
 			}
 		}
 		.option-meta-data-container {

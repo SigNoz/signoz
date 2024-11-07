@@ -2,14 +2,14 @@ package inframetrics
 
 import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
-var NonK8STableListQuery = v3.QueryRangeParamsV3{
+var HostsTableListQuery = v3.QueryRangeParamsV3{
 	CompositeQuery: &v3.CompositeQuery{
 		BuilderQueries: map[string]*v3.BuilderQuery{
 			"A": {
 				QueryName:  "A",
 				DataSource: v3.DataSourceMetrics,
 				AggregateAttribute: v3.AttributeKey{
-					Key:      "system_cpu_time",
+					Key:      metricNamesForHosts["cpu"],
 					DataType: v3.AttributeKeyDataTypeFloat64,
 				},
 				Temporality: v3.Cumulative,
@@ -27,23 +27,18 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 						},
 						{
 							Key: v3.AttributeKey{
-								Key:      "host_name",
+								Key:      hostNameAttrKey,
 								DataType: v3.AttributeKeyDataTypeString,
 								Type:     v3.AttributeKeyTypeResource,
 							},
 							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
+							Value:    agentNameToIgnore,
 						},
 					},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-					},
-					{
-						Key:      "os_type",
+						Key:      hostNameAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -58,7 +53,7 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 				QueryName:  "B",
 				DataSource: v3.DataSourceMetrics,
 				AggregateAttribute: v3.AttributeKey{
-					Key:      "system_cpu_time",
+					Key:      metricNamesForHosts["cpu"],
 					DataType: v3.AttributeKeyDataTypeFloat64,
 				},
 				Temporality: v3.Cumulative,
@@ -67,23 +62,18 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 					Items: []v3.FilterItem{
 						{
 							Key: v3.AttributeKey{
-								Key:      "host_name",
+								Key:      hostNameAttrKey,
 								DataType: v3.AttributeKeyDataTypeString,
 								Type:     v3.AttributeKeyTypeResource,
 							},
 							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
+							Value:    agentNameToIgnore,
 						},
 					},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-					},
-					{
-						Key:      "os_type",
+						Key:      hostNameAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -98,12 +88,16 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 				QueryName:  "F1",
 				Expression: "A/B",
 				Legend:     "CPU Usage (%)",
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
 			},
 			"C": {
 				QueryName:  "C",
 				DataSource: v3.DataSourceMetrics,
 				AggregateAttribute: v3.AttributeKey{
-					Key:      "system_memory_usage",
+					Key:      metricNamesForHosts["memory"],
 					DataType: v3.AttributeKeyDataTypeFloat64,
 				},
 				Temporality: v3.Cumulative,
@@ -121,23 +115,18 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 						},
 						{
 							Key: v3.AttributeKey{
-								Key:      "host_name",
+								Key:      hostNameAttrKey,
 								DataType: v3.AttributeKeyDataTypeString,
 								Type:     v3.AttributeKeyTypeResource,
 							},
 							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
+							Value:    agentNameToIgnore,
 						},
 					},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-					},
-					{
-						Key:      "os_type",
+						Key:      hostNameAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -152,7 +141,7 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 				QueryName:  "D",
 				DataSource: v3.DataSourceMetrics,
 				AggregateAttribute: v3.AttributeKey{
-					Key:      "system_memory_usage",
+					Key:      metricNamesForHosts["memory"],
 					DataType: v3.AttributeKeyDataTypeFloat64,
 				},
 				Temporality: v3.Cumulative,
@@ -161,23 +150,18 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 					Items: []v3.FilterItem{
 						{
 							Key: v3.AttributeKey{
-								Key:      "host_name",
+								Key:      hostNameAttrKey,
 								DataType: v3.AttributeKeyDataTypeString,
 								Type:     v3.AttributeKeyTypeResource,
 							},
 							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
+							Value:    agentNameToIgnore,
 						},
 					},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-					},
-					{
-						Key:      "os_type",
+						Key:      hostNameAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -192,12 +176,16 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 				QueryName:  "F2",
 				Expression: "C/D",
 				Legend:     "Memory Usage (%)",
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
 			},
 			"E": {
 				QueryName:  "E",
 				DataSource: v3.DataSourceMetrics,
 				AggregateAttribute: v3.AttributeKey{
-					Key:      "system_cpu_time",
+					Key:      metricNamesForHosts["wait"],
 					DataType: v3.AttributeKeyDataTypeFloat64,
 				},
 				Temporality: v3.Cumulative,
@@ -215,23 +203,18 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 						},
 						{
 							Key: v3.AttributeKey{
-								Key:      "host_name",
+								Key:      hostNameAttrKey,
 								DataType: v3.AttributeKeyDataTypeString,
 								Type:     v3.AttributeKeyTypeResource,
 							},
 							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
+							Value:    agentNameToIgnore,
 						},
 					},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-					},
-					{
-						Key:      "os_type",
+						Key:      hostNameAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -246,7 +229,7 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 				QueryName:  "F",
 				DataSource: v3.DataSourceMetrics,
 				AggregateAttribute: v3.AttributeKey{
-					Key:      "system_cpu_time",
+					Key:      metricNamesForHosts["wait"],
 					DataType: v3.AttributeKeyDataTypeFloat64,
 				},
 				Temporality: v3.Cumulative,
@@ -255,23 +238,18 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 					Items: []v3.FilterItem{
 						{
 							Key: v3.AttributeKey{
-								Key:      "host_name",
+								Key:      hostNameAttrKey,
 								DataType: v3.AttributeKeyDataTypeString,
 								Type:     v3.AttributeKeyTypeResource,
 							},
 							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
+							Value:    agentNameToIgnore,
 						},
 					},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-					},
-					{
-						Key:      "os_type",
+						Key:      hostNameAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -286,12 +264,16 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 				QueryName:  "F3",
 				Expression: "E/F",
 				Legend:     "CPU Wait Time (%)",
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items:    []v3.FilterItem{},
+				},
 			},
 			"G": {
 				QueryName:  "G",
 				DataSource: v3.DataSourceMetrics,
 				AggregateAttribute: v3.AttributeKey{
-					Key:      "system_cpu_load_average_15m",
+					Key:      metricNamesForHosts["load15"],
 					DataType: v3.AttributeKeyDataTypeFloat64,
 				},
 				Temporality: v3.Unspecified,
@@ -300,23 +282,18 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 					Items: []v3.FilterItem{
 						{
 							Key: v3.AttributeKey{
-								Key:      "host_name",
+								Key:      hostNameAttrKey,
 								DataType: v3.AttributeKeyDataTypeString,
 								Type:     v3.AttributeKeyTypeResource,
 							},
 							Operator: v3.FilterOperatorNotContains,
-							Value:    "k8s-infra-otel-agent",
+							Value:    agentNameToIgnore,
 						},
 					},
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      "host_name",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-					},
-					{
-						Key:      "os_type",
+						Key:      hostNameAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -327,72 +304,6 @@ var NonK8STableListQuery = v3.QueryRangeParamsV3{
 				SpaceAggregation: v3.SpaceAggregationSum,
 				Disabled:         false,
 				Legend:           "CPU Load Average (15m)",
-			},
-		},
-		PanelType: v3.PanelTypeTable,
-		QueryType: v3.QueryTypeBuilder,
-	},
-	Version:      "v4",
-	FormatForWeb: true,
-}
-
-var ProcessesTableListQuery = v3.QueryRangeParamsV3{
-	CompositeQuery: &v3.CompositeQuery{
-		BuilderQueries: map[string]*v3.BuilderQuery{
-			"A": {
-				QueryName:  "A",
-				DataSource: v3.DataSourceMetrics,
-				AggregateAttribute: v3.AttributeKey{
-					Key:      "process_cpu_time",
-					DataType: v3.AttributeKeyDataTypeFloat64,
-				},
-				Temporality: v3.Cumulative,
-				Filters: &v3.FilterSet{
-					Operator: "AND",
-					Items:    []v3.FilterItem{},
-				},
-				GroupBy: []v3.AttributeKey{
-					{
-						Key:      "process_pid",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-					},
-				},
-				Expression:       "A",
-				ReduceTo:         v3.ReduceToOperatorAvg,
-				TimeAggregation:  v3.TimeAggregationRate,
-				SpaceAggregation: v3.SpaceAggregationSum,
-				Disabled:         true,
-			},
-			"F1": {
-				QueryName:  "F1",
-				Expression: "A",
-				Legend:     "Process CPU Usage (%)",
-			},
-			"C": {
-				QueryName:  "C",
-				DataSource: v3.DataSourceMetrics,
-				AggregateAttribute: v3.AttributeKey{
-					Key:      "process_memory_usage",
-					DataType: v3.AttributeKeyDataTypeFloat64,
-				},
-				Temporality: v3.Cumulative,
-				Filters: &v3.FilterSet{
-					Operator: "AND",
-					Items:    []v3.FilterItem{},
-				},
-				GroupBy: []v3.AttributeKey{
-					{
-						Key:      "process_pid",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-					},
-				},
-				Expression:       "C",
-				ReduceTo:         v3.ReduceToOperatorAvg,
-				TimeAggregation:  v3.TimeAggregationAvg,
-				SpaceAggregation: v3.SpaceAggregationSum,
-				Disabled:         false,
 			},
 		},
 		PanelType: v3.PanelTypeTable,
