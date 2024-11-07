@@ -2,7 +2,7 @@ import './RenameModal.styles.scss';
 
 import { Button, Input, InputRef, Modal, Typography } from 'antd';
 import { Check, X } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 type Props = {
 	isOpen: boolean;
@@ -29,16 +29,7 @@ function RenameModal({
 		}
 	}, [isOpen]);
 
-	const buttonProps = {
-		size: 14,
-		onClick: (action: 'rename' | 'cancel') => (): void => {
-			if (action === 'rename') {
-				onNameChangeHandler();
-			} else {
-				setIsOpen(false);
-			}
-		},
-	};
+	const handleClose = useCallback((): void => setIsOpen(false), [setIsOpen]);
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent): void => {
@@ -46,7 +37,7 @@ function RenameModal({
 				if (e.key === 'Enter') {
 					onNameChangeHandler();
 				} else if (e.key === 'Escape') {
-					setIsOpen(false);
+					handleClose();
 				}
 			}
 		};
@@ -56,30 +47,31 @@ function RenameModal({
 		return (): void => {
 			document.removeEventListener('keydown', handleKeyDown);
 		};
-	}, [isOpen, onNameChangeHandler, setIsOpen]);
+	}, [isOpen, onNameChangeHandler, handleClose]);
+
 	return (
 		<Modal
 			open={isOpen}
 			title="Rename Alert"
 			onOk={onNameChangeHandler}
-			onCancel={buttonProps.onClick('cancel')}
+			onCancel={handleClose}
 			rootClassName="rename-alert"
 			footer={
 				<div className="alert-rename">
 					<Button
 						type="primary"
-						icon={<Check size={buttonProps.size} />}
+						icon={<Check size={14} />}
 						className="rename-btn"
-						onClick={buttonProps.onClick('rename')}
+						onClick={onNameChangeHandler}
 						disabled={isLoading}
 					>
 						Rename Alert
 					</Button>
 					<Button
 						type="text"
-						icon={<X size={buttonProps.size} />}
+						icon={<X size={14} />}
 						className="cancel-btn"
-						onClick={buttonProps.onClick('cancel')}
+						onClick={handleClose}
 					>
 						Cancel
 					</Button>
