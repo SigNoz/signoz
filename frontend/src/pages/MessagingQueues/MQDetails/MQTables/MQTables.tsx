@@ -33,6 +33,8 @@ import {
 	MessagingQueuesPayloadProps,
 } from './getConsumerLagDetails';
 
+const INITIAL_PAGE_SIZE = 10;
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function getColumns(
 	data: MessagingQueuesPayloadProps['payload'],
@@ -155,8 +157,8 @@ function MessagingQueuesTable({
 
 	const paginationConfig = useMemo(
 		() =>
-			tableData?.length > 10 && {
-				pageSize: 10,
+			tableData?.length > INITIAL_PAGE_SIZE && {
+				pageSize: INITIAL_PAGE_SIZE,
 				showTotal: showPaginationItem,
 				showSizeChanger: false,
 				hideOnSinglePage: true,

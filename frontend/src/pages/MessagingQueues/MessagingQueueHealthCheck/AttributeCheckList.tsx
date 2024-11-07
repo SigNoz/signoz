@@ -60,8 +60,6 @@ function ErrorTitleAndKey({
 	isLeaf?: boolean;
 }): TreeDataNode {
 	const handleRedirection = (): void => {
-		console.log('Redirect to the error page', parentTitle);
-
 		let link = '';
 
 		switch (parentTitle) {
