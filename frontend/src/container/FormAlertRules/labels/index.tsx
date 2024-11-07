@@ -138,6 +138,9 @@ function LabelSelect({
 						if (e.key === 'Enter' || e.code === 'Enter' || e.key === ':') {
 							send('NEXT');
 						}
+						if (state.value === 'Idle') {
+							send('NEXT');
+						}
 					}}
 					bordered={false}
 					value={currentVal as never}
