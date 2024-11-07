@@ -491,6 +491,7 @@ var testBuildTracesQueryData = []struct {
 	ExpectedQuery     string
 	PanelType         v3.PanelType
 	Options           v3.QBOptions
+	FilterBy          string
 }{
 	{
 		Name:  "Test aggregate count on fixed column of float64 type",
@@ -1192,12 +1193,21 @@ func TestBuildTracesQuery(t *testing.T) {
 		}
 		Enrich(params, keys)
 		Convey("TestBuildTracesQuery", t, func() {
-			query, err := buildTracesQuery(tt.Start, tt.End, tt.BuilderQuery.StepInterval, tt.BuilderQuery, tt.TableName, tt.PanelType, tt.Options)
+			query, err := buildTracesQuery(tt.Start, tt.End, tt.BuilderQuery.StepInterval, tt.BuilderQuery, tt.TableName, tt.PanelType, tt.Options, tt.FilterBy)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 		})
 	}
 }
+
+/*
+start,
+				end,
+				params.CompositeQuery.PanelType,
+				builderQuery,
+				v3.QBOptions{PreferRPM: preferRPM},
+				params.FilterBy,
+*/
 
 var testPrepTracesQueryData = []struct {
 	Name          string
@@ -1208,6 +1218,7 @@ var testPrepTracesQueryData = []struct {
 	ExpectedQuery string
 	Keys          map[string]v3.AttributeKey
 	Options       v3.QBOptions
+	FilterBy      string
 }{
 	{
 		Name:      "Test TS with limit- first",
@@ -1417,7 +1428,7 @@ var testPrepTracesQueryData = []struct {
 func TestPrepareTracesQuery(t *testing.T) {
 	for _, tt := range testPrepTracesQueryData {
 		Convey("TestPrepareTracesQuery", t, func() {
-			query, err := PrepareTracesQuery(tt.Start, tt.End, tt.PanelType, tt.BuilderQuery, tt.Options)
+			query, err := PrepareTracesQuery(tt.Start, tt.End, tt.PanelType, tt.BuilderQuery, tt.Options, tt.FilterBy)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 		})
