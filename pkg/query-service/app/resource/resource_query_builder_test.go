@@ -138,9 +138,9 @@ func Test_buildIndexFilterForInOperator(t *testing.T) {
 			args: args{
 				key:   "service.name",
 				op:    v3.FilterOperatorNotIn,
-				value: "application'\"_s",
+				value: `application'"_s`,
 			},
-			want: `(labels not like '%"service.name":"application\'"\_s"%')`,
+			want: `(labels not like '%"service.name":"application\'\\\\"\_s"%')`,
 		},
 	}
 	for _, tt := range tests {
@@ -231,9 +231,9 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 			args: args{
 				key:   "service.name",
 				op:    v3.FilterOperatorEqual,
-				value: "Application",
+				value: `Application"`,
 			},
-			want: `labels like '%service.name%Application%'`,
+			want: `labels like '%service.name%Application\\\\"%'`,
 		},
 	}
 	for _, tt := range tests {
@@ -319,7 +319,7 @@ func Test_buildResourceFiltersFromFilterItems(t *testing.T) {
 								Type:     v3.AttributeKeyTypeResource,
 							},
 							Operator: v3.FilterOperatorContains,
-							Value:    "test1",
+							Value:    `test1"`,
 						},
 					},
 				},
@@ -327,8 +327,8 @@ func Test_buildResourceFiltersFromFilterItems(t *testing.T) {
 			want: []string{
 				"simpleJSONExtractString(labels, 'service.name') = 'test'",
 				"labels like '%service.name%test%'",
-				"simpleJSONExtractString(lower(labels), 'namespace') LIKE '%test1%'",
-				"lower(labels) like '%namespace%test1%'",
+				`simpleJSONExtractString(lower(labels), 'namespace') LIKE '%test1"%'`,
+				`lower(labels) like '%namespace%test1\\\\"%'`,
 			},
 			wantErr: false,
 		},

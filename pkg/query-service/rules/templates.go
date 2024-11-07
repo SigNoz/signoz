@@ -234,15 +234,27 @@ func AlertTemplateData(labels map[string]string, value string, threshold string)
 // If there is a go template block, it won't be replaced.
 // The example for existing go template block is: {{$threshold}} or {{$value}} or any other valid go template syntax.
 func (te *TemplateExpander) preprocessTemplate() {
-	re := regexp.MustCompile(`({{.*?}})|(\$(\w+(?:\.\w+)*))`)
-	te.text = re.ReplaceAllStringFunc(te.text, func(match string) string {
+	// Handle the $variable syntax
+	reDollar := regexp.MustCompile(`({{.*?}})|(\$(\w+(?:\.\w+)*))`)
+	te.text = reDollar.ReplaceAllStringFunc(te.text, func(match string) string {
 		if strings.HasPrefix(match, "{{") {
 			// If it's a Go template block, leave it unchanged
 			return match
 		}
-		// Otherwise, it's our custom $variable syntax
-		path := strings.Split(match[1:], ".")
-		return "{{index $labels \"" + strings.Join(path, ".") + "\"}}"
+		path := match[1:] // Remove the '$'
+		return fmt.Sprintf(`{{index $labels "%s"}}`, path)
+	})
+
+	// Handle the {{.Labels.service.name}} syntax
+	reLabels := regexp.MustCompile(`{{\s*\.Labels\.([a-zA-Z0-9_.]+)(.*?)}}`)
+	te.text = reLabels.ReplaceAllStringFunc(te.text, func(match string) string {
+		submatches := reLabels.FindStringSubmatch(match)
+		if len(submatches) < 3 {
+			return match // Should not happen
+		}
+		path := submatches[1]
+		rest := submatches[2]
+		return fmt.Sprintf(`{{index .Labels "%s"%s}}`, path, rest)
 	})
 }
 

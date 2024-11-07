@@ -1,0 +1,1 @@
+export { OnboardingFooter } from './OnboardingFooter';

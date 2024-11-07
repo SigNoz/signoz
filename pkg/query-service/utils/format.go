@@ -156,9 +156,18 @@ func QuoteEscapedString(str string) string {
 	return str
 }
 
-func QuoteEscapedStringForContains(str string) string {
+func QuoteEscapedStringForContains(str string, isIndex bool) string {
 	// https: //clickhouse.com/docs/en/sql-reference/functions/string-search-functions#like
 	str = QuoteEscapedString(str)
+
+	// we are adding this because if a string contains quote `"` it will be stored as \" in clickhouse
+	// to query that using like our query should be \\\\"
+	if isIndex {
+		// isIndex is true means that the extra slash is present
+		// [\"a\",\"b\",\"sdf\"]
+		str = strings.ReplaceAll(str, `"`, `\\\\"`)
+	}
+
 	str = strings.ReplaceAll(str, `%`, `\%`)
 	str = strings.ReplaceAll(str, `_`, `\_`)
 	return str

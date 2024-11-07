@@ -149,7 +149,7 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 			return fmt.Sprintf(logsOp, keyName, fmtVal), nil
 		case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 			// we also want to treat %, _ as literals for contains
-			val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value))
+			val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value), false)
 			// for body the contains is case insensitive
 			if keyName == BODY {
 				logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
