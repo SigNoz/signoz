@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import '../MessagingQueues.styles.scss';
 
 import { Select, Typography } from 'antd';
@@ -15,6 +16,7 @@ import {
 	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 } from '../MessagingQueuesUtils';
+import DropRateView from '../MQDetails/DropRateView/DropRateView';
 import MessagingQueueOverview from '../MQDetails/MessagingQueueOverview';
 import MessagingQueuesDetails from '../MQDetails/MQDetails';
 import MessagingQueuesConfigOptions from '../MQGraph/MQConfigOptions';
@@ -103,26 +105,28 @@ function MQDetailPage(): JSX.Element {
 				</div>
 				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
-			<div className="messaging-queue-main-graph">
-				<MessagingQueuesConfigOptions />
-				{selectedView === MessagingQueuesViewType.consumerLag.value ? (
+			{selectedView === MessagingQueuesViewType.consumerLag.value ? (
+				<div className="messaging-queue-main-graph">
+					<MessagingQueuesConfigOptions />
 					<MessagingQueuesGraph />
-				) : (
-					<MessagingQueueOverview
-						selectedView={selectedView}
-						option={producerLatencyOption}
-						setOption={setproducerLatencyOption}
-					/>
-				)}
-			</div>
-			<div className="messaging-queue-details">
-				{selectedView !== MessagingQueuesViewType.dropRate.value && (
+				</div>
+			) : selectedView === MessagingQueuesViewType.dropRate.value ? (
+				<DropRateView />
+			) : (
+				<MessagingQueueOverview
+					selectedView={selectedView}
+					option={producerLatencyOption}
+					setOption={setproducerLatencyOption}
+				/>
+			)}
+			{selectedView !== MessagingQueuesViewType.dropRate.value && (
+				<div className="messaging-queue-details">
 					<MessagingQueuesDetails
 						selectedView={selectedView}
 						producerLatencyOption={producerLatencyOption}
 					/>
-				)}
-			</div>
+				</div>
+			)}
 		</div>
 	);
 }
