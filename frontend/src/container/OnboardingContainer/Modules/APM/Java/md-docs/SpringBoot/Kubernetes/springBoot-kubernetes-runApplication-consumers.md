@@ -3,17 +3,20 @@
 Once you are done instrumenting your Java application, you can run it using the below commands
 
 **Note:**
-- Ensure you have Java and Maven installed. Compile your Java producer applications: Ensure your producer apps are compiled and ready to run.
+- Ensure you have Java and Maven installed. Compile your Java consumer applications: Ensure your consumer apps are compiled and ready to run.
 
-**Run Producer App with Java Agent:**
+**Run Consumer App with Java Agent:**
 
 ```bash
 java -javaagent:/path/to/opentelemetry-javaagent.jar \
-     -Dotel.service.name=producer-svc \
+     -Dotel.service.name=consumer-svc \
      -Dotel.traces.exporter=otlp \
      -Dotel.metrics.exporter=otlp \
      -Dotel.logs.exporter=otlp \
-     -jar /path/to/your/producer.jar
+     -Dotel.instrumentation.kafka.producer-propagation.enabled=true \
+     -Dotel.instrumentation.kafka.experimental-span-attributes=true \
+     -Dotel.instrumentation.kafka.metric-reporter.enabled=true \
+     -jar /path/to/your/consumer.jar
 ```
 
 <path> - update it to the path where you downloaded the Java JAR agent in previous step
