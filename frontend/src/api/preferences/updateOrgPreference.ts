@@ -10,9 +10,12 @@ const updateOrgPreference = async (
 ): Promise<
 	SuccessResponse<UpdateOrgPreferenceResponseProps> | ErrorResponse
 > => {
-	const response = await axios.put(`/org/preferences`, {
-		preference_value: preferencePayload.value,
-	});
+	const response = await axios.put(
+		`/org/preferences/${preferencePayload.preferenceID}`,
+		{
+			preference_value: preferencePayload.value,
+		},
+	);
 
 	return {
 		statusCode: 200,

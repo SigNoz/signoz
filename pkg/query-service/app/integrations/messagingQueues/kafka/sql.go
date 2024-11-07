@@ -381,18 +381,3 @@ WHERE
     AND timestamp <= '%d';`, queueType, start, end)
 	return query
 }
-
-func onboardKafkaSQL(start, end int64) string {
-	query := fmt.Sprintf(`
-SELECT 
-    COUNT(*) = 0 AS entries,
-    COUNT(IF(metric_name = 'kafka_consumer_fetch_latency_avg', 1, NULL)) = 0 AS fetchlatency,
-    COUNT(IF(metric_name = 'kafka_consumer_group_lag', 1, NULL)) = 0 AS grouplag
-FROM 
-    signoz_metrics.time_series_v4_1day
-WHERE
-    metric_name IN ('kafka_consumer_fetch_latency_avg', 'kafka_consumer_group_lag')
-    AND unix_milli >= '%d'
-    AND unix_milli < '%d';`, start/1000000, end/1000000)
-	return query
-}

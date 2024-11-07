@@ -94,6 +94,7 @@ export const anamolyAlertDefaults: AlertDef = {
 		matchType: defaultMatchType,
 		algorithm: defaultAlgorithm,
 		seasonality: defaultSeasonality,
+		target: 3,
 	},
 	labels: {
 		severity: 'warning',
@@ -104,6 +105,7 @@ export const anamolyAlertDefaults: AlertDef = {
 
 export const logAlertDefaults: AlertDef = {
 	alertType: AlertTypes.LOGS_BASED_ALERT,
+	version: ENTITY_VERSION_V4,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -134,6 +136,7 @@ export const logAlertDefaults: AlertDef = {
 
 export const traceAlertDefaults: AlertDef = {
 	alertType: AlertTypes.TRACES_BASED_ALERT,
+	version: ENTITY_VERSION_V4,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -164,6 +167,7 @@ export const traceAlertDefaults: AlertDef = {
 
 export const exceptionAlertDefaults: AlertDef = {
 	alertType: AlertTypes.EXCEPTIONS_BASED_ALERT,
+	version: ENTITY_VERSION_V4,
 	condition: {
 		compositeQuery: {
 			builderQueries: {

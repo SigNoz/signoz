@@ -2833,7 +2833,7 @@ func (aH *APIHandler) onboardKafka(
 		return
 	}
 
-	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_kafka")
+	queryRangeParams, err := mq.BuildBuilderQueriesKafkaOnboarding(messagingQueue)
 
 	if err != nil {
 		zap.L().Error(err.Error())
@@ -2841,66 +2841,69 @@ func (aH *APIHandler) onboardKafka(
 		return
 	}
 
-	result, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
-
+	results, errQueriesByName, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, err)
+		RespondError(w, apiErrObj, errQueriesByName)
 		return
 	}
 
 	var entries []mq.OnboardingResponse
 
-	for _, result := range result {
-		for key, value := range result.Data {
-			var message, attribute, status string
+	var fetchLatencyState, consumerLagState bool
 
-			intValue := int(*value.(*uint8))
-
-			if key == "entries" {
-				attribute = "telemetry ingestion"
-				if intValue != 0 {
-					entries = nil
-					entry := mq.OnboardingResponse{
-						Attribute: attribute,
-						Message:   "No data available in the given time range",
-						Status:    "0",
+	for _, result := range results {
+		for _, series := range result.Series {
+			for _, point := range series.Points {
+				pointValue := point.Value
+				if pointValue > 0 {
+					if result.QueryName == "fetch_latency" {
+						fetchLatencyState = true
+						break
 					}
-					entries = append(entries, entry)
-					break
-				} else {
-					status = "1"
+					if result.QueryName == "consumer_lag" {
+						consumerLagState = true
+						break
+					}
 				}
-			} else if key == "fetchlatency" {
-				attribute = "kafka_consumer_fetch_latency_avg"
-				if intValue != 0 {
-					status = "0"
-					message = "Metric kafka_consumer_fetch_latency_avg is not present in the given time range."
-				} else {
-					status = "1"
-				}
-			} else if key == "grouplag" {
-				attribute = "kafka_consumer_group_lag"
-				if intValue != 0 {
-					status = "0"
-					message = "Metric kafka_consumer_group_lag is not present in the given time range."
-				} else {
-					status = "1"
-				}
-			}
 
-			entry := mq.OnboardingResponse{
-				Attribute: attribute,
-				Message:   message,
-				Status:    status,
 			}
-			entries = append(entries, entry)
 		}
 	}
 
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].Attribute < entries[j].Attribute
-	})
+	if !fetchLatencyState && !consumerLagState {
+		entries = append(entries, mq.OnboardingResponse{
+			Attribute: "telemetry ingestion",
+			Message:   "No data available in the given time range",
+			Status:    "0",
+		})
+	}
+
+	if !fetchLatencyState {
+		entries = append(entries, mq.OnboardingResponse{
+			Attribute: "kafka_consumer_fetch_latency_avg",
+			Message:   "Metric kafka_consumer_fetch_latency_avg is not present in the given time range.",
+			Status:    "0",
+		})
+	} else {
+		entries = append(entries, mq.OnboardingResponse{
+			Attribute: "kafka_consumer_fetch_latency_avg",
+			Status:    "1",
+		})
+	}
+
+	if !consumerLagState {
+		entries = append(entries, mq.OnboardingResponse{
+			Attribute: "kafka_consumer_group_lag",
+			Message:   "Metric kafka_consumer_group_lag is not present in the given time range.",
+			Status:    "0",
+		})
+	} else {
+		entries = append(entries, mq.OnboardingResponse{
+			Attribute: "kafka_consumer_group_lag",
+			Status:    "1",
+		})
+	}
 
 	aH.Respond(w, entries)
 }
