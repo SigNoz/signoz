@@ -152,6 +152,18 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3,
 			if minStep := common.MinAllowedStepInterval(start, end); q.StepInterval < minStep {
 				q.StepInterval = minStep
 			}
+
+			q.SetShiftByFromFunc()
+
+			if q.DataSource == v3.DataSourceMetrics && constants.UseMetricsPreAggregation() {
+				// if the time range is greater than 1 day, and less than 1 week set the step interval to be multiple of 5 minutes
+				// if the time range is greater than 1 week, set the step interval to be multiple of 30 mins
+				if end-start >= 24*time.Hour.Milliseconds() && end-start < 7*24*time.Hour.Milliseconds() {
+					q.StepInterval = int64(math.Round(float64(q.StepInterval)/300)) * 300
+				} else if end-start >= 7*24*time.Hour.Milliseconds() {
+					q.StepInterval = int64(math.Round(float64(q.StepInterval)/1800)) * 1800
+				}
+			}
 		}
 	}
 

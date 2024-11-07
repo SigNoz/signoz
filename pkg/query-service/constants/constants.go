@@ -80,6 +80,17 @@ var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
 
 var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
 
+// TODO(srikanthccv): remove after backfilling is done
+func UseMetricsPreAggregation() bool {
+	return GetOrDefaultEnv("USE_METRICS_PRE_AGGREGATION", "true") == "true"
+}
+
+func EnableHostsInfraMonitoring() bool {
+	return GetOrDefaultEnv("ENABLE_INFRA_METRICS", "true") == "true"
+}
+
+var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
+
 func IsDurationSortFeatureEnabled() bool {
 	isDurationSortFeatureEnabledStr := DurationSortFeature
 	isDurationSortFeatureEnabledBool, err := strconv.ParseBool(isDurationSortFeatureEnabledStr)
@@ -220,15 +231,19 @@ var GroupByColMap = map[string]struct{}{
 }
 
 const (
-	SIGNOZ_METRIC_DBNAME                      = "signoz_metrics"
-	SIGNOZ_SAMPLES_V4_TABLENAME               = "distributed_samples_v4"
-	SIGNOZ_TRACE_DBNAME                       = "signoz_traces"
-	SIGNOZ_SPAN_INDEX_TABLENAME               = "distributed_signoz_index_v2"
-	SIGNOZ_SPAN_INDEX_LOCAL_TABLENAME         = "signoz_index_v2"
-	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME      = "time_series_v4"
-	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME = "time_series_v4_6hrs"
-	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME = "time_series_v4_1day"
-	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME       = "distributed_time_series_v4_1day"
+	SIGNOZ_METRIC_DBNAME                       = "signoz_metrics"
+	SIGNOZ_SAMPLES_V4_TABLENAME                = "distributed_samples_v4"
+	SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME         = "distributed_samples_v4_agg_5m"
+	SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME        = "distributed_samples_v4_agg_30m"
+	SIGNOZ_EXP_HISTOGRAM_TABLENAME             = "distributed_exp_hist"
+	SIGNOZ_TRACE_DBNAME                        = "signoz_traces"
+	SIGNOZ_SPAN_INDEX_TABLENAME                = "distributed_signoz_index_v2"
+	SIGNOZ_SPAN_INDEX_LOCAL_TABLENAME          = "signoz_index_v2"
+	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME       = "time_series_v4"
+	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME  = "time_series_v4_6hrs"
+	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME  = "time_series_v4_1day"
+	SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME = "time_series_v4_1week"
+	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME        = "distributed_time_series_v4_1day"
 )
 
 var TimeoutExcludedRoutes = map[string]bool{
@@ -311,18 +326,20 @@ var StaticSelectedLogFields = []model.LogField{
 
 const (
 	LogsSQLSelect = "SELECT " +
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body," +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body," +
 		"CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
 		"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64," +
 		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
 		"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool," +
-		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "
+		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string," +
+		"CAST((scope_string_key, scope_string_value), 'Map(String, String)') as scope "
 	LogsSQLSelectV2 = "SELECT " +
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, " +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, " +
 		"attributes_string, " +
 		"attributes_number, " +
 		"attributes_bool, " +
-		"resources_string "
+		"resources_string, " +
+		"scope_string "
 	TracesExplorerViewSQLSelectWithSubQuery = "(SELECT traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s %s ORDER BY durationNano DESC LIMIT 1 BY traceID "
 	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
@@ -395,6 +412,18 @@ var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
 	},
 	"__attrs": {
 		Key:      "__attrs",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
+	"scope_name": {
+		Key:      "scope_name",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
+	"scope_version": {
+		Key:      "scope_version",
 		DataType: v3.AttributeKeyDataTypeString,
 		Type:     v3.AttributeKeyTypeUnspecified,
 		IsColumn: true,

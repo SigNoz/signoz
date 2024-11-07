@@ -1602,3 +1602,66 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		}
 	}
 }
+
+func TestThresholdRuleShiftBy(t *testing.T) {
+	target := float64(10)
+	postableRule := PostableRule{
+		AlertName:  "Logs link test",
+		AlertType:  AlertTypeLogs,
+		RuleType:   RuleTypeThreshold,
+		EvalWindow: Duration(5 * time.Minute),
+		Frequency:  Duration(1 * time.Minute),
+		RuleCondition: &RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "component",
+						},
+						AggregateOperator: v3.AggregateOperatorCountDistinct,
+						DataSource:        v3.DataSourceLogs,
+						Expression:        "A",
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key:      v3.AttributeKey{Key: "k8s.container.name", IsColumn: false, Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString},
+									Value:    "testcontainer",
+									Operator: v3.FilterOperatorEqual,
+								},
+							},
+						},
+						Functions: []v3.Function{
+							{
+								Name: v3.FunctionNameTimeShift,
+								Args: []interface{}{float64(10)},
+							},
+						},
+					},
+				},
+			},
+			Target:    &target,
+			CompareOp: ValueAboveOrEq,
+		},
+	}
+
+	rule, err := NewThresholdRule("69", &postableRule, nil, nil, true)
+	if err != nil {
+		assert.NoError(t, err)
+	}
+	rule.TemporalityMap = map[string]map[v3.Temporality]bool{
+		"signoz_calls_total": {
+			v3.Delta: true,
+		},
+	}
+
+	params, err := rule.prepareQueryRange(time.Now())
+	if err != nil {
+		assert.NoError(t, err)
+	}
+
+	assert.Equal(t, int64(10), params.CompositeQuery.BuilderQueries["A"].ShiftBy)
+}

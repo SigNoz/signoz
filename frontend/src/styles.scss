@@ -274,3 +274,41 @@ notifications	-  2050
 		url('../public/fonts/GeistMonoVF.woff2') format('woff');
 	/* Add other formats if needed (e.g., woff2, truetype, opentype, svg) */
 }
+
+@font-face {
+	font-family: 'Inter';
+	src: url('../public/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+	font-weight: 300 700;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Work Sans';
+	src: url('../public/fonts/WorkSans-VariableFont_wght.ttf') format('truetype');
+	font-weight: 500;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Space Mono';
+	src: url('../public/fonts/SpaceMono-Regular.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Fira Code';
+	src: url('../public/fonts/FiraCode-VariableFont_wght.ttf') format('truetype');
+	font-weight: 300 700;
+	font-style: normal;
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.animate-spin {
+	animation: spin 1s linear infinite;
+}

@@ -61,6 +61,16 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.New("User already exists with the same email")
 	}
 
+	// Check if an invite already exists
+	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, req.Email)
+	if apiErr != nil {
+		return nil, errors.Wrap(apiErr.Err, "Failed to check existing invite")
+	}
+
+	if invite != nil {
+		return nil, errors.New("An invite already exists for this email")
+	}
+
 	if err := validateInviteRequest(req); err != nil {
 		return nil, errors.Wrap(err, "invalid invite request")
 	}
@@ -79,6 +89,113 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 	if apiErr != nil {
 		return nil, errors.Wrap(err, "failed to query admin user from the DB")
 	}
+
+	inv := &model.InvitationObject{
+		Name:      req.Name,
+		Email:     req.Email,
+		Token:     token,
+		CreatedAt: time.Now().Unix(),
+		Role:      req.Role,
+		OrgId:     au.OrgId,
+	}
+
+	if err := dao.DB().CreateInviteEntry(ctx, inv); err != nil {
+		return nil, errors.Wrap(err.Err, "failed to write to DB")
+	}
+
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_SENT, map[string]interface{}{
+		"invited user email": req.Email,
+	}, au.Email, true, false)
+
+	// send email if SMTP is enabled
+	if os.Getenv("SMTP_ENABLED") == "true" && req.FrontendBaseUrl != "" {
+		inviteEmail(req, au, token)
+	}
+
+	return &model.InviteResponse{Email: inv.Email, InviteToken: inv.Token}, nil
+}
+
+func InviteUsers(ctx context.Context, req *model.BulkInviteRequest) (*model.BulkInviteResponse, error) {
+	response := &model.BulkInviteResponse{
+		Status:            "success",
+		Summary:           model.InviteSummary{TotalInvites: len(req.Users)},
+		SuccessfulInvites: []model.SuccessfulInvite{},
+		FailedInvites:     []model.FailedInvite{},
+	}
+
+	jwtAdmin, ok := ExtractJwtFromContext(ctx)
+	if !ok {
+		return nil, errors.New("failed to extract admin jwt token")
+	}
+
+	adminUser, err := validateUser(jwtAdmin)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to validate admin jwt token")
+	}
+
+	au, apiErr := dao.DB().GetUser(ctx, adminUser.Id)
+	if apiErr != nil {
+		return nil, errors.Wrap(apiErr.Err, "failed to query admin user from the DB")
+	}
+
+	for _, inviteReq := range req.Users {
+		inviteResp, err := inviteUser(ctx, &inviteReq, au)
+		if err != nil {
+			response.FailedInvites = append(response.FailedInvites, model.FailedInvite{
+				Email: inviteReq.Email,
+				Error: err.Error(),
+			})
+			response.Summary.FailedInvites++
+		} else {
+			response.SuccessfulInvites = append(response.SuccessfulInvites, model.SuccessfulInvite{
+				Email:      inviteResp.Email,
+				InviteLink: fmt.Sprintf("%s/signup?token=%s", inviteReq.FrontendBaseUrl, inviteResp.InviteToken),
+				Status:     "sent",
+			})
+			response.Summary.SuccessfulInvites++
+		}
+	}
+
+	// Update the status based on the results
+	if response.Summary.FailedInvites == response.Summary.TotalInvites {
+		response.Status = "failure"
+	} else if response.Summary.FailedInvites > 0 {
+		response.Status = "partial_success"
+	}
+
+	return response, nil
+}
+
+// Helper function to handle individual invites
+func inviteUser(ctx context.Context, req *model.InviteRequest, au *model.UserPayload) (*model.InviteResponse, error) {
+	token, err := utils.RandomHex(opaqueTokenSize)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to generate invite token")
+	}
+
+	user, apiErr := dao.DB().GetUserByEmail(ctx, req.Email)
+	if apiErr != nil {
+		return nil, errors.Wrap(apiErr.Err, "Failed to check already existing user")
+	}
+
+	if user != nil {
+		return nil, errors.New("User already exists with the same email")
+	}
+
+	// Check if an invite already exists
+	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, req.Email)
+	if apiErr != nil {
+		return nil, errors.Wrap(apiErr.Err, "Failed to check existing invite")
+	}
+
+	if invite != nil {
+		return nil, errors.New("An invite already exists for this email")
+	}
+
+	if err := validateInviteRequest(req); err != nil {
+		return nil, errors.Wrap(err, "invalid invite request")
+	}
+
 	inv := &model.InvitationObject{
 		Name:      req.Name,
 		Email:     req.Email,

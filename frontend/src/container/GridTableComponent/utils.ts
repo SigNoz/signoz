@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { ColumnsType, ColumnType } from 'antd/es/table';
+import { convertUnit } from 'container/NewWidget/RightContainer/dataFormatCategories';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
@@ -30,10 +31,39 @@ function evaluateCondition(
 	}
 }
 
+/**
+ * Evaluates whether a given value meets a specified threshold condition.
+ * It first converts the value to the appropriate unit if a threshold unit is provided,
+ * and then checks the condition using the specified operator.
+ *
+ * @param value - The value to be evaluated.
+ * @param thresholdValue - The threshold value to compare against.
+ * @param thresholdOperator - The operator used for comparison (e.g., '>', '<', '==').
+ * @param thresholdUnit - The unit to which the value should be converted.
+ * @param columnUnit - The current unit of the value.
+ * @returns A boolean indicating whether the value meets the threshold condition.
+ */
+function evaluateThresholdWithConvertedValue(
+	value: number,
+	thresholdValue: number,
+	thresholdOperator?: string,
+	thresholdUnit?: string,
+	columnUnit?: string,
+): boolean {
+	const convertedValue = convertUnit(value, columnUnit, thresholdUnit);
+
+	if (convertedValue) {
+		return evaluateCondition(thresholdOperator, convertedValue, thresholdValue);
+	}
+
+	return evaluateCondition(thresholdOperator, value, thresholdValue);
+}
+
 export function findMatchingThreshold(
 	thresholds: ThresholdProps[],
 	label: string,
 	value: number,
+	columnUnit?: string,
 ): {
 	threshold: ThresholdProps;
 	hasMultipleMatches: boolean;
@@ -45,10 +75,12 @@ export function findMatchingThreshold(
 		if (
 			threshold.thresholdValue !== undefined &&
 			threshold.thresholdTableOptions === label &&
-			evaluateCondition(
-				threshold.thresholdOperator,
+			evaluateThresholdWithConvertedValue(
 				value,
-				threshold.thresholdValue,
+				threshold?.thresholdValue,
+				threshold.thresholdOperator,
+				threshold.thresholdUnit,
+				columnUnit,
 			)
 		) {
 			matchingThresholds.push(threshold);

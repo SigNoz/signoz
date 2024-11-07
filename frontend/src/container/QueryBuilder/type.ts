@@ -16,4 +16,5 @@ export type Option = {
 	selected?: boolean;
 	dataType?: string;
 	isIndexed?: boolean;
+	type?: string;
 };

@@ -57,8 +57,11 @@ export const useAlertHistoryQueryParams = (): {
 
 	const startTime = params.get(QueryParams.startTime);
 	const endTime = params.get(QueryParams.endTime);
+	const relativeTimeParam = params.get(QueryParams.relativeTime);
+
 	const relativeTime =
-		params.get(QueryParams.relativeTime) ?? RelativeTimeMap['6hr'];
+		(relativeTimeParam === 'null' ? null : relativeTimeParam) ??
+		RelativeTimeMap['6hr'];
 
 	const intStartTime = parseInt(startTime || '0', 10);
 	const intEndTime = parseInt(endTime || '0', 10);

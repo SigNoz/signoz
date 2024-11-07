@@ -25,8 +25,6 @@ import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
-import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
-import { dashboardListMessage } from 'components/LaunchChatSupport/util';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
@@ -79,6 +77,7 @@ import { isCloudUser } from 'utils/app';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
+import { RequestDashboardBtn } from './RequestDashboardBtn';
 import { DeleteButton } from './TableComponents/DeleteButton';
 import {
 	DashboardDynamicColumns,
@@ -693,17 +692,14 @@ function DashboardsList(): JSX.Element {
 						<Typography.Text className="subtitle">
 							Create and manage dashboards for your workspace.
 						</Typography.Text>
-						<LaunchChatSupport
-							attributes={{
-								screen: 'Dashboard list page',
-							}}
-							eventName="Dashboard: Facing Issues in dashboard"
-							message={dashboardListMessage}
-							buttonText="Need help with dashboards?"
-							onHoverText="Click here to get help with dashboards"
-							intercomMessageDisabled
-						/>
 					</Flex>
+					{isCloudUser() && (
+						<div className="integrations-container">
+							<div className="integrations-content">
+								<RequestDashboardBtn />
+							</div>
+						</div>
+					)}
 				</div>
 
 				{isDashboardListLoading ||

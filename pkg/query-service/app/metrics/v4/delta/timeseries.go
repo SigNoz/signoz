@@ -26,12 +26,14 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 
 	samplesTableFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli < %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
+	tableName := helpers.WhichSamplesTableToUse(start, end, mq)
+
 	// Select the aggregate value for interval
 	queryTmpl :=
 		"SELECT fingerprint, %s" +
 			" toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as per_series_value" +
-			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_V4_TABLENAME +
+			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + tableName +
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
@@ -41,33 +43,27 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 
 	selectLabelsAny := helpers.SelectLabelsAny(mq.GroupBy)
 
+	op := helpers.AggregationColumnForSamplesTable(start, end, mq)
+
 	switch mq.TimeAggregation {
 	case v3.TimeAggregationAvg:
-		op := "avg(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationSum:
-		op := "sum(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationMin:
-		op := "min(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationMax:
-		op := "max(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationCount:
-		op := "count(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationCountDistinct:
-		op := "count(distinct(value))"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationAnyLast:
-		op := "anyLast(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationRate:
-		op := fmt.Sprintf("sum(value)/%d", step)
+		op := fmt.Sprintf("%s/%d", op, step)
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	case v3.TimeAggregationIncrease:
-		op := "sum(value)"
 		subQuery = fmt.Sprintf(queryTmpl, selectLabelsAny, step, op, timeSeriesSubQuery)
 	}
 	return subQuery, nil
@@ -89,10 +85,8 @@ func prepareQueryOptimized(start, end, step int64, mq *v3.BuilderQuery) (string,
 
 	samplesTableFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli < %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
-	var tableName string = constants.SIGNOZ_SAMPLES_V4_TABLENAME
-	if mq.AggregateAttribute.Type == v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
-		tableName = "distributed_exp_hist"
-	}
+	tableName := helpers.WhichSamplesTableToUse(start, end, mq)
+
 	// Select the aggregate value for interval
 	queryTmpl :=
 		"SELECT %s" +
@@ -108,16 +102,16 @@ func prepareQueryOptimized(start, end, step int64, mq *v3.BuilderQuery) (string,
 
 	switch mq.SpaceAggregation {
 	case v3.SpaceAggregationSum:
-		op := "sum(value)"
+		op := helpers.AggregationColumnForSamplesTable(start, end, mq)
 		if mq.TimeAggregation == v3.TimeAggregationRate {
-			op = "sum(value)/" + fmt.Sprintf("%d", step)
+			op = fmt.Sprintf("%s/%d", op, step)
 		}
 		query = fmt.Sprintf(queryTmpl, selectLabels, step, op, timeSeriesSubQuery, groupBy, orderBy)
 	case v3.SpaceAggregationMin:
-		op := "min(value)"
+		op := helpers.AggregationColumnForSamplesTable(start, end, mq)
 		query = fmt.Sprintf(queryTmpl, selectLabels, step, op, timeSeriesSubQuery, groupBy, orderBy)
 	case v3.SpaceAggregationMax:
-		op := "max(value)"
+		op := helpers.AggregationColumnForSamplesTable(start, end, mq)
 		query = fmt.Sprintf(queryTmpl, selectLabels, step, op, timeSeriesSubQuery, groupBy, orderBy)
 	case v3.SpaceAggregationPercentile50,
 		v3.SpaceAggregationPercentile75,

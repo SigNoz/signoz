@@ -45,7 +45,6 @@ import {
 	PanelBottomClose,
 	Plus,
 	X,
-	XCircle,
 } from 'lucide-react';
 import {
 	CSSProperties,
@@ -515,7 +514,11 @@ function ExplorerOptions({
 
 	return (
 		<div className="explorer-options-container">
-			{isQueryUpdated && !isExplorerOptionHidden && (
+			{
+				// if a viewName is selected and the explorer options are not hidden then
+				// always show the clear option
+			}
+			{!isExplorerOptionHidden && viewName && (
 				<div
 					className={cx(
 						isEditDeleteSupported ? '' : 'hide-update',
@@ -529,18 +532,25 @@ function ExplorerOptions({
 							icon={<X size={14} />}
 						/>
 					</Tooltip>
-					<Divider
-						type="vertical"
-						className={isEditDeleteSupported ? '' : 'hidden'}
-					/>
-					<Tooltip title="Update this view" placement="top">
-						<Button
-							className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}
-							disabled={isViewUpdating}
-							onClick={onUpdateQueryHandler}
-							icon={<Disc3 size={14} />}
-						/>
-					</Tooltip>
+					{
+						// only show the update view option when the query is updated
+					}
+					{isQueryUpdated && (
+						<>
+							<Divider
+								type="vertical"
+								className={isEditDeleteSupported ? '' : 'hidden'}
+							/>
+							<Tooltip title="Update this view" placement="top">
+								<Button
+									className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}
+									disabled={isViewUpdating}
+									onClick={onUpdateQueryHandler}
+									icon={<Disc3 size={14} />}
+								/>
+							</Tooltip>
+						</>
+					)}
 				</div>
 			)}
 			{!isExplorerOptionHidden && (
@@ -564,10 +574,7 @@ function ExplorerOptions({
 							}}
 							dropdownStyle={dropdownStyle}
 							className="views-dropdown"
-							allowClear={{
-								clearIcon: <XCircle size={16} style={{ marginTop: '-3px' }} />,
-							}}
-							onClear={handleClearSelect}
+							allowClear={false}
 							ref={ref}
 						>
 							{viewsData?.data?.data?.map((view) => {
@@ -662,8 +669,8 @@ function ExplorerOptions({
 					</div>
 				</div>
 			)}
-
 			<ExplorerOptionsHideArea
+				viewName={viewName}
 				isExplorerOptionHidden={isExplorerOptionHidden}
 				setIsExplorerOptionHidden={setIsExplorerOptionHidden}
 				sourcepage={sourcepage}
@@ -672,7 +679,6 @@ function ExplorerOptions({
 				onUpdateQueryHandler={onUpdateQueryHandler}
 				isEditDeleteSupported={isEditDeleteSupported}
 			/>
-
 			<Modal
 				className="save-view-modal"
 				title={<span className="title">Save this view</span>}
@@ -705,7 +711,6 @@ function ExplorerOptions({
 					/>
 				</div>
 			</Modal>
-
 			<Modal
 				footer={null}
 				onOk={onCancel(false)}
