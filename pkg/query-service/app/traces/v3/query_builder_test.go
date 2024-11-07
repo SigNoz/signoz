@@ -1200,15 +1200,6 @@ func TestBuildTracesQuery(t *testing.T) {
 	}
 }
 
-/*
-start,
-				end,
-				params.CompositeQuery.PanelType,
-				builderQuery,
-				v3.QBOptions{PreferRPM: preferRPM},
-				params.FilterBy,
-*/
-
 var testPrepTracesQueryData = []struct {
 	Name          string
 	PanelType     v3.PanelType
