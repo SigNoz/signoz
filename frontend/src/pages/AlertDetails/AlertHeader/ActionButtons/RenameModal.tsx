@@ -1,3 +1,5 @@
+import './RenameModal.styles.scss';
+
 import { Button, Input, InputRef, Modal, Typography } from 'antd';
 import { Check, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
