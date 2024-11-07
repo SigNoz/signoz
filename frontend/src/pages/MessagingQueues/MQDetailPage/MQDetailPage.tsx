@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import '../MessagingQueues.styles.scss';
 
 import { Select, Typography } from 'antd';
@@ -15,6 +16,7 @@ import {
 	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 } from '../MessagingQueuesUtils';
+import DropRateView from '../MQDetails/DropRateView/DropRateView';
 import MessagingQueueOverview from '../MQDetails/MessagingQueueOverview';
 import MessagingQueuesDetails from '../MQDetails/MQDetails';
 import MessagingQueuesConfigOptions from '../MQGraph/MQConfigOptions';
@@ -108,6 +110,8 @@ function MQDetailPage(): JSX.Element {
 					<MessagingQueuesConfigOptions />
 					<MessagingQueuesGraph />
 				</div>
+			) : selectedView === MessagingQueuesViewType.dropRate.value ? (
+				<DropRateView />
 			) : (
 				<MessagingQueueOverview
 					selectedView={selectedView}

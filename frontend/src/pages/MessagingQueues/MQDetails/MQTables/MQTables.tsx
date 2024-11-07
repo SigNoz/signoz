@@ -251,7 +251,7 @@ function MessagingQueuesTable({
 					<Table
 						className={cx(
 							'mq-table',
-							type !== 'Detail' ? 'mq-overview-row-clickable' : '',
+							type !== 'Detail' ? 'mq-overview-row-clickable' : 'pagination-left',
 						)}
 						pagination={paginationConfig}
 						size="middle"
