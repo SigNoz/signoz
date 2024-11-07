@@ -53,6 +53,9 @@ const DurationSort = "DurationSort"
 const TimestampSort = "TimestampSort"
 const PreferRPM = "PreferRPM"
 
+const TraceFilterSpanCount = "span_count"
+const TraceFilterTraceDuration = "trace_duration"
+
 func GetAlertManagerApiPrefix() string {
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
 		return os.Getenv("ALERTMANAGER_API_PREFIX")
@@ -347,6 +350,7 @@ const (
 	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
 		"span_count, subQuery.durationNano, traceID FROM %s.%s GLOBAL INNER JOIN subQuery ON %s.traceID = subQuery.traceID GROUP " +
 		"BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc;"
+	TraceExplorerSpanCountSubquery = "SELECT traceID, COUNT() AS span_count, max(toInt64(timestamp) + durationNano) - min(toInt64(timestamp)) AS total_duration_nano FROM %s.%s WHERE %s %s GROUP BY traceID ORDER BY span_count DESC "
 )
 
 // ReservedColumnTargetAliases identifies result value from a user
