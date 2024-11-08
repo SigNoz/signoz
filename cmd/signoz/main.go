@@ -70,8 +70,6 @@ func run(
 		return err
 	}
 
-	signozconfig.EnsureBackwardsCompatibility(ctx, config)
-
 	// Print the current environment
 	if config.Version.Banner.Enabled {
 		version.Info.PrettyPrint()
@@ -82,6 +80,8 @@ func run(
 	if err != nil {
 		return err
 	}
+
+	signozconfig.EnsureBackwardsCompatibility(ctx, instr, config)
 
 	// To support backward compatibility, we are going to initialize the global zap logger
 	zap.ReplaceGlobals(instr.Logger.Named("go.signoz.io/signoz/cmd/signoz"))

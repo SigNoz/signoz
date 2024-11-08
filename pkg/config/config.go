@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"os"
 
 	signozconfmap "go.signoz.io/signoz/pkg/confmap"
 	"go.signoz.io/signoz/pkg/instrumentation"
@@ -51,6 +52,11 @@ func New(ctx context.Context, settings ProviderSettings) (*Config, error) {
 
 // A backwards compatibility function to ensure signoz does not break for existing
 // users. This will modify the input config in place
-func EnsureBackwardsCompatibility(ctx context.Context, cfg *Config) {
+func EnsureBackwardsCompatibility(ctx context.Context, instrumentation *instrumentation.Instrumentation, cfg *Config) {
+	jwtSecret, ok := os.LookupEnv("SIGNOZ_JWT_SECRET")
+	if ok {
+		instrumentation.Logger.Warn("SIGNOZ_JWT_SECRET has been deprecated and will be removed in a future release")
+		cfg.Auth.Jwt.Secret = jwtSecret
+	}
 
 }

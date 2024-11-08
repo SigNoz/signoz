@@ -1,15 +1,15 @@
 ##################### SigNoz Configuration Defaults #####################
-# Do not modify this file in signoz installs
-#----------------------------------------------
-# Version
-#----------------------------------------------
+# 
+# Do not modify this file
+#
+
+##################### Version #####################
 version:
   banner:
     # Whether to show the banner on startup
     enabled: true
-#----------------------------------------------
-# Instrumentation
-#----------------------------------------------
+
+##################### Instrumentation #####################
 instrumentation:
   logs:
     # Whether to enable log exports to an otlp compatible backend
@@ -49,17 +49,15 @@ instrumentation:
             prometheus:
               host: 0.0.0.0
               port: 9090
-#----------------------------------------------
-# Web
-#----------------------------------------------
+
+##################### Web #####################
 web:
   # The prefix to serve web on
   prefix: /
   # The directory containing the static build files.
   directory: /etc/signoz/web
-#----------------------------------------------
-# Cache
-#----------------------------------------------
+
+##################### Cache #####################
 cache:
   # Memory provider
   provider: memory
@@ -68,30 +66,28 @@ cache:
     cleanup_interval: 60
 
   # Redis Provider
+  # provider: redis
   # redis:
   #   host: localhost
   #   port: 6379
   #   password: password
   #   db: 0
-#----------------------------------------------
-# Auth
-#----------------------------------------------
-jwt:
-  auth:
+
+##################### Auth #####################
+auth:
+  jwt:
     # The JWT secret for authentication
     secret: secret
-#----------------------------------------------
-# Database
-#----------------------------------------------
+
+##################### Database #####################
 database:
   # Supported options are sqlite
   provider: sqlite
   # Path to the sqlite database
   sqlite:
-    path: /var/lib/signoz
-#----------------------------------------------
-# Storage
-#----------------------------------------------
+    path: signoz.db
+
+##################### Storage #####################
 storage:
   provider: clickhouse
   clickhouse:
@@ -105,22 +101,24 @@ storage:
       max_execution_time_leaf:
       timeout_before_checking_execution_speed:
       max_bytes_to_read:
-#----------------------------------------------
-# Opamp
-#----------------------------------------------
+
+##################### Opamp #####################
 opamp:
   address: 0.0.0.0:4320
-#----------------------------------------------
-# Http
-#----------------------------------------------
+
+##################### Http #####################
 http:
   address: 0.0.0.0:8000
   timeout: 60s
   max_timeout: 600s
-#----------------------------------------------
-# Prometheus
-#----------------------------------------------
+
+##################### Prometheus #####################
 prometheus:
   remote_read:
     config: 
     url: tcp://localhost:9000/signoz_metrics
+
+##################### Alerting #####################
+alerting:
+  rules:
+    enabled: true

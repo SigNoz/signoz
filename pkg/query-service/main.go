@@ -87,16 +87,6 @@ func main() {
 		UseLogsNewSchema:  useLogsNewSchema,
 	}
 
-	// Read the jwt secret key
-	// todo(remove): read from config
-	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
-
-	if len(auth.JwtSecret) == 0 {
-		zap.L().Warn("No JWT secret key is specified.")
-	} else {
-		zap.L().Info("JWT secret key set successfully.")
-	}
-
 	if err := migrate.Migrate(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
 		zap.L().Error("Failed to migrate", zap.Error(err))
 	} else {
