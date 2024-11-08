@@ -73,6 +73,10 @@ func getParamsForTopClusters(req model.ClusterListRequest) (int64, string, strin
 	return getParamsForTopItems(req.Start, req.End)
 }
 
+func getParamsForTopDeployments(req model.DeploymentListRequest) (int64, string, string) {
+	return getParamsForTopItems(req.Start, req.End)
+}
+
 // TODO(srikanthccv): remove this
 // What is happening here?
 // The `PrepareTimeseriesFilterQuery` uses the local time series table for sub-query because each fingerprint

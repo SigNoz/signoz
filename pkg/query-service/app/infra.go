@@ -334,3 +334,56 @@ func (aH *APIHandler) getClusterList(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, clusterList)
 }
+
+func (aH *APIHandler) getDeploymentAttributeKeys(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req, err := parseFilterAttributeKeyRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	keys, err := aH.deploymentsRepo.GetDeploymentAttributeKeys(ctx, *req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, keys)
+}
+
+func (aH *APIHandler) getDeploymentAttributeValues(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req, err := parseFilterAttributeValueRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	values, err := aH.deploymentsRepo.GetDeploymentAttributeValues(ctx, *req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, values)
+}
+
+func (aH *APIHandler) getDeploymentList(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req := model.DeploymentListRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	deploymentList, err := aH.deploymentsRepo.GetDeploymentList(ctx, req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, deploymentList)
+}
