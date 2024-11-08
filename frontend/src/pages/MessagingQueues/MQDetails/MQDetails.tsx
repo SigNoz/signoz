@@ -116,12 +116,7 @@ const checkValidityOfDetailConfigs = (
 			return false;
 		}
 
-		if (currentTab === MessagingQueueServiceDetailType.ConsumerDetails) {
-			return Boolean(configDetails?.topic && configDetails?.partition);
-		}
-		return Boolean(
-			configDetails?.group && configDetails?.topic && configDetails?.partition,
-		);
+		return Boolean(configDetails?.topic && configDetails?.partition);
 	}
 
 	if (selectedView === MessagingQueuesViewType.producerLatency.value) {

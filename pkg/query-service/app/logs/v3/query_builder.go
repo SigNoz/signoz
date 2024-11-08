@@ -57,6 +57,9 @@ func GetClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
 	if columnType == v3.AttributeKeyTypeTag {
 		return "attributes"
 	}
+	if columnType == v3.AttributeKeyTypeInstrumentationScope {
+		return "scope"
+	}
 	return "resources"
 }
 
@@ -416,9 +419,6 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 		} else if panelType == v3.PanelTypeList {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name := getClickhouseColumnName(attr)
-			if item.IsColumn {
-				name = "`" + name + "`"
-			}
 			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 		}
 	}

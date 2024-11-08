@@ -53,6 +53,7 @@ export enum KeyOperationTableHeader {
 export enum MetricsType {
 	Tag = 'tag',
 	Resource = 'resource',
+	Scope = 'scope',
 }
 
 export enum WidgetKeys {

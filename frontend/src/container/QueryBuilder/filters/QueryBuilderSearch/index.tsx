@@ -410,6 +410,7 @@ function QueryBuilderSearch({
 									label={option.label}
 									value={option.value}
 									dataType={option.dataType || ''}
+									type={option.type || ''}
 								/>
 								{option.selected && <StyledCheckOutlined />}
 							</Select.Option>

@@ -1,16 +1,12 @@
 import axios from 'api';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
-import {
-	MessagingQueueServicePayload,
-	MessagingQueuesPayloadProps,
-} from './getConsumerLagDetails';
+import { DropRateAPIResponse } from '../DropRateView/dropRateViewUtils';
+import { MessagingQueueServicePayload } from './getConsumerLagDetails';
 
 export const getKafkaSpanEval = async (
 	props: Omit<MessagingQueueServicePayload, 'detailType' | 'variables'>,
-): Promise<
-	SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
-> => {
+): Promise<SuccessResponse<DropRateAPIResponse['data']> | ErrorResponse> => {
 	const { start, end, evalTime } = props;
 	const response = await axios.post(`messaging-queues/kafka/span/evaluation`, {
 		start,
