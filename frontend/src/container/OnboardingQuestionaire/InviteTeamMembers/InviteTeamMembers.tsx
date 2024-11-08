@@ -161,6 +161,13 @@ function InviteTeamMembers({
 
 			setInviteUsersSuccessResponse(successfulInvites);
 
+			logEvent('Org Onboarding: Invite Team Members Success', {
+				teamMembers: teamMembersToInvite,
+				totalInvites: inviteUsersResponse.summary.total_invites,
+				successfulInvites: inviteUsersResponse.summary.successful_invites,
+				failedInvites: inviteUsersResponse.summary.failed_invites,
+			});
+
 			setTimeout(() => {
 				setDisableNextButton(false);
 				onNext();
@@ -172,6 +179,13 @@ function InviteTeamMembers({
 
 			setInviteUsersSuccessResponse(successfulInvites);
 
+			logEvent('Org Onboarding: Invite Team Members Partial Success', {
+				teamMembers: teamMembersToInvite,
+				totalInvites: inviteUsersResponse.summary.total_invites,
+				successfulInvites: inviteUsersResponse.summary.successful_invites,
+				failedInvites: inviteUsersResponse.summary.failed_invites,
+			});
+
 			if (inviteUsersResponse.failed_invites.length > 0) {
 				setHasErrors(true);
 
@@ -182,27 +196,21 @@ function InviteTeamMembers({
 		}
 	};
 
-	const {
-		mutate: sendInvites,
-		isLoading: isSendingInvites,
-		data: inviteUsersApiResponseData,
-	} = useMutation(inviteUsers, {
-		onSuccess: (response: SuccessResponse<InviteUsersResponse>): void => {
-			logEvent('User Onboarding: Invite Team Members Sent', {
-				teamMembers: teamMembersToInvite,
-			});
+	const { mutate: sendInvites, isLoading: isSendingInvites } = useMutation(
+		inviteUsers,
+		{
+			onSuccess: (response: SuccessResponse<InviteUsersResponse>): void => {
+				handleInviteUsersSuccess(response);
+			},
+			onError: (error: AxiosError): void => {
+				logEvent('Org Onboarding: Invite Team Members Failed', {
+					teamMembers: teamMembersToInvite,
+				});
 
-			handleInviteUsersSuccess(response);
+				handleError(error);
+			},
 		},
-		onError: (error: AxiosError): void => {
-			logEvent('User Onboarding: Invite Team Members Failed', {
-				teamMembers: teamMembersToInvite,
-				error,
-			});
-
-			handleError(error);
-		},
-	});
+	);
 
 	const handleNext = (): void => {
 		if (validateAllUsers()) {
@@ -254,9 +262,8 @@ function InviteTeamMembers({
 	};
 
 	const handleDoLater = (): void => {
-		logEvent('User Onboarding: Invite Team Members Skipped', {
-			teamMembers: teamMembersToInvite,
-			apiResponse: inviteUsersApiResponseData,
+		logEvent('Org Onboarding: Clicked Do Later', {
+			currentPageID: 4,
 		});
 
 		onNext();

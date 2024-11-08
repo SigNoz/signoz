@@ -94,6 +94,13 @@ function OrgQuestions({
 			organisationName === '' ||
 			orgDetails.organisationName === organisationName
 		) {
+			logEvent('Org Onboarding: Answered', {
+				usesObservability,
+				observabilityTool,
+				otherTool,
+				familiarity,
+			});
+
 			onNext({
 				organisationName,
 				usesObservability,
@@ -121,8 +128,15 @@ function OrgQuestions({
 					},
 				});
 
-				logEvent('User Onboarding: Org Name Updated', {
+				logEvent('Org Onboarding: Org Name Updated', {
 					organisationName: orgDetails.organisationName,
+				});
+
+				logEvent('Org Onboarding: Answered', {
+					usesObservability,
+					observabilityTool,
+					otherTool,
+					familiarity,
 				});
 
 				onNext({
@@ -133,7 +147,7 @@ function OrgQuestions({
 					familiarity,
 				});
 			} else {
-				logEvent('User Onboarding: Org Name Update Failed', {
+				logEvent('Org Onboarding: Org Name Update Failed', {
 					organisationName: orgDetails.organisationName,
 				});
 
