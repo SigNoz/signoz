@@ -1,9 +1,12 @@
+/* eslint-disable no-nested-ternary */
 import '../MessagingQueues.styles.scss';
 
 import { Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { ListMinus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
@@ -13,7 +16,7 @@ import {
 	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 } from '../MessagingQueuesUtils';
-import { SelectLabelWithComingSoon } from '../MQCommon/MQCommon';
+import DropRateView from '../MQDetails/DropRateView/DropRateView';
 import MessagingQueueOverview from '../MQDetails/MessagingQueueOverview';
 import MessagingQueuesDetails from '../MQDetails/MQDetails';
 import MessagingQueuesConfigOptions from '../MQGraph/MQConfigOptions';
@@ -33,9 +36,29 @@ function MQDetailPage(): JSX.Element {
 		setproducerLatencyOption,
 	] = useState<ProducerLatencyOptions>(ProducerLatencyOptions.Producers);
 
+	const mqServiceView = useUrlQuery().get(
+		QueryParams.mqServiceView,
+	) as MessagingQueuesViewTypeOptions;
+
 	useEffect(() => {
 		logEvent('Messaging Queues: Detail page visited', {});
 	}, []);
+
+	useEffect(() => {
+		if (mqServiceView) {
+			setSelectedView(mqServiceView);
+		}
+	}, [mqServiceView]);
+
+	const updateUrlQuery = (query: Record<string, string | number>): void => {
+		const searchParams = new URLSearchParams(history.location.search);
+		Object.keys(query).forEach((key) => {
+			searchParams.set(key, query[key].toString());
+		});
+		history.push({
+			search: searchParams.toString(),
+		});
+	};
 
 	return (
 		<div className="messaging-queue-container">
@@ -55,7 +78,11 @@ function MQDetailPage(): JSX.Element {
 						className="messaging-queue-options"
 						defaultValue={MessagingQueuesViewType.consumerLag.value}
 						popupClassName="messaging-queue-options-popup"
-						onChange={(value): void => setSelectedView(value)}
+						onChange={(value): void => {
+							setSelectedView(value);
+							updateUrlQuery({ [QueryParams.mqServiceView]: value });
+						}}
+						value={mqServiceView}
 						options={[
 							{
 								label: MessagingQueuesViewType.consumerLag.label,
@@ -70,37 +97,36 @@ function MQDetailPage(): JSX.Element {
 								value: MessagingQueuesViewType.producerLatency.value,
 							},
 							{
-								label: (
-									<SelectLabelWithComingSoon
-										label={MessagingQueuesViewType.consumerLatency.label}
-									/>
-								),
-								value: MessagingQueuesViewType.consumerLatency.value,
-								disabled: true,
+								label: MessagingQueuesViewType.dropRate.label,
+								value: MessagingQueuesViewType.dropRate.value,
 							},
 						]}
 					/>
 				</div>
 				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
-			<div className="messaging-queue-main-graph">
-				<MessagingQueuesConfigOptions />
-				{selectedView === MessagingQueuesViewType.consumerLag.value ? (
+			{selectedView === MessagingQueuesViewType.consumerLag.value ? (
+				<div className="messaging-queue-main-graph">
+					<MessagingQueuesConfigOptions />
 					<MessagingQueuesGraph />
-				) : (
-					<MessagingQueueOverview
-						selectedView={selectedView}
-						option={producerLatencyOption}
-						setOption={setproducerLatencyOption}
-					/>
-				)}
-			</div>
-			<div className="messaging-queue-details">
-				<MessagingQueuesDetails
+				</div>
+			) : selectedView === MessagingQueuesViewType.dropRate.value ? (
+				<DropRateView />
+			) : (
+				<MessagingQueueOverview
 					selectedView={selectedView}
-					producerLatencyOption={producerLatencyOption}
+					option={producerLatencyOption}
+					setOption={setproducerLatencyOption}
 				/>
-			</div>
+			)}
+			{selectedView !== MessagingQueuesViewType.dropRate.value && (
+				<div className="messaging-queue-details">
+					<MessagingQueuesDetails
+						selectedView={selectedView}
+						producerLatencyOption={producerLatencyOption}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }

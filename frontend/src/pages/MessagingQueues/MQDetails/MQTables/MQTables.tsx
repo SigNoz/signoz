@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable react/require-default-props */
 import './MQTables.styles.scss';
 
@@ -31,6 +32,8 @@ import {
 	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
 } from './getConsumerLagDetails';
+
+const INITIAL_PAGE_SIZE = 10;
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function getColumns(
@@ -154,8 +157,8 @@ function MessagingQueuesTable({
 
 	const paginationConfig = useMemo(
 		() =>
-			tableData?.length > 20 && {
-				pageSize: 20,
+			tableData?.length > INITIAL_PAGE_SIZE && {
+				pageSize: INITIAL_PAGE_SIZE,
 				showTotal: showPaginationItem,
 				showSizeChanger: false,
 				hideOnSinglePage: true,
@@ -169,15 +172,18 @@ function MessagingQueuesTable({
 		});
 	};
 
-	const { mutate: getViewDetails, isLoading } = useMutation(tableApi, {
-		onSuccess: (data) => {
-			if (data.payload) {
-				setColumns(getColumns(data?.payload, history));
-				setTableData(getTableData(data?.payload));
-			}
+	const { mutate: getViewDetails, isLoading, error, isError } = useMutation(
+		tableApi,
+		{
+			onSuccess: (data) => {
+				if (data.payload) {
+					setColumns(getColumns(data?.payload, history));
+					setTableData(getTableData(data?.payload));
+				}
+			},
+			onError: handleConsumerDetailsOnError,
 		},
-		onError: handleConsumerDetailsOnError,
-	});
+	);
 
 	useEffect(
 		() => {
@@ -230,6 +236,10 @@ function MessagingQueuesTable({
 					</Typography.Text>
 					<Skeleton />
 				</div>
+			) : isError ? (
+				<div className="no-data-style">
+					<Typography.Text>{error?.message || SOMETHING_WENT_WRONG}</Typography.Text>
+				</div>
 			) : (
 				<>
 					{currentTab && (
@@ -241,7 +251,7 @@ function MessagingQueuesTable({
 					<Table
 						className={cx(
 							'mq-table',
-							type !== 'Detail' ? 'mq-overview-row-clickable' : '',
+							type !== 'Detail' ? 'mq-overview-row-clickable' : 'pagination-left',
 						)}
 						pagination={paginationConfig}
 						size="middle"

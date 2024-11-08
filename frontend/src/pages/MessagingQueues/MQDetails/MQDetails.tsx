@@ -116,12 +116,7 @@ const checkValidityOfDetailConfigs = (
 			return false;
 		}
 
-		if (currentTab === MessagingQueueServiceDetailType.ConsumerDetails) {
-			return Boolean(configDetails?.topic && configDetails?.partition);
-		}
-		return Boolean(
-			configDetails?.group && configDetails?.topic && configDetails?.partition,
-		);
+		return Boolean(configDetails?.topic && configDetails?.partition);
 	}
 
 	if (selectedView === MessagingQueuesViewType.producerLatency.value) {
@@ -139,7 +134,7 @@ const checkValidityOfDetailConfigs = (
 		return Boolean(configDetails?.topic && configDetails?.service_name);
 	}
 
-	return false;
+	return selectedView === MessagingQueuesViewType.dropRate.value;
 };
 
 function MessagingQueuesDetails({
@@ -213,14 +208,14 @@ function MessagingQueuesDetails({
 			<MessagingQueuesTable
 				currentTab={currentTab}
 				selectedView={selectedView}
-				tableApi={serviceConfigDetails[selectedView].tableApi}
+				tableApi={serviceConfigDetails[selectedView]?.tableApi}
 				validConfigPresent={checkValidityOfDetailConfigs(
 					timelineQueryData,
 					selectedView,
 					currentTab,
 					configDetailQueryData,
 				)}
-				tableApiPayload={serviceConfigDetails[selectedView].tableApiPayload}
+				tableApiPayload={serviceConfigDetails[selectedView]?.tableApiPayload}
 			/>
 		</div>
 	);
