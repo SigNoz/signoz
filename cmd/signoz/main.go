@@ -70,6 +70,8 @@ func run(
 		return err
 	}
 
+	signozconfig.EnsureBackwardsCompatibility(ctx, config)
+
 	// Print the current environment
 	if config.Version.Banner.Enabled {
 		version.Info.PrettyPrint()

@@ -123,4 +123,4 @@ http:
 prometheus:
   remote_read:
     config: 
-    url:
+    url: tcp://localhost:9000/signoz_metrics

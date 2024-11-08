@@ -48,3 +48,9 @@ func New(ctx context.Context, settings ProviderSettings) (*Config, error) {
 
 	return provider.Get(ctx)
 }
+
+// A backwards compatibility function to ensure signoz does not break for existing
+// users. This will modify the input config in place
+func EnsureBackwardsCompatibility(ctx context.Context, cfg *Config) {
+
+}
