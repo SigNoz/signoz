@@ -31,7 +31,6 @@ import (
 	"go.signoz.io/signoz/ee/query-service/rules"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
@@ -348,7 +347,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 		}
 
 		if user.User.OrgId == "" {
-			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
+			return nil, basemodel.UnauthorizedError(errors.New("orgId is missing in the claims"))
 		}
 
 		return user, nil
@@ -765,8 +764,9 @@ func makeRulesManager(
 		Cache:        cache,
 		EvalDelay:    baseconst.GetEvalDelay(),
 
-		PrepareTaskFunc:  rules.PrepareTaskFunc,
-		UseLogsNewSchema: useLogsNewSchema,
+		PrepareTaskFunc:     rules.PrepareTaskFunc,
+		PrepareTestRuleFunc: rules.TestNotification,
+		UseLogsNewSchema:    useLogsNewSchema,
 	}
 
 	// create Manager
