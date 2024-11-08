@@ -16,7 +16,7 @@
 					"key": "springboot",
 					"label": "Spring Boot",
 					"imgUrl": "/Logos/springboot.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -26,19 +26,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-springboot/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -47,7 +47,7 @@
 					"key": "tomcat",
 					"label": "Tomcat",
 					"imgUrl": "/Logos/tomcat.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -57,19 +57,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-tomcat/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -78,7 +78,7 @@
 					"key": "jboss",
 					"label": "JBoss",
 					"imgUrl": "/Logos/jboss.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -88,19 +88,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-jboss/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -109,7 +109,7 @@
 					"key": "Others",
 					"label": "Others",
 					"imgUrl": "/Logos/java-others.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -119,13 +119,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-java/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -149,7 +149,7 @@
 					"key": "flask",
 					"label": "Flask",
 					"imgUrl": "/Logos/flask.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -159,13 +159,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-flask/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -174,7 +174,7 @@
 					"key": "django",
 					"label": "Django",
 					"imgUrl": "/Logos/django.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -184,13 +184,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-django/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -199,7 +199,7 @@
 					"key": "fastapi",
 					"label": "FastAPI",
 					"imgUrl": "/Logos/fastapi.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -209,13 +209,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-fastapi/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -224,7 +224,7 @@
 					"key": "falcon",
 					"label": "Falcon",
 					"imgUrl": "/Logos/falcon.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -234,13 +234,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-falcon/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -249,7 +249,7 @@
 					"key": "others",
 					"label": "Others",
 					"imgUrl": "/Logos/python-others.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -259,13 +259,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-python/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -289,7 +289,7 @@
 					"key": "nodejs",
 					"label": "NodeJs",
 					"imgUrl": "/Logos/nodejs.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -299,19 +299,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-javascript/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -320,7 +320,7 @@
 					"key": "express",
 					"label": "Express",
 					"imgUrl": "/Logos/express.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -330,19 +330,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-express/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -351,7 +351,7 @@
 					"key": "nestjs",
 					"label": "NestJS",
 					"imgUrl": "/Logos/nestjs.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -361,19 +361,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-nestjs/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -382,7 +382,7 @@
 					"key": "angular",
 					"label": "Angular",
 					"imgUrl": "/Logos/angular.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -392,19 +392,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-angular/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -413,7 +413,7 @@
 					"key": "nextjs",
 					"label": "NextJS",
 					"imgUrl": "/Logos/nextjs.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud",
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -423,19 +423,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
+								"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-nextjs/#send-traces-to-signoz-cloud"
 							}
 						]
 					}
@@ -450,7 +450,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "golang",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud",
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -460,19 +460,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-golang/#send-traces-to-signoz-cloud"
 				}
 			]
 		}
@@ -484,7 +484,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "php",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud",
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -494,19 +494,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-php/#send-traces-to-signoz-cloud"
 				}
 			]
 		}
@@ -518,7 +518,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "dotnet",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud",
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -528,19 +528,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-dotnet/#send-traces-to-signoz-cloud"
 				}
 			]
 		}
@@ -552,7 +552,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "ruby-on-rails",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud",
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -562,19 +562,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-ruby-on-rails/#send-traces-to-signoz-cloud"
 				}
 			]
 		}
@@ -586,7 +586,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "elixir",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud",
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -596,19 +596,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-elixir/#send-traces-to-signoz-cloud"
 				}
 			]
 		}
@@ -620,7 +620,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "rust",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud",
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -630,19 +630,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-rust/#send-traces-to-signoz-cloud"
 				}
 			]
 		}
@@ -654,7 +654,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "swift",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud",
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -664,19 +664,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/opentelemetry-swift/#send-traces-to-signoz-cloud"
 				}
 			]
 		}
@@ -688,7 +688,7 @@
 		"tags": ["logs"],
 		"module": "logs",
 		"id": "kubernetes-pod-logs",
-		"link": "https://signoz.io/docs/userguide/collect_kubernetes_pod_logs/#steps-to-filterexclude-logs-collection"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/collect_kubernetes_pod_logs/#steps-to-filterexclude-logs-collection"
 	},
 	{
 		"dataSource": "docker-container-logs",
@@ -696,7 +696,7 @@
 		"imgUrl": "/Logos/docker.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/userguide/collect_docker_logs/#collect-docker-container-logs-in-signoz-cloud"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/collect_docker_logs/#collect-docker-container-logs-in-signoz-cloud"
 	},
 	{
 		"dataSource": "vercel-logs",
@@ -704,7 +704,7 @@
 		"imgUrl": "/Logos/vercel.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/userguide/vercel_logs_to_signoz/#stream-vercel-logs-to-signoz-in-signoz-cloud"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/vercel_logs_to_signoz/#stream-vercel-logs-to-signoz-in-signoz-cloud"
 	},
 	{
 		"dataSource": "heroku-logs",
@@ -712,7 +712,7 @@
 		"imgUrl": "/Logos/heroku.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/userguide/heroku_logs_to_signoz/#stream-heroku-logs-to-signoz-in-signoz-cloud"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/heroku_logs_to_signoz/#stream-heroku-logs-to-signoz-in-signoz-cloud"
 	},
 	{
 		"dataSource": "http-logs",
@@ -720,7 +720,7 @@
 		"imgUrl": "/Logos/http.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/userguide/send-logs-http/#send-logs-to-signoz-cloud"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/send-logs-http/#send-logs-to-signoz-cloud"
 	},
 	{
 		"dataSource": "syslogs",
@@ -728,7 +728,7 @@
 		"imgUrl": "/Logos/syslogs.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/userguide/collecting_syslogs/#collect-syslogs-in-signoz-cloud"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/collecting_syslogs/#collect-syslogs-in-signoz-cloud"
 	},
 	{
 		"dataSource": "fluentd",
@@ -736,7 +736,7 @@
 		"imgUrl": "/Logos/fluentd.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/userguide/fluentd_to_signoz/#collect-logs-using-fluentd-in-signoz-cloud"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/fluentd_to_signoz/#collect-logs-using-fluentd-in-signoz-cloud"
 	},
 	{
 		"dataSource": "fluentbit",
@@ -744,7 +744,7 @@
 		"imgUrl": "/Logos/fluentbit.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/userguide/fluentbit_to_signoz/#collect-logs-using-fluentbit-in-signoz-cloud"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/fluentbit_to_signoz/#collect-logs-using-fluentbit-in-signoz-cloud"
 	},
 	{
 		"dataSource": "logstash",
@@ -752,7 +752,7 @@
 		"imgUrl": "/Logos/logstash.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/userguide/logstash_to_signoz/#collect-logs-using-logstash-in-signoz-cloud"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/logstash_to_signoz/#collect-logs-using-logstash-in-signoz-cloud"
 	},
 	{
 		"dataSource": "tomcat-logs",
@@ -760,7 +760,7 @@
 		"imgUrl": "/Logos/tomcat-logs.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/logs-management/send-logs/collect-tomcat-access-and-garbage-collector-logs/#collect-logs-in-signoz-cloud"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/logs-management/send-logs/collect-tomcat-access-and-garbage-collector-logs/#collect-logs-in-signoz-cloud"
 	},
 	{
 		"dataSource": "vector-logs",
@@ -768,7 +768,7 @@
 		"imgUrl": "/Logos/vector.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/logs-management/send-logs/vector-logs-to-signoz/#send-logs-from-vector-to-signoz-in-signoz-cloud"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/logs-management/send-logs/vector-logs-to-signoz/#send-logs-from-vector-to-signoz-in-signoz-cloud"
 	},
 	{
 		"dataSource": "windows-events-logs",
@@ -776,7 +776,7 @@
 		"imgUrl": "/Logos/windows-events-logs.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/logs-management/send-logs/windows-events-log/#prerequisites"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/logs-management/send-logs/windows-events-log/#prerequisites"
 	},
 	{
 		"dataSource": "cloudwatch-logs",
@@ -784,7 +784,7 @@
 		"imgUrl": "/Logos/cloudwatch-logs.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/userguide/send-cloudwatch-logs-to-signoz/#setup"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/send-cloudwatch-logs-to-signoz/#setup"
 	},
 	{
 		"dataSource": "nodejs-winston-logs",
@@ -792,7 +792,7 @@
 		"imgUrl": "/Logos/nodejs.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "https://signoz.io/docs/userguide/send-cloudwatch-logs-to-signoz/#setup"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/send-cloudwatch-logs-to-signoz/#setup"
 	},
 	{
 		"dataSource": "application-logs",
@@ -808,31 +808,31 @@
 					"key": "from-log-file",
 					"label": "From log file",
 					"imgUrl": "/Logos/from-log-file.svg",
-					"link": "https://signoz.io/docs/userguide/collect_logs_from_file/#collect-logs-in-signoz-cloud"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/collect_logs_from_file/#collect-logs-in-signoz-cloud"
 				},
 				{
 					"key": "aws-lambda-nodejs-logs",
 					"label": "AWS Lambda NodeJS logs",
 					"imgUrl": "/Logos/lambda.svg",
-					"link": "https://signoz.io/docs/logs-management/send-logs/aws-lambda-nodejs/"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/logs-management/send-logs/aws-lambda-nodejs/"
 				},
 				{
 					"key": "otel-python-sdk",
 					"label": "OTel Python SDK",
 					"imgUrl": "/Logos/python.svg",
-					"link": "https://signoz.io/docs/userguide/collecting_application_logs_otel_sdk_python/"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/collecting_application_logs_otel_sdk_python/"
 				},
 				{
 					"key": "otel-java-sdk",
 					"label": "OTel Java SDK",
 					"imgUrl": "/Logos/java.svg",
-					"link": "https://signoz.io/docs/userguide/collecting_application_logs_otel_sdk_java/#collecting-application-logs-using-otel-java-agent"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/collecting_application_logs_otel_sdk_java/#collecting-application-logs-using-otel-java-agent"
 				},
 				{
 					"key": "python-logs-auto-instrumentation",
 					"label": "Python logs auto-instrumentation",
 					"imgUrl": "/Logos/python.svg",
-					"link": "https://signoz.io/docs/userguide/python-logs-auto-instrumentation/#collecting-python-application-logs-using-auto-instrumentation"
+					"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/python-logs-auto-instrumentation/#collecting-python-application-logs-using-auto-instrumentation"
 				}
 			]
 		}
@@ -843,7 +843,7 @@
 		"tags": ["infrastructure monitoring"],
 		"module": "metrics",
 		"imgUrl": "/Logos/kubernetes.svg",
-		"link": "https://signoz.io/docs/tutorial/kubernetes-infra-metrics/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/tutorial/kubernetes-infra-metrics/"
 	},
 	{
 		"dataSource": "hostmetrics",
@@ -851,7 +851,7 @@
 		"tags": ["infrastructure monitoring"],
 		"module": "metrics",
 		"imgUrl": "/Logos/hostmetrics.svg",
-		"link": "https://signoz.io/docs/userguide/hostmetrics/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/hostmetrics/"
 	},
 	{
 		"dataSource": "other-metrics",
@@ -859,7 +859,7 @@
 		"tags": ["infrastructure monitoring"],
 		"module": "metrics",
 		"imgUrl": "/Logos/other-metrics.svg",
-		"link": "https://signoz.io/docs/userguide/send-metrics-cloud/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/send-metrics-cloud/"
 	},
 	{
 		"dataSource": "ec2-application-logs",
@@ -867,7 +867,7 @@
 		"tags": ["AWS", "logs"],
 		"module": "logs",
 		"imgUrl": "/Logos/ec2.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/ec2-logs/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/aws-monitoring/ec2-logs/"
 	},
 	{
 		"dataSource": "ec2-infrastructure-metrics",
@@ -875,7 +875,7 @@
 		"tags": ["AWS"],
 		"module": "metrics",
 		"imgUrl": "/Logos/ec2.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/ec2-infra-metrics/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/aws-monitoring/ec2-infra-metrics/"
 	},
 	{
 		"dataSource": "ecs-ec2",
@@ -883,7 +883,7 @@
 		"tags": ["AWS"],
 		"module": "metrics",
 		"imgUrl": "/Logos/ecs.svg",
-		"link": "https://signoz.io/docs/userguide/collecting-ecs-logs-and-metrics/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/collecting-ecs-logs-and-metrics/"
 	},
 	{
 		"dataSource": "ecs-external",
@@ -891,7 +891,7 @@
 		"tags": ["AWS"],
 		"module": "metrics",
 		"imgUrl": "/Logos/ecs.svg",
-		"link": "https://signoz.io/docs/userguide/collecting-ecs-logs-and-metrics/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/collecting-ecs-logs-and-metrics/"
 	},
 	{
 		"dataSource": "ecs-fargate",
@@ -899,7 +899,7 @@
 		"tags": ["AWS"],
 		"module": "metrics",
 		"imgUrl": "/Logos/ecs.svg",
-		"link": "https://signoz.io/docs/userguide/collecting-ecs-sidecar-infra/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/userguide/collecting-ecs-sidecar-infra/"
 	},
 	{
 		"dataSource": "eks",
@@ -907,7 +907,7 @@
 		"tags": ["AWS", "logs"],
 		"module": "logs",
 		"imgUrl": "/Logos/eks.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/eks/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/aws-monitoring/eks/"
 	},
 	{
 		"dataSource": "elb-logs",
@@ -915,7 +915,7 @@
 		"tags": ["AWS", "logs"],
 		"module": "logs",
 		"imgUrl": "/Logos/elb.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/elb-logs/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/aws-monitoring/elb-logs/"
 	},
 	{
 		"dataSource": "vpc-logs",
@@ -923,7 +923,7 @@
 		"tags": ["AWS", "logs"],
 		"module": "logs",
 		"imgUrl": "/Logos/vpc.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/vpc-logs/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/aws-monitoring/vpc-logs/"
 	},
 	{
 		"dataSource": "rds-logs",
@@ -931,7 +931,7 @@
 		"tags": ["AWS", "logs"],
 		"module": "logs",
 		"imgUrl": "/Logos/rds.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/rds-logs/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/aws-monitoring/rds-logs/"
 	},
 	{
 		"dataSource": "aws-lambda",
@@ -939,7 +939,7 @@
 		"tags": ["AWS", "logs"],
 		"module": "logs",
 		"imgUrl": "/Logos/lambda.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/lambda-logs/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/aws-monitoring/lambda-logs/"
 	},
 	{
 		"dataSource": "vm-metrics-and-logging",
@@ -947,7 +947,7 @@
 		"tags": ["Azure"],
 		"module": "apm",
 		"imgUrl": "/Logos/azure-vm.svg",
-		"link": "https://signoz.io/docs/azure-monitoring/virtual-machines/vm-metrics/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/azure-monitoring/virtual-machines/vm-metrics/"
 	},
 	{
 		"dataSource": "app-service",
@@ -955,7 +955,7 @@
 		"tags": ["Azure"],
 		"module": "apm",
 		"imgUrl": "/Logos/azure-vm.svg",
-		"link": "https://signoz.io/docs/azure-monitoring/app-service/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/azure-monitoring/app-service/"
 	},
 	{
 		"dataSource": "aks",
@@ -963,7 +963,7 @@
 		"tags": ["Azure"],
 		"module": "apm",
 		"imgUrl": "/Logos/azure-app-service.svg",
-		"link": "https://signoz.io/docs/azure-monitoring/aks/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/azure-monitoring/aks/"
 	},
 	{
 		"dataSource": "azure-container-apps",
@@ -971,7 +971,7 @@
 		"tags": ["Azure"],
 		"module": "apm",
 		"imgUrl": "/Logos/azure-container-apps.svg",
-		"link": "https://signoz.io/docs/azure-monitoring/az-container-app/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/azure-monitoring/az-container-app/"
 	},
 	{
 		"dataSource": "azure-functions",
@@ -979,7 +979,7 @@
 		"tags": ["Azure"],
 		"module": "apm",
 		"imgUrl": "/Logos/azure-functions.svg",
-		"link": "https://signoz.io/docs/azure-monitoring/az-fns/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/azure-monitoring/az-fns/"
 	},
 	{
 		"dataSource": "sql-database-metrics",
@@ -987,7 +987,7 @@
 		"tags": ["Azure"],
 		"module": "metrics",
 		"imgUrl": "/Logos/azure-sql-database-metrics.svg",
-		"link": "https://signoz.io/docs/azure-monitoring/db-metrics/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/azure-monitoring/db-metrics/"
 	},
 	{
 		"dataSource": "azure-blob-storage",
@@ -995,7 +995,7 @@
 		"tags": ["Azure"],
 		"module": "apm",
 		"imgUrl": "/Logos/azure-blob-storage.svg",
-		"link": "https://signoz.io/docs/azure-monitoring/az-blob-storage/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/azure-monitoring/az-blob-storage/"
 	},
 	{
 		"dataSource": "cloud-functions",
@@ -1003,7 +1003,7 @@
 		"tags": ["GCP"],
 		"module": "apm",
 		"imgUrl": "/Logos/gcp-cloud-functions.svg",
-		"link": "https://signoz.io/docs/gcp-monitoring/gcp-fns/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/gcp-monitoring/gcp-fns/"
 	},
 	{
 		"dataSource": "app-engine",
@@ -1011,7 +1011,7 @@
 		"tags": ["GCP"],
 		"module": "apm",
 		"imgUrl": "/Logos/gcp-app-engine.svg",
-		"link": "https://signoz.io/docs/gcp-monitoring/app-engine/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/gcp-monitoring/app-engine/"
 	},
 	{
 		"dataSource": "compute-engine",
@@ -1019,7 +1019,7 @@
 		"imgUrl": "/Logos/gcp-compute-engine.svg",
 		"tags": ["GCP"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/gcp-monitoring/compute-engine/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/gcp-monitoring/compute-engine/"
 	},
 	{
 		"dataSource": "cloud-storage",
@@ -1027,7 +1027,7 @@
 		"imgUrl": "/Logos/gcp-cloud-storage.svg",
 		"tags": ["GCP"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/gcp-monitoring/gcs/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/gcp-monitoring/gcs/"
 	},
 	{
 		"dataSource": "cloud-sql",
@@ -1035,7 +1035,7 @@
 		"imgUrl": "/Logos/gcp-cloud-sql.svg",
 		"tags": ["GCP"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/gcp-monitoring/cloud-sql/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/gcp-monitoring/cloud-sql/"
 	},
 	{
 		"dataSource": "cloud-load-balancer",
@@ -1043,7 +1043,7 @@
 		"imgUrl": "/Logos/gcp-cloud-load-balancer.svg",
 		"tags": ["GCP"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/gcp-monitoring/gcp-clb/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/gcp-monitoring/gcp-clb/"
 	},
 	{
 		"dataSource": "vpc",
@@ -1051,7 +1051,7 @@
 		"imgUrl": "/Logos/gcp-vpc.svg",
 		"tags": ["GCP"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/gcp-monitoring/vpc/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/gcp-monitoring/vpc/"
 	},
 	{
 		"dataSource": "gke",
@@ -1059,7 +1059,7 @@
 		"imgUrl": "/Logos/gcp-gke.svg",
 		"tags": ["GCP"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/gcp-monitoring/gke/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/gcp-monitoring/gke/"
 	},
 	{
 		"dataSource": "cloud-run",
@@ -1067,7 +1067,7 @@
 		"imgUrl": "/Logos/gcp-cloud-run.svg",
 		"tags": ["GCP"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/gcp-monitoring/cloud-run/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/gcp-monitoring/cloud-run/"
 	},
 	{
 		"dataSource": "cloud-monitoring",
@@ -1075,7 +1075,7 @@
 		"imgUrl": "/Logos/gcp-cloud-monitoring.svg",
 		"tags": ["GCP"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/gcp-monitoring/cloud-monitoring/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/gcp-monitoring/cloud-monitoring/"
 	},
 	{
 		"dataSource": "llm-monitoring",
@@ -1083,7 +1083,7 @@
 		"imgUrl": "/Logos/llm-monitoring.svg",
 		"tags": ["LLM Monitoring"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/community/llm-monitoring/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/community/llm-monitoring/"
 	},
 	{
 		"dataSource": "android-java",
@@ -1091,7 +1091,7 @@
 		"imgUrl": "/Logos/android-java-monitoring.svg",
 		"tags": ["mobile app monitoring"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-java/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/mobile-instrumentation/opentelemetry-java/"
 	},
 	{
 		"dataSource": "android-kotlin",
@@ -1099,7 +1099,7 @@
 		"imgUrl": "/Logos/android-kotlin-monitoring.svg",
 		"tags": ["mobile app monitoring"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-kotlin/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/mobile-instrumentation/opentelemetry-kotlin/"
 	},
 	{
 		"dataSource": "flutter",
@@ -1107,7 +1107,7 @@
 		"imgUrl": "/Logos/flutter-monitoring.svg",
 		"tags": ["mobile app monitoring"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-flutter/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/mobile-instrumentation/opentelemetry-flutter/"
 	},
 	{
 		"dataSource": "swift",
@@ -1115,6 +1115,6 @@
 		"imgUrl": "/Logos/swift-monitoring.svg",
 		"tags": ["mobile app monitoring"],
 		"module": "apm",
-		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-swiftui/"
+		"link": "https://signoz-web-git-feat-onboarding-v2-p3-signoz.vercel.app/docs/instrumentation/mobile-instrumentation/opentelemetry-swiftui/"
 	}
 ]
