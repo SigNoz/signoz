@@ -110,3 +110,19 @@
 		}
 	}
 }
+
+.lightMode {
+	.metric-page {
+		.row-panel {
+			.row-panel-section {
+				.row-icon {
+					color: var(--bg-ink-300);
+				}
+
+				.section-title {
+					color: var(--bg-ink-300);
+				}
+			}
+		}
+	}
+}

@@ -331,6 +331,10 @@
 		.messaging-breadcrumb {
 			color: var(--bg-ink-400);
 			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.message-queue-text {
+				color: var(--bg-ink-400);
+			}
 		}
 		.messaging-header {
 			color: var(--bg-ink-400);
