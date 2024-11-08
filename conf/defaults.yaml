@@ -63,15 +63,16 @@ web:
 cache:
   # Memory provider
   provider: memory
-  ttl: -1
-  cleanup_interval: 60
+  memory:
+    ttl: -1
+    cleanup_interval: 60
 
-  # Options for redis
-  # provider: redis
-  # host: localhost
-  # port: 6379
-  # password: password
-  # db: 0
+  # Redis Provider
+  # redis:
+  #   host: localhost
+  #   port: 6379
+  #   password: password
+  #   db: 0
 #----------------------------------------------
 # Auth
 #----------------------------------------------
@@ -86,24 +87,26 @@ database:
   # Supported options are sqlite
   provider: sqlite
   # Path to the sqlite database
-  path: /var/lib/signoz
+  sqlite:
+    path: /var/lib/signoz
 #----------------------------------------------
 # Storage
 #----------------------------------------------
 storage:
   provider: clickhouse
-  dsn: tcp://localhost:9000
-  cluster: cluster
-  prometheus_config_path: /etc/signoz/config/prometheus.yml
-  max_idle_connections:
-  max_open_connections:
-  dial_timeout:
-  optimize_read_in_order_regex:
-  max_execution_time_leaf:
-  timeout_before_checking_execution_speed:
-  max_bytes_to_read:
+  clickhouse:
+    dsn: tcp://localhost:9000
+    cluster: cluster
+    max_idle_connections:
+    max_open_connections:
+    dial_timeout:
+    settings:
+      optimize_read_in_order_regex:
+      max_execution_time_leaf:
+      timeout_before_checking_execution_speed:
+      max_bytes_to_read:
 #----------------------------------------------
-# Storage
+# Opamp
 #----------------------------------------------
 opamp:
   address: 0.0.0.0:4320
@@ -114,3 +117,10 @@ http:
   address: 0.0.0.0:8000
   timeout: 60s
   max_timeout: 600s
+#----------------------------------------------
+# Prometheus
+#----------------------------------------------
+prometheus:
+  remote_read:
+    config: 
+    url:
