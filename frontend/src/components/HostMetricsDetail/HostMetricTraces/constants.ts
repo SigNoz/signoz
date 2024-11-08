@@ -98,6 +98,8 @@ export const getHostTracesQueryPayload = (
 	},
 	graphType: PANEL_TYPES.LIST,
 	selectedTime: 'GLOBAL_TIME',
+	start,
+	end,
 	params: {
 		dataSource: DataSource.TRACES,
 	},

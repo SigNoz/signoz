@@ -13,7 +13,7 @@ export interface HostRowData {
 	hostName: string;
 	cpu: React.ReactNode;
 	memory: React.ReactNode;
-	wait: number;
+	wait: string;
 	load15: number;
 	active: React.ReactNode;
 }
@@ -24,7 +24,7 @@ export const getHostListsQuery = (): HostListPayload => ({
 		op: 'and',
 	},
 	groupBy: [],
-	orderBy: { columnName: '', order: 'asc' },
+	orderBy: { columnName: 'cpu', order: 'desc' },
 });
 export const getTabsItems = (): TabsProps['items'] => [
 	{
@@ -39,7 +39,7 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		title: 'Hostname',
 		dataIndex: 'hostName',
 		key: 'hostName',
-		width: 150,
+		width: 250,
 	},
 	{
 		title: 'Status',
@@ -48,32 +48,36 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		width: 100,
 	},
 	{
-		title: 'CPU Usage',
+		title: <div className="column-header-right">CPU Usage</div>,
 		dataIndex: 'cpu',
 		key: 'cpu',
 		width: 100,
 		sorter: true,
+		align: 'right',
 	},
 	{
-		title: 'Memory Usage',
+		title: <div className="column-header-right">Memory Usage</div>,
 		dataIndex: 'memory',
 		key: 'memory',
 		width: 100,
 		sorter: true,
+		align: 'right',
 	},
 	{
-		title: 'IOWait',
+		title: <div className="column-header-right">IOWait</div>,
 		dataIndex: 'wait',
 		key: 'wait',
 		width: 100,
 		sorter: true,
+		align: 'right',
 	},
 	{
-		title: 'Load Avg',
+		title: <div className="column-header-right">Load Avg</div>,
 		dataIndex: 'load15',
 		key: 'load15',
 		width: 100,
 		sorter: true,
+		align: 'right',
 	},
 ];
 
@@ -120,6 +124,6 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 				/>
 			</div>
 		),
-		wait: host.wait,
+		wait: `${Number((host.wait * 100).toFixed(1))}%`,
 		load15: host.load15,
 	}));

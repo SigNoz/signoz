@@ -34,8 +34,31 @@
 		}
 	}
 
+	.no-hosts-message {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		min-height: 500px;
+	}
+
 	.hosts-list-controls {
 		margin: 1rem 0.5rem;
+
+		.ant-select-selection-search {
+			width: auto !important;
+			min-width: 85rem;
+		}
+
+		.ant-select-multiple {
+			.ant-select-selection-overflow {
+				flex-wrap: wrap;
+				overflow: visible;
+			}
+
+			.ant-select-selection-overflow-item {
+				flex: 0 0 auto;
+			}
+		}
 	}
 	
 	.progress-container {
@@ -44,16 +67,98 @@
 	  }
 	  
 	  .progress-bar {
-		flex: 1;
-		margin-right: 8px;
+			flex: 1;
+			margin-right: 8px;
 	  }
 	  
 	  .clickable-row {
-		cursor: pointer;
+			cursor: pointer;
 	  }
 
 	  .infra-monitoring-tags {
-		border-radius: 10px;
-		width: fit-content;
+			border-radius: 10px;
+			width: fit-content;
 	  }
+
+	  .ant-table {
+			.ant-table-thead > tr > th {
+				padding: 12px 16px;
+				font-weight: 500;
+				font-size: 12px;
+				line-height: 18px;
+			}
+
+			.ant-table-cell {
+				padding: 16px;
+				font-size: 14px;
+				line-height: 20px;
+				color: var(--bg-vanilla-100);
+			}
+
+			.status-cell {
+				.active-tag {
+					color: var(--bg-success-400);
+					padding: 4px 8px;
+					border-radius: 4px;
+					font-size: 12px;
+					font-weight: 500;
+				}
+			}
+
+			.progress-container {
+				.ant-progress-bg {
+					height: 8px !important;
+					border-radius: 4px;
+				}
+			}
+
+			.ant-table-tbody > tr:hover > td {
+				background: rgba(255, 255, 255, 0.04);
+			}
+
+			.ant-table-cell:first-child {
+				text-align: justify;
+			}
+
+			.ant-table-cell:nth-child(2) {
+				padding-left: 16px;
+				padding-right: 16px;
+			}
+
+			.ant-table-cell:nth-child(n+3) {
+				padding-right: 24px; 
+			}
+			.column-header-right {
+				text-align: right;
+			  }
+			  .ant-table-tbody > tr > td {
+				border-bottom: none;
+			  }
+	  }
+
+	  .ant-pagination {
+			margin: 16px 24px;
+			
+			.ant-pagination-item {
+				border-radius: 4px;
+				
+				&-active {
+					background: var(--bg-primary-400);
+					border-color: var(--bg-primary-400);
+				}
+			}
+	  }
+}
+
+.lightMode {
+	.infra-monitoring-container {
+		.ant-table-thead > tr > th { 
+			background: var(--bg-vanilla-100);
+			color: var(--bg-ink-500);
+		}
+
+		.ant-table-cell {
+			color: var(--bg-ink-500);
+		}
+	}
 }

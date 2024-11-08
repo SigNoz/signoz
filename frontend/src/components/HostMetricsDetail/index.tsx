@@ -49,7 +49,7 @@ function HostMetricDetail({
 		[startMs, endMs],
 	);
 
-	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.CONTAINERS);
+	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.METRICS);
 	const isDarkMode = useIsDarkMode();
 
 	const handleModeChange = (e: RadioChangeEvent): void => {
@@ -135,28 +135,6 @@ function HostMetricDetail({
 						<Radio.Button
 							className={
 								// eslint-disable-next-line sonarjs/no-duplicate-string
-								selectedView === VIEW_TYPES.CONTAINERS ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.CONTAINERS}
-						>
-							<div className="view-title">
-								<Package2 size={14} />
-								Containers
-							</div>
-						</Radio.Button>
-						<Radio.Button
-							className={
-								selectedView === VIEW_TYPES.PROCESSES ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.PROCESSES}
-						>
-							<div className="view-title">
-								<ChevronsLeftRight size={14} />
-								Processes
-							</div>
-						</Radio.Button>
-						<Radio.Button
-							className={
 								selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
 							}
 							value={VIEW_TYPES.METRICS}
@@ -186,6 +164,28 @@ function HostMetricDetail({
 							<div className="view-title">
 								<DraftingCompass size={14} />
 								Traces
+							</div>
+						</Radio.Button>
+						<Radio.Button
+							className={
+								selectedView === VIEW_TYPES.CONTAINERS ? 'selected_view tab' : 'tab'
+							}
+							value={VIEW_TYPES.CONTAINERS}
+						>
+							<div className="view-title">
+								<Package2 size={14} />
+								Containers
+							</div>
+						</Radio.Button>
+						<Radio.Button
+							className={
+								selectedView === VIEW_TYPES.PROCESSES ? 'selected_view tab' : 'tab'
+							}
+							value={VIEW_TYPES.PROCESSES}
+						>
+							<div className="view-title">
+								<ChevronsLeftRight size={14} />
+								Processes
 							</div>
 						</Radio.Button>
 					</Radio.Group>

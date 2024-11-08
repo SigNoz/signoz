@@ -1,3 +1,5 @@
+import './InfraMonitoring.styles.scss';
+
 import { Table, TablePaginationConfig, TableProps, Typography } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
@@ -131,8 +133,8 @@ function HostsList(): JSX.Element {
 				<NoLogs dataSource={DataSource.METRICS} />
 			)}
 
-			{isDataPresent && filters.items.length > 0 && (
-				<div>No hosts match the applied filters.</div>
+			{formattedHostMetricsData.length === 0 && filters.items.length > 0 && (
+				<div className="no-hosts-message">No hosts match the applied filters.</div>
 			)}
 
 			{!isError && formattedHostMetricsData.length > 0 && (

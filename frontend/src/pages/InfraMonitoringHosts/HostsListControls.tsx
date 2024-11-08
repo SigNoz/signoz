@@ -1,6 +1,7 @@
+import './InfraMonitoring.styles.scss';
+
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useCallback, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -29,19 +30,12 @@ function HostsListControls({
 		[currentQuery],
 	);
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
-	const { handleChangeQueryData } = useQueryOperations({
-		index: 0,
-		query,
-		isListViewPanel: true,
-		entityVersion: '',
-	});
 
 	const handleChangeTagFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			handleChangeQueryData('filters', value);
 			handleFiltersChange(value);
 		},
-		[handleChangeQueryData, handleFiltersChange],
+		[handleFiltersChange],
 	);
 
 	return (

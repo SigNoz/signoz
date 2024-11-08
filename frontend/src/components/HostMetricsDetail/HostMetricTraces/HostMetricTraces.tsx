@@ -2,11 +2,9 @@ import './HostMetricTraces.styles.scss';
 
 import { ResizeTable } from 'components/ResizeTable';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
-import { useOptionsMenu } from 'container/OptionsMenu';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { ErrorText } from 'container/TimeSeriesView/styles';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -15,10 +13,7 @@ import {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
-import {
-	defaultSelectedColumns,
-	PER_PAGE_OPTIONS,
-} from 'container/TracesExplorer/ListView/configs';
+import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
@@ -30,7 +25,6 @@ import { useQuery } from 'react-query';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { v4 as uuidv4 } from 'uuid';
 
 import { columns, getHostTracesQueryPayload } from './constants';
 
@@ -52,19 +46,34 @@ function HostMetricTraces({
 	const [offset] = useState<number>(0);
 	const [modalTimeRange, setModalTimeRange] = useState(timeRange);
 	const [, setSelectedInterval] = useState<Time>('5m');
-	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
-		op: 'AND',
-		items: [],
-	});
 
-	const { config } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		dataSource: DataSource.TRACES,
-		aggregateOperator: 'count',
-		initialOptions: {
-			selectColumns: defaultSelectedColumns,
-		},
-	});
+	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => ({
+		op: 'AND',
+		items: [
+			{
+				id: 'host-filter-id', // Static ID since this is a permanent filter
+				key: {
+					key: 'host.name',
+					dataType: DataTypes.String,
+					type: 'resource',
+					isColumn: false,
+					isJSON: false,
+					id: 'host.name--string--resource--false',
+				},
+				op: '=',
+				value: hostName,
+			},
+		],
+	}));
+
+	// const { config } = useOptionsMenu({
+	//     storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
+	//     dataSource: DataSource.TRACES,
+	//     aggregateOperator: 'count',
+	//     initialOptions: {
+	//         selectColumns: defaultSelectedColumns,
+	//     },
+	// });
 
 	const { currentQuery } = useQueryBuilder();
 	const updatedCurrentQuery = useMemo(
@@ -91,27 +100,12 @@ function HostMetricTraces({
 
 	const handleChangeTagFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setFilters({
+			setFilters((prevFilters) => ({
 				op: 'AND',
-				items: [
-					{
-						id: uuidv4(),
-						key: {
-							key: 'host.name',
-							dataType: DataTypes.String,
-							type: 'resource',
-							isColumn: false,
-							isJSON: false,
-							id: 'host.name--string--resource--false',
-						},
-						op: '=',
-						value: hostName,
-					},
-					...value.items,
-				],
-			});
+				items: [...prevFilters.items, ...value.items],
+			}));
 		},
-		[hostName],
+		[], // hostName can be removed from deps since we're using prevFilters
 	);
 
 	const handleTimeChange = useCallback(
@@ -119,18 +113,22 @@ function HostMetricTraces({
 			setSelectedInterval(interval as Time);
 			if (interval === 'custom' && dateTimeRange) {
 				setModalTimeRange({
-					startTime: dateTimeRange[0],
-					endTime: dateTimeRange[1],
+					startTime: Math.floor(dateTimeRange[0] / 1000),
+					endTime: Math.floor(dateTimeRange[1] / 1000),
 				});
 			} else {
 				const { maxTime, minTime } = GetMinMax(interval);
 				setModalTimeRange({
-					startTime: minTime / 1000000,
-					endTime: maxTime / 1000000,
+					startTime: Math.floor(minTime / 1000000),
+					endTime: Math.floor(maxTime / 1000000),
 				});
 			}
 		},
 		[],
+	);
+
+	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
+		QueryParams.pagination,
 	);
 
 	const queryPayload = useMemo(
@@ -138,14 +136,16 @@ function HostMetricTraces({
 			getHostTracesQueryPayload(
 				modalTimeRange.startTime,
 				modalTimeRange.endTime,
-				offset,
+				paginationQueryData?.offset || offset,
 				filters,
 			),
-		[modalTimeRange.startTime, modalTimeRange.endTime, offset, filters],
-	);
-
-	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
-		QueryParams.pagination,
+		[
+			modalTimeRange.startTime,
+			modalTimeRange.endTime,
+			offset,
+			filters,
+			paginationQueryData,
+		],
 	);
 
 	const { data, isLoading, isFetching, isError } = useQuery({
@@ -159,6 +159,7 @@ function HostMetricTraces({
 			paginationQueryData,
 		],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
+		enabled: !!queryPayload,
 	});
 
 	useEffect(() => {
@@ -203,7 +204,7 @@ function HostMetricTraces({
 
 			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
 
-			{(isLoading || (isFetching && traces.length === 0)) && <TracesLoading />}
+			{isLoading && traces.length === 0 && <TracesLoading />}
 
 			{isDataEmpty && !hasAdditionalFilters && (
 				<NoLogs dataSource={DataSource.TRACES} />
@@ -216,9 +217,8 @@ function HostMetricTraces({
 			{!isError && traces.length > 0 && (
 				<>
 					<TraceExplorerControls
-						isLoading={isLoading}
+						isLoading={isFetching}
 						totalCount={totalCount}
-						config={config}
 						perPageOptions={PER_PAGE_OPTIONS}
 					/>
 					<ResizeTable

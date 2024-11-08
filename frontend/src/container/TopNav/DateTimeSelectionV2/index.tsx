@@ -212,14 +212,20 @@ function DateTimeSelection({
 	};
 
 	useEffect(() => {
-		if (selectedTime === 'custom' || isModalTimeSelection) {
+		if (selectedTime === 'custom') {
 			setRefreshButtonHidden(true);
 			setCustomDTPickerVisible(true);
 		} else {
 			setRefreshButtonHidden(false);
 			setCustomDTPickerVisible(false);
 		}
-	}, [selectedTime, isModalTimeSelection]);
+	}, [selectedTime]);
+
+	useEffect(() => {
+		if (isModalTimeSelection && selectedTime === 'custom') {
+			setCustomDTPickerVisible(true);
+		}
+	}, [isModalTimeSelection, selectedTime]);
 
 	const getDefaultTime = (pathName: string): Time => {
 		const defaultSelectedOption = getDefaultOption(pathName);
@@ -309,6 +315,11 @@ function DateTimeSelection({
 	const onSelectHandler = useCallback(
 		(value: Time | CustomTimeType): void => {
 			if (isModalTimeSelection) {
+				if (value === 'custom') {
+					setCustomDTPickerVisible(true);
+					setIsValidteRelativeTime(false);
+					return;
+				}
 				onTimeChange?.(value);
 				return;
 			}
@@ -376,7 +387,8 @@ function DateTimeSelection({
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (isModalTimeSelection) {
-				onTimeChange?.(selectedTime, [
+				setCustomDTPickerVisible(false);
+				onTimeChange?.('custom', [
 					startTimeMoment?.toDate().getTime() || 0,
 					endTimeMoment?.toDate().getTime() || 0,
 				]);

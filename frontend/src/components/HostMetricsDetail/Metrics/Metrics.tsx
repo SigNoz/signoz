@@ -44,14 +44,14 @@ function Metrics({
 			setSelectedInterval(interval as Time);
 			if (interval === 'custom' && dateTimeRange) {
 				setModalTimeRange({
-					startTime: dateTimeRange[0],
-					endTime: dateTimeRange[1],
+					startTime: Math.floor(dateTimeRange[0] / 1000),
+					endTime: Math.floor(dateTimeRange[1] / 1000),
 				});
 			} else {
 				const { maxTime, minTime } = GetMinMax(interval);
 				setModalTimeRange({
-					startTime: minTime / 1000000000,
-					endTime: maxTime / 1000000000,
+					startTime: Math.floor(minTime / 1000000000),
+					endTime: Math.floor(maxTime / 1000000000),
 				});
 			}
 		},
