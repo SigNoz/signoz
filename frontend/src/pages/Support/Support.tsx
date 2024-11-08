@@ -10,8 +10,6 @@ import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import {
 	Book,
-	Cable,
-	Calendar,
 	CreditCard,
 	Github,
 	MessageSquare,
@@ -78,22 +76,6 @@ const supportChannels = [
 		url: '',
 		btnText: 'Launch chat',
 	},
-	{
-		key: 'schedule_call',
-		name: 'Schedule a call',
-		icon: <Calendar />,
-		title: 'Schedule a call with the founders.',
-		url: 'https://calendly.com/pranay-signoz/signoz-intro-calls',
-		btnText: 'Schedule call',
-	},
-	{
-		key: 'slack_connect',
-		name: 'Slack Connect',
-		icon: <Cable />,
-		title: 'Get a dedicated support channel for your team.',
-		url: '',
-		btnText: 'Request Slack connect',
-	},
 ];
 
 export default function Support(): JSX.Element {
@@ -121,20 +103,6 @@ export default function Support(): JSX.Element {
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
-
-	const handleSlackConnectRequest = (): void => {
-		const recipient = 'support@signoz.io';
-		const subject = 'Slack Connect Request';
-		const body = `I'd like to request a dedicated Slack Connect channel for me and my team. Users (emails) to include besides mine:`;
-
-		// Create the mailto link
-		const mailtoLink = `mailto:${recipient}?subject=${encodeURIComponent(
-			subject,
-		)}&body=${encodeURIComponent(body)}`;
-
-		// Open the default email client
-		window.location.href = mailtoLink;
-	};
 
 	const isPremiumChatSupportEnabled =
 		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
@@ -214,14 +182,10 @@ export default function Support(): JSX.Element {
 			case channelsMap.documentation:
 			case channelsMap.github:
 			case channelsMap.slack_community:
-			case channelsMap.schedule_call:
 				handleChannelWithRedirects(channel.url);
 				break;
 			case channelsMap.chat:
 				handleChat();
-				break;
-			case channelsMap.slack_connect:
-				handleSlackConnectRequest();
 				break;
 			default:
 				handleChannelWithRedirects('https://signoz.io/slack');

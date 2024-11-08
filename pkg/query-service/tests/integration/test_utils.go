@@ -45,6 +45,7 @@ func NewMockClickhouseReader(
 		"",
 		featureFlags,
 		"",
+		true,
 	)
 
 	return reader, mockDB

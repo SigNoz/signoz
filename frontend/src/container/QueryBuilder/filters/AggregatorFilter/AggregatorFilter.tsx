@@ -62,7 +62,9 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				dataSource: query.dataSource,
 			}),
 		{
-			enabled: !!query.aggregateOperator && !!query.dataSource,
+			enabled:
+				query.dataSource === DataSource.METRICS ||
+				(!!query.aggregateOperator && !!query.dataSource),
 			onSuccess: (data) => {
 				const options: ExtendedSelectOption[] =
 					data?.payload?.attributeKeys?.map(({ id: _, ...item }) => ({
@@ -79,8 +81,10 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 										prefix: item.type || '',
 										condition: !item.isColumn,
 									}),
+									!item.isColumn && item.type ? item.type : '',
 								)}
 								dataType={item.dataType}
+								type={item.type || ''}
 							/>
 						),
 						value: `${item.key}${selectValueDivider}${createIdFromObjectFields(
@@ -185,6 +189,9 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			prefix: query.aggregateAttribute.type || '',
 			condition: !query.aggregateAttribute.isColumn,
 		}),
+		!query.aggregateAttribute.isColumn && query.aggregateAttribute.type
+			? query.aggregateAttribute.type
+			: '',
 	);
 
 	return (

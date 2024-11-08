@@ -2,7 +2,7 @@ import { Form, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { QueryParams } from 'constants/query';
-import FormAlertRules from 'container/FormAlertRules';
+import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import history from 'lib/history';
 import { useEffect, useState } from 'react';
@@ -13,6 +13,7 @@ import { AlertDef } from 'types/api/alerts/def';
 import { ALERT_TYPE_VS_SOURCE_MAPPING } from './config';
 import {
 	alertDefaults,
+	anamolyAlertDefaults,
 	exceptionAlertDefaults,
 	logAlertDefaults,
 	traceAlertDefaults,
@@ -24,8 +25,12 @@ function CreateRules(): JSX.Element {
 
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
+	const alertTypeFromURL = queryParams.get(QueryParams.ruleType);
 	const version = queryParams.get('version');
-	const alertTypeFromParams = queryParams.get(QueryParams.alertType);
+	const alertTypeFromParams =
+		alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+			? AlertTypes.ANOMALY_BASED_ALERT
+			: queryParams.get(QueryParams.alertType);
 
 	const compositeQuery = useGetCompositeQueryParam();
 	function getAlertTypeFromDataSource(): AlertTypes | null {
@@ -45,6 +50,7 @@ function CreateRules(): JSX.Element {
 
 	const onSelectType = (typ: AlertTypes): void => {
 		setAlertType(typ);
+
 		switch (typ) {
 			case AlertTypes.LOGS_BASED_ALERT:
 				setInitValues(logAlertDefaults);
@@ -55,13 +61,40 @@ function CreateRules(): JSX.Element {
 			case AlertTypes.EXCEPTIONS_BASED_ALERT:
 				setInitValues(exceptionAlertDefaults);
 				break;
+			case AlertTypes.ANOMALY_BASED_ALERT:
+				setInitValues({
+					...anamolyAlertDefaults,
+					version: version || ENTITY_VERSION_V4,
+					ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
+				});
+				break;
 			default:
 				setInitValues({
 					...alertDefaults,
 					version: version || ENTITY_VERSION_V4,
+					ruleType: AlertDetectionTypes.THRESHOLD_ALERT,
 				});
 		}
-		queryParams.set(QueryParams.alertType, typ);
+
+		queryParams.set(
+			QueryParams.alertType,
+			typ === AlertTypes.ANOMALY_BASED_ALERT
+				? AlertTypes.METRICS_BASED_ALERT
+				: typ,
+		);
+
+		if (
+			typ === AlertTypes.ANOMALY_BASED_ALERT ||
+			alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+		) {
+			queryParams.set(
+				QueryParams.ruleType,
+				AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
+			);
+		} else {
+			queryParams.set(QueryParams.ruleType, AlertDetectionTypes.THRESHOLD_ALERT);
+		}
+
 		const generatedUrl = `${location.pathname}?${queryParams.toString()}`;
 		history.replace(generatedUrl);
 	};

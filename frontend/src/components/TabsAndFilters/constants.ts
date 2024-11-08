@@ -1,0 +1,5 @@
+export const ALERT_TABS = {
+	OVERVIEW: 'OVERVIEW',
+	HISTORY: 'HISTORY',
+	ACTIVITY: 'ACTIVITY',
+} as const;

@@ -70,7 +70,7 @@ export const useFetchKeysAndValues = (
 	const queryFiltersWithoutId = useMemo(
 		() => ({
 			...query.filters,
-			items: query.filters.items.map((item) => {
+			items: query.filters?.items?.map((item) => {
 				const filterWithoutId = cloneDeep(item);
 				unset(filterWithoutId, 'id');
 				return filterWithoutId;
@@ -92,15 +92,9 @@ export const useFetchKeysAndValues = (
 	const isQueryEnabled = useMemo(
 		() =>
 			query.dataSource === DataSource.METRICS
-				? !!query.aggregateOperator &&
-				  !!query.dataSource &&
-				  !!query.aggregateAttribute.dataType
+				? !!query.dataSource && !!query.aggregateAttribute.dataType
 				: true,
-		[
-			query.aggregateAttribute.dataType,
-			query.aggregateOperator,
-			query.dataSource,
-		],
+		[query.aggregateAttribute.dataType, query.dataSource],
 	);
 
 	const { data, isFetching, status } = useGetAggregateKeys(

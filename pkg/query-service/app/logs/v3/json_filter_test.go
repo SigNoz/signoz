@@ -140,7 +140,7 @@ var testGetJSONFilterKeyData = []struct {
 func TestGetJSONFilterKey(t *testing.T) {
 	for _, tt := range testGetJSONFilterKeyData {
 		Convey("testgetKey", t, func() {
-			columnName, err := getJSONFilterKey(tt.Key, tt.Operator, tt.IsArray)
+			columnName, err := GetJSONFilterKey(tt.Key, tt.Operator, tt.IsArray)
 			if tt.Error {
 				So(err, ShouldNotBeNil)
 			} else {

@@ -6,6 +6,7 @@ import { Typography } from 'antd';
 import cx from 'classnames';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
+import { unescapeString } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
@@ -56,7 +57,7 @@ function LogGeneralField({
 	const html = useMemo(
 		() => ({
 			__html: convert.toHtml(
-				dompurify.sanitize(fieldValue, {
+				dompurify.sanitize(unescapeString(fieldValue), {
 					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 				}),
 			),
@@ -194,21 +195,20 @@ function ListLogView({
 	return (
 		<>
 			<Container
-				$isActiveLog={isHighlighted}
+				$isActiveLog={
+					isHighlighted ||
+					activeLog?.id === logData.id ||
+					activeContextLog?.id === logData.id
+				}
 				$isDarkMode={isDarkMode}
+				$logType={logType}
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 				onClick={handleDetailedView}
 				fontSize={fontSize}
 			>
 				<div className="log-line">
-					<LogStateIndicator
-						type={logType}
-						isActive={
-							activeLog?.id === logData.id || activeContextLog?.id === logData.id
-						}
-						fontSize={fontSize}
-					/>
+					<LogStateIndicator type={logType} fontSize={fontSize} />
 					<div>
 						<LogContainer fontSize={fontSize}>
 							<LogGeneralField

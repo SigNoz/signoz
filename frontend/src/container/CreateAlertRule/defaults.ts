@@ -4,12 +4,15 @@ import {
 	initialQueryPromQLData,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	AlertDef,
+	defaultAlgorithm,
 	defaultCompareOp,
 	defaultEvalWindow,
 	defaultMatchType,
+	defaultSeasonality,
 } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -46,6 +49,52 @@ export const alertDefaults: AlertDef = {
 		},
 		op: defaultCompareOp,
 		matchType: defaultMatchType,
+		algorithm: defaultAlgorithm,
+		seasonality: defaultSeasonality,
+	},
+	labels: {
+		severity: 'warning',
+	},
+	annotations: defaultAnnotations,
+	evalWindow: defaultEvalWindow,
+};
+
+export const anamolyAlertDefaults: AlertDef = {
+	alertType: AlertTypes.METRICS_BASED_ALERT,
+	version: ENTITY_VERSION_V4,
+	ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
+	condition: {
+		compositeQuery: {
+			builderQueries: {
+				A: {
+					...initialQueryBuilderFormValuesMap.metrics,
+					functions: [
+						{
+							name: 'anomaly',
+							args: [],
+							namedArgs: { z_score_threshold: 3 },
+						},
+					],
+				},
+			},
+			promQueries: { A: initialQueryPromQLData },
+			chQueries: {
+				A: {
+					name: 'A',
+					query: ``,
+					legend: '',
+					disabled: false,
+				},
+			},
+			queryType: EQueryType.QUERY_BUILDER,
+			panelType: PANEL_TYPES.TIME_SERIES,
+			unit: undefined,
+		},
+		op: defaultCompareOp,
+		matchType: defaultMatchType,
+		algorithm: defaultAlgorithm,
+		seasonality: defaultSeasonality,
+		target: 3,
 	},
 	labels: {
 		severity: 'warning',
@@ -56,6 +105,7 @@ export const alertDefaults: AlertDef = {
 
 export const logAlertDefaults: AlertDef = {
 	alertType: AlertTypes.LOGS_BASED_ALERT,
+	version: ENTITY_VERSION_V4,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -65,7 +115,7 @@ export const logAlertDefaults: AlertDef = {
 			chQueries: {
 				A: {
 					name: 'A',
-					query: `select \ntoStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 MINUTE) AS interval, \ntoFloat64(count()) as value \nFROM signoz_logs.distributed_logs  \nWHERE timestamp BETWEEN {{.start_timestamp_nano}} AND {{.end_timestamp_nano}}  \nGROUP BY interval;\n\n-- available variables:\n-- \t{{.start_timestamp_nano}}\n-- \t{{.end_timestamp_nano}}\n\n-- required columns (or alias):\n-- \tvalue\n-- \tinterval`,
+					query: `select \ntoStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 MINUTE) AS interval, \ntoFloat64(count()) as value \nFROM signoz_logs.distributed_logs_v2  \nWHERE timestamp BETWEEN {{.start_timestamp_nano}} AND {{.end_timestamp_nano}}  \nGROUP BY interval;\n\n-- available variables:\n-- \t{{.start_timestamp_nano}}\n-- \t{{.end_timestamp_nano}}\n\n-- required columns (or alias):\n-- \tvalue\n-- \tinterval`,
 					legend: '',
 					disabled: false,
 				},
@@ -86,6 +136,7 @@ export const logAlertDefaults: AlertDef = {
 
 export const traceAlertDefaults: AlertDef = {
 	alertType: AlertTypes.TRACES_BASED_ALERT,
+	version: ENTITY_VERSION_V4,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -95,7 +146,7 @@ export const traceAlertDefaults: AlertDef = {
 			chQueries: {
 				A: {
 					name: 'A',
-					query: `SELECT \n\ttoStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval, \n\ttagMap['peer.service'] AS op_name, \n\ttoFloat64(avg(durationNano)) AS value \nFROM signoz_traces.distributed_signoz_index_v2  \nWHERE tagMap['peer.service']!='' \nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} \nGROUP BY (op_name, interval);\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
+					query: `SELECT \n\ttoStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval, \n\tstringTagMap['peer.service'] AS op_name, \n\ttoFloat64(avg(durationNano)) AS value \nFROM signoz_traces.distributed_signoz_index_v2  \nWHERE stringTagMap['peer.service']!='' \nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} \nGROUP BY (op_name, interval);\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
 					legend: '',
 					disabled: false,
 				},
@@ -116,6 +167,7 @@ export const traceAlertDefaults: AlertDef = {
 
 export const exceptionAlertDefaults: AlertDef = {
 	alertType: AlertTypes.EXCEPTIONS_BASED_ALERT,
+	version: ENTITY_VERSION_V4,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -145,6 +197,7 @@ export const exceptionAlertDefaults: AlertDef = {
 };
 
 export const ALERTS_VALUES_MAP: Record<AlertTypes, AlertDef> = {
+	[AlertTypes.ANOMALY_BASED_ALERT]: anamolyAlertDefaults,
 	[AlertTypes.METRICS_BASED_ALERT]: alertDefaults,
 	[AlertTypes.LOGS_BASED_ALERT]: logAlertDefaults,
 	[AlertTypes.TRACES_BASED_ALERT]: traceAlertDefaults,

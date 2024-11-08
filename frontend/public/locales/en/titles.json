@@ -4,6 +4,7 @@
 	"SERVICE_METRICS": "SigNoz | Service Metrics",
 	"SERVICE_MAP": "SigNoz | Service Map",
 	"GET_STARTED": "SigNoz | Get Started",
+	"ONBOARDING": "SigNoz | Get Started",
 	"GET_STARTED_APPLICATION_MONITORING": "SigNoz | Get Started | APM",
 	"GET_STARTED_LOGS_MANAGEMENT": "SigNoz | Get Started | Logs",
 	"GET_STARTED_INFRASTRUCTURE_MONITORING": "SigNoz | Get Started | Infrastructure",
@@ -49,5 +50,8 @@
 	"TRACES_SAVE_VIEWS": "SigNoz | Traces Saved Views",
 	"DEFAULT": "Open source Observability Platform | SigNoz",
 	"SHORTCUTS": "SigNoz | Shortcuts",
-	"INTEGRATIONS": "SigNoz | Integrations"
+	"INTEGRATIONS": "SigNoz | Integrations",
+	"ALERT_HISTORY": "SigNoz | Alert Rule History",
+	"ALERT_OVERVIEW": "SigNoz | Alert Rule Overview",
+	"MESSAGING_QUEUES": "SigNoz | Messaging Queues"
 }

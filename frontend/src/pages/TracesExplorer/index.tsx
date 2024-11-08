@@ -259,7 +259,7 @@ function TracesExplorer(): JSX.Element {
 						)}
 						<div className="trace-explorer-run-query">
 							<RightToolbarActions onStageRunQuery={handleRunQuery} />
-							<DateTimeSelector showAutoRefresh showOldExplorerCTA />
+							<DateTimeSelector showAutoRefresh />
 						</div>
 					</div>
 					<ExplorerCard sourcepage={DataSource.TRACES}>

@@ -11,6 +11,7 @@ import (
 )
 
 type ClickhouseQuerySettings struct {
+	MaxExecutionTime                    string
 	MaxExecutionTimeLeaf                string
 	TimeoutBeforeCheckingExecutionSpeed string
 	MaxBytesToRead                      string
@@ -45,6 +46,10 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 
 	if c.settings.MaxBytesToRead != "" {
 		settings["max_bytes_to_read"] = c.settings.MaxBytesToRead
+	}
+
+	if c.settings.MaxExecutionTime != "" {
+		settings["max_execution_time"] = c.settings.MaxExecutionTime
 	}
 
 	if c.settings.MaxExecutionTimeLeaf != "" {

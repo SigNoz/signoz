@@ -1,14 +1,8 @@
 import '@testing-library/jest-dom/extend-expect';
 
-import {
-	act,
-	fireEvent,
-	render,
-	screen,
-	waitFor,
-} from '@testing-library/react';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import React, { useEffect } from 'react';
+import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import VariableItem from './VariableItem';

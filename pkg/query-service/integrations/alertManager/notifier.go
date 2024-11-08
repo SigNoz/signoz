@@ -295,7 +295,7 @@ func newAlertmanagerSet(urls []string, timeout time.Duration, logger log.Logger)
 
 	ams := []Manager{}
 	for _, u := range urls {
-		am, err := New(u)
+		am, err := New(WithURL(u))
 		if err != nil {
 			level.Error(s.logger).Log(fmt.Sprintf("invalid alert manager url %s: %s", u, err))
 		} else {

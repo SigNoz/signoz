@@ -96,7 +96,7 @@ function BasicInfo({
 
 	return (
 		<>
-			<StepHeading> {t('alert_form_step3')} </StepHeading>
+			<StepHeading> {t('alert_form_step4')} </StepHeading>
 			<FormContainer>
 				<Form.Item
 					label={t('field_severity')}
@@ -189,6 +189,7 @@ function BasicInfo({
 							checked={shouldBroadCastToAllChannels}
 							onChange={handleBroadcastToAllChannels}
 							disabled={noChannels || !!channels.loading}
+							data-testid="alert-broadcast-to-all-channels"
 						/>
 					</Tooltip>
 				</FormItemMedium>

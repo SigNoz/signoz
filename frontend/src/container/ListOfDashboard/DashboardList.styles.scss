@@ -5,6 +5,17 @@
 	justify-content: center;
 	width: 100%;
 
+	// overridding the request integration style to fix the spacing for dashboard list
+	.request-entity-container {
+		margin-bottom: 16px !important;
+		margin-top: 0 !important;
+	}
+
+	.integrations-content {
+		max-width: 100% !important;
+		width: 100% !important;
+	}
+
 	.dashboards-list-view-content {
 		width: calc(100% - 30px);
 		max-width: 836px;
@@ -64,15 +75,21 @@
 
 						.dashboard-icon {
 							display: inline-block;
-							margin-top: 4px;
-							margin-right: 4px;
 							line-height: 20px;
+							height: 14px;
+							width: 14px;
 						}
 
 						.dot {
 							min-height: 6px;
 							min-width: 6px;
 							border-radius: 50%;
+						}
+
+						.title-link {
+							display: flex;
+							align-items: center;
+							gap: 8px;
 						}
 
 						.title {
@@ -590,6 +607,8 @@
 }
 
 .new-dashboard-menu {
+	width: 200px;
+
 	.create-dashboard-menu-item {
 		display: flex;
 		align-items: center;

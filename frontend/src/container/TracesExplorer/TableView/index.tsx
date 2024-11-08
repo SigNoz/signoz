@@ -47,6 +47,7 @@ function TableView(): JSX.Element {
 				query={stagedQuery || initialQueriesMap.traces}
 				queryTableData={data?.payload?.data?.newResult?.data?.result || []}
 				loading={isLoading}
+				sticky
 			/>
 		</Space.Compact>
 	);

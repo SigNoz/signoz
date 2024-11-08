@@ -64,6 +64,7 @@ import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	OrderByPayload,
@@ -100,14 +101,14 @@ function LogsExplorerViews({
 	// this is to respect the panel type present in the URL rather than defaulting it to list always.
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
-	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
+	const { activeLogId, onTimeRangeChange } = useCopyLogLink();
 
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
 	);
 
-	const { minTime } = useSelector<AppState, GlobalReducer>(
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
@@ -132,6 +133,9 @@ function LogsExplorerViews({
 	// State
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
+	const [lastLogLineTimestamp, setLastLogLineTimestamp] = useState<
+		number | string | null
+	>();
 	const [requestData, setRequestData] = useState<Query | null>(null);
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
 	const [queryId, setQueryId] = useState<string>(v4());
@@ -188,6 +192,16 @@ function LogsExplorerViews({
 		const modifiedQueryData: IBuilderQuery = {
 			...listQuery,
 			aggregateOperator: LogsAggregatorOperator.COUNT,
+			groupBy: [
+				{
+					key: 'severity_text',
+					dataType: DataTypes.String,
+					type: '',
+					isColumn: true,
+					isJSON: false,
+					id: 'severity_text--string----true',
+				},
+			],
 		};
 
 		const modifiedQuery: Query = {
@@ -254,16 +268,26 @@ function LogsExplorerViews({
 			enabled: !isLimit && !!requestData,
 		},
 		{
-			...(timeRange &&
-				activeLogId &&
+			...(activeLogId &&
 				!logs.length && {
-					start: timeRange.start,
-					end: timeRange.end,
+					start: minTime,
+					end: maxTime,
 				}),
+			// send the lastLogTimeStamp only when the panel type is list and the orderBy is timestamp and the order is desc
+			lastLogLineTimestamp:
+				panelType === PANEL_TYPES.LIST &&
+				requestData?.builder?.queryData?.[0]?.orderBy?.[0]?.columnName ===
+					'timestamp' &&
+				requestData?.builder?.queryData?.[0]?.orderBy?.[0]?.order === 'desc'
+					? lastLogLineTimestamp
+					: undefined,
 		},
 		undefined,
 		listQueryKeyRef,
-		{},
+		{
+			...(!isEmpty(queryId) &&
+				selectedPanelType !== PANEL_TYPES.LIST && { 'X-SIGNOZ-QUERY-ID': queryId }),
+		},
 	);
 
 	const getRequestData = useCallback(
@@ -334,6 +358,10 @@ function LogsExplorerViews({
 				pageSize: nextPageSize,
 			});
 
+			// initialise the last log timestamp to null as we don't have the logs.
+			// as soon as we scroll to the end of the logs we set the lastLogLineTimestamp to the last log timestamp.
+			setLastLogLineTimestamp(lastLog.timestamp);
+
 			setPage((prevPage) => prevPage + 1);
 
 			setRequestData(newRequestData);
@@ -352,7 +380,7 @@ function LogsExplorerViews({
 
 	useEffect(() => {
 		setQueryId(v4());
-	}, [isError, isSuccess]);
+	}, [data]);
 
 	useEffect(() => {
 		if (
@@ -518,12 +546,17 @@ function LogsExplorerViews({
 			setLogs(newLogs);
 			onTimeRangeChange({
 				start: currentParams?.start,
-				end: timeRange?.end || currentParams?.end,
+				end: currentParams?.end,
 				pageSize: newLogs.length,
 			});
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data]);
+
+	useEffect(() => {
+		// clear the lastLogLineTimestamp when the data changes
+		setLastLogLineTimestamp(null);
 	}, [data]);
 
 	useEffect(() => {
@@ -535,8 +568,7 @@ function LogsExplorerViews({
 				filters: listQuery?.filters || initialFilters,
 				page: 1,
 				log: null,
-				pageSize:
-					timeRange?.pageSize && activeLogId ? timeRange?.pageSize : pageSize,
+				pageSize,
 			});
 
 			setLogs([]);
@@ -551,7 +583,6 @@ function LogsExplorerViews({
 		listQuery,
 		pageSize,
 		minTime,
-		timeRange,
 		activeLogId,
 		onTimeRangeChange,
 		panelType,
@@ -661,6 +692,7 @@ function LogsExplorerViews({
 					className="logs-histogram"
 					isLoading={isFetchingListChartData || isLoadingListChartData}
 					data={chartData}
+					isLogsExplorerViews={panelType === PANEL_TYPES.LIST}
 				/>
 			)}
 

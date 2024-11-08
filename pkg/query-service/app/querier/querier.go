@@ -2,19 +2,19 @@ package querier
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"math"
-	"sort"
-	"strings"
 	"sync"
 	"time"
 
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	logsV4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
 	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
+	"go.signoz.io/signoz/pkg/query-service/querycache"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -32,14 +32,11 @@ type channelResult struct {
 	Query  string
 }
 
-type missInterval struct {
-	start, end int64 // in milliseconds
-}
-
 type querier struct {
 	cache        cache.Cache
 	reader       interfaces.Reader
 	keyGenerator cache.KeyGenerator
+	queryCache   interfaces.QueryCache
 
 	fluxInterval time.Duration
 
@@ -54,6 +51,8 @@ type querier struct {
 	timeRanges     [][]int
 	returnedSeries []*v3.Series
 	returnedErr    error
+
+	UseLogsNewSchema bool
 }
 
 type QuerierOptions struct {
@@ -64,28 +63,38 @@ type QuerierOptions struct {
 	FeatureLookup interfaces.FeatureLookup
 
 	// used for testing
-	TestingMode    bool
-	ReturnedSeries []*v3.Series
-	ReturnedErr    error
+	TestingMode      bool
+	ReturnedSeries   []*v3.Series
+	ReturnedErr      error
+	UseLogsNewSchema bool
 }
 
 func NewQuerier(opts QuerierOptions) interfaces.Querier {
+	logsQueryBuilder := logsV3.PrepareLogsQuery
+	if opts.UseLogsNewSchema {
+		logsQueryBuilder = logsV4.PrepareLogsQuery
+	}
+
+	qc := querycache.NewQueryCache(querycache.WithCache(opts.Cache), querycache.WithFluxInterval(opts.FluxInterval))
+
 	return &querier{
 		cache:        opts.Cache,
+		queryCache:   qc,
 		reader:       opts.Reader,
 		keyGenerator: opts.KeyGenerator,
 		fluxInterval: opts.FluxInterval,
 
 		builder: queryBuilder.NewQueryBuilder(queryBuilder.QueryBuilderOptions{
 			BuildTraceQuery:  tracesV3.PrepareTracesQuery,
-			BuildLogQuery:    logsV3.PrepareLogsQuery,
+			BuildLogQuery:    logsQueryBuilder,
 			BuildMetricQuery: metricsV3.PrepareMetricQuery,
 		}, opts.FeatureLookup),
 		featureLookUp: opts.FeatureLookup,
 
-		testingMode:    opts.TestingMode,
-		returnedSeries: opts.ReturnedSeries,
-		returnedErr:    opts.ReturnedErr,
+		testingMode:      opts.TestingMode,
+		returnedSeries:   opts.ReturnedSeries,
+		returnedErr:      opts.ReturnedErr,
+		UseLogsNewSchema: opts.UseLogsNewSchema,
 	}
 }
 
@@ -143,151 +152,7 @@ func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangePar
 	return seriesList, nil
 }
 
-// findMissingTimeRanges finds the missing time ranges in the seriesList
-// and returns a list of miss structs, It takes the fluxInterval into
-// account to find the missing time ranges.
-//
-// The [End - fluxInterval, End] is always added to the list of misses, because
-// the data might still be in flux and not yet available in the database.
-func findMissingTimeRanges(start, end, step int64, seriesList []*v3.Series, fluxInterval time.Duration) (misses []missInterval) {
-	var cachedStart, cachedEnd int64
-	for idx := range seriesList {
-		series := seriesList[idx]
-		for pointIdx := range series.Points {
-			point := series.Points[pointIdx]
-			if cachedStart == 0 || point.Timestamp < cachedStart {
-				cachedStart = point.Timestamp
-			}
-			if cachedEnd == 0 || point.Timestamp > cachedEnd {
-				cachedEnd = point.Timestamp
-			}
-		}
-	}
-
-	// time.Now is used because here we are considering the case where data might not
-	// be fully ingested for last (fluxInterval) minutes
-	endMillis := time.Now().UnixMilli()
-	adjustStep := int64(math.Min(float64(step), 60))
-	roundedMillis := endMillis - (endMillis % (adjustStep * 1000))
-
-	// Exclude the flux interval from the cached end time
-	cachedEnd = int64(
-		math.Min(
-			float64(cachedEnd),
-			float64(roundedMillis-fluxInterval.Milliseconds()),
-		),
-	)
-
-	// There are five cases to consider
-	// 1. Cached time range is a subset of the requested time range
-	// 2. Cached time range is a superset of the requested time range
-	// 3. Cached time range is a left overlap of the requested time range
-	// 4. Cached time range is a right overlap of the requested time range
-	// 5. Cached time range is a disjoint of the requested time range
-	if cachedStart >= start && cachedEnd <= end {
-		// Case 1: Cached time range is a subset of the requested time range
-		// Add misses for the left and right sides of the cached time range
-		misses = append(misses, missInterval{start: start, end: cachedStart - 1})
-		misses = append(misses, missInterval{start: cachedEnd + 1, end: end})
-	} else if cachedStart <= start && cachedEnd >= end {
-		// Case 2: Cached time range is a superset of the requested time range
-		// No misses
-	} else if cachedStart <= start && cachedEnd >= start {
-		// Case 3: Cached time range is a left overlap of the requested time range
-		// Add a miss for the left side of the cached time range
-		misses = append(misses, missInterval{start: cachedEnd + 1, end: end})
-	} else if cachedStart <= end && cachedEnd >= end {
-		// Case 4: Cached time range is a right overlap of the requested time range
-		// Add a miss for the right side of the cached time range
-		misses = append(misses, missInterval{start: start, end: cachedStart - 1})
-	} else {
-		// Case 5: Cached time range is a disjoint of the requested time range
-		// Add a miss for the entire requested time range
-		misses = append(misses, missInterval{start: start, end: end})
-	}
-
-	// remove the struts with start > end
-	var validMisses []missInterval
-	for idx := range misses {
-		miss := misses[idx]
-		if miss.start < miss.end {
-			validMisses = append(validMisses, miss)
-		}
-	}
-	return validMisses
-}
-
-// findMissingTimeRanges finds the missing time ranges in the cached data
-// and returns them as a list of misses
-func (q *querier) findMissingTimeRanges(start, end, step int64, cachedData []byte) (misses []missInterval) {
-	var cachedSeriesList []*v3.Series
-	if err := json.Unmarshal(cachedData, &cachedSeriesList); err != nil {
-		// In case of error, we return the entire range as a miss
-		return []missInterval{{start: start, end: end}}
-	}
-	return findMissingTimeRanges(start, end, step, cachedSeriesList, q.fluxInterval)
-}
-
-func labelsToString(labels map[string]string) string {
-	type label struct {
-		Key   string
-		Value string
-	}
-	var labelsList []label
-	for k, v := range labels {
-		labelsList = append(labelsList, label{Key: k, Value: v})
-	}
-	sort.Slice(labelsList, func(i, j int) bool {
-		return labelsList[i].Key < labelsList[j].Key
-	})
-	labelKVs := make([]string, len(labelsList))
-	for idx := range labelsList {
-		labelKVs[idx] = labelsList[idx].Key + "=" + labelsList[idx].Value
-	}
-	return fmt.Sprintf("{%s}", strings.Join(labelKVs, ","))
-}
-
-func filterCachedPoints(cachedSeries []*v3.Series, start, end int64) {
-	for _, c := range cachedSeries {
-		points := []v3.Point{}
-		for _, p := range c.Points {
-			if (p.Timestamp < start || p.Timestamp > end) && p.Timestamp != 0 {
-				continue
-			}
-			points = append(points, p)
-		}
-		c.Points = points
-	}
-}
-
-func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
-	// Merge the missed series with the cached series by timestamp
-	mergedSeries := make([]*v3.Series, 0)
-	seriesesByLabels := make(map[string]*v3.Series)
-	for idx := range cachedSeries {
-		series := cachedSeries[idx]
-		seriesesByLabels[labelsToString(series.Labels)] = series
-	}
-
-	for idx := range missedSeries {
-		series := missedSeries[idx]
-		if _, ok := seriesesByLabels[labelsToString(series.Labels)]; !ok {
-			seriesesByLabels[labelsToString(series.Labels)] = series
-			continue
-		}
-		seriesesByLabels[labelsToString(series.Labels)].Points = append(seriesesByLabels[labelsToString(series.Labels)].Points, series.Points...)
-	}
-	// Sort the points in each series by timestamp
-	for idx := range seriesesByLabels {
-		series := seriesesByLabels[idx]
-		series.SortPoints()
-		series.RemoveDuplicatePoints()
-		mergedSeries = append(mergedSeries, series)
-	}
-	return mergedSeries
-}
-
-func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
+func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 
 	cacheKeys := q.keyGenerator.GenerateKeys(params)
 
@@ -300,9 +165,9 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 		}
 		wg.Add(1)
 		if queryName == builderQuery.Expression {
-			go q.runBuilderQuery(ctx, builderQuery, params, keys, cacheKeys, ch, &wg)
+			go q.runBuilderQuery(ctx, builderQuery, params, cacheKeys, ch, &wg)
 		} else {
-			go q.runBuilderExpression(ctx, builderQuery, params, keys, cacheKeys, ch, &wg)
+			go q.runBuilderExpression(ctx, builderQuery, params, cacheKeys, ch, &wg)
 		}
 	}
 
@@ -346,48 +211,34 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 		go func(queryName string, promQuery *v3.PromQuery) {
 			defer wg.Done()
 			cacheKey, ok := cacheKeys[queryName]
-			var cachedData []byte
-			// Ensure NoCache is not set and cache is not nil
-			if !params.NoCache && q.cache != nil && ok {
-				data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
-				zap.L().Info("cache retrieve status", zap.String("status", retrieveStatus.String()))
-				if err == nil {
-					cachedData = data
-				}
+
+			if !ok || params.NoCache {
+				zap.L().Info("skipping cache for metrics prom query", zap.String("queryName", queryName), zap.Int64("start", params.Start), zap.Int64("end", params.End), zap.Int64("step", params.Step), zap.Bool("noCache", params.NoCache), zap.String("cacheKey", cacheKeys[queryName]))
+				query := metricsV3.BuildPromQuery(promQuery, params.Step, params.Start, params.End)
+				series, err := q.execPromQuery(ctx, query)
+				channelResults <- channelResult{Err: err, Name: queryName, Query: query.Query, Series: series}
+				return
 			}
-			misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
-			missedSeries := make([]*v3.Series, 0)
-			cachedSeries := make([]*v3.Series, 0)
+			misses := q.queryCache.FindMissingTimeRanges(params.Start, params.End, params.Step, cacheKey)
+			zap.L().Info("cache misses for metrics prom query", zap.Any("misses", misses))
+			missedSeries := make([]querycache.CachedSeriesData, 0)
 			for _, miss := range misses {
-				query := metricsV3.BuildPromQuery(promQuery, params.Step, miss.start, miss.end)
+				query := metricsV3.BuildPromQuery(promQuery, params.Step, miss.Start, miss.End)
 				series, err := q.execPromQuery(ctx, query)
 				if err != nil {
 					channelResults <- channelResult{Err: err, Name: queryName, Query: query.Query, Series: nil}
 					return
 				}
-				missedSeries = append(missedSeries, series...)
+				missedSeries = append(missedSeries, querycache.CachedSeriesData{
+					Data:  series,
+					Start: miss.Start,
+					End:   miss.End,
+				})
 			}
-			if err := json.Unmarshal(cachedData, &cachedSeries); err != nil && cachedData != nil {
-				// ideally we should not be getting an error here
-				zap.L().Error("error unmarshalling cached data", zap.Error(err))
-			}
-			mergedSeries := mergeSerieses(cachedSeries, missedSeries)
+			mergedSeries := q.queryCache.MergeWithCachedSeriesData(cacheKey, missedSeries)
+			resultSeries := common.GetSeriesFromCachedData(mergedSeries, params.Start, params.End)
+			channelResults <- channelResult{Err: nil, Name: queryName, Query: promQuery.Query, Series: resultSeries}
 
-			channelResults <- channelResult{Err: nil, Name: queryName, Query: promQuery.Query, Series: mergedSeries}
-
-			// Cache the seriesList for future queries
-			if len(missedSeries) > 0 && !params.NoCache && q.cache != nil && ok {
-				mergedSeriesData, err := json.Marshal(mergedSeries)
-				if err != nil {
-					zap.L().Error("error marshalling merged series", zap.Error(err))
-					return
-				}
-				err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
-				if err != nil {
-					zap.L().Error("error storing merged series", zap.Error(err))
-					return
-				}
-			}
 		}(queryName, promQuery)
 	}
 	wg.Wait()
@@ -457,9 +308,80 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	return results, errQueriesByName, err
 }
 
-func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
+func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangeParamsV3, tsRanges []utils.LogsListTsRange) ([]*v3.Result, map[string]error, error) {
+	res := make([]*v3.Result, 0)
+	qName := ""
+	pageSize := uint64(0)
 
-	queries, err := q.builder.PrepareQueries(params, keys)
+	// se we are considering only one query
+	for name, v := range params.CompositeQuery.BuilderQueries {
+		qName = name
+		pageSize = v.PageSize
+	}
+	data := []*v3.Row{}
+
+	for _, v := range tsRanges {
+		params.Start = v.Start
+		params.End = v.End
+
+		params.CompositeQuery.BuilderQueries[qName].PageSize = pageSize - uint64(len(data))
+		queries, err := q.builder.PrepareQueries(params)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// this will to run only once
+		for name, query := range queries {
+			rowList, err := q.reader.GetListResultV3(ctx, query)
+			if err != nil {
+				errs := []error{err}
+				errQuriesByName := map[string]error{
+					name: err,
+				}
+				return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+			}
+			data = append(data, rowList...)
+		}
+
+		// append a filter to the params
+		if len(data) > 0 {
+			params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key:      "id",
+					IsColumn: true,
+					DataType: "string",
+				},
+				Operator: v3.FilterOperatorLessThan,
+				Value:    data[len(data)-1].Data["id"],
+			})
+		}
+
+		if uint64(len(data)) >= pageSize {
+			break
+		}
+	}
+	res = append(res, &v3.Result{
+		QueryName: qName,
+		List:      data,
+	})
+	return res, nil, nil
+}
+
+func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
+	// List query has support for only one query.
+	if q.UseLogsNewSchema && params.CompositeQuery != nil && len(params.CompositeQuery.BuilderQueries) == 1 {
+		for _, v := range params.CompositeQuery.BuilderQueries {
+			// only allow of logs queries with timestamp ordering desc
+			if v.DataSource == v3.DataSourceLogs && len(v.OrderBy) == 1 && v.OrderBy[0].ColumnName == "timestamp" && v.OrderBy[0].Order == "desc" {
+				startEndArr := utils.GetLogsListTsRanges(params.Start, params.End)
+				if len(startEndArr) > 0 {
+					return q.runLogsListQuery(ctx, params, startEndArr)
+				}
+			}
+		}
+	}
+
+	queries, err := q.builder.PrepareQueries(params)
 
 	if err != nil {
 		return nil, nil, err
@@ -475,7 +397,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 			rowList, err := q.reader.GetListResultV3(ctx, query)
 
 			if err != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+				ch <- channelResult{Err: err, Name: name, Query: query}
 				return
 			}
 			ch <- channelResult{List: rowList, Name: name, Query: query}
@@ -506,7 +428,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 	return res, nil, nil
 }
 
-func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, map[string]error, error) {
+func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 	var results []*v3.Result
 	var err error
 	var errQueriesByName map[string]error
@@ -514,9 +436,9 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 		switch params.CompositeQuery.QueryType {
 		case v3.QueryTypeBuilder:
 			if params.CompositeQuery.PanelType == v3.PanelTypeList || params.CompositeQuery.PanelType == v3.PanelTypeTrace {
-				results, errQueriesByName, err = q.runBuilderListQueries(ctx, params, keys)
+				results, errQueriesByName, err = q.runBuilderListQueries(ctx, params)
 			} else {
-				results, errQueriesByName, err = q.runBuilderQueries(ctx, params, keys)
+				results, errQueriesByName, err = q.runBuilderQueries(ctx, params)
 			}
 			// in builder query, the only errors we expose are the ones that exceed the resource limits
 			// everything else is internal error as they are not actionable by the user

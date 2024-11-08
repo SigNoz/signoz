@@ -8,6 +8,7 @@ const ROUTES = {
 	TRACE_DETAIL: '/trace/:id',
 	TRACES_EXPLORER: '/traces-explorer',
 	GET_STARTED: '/get-started',
+	ONBOARDING: '/onboarding',
 	GET_STARTED_APPLICATION_MONITORING: '/get-started/application-monitoring',
 	GET_STARTED_LOGS_MANAGEMENT: '/get-started/logs-management',
 	GET_STARTED_INFRASTRUCTURE_MONITORING:
@@ -22,6 +23,8 @@ const ROUTES = {
 	EDIT_ALERTS: '/alerts/edit',
 	LIST_ALL_ALERT: '/alerts',
 	ALERTS_NEW: '/alerts/new',
+	ALERT_HISTORY: '/alerts/history',
+	ALERT_OVERVIEW: '/alerts/overview',
 	ALL_CHANNELS: '/settings/channels',
 	CHANNELS_NEW: '/settings/channels/new',
 	CHANNELS_EDIT: '/settings/channels/:id',
@@ -54,6 +57,8 @@ const ROUTES = {
 	WORKSPACE_LOCKED: '/workspace-locked',
 	SHORTCUTS: '/shortcuts',
 	INTEGRATIONS: '/integrations',
+	MESSAGING_QUEUES: '/messaging-queues',
+	MESSAGING_QUEUES_DETAIL: '/messaging-queues/detail',
 } as const;
 
 export default ROUTES;

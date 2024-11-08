@@ -122,10 +122,10 @@ function TableView({
 		fieldValue: string,
 	) => (): void => {
 		handleClick(operator, fieldKey, fieldValue);
-		if (operator === OPERATORS.IN) {
+		if (operator === OPERATORS['=']) {
 			setIsFilterInLoading(true);
 		}
-		if (operator === OPERATORS.NIN) {
+		if (operator === OPERATORS['!=']) {
 			setIsFilterOutLoading(true);
 		}
 	};

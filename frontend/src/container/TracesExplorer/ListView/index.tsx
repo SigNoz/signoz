@@ -14,9 +14,8 @@ import { Pagination } from 'hooks/queryPagination';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { HTMLAttributes, memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
@@ -25,7 +24,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { TracesLoading } from '../TraceLoading/TraceLoading';
 import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
 import { Container, ErrorText, tableStyles } from './styles';
-import { getListColumns, getTraceLink, transformDataWithDate } from './utils';
+import { getListColumns, transformDataWithDate } from './utils';
 
 interface ListViewProps {
 	isFilterApplied: boolean;
@@ -108,21 +107,6 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		[queryTableData],
 	);
 
-	const handleRow = useCallback(
-		(record: RowData): HTMLAttributes<RowData> => ({
-			onClick: (event): void => {
-				event.preventDefault();
-				event.stopPropagation();
-				if (event.metaKey || event.ctrlKey) {
-					window.open(getTraceLink(record), '_blank');
-				} else {
-					history.push(getTraceLink(record));
-				}
-			},
-		}),
-		[],
-	);
-
 	const handleDragColumn = useCallback(
 		(fromIndex: number, toIndex: number) =>
 			onDragColumns(columns, fromIndex, toIndex),
@@ -169,7 +153,6 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 					style={tableStyles}
 					dataSource={transformedQueryTableData}
 					columns={columns}
-					onRow={handleRow}
 					onDragColumn={handleDragColumn}
 				/>
 			)}

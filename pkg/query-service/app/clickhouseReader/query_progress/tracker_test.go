@@ -7,7 +7,6 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 func TestQueryProgressTracking(t *testing.T) {
@@ -45,7 +44,7 @@ func TestQueryProgressTracking(t *testing.T) {
 	require.NotNil(ch)
 	require.NotNil(unsubscribe)
 
-	expectedProgress := v3.QueryProgress{}
+	expectedProgress := model.QueryProgress{}
 	updateQueryProgress(&expectedProgress, testProgress1)
 	require.Equal(expectedProgress.ReadRows, testProgress1.Rows)
 	select {

@@ -1,24 +1,18 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/alerts/delete';
 
 const deleteAlerts = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
-	try {
-		const response = await axios.delete(`/rules/${props.id}`);
+	const response = await axios.delete(`/rules/${props.id}`);
 
-		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data.data.rules,
-		};
-	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
-	}
+	return {
+		statusCode: 200,
+		error: null,
+		message: response.data.status,
+		payload: response.data.data.rules,
+	};
 };
 
 export default deleteAlerts;

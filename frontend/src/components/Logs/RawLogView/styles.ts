@@ -13,6 +13,7 @@ export const RawLogViewContainer = styled(Row)<{
 	$isReadOnly?: boolean;
 	$isActiveLog?: boolean;
 	$isHightlightedLog: boolean;
+	$logType: string;
 	fontSize: FontSize;
 }>`
 	position: relative;
@@ -34,11 +35,12 @@ export const RawLogViewContainer = styled(Row)<{
 				: `margin: 2px 0;`}
 	}
 
-	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
+	${({ $isActiveLog, $logType }): string =>
+		getActiveLogBackground($isActiveLog, true, $logType)}
 
-	${({ $isReadOnly, $isActiveLog, $isDarkMode }): string =>
+	${({ $isReadOnly, $isActiveLog, $isDarkMode, $logType }): string =>
 		$isActiveLog
-			? getActiveLogBackground($isActiveLog, $isDarkMode)
+			? getActiveLogBackground($isActiveLog, $isDarkMode, $logType)
 			: getDefaultLogBackground($isReadOnly, $isDarkMode)}
 
 	${({ $isHightlightedLog, $isDarkMode }): string =>

@@ -7,6 +7,10 @@ import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import {
+	AllTraceFilterKeys,
+	AllTraceFilterKeyValue,
+} from 'pages/TracesExplorer/Filter/filterUtils';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -111,15 +115,45 @@ const useOptionsMenu = ({
 			[] as BaseAutocompleteData[],
 		);
 
-		return (
-			(initialOptions.selectColumns
-				?.map((column) => attributesData.find(({ key }) => key === column))
-				.filter(Boolean) as BaseAutocompleteData[]) || []
-		);
+		let initialSelected = initialOptions.selectColumns
+			?.map((column) => attributesData.find(({ key }) => key === column))
+			.filter(Boolean) as BaseAutocompleteData[];
+
+		if (dataSource === DataSource.TRACES) {
+			initialSelected = initialSelected
+				?.map((col) => {
+					if (col && Object.keys(AllTraceFilterKeyValue).includes(col?.key)) {
+						const metaData = defaultTraceSelectedColumns.find(
+							(coln) => coln.key === (col.key as AllTraceFilterKeys),
+						);
+
+						return {
+							...metaData,
+							key: metaData?.key,
+							dataType: metaData?.dataType,
+							type: metaData?.type,
+							isColumn: metaData?.isColumn,
+							isJSON: metaData?.isJSON,
+							id: metaData?.id,
+						};
+					}
+					return col;
+				})
+				.filter(Boolean) as BaseAutocompleteData[];
+
+			// this is the last point where we can set the default columns and if uptil now also we have an empty array then we will set the default columns
+			if (!initialSelected || !initialSelected?.length) {
+				initialSelected = defaultTraceSelectedColumns;
+			}
+		}
+
+		return initialSelected || [];
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isFetchedInitialAttributes,
 		initialOptions?.selectColumns,
 		initialAttributesResult,
+		dataSource,
 	]);
 
 	const {

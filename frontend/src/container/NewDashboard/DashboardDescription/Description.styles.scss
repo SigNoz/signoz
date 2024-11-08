@@ -130,11 +130,15 @@
 
 		.left-section {
 			display: flex;
-			flex-wrap: wrap;
 
 			align-items: center;
 			gap: 8px;
 			width: 45%;
+
+			.dashboard-img {
+				height: 16px;
+				width: 16px;
+			}
 
 			.dashboard-title {
 				color: #fff;

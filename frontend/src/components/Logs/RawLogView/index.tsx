@@ -4,6 +4,7 @@ import Convert from 'ansi-to-html';
 import { DrawerProps } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES, VIEWS } from 'components/LogDetail/constants';
+import { unescapeString } from 'container/LogDetailedView/utils';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
@@ -145,7 +146,9 @@ function RawLogView({
 	const html = useMemo(
 		() => ({
 			__html: convert.toHtml(
-				dompurify.sanitize(text, { FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS] }),
+				dompurify.sanitize(unescapeString(text), {
+					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				}),
 			),
 		}),
 		[text],
@@ -159,20 +162,15 @@ function RawLogView({
 			$isDarkMode={isDarkMode}
 			$isReadOnly={isReadOnly}
 			$isHightlightedLog={isHighlighted}
-			$isActiveLog={isActiveLog}
+			$isActiveLog={
+				activeLog?.id === data.id || activeContextLog?.id === data.id || isActiveLog
+			}
+			$logType={logType}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 			fontSize={fontSize}
 		>
-			<LogStateIndicator
-				type={logType}
-				isActive={
-					activeLog?.id === data.id ||
-					activeContextLog?.id === data.id ||
-					isActiveLog
-				}
-				fontSize={fontSize}
-			/>
+			<LogStateIndicator type={logType} fontSize={fontSize} />
 
 			<RawLogContent
 				$isReadOnly={isReadOnly}

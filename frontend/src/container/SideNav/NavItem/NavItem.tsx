@@ -24,14 +24,16 @@ export default function NavItem({
 			onClick={(event): void => onClick(event)}
 		>
 			<div className="nav-item-active-marker" />
-			<div className="nav-item-data">
+			<div className={cx('nav-item-data', isBeta ? 'beta-tag' : '')}>
 				<div className="nav-item-icon">{icon}</div>
 
 				<div className="nav-item-label">{label}</div>
 
 				{isBeta && (
 					<div className="nav-item-beta">
-						<Tag color="magenta">Beta</Tag>
+						<Tag bordered={false} color="geekblue">
+							Beta
+						</Tag>
 					</div>
 				)}
 			</div>

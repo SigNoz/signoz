@@ -1,12 +1,8 @@
-import { Button, Card, Col, Form, Input, Row, Select, Typography } from 'antd';
+import { Button, Card, Col, Form, Input, Select, Typography } from 'antd';
 import styled from 'styled-components';
 
 const { TextArea } = Input;
 const { Item } = Form;
-
-export const PanelContainer = styled(Row)`
-	flex-wrap: nowrap;
-`;
 
 export const StyledLeftContainer = styled(Col)`
 	&&& {

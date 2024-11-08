@@ -16,6 +16,7 @@ import (
 
 	"golang.org/x/text/cases"
 
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 )
 
@@ -204,15 +205,57 @@ func NewTemplateExpander(
 
 // AlertTemplateData returns the interface to be used in expanding the template.
 func AlertTemplateData(labels map[string]string, value string, threshold string) interface{} {
+	// This exists here for backwards compatibility.
+	// The labels map passed in no longer contains the normalized labels.
+	// To continue supporting the old way of referencing labels, we need to
+	// add the normalized labels just for the template expander.
+	// This is done by creating a new map and adding the normalized labels to it.
+	newLabels := make(map[string]string)
+	for k, v := range labels {
+		newLabels[k] = v
+		newLabels[common.NormalizeLabelName(k)] = v
+	}
+
 	return struct {
 		Labels    map[string]string
 		Value     string
 		Threshold string
 	}{
-		Labels:    labels,
+		Labels:    newLabels,
 		Value:     value,
 		Threshold: threshold,
 	}
+}
+
+// preprocessTemplate preprocesses the template to replace our custom $variable syntax with the correct Go template syntax.
+// example, $service.name in the template is replaced with {{index $labels "service.name"}}
+// While we could use go template functions to do this, we need to keep the syntax
+// consistent across the platform.
+// If there is a go template block, it won't be replaced.
+// The example for existing go template block is: {{$threshold}} or {{$value}} or any other valid go template syntax.
+func (te *TemplateExpander) preprocessTemplate() {
+	// Handle the $variable syntax
+	reDollar := regexp.MustCompile(`({{.*?}})|(\$(\w+(?:\.\w+)*))`)
+	te.text = reDollar.ReplaceAllStringFunc(te.text, func(match string) string {
+		if strings.HasPrefix(match, "{{") {
+			// If it's a Go template block, leave it unchanged
+			return match
+		}
+		path := match[1:] // Remove the '$'
+		return fmt.Sprintf(`{{index $labels "%s"}}`, path)
+	})
+
+	// Handle the {{.Labels.service.name}} syntax
+	reLabels := regexp.MustCompile(`{{\s*\.Labels\.([a-zA-Z0-9_.]+)(.*?)}}`)
+	te.text = reLabels.ReplaceAllStringFunc(te.text, func(match string) string {
+		submatches := reLabels.FindStringSubmatch(match)
+		if len(submatches) < 3 {
+			return match // Should not happen
+		}
+		path := submatches[1]
+		rest := submatches[2]
+		return fmt.Sprintf(`{{index .Labels "%s"%s}}`, path, rest)
+	})
 }
 
 // Funcs adds the functions in fm to the Expander's function map.
@@ -236,6 +279,8 @@ func (te TemplateExpander) Expand() (result string, resultErr error) {
 			}
 		}
 	}()
+
+	te.preprocessTemplate()
 
 	tmpl, err := text_template.New(te.name).Funcs(te.funcMap).Option("missingkey=zero").Parse(te.text)
 	if err != nil {

@@ -1,6 +1,6 @@
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { QueryBuilderKeys } from 'constants/queryBuilder';
+import { OPERATORS, QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -24,6 +24,16 @@ import { v4 as uuid } from 'uuid';
 
 import { UseActiveLog } from './types';
 
+export function getOldLogsOperatorFromNew(operator: string): string {
+	switch (operator) {
+		case OPERATORS['=']:
+			return OPERATORS.IN;
+		case OPERATORS['!=']:
+			return OPERATORS.NIN;
+		default:
+			return operator;
+	}
+}
 export const useActiveLog = (): UseActiveLog => {
 	const dispatch = useDispatch();
 
@@ -178,10 +188,11 @@ export const useActiveLog = (): UseActiveLog => {
 	);
 	const onAddToQueryLogs = useCallback(
 		(fieldKey: string, fieldValue: string, operator: string) => {
+			const newOperator = getOldLogsOperatorFromNew(operator);
 			const updatedQueryString = getGeneratedFilterQueryString(
 				fieldKey,
 				fieldValue,
-				operator,
+				newOperator,
 				queryString,
 			);
 

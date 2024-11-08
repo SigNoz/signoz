@@ -21,6 +21,70 @@
 	}
 }
 
+.steps-container {
+	width: 80%;
+}
+
+.qb-chart-preview-container {
+	margin-bottom: 1rem;
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+
+.overview-header {
+	margin-bottom: 1rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+
+	.alert-type-container {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+
+		.alert-type-title {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.ant-typography {
+			margin: 0;
+		}
+	}
+}
+
+.chart-preview-container {
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+
+	.ant-card {
+		flex: 1;
+	}
+}
+
+.detection-method-container {
+	margin: 24px 0;
+
+	.ant-tabs-nav {
+		margin-bottom: 0;
+
+		.ant-tabs-tab {
+			padding: 12px 0;
+		}
+	}
+
+	.detection-method-description {
+		padding: 8px 0;
+		font-size: 12px;
+	}
+}
+
 .info-help-btns {
 	display: grid;
 	grid-template-columns: auto auto;

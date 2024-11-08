@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"sort"
 	"strconv"
 	"time"
 
@@ -79,7 +78,7 @@ func BadRequest(err error) *ApiError {
 func BadRequestStr(s string) *ApiError {
 	return &ApiError{
 		Typ: ErrorBadData,
-		Err: fmt.Errorf(s),
+		Err: errors.New(s),
 	}
 }
 
@@ -500,44 +499,10 @@ type NextPrevErrorIDs struct {
 	GroupID       string    `json:"groupID"`
 }
 
-type Series struct {
-	QueryName string            `json:"queryName"`
-	Labels    map[string]string `json:"metric"`
-	Points    []MetricPoint     `json:"values"`
-}
-
-func (s *Series) SortPoints() {
-	sort.Slice(s.Points, func(i, j int) bool {
-		return s.Points[i].Timestamp < s.Points[j].Timestamp
-	})
-}
-
-type MetricPoint struct {
-	Timestamp int64
-	Value     float64
-}
-
 type MetricStatus struct {
 	MetricName           string
 	LastReceivedTsMillis int64
 	LastReceivedLabels   map[string]string
-}
-
-// MarshalJSON implements json.Marshaler.
-func (p *MetricPoint) MarshalJSON() ([]byte, error) {
-	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
-	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (p *MetricPoint) UnmarshalJSON(b []byte) error {
-	var a [2]interface{}
-	if err := json.Unmarshal(b, &a); err != nil {
-		return err
-	}
-	p.Timestamp = int64(a[0].(float64) * 1000)
-	p.Value, _ = strconv.ParseFloat(a[1].(string), 64)
-	return nil
 }
 
 type ShowCreateTableStatement struct {
@@ -570,6 +535,21 @@ type SignozLog struct {
 	Attributes_int64   map[string]int64   `json:"attributes_int" ch:"attributes_int64"`
 	Attributes_float64 map[string]float64 `json:"attributes_float" ch:"attributes_float64"`
 	Attributes_bool    map[string]bool    `json:"attributes_bool" ch:"attributes_bool"`
+}
+
+type SignozLogV2 struct {
+	Timestamp         uint64             `json:"timestamp" ch:"timestamp"`
+	ID                string             `json:"id" ch:"id"`
+	TraceID           string             `json:"trace_id" ch:"trace_id"`
+	SpanID            string             `json:"span_id" ch:"span_id"`
+	TraceFlags        uint32             `json:"trace_flags" ch:"trace_flags"`
+	SeverityText      string             `json:"severity_text" ch:"severity_text"`
+	SeverityNumber    uint8              `json:"severity_number" ch:"severity_number"`
+	Body              string             `json:"body" ch:"body"`
+	Resources_string  map[string]string  `json:"resources_string" ch:"resources_string"`
+	Attributes_string map[string]string  `json:"attributes_string" ch:"attributes_string"`
+	Attributes_number map[string]float64 `json:"attributes_float" ch:"attributes_number"`
+	Attributes_bool   map[string]bool    `json:"attributes_bool" ch:"attributes_bool"`
 }
 
 type LogsTailClient struct {
@@ -638,6 +618,7 @@ type AlertsInfo struct {
 	LogsBasedAlerts              int      `json:"logsBasedAlerts"`
 	MetricBasedAlerts            int      `json:"metricBasedAlerts"`
 	TracesBasedAlerts            int      `json:"tracesBasedAlerts"`
+	TotalChannels                int      `json:"totalChannels"`
 	SlackChannels                int      `json:"slackChannels"`
 	WebHookChannels              int      `json:"webHookChannels"`
 	PagerDutyChannels            int      `json:"pagerDutyChannels"`
@@ -650,12 +631,16 @@ type AlertsInfo struct {
 	SpanMetricsPrometheusQueries int      `json:"spanMetricsPrometheusQueries"`
 	AlertNames                   []string `json:"alertNames"`
 	AlertsWithTSV2               int      `json:"alertsWithTSv2"`
+	AlertsWithLogsChQuery        int      `json:"alertsWithLogsChQuery"`
+	AlertsWithLogsContainsOp     int      `json:"alertsWithLogsContainsOp"`
 }
 
 type SavedViewsInfo struct {
 	TotalSavedViews  int `json:"totalSavedViews"`
 	TracesSavedViews int `json:"tracesSavedViews"`
 	LogsSavedViews   int `json:"logsSavedViews"`
+
+	LogsSavedViewWithContainsOp int `json:"logsSavedViewWithContainsOp"`
 }
 
 type DashboardsInfo struct {
@@ -666,6 +651,8 @@ type DashboardsInfo struct {
 	TracesBasedPanels               int      `json:"tracesBasedPanels"`
 	DashboardNames                  []string `json:"dashboardNames"`
 	QueriesWithTSV2                 int      `json:"queriesWithTSV2"`
+	DashboardsWithLogsChQuery       int      `json:"dashboardsWithLogsChQuery"`
+	LogsPanelsWithAttrContainsOp    int      `json:"logsPanelsWithAttrContainsOp"`
 }
 
 type TagTelemetryData struct {

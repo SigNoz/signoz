@@ -16,12 +16,14 @@ import { UpdateTimeInterval } from 'store/actions';
 
 import { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';
 import { CardStyled } from './LogsExplorerChart.styled';
+import { getColorsForSeverityLabels } from './utils';
 
 function LogsExplorerChart({
 	data,
 	isLoading,
 	isLabelEnabled = true,
 	className,
+	isLogsExplorerViews = false,
 }: LogsExplorerChartProps): JSX.Element {
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
@@ -29,15 +31,19 @@ function LogsExplorerChart({
 	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] = useCallback(
 		(element, index, allLabels) => ({
 			data: element,
-			backgroundColor: colors[index % colors.length] || themeColors.red,
-			borderColor: colors[index % colors.length] || themeColors.red,
+			backgroundColor: isLogsExplorerViews
+				? getColorsForSeverityLabels(allLabels[index], index)
+				: colors[index % colors.length] || themeColors.red,
+			borderColor: isLogsExplorerViews
+				? getColorsForSeverityLabels(allLabels[index], index)
+				: colors[index % colors.length] || themeColors.red,
 			...(isLabelEnabled
 				? {
 						label: allLabels[index],
 				  }
 				: {}),
 		}),
-		[isLabelEnabled],
+		[isLabelEnabled, isLogsExplorerViews],
 	);
 
 	const onDragSelect = useCallback(
@@ -112,6 +118,7 @@ function LogsExplorerChart({
 				<Graph
 					name="logsExplorerChart"
 					data={graphData.data}
+					isStacked={isLogsExplorerViews}
 					type="bar"
 					animate
 					onDragSelect={onDragSelect}

@@ -46,4 +46,17 @@ export function getQueryStats(props: GetQueryStatsProps): void {
 			setData(event?.data);
 		}
 	});
+
+	socket.addEventListener('error', (event) => {
+		console.error(event);
+	});
+
+	socket.addEventListener('close', (event) => {
+		// 1000 is a normal closure status code
+		if (event.code !== 1000) {
+			console.error('WebSocket closed with error:', event);
+		} else {
+			console.error('WebSocket closed normally.');
+		}
+	});
 }

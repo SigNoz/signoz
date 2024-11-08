@@ -62,6 +62,14 @@
 	.shareable-link-popover {
 		margin-left: 8px;
 	}
+	.reset-button {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		background: var(--bg-ink-300);
+		border: 1px solid var(--bg-slate-400);
+		margin-right: 16px;
+	}
 }
 
 .share-modal-content {
@@ -295,5 +303,9 @@
 				background: var(--bg-vanilla-100);
 			}
 		}
+	}
+	.reset-button {
+		background: var(--bg-vanilla-100);
+		border-color: var(--bg-vanilla-300);
 	}
 }

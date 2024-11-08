@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
@@ -18,6 +20,12 @@ import (
 
 // Data store to capture user alert rule settings
 type RuleDB interface {
+	GetChannel(id string) (*model.ChannelItem, *model.ApiError)
+	GetChannels() (*[]model.ChannelItem, *model.ApiError)
+	DeleteChannel(id string) *model.ApiError
+	CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError)
+	EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError)
+
 	// CreateRuleTx stores rule in the db and returns tx and group name (on success)
 	CreateRuleTx(ctx context.Context, rule string) (int64, Tx, error)
 
@@ -68,13 +76,15 @@ type Tx interface {
 
 type ruleDB struct {
 	*sqlx.DB
+	alertManager am.Manager
 }
 
 // todo: move init methods for creating tables
 
-func NewRuleDB(db *sqlx.DB) RuleDB {
+func NewRuleDB(db *sqlx.DB, alertManager am.Manager) RuleDB {
 	return &ruleDB{
 		db,
+		alertManager,
 	}
 }
 
@@ -303,6 +313,229 @@ func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance Planned
 	return "", nil
 }
 
+func getChannelType(receiver *am.Receiver) string {
+
+	if receiver.EmailConfigs != nil {
+		return "email"
+	}
+	if receiver.OpsGenieConfigs != nil {
+		return "opsgenie"
+	}
+	if receiver.PagerdutyConfigs != nil {
+		return "pagerduty"
+	}
+	if receiver.PushoverConfigs != nil {
+		return "pushover"
+	}
+	if receiver.SNSConfigs != nil {
+		return "sns"
+	}
+	if receiver.SlackConfigs != nil {
+		return "slack"
+	}
+	if receiver.VictorOpsConfigs != nil {
+		return "victorops"
+	}
+	if receiver.WebhookConfigs != nil {
+		return "webhook"
+	}
+	if receiver.WechatConfigs != nil {
+		return "wechat"
+	}
+	if receiver.MSTeamsConfigs != nil {
+		return "msteams"
+	}
+	return ""
+}
+
+func (r *ruleDB) GetChannel(id string) (*model.ChannelItem, *model.ApiError) {
+
+	idInt, _ := strconv.Atoi(id)
+	channel := model.ChannelItem{}
+
+	query := "SELECT id, created_at, updated_at, name, type, data data FROM notification_channels WHERE id=?;"
+
+	stmt, err := r.Preparex(query)
+
+	if err != nil {
+		zap.L().Error("Error in preparing sql query for GetChannel", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	err = stmt.Get(&channel, idInt)
+
+	if err != nil {
+		zap.L().Error("Error in getting channel with id", zap.Int("id", idInt), zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return &channel, nil
+}
+
+func (r *ruleDB) DeleteChannel(id string) *model.ApiError {
+
+	idInt, _ := strconv.Atoi(id)
+
+	channelToDelete, apiErrorObj := r.GetChannel(id)
+
+	if apiErrorObj != nil {
+		return apiErrorObj
+	}
+
+	tx, err := r.Begin()
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	{
+		stmt, err := tx.Prepare(`DELETE FROM notification_channels WHERE id=$1;`)
+		if err != nil {
+			zap.L().Error("Error in preparing statement for INSERT to notification_channels", zap.Error(err))
+			tx.Rollback()
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
+
+		if _, err := stmt.Exec(idInt); err != nil {
+			zap.L().Error("Error in Executing prepared statement for INSERT to notification_channels", zap.Error(err))
+			tx.Rollback() // return an error too, we may want to wrap them
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	}
+
+	apiError := r.alertManager.DeleteRoute(channelToDelete.Name)
+	if apiError != nil {
+		tx.Rollback()
+		return apiError
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		zap.L().Error("Error in committing transaction for DELETE command to notification_channels", zap.Error(err))
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return nil
+
+}
+
+func (r *ruleDB) GetChannels() (*[]model.ChannelItem, *model.ApiError) {
+
+	channels := []model.ChannelItem{}
+
+	query := "SELECT id, created_at, updated_at, name, type, data data FROM notification_channels"
+
+	err := r.Select(&channels, query)
+
+	zap.L().Info(query)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return &channels, nil
+
+}
+
+func (r *ruleDB) EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError) {
+
+	idInt, _ := strconv.Atoi(id)
+
+	channel, apiErrObj := r.GetChannel(id)
+
+	if apiErrObj != nil {
+		return nil, apiErrObj
+	}
+	if channel.Name != receiver.Name {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("channel name cannot be changed")}
+	}
+
+	tx, err := r.Begin()
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	channel_type := getChannelType(receiver)
+
+	receiverString, _ := json.Marshal(receiver)
+
+	{
+		stmt, err := tx.Prepare(`UPDATE notification_channels SET updated_at=$1, type=$2, data=$3 WHERE id=$4;`)
+
+		if err != nil {
+			zap.L().Error("Error in preparing statement for UPDATE to notification_channels", zap.Error(err))
+			tx.Rollback()
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
+
+		if _, err := stmt.Exec(time.Now(), channel_type, string(receiverString), idInt); err != nil {
+			zap.L().Error("Error in Executing prepared statement for UPDATE to notification_channels", zap.Error(err))
+			tx.Rollback() // return an error too, we may want to wrap them
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	}
+
+	apiError := r.alertManager.EditRoute(receiver)
+	if apiError != nil {
+		tx.Rollback()
+		return nil, apiError
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		zap.L().Error("Error in committing transaction for INSERT to notification_channels", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return receiver, nil
+
+}
+
+func (r *ruleDB) CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError) {
+
+	channel_type := getChannelType(receiver)
+
+	receiverString, _ := json.Marshal(receiver)
+
+	tx, err := r.Begin()
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	{
+		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
+		if err != nil {
+			zap.L().Error("Error in preparing statement for INSERT to notification_channels", zap.Error(err))
+			tx.Rollback()
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
+
+		if _, err := stmt.Exec(time.Now(), time.Now(), receiver.Name, channel_type, string(receiverString)); err != nil {
+			zap.L().Error("Error in Executing prepared statement for INSERT to notification_channels", zap.Error(err))
+			tx.Rollback() // return an error too, we may want to wrap them
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	}
+
+	apiError := r.alertManager.AddRoute(receiver)
+	if apiError != nil {
+		tx.Rollback()
+		return nil, apiError
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		zap.L().Error("Error in committing transaction for INSERT to notification_channels", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return receiver, nil
+
+}
+
 func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 	alertsInfo := model.AlertsInfo{}
 	// fetch alerts from rules db
@@ -325,9 +558,32 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 			continue
 		}
 		alertNames = append(alertNames, rule.AlertName)
-		if rule.AlertType == "LOGS_BASED_ALERT" {
+		if rule.AlertType == AlertTypeLogs {
 			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
-		} else if rule.AlertType == "METRIC_BASED_ALERT" {
+
+			if rule.RuleCondition != nil && rule.RuleCondition.CompositeQuery != nil {
+				if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+					if strings.Contains(alert, "signoz_logs.distributed_logs") ||
+						strings.Contains(alert, "signoz_logs.logs") {
+						alertsInfo.AlertsWithLogsChQuery = alertsInfo.AlertsWithLogsChQuery + 1
+					}
+				}
+			}
+
+			for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+				if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+					if query.Filters != nil {
+						for _, item := range query.Filters.Items {
+							if slices.Contains([]string{"contains", "ncontains", "like", "nlike"}, string(item.Operator)) {
+								if item.Key.Key != "body" {
+									alertsInfo.AlertsWithLogsContainsOp += 1
+								}
+							}
+						}
+					}
+				}
+			}
+		} else if rule.AlertType == AlertTypeMetric {
 			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
 			if rule.RuleCondition != nil && rule.RuleCondition.CompositeQuery != nil {
 				if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
@@ -343,11 +599,37 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 					}
 				}
 			}
-		} else if rule.AlertType == "TRACES_BASED_ALERT" {
+		} else if rule.AlertType == AlertTypeTraces {
 			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
 		}
 		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1
 	}
 	alertsInfo.AlertNames = alertNames
+
+	channels, _ := r.GetChannels()
+	if channels != nil {
+		alertsInfo.TotalChannels = len(*channels)
+		for _, channel := range *channels {
+			if channel.Type == "slack" {
+				alertsInfo.SlackChannels = alertsInfo.SlackChannels + 1
+			}
+			if channel.Type == "webhook" {
+				alertsInfo.WebHookChannels = alertsInfo.WebHookChannels + 1
+			}
+			if channel.Type == "email" {
+				alertsInfo.EmailChannels = alertsInfo.EmailChannels + 1
+			}
+			if channel.Type == "pagerduty" {
+				alertsInfo.PagerDutyChannels = alertsInfo.PagerDutyChannels + 1
+			}
+			if channel.Type == "opsgenie" {
+				alertsInfo.OpsGenieChannels = alertsInfo.OpsGenieChannels + 1
+			}
+			if channel.Type == "msteams" {
+				alertsInfo.MSTeamsChannels = alertsInfo.MSTeamsChannels + 1
+			}
+		}
+	}
+
 	return &alertsInfo, nil
 }

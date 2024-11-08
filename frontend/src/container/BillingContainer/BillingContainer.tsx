@@ -348,7 +348,12 @@ export default function BillingContainer(): JSX.Element {
 	const BillingUsageGraphCallback = useCallback(
 		() =>
 			!isLoading && !isFetchingBillingData ? (
-				<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
+				<>
+					<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
+					<div className="billing-update-note">
+						Note: Billing metrics are updated once every 24 hours.
+					</div>
+				</>
 			) : (
 				<Card className="empty-graph-card" bordered={false}>
 					<Spinner size="large" tip="Loading..." height="35vh" />

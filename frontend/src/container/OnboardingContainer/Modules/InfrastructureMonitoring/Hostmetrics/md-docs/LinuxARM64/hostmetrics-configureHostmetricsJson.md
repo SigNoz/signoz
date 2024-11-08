@@ -1,6 +1,6 @@
 ### Step 1: Download/Copy this hostmetrics JSON file
 
-Download/Copy the `hostmetrics-with-variable.json` from [here](https://github.com/SigNoz/dashboards/blob/main/hostmetrics/hostmetrics-with-variable.json)
+Download/Copy the `hostmetrics.json` from [here](https://github.com/SigNoz/dashboards/blob/main/hostmetrics/hostmetrics.json)
 
 
 ### Step 2: Import hostmetrics JSON file to SigNoz Cloud

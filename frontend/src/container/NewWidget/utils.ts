@@ -1,3 +1,4 @@
+import { DefaultOptionType } from 'antd/es/select';
 import { omitIdFromQuery } from 'components/ExplorerCard/utils';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -8,10 +9,18 @@ import {
 	listViewInitialTraceQuery,
 	PANEL_TYPES_INITIAL_QUERY,
 } from 'container/NewDashboard/ComponentsSlider/constants';
-import { cloneDeep, isEqual, set, unset } from 'lodash-es';
+import { categoryToSupport } from 'container/QueryBuilder/filters/BuilderUnitsFilter/config';
+import { cloneDeep, isEmpty, isEqual, set, unset } from 'lodash-es';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
+
+import {
+	dataTypeCategories,
+	getCategoryName,
+} from './RightContainer/dataFormatCategories';
+import { CategoryNames } from './RightContainer/types';
 
 export const getIsQueryModified = (
 	currentQuery: Query,
@@ -492,3 +501,77 @@ export const getDefaultWidgetData = (
 		...listViewInitialTraceQuery.builder.queryData[0].selectColumns,
 	],
 });
+
+export const PANEL_TYPE_TO_QUERY_TYPES: Record<PANEL_TYPES, EQueryType[]> = {
+	[PANEL_TYPES.TIME_SERIES]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.TABLE]: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	[PANEL_TYPES.VALUE]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.LIST]: [EQueryType.QUERY_BUILDER],
+	[PANEL_TYPES.TRACE]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.BAR]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.PIE]: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	[PANEL_TYPES.HISTOGRAM]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.EMPTY_WIDGET]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+};
+
+/**
+ * Retrieves a list of category select options based on the provided category name.
+ * If the category is found, it maps the formats to an array of objects containing
+ * the label and value for each format.
+ */
+export const getCategorySelectOptionByName = (
+	name?: CategoryNames | string,
+): DefaultOptionType[] =>
+	dataTypeCategories
+		.find((category) => category.name === name)
+		?.formats.map((format) => ({
+			label: format.name,
+			value: format.id,
+		})) || [];
+
+/**
+ * Generates unit options based on the provided column unit.
+ * It first retrieves the category name associated with the column unit.
+ * If the category is empty, it maps all supported categories to their respective
+ * select options. If a valid category is found, it filters the supported categories
+ * to return only the options for the matched category.
+ */
+export const unitOptions = (columnUnit: string): DefaultOptionType[] => {
+	const category = getCategoryName(columnUnit);
+	if (isEmpty(category)) {
+		return categoryToSupport.map((category) => ({
+			label: category,
+			options: getCategorySelectOptionByName(category),
+		}));
+	}
+	return categoryToSupport
+		.filter((supportedCategory) => supportedCategory === category)
+		.map((filteredCategory) => ({
+			label: filteredCategory,
+			options: getCategorySelectOptionByName(filteredCategory),
+		}));
+};

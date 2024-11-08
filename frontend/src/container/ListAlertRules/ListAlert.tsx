@@ -1,11 +1,10 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { Input, Typography } from 'antd';
+import { Flex, Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
 import DropDown from 'components/DropDown/DropDown';
-import { listAlertMessage } from 'components/LaunchChatSupport/util';
 import {
 	DynamicColumnsKey,
 	TableDataSource,
@@ -34,12 +33,7 @@ import { GettableAlert } from 'types/api/alerts/get';
 import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
-import {
-	Button,
-	ButtonContainer,
-	ColumnButton,
-	SearchContainer,
-} from './styles';
+import { Button, ColumnButton, SearchContainer } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
 import { alertActionLogEvent, filterAlerts } from './utils';
@@ -139,7 +133,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				params.set(QueryParams.ruleId, record.id.toString());
 
 				setEditLoader(false);
-				history.push(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
+				history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 			})
 			.catch(handleError)
 			.finally(() => setEditLoader(false));
@@ -373,21 +367,25 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					onChange={handleSearch}
 					defaultValue={searchString}
 				/>
-				<ButtonContainer>
+				<Flex gap={12}>
+					{addNewAlert && (
+						<Button
+							type="primary"
+							onClick={onClickNewAlertHandler}
+							icon={<PlusOutlined />}
+						>
+							New Alert
+						</Button>
+					)}
 					<TextToolTip
 						{...{
 							text: `More details on how to create alerts`,
 							url:
 								'https://signoz.io/docs/alerts/?utm_source=product&utm_medium=list-alerts',
+							urlText: 'Learn More',
 						}}
 					/>
-
-					{addNewAlert && (
-						<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
-							New Alert
-						</Button>
-					)}
-				</ButtonContainer>
+				</Flex>
 			</SearchContainer>
 			<DynamicColumnTable
 				tablesource={TableDataSource.Alert}
@@ -398,15 +396,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				dynamicColumns={dynamicColumns}
 				onChange={handleChange}
 				pagination={paginationConfig}
-				facingIssueBtn={{
-					attributes: {
-						screen: 'Alert list page',
-					},
-					eventName: 'Alert: Facing Issues in alert',
-					buttonText: 'Facing issues with alerts?',
-					message: listAlertMessage,
-					onHoverText: 'Click here to get help with alerts',
-				}}
 			/>
 		</>
 	);

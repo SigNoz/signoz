@@ -1,0 +1,30 @@
+{
+  "breadcrumb": "Messaging Queues",
+  "header": "Kafka / Overview",
+  "overview": {
+    "title": "Start sending data in as little as 20 minutes",
+    "subtitle": "Connect and Monitor Your Data Streams"
+  },
+  "configureConsumer": {
+    "title": "Configure Consumer",
+    "description": "Add consumer data sources to gain insights and enhance monitoring.",
+    "button": "Get Started"
+  },
+  "configureProducer": {
+    "title": "Configure Producer",
+    "description": "Add producer data sources to gain insights and enhance monitoring.",
+    "button": "Get Started"
+  },
+  "monitorKafka": {
+    "title": "Monitor kafka",
+    "description": "Add your Kafka source to gain insights and enhance activity tracking.",
+    "button": "Get Started"
+  },
+  "summarySection": {
+    "viewDetailsButton": "View Details"
+  },
+  "confirmModal": {
+    "content": "Before navigating to the details page, please make sure you have configured all the required setup to ensure correct data monitoring.",
+    "okText": "Proceed"
+  }
+}

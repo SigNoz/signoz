@@ -1,10 +1,14 @@
 import { Tabs } from 'antd';
 import { TabsProps } from 'antd/lib';
+import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
+import ROUTES from 'constants/routes';
 import AllAlertRules from 'container/ListAlertRules';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
+import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
+import AlertDetails from 'pages/AlertDetails';
 import { useLocation } from 'react-router-dom';
 
 function AllAlertList(): JSX.Element {
@@ -12,15 +16,40 @@ function AllAlertList(): JSX.Element {
 	const location = useLocation();
 
 	const tab = urlQuery.get('tab');
+	const isAlertHistory = location.pathname === ROUTES.ALERT_HISTORY;
+	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
+
+	const search = urlQuery.get('search');
+
 	const items: TabsProps['items'] = [
-		{ label: 'Alert Rules', key: 'AlertRules', children: <AllAlertRules /> },
 		{
-			label: 'Triggered Alerts',
+			label: (
+				<div className="periscope-tab top-level-tab">
+					<GalleryVerticalEnd size={16} />
+					Triggered Alerts
+				</div>
+			),
 			key: 'TriggeredAlerts',
 			children: <TriggeredAlerts />,
 		},
 		{
-			label: 'Configuration',
+			label: (
+				<div className="periscope-tab top-level-tab">
+					<Pyramid size={16} />
+					Alert Rules
+				</div>
+			),
+			key: 'AlertRules',
+			children:
+				isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />,
+		},
+		{
+			label: (
+				<div className="periscope-tab top-level-tab">
+					<ConfigureIcon />
+					Configuration
+				</div>
+			),
 			key: 'Configuration',
 			children: <PlannedDowntime />,
 		},
@@ -33,8 +62,16 @@ function AllAlertList(): JSX.Element {
 			activeKey={tab || 'AlertRules'}
 			onChange={(tab): void => {
 				urlQuery.set('tab', tab);
-				history.replace(`${location.pathname}?${urlQuery.toString()}`);
+				let params = `tab=${tab}`;
+
+				if (search) {
+					params += `&search=${search}`;
+				}
+				history.replace(`/alerts?${params}`);
 			}}
+			className={`${
+				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''
+			}`}
 		/>
 	);
 }

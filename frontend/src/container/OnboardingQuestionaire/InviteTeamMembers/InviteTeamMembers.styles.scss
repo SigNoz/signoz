@@ -1,0 +1,122 @@
+.team-member-container {
+	display: flex;
+	align-items: center;
+
+	.team-member-role-select {
+		width: 20%;
+
+		.ant-select-selector {
+			border: 1px solid #1d212d;
+			border-top-left-radius: 0px;
+			border-bottom-left-radius: 0px;
+		}
+	}
+
+	.team-member-email-input {
+		width: 80%;
+		background-color: #121317;
+		border-top-right-radius: 0px;
+		border-bottom-right-radius: 0px;
+
+		.ant-input,
+		.ant-input-group-addon {
+			background-color: #121317 !important;
+			border-right: 0px;
+			border-top-right-radius: 0px;
+			border-bottom-right-radius: 0px;
+		}
+	}
+}
+
+.questions-form-container {
+	.error-message-container,
+	.success-message-container,
+	.partially-sent-invites-container {
+		border-radius: 4px;
+		width: 100%;
+		display: flex;
+		align-items: center;
+
+		.error-message,
+		.success-message {
+			font-size: 12px;
+			font-weight: 400;
+
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+	}
+
+	.invite-users-error-message-container,
+	.invite-users-success-message-container {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+
+		.success-message {
+			color: var(--bg-success-500, #00b37e);
+		}
+	}
+
+	.partially-sent-invites-container {
+		margin-top: 16px;
+		padding: 8px;
+		border: 1px solid #1d212d;
+		background-color: #121317;
+
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+
+		.partially-sent-invites-message {
+			color: var(--bg-warning-500, #fbbd23);
+
+			font-size: 12px;
+			font-weight: 400;
+
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+	}
+}
+
+.lightMode {
+	.team-member-container {
+		.team-member-role-select {
+			.ant-select-selector {
+				border: 1px solid var(--bg-vanilla-300);
+			}
+		}
+
+		.team-member-email-input {
+			background-color: var(--bg-vanilla-100);
+
+			.ant-input,
+			.ant-input-group-addon {
+				background-color: var(--bg-vanilla-100) !important;
+			}
+		}
+	}
+
+	.questions-form-container {
+		.invite-users-error-message-container,
+		.invite-users-success-message-container {
+			.success-message {
+				color: var(--bg-success-500, #00b37e);
+			}
+		}
+
+		.partially-sent-invites-container {
+			border: 1px solid var(--bg-vanilla-300);
+			background-color: var(--bg-vanilla-100);
+
+			.partially-sent-invites-message {
+				color: var(--bg-warning-500, #fbbd23);
+			}
+		}
+	}
+}

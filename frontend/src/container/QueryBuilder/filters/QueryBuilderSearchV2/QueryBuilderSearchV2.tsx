@@ -56,7 +56,13 @@ import { v4 as uuid } from 'uuid';
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
 import { TypographyText } from '../QueryBuilderSearch/style';
-import { getTagToken, isInNInOperator } from '../QueryBuilderSearch/utils';
+import {
+	checkCommaInValue,
+	getOperatorFromValue,
+	getOperatorValue,
+	getTagToken,
+	isInNInOperator,
+} from '../QueryBuilderSearch/utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
 import Suggestions from './Suggestions';
 
@@ -99,8 +105,8 @@ function getInitTags(query: IBuilderQuery): ITag[] {
 	return query.filters.items.map((item) => ({
 		id: item.id,
 		key: item.key as BaseAutocompleteData,
-		op: item.op,
-		value: `${item.value}`,
+		op: getOperatorFromValue(item.op),
+		value: item.value,
 	}));
 }
 
@@ -213,18 +219,11 @@ function QueryBuilderSearchV2(
 	const isQueryEnabled = useMemo(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
 			return query.dataSource === DataSource.METRICS
-				? !!query.aggregateOperator &&
-						!!query.dataSource &&
-						!!query.aggregateAttribute.dataType
+				? !!query.dataSource && !!query.aggregateAttribute.dataType
 				: true;
 		}
 		return false;
-	}, [
-		currentState,
-		query.aggregateAttribute.dataType,
-		query.aggregateOperator,
-		query.dataSource,
-	]);
+	}, [currentState, query.aggregateAttribute.dataType, query.dataSource]);
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
@@ -245,7 +244,7 @@ function QueryBuilderSearchV2(
 		isFetching: isFetchingSuggestions,
 	} = useGetAttributeSuggestions(
 		{
-			searchText: searchValue.split(' ')[0],
+			searchText: searchValue?.split(' ')[0],
 			dataSource: query.dataSource,
 			filters: query.filters,
 		},
@@ -287,16 +286,62 @@ function QueryBuilderSearchV2(
 				parsedValue = value;
 			}
 			if (currentState === DropdownState.ATTRIBUTE_KEY) {
-				setCurrentFilterItem((prev) => ({
-					...prev,
-					key: parsedValue as BaseAutocompleteData,
-					op: '',
-					value: '',
-				}));
-				setCurrentState(DropdownState.OPERATOR);
-				setSearchValue((parsedValue as BaseAutocompleteData)?.key);
+				// Case - convert abc def ghi type attribute keys directly to body contains abc def ghi
+				if (
+					isObject(parsedValue) &&
+					parsedValue?.key &&
+					parsedValue?.key?.split(' ').length > 1
+				) {
+					setTags((prev) => [
+						...prev,
+						{
+							key: {
+								key: 'body',
+								dataType: DataTypes.String,
+								type: '',
+								isColumn: true,
+								isJSON: false,
+								// eslint-disable-next-line sonarjs/no-duplicate-string
+								id: 'body--string----true',
+							},
+							op: OPERATORS.CONTAINS,
+							value: (parsedValue as BaseAutocompleteData)?.key,
+						},
+					]);
+					setCurrentFilterItem(undefined);
+					setSearchValue('');
+					setCurrentState(DropdownState.ATTRIBUTE_KEY);
+				} else {
+					setCurrentFilterItem((prev) => ({
+						...prev,
+						key: parsedValue as BaseAutocompleteData,
+						op: '',
+						value: '',
+					}));
+					setCurrentState(DropdownState.OPERATOR);
+					setSearchValue(`${(parsedValue as BaseAutocompleteData)?.key} `);
+				}
 			} else if (currentState === DropdownState.OPERATOR) {
-				if (value === OPERATORS.EXISTS || value === OPERATORS.NOT_EXISTS) {
+				if (isEmpty(value) && currentFilterItem?.key?.key) {
+					setTags((prev) => [
+						...prev,
+						{
+							key: {
+								key: 'body',
+								dataType: DataTypes.String,
+								type: '',
+								isColumn: true,
+								isJSON: false,
+								id: 'body--string----true',
+							},
+							op: OPERATORS.CONTAINS,
+							value: currentFilterItem?.key?.key,
+						},
+					]);
+					setCurrentFilterItem(undefined);
+					setSearchValue('');
+					setCurrentState(DropdownState.ATTRIBUTE_KEY);
+				} else if (value === OPERATORS.EXISTS || value === OPERATORS.NOT_EXISTS) {
 					setTags((prev) => [
 						...prev,
 						{
@@ -315,7 +360,7 @@ function QueryBuilderSearchV2(
 						value: '',
 					}));
 					setCurrentState(DropdownState.ATTRIBUTE_VALUE);
-					setSearchValue(`${currentFilterItem?.key?.key} ${value}`);
+					setSearchValue(`${currentFilterItem?.key?.key} ${value} `);
 				}
 			} else if (currentState === DropdownState.ATTRIBUTE_VALUE) {
 				const operatorType =
@@ -324,6 +369,23 @@ function QueryBuilderSearchV2(
 
 				if (isMulti) {
 					const { tagKey, tagOperator, tagValue } = getTagToken(searchValue);
+					// this condition takes care of adding the IN/NIN multi values when pressed enter on an already existing value.
+					// not the best interaction but in sync with what we have today!
+					if (tagValue.includes(String(value))) {
+						setSearchValue('');
+						setCurrentState(DropdownState.ATTRIBUTE_KEY);
+						setCurrentFilterItem(undefined);
+						setTags((prev) => [
+							...prev,
+							{
+								key: currentFilterItem?.key,
+								op: currentFilterItem?.op,
+								value: tagValue,
+							} as ITag,
+						]);
+						return;
+					}
+					// this is for adding subsequent comma seperated values
 					const newSearch = [...tagValue];
 					newSearch[newSearch.length === 0 ? 0 : newSearch.length - 1] = value;
 					const newSearchValue = newSearch.join(',');
@@ -356,6 +418,7 @@ function QueryBuilderSearchV2(
 				event.stopPropagation();
 				setTags((prev) => prev.slice(0, -1));
 			}
+
 			if ((event.ctrlKey || event.metaKey) && event.key === '/') {
 				event.preventDefault();
 				event.stopPropagation();
@@ -375,12 +438,14 @@ function QueryBuilderSearchV2(
 		if (searchValue) {
 			const operatorType =
 				operatorTypeMapper[currentFilterItem?.op || ''] || 'NOT_VALID';
+			// if key is added and operator is not present then convert to body CONTAINS key
 			if (
 				currentFilterItem?.key &&
 				isEmpty(currentFilterItem?.op) &&
 				whereClauseConfig?.customKey === 'body' &&
 				whereClauseConfig?.customOp === OPERATORS.CONTAINS
 			) {
+				// eslint-disable-next-line sonarjs/no-identical-functions
 				setTags((prev) => [
 					...prev,
 					{
@@ -403,6 +468,7 @@ function QueryBuilderSearchV2(
 				currentFilterItem?.op === OPERATORS.EXISTS ||
 				currentFilterItem?.op === OPERATORS.NOT_EXISTS
 			) {
+				// is exists and not exists operator is present then convert directly to tag! no need of value here
 				setTags((prev) => [
 					...prev,
 					{
@@ -415,6 +481,7 @@ function QueryBuilderSearchV2(
 				setSearchValue('');
 				setCurrentState(DropdownState.ATTRIBUTE_KEY);
 			} else if (
+				// if the current state is in sync with the kind of operator used then convert into a tag
 				validationMapper[operatorType]?.(
 					isArray(currentFilterItem?.value)
 						? currentFilterItem?.value.length || 0
@@ -445,15 +512,16 @@ function QueryBuilderSearchV2(
 
 	// this useEffect takes care of tokenisation based on the search state
 	useEffect(() => {
-		if (isFetchingSuggestions) {
-			return;
-		}
+		// if there is no search value reset to the default state
 		if (!searchValue) {
 			setCurrentFilterItem(undefined);
 			setCurrentState(DropdownState.ATTRIBUTE_KEY);
 		}
+
+		// split the current search value based on delimiters
 		const { tagKey, tagOperator, tagValue } = getTagToken(searchValue);
 
+		// Case 1 -> when typing an attribute key (not selecting from dropdown)
 		if (tagKey && isUndefined(currentFilterItem?.key)) {
 			let currentRunningAttributeKey;
 			const isSuggestedKeyInAutocomplete = suggestionsData?.payload?.attributes?.some(
@@ -470,8 +538,17 @@ function QueryBuilderSearchV2(
 					[currentRunningAttributeKey] = allAttributesMatchingTheKey;
 				}
 				if (allAttributesMatchingTheKey?.length > 1) {
-					// the priority logic goes here
-					[currentRunningAttributeKey] = allAttributesMatchingTheKey;
+					// when there are multiple options let the user choose it until they do not select an operator
+					if (tagOperator) {
+						// if they select the operator then pick the first one from the ranked list
+						setCurrentFilterItem({
+							key: allAttributesMatchingTheKey?.[0],
+							op: tagOperator,
+							value: '',
+						});
+						setCurrentState(DropdownState.ATTRIBUTE_VALUE);
+					}
+					return;
 				}
 
 				if (currentRunningAttributeKey) {
@@ -484,28 +561,31 @@ function QueryBuilderSearchV2(
 					setCurrentState(DropdownState.OPERATOR);
 				}
 			}
-			if (suggestionsData?.payload?.attributes?.length === 0) {
+			// again let's not auto select anything for the user
+			if (tagOperator) {
 				setCurrentFilterItem({
 					key: {
-						key: tagKey.split(' ')[0],
-						// update this for has and nhas operator , check the useEffect of source keys in older component for details
+						key: tagKey,
 						dataType: DataTypes.EMPTY,
 						type: '',
 						isColumn: false,
 						isJSON: false,
 					},
-					op: '',
+					op: tagOperator,
 					value: '',
 				});
-				setCurrentState(DropdownState.OPERATOR);
+				setCurrentState(DropdownState.ATTRIBUTE_VALUE);
 			}
 		} else if (
+			// Case 2 - if key is defined but the search text doesn't match with the set key,
+			// can happen when user selects from dropdown and then deletes a few characters
 			currentFilterItem?.key &&
 			currentFilterItem?.key?.key !== tagKey.split(' ')[0]
 		) {
 			setCurrentFilterItem(undefined);
 			setCurrentState(DropdownState.ATTRIBUTE_KEY);
 		} else if (tagOperator && isEmpty(currentFilterItem?.op)) {
+			// Case 3 -> key is set and now typing for the operator
 			if (
 				tagOperator === OPERATORS.EXISTS ||
 				tagOperator === OPERATORS.NOT_EXISTS
@@ -531,6 +611,7 @@ function QueryBuilderSearchV2(
 				setCurrentState(DropdownState.ATTRIBUTE_VALUE);
 			}
 		} else if (
+			// Case 4 -> selected operator from dropdown and then erased a part of it
 			!isEmpty(currentFilterItem?.op) &&
 			tagOperator !== currentFilterItem?.op
 		) {
@@ -540,10 +621,12 @@ function QueryBuilderSearchV2(
 				value: '',
 			}));
 			setCurrentState(DropdownState.OPERATOR);
-		} else if (!isEmpty(tagValue)) {
+		} else if (currentState === DropdownState.ATTRIBUTE_VALUE) {
+			// Case 5 -> the final value state where we set the current filter values and the tokenisation happens on either
+			// dropdown click or blur event
 			const currentValue = {
 				key: currentFilterItem?.key as BaseAutocompleteData,
-				operator: currentFilterItem?.op as string,
+				op: currentFilterItem?.op as string,
 				value: tagValue,
 			};
 			if (!isEqual(currentValue, currentFilterItem)) {
@@ -561,18 +644,38 @@ function QueryBuilderSearchV2(
 		suggestionsData?.payload?.attributes,
 		searchValue,
 		isFetchingSuggestions,
+		currentState,
 	]);
 
 	// the useEffect takes care of setting the dropdown values correctly on change of the current state
 	useEffect(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
+			const { tagKey } = getTagToken(searchValue);
 			if (isLogsExplorerPage) {
-				setDropdownOptions(
-					suggestionsData?.payload?.attributes?.map((key) => ({
+				// add the user typed option in the dropdown to select that and move ahead irrespective of the matches and all
+				setDropdownOptions([
+					...(!isEmpty(tagKey) &&
+					!suggestionsData?.payload?.attributes?.some((val) =>
+						isEqual(val.key, tagKey),
+					)
+						? [
+								{
+									label: tagKey,
+									value: {
+										key: tagKey,
+										dataType: DataTypes.EMPTY,
+										type: '',
+										isColumn: false,
+										isJSON: false,
+									},
+								},
+						  ]
+						: []),
+					...(suggestionsData?.payload?.attributes?.map((key) => ({
 						label: key.key,
 						value: key,
-					})) || [],
-				);
+					})) || []),
+				]);
 			} else {
 				setDropdownOptions(
 					data?.payload?.attributeKeys?.map((key) => ({
@@ -583,7 +686,7 @@ function QueryBuilderSearchV2(
 			}
 		}
 		if (currentState === DropdownState.OPERATOR) {
-			const keyOperator = searchValue.split(' ');
+			const keyOperator = searchValue?.split(' ');
 			const partialOperator = keyOperator?.[1];
 			const strippedKey = keyOperator?.[0];
 
@@ -602,12 +705,14 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
+				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
 				setDropdownOptions(operatorOptions);
 			} else if (strippedKey.endsWith('[*]') && strippedKey.startsWith('body.')) {
 				operatorOptions = [OPERATORS.HAS, OPERATORS.NHAS].map((operator) => ({
 					label: operator,
 					value: operator,
 				}));
+				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
 				setDropdownOptions(operatorOptions);
 			} else {
 				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES.universal.map(
@@ -622,33 +727,33 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
+				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
 				setDropdownOptions(operatorOptions);
 			}
 		}
 
 		if (currentState === DropdownState.ATTRIBUTE_VALUE) {
-			const values: string[] =
-				Object.values(attributeValues?.payload || {}).find((el) => !!el) || [];
-
+			const values: string[] = [];
 			const { tagValue } = getTagToken(searchValue);
+			if (isArray(tagValue)) {
+				if (!isEmpty(tagValue[tagValue.length - 1]))
+					values.push(tagValue[tagValue.length - 1]);
+			} else if (!isEmpty(tagValue)) values.push(tagValue);
 
-			if (values.length === 0) {
-				if (isArray(tagValue)) {
-					if (!isEmpty(tagValue[tagValue.length - 1]))
-						values.push(tagValue[tagValue.length - 1]);
-				} else if (!isEmpty(tagValue)) values.push(tagValue);
-			}
+			values.push(
+				...(Object.values(attributeValues?.payload || {}).find((el) => !!el) || []),
+			);
 
 			setDropdownOptions(
 				values.map((val) => ({
-					label: val,
+					label: checkCommaInValue(String(val)),
 					value: val,
 				})),
 			);
 		}
 	}, [
 		attributeValues?.payload,
-		currentFilterItem?.key.dataType,
+		currentFilterItem?.key?.dataType,
 		currentState,
 		data?.payload?.attributeKeys,
 		isLogsExplorerPage,
@@ -656,25 +761,44 @@ function QueryBuilderSearchV2(
 		suggestionsData?.payload?.attributes,
 	]);
 
+	// keep the query in sync with the selected tags in logs explorer page
 	useEffect(() => {
 		const filterTags: IBuilderQuery['filters'] = {
 			op: 'AND',
 			items: [],
 		};
 		tags.forEach((tag) => {
+			const computedTagValue =
+				tag.value &&
+				Array.isArray(tag.value) &&
+				tag.value[tag.value.length - 1] === ''
+					? tag.value?.slice(0, -1)
+					: tag.value ?? '';
 			filterTags.items.push({
 				id: tag.id || uuid().slice(0, 8),
 				key: tag.key,
-				op: tag.op,
-				value: tag.value,
+				op: getOperatorValue(tag.op),
+				value: computedTagValue,
 			});
 		});
 
 		if (!isEqual(query.filters, filterTags)) {
 			onChange(filterTags);
-			setTags(filterTags.items as ITag[]);
 		}
-	}, [onChange, query.filters, tags]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [tags]);
+
+	// keep the use effects pure!
+	// if the tags lacks the ID then the above use effect will add it to query
+	// and then the below use effect will take care of adding it to the tags.
+	// keep the tags in sycn with current query.
+	useEffect(() => {
+		// convert the query and tags to same format before comparison
+		if (!isEqual(getInitTags(query), tags)) {
+			setTags(getInitTags(query));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [query]);
 
 	const isLastQuery = useMemo(
 		() =>
@@ -710,7 +834,7 @@ function QueryBuilderSearchV2(
 	);
 
 	const queryTags = useMemo(
-		() => tags.map((tag) => `${tag.key.key} ${tag.op} ${tag.value}`),
+		() => tags.map((tag) => `${tag.key?.key} ${tag.op} ${tag.value}`),
 		[tags],
 	);
 
@@ -843,6 +967,7 @@ function QueryBuilderSearchV2(
 								label={option.label}
 								value={option.value}
 								option={currentState}
+								searchValue={searchValue}
 							/>
 						</Select.Option>
 					);

@@ -67,6 +67,10 @@ export const metricQueryFunctionOptions: SelectOption<string, string>[] = [
 		value: QueryFunctionsTypes.TIME_SHIFT,
 		label: 'Time Shift',
 	},
+	{
+		value: QueryFunctionsTypes.TIME_SHIFT,
+		label: 'Time Shift',
+	},
 ];
 
 export const logsQueryFunctionOptions: SelectOption<string, string>[] = [
@@ -80,10 +84,15 @@ interface QueryFunctionConfigType {
 		showInput: boolean;
 		inputType?: string;
 		placeholder?: string;
+		disabled?: boolean;
 	};
 }
 
 export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
+	anomaly: {
+		showInput: false,
+		disabled: true,
+	},
 	cutOffMin: {
 		showInput: true,
 		inputType: 'text',

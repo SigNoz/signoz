@@ -5,13 +5,11 @@ import './AppLayout.styles.scss';
 
 import * as Sentry from '@sentry/react';
 import { Flex } from 'antd';
-import getLocalStorageKey from 'api/browser/localstorage/get';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import cx from 'classnames';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import SideNav from 'container/SideNav';
@@ -22,22 +20,13 @@ import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import {
-	ReactNode,
-	useCallback,
-	useEffect,
-	useLayoutEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
-import { sideBarCollapse } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {
@@ -47,6 +36,7 @@ import {
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
+import { isCloudUser } from 'utils/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
@@ -58,10 +48,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		(state) => state.app,
 	);
 
-	const [collapsed, setCollapsed] = useState<boolean>(
-		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
-	);
-
 	const { notifications } = useNotifications();
 
 	const isDarkMode = useIsDarkMode();
@@ -71,7 +57,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isPremiumChatSupportEnabled =
 		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
 
+	const isChatSupportEnabled =
+		useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active || false;
+
+	const isCloudUserVal = isCloudUser();
+
 	const showAddCreditCardModal =
+		isLoggedIn &&
+		isChatSupportEnabled &&
+		isCloudUserVal &&
 		!isPremiumChatSupportEnabled &&
 		!licenseData?.payload?.trialConvertedToSubscription;
 
@@ -107,14 +101,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const latestCurrentCounter = useRef(0);
 	const latestVersionCounter = useRef(0);
-
-	const onCollapse = useCallback(() => {
-		setCollapsed((collapsed) => !collapsed);
-	}, []);
-
-	useLayoutEffect(() => {
-		dispatch(sideBarCollapse(collapsed));
-	}, [collapsed, dispatch]);
 
 	useEffect(() => {
 		if (
@@ -205,7 +191,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const pageTitle = t(routeKey);
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED ||
-		pathname === ROUTES.WORKSPACE_LOCKED ||
+		pathname === ROUTES.ONBOARDING ||
 		pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING ||
 		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
 		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
@@ -226,6 +212,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [licenseData, isFetching]);
 
+	useEffect(() => {
+		// after logging out hide the trial expiry banner
+		if (!isLoggedIn) {
+			setShowTrialExpiryBanner(false);
+		}
+	}, [isLoggedIn]);
+
 	const handleUpgrade = (): void => {
 		if (role === 'ADMIN') {
 			history.push(ROUTES.BILLING);
@@ -241,20 +234,22 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isTracesView = (): boolean =>
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
-	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
-	const isDashboardView = (): boolean => {
-		/**
-		 * need to match using regex here as the getRoute function will not work for
-		 * routes with id
-		 */
-		const regex = /^\/dashboard\/[a-zA-Z0-9_-]+$/;
-		return regex.test(pathname);
-	};
+	const isMessagingQueues = (): boolean =>
+		routeKey === 'MESSAGING_QUEUES' || routeKey === 'MESSAGING_QUEUES_DETAIL';
 
-	const isDashboardWidgetView = (): boolean => {
-		const regex = /^\/dashboard\/[a-zA-Z0-9_-]+\/new$/;
-		return regex.test(pathname);
-	};
+	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
+	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
+	const isAlertOverview = (): boolean => routeKey === 'ALERT_OVERVIEW';
+	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
+
+	const isDashboardView = (): boolean =>
+		isPathMatch(/^\/dashboard\/[a-zA-Z0-9_-]+$/);
+
+	const isDashboardWidgetView = (): boolean =>
+		isPathMatch(/^\/dashboard\/[a-zA-Z0-9_-]+\/new$/);
+
+	const isTraceDetailsView = (): boolean =>
+		isPathMatch(/^\/trace\/[a-zA-Z0-9]+(\?.*)?$/);
 
 	useEffect(() => {
 		if (isDarkMode) {
@@ -266,15 +261,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [isDarkMode]);
 
-	const isSideNavCollapsed = getLocalStorageKey(IS_SIDEBAR_COLLAPSED);
-
 	return (
-		<Layout
-			className={cx(
-				isDarkMode ? 'darkMode' : 'lightMode',
-				isSideNavCollapsed ? 'sidebarCollapsed' : '',
-			)}
-		>
+		<Layout className={cx(isDarkMode ? 'darkMode' : 'lightMode')}>
 			<Helmet>
 				<title>{pageTitle}</title>
 			</Helmet>
@@ -300,25 +288,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				</div>
 			)}
 
-			<Flex
-				className={cx(
-					'app-layout',
-					isDarkMode ? 'darkMode' : 'lightMode',
-					!collapsed && !renderFullScreen ? 'docked' : '',
-				)}
-			>
+			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
 				{isToDisplayLayout && !renderFullScreen && (
-					<SideNav
-						licenseData={licenseData}
-						isFetching={isFetching}
-						onCollapse={onCollapse}
-						collapsed={collapsed}
-					/>
+					<SideNav licenseData={licenseData} isFetching={isFetching} />
 				)}
-				<div
-					className={cx('app-content', collapsed ? 'collapsed' : '')}
-					data-overlayscrollbars-initialize
-				>
+				<div className="app-content" data-overlayscrollbars-initialize>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent data-overlayscrollbars-initialize>
 							<OverlayScrollbar>
@@ -329,9 +303,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isTracesView() ||
 											isDashboardView() ||
 											isDashboardWidgetView() ||
-											isDashboardListView()
+											isDashboardListView() ||
+											isAlertHistory() ||
+											isAlertOverview() ||
+											isMessagingQueues()
 												? 0
 												: '0 1rem',
+
+										...(isTraceDetailsView() ? { marginRight: 0 } : {}),
 									}}
 								>
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}

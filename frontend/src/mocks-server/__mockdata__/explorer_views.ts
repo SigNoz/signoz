@@ -78,13 +78,13 @@ export const explorerView = {
 			extraData: '{"color":"#00ffd0"}',
 		},
 		{
-			uuid: '58b010b6-8be9-40d1-8d25-f73b5f7314ad',
-			name: 'success traces list view',
+			uuid: '8c4bf492-d54d-4ab2-a8d6-9c1563f46e1f',
+			name: 'R-test panel',
 			category: '',
-			createdAt: '2023-08-30T13:00:40.958011925Z',
-			createdBy: 'test-email',
-			updatedAt: '2024-04-29T13:09:06.175537361Z',
-			updatedBy: 'test-email',
+			createdAt: '2024-07-01T13:45:57.924686766Z',
+			createdBy: 'test-user-test',
+			updatedAt: '2024-07-01T13:48:31.032106578Z',
+			updatedBy: 'test-user-test',
 			sourcePage: 'traces',
 			tags: [''],
 			compositeQuery: {
@@ -106,13 +106,13 @@ export const explorerView = {
 							items: [
 								{
 									key: {
-										key: 'responseStatusCode',
+										key: 'httpMethod',
 										dataType: 'string',
 										type: 'tag',
 										isColumn: true,
 										isJSON: false,
 									},
-									value: '200',
+									value: 'GET',
 									op: '=',
 								},
 							],
@@ -128,7 +128,7 @@ export const explorerView = {
 								order: 'desc',
 							},
 						],
-						reduceTo: 'sum',
+						reduceTo: 'avg',
 						timeAggregation: 'rate',
 						spaceAggregation: 'sum',
 						ShiftBy: 0,
@@ -137,7 +137,7 @@ export const explorerView = {
 				panelType: 'list',
 				queryType: 'builder',
 			},
-			extraData: '{"color":"#bdff9d"}',
+			extraData: '{"color":"#AD7F58"}',
 		},
 	],
 };

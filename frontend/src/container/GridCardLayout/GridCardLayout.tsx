@@ -438,6 +438,10 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				: true,
 		[selectedDashboard],
 	);
+
+	let isDataAvailableInAnyWidget = false;
+	const isLogEventCalled = useRef<boolean>(false);
+
 	return isDashboardEmpty ? (
 		<DashboardEmptyState />
 	) : (
@@ -468,6 +472,15 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 					if (currentWidget?.panelTypes === PANEL_GROUP_TYPES.ROW) {
 						const rowWidgetProperties = currentPanelMap[id] || {};
+						let { title } = currentWidget;
+						if (rowWidgetProperties.collapsed) {
+							const widgetCount = rowWidgetProperties.widgets?.length || 0;
+							const collapsedText = `(${widgetCount} widget${
+								widgetCount > 1 ? 's' : ''
+							})`;
+							title += ` ${collapsedText}`;
+						}
+
 						return (
 							<CardContainer
 								className="row-card"
@@ -485,9 +498,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 												cursor="move"
 											/>
 										)}
-										<Typography.Text className="section-title">
-											{currentWidget.title}
-										</Typography.Text>
+										<Typography.Text className="section-title">{title}</Typography.Text>
 										{rowWidgetProperties.collapsed ? (
 											<ChevronDown
 												size={14}
@@ -516,6 +527,18 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 						);
 					}
 
+					const checkIfDataExists = (isDataAvailable: boolean): void => {
+						if (!isDataAvailableInAnyWidget && isDataAvailable) {
+							isDataAvailableInAnyWidget = true;
+						}
+						if (!isLogEventCalled.current && isDataAvailableInAnyWidget) {
+							isLogEventCalled.current = true;
+							logEvent('Dashboard Detail: Panel data fetched', {
+								isDataAvailableInAnyWidget,
+							});
+						}
+					};
+
 					return (
 						<CardContainer
 							className={isDashboardLocked ? '' : 'enable-resize'}
@@ -534,6 +557,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 									variables={variables}
 									version={selectedDashboard?.data?.version}
 									onDragSelect={onDragSelect}
+									dataAvailable={checkIfDataExists}
 								/>
 							</Card>
 						</CardContainer>

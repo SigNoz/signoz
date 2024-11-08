@@ -247,8 +247,7 @@ export default function Onboarding(): JSX.Element {
 
 	const handleNext = (): void => {
 		if (activeStep <= 3) {
-			handleNextStep();
-			history.replace(moduleRouteMap[selectedModule.id as ModulesMap]);
+			history.push(moduleRouteMap[selectedModule.id as ModulesMap]);
 		}
 	};
 
@@ -256,6 +255,13 @@ export default function Onboarding(): JSX.Element {
 		setSelectedModule(module);
 		updateSelectedModule(module);
 		updateSelectedDataSource(null);
+	};
+
+	const handleBackNavigation = (): void => {
+		setCurrent(0);
+		setActiveStep(1);
+		setSelectedModule(useCases.APM);
+		resetProgress();
 	};
 
 	useEffect(() => {
@@ -277,9 +283,11 @@ export default function Onboarding(): JSX.Element {
 		} else if (pathname === ROUTES.GET_STARTED_AZURE_MONITORING) {
 			handleModuleSelect(useCases.AzureMonitoring);
 			handleNextStep();
+		} else {
+			handleBackNavigation();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [location.pathname]);
 
 	const [form] = Form.useForm<InviteMemberFormValues>();
 	const [
@@ -304,7 +312,7 @@ export default function Onboarding(): JSX.Element {
 					<div
 						onClick={(): void => {
 							logEvent('Onboarding V2: Skip Button Clicked', {});
-							history.push('/');
+							history.push(ROUTES.APPLICATION);
 						}}
 						className="skip-to-console"
 					>
