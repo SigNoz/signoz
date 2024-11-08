@@ -227,15 +227,16 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	if err != nil {
 		return "", err
 	}
+	if filterSubQuery != "" {
+		filterSubQuery = " AND " + filterSubQuery
+	}
 
 	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(mq.GroupBy)
 	if err != nil {
 		return "", err
 	}
-	filterSubQuery += emptyValuesInGroupByFilter
-
-	if filterSubQuery != "" {
-		filterSubQuery = " AND " + filterSubQuery
+	if emptyValuesInGroupByFilter != "" {
+		filterSubQuery = " AND " + emptyValuesInGroupByFilter
 	}
 
 	resourceSubQuery, err := resource.BuildResourceSubQuery("signoz_traces", "distributed_traces_v3_resource", bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
