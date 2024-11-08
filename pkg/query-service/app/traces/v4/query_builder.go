@@ -249,7 +249,6 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	}
 
 	// timerange will be sent in epoch millisecond
-
 	selectLabels := getSelectLabels(mq.GroupBy)
 	if selectLabels != "" {
 		selectLabels = selectLabels + ","
