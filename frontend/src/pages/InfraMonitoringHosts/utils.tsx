@@ -4,10 +4,10 @@ import { Color } from '@signozhq/design-tokens';
 import { Progress, TabsProps, Tag } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import { HostData, HostListPayload } from 'api/infraMonitoring/getHostLists';
-import TabLabel from 'components/TabLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
 import HostsList from './HostsList';
+import HostsMapView from './HostsMapView';
 
 export interface HostRowData {
 	hostName: string;
@@ -28,9 +28,14 @@ export const getHostListsQuery = (): HostListPayload => ({
 });
 export const getTabsItems = (): TabsProps['items'] => [
 	{
-		label: <TabLabel label="List View" isDisabled={false} tooltipText="" />,
+		label: 'List View',
 		key: PANEL_TYPES.LIST,
 		children: <HostsList />,
+	},
+	{
+		label: 'Map View',
+		key: PANEL_TYPES.TIME_SERIES,
+		children: <HostsMapView />,
 	},
 ];
 
