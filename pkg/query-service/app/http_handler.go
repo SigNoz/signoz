@@ -119,8 +119,9 @@ type APIHandler struct {
 	namespacesRepo *inframetrics.NamespacesRepo
 	clustersRepo   *inframetrics.ClustersRepo
 	// workloads
-	deploymentsRepo *inframetrics.DeploymentsRepo
-	daemonsetsRepo  *inframetrics.DaemonSetsRepo
+	deploymentsRepo  *inframetrics.DeploymentsRepo
+	daemonsetsRepo   *inframetrics.DaemonSetsRepo
+	statefulsetsRepo *inframetrics.StatefulSetsRepo
 }
 
 type APIHandlerOpts struct {
@@ -198,6 +199,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	clustersRepo := inframetrics.NewClustersRepo(opts.Reader, querierv2)
 	deploymentsRepo := inframetrics.NewDeploymentsRepo(opts.Reader, querierv2)
 	daemonsetsRepo := inframetrics.NewDaemonSetsRepo(opts.Reader, querierv2)
+	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -224,6 +226,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		clustersRepo:                  clustersRepo,
 		deploymentsRepo:               deploymentsRepo,
 		daemonsetsRepo:                daemonsetsRepo,
+		statefulsetsRepo:              statefulsetsRepo,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -412,6 +415,11 @@ func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMid
 	daemonsetsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getDaemonSetAttributeKeys)).Methods(http.MethodGet)
 	daemonsetsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getDaemonSetAttributeValues)).Methods(http.MethodGet)
 	daemonsetsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getDaemonSetList)).Methods(http.MethodPost)
+
+	statefulsetsSubRouter := router.PathPrefix("/api/v1/statefulsets").Subrouter()
+	statefulsetsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getStatefulSetAttributeKeys)).Methods(http.MethodGet)
+	statefulsetsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getStatefulSetAttributeValues)).Methods(http.MethodGet)
+	statefulsetsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getStatefulSetList)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {

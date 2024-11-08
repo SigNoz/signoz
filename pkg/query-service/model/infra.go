@@ -233,3 +233,33 @@ type DaemonSetListRecord struct {
 	AvailableNodes int               `json:"availableNodes"`
 	Meta           map[string]string `json:"meta"`
 }
+
+type StatefulSetListRequest struct {
+	Start   int64             `json:"start"` // epoch time in ms
+	End     int64             `json:"end"`   // epoch time in ms
+	Filters *v3.FilterSet     `json:"filters"`
+	GroupBy []v3.AttributeKey `json:"groupBy"`
+	OrderBy *v3.OrderBy       `json:"orderBy"`
+	Offset  int               `json:"offset"`
+	Limit   int               `json:"limit"`
+}
+
+type StatefulSetListResponse struct {
+	Type    ResponseType            `json:"type"`
+	Records []StatefulSetListRecord `json:"records"`
+	Total   int                     `json:"total"`
+}
+
+type StatefulSetListRecord struct {
+	StatefulSetName string            `json:"statefulSetName"`
+	CPUUsage        float64           `json:"cpuUsage"`
+	MemoryUsage     float64           `json:"memoryUsage"`
+	CPURequest      float64           `json:"cpuRequest"`
+	MemoryRequest   float64           `json:"memoryRequest"`
+	CPULimit        float64           `json:"cpuLimit"`
+	MemoryLimit     float64           `json:"memoryLimit"`
+	Restarts        int               `json:"restarts"`
+	DesiredPods     int               `json:"desiredPods"`
+	AvailablePods   int               `json:"availablePods"`
+	Meta            map[string]string `json:"meta"`
+}
