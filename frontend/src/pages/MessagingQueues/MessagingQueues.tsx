@@ -174,7 +174,7 @@ function MessagingQueues(): JSX.Element {
 							</Button>
 						</div>
 					</div>
-					<div className="overview-info-card middle-card">
+					<div className="overview-info-card">
 						<div>
 							<p className="card-title">{t('summarySection.partition.title')}</p>
 							<p className="card-info-text">
