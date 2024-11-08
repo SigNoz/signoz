@@ -29,7 +29,7 @@ func TestEnrichTracesQuery(t *testing.T) {
 					},
 				},
 				keys: map[string]v3.AttributeKey{
-					"bytes": {Key: "bytes", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag},
+					"bytes##tag##int64": {Key: "bytes", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag},
 				},
 				want: &v3.BuilderQuery{
 					Filters: &v3.FilterSet{
@@ -79,7 +79,7 @@ func TestEnrichTracesQuery(t *testing.T) {
 					Filters: &v3.FilterSet{
 						Operator: "AND",
 						Items: []v3.FilterItem{
-							{Key: v3.AttributeKey{Key: "httpRoute", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "/api", Operator: "="},
+							{Key: v3.AttributeKey{Key: "http.route", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "/api", Operator: "="},
 						},
 					},
 				},

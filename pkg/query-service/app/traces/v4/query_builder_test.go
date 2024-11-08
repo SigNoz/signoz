@@ -108,7 +108,7 @@ func Test_getColumnName(t *testing.T) {
 			args: args{
 				key: v3.AttributeKey{Key: "data", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
 			},
-			want: "`data`",
+			want: "`attribute_string_data`",
 		},
 		{
 			name: "missing meta",
@@ -151,7 +151,7 @@ func Test_getSelectLabels(t *testing.T) {
 					{Key: "service_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource, IsColumn: true},
 				},
 			},
-			want: " attributes_string['user_name'] as `user_name`, `service_name` as `service_name`",
+			want: " attributes_string['user_name'] as `user_name`, `resource_string_service_name` as `service_name`",
 		},
 	}
 	for _, tt := range tests {
@@ -214,7 +214,7 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 				}},
 			},
 			want: "attributes_string['host'] ILIKE '%102.%' AND attributes_string['host'] NOT ILIKE '%103%' AND attributes_string['host'] ILIKE '102.' AND attributes_string['host'] NOT ILIKE '102' AND " +
-				"match(`path`, '/mypath') AND NOT match(`path`, '/health.*')",
+				"match(`attribute_string_path`, '/mypath') AND NOT match(`attribute_string_path`, '/health.*')",
 		},
 		{
 			name: "Test exists, nexists",
@@ -239,32 +239,6 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 			}
 		})
 	}
-}
-
-var handleEmptyValuesInGroupByData = []struct {
-	Name           string
-	GroupBy        []v3.AttributeKey
-	ExpectedFilter string
-}{
-	{
-		Name:           "String type key",
-		GroupBy:        []v3.AttributeKey{{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-		ExpectedFilter: " AND has(stringTagMap, 'bytes')",
-	},
-	{
-		Name:           "fixed column type key",
-		GroupBy:        []v3.AttributeKey{{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
-		ExpectedFilter: "",
-	},
-	{
-		Name: "String, float64 and fixed column type key",
-		GroupBy: []v3.AttributeKey{
-			{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-			{Key: "count", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag},
-			{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-		},
-		ExpectedFilter: " AND has(stringTagMap, 'bytes') AND has(numberTagMap, 'count')",
-	},
 }
 
 func Test_handleEmptyValuesInGroupBy(t *testing.T) {
@@ -383,7 +357,7 @@ func Test_buildTracesQuery(t *testing.T) {
 					SelectColumns:     []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
 				},
 			},
-			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, `name` as `name`, `id` as `id` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name`, id as `id` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  order by timestamp DESC",
 		},
 		{
@@ -430,7 +404,7 @@ func Test_buildTracesQuery(t *testing.T) {
 					},
 				},
 			},
-			want: "SELECT  toFloat64(count(distinct(`name`))) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND " +
+			want: "SELECT  toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND " +
 				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) having value > 10 order by value ASC",
 		},
 	}
@@ -519,7 +493,7 @@ func TestPrepareTracesQuery(t *testing.T) {
 					GraphLimitQtype: constants.FirstQueryGraphLimit,
 				},
 			},
-			want: "SELECT `serviceName` from (SELECT `serviceName` as `serviceName`, toFloat64(count(distinct(`name`))) as value from signoz_traces.distributed_signoz_index_v3 " +
+			want: "SELECT `serviceName` from (SELECT serviceName as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 " +
 				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) group by `serviceName`) LIMIT 10",
 		},
 		{
@@ -540,7 +514,7 @@ func TestPrepareTracesQuery(t *testing.T) {
 					GraphLimitQtype: constants.SecondQueryGraphLimit,
 				},
 			},
-			want: "SELECT  `serviceName` as `serviceName`, toFloat64(count(distinct(`name`))) as value from signoz_traces.distributed_signoz_index_v3 where " +
+			want: "SELECT  serviceName as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 where " +
 				"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND (`serviceName`) GLOBAL IN (%s) group by `serviceName`",
 		},
 	}

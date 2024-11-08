@@ -70,7 +70,7 @@ func getColumnName(key v3.AttributeKey) string {
 		return key.Key
 	}
 
-	return utils.GetClickhouseColumnName(string(key.Type), string(key.DataType), key.Key)
+	return "`" + utils.GetClickhouseColumnNameV2(string(key.Type), string(key.DataType), key.Key) + "`"
 }
 
 // getSelectLabels returns the select labels for the query based on groupBy and aggregateOperator

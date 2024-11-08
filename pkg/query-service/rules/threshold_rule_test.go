@@ -1648,7 +1648,7 @@ func TestThresholdRuleShiftBy(t *testing.T) {
 		},
 	}
 
-	rule, err := NewThresholdRule("69", &postableRule, nil, nil, true)
+	rule, err := NewThresholdRule("69", &postableRule, nil, nil, true, true)
 	if err != nil {
 		assert.NoError(t, err)
 	}
