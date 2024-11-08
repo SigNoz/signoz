@@ -47,7 +47,7 @@
 
 		.header-config {
 			display: flex;
-			gap: 10px;
+			gap: 12px;
 			align-items: center;
 
 			.messaging-queue-options {
@@ -106,6 +106,8 @@
 
 		.mq-details-options {
 			letter-spacing: -0.06px;
+			cursor: pointer;
+
 			.ant-radio-button-wrapper {
 				border-color: var(--bg-slate-400);
 				color: var(--bg-vanilla-400);
@@ -216,6 +218,23 @@
 					background-color: var(--bg-slate-400);
 					border: none;
 					box-shadow: none;
+				}
+			}
+		}
+
+		&.summary-section {
+			.overview-info-card {
+				min-height: 144px;
+
+				.card-title {
+					color: var(--bg-vanilla-400);
+					font-family: Inter;
+					font-size: 13px;
+					font-style: normal;
+					font-weight: 500;
+					line-height: 22px;
+					letter-spacing: 0.52px;
+					text-transform: uppercase;
 				}
 			}
 		}

@@ -178,7 +178,9 @@ func (p *NamespacesRepo) getTopNamespaceGroups(ctx context.Context, req model.Na
 		})
 	}
 
-	paginatedTopNamespaceGroupsSeries := formattedResponse[0].Series[req.Offset : req.Offset+req.Limit]
+	limit := math.Min(float64(req.Offset+req.Limit), float64(len(formattedResponse[0].Series)))
+
+	paginatedTopNamespaceGroupsSeries := formattedResponse[0].Series[req.Offset:int(limit)]
 
 	topNamespaceGroups := []map[string]string{}
 	for _, series := range paginatedTopNamespaceGroupsSeries {

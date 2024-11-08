@@ -53,6 +53,10 @@ func getParamsForTopHosts(req model.HostListRequest) (int64, string, string) {
 	return getParamsForTopItems(req.Start, req.End)
 }
 
+func getParamsForTopProcesses(req model.ProcessListRequest) (int64, string, string) {
+	return getParamsForTopItems(req.Start, req.End)
+}
+
 func getParamsForTopPods(req model.PodListRequest) (int64, string, string) {
 	return getParamsForTopItems(req.Start, req.End)
 }

@@ -149,7 +149,7 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 			return fmt.Sprintf(logsOp, keyName, fmtVal), nil
 		case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 			// we also want to treat %, _ as literals for contains
-			val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value))
+			val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value), false)
 			// for body the contains is case insensitive
 			if keyName == BODY {
 				logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
@@ -255,9 +255,6 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 		} else if panelType == v3.PanelTypeList {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name := getClickhouseKey(attr)
-			if item.IsColumn {
-				name = "`" + name + "`"
-			}
 			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 		}
 	}

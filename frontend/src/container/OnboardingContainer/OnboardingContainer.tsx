@@ -312,7 +312,7 @@ export default function Onboarding(): JSX.Element {
 					<div
 						onClick={(): void => {
 							logEvent('Onboarding V2: Skip Button Clicked', {});
-							history.push('/');
+							history.push(ROUTES.APPLICATION);
 						}}
 						className="skip-to-console"
 					>

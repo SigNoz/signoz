@@ -81,8 +81,10 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 										prefix: item.type || '',
 										condition: !item.isColumn,
 									}),
+									!item.isColumn && item.type ? item.type : '',
 								)}
 								dataType={item.dataType}
+								type={item.type || ''}
 							/>
 						),
 						value: `${item.key}${selectValueDivider}${createIdFromObjectFields(
@@ -187,6 +189,9 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			prefix: query.aggregateAttribute.type || '',
 			condition: !query.aggregateAttribute.isColumn,
 		}),
+		!query.aggregateAttribute.isColumn && query.aggregateAttribute.type
+			? query.aggregateAttribute.type
+			: '',
 	);
 
 	return (
