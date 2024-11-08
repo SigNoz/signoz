@@ -47,7 +47,7 @@ require (
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/soheilhy/cmux v0.1.5
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/srikanthccv/ClickHouse-go-mock v0.9.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector/component v0.111.0
