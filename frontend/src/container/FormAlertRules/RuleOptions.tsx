@@ -181,8 +181,18 @@ function RuleOptions({
 			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
 			<Select.Option value="15m0s">{t('option_15min')}</Select.Option>
 			<Select.Option value="1h0m0s">{t('option_60min')}</Select.Option>
+			<Select.Option value="2h0m0s">{t('option_2hours')}</Select.Option>
+			<Select.Option value="3h0m0s">{t('option_3hours')}</Select.Option>
 			<Select.Option value="4h0m0s">{t('option_4hours')}</Select.Option>
+			<Select.Option value="5h0m0s">{t('option_5hours')}</Select.Option>
+			<Select.Option value="6h0m0s">{t('option_6hours')}</Select.Option>
+			<Select.Option value="8h0m0s">{t('option_8hours')}</Select.Option>
+			<Select.Option value="10h0m0s">{t('option_10hours')}</Select.Option>
+			<Select.Option value="12h0m0s">{t('option_12hours')}</Select.Option>
 			<Select.Option value="24h0m0s">{t('option_24hours')}</Select.Option>
+			<Select.Option value="48h0m0s">{t('option_48hours')}</Select.Option>
+			<Select.Option value="72h0m0s">{t('option_72hours')}</Select.Option>
+			<Select.Option value="168h0m0s">{t('option_1week')}</Select.Option>
 		</InlineSelect>
 	);
 
