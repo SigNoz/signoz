@@ -6,6 +6,7 @@ import { CardContainer } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import MetricColumnGraphs from './MetricColumnGraphs';
@@ -86,12 +87,13 @@ function MetricPage(): JSX.Element {
 		}));
 	};
 
+	const { t } = useTranslation('messagingQueues');
+
 	const metricSections = [
 		{
 			key: 'bokerJVMMetrics',
-			title: 'Broker JVM Metrics',
-			description:
-				"Kafka brokers are Java applications that expose JVM metrics to inform on the broker's system health. Garbage collection metrics like those below provide key insights into free memory, broker performance, and heap size. You need to enable new_gc_metrics for this section to populate.",
+			title: t('metricGraphCategory.brokerJVMMetrics.title'),
+			description: t('metricGraphCategory.brokerJVMMetrics.description'),
 			graphCount: [
 				jvmGCCountWidgetData,
 				jvmGcCollectionsElapsedWidgetData,
@@ -101,9 +103,8 @@ function MetricPage(): JSX.Element {
 		},
 		{
 			key: 'partitionMetrics',
-			title: 'Partition Metrics',
-			description:
-				'Kafka partitions are the unit of parallelism in Kafka. These metrics inform you of the number of partitions per topic, the current offset of each partition, the oldest offset, and the number of in-sync replicas.',
+			title: t('metricGraphCategory.partitionMetrics.title'),
+			description: t('metricGraphCategory.partitionMetrics.description'),
 			graphCount: [
 				partitionCountPerTopicWidgetData,
 				currentOffsetPartitionWidgetData,

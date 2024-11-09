@@ -61,6 +61,10 @@ function MQDetailPage(): JSX.Element {
 		});
 	};
 
+	const showMessagingQueueDetails =
+		selectedView !== MessagingQueuesViewType.dropRate.value &&
+		selectedView !== MessagingQueuesViewType.metricPage.value;
+
 	return (
 		<div className="messaging-queue-container">
 			<div className="messaging-breadcrumb">
@@ -126,15 +130,14 @@ function MQDetailPage(): JSX.Element {
 					setOption={setproducerLatencyOption}
 				/>
 			)}
-			{selectedView !== MessagingQueuesViewType.dropRate.value &&
-				selectedView !== MessagingQueuesViewType.metricPage.value && (
-					<div className="messaging-queue-details">
-						<MessagingQueuesDetails
-							selectedView={selectedView}
-							producerLatencyOption={producerLatencyOption}
-						/>
-					</div>
-				)}
+			{showMessagingQueueDetails && (
+				<div className="messaging-queue-details">
+					<MessagingQueuesDetails
+						selectedView={selectedView}
+						producerLatencyOption={producerLatencyOption}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }

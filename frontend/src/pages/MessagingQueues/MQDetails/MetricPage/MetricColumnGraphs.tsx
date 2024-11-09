@@ -1,7 +1,7 @@
 import { Typography } from 'antd';
-import cx from 'classnames';
 import { CardContainer } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useTranslation } from 'react-i18next';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import MetricPageGridGraph from './MetricPageGraph';
@@ -38,7 +38,7 @@ function MetricSection({
 	return (
 		<div className="metric-column-graph">
 			<CardContainer className="row-card" isDarkMode={isDarkMode}>
-				<div className={cx('row-panel')}>
+				<div className="row-panel">
 					<Typography.Text className="section-title">{title}</Typography.Text>
 				</div>
 			</CardContainer>
@@ -58,11 +58,12 @@ function MetricSection({
 }
 
 function MetricColumnGraphs(): JSX.Element {
+	const { t } = useTranslation('messagingQueues');
+
 	const metricsData = [
 		{
-			title: 'Broker Metrics',
-			description:
-				'The Kafka Broker metrics here inform you of data loss/delay through unclean leader elections and network throughputs, as well as request fails through request purgatories and timeouts metrics',
+			title: t('metricGraphCategory.brokerMetrics.title'),
+			description: t('metricGraphCategory.brokerMetrics.description'),
 			graphCount: [
 				brokerCountWidgetData,
 				requestTimesWidgetData,
@@ -72,9 +73,8 @@ function MetricColumnGraphs(): JSX.Element {
 			id: 'broker-metrics',
 		},
 		{
-			title: 'Producer Metrics',
-			description:
-				'Kafka Producers send messages to brokers for storage and distribution by topic. These metrics inform you of the volume and rate of data sent, and the success rate of message delivery.',
+			title: t('metricGraphCategory.producerMetrics.title'),
+			description: t('metricGraphCategory.producerMetrics.description'),
 			graphCount: [
 				ioWaitTimeWidgetData,
 				requestResponseWidgetData,
@@ -85,9 +85,8 @@ function MetricColumnGraphs(): JSX.Element {
 			id: 'producer-metrics',
 		},
 		{
-			title: 'Consumer Metrics',
-			description:
-				'Kafka Consumer metrics provide insights into lag between message production and consumption, success rates and latency of message delivery, and the volume of data consumed.',
+			title: t('metricGraphCategory.consumerMetrics.title'),
+			description: t('metricGraphCategory.consumerMetrics.description'),
 			graphCount: [
 				consumerOffsetWidgetData,
 				consumerGroupMemberWidgetData,
@@ -106,7 +105,7 @@ function MetricColumnGraphs(): JSX.Element {
 					key={metric.id}
 					title={metric.title}
 					description={metric.description}
-					graphCount={metric.graphCount}
+					graphCount={metric?.graphCount || []}
 				/>
 			))}
 		</div>
