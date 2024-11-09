@@ -157,6 +157,11 @@ export const getFieldAttributes = (field: string): IFieldAttributes => {
 		const stringWithoutPrefix = field.slice('resources_'.length);
 		const parts = splitOnce(stringWithoutPrefix, '.');
 		[dataType, newField] = parts;
+	} else if (field.startsWith('scope_string')) {
+		logType = MetricsType.Scope;
+		const stringWithoutPrefix = field.slice('scope_'.length);
+		const parts = splitOnce(stringWithoutPrefix, '.');
+		[dataType, newField] = parts;
 	}
 
 	return { dataType, newField, logType };
@@ -187,6 +192,7 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 		traceId: logData.traceId,
 		attributes: {},
 		resources: {},
+		scope: {},
 		severity_text: logData.severity_text,
 		severity_number: logData.severity_number,
 	};
@@ -198,6 +204,9 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 		} else if (key.startsWith('resources_')) {
 			outputJson.resources = outputJson.resources || {};
 			Object.assign(outputJson.resources, logData[key as keyof ILog]);
+		} else if (key.startsWith('scope_string')) {
+			outputJson.scope = outputJson.scope || {};
+			Object.assign(outputJson.scope, logData[key as keyof ILog]);
 		} else {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore

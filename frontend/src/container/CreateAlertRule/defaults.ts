@@ -94,6 +94,7 @@ export const anamolyAlertDefaults: AlertDef = {
 		matchType: defaultMatchType,
 		algorithm: defaultAlgorithm,
 		seasonality: defaultSeasonality,
+		target: 3,
 	},
 	labels: {
 		severity: 'warning',

@@ -8,7 +8,7 @@ import (
 
 func TestIsAllQueriesDisabled(t *testing.T) {
 	testCases := []*v3.CompositeQuery{
-		&v3.CompositeQuery{
+		{
 			BuilderQueries: map[string]*v3.BuilderQuery{
 				"query1": {
 					Disabled: true,
@@ -20,10 +20,10 @@ func TestIsAllQueriesDisabled(t *testing.T) {
 			QueryType: v3.QueryTypeBuilder,
 		},
 		nil,
-		&v3.CompositeQuery{
+		{
 			QueryType: v3.QueryTypeBuilder,
 		},
-		&v3.CompositeQuery{
+		{
 			QueryType: v3.QueryTypeBuilder,
 			BuilderQueries: map[string]*v3.BuilderQuery{
 				"query1": {
@@ -34,10 +34,10 @@ func TestIsAllQueriesDisabled(t *testing.T) {
 				},
 			},
 		},
-		&v3.CompositeQuery{
+		{
 			QueryType: v3.QueryTypePromQL,
 		},
-		&v3.CompositeQuery{
+		{
 			QueryType: v3.QueryTypePromQL,
 			PromQueries: map[string]*v3.PromQuery{
 				"query3": {
@@ -45,7 +45,7 @@ func TestIsAllQueriesDisabled(t *testing.T) {
 				},
 			},
 		},
-		&v3.CompositeQuery{
+		{
 			QueryType: v3.QueryTypePromQL,
 			PromQueries: map[string]*v3.PromQuery{
 				"query3": {
@@ -53,10 +53,10 @@ func TestIsAllQueriesDisabled(t *testing.T) {
 				},
 			},
 		},
-		&v3.CompositeQuery{
+		{
 			QueryType: v3.QueryTypeClickHouseSQL,
 		},
-		&v3.CompositeQuery{
+		{
 			QueryType: v3.QueryTypeClickHouseSQL,
 			ClickHouseQueries: map[string]*v3.ClickHouseQuery{
 				"query4": {
@@ -64,7 +64,7 @@ func TestIsAllQueriesDisabled(t *testing.T) {
 				},
 			},
 		},
-		&v3.CompositeQuery{
+		{
 			QueryType: v3.QueryTypeClickHouseSQL,
 			ClickHouseQueries: map[string]*v3.ClickHouseQuery{
 				"query4": {
