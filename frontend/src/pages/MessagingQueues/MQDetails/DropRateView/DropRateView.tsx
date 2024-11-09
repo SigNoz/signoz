@@ -230,9 +230,7 @@ function DropRateView(): JSX.Element {
 	return (
 		<div className={cx('mq-overview-container', 'droprate-view')}>
 			<div className="mq-overview-title">
-				<div className="drop-rat-title">
-					{MessagingQueuesViewType.dropRate.label}
-				</div>
+				{MessagingQueuesViewType.dropRate.label}
 				<EvaluationTimeSelector setInterval={setInterval} />
 			</div>
 			<Table

@@ -222,6 +222,12 @@
 			}
 		}
 
+		:nth-child(2),
+		:nth-child(4) {
+			border-left: none !important;
+			border-right: none !important;
+		}
+
 		&.summary-section {
 			.overview-info-card {
 				min-height: 144px;
@@ -331,6 +337,10 @@
 		.messaging-breadcrumb {
 			color: var(--bg-ink-400);
 			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.message-queue-text {
+				color: var(--bg-ink-400);
+			}
 		}
 		.messaging-header {
 			color: var(--bg-ink-400);
