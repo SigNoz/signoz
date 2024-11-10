@@ -1709,7 +1709,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 	var traceSummary model.TraceSummary
 	summaryQuery := fmt.Sprintf("SELECT * from %s.%s WHERE traceID=$1", r.TraceDB, r.traceSummaryTable)
-	err := r.db.QueryRow(ctx, summaryQuery, params.TraceID).Scan(&traceSummary.TraceID, &traceSummary.FirstReported, &traceSummary.LastReported, &traceSummary.NumSpans)
+	err := r.db.QueryRow(ctx, summaryQuery, params.TraceID).Scan(&traceSummary.TraceID, &traceSummary.Start, &traceSummary.End, &traceSummary.NumSpans)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return &searchSpansResult, nil
@@ -1747,7 +1747,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 	start := time.Now()
 
-	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID, strconv.FormatInt(traceSummary.FirstReported.Unix()-1800, 10), strconv.FormatInt(traceSummary.LastReported.Unix(), 10))
+	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
 
 	zap.L().Info(query)
 

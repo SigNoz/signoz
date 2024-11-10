@@ -357,7 +357,7 @@ func Test_buildTracesQuery(t *testing.T) {
 					SelectColumns:     []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
 				},
 			},
-			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name`, id as `id` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  order by timestamp DESC",
 		},
 		{

@@ -289,10 +289,10 @@ type SearchSpanResponseItemV2 struct {
 }
 
 type TraceSummary struct {
-	TraceID       string    `json:"traceID" ch:"traceID"`
-	FirstReported time.Time `json:"firstReported" ch:"first_reported"`
-	LastReported  time.Time `json:"lastReported" ch:"last_reported"`
-	NumSpans      uint64    `json:"numSpans" ch:"num_spans"`
+	TraceID  string    `json:"traceId" ch:"trace_id"`
+	Start    time.Time `json:"start" ch:"start"`
+	End      time.Time `json:"end" ch:"end"`
+	NumSpans uint64    `json:"numSpans" ch:"num_spans"`
 }
 
 type OtelSpanRef struct {

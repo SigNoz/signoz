@@ -354,15 +354,27 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 
 		// append a filter to the params
 		if len(data) > 0 {
-			params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
-				Key: v3.AttributeKey{
-					Key:      "id",
-					IsColumn: true,
-					DataType: "string",
-				},
-				Operator: v3.FilterOperatorLessThan,
-				Value:    data[len(data)-1].Data["id"],
-			})
+			if params.CompositeQuery.BuilderQueries[qName].DataSource == v3.DataSourceLogs {
+				params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
+					Key: v3.AttributeKey{
+						Key:      "id",
+						IsColumn: true,
+						DataType: "string",
+					},
+					Operator: v3.FilterOperatorLessThan,
+					Value:    data[len(data)-1].Data["id"],
+				})
+			} else {
+				// for traces setting offset = 0 works
+				// eg -
+				// 1)--- searching 100 logs in between t1, t10, t100 with offset 0
+				// if 100 logs are there in t1 to t10 then 100 will return immediately.
+				// if 10 logs are there in t1 to t10 then we get 10, set offset to 0 and search in the next timerange of t10 to t100.
+				// 1)--- searching 100 logs in between t1, t10, t100 with offset 100
+				// It will have offset = 0 till 100 logs are found in one of the timerange tx to tx-1
+				// If it finds <100 in tx to tx-1 then it will set offset = 0 and search in the next timerange of tx-1 to tx-2
+				params.CompositeQuery.BuilderQueries[qName].Offset = 0
+			}
 		}
 
 		if uint64(len(data)) >= pageSize {
