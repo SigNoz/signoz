@@ -498,11 +498,11 @@ var testLogsWithFormula = []struct {
 				},
 			},
 		},
-		ExpectedQuery: "SELECT A.`key1.1` as `key1.1`, A.`ts` as `ts`, A.value + B.value as value FROM (SELECT now() as ts, attributes_bool_value[indexOf(attributes_bool_key, 'key1.1')] as `key1.1`, " +
+		ExpectedQuery: "SELECT A.`key1.1` as `key1.1`, A.value + B.value as value FROM (SELECT now() as ts, attributes_bool_value[indexOf(attributes_bool_key, 'key1.1')] as `key1.1`, " +
 			"toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1702979056000000000 AND timestamp <= 1702982656000000000) AND attributes_bool_value[indexOf(attributes_bool_key, 'key1.1')] = true AND " +
 			"has(attributes_bool_key, 'key1.1') group by `key1.1` order by value DESC) as A  INNER JOIN (SELECT now() as ts, attributes_bool_value[indexOf(attributes_bool_key, 'key1.1')] as `key1.1`, " +
 			"toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1702979056000000000 AND timestamp <= 1702982656000000000) AND attributes_bool_value[indexOf(attributes_bool_key, 'key1.2')] = true AND " +
-			"has(attributes_bool_key, 'key1.1') group by `key1.1` order by value DESC) as B  ON A.`key1.1` = B.`key1.1` AND A.`ts` = B.`ts`",
+			"has(attributes_bool_key, 'key1.1') group by `key1.1` order by value DESC) as B  ON A.`key1.1` = B.`key1.1`",
 	},
 	{
 		Name: "test formula with dot in filter and group by materialized attribute",
@@ -707,12 +707,12 @@ var testLogsWithFormulaV2 = []struct {
 				},
 			},
 		},
-		ExpectedQuery: "SELECT A.`key1.1` as `key1.1`, A.`ts` as `ts`, A.value + B.value as value FROM (SELECT attributes_bool['key1.1'] as `key1.1`, " +
+		ExpectedQuery: "SELECT A.`key1.1` as `key1.1`, A.value + B.value as value FROM (SELECT attributes_bool['key1.1'] as `key1.1`, " +
 			"toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1702979056000000000 AND timestamp <= 1702982656000000000) AND (ts_bucket_start >= 1702977256 AND ts_bucket_start <= 1702982656) " +
 			"AND attributes_bool['key1.1'] = true AND mapContains(attributes_bool, 'key1.1') AND mapContains(attributes_bool, 'key1.1') group by `key1.1` order by value DESC) as A  INNER JOIN (SELECT " +
 			"attributes_bool['key1.1'] as `key1.1`, toFloat64(count(*)) as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1702979056000000000 AND timestamp <= 1702982656000000000) " +
 			"AND (ts_bucket_start >= 1702977256 AND ts_bucket_start <= 1702982656) AND attributes_bool['key1.2'] = true AND mapContains(attributes_bool, 'key1.2') AND " +
-			"mapContains(attributes_bool, 'key1.1') group by `key1.1` order by value DESC) as B  ON A.`key1.1` = B.`key1.1` AND A.`ts` = B.`ts`",
+			"mapContains(attributes_bool, 'key1.1') group by `key1.1` order by value DESC) as B  ON A.`key1.1` = B.`key1.1`",
 	},
 	{
 		Name: "test formula with dot in filter and group by materialized attribute",
