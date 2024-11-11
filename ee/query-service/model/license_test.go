@@ -19,68 +19,16 @@ func TestNewLicenseV3(t *testing.T) {
 		error    error
 	}{
 		{
-			name:  "give plan error when plan not present",
-			data:  []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":"{}"}`),
-			pass:  false,
-			error: errors.New("failed to unmarshal plan data: json: cannot unmarshal string into Go value of type model.Plan"),
-		},
-		{
-			name: "parse the plan properly!",
-			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"TEAMS"}}`),
-			pass: true,
-			expected: &LicenseV3{
-				ID:  "does-not-matter",
-				Key: "does-not-matter-key",
-				Data: map[string]interface{}{
-					"plan": map[string]interface{}{
-						"name": "TEAMS",
-					},
-					"category": "FREE",
-					"status":   "ACTIVE",
-				},
-				Plan: Plan{
-					Name: PlanNameTeams,
-				},
-				ValidFrom:  0,
-				ValidUntil: 0,
-				Status:     "ACTIVE",
-				Category:   "FREE",
-				IsCurrent:  false,
-				Features:   model.FeatureSet{},
-			},
-		},
-		{
-			name: "parse the validFrom and validUntil",
-			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"TEAMS"},"valid_from":1234,"valid_until":5678}`),
-			pass: true,
-			expected: &LicenseV3{
-				ID:  "does-not-matter",
-				Key: "does-not-matter-key",
-				Data: map[string]interface{}{
-					"plan": map[string]interface{}{
-						"name": "TEAMS",
-					},
-					"valid_from":  float64(1234),
-					"valid_until": float64(5678),
-					"category":    "FREE",
-					"status":      "ACTIVE",
-				},
-				Plan: Plan{
-					Name: PlanNameTeams,
-				},
-				ValidFrom:  1234,
-				ValidUntil: 5678,
-				Status:     "ACTIVE",
-				Category:   "FREE",
-				IsCurrent:  false,
-				Features:   model.FeatureSet{},
-			},
-		},
-		{
 			name:  "Error for missing license id",
 			data:  []byte(`{}`),
 			pass:  false,
 			error: errors.New("license id is missing"),
+		},
+		{
+			name:  "Error for license id not being a valid string",
+			data:  []byte(`{"id": 10}`),
+			pass:  false,
+			error: errors.New("license id is not a valid string"),
 		},
 		{
 			name:  "Error for missing license key",
@@ -93,6 +41,129 @@ func TestNewLicenseV3(t *testing.T) {
 			data:  []byte(`{"id":"does-not-matter","key":10}`),
 			pass:  false,
 			error: errors.New("license key is not a valid string"),
+		},
+		{
+			name:  "Error for missing license category",
+			data:  []byte(`{"id":"does-not-matter", "key": "does-not-matter"}`),
+			pass:  false,
+			error: errors.New("license category is missing"),
+		},
+		{
+			name:  "Error for invalid string license category",
+			data:  []byte(`{"id":"does-not-matter","key": "does-not-matter", "category":10}`),
+			pass:  false,
+			error: errors.New("license category is not a valid string"),
+		},
+		{
+			name:  "Error for missing license status",
+			data:  []byte(`{"id":"does-not-matter", "key": "does-not-matter","category":"FREE"}`),
+			pass:  false,
+			error: errors.New("license status is missing"),
+		},
+		{
+			name:  "Error for invalid string license status",
+			data:  []byte(`{"id":"does-not-matter","key": "does-not-matter", "category":"FREE", "status":10}`),
+			pass:  false,
+			error: errors.New("license status is not a valid string"),
+		},
+		{
+			name:  "Error for missing license plan",
+			data:  []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE"}`),
+			pass:  false,
+			error: errors.New("license plan is missing"),
+		},
+		{
+			name:  "Error for invalid json license plan",
+			data:  []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":10}`),
+			pass:  false,
+			error: errors.New("failed to unmarshal plan data: json: cannot unmarshal number into Go value of type model.Plan"),
+		},
+		{
+			name:  "Error for invalid license plan",
+			data:  []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{}}`),
+			pass:  false,
+			error: errors.New("license plan is missing plan name"),
+		},
+		{
+			name: "Parse the entire license properly",
+			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"TEAMS"},"valid_from": 1730899309,"valid_until": -1}`),
+			pass: true,
+			expected: &LicenseV3{
+				ID:  "does-not-matter",
+				Key: "does-not-matter-key",
+				Data: map[string]interface{}{
+					"plan": map[string]interface{}{
+						"name": "TEAMS",
+					},
+					"category":    "FREE",
+					"status":      "ACTIVE",
+					"valid_from":  float64(1730899309),
+					"valid_until": float64(-1),
+				},
+				Plan: Plan{
+					Name: PlanNameTeams,
+				},
+				ValidFrom:  1730899309,
+				ValidUntil: -1,
+				Status:     "ACTIVE",
+				Category:   "FREE",
+				IsCurrent:  false,
+				Features:   model.FeatureSet{},
+			},
+		},
+		{
+			name: "Fallback to basic plan if license status is inactive",
+			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"INACTIVE","plan":{"name":"TEAMS"},"valid_from": 1730899309,"valid_until": -1}`),
+			pass: true,
+			expected: &LicenseV3{
+				ID:  "does-not-matter",
+				Key: "does-not-matter-key",
+				Data: map[string]interface{}{
+					"plan": map[string]interface{}{
+						"name": "TEAMS",
+					},
+					"category":    "FREE",
+					"status":      "INACTIVE",
+					"valid_from":  float64(1730899309),
+					"valid_until": float64(-1),
+				},
+				Plan: Plan{
+					Name: PlanNameBasic,
+				},
+				ValidFrom:  1730899309,
+				ValidUntil: -1,
+				Status:     "INACTIVE",
+				Category:   "FREE",
+				IsCurrent:  false,
+				Features:   model.FeatureSet{},
+			},
+		},
+		{
+			name: "fallback states for validFrom and validUntil",
+			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"TEAMS"},"valid_from":1234.456,"valid_until":5678.567}`),
+			pass: true,
+			expected: &LicenseV3{
+				ID:  "does-not-matter",
+				Key: "does-not-matter-key",
+				Data: map[string]interface{}{
+					"plan": map[string]interface{}{
+						"name": "TEAMS",
+					},
+					"valid_from":  1234.456,
+					"valid_until": 5678.567,
+					"category":    "FREE",
+					"status":      "ACTIVE",
+				},
+				Plan: Plan{
+					Name: PlanNameTeams,
+				},
+				ValidFrom:  0,
+				ValidUntil: -1,
+				Status:     "ACTIVE",
+				Category:   "FREE",
+				IsCurrent:  false,
+				Features:   model.FeatureSet{},
+			},
 		},
 	}
 

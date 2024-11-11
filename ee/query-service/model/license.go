@@ -194,6 +194,10 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		if err := json.Unmarshal(planData, &parsedPlan); err != nil {
 			return nil, errors.Wrap(err, "failed to unmarshal plan data")
 		}
+
+		if parsedPlan.Name == "" {
+			return nil, errors.New("license plan is missing plan name")
+		}
 		plan = &parsedPlan
 	} else {
 		return nil, errors.New("license plan is missing")
@@ -266,10 +270,12 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		} else {
 			floatVal, ok := _value.(float64)
 			if !ok || floatVal != float64(int64(floatVal)) {
-				// if the validFrom is float value default it to -1
+				// if the validUntil is float value default it to -1
 				validUntil = -1
+			} else {
+				validUntil = int64(floatVal)
 			}
-			validUntil = int64(floatVal)
+
 		}
 	}
 
