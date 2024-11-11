@@ -467,6 +467,44 @@ export const useAlertRuleDuplicate = ({
 
 	return { handleAlertDuplicate };
 };
+export const useAlertRuleUpdate = ({
+	alertDetails,
+	setUpdatedName,
+	intermediateName,
+}: {
+	alertDetails: AlertDef;
+	setUpdatedName: (name: string) => void;
+	intermediateName: string;
+}): {
+	handleAlertUpdate: () => void;
+	isLoading: boolean;
+} => {
+	const { notifications } = useNotifications();
+	const handleError = useAxiosError();
+
+	const { mutate: updateAlertRule, isLoading } = useMutation(
+		[REACT_QUERY_KEY.UPDATE_ALERT_RULE, alertDetails.id],
+		save,
+		{
+			onMutate: () => setUpdatedName(intermediateName),
+			onSuccess: () =>
+				notifications.success({ message: 'Alert renamed successfully' }),
+			onError: (error) => {
+				setUpdatedName(alertDetails.alert);
+				handleError(error);
+			},
+		},
+	);
+
+	const handleAlertUpdate = (): void => {
+		updateAlertRule({
+			data: { ...alertDetails, alert: intermediateName },
+			id: alertDetails.id,
+		});
+	};
+
+	return { handleAlertUpdate, isLoading };
+};
 
 export const useAlertRuleDelete = ({
 	ruleId,
