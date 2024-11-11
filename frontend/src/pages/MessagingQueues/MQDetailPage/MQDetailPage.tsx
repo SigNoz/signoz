@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import '../MessagingQueues.styles.scss';
 
 import { Select, Typography } from 'antd';
@@ -15,7 +16,9 @@ import {
 	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 } from '../MessagingQueuesUtils';
+import DropRateView from '../MQDetails/DropRateView/DropRateView';
 import MessagingQueueOverview from '../MQDetails/MessagingQueueOverview';
+import MetricPage from '../MQDetails/MetricPage/MetricPage';
 import MessagingQueuesDetails from '../MQDetails/MQDetails';
 import MessagingQueuesConfigOptions from '../MQGraph/MQConfigOptions';
 import MessagingQueuesGraph from '../MQGraph/MQGraph';
@@ -58,6 +61,10 @@ function MQDetailPage(): JSX.Element {
 		});
 	};
 
+	const showMessagingQueueDetails =
+		selectedView !== MessagingQueuesViewType.dropRate.value &&
+		selectedView !== MessagingQueuesViewType.metricPage.value;
+
 	return (
 		<div className="messaging-queue-container">
 			<div className="messaging-breadcrumb">
@@ -80,7 +87,7 @@ function MQDetailPage(): JSX.Element {
 							setSelectedView(value);
 							updateUrlQuery({ [QueryParams.mqServiceView]: value });
 						}}
-						value={mqServiceView}
+						value={selectedView}
 						options={[
 							{
 								label: MessagingQueuesViewType.consumerLag.label,
@@ -98,31 +105,39 @@ function MQDetailPage(): JSX.Element {
 								label: MessagingQueuesViewType.dropRate.label,
 								value: MessagingQueuesViewType.dropRate.value,
 							},
+							{
+								label: MessagingQueuesViewType.metricPage.label,
+								value: MessagingQueuesViewType.metricPage.value,
+							},
 						]}
 					/>
 				</div>
 				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
-			<div className="messaging-queue-main-graph">
-				<MessagingQueuesConfigOptions />
-				{selectedView === MessagingQueuesViewType.consumerLag.value ? (
+			{selectedView === MessagingQueuesViewType.consumerLag.value ? (
+				<div className="messaging-queue-main-graph">
+					<MessagingQueuesConfigOptions />
 					<MessagingQueuesGraph />
-				) : (
-					<MessagingQueueOverview
-						selectedView={selectedView}
-						option={producerLatencyOption}
-						setOption={setproducerLatencyOption}
-					/>
-				)}
-			</div>
-			<div className="messaging-queue-details">
-				{selectedView !== MessagingQueuesViewType.dropRate.value && (
+				</div>
+			) : selectedView === MessagingQueuesViewType.dropRate.value ? (
+				<DropRateView />
+			) : selectedView === MessagingQueuesViewType.metricPage.value ? (
+				<MetricPage />
+			) : (
+				<MessagingQueueOverview
+					selectedView={selectedView}
+					option={producerLatencyOption}
+					setOption={setproducerLatencyOption}
+				/>
+			)}
+			{showMessagingQueueDetails && (
+				<div className="messaging-queue-details">
 					<MessagingQueuesDetails
 						selectedView={selectedView}
 						producerLatencyOption={producerLatencyOption}
 					/>
-				)}
-			</div>
+				</div>
+			)}
 		</div>
 	);
 }

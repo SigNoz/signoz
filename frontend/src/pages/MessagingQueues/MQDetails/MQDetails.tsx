@@ -18,7 +18,6 @@ import {
 	ProducerLatencyOptions,
 	SelectedTimelineQuery,
 } from '../MessagingQueuesUtils';
-import { ComingSoon } from '../MQCommon/MQCommon';
 import MessagingQueuesTable from './MQTables/MQTables';
 
 const MQServiceDetailTypePerView = (
@@ -28,7 +27,6 @@ const MQServiceDetailTypePerView = (
 		MessagingQueueServiceDetailType.ConsumerDetails,
 		MessagingQueueServiceDetailType.ProducerDetails,
 		MessagingQueueServiceDetailType.NetworkLatency,
-		MessagingQueueServiceDetailType.PartitionHostMetrics,
 	],
 	[MessagingQueuesViewType.partitionLatency.value]: [
 		MessagingQueueServiceDetailType.ConsumerDetails,
@@ -62,22 +60,8 @@ function MessagingQueuesOptions({
 		const detailTypes =
 			MQServiceDetailTypePerView(producerLatencyOption)[selectedView] || [];
 		return detailTypes.map((detailType) => (
-			<Radio.Button
-				key={detailType}
-				value={detailType}
-				disabled={
-					detailType === MessagingQueueServiceDetailType.PartitionHostMetrics
-				}
-				className={
-					detailType === MessagingQueueServiceDetailType.PartitionHostMetrics
-						? 'disabled-option'
-						: ''
-				}
-			>
+			<Radio.Button key={detailType} value={detailType}>
 				{ConsumerLagDetailTitle[detailType]}
-				{detailType === MessagingQueueServiceDetailType.PartitionHostMetrics && (
-					<ComingSoon />
-				)}
 			</Radio.Button>
 		));
 	};
@@ -116,12 +100,7 @@ const checkValidityOfDetailConfigs = (
 			return false;
 		}
 
-		if (currentTab === MessagingQueueServiceDetailType.ConsumerDetails) {
-			return Boolean(configDetails?.topic && configDetails?.partition);
-		}
-		return Boolean(
-			configDetails?.group && configDetails?.topic && configDetails?.partition,
-		);
+		return Boolean(configDetails?.topic && configDetails?.partition);
 	}
 
 	if (selectedView === MessagingQueuesViewType.producerLatency.value) {
