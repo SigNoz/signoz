@@ -1,11 +1,15 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Select, Spin } from 'antd';
 import ROUTES from 'constants/routes';
+import useComponentPermission from 'hooks/useComponentPermission';
 import { State } from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/channels/getAll';
+import AppReducer from 'types/reducer/app';
 
 import { StyledCreateChannelOption, StyledSelect } from './styles';
 
@@ -44,10 +48,16 @@ function ChannelSelect({
 		});
 	}
 
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const [addNewChannelPermission] = useComponentPermission(
+		['add_new_channel'],
+		role,
+	);
+
 	const renderOptions = (): ReactNode[] => {
 		const children: ReactNode[] = [];
 
-		if (!channels.loading) {
+		if (!channels.loading && addNewChannelPermission) {
 			children.push(
 				<Select.Option key="add-new-channel" value="add-new-channel">
 					<StyledCreateChannelOption>
