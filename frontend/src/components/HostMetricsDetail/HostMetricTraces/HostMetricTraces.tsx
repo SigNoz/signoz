@@ -19,61 +19,36 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import GetMinMax from 'lib/getMinMax';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { columns, getHostTracesQueryPayload } from './constants';
 
 interface Props {
-	hostName: string;
 	timeRange: {
 		startTime: number;
 		endTime: number;
 	};
 	isModalTimeSelection: boolean;
+	handleTimeChange: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	) => void;
+	handleChangeTracesFilters: (value: IBuilderQuery['filters']) => void;
+	tracesFilters: IBuilderQuery['filters'];
 }
 
 function HostMetricTraces({
-	hostName,
 	timeRange,
 	isModalTimeSelection,
+	handleTimeChange,
+	handleChangeTracesFilters,
+	tracesFilters,
 }: Props): JSX.Element {
 	const [traces, setTraces] = useState<any[]>([]);
 	const [offset] = useState<number>(0);
-	const [modalTimeRange, setModalTimeRange] = useState(timeRange);
-	const [, setSelectedInterval] = useState<Time>('5m');
-
-	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => ({
-		op: 'AND',
-		items: [
-			{
-				id: 'host-filter-id', // Static ID since this is a permanent filter
-				key: {
-					key: 'host.name',
-					dataType: DataTypes.String,
-					type: 'resource',
-					isColumn: false,
-					isJSON: false,
-					id: 'host.name--string--resource--false',
-				},
-				op: '=',
-				value: hostName,
-			},
-		],
-	}));
-
-	// const { config } = useOptionsMenu({
-	//     storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-	//     dataSource: DataSource.TRACES,
-	//     aggregateOperator: 'count',
-	//     initialOptions: {
-	//         selectColumns: defaultSelectedColumns,
-	//     },
-	// });
 
 	const { currentQuery } = useQueryBuilder();
 	const updatedCurrentQuery = useMemo(
@@ -98,35 +73,6 @@ function HostMetricTraces({
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
-	const handleChangeTagFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
-			setFilters((prevFilters) => ({
-				op: 'AND',
-				items: [...prevFilters.items, ...value.items],
-			}));
-		},
-		[], // hostName can be removed from deps since we're using prevFilters
-	);
-
-	const handleTimeChange = useCallback(
-		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
-			setSelectedInterval(interval as Time);
-			if (interval === 'custom' && dateTimeRange) {
-				setModalTimeRange({
-					startTime: Math.floor(dateTimeRange[0] / 1000),
-					endTime: Math.floor(dateTimeRange[1] / 1000),
-				});
-			} else {
-				const { maxTime, minTime } = GetMinMax(interval);
-				setModalTimeRange({
-					startTime: Math.floor(minTime / 1000000),
-					endTime: Math.floor(maxTime / 1000000),
-				});
-			}
-		},
-		[],
-	);
-
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
 		QueryParams.pagination,
 	);
@@ -134,16 +80,16 @@ function HostMetricTraces({
 	const queryPayload = useMemo(
 		() =>
 			getHostTracesQueryPayload(
-				modalTimeRange.startTime,
-				modalTimeRange.endTime,
+				timeRange.startTime,
+				timeRange.endTime,
 				paginationQueryData?.offset || offset,
-				filters,
+				tracesFilters,
 			),
 		[
-			modalTimeRange.startTime,
-			modalTimeRange.endTime,
+			timeRange.startTime,
+			timeRange.endTime,
 			offset,
-			filters,
+			tracesFilters,
 			paginationQueryData,
 		],
 	);
@@ -151,10 +97,10 @@ function HostMetricTraces({
 	const { data, isLoading, isFetching, isError } = useQuery({
 		queryKey: [
 			'hostMetricTraces',
-			modalTimeRange.startTime,
-			modalTimeRange.endTime,
+			timeRange.startTime,
+			timeRange.endTime,
 			offset,
-			filters,
+			tracesFilters,
 			DEFAULT_ENTITY_VERSION,
 			paginationQueryData,
 		],
@@ -177,7 +123,7 @@ function HostMetricTraces({
 
 	const isDataEmpty =
 		!isLoading && !isFetching && !isError && traces.length === 0;
-	const hasAdditionalFilters = filters.items.length > 1;
+	const hasAdditionalFilters = tracesFilters.items.length > 1;
 
 	const totalCount =
 		data?.payload?.data?.newResult?.data?.result?.[0]?.list?.length || 0;
@@ -187,7 +133,7 @@ function HostMetricTraces({
 			<div className="host-metric-traces-header">
 				<div className="filter-section">
 					{query && (
-						<QueryBuilderSearch query={query} onChange={handleChangeTagFilters} />
+						<QueryBuilderSearch query={query} onChange={handleChangeTracesFilters} />
 					)}
 				</div>
 				<div className="datetime-section">

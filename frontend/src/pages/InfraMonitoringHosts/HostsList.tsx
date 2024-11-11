@@ -102,9 +102,12 @@ function HostsList(): JSX.Element {
 
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {
-			setFilters(value);
+			const isNewFilterAdded = value.items.length !== filters.items.length;
+			if (isNewFilterAdded) {
+				setFilters(value);
+			}
 		},
-		[],
+		[filters],
 	);
 
 	const selectedHostData = useMemo(() => {

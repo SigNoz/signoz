@@ -103,9 +103,14 @@
 		}
 	}
 
+	.views-tabs-container {
+		margin-top: 2rem;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+
 	.views-tabs {
 		color: var(--text-vanilla-400);
-		margin-top: 2rem;
 
 		.view-title {
 			display: flex;
@@ -136,7 +141,11 @@
 			background: var(--bg-slate-400);
 		}
 	}
-
+	.compass-button {
+		width: 30px;
+		height: 30px;
+	}
+}
 	.ant-drawer-close {
 		padding: 0px;
 	}

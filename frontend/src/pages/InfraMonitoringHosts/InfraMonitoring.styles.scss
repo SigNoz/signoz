@@ -41,25 +41,25 @@
 		min-height: 500px;
 	}
 
-	.hosts-list-controls {
-		margin: 1rem 0.5rem;
+	// .hosts-list-controls {
+	// 	// margin: 1rem 0.5rem;
 
-		.ant-select-selection-search {
-			width: auto !important;
-			min-width: 85rem;
-		}
+	// 	// .ant-select-selection-search {
+	// 	// 	width: auto !important;
+	// 	// 	min-width: 70rem;
+	// 	// }
 
-		.ant-select-multiple {
-			.ant-select-selection-overflow {
-				flex-wrap: wrap;
-				overflow: visible;
-			}
+	// 	// .ant-select-multiple {
+	// 	// 	.ant-select-selection-overflow {
+	// 	// 		flex-wrap: wrap;
+	// 	// 		overflow: visible;
+	// 	// 	}
 
-			.ant-select-selection-overflow-item {
-				flex: 0 0 auto;
-			}
-		}
-	}
+	// 	// 	.ant-select-selection-overflow-item {
+	// 	// 		flex: 0 0 auto;
+	// 	// 	}
+	// 	// }
+	// }
 	
 	.progress-container {
 		display: flex;

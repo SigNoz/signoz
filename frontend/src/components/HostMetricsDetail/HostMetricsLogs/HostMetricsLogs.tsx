@@ -1,21 +1,24 @@
 import './HostMetricLogs.styles.scss';
 
-import { Card, Skeleton } from 'antd';
+import { Card } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { CARD_BODY_STYLE } from 'constants/card';
+import LogsError from 'container/LogsError/LogsError';
 import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
+import { LogsLoading } from 'container/LogsLoading/LogsLoading';
+import NoLogs from 'container/NoLogs/NoLogs';
 import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
-import useDebounce from 'hooks/useDebounce';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { getHostLogsQueryPayload } from './constants';
 
@@ -34,13 +37,12 @@ function Footer(): JSX.Element {
 function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [offset, setOffset] = useState<number>(0);
-	const debouncedFilters = useDebounce(filters, 800);
 
 	const queryPayload = useMemo(() => {
 		const basePayload = getHostLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
-			debouncedFilters,
+			filters,
 		);
 
 		basePayload.query.builder.queryData[0].offset = offset;
@@ -50,13 +52,13 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 		];
 
 		return basePayload;
-	}, [timeRange.startTime, timeRange.endTime, debouncedFilters, offset]);
+	}, [timeRange.startTime, timeRange.endTime, filters, offset]);
 
-	const { data, isLoading } = useQuery({
+	const { data, isLoading, isError } = useQuery({
 		queryKey: [
 			'hostMetricsLogs',
 			offset,
-			debouncedFilters,
+			filters,
 			timeRange.startTime,
 			timeRange.endTime,
 		],
@@ -120,12 +122,17 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 			</Card>
 		);
 	}, [isLoading, logs, loadMore, getItemContent]);
-
 	return (
 		<div className="host-metrics-logs">
-			{isLoading && logs.length === 0 ? (
-				<Skeleton active />
-			) : (
+			{isLoading && <LogsLoading />}
+			{filters.items.length > 1 && isLoading && logs.length !== 0 && (
+				<LogsLoading />
+			)}
+			{!isLoading && !isError && logs.length === 0 && (
+				<NoLogs dataSource={DataSource.LOGS} />
+			)}
+			{isError && !isLoading && <LogsError />}
+			{!isLoading && !isError && (
 				<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
 			)}
 		</div>

@@ -7,35 +7,33 @@ import {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import GetMinMax from 'lib/getMinMax';
-import { memo, useCallback, useMemo, useState } from 'react';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { v4 as uuidv4 } from 'uuid';
 
 import HostMetricsLogs from './HostMetricsLogs';
 
 interface Props {
-	hostName: string;
 	timeRange: {
 		startTime: number;
 		endTime: number;
 	};
 	isModalTimeSelection: boolean;
+	handleTimeChange: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	) => void;
+	handleChangeLogFilters: (value: IBuilderQuery['filters']) => void;
+	logFilters: IBuilderQuery['filters'];
 }
 
 function HostMetricLogsDetailedView({
-	hostName,
 	timeRange,
 	isModalTimeSelection,
+	handleTimeChange,
+	handleChangeLogFilters,
+	logFilters,
 }: Props): JSX.Element {
-	const [modalTimeRange, setModalTimeRange] = useState(timeRange);
-	const [, setSelectedInterval] = useState<Time>('5m');
-	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
-		op: 'AND',
-		items: [],
-	});
 	const { currentQuery } = useQueryBuilder();
 	const updatedCurrentQuery = useMemo(
 		() => ({
@@ -59,56 +57,12 @@ function HostMetricLogsDetailedView({
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
-	const handleChangeTagFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
-			setFilters({
-				op: 'AND',
-				items: [
-					{
-						id: uuidv4(),
-						key: {
-							key: 'host.name',
-							dataType: DataTypes.String,
-							type: 'resource',
-							isColumn: false,
-							isJSON: false,
-							id: 'host.name--string--resource--false',
-						},
-						op: '=',
-						value: hostName,
-					},
-					...value.items,
-				],
-			});
-		},
-		[hostName],
-	);
-
-	const handleTimeChange = useCallback(
-		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
-			setSelectedInterval(interval as Time);
-			if (interval === 'custom' && dateTimeRange) {
-				setModalTimeRange({
-					startTime: Math.floor(dateTimeRange[0] / 1000),
-					endTime: Math.floor(dateTimeRange[1] / 1000),
-				});
-			} else {
-				const { maxTime, minTime } = GetMinMax(interval);
-				setModalTimeRange({
-					startTime: Math.floor(minTime / 1000000),
-					endTime: Math.floor(maxTime / 1000000),
-				});
-			}
-		},
-		[],
-	);
-
 	return (
 		<div className="host-metrics-logs-container">
 			<div className="host-metrics-logs-header">
 				<div className="filter-section">
 					{query && (
-						<QueryBuilderSearch query={query} onChange={handleChangeTagFilters} />
+						<QueryBuilderSearch query={query} onChange={handleChangeLogFilters} />
 					)}
 				</div>
 				<div className="datetime-section">
@@ -122,9 +76,9 @@ function HostMetricLogsDetailedView({
 					/>
 				</div>
 			</div>
-			<HostMetricsLogs timeRange={modalTimeRange} filters={filters} />
+			<HostMetricsLogs timeRange={timeRange} filters={logFilters} />
 		</div>
 	);
 }
 
-export default memo(HostMetricLogsDetailedView);
+export default HostMetricLogsDetailedView;
