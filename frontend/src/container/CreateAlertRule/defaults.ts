@@ -102,6 +102,7 @@ export const anamolyAlertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const logAlertDefaults: AlertDef = {
