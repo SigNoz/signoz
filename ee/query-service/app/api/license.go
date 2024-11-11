@@ -66,7 +66,7 @@ type ApplyLicenseRequest struct {
 
 type ListLicenseResponse map[string]interface{}
 
-func convertLicenseV3ToListLicenseResponse(licensesV3 []model.LicenseV3) []ListLicenseResponse {
+func convertLicenseV3ToListLicenseResponse(licensesV3 []*model.LicenseV3) []ListLicenseResponse {
 	listLicenses := []ListLicenseResponse{}
 
 	for _, license := range licensesV3 {
@@ -215,9 +215,9 @@ func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 	ah.Respond(w, billingResponse.Data)
 }
 
-func convertLicenseV3ToLicenseV2(licenses *[]model.LicenseV3) []model.License {
+func convertLicenseV3ToLicenseV2(licenses []*model.LicenseV3) []model.License {
 	licensesV2 := []model.License{}
-	for _, l := range *licenses {
+	for _, l := range licenses {
 		licenseV2 := model.License{
 			Key:               l.Key,
 			ActivationId:      "",
@@ -240,18 +240,21 @@ func convertLicenseV3ToLicenseV2(licenses *[]model.LicenseV3) []model.License {
 func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 
 	var licenses []model.License
-	var apiError *model.ApiError
 
 	if ah.UseLicensesV3 {
-		licensesV3, err := ah.LM().GetLicensesV3(context.Background())
-		apiError = err
-		licenses = convertLicenseV3ToLicenseV2(&licensesV3)
+		licensesV3, err := ah.LM().GetLicensesV3(r.Context())
+		if err != nil {
+			RespondError(w, err, nil)
+			return
+		}
+		licenses = convertLicenseV3ToLicenseV2(licensesV3)
 	} else {
-		licenses, apiError = ah.LM().GetLicenses(context.Background())
-	}
-
-	if apiError != nil {
-		RespondError(w, apiError, nil)
+		_licenses, apiError := ah.LM().GetLicenses(r.Context())
+		if apiError != nil {
+			RespondError(w, apiError, nil)
+			return
+		}
+		licenses = _licenses
 	}
 
 	resp := model.Licenses{

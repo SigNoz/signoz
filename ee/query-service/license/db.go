@@ -49,9 +49,9 @@ func (r *Repo) GetLicenses(ctx context.Context) ([]model.License, error) {
 	return licenses, nil
 }
 
-func (r *Repo) GetLicensesV3(ctx context.Context) ([]model.LicenseV3, error) {
+func (r *Repo) GetLicensesV3(ctx context.Context) ([]*model.LicenseV3, error) {
 	licensesData := []model.LicenseDB{}
-	licenseV3Data := []model.LicenseV3{}
+	licenseV3Data := []*model.LicenseV3{}
 
 	query := "SELECT id,key,data FROM licenses_v3"
 
@@ -71,7 +71,7 @@ func (r *Repo) GetLicensesV3(ctx context.Context) ([]model.LicenseV3, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to get licenses v3 schema : %v", err)
 		}
-		licenseV3Data = append(licenseV3Data, *license)
+		licenseV3Data = append(licenseV3Data, license)
 	}
 
 	return licenseV3Data, nil

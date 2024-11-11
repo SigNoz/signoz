@@ -17,16 +17,7 @@ var (
 )
 
 var (
-	LicenseCategoryFree = "FREE"
-	LicenseCategoryPaid = "PAID"
-)
-
-var (
-	LicenseStatusIssued    = "ISSUED"
-	LicenseStatusActive    = "ACTIVE"
-	LicenseStatusSuspended = "SUSPENDED"
-	LicenseStatusHibernate = "HIBERNATE"
-	LicenseStatusInactive  = "INACTIVE"
+	LicenseStatusInactive = "INACTIVE"
 )
 
 const DisableUpsell = "DISABLE_UPSELL"

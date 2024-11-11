@@ -218,7 +218,7 @@ func (lm *Manager) GetLicenses(ctx context.Context) (response []model.License, a
 	return
 }
 
-func (lm *Manager) GetLicensesV3(ctx context.Context) (response []model.LicenseV3, apiError *model.ApiError) {
+func (lm *Manager) GetLicensesV3(ctx context.Context) (response []*model.LicenseV3, apiError *model.ApiError) {
 
 	licenses, err := lm.repo.GetLicensesV3(ctx)
 	if err != nil {

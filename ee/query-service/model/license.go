@@ -115,21 +115,20 @@ type LicenseDB struct {
 	Data string `json:"data"`
 }
 type LicenseV3 struct {
-	ID         string                 `json:"id"`
-	Key        string                 `json:"key"`
-	Data       map[string]interface{} `json:"data"`
-	Plan       Plan                   `json:"plan"`
-	Features   basemodel.FeatureSet   `json:"features"`
-	Category   string                 `json:"category"`
-	Status     string                 `json:"status"`
-	IsCurrent  bool                   `json:"isCurrent"`
-	CreatedAt  time.Time              `json:"createdAt"`
-	ValidFrom  int64                  `json:"validFrom"`
-	ValidUntil int64                  `json:"validUntil"`
+	ID         string
+	Key        string
+	Data       map[string]interface{}
+	Plan       Plan
+	Features   basemodel.FeatureSet
+	Status     string
+	IsCurrent  bool
+	CreatedAt  time.Time
+	ValidFrom  int64
+	ValidUntil int64
 }
 
 func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
-	var licenseID, licenseKey, category, status string
+	var licenseID, licenseKey, status string
 	var validFrom, validUntil int64
 	var licenseData = data
 	var createdAt time.Time
@@ -160,17 +159,6 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		delete(licenseData, "key")
 	} else {
 		return nil, errors.New("license key is missing")
-	}
-
-	// extract category from data
-	if _licenseCategory, ok := data["category"]; ok {
-		if licenseCategory, ok := _licenseCategory.(string); ok {
-			category = licenseCategory
-		} else {
-			return nil, errors.New("license category is not a valid string")
-		}
-	} else {
-		return nil, errors.New("license category is missing")
 	}
 
 	// extract status from data
@@ -297,7 +285,6 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		Features:   features,
 		ValidFrom:  validFrom,
 		ValidUntil: validUntil,
-		Category:   category,
 		CreatedAt:  createdAt,
 		Status:     status,
 	}, nil

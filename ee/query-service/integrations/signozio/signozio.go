@@ -147,7 +147,7 @@ func ValidateLicenseV3(licenseKey string) (*model.LicenseV3, *model.ApiError) {
 	defer response.Body.Close()
 
 	switch response.StatusCode {
-	case 200, 201:
+	case 200:
 		a := ValidateLicenseResponse{}
 		err = json.Unmarshal(body, &a)
 		if err != nil {
@@ -160,9 +160,12 @@ func ValidateLicenseV3(licenseKey string) (*model.LicenseV3, *model.ApiError) {
 		}
 
 		return license, nil
-	case 400, 401:
+	case 400:
 		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
 			fmt.Sprintf("bad request error received from %v", C.GatewayUrl)))
+	case 401:
+		return nil, model.Unauthorized(errors.Wrap(fmt.Errorf(string(body)),
+			fmt.Sprintf("unauthorized request error received from %v", C.GatewayUrl)))
 	default:
 		return nil, model.InternalError(errors.Wrap(fmt.Errorf(string(body)),
 			fmt.Sprintf("internal request error received from %v", C.GatewayUrl)))

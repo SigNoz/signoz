@@ -189,7 +189,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 		am.AdminAccess(ah.applyLicenseV3)).
 		Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v3/licenses/refresh",
+	router.HandleFunc("/api/v3/licenses",
 		am.AdminAccess(ah.refreshLicensesV3)).
 		Methods(http.MethodPut)
 
