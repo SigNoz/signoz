@@ -3,6 +3,8 @@ package model
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/pkg/errors"
@@ -118,85 +120,64 @@ type LicenseV3 struct {
 	ID         string
 	Key        string
 	Data       map[string]interface{}
-	Plan       Plan
+	PlanName   string
 	Features   basemodel.FeatureSet
 	Status     string
 	IsCurrent  bool
-	CreatedAt  time.Time
 	ValidFrom  int64
 	ValidUntil int64
 }
 
+func extractKeyFromMapStringInterface[T any](data map[string]interface{}, key string) (T, error) {
+	var zeroValue T
+	if val, ok := data[key]; ok {
+		if value, ok := val.(T); ok {
+			return value, nil
+		}
+		return zeroValue, fmt.Errorf("%s key is not a valid %s", key, reflect.TypeOf(zeroValue))
+	}
+	return zeroValue, fmt.Errorf("%s key is missing", key)
+}
+
 func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
-	var licenseID, licenseKey, status string
-	var validFrom, validUntil int64
-	var licenseData = data
-	var createdAt time.Time
 	var features basemodel.FeatureSet
-	plan := new(Plan)
 
 	// extract id from data
-	if _licenseId, ok := data["id"]; ok {
-		if licenseId, ok := _licenseId.(string); ok {
-			licenseID = licenseId
-		} else {
-			return nil, errors.New("license id is not a valid string")
-		}
-		// if id is present then delete id from licenseData field
-		delete(licenseData, "id")
-	} else {
-		return nil, errors.New("license id is missing")
+	licenseID, err := extractKeyFromMapStringInterface[string](data, "id")
+	if err != nil {
+		return nil, err
 	}
+	delete(data, "id")
 
 	// extract key from data
-	if _licenseKey, ok := data["key"]; ok {
-		if licensekey, ok := _licenseKey.(string); ok {
-			licenseKey = licensekey
-		} else {
-			return nil, errors.New("license key is not a valid string")
-		}
-		// if key is present then delete id from licenseData field
-		delete(licenseData, "key")
-	} else {
-		return nil, errors.New("license key is missing")
+	licenseKey, err := extractKeyFromMapStringInterface[string](data, "key")
+	if err != nil {
+		return nil, err
 	}
+	delete(data, "key")
 
 	// extract status from data
-	if _licenseStatus, ok := data["status"]; ok {
-		if licenseStatus, ok := _licenseStatus.(string); ok {
-			status = licenseStatus
-		} else {
-			return nil, errors.New("license status is not a valid string")
-		}
-	} else {
-		return nil, errors.New("license status is missing")
+	status, err := extractKeyFromMapStringInterface[string](data, "status")
+	if err != nil {
+		return nil, err
 	}
 
-	if _plan, ok := licenseData["plan"]; ok {
-		planData, err := json.Marshal(_plan)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to marshal plan data")
-		}
+	planMap, err := extractKeyFromMapStringInterface[map[string]any](data, "plan")
+	if err != nil {
+		return nil, err
+	}
 
-		var parsedPlan Plan
-		if err := json.Unmarshal(planData, &parsedPlan); err != nil {
-			return nil, errors.Wrap(err, "failed to unmarshal plan data")
-		}
-
-		if parsedPlan.Name == "" {
-			return nil, errors.New("license plan is missing plan name")
-		}
-		plan = &parsedPlan
-	} else {
-		return nil, errors.New("license plan is missing")
+	planName, err := extractKeyFromMapStringInterface[string](planMap, "name")
+	if err != nil {
+		return nil, err
 	}
 	// if license status is inactive then default it to basic
 	if status == LicenseStatusInactive {
-		plan.Name = PlanNameBasic
+		planName = PlanNameBasic
 	}
 
 	featuresFromZeus := basemodel.FeatureSet{}
-	if _features, ok := licenseData["features"]; ok {
+	if _features, ok := data["features"]; ok {
 		featuresData, err := json.Marshal(_features)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to marshal features data")
@@ -207,7 +188,7 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		}
 	}
 
-	switch plan.Name {
+	switch planName {
 	case PlanNameTeams:
 		features = append(features, ProPlan...)
 	case PlanNameEnterprise:
@@ -233,59 +214,28 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 			}
 		}
 	}
-	licenseData["features"] = features
+	data["features"] = features
 
-	if _value, ok := licenseData["valid_from"]; ok {
-		val, ok := _value.(int64)
-		if ok {
-			validFrom = val
-		} else {
-			floatVal, ok := _value.(float64)
-			if !ok || floatVal != float64(int64(floatVal)) {
-				// if the validFrom is float value default it to 0
-				validFrom = 0
-			} else {
-				validFrom = int64(floatVal)
-			}
-
-		}
+	_validFrom, err := extractKeyFromMapStringInterface[float64](data, "valid_from")
+	if err != nil {
+		_validFrom = 0
 	}
+	validFrom := int64(_validFrom)
 
-	if _value, ok := licenseData["valid_until"]; ok {
-		val, ok := _value.(int64)
-		if ok {
-			validUntil = val
-		} else {
-			floatVal, ok := _value.(float64)
-			if !ok || floatVal != float64(int64(floatVal)) {
-				// if the validUntil is float value default it to -1
-				validUntil = -1
-			} else {
-				validUntil = int64(floatVal)
-			}
-
-		}
+	_validUntil, err := extractKeyFromMapStringInterface[float64](data, "valid_until")
+	if err != nil {
+		_validUntil = 0
 	}
-
-	// extract createdAt from data
-	if _createdAt, ok := data["created_at"]; ok {
-		if createdat, ok := _createdAt.(string); ok {
-			parsedCreatedAt, err := time.Parse(time.RFC3339, createdat)
-			if err == nil {
-				createdAt = parsedCreatedAt
-			}
-		}
-	}
+	validUntil := int64(_validUntil)
 
 	return &LicenseV3{
 		ID:         licenseID,
 		Key:        licenseKey,
-		Data:       licenseData,
-		Plan:       *plan,
+		Data:       data,
+		PlanName:   planName,
 		Features:   features,
 		ValidFrom:  validFrom,
 		ValidUntil: validUntil,
-		CreatedAt:  createdAt,
 		Status:     status,
 	}, nil
 

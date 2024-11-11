@@ -221,13 +221,12 @@ func convertLicenseV3ToLicenseV2(licenses []*model.LicenseV3) []model.License {
 		licenseV2 := model.License{
 			Key:               l.Key,
 			ActivationId:      "",
-			CreatedAt:         l.CreatedAt,
 			PlanDetails:       "",
 			FeatureSet:        l.Features,
 			ValidationMessage: "",
 			IsCurrent:         l.IsCurrent,
 			LicensePlan: model.LicensePlan{
-				PlanKey:    l.Plan.Name,
+				PlanKey:    l.PlanName,
 				ValidFrom:  l.ValidFrom,
 				ValidUntil: l.ValidUntil,
 				Status:     l.Status},
