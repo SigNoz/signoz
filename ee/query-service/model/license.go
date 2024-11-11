@@ -185,19 +185,16 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	}
 
 	if _plan, ok := licenseData["plan"]; ok {
-		if parsedPlan, ok := _plan.(map[string]interface{}); ok {
-			if planName, ok := parsedPlan["name"]; ok {
-				if pName, ok := planName.(string); ok {
-					plan.Name = pName
-				} else {
-					return nil, errors.New("plan name is not a valid string")
-				}
-			} else {
-				return nil, errors.New("plan name is missing in plan struct")
-			}
-		} else {
-			return nil, errors.New("plan is not a valid map[string]interface{} struct")
+		planData, err := json.Marshal(_plan)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to marshal plan data")
 		}
+
+		var parsedPlan Plan
+		if err := json.Unmarshal(planData, &parsedPlan); err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal plan data")
+		}
+		plan = &parsedPlan
 	} else {
 		return nil, errors.New("license plan is missing")
 	}
@@ -207,13 +204,15 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	}
 
 	featuresFromZeus := basemodel.FeatureSet{}
-	if features, ok := licenseData["features"]; ok {
-		if val, ok := features.(basemodel.FeatureSet); ok {
-			featuresFromZeus = val
+	if _features, ok := licenseData["features"]; ok {
+		featuresData, err := json.Marshal(_features)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to marshal features data")
 		}
-	}
-	if len(featuresFromZeus) > 0 {
-		features = append(features, featuresFromZeus...)
+
+		if err := json.Unmarshal(featuresData, &featuresFromZeus); err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal features data")
+		}
 	}
 
 	switch plan.Name {
@@ -226,6 +225,23 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	default:
 		features = append(features, BasicPlan...)
 	}
+
+	if len(featuresFromZeus) > 0 {
+		for _, feature := range featuresFromZeus {
+			exists := false
+			for i, existingFeature := range features {
+				if existingFeature.Name == feature.Name {
+					features[i] = feature // Replace existing feature
+					exists = true
+					break
+				}
+			}
+			if !exists {
+				features = append(features, feature) // Append if it doesn't exist
+			}
+		}
+	}
+	licenseData["features"] = features
 
 	if _value, ok := licenseData["valid_from"]; ok {
 		val, ok := _value.(int64)

@@ -22,7 +22,7 @@ func TestNewLicenseV3(t *testing.T) {
 			name:  "give plan error when plan not present",
 			data:  []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":"{}"}`),
 			pass:  false,
-			error: errors.New("plan is not a valid map[string]interface{} struct"),
+			error: errors.New("failed to unmarshal plan data: json: cannot unmarshal string into Go value of type model.Plan"),
 		},
 		{
 			name: "parse the plan properly!",
@@ -103,6 +103,7 @@ func TestNewLicenseV3(t *testing.T) {
 		license, err := NewLicenseV3(licensePayload)
 		if license != nil {
 			license.Features = make(model.FeatureSet, 0)
+			delete(license.Data, "features")
 		}
 
 		if tc.pass {

@@ -9,7 +9,7 @@ import (
 
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/http/render"
 	"go.uber.org/zap"
 )
 
@@ -64,34 +64,13 @@ type ApplyLicenseRequest struct {
 	LicenseKey string `json:"key"`
 }
 
-type ListLicenseResponse struct {
-	ID         string                 `json:"id"`
-	Data       map[string]interface{} `json:"data"`
-	Features   basemodel.FeatureSet   `json:"features"`
-	Plan       model.Plan             `json:"plan"`
-	IsCurrent  bool                   `json:"isCurrent"`
-	ValidFrom  int64                  `json:"validFrom"`
-	ValidUntil int64                  `json:"validUntil"`
-	Category   string                 `json:"category"`
-	Status     string                 `json:"status"`
-}
+type ListLicenseResponse map[string]interface{}
 
 func convertLicenseV3ToListLicenseResponse(licensesV3 []model.LicenseV3) []ListLicenseResponse {
 	listLicenses := []ListLicenseResponse{}
 
 	for _, license := range licensesV3 {
-		listLicense := ListLicenseResponse{
-			ID:         license.ID,
-			Data:       license.Data,
-			Features:   license.Features,
-			Plan:       license.Plan,
-			IsCurrent:  license.IsCurrent,
-			ValidFrom:  license.ValidFrom,
-			ValidUntil: license.ValidUntil,
-			Category:   license.Category,
-			Status:     license.Status,
-		}
-		listLicenses = append(listLicenses, listLicense)
+		listLicenses = append(listLicenses, license.Data)
 	}
 	return listLicenses
 }
@@ -150,13 +129,13 @@ func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	l, apiError := ah.LM().ActivateV3(r.Context(), licenseKey.LicenseKey)
+	_, apiError := ah.LM().ActivateV3(r.Context(), licenseKey.LicenseKey)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
 	}
 
-	ah.Respond(w, l)
+	render.Success(w, http.StatusAccepted, nil)
 }
 
 func (ah *APIHandler) refreshLicensesV3(w http.ResponseWriter, r *http.Request) {
@@ -167,7 +146,7 @@ func (ah *APIHandler) refreshLicensesV3(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	ah.Respond(w, nil)
+	render.Success(w, http.StatusNoContent, nil)
 }
 
 func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
