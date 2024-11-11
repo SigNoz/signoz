@@ -201,7 +201,7 @@ function BasicInfo({
 				{!shouldBroadCastToAllChannels && (
 					<Tooltip
 						title={
-							noChannels
+							noChannels && !addNewChannelPermission
 								? 'No channels. Ask an admin to create a notification channel'
 								: undefined
 						}
