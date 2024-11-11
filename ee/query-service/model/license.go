@@ -123,6 +123,7 @@ type LicenseV3 struct {
 	Category   string                 `json:"category"`
 	Status     string                 `json:"status"`
 	IsCurrent  bool                   `json:"isCurrent"`
+	CreatedAt  time.Time              `json:"createdAt"`
 	ValidFrom  int64                  `json:"validFrom"`
 	ValidUntil int64                  `json:"validUntil"`
 }
@@ -131,6 +132,7 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	var licenseID, licenseKey, category, status string
 	var validFrom, validUntil int64
 	var licenseData = data
+	var createdAt time.Time
 	var features basemodel.FeatureSet
 	plan := new(Plan)
 
@@ -139,12 +141,12 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		if licenseId, ok := _licenseId.(string); ok {
 			licenseID = licenseId
 		} else {
-			return nil, errors.New("license id is not a valid string!")
+			return nil, errors.New("license id is not a valid string")
 		}
 		// if id is present then delete id from licenseData field
 		delete(licenseData, "id")
 	} else {
-		return nil, errors.New("license id is missing!")
+		return nil, errors.New("license id is missing")
 	}
 
 	// extract key from data
@@ -152,32 +154,34 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		if licensekey, ok := _licenseKey.(string); ok {
 			licenseKey = licensekey
 		} else {
-			return nil, errors.New("license key is not a valid string!")
+			return nil, errors.New("license key is not a valid string")
 		}
 		// if key is present then delete id from licenseData field
 		delete(licenseData, "key")
 	} else {
-		return nil, errors.New("license key is missing!")
+		return nil, errors.New("license key is missing")
 	}
 
 	// extract category from data
 	if _licenseCategory, ok := data["category"]; ok {
 		if licenseCategory, ok := _licenseCategory.(string); ok {
 			category = licenseCategory
+		} else {
+			return nil, errors.New("license category is not a valid string")
 		}
-	}
-	if category == "" {
-		category = LicenseCategoryFree
+	} else {
+		return nil, errors.New("license category is missing")
 	}
 
 	// extract status from data
 	if _licenseStatus, ok := data["status"]; ok {
 		if licenseStatus, ok := _licenseStatus.(string); ok {
 			status = licenseStatus
+		} else {
+			return nil, errors.New("license status is not a valid string")
 		}
-	}
-	if status == "" {
-		status = LicenseStatusInactive
+	} else {
+		return nil, errors.New("license status is missing")
 	}
 
 	if _plan, ok := licenseData["plan"]; ok {
@@ -185,12 +189,20 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 			if planName, ok := parsedPlan["name"]; ok {
 				if pName, ok := planName.(string); ok {
 					plan.Name = pName
+				} else {
+					return nil, errors.New("plan name is not a valid string")
 				}
+			} else {
+				return nil, errors.New("plan name is missing in plan struct")
 			}
+		} else {
+			return nil, errors.New("plan is not a valid map[string]interface{} struct")
 		}
+	} else {
+		return nil, errors.New("license plan is missing")
 	}
-	// if unable to parse the plan or license is inactive then default it to basic
-	if plan.Name == "" || status == LicenseStatusInactive {
+	// if license status is inactive then default it to basic
+	if status == LicenseStatusInactive {
 		plan.Name = PlanNameBasic
 	}
 
@@ -245,6 +257,16 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		}
 	}
 
+	// extract createdAt from data
+	if _createdAt, ok := data["created_at"]; ok {
+		if createdat, ok := _createdAt.(string); ok {
+			parsedCreatedAt, err := time.Parse(time.RFC3339, createdat)
+			if err == nil {
+				createdAt = parsedCreatedAt
+			}
+		}
+	}
+
 	return &LicenseV3{
 		ID:         licenseID,
 		Key:        licenseKey,
@@ -254,6 +276,7 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 		ValidFrom:  validFrom,
 		ValidUntil: validUntil,
 		Category:   category,
+		CreatedAt:  createdAt,
 		Status:     status,
 	}, nil
 

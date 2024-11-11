@@ -40,6 +40,7 @@ type APIHandlerOptions struct {
 	// Querier Influx Interval
 	FluxInterval     time.Duration
 	UseLogsNewSchema bool
+	UseLicensesV3    bool
 }
 
 type APIHandler struct {
@@ -65,6 +66,7 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		Cache:                         opts.Cache,
 		FluxInterval:                  opts.FluxInterval,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
+		UseLicensesV3:                 opts.UseLicensesV3,
 	})
 
 	if err != nil {

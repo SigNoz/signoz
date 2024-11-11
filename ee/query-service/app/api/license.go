@@ -236,9 +236,41 @@ func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 	ah.Respond(w, billingResponse.Data)
 }
 
+func convertLicenseV3ToLicenseV2(licenses *[]model.LicenseV3) []model.License {
+	licensesV2 := []model.License{}
+	for _, l := range *licenses {
+		licenseV2 := model.License{
+			Key:               l.Key,
+			ActivationId:      "",
+			CreatedAt:         l.CreatedAt,
+			PlanDetails:       "",
+			FeatureSet:        l.Features,
+			ValidationMessage: "",
+			IsCurrent:         l.IsCurrent,
+			LicensePlan: model.LicensePlan{
+				PlanKey:    l.Plan.Name,
+				ValidFrom:  l.ValidFrom,
+				ValidUntil: l.ValidUntil,
+				Status:     l.Status},
+		}
+		licensesV2 = append(licensesV2, licenseV2)
+	}
+	return licensesV2
+}
+
 func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 
-	licenses, apiError := ah.LM().GetLicenses(context.Background())
+	var licenses []model.License
+	var apiError *model.ApiError
+
+	if ah.UseLicensesV3 {
+		licensesV3, err := ah.LM().GetLicensesV3(context.Background())
+		apiError = err
+		licenses = convertLicenseV3ToLicenseV2(&licensesV3)
+	} else {
+		licenses, apiError = ah.LM().GetLicenses(context.Background())
+	}
+
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 	}

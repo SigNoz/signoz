@@ -271,6 +271,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FluxInterval:                  fluxInterval,
 		Gateway:                       gatewayProxy,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
+		UseLicensesV3:                 serverOptions.UseLicensesV3,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)

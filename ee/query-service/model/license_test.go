@@ -19,27 +19,14 @@ func TestNewLicenseV3(t *testing.T) {
 		error    error
 	}{
 		{
-			name: "default to basic plan when plan not present",
-			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","plan":"{}"}`),
-			pass: true,
-			expected: &LicenseV3{
-				ID:  "does-not-matter",
-				Key: "does-not-matter-key",
-				Data: map[string]interface{}{
-					"plan": "{}",
-				},
-				Plan: Plan{
-					Name: PlanNameBasic,
-				},
-				ValidFrom:  0,
-				ValidUntil: 0,
-				IsCurrent:  false,
-				Features:   model.FeatureSet{},
-			},
+			name:  "give plan error when plan not present",
+			data:  []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":"{}"}`),
+			pass:  false,
+			error: errors.New("plan is not a valid map[string]interface{} struct"),
 		},
 		{
 			name: "parse the plan properly!",
-			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","plan":{"name":"TEAMS"}}`),
+			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"TEAMS"}}`),
 			pass: true,
 			expected: &LicenseV3{
 				ID:  "does-not-matter",
@@ -48,32 +35,43 @@ func TestNewLicenseV3(t *testing.T) {
 					"plan": map[string]interface{}{
 						"name": "TEAMS",
 					},
+					"category": "FREE",
+					"status":   "ACTIVE",
 				},
 				Plan: Plan{
 					Name: PlanNameTeams,
 				},
 				ValidFrom:  0,
 				ValidUntil: 0,
+				Status:     "ACTIVE",
+				Category:   "FREE",
 				IsCurrent:  false,
 				Features:   model.FeatureSet{},
 			},
 		},
 		{
 			name: "parse the validFrom and validUntil",
-			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","valid_from":1234,"valid_until":5678}`),
+			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"TEAMS"},"valid_from":1234,"valid_until":5678}`),
 			pass: true,
 			expected: &LicenseV3{
 				ID:  "does-not-matter",
 				Key: "does-not-matter-key",
 				Data: map[string]interface{}{
+					"plan": map[string]interface{}{
+						"name": "TEAMS",
+					},
 					"valid_from":  float64(1234),
 					"valid_until": float64(5678),
+					"category":    "FREE",
+					"status":      "ACTIVE",
 				},
 				Plan: Plan{
-					Name: PlanNameBasic,
+					Name: PlanNameTeams,
 				},
 				ValidFrom:  1234,
 				ValidUntil: 5678,
+				Status:     "ACTIVE",
+				Category:   "FREE",
 				IsCurrent:  false,
 				Features:   model.FeatureSet{},
 			},
@@ -82,19 +80,19 @@ func TestNewLicenseV3(t *testing.T) {
 			name:  "Error for missing license id",
 			data:  []byte(`{}`),
 			pass:  false,
-			error: errors.New("license id is missing!"),
+			error: errors.New("license id is missing"),
 		},
 		{
 			name:  "Error for missing license key",
 			data:  []byte(`{"id":"does-not-matter"}`),
 			pass:  false,
-			error: errors.New("license key is missing!"),
+			error: errors.New("license key is missing"),
 		},
 		{
 			name:  "Error for invalid string license key",
 			data:  []byte(`{"id":"does-not-matter","key":10}`),
 			pass:  false,
-			error: errors.New("license key is not a valid string!"),
+			error: errors.New("license key is not a valid string"),
 		},
 	}
 
