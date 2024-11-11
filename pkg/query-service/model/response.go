@@ -617,6 +617,7 @@ type AlertsInfo struct {
 	TotalAlerts                  int      `json:"totalAlerts"`
 	LogsBasedAlerts              int      `json:"logsBasedAlerts"`
 	MetricBasedAlerts            int      `json:"metricBasedAlerts"`
+	AnomalyBasedAlerts           int      `json:"anomalyBasedAlerts"`
 	TracesBasedAlerts            int      `json:"tracesBasedAlerts"`
 	TotalChannels                int      `json:"totalChannels"`
 	SlackChannels                int      `json:"slackChannels"`
