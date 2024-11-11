@@ -94,6 +94,10 @@ function BasicInfo({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [channels.payload, channels.loading]);
 
+	const refetchChannels = async (): Promise<void> => {
+		await channels.refetch();
+	};
+
 	return (
 		<>
 			<StepHeading> {t('alert_form_step4')} </StepHeading>
@@ -212,9 +216,8 @@ function BasicInfo({
 							]}
 						>
 							<ChannelSelect
-								disabled={
-									shouldBroadCastToAllChannels || noChannels || !!channels.loading
-								}
+								onDropdownOpen={refetchChannels}
+								disabled={shouldBroadCastToAllChannels}
 								currentValue={alertDef.preferredChannels}
 								channels={channels}
 								onSelectChannels={(preferredChannels): void => {
