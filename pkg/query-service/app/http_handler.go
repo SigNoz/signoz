@@ -111,6 +111,7 @@ type APIHandler struct {
 	Upgrader *websocket.Upgrader
 
 	UseLogsNewSchema bool
+	UseLicensesV3    bool
 
 	hostsRepo      *inframetrics.HostsRepo
 	processesRepo  *inframetrics.ProcessesRepo
@@ -156,6 +157,9 @@ type APIHandlerOpts struct {
 
 	// Use Logs New schema
 	UseLogsNewSchema bool
+
+	// Use Licenses V3 structure
+	UseLicensesV3 bool
 }
 
 // NewAPIHandler returns an APIHandler
@@ -211,6 +215,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		querier:                       querier,
 		querierV2:                     querierv2,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
+		UseLicensesV3:                 opts.UseLicensesV3,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
 		podsRepo:                      podsRepo,

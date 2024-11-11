@@ -13,3 +13,8 @@ type ActivationResponse struct {
 	ActivationId string `json:"ActivationId"`
 	PlanDetails  string `json:"PlanDetails"`
 }
+
+type ValidateLicenseResponse struct {
+	Status status                 `json:"status"`
+	Data   map[string]interface{} `json:"data"`
+}
