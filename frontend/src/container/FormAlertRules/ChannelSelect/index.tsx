@@ -1,5 +1,4 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Color } from '@signozhq/design-tokens';
 import { Select, Spin } from 'antd';
 import ROUTES from 'constants/routes';
 import { State } from 'hooks/useFetch';
@@ -8,7 +7,7 @@ import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PayloadProps } from 'types/api/channels/getAll';
 
-import { StyledSelect } from './styles';
+import { StyledCreateChannelOption, StyledSelect } from './styles';
 
 export interface ChannelSelectProps {
 	disabled?: boolean;
@@ -51,17 +50,10 @@ function ChannelSelect({
 		if (!channels.loading) {
 			children.push(
 				<Select.Option key="add-new-channel" value="add-new-channel">
-					<div
-						style={{
-							color: Color.BG_ROBIN_500,
-							display: 'flex',
-							alignItems: 'center',
-							gap: '8px',
-						}}
-					>
+					<StyledCreateChannelOption>
 						<PlusOutlined />
 						Create a new channel
-					</div>
+					</StyledCreateChannelOption>
 				</Select.Option>,
 			);
 		}
