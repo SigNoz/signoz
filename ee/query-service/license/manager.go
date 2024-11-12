@@ -463,7 +463,7 @@ func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (licenseRe
 	err := lm.repo.InsertLicenseV3(ctx, license)
 	if err != nil {
 		zap.L().Error("failed to activate license", zap.Error(err))
-		return nil, model.InternalError(err)
+		return nil, err
 	}
 
 	// license is valid, activate it

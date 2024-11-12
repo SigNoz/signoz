@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/mattn/go-sqlite3"
 
 	"go.signoz.io/signoz/ee/query-service/license/sqlite"
 	"go.signoz.io/signoz/ee/query-service/model"
@@ -274,14 +275,14 @@ func (r *Repo) InitFeatures(req basemodel.FeatureSet) error {
 }
 
 // InsertLicenseV3 inserts a new license v3 in db
-func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
+func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) *model.ApiError {
 
 	query := `INSERT INTO licenses_v3 (id, key, data) VALUES ($1, $2, $3)`
 
 	// licsense is the entity of zeus so putting the entire license here without defining schema
 	licenseData, err := json.Marshal(l.Data)
 	if err != nil {
-		return fmt.Errorf("insert license failed: license marshal error")
+		return &model.ApiError{Typ: basemodel.ErrorBadData, Err: err}
 	}
 
 	_, err = r.db.ExecContext(ctx,
@@ -292,8 +293,14 @@ func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 	)
 
 	if err != nil {
+		if sqliteErr, ok := err.(sqlite3.Error); ok {
+			if sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
+				zap.L().Error("error in inserting license data: ", zap.Error(sqliteErr))
+				return &model.ApiError{Typ: model.ErrorConflict, Err: sqliteErr}
+			}
+		}
 		zap.L().Error("error in inserting license data: ", zap.Error(err))
-		return fmt.Errorf("failed to insert license in db: %v", err)
+		return &model.ApiError{Typ: basemodel.ErrorExec, Err: err}
 	}
 
 	return nil

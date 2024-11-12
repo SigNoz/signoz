@@ -319,6 +319,8 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 		code = http.StatusUnauthorized
 	case model.ErrorForbidden:
 		code = http.StatusForbidden
+	case model.ErrorConflict:
+		code = http.StatusConflict
 	default:
 		code = http.StatusInternalServerError
 	}
