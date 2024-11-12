@@ -32,6 +32,11 @@ import {
 	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
 } from './getConsumerLagDetails';
+import {
+	getColumnsForProduderLatencyOverview,
+	getTableDataForProducerLatencyOverview,
+	TopicThroughputProducerOverviewResponse,
+} from './MQTableUtils';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -126,7 +131,13 @@ function MessagingQueuesTable({
 	tableApi: (
 		props: MessagingQueueServicePayload,
 	) => Promise<
-		SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
+		| SuccessResponse<
+				(
+					| MessagingQueuesPayloadProps
+					| TopicThroughputProducerOverviewResponse
+				)['payload']
+		  >
+		| ErrorResponse
 	>;
 	validConfigPresent?: boolean;
 	type?: 'Detail' | 'Overview';
@@ -177,8 +188,35 @@ function MessagingQueuesTable({
 		{
 			onSuccess: (data) => {
 				if (data.payload) {
-					setColumns(getColumns(data?.payload, history));
-					setTableData(getTableData(data?.payload));
+					if (
+						type === 'Overview' &&
+						selectedView === MessagingQueuesViewType.producerLatency.value &&
+						tableApiPayload?.detailType === 'producer'
+					) {
+						setColumns(
+							getColumnsForProduderLatencyOverview(
+								(data?.payload as TopicThroughputProducerOverviewResponse['payload'])
+									.result[0].list,
+								history,
+							),
+						);
+						setTableData(
+							getTableDataForProducerLatencyOverview(
+								(data?.payload as TopicThroughputProducerOverviewResponse['payload'])
+									.result[0].list,
+							),
+						);
+					} else {
+						setColumns(
+							getColumns(
+								data?.payload as MessagingQueuesPayloadProps['payload'],
+								history,
+							),
+						);
+						setTableData(
+							getTableData(data?.payload as MessagingQueuesPayloadProps['payload']),
+						);
+					}
 				}
 			},
 			onError: handleConsumerDetailsOnError,
