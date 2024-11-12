@@ -1,6 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Select, Spin } from 'antd';
-import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { State } from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
@@ -19,6 +18,7 @@ export interface ChannelSelectProps {
 	onSelectChannels: (s: string[]) => void;
 	onDropdownOpen: () => void;
 	channels: State<PayloadProps | undefined>;
+	handleCreateNewChannels: () => void;
 }
 
 function ChannelSelect({
@@ -27,6 +27,7 @@ function ChannelSelect({
 	onSelectChannels,
 	onDropdownOpen,
 	channels,
+	handleCreateNewChannels,
 }: ChannelSelectProps): JSX.Element | null {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -35,7 +36,7 @@ function ChannelSelect({
 
 	const handleChange = (value: string[]): void => {
 		if (value.includes('add-new-channel')) {
-			window.open(ROUTES.CHANNELS_NEW, '_blank');
+			handleCreateNewChannels();
 			return;
 		}
 		onSelectChannels(value);
