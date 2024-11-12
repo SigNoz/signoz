@@ -5,11 +5,18 @@ import {
 	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
 } from './getConsumerLagDetails';
+import { TopicThroughputProducerOverviewResponse } from './MQTableUtils';
 
 export const getTopicThroughputOverview = async (
 	props: Omit<MessagingQueueServicePayload, 'variables'>,
 ): Promise<
-	SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
+	| SuccessResponse<
+			(
+				| MessagingQueuesPayloadProps
+				| TopicThroughputProducerOverviewResponse
+			)['payload']
+	  >
+	| ErrorResponse
 > => {
 	const { detailType, start, end } = props;
 	const response = await axios.post(
