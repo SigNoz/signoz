@@ -24,7 +24,7 @@ export interface TopicThroughputProducerOverviewResponse {
 	};
 }
 
-export const getColumnsForProduderLatencyOverview = (
+export const getColumnsForProducerLatencyOverview = (
 	list: ProducerLatencyOverviewColumn[],
 	history: History<unknown>,
 ): RowData[] => {

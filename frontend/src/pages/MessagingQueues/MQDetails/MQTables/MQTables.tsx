@@ -33,7 +33,7 @@ import {
 	MessagingQueuesPayloadProps,
 } from './getConsumerLagDetails';
 import {
-	getColumnsForProduderLatencyOverview,
+	getColumnsForProducerLatencyOverview,
 	getTableDataForProducerLatencyOverview,
 	TopicThroughputProducerOverviewResponse,
 } from './MQTableUtils';
@@ -194,7 +194,7 @@ function MessagingQueuesTable({
 						tableApiPayload?.detailType === 'producer'
 					) {
 						setColumns(
-							getColumnsForProduderLatencyOverview(
+							getColumnsForProducerLatencyOverview(
 								(data?.payload as TopicThroughputProducerOverviewResponse['payload'])
 									.result[0].list,
 								history,
