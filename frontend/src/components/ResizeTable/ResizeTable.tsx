@@ -84,7 +84,7 @@ function ResizeTable({
 
 	return onDragColumn ? (
 		<ReactDragListView.DragColumn {...dragColumnParams} onDragEnd={onDragColumn}>
-			<Table {...tableParams} />
+			<Table {...tableParams} scroll={{ x: 'max-content' }} />
 		</ReactDragListView.DragColumn>
 	) : (
 		<Table {...tableParams} />

@@ -49,7 +49,7 @@
 	}
 
 	.trace-explorer {
-		width: 100%;
+		width: calc(100% - 260px);
 		border-left: 1px solid var(--bg-slate-400);
 		background: var(--bg-ink-500);
 
