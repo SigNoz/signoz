@@ -12,6 +12,7 @@ import {
 	Modal,
 	Row,
 	Select,
+	Switch,
 	Table,
 	TablePaginationConfig,
 	TableProps as AntDTableProps,
@@ -34,7 +35,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
-import { isNil } from 'lodash-es';
+import { isNil, isUndefined } from 'lodash-es';
 import {
 	ArrowUpRight,
 	CalendarClock,
@@ -395,84 +396,6 @@ function MultiIngestionSettings(): JSX.Element {
 	const getFormattedTime = (date: string): string =>
 		dayjs(date).format('MMM DD,YYYY, hh:mm a');
 
-	const handleAddLimit = (
-		APIKey: IngestionKeyProps,
-		signalName: string,
-	): void => {
-		setActiveSignal({
-			id: signalName,
-			signal: signalName,
-			config: {},
-		});
-
-		const { dailyLimit, secondsLimit } = addEditLimitForm.getFieldsValue();
-
-		const payload = {
-			keyID: APIKey.id,
-			signal: signalName,
-			config: {
-				day: {
-					size: gbToBytes(dailyLimit),
-				},
-				second: {
-					size: gbToBytes(secondsLimit),
-				},
-			},
-		};
-
-		createLimitForIngestionKey(payload);
-	};
-
-	const handleUpdateLimit = (
-		APIKey: IngestionKeyProps,
-		signal: LimitProps,
-	): void => {
-		setActiveSignal(signal);
-		const { dailyLimit, secondsLimit } = addEditLimitForm.getFieldsValue();
-		const payload = {
-			limitID: signal.id,
-			signal: signal.signal,
-			config: {
-				day: {
-					size: gbToBytes(dailyLimit),
-				},
-				second: {
-					size: gbToBytes(secondsLimit),
-				},
-			},
-		};
-		updateLimitForIngestionKey(payload);
-	};
-
-	const bytesToGb = (size: number | undefined): number => {
-		if (!size) {
-			return 0;
-		}
-
-		return size / BYTES;
-	};
-
-	const enableEditLimitMode = (
-		APIKey: IngestionKeyProps,
-		signal: LimitProps,
-	): void => {
-		setActiveAPIKey(APIKey);
-		setActiveSignal(signal);
-
-		addEditLimitForm.setFieldsValue({
-			dailyLimit: bytesToGb(signal?.config?.day?.size || 0),
-			secondsLimit: bytesToGb(signal?.config?.second?.size || 0),
-		});
-
-		setIsEditAddLimitOpen(true);
-	};
-
-	const onDeleteLimitHandler = (): void => {
-		if (activeSignal && activeSignal?.id) {
-			deleteLimitForKey(activeSignal.id);
-		}
-	};
-
 	const showDeleteLimitModal = (
 		APIKey: IngestionKeyProps,
 		limit: LimitProps,
@@ -494,6 +417,131 @@ function MultiIngestionSettings(): JSX.Element {
 		setActiveSignal(null);
 
 		addEditLimitForm.resetFields();
+	};
+
+	const handleAddLimit = (
+		APIKey: IngestionKeyProps,
+		signalName: string,
+	): void => {
+		const { dailyLimit, secondsLimit } = addEditLimitForm.getFieldsValue();
+
+		const payload = {
+			keyID: APIKey.id,
+			signal: signalName,
+			config: {},
+		};
+
+		if (!isUndefined(dailyLimit)) {
+			payload.config = {
+				day: {
+					size: gbToBytes(dailyLimit),
+				},
+			};
+		}
+
+		if (!isUndefined(secondsLimit)) {
+			payload.config = {
+				...payload.config,
+				second: {
+					size: gbToBytes(secondsLimit),
+				},
+			};
+		}
+
+		if (isUndefined(dailyLimit) && isUndefined(secondsLimit)) {
+			// No need to save as no limit is provided, close the edit view and reset active signal and api key
+			setActiveSignal(null);
+			setActiveAPIKey(null);
+			setIsEditAddLimitOpen(false);
+			setUpdatedTags([]);
+			hideAddViewModal();
+			setHasCreateLimitForIngestionKeyError(false);
+
+			return;
+		}
+
+		createLimitForIngestionKey(payload);
+	};
+
+	const handleUpdateLimit = (
+		APIKey: IngestionKeyProps,
+		signal: LimitProps,
+	): void => {
+		const { dailyLimit, secondsLimit } = addEditLimitForm.getFieldsValue();
+		const payload = {
+			limitID: signal.id,
+			signal: signal.signal,
+			config: {},
+		};
+
+		if (isUndefined(dailyLimit) && isUndefined(secondsLimit)) {
+			showDeleteLimitModal(APIKey, signal);
+
+			return;
+		}
+
+		if (!isUndefined(dailyLimit)) {
+			payload.config = {
+				day: {
+					size: gbToBytes(dailyLimit),
+				},
+			};
+		}
+
+		if (!isUndefined(secondsLimit)) {
+			payload.config = {
+				...payload.config,
+				second: {
+					size: gbToBytes(secondsLimit),
+				},
+			};
+		}
+
+		updateLimitForIngestionKey(payload);
+	};
+
+	const bytesToGb = (size: number | undefined): number => {
+		if (!size) {
+			return 0;
+		}
+
+		return size / BYTES;
+	};
+
+	const enableEditLimitMode = (
+		APIKey: IngestionKeyProps,
+		signal: LimitProps,
+	): void => {
+		setActiveAPIKey(APIKey);
+		setActiveSignal({
+			...signal,
+			config: {
+				...signal.config,
+				day: {
+					...signal.config?.day,
+					enabled: !isNil(signal?.config?.day?.size),
+				},
+				second: {
+					...signal.config?.second,
+					enabled: !isNil(signal?.config?.second?.size),
+				},
+			},
+		});
+
+		addEditLimitForm.setFieldsValue({
+			dailyLimit: bytesToGb(signal?.config?.day?.size || 0),
+			secondsLimit: bytesToGb(signal?.config?.second?.size || 0),
+			enableDailyLimit: !isNil(signal?.config?.day?.size),
+			enableSecondLimit: !isNil(signal?.config?.second?.size),
+		});
+
+		setIsEditAddLimitOpen(true);
+	};
+
+	const onDeleteLimitHandler = (): void => {
+		if (activeSignal && activeSignal?.id) {
+			deleteLimitForKey(activeSignal.id);
+		}
 	};
 
 	const columns: AntDTableProps<IngestionKeyProps>['columns'] = [
@@ -684,50 +732,108 @@ function MultiIngestionSettings(): JSX.Element {
 																	<div className="signal-limit-edit-mode">
 																		<div className="daily-limit">
 																			<div className="heading">
-																				<div className="title"> Daily limit </div>
+																				<div className="title">
+																					Daily limit
+																					<div className="limit-enable-disable-toggle">
+																						<Form.Item name="enableDailyLimit">
+																							<Switch
+																								size="small"
+																								checked={activeSignal?.config?.day?.enabled}
+																								onChange={(value): void => {
+																									setActiveSignal({
+																										...activeSignal,
+																										config: {
+																											...activeSignal.config,
+																											day: {
+																												...activeSignal.config?.day,
+																												enabled: value,
+																											},
+																										},
+																									});
+																								}}
+																							/>
+																						</Form.Item>
+																					</div>
+																				</div>
 																				<div className="subtitle">
-																					Add a limit for data ingested daily{' '}
+																					Add a limit for data ingested daily
 																				</div>
 																			</div>
-
 																			<div className="size">
-																				<Form.Item name="dailyLimit">
-																					<InputNumber
-																						addonAfter={
-																							<Select defaultValue="GiB" disabled>
-																								<Option value="TiB"> TiB</Option>
-																								<Option value="GiB"> GiB</Option>
-																								<Option value="MiB"> MiB </Option>
-																								<Option value="KiB"> KiB </Option>
-																							</Select>
-																						}
-																					/>
-																				</Form.Item>
+																				{activeSignal?.config?.day?.enabled ? (
+																					<Form.Item name="dailyLimit" key="dailyLimit">
+																						<InputNumber
+																							disabled={!activeSignal?.config?.day?.enabled}
+																							key="dailyLimit"
+																							addonAfter={
+																								<Select defaultValue="GiB" disabled>
+																									<Option value="TiB"> TiB</Option>
+																									<Option value="GiB"> GiB</Option>
+																									<Option value="MiB"> MiB </Option>
+																									<Option value="KiB"> KiB </Option>
+																								</Select>
+																							}
+																						/>
+																					</Form.Item>
+																				) : (
+																					<div className="no-limit">
+																						<Infinity size={16} /> NO LIMIT
+																					</div>
+																				)}
 																			</div>
 																		</div>
 
 																		<div className="second-limit">
 																			<div className="heading">
-																				<div className="title"> Per Second limit </div>
+																				<div className="title">
+																					Per Second limit{' '}
+																					<div className="limit-enable-disable-toggle">
+																						<Form.Item name="enableSecondLimit">
+																							<Switch
+																								size="small"
+																								checked={activeSignal?.config?.second?.enabled}
+																								onChange={(value): void => {
+																									setActiveSignal({
+																										...activeSignal,
+																										config: {
+																											...activeSignal.config,
+																											second: {
+																												...activeSignal.config?.second,
+																												enabled: value,
+																											},
+																										},
+																									});
+																								}}
+																							/>
+																						</Form.Item>
+																					</div>
+																				</div>
 																				<div className="subtitle">
-																					{' '}
-																					Add a limit for data ingested every second{' '}
+																					Add a limit for data ingested every second
 																				</div>
 																			</div>
 
 																			<div className="size">
-																				<Form.Item name="secondsLimit">
-																					<InputNumber
-																						addonAfter={
-																							<Select defaultValue="GiB" disabled>
-																								<Option value="TiB"> TiB</Option>
-																								<Option value="GiB"> GiB</Option>
-																								<Option value="MiB"> MiB </Option>
-																								<Option value="KiB"> KiB </Option>
-																							</Select>
-																						}
-																					/>
-																				</Form.Item>
+																				{activeSignal?.config?.second?.enabled ? (
+																					<Form.Item name="secondsLimit" key="secondsLimit">
+																						<InputNumber
+																							key="secondsLimit"
+																							disabled={!activeSignal?.config?.second?.enabled}
+																							addonAfter={
+																								<Select defaultValue="GiB" disabled>
+																									<Option value="TiB"> TiB</Option>
+																									<Option value="GiB"> GiB</Option>
+																									<Option value="MiB"> MiB </Option>
+																									<Option value="KiB"> KiB </Option>
+																								</Select>
+																							}
+																						/>
+																					</Form.Item>
+																				) : (
+																					<div className="no-limit">
+																						<Infinity size={16} /> NO LIMIT
+																					</div>
+																				)}
 																			</div>
 																		</div>
 																	</div>
