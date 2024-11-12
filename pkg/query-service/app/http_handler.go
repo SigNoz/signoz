@@ -3222,16 +3222,16 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	}
 
 	for _, res := range result {
-		for _, series := range res.Series {
-			serviceName, serviceNameOk := series.Labels["service_name"]
-			topicName, topicNameOk := series.Labels["topic"]
-			params := []string{serviceName, topicName}
+		for _, list := range res.List {
+			serviceName, serviceNameOk := list.Data["service_name"].(*string)
+			topicName, topicNameOk := list.Data["topic"].(*string)
+			params := []string{*serviceName, *topicName}
 			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if topicNameOk && serviceNameOk && !ok {
 				attributeCache.Hash[hashKey] = struct{}{}
-				attributeCache.TopicName = append(attributeCache.TopicName, topicName)
-				attributeCache.ServiceName = append(attributeCache.ServiceName, serviceName)
+				attributeCache.TopicName = append(attributeCache.TopicName, *topicName)
+				attributeCache.ServiceName = append(attributeCache.ServiceName, *serviceName)
 			}
 		}
 	}
@@ -3256,24 +3256,22 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	}
 
 	latencyColumn := &v3.Result{QueryName: "latency"}
-	var latencySeries []*v3.Series
+	var latencySeries []*v3.Row
 	for _, res := range resultFetchLatency {
-		for _, series := range res.Series {
-			topic, topicOk := series.Labels["topic"]
-			serviceName, serviceNameOk := series.Labels["service_name"]
-			params := []string{topic, serviceName}
+		for _, list := range res.List {
+			topic, topicOk := list.Data["topic"].(*string)
+			serviceName, serviceNameOk := list.Data["service_name"].(*string)
+			params := []string{*serviceName, *topic}
 			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if topicOk && serviceNameOk && ok {
-				latencySeries = append(latencySeries, series)
+				latencySeries = append(latencySeries, list)
 			}
 		}
 	}
 
-	latencyColumn.Series = latencySeries
+	latencyColumn.List = latencySeries
 	result = append(result, latencyColumn)
-
-	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
 
 	resp := v3.QueryRangeResponse{
 		Result: resultFetchLatency,
