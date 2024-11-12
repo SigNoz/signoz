@@ -119,6 +119,11 @@ type APIHandler struct {
 	nodesRepo      *inframetrics.NodesRepo
 	namespacesRepo *inframetrics.NamespacesRepo
 	clustersRepo   *inframetrics.ClustersRepo
+	// workloads
+	deploymentsRepo  *inframetrics.DeploymentsRepo
+	daemonsetsRepo   *inframetrics.DaemonSetsRepo
+	statefulsetsRepo *inframetrics.StatefulSetsRepo
+	jobsRepo         *inframetrics.JobsRepo
 }
 
 type APIHandlerOpts struct {
@@ -197,6 +202,10 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	nodesRepo := inframetrics.NewNodesRepo(opts.Reader, querierv2)
 	namespacesRepo := inframetrics.NewNamespacesRepo(opts.Reader, querierv2)
 	clustersRepo := inframetrics.NewClustersRepo(opts.Reader, querierv2)
+	deploymentsRepo := inframetrics.NewDeploymentsRepo(opts.Reader, querierv2)
+	daemonsetsRepo := inframetrics.NewDaemonSetsRepo(opts.Reader, querierv2)
+	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
+	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -222,6 +231,10 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		nodesRepo:                     nodesRepo,
 		namespacesRepo:                namespacesRepo,
 		clustersRepo:                  clustersRepo,
+		deploymentsRepo:               deploymentsRepo,
+		daemonsetsRepo:                daemonsetsRepo,
+		statefulsetsRepo:              statefulsetsRepo,
+		jobsRepo:                      jobsRepo,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -400,6 +413,26 @@ func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMid
 	clustersSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getClusterAttributeKeys)).Methods(http.MethodGet)
 	clustersSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getClusterAttributeValues)).Methods(http.MethodGet)
 	clustersSubRouter.HandleFunc("/list", am.ViewAccess(aH.getClusterList)).Methods(http.MethodPost)
+
+	deploymentsSubRouter := router.PathPrefix("/api/v1/deployments").Subrouter()
+	deploymentsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getDeploymentAttributeKeys)).Methods(http.MethodGet)
+	deploymentsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getDeploymentAttributeValues)).Methods(http.MethodGet)
+	deploymentsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getDeploymentList)).Methods(http.MethodPost)
+
+	daemonsetsSubRouter := router.PathPrefix("/api/v1/daemonsets").Subrouter()
+	daemonsetsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getDaemonSetAttributeKeys)).Methods(http.MethodGet)
+	daemonsetsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getDaemonSetAttributeValues)).Methods(http.MethodGet)
+	daemonsetsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getDaemonSetList)).Methods(http.MethodPost)
+
+	statefulsetsSubRouter := router.PathPrefix("/api/v1/statefulsets").Subrouter()
+	statefulsetsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getStatefulSetAttributeKeys)).Methods(http.MethodGet)
+	statefulsetsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getStatefulSetAttributeValues)).Methods(http.MethodGet)
+	statefulsetsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getStatefulSetList)).Methods(http.MethodPost)
+
+	jobsSubRouter := router.PathPrefix("/api/v1/jobs").Subrouter()
+	jobsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getJobAttributeKeys)).Methods(http.MethodGet)
+	jobsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getJobAttributeValues)).Methods(http.MethodGet)
+	jobsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getJobList)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
