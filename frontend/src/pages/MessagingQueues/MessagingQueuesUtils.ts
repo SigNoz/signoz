@@ -222,7 +222,8 @@ export enum MessagingQueuesViewTypeOptions {
 	ConsumerLag = 'consumerLag',
 	PartitionLatency = 'partitionLatency',
 	ProducerLatency = 'producerLatency',
-	ConsumerLatency = 'consumerLatency',
+	DropRate = 'dropRate',
+	MetricPage = 'metricPage',
 }
 
 export const MessagingQueuesViewType = {
@@ -240,7 +241,11 @@ export const MessagingQueuesViewType = {
 	},
 	dropRate: {
 		label: 'Drop Rate view',
-		value: 'dropRate',
+		value: MessagingQueuesViewTypeOptions.DropRate,
+	},
+	metricPage: {
+		label: 'Metric view',
+		value: MessagingQueuesViewTypeOptions.MetricPage,
 	},
 };
 
