@@ -1,13 +1,26 @@
 import '../OnboardingV2.styles.scss';
 
 import { SearchOutlined } from '@ant-design/icons';
-import { Button, Flex, Input, Layout, Modal, Steps, Typography } from 'antd';
+import {
+	Button,
+	Flex,
+	Input,
+	Layout,
+	Modal,
+	Skeleton,
+	Space,
+	Steps,
+	Typography,
+} from 'antd';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { ArrowRight, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
 
 import onboardingConfigWithLinks from '../configs/onboarding-config-with-links.json';
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
@@ -62,7 +75,7 @@ interface Entity {
 const setupStepItemsBase = [
 	{
 		title: 'Org Setup',
-		description: '',
+		description: ' ',
 	},
 	{
 		title: 'Add your first data source',
@@ -70,6 +83,7 @@ const setupStepItemsBase = [
 	},
 	{
 		title: 'Configure Your Product',
+		description: '',
 	},
 ];
 
@@ -80,11 +94,17 @@ function OnboardingAddDataSource(): JSX.Element {
 		[tag: string]: Entity[];
 	}>({});
 
+	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+
 	const [setupStepItems, setSetupStepItems] = useState(setupStepItemsBase);
 
 	const question2Ref = useRef<HTMLDivElement | null>(null);
 	const question3Ref = useRef<HTMLDivElement | null>(null);
-	const question4Ref = useRef<HTMLDivElement | null>(null);
+	const configureProdRef = useRef<HTMLDivElement | null>(null);
+
+	const [showConfigureProduct, setShowConfigureProduct] = useState<boolean>(
+		false,
+	);
 
 	const [currentStep, setCurrentStep] = useState(1);
 
@@ -144,6 +164,13 @@ function OnboardingAddDataSource(): JSX.Element {
 		setDocsUrl(updatedUrl);
 	};
 
+	const resetState = (): void => {
+		setSelectedDataSource(null);
+		setSelectedFramework(null);
+		setSelectedEnvironment(null);
+		setHasMoreQuestions(true);
+	};
+
 	const handleSelectDataSource = (dataSource: Entity): void => {
 		setSelectedDataSource(dataSource);
 		setSelectedFramework(null);
@@ -160,7 +187,7 @@ function OnboardingAddDataSource(): JSX.Element {
 
 			updateUrl(dataSource?.link || '', null);
 
-			handleScrollToStep(question4Ref);
+			setShowConfigureProduct(true);
 		}
 	};
 
@@ -179,7 +206,7 @@ function OnboardingAddDataSource(): JSX.Element {
 			updateUrl(option.link, null);
 			setHasMoreQuestions(false);
 
-			handleScrollToStep(question4Ref);
+			setShowConfigureProduct(true);
 		}
 	};
 
@@ -189,9 +216,7 @@ function OnboardingAddDataSource(): JSX.Element {
 
 		updateUrl(docsUrl, selectedEnvironment?.key);
 
-		setTimeout((): void => {
-			handleScrollToStep(question4Ref);
-		}, 100);
+		setShowConfigureProduct(true);
 	};
 
 	const groupDataSourcesByTags = (
@@ -267,12 +292,26 @@ function OnboardingAddDataSource(): JSX.Element {
 		);
 	};
 
+	useEffect(() => {
+		setSetupStepItems([
+			{
+				...setupStepItemsBase[0],
+				description: org?.[0]?.name || '',
+			},
+			...setupStepItemsBase.slice(1),
+		]);
+	}, [org]);
+
 	const handleUpdateCurrentStep = (step: number): void => {
 		setCurrentStep(step);
 
 		if (step === 1) {
+			resetState();
 			setSetupStepItems([
-				...setupStepItemsBase.slice(0, 1),
+				{
+					...setupStepItemsBase[0],
+					description: org?.[0]?.name || '',
+				},
 				{
 					...setupStepItemsBase[1],
 					description: '',
@@ -283,7 +322,10 @@ function OnboardingAddDataSource(): JSX.Element {
 
 		if (step === 2) {
 			setSetupStepItems([
-				...setupStepItemsBase.slice(0, 1),
+				{
+					...setupStepItemsBase[0],
+					description: org?.[0]?.name || '',
+				},
 				{
 					...setupStepItemsBase[1],
 					description: `${selectedDataSource?.label} ${
@@ -394,7 +436,11 @@ function OnboardingAddDataSource(): JSX.Element {
 									</div>
 
 									<div className="questionnaire-container">
-										<div className="question-1 data-sources-and-filters-container">
+										<div
+											className={`question-1 question-block data-sources-and-filters-container ${
+												selectedDataSource ? 'answered' : ''
+											}`}
+										>
 											<div className="data-sources-container">
 												<div className="onboarding-data-source-search">
 													<Input
@@ -472,7 +518,12 @@ function OnboardingAddDataSource(): JSX.Element {
 										{selectedDataSource &&
 											selectedDataSource?.question &&
 											!isEmpty(selectedDataSource?.question) && (
-												<div className="question-2" ref={question2Ref}>
+												<div
+													className={`question-2 question-block ${
+														selectedFramework ? 'answered' : ''
+													}`}
+													ref={question2Ref}
+												>
 													{selectedDataSource?.question?.desc && (
 														<>
 															<div className="question-title-container">
@@ -514,7 +565,12 @@ function OnboardingAddDataSource(): JSX.Element {
 										{selectedFramework &&
 											selectedFramework?.question &&
 											!isEmpty(selectedFramework?.question) && (
-												<div className="question-3" ref={question3Ref}>
+												<div
+													className={`question-3 question-block ${
+														selectedEnvironment ? 'answered' : ''
+													}`}
+													ref={question3Ref}
+												>
 													{selectedFramework?.question?.desc && (
 														<>
 															<div className="question-title-container">
@@ -550,8 +606,8 @@ function OnboardingAddDataSource(): JSX.Element {
 												</div>
 											)}
 
-										{!hasMoreQuestions && (
-											<div className="question-4" ref={question4Ref}>
+										{!hasMoreQuestions && showConfigureProduct && (
+											<div className="questionaire-footer" ref={configureProdRef}>
 												<Button
 													type="primary"
 													disabled={!selectedDataSource}
@@ -570,6 +626,25 @@ function OnboardingAddDataSource(): JSX.Element {
 						{currentStep === 2 && (
 							<div className="onboarding-configure-container step-2">
 								<div className="configure-product-docs-section">
+									<div className="loading-container">
+										<Flex gap="middle" vertical>
+											<Space align="end">
+												<Skeleton.Avatar
+													style={{ width: 40, height: 40 }}
+													shape="square"
+													active
+												/>
+											</Space>
+											<Space align="start">
+												<Skeleton.Button active size="small" block />
+												<Skeleton.Input active size="small" />
+												<Skeleton.Input active size="small" />
+											</Space>
+
+											<Skeleton.Button active size="small" block />
+											<Skeleton.Button active size="small" block />
+										</Flex>
+									</div>
 									<iframe
 										title="docs"
 										src={docsUrl}
