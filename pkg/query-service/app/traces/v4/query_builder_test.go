@@ -349,7 +349,7 @@ func Test_orderByAttributeKeyTags(t *testing.T) {
 				items:     []v3.OrderBy{{ColumnName: "timestamp", Order: "DESC"}},
 				tags:      []v3.AttributeKey{},
 			},
-			want: "",
+			want: "value DESC",
 		},
 		{
 			name: "add default order by ts for list panel",
@@ -376,7 +376,7 @@ func Test_orderByAttributeKeyTags(t *testing.T) {
 				items:     []v3.OrderBy{},
 				tags:      []v3.AttributeKey{},
 			},
-			want: "",
+			want: "value DESC",
 		},
 	}
 	for _, tt := range tests {
