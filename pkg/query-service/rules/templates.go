@@ -233,6 +233,7 @@ func AlertTemplateData(labels map[string]string, value string, threshold string)
 // consistent across the platform.
 // If there is a go template block, it won't be replaced.
 // The example for existing go template block is: {{$threshold}} or {{$value}} or any other valid go template syntax.
+// See templates_test.go for examples.
 func (te *TemplateExpander) preprocessTemplate() {
 	// Handle the $variable syntax
 	reDollar := regexp.MustCompile(`({{.*?}})|(\$(\w+(?:\.\w+)*))`)
@@ -255,6 +256,19 @@ func (te *TemplateExpander) preprocessTemplate() {
 		path := submatches[1]
 		rest := submatches[2]
 		return fmt.Sprintf(`{{index .Labels "%s"%s}}`, path, rest)
+	})
+
+	// Handle the {{$variable}} syntax
+	// skip the special case for {{$threshold}} and {{$value}}
+	reVariable := regexp.MustCompile(`{{\s*\$\s*([a-zA-Z0-9_.]+)\s*}}`)
+	te.text = reVariable.ReplaceAllStringFunc(te.text, func(match string) string {
+		if strings.HasPrefix(match, "{{$threshold}}") || strings.HasPrefix(match, "{{$value}}") {
+			return match
+		}
+		// get the variable name from {{$variable}} syntax
+		variable := strings.TrimPrefix(match, "{{$")
+		variable = strings.TrimSuffix(variable, "}}")
+		return fmt.Sprintf(`{{index .Labels "%s"}}`, variable)
 	})
 }
 
@@ -335,6 +349,7 @@ func (te TemplateExpander) ExpandHTML(templateFiles []string) (result string, re
 
 // ParseTest parses the templates and returns the error if any.
 func (te TemplateExpander) ParseTest() error {
+	te.preprocessTemplate()
 	_, err := text_template.New(te.name).Funcs(te.funcMap).Option("missingkey=zero").Parse(te.text)
 	if err != nil {
 		return err

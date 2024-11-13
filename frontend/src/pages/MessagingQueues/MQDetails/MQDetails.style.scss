@@ -22,15 +22,13 @@
 		align-items: center;
 		width: 100%;
 
-		.drop-rat-title {
-			color: var(--bg-vanilla-200);
+		color: var(--bg-vanilla-200);
 
-			font-family: Inter;
-			font-size: 18px;
-			font-style: normal;
-			font-weight: 500;
-			line-height: 28px;
-		}
+		font-family: Inter;
+		font-size: 18px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 28px;
 	}
 
 	.mq-details-options {
@@ -113,6 +111,70 @@
 	&.mq-table {
 		.ant-pagination {
 			justify-content: flex-start;
+		}
+	}
+}
+
+.lightMode {
+	.mq-overview-container {
+		background: var(--bg-vanilla-200);
+		border: 1px solid var(--bg-vanilla-300);
+
+		.mq-overview-title {
+			color: var(--bg-ink-400);
+		}
+
+		.mq-details-options {
+			.ant-radio-button-wrapper {
+				border-color: var(--bg-vanilla-300);
+				color: var(--bg-slate-200);
+			}
+			.ant-radio-button-wrapper-checked {
+				color: var(--bg-slate-200);
+				background: var(--bg-vanilla-300);
+			}
+			.ant-radio-button-wrapper-disabled {
+				background: var(--bg-vanilla-100);
+				color: var(--bg-vanilla-400);
+			}
+		}
+	}
+
+	.droprate-view {
+		.mq-table {
+			.ant-table-content {
+				border: 1px solid var(--bg-vanilla-300);
+			}
+
+			.ant-table-tbody {
+				.ant-table-cell {
+					background-color: var(--bg-vanilla-100);
+				}
+			}
+
+			.ant-table-thead {
+				.ant-table-cell {
+					background-color: var(--bg-vanilla-100);
+					border-bottom: 1px solid var(--bg-vanilla-300);
+				}
+			}
+		}
+
+		.no-data-style {
+			border: 1px solid var(--bg-vanilla-300);
+		}
+	}
+
+	.trace-id-list {
+		.traceid-style {
+			.traceid-text {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-300);
+			}
+
+			.remaing-count {
+				color: var(--bg-ink-400);
+			}
 		}
 	}
 }
