@@ -181,15 +181,27 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "Test ignore resource",
+			args: args{
+				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "service.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: []interface{}{"service"}, Operator: v3.FilterOperatorIn},
+				},
+				}},
+			want: "",
+		},
+		{
 			name: "Test buildTracesFilterQuery in, nin",
 			args: args{
 				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 					{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"GET", "POST"}, Operator: v3.FilterOperatorIn},
 					{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"PUT"}, Operator: v3.FilterOperatorNotIn},
 					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: []interface{}{"server"}, Operator: v3.FilterOperatorNotIn},
+					{Key: v3.AttributeKey{Key: "status.code", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{200}, Operator: v3.FilterOperatorNotIn},
+					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{100.0}, Operator: v3.FilterOperatorIn},
+					{Key: v3.AttributeKey{Key: "isDone", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{true}, Operator: v3.FilterOperatorIn},
 				}},
 			},
-			want:    "attributes_string['method'] IN ['GET','POST'] AND attributes_string['method'] NOT IN ['PUT']",
+			want:    "attributes_string['method'] IN ['GET','POST'] AND attributes_string['method'] NOT IN ['PUT'] AND attributes_number['status.code'] NOT IN [200] AND attributes_number['duration'] IN [100] AND attributes_bool['isDone'] IN [true]",
 			wantErr: false,
 		},
 		{
@@ -200,27 +212,27 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 100, Operator: v3.FilterOperatorNotEqual},
 					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: v3.FilterOperatorGreaterThan},
 					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 200, Operator: v3.FilterOperatorLessThan},
-					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: v3.FilterOperatorGreaterThanOrEq},
-					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 200, Operator: v3.FilterOperatorLessThanOrEq},
+					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag}, Value: 10.0, Operator: v3.FilterOperatorGreaterThanOrEq},
+					{Key: v3.AttributeKey{Key: "duration_str", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "200", Operator: v3.FilterOperatorLessThanOrEq},
 				}},
 			},
 			want: "attributes_number['duration'] = 102 AND attributes_number['duration'] != 100 AND attributes_number['duration'] > 10 AND attributes_number['duration'] < 200" +
-				" AND attributes_number['duration'] >= 10 AND attributes_number['duration'] <= 200",
+				" AND attributes_number['duration'] >= 10.000000 AND attributes_string['duration_str'] <= '200'",
 			wantErr: false,
 		},
 		{
 			name: "Test contains, ncontains, like, nlike, regex, nregex",
 			args: args{
 				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: v3.FilterOperatorContains},
-					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "103", Operator: v3.FilterOperatorNotContains},
+					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.%", Operator: v3.FilterOperatorContains},
+					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "103_", Operator: v3.FilterOperatorNotContains},
 					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: v3.FilterOperatorLike},
 					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102", Operator: v3.FilterOperatorNotLike},
 					{Key: v3.AttributeKey{Key: "path", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "/mypath", Operator: v3.FilterOperatorRegex},
 					{Key: v3.AttributeKey{Key: "path", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "/health.*", Operator: v3.FilterOperatorNotRegex},
 				}},
 			},
-			want: "attributes_string['host'] ILIKE '%102.%' AND attributes_string['host'] NOT ILIKE '%103%' AND attributes_string['host'] ILIKE '102.' AND attributes_string['host'] NOT ILIKE '102' AND " +
+			want: "attributes_string['host'] ILIKE '%102.\\%%' AND attributes_string['host'] NOT ILIKE '%103\\_%' AND attributes_string['host'] ILIKE '102.' AND attributes_string['host'] NOT ILIKE '102' AND " +
 				"match(`attribute_string_path`, '/mypath') AND NOT match(`attribute_string_path`, '/health.*')",
 		},
 		{
@@ -228,10 +240,13 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 			args: args{
 				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: v3.FilterOperatorExists},
+					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Operator: v3.FilterOperatorExists},
+					{Key: v3.AttributeKey{Key: "isDone", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag}, Operator: v3.FilterOperatorNotExists},
+					{Key: v3.AttributeKey{Key: "host1", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: v3.FilterOperatorNotExists},
 					{Key: v3.AttributeKey{Key: "path", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Operator: v3.FilterOperatorNotExists},
 				}},
 			},
-			want: "mapContains(attributes_string, 'host') AND path = ''",
+			want: "mapContains(attributes_string, 'host') AND mapContains(attributes_number, 'duration') AND NOT mapContains(attributes_bool, 'isDone') AND NOT mapContains(attributes_string, 'host1') AND path = ''",
 		},
 	}
 	for _, tt := range tests {
@@ -510,13 +525,14 @@ func TestPrepareTracesQuery(t *testing.T) {
 					AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 					GroupBy:            []v3.AttributeKey{{Key: "serviceName", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 					Limit:              10,
+					OrderBy:            []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "DESC"}},
 				},
 				options: v3.QBOptions{
 					GraphLimitQtype: constants.FirstQueryGraphLimit,
 				},
 			},
 			want: "SELECT `serviceName` from (SELECT serviceName as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 " +
-				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) group by `serviceName`) LIMIT 10",
+				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) group by `serviceName` order by value DESC) LIMIT 10",
 		},
 		{
 			name: "test with limit - second",
@@ -530,6 +546,7 @@ func TestPrepareTracesQuery(t *testing.T) {
 					Filters:            &v3.FilterSet{},
 					AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 					GroupBy:            []v3.AttributeKey{{Key: "serviceName", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+					OrderBy:            []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "DESC"}},
 					Limit:              10,
 				},
 				options: v3.QBOptions{
@@ -537,7 +554,7 @@ func TestPrepareTracesQuery(t *testing.T) {
 				},
 			},
 			want: "SELECT  serviceName as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 where " +
-				"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND (`serviceName`) GLOBAL IN (%s) group by `serviceName`",
+				"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND (`serviceName`) GLOBAL IN (%s) group by `serviceName` order by value DESC",
 		},
 	}
 

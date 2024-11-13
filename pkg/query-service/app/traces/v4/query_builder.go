@@ -29,7 +29,7 @@ var tracesOperatorMappingV3 = map[v3.FilterOperator]string{
 	v3.FilterOperatorContains:        "ILIKE",
 	v3.FilterOperatorNotContains:     "NOT ILIKE",
 	v3.FilterOperatorExists:          "mapContains(%s, '%s')",
-	v3.FilterOperatorNotExists:       "NOT has(%s%s, '%s')",
+	v3.FilterOperatorNotExists:       "NOT mapContains(%s, '%s')",
 }
 
 func getClickHouseTracesColumnType(columnType v3.AttributeKeyType) string {
@@ -103,7 +103,8 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 			if operator, ok := tracesOperatorMappingV3[item.Operator]; ok {
 				switch item.Operator {
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
-					val = utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					// we also want to treat %, _ as literals for contains
+					val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value), false)
 					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, val))
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
