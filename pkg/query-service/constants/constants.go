@@ -434,6 +434,7 @@ var SpanRenderLimitStr = GetOrDefaultEnv("SPAN_RENDER_LIMIT", "2500")
 var MaxSpansInTraceStr = GetOrDefaultEnv("MAX_SPANS_IN_TRACE", "250000")
 
 var StaticFieldsTraces = map[string]v3.AttributeKey{
+	"timestamp": {},
 	"traceID": {
 		Key:      "traceID",
 		DataType: v3.AttributeKeyDataTypeString,

@@ -111,6 +111,13 @@ func Test_getColumnName(t *testing.T) {
 			want: "`attribute_string_data`",
 		},
 		{
+			name: "static column",
+			args: args{
+				key: v3.AttributeKey{Key: "spanKind", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			},
+			want: "spanKind",
+		},
+		{
 			name: "missing meta",
 			args: args{
 				key: v3.AttributeKey{Key: "xyz"},
@@ -147,11 +154,11 @@ func Test_getSelectLabels(t *testing.T) {
 			name: "multiple group by",
 			args: args{
 				groupBy: []v3.AttributeKey{
-					{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, // static col
 					{Key: "service_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource, IsColumn: true},
 				},
 			},
-			want: " attributes_string['user_name'] as `user_name`, `resource_string_service_name` as `service_name`",
+			want: " name as `name`, `resource_string_service_name` as `service_name`",
 		},
 	}
 	for _, tt := range tests {
@@ -174,15 +181,27 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "Test ignore resource",
+			args: args{
+				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "service.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: []interface{}{"service"}, Operator: v3.FilterOperatorIn},
+				},
+				}},
+			want: "",
+		},
+		{
 			name: "Test buildTracesFilterQuery in, nin",
 			args: args{
 				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 					{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"GET", "POST"}, Operator: v3.FilterOperatorIn},
 					{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"PUT"}, Operator: v3.FilterOperatorNotIn},
 					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: []interface{}{"server"}, Operator: v3.FilterOperatorNotIn},
+					{Key: v3.AttributeKey{Key: "status.code", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{200}, Operator: v3.FilterOperatorNotIn},
+					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{100.0}, Operator: v3.FilterOperatorIn},
+					{Key: v3.AttributeKey{Key: "isDone", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{true}, Operator: v3.FilterOperatorIn},
 				}},
 			},
-			want:    "attributes_string['method'] IN ['GET','POST'] AND attributes_string['method'] NOT IN ['PUT']",
+			want:    "attributes_string['method'] IN ['GET','POST'] AND attributes_string['method'] NOT IN ['PUT'] AND attributes_number['status.code'] NOT IN [200] AND attributes_number['duration'] IN [100] AND attributes_bool['isDone'] IN [true]",
 			wantErr: false,
 		},
 		{
@@ -193,27 +212,27 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 100, Operator: v3.FilterOperatorNotEqual},
 					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: v3.FilterOperatorGreaterThan},
 					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 200, Operator: v3.FilterOperatorLessThan},
-					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: v3.FilterOperatorGreaterThanOrEq},
-					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 200, Operator: v3.FilterOperatorLessThanOrEq},
+					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag}, Value: 10.0, Operator: v3.FilterOperatorGreaterThanOrEq},
+					{Key: v3.AttributeKey{Key: "duration_str", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "200", Operator: v3.FilterOperatorLessThanOrEq},
 				}},
 			},
 			want: "attributes_number['duration'] = 102 AND attributes_number['duration'] != 100 AND attributes_number['duration'] > 10 AND attributes_number['duration'] < 200" +
-				" AND attributes_number['duration'] >= 10 AND attributes_number['duration'] <= 200",
+				" AND attributes_number['duration'] >= 10.000000 AND attributes_string['duration_str'] <= '200'",
 			wantErr: false,
 		},
 		{
 			name: "Test contains, ncontains, like, nlike, regex, nregex",
 			args: args{
 				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: v3.FilterOperatorContains},
-					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "103", Operator: v3.FilterOperatorNotContains},
+					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.%", Operator: v3.FilterOperatorContains},
+					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "103_", Operator: v3.FilterOperatorNotContains},
 					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: v3.FilterOperatorLike},
 					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102", Operator: v3.FilterOperatorNotLike},
 					{Key: v3.AttributeKey{Key: "path", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "/mypath", Operator: v3.FilterOperatorRegex},
 					{Key: v3.AttributeKey{Key: "path", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "/health.*", Operator: v3.FilterOperatorNotRegex},
 				}},
 			},
-			want: "attributes_string['host'] ILIKE '%102.%' AND attributes_string['host'] NOT ILIKE '%103%' AND attributes_string['host'] ILIKE '102.' AND attributes_string['host'] NOT ILIKE '102' AND " +
+			want: "attributes_string['host'] ILIKE '%102.\\%%' AND attributes_string['host'] NOT ILIKE '%103\\_%' AND attributes_string['host'] ILIKE '102.' AND attributes_string['host'] NOT ILIKE '102' AND " +
 				"match(`attribute_string_path`, '/mypath') AND NOT match(`attribute_string_path`, '/health.*')",
 		},
 		{
@@ -221,10 +240,13 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 			args: args{
 				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 					{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: v3.FilterOperatorExists},
+					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Operator: v3.FilterOperatorExists},
+					{Key: v3.AttributeKey{Key: "isDone", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag}, Operator: v3.FilterOperatorNotExists},
+					{Key: v3.AttributeKey{Key: "host1", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: v3.FilterOperatorNotExists},
 					{Key: v3.AttributeKey{Key: "path", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Operator: v3.FilterOperatorNotExists},
 				}},
 			},
-			want: "mapContains(attributes_string, 'host') AND path = ''",
+			want: "mapContains(attributes_string, 'host') AND mapContains(attributes_number, 'duration') AND NOT mapContains(attributes_bool, 'isDone') AND NOT mapContains(attributes_string, 'host1') AND path = ''",
 		},
 	}
 	for _, tt := range tests {
@@ -282,6 +304,54 @@ func Test_handleEmptyValuesInGroupBy(t *testing.T) {
 	}
 }
 
+func Test_orderByAttributeKeyTags(t *testing.T) {
+	type args struct {
+		panelType v3.PanelType
+		items     []v3.OrderBy
+		tags      []v3.AttributeKey
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "test",
+			args: args{
+				panelType: v3.PanelTypeGraph,
+				items:     []v3.OrderBy{{ColumnName: "name", Order: "ASC"}},
+				tags:      []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			},
+			want: "`name` ASC",
+		},
+		{
+			name: "order by value",
+			args: args{
+				panelType: v3.PanelTypeGraph,
+				items:     []v3.OrderBy{{ColumnName: "name", Order: "ASC"}, {ColumnName: constants.SigNozOrderByValue, Order: "DESC"}},
+				tags:      []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			},
+			want: "`name` ASC,value DESC",
+		},
+		{
+			name: "test",
+			args: args{
+				panelType: v3.PanelTypeList,
+				items: []v3.OrderBy{{ColumnName: "status", Order: "DESC", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					{ColumnName: "route", Order: "DESC", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
+			},
+			want: "attributes_string['status'] DESC,`attribute_string_route` DESC",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := orderByAttributeKeyTags(tt.args.panelType, tt.args.items, tt.args.tags); got != tt.want {
+				t.Errorf("orderByAttributeKeyTags() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_buildTracesQuery(t *testing.T) {
 	type args struct {
 		start     int64
@@ -307,16 +377,22 @@ func Test_buildTracesQuery(t *testing.T) {
 				mq: &v3.BuilderQuery{
 					AggregateOperator: v3.AggregateOperatorCount,
 					Filters: &v3.FilterSet{
-						Items: []v3.FilterItem{},
+						Items: []v3.FilterItem{
+							{
+								Key:      v3.AttributeKey{Key: "http.method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+								Value:    100,
+								Operator: v3.FilterOperatorEqual,
+							},
+						},
 					},
 					GroupBy: []v3.AttributeKey{{Key: "http.method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 					OrderBy: []v3.OrderBy{
 						{ColumnName: "http.method", Order: "ASC"}},
 				},
 			},
-			want: "SELECT  attributes_string['http.method'] as `http.method`, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v3 " +
-				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-				"AND mapContains(attributes_string, 'http.method') group by `http.method` order by `http.method` ASC",
+			want: "SELECT  attributes_string['http.method'] as `http.method`, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['http.method'] = '100' AND mapContains(attributes_string, 'http.method') " +
+				"group by `http.method` order by `http.method` ASC",
 		},
 		{
 			name: "Test buildTracesQuery",
@@ -347,6 +423,22 @@ func Test_buildTracesQuery(t *testing.T) {
 		},
 		{
 			name: "test noop list view",
+			args: args{
+				panelType: v3.PanelTypeList,
+				start:     1680066360726210000,
+				end:       1680066458000000000,
+				mq: &v3.BuilderQuery{
+					AggregateOperator: v3.AggregateOperatorNoOp,
+					Filters:           &v3.FilterSet{},
+					SelectColumns:     []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
+					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "ASC"}},
+				},
+			},
+			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  order by timestamp ASC",
+		},
+		{
+			name: "test noop list view-without ts",
 			args: args{
 				panelType: v3.PanelTypeList,
 				start:     1680066360726210000,
@@ -422,45 +514,6 @@ func Test_buildTracesQuery(t *testing.T) {
 	}
 }
 
-func Test_orderByAttributeKeyTags(t *testing.T) {
-	type args struct {
-		panelType v3.PanelType
-		items     []v3.OrderBy
-		tags      []v3.AttributeKey
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "test",
-			args: args{
-				panelType: v3.PanelTypeTrace,
-				items:     []v3.OrderBy{{ColumnName: "name", Order: "ASC"}},
-				tags:      []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-			},
-			want: "`name` ASC",
-		},
-		{
-			name: "test",
-			args: args{
-				panelType: v3.PanelTypeList,
-				items:     []v3.OrderBy{{ColumnName: "name", Order: "DESC"}},
-				tags:      []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-			},
-			want: "`name` DESC",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := orderByAttributeKeyTags(tt.args.panelType, tt.args.items, tt.args.tags); got != tt.want {
-				t.Errorf("orderByAttributeKeyTags() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestPrepareTracesQuery(t *testing.T) {
 	type args struct {
 		start     int64
@@ -485,16 +538,17 @@ func TestPrepareTracesQuery(t *testing.T) {
 					StepInterval:       60,
 					AggregateOperator:  v3.AggregateOperatorCountDistinct,
 					Filters:            &v3.FilterSet{},
-					AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-					GroupBy:            []v3.AttributeKey{{Key: "serviceName", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+					AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					GroupBy:            []v3.AttributeKey{{Key: "function", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 					Limit:              10,
+					OrderBy:            []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "DESC"}},
 				},
 				options: v3.QBOptions{
 					GraphLimitQtype: constants.FirstQueryGraphLimit,
 				},
 			},
-			want: "SELECT `serviceName` from (SELECT serviceName as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 " +
-				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) group by `serviceName`) LIMIT 10",
+			want: "SELECT `function` from (SELECT attributes_string['function'] as `function`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 " +
+				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND mapContains(attributes_string, 'function') group by `function` order by value DESC) LIMIT 10",
 		},
 		{
 			name: "test with limit - second",
@@ -506,16 +560,100 @@ func TestPrepareTracesQuery(t *testing.T) {
 					StepInterval:       60,
 					AggregateOperator:  v3.AggregateOperatorCountDistinct,
 					Filters:            &v3.FilterSet{},
-					AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-					GroupBy:            []v3.AttributeKey{{Key: "serviceName", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+					AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					GroupBy:            []v3.AttributeKey{{Key: "function", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+					OrderBy:            []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "DESC"}},
 					Limit:              10,
 				},
 				options: v3.QBOptions{
 					GraphLimitQtype: constants.SecondQueryGraphLimit,
 				},
 			},
-			want: "SELECT  serviceName as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 where " +
-				"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND (`serviceName`) GLOBAL IN (%s) group by `serviceName`",
+			want: "SELECT  attributes_string['function'] as `function`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 where " +
+				"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND mapContains(attributes_string, 'function') AND (`function`) GLOBAL IN (%s) group by `function` order by value DESC",
+		},
+		{
+			name: "test with limit with resources- first",
+			args: args{
+				start:     1680066360726210000,
+				end:       1680066458000000000,
+				panelType: v3.PanelTypeTable,
+				mq: &v3.BuilderQuery{
+					StepInterval:      60,
+					AggregateOperator: v3.AggregateOperatorCountDistinct,
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items: []v3.FilterItem{
+							{
+								Key:      v3.AttributeKey{Key: "line", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag},
+								Value:    100,
+								Operator: v3.FilterOperatorEqual,
+							},
+							{
+								Key:      v3.AttributeKey{Key: "hostname", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
+								Value:    "server1",
+								Operator: v3.FilterOperatorEqual,
+							},
+						},
+					},
+					AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					GroupBy: []v3.AttributeKey{
+						{Key: "function", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+						{Key: "service.name", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
+					},
+					Limit:   10,
+					OrderBy: []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "DESC"}},
+				},
+				options: v3.QBOptions{
+					GraphLimitQtype: constants.FirstQueryGraphLimit,
+				},
+			},
+			want: "SELECT `function`,`service.name` from (SELECT `attribute_string_function` as `function`, `resource_string_service$$name` as `service.name`, toFloat64(count(distinct(name))) as value " +
+				"from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
+				"AND attributes_number['line'] = 100 AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE " +
+				"(seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'hostname') = 'server1' AND labels like '%hostname%server1%' AND " +
+				"( (simpleJSONHas(labels, 'service.name') AND labels like '%service.name%') ))) group by `function`,`service.name` order by value DESC) LIMIT 10",
+		},
+		{
+			name: "test with limit with resources - second",
+			args: args{
+				start:     1680066360726210000,
+				end:       1680066458000000000,
+				panelType: v3.PanelTypeTable,
+				mq: &v3.BuilderQuery{
+					StepInterval:      60,
+					AggregateOperator: v3.AggregateOperatorCountDistinct,
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items: []v3.FilterItem{
+							{
+								Key:      v3.AttributeKey{Key: "line", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag},
+								Value:    100,
+								Operator: v3.FilterOperatorEqual,
+							},
+							{
+								Key:      v3.AttributeKey{Key: "hostname", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
+								Value:    "server1",
+								Operator: v3.FilterOperatorEqual,
+							},
+						},
+					},
+					AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					GroupBy: []v3.AttributeKey{
+						{Key: "function", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+						{Key: "serviceName", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					},
+					OrderBy: []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "DESC"}},
+					Limit:   10,
+				},
+				options: v3.QBOptions{
+					GraphLimitQtype: constants.SecondQueryGraphLimit,
+				},
+			},
+			want: "SELECT  `attribute_string_function` as `function`, serviceName as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 " +
+				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_number['line'] = 100 " +
+				"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) " +
+				"AND simpleJSONExtractString(labels, 'hostname') = 'server1' AND labels like '%hostname%server1%')) AND (`function`,`serviceName`) GLOBAL IN (%s) group by `function`,`serviceName` order by value DESC",
 		},
 	}
 

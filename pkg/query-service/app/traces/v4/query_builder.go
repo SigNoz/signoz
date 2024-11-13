@@ -11,10 +11,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-type Options struct {
-	GraphLimitQtype string
-	PreferRPM       bool
-}
+const NANOSECOND = 1000000000
 
 var tracesOperatorMappingV3 = map[v3.FilterOperator]string{
 	v3.FilterOperatorIn:              "IN",
@@ -32,7 +29,7 @@ var tracesOperatorMappingV3 = map[v3.FilterOperator]string{
 	v3.FilterOperatorContains:        "ILIKE",
 	v3.FilterOperatorNotContains:     "NOT ILIKE",
 	v3.FilterOperatorExists:          "mapContains(%s, '%s')",
-	v3.FilterOperatorNotExists:       "NOT has(%s%s, '%s')",
+	v3.FilterOperatorNotExists:       "NOT mapContains(%s, '%s')",
 }
 
 func getClickHouseTracesColumnType(columnType v3.AttributeKeyType) string {
@@ -53,21 +50,15 @@ func getClickHouseTracesColumnDataType(columnDataType v3.AttributeKeyDataType) s
 }
 
 func getColumnName(key v3.AttributeKey) string {
+	// if key present in static return as it is
+	if _, ok := constants.StaticFieldsTraces[key.Key]; ok {
+		return key.Key
+	}
+
 	if !key.IsColumn {
 		keyType := getClickHouseTracesColumnType(key.Type)
 		keyDType := getClickHouseTracesColumnDataType(key.DataType)
 		return fmt.Sprintf("%s_%s['%s']", keyType, keyDType, key.Key)
-	}
-
-	// check if it is a static field
-	if key.Type == v3.AttributeKeyTypeUnspecified {
-		// name is the column name
-		return key.Key
-	}
-
-	// if key present in static return as it is
-	if _, ok := constants.StaticFieldsTraces[key.Key]; ok {
-		return key.Key
 	}
 
 	return "`" + utils.GetClickhouseColumnNameV2(string(key.Type), string(key.DataType), key.Key) + "`"
@@ -112,7 +103,8 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 			if operator, ok := tracesOperatorMappingV3[item.Operator]; ok {
 				switch item.Operator {
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
-					val = utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					// we also want to treat %, _ as literals for contains
+					val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value), false)
 					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, val))
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
@@ -144,6 +136,8 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 }
 
 func handleEmptyValuesInGroupBy(groupBy []v3.AttributeKey) (string, error) {
+	// TODO(nitya): in future when we support user based mat column handle them
+	// skipping now as we don't support creating them
 	filterItems := []v3.FilterItem{}
 	if len(groupBy) != 0 {
 		for _, item := range groupBy {
@@ -165,8 +159,6 @@ func handleEmptyValuesInGroupBy(groupBy []v3.AttributeKey) (string, error) {
 	return "", nil
 }
 
-const NANOSECOND = 1000000000
-
 // orderBy returns a string of comma separated tags for order by clause
 // if there are remaining items which are not present in tags they are also added
 // if the order is not specified, it defaults to ASC
@@ -181,11 +173,7 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 		} else if panelType == v3.PanelTypeList {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name := getColumnName(attr)
-			if item.IsColumn {
-				orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
-			} else {
-				orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
-			}
+			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 		}
 	}
 
@@ -200,7 +188,6 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 
 	orderByArray := orderBy(panelType, items, tagLookup)
 
-	// TODO: check this with logs
 	if len(orderByArray) == 0 {
 		if panelType == v3.PanelTypeList {
 			orderByArray = append(orderByArray, constants.TIMESTAMP+" DESC")
@@ -304,8 +291,6 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	} else if panelType == v3.PanelTypeTable {
 		queryTmpl =
 			"SELECT "
-		// step or aggregate interval is whole time period in case of table panel
-		step = (tracesEnd - tracesStart) / 1000000000
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmpl =
@@ -368,7 +353,6 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 					filterSubQuery = fmt.Sprintf("%s AND %s", filterSubQuery, subQuery)
 				}
 			} else {
-				// columnType, columnDataType := getClickhouseTracesColumnDataTypeAndType(mq.AggregateAttribute)
 				column := getColumnName(mq.AggregateAttribute)
 				filterSubQuery = fmt.Sprintf("%s AND has(%s, '%s')", filterSubQuery, column, mq.AggregateAttribute.Key)
 			}
@@ -380,9 +364,6 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
-	// case v3.AggregateOperatorNoOp:
-
-	// return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator %s", mq.AggregateOperator)
 	}
