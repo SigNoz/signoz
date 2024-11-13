@@ -342,6 +342,42 @@ func Test_orderByAttributeKeyTags(t *testing.T) {
 			},
 			want: "attributes_string['status'] DESC,`attribute_string_route` DESC",
 		},
+		{
+			name: "ignore order by in table panel",
+			args: args{
+				panelType: v3.PanelTypeTable,
+				items:     []v3.OrderBy{{ColumnName: "timestamp", Order: "DESC"}},
+				tags:      []v3.AttributeKey{},
+			},
+			want: "",
+		},
+		{
+			name: "add default order by ts for list panel",
+			args: args{
+				panelType: v3.PanelTypeList,
+				items:     []v3.OrderBy{},
+				tags:      []v3.AttributeKey{},
+			},
+			want: "timestamp DESC",
+		},
+		{
+			name: "add default order by value for graph panel",
+			args: args{
+				panelType: v3.PanelTypeGraph,
+				items:     []v3.OrderBy{},
+				tags:      []v3.AttributeKey{},
+			},
+			want: "value DESC",
+		},
+		{
+			name: "don't add default order by for table panel",
+			args: args{
+				panelType: v3.PanelTypeTable,
+				items:     []v3.OrderBy{},
+				tags:      []v3.AttributeKey{},
+			},
+			want: "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -499,30 +535,6 @@ func Test_buildTracesQuery(t *testing.T) {
 			want: "SELECT  toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND " +
 				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) having value > 10 order by value ASC",
 		},
-		{
-			name: "test buildTraceQuery with static columns",
-			args: args{
-				panelType: v3.PanelTypeTable,
-				start:     1680066360726210000,
-				end:       1680066458000000000,
-				mq: &v3.BuilderQuery{
-					AggregateOperator: v3.AggregateOperatorCount,
-					Filters: &v3.FilterSet{
-						Items: []v3.FilterItem{
-							{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "GET", Operator: "="},
-							{Key: v3.AttributeKey{Key: "spanID", DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "myService", Operator: "="},
-						},
-					},
-					OrderBy: []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "ASC"}},
-					GroupBy: []v3.AttributeKey{
-						{Key: "serviceName", DataType: v3.AttributeKeyDataTypeString, IsColumn: true},
-					},
-				},
-			},
-			want: "SELECT  serviceName as `serviceName`, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND " +
-				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND name = 'GET' AND spanID = 'myService' group by `serviceName` order by value ASC",
-		},
-		// TODO (nitya): add test for the new column names that are added
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
