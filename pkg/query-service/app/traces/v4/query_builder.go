@@ -56,12 +56,6 @@ func getColumnName(key v3.AttributeKey) string {
 		return fmt.Sprintf("%s_%s['%s']", keyType, keyDType, key.Key)
 	}
 
-	// check if it is a static field
-	if key.Type == v3.AttributeKeyTypeUnspecified {
-		// name is the column name
-		return key.Key
-	}
-
 	// if key present in static return as it is
 	if _, ok := constants.StaticFieldsTraces[key.Key]; ok {
 		return key.Key
@@ -265,7 +259,6 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
 			}
 			// add it to the select labels
-			mq.SelectColumns = append(mq.SelectColumns, v3.AttributeKey{Key: "id", IsColumn: true})
 			selectLabels = getSelectLabels(mq.SelectColumns)
 			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where %s %s" + "%s"
 			query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
