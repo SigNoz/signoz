@@ -342,6 +342,42 @@ func Test_orderByAttributeKeyTags(t *testing.T) {
 			},
 			want: "attributes_string['status'] DESC,`attribute_string_route` DESC",
 		},
+		{
+			name: "ignore order by in table panel",
+			args: args{
+				panelType: v3.PanelTypeTable,
+				items:     []v3.OrderBy{{ColumnName: "timestamp", Order: "DESC"}},
+				tags:      []v3.AttributeKey{},
+			},
+			want: "",
+		},
+		{
+			name: "add default order by ts for list panel",
+			args: args{
+				panelType: v3.PanelTypeList,
+				items:     []v3.OrderBy{},
+				tags:      []v3.AttributeKey{},
+			},
+			want: "timestamp DESC",
+		},
+		{
+			name: "add default order by value for graph panel",
+			args: args{
+				panelType: v3.PanelTypeGraph,
+				items:     []v3.OrderBy{},
+				tags:      []v3.AttributeKey{},
+			},
+			want: "value DESC",
+		},
+		{
+			name: "don't add default order by for table panel",
+			args: args{
+				panelType: v3.PanelTypeTable,
+				items:     []v3.OrderBy{},
+				tags:      []v3.AttributeKey{},
+			},
+			want: "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
