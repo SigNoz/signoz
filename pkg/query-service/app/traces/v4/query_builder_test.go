@@ -431,6 +431,22 @@ func Test_buildTracesQuery(t *testing.T) {
 					AggregateOperator: v3.AggregateOperatorNoOp,
 					Filters:           &v3.FilterSet{},
 					SelectColumns:     []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
+					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "ASC"}},
+				},
+			},
+			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  order by timestamp ASC",
+		},
+		{
+			name: "test noop list view-without ts",
+			args: args{
+				panelType: v3.PanelTypeList,
+				start:     1680066360726210000,
+				end:       1680066458000000000,
+				mq: &v3.BuilderQuery{
+					AggregateOperator: v3.AggregateOperatorNoOp,
+					Filters:           &v3.FilterSet{},
+					SelectColumns:     []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
 				},
 			},
 			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
@@ -522,8 +538,8 @@ func TestPrepareTracesQuery(t *testing.T) {
 					StepInterval:       60,
 					AggregateOperator:  v3.AggregateOperatorCountDistinct,
 					Filters:            &v3.FilterSet{},
-					AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-					GroupBy:            []v3.AttributeKey{{Key: "serviceName", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+					AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					GroupBy:            []v3.AttributeKey{{Key: "function", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 					Limit:              10,
 					OrderBy:            []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "DESC"}},
 				},
@@ -531,8 +547,8 @@ func TestPrepareTracesQuery(t *testing.T) {
 					GraphLimitQtype: constants.FirstQueryGraphLimit,
 				},
 			},
-			want: "SELECT `serviceName` from (SELECT serviceName as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 " +
-				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) group by `serviceName` order by value DESC) LIMIT 10",
+			want: "SELECT `function` from (SELECT attributes_string['function'] as `function`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 " +
+				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND mapContains(attributes_string, 'function') group by `function` order by value DESC) LIMIT 10",
 		},
 		{
 			name: "test with limit - second",
@@ -544,8 +560,8 @@ func TestPrepareTracesQuery(t *testing.T) {
 					StepInterval:       60,
 					AggregateOperator:  v3.AggregateOperatorCountDistinct,
 					Filters:            &v3.FilterSet{},
-					AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-					GroupBy:            []v3.AttributeKey{{Key: "serviceName", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+					AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					GroupBy:            []v3.AttributeKey{{Key: "function", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 					OrderBy:            []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "DESC"}},
 					Limit:              10,
 				},
@@ -553,8 +569,91 @@ func TestPrepareTracesQuery(t *testing.T) {
 					GraphLimitQtype: constants.SecondQueryGraphLimit,
 				},
 			},
-			want: "SELECT  serviceName as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 where " +
-				"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND (`serviceName`) GLOBAL IN (%s) group by `serviceName` order by value DESC",
+			want: "SELECT  attributes_string['function'] as `function`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 where " +
+				"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND mapContains(attributes_string, 'function') AND (`function`) GLOBAL IN (%s) group by `function` order by value DESC",
+		},
+		{
+			name: "test with limit with resources- first",
+			args: args{
+				start:     1680066360726210000,
+				end:       1680066458000000000,
+				panelType: v3.PanelTypeTable,
+				mq: &v3.BuilderQuery{
+					StepInterval:      60,
+					AggregateOperator: v3.AggregateOperatorCountDistinct,
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items: []v3.FilterItem{
+							{
+								Key:      v3.AttributeKey{Key: "line", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag},
+								Value:    100,
+								Operator: v3.FilterOperatorEqual,
+							},
+							{
+								Key:      v3.AttributeKey{Key: "hostname", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
+								Value:    "server1",
+								Operator: v3.FilterOperatorEqual,
+							},
+						},
+					},
+					AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					GroupBy: []v3.AttributeKey{
+						{Key: "function", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+						{Key: "service.name", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
+					},
+					Limit:   10,
+					OrderBy: []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "DESC"}},
+				},
+				options: v3.QBOptions{
+					GraphLimitQtype: constants.FirstQueryGraphLimit,
+				},
+			},
+			want: "SELECT `function`,`service.name` from (SELECT `attribute_string_function` as `function`, `resource_string_service$$name` as `service.name`, toFloat64(count(distinct(name))) as value " +
+				"from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
+				"AND attributes_number['line'] = 100 AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE " +
+				"(seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'hostname') = 'server1' AND labels like '%hostname%server1%' AND " +
+				"( (simpleJSONHas(labels, 'service.name') AND labels like '%service.name%') ))) group by `function`,`service.name` order by value DESC) LIMIT 10",
+		},
+		{
+			name: "test with limit with resources - second",
+			args: args{
+				start:     1680066360726210000,
+				end:       1680066458000000000,
+				panelType: v3.PanelTypeTable,
+				mq: &v3.BuilderQuery{
+					StepInterval:      60,
+					AggregateOperator: v3.AggregateOperatorCountDistinct,
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items: []v3.FilterItem{
+							{
+								Key:      v3.AttributeKey{Key: "line", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag},
+								Value:    100,
+								Operator: v3.FilterOperatorEqual,
+							},
+							{
+								Key:      v3.AttributeKey{Key: "hostname", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
+								Value:    "server1",
+								Operator: v3.FilterOperatorEqual,
+							},
+						},
+					},
+					AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					GroupBy: []v3.AttributeKey{
+						{Key: "function", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+						{Key: "serviceName", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					},
+					OrderBy: []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "DESC"}},
+					Limit:   10,
+				},
+				options: v3.QBOptions{
+					GraphLimitQtype: constants.SecondQueryGraphLimit,
+				},
+			},
+			want: "SELECT  `attribute_string_function` as `function`, serviceName as `serviceName`, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 " +
+				"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_number['line'] = 100 " +
+				"AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) " +
+				"AND simpleJSONExtractString(labels, 'hostname') = 'server1' AND labels like '%hostname%server1%')) AND (`function`,`serviceName`) GLOBAL IN (%s) group by `function`,`serviceName` order by value DESC",
 		},
 	}
 

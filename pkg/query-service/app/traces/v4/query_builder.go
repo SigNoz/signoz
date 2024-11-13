@@ -50,15 +50,15 @@ func getClickHouseTracesColumnDataType(columnDataType v3.AttributeKeyDataType) s
 }
 
 func getColumnName(key v3.AttributeKey) string {
+	// if key present in static return as it is
+	if _, ok := constants.StaticFieldsTraces[key.Key]; ok {
+		return key.Key
+	}
+
 	if !key.IsColumn {
 		keyType := getClickHouseTracesColumnType(key.Type)
 		keyDType := getClickHouseTracesColumnDataType(key.DataType)
 		return fmt.Sprintf("%s_%s['%s']", keyType, keyDType, key.Key)
-	}
-
-	// if key present in static return as it is
-	if _, ok := constants.StaticFieldsTraces[key.Key]; ok {
-		return key.Key
 	}
 
 	return "`" + utils.GetClickhouseColumnNameV2(string(key.Type), string(key.DataType), key.Key) + "`"
