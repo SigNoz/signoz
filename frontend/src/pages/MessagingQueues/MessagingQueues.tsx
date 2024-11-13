@@ -156,7 +156,7 @@ function MessagingQueues(): JSX.Element {
 							</Button>
 						</div>
 					</div>
-					<div className="overview-info-card middle-card">
+					<div className="overview-info-card">
 						<div>
 							<p className="card-title">{t('summarySection.producer.title')}</p>
 							<p className="card-info-text">
@@ -174,7 +174,7 @@ function MessagingQueues(): JSX.Element {
 							</Button>
 						</div>
 					</div>
-					<div className="overview-info-card middle-card">
+					<div className="overview-info-card">
 						<div>
 							<p className="card-title">{t('summarySection.partition.title')}</p>
 							<p className="card-info-text">
@@ -204,6 +204,24 @@ function MessagingQueues(): JSX.Element {
 								type="default"
 								onClick={(): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.dropRate.value)
+								}
+							>
+								{t('summarySection.viewDetailsButton')}
+							</Button>
+						</div>
+					</div>
+					<div className="overview-info-card">
+						<div>
+							<p className="card-title">{t('summarySection.metricPage.title')}</p>
+							<p className="card-info-text">
+								{t('summarySection.metricPage.description')}
+							</p>
+						</div>
+						<div className="button-grp">
+							<Button
+								type="default"
+								onClick={(): void =>
+									redirectToDetailsPage(MessagingQueuesViewType.metricPage.value)
 								}
 							>
 								{t('summarySection.viewDetailsButton')}

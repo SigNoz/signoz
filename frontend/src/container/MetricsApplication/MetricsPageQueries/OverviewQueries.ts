@@ -83,6 +83,17 @@ export const latency = ({
 	const dataSource = isSpanMetricEnable ? DataSource.METRICS : DataSource.TRACES;
 	const queryNameAndExpression = QUERYNAME_AND_EXPRESSION;
 
+	const timeAggregateOperators = [
+		MetricAggregateOperator.EMPTY,
+		MetricAggregateOperator.EMPTY,
+		MetricAggregateOperator.EMPTY,
+	];
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.P50,
+		MetricAggregateOperator.P90,
+		MetricAggregateOperator.P99,
+	];
+
 	return getQueryBuilderQueries({
 		autocompleteData,
 		legends,
@@ -90,6 +101,8 @@ export const latency = ({
 		aggregateOperator,
 		dataSource,
 		queryNameAndExpression,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 	});
 };
 
@@ -510,11 +523,16 @@ export const operationPerSec = ({
 	const legends = OPERATION_LEGENDS;
 	const dataSource = DataSource.METRICS;
 
+	const timeAggregateOperators = [MetricAggregateOperator.RATE];
+	const spaceAggregateOperators = [MetricAggregateOperator.SUM];
+
 	return getQueryBuilderQueries({
 		autocompleteData,
 		legends,
 		filterItems,
 		dataSource,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 	});
 };
 

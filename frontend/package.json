@@ -42,7 +42,7 @@
 		"@radix-ui/react-tooltip": "1.0.7",
 		"@sentry/react": "7.102.1",
 		"@sentry/webpack-plugin": "2.16.0",
-		"@signozhq/design-tokens": "0.0.8",
+		"@signozhq/design-tokens": "1.1.4",
 		"@uiw/react-md-editor": "3.23.5",
 		"@visx/group": "3.3.0",
 		"@visx/shape": "3.5.0",
