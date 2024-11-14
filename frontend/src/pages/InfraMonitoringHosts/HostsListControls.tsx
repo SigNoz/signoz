@@ -44,6 +44,7 @@ function HostsListControls({
 				query={query}
 				onChange={handleChangeTagFilters}
 				isInfraMonitoring
+				disableNavigationShortcuts
 			/>
 		</div>
 	);

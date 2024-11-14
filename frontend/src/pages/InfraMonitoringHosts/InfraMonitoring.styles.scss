@@ -41,25 +41,25 @@
 		min-height: 500px;
 	}
 
-	// .hosts-list-controls {
-	// 	// margin: 1rem 0.5rem;
+	.hosts-list-controls {
+		padding: 8px 16px;
+	border-top: 1px solid var(--bg-slate-400, #1d212d);
+	border-bottom: 1px solid var(--bg-slate-400, #1d212d);
 
-	// 	// .ant-select-selection-search {
-	// 	// 	width: auto !important;
-	// 	// 	min-width: 70rem;
-	// 	// }
+	.ant-select-selector {
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-400) !important;
+		background-color: var(--bg-ink-300) !important;
 
-	// 	// .ant-select-multiple {
-	// 	// 	.ant-select-selection-overflow {
-	// 	// 		flex-wrap: wrap;
-	// 	// 		overflow: visible;
-	// 	// 	}
+		input {
+			font-size: 12px;
+		}
 
-	// 	// 	.ant-select-selection-overflow-item {
-	// 	// 		flex: 0 0 auto;
-	// 	// 	}
-	// 	// }
-	// }
+		.ant-tag .ant-typography {
+			font-size: 12px;
+		}
+	}
+	}
 	
 	.progress-container {
 		display: flex;
@@ -159,6 +159,16 @@
 
 		.ant-table-cell {
 			color: var(--bg-ink-500);
+		}
+		.hosts-list-controls {
+			border-top: 1px solid var(--bg-vanilla-300);
+		border-bottom: 1px solid var(--bg-vanilla-300);
+
+		.ant-select-selector {
+			border-color: var(--bg-vanilla-300) !important;
+			background-color: var(--bg-vanilla-100) !important;
+			color: var(--bg-ink-200);
+		}
 		}
 	}
 }

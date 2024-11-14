@@ -37,7 +37,7 @@ function Metrics({
 		startTime: timeRange.startTime / 1000,
 		endTime: timeRange.endTime / 1000,
 	});
-	const [, setSelectedInterval] = useState<Time>('5m');
+	const [selectedInterval, setSelectedInterval] = useState<Time>('5m');
 
 	const handleTimeChange = useCallback(
 		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
@@ -144,6 +144,7 @@ function Metrics({
 					onTimeChange={handleTimeChange}
 					defaultRelativeTime="5m"
 					isModalTimeSelection={isModalTimeSelection}
+					modalSelectedInterval={selectedInterval}
 				/>
 			</div>
 			<Row gutter={24} className="host-metrics-container">

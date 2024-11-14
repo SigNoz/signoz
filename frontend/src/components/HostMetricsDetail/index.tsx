@@ -39,6 +39,10 @@ import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	LogsAggregatorOperator,
+	TracesAggregatorOperator,
+} from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -69,15 +73,18 @@ function HostMetricDetail({
 
 	const timeRange = useMemo(
 		() => ({
-			startTime: startMs * 1000,
-			endTime: endMs * 1000,
+			startTime: Math.floor(startMs * 1000),
+			endTime: Math.floor(endMs * 1000),
 		}),
 		[startMs, endMs],
 	);
 
 	const urlQuery = useUrlQuery();
 
-	const [modalTimeRange, setModalTimeRange] = useState(timeRange);
+	const [modalTimeRange, setModalTimeRange] = useState(() => ({
+		startTime: startMs,
+		endTime: endMs,
+	}));
 	const [selectedInterval, setSelectedInterval] = useState<Time>(
 		urlQuery.get(QueryParams.relativeTime) as Time,
 	);
@@ -115,7 +122,6 @@ function HostMetricDetail({
 		initialFilters,
 	);
 
-	// Update filters when initialFilters changes
 	useEffect(() => {
 		setLogFilters(initialFilters);
 		setTracesFilters(initialFilters);
@@ -146,10 +152,38 @@ function HostMetricDetail({
 
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setLogFilters((prevFilters) => ({
-				op: 'AND',
-				items: [...prevFilters.items, ...value.items],
-			}));
+			setLogFilters((prevFilters) => {
+				// Keep only non-pagination filters from previous state
+				const baseFilters = prevFilters.items.filter(
+					(item) => item.key?.key !== 'id',
+				);
+
+				// Keep only non-pagination filters from new value
+				const newNonPaginationFilters = value.items.filter(
+					(item) => item.key?.key !== 'id',
+				);
+
+				// Find pagination filter from new value if it exists
+				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
+
+				// Combine filters while removing duplicates
+				const uniqueFilters = [...baseFilters];
+				newNonPaginationFilters.forEach((newItem) => {
+					const exists = uniqueFilters.some(
+						(existingItem) =>
+							existingItem.key?.key === newItem.key?.key &&
+							existingItem.value === newItem.value,
+					);
+					if (!exists) {
+						uniqueFilters.push(newItem);
+					}
+				});
+
+				return {
+					op: 'AND',
+					items: [...uniqueFilters, ...(paginationFilter ? [paginationFilter] : [])],
+				};
+			});
 		},
 		[],
 	);
@@ -174,6 +208,11 @@ function HostMetricDetail({
 		}
 
 		if (selectedView === VIEW_TYPES.LOGS) {
+			const filtersWithoutPagination = {
+				...logFilters,
+				items: logFilters.items.filter((item) => item.key?.key !== 'id'),
+			};
+
 			const compositeQuery = {
 				...initialQueryState,
 				queryType: 'builder',
@@ -182,7 +221,8 @@ function HostMetricDetail({
 					queryData: [
 						{
 							...initialQueryBuilderFormValuesMap.logs,
-							filters: logFilters,
+							aggregateOperator: LogsAggregatorOperator.NOOP,
+							filters: filtersWithoutPagination,
 						},
 					],
 				},
@@ -203,6 +243,7 @@ function HostMetricDetail({
 					queryData: [
 						{
 							...initialQueryBuilderFormValuesMap.traces,
+							aggregateOperator: TracesAggregatorOperator.NOOP,
 							filters: tracesFilters,
 						},
 					],
@@ -379,6 +420,7 @@ function HostMetricDetail({
 							handleTimeChange={handleTimeChange}
 							handleChangeLogFilters={handleChangeLogFilters}
 							logFilters={logFilters}
+							selectedInterval={selectedInterval}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (
@@ -388,6 +430,7 @@ function HostMetricDetail({
 							handleTimeChange={handleTimeChange}
 							handleChangeTracesFilters={handleChangeTracesFilters}
 							tracesFilters={tracesFilters}
+							selectedInterval={selectedInterval}
 						/>
 					)}
 				</>

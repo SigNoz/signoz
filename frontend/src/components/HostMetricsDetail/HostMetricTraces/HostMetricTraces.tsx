@@ -38,6 +38,7 @@ interface Props {
 	) => void;
 	handleChangeTracesFilters: (value: IBuilderQuery['filters']) => void;
 	tracesFilters: IBuilderQuery['filters'];
+	selectedInterval: Time;
 }
 
 function HostMetricTraces({
@@ -46,6 +47,7 @@ function HostMetricTraces({
 	handleTimeChange,
 	handleChangeTracesFilters,
 	tracesFilters,
+	selectedInterval,
 }: Props): JSX.Element {
 	const [traces, setTraces] = useState<any[]>([]);
 	const [offset] = useState<number>(0);
@@ -133,7 +135,11 @@ function HostMetricTraces({
 			<div className="host-metric-traces-header">
 				<div className="filter-section">
 					{query && (
-						<QueryBuilderSearch query={query} onChange={handleChangeTracesFilters} />
+						<QueryBuilderSearch
+							query={query}
+							onChange={handleChangeTracesFilters}
+							disableNavigationShortcuts
+						/>
 					)}
 				</div>
 				<div className="datetime-section">
@@ -144,6 +150,7 @@ function HostMetricTraces({
 						isModalTimeSelection={isModalTimeSelection}
 						onTimeChange={handleTimeChange}
 						defaultRelativeTime="5m"
+						modalSelectedInterval={selectedInterval}
 					/>
 				</div>
 			</div>

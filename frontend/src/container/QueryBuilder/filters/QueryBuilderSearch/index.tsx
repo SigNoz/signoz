@@ -73,6 +73,7 @@ function QueryBuilderSearch({
 	placeholder,
 	suffixIcon,
 	isInfraMonitoring,
+	disableNavigationShortcuts,
 }: QueryBuilderSearchProps): JSX.Element {
 	const { pathname } = useLocation();
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
@@ -169,14 +170,22 @@ function QueryBuilderSearch({
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
 
-		if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+		if (
+			!disableNavigationShortcuts &&
+			(event.ctrlKey || event.metaKey) &&
+			event.key === 'Enter'
+		) {
 			event.preventDefault();
 			event.stopPropagation();
 			handleRunQuery();
 			setIsOpen(false);
 		}
 
-		if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+		if (
+			!disableNavigationShortcuts &&
+			(event.ctrlKey || event.metaKey) &&
+			event.key === '/'
+		) {
 			event.preventDefault();
 			event.stopPropagation();
 			setShowAllFilters((prev) => !prev);
@@ -434,6 +443,7 @@ interface QueryBuilderSearchProps {
 	placeholder?: string;
 	suffixIcon?: React.ReactNode;
 	isInfraMonitoring?: boolean;
+	disableNavigationShortcuts?: boolean;
 }
 
 QueryBuilderSearch.defaultProps = {
@@ -442,6 +452,7 @@ QueryBuilderSearch.defaultProps = {
 	placeholder: PLACEHOLDER,
 	suffixIcon: undefined,
 	isInfraMonitoring: false,
+	disableNavigationShortcuts: false,
 };
 
 export interface CustomTagProps {

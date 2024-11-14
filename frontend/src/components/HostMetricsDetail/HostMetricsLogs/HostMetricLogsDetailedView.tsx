@@ -25,6 +25,7 @@ interface Props {
 	) => void;
 	handleChangeLogFilters: (value: IBuilderQuery['filters']) => void;
 	logFilters: IBuilderQuery['filters'];
+	selectedInterval: Time;
 }
 
 function HostMetricLogsDetailedView({
@@ -33,6 +34,7 @@ function HostMetricLogsDetailedView({
 	handleTimeChange,
 	handleChangeLogFilters,
 	logFilters,
+	selectedInterval,
 }: Props): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const updatedCurrentQuery = useMemo(
@@ -62,7 +64,11 @@ function HostMetricLogsDetailedView({
 			<div className="host-metrics-logs-header">
 				<div className="filter-section">
 					{query && (
-						<QueryBuilderSearch query={query} onChange={handleChangeLogFilters} />
+						<QueryBuilderSearch
+							query={query}
+							onChange={handleChangeLogFilters}
+							disableNavigationShortcuts
+						/>
 					)}
 				</div>
 				<div className="datetime-section">
@@ -73,10 +79,15 @@ function HostMetricLogsDetailedView({
 						isModalTimeSelection={isModalTimeSelection}
 						onTimeChange={handleTimeChange}
 						defaultRelativeTime="5m"
+						modalSelectedInterval={selectedInterval}
 					/>
 				</div>
 			</div>
-			<HostMetricsLogs timeRange={timeRange} filters={logFilters} />
+			<HostMetricsLogs
+				timeRange={timeRange}
+				handleChangeLogFilters={handleChangeLogFilters}
+				filters={logFilters}
+			/>
 		</div>
 	);
 }
