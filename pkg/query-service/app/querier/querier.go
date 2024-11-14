@@ -321,11 +321,13 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 	res := make([]*v3.Result, 0)
 	qName := ""
 	pageSize := uint64(0)
+	limit := uint64(0)
 
 	// se we are considering only one query
 	for name, v := range params.CompositeQuery.BuilderQueries {
 		qName = name
 		pageSize = v.PageSize
+		limit = v.Limit
 	}
 	data := []*v3.Row{}
 
@@ -352,9 +354,8 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 			data = append(data, rowList...)
 		}
 
-		// append a filter to the params
-		if len(data) > 0 {
-			if params.CompositeQuery.BuilderQueries[qName].DataSource == v3.DataSourceLogs {
+		if params.CompositeQuery.BuilderQueries[qName].DataSource == v3.DataSourceLogs {
+			if len(data) > 0 {
 				params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
 					Key: v3.AttributeKey{
 						Key:      "id",
@@ -364,21 +365,30 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 					Operator: v3.FilterOperatorLessThan,
 					Value:    data[len(data)-1].Data["id"],
 				})
-			} else {
-				// for traces setting offset = 0 works
-				// eg -
-				// 1)--- searching 100 logs in between t1, t10, t100 with offset 0
-				// if 100 logs are there in t1 to t10 then 100 will return immediately.
-				// if 10 logs are there in t1 to t10 then we get 10, set offset to 0 and search in the next timerange of t10 to t100.
-				// 1)--- searching 100 logs in between t1, t10, t100 with offset 100
-				// It will have offset = 0 till 100 logs are found in one of the timerange tx to tx-1
-				// If it finds <100 in tx to tx-1 then it will set offset = 0 and search in the next timerange of tx-1 to tx-2
-				params.CompositeQuery.BuilderQueries[qName].Offset = 0
 			}
-		}
 
-		if uint64(len(data)) >= pageSize {
-			break
+			if uint64(len(data)) >= pageSize {
+				break
+			}
+		} else {
+			// we are updating the offset and limit based on the number of traces we have found in the current timerange
+			// eg -
+			// 1)offset = 0, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
+			// if 100 traces are there in [t1, t10] then 100 will return immediately.
+			// if 10 traces are there in [t1, t10] then we get 10, set offset to 0 and limit to 90, search in the next timerange of [t10, 20]
+			//
+			// 2) offset = 50, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
+			// If we find 100 traces in [t1, t10] then we return immediately
+			// If we finds 50 in [t1, t10] then it will set offset = 0 and limit = 50 and search in the next timerange of [t10, 20]
+			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with offset=50, limit=100
+			if len(data) > 0 {
+				params.CompositeQuery.BuilderQueries[qName].Offset = 0
+				params.CompositeQuery.BuilderQueries[qName].Limit = limit - uint64(len(data))
+			}
+
+			if uint64(len(data)) >= limit {
+				break
+			}
 		}
 	}
 	res = append(res, &v3.Result{

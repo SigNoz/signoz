@@ -321,11 +321,13 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 	res := make([]*v3.Result, 0)
 	qName := ""
 	pageSize := uint64(0)
+	limit := uint64(0)
 
 	// se we are considering only one query
 	for name, v := range params.CompositeQuery.BuilderQueries {
 		qName = name
 		pageSize = v.PageSize
+		limit = v.Limit
 	}
 	data := []*v3.Row{}
 
@@ -352,17 +354,41 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 			data = append(data, rowList...)
 		}
 
-		// append a filter to the params
-		if len(data) > 0 {
-			params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
-				Key: v3.AttributeKey{
-					Key:      "id",
-					IsColumn: true,
-					DataType: "string",
-				},
-				Operator: v3.FilterOperatorLessThan,
-				Value:    data[len(data)-1].Data["id"],
-			})
+		if params.CompositeQuery.BuilderQueries[qName].DataSource == v3.DataSourceLogs {
+			if len(data) > 0 {
+				params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
+					Key: v3.AttributeKey{
+						Key:      "id",
+						IsColumn: true,
+						DataType: "string",
+					},
+					Operator: v3.FilterOperatorLessThan,
+					Value:    data[len(data)-1].Data["id"],
+				})
+			}
+
+			if uint64(len(data)) >= pageSize {
+				break
+			}
+		} else {
+			// we are updating the offset and limit based on the number of traces we have found in the current timerange
+			// eg -
+			// 1)offset = 0, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
+			// if 100 traces are there in [t1, t10] then 100 will return immediately.
+			// if 10 traces are there in [t1, t10] then we get 10, set offset to 0 and limit to 90, search in the next timerange of [t10, 20]
+			//
+			// 2) offset = 50, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
+			// If we find 100 traces in [t1, t10] then we return immediately
+			// If we finds 50 in [t1, t10] then it will set offset = 0 and limit = 50 and search in the next timerange of [t10, 20]
+			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with offset=50, limit=100
+			if len(data) > 0 {
+				params.CompositeQuery.BuilderQueries[qName].Offset = 0
+				params.CompositeQuery.BuilderQueries[qName].Limit = limit - uint64(len(data))
+			}
+
+			if uint64(len(data)) >= limit {
+				break
+			}
 		}
 
 		if uint64(len(data)) >= pageSize {
@@ -375,7 +401,6 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 	})
 	return res, nil, nil
 }
-
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 	// List query has support for only one query
 	// we are skipping for PanelTypeTrace as it has a custom order by regardless of what's in the payload
