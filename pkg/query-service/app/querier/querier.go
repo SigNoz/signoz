@@ -382,7 +382,7 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with offset=50, limit=100
 			if length > 0 {
 				params.CompositeQuery.BuilderQueries[qName].Offset = 0
-				params.CompositeQuery.BuilderQueries[qName].Limit = limit - length
+				params.CompositeQuery.BuilderQueries[qName].Limit = limit - uint64(len(data))
 			}
 
 			if uint64(len(data)) >= limit {
