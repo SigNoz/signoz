@@ -9,7 +9,7 @@ type LogsListTsRange struct {
 	End   int64
 }
 
-func GetLogsListTsRanges(start, end int64) []LogsListTsRange {
+func GetListTsRanges(start, end int64) []LogsListTsRange {
 	startNano := GetEpochNanoSecs(start)
 	endNano := GetEpochNanoSecs(end)
 	result := []LogsListTsRange{}

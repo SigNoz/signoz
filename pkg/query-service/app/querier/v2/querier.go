@@ -377,18 +377,24 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 }
 
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
-	// List query has support for only one query.
-	if q.UseLogsNewSchema && params.CompositeQuery != nil &&
+	// List query has support for only one query
+	// we are skipping for PanelTypeTrace as it has a custom order by regardless of what's in the payload
+	if params.CompositeQuery != nil &&
 		len(params.CompositeQuery.BuilderQueries) == 1 &&
 		params.CompositeQuery.PanelType != v3.PanelTypeTrace {
 		for _, v := range params.CompositeQuery.BuilderQueries {
+			if (v.DataSource == v3.DataSourceLogs && !q.UseLogsNewSchema) ||
+				(v.DataSource == v3.DataSourceTraces && !q.UseTraceNewSchema) {
+				break
+			}
+
 			// only allow of logs queries with timestamp ordering desc
 			// TODO(nitya): allow for timestamp asc
 			if (v.DataSource == v3.DataSourceLogs || v.DataSource == v3.DataSourceTraces) &&
 				len(v.OrderBy) == 1 &&
 				v.OrderBy[0].ColumnName == "timestamp" &&
 				v.OrderBy[0].Order == "desc" {
-				startEndArr := utils.GetLogsListTsRanges(params.Start, params.End)
+				startEndArr := utils.GetListTsRanges(params.Start, params.End)
 				return q.runWindowBasedListQuery(ctx, params, startEndArr)
 			}
 		}

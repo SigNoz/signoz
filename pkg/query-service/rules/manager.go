@@ -49,7 +49,8 @@ type PrepareTestRuleOptions struct {
 	ManagerOpts *ManagerOptions
 	NotifyFunc  NotifyFunc
 
-	UseLogsNewSchema bool
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 const taskNamesuffix = "webAppEditor"
@@ -814,15 +815,16 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 	}
 
 	alertCount, apiErr := m.prepareTestRuleFunc(PrepareTestRuleOptions{
-		Rule:             parsedRule,
-		RuleDB:           m.ruleDB,
-		Logger:           m.logger,
-		Reader:           m.reader,
-		Cache:            m.cache,
-		FF:               m.featureFlags,
-		ManagerOpts:      m.opts,
-		NotifyFunc:       m.prepareNotifyFunc(),
-		UseLogsNewSchema: m.opts.UseLogsNewSchema,
+		Rule:              parsedRule,
+		RuleDB:            m.ruleDB,
+		Logger:            m.logger,
+		Reader:            m.reader,
+		Cache:             m.cache,
+		FF:                m.featureFlags,
+		ManagerOpts:       m.opts,
+		NotifyFunc:        m.prepareNotifyFunc(),
+		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
+		UseTraceNewSchema: m.opts.UseTraceNewSchema,
 	})
 
 	return alertCount, apiErr

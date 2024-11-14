@@ -774,7 +774,6 @@ func makeRulesManager(
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
 		UseLogsNewSchema:    useLogsNewSchema,
 		UseTraceNewSchema:   useTraceNewSchema,
-		PrepareTaskFunc:     rules.PrepareTaskFunc,
 		PrepareTestRuleFunc: rules.TestNotification,
 	}
 

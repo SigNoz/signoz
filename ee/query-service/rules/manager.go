@@ -123,6 +123,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			opts.FF,
 			opts.Reader,
 			opts.UseLogsNewSchema,
+			opts.UseTraceNewSchema,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 		)
