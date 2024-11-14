@@ -150,7 +150,7 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 
 // Clickhouse migration under the feature-flag
 
-func IsClickhouseMigrationEnable() bool {
+func IsClickhouseMigrationEnabled() bool {
 	isEnableMigrationStr := os.Getenv("CLICKHOUSE_MIGRATION_ENABLED")
 	if isEnableMigrationStr == "" {
 		return false
