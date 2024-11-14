@@ -162,8 +162,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	migration := constants.IsClickhouseMigrationEnable()
+
 	go func() {
-		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
+		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster, migration)
 		if err != nil {
 			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
 		}
