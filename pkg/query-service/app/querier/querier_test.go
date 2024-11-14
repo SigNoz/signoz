@@ -1131,10 +1131,10 @@ func TestQueryRangeValueTypePromQL(t *testing.T) {
 	}
 }
 
-type queryMatcherAny struct {
+type regexMatcher struct {
 }
 
-func (m *queryMatcherAny) Match(expectedSQL, actualSQL string) error {
+func (m *regexMatcher) Match(expectedSQL, actualSQL string) error {
 	re, err := regexp.Compile(expectedSQL)
 	if err != nil {
 		return err
@@ -1326,7 +1326,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup mock
-			mock, err := cmock.NewClickHouseWithQueryMatcher(nil, &queryMatcherAny{})
+			mock, err := cmock.NewClickHouseWithQueryMatcher(nil, &regexMatcher{})
 			require.NoError(t, err, "Failed to create ClickHouse mock")
 
 			// Configure mock responses
