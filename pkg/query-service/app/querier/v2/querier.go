@@ -48,10 +48,11 @@ type querier struct {
 	testingMode     bool
 	queriesExecuted []string
 	// tuple of start and end time in milliseconds
-	timeRanges       [][]int
-	returnedSeries   []*v3.Series
-	returnedErr      error
-	UseLogsNewSchema bool
+	timeRanges        [][]int
+	returnedSeries    []*v3.Series
+	returnedErr       error
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 type QuerierOptions struct {
@@ -308,7 +309,7 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	return results, errQueriesByName, err
 }
 
-func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangeParamsV3, tsRanges []utils.LogsListTsRange) ([]*v3.Result, map[string]error, error) {
+func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryRangeParamsV3, tsRanges []utils.LogsListTsRange) ([]*v3.Result, map[string]error, error) {
 	res := make([]*v3.Result, 0)
 	qName := ""
 	pageSize := uint64(0)
@@ -345,15 +346,27 @@ func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangePar
 
 		// append a filter to the params
 		if len(data) > 0 {
-			params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
-				Key: v3.AttributeKey{
-					Key:      "id",
-					IsColumn: true,
-					DataType: "string",
-				},
-				Operator: v3.FilterOperatorLessThan,
-				Value:    data[len(data)-1].Data["id"],
-			})
+			if params.CompositeQuery.BuilderQueries[qName].DataSource == v3.DataSourceLogs {
+				params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
+					Key: v3.AttributeKey{
+						Key:      "id",
+						IsColumn: true,
+						DataType: "string",
+					},
+					Operator: v3.FilterOperatorLessThan,
+					Value:    data[len(data)-1].Data["id"],
+				})
+			} else {
+				// for traces setting offset = 0 works
+				// eg -
+				// 1)--- searching 100 logs in between t1, t10, t100 with offset 0
+				// if 100 logs are there in t1 to t10 then 100 will return immediately.
+				// if 10 logs are there in t1 to t10 then we get 10, set offset to 0 and search in the next timerange of t10 to t100.
+				// 1)--- searching 100 logs in between t1, t10, t100 with offset 100
+				// It will have offset = 0 till 100 logs are found in one of the timerange tx to tx-1
+				// If it finds <100 in tx to tx-1 then it will set offset = 0 and search in the next timerange of tx-1 to tx-2
+				params.CompositeQuery.BuilderQueries[qName].Offset = 0
+			}
 		}
 
 		if uint64(len(data)) >= pageSize {
@@ -369,14 +382,24 @@ func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangePar
 
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 	// List query has support for only one query.
-	if q.UseLogsNewSchema && params.CompositeQuery != nil && len(params.CompositeQuery.BuilderQueries) == 1 {
+	// we are skipping for PanelTypeTrace as it has a custom order by regardless of what's in the payload
+	if params.CompositeQuery != nil &&
+		len(params.CompositeQuery.BuilderQueries) == 1 &&
+		params.CompositeQuery.PanelType != v3.PanelTypeTrace {
 		for _, v := range params.CompositeQuery.BuilderQueries {
+			if (v.DataSource == v3.DataSourceLogs && !q.UseLogsNewSchema) ||
+				(v.DataSource == v3.DataSourceTraces && !q.UseTraceNewSchema) {
+				break
+			}
+
 			// only allow of logs queries with timestamp ordering desc
-			if v.DataSource == v3.DataSourceLogs && len(v.OrderBy) == 1 && v.OrderBy[0].ColumnName == "timestamp" && v.OrderBy[0].Order == "desc" {
-				startEndArr := utils.GetLogsListTsRanges(params.Start, params.End)
-				if len(startEndArr) > 0 {
-					return q.runLogsListQuery(ctx, params, startEndArr)
-				}
+			// TODO(nitya): allow for timestamp asc
+			if (v.DataSource == v3.DataSourceLogs || v.DataSource == v3.DataSourceTraces) &&
+				len(v.OrderBy) == 1 &&
+				v.OrderBy[0].ColumnName == "timestamp" &&
+				v.OrderBy[0].Order == "desc" {
+				startEndArr := utils.GetListTsRanges(params.Start, params.End)
+				return q.runWindowBasedListQuery(ctx, params, startEndArr)
 			}
 		}
 	}
