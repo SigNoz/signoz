@@ -40,8 +40,8 @@ func GetLogsListTsRanges(start, end int64) []LogsListTsRange {
 }
 
 // This tries to see all possible fields that it can fall back to if some meta is missing
-// check Test_GenerateLogEnrichmentKeys for example
-func GenerateLogEnrichmentKeys(field v3.AttributeKey) []string {
+// check Test_GenerateEnrichmentKeys for example
+func GenerateEnrichmentKeys(field v3.AttributeKey) []string {
 	names := []string{}
 	if field.Type != v3.AttributeKeyTypeUnspecified && field.DataType != v3.AttributeKeyDataTypeUnspecified {
 		names = append(names, field.Key+"##"+field.Type.String()+"##"+field.DataType.String())

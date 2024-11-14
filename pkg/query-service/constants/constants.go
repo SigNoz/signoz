@@ -589,4 +589,58 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
+
+	// new support
+	"response_status_code": {
+		Key:      "response_status_code",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"external_http_url": {
+		Key:      "external_http_url",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"http_url": {
+		Key:      "http_url",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"external_http_method": {
+		Key:      "external_http_method",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"http_method": {
+		Key:      "http_method",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"http_host": {
+		Key:      "http_host",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"db_name": {
+		Key:      "db_name",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"db_operation": {
+		Key:      "db_operation",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"has_error": {
+		Key:      "has_error",
+		DataType: v3.AttributeKeyDataTypeBool,
+		IsColumn: true,
+	},
+	"is_remote": {
+		Key:      "is_remote",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	// the simple attributes are not present here as
+	// they are taken care by new format <attribute_type>_<attribute_datatype>_'<attribute_key>'
 }
