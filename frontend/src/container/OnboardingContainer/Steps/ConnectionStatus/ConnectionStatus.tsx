@@ -14,6 +14,7 @@ import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
+import MessagingQueueHealthCheck from 'pages/MessagingQueues/MessagingQueueHealthCheck/MessagingQueueHealthCheck';
 import { getAttributeDataFromOnboardingStatus } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -33,6 +34,9 @@ export default function ConnectionStatus(): JSX.Element {
 
 	const urlQuery = useUrlQuery();
 	const getStartedSource = urlQuery.get(QueryParams.getStartedSource);
+	const getStartedSourceService = urlQuery.get(
+		QueryParams.getStartedSourceService,
+	);
 
 	const {
 		serviceName,
@@ -74,10 +78,14 @@ export default function ConnectionStatus(): JSX.Element {
 		data: onbData,
 		error: onbErr,
 		isFetching: onbFetching,
-	} = useOnboardingStatus({
-		enabled: getStartedSource === 'kafka',
-		refetchInterval: pollInterval,
-	});
+	} = useOnboardingStatus(
+		{
+			enabled: getStartedSource === 'kafka',
+			refetchInterval: pollInterval,
+		},
+		getStartedSourceService || '',
+		'query-key-onboarding-status',
+	);
 
 	const [
 		shouldRetryOnboardingCall,
@@ -326,18 +334,30 @@ export default function ConnectionStatus(): JSX.Element {
 
 					<div className="status">
 						{isQueryServiceLoading && <LoadingOutlined />}
-						{!isQueryServiceLoading && isReceivingData && (
-							<>
-								<CheckCircleTwoTone twoToneColor="#52c41a" />
-								<span> Success </span>
-							</>
-						)}
-						{!isQueryServiceLoading && !isReceivingData && (
-							<>
-								<CloseCircleTwoTone twoToneColor="#e84749" />
-								<span> Failed </span>
-							</>
-						)}
+						{!isQueryServiceLoading &&
+							isReceivingData &&
+							(getStartedSource !== 'kafka' ? (
+								<>
+									<CheckCircleTwoTone twoToneColor="#52c41a" />
+									<span> Success </span>
+								</>
+							) : (
+								<MessagingQueueHealthCheck
+									serviceToInclude={[getStartedSourceService || '']}
+								/>
+							))}
+						{!isQueryServiceLoading &&
+							!isReceivingData &&
+							(getStartedSource !== 'kafka' ? (
+								<>
+									<CloseCircleTwoTone twoToneColor="#e84749" />
+									<span> Failed </span>
+								</>
+							) : (
+								<MessagingQueueHealthCheck
+									serviceToInclude={[getStartedSourceService || '']}
+								/>
+							))}
 					</div>
 				</div>
 				<div className="details-info">

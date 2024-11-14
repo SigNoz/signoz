@@ -260,6 +260,20 @@
 					background: rgba(189, 153, 121, 0.1);
 				}
 			}
+
+			&.scope {
+				border: 1px solid rgba(113, 144, 249, 0.2);
+
+				.ant-typography {
+					color: var(--bg-robin-400);
+					background: rgba(113, 144, 249, 0.1);
+					font-size: 14px;
+				}
+
+				.ant-tag-close-icon {
+					background: rgba(113, 144, 249, 0.1);
+				}
+			}
 		}
 	}
 }

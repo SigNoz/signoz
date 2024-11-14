@@ -222,7 +222,8 @@ export enum MessagingQueuesViewTypeOptions {
 	ConsumerLag = 'consumerLag',
 	PartitionLatency = 'partitionLatency',
 	ProducerLatency = 'producerLatency',
-	ConsumerLatency = 'consumerLatency',
+	DropRate = 'dropRate',
+	MetricPage = 'metricPage',
 }
 
 export const MessagingQueuesViewType = {
@@ -238,9 +239,13 @@ export const MessagingQueuesViewType = {
 		label: 'Producer Latency view',
 		value: MessagingQueuesViewTypeOptions.ProducerLatency,
 	},
-	consumerLatency: {
-		label: 'Consumer latency view',
-		value: MessagingQueuesViewTypeOptions.ConsumerLatency,
+	dropRate: {
+		label: 'Drop Rate view',
+		value: MessagingQueuesViewTypeOptions.DropRate,
+	},
+	metricPage: {
+		label: 'Metric view',
+		value: MessagingQueuesViewTypeOptions.MetricPage,
 	},
 };
 
@@ -381,3 +386,9 @@ export const getAttributeDataFromOnboardingStatus = (
 		attributeDataWithError,
 	};
 };
+
+export enum MessagingQueueHealthCheckService {
+	Consumers = 'consumers',
+	Producers = 'producers',
+	Kafka = 'kafka',
+}

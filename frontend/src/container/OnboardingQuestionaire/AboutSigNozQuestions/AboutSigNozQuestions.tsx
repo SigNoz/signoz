@@ -82,7 +82,7 @@ export function AboutSigNozQuestions({
 			otherInterestInSignoz,
 		});
 
-		logEvent('User Onboarding: About SigNoz Questions Answered', {
+		logEvent('Org Onboarding: Answered', {
 			hearAboutSignoz,
 			otherAboutSignoz,
 			interestInSignoz,

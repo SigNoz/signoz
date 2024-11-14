@@ -113,6 +113,7 @@ type APIHandler struct {
 
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
+	UseLicensesV3     bool
 
 	hostsRepo      *inframetrics.HostsRepo
 	processesRepo  *inframetrics.ProcessesRepo
@@ -120,6 +121,11 @@ type APIHandler struct {
 	nodesRepo      *inframetrics.NodesRepo
 	namespacesRepo *inframetrics.NamespacesRepo
 	clustersRepo   *inframetrics.ClustersRepo
+	// workloads
+	deploymentsRepo  *inframetrics.DeploymentsRepo
+	daemonsetsRepo   *inframetrics.DaemonSetsRepo
+	statefulsetsRepo *inframetrics.StatefulSetsRepo
+	jobsRepo         *inframetrics.JobsRepo
 }
 
 type APIHandlerOpts struct {
@@ -160,6 +166,8 @@ type APIHandlerOpts struct {
 	UseLogsNewSchema bool
 
 	UseTraceNewSchema bool
+	// Use Licenses V3 structure
+	UseLicensesV3 bool
 }
 
 // NewAPIHandler returns an APIHandler
@@ -199,6 +207,10 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	nodesRepo := inframetrics.NewNodesRepo(opts.Reader, querierv2)
 	namespacesRepo := inframetrics.NewNamespacesRepo(opts.Reader, querierv2)
 	clustersRepo := inframetrics.NewClustersRepo(opts.Reader, querierv2)
+	deploymentsRepo := inframetrics.NewDeploymentsRepo(opts.Reader, querierv2)
+	daemonsetsRepo := inframetrics.NewDaemonSetsRepo(opts.Reader, querierv2)
+	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
+	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -218,12 +230,17 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		querierV2:                     querierv2,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
 		UseTraceNewSchema:             opts.UseTraceNewSchema,
+		UseLicensesV3:                 opts.UseLicensesV3,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
 		podsRepo:                      podsRepo,
 		nodesRepo:                     nodesRepo,
 		namespacesRepo:                namespacesRepo,
 		clustersRepo:                  clustersRepo,
+		deploymentsRepo:               deploymentsRepo,
+		daemonsetsRepo:                daemonsetsRepo,
+		statefulsetsRepo:              statefulsetsRepo,
+		jobsRepo:                      jobsRepo,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -326,6 +343,8 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 		code = http.StatusUnauthorized
 	case model.ErrorForbidden:
 		code = http.StatusForbidden
+	case model.ErrorConflict:
+		code = http.StatusConflict
 	default:
 		code = http.StatusInternalServerError
 	}
@@ -407,6 +426,26 @@ func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMid
 	clustersSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getClusterAttributeKeys)).Methods(http.MethodGet)
 	clustersSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getClusterAttributeValues)).Methods(http.MethodGet)
 	clustersSubRouter.HandleFunc("/list", am.ViewAccess(aH.getClusterList)).Methods(http.MethodPost)
+
+	deploymentsSubRouter := router.PathPrefix("/api/v1/deployments").Subrouter()
+	deploymentsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getDeploymentAttributeKeys)).Methods(http.MethodGet)
+	deploymentsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getDeploymentAttributeValues)).Methods(http.MethodGet)
+	deploymentsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getDeploymentList)).Methods(http.MethodPost)
+
+	daemonsetsSubRouter := router.PathPrefix("/api/v1/daemonsets").Subrouter()
+	daemonsetsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getDaemonSetAttributeKeys)).Methods(http.MethodGet)
+	daemonsetsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getDaemonSetAttributeValues)).Methods(http.MethodGet)
+	daemonsetsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getDaemonSetList)).Methods(http.MethodPost)
+
+	statefulsetsSubRouter := router.PathPrefix("/api/v1/statefulsets").Subrouter()
+	statefulsetsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getStatefulSetAttributeKeys)).Methods(http.MethodGet)
+	statefulsetsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getStatefulSetAttributeValues)).Methods(http.MethodGet)
+	statefulsetsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getStatefulSetList)).Methods(http.MethodPost)
+
+	jobsSubRouter := router.PathPrefix("/api/v1/jobs").Subrouter()
+	jobsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getJobAttributeKeys)).Methods(http.MethodGet)
+	jobsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getJobAttributeValues)).Methods(http.MethodGet)
+	jobsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getJobList)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
@@ -3229,16 +3268,16 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	}
 
 	for _, res := range result {
-		for _, series := range res.Series {
-			serviceName, serviceNameOk := series.Labels["service_name"]
-			topicName, topicNameOk := series.Labels["topic"]
-			params := []string{serviceName, topicName}
+		for _, list := range res.List {
+			serviceName, serviceNameOk := list.Data["service_name"].(*string)
+			topicName, topicNameOk := list.Data["topic"].(*string)
+			params := []string{*serviceName, *topicName}
 			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if topicNameOk && serviceNameOk && !ok {
 				attributeCache.Hash[hashKey] = struct{}{}
-				attributeCache.TopicName = append(attributeCache.TopicName, topicName)
-				attributeCache.ServiceName = append(attributeCache.ServiceName, serviceName)
+				attributeCache.TopicName = append(attributeCache.TopicName, *topicName)
+				attributeCache.ServiceName = append(attributeCache.ServiceName, *serviceName)
 			}
 		}
 	}
@@ -3263,24 +3302,22 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	}
 
 	latencyColumn := &v3.Result{QueryName: "latency"}
-	var latencySeries []*v3.Series
+	var latencySeries []*v3.Row
 	for _, res := range resultFetchLatency {
-		for _, series := range res.Series {
-			topic, topicOk := series.Labels["topic"]
-			serviceName, serviceNameOk := series.Labels["service_name"]
-			params := []string{topic, serviceName}
+		for _, list := range res.List {
+			topic, topicOk := list.Data["topic"].(*string)
+			serviceName, serviceNameOk := list.Data["service_name"].(*string)
+			params := []string{*serviceName, *topic}
 			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if topicOk && serviceNameOk && ok {
-				latencySeries = append(latencySeries, series)
+				latencySeries = append(latencySeries, list)
 			}
 		}
 	}
 
-	latencyColumn.Series = latencySeries
+	latencyColumn.List = latencySeries
 	result = append(result, latencyColumn)
-
-	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
 
 	resp := v3.QueryRangeResponse{
 		Result: resultFetchLatency,

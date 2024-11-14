@@ -57,6 +57,7 @@ export const alertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const anamolyAlertDefaults: AlertDef = {
@@ -94,12 +95,14 @@ export const anamolyAlertDefaults: AlertDef = {
 		matchType: defaultMatchType,
 		algorithm: defaultAlgorithm,
 		seasonality: defaultSeasonality,
+		target: 3,
 	},
 	labels: {
 		severity: 'warning',
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const logAlertDefaults: AlertDef = {
@@ -131,6 +134,7 @@ export const logAlertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const traceAlertDefaults: AlertDef = {
@@ -162,6 +166,7 @@ export const traceAlertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const exceptionAlertDefaults: AlertDef = {
@@ -193,6 +198,7 @@ export const exceptionAlertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const ALERTS_VALUES_MAP: Record<AlertTypes, AlertDef> = {

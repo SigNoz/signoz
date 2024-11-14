@@ -31,7 +31,6 @@ import (
 	"go.signoz.io/signoz/ee/query-service/rules"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
@@ -79,6 +78,7 @@ type ServerOptions struct {
 	GatewayUrl        string
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
+	UseLicensesV3     bool
 }
 
 // Server runs HTTP api service
@@ -135,7 +135,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", localDB)
+	lm, err := licensepkg.StartManager("sqlite", localDB, serverOptions.UseLicensesV3)
 	if err != nil {
 		return nil, err
 	}
@@ -274,6 +274,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		Gateway:                       gatewayProxy,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
+		UseLicensesV3:                 serverOptions.UseLicensesV3,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -352,7 +353,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 		}
 
 		if user.User.OrgId == "" {
-			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
+			return nil, basemodel.UnauthorizedError(errors.New("orgId is missing in the claims"))
 		}
 
 		return user, nil
@@ -770,9 +771,11 @@ func makeRulesManager(
 		Cache:        cache,
 		EvalDelay:    baseconst.GetEvalDelay(),
 
-		PrepareTaskFunc:   rules.PrepareTaskFunc,
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
+		PrepareTaskFunc:     rules.PrepareTaskFunc,
+		UseLogsNewSchema:    useLogsNewSchema,
+		UseTraceNewSchema:   useTraceNewSchema,
+		PrepareTaskFunc:     rules.PrepareTaskFunc,
+		PrepareTestRuleFunc: rules.TestNotification,
 	}
 
 	// create Manager

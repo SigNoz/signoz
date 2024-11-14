@@ -46,6 +46,13 @@ func BadRequest(err error) *ApiError {
 	}
 }
 
+func Unauthorized(err error) *ApiError {
+	return &ApiError{
+		Typ: basemodel.ErrorUnauthorized,
+		Err: err,
+	}
+}
+
 // BadRequestStr returns a ApiError object of bad request for string input
 func BadRequestStr(s string) *ApiError {
 	return &ApiError{

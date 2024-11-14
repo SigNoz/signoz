@@ -41,6 +41,7 @@ type APIHandlerOptions struct {
 	FluxInterval      time.Duration
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
+	UseLicensesV3     bool
 }
 
 type APIHandler struct {
@@ -67,6 +68,7 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		FluxInterval:                  opts.FluxInterval,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
 		UseTraceNewSchema:             opts.UseTraceNewSchema,
+		UseLicensesV3:                 opts.UseLicensesV3,
 	})
 
 	if err != nil {
@@ -175,10 +177,25 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v1/dashboards/{uuid}/lock", am.EditAccess(ah.lockDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}/unlock", am.EditAccess(ah.unlockDashboard)).Methods(http.MethodPut)
 
+	// v2
 	router.HandleFunc("/api/v2/licenses",
 		am.ViewAccess(ah.listLicensesV2)).
 		Methods(http.MethodGet)
 
+	// v3
+	router.HandleFunc("/api/v3/licenses",
+		am.ViewAccess(ah.listLicensesV3)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v3/licenses",
+		am.AdminAccess(ah.applyLicenseV3)).
+		Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v3/licenses",
+		am.AdminAccess(ah.refreshLicensesV3)).
+		Methods(http.MethodPut)
+
+	// v4
 	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)
 
 	// Gateway
