@@ -57,8 +57,11 @@ export const useAlertHistoryQueryParams = (): {
 
 	const startTime = params.get(QueryParams.startTime);
 	const endTime = params.get(QueryParams.endTime);
+	const relativeTimeParam = params.get(QueryParams.relativeTime);
+
 	const relativeTime =
-		params.get(QueryParams.relativeTime) ?? RelativeTimeMap['6hr'];
+		(relativeTimeParam === 'null' ? null : relativeTimeParam) ??
+		RelativeTimeMap['6hr'];
 
 	const intStartTime = parseInt(startTime || '0', 10);
 	const intEndTime = parseInt(endTime || '0', 10);
@@ -463,6 +466,44 @@ export const useAlertRuleDuplicate = ({
 	};
 
 	return { handleAlertDuplicate };
+};
+export const useAlertRuleUpdate = ({
+	alertDetails,
+	setUpdatedName,
+	intermediateName,
+}: {
+	alertDetails: AlertDef;
+	setUpdatedName: (name: string) => void;
+	intermediateName: string;
+}): {
+	handleAlertUpdate: () => void;
+	isLoading: boolean;
+} => {
+	const { notifications } = useNotifications();
+	const handleError = useAxiosError();
+
+	const { mutate: updateAlertRule, isLoading } = useMutation(
+		[REACT_QUERY_KEY.UPDATE_ALERT_RULE, alertDetails.id],
+		save,
+		{
+			onMutate: () => setUpdatedName(intermediateName),
+			onSuccess: () =>
+				notifications.success({ message: 'Alert renamed successfully' }),
+			onError: (error) => {
+				setUpdatedName(alertDetails.alert);
+				handleError(error);
+			},
+		},
+	);
+
+	const handleAlertUpdate = (): void => {
+		updateAlertRule({
+			data: { ...alertDetails, alert: intermediateName },
+			id: alertDetails.id,
+		});
+	};
+
+	return { handleAlertUpdate, isLoading };
 };
 
 export const useAlertRuleDelete = ({

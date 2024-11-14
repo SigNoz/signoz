@@ -599,6 +599,9 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 					}
 				}
 			}
+			if rule.RuleType == RuleTypeAnomaly {
+				alertsInfo.AnomalyBasedAlerts = alertsInfo.AnomalyBasedAlerts + 1
+			}
 		} else if rule.AlertType == AlertTypeTraces {
 			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
 		}

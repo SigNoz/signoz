@@ -1,6 +1,7 @@
 import './OnboardingQuestionaire.styles.scss';
 
 import { NotificationInstance } from 'antd/es/notification/interface';
+import logEvent from 'api/common/logEvent';
 import updateProfileAPI from 'api/onboarding/updateProfile';
 import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
 import updateOrgPreferenceAPI from 'api/preferences/updateOrgPreference';
@@ -61,6 +62,10 @@ const INITIAL_OPTIMISE_SIGNOZ_DETAILS: OptimiseSignozDetails = {
 	services: 0,
 };
 
+const BACK_BUTTON_EVENT_NAME = 'Org Onboarding: Back Button Clicked';
+const NEXT_BUTTON_EVENT_NAME = 'Org Onboarding: Next Button Clicked';
+const ONBOARDING_COMPLETE_EVENT_NAME = 'Org Onboarding: Complete';
+
 function OnboardingQuestionaire(): JSX.Element {
 	const { notifications } = useNotifications();
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -98,6 +103,13 @@ function OnboardingQuestionaire(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [org]);
 
+	useEffect(() => {
+		logEvent('Org Onboarding: Started', {
+			org_id: org?.[0]?.id,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	const { refetch: refetchOrgPreferences } = useQuery({
 		queryFn: () => getAllOrgPreferences(),
 		queryKey: ['getOrgPreferences'],
@@ -119,6 +131,8 @@ function OnboardingQuestionaire(): JSX.Element {
 			});
 
 			setUpdatingOrgOnboardingStatus(false);
+
+			logEvent('Org Onboarding: Redirecting to Get Started', {});
 
 			history.push(ROUTES.GET_STARTED);
 		},
@@ -156,6 +170,11 @@ function OnboardingQuestionaire(): JSX.Element {
 	});
 
 	const handleUpdateProfile = (): void => {
+		logEvent(NEXT_BUTTON_EVENT_NAME, {
+			currentPageID: 3,
+			nextPageID: 4,
+		});
+
 		updateProfile({
 			familiarity_with_observability: orgDetails?.familiarity as string,
 			has_existing_observability_tool: orgDetails?.usesObservability as boolean,
@@ -180,6 +199,10 @@ function OnboardingQuestionaire(): JSX.Element {
 	};
 
 	const handleOnboardingComplete = (): void => {
+		logEvent(ONBOARDING_COMPLETE_EVENT_NAME, {
+			currentPageID: 4,
+		});
+
 		setUpdatingOrgOnboardingStatus(true);
 		updateOrgPreference({
 			preferenceID: 'ORG_ONBOARDING',
@@ -199,6 +222,11 @@ function OnboardingQuestionaire(): JSX.Element {
 						currentOrgData={currentOrgData}
 						orgDetails={orgDetails}
 						onNext={(orgDetails: OrgDetails): void => {
+							logEvent(NEXT_BUTTON_EVENT_NAME, {
+								currentPageID: 1,
+								nextPageID: 2,
+							});
+
 							setOrgDetails(orgDetails);
 							setCurrentStep(2);
 						}}
@@ -209,8 +237,20 @@ function OnboardingQuestionaire(): JSX.Element {
 					<AboutSigNozQuestions
 						signozDetails={signozDetails}
 						setSignozDetails={setSignozDetails}
-						onBack={(): void => setCurrentStep(1)}
-						onNext={(): void => setCurrentStep(3)}
+						onBack={(): void => {
+							logEvent(BACK_BUTTON_EVENT_NAME, {
+								currentPageID: 2,
+								prevPageID: 1,
+							});
+							setCurrentStep(1);
+						}}
+						onNext={(): void => {
+							logEvent(NEXT_BUTTON_EVENT_NAME, {
+								currentPageID: 2,
+								nextPageID: 3,
+							});
+							setCurrentStep(3);
+						}}
 					/>
 				)}
 
@@ -220,9 +260,15 @@ function OnboardingQuestionaire(): JSX.Element {
 						isUpdatingProfile={isUpdatingProfile}
 						optimiseSignozDetails={optimiseSignozDetails}
 						setOptimiseSignozDetails={setOptimiseSignozDetails}
-						onBack={(): void => setCurrentStep(2)}
+						onBack={(): void => {
+							logEvent(BACK_BUTTON_EVENT_NAME, {
+								currentPageID: 3,
+								prevPageID: 2,
+							});
+							setCurrentStep(2);
+						}}
 						onNext={handleUpdateProfile}
-						onWillDoLater={(): void => setCurrentStep(4)} // This is temporary, only to skip gateway api call as it's not setup on staging yet
+						onWillDoLater={(): void => setCurrentStep(4)}
 					/>
 				)}
 
@@ -231,7 +277,13 @@ function OnboardingQuestionaire(): JSX.Element {
 						isLoading={updatingOrgOnboardingStatus}
 						teamMembers={teamMembers}
 						setTeamMembers={setTeamMembers}
-						onBack={(): void => setCurrentStep(3)}
+						onBack={(): void => {
+							logEvent(BACK_BUTTON_EVENT_NAME, {
+								currentPageID: 4,
+								prevPageID: 3,
+							});
+							setCurrentStep(3);
+						}}
 						onNext={handleOnboardingComplete}
 					/>
 				)}
