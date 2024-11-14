@@ -367,12 +367,16 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 			// we are updating the offset and limit based on the number of traces we have found in the current timerange
 			// eg -
 			// 1)offset = 0, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
+			//
 			// if 100 traces are there in [t1, t10] then 100 will return immediately.
 			// if 10 traces are there in [t1, t10] then we get 10, set offset to 0 and limit to 90, search in the next timerange of [t10, 20]
+			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with offset=0, limit=100
+
 			//
 			// 2) offset = 50, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
+			//
 			// If we find 100 traces in [t1, t10] then we return immediately
-			// If we finds 50 in [t1, t10] then it will set offset = 0 and limit = 50 and search in the next timerange of [t10, 20]
+			// If we find 50 in [t1, t10] then it will set offset = 0 and limit = 50 and search in the next timerange of [t10, 20]
 			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with offset=50, limit=100
 			if len(data) > 0 {
 				params.CompositeQuery.BuilderQueries[qName].Offset = 0
