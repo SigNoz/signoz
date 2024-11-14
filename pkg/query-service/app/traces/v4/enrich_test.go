@@ -147,6 +147,27 @@ func TestEnrichTracesQuery(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "enrich default values",
+			args: args{
+				query: &v3.BuilderQuery{
+					Filters: &v3.FilterSet{
+						Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "testattr"}},
+						},
+					},
+					OrderBy: []v3.OrderBy{{ColumnName: "timestamp", Order: v3.DirectionAsc}},
+				},
+				keys: map[string]v3.AttributeKey{},
+				want: &v3.BuilderQuery{
+					Filters: &v3.FilterSet{
+						Items: []v3.FilterItem{{Key: v3.AttributeKey{Key: "testattr", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString}}},
+					},
+					// isColumn won't matter in timestamp as it will always be a column
+					OrderBy: []v3.OrderBy{{Key: "timestamp", Order: v3.DirectionAsc, ColumnName: "timestamp"}},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
