@@ -1335,36 +1335,56 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 			expectedTimestamps: []int64{1722259300000000000, 1722259400000000000, 1722253000000000000, 1722237700000000000},
 		},
 		{
-			name: "regardless of limit send only as many as available",
+			name: "query with offset",
 			queryResponses: []queryResponse{
 				{
-					expectedQuery: ".*(timestamp >= '1722259200000000000' AND timestamp <= '1722262800000000000').* DESC LIMIT 5 OFFSET 10",
-					timestamps:    []uint64{},
+					expectedQuery: ".*(timestamp >= '1722259200000000000' AND timestamp <= '1722262800000000000').* DESC LIMIT 7",
+					timestamps:    []uint64{1722259210000000000, 1722259220000000000, 1722259230000000000},
 				},
 				{
-					expectedQuery: ".*(timestamp >= '1722252000000000000' AND timestamp <= '1722259200000000000').* DESC LIMIT 5 OFFSET 10",
+					expectedQuery: ".*(timestamp >= '1722252000000000000' AND timestamp <= '1722259200000000000').* DESC LIMIT 4",
 					timestamps:    []uint64{1722253000000000000, 1722254000000000000, 1722255000000000000},
 				},
 				{
-					expectedQuery: ".*(timestamp >= '1722237600000000000' AND timestamp <= '1722252000000000000').* DESC LIMIT 2",
+					expectedQuery: ".*(timestamp >= '1722237600000000000' AND timestamp <= '1722252000000000000').* DESC LIMIT 1",
+					timestamps:    []uint64{1722237700000000000},
+				},
+			},
+			queryParams: queryParams{
+				start:  1722171576000000000,
+				end:    1722262800000000000,
+				limit:  4,
+				offset: 3,
+			},
+			expectedTimestamps: []int64{1722253000000000000, 1722254000000000000, 1722255000000000000, 1722237700000000000},
+		},
+		{
+			name: "query with offset and limit- data spread across multiple windows",
+			queryResponses: []queryResponse{
+				{
+					expectedQuery: ".*(timestamp >= '1722259200000000000' AND timestamp <= '1722262800000000000').* DESC LIMIT 11",
 					timestamps:    []uint64{},
 				},
 				{
-					expectedQuery: ".*(timestamp >= '1722208800000000000' AND timestamp <= '1722237600000000000').* DESC LIMIT 2",
-					timestamps:    []uint64{},
+					expectedQuery: ".*(timestamp >= '1722252000000000000' AND timestamp <= '1722259200000000000').* DESC LIMIT 11",
+					timestamps:    []uint64{1722253000000000000, 1722254000000000000, 1722255000000000000},
 				},
 				{
-					expectedQuery: ".*(timestamp >= '1722171576000000000' AND timestamp <= '1722208800000000000').* DESC LIMIT 2",
-					timestamps:    []uint64{},
+					expectedQuery: ".*(timestamp >= '1722237600000000000' AND timestamp <= '1722252000000000000').* DESC LIMIT 8",
+					timestamps:    []uint64{1722237700000000000, 1722237800000000000, 1722237900000000000, 1722237910000000000, 1722237920000000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= '1722208800000000000' AND timestamp <= '1722237600000000000').* DESC LIMIT 3",
+					timestamps:    []uint64{1722208810000000000, 1722208820000000000, 1722208830000000000},
 				},
 			},
 			queryParams: queryParams{
 				start:  1722171576000000000,
 				end:    1722262800000000000,
 				limit:  5,
-				offset: 10,
+				offset: 6,
 			},
-			expectedTimestamps: []int64{1722253000000000000, 1722254000000000000, 1722255000000000000},
+			expectedTimestamps: []int64{1722237910000000000, 1722237920000000000, 1722208810000000000, 1722208820000000000, 1722208830000000000},
 		},
 	}
 
