@@ -152,7 +152,7 @@ function HostMetricsLogs({
 
 	return (
 		<div className="host-metrics-logs">
-			{isLoading && !isPaginating && <LogsLoading />}
+			{isLoading && <LogsLoading />}
 			{!isLoading && !isError && logs.length === 0 && (
 				<NoLogs dataSource={DataSource.LOGS} />
 			)}

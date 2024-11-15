@@ -38,7 +38,10 @@ import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import {
 	LogsAggregatorOperator,
 	TracesAggregatorOperator,
@@ -128,6 +131,11 @@ function HostMetricDetail({
 	}, [initialFilters]);
 
 	const handleModeChange = (e: RadioChangeEvent): void => {
+		setSelectedInterval(urlQuery.get(QueryParams.relativeTime) as Time);
+		setModalTimeRange({
+			startTime: startMs,
+			endTime: endMs,
+		});
 		setSelectedView(e.target.value);
 	};
 
@@ -153,35 +161,21 @@ function HostMetricDetail({
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
 			setLogFilters((prevFilters) => {
-				// Keep only non-pagination filters from previous state
-				const baseFilters = prevFilters.items.filter(
-					(item) => item.key?.key !== 'id',
+				const hostNameFilter = prevFilters.items.find(
+					(item) => item.key?.key === 'host.name',
 				);
-
-				// Keep only non-pagination filters from new value
-				const newNonPaginationFilters = value.items.filter(
-					(item) => item.key?.key !== 'id',
-				);
-
-				// Find pagination filter from new value if it exists
 				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
-
-				// Combine filters while removing duplicates
-				const uniqueFilters = [...baseFilters];
-				newNonPaginationFilters.forEach((newItem) => {
-					const exists = uniqueFilters.some(
-						(existingItem) =>
-							existingItem.key?.key === newItem.key?.key &&
-							existingItem.value === newItem.value,
-					);
-					if (!exists) {
-						uniqueFilters.push(newItem);
-					}
-				});
+				const newFilters = value.items.filter(
+					(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
+				);
 
 				return {
 					op: 'AND',
-					items: [...uniqueFilters, ...(paginationFilter ? [paginationFilter] : [])],
+					items: [
+						hostNameFilter,
+						...newFilters,
+						...(paginationFilter ? [paginationFilter] : []),
+					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 			});
 		},
@@ -190,10 +184,18 @@ function HostMetricDetail({
 
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setTracesFilters((prevFilters) => ({
-				op: 'AND',
-				items: [...prevFilters.items, ...value.items],
-			}));
+			setTracesFilters((prevFilters) => {
+				const hostNameFilter = prevFilters.items.find(
+					(item) => item.key?.key === 'host.name',
+				);
+				return {
+					op: 'AND',
+					items: [
+						hostNameFilter,
+						...value.items.filter((item) => item.key?.key !== 'host.name'),
+					].filter((item): item is TagFilterItem => item !== undefined),
+				};
+			});
 		},
 		[],
 	);

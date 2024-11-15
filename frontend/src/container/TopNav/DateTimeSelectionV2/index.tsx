@@ -715,7 +715,7 @@ function DateTimeSelection({
 						selectedValue={getInputLabel(
 							dayjs(isModalTimeSelection ? modalStartTime : minTime / 1000000),
 							dayjs(isModalTimeSelection ? modalEndTime : maxTime / 1000000),
-							isModalTimeSelection ? 'custom' : selectedTime,
+							isModalTimeSelection ? modalSelectedInterval : selectedTime,
 						)}
 						data-testid="dropDown"
 						items={options}
