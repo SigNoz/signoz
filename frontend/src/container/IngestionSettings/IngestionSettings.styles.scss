@@ -18,8 +18,13 @@
 			font-style: normal;
 			font-weight: var(--font-weight-normal);
 			line-height: 28px;
-			/* 155.556% */
 			letter-spacing: -0.09px;
+
+			width: 72%; // arbitrary number to match input width
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			justify-content: space-between;
 		}
 
 		.subtitle {
@@ -356,6 +361,8 @@
 						flex: 1;
 
 						.heading {
+							margin-bottom: 8px;
+
 							.title {
 								font-size: 12px;
 							}
@@ -369,6 +376,18 @@
 
 						.ant-input-number {
 							width: 80%;
+						}
+
+						.no-limit {
+							display: flex;
+							align-items: center;
+							gap: 8px;
+
+							margin-bottom: 24px;
+
+							font-weight: 700;
+							font-size: 12px;
+							color: var(--bg-forest-400);
 						}
 					}
 
