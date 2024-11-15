@@ -22,6 +22,7 @@ import AppActions from 'types/actions';
 import { UPDATE_USER_IS_FETCH } from 'types/actions/app';
 import { Organization } from 'types/api/user/getOrganization';
 import AppReducer from 'types/reducer/app';
+import { isCloudUser } from 'utils/app';
 import { routePermission } from 'utils/permission';
 
 import routes, {
@@ -75,6 +76,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	} = useLicense();
 
 	const { t } = useTranslation(['common']);
+
+	const isCloudUserVal = isCloudUser();
 
 	const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
 
@@ -143,6 +146,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const handleRedirectForOrgOnboarding = (key: string): void => {
 		if (
 			isLoggedInState &&
+			isCloudUserVal &&
 			!isFetchingOrgPreferences &&
 			!isLoadingOrgUsers &&
 			!isEmpty(orgUsers?.payload) &&
@@ -157,6 +161,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			if (isFirstTimeUser && !isOnboardingComplete) {
 				history.push(ROUTES.ONBOARDING);
 			}
+		}
+
+		if (!isCloudUserVal && key === 'ONBOARDING') {
+			history.push(ROUTES.APPLICATION);
 		}
 	};
 
@@ -250,7 +258,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const handleRouting = (): void => {
 		const showOrgOnboarding = shouldShowOnboarding();
 
-		if (showOrgOnboarding && !isOnboardingComplete) {
+		if (showOrgOnboarding && !isOnboardingComplete && isCloudUserVal) {
 			history.push(ROUTES.ONBOARDING);
 		} else {
 			history.push(ROUTES.APPLICATION);
