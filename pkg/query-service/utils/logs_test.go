@@ -7,7 +7,7 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-func TestLogsListTsRange(t *testing.T) {
+func TestListTsRange(t *testing.T) {
 	startEndData := []struct {
 		name  string
 		start int64
@@ -44,7 +44,7 @@ func TestLogsListTsRange(t *testing.T) {
 	}
 
 	for _, test := range startEndData {
-		res := GetLogsListTsRanges(test.start, test.end)
+		res := GetListTsRanges(test.start, test.end)
 		for i, v := range res {
 			if test.res[i].Start != v.Start || test.res[i].End != v.End {
 				t.Errorf("expected range was %v - %v, got %v - %v", v.Start, v.End, test.res[i].Start, test.res[i].End)
