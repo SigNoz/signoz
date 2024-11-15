@@ -322,40 +322,49 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 	qName := ""
 	pageSize := uint64(0)
 	limit := uint64(0)
+	offset := uint64(0)
 
 	// se we are considering only one query
 	for name, v := range params.CompositeQuery.BuilderQueries {
 		qName = name
 		pageSize = v.PageSize
+
+		// for traces specifically
 		limit = v.Limit
+		offset = v.Offset
 	}
 	data := []*v3.Row{}
+
+	tracesLimit := limit + offset
 
 	for _, v := range tsRanges {
 		params.Start = v.Start
 		params.End = v.End
 
-		params.CompositeQuery.BuilderQueries[qName].PageSize = pageSize - uint64(len(data))
-		queries, err := q.builder.PrepareQueries(params)
-		if err != nil {
-			return nil, nil, err
-		}
-
+		length := uint64(0)
 		// this will to run only once
-		for name, query := range queries {
-			rowList, err := q.reader.GetListResultV3(ctx, query)
-			if err != nil {
-				errs := []error{err}
-				errQuriesByName := map[string]error{
-					name: err,
-				}
-				return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
-			}
-			data = append(data, rowList...)
-		}
 
+		// appending the filter to get the next set of data
 		if params.CompositeQuery.BuilderQueries[qName].DataSource == v3.DataSourceLogs {
-			if len(data) > 0 {
+			params.CompositeQuery.BuilderQueries[qName].PageSize = pageSize - uint64(len(data))
+			queries, err := q.builder.PrepareQueries(params)
+			if err != nil {
+				return nil, nil, err
+			}
+			for name, query := range queries {
+				rowList, err := q.reader.GetListResultV3(ctx, query)
+				if err != nil {
+					errs := []error{err}
+					errQuriesByName := map[string]error{
+						name: err,
+					}
+					return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+				}
+				length += uint64(len(rowList))
+				data = append(data, rowList...)
+			}
+
+			if length > 0 {
 				params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
 					Key: v3.AttributeKey{
 						Key:      "id",
@@ -371,28 +380,52 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 				break
 			}
 		} else {
+			// TRACE
 			// we are updating the offset and limit based on the number of traces we have found in the current timerange
 			// eg -
 			// 1)offset = 0, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
+			//
 			// if 100 traces are there in [t1, t10] then 100 will return immediately.
 			// if 10 traces are there in [t1, t10] then we get 10, set offset to 0 and limit to 90, search in the next timerange of [t10, 20]
+			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with offset=0, limit=100
+
 			//
 			// 2) offset = 50, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
-			// If we find 100 traces in [t1, t10] then we return immediately
-			// If we finds 50 in [t1, t10] then it will set offset = 0 and limit = 50 and search in the next timerange of [t10, 20]
-			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with offset=50, limit=100
-			if len(data) > 0 {
-				params.CompositeQuery.BuilderQueries[qName].Offset = 0
-				params.CompositeQuery.BuilderQueries[qName].Limit = limit - uint64(len(data))
+			//
+			// If we find 150 traces with limit=150 and offset=0 in [t1, t10] then we return immediately 100 traces
+			// If we find 50 in [t1, t10] with limit=150 and offset=0 then it will set limit = 100 and offset=0 and search in the next timerange of [t10, 20]
+			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with limit=150 and offset=0
+			params.CompositeQuery.BuilderQueries[qName].Offset = 0
+			params.CompositeQuery.BuilderQueries[qName].Limit = tracesLimit
+			queries, err := q.builder.PrepareQueries(params)
+			if err != nil {
+				return nil, nil, err
 			}
+			for name, query := range queries {
+				rowList, err := q.reader.GetListResultV3(ctx, query)
+				if err != nil {
+					errs := []error{err}
+					errQuriesByName := map[string]error{
+						name: err,
+					}
+					return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+				}
+				length += uint64(len(rowList))
+
+				// skip the traces unless offset is 0
+				for _, row := range rowList {
+					if offset == 0 {
+						data = append(data, row)
+					} else {
+						offset--
+					}
+				}
+			}
+			tracesLimit = tracesLimit - length
 
 			if uint64(len(data)) >= limit {
 				break
 			}
-		}
-
-		if uint64(len(data)) >= pageSize {
-			break
 		}
 	}
 	res = append(res, &v3.Result{
@@ -401,8 +434,9 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 	})
 	return res, nil, nil
 }
+
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
-	// List query has support for only one query
+	// List query has support for only one query.
 	// we are skipping for PanelTypeTrace as it has a custom order by regardless of what's in the payload
 	if params.CompositeQuery != nil &&
 		len(params.CompositeQuery.BuilderQueries) == 1 &&
