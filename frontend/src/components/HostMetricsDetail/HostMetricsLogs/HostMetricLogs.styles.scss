@@ -2,8 +2,22 @@
     margin-top: 1rem;
 
     .filter-section {
-       width: 35.7rem;
-    }
+        width: 56%;
+
+	.ant-select-selector {
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-400) !important;
+		background-color: var(--bg-ink-300) !important;
+
+		input {
+			font-size: 12px;
+		}
+
+		.ant-tag .ant-typography {
+			font-size: 12px;
+		}
+	}
+}
 
     .host-metrics-logs-header {
         display: flex;
@@ -42,5 +56,18 @@
             height: 100%;
             padding: 16px;
           }
+    }
+}
+
+.lightMode {
+    .filter-section {
+    border-top: 1px solid var(--bg-vanilla-300);
+    border-bottom: 1px solid var(--bg-vanilla-300);
+
+    .ant-select-selector {
+        border-color: var(--bg-vanilla-300) !important;
+        background-color: var(--bg-vanilla-100) !important;
+        color: var(--bg-ink-200);
+        }
     }
 }

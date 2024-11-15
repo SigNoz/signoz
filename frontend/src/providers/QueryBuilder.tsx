@@ -916,6 +916,12 @@ export function QueryBuilderProvider({
 		],
 	);
 
+	useEffect(() => {
+		if (location.pathname === ROUTES.INFRASTRUCTURE_MONITORING_HOSTS) {
+			setCurrentQuery(initialQueriesMap.metrics);
+		}
+	}, [location.pathname]);
+
 	return (
 		<QueryBuilderContext.Provider value={contextValues}>
 			{children}

@@ -37,21 +37,21 @@ function Metrics({
 		startTime: timeRange.startTime / 1000,
 		endTime: timeRange.endTime / 1000,
 	});
-	const [, setSelectedInterval] = useState<Time>('5m');
+	const [selectedInterval, setSelectedInterval] = useState<Time>('5m');
 
 	const handleTimeChange = useCallback(
 		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
 			setSelectedInterval(interval as Time);
 			if (interval === 'custom' && dateTimeRange) {
 				setModalTimeRange({
-					startTime: dateTimeRange[0],
-					endTime: dateTimeRange[1],
+					startTime: Math.floor(dateTimeRange[0] / 1000),
+					endTime: Math.floor(dateTimeRange[1] / 1000),
 				});
 			} else {
 				const { maxTime, minTime } = GetMinMax(interval);
 				setModalTimeRange({
-					startTime: minTime / 1000000000,
-					endTime: maxTime / 1000000000,
+					startTime: Math.floor(minTime / 1000000000),
+					endTime: Math.floor(maxTime / 1000000000),
 				});
 			}
 		},
@@ -144,6 +144,7 @@ function Metrics({
 					onTimeChange={handleTimeChange}
 					defaultRelativeTime="5m"
 					isModalTimeSelection={isModalTimeSelection}
+					modalSelectedInterval={selectedInterval}
 				/>
 			</div>
 			<Row gutter={24} className="host-metrics-container">

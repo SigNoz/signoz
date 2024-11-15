@@ -70,6 +70,7 @@ function DateTimeSelection({
 	defaultRelativeTime = RelativeTimeMap['6hr'] as Time,
 	isModalTimeSelection = false,
 	onTimeChange,
+	modalSelectedInterval,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
@@ -207,19 +208,24 @@ function DateTimeSelection({
 
 			return `${startString} - ${endString}`;
 		}
-
 		return timeInterval;
 	};
 
 	useEffect(() => {
-		if (selectedTime === 'custom' || isModalTimeSelection) {
+		if (selectedTime === 'custom') {
 			setRefreshButtonHidden(true);
 			setCustomDTPickerVisible(true);
 		} else {
 			setRefreshButtonHidden(false);
 			setCustomDTPickerVisible(false);
 		}
-	}, [selectedTime, isModalTimeSelection]);
+	}, [selectedTime]);
+
+	useEffect(() => {
+		if (isModalTimeSelection && modalSelectedInterval === 'custom') {
+			setCustomDTPickerVisible(true);
+		}
+	}, [isModalTimeSelection, modalSelectedInterval]);
 
 	const getDefaultTime = (pathName: string): Time => {
 		const defaultSelectedOption = getDefaultOption(pathName);
@@ -309,6 +315,11 @@ function DateTimeSelection({
 	const onSelectHandler = useCallback(
 		(value: Time | CustomTimeType): void => {
 			if (isModalTimeSelection) {
+				if (value === 'custom') {
+					setCustomDTPickerVisible(true);
+					setIsValidteRelativeTime(false);
+					return;
+				}
 				onTimeChange?.(value);
 				return;
 			}
@@ -372,14 +383,32 @@ function DateTimeSelection({
 		}
 	}, [defaultRelativeTime, onSelectHandler]);
 
+	const [modalStartTime, setModalStartTime] = useState<number>(0);
+	const [modalEndTime, setModalEndTime] = useState<number>(0);
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (isModalTimeSelection) {
-				onTimeChange?.(selectedTime, [
-					startTimeMoment?.toDate().getTime() || 0,
-					endTimeMoment?.toDate().getTime() || 0,
-				]);
+				if (!startTimeMoment || !endTimeMoment) {
+					setHasSelectedTimeError(true);
+					return;
+				}
+
+				const startTs = startTimeMoment.toDate().getTime();
+				const endTs = endTimeMoment.toDate().getTime();
+
+				if (startTs >= endTs) {
+					setHasSelectedTimeError(true);
+					return;
+				}
+
+				setCustomDTPickerVisible(false);
+				setHasSelectedTimeError(false);
+				setModalStartTime(startTs);
+				setModalEndTime(endTs);
+				onTimeChange?.('custom', [startTs, endTs]);
 				return;
 			}
 			if (startTimeMoment && endTimeMoment) {
@@ -471,7 +500,6 @@ function DateTimeSelection({
 		if (OLD_RELATIVE_TIME_VALUES.indexOf(time) > -1) {
 			return convertOldTimeToNewValidCustomTimeFormat(time);
 		}
-
 		return time;
 	};
 
@@ -675,7 +703,9 @@ function DateTimeSelection({
 						onError={(hasError: boolean): void => {
 							setHasSelectedTimeError(hasError);
 						}}
-						selectedTime={selectedTime}
+						selectedTime={
+							isModalTimeSelection ? (modalSelectedInterval as Time) : selectedTime
+						}
 						onValidCustomDateChange={(dateTime): void => {
 							onValidCustomDateHandler(dateTime.timeStr as CustomTimeType);
 						}}
@@ -683,9 +713,9 @@ function DateTimeSelection({
 							setIsValidteRelativeTime(isValid);
 						}}
 						selectedValue={getInputLabel(
-							dayjs(minTime / 1000000),
-							dayjs(maxTime / 1000000),
-							selectedTime,
+							dayjs(isModalTimeSelection ? modalStartTime : minTime / 1000000),
+							dayjs(isModalTimeSelection ? modalEndTime : maxTime / 1000000),
+							isModalTimeSelection ? modalSelectedInterval : selectedTime,
 						)}
 						data-testid="dropDown"
 						items={options}
@@ -746,6 +776,7 @@ interface DateTimeSelectionV2Props {
 		interval: Time | CustomTimeType,
 		dateTimeRange?: [number, number],
 	) => void;
+	modalSelectedInterval?: Time;
 }
 
 DateTimeSelection.defaultProps = {
@@ -756,6 +787,7 @@ DateTimeSelection.defaultProps = {
 	defaultRelativeTime: RelativeTimeMap['6hr'] as Time,
 	isModalTimeSelection: false,
 	onTimeChange: (): void => {},
+	modalSelectedInterval: RelativeTimeMap['5m'] as Time,
 };
 interface DispatchProps {
 	updateTimeInterval: (

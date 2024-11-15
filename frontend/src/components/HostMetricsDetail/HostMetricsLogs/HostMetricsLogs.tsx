@@ -1,20 +1,25 @@
 import './HostMetricLogs.styles.scss';
 
-import { Skeleton } from 'antd';
+import { Card } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-// import { TimeRange } from 'components/TimeSelection/TimeSelection';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
-import ShowButton from 'container/LogsContextList/ShowButton';
+import { CARD_BODY_STYLE } from 'constants/card';
+import LogsError from 'container/LogsError/LogsError';
+import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
+import { LogsLoading } from 'container/LogsLoading/LogsLoading';
+import NoLogs from 'container/NoLogs/NoLogs';
 import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
-import useDebounce from 'hooks/useDebounce';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
+import { v4 } from 'uuid';
 
 import { getHostLogsQueryPayload } from './constants';
 
@@ -23,99 +28,49 @@ interface Props {
 		startTime: number;
 		endTime: number;
 	};
+	handleChangeLogFilters: (filters: IBuilderQuery['filters']) => void;
 	filters: IBuilderQuery['filters'];
 }
 
-function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
+function HostMetricsLogs({
+	timeRange,
+	handleChangeLogFilters,
+	filters,
+}: Props): JSX.Element {
 	const [logs, setLogs] = useState<ILog[]>([]);
-	// const { initialDataSource, stagedQuery } = useQueryBuilder();
-	const [prevOffset, setPrevOffset] = useState<number>(0);
-	const [afterOffset, setAfterOffset] = useState<number>(0);
-	const debouncedFilters = useDebounce(filters, 800);
 
-	// const listQuery = useMemo(() => {
-	//     if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
-	//     return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
-	// }, [stagedQuery]);
-
-	// const { options } = useOptionsMenu({
-	//     storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-	//     dataSource: initialDataSource || DataSource.LOGS,
-	//     aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
-	// });
-
-	const prevQueryPayload = useMemo(() => {
+	const queryPayload = useMemo(() => {
 		const basePayload = getHostLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
-			debouncedFilters,
+			filters,
 		);
 
-		basePayload.query.builder.queryData[0].offset = prevOffset;
-		basePayload.query.builder.queryData[0].pageSize = 10;
-		basePayload.query.builder.queryData[0].orderBy = [
-			{ columnName: 'timestamp', order: ORDERBY_FILTERS.ASC },
-		];
-
-		return basePayload;
-	}, [timeRange.startTime, timeRange.endTime, debouncedFilters, prevOffset]);
-
-	const afterQueryPayload = useMemo(() => {
-		const basePayload = getHostLogsQueryPayload(
-			timeRange.startTime,
-			timeRange.endTime,
-			debouncedFilters,
-		);
-
-		basePayload.query.builder.queryData[0].offset = afterOffset;
-		basePayload.query.builder.queryData[0].pageSize = 10;
+		basePayload.query.builder.queryData[0].pageSize = 50;
 		basePayload.query.builder.queryData[0].orderBy = [
 			{ columnName: 'timestamp', order: ORDERBY_FILTERS.DESC },
 		];
 
 		return basePayload;
-	}, [timeRange.startTime, timeRange.endTime, debouncedFilters, afterOffset]);
+	}, [timeRange.startTime, timeRange.endTime, filters]);
 
-	const { data: prevData, isLoading: isPrevLoading } = useQuery({
+	const [isPaginating, setIsPaginating] = useState(false);
+
+	const { data, isLoading, isError } = useQuery({
 		queryKey: [
-			'hostMetricsLogs-prev',
-			prevOffset,
-			debouncedFilters,
+			'hostMetricsLogs',
 			timeRange.startTime,
 			timeRange.endTime,
+			filters,
 		],
-		queryFn: () => GetMetricQueryRange(prevQueryPayload, DEFAULT_ENTITY_VERSION),
-		enabled: !!prevQueryPayload,
-	});
-
-	const { data: afterData, isLoading: isAfterLoading } = useQuery({
-		queryKey: [
-			'hostMetricsLogs-after',
-			afterOffset,
-			debouncedFilters,
-			timeRange.startTime,
-			timeRange.endTime,
-		],
-		queryFn: () => GetMetricQueryRange(afterQueryPayload, DEFAULT_ENTITY_VERSION),
-		enabled: !!afterQueryPayload,
+		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
+		enabled: !!queryPayload,
+		keepPreviousData: isPaginating,
 	});
 
 	useEffect(() => {
-		if (prevData?.payload?.data?.newResult?.data?.result) {
-			const currentData = prevData.payload.data.newResult.data.result;
-			if (currentData.length > 0 && currentData[0].list) {
-				const currentLogs: ILog[] = currentData[0].list.map((item) => ({
-					...item.data,
-					timestamp: item.timestamp,
-				}));
-				setLogs((prev) => [...currentLogs, ...prev]);
-			}
-		}
-	}, [prevData]);
-
-	useEffect(() => {
-		if (afterData?.payload?.data?.newResult?.data?.result) {
-			const currentData = afterData.payload.data.newResult.data.result;
+		if (data?.payload?.data?.newResult?.data?.result) {
+			const currentData = data.payload.data.newResult.data.result;
 			if (currentData.length > 0 && currentData[0].list) {
 				const currentLogs: ILog[] = currentData[0].list.map((item) => ({
 					...item.data,
@@ -124,7 +79,7 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 				setLogs((prev) => [...prev, ...currentLogs]);
 			}
 		}
-	}, [afterData]);
+	}, [data]);
 
 	const getItemContent = useCallback(
 		(_: number, logToRender: ILog): JSX.Element => (
@@ -140,43 +95,71 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 		[],
 	);
 
-	const handlePreviousLogsShowNextLine = useCallback(() => {
-		setPrevOffset((prev) => prev + 10);
-	}, []);
+	const loadMoreLogs = useCallback(() => {
+		if (!logs.length) return;
 
-	const handleAfterLogsShowNextLine = useCallback(() => {
-		setAfterOffset((prev) => prev + 10);
-	}, []);
+		setIsPaginating(true);
+		const lastLog = logs[logs.length - 1];
 
-	if (isPrevLoading && isAfterLoading && logs.length === 0) {
-		return <Skeleton active />;
-	}
+		const newItems = [
+			...filters.items.filter((item) => item.key?.key !== 'id'),
+			{
+				id: v4(),
+				key: {
+					key: 'id',
+					type: '',
+					dataType: DataTypes.String,
+					isColumn: true,
+				},
+				op: '<',
+				value: lastLog.id,
+			},
+		];
+
+		const newFilters = {
+			op: 'AND',
+			items: newItems,
+		} as IBuilderQuery['filters'];
+
+		handleChangeLogFilters(newFilters);
+	}, [logs, filters, handleChangeLogFilters]);
+
+	useEffect(() => {
+		setIsPaginating(false);
+	}, [data]);
+
+	const renderContent = useMemo(
+		() => (
+			<Card
+				style={{ width: '98%', marginTop: '12px' }}
+				bodyStyle={CARD_BODY_STYLE}
+				bordered={false}
+			>
+				<OverlayScrollbar isVirtuoso>
+					<Virtuoso
+						key="host-metrics-logs-virtuoso"
+						data={logs}
+						endReached={loadMoreLogs}
+						totalCount={logs.length}
+						itemContent={getItemContent}
+						overscan={200}
+					/>
+				</OverlayScrollbar>
+			</Card>
+		),
+		[logs, loadMoreLogs, getItemContent],
+	);
 
 	return (
 		<div className="host-metrics-logs">
-			<ShowButton
-				isLoading={isPrevLoading}
-				isDisabled={false}
-				order={ORDERBY_FILTERS.ASC}
-				onClick={handlePreviousLogsShowNextLine}
-			/>
-			{isPrevLoading && <Skeleton className="skeleton-container" />}
-			<OverlayScrollbar isVirtuoso>
-				<Virtuoso
-					className="virtuoso-list"
-					initialTopMostItemIndex={0}
-					data={logs}
-					itemContent={getItemContent}
-					style={{ height: '400px' }}
-				/>
-			</OverlayScrollbar>
-			{isAfterLoading && <Skeleton className="skeleton-container" />}
-			<ShowButton
-				isLoading={isAfterLoading}
-				isDisabled={false}
-				order={ORDERBY_FILTERS.DESC}
-				onClick={handleAfterLogsShowNextLine}
-			/>
+			{isLoading && <LogsLoading />}
+			{!isLoading && !isError && logs.length === 0 && (
+				<NoLogs dataSource={DataSource.LOGS} />
+			)}
+			{isError && !isLoading && <LogsError />}
+			{!isLoading && !isError && (
+				<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
+			)}
 		</div>
 	);
 }

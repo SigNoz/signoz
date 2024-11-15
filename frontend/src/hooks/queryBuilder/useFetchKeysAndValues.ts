@@ -159,7 +159,7 @@ export const useFetchKeysAndValues = (
 			let payload;
 			if (isInfraMonitoring) {
 				const response = await getInfraAttributesValues({
-					dataSource: query.dataSource,
+					dataSource: DataSource.METRICS,
 					attributeKey: filterAttributeKey?.key ?? tagKey,
 					filterAttributeKeyDataType:
 						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
