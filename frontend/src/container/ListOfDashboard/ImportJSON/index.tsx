@@ -82,9 +82,8 @@ function ImportJSON({
 
 			const dashboardData = JSON.parse(editorValue) as DashboardData;
 
-			// Add validation for uuid
+			// Remove uuid from the dashboard data, in all cases - empty, duplicate or any valid not duplicate uuid
 			if (dashboardData.uuid !== undefined) {
-				// silently remove uuid if it is empty
 				delete dashboardData.uuid;
 			}
 
