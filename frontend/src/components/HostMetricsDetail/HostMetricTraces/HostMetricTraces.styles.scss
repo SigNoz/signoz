@@ -30,3 +30,18 @@
 	}
     
 }
+
+.lightMode {
+    .host-metric-traces-header {
+    .filter-section {
+    border-top: 1px solid var(--bg-vanilla-300);
+    border-bottom: 1px solid var(--bg-vanilla-300);
+
+    .ant-select-selector {
+        border-color: var(--bg-vanilla-300) !important;
+        background-color: var(--bg-vanilla-100) !important;
+        color: var(--bg-ink-200);
+        }
+    }
+    }
+}

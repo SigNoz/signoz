@@ -39,3 +39,9 @@
 		margin: auto;
 	}
 }
+
+.lightMode {
+	.infra-container-card-text {
+		color: var(--text-ink-200);
+	}
+}

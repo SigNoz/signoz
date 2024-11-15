@@ -123,6 +123,7 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 		label: 'Infrastructure Monitoring',
 		icon: <PackagePlus size={16} />,
+		isBeta: true,
 	},
 	{
 		key: ROUTES.SETTINGS,
