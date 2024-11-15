@@ -347,10 +347,10 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 				rowList, err := q.reader.GetListResultV3(ctx, query)
 				if err != nil {
 					errs := []error{err}
-					errQuriesByName := map[string]error{
+					errQueriesByName := map[string]error{
 						name: err,
 					}
-					return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+					return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
 				}
 				length += uint64(len(rowList))
 				data = append(data, rowList...)
@@ -397,10 +397,10 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 				rowList, err := q.reader.GetListResultV3(ctx, query)
 				if err != nil {
 					errs := []error{err}
-					errQuriesByName := map[string]error{
+					errQueriesByName := map[string]error{
 						name: err,
 					}
-					return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+					return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
 				}
 				length += uint64(len(rowList))
 
@@ -478,13 +478,13 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 	close(ch)
 
 	var errs []error
-	errQuriesByName := make(map[string]error)
+	errQueriesByName := make(map[string]error)
 	res := make([]*v3.Result, 0)
 	// read values from the channel
 	for r := range ch {
 		if r.Err != nil {
 			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Err
+			errQueriesByName[r.Name] = r.Err
 			continue
 		}
 		res = append(res, &v3.Result{
@@ -493,7 +493,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 		})
 	}
 	if len(errs) != 0 {
-		return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+		return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
 	}
 	return res, nil, nil
 }
