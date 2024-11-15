@@ -284,7 +284,7 @@ func BuildQRParamsWithCache(messagingQueue *MessagingQueue, queryContext string,
 		cq = &v3.CompositeQuery{
 			QueryType:      v3.QueryTypeBuilder,
 			BuilderQueries: bhq,
-			PanelType:      v3.PanelTypeTable,
+			PanelType:      v3.PanelTypeList,
 		}
 	}
 
@@ -364,7 +364,7 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 
 func buildCompositeQuery(chq *v3.ClickHouseQuery, queryContext string) (*v3.CompositeQuery, error) {
 
-	if queryContext == "producer-consumer-eval" {
+	if queryContext == "producer-consumer-eval" || queryContext == "producer-throughput-overview" {
 		return &v3.CompositeQuery{
 			QueryType:         v3.QueryTypeClickHouseSQL,
 			ClickHouseQueries: map[string]*v3.ClickHouseQuery{queryContext: chq},

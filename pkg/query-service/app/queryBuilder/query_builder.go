@@ -116,7 +116,9 @@ func expressionToQuery(
 		for _, tag := range qp.CompositeQuery.BuilderQueries[variable].GroupBy {
 			groupTags = append(groupTags, tag.Key)
 		}
-		groupTags = append(groupTags, "ts")
+		if qp.CompositeQuery.PanelType != v3.PanelTypeTable {
+			groupTags = append(groupTags, "ts")
+		}
 		if joinUsing == "" {
 			for _, tag := range groupTags {
 				joinUsing += fmt.Sprintf("%s.`%s` as `%s`, ", variable, tag, tag)
