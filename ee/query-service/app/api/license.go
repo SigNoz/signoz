@@ -149,6 +149,17 @@ func (ah *APIHandler) refreshLicensesV3(w http.ResponseWriter, r *http.Request) 
 	render.Success(w, http.StatusNoContent, nil)
 }
 
+func (ah *APIHandler) insertLicenseV3ForActiveLicenseKey(w http.ResponseWriter, r *http.Request) {
+	err := ah.LM().InsertLicensesV3(r.Context())
+
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	render.Success(w, http.StatusAccepted, nil)
+}
+
 func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 
 	type checkoutResponse struct {

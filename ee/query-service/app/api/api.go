@@ -193,6 +193,8 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 		am.AdminAccess(ah.refreshLicensesV3)).
 		Methods(http.MethodPut)
 
+	router.HandleFunc("/api/v3/licenses/insert", am.AdminAccess(ah.insertLicenseV3ForActiveLicenseKey)).Methods(http.MethodPost)
+
 	// v4
 	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)
 

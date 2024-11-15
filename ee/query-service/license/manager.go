@@ -235,6 +235,25 @@ func (lm *Manager) GetLicensesV3(ctx context.Context) (response []*model.License
 	return response, nil
 }
 
+func (lm *Manager) InsertLicensesV3(ctx context.Context) *model.ApiError {
+	// get the active license from the license manager
+	activeLicenseKey := lm.activeLicense.Key
+
+	// fetch the license from zeus based on the active key
+	licenseV3, err := validate.ValidateLicenseV3(activeLicenseKey)
+	if err != nil {
+		return err
+	}
+
+	// insert the licenseV3 in sqlite db
+	err = lm.repo.InsertLicenseV3(ctx, licenseV3)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Validator validates license after an epoch of time
 func (lm *Manager) Validator(ctx context.Context) {
 	defer close(lm.terminated)
