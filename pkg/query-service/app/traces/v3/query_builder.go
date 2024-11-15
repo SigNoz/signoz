@@ -10,7 +10,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
+var AggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
 	v3.AggregateOperatorP05: 0.05,
 	v3.AggregateOperatorP10: 0.10,
 	v3.AggregateOperatorP20: 0.20,
@@ -22,7 +22,7 @@ var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
 	v3.AggregateOperatorP99: 0.99,
 }
 
-var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
+var AggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 	v3.AggregateOperatorAvg:     "avg",
 	v3.AggregateOperatorMax:     "max",
 	v3.AggregateOperatorMin:     "min",
@@ -109,7 +109,7 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 	return selectLabels
 }
 
-func getSelectKeys(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey) string {
+func GetSelectKeys(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey) string {
 	var selectLabels []string
 	if aggregatorOperator == v3.AggregateOperatorNoOp {
 		return ""
@@ -173,7 +173,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
 					if item.Key.IsColumn {
-						subQuery, err := existsSubQueryForFixedColumn(item.Key, item.Operator)
+						subQuery, err := ExistsSubQueryForFixedColumn(item.Key, item.Operator)
 						if err != nil {
 							return "", err
 						}
@@ -199,7 +199,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 	return queryString, nil
 }
 
-func existsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (string, error) {
+func ExistsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (string, error) {
 	if key.DataType == v3.AttributeKeyDataTypeString {
 		if op == v3.FilterOperatorExists {
 			return fmt.Sprintf("%s %s ''", key.Key, tracesOperatorMappingV3[v3.FilterOperatorNotEqual]), nil
@@ -244,7 +244,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, pan
 
 	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
 
-	having := having(mq.Having)
+	having := Having(mq.Having)
 	if having != "" {
 		having = " having " + having
 	}
@@ -272,7 +272,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, pan
 
 	// we don't need value for first query
 	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
-		queryTmpl = "SELECT " + getSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + queryTmpl + ")"
+		queryTmpl = "SELECT " + GetSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + queryTmpl + ")"
 	}
 
 	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(mq.GroupBy)
@@ -281,7 +281,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, pan
 	}
 	filterSubQuery += emptyValuesInGroupByFilter
 
-	groupBy := groupByAttributeKeyTags(panelType, options.GraphLimitQtype, mq.GroupBy...)
+	groupBy := GroupByAttributeKeyTags(panelType, options.GraphLimitQtype, mq.GroupBy...)
 	if groupBy != "" {
 		groupBy = " group by " + groupBy
 	}
@@ -291,7 +291,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, pan
 	}
 
 	if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
+		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", GetSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
 	}
 
 	aggregationKey := ""
@@ -311,7 +311,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, pan
 			rate = rate / 60.0
 		}
 
-		op := fmt.Sprintf("%s(%s)/%f", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)
+		op := fmt.Sprintf("%s(%s)/%f", AggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case
@@ -324,17 +324,17 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, pan
 		v3.AggregateOperatorP90,
 		v3.AggregateOperatorP95,
 		v3.AggregateOperatorP99:
-		op := fmt.Sprintf("quantile(%v)(%s)", aggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
+		op := fmt.Sprintf("quantile(%v)(%s)", AggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
-		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
+		op := fmt.Sprintf("%s(%s)", AggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
 			if mq.AggregateAttribute.IsColumn {
-				subQuery, err := existsSubQueryForFixedColumn(mq.AggregateAttribute, v3.FilterOperatorExists)
+				subQuery, err := ExistsSubQueryForFixedColumn(mq.AggregateAttribute, v3.FilterOperatorExists)
 				if err == nil {
 					filterSubQuery = fmt.Sprintf("%s AND %s", filterSubQuery, subQuery)
 				}
@@ -354,9 +354,9 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, pan
 		var query string
 		if panelType == v3.PanelTypeTrace {
 			withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_LOCAL_TABLENAME, spanIndexTableTimeFilter, filterSubQuery)
-			withSubQuery = addLimitToQuery(withSubQuery, mq.Limit)
+			withSubQuery = AddLimitToQuery(withSubQuery, mq.Limit)
 			if mq.Offset != 0 {
-				withSubQuery = addOffsetToQuery(withSubQuery, mq.Offset)
+				withSubQuery = AddOffsetToQuery(withSubQuery, mq.Offset)
 			}
 			// query = withSubQuery + ") " + fmt.Sprintf(constants.TracesExplorerViewSQLSelectQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME)
 			query = fmt.Sprintf(constants.TracesExplorerViewSQLSelectBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME) + withSubQuery + ") " + fmt.Sprintf(constants.TracesExplorerViewSQLSelectAfterSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME, spanIndexTableTimeFilter)
@@ -403,7 +403,7 @@ func groupBy(panelType v3.PanelType, graphLimitQtype string, tags ...string) str
 	return strings.Join(tags, ",")
 }
 
-func groupByAttributeKeyTags(panelType v3.PanelType, graphLimitQtype string, tags ...v3.AttributeKey) string {
+func GroupByAttributeKeyTags(panelType v3.PanelType, graphLimitQtype string, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
 		groupTags = append(groupTags, fmt.Sprintf("`%s`", tag.Key))
@@ -456,7 +456,7 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 	return str
 }
 
-func having(items []v3.Having) string {
+func Having(items []v3.Having) string {
 	// aggregate something and filter on that aggregate
 	var having []string
 	for _, item := range items {
@@ -465,7 +465,7 @@ func having(items []v3.Having) string {
 	return strings.Join(having, " AND ")
 }
 
-func reduceToQuery(query string, reduceTo v3.ReduceToOperator, _ v3.AggregateOperator) (string, error) {
+func ReduceToQuery(query string, reduceTo v3.ReduceToOperator, _ v3.AggregateOperator) (string, error) {
 
 	var groupBy string
 	switch reduceTo {
@@ -485,14 +485,14 @@ func reduceToQuery(query string, reduceTo v3.ReduceToOperator, _ v3.AggregateOpe
 	return query, nil
 }
 
-func addLimitToQuery(query string, limit uint64) string {
+func AddLimitToQuery(query string, limit uint64) string {
 	if limit == 0 {
 		limit = 100
 	}
 	return fmt.Sprintf("%s LIMIT %d", query, limit)
 }
 
-func addOffsetToQuery(query string, offset uint64) string {
+func AddOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
@@ -513,7 +513,7 @@ func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 		if err != nil {
 			return "", err
 		}
-		query = addLimitToQuery(query, mq.Limit)
+		query = AddLimitToQuery(query, mq.Limit)
 
 		return query, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
@@ -529,13 +529,13 @@ func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 		return "", err
 	}
 	if panelType == v3.PanelTypeValue {
-		query, err = reduceToQuery(query, mq.ReduceTo, mq.AggregateOperator)
+		query, err = ReduceToQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
 	if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTable {
-		query = addLimitToQuery(query, mq.Limit)
+		query = AddLimitToQuery(query, mq.Limit)
 
 		if mq.Offset != 0 {
-			query = addOffsetToQuery(query, mq.Offset)
+			query = AddOffsetToQuery(query, mq.Offset)
 		}
 	}
 	return query, err
