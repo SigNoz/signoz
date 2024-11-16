@@ -102,9 +102,9 @@ function RuleOptions({
 					<Select.Option value="4">{t('option_notequal')}</Select.Option>
 				</>
 			)}
-
+			{/* the value 5 and 6 are reserved for above or equal and below or equal */}
 			{ruleType === 'anomaly_rule' && (
-				<Select.Option value="5">{t('option_above_below')}</Select.Option>
+				<Select.Option value="7">{t('option_above_below')}</Select.Option>
 			)}
 		</InlineSelect>
 	);

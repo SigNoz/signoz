@@ -61,6 +61,11 @@ func NewAnomalyRule(
 
 	zap.L().Info("creating new AnomalyRule", zap.String("id", id), zap.Any("opts", opts))
 
+	if p.RuleCondition.CompareOp == baserules.ValueIsBelow {
+		target := -1 * *p.RuleCondition.Target
+		p.RuleCondition.Target = &target
+	}
+
 	baseRule, err := baserules.NewBaseRule(id, p, reader, opts...)
 	if err != nil {
 		return nil, err
