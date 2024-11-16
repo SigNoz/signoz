@@ -97,7 +97,7 @@ func Test_GenerateEnrichmentKeys(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := GenerateEnrichmentKeys(tt.args.field); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("generateEnrichmentKeys() = %v, want %v", got, tt.want)
+				t.Errorf("GenerateEnrichmentKeys() = %v, want %v", got, tt.want)
 			}
 		})
 	}
