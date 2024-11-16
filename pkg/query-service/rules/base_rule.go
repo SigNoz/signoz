@@ -463,9 +463,9 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 			}
 		} else if r.compareOp() == ValueOutsideBounds {
 			for _, smpl := range series.Points {
-				if math.Abs(smpl.Value) >= r.targetVal() {
+				if math.Abs(smpl.Value) < r.targetVal() {
 					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
+					shouldAlert = false
 					break
 				}
 			}
