@@ -53,7 +53,7 @@ func TestListTsRange(t *testing.T) {
 	}
 }
 
-func Test_GenerateLogEnrichmentKeys(t *testing.T) {
+func Test_GenerateEnrichmentKeys(t *testing.T) {
 	type args struct {
 		field v3.AttributeKey
 	}
@@ -96,8 +96,8 @@ func Test_GenerateLogEnrichmentKeys(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GenerateLogEnrichmentKeys(tt.args.field); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("generateLogEnrichmentKeys() = %v, want %v", got, tt.want)
+			if got := GenerateEnrichmentKeys(tt.args.field); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GenerateEnrichmentKeys() = %v, want %v", got, tt.want)
 			}
 		})
 	}
