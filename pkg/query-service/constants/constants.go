@@ -644,3 +644,5 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{
 	// the simple attributes are not present here as
 	// they are taken care by new format <attribute_type>_<attribute_datatype>_'<attribute_key>'
 }
+
+const TRACE_V4_MAX_PAGINATION_LIMIT = 10000
