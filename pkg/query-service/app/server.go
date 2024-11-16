@@ -384,6 +384,11 @@ func LogCommentEnricher(next http.Handler) http.Handler {
 			client = "api"
 		}
 
+		email, err := auth.GetEmailFromJwt(r.Context())
+		if err != nil {
+			zap.S().Errorf("error while getting email from jwt: %v", err)
+		}
+
 		kvs := map[string]string{
 			"path":        path,
 			"dashboardID": dashboardID,
@@ -392,6 +397,7 @@ func LogCommentEnricher(next http.Handler) http.Handler {
 			"client":      client,
 			"viewName":    viewName,
 			"servicesTab": tab,
+			"email":       email,
 		}
 
 		r = r.WithContext(context.WithValue(r.Context(), common.LogCommentKey, kvs))
