@@ -3958,7 +3958,63 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 	return &response, nil
 }
 
+func (r *ClickHouseReader) GetTraceAttributeKeysV2(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.FilterAttributeKeyResponse
+
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType FROM %s.%s WHERE tagKey ILIKE $1 LIMIT $2", r.TraceDB, r.spanAttributeTable)
+
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
+
+	if err != nil {
+		zap.L().Error("Error while executing query", zap.Error(err))
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	statements := []model.ShowCreateTableStatement{}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.TraceDB, r.traceLocalTableName)
+	err = r.db.Select(ctx, &statements, query)
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
+	}
+
+	var tagKey string
+	var dataType string
+	var tagType string
+	for rows.Next() {
+		if err := rows.Scan(&tagKey, &tagType, &dataType); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      tagKey,
+			DataType: v3.AttributeKeyDataType(dataType),
+			Type:     v3.AttributeKeyType(tagType),
+			IsColumn: isColumn(true, statements[0].Statement, tagType, tagKey, dataType),
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+
+	// add other attributes
+	for _, f := range constants.StaticFieldsTraces {
+		if (v3.AttributeKey{} == f) {
+			continue
+		}
+		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
+			response.AttributeKeys = append(response.AttributeKeys, f)
+		}
+	}
+
+	return &response, nil
+}
+
 func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+	if r.useTraceNewSchema {
+		return r.GetTraceAttributeKeysV2(ctx, req)
+	}
 
 	var query string
 	var err error
@@ -3997,8 +4053,88 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 	return &response, nil
 }
 
+func (r *ClickHouseReader) GetTraceAttributeValuesV2(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+	var query string
+	var filterValueColumn string
+	var err error
+	var rows driver.Rows
+	var attributeValues v3.FilterAttributeValueResponse
+	// if dataType or tagType is not present return empty response
+	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 {
+		return &v3.FilterAttributeValueResponse{}, nil
+	}
+
+	// if data type is bool, return true and false
+	if req.FilterAttributeKeyDataType == v3.AttributeKeyDataTypeBool {
+		return &v3.FilterAttributeValueResponse{
+			BoolAttributeValues: []bool{true, false},
+		}, nil
+	}
+
+	query = "select distinct"
+	switch req.FilterAttributeKeyDataType {
+	case v3.AttributeKeyDataTypeFloat64:
+		filterValueColumn = "float64TagValue"
+	case v3.AttributeKeyDataTypeString:
+		filterValueColumn = "stringTagValue"
+	}
+
+	searchText := fmt.Sprintf("%%%s%%", req.SearchText)
+
+	// check if the tagKey is a topLevelColumn
+	if _, ok := constants.StaticFieldsTraces[req.FilterAttributeKey]; ok {
+		// query the column for the last 48 hours
+		filterValueColumnWhere := req.FilterAttributeKey
+		selectKey := req.FilterAttributeKey
+		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
+			filterValueColumnWhere = fmt.Sprintf("toString(%s)", req.FilterAttributeKey)
+			selectKey = fmt.Sprintf("toInt64(%s)", req.FilterAttributeKey)
+		}
+
+		query = fmt.Sprintf("select distinct %s from %s.%s where ts_bucket_start >= toUInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)) AND timestamp >= toDateTime64(now() - INTERVAL 48 HOUR, 9) and %s ILIKE $1 limit $2", selectKey, r.TraceDB, r.traceLocalTableName, filterValueColumnWhere)
+		rows, err = r.db.Query(ctx, query, searchText, req.Limit)
+	} else {
+		filterValueColumnWhere := filterValueColumn
+		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
+			filterValueColumnWhere = fmt.Sprintf("toString(%s)", filterValueColumn)
+		}
+		query = fmt.Sprintf("select distinct %s  from  %s.%s where tagKey=$1 and %s ILIKE $2  and tagType=$3 limit $4", filterValueColumn, r.TraceDB, r.spanAttributeTable, filterValueColumnWhere)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, searchText, req.TagType, req.Limit)
+	}
+
+	if err != nil {
+		zap.L().Error("Error while executing query", zap.Error(err))
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var strAttributeValue string
+	var float64AttributeValue sql.NullFloat64
+	for rows.Next() {
+		switch req.FilterAttributeKeyDataType {
+		case v3.AttributeKeyDataTypeFloat64:
+			if err := rows.Scan(&float64AttributeValue); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			if float64AttributeValue.Valid {
+				attributeValues.NumberAttributeValues = append(attributeValues.NumberAttributeValues, float64AttributeValue.Float64)
+			}
+		case v3.AttributeKeyDataTypeString:
+			if err := rows.Scan(&strAttributeValue); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
+		}
+	}
+
+	return &attributeValues, nil
+}
+
 func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 
+	if r.useTraceNewSchema {
+		return r.GetTraceAttributeValuesV2(ctx, req)
+	}
 	var query string
 	var err error
 	var rows driver.Rows
