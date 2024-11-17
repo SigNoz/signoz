@@ -1211,6 +1211,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 		queryResponses     []queryResponse
 		queryParams        queryParams
 		expectedTimestamps []int64
+		expectedError      bool
 	}{
 		{
 			name: "should return correct timestamps when querying within time window",
@@ -1332,6 +1333,17 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 			},
 			expectedTimestamps: []int64{1722237910000000000, 1722237920000000000, 1722208810000000000, 1722208820000000000, 1722208830000000000},
 		},
+		{
+			name:           "don't allow pagination to get more than 10k spans",
+			queryResponses: []queryResponse{},
+			queryParams: queryParams{
+				start:  1722171576000000000,
+				end:    1722262800000000000,
+				limit:  10,
+				offset: 9991,
+			},
+			expectedError: true,
+		},
 	}
 
 	cols := []cmock.ColumnType{
@@ -1391,6 +1403,11 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 
 			// Execute query
 			results, errMap, err := q.runWindowBasedListQuery(context.Background(), params, tsRanges)
+
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
 
 			// Assertions
 			require.NoError(t, err, "Query execution failed")

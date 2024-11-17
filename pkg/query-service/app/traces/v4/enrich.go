@@ -6,13 +6,18 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
+// if the field is timestamp/id/value we don't need to enrich
+// if the field is static we don't need to enrich
+// for all others we need to enrich
+// an attribute/resource can be materialized/dematerialized
+// but the query should work regardless and shouldn't fail
 func isEnriched(field v3.AttributeKey) bool {
 	// if it is timestamp/id dont check
-	if field.Key == "timestamp" || field.Key == "id" || field.Key == constants.SigNozOrderByValue {
+	if field.Key == "timestamp" || field.Key == constants.SigNozOrderByValue {
 		return true
 	}
 
-	// don't need to enrich the static fields as they will be always used a column
+	// we need to check if the field is static and return false if isColumn is not set
 	if _, ok := constants.StaticFieldsTraces[field.Key]; ok && field.IsColumn {
 		return true
 	}
@@ -46,11 +51,13 @@ func enrichKeyWithMetadata(key v3.AttributeKey, keys map[string]v3.AttributeKey)
 }
 
 func Enrich(params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) {
-	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		for _, query := range params.CompositeQuery.BuilderQueries {
-			if query.DataSource == v3.DataSourceTraces {
-				EnrichTracesQuery(query, keys)
-			}
+	if params.CompositeQuery.QueryType != v3.QueryTypeBuilder {
+		return
+	}
+
+	for _, query := range params.CompositeQuery.BuilderQueries {
+		if query.DataSource == v3.DataSourceTraces {
+			EnrichTracesQuery(query, keys)
 		}
 	}
 }
@@ -58,12 +65,15 @@ func Enrich(params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) {
 func EnrichTracesQuery(query *v3.BuilderQuery, keys map[string]v3.AttributeKey) {
 	// enrich aggregate attribute
 	query.AggregateAttribute = enrichKeyWithMetadata(query.AggregateAttribute, keys)
+
 	// enrich filter items
 	if query.Filters != nil && len(query.Filters.Items) > 0 {
 		for idx, filter := range query.Filters.Items {
 			query.Filters.Items[idx].Key = enrichKeyWithMetadata(filter.Key, keys)
 			// if the serviceName column is used, use the corresponding resource attribute as well during filtering
-			if filter.Key.Key == "serviceName" && filter.Key.IsColumn {
+			// since there is only one of these resource attributes we are adding it here directly.
+			// move it somewhere else if this list is big
+			if filter.Key.Key == "serviceName" {
 				query.Filters.Items[idx].Key = v3.AttributeKey{
 					Key:      "service.name",
 					DataType: v3.AttributeKeyDataTypeString,
@@ -73,16 +83,20 @@ func EnrichTracesQuery(query *v3.BuilderQuery, keys map[string]v3.AttributeKey) 
 			}
 		}
 	}
+
 	// enrich group by
 	for idx, groupBy := range query.GroupBy {
 		query.GroupBy[idx] = enrichKeyWithMetadata(groupBy, keys)
 	}
+
 	// enrich order by
 	query.OrderBy = enrichOrderBy(query.OrderBy, keys)
+
 	// enrich select columns
 	for idx, selectColumn := range query.SelectColumns {
 		query.SelectColumns[idx] = enrichKeyWithMetadata(selectColumn, keys)
 	}
+
 }
 
 func enrichOrderBy(items []v3.OrderBy, keys map[string]v3.AttributeKey) []v3.OrderBy {

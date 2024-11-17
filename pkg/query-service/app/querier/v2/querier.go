@@ -13,6 +13,7 @@ import (
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 	"go.signoz.io/signoz/pkg/query-service/querycache"
 	"go.signoz.io/signoz/pkg/query-service/utils"
@@ -355,10 +356,10 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 				rowList, err := q.reader.GetListResultV3(ctx, query)
 				if err != nil {
 					errs := []error{err}
-					errQuriesByName := map[string]error{
+					errQueriesByName := map[string]error{
 						name: err,
 					}
-					return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+					return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
 				}
 				length += uint64(len(rowList))
 				data = append(data, rowList...)
@@ -395,6 +396,12 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 			// If we find 150 traces with limit=150 and offset=0 in [t1, t10] then we return immediately 100 traces
 			// If we find 50 in [t1, t10] with limit=150 and offset=0 then it will set limit = 100 and offset=0 and search in the next timerange of [t10, 20]
 			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with limit=150 and offset=0
+
+			// max limit + offset is 10k for pagination
+			if tracesLimit > constants.TRACE_V4_MAX_PAGINATION_LIMIT {
+				return nil, nil, fmt.Errorf("maximum traces that can be paginated is 10000")
+			}
+
 			params.CompositeQuery.BuilderQueries[qName].Offset = 0
 			params.CompositeQuery.BuilderQueries[qName].Limit = tracesLimit
 			queries, err := q.builder.PrepareQueries(params)
@@ -405,10 +412,10 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 				rowList, err := q.reader.GetListResultV3(ctx, query)
 				if err != nil {
 					errs := []error{err}
-					errQuriesByName := map[string]error{
+					errQueriesByName := map[string]error{
 						name: err,
 					}
-					return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+					return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
 				}
 				length += uint64(len(rowList))
 
@@ -494,13 +501,13 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 	close(ch)
 
 	var errs []error
-	errQuriesByName := make(map[string]error)
+	errQueriesByName := make(map[string]error)
 	res := make([]*v3.Result, 0)
 	// read values from the channel
 	for r := range ch {
 		if r.Err != nil {
 			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Err
+			errQueriesByName[r.Name] = r.Err
 			continue
 		}
 		res = append(res, &v3.Result{
@@ -509,7 +516,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 		})
 	}
 	if len(errs) != 0 {
-		return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+		return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
 	}
 	return res, nil, nil
 }
