@@ -53,6 +53,7 @@ import {
 	QueryFunctionProps,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import BasicInfo from './BasicInfo';
@@ -105,6 +106,11 @@ function FormAlertRules({
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
 
+	const dataSource = useMemo(
+		() => urlQuery.get(QueryParams.alertType) as DataSource,
+		[urlQuery],
+	);
+
 	// In case of alert the panel types should always be "Graph" only
 	const panelType = PANEL_TYPES.TIME_SERIES;
 
@@ -114,13 +120,12 @@ function FormAlertRules({
 		handleSetQueryData,
 		handleRunQuery,
 		handleSetConfig,
-		initialDataSource,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
 	useEffect(() => {
-		handleSetConfig(panelType || PANEL_TYPES.TIME_SERIES, initialDataSource);
-	}, [handleSetConfig, initialDataSource, panelType]);
+		handleSetConfig(panelType || PANEL_TYPES.TIME_SERIES, dataSource);
+	}, [handleSetConfig, dataSource, panelType]);
 
 	// use query client
 	const ruleCache = useQueryClient();
