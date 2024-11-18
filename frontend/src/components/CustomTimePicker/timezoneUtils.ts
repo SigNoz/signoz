@@ -10,6 +10,7 @@ dayjs.extend(timezone);
 interface Timezone {
 	name: string;
 	offset: string;
+	searchIndex: string;
 	hasDivider?: boolean;
 }
 
@@ -17,6 +18,7 @@ interface Timezone {
 const UTC_TIMEZONE: Timezone = {
 	name: 'Coordinated Universal Time — UTC, GMT',
 	offset: 'UTC',
+	searchIndex: 'UTC',
 	hasDivider: true,
 };
 
@@ -37,7 +39,7 @@ const formatOffset = (offsetMinutes: number): string => {
 	const minutes = Math.abs(offsetMinutes) % 60;
 	const sign = offsetMinutes > 0 ? '+' : '-';
 
-	return `UTC ${sign}${hours}${
+	return `UTC ${sign} ${hours}${
 		minutes ? `:${minutes.toString().padStart(2, '0')}` : ':00'
 	}`;
 };
@@ -46,12 +48,15 @@ const createTimezoneEntry = (
 	name: string,
 	offsetMinutes: number,
 	hasDivider = false,
-): Timezone => ({
-	name,
-	offset: formatOffset(offsetMinutes),
-	...(hasDivider && { hasDivider }),
-});
-
+): Timezone => {
+	const offset = formatOffset(offsetMinutes);
+	return {
+		name,
+		offset,
+		searchIndex: offset.replace(/ /g, ''),
+		...(hasDivider && { hasDivider }),
+	};
+};
 const getBrowserTimezone = (
 	allTimezones: ReturnType<typeof getTimeZones>,
 ): Timezone | null => {

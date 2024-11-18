@@ -113,8 +113,11 @@ function TimezonePicker({
 
 	const getFilteredTimezones = useCallback((searchTerm: string): Timezone[] => {
 		const normalizedSearch = searchTerm.toLowerCase();
-		return TIMEZONE_DATA.filter((tz) =>
-			tz.name.toLowerCase().includes(normalizedSearch),
+		return TIMEZONE_DATA.filter(
+			(tz) =>
+				tz.name.toLowerCase().includes(normalizedSearch) ||
+				tz.offset.toLowerCase().includes(normalizedSearch) ||
+				tz.searchIndex.toLowerCase().includes(normalizedSearch),
 		);
 	}, []);
 

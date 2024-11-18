@@ -30,6 +30,7 @@ $item-spacing: 8px;
 	&__input-container {
 		@include flex-center;
 		gap: 6px;
+		width: -webkit-fill-available;
 	}
 
 	&__input {
