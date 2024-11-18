@@ -119,3 +119,28 @@
 		color: var(--bg-slate-400) !important;
 	}
 }
+
+.date-time-popover-footer {
+	border-top: 1px solid var(--bg-ink-200);
+	padding: 8px 14px;
+	.timezone-container {
+		&,
+		.timezone {
+			font-family: Inter;
+			font-size: 12px;
+			line-height: 16px;
+			letter-spacing: -0.06px;
+		}
+		display: flex;
+		align-items: center;
+		color: var(--bg-vanilla-400);
+		gap: 6px;
+		.timezone {
+			cursor: pointer;
+			padding: 0;
+			color: var(--bg-vanilla-100);
+			background-color: transparent;
+			border: none;
+		}
+	}
+}
