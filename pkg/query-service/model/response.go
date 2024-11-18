@@ -271,12 +271,12 @@ type SearchSpanResponseItem struct {
 
 type SearchSpanResponseItemV2 struct {
 	TimeUnixNano      time.Time          `json:"timestamp" ch:"timestamp"`
-	DurationNano      uint64             `json:"durationNano" ch:"durationNano"`
+	DurationNano      uint64             `json:"durationNano" ch:"duration_nano"`
 	SpanID            string             `json:"spanId" ch:"span_id"`
 	TraceID           string             `json:"traceId" ch:"trace_id"`
 	HasError          bool               `json:"hasError" ch:"has_error"`
 	Kind              int8               `json:"kind" ch:"kind"`
-	ServiceName       string             `json:"serviceName" ch:"resource_string$$service.name"`
+	ServiceName       string             `json:"serviceName" ch:"resource_string_service$$name"`
 	Name              string             `json:"name" ch:"name"`
 	References        string             `json:"references,omitempty" ch:"references"`
 	Attributes_string map[string]string  `json:"attributes_string" ch:"attributes_string"`
