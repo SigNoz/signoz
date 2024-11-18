@@ -1,6 +1,7 @@
 package constants
 
 import (
+	"maps"
 	"os"
 	"strconv"
 	"testing"
@@ -447,30 +448,35 @@ const MaxFilterSuggestionsExamplesLimit = 10
 var SpanRenderLimitStr = GetOrDefaultEnv("SPAN_RENDER_LIMIT", "2500")
 var MaxSpansInTraceStr = GetOrDefaultEnv("MAX_SPANS_IN_TRACE", "250000")
 
-var StaticFieldsTraces = map[string]v3.AttributeKey{
+var NewStaticFieldsTraces = map[string]v3.AttributeKey{
 	"timestamp": {},
-	"traceID": {
-		Key:      "traceID",
+	"trace_id": {
+		Key:      "trace_id",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"spanID": {
-		Key:      "spanID",
+	"span_id": {
+		Key:      "span_id",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"parentSpanID": {
-		Key:      "parentSpanID",
+	"trace_state": {
+		Key:      "trace_state",
 		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"parent_span_id": {
+		Key:      "parent_span_id",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"flags": {
+		Key:      "flags",
+		DataType: v3.AttributeKeyDataTypeInt64,
 		IsColumn: true,
 	},
 	"name": {
 		Key:      "name",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"serviceName": {
-		Key:      "serviceName",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
@@ -479,118 +485,33 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"spanKind": {
-		Key:      "spanKind",
+	"kind_string": {
+		Key:      "kind_string",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"durationNano": {
-		Key:      "durationNano",
+	"duration_nano": {
+		Key:      "duration_nano",
 		DataType: v3.AttributeKeyDataTypeFloat64,
 		IsColumn: true,
 	},
-	"statusCode": {
-		Key:      "statusCode",
+	"status_code": {
+		Key:      "status_code",
 		DataType: v3.AttributeKeyDataTypeFloat64,
 		IsColumn: true,
 	},
-	"hasError": {
-		Key:      "hasError",
-		DataType: v3.AttributeKeyDataTypeBool,
-		IsColumn: true,
-	},
-	"statusMessage": {
-		Key:      "statusMessage",
+	"status_message": {
+		Key:      "status_message",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"statusCodeString": {
-		Key:      "statusCodeString",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"externalHttpMethod": {
-		Key:      "externalHttpMethod",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"externalHttpUrl": {
-		Key:      "externalHttpUrl",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"dbSystem": {
-		Key:      "dbSystem",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"dbName": {
-		Key:      "dbName",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"dbOperation": {
-		Key:      "dbOperation",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"peerService": {
-		Key:      "peerService",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"httpMethod": {
-		Key:      "httpMethod",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"httpUrl": {
-		Key:      "httpUrl",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"httpRoute": {
-		Key:      "httpRoute",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"httpHost": {
-		Key:      "httpHost",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"msgSystem": {
-		Key:      "msgSystem",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"msgOperation": {
-		Key:      "msgOperation",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"rpcSystem": {
-		Key:      "rpcSystem",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"rpcService": {
-		Key:      "rpcService",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"rpcMethod": {
-		Key:      "rpcMethod",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"responseStatusCode": {
-		Key:      "responseStatusCode",
+	"status_code_string": {
+		Key:      "status_code_string",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
 
-	// new support
+	// new support for composite attributes
 	"response_status_code": {
 		Key:      "response_status_code",
 		DataType: v3.AttributeKeyDataTypeString,
@@ -643,6 +564,157 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{
 	},
 	// the simple attributes are not present here as
 	// they are taken care by new format <attribute_type>_<attribute_datatype>_'<attribute_key>'
+}
+
+var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
+	"traceID": {
+		Key:      "traceID",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"spanID": {
+		Key:      "spanID",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"parentSpanID": {
+		Key:      "parentSpanID",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"spanKind": {
+		Key:      "spanKind",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"durationNano": {
+		Key:      "durationNano",
+		DataType: v3.AttributeKeyDataTypeFloat64,
+		IsColumn: true,
+	},
+	"statusCode": {
+		Key:      "statusCode",
+		DataType: v3.AttributeKeyDataTypeFloat64,
+		IsColumn: true,
+	},
+	"statusMessage": {
+		Key:      "statusMessage",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"statusCodeString": {
+		Key:      "statusCodeString",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+
+	// old support for composite attributes
+	"responseStatusCode": {
+		Key:      "responseStatusCode",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"externalHttpUrl": {
+		Key:      "externalHttpUrl",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"httpUrl": {
+		Key:      "httpUrl",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"externalHttpMethod": {
+		Key:      "externalHttpMethod",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"httpMethod": {
+		Key:      "httpMethod",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"httpHost": {
+		Key:      "httpHost",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"dbName": {
+		Key:      "dbName",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"dbOperation": {
+		Key:      "dbOperation",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"hasError": {
+		Key:      "hasError",
+		DataType: v3.AttributeKeyDataTypeBool,
+		IsColumn: true,
+	},
+	"isRemote": {
+		Key:      "isRemote",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+
+	// old support for resource attributes
+	"serviceName": {
+		Key:      "serviceName",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+
+	// old support for simple attributes
+	"httpRoute": {
+		Key:      "httpRoute",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"msgSystem": {
+		Key:      "msgSystem",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"msgOperation": {
+		Key:      "msgOperation",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"dbSystem": {
+		Key:      "dbSystem",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"rpcSystem": {
+		Key:      "rpcSystem",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"rpcService": {
+		Key:      "rpcService",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"rpcMethod": {
+		Key:      "rpcMethod",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"peerService": {
+		Key:      "peerService",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+}
+
+var StaticFieldsTraces = map[string]v3.AttributeKey{}
+
+func init() {
+	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
+	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
 }
 
 const TRACE_V4_MAX_PAGINATION_LIMIT = 10000

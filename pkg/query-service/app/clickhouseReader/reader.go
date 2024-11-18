@@ -3890,7 +3890,99 @@ func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	return nil
 }
 
+func (r *ClickHouseReader) GetTraceAggregateAttributesV2(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.AggregateAttributeResponse
+	var stringAllowed bool
+
+	where := ""
+	switch req.Operator {
+	case
+		v3.AggregateOperatorCountDistinct,
+		v3.AggregateOperatorCount:
+		where = "tagKey ILIKE $1"
+		stringAllowed = true
+	case
+		v3.AggregateOperatorRateSum,
+		v3.AggregateOperatorRateMax,
+		v3.AggregateOperatorRateAvg,
+		v3.AggregateOperatorRate,
+		v3.AggregateOperatorRateMin,
+		v3.AggregateOperatorP05,
+		v3.AggregateOperatorP10,
+		v3.AggregateOperatorP20,
+		v3.AggregateOperatorP25,
+		v3.AggregateOperatorP50,
+		v3.AggregateOperatorP75,
+		v3.AggregateOperatorP90,
+		v3.AggregateOperatorP95,
+		v3.AggregateOperatorP99,
+		v3.AggregateOperatorAvg,
+		v3.AggregateOperatorSum,
+		v3.AggregateOperatorMin,
+		v3.AggregateOperatorMax:
+		where = "tagKey ILIKE $1 AND dataType='float64'"
+		stringAllowed = false
+	case
+		v3.AggregateOperatorNoOp:
+		return &v3.AggregateAttributeResponse{}, nil
+	default:
+		return nil, fmt.Errorf("unsupported aggregate operator")
+	}
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType FROM %s.%s WHERE %s", r.TraceDB, r.spanAttributeTable, where)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+
+	if err != nil {
+		zap.L().Error("Error while executing query", zap.Error(err))
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	statements := []model.ShowCreateTableStatement{}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.TraceDB, r.traceLocalTableName)
+	err = r.db.Select(ctx, &statements, query)
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
+	}
+
+	var tagKey string
+	var dataType string
+	var tagType string
+	for rows.Next() {
+		if err := rows.Scan(&tagKey, &tagType, &dataType); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      tagKey,
+			DataType: v3.AttributeKeyDataType(dataType),
+			Type:     v3.AttributeKeyType(tagType),
+			IsColumn: isColumn(true, statements[0].Statement, tagType, tagKey, dataType),
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+
+	// add other attributes
+	for _, field := range constants.NewStaticFieldsTraces {
+		if (!stringAllowed && field.DataType == v3.AttributeKeyDataTypeString) || (v3.AttributeKey{} == field) {
+			continue
+		} else if len(req.SearchText) == 0 || strings.Contains(field.Key, req.SearchText) {
+			response.AttributeKeys = append(response.AttributeKeys, field)
+		}
+	}
+
+	return &response, nil
+}
+
 func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+	if r.useTraceNewSchema {
+		return r.GetTraceAggregateAttributesV2(ctx, req)
+	}
+
 	var query string
 	var err error
 	var rows driver.Rows
@@ -3999,7 +4091,7 @@ func (r *ClickHouseReader) GetTraceAttributeKeysV2(ctx context.Context, req *v3.
 	}
 
 	// add other attributes
-	for _, f := range constants.StaticFieldsTraces {
+	for _, f := range constants.NewStaticFieldsTraces {
 		if (v3.AttributeKey{} == f) {
 			continue
 		}
@@ -4059,9 +4151,15 @@ func (r *ClickHouseReader) GetTraceAttributeValuesV2(ctx context.Context, req *v
 	var err error
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
+
 	// if dataType or tagType is not present return empty response
 	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 {
-		return &v3.FilterAttributeValueResponse{}, nil
+		// add data type if it's a top level key
+		if k, ok := constants.StaticFieldsTraces[req.FilterAttributeKey]; ok {
+			req.FilterAttributeKeyDataType = k.DataType
+		} else {
+			return &v3.FilterAttributeValueResponse{}, nil
+		}
 	}
 
 	// if data type is bool, return true and false
@@ -4082,6 +4180,7 @@ func (r *ClickHouseReader) GetTraceAttributeValuesV2(ctx context.Context, req *v
 	searchText := fmt.Sprintf("%%%s%%", req.SearchText)
 
 	// check if the tagKey is a topLevelColumn
+	// here we are using StaticFieldsTraces instead of NewStaticFieldsTraces as we want to consider old columns as well.
 	if _, ok := constants.StaticFieldsTraces[req.FilterAttributeKey]; ok {
 		// query the column for the last 48 hours
 		filterValueColumnWhere := req.FilterAttributeKey
