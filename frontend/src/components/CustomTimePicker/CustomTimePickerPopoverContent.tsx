@@ -135,7 +135,7 @@ function CustomTimePickerPopoverContent({
 		</div>
 	) : (
 		<div className="date-time-popover">
-			<TimezonePicker />
+			<TimezonePicker setActiveView={setActiveView} />
 		</div>
 	);
 }
