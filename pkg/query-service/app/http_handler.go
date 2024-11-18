@@ -526,12 +526,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/configs", am.OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/health", am.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/getSpanFilters", am.ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getTagFilters", am.ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getFilteredSpans", am.ViewAccess(aH.getFilteredSpans)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", am.ViewAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getTagValues", am.ViewAccess(aH.getTagValues)).Methods(http.MethodPost)
-
 	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/countErrors", am.ViewAccess(aH.countErrors)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/errorFromErrorID", am.ViewAccess(aH.getErrorFromErrorID)).Methods(http.MethodGet)
@@ -1841,86 +1835,6 @@ func (aH *APIHandler) getErrorFromGroupID(w http.ResponseWriter, r *http.Request
 	result, apiErr := aH.reader.GetErrorFromGroupID(r.Context(), query)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
-func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseSpanFilterRequestBody(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetSpanFilters(r.Context(), query)
-
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
-func (aH *APIHandler) getFilteredSpans(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseFilteredSpansRequest(r, aH)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetFilteredSpans(r.Context(), query)
-
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
-func (aH *APIHandler) getFilteredSpanAggregates(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseFilteredSpanAggregatesRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetFilteredSpansAggregates(r.Context(), query)
-
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
-func (aH *APIHandler) getTagFilters(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseTagFilterRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetTagFilters(r.Context(), query)
-
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
-func (aH *APIHandler) getTagValues(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseTagValueRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetTagValues(r.Context(), query)
-
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
