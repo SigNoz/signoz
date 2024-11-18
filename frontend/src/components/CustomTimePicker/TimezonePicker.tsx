@@ -2,8 +2,10 @@ import './TimezonePicker.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import cx from 'classnames';
+import { TimezonePickerShortcuts } from 'constants/shortcuts/TimezonePickerShortcuts';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { Check, Search } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { TIMEZONE_DATA } from './timezoneUtils';
 
@@ -82,7 +84,11 @@ TimezoneItem.defaultProps = {
 	onClick: undefined,
 };
 
-function TimezonePicker(): JSX.Element {
+interface TimezonePickerProps {
+	setActiveView: (view: 'datetime' | 'timezone') => void;
+}
+
+function TimezonePicker({ setActiveView }: TimezonePickerProps): JSX.Element {
 	const [search, setSearch] = useState('');
 	// TODO(shaheer): get this from user's selected time zone
 	const [selectedTimezone, setSelectedTimezone] = useState<string>(
@@ -99,6 +105,24 @@ function TimezonePicker(): JSX.Element {
 	const handleTimezoneSelect = useCallback((timezone: Timezone) => {
 		setSelectedTimezone(timezone.name);
 	}, []);
+
+	// Register keyboard shortcuts
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+
+	const handleCloseTimezonePicker = useCallback(() => {
+		setActiveView('datetime');
+	}, [setActiveView]);
+
+	useEffect(() => {
+		registerShortcut(
+			TimezonePickerShortcuts.CloseTimezonePicker,
+			handleCloseTimezonePicker,
+		);
+
+		return (): void => {
+			deregisterShortcut(TimezonePickerShortcuts.CloseTimezonePicker);
+		};
+	}, [deregisterShortcut, handleCloseTimezonePicker, registerShortcut]);
 
 	return (
 		<div className="timezone-picker">
