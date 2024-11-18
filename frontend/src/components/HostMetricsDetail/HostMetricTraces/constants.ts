@@ -4,8 +4,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
-
-import { formatNanoToMS } from './utils';
+import { nanoToMilli } from 'utils/timeUtils';
 
 export const columns = [
 	{
@@ -32,7 +31,7 @@ export const columns = [
 		dataIndex: ['data', 'durationNano'],
 		key: 'durationNano-float64-tag',
 		width: 145,
-		render: (duration: number): string => `${formatNanoToMS(duration)}`,
+		render: (duration: number): string => `${nanoToMilli(duration)}ms`,
 	},
 	{
 		title: 'HTTP Method',

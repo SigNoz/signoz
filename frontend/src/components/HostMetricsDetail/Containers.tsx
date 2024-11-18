@@ -5,6 +5,8 @@ import { LifeBuoy } from 'lucide-react';
 import { handleContactSupport } from 'pages/Integrations/utils';
 import { isCloudUser } from 'utils/app';
 
+import { FEATURE_COMING_SOON_STRINGS } from './constants';
+
 const { Text } = Typography;
 
 function Containers(): JSX.Element {
@@ -18,8 +20,7 @@ function Containers(): JSX.Element {
 					height={32}
 				/>
 				<Text className="infra-container-card-text">
-					The ability to visualise containers is in active development and should be
-					available to you soon.
+					{FEATURE_COMING_SOON_STRINGS.CONTAINERS_VISUALIZATION_MESSAGE}
 				</Text>
 			</div>
 
@@ -27,14 +28,13 @@ function Containers(): JSX.Element {
 				<Space>
 					<img src="/Icons/broom.svg" alt="broom" width={16} height={16} />
 					<Text className="infra-container-card-text">
-						We&apos;re working to extend infrastructure monitoring to take care of a
-						bunch of different cases. Thank you for your patience.
+						{FEATURE_COMING_SOON_STRINGS.WORKING_MESSAGE}
 					</Text>
 				</Space>
 			</div>
 
 			<Text className="infra-container-card-text">
-				Join the waitlist for early access or contact support.
+				{FEATURE_COMING_SOON_STRINGS.WAITLIST_MESSAGE}
 			</Text>
 
 			<Button
@@ -42,7 +42,7 @@ function Containers(): JSX.Element {
 				className="infra-container-contact-support-btn"
 				onClick={(): void => handleContactSupport(isCloudUser())}
 			>
-				Contact Support
+				{FEATURE_COMING_SOON_STRINGS.CONTACT_SUPPORT}
 			</Button>
 		</Space>
 	);

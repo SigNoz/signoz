@@ -805,12 +805,23 @@ const mapDispatchToProps = (
 		interval: Time | CustomTimeType,
 		dateTimeRange?: [number, number],
 	): ((dispatch: Dispatch<AppActions>) => void) => {
+		/**
+		 * Updates the global time interval only when not in modal view
+		 *
+		 * @param interval - Selected time interval or custom time range
+		 * @param dateTimeRange - Optional tuple of [startTime, endTime]
+		 * @returns Function that updates redux store with new time interval, or empty function for modal view
+		 *
+		 * When in modal view (isModalTimeSelection=true), we don't want to update the global time state
+		 * as the selection is temporary until the modal is confirmed
+		 */
 		if (!isModalTimeSelection) {
 			return bindActionCreators(UpdateTimeInterval, dispatch)(
 				interval,
 				dateTimeRange,
 			);
 		}
+		// Return empty function for modal view as we don't want to update global state
 		return (): void => {};
 	},
 	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
