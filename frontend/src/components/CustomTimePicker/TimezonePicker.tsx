@@ -4,8 +4,17 @@ import { Color } from '@signozhq/design-tokens';
 import cx from 'classnames';
 import { TimezonePickerShortcuts } from 'constants/shortcuts/TimezonePickerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
+import history from 'lib/history';
 import { Check, Search } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
+import { useLocation } from 'react-use';
 
 import { TIMEZONE_DATA } from './timezoneUtils';
 
@@ -85,14 +94,21 @@ TimezoneItem.defaultProps = {
 };
 
 interface TimezonePickerProps {
-	setActiveView: (view: 'datetime' | 'timezone') => void;
+	setActiveView: Dispatch<SetStateAction<'datetime' | 'timezone'>>;
+	setIsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
-function TimezonePicker({ setActiveView }: TimezonePickerProps): JSX.Element {
-	const [search, setSearch] = useState('');
+function TimezonePicker({
+	setActiveView,
+	setIsOpen,
+}: TimezonePickerProps): JSX.Element {
+	const { search } = useLocation();
+	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
+
+	const [searchTerm, setSearchTerm] = useState('');
 	// TODO(shaheer): get this from user's selected time zone
 	const [selectedTimezone, setSelectedTimezone] = useState<string>(
-		TIMEZONE_DATA[0].name,
+		searchParams.get('timezone') ?? TIMEZONE_DATA[0].name,
 	);
 
 	const getFilteredTimezones = useCallback((searchTerm: string): Timezone[] => {
@@ -102,9 +118,15 @@ function TimezonePicker({ setActiveView }: TimezonePickerProps): JSX.Element {
 		);
 	}, []);
 
-	const handleTimezoneSelect = useCallback((timezone: Timezone) => {
-		setSelectedTimezone(timezone.name);
-	}, []);
+	const handleTimezoneSelect = useCallback(
+		(timezone: Timezone) => {
+			setSelectedTimezone(timezone.name);
+			searchParams.set('timezone', timezone.name);
+			history.push({ search: searchParams.toString() });
+			setIsOpen(false);
+		},
+		[searchParams, setIsOpen],
+	);
 
 	// Register keyboard shortcuts
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -126,9 +148,9 @@ function TimezonePicker({ setActiveView }: TimezonePickerProps): JSX.Element {
 
 	return (
 		<div className="timezone-picker">
-			<SearchBar value={search} onChange={setSearch} />
+			<SearchBar value={searchTerm} onChange={setSearchTerm} />
 			<div className="timezone-picker__list">
-				{getFilteredTimezones(search).map((timezone) => (
+				{getFilteredTimezones(searchTerm).map((timezone) => (
 					<TimezoneItem
 						key={timezone.name}
 						timezone={timezone}
