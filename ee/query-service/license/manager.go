@@ -84,7 +84,8 @@ func StartManager(dbType string, db *sqlx.DB, useLicensesV3 bool, features ...ba
 
 			// insert the licenseV3 in sqlite db
 			apiError = m.repo.InsertLicenseV3(context.Background(), licenseV3)
-			if apiError != nil {
+			// if the license already exists move ahead.
+			if apiError != nil && apiError.Typ != model.ErrorConflict {
 				return m, apiError
 			}
 		}
