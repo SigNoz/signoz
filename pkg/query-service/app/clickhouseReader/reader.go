@@ -3963,7 +3963,10 @@ func (r *ClickHouseReader) GetTraceAggregateAttributesV2(ctx context.Context, re
 			Type:     v3.AttributeKeyType(tagType),
 			IsColumn: isColumn(true, statements[0].Statement, tagType, tagKey, dataType),
 		}
-		response.AttributeKeys = append(response.AttributeKeys, key)
+
+		if _, ok := constants.DeprecatedStaticFieldsTraces[tagKey]; !ok {
+			response.AttributeKeys = append(response.AttributeKeys, key)
+		}
 	}
 
 	// add other attributes
@@ -4087,7 +4090,11 @@ func (r *ClickHouseReader) GetTraceAttributeKeysV2(ctx context.Context, req *v3.
 			Type:     v3.AttributeKeyType(tagType),
 			IsColumn: isColumn(true, statements[0].Statement, tagType, tagKey, dataType),
 		}
-		response.AttributeKeys = append(response.AttributeKeys, key)
+
+		// don't send deprecated static fields
+		if _, ok := constants.DeprecatedStaticFieldsTraces[tagKey]; !ok {
+			response.AttributeKeys = append(response.AttributeKeys, key)
+		}
 	}
 
 	// add other attributes
@@ -4286,7 +4293,7 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 	return &attributeValues, nil
 }
 
-func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string]v3.AttributeKey, error) {
+func (r *ClickHouseReader) GetSpanAttributeKeysV2(ctx context.Context) (map[string]v3.AttributeKey, error) {
 	var query string
 	var err error
 	var rows driver.Rows
@@ -4324,6 +4331,50 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 
 		name := tagKey + "##" + tagType + "##" + strings.ToLower(dataType)
 		response[name] = key
+	}
+
+	for _, key := range constants.StaticFieldsTraces {
+		name := key.Key + "##" + key.Type.String() + "##" + strings.ToLower(key.DataType.String())
+		response[name] = key
+	}
+
+	return response, nil
+}
+
+func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string]v3.AttributeKey, error) {
+	if r.useTraceNewSchema {
+		return r.GetSpanAttributeKeysV2(ctx)
+	}
+	var query string
+	var err error
+	var rows driver.Rows
+	response := map[string]v3.AttributeKey{}
+
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM %s.%s", r.TraceDB, r.spanAttributesKeysTable)
+
+	rows, err = r.db.Query(ctx, query)
+
+	if err != nil {
+		zap.L().Error("Error while executing query", zap.Error(err))
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var tagKey string
+	var dataType string
+	var tagType string
+	var isColumn bool
+	for rows.Next() {
+		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      tagKey,
+			DataType: v3.AttributeKeyDataType(dataType),
+			Type:     v3.AttributeKeyType(tagType),
+			IsColumn: isColumn,
+		}
+		response[tagKey] = key
 	}
 	return response, nil
 }

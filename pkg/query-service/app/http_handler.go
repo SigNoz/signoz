@@ -4833,7 +4833,11 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		tracesV3.Enrich(queryRangeParams, spanKeys)
+		if aH.UseTraceNewSchema {
+			tracesV4.Enrich(queryRangeParams, spanKeys)
+		} else {
+			tracesV3.Enrich(queryRangeParams, spanKeys)
+		}
 	}
 
 	// WARN: Only works for AND operator in traces query

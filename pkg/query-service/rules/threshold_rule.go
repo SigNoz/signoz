@@ -29,6 +29,7 @@ import (
 
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
 	"go.signoz.io/signoz/pkg/query-service/formatter"
 
 	yaml "gopkg.in/yaml.v2"
@@ -50,6 +51,8 @@ type ThresholdRule struct {
 	// used for attribute metadata enrichment for logs and traces
 	logsKeys  map[string]v3.AttributeKey
 	spansKeys map[string]v3.AttributeKey
+
+	useTraceNewSchema bool
 }
 
 func NewThresholdRule(
@@ -299,7 +302,11 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 				return nil, err
 			}
 			r.spansKeys = spanKeys
-			tracesV3.Enrich(params, spanKeys)
+			if r.useTraceNewSchema {
+				tracesV4.Enrich(params, spanKeys)
+			} else {
+				tracesV3.Enrich(params, spanKeys)
+			}
 		}
 	}
 
