@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -1118,7 +1119,9 @@ func TestThresholdRuleClickHouseTmpl(t *testing.T) {
 type queryMatcherAny struct {
 }
 
-func (m *queryMatcherAny) Match(string, string) error {
+func (m *queryMatcherAny) Match(x string, y string) error {
+	fmt.Println(x)
+	fmt.Println(y)
 	return nil
 }
 
@@ -1423,8 +1426,11 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 	for idx, c := range testCases {
 		metaRows := cmock.NewRows(metaCols, c.metaValues)
 		mock.
-			ExpectQuery("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM archiveNamespace.span_attributes_keys").
+			ExpectQuery("SELECT DISTINCT(tagKey), tagType, dataType FROM archiveNamespace.span_attributes_keys").
 			WillReturnRows(metaRows)
+
+		mock.
+			ExpectSelect("SHOW CREATE TABLE signoz_traces.distributed_signoz_index_v3").WillReturnRows(&cmock.Rows{})
 
 		rows := cmock.NewRows(cols, c.values)
 

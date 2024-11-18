@@ -3947,7 +3947,7 @@ func (r *ClickHouseReader) GetTraceAggregateAttributesV2(ctx context.Context, re
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.TraceDB, r.traceLocalTableName)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
-		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
+		return nil, fmt.Errorf("error while fetching trace schema: %s", err.Error())
 	}
 
 	var tagKey string
@@ -4071,7 +4071,7 @@ func (r *ClickHouseReader) GetTraceAttributeKeysV2(ctx context.Context, req *v3.
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.TraceDB, r.traceLocalTableName)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
-		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
+		return nil, fmt.Errorf("error while fetching trace schema: %s", err.Error())
 	}
 
 	var tagKey string
@@ -4305,7 +4305,7 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.TraceDB, r.traceTableName)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
-		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
+		return nil, fmt.Errorf("error while fetching trace schema: %s", err.Error())
 	}
 
 	var tagKey string
