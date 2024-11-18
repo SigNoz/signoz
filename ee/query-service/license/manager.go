@@ -67,6 +67,26 @@ func StartManager(dbType string, db *sqlx.DB, useLicensesV3 bool, features ...ba
 		repo: &repo,
 	}
 
+	if useLicensesV3 {
+		// get active license from the db
+		active, err := m.repo.GetActiveLicense(context.Background())
+		if err != nil {
+			return m, err
+		}
+
+		// fetch the new license structure from control plane
+		licenseV3, apiError := validate.ValidateLicenseV3(active.Key)
+		if apiError != nil {
+			return m, apiError
+		}
+
+		// insert the licenseV3 in sqlite db
+		apiError = m.repo.InsertLicenseV3(context.Background(), licenseV3)
+		if apiError != nil {
+			return m, apiError
+		}
+	}
+
 	if err := m.start(useLicensesV3, features...); err != nil {
 		return m, err
 	}
