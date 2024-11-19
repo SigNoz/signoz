@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 
-// Initialize dayjs plugins
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -57,18 +56,10 @@ const createTimezoneEntry = (
 		...(hasDivider && { hasDivider }),
 	};
 };
-const getBrowserTimezone = (
-	allTimezones: ReturnType<typeof getTimeZones>,
-): Timezone | null => {
-	const browserTz = dayjs.tz.guess();
-	const browserTimezone = allTimezones.find((tz) => tz.name === browserTz);
 
-	if (!browserTimezone) return null;
-
-	return createTimezoneEntry(
-		`Browser time — ${browserTimezone.name}`,
-		browserTimezone.rawOffsetInMinutes,
-	);
+const getOffsetByTimezone = (timezone: string): number => {
+	const dayjsTimezone = dayjs().tz(timezone);
+	return dayjsTimezone.utcOffset();
 };
 
 const filterAndSortTimezones = (
@@ -89,19 +80,34 @@ const generateTimezoneData = (): Timezone[] => {
 	const allTimezones = getTimeZones();
 	const timezones: Timezone[] = [];
 
-	// Add browser timezone if available
-	const browserTz = getBrowserTimezone(allTimezones);
-	if (browserTz) {
-		timezones.push(browserTz);
+	// Add browser timezone
+	const browserTz = dayjs.tz.guess();
+	const utcOffset = getOffsetByTimezone(browserTz);
+
+	const browserTzObject = createTimezoneEntry(
+		`Browser time — ${browserTz}`,
+		utcOffset,
+	);
+
+	if (browserTzObject) {
+		timezones.push(browserTzObject);
 	}
 
 	// Add UTC timezone with divider
 	timezones.push(UTC_TIMEZONE);
 
 	// Add remaining timezones
-	timezones.push(...filterAndSortTimezones(allTimezones, browserTz?.name[1]));
+	timezones.push(...filterAndSortTimezones(allTimezones, browserTz));
 
 	return timezones;
+};
+
+export const getTimezoneObjectByTimezoneString = (
+	timezone: string,
+): Timezone | null => {
+	const utcOffset = getOffsetByTimezone(timezone);
+
+	return createTimezoneEntry(timezone, utcOffset);
 };
 
 export const TIMEZONE_DATA = generateTimezoneData();
