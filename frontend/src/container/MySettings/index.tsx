@@ -7,7 +7,7 @@ import { LogOut, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 
 import Password from './Password';
-import TimezoneAdaption from './TimezoneAdaptation/TimezoneAdaptation';
+import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
 import UserInfo from './UserInfo';
 
 function MySettings(): JSX.Element {
@@ -79,7 +79,7 @@ function MySettings(): JSX.Element {
 				<Password />
 			</div>
 
-			<TimezoneAdaption />
+			<TimezoneAdaptation />
 
 			<Button
 				className="flexBtn"

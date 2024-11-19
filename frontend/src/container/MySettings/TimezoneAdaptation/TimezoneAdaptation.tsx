@@ -1,11 +1,11 @@
-import './TimezoneAdaption.styles.scss';
+import './TimezoneAdaptation.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Switch } from 'antd';
 import { Delete } from 'lucide-react';
 import { useState } from 'react';
 
-function TimezoneAdaption(): JSX.Element {
+function TimezoneAdaptation(): JSX.Element {
 	// TODO(shaheer): Get this from user's preferences
 	const [override, setOverride] = useState('UTC + 5:30');
 	const [isAdaptationEnabled, setIsAdaptationEnabled] = useState(true);
@@ -69,4 +69,4 @@ function TimezoneAdaption(): JSX.Element {
 	);
 }
 
-export default TimezoneAdaption;
+export default TimezoneAdaptation;
