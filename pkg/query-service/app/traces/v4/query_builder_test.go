@@ -124,6 +124,27 @@ func Test_getColumnName(t *testing.T) {
 			},
 			want: "attributes_string['xyz']",
 		},
+		{
+			name: "new composite column",
+			args: args{
+				key: v3.AttributeKey{Key: "response_status_code"},
+			},
+			want: "response_status_code",
+		},
+		{
+			name: "new composite column with metadata",
+			args: args{
+				key: v3.AttributeKey{Key: "response_status_code", DataType: v3.AttributeKeyDataTypeString, IsColumn: true},
+			},
+			want: "response_status_code",
+		},
+		{
+			name: "new normal column with metadata",
+			args: args{
+				key: v3.AttributeKey{Key: "http.route", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			},
+			want: "`attribute_string_http$$route`",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

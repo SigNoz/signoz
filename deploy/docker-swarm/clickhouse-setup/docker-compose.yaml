@@ -146,7 +146,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.58.1
+    image: signoz/query-service:0.58.2
     command:
       [
         "-config=/root/config/prometheus.yml",
@@ -186,7 +186,7 @@ services:
     <<: *db-depend
 
   frontend:
-    image: signoz/frontend:0.58.1
+    image: signoz/frontend:0.58.2
     deploy:
       restart_policy:
         condition: on-failure

@@ -183,7 +183,7 @@ func PrepareFilters(labels map[string]string, whereClauseItems []v3.FilterItem, 
 			var attrFound bool
 
 			// as of now this logic will only apply for logs
-			for _, tKey := range utils.GenerateLogEnrichmentKeys(v3.AttributeKey{Key: key}) {
+			for _, tKey := range utils.GenerateEnrichmentKeys(v3.AttributeKey{Key: key}) {
 				if val, ok := keys[tKey]; ok {
 					attributeKey = val
 					attrFound = true
