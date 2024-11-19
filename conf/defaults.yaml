@@ -86,6 +86,7 @@ database:
   # Path to the sqlite database
   sqlite:
     path: signoz.db
+    max_open_conn: 10
 
 ##################### Storage #####################
 storage:

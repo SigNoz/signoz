@@ -81,6 +81,7 @@ func run(
 		return err
 	}
 
+	// Remove this function once the new config is completely rolled out
 	signozconfig.EnsureBackwardsCompatibility(ctx, instr, config)
 
 	// To support backward compatibility, we are going to initialize the global zap logger
