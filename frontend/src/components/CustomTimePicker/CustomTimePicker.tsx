@@ -352,7 +352,10 @@ function CustomTimePicker({
 							{!!activeTimezoneOffset && (
 								<div
 									className="timezone-badge"
-									onClick={(): void => handleViewChange('timezone')}
+									onClick={(e): void => {
+										e.stopPropagation();
+										handleViewChange('timezone');
+									}}
 								>
 									<span>{activeTimezoneOffset}</span>
 								</div>
