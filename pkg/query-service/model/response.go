@@ -269,32 +269,6 @@ type SearchSpanResponseItem struct {
 	SpanKind         string            `json:"spanKind"`
 }
 
-type SearchSpanResponseItemV2 struct {
-	TimeUnixNano      time.Time          `json:"timestamp" ch:"timestamp"`
-	DurationNano      uint64             `json:"durationNano" ch:"duration_nano"`
-	SpanID            string             `json:"spanId" ch:"span_id"`
-	TraceID           string             `json:"traceId" ch:"trace_id"`
-	HasError          bool               `json:"hasError" ch:"has_error"`
-	Kind              int8               `json:"kind" ch:"kind"`
-	ServiceName       string             `json:"serviceName" ch:"resource_string_service$$name"`
-	Name              string             `json:"name" ch:"name"`
-	References        string             `json:"references,omitempty" ch:"references"`
-	Attributes_string map[string]string  `json:"attributes_string" ch:"attributes_string"`
-	Attributes_number map[string]float64 `json:"attributes_number" ch:"attributes_number"`
-	Attributes_bool   map[string]bool    `json:"attributes_bool" ch:"attributes_bool"`
-	Events            []string           `json:"event" ch:"events"`
-	StatusMessage     string             `json:"statusMessage" ch:"status_message"`
-	StatusCodeString  string             `json:"statusCodeString" ch:"status_code_string"`
-	SpanKind          string             `json:"spanKind" ch:"kind_string"`
-}
-
-type TraceSummary struct {
-	TraceID  string    `json:"traceId" ch:"trace_id"`
-	Start    time.Time `json:"start" ch:"start"`
-	End      time.Time `json:"end" ch:"end"`
-	NumSpans uint64    `json:"numSpans" ch:"num_spans"`
-}
-
 type OtelSpanRef struct {
 	TraceId string `json:"traceId,omitempty"`
 	SpanId  string `json:"spanId,omitempty"`
