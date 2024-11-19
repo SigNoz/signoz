@@ -6,16 +6,26 @@ import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-interface Timezone {
+export interface Timezone {
 	name: string;
+	value: string;
 	offset: string;
 	searchIndex: string;
 	hasDivider?: boolean;
 }
 
 // Constants
+const TIMEZONE_TYPES = {
+	BROWSER: 'BROWSER',
+	UTC: 'UTC',
+	STANDARD: 'STANDARD',
+} as const;
+
+type TimezoneType = typeof TIMEZONE_TYPES[keyof typeof TIMEZONE_TYPES];
+
 const UTC_TIMEZONE: Timezone = {
 	name: 'Coordinated Universal Time — UTC, GMT',
+	value: 'UTC',
 	offset: 'UTC',
 	searchIndex: 'UTC',
 	hasDivider: true,
@@ -46,11 +56,33 @@ const formatOffset = (offsetMinutes: number): string => {
 const createTimezoneEntry = (
 	name: string,
 	offsetMinutes: number,
+	type: TimezoneType = TIMEZONE_TYPES.STANDARD,
 	hasDivider = false,
 ): Timezone => {
 	const offset = formatOffset(offsetMinutes);
+	let value = name;
+	let displayName = name;
+
+	switch (type) {
+		case TIMEZONE_TYPES.BROWSER:
+			displayName = `Browser time — ${name}`;
+			value = name;
+			break;
+		case TIMEZONE_TYPES.UTC:
+			displayName = 'Coordinated Universal Time — UTC, GMT';
+			value = 'UTC';
+			break;
+		case TIMEZONE_TYPES.STANDARD:
+			displayName = name;
+			value = name;
+			break;
+		default:
+			console.error(`Invalid timezone type: ${type}`);
+	}
+
 	return {
-		name,
+		name: displayName,
+		value,
 		offset,
 		searchIndex: offset.replace(/ /g, ''),
 		...(hasDivider && { hasDivider }),
@@ -82,16 +114,10 @@ const generateTimezoneData = (): Timezone[] => {
 
 	// Add browser timezone
 	const browserTz = dayjs.tz.guess();
-	const utcOffset = getOffsetByTimezone(browserTz);
-
-	const browserTzObject = createTimezoneEntry(
-		`Browser time — ${browserTz}`,
-		utcOffset,
+	const browserOffset = getOffsetByTimezone(browserTz);
+	timezones.push(
+		createTimezoneEntry(browserTz, browserOffset, TIMEZONE_TYPES.BROWSER),
 	);
-
-	if (browserTzObject) {
-		timezones.push(browserTzObject);
-	}
 
 	// Add UTC timezone with divider
 	timezones.push(UTC_TIMEZONE);

@@ -16,13 +16,7 @@ import {
 } from 'react';
 import { useLocation } from 'react-use';
 
-import { TIMEZONE_DATA } from './timezoneUtils';
-
-interface Timezone {
-	name: string;
-	offset: string;
-	hasDivider?: boolean;
-}
+import { Timezone, TIMEZONE_DATA } from './timezoneUtils';
 
 interface SearchBarProps {
 	value: string;
@@ -126,7 +120,7 @@ function TimezonePicker({
 	const handleTimezoneSelect = useCallback(
 		(timezone: Timezone) => {
 			setSelectedTimezone(timezone.name);
-			searchParams.set('timezone', timezone.name);
+			searchParams.set('timezone', timezone.value);
 			history.push({ search: searchParams.toString() });
 			handleCloseTimezonePicker();
 			setIsOpen(false);
@@ -154,7 +148,7 @@ function TimezonePicker({
 			<div className="timezone-picker__list">
 				{getFilteredTimezones(searchTerm).map((timezone) => (
 					<TimezoneItem
-						key={timezone.name}
+						key={timezone.value}
 						timezone={timezone}
 						isSelected={timezone.name === selectedTimezone}
 						onClick={(): void => handleTimezoneSelect(timezone)}
