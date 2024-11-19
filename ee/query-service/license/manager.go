@@ -253,6 +253,11 @@ func (lm *Manager) GetLicensesV3(ctx context.Context) (response []*model.License
 		if lm.activeLicenseV3 != nil && l.Key == lm.activeLicenseV3.Key {
 			l.IsCurrent = true
 		}
+		if l.ValidUntil == -1 {
+			// for subscriptions, there is no end-date as such
+			// but for showing user some validity we default one year timespan
+			l.ValidUntil = l.ValidFrom + 31556926
+		}
 		response = append(response, l)
 	}
 
