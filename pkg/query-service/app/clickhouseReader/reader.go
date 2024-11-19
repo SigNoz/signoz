@@ -490,7 +490,7 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName)
 
 	if r.useTraceNewSchema {
-		query = fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now()) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName)
+		query = fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName)
 	}
 
 	rows, err := r.db.Query(ctx, query)
@@ -3978,7 +3978,7 @@ func (r *ClickHouseReader) GetTraceAggregateAttributesV2(ctx context.Context, re
 		}
 	}
 
-	// add other attributes
+	// add the new static fields
 	for _, field := range constants.NewStaticFieldsTraces {
 		if (!stringAllowed && field.DataType == v3.AttributeKeyDataTypeString) || (v3.AttributeKey{} == field) {
 			continue
@@ -4101,12 +4101,14 @@ func (r *ClickHouseReader) GetTraceAttributeKeysV2(ctx context.Context, req *v3.
 		}
 
 		// don't send deprecated static fields
+		// this is added so that once the old tenants are moved to new schema,
+		// they old attributes are not sent to the frontend autocomplete
 		if _, ok := constants.DeprecatedStaticFieldsTraces[tagKey]; !ok {
 			response.AttributeKeys = append(response.AttributeKeys, key)
 		}
 	}
 
-	// add other attributes
+	// add the new static fields
 	for _, f := range constants.NewStaticFieldsTraces {
 		if (v3.AttributeKey{} == f) {
 			continue
