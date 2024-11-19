@@ -19,15 +19,21 @@ import {
 	ChangeEvent,
 	Dispatch,
 	SetStateAction,
+	useCallback,
 	useEffect,
+	useMemo,
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import useUrlQuery from '../../hooks/useUrlQuery';
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
+import { getTimezoneObjectByTimezoneString } from './timezoneUtils';
 
 const maxAllowedMinTimeInMonths = 6;
+type ViewType = 'datetime' | 'timezone';
+const DEFAULT_VIEW: ViewType = 'datetime';
 
 interface CustomTimePickerProps {
 	onSelect: (value: string) => void;
@@ -73,6 +79,8 @@ function CustomTimePicker({
 		setSelectedTimePlaceholderValue,
 	] = useState('Select / Enter Time Range');
 
+	const urlQuery = useUrlQuery();
+
 	const [inputValue, setInputValue] = useState('');
 	const [inputStatus, setInputStatus] = useState<'' | 'error' | 'success'>('');
 	const [inputErrorMessage, setInputErrorMessage] = useState<string | null>(
@@ -80,6 +88,28 @@ function CustomTimePicker({
 	);
 	const location = useLocation();
 	const [isInputFocused, setIsInputFocused] = useState(false);
+
+	const [activeView, setActiveView] = useState<ViewType>(DEFAULT_VIEW);
+
+	const activeTimezoneOffset = useMemo(() => {
+		const timezone = urlQuery.get('timezone');
+		if (timezone) {
+			const timezoneObj = getTimezoneObjectByTimezoneString(timezone);
+			console.log('here', timezoneObj, timezone);
+			return timezoneObj?.offset;
+		}
+		return '';
+	}, [urlQuery]);
+
+	const handleViewChange = useCallback(
+		(newView: 'timezone' | 'datetime'): void => {
+			if (activeView !== newView) {
+				setActiveView(newView);
+			}
+			setOpen(!open);
+		},
+		[activeView, open, setOpen],
+	);
 
 	const getSelectedTimeRangeLabel = (
 		selectedTime: string,
@@ -281,6 +311,8 @@ function CustomTimePicker({
 							handleGoLive={defaultTo(handleGoLive, noop)}
 							options={items}
 							selectedTime={selectedTime}
+							activeView={activeView}
+							setActiveView={setActiveView}
 						/>
 					) : (
 						content
@@ -317,12 +349,20 @@ function CustomTimePicker({
 						)
 					}
 					suffix={
-						<ChevronDown
-							size={14}
-							onClick={(): void => {
-								setOpen(!open);
-							}}
-						/>
+						<>
+							{!!activeTimezoneOffset && (
+								<div
+									className="timezone-badge"
+									onClick={(): void => handleViewChange('timezone')}
+								>
+									<span>{activeTimezoneOffset}</span>
+								</div>
+							)}
+							<ChevronDown
+								size={14}
+								onClick={(): void => handleViewChange('datetime')}
+							/>
+						</>
 					}
 				/>
 			</Popover>

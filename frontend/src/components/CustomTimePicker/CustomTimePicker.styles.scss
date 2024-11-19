@@ -144,3 +144,17 @@
 		}
 	}
 }
+.timezone-badge {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 4px;
+	border-radius: 2px;
+	background: rgba(171, 189, 255, 0.04);
+	color: var(--bg-vanilla-100);
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 16px;
+	letter-spacing: -0.06px;
+	cursor: pointer;
+}
