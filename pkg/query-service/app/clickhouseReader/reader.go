@@ -1134,7 +1134,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	}
 
 	var startTime, endTime, durationNano uint64
-	var searchScanResponses []model.SearchSpanResponseItemV2
+	var searchScanResponses []model.SpanItemV2
 
 	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceTableName)
 
