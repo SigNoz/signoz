@@ -347,6 +347,7 @@ func createTelemetry() {
 						"alertsWithTSV2":                  alertsInfo.AlertsWithTSV2,
 						"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
 						"metricBasedAlerts":               alertsInfo.MetricBasedAlerts,
+						"anomalyBasedAlerts":              alertsInfo.AnomalyBasedAlerts,
 						"tracesBasedAlerts":               alertsInfo.TracesBasedAlerts,
 						"totalChannels":                   alertsInfo.TotalChannels,
 						"totalSavedViews":                 savedViewsInfo.TotalSavedViews,
