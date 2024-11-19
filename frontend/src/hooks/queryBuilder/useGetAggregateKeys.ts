@@ -1,3 +1,4 @@
+import { getHostAttributeKeys } from 'api/infra/getHostAttributeKeys';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { useMemo } from 'react';
@@ -34,7 +35,10 @@ export const useGetAggregateKeys: UseGetAttributeKeys = (
 
 	return useQuery<SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse>({
 		queryKey,
-		queryFn: () => getAggregateKeys({ ...requestData, isInfraMonitoring }),
+		queryFn: () =>
+			isInfraMonitoring
+				? getHostAttributeKeys(requestData.searchText)
+				: getAggregateKeys(requestData),
 		...options,
 	});
 };

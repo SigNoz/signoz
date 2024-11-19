@@ -8,5 +8,4 @@ export interface IGetAttributeKeysPayload {
 	searchText: string;
 	aggregateAttribute?: string;
 	tagType?: BaseAutocompleteData['type'];
-	isInfraMonitoring?: boolean;
 }
