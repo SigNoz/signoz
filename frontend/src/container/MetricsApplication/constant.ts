@@ -38,11 +38,12 @@ export enum FORMULA {
 	// query C => durationNano <= 2000ms
 	// Since <= 2000ms includes <= 500ms, we over count, to correct we subtract B/2
 	// so the full expression would be (B + C/2) - B/2 = (B+C)/2
+	// However, if you add a filter on durationNano > 500ms, (filterItemC in overviewQueries) the query would be
+	// B + C/2
 	APDEX_TRACES = '((B + C)/2)/A',
-	// Does the same not apply for delta span metrics?
-	// No, because the delta metrics store the counts just for the current bucket
-	// so we don't need to subtract anything
-	APDEX_DELTA_SPAN_METRICS = '(B + C)/A',
+	// The delta span metrics store delta compared to previous reporting interval
+	// but not the counts for the current interval. The bucket counts are cumulative
+	APDEX_DELTA_SPAN_METRICS = '((B + C)/2)/A',
 	// Cumulative span metrics store the counts for all buckets
 	// so we need to subtract B/2 to correct the over counting
 	APDEX_CUMULATIVE_SPAN_METRICS = '((B + C)/2)/A',
