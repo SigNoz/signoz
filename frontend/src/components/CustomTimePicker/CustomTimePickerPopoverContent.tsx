@@ -11,7 +11,7 @@ import {
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { Clock } from 'lucide-react';
-import { Dispatch, SetStateAction, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import RangePickerModal from './RangePickerModal';
@@ -29,6 +29,8 @@ interface CustomTimePickerPopoverContentProps {
 	onSelectHandler: (label: string, value: string) => void;
 	handleGoLive: () => void;
 	selectedTime: string;
+	activeView: 'datetime' | 'timezone';
+	setActiveView: Dispatch<SetStateAction<'datetime' | 'timezone'>>;
 }
 
 function CustomTimePickerPopoverContent({
@@ -40,15 +42,14 @@ function CustomTimePickerPopoverContent({
 	onSelectHandler,
 	handleGoLive,
 	selectedTime,
+	activeView,
+	setActiveView,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { pathname } = useLocation();
 
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
 		pathname,
 	]);
-	const [activeView, setActiveView] = useState<'datetime' | 'timezone'>(
-		'datetime',
-	);
 
 	function getTimeChips(options: Option[]): JSX.Element {
 		return (
