@@ -18,9 +18,7 @@ func TestListTsRange(t *testing.T) {
 			name:  "testing for less then one hour",
 			start: 1722262800000000000, // July 29, 2024 7:50:00 PM
 			end:   1722263800000000000, // July 29, 2024 8:06:40 PM
-			res: []LogsListTsRange{
-				{1722262800000000000, 1722263800000000000},
-			},
+			res:   []LogsListTsRange{{1722262800000000000, 1722263800000000000}},
 		},
 		{
 			name:  "testing for more than one hour",
