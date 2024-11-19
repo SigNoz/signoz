@@ -73,6 +73,11 @@ $item-spacing: 8px;
 		padding: 7.5px 6px 7.5px $item-spacing;
 		margin: 4px $item-spacing;
 		cursor: pointer;
+		background: transparent;
+		border: none;
+		width: -webkit-fill-available;
+		color: var(--bg-vanilla-400);
+		font-family: $font-family;
 
 		&:hover,
 		&.selected {

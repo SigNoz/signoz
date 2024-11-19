@@ -61,15 +61,13 @@ function TimezoneItem({
 	onClick,
 }: TimezoneItemProps): JSX.Element {
 	return (
-		// eslint-disable-next-line jsx-a11y/click-events-have-key-events
-		<div
+		<button
+			type="button"
 			className={cx('timezone-picker__item', {
 				selected: isSelected,
 				'has-divider': timezone.hasDivider,
 			})}
 			onClick={onClick}
-			role="button"
-			tabIndex={0}
 		>
 			<div className="timezone-name-wrapper">
 				<div className="timezone-name-wrapper__selected-icon">
@@ -84,7 +82,7 @@ function TimezoneItem({
 				<div className="timezone-picker__name">{timezone.name}</div>
 			</div>
 			<div className="timezone-picker__offset">{timezone.offset}</div>
-		</div>
+		</button>
 	);
 }
 
@@ -121,22 +119,23 @@ function TimezonePicker({
 		);
 	}, []);
 
+	const handleCloseTimezonePicker = useCallback(() => {
+		setActiveView('datetime');
+	}, [setActiveView]);
+
 	const handleTimezoneSelect = useCallback(
 		(timezone: Timezone) => {
 			setSelectedTimezone(timezone.name);
 			searchParams.set('timezone', timezone.name);
 			history.push({ search: searchParams.toString() });
+			handleCloseTimezonePicker();
 			setIsOpen(false);
 		},
-		[searchParams, setIsOpen],
+		[handleCloseTimezonePicker, searchParams, setIsOpen],
 	);
 
 	// Register keyboard shortcuts
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-
-	const handleCloseTimezonePicker = useCallback(() => {
-		setActiveView('datetime');
-	}, [setActiveView]);
 
 	useEffect(() => {
 		registerShortcut(
