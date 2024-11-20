@@ -133,7 +133,7 @@ const generateTimezoneData = (): Timezone[] => {
 
 export const getTimezoneObjectByTimezoneString = (
 	timezone: string,
-): Timezone | null => {
+): Timezone => {
 	const utcOffset = getOffsetByTimezone(timezone);
 
 	return createTimezoneEntry(timezone, utcOffset);
