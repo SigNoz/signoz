@@ -218,6 +218,10 @@ func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 func convertLicenseV3ToLicenseV2(licenses []*model.LicenseV3) []model.License {
 	licensesV2 := []model.License{}
 	for _, l := range licenses {
+		planKeyFromPlanName, ok := model.MapOldPlanKeyToNewPlanName[l.PlanName]
+		if !ok {
+			planKeyFromPlanName = model.Basic
+		}
 		licenseV2 := model.License{
 			Key:               l.Key,
 			ActivationId:      "",
@@ -226,7 +230,7 @@ func convertLicenseV3ToLicenseV2(licenses []*model.LicenseV3) []model.License {
 			ValidationMessage: "",
 			IsCurrent:         l.IsCurrent,
 			LicensePlan: model.LicensePlan{
-				PlanKey:    l.PlanName,
+				PlanKey:    planKeyFromPlanName,
 				ValidFrom:  l.ValidFrom,
 				ValidUntil: l.ValidUntil,
 				Status:     l.Status},
