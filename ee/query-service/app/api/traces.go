@@ -31,3 +31,19 @@ func (ah *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 	ah.WriteJSON(w, r, result)
 
 }
+
+func (ah *APIHandler) searchTracesV2(w http.ResponseWriter, r *http.Request) {
+
+	searchTracesParams, err := baseapp.ParseSearchTracesV2Params(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading params")
+		return
+	}
+
+	result, err := ah.opts.DataConnector.SearchTracesV2(r.Context(), searchTracesParams)
+	if ah.HandleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	ah.WriteJSON(w, r, result)
+}
