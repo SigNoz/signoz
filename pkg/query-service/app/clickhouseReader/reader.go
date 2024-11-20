@@ -753,6 +753,11 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 		WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
 		r.TraceDB, r.traceTableName,
 	)
+	if r.useTraceNewSchema {
+		resourceBucketFilter := fmt.Sprintf(constants.TraceResourceBucketFilterWithServiceName, r.TraceDB, r.traceResourceTableV3)
+		query += resourceBucketFilter
+		// args are already added in namedArgs
+	}
 	args = []interface{}{}
 	args = append(args, namedArgs...)
 	subQuery, argsSubQuery, errStatus = buildQueryWithTagParams(ctx, tags)
