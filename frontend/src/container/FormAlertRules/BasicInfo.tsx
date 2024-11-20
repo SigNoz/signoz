@@ -8,7 +8,7 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useFetch from 'hooks/useFetch';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -83,16 +83,22 @@ function BasicInfo({
 		window.open(ROUTES.CHANNELS_NEW, '_blank');
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+	const hasLoggedEvent = useRef(false);
 
 	useEffect(() => {
-		if (!channels.loading && isNewRule) {
+		if (!channels.loading && isNewRule && !hasLoggedEvent.current) {
 			logEvent('Alert: New alert creation page visited', {
 				dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
 				numberOfChannels: channels?.payload?.length,
 			});
+			hasLoggedEvent.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [channels.payload, channels.loading]);
+	}, [channels.loading]);
+
+	const refetchChannels = async (): Promise<void> => {
+		await channels.refetch();
+	};
 
 	return (
 		<>
@@ -197,7 +203,7 @@ function BasicInfo({
 				{!shouldBroadCastToAllChannels && (
 					<Tooltip
 						title={
-							noChannels
+							noChannels && !addNewChannelPermission
 								? 'No channels. Ask an admin to create a notification channel'
 								: undefined
 						}
@@ -212,10 +218,10 @@ function BasicInfo({
 							]}
 						>
 							<ChannelSelect
-								disabled={
-									shouldBroadCastToAllChannels || noChannels || !!channels.loading
-								}
+								onDropdownOpen={refetchChannels}
+								disabled={shouldBroadCastToAllChannels}
 								currentValue={alertDef.preferredChannels}
+								handleCreateNewChannels={handleCreateNewChannels}
 								channels={channels}
 								onSelectChannels={(preferredChannels): void => {
 									setAlertDef({

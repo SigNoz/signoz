@@ -202,6 +202,7 @@ function LogsExplorerViews({
 					id: 'severity_text--string----true',
 				},
 			],
+			legend: '{{severity_text}}',
 		};
 
 		const modifiedQuery: Query = {

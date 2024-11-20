@@ -8,6 +8,7 @@ BUILD_HASH      ?= $(shell git rev-parse --short HEAD)
 BUILD_TIME      ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILD_BRANCH    ?= $(shell git rev-parse --abbrev-ref HEAD)
 DEV_LICENSE_SIGNOZ_IO ?= https://staging-license.signoz.io/api/v1
+ZEUS_URL ?= https://api.signoz.cloud
 DEV_BUILD ?= "" # set to any non-empty value to enable dev build
 
 # Internal variables or constants.
@@ -33,8 +34,9 @@ buildHash=${PACKAGE}/pkg/query-service/version.buildHash
 buildTime=${PACKAGE}/pkg/query-service/version.buildTime
 gitBranch=${PACKAGE}/pkg/query-service/version.gitBranch
 licenseSignozIo=${PACKAGE}/ee/query-service/constants.LicenseSignozIo
+zeusURL=${PACKAGE}/ee/query-service/constants.ZeusURL
 
-LD_FLAGS=-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH}
+LD_FLAGS=-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH} -X ${zeusURL}=${ZEUS_URL}
 DEV_LD_FLAGS=-X ${licenseSignozIo}=${DEV_LICENSE_SIGNOZ_IO}
 
 all: build-push-frontend build-push-query-service

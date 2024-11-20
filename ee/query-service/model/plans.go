@@ -9,6 +9,21 @@ const SSO = "SSO"
 const Basic = "BASIC_PLAN"
 const Pro = "PRO_PLAN"
 const Enterprise = "ENTERPRISE_PLAN"
+
+var (
+	PlanNameEnterprise = "ENTERPRISE"
+	PlanNameTeams      = "TEAMS"
+	PlanNameBasic      = "BASIC"
+)
+
+var (
+	MapOldPlanKeyToNewPlanName map[string]string = map[string]string{PlanNameBasic: Basic, PlanNameTeams: Pro, PlanNameEnterprise: Enterprise}
+)
+
+var (
+	LicenseStatusInactive = "INACTIVE"
+)
+
 const DisableUpsell = "DISABLE_UPSELL"
 const Onboarding = "ONBOARDING"
 const ChatSupport = "CHAT_SUPPORT"
