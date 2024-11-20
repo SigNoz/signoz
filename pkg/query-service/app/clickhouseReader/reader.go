@@ -620,12 +620,26 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 			)
 
 			if r.useTraceNewSchema {
-				bFilter := " AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket"
-				query += bFilter
-				errorQuery += bFilter
+				resourceBucketFilter := `
+					AND (
+						resource_fingerprint GLOBAL IN 
+							(
+								SELECT fingerprint FROM %s.%s 
+								WHERE  
+									seen_at_ts_bucket_start >= @start_bucket AND seen_at_ts_bucket_start <= @end_bucket AND 
+									simpleJSONExtractString(labels, 'service.name') = @serviceName AND  
+									labels like @labelFilter
+							)
+						)
+					AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket
+				`
+				resourceBucketFilter = fmt.Sprintf(resourceBucketFilter, r.TraceDB, r.traceResourceTableV3)
+				query += resourceBucketFilter
+				errorQuery += resourceBucketFilter
 				args = append(args,
 					clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
 					clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
+					clickhouse.Named("labelFilter", "%service.name%"+strings.ToLower(utils.QuoteEscapedStringForContains(svc, true))+"%"),
 				)
 			}
 
@@ -1027,6 +1041,30 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 		WHERE serviceName = @serviceName AND timestamp>= @start AND timestamp<= @end`,
 		r.TraceDB, r.traceTableName,
 	)
+
+	if r.useTraceNewSchema {
+		resourceBucketFilter := `
+			AND (
+				resource_fingerprint GLOBAL IN 
+					(
+						SELECT fingerprint FROM %s.%s 
+						WHERE  
+							seen_at_ts_bucket_start >= @start_bucket AND seen_at_ts_bucket_start <= @end_bucket AND 
+							simpleJSONExtractString(labels, 'service.name') = @serviceName AND  
+							labels like @labelFilter
+					)
+				) 
+			AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket
+		`
+		resourceBucketFilter = fmt.Sprintf(resourceBucketFilter, r.TraceDB, r.traceResourceTableV3)
+		query += resourceBucketFilter
+		namedArgs = append(namedArgs,
+			clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
+			clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
+			clickhouse.Named("labelFilter", "%service.name%"+strings.ToLower(utils.QuoteEscapedStringForContains(queryParams.ServiceName, true))+"%"),
+		)
+	}
+
 	args := []interface{}{}
 	args = append(args, namedArgs...)
 	// create TagQuery from TagQueryParams
@@ -1137,8 +1175,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	var startTime, endTime, durationNano uint64
 	var searchScanResponses []model.SpanItemV2
 
-	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceTableName)
-
+	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceTableName)
 	start := time.Now()
 
 	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
