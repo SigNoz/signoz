@@ -95,7 +95,6 @@ function CustomTimePicker({
 		const timezone = urlQuery.get('timezone');
 		if (timezone) {
 			const timezoneObj = getTimezoneObjectByTimezoneString(timezone);
-			console.log('here', timezoneObj, timezone);
 			return timezoneObj?.offset;
 		}
 		return '';
