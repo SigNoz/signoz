@@ -36,10 +36,12 @@ function TimezoneProvider({
 			return undefined;
 		}
 	};
-	const [timezone, setTimezone] = useState<Timezone | undefined>(
-		getTimezoneFromLocalStorage(),
-	);
+
 	const browserTimezone = useMemo(() => getBrowserTimezone(), []);
+
+	const [timezone, setTimezone] = useState<Timezone | undefined>(
+		getTimezoneFromLocalStorage() ?? browserTimezone,
+	);
 
 	const updateTimezone = useCallback((timezone: Timezone): void => {
 		// TODO(shaheer): replace this with user preferences API
