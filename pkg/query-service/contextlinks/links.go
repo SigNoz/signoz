@@ -8,6 +8,7 @@ import (
 
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 func PrepareLinksToTraces(start, end time.Time, filterItems []v3.FilterItem) string {
@@ -178,8 +179,26 @@ func PrepareFilters(labels map[string]string, whereClauseItems []v3.FilterItem, 
 	for key, value := range labels {
 		if _, ok := added[key]; !ok {
 			// start by taking the attribute key from the keys map, if not present, create a new one
-			attributeKey, ok := keys[key]
-			if !ok {
+			var attributeKey v3.AttributeKey
+			var attrFound bool
+
+			// as of now this logic will only apply for logs
+			for _, tKey := range utils.GenerateEnrichmentKeys(v3.AttributeKey{Key: key}) {
+				if val, ok := keys[tKey]; ok {
+					attributeKey = val
+					attrFound = true
+					break
+				}
+			}
+
+			// check if the attribute key is directly present, as of now this will always be false for logs
+			// as for logs it will be satisfied in the condition above
+			if !attrFound {
+				attributeKey, attrFound = keys[key]
+			}
+
+			// if the attribute key is not present, create a new one
+			if !attrFound {
 				attributeKey = v3.AttributeKey{Key: key}
 			}
 

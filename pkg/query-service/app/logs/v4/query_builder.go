@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	"go.signoz.io/signoz/pkg/query-service/app/resource"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
@@ -33,6 +34,7 @@ const (
 	BODY                         = "body"
 	DISTRIBUTED_LOGS_V2          = "distributed_logs_v2"
 	DISTRIBUTED_LOGS_V2_RESOURCE = "distributed_logs_v2_resource"
+	DB_NAME                      = "signoz_logs"
 	NANOSECOND                   = 1000000000
 )
 
@@ -147,7 +149,7 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 			return fmt.Sprintf(logsOp, keyName, fmtVal), nil
 		case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 			// we also want to treat %, _ as literals for contains
-			val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value))
+			val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value), false)
 			// for body the contains is case insensitive
 			if keyName == BODY {
 				logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
@@ -253,9 +255,6 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 		} else if panelType == v3.PanelTypeList {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name := getClickhouseKey(attr)
-			if item.IsColumn {
-				name = "`" + name + "`"
-			}
 			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 		}
 	}
@@ -372,7 +371,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	// build the where clause for resource table
-	resourceSubQuery, err := buildResourceSubQuery(bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
+	resourceSubQuery, err := resource.BuildResourceSubQuery(DB_NAME, DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
 	if err != nil {
 		return "", err
 	}
@@ -437,8 +436,6 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	} else if panelType == v3.PanelTypeTable {
 		queryTmplPrefix =
 			"SELECT"
-		// step or aggregate interval is whole time period in case of table panel
-		step = (utils.GetEpochNanoSecs(end) - utils.GetEpochNanoSecs(start)) / NANOSECOND
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmplPrefix =
@@ -463,7 +460,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 	}
 
 	// no values for bucket start and end
-	resourceSubQuery, err := buildResourceSubQuery(0, 0, mq.Filters, mq.GroupBy, mq.AggregateAttribute, true)
+	resourceSubQuery, err := resource.BuildResourceSubQuery(DB_NAME, DISTRIBUTED_LOGS_V2_RESOURCE, 0, 0, mq.Filters, mq.GroupBy, mq.AggregateAttribute, true)
 	if err != nil {
 		return "", err
 	}
@@ -491,7 +488,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 }
 
 // PrepareLogsQuery prepares the query for logs
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.LogQBOptions) (string, error) {
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
 
 	// adjust the start and end time to the step interval
 	// NOTE: Disabling this as it's creating confusion between charts and actual data

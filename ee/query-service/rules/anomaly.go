@@ -61,6 +61,11 @@ func NewAnomalyRule(
 
 	zap.L().Info("creating new AnomalyRule", zap.String("id", id), zap.Any("opts", opts))
 
+	if p.RuleCondition.CompareOp == baserules.ValueIsBelow {
+		target := -1 * *p.RuleCondition.Target
+		p.RuleCondition.Target = &target
+	}
+
 	baseRule, err := baserules.NewBaseRule(id, p, reader, opts...)
 	if err != nil {
 		return nil, err
@@ -250,7 +255,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		}
 
 		lb := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel)
-		resultLabels := labels.NewBuilder(smpl.MetricOrig).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel).Labels()
+		resultLabels := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel).Labels()
 
 		for name, value := range r.Labels().Map() {
 			lb.Set(name, expand(value))
@@ -262,7 +267,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 
 		annotations := make(labels.Labels, 0, len(r.Annotations().Map()))
 		for name, value := range r.Annotations().Map() {
-			annotations = append(annotations, labels.Label{Name: common.NormalizeLabelName(name), Value: expand(value)})
+			annotations = append(annotations, labels.Label{Name: name, Value: expand(value)})
 		}
 		if smpl.IsMissing {
 			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())

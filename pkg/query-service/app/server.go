@@ -308,6 +308,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterIntegrationRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
+	api.RegisterInfraMetricsRoutes(r, am)
 	api.RegisterWebSocketPaths(r, am)
 	api.RegisterQueryRangeV4Routes(r, am)
 	api.RegisterMessagingQueuesRoutes(r, am)
@@ -383,6 +384,11 @@ func LogCommentEnricher(next http.Handler) http.Handler {
 			client = "api"
 		}
 
+		email, err := auth.GetEmailFromJwt(r.Context())
+		if err != nil {
+			zap.S().Errorf("error while getting email from jwt: %v", err)
+		}
+
 		kvs := map[string]string{
 			"path":        path,
 			"dashboardID": dashboardID,
@@ -391,6 +397,7 @@ func LogCommentEnricher(next http.Handler) http.Handler {
 			"client":      client,
 			"viewName":    viewName,
 			"servicesTab": tab,
+			"email":       email,
 		}
 
 		r = r.WithContext(context.WithValue(r.Context(), common.LogCommentKey, kvs))
@@ -742,7 +749,7 @@ func makeRulesManager(
 		RepoURL:          ruleRepoURL,
 		DBConn:           db,
 		Context:          context.Background(),
-		Logger:           nil,
+		Logger:           zap.L(),
 		DisableRules:     disableRules,
 		FeatureFlags:     fm,
 		Reader:           ch,

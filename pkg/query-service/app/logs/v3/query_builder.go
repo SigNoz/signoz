@@ -57,6 +57,9 @@ func GetClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
 	if columnType == v3.AttributeKeyTypeTag {
 		return "attributes"
 	}
+	if columnType == v3.AttributeKeyTypeInstrumentationScope {
+		return "scope"
+	}
 	return "resources"
 }
 
@@ -416,9 +419,6 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 		} else if panelType == v3.PanelTypeList {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name := getClickhouseColumnName(attr)
-			if item.IsColumn {
-				name = "`" + name + "`"
-			}
 			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 		}
 	}
@@ -496,7 +496,7 @@ func IsOrderByTs(orderBy []v3.OrderBy) bool {
 // PrepareLogsQuery prepares the query for logs
 // start and end are in epoch millisecond
 // step is in seconds
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.LogQBOptions) (string, error) {
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
 
 	// adjust the start and end time to the step interval
 	// NOTE: Disabling this as it's creating confusion between charts and actual data

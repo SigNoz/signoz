@@ -16,10 +16,12 @@ import {
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
+import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
+import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
@@ -141,6 +143,15 @@ function External(): JSX.Element {
 		],
 	});
 
+	const stepInterval = useMemo(
+		() =>
+			getStep({
+				end: store.getState().globalTime.maxTime,
+				inputFormat: 'ns',
+				start: store.getState().globalTime.minTime,
+			}),
+		[],
+	);
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
@@ -222,6 +233,7 @@ function External(): JSX.Element {
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery: errorApmToTraceQuery,
+							stepInterval,
 						})}
 					>
 						View Traces
@@ -257,6 +269,7 @@ function External(): JSX.Element {
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery,
+							stepInterval,
 						})}
 					>
 						View Traces
@@ -295,6 +308,7 @@ function External(): JSX.Element {
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery,
+							stepInterval,
 						})}
 					>
 						View Traces
@@ -330,6 +344,7 @@ function External(): JSX.Element {
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery,
+							stepInterval,
 						})}
 					>
 						View Traces

@@ -153,6 +153,7 @@ export enum LogsAggregatorOperator {
 }
 
 export enum QueryFunctionsTypes {
+	ANOMALY = 'anomaly',
 	CUTOFF_MIN = 'cutOffMin',
 	CUTOFF_MAX = 'cutOffMax',
 	CLAMP_MIN = 'clampMin',

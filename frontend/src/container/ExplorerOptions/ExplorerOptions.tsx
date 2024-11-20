@@ -24,6 +24,9 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
+import { useOptionsMenu } from 'container/OptionsMenu';
+import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
@@ -34,7 +37,7 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isEqual } from 'lodash-es';
 import {
 	Check,
 	ConciergeBell,
@@ -42,7 +45,6 @@ import {
 	PanelBottomClose,
 	Plus,
 	X,
-	XCircle,
 } from 'lucide-react';
 import {
 	CSSProperties,
@@ -58,7 +60,9 @@ import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
@@ -252,6 +256,46 @@ function ExplorerOptions({
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
+	const { options, handleOptionsChange } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
+		dataSource: DataSource.TRACES,
+		aggregateOperator: StringOperators.NOOP,
+	});
+
+	type ExtraData = {
+		selectColumns?: BaseAutocompleteData[];
+	};
+
+	const updateOrRestoreSelectColumns = (
+		key: string,
+		allViewsData: ViewProps[] | undefined,
+		options: OptionsQuery,
+		handleOptionsChange: (newQueryData: OptionsQuery) => void,
+	): void => {
+		const currentViewDetails = getViewDetailsUsingViewKey(key, allViewsData);
+		if (!currentViewDetails) {
+			return;
+		}
+
+		let extraData: ExtraData = {};
+		try {
+			extraData = JSON.parse(currentViewDetails?.extraData ?? '{}') as ExtraData;
+		} catch (error) {
+			console.error('Error parsing extraData:', error);
+		}
+
+		if (extraData.selectColumns?.length) {
+			handleOptionsChange({
+				...options,
+				selectColumns: extraData.selectColumns,
+			});
+		} else if (!isEqual(defaultTraceSelectedColumns, options.selectColumns)) {
+			handleOptionsChange({
+				...options,
+				selectColumns: defaultTraceSelectedColumns,
+			});
+		}
+	};
 	const onMenuItemSelectHandler = useCallback(
 		({ key }: { key: string }): void => {
 			const currentViewDetails = getViewDetailsUsingViewKey(
@@ -321,6 +365,13 @@ function ExplorerOptions({
 
 		updatePreservedViewInLocalStorage(option);
 
+		updateOrRestoreSelectColumns(
+			option.key,
+			viewsData?.data?.data,
+			options,
+			handleOptionsChange,
+		);
+
 		if (ref.current) {
 			ref.current.blur();
 		}
@@ -360,14 +411,20 @@ function ExplorerOptions({
 		viewName: newViewName || '',
 		compositeQuery,
 		sourcePage: sourcepage,
-		extraData: JSON.stringify({ color }),
+		extraData: JSON.stringify({
+			color,
+			selectColumns: options.selectColumns,
+		}),
 	});
 
 	const onSaveHandler = (): void => {
 		saveNewViewHandler({
 			compositeQuery,
 			handlePopOverClose: hideSaveViewModal,
-			extraData: JSON.stringify({ color }),
+			extraData: JSON.stringify({
+				color,
+				selectColumns: options.selectColumns,
+			}),
 			notifications,
 			panelType: panelType || PANEL_TYPES.LIST,
 			redirectWithQueryBuilderData,
@@ -457,7 +514,11 @@ function ExplorerOptions({
 
 	return (
 		<div className="explorer-options-container">
-			{isQueryUpdated && !isExplorerOptionHidden && (
+			{
+				// if a viewName is selected and the explorer options are not hidden then
+				// always show the clear option
+			}
+			{!isExplorerOptionHidden && viewName && (
 				<div
 					className={cx(
 						isEditDeleteSupported ? '' : 'hide-update',
@@ -471,18 +532,25 @@ function ExplorerOptions({
 							icon={<X size={14} />}
 						/>
 					</Tooltip>
-					<Divider
-						type="vertical"
-						className={isEditDeleteSupported ? '' : 'hidden'}
-					/>
-					<Tooltip title="Update this view" placement="top">
-						<Button
-							className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}
-							disabled={isViewUpdating}
-							onClick={onUpdateQueryHandler}
-							icon={<Disc3 size={14} />}
-						/>
-					</Tooltip>
+					{
+						// only show the update view option when the query is updated
+					}
+					{isQueryUpdated && (
+						<>
+							<Divider
+								type="vertical"
+								className={isEditDeleteSupported ? '' : 'hidden'}
+							/>
+							<Tooltip title="Update this view" placement="top">
+								<Button
+									className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}
+									disabled={isViewUpdating}
+									onClick={onUpdateQueryHandler}
+									icon={<Disc3 size={14} />}
+								/>
+							</Tooltip>
+						</>
+					)}
 				</div>
 			)}
 			{!isExplorerOptionHidden && (
@@ -506,10 +574,7 @@ function ExplorerOptions({
 							}}
 							dropdownStyle={dropdownStyle}
 							className="views-dropdown"
-							allowClear={{
-								clearIcon: <XCircle size={16} style={{ marginTop: '-3px' }} />,
-							}}
-							onClear={handleClearSelect}
+							allowClear={false}
 							ref={ref}
 						>
 							{viewsData?.data?.data?.map((view) => {
@@ -604,8 +669,8 @@ function ExplorerOptions({
 					</div>
 				</div>
 			)}
-
 			<ExplorerOptionsHideArea
+				viewName={viewName}
 				isExplorerOptionHidden={isExplorerOptionHidden}
 				setIsExplorerOptionHidden={setIsExplorerOptionHidden}
 				sourcepage={sourcepage}
@@ -614,7 +679,6 @@ function ExplorerOptions({
 				onUpdateQueryHandler={onUpdateQueryHandler}
 				isEditDeleteSupported={isEditDeleteSupported}
 			/>
-
 			<Modal
 				className="save-view-modal"
 				title={<span className="title">Save this view</span>}
@@ -647,7 +711,6 @@ function ExplorerOptions({
 					/>
 				</div>
 			</Modal>
-
 			<Modal
 				footer={null}
 				onOk={onCancel(false)}

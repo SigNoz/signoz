@@ -191,6 +191,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const pageTitle = t(routeKey);
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED ||
+		pathname === ROUTES.ONBOARDING ||
 		pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING ||
 		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
 		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
@@ -210,6 +211,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			setShowTrialExpiryBanner(true);
 		}
 	}, [licenseData, isFetching]);
+
+	useEffect(() => {
+		// after logging out hide the trial expiry banner
+		if (!isLoggedIn) {
+			setShowTrialExpiryBanner(false);
+		}
+	}, [isLoggedIn]);
 
 	const handleUpgrade = (): void => {
 		if (role === 'ADMIN') {

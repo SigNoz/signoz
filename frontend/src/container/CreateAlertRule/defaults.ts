@@ -4,12 +4,15 @@ import {
 	initialQueryPromQLData,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	AlertDef,
+	defaultAlgorithm,
 	defaultCompareOp,
 	defaultEvalWindow,
 	defaultMatchType,
+	defaultSeasonality,
 } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -46,16 +49,65 @@ export const alertDefaults: AlertDef = {
 		},
 		op: defaultCompareOp,
 		matchType: defaultMatchType,
+		algorithm: defaultAlgorithm,
+		seasonality: defaultSeasonality,
 	},
 	labels: {
 		severity: 'warning',
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
+};
+
+export const anamolyAlertDefaults: AlertDef = {
+	alertType: AlertTypes.METRICS_BASED_ALERT,
+	version: ENTITY_VERSION_V4,
+	ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
+	condition: {
+		compositeQuery: {
+			builderQueries: {
+				A: {
+					...initialQueryBuilderFormValuesMap.metrics,
+					functions: [
+						{
+							name: 'anomaly',
+							args: [],
+							namedArgs: { z_score_threshold: 3 },
+						},
+					],
+				},
+			},
+			promQueries: { A: initialQueryPromQLData },
+			chQueries: {
+				A: {
+					name: 'A',
+					query: ``,
+					legend: '',
+					disabled: false,
+				},
+			},
+			queryType: EQueryType.QUERY_BUILDER,
+			panelType: PANEL_TYPES.TIME_SERIES,
+			unit: undefined,
+		},
+		op: defaultCompareOp,
+		matchType: defaultMatchType,
+		algorithm: defaultAlgorithm,
+		seasonality: defaultSeasonality,
+		target: 3,
+	},
+	labels: {
+		severity: 'warning',
+	},
+	annotations: defaultAnnotations,
+	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const logAlertDefaults: AlertDef = {
 	alertType: AlertTypes.LOGS_BASED_ALERT,
+	version: ENTITY_VERSION_V4,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -82,10 +134,12 @@ export const logAlertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const traceAlertDefaults: AlertDef = {
 	alertType: AlertTypes.TRACES_BASED_ALERT,
+	version: ENTITY_VERSION_V4,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -112,10 +166,12 @@ export const traceAlertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const exceptionAlertDefaults: AlertDef = {
 	alertType: AlertTypes.EXCEPTIONS_BASED_ALERT,
+	version: ENTITY_VERSION_V4,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -142,9 +198,11 @@ export const exceptionAlertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+	alert: '',
 };
 
 export const ALERTS_VALUES_MAP: Record<AlertTypes, AlertDef> = {
+	[AlertTypes.ANOMALY_BASED_ALERT]: anamolyAlertDefaults,
 	[AlertTypes.METRICS_BASED_ALERT]: alertDefaults,
 	[AlertTypes.LOGS_BASED_ALERT]: logAlertDefaults,
 	[AlertTypes.TRACES_BASED_ALERT]: traceAlertDefaults,

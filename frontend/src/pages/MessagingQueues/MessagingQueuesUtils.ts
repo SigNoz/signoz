@@ -1,16 +1,26 @@
+import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
 import { History, Location } from 'history';
 import { isEmpty } from 'lodash-es';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
+import {
+	getConsumerLagDetails,
+	MessagingQueueServicePayload,
+	MessagingQueuesPayloadProps,
+} from './MQDetails/MQTables/getConsumerLagDetails';
+import { getPartitionLatencyDetails } from './MQDetails/MQTables/getPartitionLatencyDetails';
+import { getTopicThroughputDetails } from './MQDetails/MQTables/getTopicThroughputDetails';
+
 export const KAFKA_SETUP_DOC_LINK =
-	'https://github.com/shivanshuraj1333/kafka-opentelemetry-instrumentation/tree/master';
+	'https://signoz.io/docs/messaging-queues/kafka?utm_source=product&utm_medium=kafka-get-started';
 
 export function convertToTitleCase(text: string): string {
 	return text
@@ -24,14 +34,17 @@ export type RowData = {
 	[key: string]: string | number;
 };
 
-export enum ConsumerLagDetailType {
+export enum MessagingQueueServiceDetailType {
 	ConsumerDetails = 'consumer-details',
 	ProducerDetails = 'producer-details',
 	NetworkLatency = 'network-latency',
 	PartitionHostMetrics = 'partition-host-metric',
 }
 
-export const ConsumerLagDetailTitle: Record<ConsumerLagDetailType, string> = {
+export const ConsumerLagDetailTitle: Record<
+	MessagingQueueServiceDetailType,
+	string
+> = {
 	'consumer-details': 'Consumer Groups Details',
 	'producer-details': 'Producer Details',
 	'network-latency': 'Network Latency',
@@ -205,21 +218,177 @@ export function setSelectedTimelineQuery(
 	history.replace(generatedUrl);
 }
 
+export enum MessagingQueuesViewTypeOptions {
+	ConsumerLag = 'consumerLag',
+	PartitionLatency = 'partitionLatency',
+	ProducerLatency = 'producerLatency',
+	DropRate = 'dropRate',
+	MetricPage = 'metricPage',
+}
+
 export const MessagingQueuesViewType = {
 	consumerLag: {
 		label: 'Consumer Lag view',
-		value: 'consumerLag',
+		value: MessagingQueuesViewTypeOptions.ConsumerLag,
 	},
 	partitionLatency: {
 		label: 'Partition Latency view',
-		value: 'partitionLatency',
+		value: MessagingQueuesViewTypeOptions.PartitionLatency,
 	},
 	producerLatency: {
 		label: 'Producer Latency view',
-		value: 'producerLatency',
+		value: MessagingQueuesViewTypeOptions.ProducerLatency,
 	},
-	consumerLatency: {
-		label: 'Consumer latency view',
-		value: 'consumerLatency',
+	dropRate: {
+		label: 'Drop Rate view',
+		value: MessagingQueuesViewTypeOptions.DropRate,
+	},
+	metricPage: {
+		label: 'Metric view',
+		value: MessagingQueuesViewTypeOptions.MetricPage,
 	},
 };
+
+export function setConfigDetail(
+	urlQuery: URLSearchParams,
+	location: Location<unknown>,
+	history: History<unknown>,
+	paramsToSet?: {
+		[key: string]: string;
+	},
+): void {
+	// remove "key" and its value from the paramsToSet object
+	const { key, ...restParamsToSet } = paramsToSet || {};
+
+	if (!isEmpty(restParamsToSet)) {
+		const configDetail = {
+			...restParamsToSet,
+		};
+		urlQuery.set(
+			QueryParams.configDetail,
+			encodeURIComponent(JSON.stringify(configDetail)),
+		);
+	} else {
+		urlQuery.delete(QueryParams.configDetail);
+	}
+	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+	history.replace(generatedUrl);
+}
+
+export enum ProducerLatencyOptions {
+	Producers = 'Producers',
+	Consumers = 'Consumers',
+}
+
+interface MetaDataAndAPI {
+	tableApiPayload: MessagingQueueServicePayload;
+	tableApi: (
+		props: MessagingQueueServicePayload,
+	) => Promise<
+		SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
+	>;
+}
+interface MetaDataAndAPIPerView {
+	detailType: MessagingQueueServiceDetailType;
+	selectedTimelineQuery: SelectedTimelineQuery;
+	configDetails?: {
+		[key: string]: string;
+	};
+	minTime: number;
+	maxTime: number;
+}
+
+export const getMetaDataAndAPIPerView = (
+	metaDataProps: MetaDataAndAPIPerView,
+): Record<string, MetaDataAndAPI> => {
+	const {
+		detailType,
+		minTime,
+		maxTime,
+		selectedTimelineQuery,
+		configDetails,
+	} = metaDataProps;
+	return {
+		[MessagingQueuesViewType.consumerLag.value]: {
+			tableApiPayload: {
+				start: (selectedTimelineQuery?.start || 0) * 1e9,
+				end: (selectedTimelineQuery?.end || 0) * 1e9,
+				variables: {
+					partition: selectedTimelineQuery?.partition,
+					topic: selectedTimelineQuery?.topic,
+					consumer_group: selectedTimelineQuery?.group,
+				},
+				detailType,
+			},
+			tableApi: getConsumerLagDetails,
+		},
+		[MessagingQueuesViewType.partitionLatency.value]: {
+			tableApiPayload: {
+				start: minTime,
+				end: maxTime,
+				variables: {
+					partition: configDetails?.partition,
+					topic: configDetails?.topic,
+					consumer_group: configDetails?.group,
+				},
+				detailType,
+			},
+			tableApi: getPartitionLatencyDetails,
+		},
+		[MessagingQueuesViewType.producerLatency.value]: {
+			tableApiPayload: {
+				start: minTime,
+				end: maxTime,
+				variables: {
+					partition: configDetails?.partition,
+					topic: configDetails?.topic,
+					service_name: configDetails?.service_name,
+				},
+				detailType,
+			},
+			tableApi: getTopicThroughputDetails,
+		},
+	};
+};
+
+interface OnboardingStatusAttributeData {
+	overallStatus: string;
+	allAvailableAttributes: string[];
+	attributeDataWithError: { attributeName: string; errorMsg: string }[];
+}
+
+export const getAttributeDataFromOnboardingStatus = (
+	onboardingStatus?: OnboardingStatusResponse | null,
+): OnboardingStatusAttributeData => {
+	const allAvailableAttributes: string[] = [];
+	const attributeDataWithError: {
+		attributeName: string;
+		errorMsg: string;
+	}[] = [];
+
+	if (onboardingStatus?.data && !isEmpty(onboardingStatus?.data)) {
+		onboardingStatus.data.forEach((status) => {
+			if (status.attribute) {
+				allAvailableAttributes.push(status.attribute);
+				if (status.status === '0') {
+					attributeDataWithError.push({
+						attributeName: status.attribute,
+						errorMsg: status.error_message || '',
+					});
+				}
+			}
+		});
+	}
+
+	return {
+		overallStatus: attributeDataWithError.length ? 'error' : 'success',
+		allAvailableAttributes,
+		attributeDataWithError,
+	};
+};
+
+export enum MessagingQueueHealthCheckService {
+	Consumers = 'consumers',
+	Producers = 'producers',
+	Kafka = 'kafka',
+}

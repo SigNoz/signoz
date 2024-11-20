@@ -49,7 +49,8 @@ func GetLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3
 				if pass {
 					continue
 				}
-				data[selectedField.Name] = v3.AttributeKey{
+				name := selectedField.Name + "##" + fieldType.String() + "##" + strings.ToLower(selectedField.DataType)
+				data[name] = v3.AttributeKey{
 					Key:      selectedField.Name,
 					Type:     fieldType,
 					DataType: v3.AttributeKeyDataType(strings.ToLower(selectedField.DataType)),
@@ -61,12 +62,14 @@ func GetLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3
 				if pass {
 					continue
 				}
-				data[interestingField.Name] = v3.AttributeKey{
+				name := interestingField.Name + "##" + fieldType.String() + "##" + strings.ToLower(interestingField.DataType)
+				data[name] = v3.AttributeKey{
 					Key:      interestingField.Name,
 					Type:     fieldType,
 					DataType: v3.AttributeKeyDataType(strings.ToLower(interestingField.DataType)),
 					IsColumn: false,
 				}
+
 			}
 			break
 		}

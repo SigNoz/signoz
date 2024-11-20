@@ -59,6 +59,6 @@ func makeTestExporter(exporterId string) (exporter.Logs, error) {
 	confmap.NewFromStringMap(map[string]any{"id": exporterId}).Unmarshal(&cfg)
 
 	return factory.CreateLogsExporter(
-		context.Background(), exporter.CreateSettings{}, cfg,
+		context.Background(), exporter.Settings{}, cfg,
 	)
 }

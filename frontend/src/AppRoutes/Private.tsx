@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import getLocalStorageApi from 'api/browser/localstorage/get';
+import getOrgUser from 'api/user/getOrgUser';
 import loginApi from 'api/user/login';
 import { Logout } from 'api/utils';
 import Spinner from 'components/Spinner';
@@ -8,8 +9,10 @@ import ROUTES from 'constants/routes';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { ReactChild, useEffect, useMemo } from 'react';
+import { isEmpty, isNull } from 'lodash-es';
+import { ReactChild, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { matchPath, Redirect, useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
@@ -17,7 +20,9 @@ import { AppState } from 'store/reducers';
 import { getInitialUserTokenRefreshToken } from 'store/utils';
 import AppActions from 'types/actions';
 import { UPDATE_USER_IS_FETCH } from 'types/actions/app';
+import { Organization } from 'types/api/user/getOrganization';
 import AppReducer from 'types/reducer/app';
+import { isCloudUser } from 'utils/app';
 import { routePermission } from 'utils/permission';
 
 import routes, {
@@ -30,6 +35,19 @@ import afterLogin from './utils';
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const location = useLocation();
 	const { pathname } = location;
+
+	const [isLoading, setIsLoading] = useState<boolean>(true);
+
+	const {
+		org,
+		orgPreferences,
+		user,
+		role,
+		isUserFetching,
+		isUserFetchingError,
+		isLoggedIn: isLoggedInState,
+		isFetchingOrgPreferences,
+	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const mapRoutes = useMemo(
 		() =>
@@ -44,18 +62,23 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		[pathname],
 	);
 
+	const isOnboardingComplete = useMemo(
+		() =>
+			orgPreferences?.find(
+				(preference: Record<string, any>) => preference.key === 'ORG_ONBOARDING',
+			)?.value,
+		[orgPreferences],
+	);
+
 	const {
 		data: licensesData,
 		isFetching: isFetchingLicensesData,
 	} = useLicense();
 
-	const {
-		isUserFetching,
-		isUserFetchingError,
-		isLoggedIn: isLoggedInState,
-	} = useSelector<AppState, AppReducer>((state) => state.app);
-
 	const { t } = useTranslation(['common']);
+
+	const isCloudUserVal = isCloudUser();
+
 	const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -65,6 +88,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const currentRoute = mapRoutes.get('current');
 
 	const isOldRoute = oldRoutes.indexOf(pathname) > -1;
+
+	const [orgData, setOrgData] = useState<Organization | undefined>(undefined);
 
 	const isLocalStorageLoggedIn =
 		getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true';
@@ -78,6 +103,68 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		});
 		if (!isLoggedIn) {
 			history.push(ROUTES.LOGIN, { from: pathname });
+		}
+	};
+
+	const { data: orgUsers, isLoading: isLoadingOrgUsers } = useQuery({
+		queryFn: () => {
+			if (orgData && orgData.id !== undefined) {
+				return getOrgUser({
+					orgId: orgData.id,
+				});
+			}
+			return undefined;
+		},
+		queryKey: ['getOrgUser'],
+		enabled: !isEmpty(orgData),
+	});
+
+	const checkFirstTimeUser = (): boolean => {
+		const users = orgUsers?.payload || [];
+
+		const remainingUsers = users.filter(
+			(user) => user.email !== 'admin@signoz.cloud',
+		);
+
+		return remainingUsers.length === 1;
+	};
+
+	// Check if the onboarding should be shown based on the org users and onboarding completion status, wait for org users and preferences to load
+	const shouldShowOnboarding = (): boolean => {
+		// Only run this effect if the org users and preferences are loaded
+
+		if (!isLoadingOrgUsers && !isFetchingOrgPreferences) {
+			const isFirstUser = checkFirstTimeUser();
+
+			// Redirect to get started if it's not the first user or if the onboarding is complete
+			return isFirstUser && !isOnboardingComplete;
+		}
+
+		return false;
+	};
+
+	const handleRedirectForOrgOnboarding = (key: string): void => {
+		if (
+			isLoggedInState &&
+			isCloudUserVal &&
+			!isFetchingOrgPreferences &&
+			!isLoadingOrgUsers &&
+			!isEmpty(orgUsers?.payload) &&
+			!isNull(orgPreferences)
+		) {
+			if (key === 'ONBOARDING' && isOnboardingComplete) {
+				history.push(ROUTES.APPLICATION);
+			}
+
+			const isFirstTimeUser = checkFirstTimeUser();
+
+			if (isFirstTimeUser && !isOnboardingComplete) {
+				history.push(ROUTES.ONBOARDING);
+			}
+		}
+
+		if (!isCloudUserVal && key === 'ONBOARDING') {
+			history.push(ROUTES.APPLICATION);
 		}
 	};
 
@@ -101,6 +188,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 					response.payload.accessJwt,
 					response.payload.refreshJwt,
 				);
+
+				handleRedirectForOrgOnboarding(key);
 
 				if (
 					userResponse &&
@@ -129,7 +218,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		) {
 			handleUserLoginIfTokenPresent(key);
 		} else {
-			// user does have localstorage values
+			handleRedirectForOrgOnboarding(key);
 
 			navigateToLoginIfNotLoggedIn(isLocalStorageLoggedIn);
 		}
@@ -160,6 +249,45 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		}
 	}, [isFetchingLicensesData]);
 
+	useEffect(() => {
+		if (org && org.length > 0 && org[0].id !== undefined) {
+			setOrgData(org[0]);
+		}
+	}, [org]);
+
+	const handleRouting = (): void => {
+		const showOrgOnboarding = shouldShowOnboarding();
+
+		if (showOrgOnboarding && !isOnboardingComplete && isCloudUserVal) {
+			history.push(ROUTES.ONBOARDING);
+		} else {
+			history.push(ROUTES.APPLICATION);
+		}
+	};
+
+	useEffect(() => {
+		const { isPrivate } = currentRoute || {
+			isPrivate: false,
+		};
+
+		if (isLoggedInState && role && role !== 'ADMIN') {
+			setIsLoading(false);
+		}
+
+		if (!isPrivate) {
+			setIsLoading(false);
+		}
+
+		if (
+			!isEmpty(user) &&
+			!isFetchingOrgPreferences &&
+			!isEmpty(orgUsers?.payload) &&
+			!isNull(orgPreferences)
+		) {
+			setIsLoading(false);
+		}
+	}, [currentRoute, user, role, orgUsers, orgPreferences]);
+
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		(async (): Promise<void> => {
@@ -181,9 +309,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 						handlePrivateRoutes(key);
 					} else {
 						// no need to fetch the user and make user fetching false
-
 						if (getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true') {
-							history.push(ROUTES.APPLICATION);
+							handleRouting();
 						}
 						dispatch({
 							type: UPDATE_USER_IS_FETCH,
@@ -195,7 +322,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				} else if (pathname === ROUTES.HOME_PAGE) {
 					// routing to application page over root page
 					if (isLoggedInState) {
-						history.push(ROUTES.APPLICATION);
+						handleRouting();
 					} else {
 						navigateToLoginIfNotLoggedIn();
 					}
@@ -208,13 +335,20 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				history.push(ROUTES.SOMETHING_WENT_WRONG);
 			}
 		})();
-	}, [dispatch, isLoggedInState, currentRoute, licensesData]);
+	}, [
+		dispatch,
+		isLoggedInState,
+		currentRoute,
+		licensesData,
+		orgUsers,
+		orgPreferences,
+	]);
 
 	if (isUserFetchingError) {
 		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
 	}
 
-	if (isUserFetching) {
+	if (isUserFetching || isLoading) {
 		return <Spinner tip="Loading..." />;
 	}
 

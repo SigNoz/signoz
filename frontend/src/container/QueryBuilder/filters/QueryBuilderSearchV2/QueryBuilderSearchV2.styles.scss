@@ -260,6 +260,20 @@
 					background: rgba(189, 153, 121, 0.1);
 				}
 			}
+
+			&.scope {
+				border: 1px solid rgba(113, 144, 249, 0.2);
+
+				.ant-typography {
+					color: var(--bg-robin-400);
+					background: rgba(113, 144, 249, 0.1);
+					font-size: 14px;
+				}
+
+				.ant-tag-close-icon {
+					background: rgba(113, 144, 249, 0.1);
+				}
+			}
 		}
 	}
 }
@@ -334,8 +348,8 @@
 
 		.qb-search-bar-tokenised-tags {
 			.ant-tag {
-				border: 1px solid var(--bg-slate-100);
 				background: var(--bg-vanilla-300);
+				border: 1px solid var(--bg-slate-100);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
 				.ant-typography {

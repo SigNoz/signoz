@@ -162,20 +162,15 @@ function RawLogView({
 			$isDarkMode={isDarkMode}
 			$isReadOnly={isReadOnly}
 			$isHightlightedLog={isHighlighted}
-			$isActiveLog={isActiveLog}
+			$isActiveLog={
+				activeLog?.id === data.id || activeContextLog?.id === data.id || isActiveLog
+			}
+			$logType={logType}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 			fontSize={fontSize}
 		>
-			<LogStateIndicator
-				type={logType}
-				isActive={
-					activeLog?.id === data.id ||
-					activeContextLog?.id === data.id ||
-					isActiveLog
-				}
-				fontSize={fontSize}
-			/>
+			<LogStateIndicator type={logType} fontSize={fontSize} />
 
 			<RawLogContent
 				$isReadOnly={isReadOnly}

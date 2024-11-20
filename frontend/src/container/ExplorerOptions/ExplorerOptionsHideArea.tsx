@@ -10,6 +10,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { setExplorerToolBarVisibility } from './utils';
 
 interface DroppableAreaProps {
+	viewName: string;
 	isQueryUpdated: boolean;
 	isExplorerOptionHidden?: boolean;
 	sourcepage: DataSource;
@@ -20,6 +21,7 @@ interface DroppableAreaProps {
 }
 
 function ExplorerOptionsHideArea({
+	viewName,
 	isQueryUpdated,
 	isExplorerOptionHidden,
 	sourcepage,
@@ -39,7 +41,7 @@ function ExplorerOptionsHideArea({
 		<div className="explorer-option-droppable-container">
 			{isExplorerOptionHidden && (
 				<>
-					{isQueryUpdated && (
+					{viewName && (
 						<div className="explorer-actions-btn">
 							<Tooltip title="Clear this view">
 								<Button
@@ -49,7 +51,7 @@ function ExplorerOptionsHideArea({
 									icon={<X size={14} color={Color.BG_INK_500} />}
 								/>
 							</Tooltip>
-							{isEditDeleteSupported && (
+							{isEditDeleteSupported && isQueryUpdated && (
 								<Tooltip title="Update this View">
 									<Button
 										onClick={onUpdateQueryHandler}

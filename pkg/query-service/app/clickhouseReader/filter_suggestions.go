@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz-otel-collector/exporter/clickhouselogsexporter/logsv2"
+	"github.com/SigNoz/signoz-otel-collector/utils/fingerprint"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
@@ -260,7 +260,7 @@ func newRankingStrategy() attribRankingStrategy {
 	}
 
 	// Synonyms of interesting attributes should come next
-	resourceHierarchy := logsv2.ResourceHierarchy()
+	resourceHierarchy := fingerprint.ResourceHierarchy()
 	for _, attr := range []string{
 		"service.name",
 		"deployment.environment",

@@ -152,6 +152,18 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3,
 			if minStep := common.MinAllowedStepInterval(start, end); q.StepInterval < minStep {
 				q.StepInterval = minStep
 			}
+
+			q.SetShiftByFromFunc()
+
+			if q.DataSource == v3.DataSourceMetrics && constants.UseMetricsPreAggregation() {
+				// if the time range is greater than 1 day, and less than 1 week set the step interval to be multiple of 5 minutes
+				// if the time range is greater than 1 week, set the step interval to be multiple of 30 mins
+				if end-start >= 24*time.Hour.Milliseconds() && end-start < 7*24*time.Hour.Milliseconds() {
+					q.StepInterval = int64(math.Round(float64(q.StepInterval)/300)) * 300
+				} else if end-start >= 7*24*time.Hour.Milliseconds() {
+					q.StepInterval = int64(math.Round(float64(q.StepInterval)/1800)) * 1800
+				}
+			}
 		}
 	}
 
@@ -401,7 +413,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		}
 
 		lb := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel)
-		resultLabels := labels.NewBuilder(smpl.MetricOrig).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel).Labels()
+		resultLabels := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel).Labels()
 
 		for name, value := range r.labels.Map() {
 			lb.Set(name, expand(value))
@@ -413,7 +425,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 		annotations := make(labels.Labels, 0, len(r.annotations.Map()))
 		for name, value := range r.annotations.Map() {
-			annotations = append(annotations, labels.Label{Name: common.NormalizeLabelName(name), Value: expand(value)})
+			annotations = append(annotations, labels.Label{Name: name, Value: expand(value)})
 		}
 		if smpl.IsMissing {
 			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
@@ -423,13 +435,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		// is used alert grouping, and we want to group alerts with the same
 		// label set, but different timestamps, together.
 		if r.typ == AlertTypeTraces {
-			link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
+			link := r.prepareLinksToTraces(ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
 				zap.L().Info("adding traces link to annotations", zap.String("link", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)))
 				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
 			}
 		} else if r.typ == AlertTypeLogs {
-			link := r.prepareLinksToLogs(ts, smpl.MetricOrig)
+			link := r.prepareLinksToLogs(ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
 				zap.L().Info("adding logs link to annotations", zap.String("link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)))
 				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})

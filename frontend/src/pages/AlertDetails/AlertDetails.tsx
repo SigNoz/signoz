@@ -1,6 +1,7 @@
 import './AlertDetails.styles.scss';
 
 import { Breadcrumb, Button, Divider } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
 import NotFound from 'components/NotFound';
 import RouteTab from 'components/RouteTab';
@@ -87,6 +88,12 @@ function AlertDetails(): JSX.Element {
 		return <NotFound />;
 	}
 
+	const handleTabChange = (route: string): void => {
+		if (route === ROUTES.ALERT_HISTORY) {
+			logEvent('Alert History tab: Visited', { ruleId });
+		}
+	};
+
 	return (
 		<div className="alert-details">
 			<Breadcrumb
@@ -113,6 +120,7 @@ function AlertDetails(): JSX.Element {
 					routes={routes}
 					activeKey={pathname}
 					history={history}
+					onChangeHandler={handleTabChange}
 					tabBarExtraContent={<Filters />}
 				/>
 			</div>

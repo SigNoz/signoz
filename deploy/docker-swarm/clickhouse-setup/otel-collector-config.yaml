@@ -66,28 +66,6 @@ processors:
     # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
     detectors: [env, system] # include ec2 for AWS, gcp for GCP and azure for Azure.
     timeout: 2s
-  signozspanmetrics/cumulative:
-    metrics_exporter: clickhousemetricswrite
-    latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
-    dimensions_cache_size: 100000
-    dimensions:
-      - name: service.namespace
-        default: default
-      - name: deployment.environment
-        default: default
-      # This is added to ensure the uniqueness of the timeseries
-      # Otherwise, identical timeseries produced by multiple replicas of
-      # collectors result in incorrect APM metrics
-      - name: signoz.collector.id
-      - name: service.version
-      - name: browser.platform
-      - name: browser.mobile
-      - name: k8s.cluster.name
-      - name: k8s.node.name
-      - name: k8s.namespace.name
-      - name: host.name
-      - name: host.type
-      - name: container.name
   # memory_limiter:
   #   # 80% of maximum memory up to 2G
   #   limit_mib: 1500
@@ -131,18 +109,18 @@ processors:
 exporters:
   clickhousetraces:
     datasource: tcp://clickhouse:9000/signoz_traces
-    docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
-    low_cardinal_exception_grouping: ${LOW_CARDINAL_EXCEPTION_GROUPING}
+    low_cardinal_exception_grouping: ${env:LOW_CARDINAL_EXCEPTION_GROUPING}
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/signoz_metrics
     resource_to_telemetry_conversion:
       enabled: true
   clickhousemetricswrite/prometheus:
     endpoint: tcp://clickhouse:9000/signoz_metrics
+  clickhousemetricswritev2:
+    dsn: tcp://clickhouse:9000/signoz_metrics
   # logging: {}
   clickhouselogsexporter:
     dsn: tcp://clickhouse:9000/signoz_logs
-    docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
     timeout: 10s
     use_new_schema: true
 extensions:
@@ -163,20 +141,20 @@ service:
   pipelines:
     traces:
       receivers: [jaeger, otlp]
-      processors: [signozspanmetrics/cumulative, signozspanmetrics/delta, batch]
+      processors: [signozspanmetrics/delta, batch]
       exporters: [clickhousetraces]
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [clickhousemetricswrite]
-    metrics/generic:
+      exporters: [clickhousemetricswrite, clickhousemetricswritev2]
+    metrics/hostmetrics:
       receivers: [hostmetrics]
       processors: [resourcedetection, batch]
-      exporters: [clickhousemetricswrite]
+      exporters: [clickhousemetricswrite, clickhousemetricswritev2]
     metrics/prometheus:
       receivers: [prometheus]
       processors: [batch]
-      exporters: [clickhousemetricswrite/prometheus]
+      exporters: [clickhousemetricswrite/prometheus, clickhousemetricswritev2]
     logs:
       receivers: [otlp, tcplog/docker]
       processors: [batch]
