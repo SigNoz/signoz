@@ -718,3 +718,17 @@ func init() {
 }
 
 const TRACE_V4_MAX_PAGINATION_LIMIT = 10000
+
+const TraceResourceBucketFilterWithServiceName = `
+					AND (
+						resource_fingerprint GLOBAL IN 
+							(
+								SELECT fingerprint FROM %s.%s 
+								WHERE  
+									seen_at_ts_bucket_start >= @start_bucket AND seen_at_ts_bucket_start <= @end_bucket AND 
+									simpleJSONExtractString(labels, 'service.name') = @serviceName AND  
+									labels like @labelFilter
+							)
+						)
+					AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket
+				`
