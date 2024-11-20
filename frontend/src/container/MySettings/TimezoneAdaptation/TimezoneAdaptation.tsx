@@ -3,20 +3,26 @@ import './TimezoneAdaptation.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Switch } from 'antd';
 import { Delete } from 'lucide-react';
-import { useState } from 'react';
+import { useTimezone } from 'providers/Timezone';
+import { useMemo, useState } from 'react';
 
 function TimezoneAdaptation(): JSX.Element {
-	// TODO(shaheer): Get this from user's preferences
-	const [override, setOverride] = useState('UTC + 5:30');
+	const { timezone, browserTimezone, updateTimezone } = useTimezone();
+
+	const isTimezoneOverridden = useMemo(
+		() => timezone?.offset !== browserTimezone.offset,
+		[timezone, browserTimezone],
+	);
+
 	const [isAdaptationEnabled, setIsAdaptationEnabled] = useState(true);
 
 	const getSwitchStyles = (): React.CSSProperties => ({
 		backgroundColor:
-			isAdaptationEnabled && override.length ? Color.BG_AMBER_400 : undefined,
+			isAdaptationEnabled && isTimezoneOverridden ? Color.BG_AMBER_400 : undefined,
 	});
 
 	const handleOverrideClear = (): void => {
-		setOverride('');
+		updateTimezone(browserTimezone);
 	};
 
 	return (
@@ -38,11 +44,11 @@ function TimezoneAdaptation(): JSX.Element {
 				<div className="timezone-adaption__note-text-container">
 					<span className="timezone-adaption__bullet">•</span>
 					<span className="timezone-adaption__note-text">
-						{override.length ? (
+						{isTimezoneOverridden ? (
 							<>
 								Your current timezone is overridden to
 								<span className="timezone-adaption__note-text-overridden">
-									{override}
+									{timezone?.offset}
 								</span>
 							</>
 						) : (
@@ -54,7 +60,7 @@ function TimezoneAdaptation(): JSX.Element {
 					</span>
 				</div>
 
-				{!!override.length && (
+				{!!isTimezoneOverridden && (
 					<button
 						type="button"
 						className="timezone-adaption__clear-override"

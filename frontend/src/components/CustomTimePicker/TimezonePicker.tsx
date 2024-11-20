@@ -4,17 +4,15 @@ import { Color } from '@signozhq/design-tokens';
 import cx from 'classnames';
 import { TimezonePickerShortcuts } from 'constants/shortcuts/TimezonePickerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
-import history from 'lib/history';
 import { Check, Search } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
 	SetStateAction,
 	useCallback,
 	useEffect,
-	useMemo,
 	useState,
 } from 'react';
-import { useLocation } from 'react-use';
 
 import { Timezone, TIMEZONE_DATA } from './timezoneUtils';
 
@@ -94,13 +92,10 @@ function TimezonePicker({
 	setActiveView,
 	setIsOpen,
 }: TimezonePickerProps): JSX.Element {
-	const { search } = useLocation();
-	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
-
 	const [searchTerm, setSearchTerm] = useState('');
-	// TODO(shaheer): get this from user's selected time zone
+	const { timezone, updateTimezone } = useTimezone();
 	const [selectedTimezone, setSelectedTimezone] = useState<string>(
-		searchParams.get('timezone') ?? TIMEZONE_DATA[0].name,
+		timezone?.name ?? TIMEZONE_DATA[0].name,
 	);
 
 	const getFilteredTimezones = useCallback((searchTerm: string): Timezone[] => {
@@ -120,12 +115,11 @@ function TimezonePicker({
 	const handleTimezoneSelect = useCallback(
 		(timezone: Timezone) => {
 			setSelectedTimezone(timezone.name);
-			searchParams.set('timezone', timezone.value);
-			history.push({ search: searchParams.toString() });
+			updateTimezone(timezone);
 			handleCloseTimezonePicker();
 			setIsOpen(false);
 		},
-		[handleCloseTimezonePicker, searchParams, setIsOpen],
+		[handleCloseTimezonePicker, setIsOpen, updateTimezone],
 	);
 
 	// Register keyboard shortcuts

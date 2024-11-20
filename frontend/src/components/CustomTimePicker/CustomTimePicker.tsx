@@ -15,6 +15,7 @@ import { isValidTimeFormat } from 'lib/getMinMax';
 import { defaultTo, isFunction, noop } from 'lodash-es';
 import debounce from 'lodash-es/debounce';
 import { CheckCircle, ChevronDown, Clock } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 import {
 	ChangeEvent,
 	Dispatch,
@@ -27,9 +28,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import useUrlQuery from '../../hooks/useUrlQuery';
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
-import { getTimezoneObjectByTimezoneString } from './timezoneUtils';
 
 const maxAllowedMinTimeInMonths = 6;
 type ViewType = 'datetime' | 'timezone';
@@ -79,8 +78,6 @@ function CustomTimePicker({
 		setSelectedTimePlaceholderValue,
 	] = useState('Select / Enter Time Range');
 
-	const urlQuery = useUrlQuery();
-
 	const [inputValue, setInputValue] = useState('');
 	const [inputStatus, setInputStatus] = useState<'' | 'error' | 'success'>('');
 	const [inputErrorMessage, setInputErrorMessage] = useState<string | null>(
@@ -91,14 +88,12 @@ function CustomTimePicker({
 
 	const [activeView, setActiveView] = useState<ViewType>(DEFAULT_VIEW);
 
-	const activeTimezoneOffset = useMemo(() => {
-		const timezone = urlQuery.get('timezone');
-		if (timezone) {
-			const timezoneObj = getTimezoneObjectByTimezoneString(timezone);
-			return timezoneObj?.offset;
-		}
-		return '';
-	}, [urlQuery]);
+	const { timezone, browserTimezone } = useTimezone();
+	const activeTimezoneOffset = timezone?.offset;
+	const isTimezoneOverridden = useMemo(
+		() => timezone?.offset !== browserTimezone.offset,
+		[timezone, browserTimezone],
+	);
 
 	const handleViewChange = useCallback(
 		(newView: 'timezone' | 'datetime'): void => {
@@ -349,7 +344,7 @@ function CustomTimePicker({
 					}
 					suffix={
 						<>
-							{!!activeTimezoneOffset && (
+							{!!isTimezoneOverridden && activeTimezoneOffset && (
 								<div
 									className="timezone-badge"
 									onClick={(e): void => {
