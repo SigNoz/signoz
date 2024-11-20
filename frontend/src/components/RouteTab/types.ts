@@ -11,6 +11,6 @@ export type TabRoutes = {
 export interface RouteTabProps {
 	routes: TabRoutes[];
 	activeKey: TabsProps['activeKey'];
-	onChangeHandler?: VoidFunction;
+	onChangeHandler?: (key: string) => void;
 	history: History<unknown>;
 }
