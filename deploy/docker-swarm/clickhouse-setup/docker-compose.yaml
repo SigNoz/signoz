@@ -243,7 +243,9 @@ services:
           condition: on-failure
           delay: 5s
       command:
-        - "--dsn=tcp://clickhouse:9000"
+        - "sync" 
+        - "--dsn=tcp://clickhouse:9000" 
+        - "--up=" 
       depends_on:
         - clickhouse
         # - clickhouse-2
