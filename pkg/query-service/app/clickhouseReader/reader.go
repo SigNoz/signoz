@@ -714,6 +714,15 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 		WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
 		r.TraceDB, r.traceTableName,
 	)
+	if r.useTraceNewSchema {
+		resourceBucketFilter := fmt.Sprintf(constants.TraceResourceBucketFilterWithServiceName, r.TraceDB, r.traceResourceTableV3)
+		query += resourceBucketFilter
+		namedArgs = append(namedArgs,
+			clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
+			clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
+			clickhouse.Named("labelFilter", "%service.name%"+strings.ToLower(utils.QuoteEscapedStringForContains(queryParams.ServiceName, true))+"%"),
+		)
+	}
 	args := []interface{}{}
 	args = append(args, namedArgs...)
 
@@ -749,11 +758,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 	if r.useTraceNewSchema {
 		resourceBucketFilter := fmt.Sprintf(constants.TraceResourceBucketFilterWithServiceName, r.TraceDB, r.traceResourceTableV3)
 		query += resourceBucketFilter
-		namedArgs = append(namedArgs,
-			clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
-			clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
-			clickhouse.Named("labelFilter", "%service.name%"+strings.ToLower(utils.QuoteEscapedStringForContains(queryParams.ServiceName, true))+"%"),
-		)
+		// args are already added in namedArgs
 	}
 	args = []interface{}{}
 	args = append(args, namedArgs...)
