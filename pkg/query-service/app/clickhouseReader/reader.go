@@ -4364,7 +4364,7 @@ func (r *ClickHouseReader) GetSpanAttributeKeysV2(ctx context.Context) (map[stri
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
 			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn(r.useLogsNewSchema, statements[0].Statement, tagType, tagKey, dataType),
+			IsColumn: isColumn(true, statements[0].Statement, tagType, tagKey, dataType),
 		}
 
 		name := tagKey + "##" + tagType + "##" + strings.ToLower(dataType)
