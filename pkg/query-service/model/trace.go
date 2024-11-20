@@ -15,6 +15,7 @@ type SpanItemV2 struct {
 	Attributes_string map[string]string  `ch:"attributes_string"`
 	Attributes_number map[string]float64 `ch:"attributes_number"`
 	Attributes_bool   map[string]bool    `ch:"attributes_bool"`
+	Resources_string  map[string]string  `ch:"resources_string"`
 	Events            []string           `ch:"events"`
 	StatusMessage     string             `ch:"status_message"`
 	StatusCodeString  string             `ch:"status_code_string"`
