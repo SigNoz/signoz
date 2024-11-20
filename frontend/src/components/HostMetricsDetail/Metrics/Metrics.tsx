@@ -16,56 +16,38 @@ import {
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import GetMinMax from 'lib/getMinMax';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
+interface MetricsTabProps {
+	timeRange: {
+		startTime: number;
+		endTime: number;
+	};
+	isModalTimeSelection: boolean;
+	handleTimeChange: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	) => void;
+	selectedInterval: Time;
+
+	hostName: string;
+}
+
 function Metrics({
+	selectedInterval,
 	hostName,
 	timeRange,
+	handleTimeChange,
 	isModalTimeSelection,
-}: {
-	hostName: string;
-	timeRange: { startTime: number; endTime: number };
-	isModalTimeSelection: boolean;
-}): JSX.Element {
-	const [modalTimeRange, setModalTimeRange] = useState({
-		startTime: timeRange.startTime / 1000,
-		endTime: timeRange.endTime / 1000,
-	});
-	const [selectedInterval, setSelectedInterval] = useState<Time>('5m');
-
-	const handleTimeChange = useCallback(
-		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
-			setSelectedInterval(interval as Time);
-			if (interval === 'custom' && dateTimeRange) {
-				setModalTimeRange({
-					startTime: Math.floor(dateTimeRange[0] / 1000),
-					endTime: Math.floor(dateTimeRange[1] / 1000),
-				});
-			} else {
-				const { maxTime, minTime } = GetMinMax(interval);
-				setModalTimeRange({
-					startTime: Math.floor(minTime / 1000000000),
-					endTime: Math.floor(maxTime / 1000000000),
-				});
-			}
-		},
-		[],
-	);
-
+}: MetricsTabProps): JSX.Element {
 	const queryPayloads = useMemo(
-		() =>
-			getHostQueryPayload(
-				hostName,
-				modalTimeRange.startTime,
-				modalTimeRange.endTime,
-			),
-		[hostName, modalTimeRange.startTime, modalTimeRange.endTime],
+		() => getHostQueryPayload(hostName, timeRange.startTime, timeRange.endTime),
+		[hostName, timeRange.startTime, timeRange.endTime],
 	);
 
 	const queries = useQueries(
@@ -96,17 +78,11 @@ function Metrics({
 					yAxisUnit: hostWidgetInfo[idx].yAxisUnit,
 					softMax: null,
 					softMin: null,
-					minTimeScale: modalTimeRange.startTime,
-					maxTimeScale: modalTimeRange.endTime,
+					minTimeScale: timeRange.startTime,
+					maxTimeScale: timeRange.endTime,
 				}),
 			),
-		[
-			queries,
-			isDarkMode,
-			dimensions,
-			modalTimeRange.startTime,
-			modalTimeRange.endTime,
-		],
+		[queries, isDarkMode, dimensions, timeRange.startTime, timeRange.endTime],
 	);
 
 	const renderCardContent = (
@@ -136,16 +112,18 @@ function Metrics({
 
 	return (
 		<>
-			<div className="metrics-datetime-section">
-				<DateTimeSelectionV2
-					showAutoRefresh={false}
-					showRefreshText={false}
-					hideShareModal
-					onTimeChange={handleTimeChange}
-					defaultRelativeTime="5m"
-					isModalTimeSelection={isModalTimeSelection}
-					modalSelectedInterval={selectedInterval}
-				/>
+			<div className="metrics-header">
+				<div className="metrics-datetime-section">
+					<DateTimeSelectionV2
+						showAutoRefresh={false}
+						showRefreshText={false}
+						hideShareModal
+						onTimeChange={handleTimeChange}
+						defaultRelativeTime="5m"
+						isModalTimeSelection={isModalTimeSelection}
+						modalSelectedInterval={selectedInterval}
+					/>
+				</div>
 			</div>
 			<Row gutter={24} className="host-metrics-container">
 				{queries.map((query, idx) => (

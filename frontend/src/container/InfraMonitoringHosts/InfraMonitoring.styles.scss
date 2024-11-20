@@ -11,10 +11,7 @@
 	}
 
 	.no-hosts-message {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		min-height: 500px;
+		padding: 16px;
 	}
 
 	.hosts-list-controls {
@@ -58,39 +55,6 @@
 		cursor: pointer;
 	}
 
-	.infra-monitoring-tags {
-		border-radius: 10px;
-		width: fit-content;
-
-		&.active {
-			color: var(--Forest-500, #25e192);
-			font-family: Inter;
-			font-size: 11px;
-			font-style: normal;
-			font-weight: 500;
-			line-height: 18px; /* 163.636% */
-			letter-spacing: 0.44px;
-
-			border-radius: 50px;
-			border: 1px solid rgba(37, 225, 146, 0.2);
-			background: rgba(37, 225, 146, 0.1);
-		}
-
-		&.inactive {
-			color: var(--Slate-50, #62687c);
-			font-family: Inter;
-			font-size: 11px;
-			font-style: normal;
-			font-weight: 500;
-			line-height: 18px; /* 150% */
-			letter-spacing: 0.44px;
-
-			border-radius: 50px;
-			border: 1px solid rgba(98, 104, 124, 0.2);
-			background: rgba(98, 104, 124, 0.1);
-		}
-	}
-
 	.hosts-list-table {
 		.ant-table {
 			.ant-table-thead > tr > th {
@@ -114,6 +78,10 @@
 				&::before {
 					background-color: transparent;
 				}
+			}
+
+			.ant-table-thead > tr > th:has(.hostname-column-header) {
+				background: var(--bg-ink-400);
 			}
 
 			.ant-table-cell {
@@ -182,20 +150,60 @@
 				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
 				background-color: transparent;
 			}
+
+			.ant-empty-normal {
+				visibility: hidden;
+			}
 		}
 
 		.ant-pagination {
-			margin: 16px 24px;
+			position: fixed;
+			bottom: 0;
+			width: calc(100% - 124px);
+			background: var(--bg-ink-500);
+			padding: 16px;
+			margin: 0;
 
 			.ant-pagination-item {
 				border-radius: 4px;
 
 				&-active {
-					background: var(--bg-primary-400);
-					border-color: var(--bg-primary-400);
+					background: var(--bg-robin-500);
+					border-color: var(--bg-robin-500);
+
+					a {
+						color: var(--bg-ink-500) !important;
+					}
 				}
 			}
 		}
+	}
+}
+
+.infra-monitoring-tags {
+	width: fit-content;
+
+	font-family: Inter;
+	font-size: 11px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 18px; /* 163.636% */
+	letter-spacing: 0.44px;
+	text-transform: uppercase;
+
+	border-radius: 50px;
+	padding: 2px 8px;
+
+	&.active {
+		color: var(--Forest-500, #25e192);
+		border: 1px solid rgba(37, 225, 146, 0.2);
+		background: rgba(37, 225, 146, 0.1);
+	}
+
+	&.inactive {
+		color: var(--Slate-50, #62687c);
+		border: 1px solid rgba(98, 104, 124, 0.2);
+		background: rgba(98, 104, 124, 0.1);
 	}
 }
 

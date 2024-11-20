@@ -266,7 +266,7 @@ function QueryBuilderSearch({
 	);
 
 	useEffect(() => {
-		if (isLastQuery) {
+		if (isLastQuery && !disableNavigationShortcuts) {
 			registerShortcut(LogsExplorerShortcuts.FocusTheSearchBar, () => {
 				// set timeout is needed here else the select treats the hotkey as input value
 				setTimeout(() => {
@@ -277,7 +277,12 @@ function QueryBuilderSearch({
 
 		return (): void =>
 			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
-	}, [deregisterShortcut, isLastQuery, registerShortcut]);
+	}, [
+		deregisterShortcut,
+		disableNavigationShortcuts,
+		isLastQuery,
+		registerShortcut,
+	]);
 
 	useEffect(() => {
 		if (!isOpen) {

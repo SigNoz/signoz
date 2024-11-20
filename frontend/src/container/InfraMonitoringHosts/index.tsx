@@ -15,6 +15,8 @@ function InfraMonitoringHosts(): JSX.Element {
 		handleSetConfig,
 		setSupersetQuery,
 		setLastUsedQuery,
+		currentQuery,
+		resetQuery,
 	} = useQueryBuilder();
 
 	useEffect(() => {
@@ -37,6 +39,27 @@ function InfraMonitoringHosts(): JSX.Element {
 		setLastUsedQuery,
 		handleSetConfig,
 	]);
+
+	useEffect(() => {
+		const updatedCurrentQuery = {
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: [
+					{
+						...currentQuery.builder.queryData[0],
+						filters: {
+							items: [],
+							op: 'AND',
+						},
+					},
+				],
+			},
+		};
+
+		resetQuery(updatedCurrentQuery);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>

@@ -63,9 +63,10 @@ function HostMetricDetail({
 	onClose,
 	isModalTimeSelection,
 }: HostDetailProps): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { maxTime, minTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
 		minTime,
@@ -74,25 +75,18 @@ function HostMetricDetail({
 		maxTime,
 	]);
 
-	const timeRange = useMemo(
-		() => ({
-			startTime: Math.floor(startMs * 1000),
-			endTime: Math.floor(endMs * 1000),
-		}),
-		[startMs, endMs],
-	);
-
 	const urlQuery = useUrlQuery();
 
 	const [modalTimeRange, setModalTimeRange] = useState(() => ({
 		startTime: startMs,
 		endTime: endMs,
 	}));
+
 	const [selectedInterval, setSelectedInterval] = useState<Time>(
-		urlQuery.get(QueryParams.relativeTime) as Time,
+		selectedTime as Time,
 	);
 
-	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.METRICS);
+	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.LOGS);
 	const isDarkMode = useIsDarkMode();
 	const history = useHistory();
 
@@ -121,6 +115,7 @@ function HostMetricDetail({
 	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
 		initialFilters,
 	);
+
 	const [tracesFilters, setTracesFilters] = useState<IBuilderQuery['filters']>(
 		initialFilters,
 	);
@@ -130,12 +125,11 @@ function HostMetricDetail({
 		setTracesFilters(initialFilters);
 	}, [initialFilters]);
 
-	const handleModeChange = (e: RadioChangeEvent): void => {
-		setSelectedInterval(urlQuery.get(QueryParams.relativeTime) as Time);
-		setModalTimeRange({
-			startTime: startMs,
-			endTime: endMs,
-		});
+	useEffect(() => {
+		setSelectedInterval(selectedTime as Time);
+	}, [selectedTime]);
+
+	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
 	};
 
@@ -149,9 +143,10 @@ function HostMetricDetail({
 				});
 			} else {
 				const { maxTime, minTime } = GetMinMax(interval);
+
 				setModalTimeRange({
-					startTime: Math.floor(minTime / 1000000),
-					endTime: Math.floor(maxTime / 1000000),
+					startTime: Math.floor(minTime / 1000000000),
+					endTime: Math.floor(maxTime / 1000000000),
 				});
 			}
 		},
@@ -263,7 +258,7 @@ function HostMetricDetail({
 
 	return (
 		<Drawer
-			width="70%"
+			width="60%"
 			title={
 				<>
 					<Divider type="vertical" />
@@ -286,16 +281,38 @@ function HostMetricDetail({
 					<div className="host-detail-drawer__host">
 						<div className="host-details-grid">
 							<div className="labels-row">
-								<Typography.Text type="secondary">STATUS</Typography.Text>
-								<Typography.Text type="secondary">OPERATING SYSTEM</Typography.Text>
-								<Typography.Text type="secondary">CPU USAGE</Typography.Text>
-								<Typography.Text type="secondary">MEMORY USAGE</Typography.Text>
+								<Typography.Text
+									type="secondary"
+									className="host-details-metadata-label"
+								>
+									STATUS
+								</Typography.Text>
+								<Typography.Text
+									type="secondary"
+									className="host-details-metadata-label"
+								>
+									OPERATING SYSTEM
+								</Typography.Text>
+								<Typography.Text
+									type="secondary"
+									className="host-details-metadata-label"
+								>
+									CPU USAGE
+								</Typography.Text>
+								<Typography.Text
+									type="secondary"
+									className="host-details-metadata-label"
+								>
+									MEMORY USAGE
+								</Typography.Text>
 							</div>
+
 							<div className="values-row">
 								<Tag
-									color={host.active ? 'success' : 'default'}
 									bordered
-									className="infra-monitoring-tags"
+									className={`infra-monitoring-tags ${
+										host.active ? 'active' : 'inactive'
+									}`}
 								>
 									{host.active ? 'ACTIVE' : 'INACTIVE'}
 								</Tag>
@@ -335,7 +352,7 @@ function HostMetricDetail({
 					<div className="views-tabs-container">
 						<Radio.Group
 							className="views-tabs"
-							onChange={handleModeChange}
+							onChange={handleTabChange}
 							value={selectedView}
 						>
 							<Radio.Button
@@ -406,12 +423,12 @@ function HostMetricDetail({
 						)}
 					</div>
 
-					{selectedView === VIEW_TYPES.CONTAINERS && <Containers />}
-					{selectedView === VIEW_TYPES.PROCESSES && <Processes />}
 					{selectedView === VIEW_TYPES.METRICS && (
 						<Metrics
+							selectedInterval={selectedInterval}
 							hostName={host.hostName}
-							timeRange={timeRange}
+							timeRange={modalTimeRange}
+							handleTimeChange={handleTimeChange}
 							isModalTimeSelection={isModalTimeSelection}
 						/>
 					)}
@@ -435,6 +452,9 @@ function HostMetricDetail({
 							selectedInterval={selectedInterval}
 						/>
 					)}
+
+					{selectedView === VIEW_TYPES.CONTAINERS && <Containers />}
+					{selectedView === VIEW_TYPES.PROCESSES && <Processes />}
 				</>
 			)}
 		</Drawer>

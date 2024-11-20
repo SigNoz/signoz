@@ -1,10 +1,16 @@
 import './InfraMonitoring.styles.scss';
 
-import { Table, TablePaginationConfig, TableProps, Typography } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import {
+	Spin,
+	Table,
+	TablePaginationConfig,
+	TableProps,
+	Typography,
+} from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import HostMetricDetail from 'components/HostMetricsDetail';
-import { HostMetricsLoading } from 'container/HostMetricsLoading/HostMetricsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useCallback, useMemo, useState } from 'react';
@@ -40,7 +46,7 @@ function HostsList(): JSX.Element {
 
 	const [selectedHostName, setSelectedHostName] = useState<string | null>(null);
 
-	const pageSize = 10;
+	const pageSize = 15;
 
 	const query = useMemo(() => {
 		const baseQuery = getHostListsQuery();
@@ -130,8 +136,6 @@ function HostsList(): JSX.Element {
 			<HostsListControls handleFiltersChange={handleFiltersChange} />
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
-			{isLoading && <HostMetricsLoading />}
-
 			{isDataPresent && filters.items.length === 0 && (
 				<NoLogs dataSource={DataSource.METRICS} />
 			)}
@@ -140,10 +144,10 @@ function HostsList(): JSX.Element {
 				<div className="no-hosts-message">No hosts match the applied filters.</div>
 			)}
 
-			{!isError && formattedHostMetricsData.length > 0 && (
+			{!isError && (
 				<Table
 					className="hosts-list-table"
-					dataSource={formattedHostMetricsData}
+					dataSource={isFetching || isLoading ? [] : formattedHostMetricsData}
 					columns={columns}
 					pagination={{
 						current: currentPage,
@@ -153,7 +157,10 @@ function HostsList(): JSX.Element {
 						hideOnSinglePage: true,
 					}}
 					scroll={{ x: true }}
-					loading={isFetching}
+					loading={{
+						spinning: isFetching || isLoading,
+						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+					}}
 					tableLayout="fixed"
 					rowKey={(record): string => record.hostName}
 					onChange={handleTableChange}
@@ -163,6 +170,7 @@ function HostsList(): JSX.Element {
 					})}
 				/>
 			)}
+
 			<HostMetricDetail
 				host={selectedHostData}
 				isModalTimeSelection
