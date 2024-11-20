@@ -10,17 +10,13 @@ import {
 	Option,
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { Clock } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import RangePickerModal from './RangePickerModal';
 import TimezonePicker from './TimezonePicker';
-import {
-	getTimezoneObjectByTimezoneString,
-	TIMEZONE_DATA,
-} from './timezoneUtils';
 
 interface CustomTimePickerPopoverContentProps {
 	options: any[];
@@ -56,15 +52,8 @@ function CustomTimePickerPopoverContent({
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
 		pathname,
 	]);
-	const urlQuery = useUrlQuery();
-	const activeTimezoneOffset = useMemo(() => {
-		const timezone = urlQuery.get('timezone') ?? TIMEZONE_DATA[0].value;
-		if (timezone) {
-			const timezoneObj = getTimezoneObjectByTimezoneString(timezone);
-			return timezoneObj?.offset;
-		}
-		return '';
-	}, [urlQuery]);
+	const { timezone } = useTimezone();
+	const activeTimezoneOffset = timezone?.offset;
 
 	function getTimeChips(options: Option[]): JSX.Element {
 		return (
