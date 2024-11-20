@@ -36,10 +36,13 @@ export const getTabsItems = (): TabsProps['items'] => [
 
 export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 	{
-		title: 'Hostname',
+		title: <div className="hostname-column-header">Hostname</div>,
 		dataIndex: 'hostName',
 		key: 'hostName',
 		width: 250,
+		render: (value: string): React.ReactNode => (
+			<div className="hostname-column-value">{value}</div>
+		),
 	},
 	{
 		title: 'Status',
@@ -87,9 +90,8 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 		hostName: host.hostName || '',
 		active: (
 			<Tag
-				color={host.active ? 'success' : 'default'}
 				bordered
-				className="infra-monitoring-tags"
+				className={`infra-monitoring-tags ${host.active ? 'active' : 'inactive'}`}
 			>
 				{host.active ? 'ACTIVE' : 'INACTIVE'}
 			</Tag>
@@ -98,6 +100,7 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 			<div className="progress-container">
 				<Progress
 					percent={Number((host.cpu * 100).toFixed(1))}
+					strokeLinecap="butt"
 					size="small"
 					strokeColor={((): string => {
 						const cpuPercent = Number((host.cpu * 100).toFixed(1));
@@ -113,6 +116,7 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 			<div className="progress-container">
 				<Progress
 					percent={Number((host.memory * 100).toFixed(1))}
+					strokeLinecap="butt"
 					size="small"
 					strokeColor={((): string => {
 						const memoryPercent = Number((host.memory * 100).toFixed(1));

@@ -1,37 +1,13 @@
 .infra-monitoring-container {
 	display: flex;
 	height: 100%;
-	margin-top: 1rem;
-
-	.time-selector {
-        position: absolute;
-        top: 9px;
-        right: 0;
-		padding: 0 1.5rem;
-    }
+	flex-direction: column;
 
 	.infra-monitoring-header {
 		display: flex;
 		justify-content: space-between;
 		width: 100%;
 		margin-bottom: 16px;
-
-		.tabs-wrapper {
-			flex: 1;
-			margin-right: 24px;
-
-			.infra-monitoring-tabs {
-				width: 100%;
-
-				:global(.ant-tabs-nav) {
-					margin: 0;
-				}
-			}
-		}
-
-		.time-selector {
-			flex-shrink: 0;
-		}
 	}
 
 	.no-hosts-message {
@@ -42,62 +18,128 @@
 	}
 
 	.hosts-list-controls {
-		padding: 8px 16px;
-	border-top: 1px solid var(--bg-slate-400, #1d212d);
-	border-bottom: 1px solid var(--bg-slate-400, #1d212d);
+		padding: 8px;
 
-	.ant-select-selector {
-		border-radius: 2px;
-		border: 1px solid var(--bg-slate-400) !important;
-		background-color: var(--bg-ink-300) !important;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 16px;
 
-		input {
-			font-size: 12px;
+		.ant-select-selector {
+			border-radius: 2px;
+			border: 1px solid var(--bg-slate-400) !important;
+			background-color: var(--bg-ink-300) !important;
+
+			input {
+				font-size: 12px;
+			}
+
+			.ant-tag .ant-typography {
+				font-size: 12px;
+			}
 		}
 
-		.ant-tag .ant-typography {
-			font-size: 12px;
+		.hosts-list-controls-left {
+			flex: 1;
 		}
 	}
-	}
-	
+
 	.progress-container {
 		display: flex;
 		align-items: center;
-	  }
-	  
-	  .progress-bar {
-			flex: 1;
-			margin-right: 8px;
-	  }
-	  
-	  .clickable-row {
-			cursor: pointer;
-	  }
+	}
 
-	  .infra-monitoring-tags {
-			border-radius: 10px;
-			width: fit-content;
-	  }
+	.progress-bar {
+		flex: 1;
+		margin-right: 8px;
+	}
 
-	  .ant-table {
+	.clickable-row {
+		cursor: pointer;
+	}
+
+	.infra-monitoring-tags {
+		border-radius: 10px;
+		width: fit-content;
+
+		&.active {
+			color: var(--Forest-500, #25e192);
+			font-family: Inter;
+			font-size: 11px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 18px; /* 163.636% */
+			letter-spacing: 0.44px;
+
+			border-radius: 50px;
+			border: 1px solid rgba(37, 225, 146, 0.2);
+			background: rgba(37, 225, 146, 0.1);
+		}
+
+		&.inactive {
+			color: var(--Slate-50, #62687c);
+			font-family: Inter;
+			font-size: 11px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 18px; /* 150% */
+			letter-spacing: 0.44px;
+
+			border-radius: 50px;
+			border: 1px solid rgba(98, 104, 124, 0.2);
+			background: rgba(98, 104, 124, 0.1);
+		}
+	}
+
+	.hosts-list-table {
+		.ant-table {
 			.ant-table-thead > tr > th {
-				padding: 12px 16px;
+				padding: 12px;
 				font-weight: 500;
 				font-size: 12px;
 				line-height: 18px;
+
+				background: var(--bg-ink-500);
+				border-bottom: none;
+
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: Inter;
+				font-size: 11px;
+				font-style: normal;
+				font-weight: 600;
+				line-height: 18px; /* 163.636% */
+				letter-spacing: 0.44px;
+				text-transform: uppercase;
+
+				&::before {
+					background-color: transparent;
+				}
 			}
 
 			.ant-table-cell {
-				padding: 16px;
-				font-size: 14px;
+				padding: 12px;
+				font-size: 13px;
 				line-height: 20px;
 				color: var(--bg-vanilla-100);
+				background: var(--bg-ink-500);
+			}
+
+			.ant-table-cell:has(.hostname-column-value) {
+				background: var(--bg-ink-400);
+			}
+
+			.hostname-column-value {
+				color: var(--Vanilla-100, #fff);
+				font-family: 'Geist Mono';
+				font-style: normal;
+				font-weight: 600;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
 			}
 
 			.status-cell {
 				.active-tag {
-					color: var(--bg-success-400);
+					color: var(--bg-forest-500);
 					padding: 4px 8px;
 					border-radius: 4px;
 					font-size: 12px;
@@ -125,34 +167,41 @@
 				padding-right: 16px;
 			}
 
-			.ant-table-cell:nth-child(n+3) {
-				padding-right: 24px; 
+			.ant-table-cell:nth-child(n + 3) {
+				padding-right: 24px;
 			}
 			.column-header-right {
 				text-align: right;
-			  }
-			  .ant-table-tbody > tr > td {
+			}
+			.ant-table-tbody > tr > td {
 				border-bottom: none;
-			  }
-	  }
+			}
 
-	  .ant-pagination {
+			.ant-table-thead
+				> tr
+				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				background-color: transparent;
+			}
+		}
+
+		.ant-pagination {
 			margin: 16px 24px;
-			
+
 			.ant-pagination-item {
 				border-radius: 4px;
-				
+
 				&-active {
 					background: var(--bg-primary-400);
 					border-color: var(--bg-primary-400);
 				}
 			}
-	  }
+		}
+	}
 }
 
 .lightMode {
 	.infra-monitoring-container {
-		.ant-table-thead > tr > th { 
+		.ant-table-thead > tr > th {
 			background: var(--bg-vanilla-100);
 			color: var(--bg-ink-500);
 		}
@@ -162,13 +211,13 @@
 		}
 		.hosts-list-controls {
 			border-top: 1px solid var(--bg-vanilla-300);
-		border-bottom: 1px solid var(--bg-vanilla-300);
+			border-bottom: 1px solid var(--bg-vanilla-300);
 
-		.ant-select-selector {
-			border-color: var(--bg-vanilla-300) !important;
-			background-color: var(--bg-vanilla-100) !important;
-			color: var(--bg-ink-200);
-		}
+			.ant-select-selector {
+				border-color: var(--bg-vanilla-300) !important;
+				background-color: var(--bg-vanilla-100) !important;
+				color: var(--bg-ink-200);
+			}
 		}
 	}
 }

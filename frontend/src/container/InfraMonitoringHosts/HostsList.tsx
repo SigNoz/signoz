@@ -126,7 +126,7 @@ function HostsList(): JSX.Element {
 	};
 
 	return (
-		<div>
+		<div className="hosts-list">
 			<HostsListControls handleFiltersChange={handleFiltersChange} />
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
@@ -142,6 +142,7 @@ function HostsList(): JSX.Element {
 
 			{!isError && formattedHostMetricsData.length > 0 && (
 				<Table
+					className="hosts-list-table"
 					dataSource={formattedHostMetricsData}
 					columns={columns}
 					pagination={{

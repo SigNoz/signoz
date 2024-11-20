@@ -1,15 +1,13 @@
 import './InfraMonitoring.styles.scss';
 
 import * as Sentry from '@sentry/react';
-import { Tabs } from 'antd';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useEffect } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { getTabsItems } from './utils';
+import HostsList from './HostsList';
 
 function InfraMonitoringHosts(): JSX.Element {
 	const {
@@ -43,22 +41,8 @@ function InfraMonitoringHosts(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="infra-monitoring-container">
-				<div className="infra-monitoring-header">
-					<div className="tabs-wrapper">
-						<Tabs
-							defaultActiveKey="list"
-							items={getTabsItems()}
-							className="infra-monitoring-tabs"
-							type="card"
-						/>
-					</div>
-				</div>
-				<div className="time-selector">
-					<DateTimeSelectionV2
-						showAutoRefresh={false}
-						showRefreshText={false}
-						hideShareModal
-					/>
+				<div className="hosts-list-container">
+					<HostsList />
 				</div>
 			</div>
 		</Sentry.ErrorBoundary>
