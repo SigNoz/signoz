@@ -4074,6 +4074,13 @@
   resolved "https://registry.yarnpkg.com/@types/html-minifier-terser/-/html-minifier-terser-6.1.0.tgz#4fc33a00c1d0c16987b1a20cf92d20614c55ac35"
   integrity sha512-oh/6byDPnL1zeNXFrDXFLyZjkr1MsBG667IM792caf1L2UPOOMf65NFzjUH/ltyfwjAGfs1rsX1eftK0jC/KIg==
 
+"@types/http-proxy@^1.17.15":
+  version "1.17.15"
+  resolved "https://registry.yarnpkg.com/@types/http-proxy/-/http-proxy-1.17.15.tgz#12118141ce9775a6499ecb4c01d02f90fc839d36"
+  integrity sha512-25g5atgiVNTIv0LBDTg1H74Hvayx0ajtJPLLcYE3whFv75J0pWNtOBzaXJQgDTmrX1bx5U9YC2w/n65BN1HwRQ==
+  dependencies:
+    "@types/node" "*"
+
 "@types/http-proxy@^1.17.8":
   version "1.17.11"
   resolved "https://registry.npmjs.org/@types/http-proxy/-/http-proxy-1.17.11.tgz"
@@ -7224,7 +7231,7 @@ debounce@^1.2.1:
   resolved "https://registry.yarnpkg.com/debounce/-/debounce-1.2.1.tgz#38881d8f4166a5c5848020c11827b834bcb3e0a5"
   integrity sha512-XRRe6Glud4rd/ZGQfiV1ruXSfbvfJedlV9Y6zOlP+2K04vBYiJEte6stfFkCP03aMnY5tsipamumUjL14fofug==
 
-debug@2.6.9, debug@4, debug@4.3.4, debug@^3.2.6, debug@^3.2.7, debug@^4.0.0, debug@^4.0.1, debug@^4.1.0, debug@^4.1.1, debug@^4.3.1, debug@^4.3.2, debug@^4.3.3, debug@^4.3.4, debug@ngokevin/debug#noTimestamp:
+debug@2.6.9, debug@4, debug@4.3.4, debug@^3.2.6, debug@^3.2.7, debug@^4.0.0, debug@^4.0.1, debug@^4.1.0, debug@^4.1.1, debug@^4.3.1, debug@^4.3.2, debug@^4.3.3, debug@^4.3.4, debug@^4.3.6, debug@ngokevin/debug#noTimestamp:
   version "4.3.4"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.4.tgz#1319f6579357f2338d3337d2cdd4914bb5dcc865"
   integrity sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==
@@ -9352,16 +9359,17 @@ http-proxy-agent@^4.0.1:
     agent-base "6"
     debug "4"
 
-http-proxy-middleware@2.0.7:
-  version "2.0.7"
-  resolved "https://registry.yarnpkg.com/http-proxy-middleware/-/http-proxy-middleware-2.0.7.tgz#915f236d92ae98ef48278a95dedf17e991936ec6"
-  integrity sha512-fgVY8AV7qU7z/MmXJ/rxwbrtQH4jBQ9m7kp3llF0liB7glmFeVZFBepQb32T3y8n8k2+AEYuMPCpinYW+/CuRA==
+http-proxy-middleware@3.0.3:
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/http-proxy-middleware/-/http-proxy-middleware-3.0.3.tgz#dc1313c75bd00d81e103823802551ee30130ebd1"
+  integrity sha512-usY0HG5nyDUwtqpiZdETNbmKtw3QQ1jwYFZ9wi5iHzX2BcILwQKtYDJPo7XHTsu5Z0B2Hj3W9NNnbd+AjFWjqg==
   dependencies:
-    "@types/http-proxy" "^1.17.8"
+    "@types/http-proxy" "^1.17.15"
+    debug "^4.3.6"
     http-proxy "^1.18.1"
-    is-glob "^4.0.1"
-    is-plain-obj "^3.0.0"
-    micromatch "^4.0.2"
+    is-glob "^4.0.3"
+    is-plain-object "^5.0.0"
+    micromatch "^4.0.8"
 
 http-proxy-middleware@^2.0.3:
   version "2.0.6"
@@ -9852,6 +9860,11 @@ is-plain-object@^2.0.4:
   integrity sha512-h5PpgXkWitc38BBMYawTYMWJHFZJVnBquFE57xFpjB8pJFiF6gZ+bU+WyI/yqXiFR5mdLsgYNaPe8uao6Uv9Og==
   dependencies:
     isobject "^3.0.1"
+
+is-plain-object@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/is-plain-object/-/is-plain-object-5.0.0.tgz#4427f50ab3429e9025ea7d52e9043a9ef4159344"
+  integrity sha512-VRSzKkbMm5jMDoKLbltAkFQ5Qr7VDiTFGXxYFXXowVj387GeGNOCsOH6Msy00SGZ3Fp84b1Naa1psqgcCIEP5Q==
 
 is-potential-custom-element-name@^1.0.1:
   version "1.0.1"
@@ -11838,7 +11851,7 @@ micromark@^3.0.0:
     micromark-util-types "^1.0.1"
     uvu "^0.5.0"
 
-micromatch@^4.0.2, micromatch@^4.0.4, micromatch@^4.0.5:
+micromatch@^4.0.2, micromatch@^4.0.4, micromatch@^4.0.5, micromatch@^4.0.8:
   version "4.0.8"
   resolved "https://registry.yarnpkg.com/micromatch/-/micromatch-4.0.8.tgz#d66fa18f3a47076789320b9b1af32bd86d9fa202"
   integrity sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==
