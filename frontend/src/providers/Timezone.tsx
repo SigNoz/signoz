@@ -1,5 +1,6 @@
 import {
 	getBrowserTimezone,
+	getTimezoneObjectByTimezoneString,
 	Timezone,
 } from 'components/CustomTimePicker/timezoneUtils';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -26,15 +27,11 @@ function TimezoneProvider({
 }: {
 	children: React.ReactNode;
 }): JSX.Element {
-	const getTimezoneFromLocalStorage = (): Timezone | undefined => {
-		try {
-			return JSON.parse(
-				localStorage.getItem(LOCALSTORAGE.PREFERRED_TIMEZONE) || '{}',
-			);
-		} catch (error) {
-			console.error('Error parsing timezone from localStorage:', error);
-			return undefined;
-		}
+	const getTimezoneFromLocalStorage = (): Timezone | null => {
+		const timezoneValue =
+			localStorage.getItem(LOCALSTORAGE.PREFERRED_TIMEZONE) || '{}';
+
+		return getTimezoneObjectByTimezoneString(timezoneValue);
 	};
 
 	const browserTimezone = useMemo(() => getBrowserTimezone(), []);
@@ -45,10 +42,7 @@ function TimezoneProvider({
 
 	const updateTimezone = useCallback((timezone: Timezone): void => {
 		// TODO(shaheer): replace this with user preferences API
-		localStorage.setItem(
-			LOCALSTORAGE.PREFERRED_TIMEZONE,
-			JSON.stringify(timezone),
-		);
+		localStorage.setItem(LOCALSTORAGE.PREFERRED_TIMEZONE, timezone.value);
 		setTimezone(timezone);
 	}, []);
 
