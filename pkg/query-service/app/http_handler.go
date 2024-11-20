@@ -508,7 +508,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/overview", am.ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_operations", am.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", am.ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
@@ -1625,22 +1624,6 @@ func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
 
 	result, err := aH.reader.GetUsage(r.Context(), query)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServiceOverviewRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetServiceOverview(r.Context(), query, aH.skipConfig)
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
