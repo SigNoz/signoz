@@ -1409,7 +1409,7 @@ func (r *ClickHouseReader) SetTTLTracesV2(ctx context.Context, params *model.TTL
 
 	// TTL query for resource table
 	ttlV2Resource := "ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + INTERVAL %v SECOND DELETE"
-	ttlLogsV2ResourceColdStorage := ", toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + INTERVAL %v SECOND TO VOLUME '%s'"
+	ttlTracesV2ResourceColdStorage := ", toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + INTERVAL %v SECOND TO VOLUME '%s'"
 
 	for _, distributedTableName := range tableNames {
 		go func(distributedTableName string) {
@@ -1433,7 +1433,7 @@ func (r *ClickHouseReader) SetTTLTracesV2(ctx context.Context, params *model.TTL
 
 			if len(params.ColdStorageVolume) > 0 {
 				if strings.HasSuffix(distributedTableName, r.traceResourceTableV3) {
-					req += fmt.Sprintf(ttlLogsV2ResourceColdStorage, params.ToColdStorageDuration, params.ColdStorageVolume)
+					req += fmt.Sprintf(ttlTracesV2ResourceColdStorage, params.ToColdStorageDuration, params.ColdStorageVolume)
 				} else {
 					req += fmt.Sprintf(ttlV2ColdStorage, timestamp, params.ToColdStorageDuration, params.ColdStorageVolume)
 				}
