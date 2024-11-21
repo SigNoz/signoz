@@ -1,6 +1,9 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -44,6 +47,45 @@ export const columns = [
 		dataIndex: ['data', 'responseStatusCode'],
 		key: 'responseStatusCode-string-tag',
 		width: 145,
+	},
+];
+
+export const selectedColumns: BaseAutocompleteData[] = [
+	{
+		key: 'timestamp',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+	},
+	{
+		key: 'serviceName',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+	},
+	{
+		key: 'name',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+	},
+	{
+		key: 'durationNano',
+		dataType: DataTypes.Float64,
+		type: 'tag',
+		isColumn: true,
+	},
+	{
+		key: 'httpMethod',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+	},
+	{
+		key: 'responseStatusCode',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
 	},
 ];
 

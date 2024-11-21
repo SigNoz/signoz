@@ -24,7 +24,8 @@ import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { columns, getHostTracesQueryPayload } from './constants';
+import { getHostTracesQueryPayload, selectedColumns } from './constants';
+import { getListColumns } from './utils';
 
 interface Props {
 	timeRange: {
@@ -110,6 +111,8 @@ function HostMetricTraces({
 		enabled: !!queryPayload,
 	});
 
+	const traceListColumns = getListColumns(selectedColumns);
+
 	useEffect(() => {
 		if (data?.payload?.data?.newResult?.data?.result) {
 			const currentData = data.payload.data.newResult.data.result;
@@ -168,11 +171,12 @@ function HostMetricTraces({
 			)}
 
 			{!isError && traces.length > 0 && (
-				<>
+				<div className="host-metric-traces-table">
 					<TraceExplorerControls
 						isLoading={isFetching}
 						totalCount={totalCount}
 						perPageOptions={PER_PAGE_OPTIONS}
+						showSizeChanger={false}
 					/>
 					<ResizeTable
 						tableLayout="fixed"
@@ -180,9 +184,9 @@ function HostMetricTraces({
 						scroll={{ x: true }}
 						loading={isFetching}
 						dataSource={traces}
-						columns={columns}
+						columns={traceListColumns}
 					/>
-				</>
+				</div>
 			)}
 		</div>
 	);

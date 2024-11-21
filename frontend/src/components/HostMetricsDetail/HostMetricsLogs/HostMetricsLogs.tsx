@@ -7,7 +7,6 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
-import NoLogs from 'container/NoLogs/NoLogs';
 import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
@@ -21,10 +20,10 @@ import {
 	IBuilderQuery,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import { getHostLogsQueryPayload } from './constants';
+import NoLogsContainer from './NoLogsContainer';
 
 interface Props {
 	timeRange: {
@@ -205,11 +204,9 @@ function HostMetricsLogs({
 	return (
 		<div className="host-metrics-logs">
 			{isLoading && <LogsLoading />}
-			{!isLoading && !isError && logs.length === 0 && (
-				<NoLogs dataSource={DataSource.LOGS} />
-			)}
+			{!isLoading && !isError && logs.length === 0 && <NoLogsContainer />}
 			{isError && !isLoading && <LogsError />}
-			{!isLoading && !isError && (
+			{!isLoading && !isError && logs.length > 0 && (
 				<div className="host-metrics-logs-list-container">{renderContent}</div>
 			)}
 		</div>

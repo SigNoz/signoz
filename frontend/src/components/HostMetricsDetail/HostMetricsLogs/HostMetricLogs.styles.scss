@@ -102,6 +102,23 @@
 	}
 }
 
+.no-logs-found {
+	height: 50vh;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	padding: 24px;
+	box-sizing: border-box;
+
+	.ant-typography {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+	}
+}
+
 .lightMode {
 	.filter-section {
 		border-top: 1px solid var(--bg-vanilla-300);
