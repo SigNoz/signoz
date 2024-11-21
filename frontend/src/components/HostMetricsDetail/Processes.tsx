@@ -1,15 +1,13 @@
 import './Containers.styles.scss';
 
-import { Button, Space, Typography } from 'antd';
-import { LifeBuoy } from 'lucide-react';
-import { handleContactSupport } from 'pages/Integrations/utils';
-import { isCloudUser } from 'utils/app';
-
-import { FEATURE_COMING_SOON_STRINGS } from './constants';
+import { Space, Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
 function Processes(): JSX.Element {
+	const { t } = useTranslation(['infraMonitoring']);
+
 	return (
 		<Space direction="vertical" className="host-containers" size={24}>
 			<div className="infra-container-card">
@@ -20,30 +18,16 @@ function Processes(): JSX.Element {
 					height={32}
 				/>
 				<Text className="infra-container-card-text">
-					{FEATURE_COMING_SOON_STRINGS.PROCESSES_VISUALIZATION_MESSAGE}
+					{t('processes_visualization_message')}
 				</Text>
 			</div>
 
 			<div className="infra-container-working-msg">
 				<Space>
 					<img src="/Icons/broom.svg" alt="broom" width={16} height={16} />
-					<Text className="infra-container-card-text">
-						{FEATURE_COMING_SOON_STRINGS.WORKING_MESSAGE}
-					</Text>
+					<Text className="infra-container-card-text">{t('working_message')}</Text>
 				</Space>
 			</div>
-
-			<Text className="infra-container-card-text">
-				{FEATURE_COMING_SOON_STRINGS.WAITLIST_MESSAGE}
-			</Text>
-
-			<Button
-				icon={<LifeBuoy size={16} />}
-				className="infra-container-contact-support-btn"
-				onClick={(): void => handleContactSupport(isCloudUser())}
-			>
-				{FEATURE_COMING_SOON_STRINGS.CONTACT_SUPPORT}
-			</Button>
 		</Space>
 	);
 }
