@@ -1454,8 +1454,7 @@ func (r *ClickHouseReader) SetTTLTracesV2(ctx context.Context, params *model.TTL
 			req += " SETTINGS materialize_ttl_after_modify=0;"
 			zap.L().Error(" ExecutingTTL request: ", zap.String("request", req))
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
-			fmt.Println(req)
-			if err := r.db.Exec(context.Background(), req); err != nil {
+			if err := r.db.Exec(ctx, req); err != nil {
 				zap.L().Error("Error in executing set TTL query", zap.Error(err))
 				_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
 				if dbErr != nil {
