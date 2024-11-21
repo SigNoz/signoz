@@ -2,7 +2,6 @@ package rules
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -1120,8 +1119,6 @@ type queryMatcherAny struct {
 }
 
 func (m *queryMatcherAny) Match(x string, y string) error {
-	fmt.Println(x)
-	fmt.Println(y)
 	return nil
 }
 
