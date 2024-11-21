@@ -142,7 +142,7 @@ export const APIKeys = Loadable(
 );
 
 export const MySettings = Loadable(
-	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
+	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
 );
 
 export const Logs = Loadable(
