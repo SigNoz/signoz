@@ -178,6 +178,7 @@ function RawLogView({
 			/>
 
 			<RawLogContent
+				className="raw-log-content"
 				$isReadOnly={isReadOnly}
 				$isActiveLog={isActiveLog}
 				$isDarkMode={isDarkMode}

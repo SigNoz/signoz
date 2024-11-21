@@ -8,7 +8,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { SaveNewViewHandlerProps } from './types';
 
-export const getRandomColor = (): Color => {
+export const getRandomColor = (): string => {
 	const colorKeys = Object.keys(Color) as (keyof typeof Color)[];
 	const randomKey = colorKeys[Math.floor(Math.random() * colorKeys.length)];
 	return Color[randomKey];

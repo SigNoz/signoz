@@ -232,6 +232,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
 	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
 	const isAlertOverview = (): boolean => routeKey === 'ALERT_OVERVIEW';
+	const isInfraMonitoringHosts = (): boolean =>
+		routeKey === 'INFRASTRUCTURE_MONITORING_HOSTS';
 	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
 
 	const isDashboardView = (): boolean =>
@@ -298,7 +300,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isDashboardListView() ||
 											isAlertHistory() ||
 											isAlertOverview() ||
-											isMessagingQueues()
+											isMessagingQueues() ||
+											isInfraMonitoringHosts()
 												? 0
 												: '0 1rem',
 

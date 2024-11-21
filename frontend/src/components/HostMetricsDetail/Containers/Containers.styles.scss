@@ -1,0 +1,48 @@
+.host-containers {
+	max-width: 600px;
+	margin: 150px auto;
+	padding: 0 16px;
+
+	.infra-container-card {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	.infra-container-card-text {
+		font-size: var(--font-size-sm);
+		color: var(--text-vanilla-400);
+		line-height: 20px;
+		letter-spacing: -0.07px;
+		width: 400px;
+		font-family: 'Inter';
+		margin-top: 12px;
+	}
+
+	.infra-container-working-msg {
+		display: flex;
+		width: 400px;
+		padding: 12px;
+		align-items: flex-start;
+		gap: 12px;
+		border-radius: 4px;
+		background: rgba(171, 189, 255, 0.04);
+
+		.ant-space {
+			align-items: flex-start;
+		}
+	}
+
+	.infra-container-contact-support-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin: auto;
+	}
+}
+
+.lightMode {
+	.infra-container-card-text {
+		color: var(--text-ink-200);
+	}
+}
