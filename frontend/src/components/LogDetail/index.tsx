@@ -129,6 +129,7 @@ function LogDetail({
 	return (
 		<Drawer
 			width="60%"
+			maskStyle={{ background: 'none' }}
 			title={
 				<>
 					<Divider type="vertical" className={cx('log-type-indicator', LogType)} />

@@ -13,6 +13,7 @@ import {
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
 
 import Function from './Function';
+import { toFloat64 } from './utils';
 
 const defaultMetricFunctionStruct: QueryFunctionProps = {
 	name: QueryFunctionsTypes.CUTOFF_MIN,
@@ -92,6 +93,8 @@ export default function QueryFunctions({
 
 	const isDarkMode = useIsDarkMode();
 
+	const hasAnomalyFunction = functions.some((func) => func.name === 'anomaly');
+
 	const handleAddNewFunction = (): void => {
 		const defaultFunctionStruct =
 			query.dataSource === DataSource.LOGS
@@ -105,9 +108,22 @@ export default function QueryFunctions({
 			},
 		];
 
-		setFunctions(updatedFunctionsArr);
+		const functionsCopy = cloneDeep(updatedFunctionsArr);
 
-		onChange(updatedFunctionsArr);
+		const anomalyFuncIndex = functionsCopy.findIndex(
+			(func) => func.name === 'anomaly',
+		);
+
+		if (anomalyFuncIndex !== -1) {
+			const anomalyFunc = functionsCopy[anomalyFuncIndex];
+
+			functionsCopy.splice(anomalyFuncIndex, 1);
+			functionsCopy.push(anomalyFunc);
+		}
+
+		setFunctions(functionsCopy);
+
+		onChange(functionsCopy);
 	};
 
 	const handleDeleteFunction = (
@@ -143,7 +159,13 @@ export default function QueryFunctions({
 		const updateFunctions = cloneDeep(functions);
 
 		if (updateFunctions && updateFunctions.length > 0 && updateFunctions[index]) {
-			updateFunctions[index].args = [value];
+			updateFunctions[index].args = [
+				// timeShift expects a float64 value, so we convert the string to a number
+				// For other functions, we keep the value as a string
+				updateFunctions[index].name === QueryFunctionsTypes.TIME_SHIFT
+					? toFloat64(value)
+					: value,
+			];
 			setFunctions(updateFunctions);
 			onChange(updateFunctions);
 		}
@@ -181,7 +203,9 @@ export default function QueryFunctions({
 			<Tooltip
 				title={
 					functions && functions.length >= 3 ? (
-						'Functions are in early access. You can add a maximum of 3 function as of now.'
+						`Functions are in early access. You can add a maximum of ${
+							hasAnomalyFunction ? 2 : 3
+						} function as of now.`
 					) : (
 						<div style={{ textAlign: 'center' }}>
 							Add new function

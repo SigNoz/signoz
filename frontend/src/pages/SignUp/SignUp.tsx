@@ -303,7 +303,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		return (
 			loading ||
 			!values.email ||
-			!values.organizationName ||
 			(!precheck.sso && (!values.password || !values.confirmPassword)) ||
 			(!isDetailsDisable && !values.firstName) ||
 			confirmPasswordError ||
@@ -354,7 +353,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						<FormContainer.Item noStyle name="organizationName">
 							<Input
 								placeholder={t('placeholder_orgname')}
-								required
 								id="organizationName"
 								disabled={isDetailsDisable}
 							/>

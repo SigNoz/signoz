@@ -21,7 +21,7 @@ func TestCreateLogsExporter(t *testing.T) {
 	cfg := factory.CreateDefaultConfig()
 
 	te, err := factory.CreateLogsExporter(
-		context.Background(), exporter.CreateSettings{}, cfg,
+		context.Background(), exporter.Settings{}, cfg,
 	)
 	assert.NoError(t, err)
 	assert.NotNil(t, te)

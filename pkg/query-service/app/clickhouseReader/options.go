@@ -22,6 +22,7 @@ const (
 	defaultTraceDB                 string        = "signoz_traces"
 	defaultOperationsTable         string        = "distributed_signoz_operations"
 	defaultIndexTable              string        = "distributed_signoz_index_v2"
+	defaultLocalIndexTable         string        = "signoz_index_v2"
 	defaultErrorTable              string        = "distributed_signoz_error_index_v2"
 	defaultDurationTable           string        = "distributed_durationSort"
 	defaultUsageExplorerTable      string        = "distributed_usage_explorer"
@@ -45,6 +46,11 @@ const (
 	defaultLogsTableV2              string = "distributed_logs_v2"
 	defaultLogsResourceLocalTableV2 string = "logs_v2_resource"
 	defaultLogsResourceTableV2      string = "distributed_logs_v2_resource"
+
+	defaultTraceIndexTableV3    string = "distributed_signoz_index_v3"
+	defaultTraceLocalTableName  string = "signoz_index_v3"
+	defaultTraceResourceTableV3 string = "distributed_traces_v3_resource"
+	defaultTraceSummaryTable    string = "distributed_trace_summary"
 )
 
 // NamespaceConfig is Clickhouse's internal configuration data
@@ -58,6 +64,7 @@ type namespaceConfig struct {
 	TraceDB                 string
 	OperationsTable         string
 	IndexTable              string
+	LocalIndexTable         string
 	DurationTable           string
 	UsageExplorerTable      string
 	SpansTable              string
@@ -82,6 +89,11 @@ type namespaceConfig struct {
 	LogsTableV2              string
 	LogsResourceLocalTableV2 string
 	LogsResourceTableV2      string
+
+	TraceIndexTableV3     string
+	TraceLocalTableNameV3 string
+	TraceResourceTableV3  string
+	TraceSummaryTable     string
 }
 
 // Connecto defines how to connect to the database
@@ -150,6 +162,7 @@ func NewOptions(
 			TraceDB:                 defaultTraceDB,
 			OperationsTable:         defaultOperationsTable,
 			IndexTable:              defaultIndexTable,
+			LocalIndexTable:         defaultLocalIndexTable,
 			ErrorTable:              defaultErrorTable,
 			DurationTable:           defaultDurationTable,
 			UsageExplorerTable:      defaultUsageExplorerTable,
@@ -174,6 +187,11 @@ func NewOptions(
 			LogsLocalTableV2:         defaultLogsLocalTableV2,
 			LogsResourceTableV2:      defaultLogsResourceTableV2,
 			LogsResourceLocalTableV2: defaultLogsResourceLocalTableV2,
+
+			TraceIndexTableV3:     defaultTraceIndexTableV3,
+			TraceLocalTableNameV3: defaultTraceLocalTableName,
+			TraceResourceTableV3:  defaultTraceResourceTableV3,
+			TraceSummaryTable:     defaultTraceSummaryTable,
 		},
 		others: make(map[string]*namespaceConfig, len(otherNamespaces)),
 	}

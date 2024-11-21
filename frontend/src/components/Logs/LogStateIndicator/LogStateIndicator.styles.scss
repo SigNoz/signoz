@@ -41,10 +41,4 @@
 			background-color: var(--bg-sakura-500);
 		}
 	}
-
-	&.isActive {
-		.line {
-			background-color: var(--bg-robin-400, #7190f9);
-		}
-	}
 }

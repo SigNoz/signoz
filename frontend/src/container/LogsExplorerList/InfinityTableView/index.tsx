@@ -1,5 +1,6 @@
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
+import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
 import { useTableView } from 'components/Logs/TableView/useTableView';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
@@ -21,6 +22,11 @@ import { TableHeaderCellStyled, TableRowStyled } from './styles';
 import TableRow from './TableRow';
 import { InfinityTableProps } from './types';
 
+interface CustomTableRowProps {
+	activeContextLogId: string;
+	activeLogId: string;
+}
+
 // eslint-disable-next-line react/function-component-definition
 const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 	children,
@@ -31,10 +37,17 @@ const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 
 	const isDarkMode = useIsDarkMode();
 
+	const logType = getLogIndicatorType(props.item);
+
 	return (
 		<TableRowStyled
 			$isDarkMode={isDarkMode}
-			$isActiveLog={isHighlighted}
+			$isActiveLog={
+				isHighlighted ||
+				(context as CustomTableRowProps).activeContextLogId === props.item.id ||
+				(context as CustomTableRowProps).activeLogId === props.item.id
+			}
+			$logType={logType}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
 		>
@@ -66,8 +79,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			...tableViewProps,
 			onClickExpand: onSetActiveLog,
 			onOpenLogsContext: handleSetActiveContextLog,
-			activeLog,
-			activeContextLog,
 		});
 
 		const { draggedColumns, onDragColumns } = useDragColumns<
@@ -153,7 +164,14 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						// TODO: fix it in the future
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore
-						TableRow: CustomTableRow,
+						TableRow: (props): any =>
+							CustomTableRow({
+								...props,
+								context: {
+									activeContextLogId: activeContextLog?.id,
+									activeLogId: activeLog?.id,
+								},
+							} as any),
 					}}
 					itemContent={itemContent}
 					fixedHeaderContent={tableHeader}

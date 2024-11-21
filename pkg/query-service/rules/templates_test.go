@@ -63,3 +63,25 @@ func TestTemplateExpander_WithMissingKey(t *testing.T) {
 	}
 	require.Equal(t, "test  exceeds 100 and observed at 200", result)
 }
+
+func TestTemplateExpander_WithLablesDotSyntax(t *testing.T) {
+	defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
+	data := AlertTemplateData(map[string]string{"service.name": "my-service"}, "200", "100")
+	expander := NewTemplateExpander(context.Background(), defs+"test {{.Labels.service.name}} exceeds {{$threshold}} and observed at {{$value}}", "test", data, times.Time(time.Now().Unix()), nil)
+	result, err := expander.Expand()
+	if err != nil {
+		t.Fatal(err)
+	}
+	require.Equal(t, "test my-service exceeds 100 and observed at 200", result)
+}
+
+func TestTemplateExpander_WithVariableSyntax(t *testing.T) {
+	defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
+	data := AlertTemplateData(map[string]string{"service.name": "my-service"}, "200", "100")
+	expander := NewTemplateExpander(context.Background(), defs+"test {{$service.name}} exceeds {{$threshold}} and observed at {{$value}}", "test", data, times.Time(time.Now().Unix()), nil)
+	result, err := expander.Expand()
+	if err != nil {
+		t.Fatal(err)
+	}
+	require.Equal(t, "test my-service exceeds 100 and observed at 200", result)
+}

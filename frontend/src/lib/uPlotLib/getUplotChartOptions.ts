@@ -163,7 +163,8 @@ export const getUPlotChartOptions = ({
 
 	const stackBarChart = stackChart && isUndefined(hiddenGraph);
 
-	const isAnomalyRule = apiResponse?.data?.newResult?.data?.result[0].isAnomaly;
+	const isAnomalyRule =
+		apiResponse?.data?.newResult?.data?.result[0]?.isAnomaly || false;
 
 	const series = getStackedSeries(apiResponse?.data?.result || []);
 

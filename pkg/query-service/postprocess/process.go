@@ -28,12 +28,12 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	// The function is named applyMetricLimit because it only applies to metrics data source
 	// In traces and logs, the limit is achieved using subqueries
 	ApplyMetricLimit(result, queryRangeParams)
+	// We apply the functions here it's easier to add new functions
+	ApplyFunctions(result, queryRangeParams)
 	// Each series in the result produces N number of points, where N is (end - start) / step
 	// For the panel type table, we need to show one point for each series in the row
 	// We do that by applying a reduce function to each series
 	applyReduceTo(result, queryRangeParams)
-	// We apply the functions here it's easier to add new functions
-	ApplyFunctions(result, queryRangeParams)
 
 	// expressions are executed at query serivce so the value of time.now in the invdividual
 	// queries will be different so for table panel we are making it same.

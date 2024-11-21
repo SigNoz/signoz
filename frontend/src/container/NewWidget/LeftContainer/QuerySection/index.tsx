@@ -4,7 +4,6 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
-import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
@@ -235,21 +234,6 @@ function QuerySection({
 				onChange={handleQueryCategoryChange}
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-						<LaunchChatSupport
-							attributes={{
-								uuid: selectedDashboard?.uuid,
-								title: selectedDashboard?.data.title,
-								screen: 'Dashboard widget',
-								panelType: selectedGraph,
-								widgetId: query.id,
-								queryType: currentQuery.queryType,
-							}}
-							eventName="Dashboard: Facing Issues in dashboard"
-							buttonText="Need help with this chart?"
-							// message={chartHelpMessage(selectedDashboard, graphType)}
-							onHoverText="Click here to get help with this dashboard widget"
-							intercomMessageDisabled
-						/>
 						<TextToolTip
 							text="This will temporarily save the current query and graph state. This will persist across tab change"
 							url="https://signoz.io/docs/userguide/query-builder?utm_source=product&utm_medium=query-builder"

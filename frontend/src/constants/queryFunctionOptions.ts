@@ -4,10 +4,6 @@ import { SelectOption } from 'types/common/select';
 
 export const metricQueryFunctionOptions: SelectOption<string, string>[] = [
 	{
-		value: QueryFunctionsTypes.ANOMALY,
-		label: 'Anomaly',
-	},
-	{
 		value: QueryFunctionsTypes.CUTOFF_MIN,
 		label: 'Cut Off Min',
 	},

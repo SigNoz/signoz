@@ -366,3 +366,65 @@ func TestPipelineRouterWorksEvenIfFirstOpIsDisabled(t *testing.T) {
 		}, result[0].Attributes_string,
 	)
 }
+
+func TestPipeCharInAliasDoesntBreakCollectorConfig(t *testing.T) {
+	require := require.New(t)
+
+	testPipelines := []Pipeline{
+		{
+			OrderId: 1,
+			Name:    "test | pipeline",
+			Alias:   "test|pipeline",
+			Enabled: true,
+			Filter: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "method",
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeTag,
+						},
+						Operator: "=",
+						Value:    "GET",
+					},
+				},
+			},
+			Config: []PipelineOperator{
+				{
+					OrderId: 1,
+					ID:      "add",
+					Type:    "add",
+					Field:   "attributes.test",
+					Value:   "val",
+					Enabled: true,
+					Name:    "test add",
+				},
+			},
+		},
+	}
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(),
+		testPipelines,
+		[]model.SignozLog{
+			makeTestSignozLog(
+				"test log body",
+				map[string]any{
+					"method": "GET",
+				},
+			),
+		},
+	)
+
+	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs))
+	require.Equal(1, len(result))
+
+	require.Equal(
+		map[string]string{
+			"method": "GET",
+			"test":   "val",
+		}, result[0].Attributes_string,
+	)
+}

@@ -69,7 +69,7 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 // but the query should work regardless and shouldn't fail
 func isEnriched(field v3.AttributeKey) bool {
 	// if it is timestamp/id dont check
-	if field.Key == "timestamp" || field.Key == "id" || field.Key == constants.SigNozOrderByValue {
+	if field.Key == "timestamp" || field.Key == "id" || field.Key == constants.SigNozOrderByValue || field.Type == v3.AttributeKeyTypeInstrumentationScope {
 		return true
 	}
 
@@ -142,7 +142,7 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 	}
 
 	// check if the field is present in the fields map
-	for _, key := range utils.GenerateLogEnrichmentKeys(field) {
+	for _, key := range utils.GenerateEnrichmentKeys(field) {
 		if val, ok := fields[key]; ok {
 			return val
 		}

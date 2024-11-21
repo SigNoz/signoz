@@ -82,6 +82,11 @@ function ImportJSON({
 
 			const dashboardData = JSON.parse(editorValue) as DashboardData;
 
+			// Remove uuid from the dashboard data, in all cases - empty, duplicate or any valid not duplicate uuid
+			if (dashboardData.uuid !== undefined) {
+				delete dashboardData.uuid;
+			}
+
 			if (dashboardData?.layout) {
 				dashboardData.layout = getUpdatedLayout(dashboardData.layout);
 			} else {
@@ -123,11 +128,14 @@ function ImportJSON({
 				});
 			}
 			setDashboardCreating(false);
-		} catch {
+		} catch (error) {
 			setDashboardCreating(false);
 			setIsFeatureAlert(false);
 
 			setIsCreateDashboardError(true);
+			notifications.error({
+				message: error instanceof Error ? error.message : t('error_loading_json'),
+			});
 		}
 	};
 

@@ -22,6 +22,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -194,28 +195,6 @@ func parseGetUsageRequest(r *http.Request) (*model.GetUsageParams, error) {
 
 }
 
-func parseGetServiceOverviewRequest(r *http.Request) (*model.GetServiceOverviewParams, error) {
-
-	var postData *model.GetServiceOverviewParams
-	err := json.NewDecoder(r.Body).Decode(&postData)
-
-	if err != nil {
-		return nil, err
-	}
-
-	postData.Start, err = parseTimeStr(postData.StartTime, "start")
-	if err != nil {
-		return nil, err
-	}
-	postData.End, err = parseTimeMinusBufferStr(postData.EndTime, "end")
-	if err != nil {
-		return nil, err
-	}
-
-	postData.Period = fmt.Sprintf("PT%dM", postData.StepSeconds/60)
-	return postData, nil
-}
-
 func parseGetServicesRequest(r *http.Request) (*model.GetServicesParams, error) {
 
 	var postData *model.GetServicesParams
@@ -288,229 +267,6 @@ func DoesExistInSlice(item string, list []string) bool {
 	}
 	return false
 }
-
-func parseSpanFilterRequestBody(r *http.Request) (*model.SpanFilterParams, error) {
-
-	var postData *model.SpanFilterParams
-	err := json.NewDecoder(r.Body).Decode(&postData)
-
-	if err != nil {
-		return nil, err
-	}
-
-	postData.Start, err = parseTimeStr(postData.StartStr, "start")
-	if err != nil {
-		return nil, err
-	}
-	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
-	if err != nil {
-		return nil, err
-	}
-
-	return postData, nil
-}
-
-func parseFilteredSpansRequest(r *http.Request, aH *APIHandler) (*model.GetFilteredSpansParams, error) {
-
-	var postData *model.GetFilteredSpansParams
-	err := json.NewDecoder(r.Body).Decode(&postData)
-
-	if err != nil {
-		return nil, err
-	}
-
-	postData.Start, err = parseTimeStr(postData.StartStr, "start")
-	if err != nil {
-		return nil, err
-	}
-	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
-	if err != nil {
-		return nil, err
-	}
-
-	if postData.Limit == 0 {
-		postData.Limit = 10
-	}
-
-	if len(postData.Order) != 0 {
-		if postData.Order != baseconstants.Ascending && postData.Order != baseconstants.Descending {
-			return nil, errors.New("order param is not in correct format")
-		}
-		if postData.OrderParam != baseconstants.Duration && postData.OrderParam != baseconstants.Timestamp {
-			return nil, errors.New("order param is not in correct format")
-		}
-		if postData.OrderParam == baseconstants.Duration && !aH.CheckFeature(baseconstants.DurationSort) {
-			return nil, model.ErrFeatureUnavailable{Key: baseconstants.DurationSort}
-		} else if postData.OrderParam == baseconstants.Timestamp && !aH.CheckFeature(baseconstants.TimestampSort) {
-			return nil, model.ErrFeatureUnavailable{Key: baseconstants.TimestampSort}
-		}
-	}
-	tags, err := extractTagKeys(postData.Tags)
-	if err != nil {
-		return nil, err
-	}
-	postData.Tags = tags
-	return postData, nil
-}
-
-func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpanAggregatesParams, error) {
-
-	var postData *model.GetFilteredSpanAggregatesParams
-	err := json.NewDecoder(r.Body).Decode(&postData)
-
-	if err != nil {
-		return nil, err
-	}
-
-	postData.Start, err = parseTimeStr(postData.StartStr, "start")
-	if err != nil {
-		return nil, err
-	}
-	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
-	if err != nil {
-		return nil, err
-	}
-
-	step := postData.StepSeconds
-	if step == 0 {
-		return nil, errors.New("step param missing in query")
-	}
-
-	function := postData.Function
-	if len(function) == 0 {
-		return nil, errors.New("function param missing in query")
-	} else {
-		if !DoesExistInSlice(function, allowedFunctions) {
-			return nil, fmt.Errorf("given function: %s is not allowed in query", function)
-		}
-	}
-
-	var dimension, aggregationOption string
-
-	switch function {
-	case "count":
-		dimension = "calls"
-		aggregationOption = "count"
-	case "ratePerSec":
-		dimension = "calls"
-		aggregationOption = "rate_per_sec"
-	case "avg":
-		dimension = "duration"
-		aggregationOption = "avg"
-	case "sum":
-		dimension = "duration"
-		aggregationOption = "sum"
-	case "p50":
-		dimension = "duration"
-		aggregationOption = "p50"
-	case "p90":
-		dimension = "duration"
-		aggregationOption = "p90"
-	case "p95":
-		dimension = "duration"
-		aggregationOption = "p95"
-	case "p99":
-		dimension = "duration"
-		aggregationOption = "p99"
-	case "min":
-		dimension = "duration"
-		aggregationOption = "min"
-	case "max":
-		dimension = "duration"
-		aggregationOption = "max"
-	}
-
-	postData.AggregationOption = aggregationOption
-	postData.Dimension = dimension
-	tags, err := extractTagKeys(postData.Tags)
-	if err != nil {
-		return nil, err
-	}
-	postData.Tags = tags
-
-	return postData, nil
-}
-
-func extractTagKeys(tags []model.TagQueryParam) ([]model.TagQueryParam, error) {
-	newTags := make([]model.TagQueryParam, 0)
-	if len(tags) != 0 {
-		for _, tag := range tags {
-			customStr := strings.Split(tag.Key, ".(")
-			if len(customStr) < 2 {
-				return nil, fmt.Errorf("TagKey param is not valid in query")
-			} else {
-				tag.Key = customStr[0]
-			}
-			if tag.Operator == model.ExistsOperator || tag.Operator == model.NotExistsOperator {
-				if customStr[1] == string(model.TagTypeString)+")" {
-					tag.StringValues = []string{" "}
-				} else if customStr[1] == string(model.TagTypeBool)+")" {
-					tag.BoolValues = []bool{true}
-				} else if customStr[1] == string(model.TagTypeNumber)+")" {
-					tag.NumberValues = []float64{0}
-				} else {
-					return nil, fmt.Errorf("TagKey param is not valid in query")
-				}
-			}
-			newTags = append(newTags, tag)
-		}
-	}
-	return newTags, nil
-}
-
-func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
-	var postData *model.TagFilterParams
-	err := json.NewDecoder(r.Body).Decode(&postData)
-
-	if err != nil {
-		return nil, err
-	}
-
-	postData.Start, err = parseTimeStr(postData.StartStr, "start")
-	if err != nil {
-		return nil, err
-	}
-	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
-	if err != nil {
-		return nil, err
-	}
-
-	return postData, nil
-
-}
-
-func parseTagValueRequest(r *http.Request) (*model.TagFilterParams, error) {
-	var postData *model.TagFilterParams
-	err := json.NewDecoder(r.Body).Decode(&postData)
-
-	if err != nil {
-		return nil, err
-	}
-	if postData.TagKey == (model.TagKey{}) {
-		return nil, fmt.Errorf("TagKey param missing in query")
-	}
-
-	if postData.TagKey.Type != model.TagTypeString && postData.TagKey.Type != model.TagTypeBool && postData.TagKey.Type != model.TagTypeNumber {
-		return nil, fmt.Errorf("tag keys type %s is not supported", postData.TagKey.Type)
-	}
-
-	if postData.Limit == 0 {
-		postData.Limit = 100
-	}
-
-	postData.Start, err = parseTimeStr(postData.StartStr, "start")
-	if err != nil {
-		return nil, err
-	}
-	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
-	if err != nil {
-		return nil, err
-	}
-
-	return postData, nil
-
-}
-
 func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
 
 	var allowedOrderParams = []string{"exceptionType", "exceptionCount", "firstSeen", "lastSeen", "serviceName"}
@@ -721,6 +477,42 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 	}
 	// Trim spaces from email
 	req.Email = strings.TrimSpace(req.Email)
+	return &req, nil
+}
+
+func isValidRole(role string) bool {
+	switch role {
+	case constants.AdminGroup, constants.EditorGroup, constants.ViewerGroup:
+		return true
+	}
+	return false
+}
+
+func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) {
+	var req model.BulkInviteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	// Validate that the request contains users
+	if len(req.Users) == 0 {
+		return nil, fmt.Errorf("no users provided for invitation")
+	}
+
+	// Trim spaces and validate each user
+	for i := range req.Users {
+		req.Users[i].Email = strings.TrimSpace(req.Users[i].Email)
+		if req.Users[i].Email == "" {
+			return nil, fmt.Errorf("email is required for each user")
+		}
+		if req.Users[i].FrontendBaseUrl == "" {
+			return nil, fmt.Errorf("frontendBaseUrl is required for each user")
+		}
+		if !isValidRole(req.Users[i].Role) {
+			return nil, fmt.Errorf("invalid role for user: %s", req.Users[i].Email)
+		}
+	}
+
 	return &req, nil
 }
 
@@ -1094,25 +886,18 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				query.StepInterval = minStep
 			}
 
-			// Remove the time shift function from the list of functions and set the shift by value
-			var timeShiftBy int64
-			if len(query.Functions) > 0 {
-				for idx := range query.Functions {
-					function := &query.Functions[idx]
-					if function.Name == v3.FunctionNameTimeShift {
-						// move the function to the beginning of the list
-						// so any other function can use the shifted time
-						var fns []v3.Function
-						fns = append(fns, *function)
-						fns = append(fns, query.Functions[:idx]...)
-						fns = append(fns, query.Functions[idx+1:]...)
-						query.Functions = fns
-						timeShiftBy = int64(function.Args[0].(float64))
-						break
-					}
+			if query.DataSource == v3.DataSourceMetrics && baseconstants.UseMetricsPreAggregation() {
+				// if the time range is greater than 1 day, and less than 1 week set the step interval to be multiple of 5 minutes
+				// if the time range is greater than 1 week, set the step interval to be multiple of 30 mins
+				start, end := queryRangeParams.Start, queryRangeParams.End
+				if end-start >= 24*time.Hour.Milliseconds() && end-start < 7*24*time.Hour.Milliseconds() {
+					query.StepInterval = int64(math.Round(float64(query.StepInterval)/300)) * 300
+				} else if end-start >= 7*24*time.Hour.Milliseconds() {
+					query.StepInterval = int64(math.Round(float64(query.StepInterval)/1800)) * 1800
 				}
 			}
-			query.ShiftBy = timeShiftBy
+
+			query.SetShiftByFromFunc()
 
 			if query.Filters == nil || len(query.Filters.Items) == 0 {
 				continue

@@ -490,7 +490,7 @@ var testBuildTracesQueryData = []struct {
 	AggregateOperator v3.AggregateOperator
 	ExpectedQuery     string
 	PanelType         v3.PanelType
-	Options           Options
+	Options           v3.QBOptions
 }{
 	{
 		Name:  "Test aggregate count on fixed column of float64 type",
@@ -524,7 +524,7 @@ var testBuildTracesQueryData = []struct {
 			" signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <=" +
 			" '1680066458000000000') group by ts order by value DESC",
 		PanelType: v3.PanelTypeGraph,
-		Options:   Options{GraphLimitQtype: "", PreferRPM: true},
+		Options:   v3.QBOptions{GraphLimitQtype: "", PreferRPM: true},
 	},
 	{
 		Name:  "Test aggregate count on fixed column of float64 type with filter",
@@ -867,7 +867,7 @@ var testBuildTracesQueryData = []struct {
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" AND has(stringTagMap, 'method') group by `method`,ts order by `method` ASC",
 		PanelType: v3.PanelTypeGraph,
-		Options: Options{GraphLimitQtype: "",
+		Options: v3.QBOptions{GraphLimitQtype: "",
 			PreferRPM: false,
 		},
 	},
@@ -892,7 +892,7 @@ var testBuildTracesQueryData = []struct {
 			"AND has(stringTagMap, 'method') group by `method`,ts " +
 			"order by `method` ASC",
 		PanelType: v3.PanelTypeGraph,
-		Options:   Options{GraphLimitQtype: "", PreferRPM: true},
+		Options:   v3.QBOptions{GraphLimitQtype: "", PreferRPM: true},
 	},
 	{
 		Name:  "Test aggregate RateSum without fixed column",
@@ -916,7 +916,7 @@ var testBuildTracesQueryData = []struct {
 			"AND has(stringTagMap, 'method') group by `method`,ts " +
 			"order by `method` ASC",
 		PanelType: v3.PanelTypeGraph,
-		Options:   Options{GraphLimitQtype: "", PreferRPM: true},
+		Options:   v3.QBOptions{GraphLimitQtype: "", PreferRPM: true},
 	},
 	{
 		Name:  "Test aggregate with having clause",
@@ -1207,7 +1207,7 @@ var testPrepTracesQueryData = []struct {
 	BuilderQuery  *v3.BuilderQuery
 	ExpectedQuery string
 	Keys          map[string]v3.AttributeKey
-	Options       Options
+	Options       v3.QBOptions
 }{
 	{
 		Name:      "Test TS with limit- first",
@@ -1232,7 +1232,7 @@ var testPrepTracesQueryData = []struct {
 			" where (timestamp >= '1680066360000000000' AND timestamp <= '1680066420000000000') AND" +
 			" stringTagMap['method'] = 'GET' AND has(stringTagMap, 'method') group by `method` order by value DESC) LIMIT 10",
 		Keys: map[string]v3.AttributeKey{"name": {Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
-		Options: Options{
+		Options: v3.QBOptions{
 			GraphLimitQtype: constants.FirstQueryGraphLimit,
 		},
 	},
@@ -1261,7 +1261,7 @@ var testPrepTracesQueryData = []struct {
 			" AND timestamp <= '1680066420000000000') AND stringTagMap['method'] = 'GET' AND" +
 			" has(stringTagMap, 'method') group by `method` order by value ASC) LIMIT 10",
 		Keys: map[string]v3.AttributeKey{},
-		Options: Options{
+		Options: v3.QBOptions{
 			GraphLimitQtype: constants.FirstQueryGraphLimit,
 		},
 	},
@@ -1287,7 +1287,7 @@ var testPrepTracesQueryData = []struct {
 			" AND timestamp <= '1680066420000000000') " +
 			"group by `serviceName` order by `serviceName` ASC) LIMIT 10",
 		Keys: map[string]v3.AttributeKey{},
-		Options: Options{
+		Options: v3.QBOptions{
 			GraphLimitQtype: constants.FirstQueryGraphLimit,
 		},
 	},
@@ -1317,7 +1317,7 @@ var testPrepTracesQueryData = []struct {
 			" AND timestamp <= '1680066420000000000') AND has(stringTagMap, 'http.method') " +
 			"group by `serviceName`,`http.method` order by `serviceName` ASC,value ASC) LIMIT 10",
 		Keys: map[string]v3.AttributeKey{},
-		Options: Options{
+		Options: v3.QBOptions{
 			GraphLimitQtype: constants.FirstQueryGraphLimit,
 		},
 	},
@@ -1345,7 +1345,7 @@ var testPrepTracesQueryData = []struct {
 			" AND timestamp <= '1680066420000000000') AND stringTagMap['method'] = 'GET' AND" +
 			" has(stringTagMap, 'method') AND (`method`) GLOBAL IN (%s) group by `method`,ts order by value DESC",
 		Keys: map[string]v3.AttributeKey{},
-		Options: Options{
+		Options: v3.QBOptions{
 			GraphLimitQtype: constants.SecondQueryGraphLimit,
 		},
 	},
@@ -1373,7 +1373,7 @@ var testPrepTracesQueryData = []struct {
 			" as value from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360000000000'" +
 			" AND timestamp <= '1680066420000000000') AND stringTagMap['method'] = 'GET' AND" +
 			" has(stringTagMap, 'method') AND (`method`) GLOBAL IN (%s) group by `method`,ts order by `method` ASC", Keys: map[string]v3.AttributeKey{},
-		Options: Options{
+		Options: v3.QBOptions{
 			GraphLimitQtype: constants.SecondQueryGraphLimit,
 		},
 	},
@@ -1408,7 +1408,7 @@ var testPrepTracesQueryData = []struct {
 			"AND (`method`,`name`) GLOBAL IN (%s) group by `method`,`name`,ts " +
 			"order by `method` ASC,`name` ASC",
 		Keys: map[string]v3.AttributeKey{},
-		Options: Options{
+		Options: v3.QBOptions{
 			GraphLimitQtype: constants.SecondQueryGraphLimit,
 		},
 	},

@@ -47,7 +47,7 @@
 
 		.header-config {
 			display: flex;
-			gap: 10px;
+			gap: 12px;
 			align-items: center;
 
 			.messaging-queue-options {
@@ -106,6 +106,8 @@
 
 		.mq-details-options {
 			letter-spacing: -0.06px;
+			cursor: pointer;
+
 			.ant-radio-button-wrapper {
 				border-color: var(--bg-slate-400);
 				color: var(--bg-vanilla-400);
@@ -219,6 +221,29 @@
 				}
 			}
 		}
+
+		:nth-child(2),
+		:nth-child(4) {
+			border-left: none !important;
+			border-right: none !important;
+		}
+
+		&.summary-section {
+			.overview-info-card {
+				min-height: 144px;
+
+				.card-title {
+					color: var(--bg-vanilla-400);
+					font-family: Inter;
+					font-size: 13px;
+					font-style: normal;
+					font-weight: 500;
+					line-height: 22px;
+					letter-spacing: 0.52px;
+					text-transform: uppercase;
+				}
+			}
+		}
 	}
 
 	.summary-section {
@@ -312,6 +337,10 @@
 		.messaging-breadcrumb {
 			color: var(--bg-ink-400);
 			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.message-queue-text {
+				color: var(--bg-ink-400);
+			}
 		}
 		.messaging-header {
 			color: var(--bg-ink-400);

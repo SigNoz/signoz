@@ -7,7 +7,7 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-func TestLogsListTsRange(t *testing.T) {
+func TestListTsRange(t *testing.T) {
 	startEndData := []struct {
 		name  string
 		start int64
@@ -18,7 +18,7 @@ func TestLogsListTsRange(t *testing.T) {
 			name:  "testing for less then one hour",
 			start: 1722262800000000000, // July 29, 2024 7:50:00 PM
 			end:   1722263800000000000, // July 29, 2024 8:06:40 PM
-			res:   []LogsListTsRange{},
+			res:   []LogsListTsRange{{1722262800000000000, 1722263800000000000}},
 		},
 		{
 			name:  "testing for more than one hour",
@@ -44,7 +44,7 @@ func TestLogsListTsRange(t *testing.T) {
 	}
 
 	for _, test := range startEndData {
-		res := GetLogsListTsRanges(test.start, test.end)
+		res := GetListTsRanges(test.start, test.end)
 		for i, v := range res {
 			if test.res[i].Start != v.Start || test.res[i].End != v.End {
 				t.Errorf("expected range was %v - %v, got %v - %v", v.Start, v.End, test.res[i].Start, test.res[i].End)
@@ -53,7 +53,7 @@ func TestLogsListTsRange(t *testing.T) {
 	}
 }
 
-func Test_GenerateLogEnrichmentKeys(t *testing.T) {
+func Test_GenerateEnrichmentKeys(t *testing.T) {
 	type args struct {
 		field v3.AttributeKey
 	}
@@ -96,8 +96,8 @@ func Test_GenerateLogEnrichmentKeys(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GenerateLogEnrichmentKeys(tt.args.field); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("generateLogEnrichmentKeys() = %v, want %v", got, tt.want)
+			if got := GenerateEnrichmentKeys(tt.args.field); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GenerateEnrichmentKeys() = %v, want %v", got, tt.want)
 			}
 		})
 	}

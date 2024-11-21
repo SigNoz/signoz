@@ -520,14 +520,16 @@ func Test_orderByAttributeKeyTags(t *testing.T) {
 					{
 						ColumnName: "bytes",
 						Order:      "asc",
+						IsColumn:   true,
+						Type:       v3.AttributeKeyTypeTag,
+						DataType:   v3.AttributeKeyDataTypeString,
 					},
 				},
 				tags: []v3.AttributeKey{
 					{Key: "name"},
-					{Key: "bytes"},
 				},
 			},
-			want: "`name` asc,value asc,`bytes` asc",
+			want: "`name` asc,value asc,`attribute_string_bytes` asc",
 		},
 		{
 			name: "test 4",
@@ -722,7 +724,7 @@ func Test_buildLogsQuery(t *testing.T) {
 					},
 				},
 			},
-			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string " +
+			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string " +
 				"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 				"AND attributes_string['service.name'] = 'test' AND mapContains(attributes_string, 'service.name') order by timestamp desc",
 		},
@@ -806,7 +808,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 		queryType v3.QueryType
 		panelType v3.PanelType
 		mq        *v3.BuilderQuery
-		options   v3.LogQBOptions
+		options   v3.QBOptions
 	}
 	tests := []struct {
 		name    string
@@ -875,7 +877,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 					Limit:   10,
 					GroupBy: []v3.AttributeKey{{Key: "user", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 				},
-				options: v3.LogQBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
+				options: v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 			},
 			want: "SELECT `user` from (SELECT attributes_string['user'] as `user`, toFloat64(count(distinct(attributes_string['name']))) as value from signoz_logs.distributed_logs_v2 " +
 				"where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['method'] = 'GET' " +
@@ -904,7 +906,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 					GroupBy: []v3.AttributeKey{{Key: "user", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 					Limit:   2,
 				},
-				options: v3.LogQBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit},
+				options: v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit},
 			},
 			want: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string['user'] as `user`, toFloat64(count(distinct(attributes_string['name']))) as value " +
 				"from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND " +
@@ -929,9 +931,9 @@ func TestPrepareLogsQuery(t *testing.T) {
 					},
 					},
 				},
-				options: v3.LogQBOptions{IsLivetailQuery: true},
+				options: v3.QBOptions{IsLivetailQuery: true},
 			},
-			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string " +
+			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string " +
 				"from signoz_logs.distributed_logs_v2 where attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND ",
 		},
 		{
@@ -952,9 +954,9 @@ func TestPrepareLogsQuery(t *testing.T) {
 					},
 					},
 				},
-				options: v3.LogQBOptions{IsLivetailQuery: true},
+				options: v3.QBOptions{IsLivetailQuery: true},
 			},
-			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string from " +
+			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string from " +
 				"signoz_logs.distributed_logs_v2 where attributes_string['method'] = 'GET' AND mapContains(attributes_string, 'method') AND " +
 				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE simpleJSONExtractString(lower(labels), 'service.name') LIKE '%app%' AND lower(labels) like '%service.name%app%' AND ",
 		},
@@ -972,9 +974,9 @@ func TestPrepareLogsQuery(t *testing.T) {
 					Expression:        "A",
 					Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
 				},
-				options: v3.LogQBOptions{IsLivetailQuery: true},
+				options: v3.QBOptions{IsLivetailQuery: true},
 			},
-			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string " +
+			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string " +
 				"from signoz_logs.distributed_logs_v2 where ",
 		},
 		{
@@ -1014,9 +1016,9 @@ func TestPrepareLogsQuery(t *testing.T) {
 					PageSize:          5,
 				},
 			},
-			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string from " +
+			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string from " +
 				"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-				"order by `timestamp` desc LIMIT 1",
+				"order by timestamp desc LIMIT 1",
 		},
 		{
 			name: "Test limit greater than pageSize - order by ts",
@@ -1039,9 +1041,9 @@ func TestPrepareLogsQuery(t *testing.T) {
 					PageSize: 10,
 				},
 			},
-			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string from " +
+			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string from " +
 				"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-				"AND id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by `timestamp` desc LIMIT 10",
+				"AND id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by timestamp desc LIMIT 10",
 		},
 		{
 			name: "Test limit less than pageSize  - order by custom",
@@ -1062,7 +1064,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 					PageSize:          5,
 				},
 			},
-			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string from " +
+			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string from " +
 				"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 				"order by attributes_string['method'] desc LIMIT 1 OFFSET 0",
 		},
@@ -1087,7 +1089,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 					PageSize: 50,
 				},
 			},
-			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, attributes_string, attributes_number, attributes_bool, resources_string from " +
+			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string from " +
 				"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND " +
 				"id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by attributes_string['method'] desc LIMIT 50 OFFSET 50",
 		},

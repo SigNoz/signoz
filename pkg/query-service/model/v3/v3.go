@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 type DataSource string
@@ -228,13 +229,14 @@ type AggregateAttributeRequest struct {
 type TagType string
 
 const (
-	TagTypeTag      TagType = "tag"
-	TagTypeResource TagType = "resource"
+	TagTypeTag                  TagType = "tag"
+	TagTypeResource             TagType = "resource"
+	TagTypeInstrumentationScope TagType = "scope"
 )
 
 func (q TagType) Validate() error {
 	switch q {
-	case TagTypeTag, TagTypeResource:
+	case TagTypeTag, TagTypeResource, TagTypeInstrumentationScope:
 		return nil
 	default:
 		return fmt.Errorf("invalid tag type: %s", q)
@@ -316,9 +318,10 @@ type FilterAttributeKeyResponse struct {
 type AttributeKeyType string
 
 const (
-	AttributeKeyTypeUnspecified AttributeKeyType = ""
-	AttributeKeyTypeTag         AttributeKeyType = "tag"
-	AttributeKeyTypeResource    AttributeKeyType = "resource"
+	AttributeKeyTypeUnspecified          AttributeKeyType = ""
+	AttributeKeyTypeTag                  AttributeKeyType = "tag"
+	AttributeKeyTypeResource             AttributeKeyType = "resource"
+	AttributeKeyTypeInstrumentationScope AttributeKeyType = "scope"
 )
 
 func (t AttributeKeyType) String() string {
@@ -347,7 +350,7 @@ func (a AttributeKey) Validate() error {
 
 	if a.IsColumn {
 		switch a.Type {
-		case AttributeKeyTypeResource, AttributeKeyTypeTag, AttributeKeyTypeUnspecified:
+		case AttributeKeyTypeResource, AttributeKeyTypeTag, AttributeKeyTypeUnspecified, AttributeKeyTypeInstrumentationScope:
 			break
 		default:
 			return fmt.Errorf("invalid attribute type: %s", a.Type)
@@ -762,6 +765,11 @@ type Function struct {
 	NamedArgs map[string]interface{} `json:"namedArgs,omitempty"`
 }
 
+type MetricTableHints struct {
+	TimeSeriesTableName string
+	SamplesTableName    string
+}
+
 type BuilderQuery struct {
 	QueryName            string            `json:"queryName"`
 	StepInterval         int64             `json:"stepInterval"`
@@ -787,6 +795,39 @@ type BuilderQuery struct {
 	ShiftBy              int64
 	IsAnomaly            bool
 	QueriesUsedInFormula []string
+	MetricTableHints     *MetricTableHints `json:"-"`
+}
+
+func (b *BuilderQuery) SetShiftByFromFunc() {
+	// Remove the time shift function from the list of functions and set the shift by value
+	var timeShiftBy int64
+	if len(b.Functions) > 0 {
+		for idx := range b.Functions {
+			function := &b.Functions[idx]
+			if function.Name == FunctionNameTimeShift {
+				// move the function to the beginning of the list
+				// so any other function can use the shifted time
+				var fns []Function
+				fns = append(fns, *function)
+				fns = append(fns, b.Functions[:idx]...)
+				fns = append(fns, b.Functions[idx+1:]...)
+				b.Functions = fns
+				if len(function.Args) > 0 {
+					if shift, ok := function.Args[0].(float64); ok {
+						timeShiftBy = int64(shift)
+					} else if shift, ok := function.Args[0].(string); ok {
+						shiftBy, err := strconv.ParseFloat(shift, 64)
+						if err != nil {
+							zap.L().Error("failed to parse time shift by", zap.String("shift", shift), zap.Error(err))
+						}
+						timeShiftBy = int64(shiftBy)
+					}
+				}
+				break
+			}
+		}
+	}
+	b.ShiftBy = timeShiftBy
 }
 
 func (b *BuilderQuery) Clone() *BuilderQuery {
@@ -1075,9 +1116,16 @@ func (f *FilterItem) CacheKey() string {
 	return fmt.Sprintf("key:%s,op:%s,value:%v", f.Key.CacheKey(), f.Operator, f.Value)
 }
 
+type Direction string
+
+const (
+	DirectionAsc  Direction = "asc"
+	DirectionDesc Direction = "desc"
+)
+
 type OrderBy struct {
 	ColumnName string               `json:"columnName"`
-	Order      string               `json:"order"`
+	Order      Direction            `json:"order"`
 	Key        string               `json:"-"`
 	DataType   AttributeKeyDataType `json:"-"`
 	Type       AttributeKeyType     `json:"-"`
@@ -1308,7 +1356,7 @@ type URLShareableOptions struct {
 	SelectColumns []AttributeKey `json:"selectColumns"`
 }
 
-type LogQBOptions struct {
+type QBOptions struct {
 	GraphLimitQtype string
 	IsLivetailQuery bool
 	PreferRPM       bool
