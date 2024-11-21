@@ -1,4 +1,4 @@
-import './Containers.styles.scss';
+import './Processes.styles.scss';
 
 import { Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,7 @@ function Processes(): JSX.Element {
 	const { t } = useTranslation(['infraMonitoring']);
 
 	return (
-		<Space direction="vertical" className="host-containers" size={24}>
+		<Space direction="vertical" className="host-processes" size={24}>
 			<div className="infra-container-card">
 				<img
 					src="/Icons/infraContainers.svg"
