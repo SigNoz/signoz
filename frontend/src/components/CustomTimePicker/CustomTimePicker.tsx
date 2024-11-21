@@ -120,7 +120,6 @@ function CustomTimePicker({
 
 	useEffect(() => {
 		const value = getSelectedTimeRangeLabel(selectedTime, selectedValue);
-
 		setSelectedTimePlaceholderValue(value);
 	}, [selectedTime, selectedValue]);
 

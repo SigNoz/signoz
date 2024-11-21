@@ -15,6 +15,7 @@ import {
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
+	InfrastructureMonitoring,
 	IngestionSettings,
 	InstalledIntegrations,
 	LicensePage,
@@ -389,6 +390,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: MQDetailPage,
 		key: 'MESSAGING_QUEUES_DETAIL',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+		exact: true,
+		component: InfrastructureMonitoring,
+		key: 'INFRASTRUCTURE_MONITORING_HOSTS',
 		isPrivate: true,
 	},
 ];
