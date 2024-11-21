@@ -35,7 +35,6 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -88,7 +87,6 @@ function HostMetricsDetails({
 
 	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.METRICS);
 	const isDarkMode = useIsDarkMode();
-	const history = useHistory();
 
 	const initialFilters = useMemo(
 		() => ({
@@ -127,7 +125,16 @@ function HostMetricsDetails({
 
 	useEffect(() => {
 		setSelectedInterval(selectedTime as Time);
-	}, [selectedTime]);
+
+		if (selectedTime !== 'custom') {
+			const { maxTime, minTime } = GetMinMax(selectedTime);
+
+			setModalTimeRange({
+				startTime: Math.floor(minTime / 1000000000),
+				endTime: Math.floor(maxTime / 1000000000),
+			});
+		}
+	}, [selectedTime, minTime, maxTime]);
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
@@ -195,7 +202,7 @@ function HostMetricsDetails({
 		[],
 	);
 
-	const handleCompassClick = (): void => {
+	const handleExplorePagesRedirect = (): void => {
 		if (selectedInterval !== 'custom') {
 			urlQuery.set(QueryParams.relativeTime, selectedInterval);
 		} else {
@@ -227,10 +234,10 @@ function HostMetricsDetails({
 
 			urlQuery.set('compositeQuery', JSON.stringify(compositeQuery));
 
-			history.push({
-				pathname: ROUTES.LOGS_EXPLORER,
-				search: urlQuery.toString(),
-			});
+			window.open(
+				`${window.location.origin}${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`,
+				'_blank',
+			);
 		} else if (selectedView === VIEW_TYPES.TRACES) {
 			const compositeQuery = {
 				...initialQueryState,
@@ -249,16 +256,31 @@ function HostMetricsDetails({
 
 			urlQuery.set('compositeQuery', JSON.stringify(compositeQuery));
 
-			history.push({
-				pathname: ROUTES.TRACES_EXPLORER,
-				search: urlQuery.toString(),
+			window.open(
+				`${window.location.origin}${ROUTES.TRACES_EXPLORER}?${urlQuery.toString()}`,
+				'_blank',
+			);
+		}
+	};
+
+	const handleClose = (): void => {
+		setSelectedInterval(selectedTime as Time);
+
+		if (selectedTime !== 'custom') {
+			const { maxTime, minTime } = GetMinMax(selectedTime);
+
+			setModalTimeRange({
+				startTime: Math.floor(minTime / 1000000000),
+				endTime: Math.floor(maxTime / 1000000000),
 			});
 		}
+		setSelectedView(VIEW_TYPES.METRICS);
+		onClose();
 	};
 
 	return (
 		<Drawer
-			width="60%"
+			width="70%"
 			title={
 				<>
 					<Divider type="vertical" />
@@ -266,7 +288,7 @@ function HostMetricsDetails({
 				</>
 			}
 			placement="right"
-			onClose={onClose}
+			onClose={handleClose}
 			open={!!host}
 			style={{
 				overscrollBehavior: 'contain',
@@ -418,7 +440,7 @@ function HostMetricsDetails({
 							<Button
 								icon={<Compass size={18} />}
 								className="compass-button"
-								onClick={handleCompassClick}
+								onClick={handleExplorePagesRedirect}
 							/>
 						)}
 					</div>

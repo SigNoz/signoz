@@ -46,7 +46,7 @@ function HostsList(): JSX.Element {
 
 	const [selectedHostName, setSelectedHostName] = useState<string | null>(null);
 
-	const pageSize = 15;
+	const pageSize = 10;
 
 	const query = useMemo(() => {
 		const baseQuery = getHostListsQuery();
@@ -111,6 +111,7 @@ function HostsList(): JSX.Element {
 			const isNewFilterAdded = value.items.length !== filters.items.length;
 			if (isNewFilterAdded) {
 				setFilters(value);
+				setCurrentPage(1);
 			}
 		},
 		[filters],
@@ -140,9 +141,12 @@ function HostsList(): JSX.Element {
 				<NoLogs dataSource={DataSource.METRICS} />
 			)}
 
-			{formattedHostMetricsData.length === 0 && filters.items.length > 0 && (
-				<div className="no-hosts-message">No hosts match the applied filters.</div>
-			)}
+			{!isFetching &&
+				!isLoading &&
+				formattedHostMetricsData.length === 0 &&
+				filters.items.length > 0 && (
+					<div className="no-hosts-message">No hosts match the applied filters.</div>
+				)}
 
 			{!isError && (
 				<Table

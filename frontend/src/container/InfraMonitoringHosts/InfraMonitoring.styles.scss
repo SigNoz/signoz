@@ -159,10 +159,13 @@
 		.ant-pagination {
 			position: fixed;
 			bottom: 0;
-			width: calc(100% - 124px);
+			width: calc(100% - 64px);
 			background: var(--bg-ink-500);
 			padding: 16px;
 			margin: 0;
+
+			// this is to offset intercom icon till we improve the design
+			padding-right: 72px;
 
 			.ant-pagination-item {
 				border-radius: 4px;
