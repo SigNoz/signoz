@@ -13,7 +13,7 @@ import React, {
 } from 'react';
 
 interface TimezoneContextType {
-	timezone: Timezone | undefined;
+	timezone: Timezone;
 	browserTimezone: Timezone;
 	updateTimezone: (timezone: Timezone) => void;
 }
@@ -49,7 +49,7 @@ function TimezoneProvider({
 
 	const browserTimezone = useMemo(() => getBrowserTimezone(), []);
 
-	const [timezone, setTimezone] = useState<Timezone | undefined>(
+	const [timezone, setTimezone] = useState<Timezone>(
 		getStoredTimezoneValue() ?? browserTimezone,
 	);
 
