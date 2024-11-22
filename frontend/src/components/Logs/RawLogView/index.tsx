@@ -173,6 +173,7 @@ function RawLogView({
 			<LogStateIndicator type={logType} fontSize={fontSize} />
 
 			<RawLogContent
+				className="raw-log-content"
 				$isReadOnly={isReadOnly}
 				$isActiveLog={isActiveLog}
 				$isDarkMode={isDarkMode}

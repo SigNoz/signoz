@@ -228,3 +228,10 @@ export const MQDetailPage = Loadable(
 			/* webpackChunkName: "MQDetailPage" */ 'pages/MessagingQueues/MQDetailPage'
 		),
 );
+
+export const InfrastructureMonitoring = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "InfrastructureMonitoring" */ 'pages/InfrastructureMonitoring'
+		),
+);
