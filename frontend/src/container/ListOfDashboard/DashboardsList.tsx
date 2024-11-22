@@ -438,6 +438,7 @@ function DashboardsList(): JSX.Element {
 				const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.id}`;
 
 				const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
+					event.stopPropagation();
 					if (event.metaKey || event.ctrlKey) {
 						window.open(getLink(), '_blank');
 					} else {
@@ -458,7 +459,11 @@ function DashboardsList(): JSX.Element {
 									placement="left"
 									overlayClassName="title-toolip"
 								>
-									<Link to={getLink()} className="title-link">
+									<Link
+										to={getLink()}
+										className="title-link"
+										onClick={(e): void => e.stopPropagation()}
+									>
 										<img
 											src={dashboard?.image || Base64Icons[0]}
 											alt="dashboard-image"
