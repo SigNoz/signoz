@@ -554,13 +554,14 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 }
 
 func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc string, start, end time.Time) (string, error) {
+	// assuming all will be resource attributes.
+	// and resource attributes are string for traces
 	filterSet := v3.FilterSet{}
 	for _, tag := range tags {
-		dataType := v3.AttributeKeyDataTypeString
 		it := v3.FilterItem{
 			Key: v3.AttributeKey{
 				Key:      tag.Key,
-				DataType: dataType,
+				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeResource,
 			},
 			Operator: v3.FilterOperator(tag.Operator),
