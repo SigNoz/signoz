@@ -55,6 +55,7 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		dataIndex: 'cpu',
 		key: 'cpu',
 		width: 100,
+		sorter: true,
 		align: 'right',
 	},
 	{
@@ -62,6 +63,7 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		dataIndex: 'memory',
 		key: 'memory',
 		width: 100,
+		sorter: true,
 		align: 'right',
 	},
 	{
@@ -69,6 +71,7 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		dataIndex: 'wait',
 		key: 'wait',
 		width: 100,
+		sorter: true,
 		align: 'right',
 	},
 	{
@@ -76,6 +79,7 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		dataIndex: 'load15',
 		key: 'load15',
 		width: 100,
+		sorter: true,
 		align: 'right',
 	},
 ];
