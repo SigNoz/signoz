@@ -77,6 +77,7 @@ type ServerOptions struct {
 	Cluster           string
 	GatewayUrl        string
 	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 	UseLicensesV3     bool
 }
 
@@ -156,6 +157,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.DialTimeout,
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
+			serverOptions.UseTraceNewSchema,
 		)
 		go qb.Start(readerReady)
 		reader = qb
@@ -189,6 +191,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.DisableRules,
 		lm,
 		serverOptions.UseLogsNewSchema,
+		serverOptions.UseTraceNewSchema,
 	)
 
 	if err != nil {
@@ -270,6 +273,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FluxInterval:                  fluxInterval,
 		Gateway:                       gatewayProxy,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
+		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
 		UseLicensesV3:                 serverOptions.UseLicensesV3,
 	}
 
@@ -737,7 +741,8 @@ func makeRulesManager(
 	cache cache.Cache,
 	disableRules bool,
 	fm baseint.FeatureLookup,
-	useLogsNewSchema bool) (*baserules.Manager, error) {
+	useLogsNewSchema bool,
+	useTraceNewSchema bool) (*baserules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
@@ -767,8 +772,9 @@ func makeRulesManager(
 		EvalDelay:    baseconst.GetEvalDelay(),
 
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
-		PrepareTestRuleFunc: rules.TestNotification,
 		UseLogsNewSchema:    useLogsNewSchema,
+		UseTraceNewSchema:   useTraceNewSchema,
+		PrepareTestRuleFunc: rules.TestNotification,
 	}
 
 	// create Manager

@@ -59,6 +59,7 @@ const ROUTES = {
 	INTEGRATIONS: '/integrations',
 	MESSAGING_QUEUES: '/messaging-queues',
 	MESSAGING_QUEUES_DETAIL: '/messaging-queues/detail',
+	INFRASTRUCTURE_MONITORING_HOSTS: '/infrastructure-monitoring/hosts',
 } as const;
 
 export default ROUTES;

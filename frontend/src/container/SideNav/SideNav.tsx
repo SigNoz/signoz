@@ -119,6 +119,22 @@ function SideNav({
 
 			setMenuItems(items);
 		}
+
+		const isInfraMonitoringEnabled =
+			featureResponse.data?.find(
+				(feature) => feature.name === FeatureKeys.HOSTS_INFRA_MONITORING,
+			)?.active || false;
+
+		if (!isInfraMonitoringEnabled) {
+			let items = [...menuItems];
+
+			items = items.filter(
+				(item) => item.key !== ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+			);
+
+			setMenuItems(items);
+		}
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [featureResponse.data]);
 
