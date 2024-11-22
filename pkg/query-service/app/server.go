@@ -286,10 +286,10 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 
 	r := NewRouter()
 
-	r.Use(LogCommentEnricher)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
+	r.Use(LogCommentEnricher)
 
 	// add auth middleware
 	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
@@ -387,10 +387,7 @@ func LogCommentEnricher(next http.Handler) http.Handler {
 			client = "api"
 		}
 
-		email, err := auth.GetEmailFromJwt(r.Context())
-		if err != nil {
-			zap.S().Errorf("error while getting email from jwt: %v", err)
-		}
+		email, _ := auth.GetEmailFromJwt(r.Context())
 
 		kvs := map[string]string{
 			"path":        path,
