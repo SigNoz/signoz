@@ -1,6 +1,10 @@
 package model
 
-import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+import (
+	"sort"
+
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+)
 
 type (
 	ResponseType string
@@ -36,6 +40,34 @@ type HostListResponse struct {
 	Type    ResponseType     `json:"type"`
 	Records []HostListRecord `json:"records"`
 	Total   int              `json:"total"`
+}
+
+func (r *HostListResponse) SortBy(orderBy *v3.OrderBy) {
+	switch orderBy.ColumnName {
+	case "cpu":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPU > r.Records[j].CPU
+		})
+	case "memory":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].Memory > r.Records[j].Memory
+		})
+	case "load15":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].Load15 > r.Records[j].Load15
+		})
+	case "wait":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].Wait > r.Records[j].Wait
+		})
+	}
+	// the default is descending
+	if orderBy.Order == v3.DirectionAsc {
+		// reverse the list
+		for i, j := 0, len(r.Records)-1; i < j; i, j = i+1, j-1 {
+			r.Records[i], r.Records[j] = r.Records[j], r.Records[i]
+		}
+	}
 }
 
 type ProcessListRequest struct {
