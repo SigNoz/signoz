@@ -531,7 +531,7 @@ func Test_buildTracesQuery(t *testing.T) {
 				"WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name%myService%')) " +
 				"ORDER BY durationNano DESC LIMIT 1 BY traceID  LIMIT 100) AS inner_subquery ) AS subQuery ON signoz_traces.distributed_signoz_index_v3.traceID = subQuery.traceID WHERE (timestamp >= '1680066360726210000' AND " +
 				"timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY " +
-				"subQuery.durationNano desc LIMIT 1 BY subQuery.traceID;",
+				"subQuery.durationNano desc LIMIT 1 BY subQuery.traceID settings distributed_product_mode='allow'",
 		},
 		{
 			name: "Test order by value with having",
