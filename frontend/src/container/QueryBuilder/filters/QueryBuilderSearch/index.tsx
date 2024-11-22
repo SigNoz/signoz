@@ -72,6 +72,8 @@ function QueryBuilderSearch({
 	className,
 	placeholder,
 	suffixIcon,
+	isInfraMonitoring,
+	disableNavigationShortcuts,
 }: QueryBuilderSearchProps): JSX.Element {
 	const { pathname } = useLocation();
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
@@ -93,7 +95,12 @@ function QueryBuilderSearch({
 		searchKey,
 		key,
 		exampleQueries,
-	} = useAutoComplete(query, whereClauseConfig, isLogsExplorerPage);
+	} = useAutoComplete(
+		query,
+		whereClauseConfig,
+		isLogsExplorerPage,
+		isInfraMonitoring,
+	);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
 	const [dynamicPlacholder, setDynamicPlaceholder] = useState<string>(
@@ -105,6 +112,7 @@ function QueryBuilderSearch({
 		query,
 		searchKey,
 		isLogsExplorerPage,
+		isInfraMonitoring,
 	);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -162,14 +170,22 @@ function QueryBuilderSearch({
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
 
-		if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+		if (
+			!disableNavigationShortcuts &&
+			(event.ctrlKey || event.metaKey) &&
+			event.key === 'Enter'
+		) {
 			event.preventDefault();
 			event.stopPropagation();
 			handleRunQuery();
 			setIsOpen(false);
 		}
 
-		if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+		if (
+			!disableNavigationShortcuts &&
+			(event.ctrlKey || event.metaKey) &&
+			event.key === '/'
+		) {
 			event.preventDefault();
 			event.stopPropagation();
 			setShowAllFilters((prev) => !prev);
@@ -185,8 +201,8 @@ function QueryBuilderSearch({
 	);
 
 	const isMetricsDataSource = useMemo(
-		() => query.dataSource === DataSource.METRICS,
-		[query.dataSource],
+		() => query.dataSource === DataSource.METRICS && !isInfraMonitoring,
+		[query.dataSource, isInfraMonitoring],
 	);
 
 	const fetchValueDataType = (value: unknown, operator: string): DataTypes => {
@@ -250,7 +266,7 @@ function QueryBuilderSearch({
 	);
 
 	useEffect(() => {
-		if (isLastQuery) {
+		if (isLastQuery && !disableNavigationShortcuts) {
 			registerShortcut(LogsExplorerShortcuts.FocusTheSearchBar, () => {
 				// set timeout is needed here else the select treats the hotkey as input value
 				setTimeout(() => {
@@ -261,7 +277,12 @@ function QueryBuilderSearch({
 
 		return (): void =>
 			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
-	}, [deregisterShortcut, isLastQuery, registerShortcut]);
+	}, [
+		deregisterShortcut,
+		disableNavigationShortcuts,
+		isLastQuery,
+		registerShortcut,
+	]);
 
 	useEffect(() => {
 		if (!isOpen) {
@@ -427,6 +448,8 @@ interface QueryBuilderSearchProps {
 	className?: string;
 	placeholder?: string;
 	suffixIcon?: React.ReactNode;
+	isInfraMonitoring?: boolean;
+	disableNavigationShortcuts?: boolean;
 }
 
 QueryBuilderSearch.defaultProps = {
@@ -434,6 +457,8 @@ QueryBuilderSearch.defaultProps = {
 	className: '',
 	placeholder: PLACEHOLDER,
 	suffixIcon: undefined,
+	isInfraMonitoring: false,
+	disableNavigationShortcuts: false,
 };
 
 export interface CustomTagProps {

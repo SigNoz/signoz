@@ -39,6 +39,7 @@ import (
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/common"
@@ -110,8 +111,9 @@ type APIHandler struct {
 	// Websocket connection upgrader
 	Upgrader *websocket.Upgrader
 
-	UseLogsNewSchema bool
-	UseLicensesV3    bool
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
+	UseLicensesV3     bool
 
 	hostsRepo      *inframetrics.HostsRepo
 	processesRepo  *inframetrics.ProcessesRepo
@@ -163,6 +165,7 @@ type APIHandlerOpts struct {
 	// Use Logs New schema
 	UseLogsNewSchema bool
 
+	UseTraceNewSchema bool
 	// Use Licenses V3 structure
 	UseLicensesV3 bool
 }
@@ -176,21 +179,23 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	querierOpts := querier.QuerierOptions{
-		Reader:           opts.Reader,
-		Cache:            opts.Cache,
-		KeyGenerator:     queryBuilder.NewKeyGenerator(),
-		FluxInterval:     opts.FluxInterval,
-		FeatureLookup:    opts.FeatureFlags,
-		UseLogsNewSchema: opts.UseLogsNewSchema,
+		Reader:            opts.Reader,
+		Cache:             opts.Cache,
+		KeyGenerator:      queryBuilder.NewKeyGenerator(),
+		FluxInterval:      opts.FluxInterval,
+		FeatureLookup:     opts.FeatureFlags,
+		UseLogsNewSchema:  opts.UseLogsNewSchema,
+		UseTraceNewSchema: opts.UseTraceNewSchema,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:           opts.Reader,
-		Cache:            opts.Cache,
-		KeyGenerator:     queryBuilder.NewKeyGenerator(),
-		FluxInterval:     opts.FluxInterval,
-		FeatureLookup:    opts.FeatureFlags,
-		UseLogsNewSchema: opts.UseLogsNewSchema,
+		Reader:            opts.Reader,
+		Cache:             opts.Cache,
+		KeyGenerator:      queryBuilder.NewKeyGenerator(),
+		FluxInterval:      opts.FluxInterval,
+		FeatureLookup:     opts.FeatureFlags,
+		UseLogsNewSchema:  opts.UseLogsNewSchema,
+		UseTraceNewSchema: opts.UseTraceNewSchema,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
@@ -224,6 +229,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		querier:                       querier,
 		querierV2:                     querierv2,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
+		UseTraceNewSchema:             opts.UseTraceNewSchema,
 		UseLicensesV3:                 opts.UseLicensesV3,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
@@ -242,9 +248,14 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		logsQueryBuilder = logsv4.PrepareLogsQuery
 	}
 
+	tracesQueryBuilder := tracesV3.PrepareTracesQuery
+	if opts.UseTraceNewSchema {
+		tracesQueryBuilder = tracesV4.PrepareTracesQuery
+	}
+
 	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
-		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
+		BuildTraceQuery:  tracesQueryBuilder,
 		BuildLogQuery:    logsQueryBuilder,
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
@@ -4330,7 +4341,12 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		tracesV3.Enrich(queryRangeParams, spanKeys)
+		if aH.UseTraceNewSchema {
+			tracesV4.Enrich(queryRangeParams, spanKeys)
+		} else {
+			tracesV3.Enrich(queryRangeParams, spanKeys)
+		}
+
 	}
 
 	// WARN: Only works for AND operator in traces query
@@ -4800,7 +4816,11 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		tracesV3.Enrich(queryRangeParams, spanKeys)
+		if aH.UseTraceNewSchema {
+			tracesV4.Enrich(queryRangeParams, spanKeys)
+		} else {
+			tracesV3.Enrich(queryRangeParams, spanKeys)
+		}
 	}
 
 	// WARN: Only works for AND operator in traces query
