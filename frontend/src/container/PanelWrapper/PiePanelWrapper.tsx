@@ -108,7 +108,6 @@ function PiePanelWrapper({
 										if (!active) return half - 3;
 										return data.label === active.label ? half : half - 3;
 									}}
-									padAngle={0.02}
 									cornerRadius={3}
 									width={size}
 									height={size}
