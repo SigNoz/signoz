@@ -167,7 +167,7 @@ func NewReader(
 	dialTimeout time.Duration,
 	cluster string,
 	useLogsNewSchema bool,
-	// useTraceNewSchema bool, // TODO: uncomment this in integration PR
+	useTraceNewSchema bool,
 ) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
@@ -178,7 +178,7 @@ func NewReader(
 		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
 	}
 
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema)
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema)
 }
 
 func NewReaderFromClickhouseConnection(
@@ -189,7 +189,7 @@ func NewReaderFromClickhouseConnection(
 	featureFlag interfaces.FeatureLookup,
 	cluster string,
 	useLogsNewSchema bool,
-	// useTraceNewSchema bool,
+	useTraceNewSchema bool,
 ) *ClickHouseReader {
 	alertManager, err := am.New()
 	if err != nil {
@@ -229,11 +229,10 @@ func NewReaderFromClickhouseConnection(
 
 	traceTableName := options.primary.IndexTable
 	traceLocalTableName := options.primary.LocalIndexTable
-	// TODO: uncomment this in integration PR
-	// if useTraceNewSchema {
-	// 	traceTableName = options.primary.TraceIndexTableV3
-	// 	traceLocalTableName = options.primary.TraceLocalTableNameV3
-	// }
+	if useTraceNewSchema {
+		traceTableName = options.primary.TraceIndexTableV3
+		traceLocalTableName = options.primary.TraceLocalTableNameV3
+	}
 
 	return &ClickHouseReader{
 		db:                      wrap,
@@ -262,7 +261,8 @@ func NewReaderFromClickhouseConnection(
 		cluster:                 cluster,
 		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
 
-		useLogsNewSchema: useLogsNewSchema,
+		useLogsNewSchema:  useLogsNewSchema,
+		useTraceNewSchema: useTraceNewSchema,
 
 		logsTableV2:              options.primary.LogsTableV2,
 		logsLocalTableV2:         options.primary.LogsLocalTableV2,
@@ -271,7 +271,6 @@ func NewReaderFromClickhouseConnection(
 		logsTableName:            logsTableName,
 		logsLocalTableName:       logsLocalTableName,
 
-		// useTraceNewSchema:    useTraceNewSchema,
 		traceLocalTableName:  traceLocalTableName,
 		traceTableName:       traceTableName,
 		traceResourceTableV3: options.primary.TraceResourceTableV3,

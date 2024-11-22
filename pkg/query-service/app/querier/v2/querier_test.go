@@ -1437,6 +1437,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 				featureManager.StartManager(),
 				"",
 				true,
+				true,
 			)
 
 			q := &querier{

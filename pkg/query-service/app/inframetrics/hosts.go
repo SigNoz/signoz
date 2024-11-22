@@ -439,6 +439,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 	}
 	resp.Total = len(allHostGroups)
 	resp.Records = records
+	resp.SortBy(req.OrderBy)
 
 	return resp, nil
 }
