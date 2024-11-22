@@ -558,15 +558,32 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 	// and resource attributes are string for traces
 	filterSet := v3.FilterSet{}
 	for _, tag := range tags {
-		it := v3.FilterItem{
-			Key: v3.AttributeKey{
-				Key:      tag.Key,
-				DataType: v3.AttributeKeyDataTypeString,
-				Type:     v3.AttributeKeyTypeResource,
-			},
-			Operator: v3.FilterOperator(tag.Operator),
-			Value:    tag.StringValues[0],
+		// skip the collector id as we don't add it to traces
+		if tag.Key == "signoz.collector.id" {
+			continue
 		}
+		key := v3.AttributeKey{
+			Key:      tag.Key,
+			DataType: v3.AttributeKeyDataTypeString,
+			Type:     v3.AttributeKeyTypeResource,
+		}
+
+		it := v3.FilterItem{
+			Key: key,
+		}
+
+		// as of now only in and not in are supported
+		switch tag.Operator {
+		case model.NotInOperator:
+			it.Operator = v3.FilterOperatorNotIn
+			it.Value = tag.StringValues
+		case model.InOperator:
+			it.Operator = v3.FilterOperatorIn
+			it.Value = tag.StringValues
+		default:
+			return "", fmt.Errorf("operator %s not supported", tag.Operator)
+		}
+
 		filterSet.Items = append(filterSet.Items, it)
 	}
 	filterSet.Items = append(filterSet.Items, v3.FilterItem{
@@ -575,7 +592,7 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 			DataType: v3.AttributeKeyDataTypeString,
 			Type:     v3.AttributeKeyTypeResource,
 		},
-		Operator: v3.FilterOperatorContains,
+		Operator: v3.FilterOperatorEqual,
 		Value:    svc,
 	})
 
