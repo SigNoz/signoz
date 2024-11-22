@@ -49,6 +49,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 			opts.FF,
 			opts.Reader,
 			opts.UseLogsNewSchema,
+			opts.UseTraceNewSchema,
 			WithSendAlways(),
 			WithSendUnmatched(),
 		)
