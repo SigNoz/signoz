@@ -582,6 +582,21 @@ var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
+	"flags": {
+		Key:      "flags",
+		DataType: v3.AttributeKeyDataTypeInt64,
+		IsColumn: true,
+	},
+	"name": {
+		Key:      "name",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"kind": {
+		Key:      "kind",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
 	"spanKind": {
 		Key:      "spanKind",
 		DataType: v3.AttributeKeyDataTypeString,
