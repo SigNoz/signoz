@@ -37,9 +37,11 @@ type HostListRecord struct {
 }
 
 type HostListResponse struct {
-	Type    ResponseType     `json:"type"`
-	Records []HostListRecord `json:"records"`
-	Total   int              `json:"total"`
+	Type                     ResponseType     `json:"type"`
+	Records                  []HostListRecord `json:"records"`
+	Total                    int              `json:"total"`
+	SentAnyHostMetricsData   bool             `json:"sentAnyHostMetricsData"`
+	IsSendingK8SAgentMetrics bool             `json:"isSendingK8SAgentMetrics"`
 }
 
 func (r *HostListResponse) SortBy(orderBy *v3.OrderBy) {
