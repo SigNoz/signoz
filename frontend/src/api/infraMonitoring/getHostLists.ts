@@ -48,6 +48,8 @@ export interface HostListResponse {
 		records: HostData[];
 		groups: null;
 		total: number;
+		sentAnyHostMetricsData: boolean;
+		isSendingK8SAgentMetrics: boolean;
 	};
 }
 

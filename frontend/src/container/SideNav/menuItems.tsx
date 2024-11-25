@@ -83,6 +83,12 @@ const menuItems: SidebarItem[] = [
 		icon: <ScrollText size={16} />,
 	},
 	{
+		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+		label: 'Infra Monitoring',
+		icon: <PackagePlus size={16} />,
+		isNew: true,
+	},
+	{
 		key: ROUTES.ALL_DASHBOARD,
 		label: 'Dashboards',
 		icon: <LayoutGrid size={16} />,
@@ -91,7 +97,6 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.MESSAGING_QUEUES,
 		label: 'Messaging Queues',
 		icon: <ListMinus size={16} />,
-		isBeta: true,
 	},
 	{
 		key: ROUTES.LIST_ALL_ALERT,
@@ -118,12 +123,6 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.BILLING,
 		label: 'Billing',
 		icon: <Receipt size={16} />,
-	},
-	{
-		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
-		label: 'Infra Monitoring',
-		icon: <PackagePlus size={16} />,
-		isBeta: true,
 	},
 	{
 		key: ROUTES.SETTINGS,

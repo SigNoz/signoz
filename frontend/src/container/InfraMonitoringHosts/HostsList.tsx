@@ -2,6 +2,7 @@ import './InfraMonitoring.styles.scss';
 
 import { LoadingOutlined } from '@ant-design/icons';
 import {
+	Skeleton,
 	Spin,
 	Table,
 	TablePaginationConfig,
@@ -11,15 +12,14 @@ import {
 import { SorterResult } from 'antd/es/table/interface';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import HostMetricDetail from 'components/HostMetricsDetail';
-import NoLogs from 'container/NoLogs/NoLogs';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
 import HostsListControls from './HostsListControls';
 import {
 	formatDataForTable,
@@ -28,6 +28,7 @@ import {
 	HostRowData,
 } from './utils';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function HostsList(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -69,6 +70,16 @@ function HostsList(): JSX.Element {
 		},
 	);
 
+	const sentAnyHostMetricsData = useMemo(
+		() => data?.payload?.data?.sentAnyHostMetricsData || false,
+		[data],
+	);
+
+	const isSendingIncorrectK8SAgentMetrics = useMemo(
+		() => data?.payload?.data?.isSendingK8SAgentMetrics || false,
+		[data],
+	);
+
 	const hostMetricsData = useMemo(() => data?.payload?.data?.records || [], [
 		data,
 	]);
@@ -80,9 +91,6 @@ function HostsList(): JSX.Element {
 	);
 
 	const columns = useMemo(() => getHostsListColumns(), []);
-
-	const isDataPresent =
-		!isLoading && !isFetching && !isError && hostMetricsData.length === 0;
 
 	const handleTableChange: TableProps<HostRowData>['onChange'] = useCallback(
 		(
@@ -132,23 +140,75 @@ function HostsList(): JSX.Element {
 		setSelectedHostName(null);
 	};
 
+	const showHostsTable =
+		!isError &&
+		sentAnyHostMetricsData &&
+		!isSendingIncorrectK8SAgentMetrics &&
+		!(formattedHostMetricsData.length === 0 && filters.items.length > 0);
+
+	const showNoFilteredHostsMessage =
+		!isFetching &&
+		!isLoading &&
+		formattedHostMetricsData.length === 0 &&
+		filters.items.length > 0;
+
+	const showHostsEmptyState =
+		!isFetching &&
+		!isLoading &&
+		(!sentAnyHostMetricsData || isSendingIncorrectK8SAgentMetrics);
+
 	return (
 		<div className="hosts-list">
 			<HostsListControls handleFiltersChange={handleFiltersChange} />
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
-			{isDataPresent && filters.items.length === 0 && (
-				<NoLogs dataSource={DataSource.METRICS} />
+			{showHostsEmptyState && (
+				<HostsEmptyOrIncorrectMetrics
+					noData={!sentAnyHostMetricsData}
+					incorrectData={isSendingIncorrectK8SAgentMetrics}
+				/>
 			)}
 
-			{!isFetching &&
-				!isLoading &&
-				formattedHostMetricsData.length === 0 &&
-				filters.items.length > 0 && (
-					<div className="no-hosts-message">No hosts match the applied filters.</div>
-				)}
+			{showNoFilteredHostsMessage && (
+				<div className="no-filtered-hosts-message-container">
+					<div className="no-filtered-hosts-message-content">
+						<img
+							src="/Icons/emptyState.svg"
+							alt="thinking-emoji"
+							className="empty-state-svg"
+						/>
 
-			{!isError && (
+						<Typography.Text className="no-filtered-hosts-message">
+							This query had no results. Edit your query and try again!
+						</Typography.Text>
+					</div>
+				</div>
+			)}
+
+			{(isFetching || isLoading) && (
+				<div className="hosts-list-loading-state">
+					<Skeleton.Input
+						className="hosts-list-loading-state-item"
+						size="large"
+						block
+						active
+					/>
+					<Skeleton.Input
+						className="hosts-list-loading-state-item"
+						size="large"
+						block
+						active
+					/>
+					<Skeleton.Input
+						className="hosts-list-loading-state-item"
+						size="large"
+						block
+						active
+					/>
+				</div>
+			)}
+
+			{showHostsTable && (
 				<Table
 					className="hosts-list-table"
 					dataSource={isFetching || isLoading ? [] : formattedHostMetricsData}
