@@ -28,6 +28,7 @@ import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { isObject } from 'lodash-es';
 import { Check, Copy, Info, Send, Undo } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { connect, useSelector } from 'react-redux';
@@ -613,6 +614,8 @@ function DateTimeSelection({
 		);
 	};
 
+	const { timezone } = useTimezone();
+
 	return (
 		<div className="date-time-selector">
 			{showResetButton && selectedTime !== defaultRelativeTime && (
@@ -664,8 +667,8 @@ function DateTimeSelection({
 							setIsValidteRelativeTime(isValid);
 						}}
 						selectedValue={getInputLabel(
-							dayjs(minTime / 1000000),
-							dayjs(maxTime / 1000000),
+							dayjs(minTime / 1000000).tz(timezone.value),
+							dayjs(maxTime / 1000000).tz(timezone.value),
 							selectedTime,
 						)}
 						data-testid="dropDown"
