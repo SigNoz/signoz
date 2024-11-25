@@ -69,7 +69,7 @@ func StartManager(dbType string, db *sqlx.DB, useLicensesV3 bool, features ...ba
 
 	if useLicensesV3 {
 		// get active license from the db
-		active, err := m.repo.GetActiveLicense(context.Background())
+		active, err := m.repo.GetActiveLicenseV2(context.Background())
 		if err != nil {
 			return m, err
 		}
@@ -88,6 +88,7 @@ func StartManager(dbType string, db *sqlx.DB, useLicensesV3 bool, features ...ba
 			if apiError != nil && apiError.Typ != model.ErrorConflict {
 				return m, apiError
 			}
+			zap.L().Info("Successfully inserted license from v2 to v3 table")
 		}
 	}
 
@@ -266,6 +267,7 @@ func (lm *Manager) GetLicensesV3(ctx context.Context) (response []*model.License
 
 // Validator validates license after an epoch of time
 func (lm *Manager) Validator(ctx context.Context) {
+	zap.L().Info("Validator started!")
 	defer close(lm.terminated)
 	tick := time.NewTicker(validationFrequency)
 	defer tick.Stop()
@@ -290,6 +292,7 @@ func (lm *Manager) Validator(ctx context.Context) {
 
 // Validator validates license after an epoch of time
 func (lm *Manager) ValidatorV3(ctx context.Context) {
+	zap.L().Info("ValidatorV3 started!")
 	defer close(lm.terminated)
 	tick := time.NewTicker(validationFrequency)
 	defer tick.Stop()
@@ -379,7 +382,6 @@ func (lm *Manager) Validate(ctx context.Context) (reterr error) {
 	return nil
 }
 
-// todo[vikrantgupta25]: check the comparison here between old and new license!
 func (lm *Manager) RefreshLicense(ctx context.Context) *model.ApiError {
 
 	license, apiError := validate.ValidateLicenseV3(lm.activeLicenseV3.Key)

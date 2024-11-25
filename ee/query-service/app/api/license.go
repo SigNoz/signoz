@@ -87,6 +87,7 @@ func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 	if ah.UseLicensesV3 {
 		// if the licenses v3 is toggled on then do not apply license in v2 and run the validator!
 		// TODO: remove after migration to v3 and deprecation from zeus
+		zap.L().Info("early return from apply license v2 call")
 		render.Success(w, http.StatusOK, nil)
 		return
 	}
