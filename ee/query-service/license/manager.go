@@ -56,7 +56,7 @@ func StartManager(dbType string, db *sqlx.DB, useLicensesV3 bool, features ...ba
 		return LM, nil
 	}
 
-	repo := NewLicenseRepo(db)
+	repo := NewLicenseRepo(db, useLicensesV3)
 	err := repo.InitDB(dbType)
 
 	if err != nil {

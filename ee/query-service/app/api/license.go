@@ -84,6 +84,12 @@ func (ah *APIHandler) listLicenses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
+	if ah.UseLicensesV3 {
+		// if the licenses v3 is toggled on then do not apply license in v2 and run the validator!
+		// TODO: remove after migration to v3 and deprecation from zeus
+		render.Success(w, http.StatusOK, nil)
+		return
+	}
 	var l model.License
 
 	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
