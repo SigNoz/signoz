@@ -18,7 +18,7 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 
 	// Build queries for each builder query
 	for queryName, query := range compositeQuery.BuilderQueries {
-		if query.Expression != queryName && query.DataSource != v3.DataSourceLogs {
+		if query.Expression != queryName || query.DataSource != v3.DataSourceLogs {
 			continue
 		}
 
