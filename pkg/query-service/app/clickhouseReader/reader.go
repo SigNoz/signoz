@@ -3384,6 +3384,17 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 	}, nil
 }
 
+// GetCountOfThings returns the count of things in the query
+// This is a generic function that can be used to check if any data exists for a given query
+func (r *ClickHouseReader) GetCountOfThings(ctx context.Context, query string) (uint64, error) {
+	var count uint64
+	err := r.db.QueryRow(ctx, query).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (r *ClickHouseReader) GetLatestReceivedMetric(
 	ctx context.Context, metricNames []string,
 ) (*model.MetricStatus, *model.ApiError) {
