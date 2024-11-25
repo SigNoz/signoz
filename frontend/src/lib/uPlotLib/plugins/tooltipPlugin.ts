@@ -76,7 +76,7 @@ const generateTooltipContent = (
 				} else {
 					tooltipTitle = dayjs(data[0][idx] * 1000)
 						.tz(timezone)
-						.format('MMM DD YYYY HH:mm:ss');
+						.format('MMM DD YYYY h:mm:ss A');
 				}
 			} else if (item.show) {
 				const {
