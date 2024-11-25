@@ -156,6 +156,7 @@ function CustomTimePicker({
 		setOpen(newOpen);
 		if (!newOpen) {
 			setCustomDTPickerVisible?.(false);
+			setActiveView('datetime');
 		}
 	};
 
