@@ -243,6 +243,7 @@ const (
 	SIGNOZ_SPAN_INDEX_LOCAL_TABLENAME          = "signoz_index_v2"
 	SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME       = "signoz_index_v3"
 	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME       = "time_series_v4"
+	SIGNOZ_TIMESERIES_V4_TABLENAME             = "distributed_time_series_v4"
 	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME  = "time_series_v4_6hrs"
 	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME  = "time_series_v4_1day"
 	SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME = "time_series_v4_1week"

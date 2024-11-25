@@ -107,6 +107,8 @@ type Reader interface {
 	// Query Progress tracking helpers.
 	ReportQueryStartForProgressTracking(queryId string) (reportQueryFinished func(), err *model.ApiError)
 	SubscribeToQueryProgress(queryId string) (<-chan model.QueryProgress, func(), *model.ApiError)
+
+	GetCountOfThings(ctx context.Context, query string) (uint64, error)
 }
 
 type Querier interface {
