@@ -10,10 +10,11 @@ import {
 	Typography,
 } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
+import logEvent from 'api/common/logEvent';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import HostMetricDetail from 'components/HostMetricsDetail';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -120,10 +121,18 @@ function HostsList(): JSX.Element {
 			if (isNewFilterAdded) {
 				setFilters(value);
 				setCurrentPage(1);
+
+				logEvent('Infra Monitoring: Hosts list filters applied', {
+					filters: value,
+				});
 			}
 		},
 		[filters],
 	);
+
+	useEffect(() => {
+		logEvent('Infra Monitoring: Hosts list page visited', {});
+	}, []);
 
 	const selectedHostData = useMemo(() => {
 		if (!selectedHostName) return null;
@@ -134,6 +143,10 @@ function HostsList(): JSX.Element {
 
 	const handleRowClick = (record: HostRowData): void => {
 		setSelectedHostName(record.hostName);
+
+		logEvent('Infra Monitoring: Hosts list item clicked', {
+			host: record.hostName,
+		});
 	};
 
 	const handleCloseHostDetail = (): void => {
