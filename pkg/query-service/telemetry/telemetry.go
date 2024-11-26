@@ -307,8 +307,11 @@ func createTelemetry() {
 			"getLogsInfoInLastHeartBeatInterval":    getLogsInfoInLastHeartBeatInterval,
 			"countUsers":                            userCount,
 			"metricsTTLStatus":                      metricsTTL.Status,
+			"metricsTTLValue":                       metricsTTL.MetricsMoveTime,
 			"tracesTTLStatus":                       traceTTL.Status,
+			"traceTTLValue":                         traceTTL.TracesTime,
 			"logsTTLStatus":                         logsTTL.Status,
+			"logsTTLValue":                          logsTTL.LogsTime,
 			"patUser":                               telemetry.patTokenUser,
 		}
 		telemetry.patTokenUser = false
@@ -343,6 +346,7 @@ func createTelemetry() {
 						"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
 						"dashboardsWithTSV2":              dashboardsInfo.QueriesWithTSV2,
 						"dashboardWithLogsChQuery":        dashboardsInfo.DashboardsWithLogsChQuery,
+						"dashboardWithTraceChQuery":       dashboardsInfo.DashboardsWithTraceChQuery,
 						"totalAlerts":                     alertsInfo.TotalAlerts,
 						"alertsWithTSV2":                  alertsInfo.AlertsWithTSV2,
 						"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
@@ -366,6 +370,7 @@ func createTelemetry() {
 						"spanMetricsPrometheusQueries":    alertsInfo.SpanMetricsPrometheusQueries,
 						"alertsWithLogsChQuery":           alertsInfo.AlertsWithLogsChQuery,
 						"alertsWithLogsContainsOp":        alertsInfo.AlertsWithLogsContainsOp,
+						"alertsWithTraceChQuery":          alertsInfo.AlertsWithTraceChQuery,
 					}
 					// send event only if there are dashboards or alerts or channels
 					if (dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || alertsInfo.TotalChannels > 0 || savedViewsInfo.TotalSavedViews > 0) && apiErr == nil {
