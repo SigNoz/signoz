@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz-otel-collector/pkg/collectorsimulator"
 	_ "github.com/SigNoz/signoz-otel-collector/pkg/parser/grok"
 	"github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/processor"
-	"go.signoz.io/signoz/pkg/query-service/collectorsimulator"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -66,14 +66,20 @@ func SimulatePipelinesProcessing(
 		return updatedConf, nil
 	}
 
-	outputPLogs, collectorErrs, apiErr := collectorsimulator.SimulateLogsProcessing(
+	outputPLogs, collectorErrs, simulationErr := collectorsimulator.SimulateLogsProcessing(
 		ctx,
 		processorFactories,
 		configGenerator,
 		simulatorInputPLogs,
 		timeout,
 	)
-	if apiErr != nil {
+	if simulationErr != nil {
+		if errors.Is(simulationErr, collectorsimulator.ErrInvalidConfig) {
+			apiErr = model.BadRequest(simulationErr)
+		} else {
+			apiErr = model.InternalError(simulationErr)
+		}
+
 		return nil, collectorErrs, model.WrapApiError(apiErr,
 			"could not simulate log pipelines processing.\nCollector errors",
 		)
