@@ -1,7 +1,24 @@
 .host-containers {
-	max-width: 600px;
-	margin: 150px auto;
-	padding: 0 16px;
+	gap: 24px;
+	height: 60vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	margin: 0 auto;
+	box-sizing: border-box;
+
+	.infra-container-card-container {
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+	}
+
+	.dev-status-container {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
 
 	.infra-container-card {
 		display: flex;
@@ -17,6 +34,7 @@
 		width: 400px;
 		font-family: 'Inter';
 		margin-top: 12px;
+		font-weight: 300;
 	}
 
 	.infra-container-working-msg {
