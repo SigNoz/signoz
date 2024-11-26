@@ -19,7 +19,7 @@ interface TimezoneContextType {
 	timezone: Timezone;
 	browserTimezone: Timezone;
 	updateTimezone: (timezone: Timezone) => void;
-	formatTimestamp: (input: TimestampInput, format?: string) => string | number;
+	formatTimestamp: (input: TimestampInput, format?: string) => string;
 }
 
 const TimezoneContext = createContext<TimezoneContextType | undefined>(

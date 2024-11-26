@@ -26,7 +26,7 @@ function useTimezoneFormatter({
 }: {
 	userTimezone: Timezone;
 }): {
-	formatTimestamp: (input: TimestampInput, format?: string) => string | number;
+	formatTimestamp: (input: TimestampInput, format?: string) => string;
 } {
 	// Initialize cache using useMemo to persist between renders
 	const cache = useMemo(() => new Map<string, CacheEntry>(), []);
@@ -52,7 +52,7 @@ function useTimezoneFormatter({
 	}, [cache]);
 
 	const formatTimestamp = useCallback(
-		(input: TimestampInput, format = 'YYYY-MM-DD HH:mm:ss'): string | number => {
+		(input: TimestampInput, format = 'YYYY-MM-DD HH:mm:ss'): string => {
 			const cacheKey = `${input}_${format}_${userTimezone?.value}`;
 
 			// Check cache first
