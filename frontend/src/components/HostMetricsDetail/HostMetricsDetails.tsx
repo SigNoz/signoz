@@ -11,6 +11,7 @@ import {
 	Typography,
 } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
+import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -119,6 +120,13 @@ function HostMetricsDetails({
 	);
 
 	useEffect(() => {
+		logEvent('Infra Monitoring: Hosts list details page visited', {
+			host: host?.hostName,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	useEffect(() => {
 		setLogFilters(initialFilters);
 		setTracesFilters(initialFilters);
 	}, [initialFilters]);
@@ -143,6 +151,7 @@ function HostMetricsDetails({
 	const handleTimeChange = useCallback(
 		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
 			setSelectedInterval(interval as Time);
+
 			if (interval === 'custom' && dateTimeRange) {
 				setModalTimeRange({
 					startTime: Math.floor(dateTimeRange[0] / 1000),
@@ -156,7 +165,13 @@ function HostMetricsDetails({
 					endTime: Math.floor(maxTime / 1000000000),
 				});
 			}
+
+			logEvent('Infra Monitoring: Hosts list details time updated', {
+				host: host?.hostName,
+				interval,
+			});
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[],
 	);
 
@@ -171,6 +186,10 @@ function HostMetricsDetails({
 					(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
 				);
 
+				logEvent('Infra Monitoring: Hosts list details logs filters applied', {
+					host: host?.hostName,
+				});
+
 				return {
 					op: 'AND',
 					items: [
@@ -181,6 +200,7 @@ function HostMetricsDetails({
 				};
 			});
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[],
 	);
 
@@ -190,6 +210,11 @@ function HostMetricsDetails({
 				const hostNameFilter = prevFilters.items.find(
 					(item) => item.key?.key === 'host.name',
 				);
+
+				logEvent('Infra Monitoring: Hosts list details traces filters applied', {
+					host: host?.hostName,
+				});
+
 				return {
 					op: 'AND',
 					items: [
@@ -199,6 +224,7 @@ function HostMetricsDetails({
 				};
 			});
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[],
 	);
 
@@ -210,6 +236,11 @@ function HostMetricsDetails({
 			urlQuery.set(QueryParams.startTime, modalTimeRange.startTime.toString());
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
+
+		logEvent('Infra Monitoring: Hosts list details explore clicked', {
+			host: host?.hostName,
+			view: selectedView,
+		});
 
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {

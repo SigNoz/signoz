@@ -3,6 +3,7 @@ import ROUTES from 'constants/routes';
 import {
 	BarChart2,
 	BellDot,
+	Boxes,
 	BugIcon,
 	Cloudy,
 	DraftingCompass,
@@ -11,7 +12,6 @@ import {
 	LayoutGrid,
 	ListMinus,
 	MessageSquare,
-	PackagePlus,
 	Receipt,
 	Route,
 	ScrollText,
@@ -85,7 +85,7 @@ const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 		label: 'Infra Monitoring',
-		icon: <PackagePlus size={16} />,
+		icon: <Boxes size={16} />,
 		isNew: true,
 	},
 	{
