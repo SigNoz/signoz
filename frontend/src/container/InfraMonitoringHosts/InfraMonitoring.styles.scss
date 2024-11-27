@@ -10,10 +10,6 @@
 		margin-bottom: 16px;
 	}
 
-	.no-hosts-message {
-		padding: 16px;
-	}
-
 	.hosts-list-controls {
 		padding: 8px;
 
@@ -207,6 +203,68 @@
 		color: var(--Slate-50, #62687c);
 		border: 1px solid rgba(98, 104, 124, 0.2);
 		background: rgba(98, 104, 124, 0.1);
+	}
+}
+
+.hosts-list-loading-state {
+	padding: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+
+	.hosts-list-loading-state-item {
+		height: 48px;
+		width: 100%;
+	}
+}
+
+.no-filtered-hosts-message-container {
+	height: 30vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+
+	.no-filtered-hosts-message-content {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+
+		width: fit-content;
+		padding: 24px;
+	}
+
+	.no-filtered-hosts-message {
+		margin-top: 8px;
+	}
+}
+
+.hosts-empty-state-container {
+	padding: 16px;
+	height: 40vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+
+	.hosts-empty-state-container-content {
+		padding: 16px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+
+		width: fit-content;
+
+		.no-hosts-message {
+			margin-bottom: 16px;
+
+			.no-hosts-message-title {
+				margin-top: 8px;
+				margin-bottom: 4px;
+			}
+		}
 	}
 }
 
