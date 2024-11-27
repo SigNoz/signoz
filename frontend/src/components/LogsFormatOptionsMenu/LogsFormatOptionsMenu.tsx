@@ -41,6 +41,7 @@ export default function LogsFormatOptionsMenu({
 
 	const [selectedValue, setSelectedValue] = useState<string | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);
+	const initialMouseEnterRef = useRef<boolean>(false);
 
 	const onChange = useCallback(
 		(key: LogViewMode) => {
@@ -283,8 +284,11 @@ export default function LogsFormatOptionsMenu({
 									className={cx('column-name', value === selectedValue && 'selected')}
 									key={value}
 									onMouseEnter={(): void => {
-										console.log('mouse enter - value', value);
-										setSelectedValue(value as string | null);
+										if (!initialMouseEnterRef.current) {
+											setSelectedValue(value as string | null);
+										}
+
+										initialMouseEnterRef.current = true;
 									}}
 									onClick={(eve): void => {
 										eve.stopPropagation();
