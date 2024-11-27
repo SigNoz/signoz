@@ -3,7 +3,7 @@
 	position: absolute;
 	right: -2px;
 	margin: 6px 0;
-	width: 160px;
+	width: 240px;
 
 	border-radius: 4px;
 
@@ -24,7 +24,7 @@
 		.back-btn {
 			display: flex;
 			align-items: center;
-			gap: 6px;
+			gap: 4px;
 			padding: 12px;
 			border: none !important;
 			box-shadow: none !important;
@@ -32,14 +32,16 @@
 			.icon {
 				flex-shrink: 0;
 			}
+
 			.text {
-				color: var(--bg-vanilla-400);
+				color: var(--bg-slate-50);
 				font-family: Inter;
-				font-size: 13px;
+				font-size: 11px;
 				font-style: normal;
-				font-weight: 400;
+				font-weight: 500;
 				line-height: 20px; /* 142.857% */
 				letter-spacing: 0.14px;
+				text-transform: uppercase;
 			}
 		}
 
@@ -252,6 +254,75 @@
 		}
 	}
 
+	.add-new-column-container {
+		display: flex;
+		flex-direction: column;
+
+		.add-new-column-header {
+			display: flex;
+			flex-direction: column;
+			padding: 8px;
+			gap: 8px;
+
+			.back-icon {
+				cursor: pointer;
+			}
+
+			.title {
+				display: flex;
+				gap: 4px;
+				align-items: center;
+				color: var(--bg-slate-50);
+				text-transform: uppercase;
+				font-size: 11px;
+				font-weight: 500;
+				line-height: 18px;
+				letter-spacing: 0.88px;
+			}
+		}
+
+		.add-new-column-content {
+			display: flex;
+			flex-direction: column;
+
+			padding-bottom: 16px;
+
+			min-height: 240px;
+			max-height: 400px;
+
+			.loading-container {
+				padding: 8px;
+			}
+
+			.column-format-new-options {
+				overflow-y: auto;
+				overflow-x: hidden;
+
+				.column-name {
+					padding: 4px 8px;
+					border-radius: 1px;
+					color: var(--bg-vanilla-400, #c0c1c3);
+					font-family: Inter;
+					font-size: 13px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 20px; /* 142.857% */
+					letter-spacing: -0.07px;
+
+					&.selected {
+						background-color: var(--bg-ink-200);
+						cursor: pointer;
+					}
+				}
+
+				&::-webkit-scrollbar {
+					height: 1rem;
+					width: 0.2rem;
+				}
+			}
+		}
+	}
+
 	.selected-item-content-container {
 		.add-new-column-header {
 			padding: 8px;
@@ -313,6 +384,22 @@
 					gap: 8px;
 
 					cursor: pointer;
+
+					&.default-column {
+						color: var(--bg-vanilla-400, #c0c1c3);
+						cursor: not-allowed;
+					}
+
+					&.no-columns-selected {
+						color: var(--bg-slate-100);
+						font-size: 12px;
+						cursor: not-allowed;
+					}
+
+					&.add-new-column-btn {
+						color: var(--bg-vanilla-400, #c0c1c3);
+						cursor: pointer;
+					}
 
 					.name {
 						flex: 1;
@@ -424,6 +511,30 @@
 					.text:hover {
 						color: var(--bg-ink-300);
 					}
+				}
+			}
+		}
+
+		.add-new-column-container {
+			.add-new-column-header {
+				.title {
+					color: var(--bg-ink-100);
+				}
+			}
+
+			.add-new-column-content {
+				.column-format-new-options {
+					.column-name {
+						color: var(--bg-ink-400);
+
+						&.selected {
+							background-color: var(--bg-vanilla-400);
+						}
+					}
+				}
+
+				.loading-container {
+					color: var(--bg-ink-400);
 				}
 			}
 		}
