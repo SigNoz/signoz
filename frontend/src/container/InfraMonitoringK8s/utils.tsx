@@ -1,15 +1,15 @@
-import './InfraMonitoring.styles.scss';
+import './InfraMonitoringK8s.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Progress, TabsProps, Tag } from 'antd';
+import { Progress, Tag } from 'antd';
 import { ColumnType } from 'antd/es/table';
-import { HostData, HostListPayload } from 'api/infraMonitoring/getHostLists';
-import TabLabel from 'components/TabLabel';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	K8sPodsData,
+	K8sPodsListPayload,
+} from 'api/infraMonitoring/getK8sPodsList';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import HostsList from './HostsList';
-
-export interface HostRowData {
+export interface K8sPodsRowData {
 	hostName: string;
 	cpu: React.ReactNode;
 	memory: React.ReactNode;
@@ -18,24 +18,23 @@ export interface HostRowData {
 	active: React.ReactNode;
 }
 
-export const getHostListsQuery = (): HostListPayload => ({
+export const getK8sPodsListQuery = (): K8sPodsListPayload => ({
 	filters: {
 		items: [],
 		op: 'and',
 	},
-	groupBy: [],
+	groupBy: [
+		{
+			key: 'k8s_deployment_name',
+			dataType: DataTypes.String,
+			isColumn: true,
+			type: 'string',
+		},
+	],
 	orderBy: { columnName: 'cpu', order: 'desc' },
 });
 
-export const getTabsItems = (): TabsProps['items'] => [
-	{
-		label: <TabLabel label="List View" isDisabled={false} tooltipText="" />,
-		key: PANEL_TYPES.LIST,
-		children: <HostsList />,
-	},
-];
-
-export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
+export const getK8sPodsListColumns = (): ColumnType<K8sPodsRowData>[] => [
 	{
 		title: <div className="hostname-column-header">Hostname</div>,
 		dataIndex: 'hostName',
@@ -85,7 +84,7 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 	},
 ];
 
-export const formatDataForTable = (data: HostData[]): HostRowData[] =>
+export const formatDataForTable = (data: K8sPodsData[]): K8sPodsRowData[] =>
 	data.map((host, index) => ({
 		key: `${host.hostName}-${index}`,
 		hostName: host.hostName || '',

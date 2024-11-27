@@ -44,6 +44,13 @@
 	gap: 8px;
 }
 
+.periscope-input {
+	&.borderless {
+		border: none;
+		border-radius: 0;
+	}
+}
+
 .lightMode {
 	.periscope-btn {
 		border-color: var(--bg-vanilla-300);
