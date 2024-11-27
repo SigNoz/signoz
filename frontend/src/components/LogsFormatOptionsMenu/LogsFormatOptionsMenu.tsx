@@ -290,6 +290,10 @@ export default function LogsFormatOptionsMenu({
 
 										initialMouseEnterRef.current = true;
 									}}
+									onMouseMove={(): void => {
+										// this is added to handle the mouse move explicit event and not the re-rendered on mouse enter event
+										setSelectedValue(value as string | null);
+									}}
 									onClick={(eve): void => {
 										eve.stopPropagation();
 
