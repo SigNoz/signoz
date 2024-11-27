@@ -82,6 +82,7 @@ export default function LogsFormatOptionsMenu({
 	}, 300);
 
 	const handleToggleAddNewColumn = (): void => {
+		addColumn?.onSearch?.('');
 		setShowAddNewColumnContainer(!showAddNewColumnContainer);
 	};
 
