@@ -4,6 +4,7 @@
 import './LogsFormatOptionsMenu.styles.scss';
 
 import { Button, Input, InputNumber, Tooltip, Typography } from 'antd';
+import { DefaultOptionType } from 'antd/es/select';
 import cx from 'classnames';
 import { LogViewMode } from 'container/LogsTable';
 import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
@@ -81,6 +82,7 @@ export default function LogsFormatOptionsMenu({
 	}, 300);
 
 	const handleToggleAddNewColumn = (): void => {
+		addColumn?.onSearch?.('');
 		setShowAddNewColumnContainer(!showAddNewColumnContainer);
 	};
 
@@ -106,6 +108,39 @@ export default function LogsFormatOptionsMenu({
 		}
 	}, [fontSizeValue]);
 
+	function handleColumnSelection(
+		currentIndex: number,
+		optionsData: DefaultOptionType[],
+	): void {
+		const currentItem = optionsData[currentIndex];
+		const itemLength = optionsData.length;
+		if (addColumn && addColumn?.onSelect) {
+			addColumn?.onSelect(selectedValue, {
+				label: currentItem.label,
+				disabled: false,
+			});
+
+			// if the last element is selected then select the previous one
+			if (currentIndex === itemLength - 1) {
+				// there should be more than 1 element in the list
+				if (currentIndex - 1 >= 0) {
+					const prevValue = optionsData[currentIndex - 1]?.value || null;
+					setSelectedValue(prevValue as string | null);
+				} else {
+					// if there is only one element then just select and do nothing
+					setSelectedValue(null);
+				}
+			} else {
+				// selecting any random element from the list except the last one
+				const nextIndex = currentIndex + 1;
+
+				const nextValue = optionsData[nextIndex]?.value || null;
+
+				setSelectedValue(nextValue as string | null);
+			}
+		}
+	}
+
 	const handleKeyDown = (e: KeyboardEvent): void => {
 		if (!selectedValue) return;
 
@@ -114,8 +149,6 @@ export default function LogsFormatOptionsMenu({
 		const currentIndex = optionsData.findIndex(
 			(item) => item?.value === selectedValue,
 		);
-
-		const currentItem = optionsData[currentIndex];
 
 		const itemLength = optionsData.length;
 
@@ -137,24 +170,7 @@ export default function LogsFormatOptionsMenu({
 			}
 			case 'Enter':
 				e.preventDefault();
-				if (addColumn && addColumn?.onSelect) {
-					addColumn?.onSelect(selectedValue, {
-						label: currentItem.label,
-						disabled: false,
-					});
-
-					if (currentIndex === itemLength - 1) {
-						setSelectedValue(null);
-						break;
-					} else {
-						const nextIndex = currentIndex + 1;
-
-						const nextValue = optionsData[nextIndex]?.value || null;
-
-						setSelectedValue(nextValue as string | null);
-					}
-				}
-
+				handleColumnSelection(currentIndex, optionsData);
 				break;
 			default:
 				break;
@@ -279,7 +295,7 @@ export default function LogsFormatOptionsMenu({
 						)}
 
 						<div className="column-format-new-options" ref={listRef}>
-							{addColumn?.options?.map(({ label, value }) => (
+							{addColumn?.options?.map(({ label, value }, index) => (
 								<div
 									className={cx('column-name', value === selectedValue && 'selected')}
 									key={value}
@@ -290,14 +306,13 @@ export default function LogsFormatOptionsMenu({
 
 										initialMouseEnterRef.current = true;
 									}}
+									onMouseMove={(): void => {
+										// this is added to handle the mouse move explicit event and not the re-rendered on mouse enter event
+										setSelectedValue(value as string | null);
+									}}
 									onClick={(eve): void => {
 										eve.stopPropagation();
-
-										if (addColumn && addColumn?.onSelect) {
-											addColumn?.onSelect(value, { label, disabled: false });
-										}
-
-										setSelectedValue(null);
+										handleColumnSelection(index, addColumn?.options || []);
 									}}
 								>
 									<div className="name">
