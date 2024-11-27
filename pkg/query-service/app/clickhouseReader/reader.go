@@ -39,6 +39,7 @@ import (
 
 	queryprogress "go.signoz.io/signoz/pkg/query-service/app/clickhouseReader/query_progress"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
+	"go.signoz.io/signoz/pkg/query-service/app/resource"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
@@ -552,7 +553,66 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 	return &operations, nil
 }
 
-func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
+func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc string, start, end time.Time) (string, error) {
+	// assuming all will be resource attributes.
+	// and resource attributes are string for traces
+	filterSet := v3.FilterSet{}
+	for _, tag := range tags {
+		// skip the collector id as we don't add it to traces
+		if tag.Key == "signoz.collector.id" {
+			continue
+		}
+		key := v3.AttributeKey{
+			Key:      tag.Key,
+			DataType: v3.AttributeKeyDataTypeString,
+			Type:     v3.AttributeKeyTypeResource,
+		}
+
+		it := v3.FilterItem{
+			Key: key,
+		}
+
+		// as of now only in and not in are supported
+		switch tag.Operator {
+		case model.NotInOperator:
+			it.Operator = v3.FilterOperatorNotIn
+			it.Value = tag.StringValues
+		case model.InOperator:
+			it.Operator = v3.FilterOperatorIn
+			it.Value = tag.StringValues
+		default:
+			return "", fmt.Errorf("operator %s not supported", tag.Operator)
+		}
+
+		filterSet.Items = append(filterSet.Items, it)
+	}
+	filterSet.Items = append(filterSet.Items, v3.FilterItem{
+		Key: v3.AttributeKey{
+			Key:      "service.name",
+			DataType: v3.AttributeKeyDataTypeString,
+			Type:     v3.AttributeKeyTypeResource,
+		},
+		Operator: v3.FilterOperatorEqual,
+		Value:    svc,
+	})
+
+	resourceSubQuery, err := resource.BuildResourceSubQuery(
+		r.TraceDB,
+		r.traceResourceTableV3,
+		start.Unix()-1800,
+		end.Unix(),
+		&filterSet,
+		[]v3.AttributeKey{},
+		v3.AttributeKey{},
+		false)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return "", err
+	}
+	return resourceSubQuery, nil
+}
+
+func (r *ClickHouseReader) GetServicesV2(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
 
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
@@ -618,17 +678,133 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				clickhouse.Named("names", ops),
 			)
 
-			if r.useTraceNewSchema {
-				resourceBucketFilter := fmt.Sprintf(constants.TraceResourceBucketFilterWithServiceName, r.TraceDB, r.traceResourceTableV3)
-				query += resourceBucketFilter
-				errorQuery += resourceBucketFilter
-				args = append(args,
-					clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
-					clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
-					clickhouse.Named("labelFilter", "%service.name%"+strings.ToLower(utils.QuoteEscapedStringForContains(svc, true))+"%"),
-				)
+			resourceSubQuery, err := r.buildResourceSubQuery(queryParams.Tags, svc, *queryParams.Start, *queryParams.End)
+			if err != nil {
+				zap.L().Error("Error in processing sql query", zap.Error(err))
+				return
+			}
+			query += `
+					AND (
+						resource_fingerprint GLOBAL IN ` +
+				resourceSubQuery +
+				`) AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket`
+
+			args = append(args,
+				clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
+				clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
+			)
+
+			err = r.db.QueryRow(
+				ctx,
+				query,
+				args...,
+			).ScanStruct(&serviceItem)
+
+			if serviceItem.NumCalls == 0 {
+				return
 			}
 
+			if err != nil {
+				zap.L().Error("Error in processing sql query", zap.Error(err))
+				return
+			}
+
+			errorQuery += `
+					AND (
+						resource_fingerprint GLOBAL IN ` +
+				resourceSubQuery +
+				`) AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket`
+
+			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
+			if err != nil {
+				zap.L().Error("Error in processing sql query", zap.Error(err))
+				return
+			}
+
+			serviceItem.ServiceName = svc
+			serviceItem.NumErrors = numErrors
+			mtx.Lock()
+			serviceItems = append(serviceItems, serviceItem)
+			mtx.Unlock()
+		}(svc, ops)
+	}
+	wg.Wait()
+
+	for idx := range serviceItems {
+		serviceItems[idx].CallRate = float64(serviceItems[idx].NumCalls) / float64(queryParams.Period)
+		serviceItems[idx].ErrorRate = float64(serviceItems[idx].NumErrors) * 100 / float64(serviceItems[idx].NumCalls)
+	}
+	return &serviceItems, nil
+}
+
+func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
+	if r.useTraceNewSchema {
+		return r.GetServicesV2(ctx, queryParams, skipConfig)
+	}
+
+	if r.indexTable == "" {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
+	}
+
+	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig, *queryParams.Start, *queryParams.End, nil)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	serviceItems := []model.ServiceItem{}
+	var wg sync.WaitGroup
+	// limit the number of concurrent queries to not overload the clickhouse server
+	sem := make(chan struct{}, 10)
+	var mtx sync.RWMutex
+
+	for svc, ops := range *topLevelOps {
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(svc string, ops []string) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			var serviceItem model.ServiceItem
+			var numErrors uint64
+
+			// Even if the total number of operations within the time range is less and the all
+			// the top level operations are high, we want to warn to let user know the issue
+			// with the instrumentation
+			serviceItem.DataWarning = model.DataWarning{
+				TopLevelOps: (*topLevelOps)[svc],
+			}
+
+			// default max_query_size = 262144
+			// Let's assume the average size of the item in `ops` is 50 bytes
+			// We can have 262144/50 = 5242 items in the `ops` array
+			// Although we have make it as big as 5k, We cap the number of items
+			// in the `ops` array to 1500
+
+			ops = ops[:int(math.Min(1500, float64(len(ops))))]
+
+			query := fmt.Sprintf(
+				`SELECT
+					quantile(0.99)(durationNano) as p99,
+					avg(durationNano) as avgDuration,
+					count(*) as numCalls
+				FROM %s.%s
+				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
+				r.TraceDB, r.indexTable,
+			)
+			errorQuery := fmt.Sprintf(
+				`SELECT
+					count(*) as numErrors
+				FROM %s.%s
+				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
+				r.TraceDB, r.indexTable,
+			)
+
+			args := []interface{}{}
+			args = append(args,
+				clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
+				clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
+				clickhouse.Named("serviceName", svc),
+				clickhouse.Named("names", ops),
+			)
 			// create TagQuery from TagQueryParams
 			tags := createTagQueryFromTagQueryParams(queryParams.Tags)
 			subQuery, argsSubQuery, errStatus := buildQueryWithTagParams(ctx, tags)
@@ -882,7 +1058,66 @@ func excludeTags(_ context.Context, tags []string) []string {
 	return newTags
 }
 
+func (r *ClickHouseReader) GetTopOperationsV2(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
+
+	namedArgs := []interface{}{
+		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
+		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
+		clickhouse.Named("serviceName", queryParams.ServiceName),
+		clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
+		clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
+	}
+
+	var topOperationsItems []model.TopOperationsItem
+
+	query := fmt.Sprintf(`
+		SELECT
+			quantile(0.5)(durationNano) as p50,
+			quantile(0.95)(durationNano) as p95,
+			quantile(0.99)(durationNano) as p99,
+			COUNT(*) as numCalls,
+			countIf(statusCode=2) as errorCount,
+			name
+		FROM %s.%s
+		WHERE serviceName = @serviceName AND timestamp>= @start AND timestamp<= @end`,
+		r.TraceDB, r.traceTableName,
+	)
+
+	resourceSubQuery, err := r.buildResourceSubQuery(queryParams.Tags, queryParams.ServiceName, *queryParams.Start, *queryParams.End)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
+	}
+	query += `
+			AND (
+				resource_fingerprint GLOBAL IN ` +
+		resourceSubQuery +
+		`) AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket`
+
+	query += " GROUP BY name ORDER BY p99 DESC"
+	if queryParams.Limit > 0 {
+		query += " LIMIT @limit"
+		namedArgs = append(namedArgs, clickhouse.Named("limit", queryParams.Limit))
+	}
+	err = r.db.Select(ctx, &topOperationsItems, query, namedArgs...)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
+	}
+
+	if topOperationsItems == nil {
+		topOperationsItems = []model.TopOperationsItem{}
+	}
+
+	return &topOperationsItems, nil
+}
+
 func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
+
+	if r.useTraceNewSchema {
+		return r.GetTopOperationsV2(ctx, queryParams)
+	}
 
 	namedArgs := []interface{}{
 		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
@@ -902,19 +1137,8 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 			name
 		FROM %s.%s
 		WHERE serviceName = @serviceName AND timestamp>= @start AND timestamp<= @end`,
-		r.TraceDB, r.traceTableName,
+		r.TraceDB, r.indexTable,
 	)
-
-	if r.useTraceNewSchema {
-		resourceBucketFilter := fmt.Sprintf(constants.TraceResourceBucketFilterWithServiceName, r.TraceDB, r.traceResourceTableV3)
-		query += resourceBucketFilter
-		namedArgs = append(namedArgs,
-			clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
-			clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
-			clickhouse.Named("labelFilter", "%service.name%"+strings.ToLower(utils.QuoteEscapedStringForContains(queryParams.ServiceName, true))+"%"),
-		)
-	}
-
 	args := []interface{}{}
 	args = append(args, namedArgs...)
 	// create TagQuery from TagQueryParams
@@ -943,7 +1167,6 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 
 	return &topOperationsItems, nil
 }
-
 func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetUsageParams) (*[]model.UsageItem, error) {
 
 	var usageItems []model.UsageItem
@@ -3161,6 +3384,17 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 	}, nil
 }
 
+// GetCountOfThings returns the count of things in the query
+// This is a generic function that can be used to check if any data exists for a given query
+func (r *ClickHouseReader) GetCountOfThings(ctx context.Context, query string) (uint64, error) {
+	var count uint64
+	err := r.db.QueryRow(ctx, query).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (r *ClickHouseReader) GetLatestReceivedMetric(
 	ctx context.Context, metricNames []string,
 ) (*model.MetricStatus, *model.ApiError) {
@@ -3894,7 +4128,7 @@ func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	return nil
 }
 
-func (r *ClickHouseReader) GetTraceAggregateAttributesV2(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
 	var query string
 	var err error
 	var rows driver.Rows
@@ -3973,8 +4207,13 @@ func (r *ClickHouseReader) GetTraceAggregateAttributesV2(ctx context.Context, re
 		}
 	}
 
+	fields := constants.NewStaticFieldsTraces
+	if !r.useTraceNewSchema {
+		fields = constants.DeprecatedStaticFieldsTraces
+	}
+
 	// add the new static fields
-	for _, field := range constants.NewStaticFieldsTraces {
+	for _, field := range fields {
 		if (!stringAllowed && field.DataType == v3.AttributeKeyDataTypeString) || (v3.AttributeKey{} == field) {
 			continue
 		} else if len(req.SearchText) == 0 || strings.Contains(field.Key, req.SearchText) {
@@ -3985,79 +4224,7 @@ func (r *ClickHouseReader) GetTraceAggregateAttributesV2(ctx context.Context, re
 	return &response, nil
 }
 
-func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
-	if r.useTraceNewSchema {
-		return r.GetTraceAggregateAttributesV2(ctx, req)
-	}
-
-	var query string
-	var err error
-	var rows driver.Rows
-	var response v3.AggregateAttributeResponse
-	where := ""
-	switch req.Operator {
-	case
-		v3.AggregateOperatorCountDistinct,
-		v3.AggregateOperatorCount:
-		where = "tagKey ILIKE $1"
-	case
-		v3.AggregateOperatorRateSum,
-		v3.AggregateOperatorRateMax,
-		v3.AggregateOperatorRateAvg,
-		v3.AggregateOperatorRate,
-		v3.AggregateOperatorRateMin,
-		v3.AggregateOperatorP05,
-		v3.AggregateOperatorP10,
-		v3.AggregateOperatorP20,
-		v3.AggregateOperatorP25,
-		v3.AggregateOperatorP50,
-		v3.AggregateOperatorP75,
-		v3.AggregateOperatorP90,
-		v3.AggregateOperatorP95,
-		v3.AggregateOperatorP99,
-		v3.AggregateOperatorAvg,
-		v3.AggregateOperatorSum,
-		v3.AggregateOperatorMin,
-		v3.AggregateOperatorMax:
-		where = "tagKey ILIKE $1 AND dataType='float64'"
-	case
-		v3.AggregateOperatorNoOp:
-		return &v3.AggregateAttributeResponse{}, nil
-	default:
-		return nil, fmt.Errorf("unsupported aggregate operator")
-	}
-	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM %s.%s WHERE %s", r.TraceDB, r.spanAttributeTable, where)
-	if req.Limit != 0 {
-		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
-	}
-	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
-
-	if err != nil {
-		zap.L().Error("Error while executing query", zap.Error(err))
-		return nil, fmt.Errorf("error while executing query: %s", err.Error())
-	}
-	defer rows.Close()
-
-	var tagKey string
-	var dataType string
-	var tagType string
-	var isColumn bool
-	for rows.Next() {
-		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
-			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-		}
-		key := v3.AttributeKey{
-			Key:      tagKey,
-			DataType: v3.AttributeKeyDataType(dataType),
-			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn,
-		}
-		response.AttributeKeys = append(response.AttributeKeys, key)
-	}
-	return &response, nil
-}
-
-func (r *ClickHouseReader) GetTraceAttributeKeysV2(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 
 	var query string
 	var err error
@@ -4103,8 +4270,14 @@ func (r *ClickHouseReader) GetTraceAttributeKeysV2(ctx context.Context, req *v3.
 		}
 	}
 
+	// remove this later just to have NewStaticFieldsTraces in the response
+	fields := constants.NewStaticFieldsTraces
+	if !r.useTraceNewSchema {
+		fields = constants.DeprecatedStaticFieldsTraces
+	}
+
 	// add the new static fields
-	for _, f := range constants.NewStaticFieldsTraces {
+	for _, f := range fields {
 		if (v3.AttributeKey{} == f) {
 			continue
 		}
@@ -4116,49 +4289,7 @@ func (r *ClickHouseReader) GetTraceAttributeKeysV2(ctx context.Context, req *v3.
 	return &response, nil
 }
 
-func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
-	if r.useTraceNewSchema {
-		return r.GetTraceAttributeKeysV2(ctx, req)
-	}
-
-	var query string
-	var err error
-	var rows driver.Rows
-	var response v3.FilterAttributeKeyResponse
-
-	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM %s.%s WHERE tagKey ILIKE $1", r.TraceDB, r.spanAttributeTable)
-
-	if req.Limit != 0 {
-		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
-	}
-	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
-
-	if err != nil {
-		zap.L().Error("Error while executing query", zap.Error(err))
-		return nil, fmt.Errorf("error while executing query: %s", err.Error())
-	}
-	defer rows.Close()
-
-	var tagKey string
-	var dataType string
-	var tagType string
-	var isColumn bool
-	for rows.Next() {
-		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
-			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-		}
-		key := v3.AttributeKey{
-			Key:      tagKey,
-			DataType: v3.AttributeKeyDataType(dataType),
-			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn,
-		}
-		response.AttributeKeys = append(response.AttributeKeys, key)
-	}
-	return &response, nil
-}
-
-func (r *ClickHouseReader) GetTraceAttributeValuesV2(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	var query string
 	var filterValueColumn string
 	var err error
@@ -4204,7 +4335,11 @@ func (r *ClickHouseReader) GetTraceAttributeValuesV2(ctx context.Context, req *v
 		}
 
 		// TODO(nitya): remove 24 hour limit in future after checking the perf/resource implications
-		query = fmt.Sprintf("select distinct %s from %s.%s where ts_bucket_start >= toUInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)) AND timestamp >= toDateTime64(now() - INTERVAL 48 HOUR, 9) and %s ILIKE $1 limit $2", selectKey, r.TraceDB, r.traceTableName, filterValueColumnWhere)
+		where := "timestamp >= toDateTime64(now() - INTERVAL 48 HOUR, 9)"
+		if r.useTraceNewSchema {
+			where += " AND ts_bucket_start >= toUInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR))"
+		}
+		query = fmt.Sprintf("select distinct %s from %s.%s where %s and %s ILIKE $1 limit $2", selectKey, r.TraceDB, r.traceTableName, where, filterValueColumnWhere)
 		rows, err = r.db.Query(ctx, query, searchText, req.Limit)
 	} else {
 		filterValueColumnWhere := filterValueColumn
@@ -4238,63 +4373,6 @@ func (r *ClickHouseReader) GetTraceAttributeValuesV2(ctx context.Context, req *v
 			}
 			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
 		}
-	}
-
-	return &attributeValues, nil
-}
-
-func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
-
-	if r.useTraceNewSchema {
-		return r.GetTraceAttributeValuesV2(ctx, req)
-	}
-	var query string
-	var err error
-	var rows driver.Rows
-	var attributeValues v3.FilterAttributeValueResponse
-	// if dataType or tagType is not present return empty response
-	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 || req.FilterAttributeKey == "body" {
-		return &v3.FilterAttributeValueResponse{}, nil
-	}
-	switch req.FilterAttributeKeyDataType {
-	case v3.AttributeKeyDataTypeString:
-		query = fmt.Sprintf("SELECT DISTINCT stringTagValue from %s.%s WHERE tagKey = $1 AND stringTagValue ILIKE $2 AND tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
-		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
-		if err != nil {
-			zap.L().Error("Error while executing query", zap.Error(err))
-			return nil, fmt.Errorf("error while executing query: %s", err.Error())
-		}
-		defer rows.Close()
-
-		var strAttributeValue string
-		for rows.Next() {
-			if err := rows.Scan(&strAttributeValue); err != nil {
-				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-			}
-			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
-		}
-	case v3.AttributeKeyDataTypeFloat64, v3.AttributeKeyDataTypeInt64:
-		query = fmt.Sprintf("SELECT DISTINCT float64TagValue from %s.%s where tagKey = $1 AND toString(float64TagValue) ILIKE $2 AND tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
-		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
-		if err != nil {
-			zap.L().Error("Error while executing query", zap.Error(err))
-			return nil, fmt.Errorf("error while executing query: %s", err.Error())
-		}
-		defer rows.Close()
-
-		var numberAttributeValue sql.NullFloat64
-		for rows.Next() {
-			if err := rows.Scan(&numberAttributeValue); err != nil {
-				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-			}
-			if numberAttributeValue.Valid {
-				attributeValues.NumberAttributeValues = append(attributeValues.NumberAttributeValues, numberAttributeValue.Float64)
-			}
-		}
-	case v3.AttributeKeyDataTypeBool:
-		attributeValues.BoolAttributeValues = []bool{true, false}
-	default:
-		return nil, fmt.Errorf("invalid data type")
 	}
 
 	return &attributeValues, nil
@@ -4383,6 +4461,12 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 		}
 		response[tagKey] = key
 	}
+
+	// add the deprecated static fields as they are not present in spanAttributeKeysTable
+	for _, f := range constants.DeprecatedStaticFieldsTraces {
+		response[f.Key] = f
+	}
+
 	return response, nil
 }
 

@@ -1169,7 +1169,7 @@ var testBuildTracesQueryData = []struct {
 			"AND stringTagMap['method'] = 'GET' ORDER BY durationNano DESC LIMIT 1 BY traceID  LIMIT 100)" +
 			" AS inner_subquery ) AS subQuery " +
 			"ON signoz_traces.distributed_signoz_index_v2.traceID = subQuery.traceID WHERE (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc LIMIT 1 BY subQuery.traceID;",
+			"GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc LIMIT 1 BY subQuery.traceID",
 		PanelType: v3.PanelTypeTrace,
 	},
 }

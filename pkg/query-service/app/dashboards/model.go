@@ -468,6 +468,7 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 		dashboardsInfo.MetricBasedPanels += dashboardsInfo.MetricBasedPanels
 		dashboardsInfo.LogsPanelsWithAttrContainsOp += dashboardInfo.LogsPanelsWithAttrContainsOp
 		dashboardsInfo.DashboardsWithLogsChQuery += dashboardInfo.DashboardsWithLogsChQuery
+		dashboardsInfo.DashboardsWithTraceChQuery += dashboardInfo.DashboardsWithTraceChQuery
 		if isDashboardWithTSV2(dashboard.Data) {
 			count = count + 1
 		}
@@ -496,6 +497,18 @@ func isDashboardWithLogsClickhouseQuery(data map[string]interface{}) bool {
 	}
 	result := strings.Contains(string(jsonData), "signoz_logs.distributed_logs") ||
 		strings.Contains(string(jsonData), "signoz_logs.logs")
+	return result
+}
+
+func isDashboardWithTracesClickhouseQuery(data map[string]interface{}) bool {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return false
+	}
+	str := string(jsonData)
+	result := strings.Contains(str, "signoz_traces.distributed_signoz_index_v2") ||
+		strings.Contains(str, "signoz_traces.distributed_signoz_spans") ||
+		strings.Contains(str, "signoz_traces.distributed_signoz_error_index_v2")
 	return result
 }
 
@@ -559,7 +572,9 @@ func checkLogPanelAttrContains(data map[string]interface{}) int {
 
 func countPanelsInDashboard(inputData map[string]interface{}) model.DashboardsInfo {
 	var logsPanelCount, tracesPanelCount, metricsPanelCount, logsPanelsWithAttrContains int
-	var logChQuery bool
+	traceChQueryCount := 0
+	logChQueryCount := 0
+
 	// totalPanels := 0
 	if inputData != nil && inputData["widgets"] != nil {
 		widgets, ok := inputData["widgets"]
@@ -593,7 +608,10 @@ func countPanelsInDashboard(inputData map[string]interface{}) model.DashboardsIn
 							}
 						} else if ok && query["queryType"] == "clickhouse_sql" && query["clickhouse_sql"] != nil {
 							if isDashboardWithLogsClickhouseQuery(inputData) {
-								logChQuery = true
+								logChQueryCount = 1
+							}
+							if isDashboardWithTracesClickhouseQuery(inputData) {
+								traceChQueryCount = 1
 							}
 						}
 					}
@@ -602,16 +620,13 @@ func countPanelsInDashboard(inputData map[string]interface{}) model.DashboardsIn
 		}
 	}
 
-	logChQueryCount := 0
-	if logChQuery {
-		logChQueryCount = 1
-	}
 	return model.DashboardsInfo{
 		LogsBasedPanels:   logsPanelCount,
 		TracesBasedPanels: tracesPanelCount,
 		MetricBasedPanels: metricsPanelCount,
 
 		DashboardsWithLogsChQuery:    logChQueryCount,
+		DashboardsWithTraceChQuery:   traceChQueryCount,
 		LogsPanelsWithAttrContainsOp: logsPanelsWithAttrContains,
 	}
 }
