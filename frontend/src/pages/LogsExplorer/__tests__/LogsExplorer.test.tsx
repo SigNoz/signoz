@@ -152,11 +152,7 @@ describe('Logs Explorer Tests', () => {
 
 		// check for loading state to be not present
 		await waitFor(() =>
-			expect(
-				queryByText(
-					`Just a bit of patience, just a little bit’s enough ⎯ we’re getting your logs!`,
-				),
-			).not.toBeInTheDocument(),
+			expect(queryByText(`Retrieving your logs!`)).not.toBeInTheDocument(),
 		);
 
 		// check for no data state to not be present

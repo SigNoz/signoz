@@ -2,6 +2,7 @@ package inframetrics
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sort"
 	"strings"
@@ -9,6 +10,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -310,6 +312,45 @@ func (h *HostsRepo) getTopHostGroups(ctx context.Context, req model.HostListRequ
 	return topHostGroups, allHostGroups, nil
 }
 
+func (h *HostsRepo) DidSendHostMetricsData(ctx context.Context, req model.HostListRequest) (bool, error) {
+
+	names := []string{}
+	for _, metricName := range metricNamesForHosts {
+		names = append(names, metricName)
+	}
+
+	namesStr := "'" + strings.Join(names, "','") + "'"
+
+	query := fmt.Sprintf("SELECT count() FROM %s.%s WHERE metric_name IN (%s)",
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, namesStr)
+
+	count, err := h.reader.GetCountOfThings(ctx, query)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.HostListRequest) (bool, error) {
+	names := []string{}
+	for _, metricName := range metricNamesForHosts {
+		names = append(names, metricName)
+	}
+	namesStr := "'" + strings.Join(names, "','") + "'"
+
+	query := fmt.Sprintf(`
+	SELECT count()
+	FROM %s.%s
+	WHERE metric_name IN (%s)
+		AND unix_milli >= toUnixTimestamp(now() - INTERVAL 60 MINUTE) * 1000
+		AND JSONExtractString(labels, 'host_name') LIKE '%%-otel-agent%%'`,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr)
+
+	count, err := h.reader.GetCountOfThings(ctx, query)
+	return count > 0, err
+}
+
 func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) (model.HostListResponse, error) {
 	resp := model.HostListResponse{}
 
@@ -328,6 +369,14 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
+	}
+
+	// don't fail the request if we can't get these values
+	if sendingK8SAgentMetrics, err := h.IsSendingK8SAgentMetrics(ctx, req); err == nil {
+		resp.IsSendingK8SAgentMetrics = sendingK8SAgentMetrics
+	}
+	if sentAnyHostMetricsData, err := h.DidSendHostMetricsData(ctx, req); err == nil {
+		resp.SentAnyHostMetricsData = sentAnyHostMetricsData
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
@@ -439,6 +488,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 	}
 	resp.Total = len(allHostGroups)
 	resp.Records = records
+	resp.SortBy(req.OrderBy)
 
 	return resp, nil
 }

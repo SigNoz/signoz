@@ -1,4 +1,4 @@
-import { Color, ColorType } from '@signozhq/design-tokens';
+import { Color } from '@signozhq/design-tokens';
 import { showErrorNotification } from 'components/ExplorerCard/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
@@ -8,7 +8,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { SaveNewViewHandlerProps } from './types';
 
-export const getRandomColor = (): ColorType => {
+export const getRandomColor = (): string => {
 	const colorKeys = Object.keys(Color) as (keyof typeof Color)[];
 	const randomKey = colorKeys[Math.floor(Math.random() * colorKeys.length)];
 	return Color[randomKey];
