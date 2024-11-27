@@ -122,7 +122,7 @@ export default function LogsFormatOptionsMenu({
 			// if the last element is selected then select the previous one
 			if (currentIndex === itemLength - 1) {
 				// there should be more than 1 element in the list
-				if (currentIndex - 1 > 0) {
+				if (currentIndex - 1 >= 0) {
 					const prevValue = optionsData[currentIndex - 1]?.value || null;
 					setSelectedValue(prevValue as string | null);
 				} else {
