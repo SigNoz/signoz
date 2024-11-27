@@ -636,6 +636,7 @@ type AlertsInfo struct {
 	AlertNames                   []string `json:"alertNames"`
 	AlertsWithTSV2               int      `json:"alertsWithTSv2"`
 	AlertsWithLogsChQuery        int      `json:"alertsWithLogsChQuery"`
+	AlertsWithTraceChQuery       int      `json:"alertsWithTraceChQuery"`
 	AlertsWithLogsContainsOp     int      `json:"alertsWithLogsContainsOp"`
 }
 
@@ -656,6 +657,7 @@ type DashboardsInfo struct {
 	DashboardNames                  []string `json:"dashboardNames"`
 	QueriesWithTSV2                 int      `json:"queriesWithTSV2"`
 	DashboardsWithLogsChQuery       int      `json:"dashboardsWithLogsChQuery"`
+	DashboardsWithTraceChQuery      int      `json:"dashboardsWithTraceChQuery"`
 	LogsPanelsWithAttrContainsOp    int      `json:"logsPanelsWithAttrContainsOp"`
 }
 
