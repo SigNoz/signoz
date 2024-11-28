@@ -381,6 +381,22 @@ To contribute a new dashboard template for any service, follow the contribution 
 3. Include screenshots of the dashboard in the `assets/` directory.
 4. Submit a pull request for review.
 
+## Contributing to Kafka Server Monitoring Dashboard
+
+To contribute to the Kafka Server Monitoring Dashboard, follow these steps:
+
+1. **Create a Dashboard JSON File**: Create a JSON file for the Kafka Server Monitoring Dashboard. This file should include sections for Broker Metrics, Consumer Metrics, Topic Metrics, and Partition Metrics.
+
+2. **Add Dashboard Variables**: Include the following variables in the dashboard JSON file:
+   - `deployment.environment`
+   - `kafka.cluster.alias`
+
+3. **Write a README File**: Add a README file explaining the Kafka Server Monitoring Dashboard, the metrics ingested, and the configurations needed.
+
+4. **Include Screenshots**: Include screenshots of the Kafka Server Monitoring Dashboard in the `assets/` directory.
+
+5. **Submit a Pull Request**: Submit a pull request for review.
+
 ## Other Ways to Contribute
 
 There are many other ways to get involved with the community and to participate in this project:

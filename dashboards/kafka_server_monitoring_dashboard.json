@@ -1,0 +1,125 @@
+{
+  "dashboard": {
+    "title": "Kafka Server Monitoring Dashboard",
+    "variables": [
+      {
+        "name": "deployment.environment",
+        "label": "Environment",
+        "type": "query",
+        "query": "label_values(deployment.environment)"
+      },
+      {
+        "name": "kafka.cluster.alias",
+        "label": "Kafka Cluster",
+        "type": "query",
+        "query": "label_values(kafka.cluster.alias)"
+      }
+    ],
+    "panels": [
+      {
+        "title": "Broker Metrics",
+        "type": "row",
+        "panels": [
+          {
+            "title": "Broker CPU Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "kafka_broker_cpu_usage{deployment.environment=\"$deployment.environment\", kafka.cluster.alias=\"$kafka.cluster.alias\"}",
+                "legendFormat": "{{instance}}"
+              }
+            ]
+          },
+          {
+            "title": "Broker Memory Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "kafka_broker_memory_usage{deployment.environment=\"$deployment.environment\", kafka.cluster.alias=\"$kafka.cluster.alias\"}",
+                "legendFormat": "{{instance}}"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Consumer Metrics",
+        "type": "row",
+        "panels": [
+          {
+            "title": "Consumer Lag",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "kafka_consumer_lag{deployment.environment=\"$deployment.environment\", kafka.cluster.alias=\"$kafka.cluster.alias\"}",
+                "legendFormat": "{{consumer_group}}"
+              }
+            ]
+          },
+          {
+            "title": "Consumer Throughput",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "kafka_consumer_throughput{deployment.environment=\"$deployment.environment\", kafka.cluster.alias=\"$kafka.cluster.alias\"}",
+                "legendFormat": "{{consumer_group}}"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Topic Metrics",
+        "type": "row",
+        "panels": [
+          {
+            "title": "Topic Message Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "kafka_topic_message_rate{deployment.environment=\"$deployment.environment\", kafka.cluster.alias=\"$kafka.cluster.alias\"}",
+                "legendFormat": "{{topic}}"
+              }
+            ]
+          },
+          {
+            "title": "Topic Message Size",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "kafka_topic_message_size{deployment.environment=\"$deployment.environment\", kafka.cluster.alias=\"$kafka.cluster.alias\"}",
+                "legendFormat": "{{topic}}"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Partition Metrics",
+        "type": "row",
+        "panels": [
+          {
+            "title": "Partition Offset",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "kafka_partition_offset{deployment.environment=\"$deployment.environment\", kafka.cluster.alias=\"$kafka.cluster.alias\"}",
+                "legendFormat": "{{partition}}"
+              }
+            ]
+          },
+          {
+            "title": "Partition Lag",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "kafka_partition_lag{deployment.environment=\"$deployment.environment\", kafka.cluster.alias=\"$kafka.cluster.alias\"}",
+                "legendFormat": "{{partition}}"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

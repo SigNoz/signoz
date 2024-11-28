@@ -56,6 +56,15 @@ receivers:
               - localhost:8888
             labels:
               job_name: otel-collector
+  kafkametrics:
+    protocol_version: "2.0.0"
+    scrapers:
+      brokers:
+        brokers: ["localhost:9092"]
+      topics:
+        brokers: ["localhost:9092"]
+      consumers:
+        brokers: ["localhost:9092"]
 
 processors:
   batch:
@@ -149,7 +158,7 @@ service:
       processors: [signozspanmetrics/delta, batch]
       exporters: [clickhousetraces]
     metrics:
-      receivers: [otlp]
+      receivers: [otlp, kafkametrics]
       processors: [batch]
       exporters: [clickhousemetricswrite, clickhousemetricswritev2]
     metrics/hostmetrics:
