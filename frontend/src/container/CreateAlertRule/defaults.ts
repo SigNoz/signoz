@@ -149,7 +149,7 @@ export const traceAlertDefaults: AlertDef = {
 			chQueries: {
 				A: {
 					name: 'A',
-					query: `SELECT \n\ttoStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval, \n\tattributes_string['peer.service'] AS op_name, \n\ttoFloat64(avg(duration_nano)) AS value \nFROM signoz_traces.distributed_signoz_index_v3  \nWHERE attributes_string['peer.service']!='' \nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} \nAND ts_bucket_start BETWEEN {{.start_timestamp}} - 1800 AND {{.end_timestamp}} \nGROUP BY (op_name, interval);\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n-- \t{{.start_timestamp}}\n-- \t{{.end_timestamp}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
+					query: `SELECT \n\ttoStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval, \n\tresource_string_service$$name AS op_name, \n\ttoFloat64(avg(duration_nano)) AS value \nFROM signoz_traces.distributed_signoz_index_v3  \nWHERE resource_string_service$$name !='' \nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} \nAND ts_bucket_start BETWEEN {{.start_timestamp}} - 1800 AND {{.end_timestamp}} \nGROUP BY (op_name, interval);\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n-- \t{{.start_timestamp}}\n-- \t{{.end_timestamp}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
 					legend: '',
 					disabled: false,
 				},
