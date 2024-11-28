@@ -658,6 +658,7 @@ type DashboardsInfo struct {
 	QueriesWithTSV2                 int      `json:"queriesWithTSV2"`
 	DashboardsWithLogsChQuery       int      `json:"dashboardsWithLogsChQuery"`
 	DashboardsWithTraceChQuery      int      `json:"dashboardsWithTraceChQuery"`
+	DashboardNamesWithTraceChQuery  []string `json:"dashboardNamesWithTraceChQuery"`
 	LogsPanelsWithAttrContainsOp    int      `json:"logsPanelsWithAttrContainsOp"`
 }
 

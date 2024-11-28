@@ -472,6 +472,11 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 		if isDashboardWithTSV2(dashboard.Data) {
 			count = count + 1
 		}
+
+		if dashboardInfo.DashboardsWithTraceChQuery > 0 {
+			dashboardsInfo.DashboardNamesWithTraceChQuery = append(dashboardsInfo.DashboardNamesWithTraceChQuery, dashboardName)
+		}
+
 		// check if dashboard is a has a log operator with contains
 	}
 
@@ -505,6 +510,8 @@ func isDashboardWithTracesClickhouseQuery(data map[string]interface{}) bool {
 	if err != nil {
 		return false
 	}
+
+	// also check if the query is actually active
 	str := string(jsonData)
 	result := strings.Contains(str, "signoz_traces.distributed_signoz_index_v2") ||
 		strings.Contains(str, "signoz_traces.distributed_signoz_spans") ||
