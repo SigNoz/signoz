@@ -41,17 +41,25 @@ x-db-depend: &db-depend
     # clickhouse-3:
     #   condition: service_healthy
 
-services:
+networks:
+  caddy_network:
+    name: caddy_network
+    # external: true
+  signoz_network:
+    name: signoz_network
 
+services:
   zookeeper-1:
     image: bitnami/zookeeper:3.7.1
     container_name: signoz-zookeeper-1
     hostname: zookeeper-1
     user: root
-    ports:
-      - "2181:2181"
-      - "2888:2888"
-      - "3888:3888"
+    networks:
+      - signoz_network
+    # ports:
+    #   - "2181:2181"
+    #   - "2888:2888"
+    #   - "3888:3888"
     volumes:
       - ./data/zookeeper-1:/bitnami/zookeeper
     environment:
@@ -98,10 +106,12 @@ services:
     <<: *clickhouse-defaults
     container_name: signoz-clickhouse
     hostname: clickhouse
-    ports:
-      - "9000:9000"
-      - "8123:8123"
-      - "9181:9181"
+    # ports:
+    #   - "9000:9000"
+    #   - "8123:8123"
+    #   - "9181:9181"
+    networks:
+      - signoz_network
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
       - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
@@ -151,6 +161,8 @@ services:
     container_name: signoz-alertmanager
     volumes:
       - ./data/alertmanager:/data
+    networks:
+      - signoz_network
     depends_on:
       query-service:
         condition: service_healthy
@@ -186,6 +198,8 @@ services:
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-standalone-amd
     restart: on-failure
+    networks:
+      - signoz_network
     healthcheck:
       test:
         [
@@ -204,6 +218,9 @@ services:
     image: signoz/frontend:${DOCKER_TAG:-0.59.0}
     container_name: signoz-frontend
     restart: on-failure
+    networks:
+      - signoz_network
+      - caddy_network
     depends_on:
       - alertmanager
       - query-service
@@ -215,6 +232,8 @@ services:
   otel-collector-migrator-sync:
     image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.9}
     container_name: otel-migrator-sync
+    networks:
+      - signoz_network
     command:
       - "sync"
       - "--dsn=tcp://clickhouse:9000"
@@ -234,6 +253,8 @@ services:
       - "async"
       - "--dsn=tcp://clickhouse:9000"
       - "--up="
+    networks:
+      - signoz_network
     depends_on:
       clickhouse:
         condition: service_healthy
@@ -275,6 +296,9 @@ services:
       # - "14268:14268"   # Jaeger thrift HTTP
       # - "55678:55678"   # OpenCensus receiver
       # - "55679:55679"   # zPages extension
+    networks:
+      - signoz_network
+      - caddy_network
     restart: on-failure
     depends_on:
       clickhouse:
@@ -287,6 +311,8 @@ services:
   logspout:
     image: "gliderlabs/logspout:v3.2.14"
     container_name: signoz-logspout
+    networks:
+      - signoz_network
     volumes:
       - /etc/hostname:/etc/host_hostname:ro
       - /var/run/docker.sock:/var/run/docker.sock
