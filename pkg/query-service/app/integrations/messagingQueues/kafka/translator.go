@@ -315,7 +315,7 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 		if !ok {
 			return nil, fmt.Errorf("invalid type for Topic")
 		}
-		if queryContext != "consumer-throughput-details" {
+		if !(queryContext == "consumer-throughput-details" || queryContext == "producer-throughput-details") {
 			partition, ok = messagingQueue.Variables["partition"]
 			if !ok {
 				return nil, fmt.Errorf("invalid type for Partition")
