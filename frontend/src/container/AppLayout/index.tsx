@@ -16,6 +16,7 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
+import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useFeatureFlags from 'hooks/useFeatureFlag';
 import useLicense from 'hooks/useLicense';
@@ -348,12 +349,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					)}
 				</div>
 			)}
-			{/** TODO correct the formatted date below */}
 			{!showTrialExpiryBanner && showPaymentFailedWarning && (
 				<div className="payment-failed-banner">
 					Your bill payment has failed. Your workspace will get suspended on{' '}
 					<span>
-						{getFormattedDate(licenseData?.payload?.trialEnd || Date.now())}.
+						{getFormattedDate(
+							dayjs(activeLicenseV3?.event_queue?.scheduled_at).unix() || Date.now(),
+						)}
+						.
 					</span>
 					{role === 'ADMIN' ? (
 						<span>

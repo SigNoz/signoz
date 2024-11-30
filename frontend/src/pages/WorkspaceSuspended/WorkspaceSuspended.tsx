@@ -11,13 +11,17 @@ import {
 	Typography,
 } from 'antd';
 import updateCreditCardApi from 'api/billing/checkout';
+import ROUTES from 'constants/routes';
+import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
+import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import AppReducer from 'types/reducer/app';
 import { getFormattedDate } from 'utils/timeUtils';
 
@@ -55,6 +59,17 @@ function WorkspaceSuspended(): JSX.Element {
 			cancelURL: window.location.origin,
 		});
 	}, [activeLicenseV3?.key, updateCreditCard]);
+
+	useEffect(() => {
+		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+			const shouldSuspendWorkspace =
+				activeLicenseV3.status === LicenseStatus.SUSPENDED;
+
+			if (!shouldSuspendWorkspace) {
+				history.push(ROUTES.APPLICATION);
+			}
+		}
+	}, [isFetchingActiveLicenseV3, activeLicenseV3]);
 	return (
 		<div>
 			<Modal
@@ -101,7 +116,10 @@ function WorkspaceSuspended(): JSX.Element {
 											<br />
 											{t('yourDataIsSafe')}{' '}
 											<span className="workspace-suspended__details__highlight">
-												{getFormattedDate(Date.now())}
+												{getFormattedDate(
+													dayjs(activeLicenseV3?.event_queue?.scheduled_at).unix() ||
+														Date.now(),
+												)}
 											</span>{' '}
 											{t('actNow')}
 										</Typography.Paragraph>
