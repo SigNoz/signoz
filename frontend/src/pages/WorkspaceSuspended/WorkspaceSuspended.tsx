@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { LicenseStatus } from 'types/api/licensesV3/getActive';
+import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
 import AppReducer from 'types/reducer/app';
 import { getFormattedDate } from 'utils/timeUtils';
 
@@ -63,7 +63,8 @@ function WorkspaceSuspended(): JSX.Element {
 	useEffect(() => {
 		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
 			const shouldSuspendWorkspace =
-				activeLicenseV3.status === LicenseStatus.SUSPENDED;
+				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
+				activeLicenseV3.state === LicenseState.PAYMENT_FAILED;
 
 			if (!shouldSuspendWorkspace) {
 				history.push(ROUTES.APPLICATION);

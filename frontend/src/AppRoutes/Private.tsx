@@ -21,7 +21,7 @@ import { AppState } from 'store/reducers';
 import { getInitialUserTokenRefreshToken } from 'store/utils';
 import AppActions from 'types/actions';
 import { UPDATE_USER_IS_FETCH } from 'types/actions/app';
-import { LicenseStatus } from 'types/api/licensesV3/getActive';
+import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
 import AppReducer from 'types/reducer/app';
 import { isCloudUser } from 'utils/app';
@@ -271,7 +271,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	useEffect(() => {
 		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
 			const shouldSuspendWorkspace =
-				activeLicenseV3.status === LicenseStatus.SUSPENDED;
+				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
+				activeLicenseV3.state === LicenseState.PAYMENT_FAILED;
 
 			if (shouldSuspendWorkspace) {
 				navigateToWorkSpaceSuspended(currentRoute);
