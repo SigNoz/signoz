@@ -122,6 +122,21 @@ func (ah *APIHandler) listLicensesV3(w http.ResponseWriter, r *http.Request) {
 	ah.Respond(w, convertLicenseV3ToListLicenseResponse(licenses))
 }
 
+func (ah *APIHandler) getActiveLicenseV3(w http.ResponseWriter, r *http.Request) {
+	activeLicense, err := ah.LM().GetRepo().GetActiveLicenseV3(r.Context())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	// return 404 not found if there is no active license
+	if activeLicense == nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no active license found")}, nil)
+		return
+	}
+
+	render.Success(w, http.StatusOK, activeLicense.Data)
+}
+
 // this function is called by zeus when inserting licenses in the query-service
 func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
 	var licenseKey ApplyLicenseRequest
