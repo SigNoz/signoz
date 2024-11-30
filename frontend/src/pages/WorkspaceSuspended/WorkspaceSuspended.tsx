@@ -10,7 +10,7 @@ import {
 	Space,
 	Typography,
 } from 'antd';
-import updateCreditCardApi from 'api/billing/checkout';
+import manageCreditCardApi from 'api/billing/manage';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
@@ -33,8 +33,8 @@ function WorkspaceSuspended(): JSX.Element {
 
 	const { t } = useTranslation(['failedPayment']);
 
-	const { mutate: updateCreditCard, isLoading } = useMutation(
-		updateCreditCardApi,
+	const { mutate: manageCreditCard, isLoading } = useMutation(
+		manageCreditCardApi,
 		{
 			onSuccess: (data) => {
 				if (data.payload?.redirectURL) {
@@ -53,12 +53,12 @@ function WorkspaceSuspended(): JSX.Element {
 	);
 
 	const handleUpdateCreditCard = useCallback(async () => {
-		updateCreditCard({
+		manageCreditCard({
 			licenseKey: activeLicenseV3?.key || '',
 			successURL: window.location.origin,
 			cancelURL: window.location.origin,
 		});
-	}, [activeLicenseV3?.key, updateCreditCard]);
+	}, [activeLicenseV3?.key, manageCreditCard]);
 
 	useEffect(() => {
 		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
@@ -161,6 +161,12 @@ function WorkspaceSuspended(): JSX.Element {
 									</Col>
 								</Row>
 							)}
+							<div className="workspace-suspended__creative">
+								<img
+									src="/Images/feature-graphic-correlation.svg"
+									alt="correlation-graphic"
+								/>
+							</div>
 						</>
 					)}
 				</div>

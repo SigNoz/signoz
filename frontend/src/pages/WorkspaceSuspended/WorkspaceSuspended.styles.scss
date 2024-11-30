@@ -149,31 +149,14 @@ $dark-theme: 'darkMode';
 		margin-bottom: 18px;
 	}
 
-	&__faq-container {
-		width: 100%;
+	&__creative {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		margin-top: 54px;
 
-		.ant-collapse,
-		.ant-collapse-item,
-		.ant-collapse-content-active {
-			.#{$dark-theme} & {
-				border-color: var(--bg-slate-400);
-			}
-		}
-	}
-
-	&__customer-stories {
-		&__left-container,
-		&__right-container {
-			display: flex;
-			flex-direction: column;
-		}
-
-		&__left-container {
-			align-items: flex-end;
-		}
-
-		&__right-container {
-			align-items: flex-start;
+		img {
+			width: -webkit-fill-available;
 		}
 	}
 }
