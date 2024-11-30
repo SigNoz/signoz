@@ -11,6 +11,7 @@ import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
+import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
 import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
 import useFeatureFlags from 'hooks/useFeatureFlag';
@@ -56,6 +57,9 @@ function App(): JSX.Element {
 		AppState,
 		AppReducer
 	>((state) => state.app);
+
+	const { data: activeLicenseV3 } = useActiveLicenseV3();
+	console.log(activeLicenseV3);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
