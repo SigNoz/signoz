@@ -4,7 +4,7 @@ import { useQuery, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { LicenseV3EventQueueResModel } from 'types/api/licensesV3/getActive';
+import { LicenseV3ResModel } from 'types/api/licensesV3/getActive';
 import AppReducer from 'types/reducer/app';
 
 const useActiveLicenseV3 = (): UseLicense => {
@@ -18,7 +18,7 @@ const useActiveLicenseV3 = (): UseLicense => {
 };
 
 type UseLicense = UseQueryResult<
-	SuccessResponse<LicenseV3EventQueueResModel> | ErrorResponse,
+	SuccessResponse<LicenseV3ResModel> | ErrorResponse,
 	unknown
 >;
 

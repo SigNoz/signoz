@@ -2,8 +2,12 @@ export enum LicenseEvent {
 	FAILED_PAYMENT = 'FAILED_PAYMENT',
 }
 
+export enum LicenseState {
+	SUSPENDED = 'SUSPENDED',
+}
+
 export type LicenseV3EventQueueResModel = {
-	event: keyof LicenseEvent;
+	event: LicenseEvent;
 	status: string;
 	scheduled_at: string;
 	created_at: string;
@@ -11,7 +15,8 @@ export type LicenseV3EventQueueResModel = {
 };
 
 export type LicenseV3ResModel = {
+	key: string;
 	status: string;
-	state: string;
+	state: LicenseState;
 	event_queue: LicenseV3EventQueueResModel;
 };

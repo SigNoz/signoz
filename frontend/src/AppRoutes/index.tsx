@@ -11,7 +11,6 @@ import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
-import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
 import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
 import useFeatureFlags from 'hooks/useFeatureFlag';
@@ -23,6 +22,7 @@ import history from 'lib/history';
 import { identity, pick, pickBy } from 'lodash-es';
 import posthog from 'posthog-js';
 import AlertRuleProvider from 'providers/Alert';
+import { AppProvider } from 'providers/App/App';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useEffect, useState } from 'react';
@@ -57,9 +57,6 @@ function App(): JSX.Element {
 		AppState,
 		AppReducer
 	>((state) => state.app);
-
-	const { data: activeLicenseV3 } = useActiveLicenseV3();
-	console.log(activeLicenseV3);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
@@ -307,42 +304,44 @@ function App(): JSX.Element {
 	}, []);
 
 	return (
-		<ConfigProvider theme={themeConfig}>
-			<Router history={history}>
-				<CompatRouter>
-					<NotificationProvider>
-						<PrivateRoute>
-							<ResourceProvider>
-								<QueryBuilderProvider>
-									<DashboardProvider>
-										<KeyboardHotkeysProvider>
-											<AlertRuleProvider>
-												<AppLayout>
-													<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-														<Switch>
-															{routes.map(({ path, component, exact }) => (
-																<Route
-																	key={`${path}`}
-																	exact={exact}
-																	path={path}
-																	component={component}
-																/>
-															))}
+		<AppProvider>
+			<ConfigProvider theme={themeConfig}>
+				<Router history={history}>
+					<CompatRouter>
+						<NotificationProvider>
+							<PrivateRoute>
+								<ResourceProvider>
+									<QueryBuilderProvider>
+										<DashboardProvider>
+											<KeyboardHotkeysProvider>
+												<AlertRuleProvider>
+													<AppLayout>
+														<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+															<Switch>
+																{routes.map(({ path, component, exact }) => (
+																	<Route
+																		key={`${path}`}
+																		exact={exact}
+																		path={path}
+																		component={component}
+																	/>
+																))}
 
-															<Route path="*" component={NotFound} />
-														</Switch>
-													</Suspense>
-												</AppLayout>
-											</AlertRuleProvider>
-										</KeyboardHotkeysProvider>
-									</DashboardProvider>
-								</QueryBuilderProvider>
-							</ResourceProvider>
-						</PrivateRoute>
-					</NotificationProvider>
-				</CompatRouter>
-			</Router>
-		</ConfigProvider>
+																<Route path="*" component={NotFound} />
+															</Switch>
+														</Suspense>
+													</AppLayout>
+												</AlertRuleProvider>
+											</KeyboardHotkeysProvider>
+										</DashboardProvider>
+									</QueryBuilderProvider>
+								</ResourceProvider>
+							</PrivateRoute>
+						</NotificationProvider>
+					</CompatRouter>
+				</Router>
+			</ConfigProvider>
+		</AppProvider>
 	);
 }
 

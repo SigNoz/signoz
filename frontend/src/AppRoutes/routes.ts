@@ -53,6 +53,7 @@ import {
 	UnAuthorized,
 	UsageExplorerPage,
 	WorkspaceBlocked,
+	WorkspaceSuspended,
 } from './pageComponents';
 
 const routes: AppRoutes[] = [
@@ -361,6 +362,13 @@ const routes: AppRoutes[] = [
 		path: ROUTES.WORKSPACE_LOCKED,
 		exact: true,
 		component: WorkspaceBlocked,
+		isPrivate: true,
+		key: 'WORKSPACE_LOCKED',
+	},
+	{
+		path: ROUTES.WORKSPACE_SUSPENDED,
+		exact: true,
+		component: WorkspaceSuspended,
 		isPrivate: true,
 		key: 'WORKSPACE_LOCKED',
 	},

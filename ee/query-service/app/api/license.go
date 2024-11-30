@@ -134,6 +134,8 @@ func (ah *APIHandler) getActiveLicenseV3(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// TODO deprecate this when we move away from key for stripe
+	activeLicense.Data["key"] = activeLicense.Key
 	render.Success(w, http.StatusOK, activeLicense.Data)
 }
 
