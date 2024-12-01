@@ -6,6 +6,7 @@ import {
 	useGetAlertRuleDetailsTimelineTable,
 	useTimelineTable,
 } from 'pages/AlertDetails/hooks';
+import { useTimezone } from 'providers/Timezone';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -39,6 +40,8 @@ function TimelineTable(): JSX.Element {
 
 	const { t } = useTranslation('common');
 
+	const { formatTimestamp } = useTimezone();
+
 	if (isError || !isValidRuleId || !ruleId) {
 		return <div>{t('something_went_wrong')}</div>;
 	}
@@ -51,6 +54,7 @@ function TimelineTable(): JSX.Element {
 					filters,
 					labels: labels ?? {},
 					setFilters,
+					formatTimestamp,
 				})}
 				dataSource={timelineData}
 				pagination={paginationConfig}

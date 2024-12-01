@@ -8,6 +8,7 @@ import ClientSideQBSearch, {
 import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
 import { transformKeyValuesToAttributeValuesMap } from 'container/QueryBuilder/filters/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import { Search } from 'lucide-react';
 import AlertLabels, {
 	AlertLabelsProps,
@@ -16,7 +17,6 @@ import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
 import { useMemo } from 'react';
 import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-import { formatEpochTimestamp } from 'utils/timeUtils';
 
 const transformLabelsToQbKeys = (
 	labels: AlertRuleTimelineTableResponse['labels'],
@@ -74,10 +74,12 @@ export const timelineTableColumns = ({
 	filters,
 	labels,
 	setFilters,
+	formatTimestamp,
 }: {
 	filters: TagFilter;
 	labels: AlertLabelsProps['labels'];
 	setFilters: (filters: TagFilter) => void;
+	formatTimestamp: (input: TimestampInput, format?: string) => string;
 }): ColumnsType<AlertRuleTimelineTableResponse> => [
 	{
 		title: 'STATE',
@@ -106,7 +108,9 @@ export const timelineTableColumns = ({
 		dataIndex: 'unixMilli',
 		width: 200,
 		render: (value): JSX.Element => (
-			<div className="alert-rule__created-at">{formatEpochTimestamp(value)}</div>
+			<div className="alert-rule__created-at">
+				{formatTimestamp(value, 'MMM D, YYYY ⎯ HH:mm:ss')}
+			</div>
 		),
 	},
 	{
