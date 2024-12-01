@@ -74,12 +74,15 @@ export const timelineTableColumns = ({
 	filters,
 	labels,
 	setFilters,
-	formatTimestamp,
+	formatTimezoneAdjustedTimestamp,
 }: {
 	filters: TagFilter;
 	labels: AlertLabelsProps['labels'];
 	setFilters: (filters: TagFilter) => void;
-	formatTimestamp: (input: TimestampInput, format?: string) => string;
+	formatTimezoneAdjustedTimestamp: (
+		input: TimestampInput,
+		format?: string,
+	) => string;
 }): ColumnsType<AlertRuleTimelineTableResponse> => [
 	{
 		title: 'STATE',
@@ -109,7 +112,7 @@ export const timelineTableColumns = ({
 		width: 200,
 		render: (value): JSX.Element => (
 			<div className="alert-rule__created-at">
-				{formatTimestamp(value, 'MMM D, YYYY ⎯ HH:mm:ss')}
+				{formatTimezoneAdjustedTimestamp(value, 'MMM D, YYYY ⎯ HH:mm:ss')}
 			</div>
 		),
 	},

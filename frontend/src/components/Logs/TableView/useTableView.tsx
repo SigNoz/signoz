@@ -44,7 +44,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		logs,
 	]);
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
@@ -83,8 +83,11 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				render: (field, item): ColumnTypeRender<Record<string, unknown>> => {
 					const date =
 						typeof field === 'string'
-							? formatTimestamp(field, 'YYYY-MM-DD HH:mm:ss.SSS')
-							: formatTimestamp(field / 1e6, 'YYYY-MM-DD HH:mm:ss.SSS');
+							? formatTimezoneAdjustedTimestamp(field, 'YYYY-MM-DD HH:mm:ss.SSS')
+							: formatTimezoneAdjustedTimestamp(
+									field / 1e6,
+									'YYYY-MM-DD HH:mm:ss.SSS',
+							  );
 					return {
 						children: (
 							<div className="table-timestamp">
@@ -134,7 +137,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		isDarkMode,
 		linesPerRow,
 		fontSize,
-		formatTimestamp,
+		formatTimezoneAdjustedTimestamp,
 	]);
 
 	return { columns, dataSource: flattenLogData };

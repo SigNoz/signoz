@@ -77,11 +77,11 @@ function LogsPanelComponent({
 		});
 	};
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const columns = getLogPanelColumnsList(
 		widget.selectedLogFields,
-		formatTimestamp,
+		formatTimezoneAdjustedTimestamp,
 	);
 
 	const dataLength =

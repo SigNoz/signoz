@@ -158,9 +158,14 @@ function AllErrors(): JSX.Element {
 
 	const getDateValue = (
 		value: string,
-		formatTimestamp: (input: TimestampInput, format?: string) => string,
+		formatTimezoneAdjustedTimestamp: (
+			input: TimestampInput,
+			format?: string,
+		) => string,
 	): JSX.Element => (
-		<Typography>{formatTimestamp(value, 'DD/MM/YYYY hh:mm:ss A')}</Typography>
+		<Typography>
+			{formatTimezoneAdjustedTimestamp(value, 'DD/MM/YYYY hh:mm:ss A')}
+		</Typography>
 	);
 
 	const filterIcon = useCallback(() => <SearchOutlined />, []);
@@ -287,7 +292,7 @@ function AllErrors(): JSX.Element {
 		[filterIcon, filterDropdownWrapper],
 	);
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const columns: ColumnsType<Exception> = [
 		{
@@ -348,7 +353,8 @@ function AllErrors(): JSX.Element {
 			dataIndex: 'lastSeen',
 			width: 80,
 			key: 'lastSeen',
-			render: (value): JSX.Element => getDateValue(value, formatTimestamp),
+			render: (value): JSX.Element =>
+				getDateValue(value, formatTimezoneAdjustedTimestamp),
 			sorter: true,
 			defaultSortOrder: getDefaultOrder(
 				getUpdatedParams,
@@ -361,7 +367,8 @@ function AllErrors(): JSX.Element {
 			dataIndex: 'firstSeen',
 			width: 80,
 			key: 'firstSeen',
-			render: (value): JSX.Element => getDateValue(value, formatTimestamp),
+			render: (value): JSX.Element =>
+				getDateValue(value, formatTimezoneAdjustedTimestamp),
 			sorter: true,
 			defaultSortOrder: getDefaultOrder(
 				getUpdatedParams,

@@ -7,10 +7,10 @@ import { ColumnDataStyle, ListDataStyle, ProcessorIndexIcon } from '../styles';
 import PipelineFilterSummary from './PipelineFilterSummary';
 
 function CreatedAtComponent({ record }: { record: Record }): JSX.Element {
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	return (
 		<ColumnDataStyle>
-			{formatTimestamp(record, 'MMMM DD, YYYY hh:mm A (UTC Z)')}
+			{formatTimezoneAdjustedTimestamp(record, 'MMMM DD, YYYY hh:mm A (UTC Z)')}
 		</ColumnDataStyle>
 	);
 }

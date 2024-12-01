@@ -98,15 +98,15 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		queryTableDataResult,
 	]);
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const columns = useMemo(() => {
 		const updatedColumns = getListColumns(
 			options?.selectColumns || [],
-			formatTimestamp,
+			formatTimezoneAdjustedTimestamp,
 		);
 		return getDraggedColumns(updatedColumns, draggedColumns);
-	}, [options?.selectColumns, formatTimestamp, draggedColumns]);
+	}, [options?.selectColumns, formatTimezoneAdjustedTimestamp, draggedColumns]);
 
 	const transformedQueryTableData = useMemo(
 		() => transformDataWithDate(queryTableData) || [],
