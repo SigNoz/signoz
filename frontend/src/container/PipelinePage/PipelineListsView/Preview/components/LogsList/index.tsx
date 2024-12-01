@@ -18,14 +18,17 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 
 	const makeLogDetailsHandler = (log: ILog) => (): void => onSetActiveLog(log);
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	return (
 		<div className="logs-preview-list-container">
 			{logs.map((log) => (
 				<div key={log.id} className="logs-preview-list-item">
 					<div className="logs-preview-list-item-timestamp">
-						{formatTimestamp(log.timestamp, 'MMM DD HH:mm:ss.SSS (UTC Z)')}
+						{formatTimezoneAdjustedTimestamp(
+							log.timestamp,
+							'MMM DD HH:mm:ss.SSS (UTC Z)',
+						)}
 					</div>
 					<div className="logs-preview-list-item-body">{log.body}</div>
 					<div

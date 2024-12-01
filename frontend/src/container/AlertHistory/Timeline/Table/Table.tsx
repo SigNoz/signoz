@@ -40,7 +40,7 @@ function TimelineTable(): JSX.Element {
 
 	const { t } = useTranslation('common');
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	if (isError || !isValidRuleId || !ruleId) {
 		return <div>{t('something_went_wrong')}</div>;
@@ -54,7 +54,7 @@ function TimelineTable(): JSX.Element {
 					filters,
 					labels: labels ?? {},
 					setFilters,
-					formatTimestamp,
+					formatTimezoneAdjustedTimestamp,
 				})}
 				dataSource={timelineData}
 				pagination={paginationConfig}

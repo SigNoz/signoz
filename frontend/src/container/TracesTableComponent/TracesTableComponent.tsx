@@ -50,11 +50,11 @@ function TracesTableComponent({
 		}));
 	}, [pagination, setRequestData]);
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const columns = getListColumns(
 		widget.selectedTracesFields || [],
-		formatTimestamp,
+		formatTimezoneAdjustedTimestamp,
 	);
 
 	const dataLength =

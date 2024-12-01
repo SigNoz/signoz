@@ -69,7 +69,7 @@ export function TableViewActions(
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	if (record.field === 'body') {
 		const parsedBody = recursiveParseJSON(fieldData.value);
@@ -122,7 +122,10 @@ export function TableViewActions(
 			case 'timestamp':
 				return (
 					<span style={commonStyles}>
-						{formatTimestamp(cleanTimestamp, 'MM/DD/YYYY, HH:mm:ss.SSS (UTC Z)')}
+						{formatTimezoneAdjustedTimestamp(
+							cleanTimestamp,
+							'MM/DD/YYYY, HH:mm:ss.SSS (UTC Z)',
+						)}
 					</span>
 				);
 

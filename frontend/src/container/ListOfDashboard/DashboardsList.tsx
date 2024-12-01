@@ -344,10 +344,13 @@ function DashboardsList(): JSX.Element {
 		}
 	}, [state.error, state.value, t, notifications]);
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	function getFormattedTime(dashboard: Dashboard, option: string): string {
-		return formatTimestamp(get(dashboard, option, ''), 'MMM D, YYYY ⎯ HH:mm:ss');
+		return formatTimezoneAdjustedTimestamp(
+			get(dashboard, option, ''),
+			'MMM D, YYYY ⎯ HH:mm:ss',
+		);
 	}
 
 	const onLastUpdated = (time: string): string => {
@@ -390,7 +393,7 @@ function DashboardsList(): JSX.Element {
 			title: 'Dashboards',
 			key: 'dashboard',
 			render: (dashboard: Data, _, index): JSX.Element => {
-				const formattedDateAndTime = formatTimestamp(
+				const formattedDateAndTime = formatTimezoneAdjustedTimestamp(
 					dashboard.createdAt,
 					'MMM D, YYYY ⎯ HH:mm:ss',
 				);

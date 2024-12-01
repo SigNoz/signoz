@@ -89,16 +89,24 @@ function RawLogView({
 		attributesText += ' | ';
 	}
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const text = useMemo(() => {
 		const date =
 			typeof data.timestamp === 'string'
-				? formatTimestamp(data.timestamp, 'YYYY-MM-DD HH:mm:ss.SSS')
-				: formatTimestamp(data.timestamp / 1e6, 'YYYY-MM-DD HH:mm:ss.SSS');
+				? formatTimezoneAdjustedTimestamp(data.timestamp, 'YYYY-MM-DD HH:mm:ss.SSS')
+				: formatTimezoneAdjustedTimestamp(
+						data.timestamp / 1e6,
+						'YYYY-MM-DD HH:mm:ss.SSS',
+				  );
 
 		return `${date} | ${attributesText} ${data.body}`;
-	}, [data.timestamp, data.body, attributesText, formatTimestamp]);
+	}, [
+		data.timestamp,
+		data.body,
+		attributesText,
+		formatTimezoneAdjustedTimestamp,
+	]);
 
 	const handleClickExpand = useCallback(() => {
 		if (activeContextLog || isReadOnly) return;

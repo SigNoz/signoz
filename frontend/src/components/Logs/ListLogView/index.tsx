@@ -174,17 +174,20 @@ function ListLogView({
 		[selectedFields],
 	);
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const timestampValue = useMemo(
 		() =>
 			typeof flattenLogData.timestamp === 'string'
-				? formatTimestamp(flattenLogData.timestamp, 'YYYY-MM-DD HH:mm:ss.SSS')
-				: formatTimestamp(
+				? formatTimezoneAdjustedTimestamp(
+						flattenLogData.timestamp,
+						'YYYY-MM-DD HH:mm:ss.SSS',
+				  )
+				: formatTimezoneAdjustedTimestamp(
 						flattenLogData.timestamp / 1e6,
 						'YYYY-MM-DD HH:mm:ss.SSS',
 				  ),
-		[flattenLogData.timestamp, formatTimestamp],
+		[flattenLogData.timestamp, formatTimezoneAdjustedTimestamp],
 	);
 
 	const logType = getLogIndicatorType(logData);

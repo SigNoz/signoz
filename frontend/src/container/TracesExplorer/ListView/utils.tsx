@@ -40,7 +40,10 @@ export const getTraceLink = (record: RowData): string =>
 
 export const getListColumns = (
 	selectedColumns: BaseAutocompleteData[],
-	formatTimestamp: (input: TimestampInput, format?: string) => string | number,
+	formatTimezoneAdjustedTimestamp: (
+		input: TimestampInput,
+		format?: string,
+	) => string | number,
 ): ColumnsType<RowData> => {
 	const initialColumns: ColumnsType<RowData> = [
 		{
@@ -51,8 +54,8 @@ export const getListColumns = (
 			render: (value, item): JSX.Element => {
 				const date =
 					typeof value === 'string'
-						? formatTimestamp(value, 'YYYY-MM-DD HH:mm:ss.SSS')
-						: formatTimestamp(value / 1e6, 'YYYY-MM-DD HH:mm:ss.SSS');
+						? formatTimezoneAdjustedTimestamp(value, 'YYYY-MM-DD HH:mm:ss.SSS')
+						: formatTimezoneAdjustedTimestamp(value / 1e6, 'YYYY-MM-DD HH:mm:ss.SSS');
 				return (
 					<BlockLink to={getTraceLink(item)}>
 						<Typography.Text>{date}</Typography.Text>

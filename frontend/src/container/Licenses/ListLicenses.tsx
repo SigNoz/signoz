@@ -6,11 +6,11 @@ import { useTranslation } from 'react-i18next';
 import { License } from 'types/api/licenses/def';
 
 function ValidityColumn({ value }: { value: string }): JSX.Element {
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	return (
 		<Typography>
-			{formatTimestamp(value, 'YYYY-MM-DD HH:mm:ss (UTC Z)')}
+			{formatTimezoneAdjustedTimestamp(value, 'YYYY-MM-DD HH:mm:ss (UTC Z)')}
 		</Typography>
 	);
 }

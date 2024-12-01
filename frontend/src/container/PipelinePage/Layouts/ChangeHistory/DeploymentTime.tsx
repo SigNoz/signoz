@@ -1,9 +1,14 @@
 import { useTimezone } from 'providers/Timezone';
 
 function DeploymentTime(deployTime: string): JSX.Element {
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	return (
-		<span>{formatTimestamp(deployTime, 'MMMM DD, YYYY hh:mm A (UTC Z)')} </span>
+		<span>
+			{formatTimezoneAdjustedTimestamp(
+				deployTime,
+				'MMMM DD, YYYY hh:mm A (UTC Z)',
+			)}{' '}
+		</span>
 	);
 }
 

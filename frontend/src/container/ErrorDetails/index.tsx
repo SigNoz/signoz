@@ -134,7 +134,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	return (
 		<>
@@ -146,7 +146,10 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				<div>
 					<Typography>Event {errorDetail.errorId}</Typography>
 					<Typography>
-						{formatTimestamp(errorDetail.timestamp, 'DD/MM/YYYY hh:mm:ss A (UTC Z)')}
+						{formatTimezoneAdjustedTimestamp(
+							errorDetail.timestamp,
+							'DD/MM/YYYY hh:mm:ss A (UTC Z)',
+						)}
 					</Typography>
 				</div>
 				<div>

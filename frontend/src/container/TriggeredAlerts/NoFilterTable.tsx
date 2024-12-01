@@ -15,7 +15,7 @@ function NoFilterTable({
 	selectedFilter,
 }: NoFilterTableProps): JSX.Element {
 	const filteredAlerts = FilterAlerts(allAlerts, selectedFilter);
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	// need to add the filter
 	const columns: ColumnsType<Alerts> = [
@@ -84,7 +84,7 @@ function NoFilterTable({
 			sorter: (a, b): number =>
 				new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
 			render: (date): JSX.Element => (
-				<Typography>{`${formatTimestamp(
+				<Typography>{`${formatTimezoneAdjustedTimestamp(
 					date,
 					'MM/DD/YYYY hh:mm:ss A (UTC Z)',
 				)}`}</Typography>

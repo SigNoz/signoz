@@ -26,7 +26,10 @@ function useTimezoneFormatter({
 }: {
 	userTimezone: Timezone;
 }): {
-	formatTimestamp: (input: TimestampInput, format?: string) => string;
+	formatTimezoneAdjustedTimestamp: (
+		input: TimestampInput,
+		format?: string,
+	) => string;
 } {
 	// Initialize cache using useMemo to persist between renders
 	const cache = useMemo(() => new Map<string, CacheEntry>(), []);
@@ -51,7 +54,7 @@ function useTimezoneFormatter({
 		sortedEntries.slice(0, entriesToRemove).forEach(([key]) => cache.delete(key));
 	}, [cache]);
 
-	const formatTimestamp = useCallback(
+	const formatTimezoneAdjustedTimestamp = useCallback(
 		(input: TimestampInput, format = 'YYYY-MM-DD HH:mm:ss'): string => {
 			const cacheKey = `${input}_${format}_${userTimezone?.value}`;
 
@@ -89,7 +92,7 @@ function useTimezoneFormatter({
 		[cache, clearExpiredEntries, userTimezone],
 	);
 
-	return { formatTimestamp };
+	return { formatTimezoneAdjustedTimestamp };
 }
 
 export default useTimezoneFormatter;

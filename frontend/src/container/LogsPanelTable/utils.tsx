@@ -14,7 +14,10 @@ import { v4 as uuid } from 'uuid';
 
 export const getLogPanelColumnsList = (
 	selectedLogFields: Widgets['selectedLogFields'],
-	formatTimestamp: (input: TimestampInput, format?: string) => string,
+	formatTimezoneAdjustedTimestamp: (
+		input: TimestampInput,
+		format?: string,
+	) => string,
 ): ColumnsType<RowData> => {
 	const initialColumns: ColumnsType<RowData> = [];
 
@@ -30,7 +33,9 @@ export const getLogPanelColumnsList = (
 				render: (value: ReactNode): JSX.Element => {
 					if (name === 'timestamp') {
 						return (
-							<Typography.Text>{formatTimestamp(value as string)}</Typography.Text>
+							<Typography.Text>
+								{formatTimezoneAdjustedTimestamp(value as string)}
+							</Typography.Text>
 						);
 					}
 

@@ -19,7 +19,10 @@ interface TimezoneContextType {
 	timezone: Timezone;
 	browserTimezone: Timezone;
 	updateTimezone: (timezone: Timezone) => void;
-	formatTimestamp: (input: TimestampInput, format?: string) => string;
+	formatTimezoneAdjustedTimestamp: (
+		input: TimestampInput,
+		format?: string,
+	) => string;
 }
 
 const TimezoneContext = createContext<TimezoneContextType | undefined>(
@@ -63,16 +66,18 @@ function TimezoneProvider({
 		setTimezone(timezone);
 	}, []);
 
-	const { formatTimestamp } = useTimezoneFormatter({ userTimezone: timezone });
+	const { formatTimezoneAdjustedTimestamp } = useTimezoneFormatter({
+		userTimezone: timezone,
+	});
 
 	const value = React.useMemo(
 		() => ({
 			timezone,
 			browserTimezone,
 			updateTimezone,
-			formatTimestamp,
+			formatTimezoneAdjustedTimestamp,
 		}),
-		[timezone, browserTimezone, updateTimezone, formatTimestamp],
+		[timezone, browserTimezone, updateTimezone, formatTimezoneAdjustedTimestamp],
 	);
 
 	return (

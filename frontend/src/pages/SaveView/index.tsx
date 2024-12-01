@@ -208,7 +208,7 @@ function SaveView(): JSX.Element {
 		}
 	};
 
-	const { formatTimestamp } = useTimezone();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const columns: TableProps<ViewProps>['columns'] = [
 		{
@@ -221,7 +221,7 @@ function SaveView(): JSX.Element {
 					bgColor = extraData.color;
 				}
 
-				const formattedDateAndTime = formatTimestamp(
+				const formattedDateAndTime = formatTimezoneAdjustedTimestamp(
 					view.createdAt,
 					'HH:mm:ss ⎯ MMM D, YYYY (UTC Z)',
 				);
