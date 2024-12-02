@@ -19,6 +19,14 @@ export const getFormattedDate = (epochTimestamp: number): string => {
 	return date.format('DD MMM YYYY');
 };
 
+export const getFormattedDateWithMinutes = (epochTimestamp: number): string => {
+	// Convert epoch timestamp to a date
+	const date = dayjs.unix(epochTimestamp);
+
+	// Format the date as "18 Nov 2013"
+	return date.format('DD MMM YYYY HH:mm');
+};
+
 export const getRemainingDays = (billingEndDate: number): number => {
 	// Convert Epoch timestamps to Date objects
 	const startDate = new Date(); // Convert seconds to milliseconds
