@@ -1,5 +1,3 @@
-import 'chartjs-adapter-date-fns';
-
 import {
 	_adapters,
 	BarController,
