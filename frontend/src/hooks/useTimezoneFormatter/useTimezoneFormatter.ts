@@ -56,7 +56,8 @@ function useTimezoneFormatter({
 
 	const formatTimezoneAdjustedTimestamp = useCallback(
 		(input: TimestampInput, format = 'YYYY-MM-DD HH:mm:ss'): string => {
-			const cacheKey = `${input}_${format}_${userTimezone?.value}`;
+			const timestamp = dayjs(input).valueOf();
+			const cacheKey = `${timestamp}_${userTimezone?.value}`;
 
 			// Check cache first
 			const cachedValue = cache.get(cacheKey);
