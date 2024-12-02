@@ -54,6 +54,8 @@ function TimezoneProvider({
 	);
 
 	const updateTimezone = useCallback((timezone: Timezone): void => {
+		if (!timezone.value) return;
+
 		// TODO(shaheer): replace this with user preferences API
 		setStoredTimezoneValue(timezone.value);
 		setTimezone(timezone);
