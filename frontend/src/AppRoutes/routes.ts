@@ -370,7 +370,7 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: WorkspaceSuspended,
 		isPrivate: true,
-		key: 'WORKSPACE_LOCKED',
+		key: 'WORKSPACE_SUSPENDED',
 	},
 	{
 		path: ROUTES.SHORTCUTS,

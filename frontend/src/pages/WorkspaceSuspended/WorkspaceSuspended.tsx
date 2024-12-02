@@ -23,7 +23,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
 import AppReducer from 'types/reducer/app';
-import { getFormattedDate } from 'utils/timeUtils';
+import { getFormattedDateWithMinutes } from 'utils/timeUtils';
 
 function WorkspaceSuspended(): JSX.Element {
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -117,7 +117,7 @@ function WorkspaceSuspended(): JSX.Element {
 											<br />
 											{t('yourDataIsSafe')}{' '}
 											<span className="workspace-suspended__details__highlight">
-												{getFormattedDate(
+												{getFormattedDateWithMinutes(
 													dayjs(activeLicenseV3?.event_queue?.scheduled_at).unix() ||
 														Date.now(),
 												)}

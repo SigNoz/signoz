@@ -45,7 +45,11 @@ import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 import AppReducer from 'types/reducer/app';
 import { isCloudUser } from 'utils/app';
-import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
+import {
+	getFormattedDate,
+	getFormattedDateWithMinutes,
+	getRemainingDays,
+} from 'utils/timeUtils';
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
 import { getRouteKey } from './utils';
@@ -353,7 +357,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				<div className="payment-failed-banner">
 					Your bill payment has failed. Your workspace will get suspended on{' '}
 					<span>
-						{getFormattedDate(
+						{getFormattedDateWithMinutes(
 							dayjs(activeLicenseV3?.event_queue?.scheduled_at).unix() || Date.now(),
 						)}
 						.
@@ -375,7 +379,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 							to continue using SigNoz features.
 						</span>
 					) : (
-						'Please contact your administrator to pay the bill.'
+						' Please contact your administrator to pay the bill.'
 					)}
 				</div>
 			)}
