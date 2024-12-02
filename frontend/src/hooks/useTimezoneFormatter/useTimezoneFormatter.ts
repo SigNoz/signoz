@@ -39,7 +39,7 @@ function useTimezoneFormatter({
 		cache.clear();
 	}, [cache, userTimezone]);
 
-	const clearExpiredEntries = useCallback(() => {
+	const clearCacheEntries = useCallback(() => {
 		if (cache.size <= CACHE_SIZE_LIMIT) return;
 
 		// Sort entries by timestamp (oldest first)
@@ -47,8 +47,11 @@ function useTimezoneFormatter({
 			(a, b) => a[1].timestamp - b[1].timestamp,
 		);
 
-		// Calculate how many entries to remove
-		const entriesToRemove = Math.floor(cache.size * CACHE_CLEANUP_PERCENTAGE);
+		// Calculate how many entries to remove (50% or overflow, whichever is larger)
+		const entriesToRemove = Math.max(
+			Math.floor(cache.size * CACHE_CLEANUP_PERCENTAGE),
+			cache.size - CACHE_SIZE_LIMIT,
+		);
 
 		// Remove oldest entries
 		sortedEntries.slice(0, entriesToRemove).forEach(([key]) => cache.delete(key));
@@ -75,22 +78,12 @@ function useTimezoneFormatter({
 
 			// Clear expired entries and enforce size limit
 			if (cache.size > CACHE_SIZE_LIMIT) {
-				clearExpiredEntries();
-
-				// If still over limit, remove oldest entries
-				const entriesToDelete = cache.size - CACHE_SIZE_LIMIT;
-				if (entriesToDelete > 0) {
-					const entries = Array.from(cache.entries());
-					entries
-						.sort((a, b) => a[1].timestamp - b[1].timestamp)
-						.slice(0, entriesToDelete)
-						.forEach(([key]) => cache.delete(key));
-				}
+				clearCacheEntries();
 			}
 
 			return formattedValue;
 		},
-		[cache, clearExpiredEntries, userTimezone],
+		[cache, clearCacheEntries, userTimezone],
 	);
 
 	return { formatTimezoneAdjustedTimestamp };
