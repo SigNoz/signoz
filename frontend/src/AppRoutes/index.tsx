@@ -129,18 +129,6 @@ function App(): JSX.Element {
 
 			setRoutes(newRoutes);
 		}
-
-		const isInfraMonitoringEnabled =
-			allFlags.find((flag) => flag.name === FeatureKeys.HOSTS_INFRA_MONITORING)
-				?.active || false;
-
-		if (!isInfraMonitoringEnabled) {
-			const newRoutes = routes.filter(
-				(route) => route?.path !== ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
-			);
-
-			setRoutes(newRoutes);
-		}
 	});
 
 	const isOnBasicPlan =
