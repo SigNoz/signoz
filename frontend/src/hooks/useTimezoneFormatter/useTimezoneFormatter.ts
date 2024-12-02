@@ -57,6 +57,17 @@ function useTimezoneFormatter({
 		sortedEntries.slice(0, entriesToRemove).forEach(([key]) => cache.delete(key));
 	}, [cache]);
 
+	/**
+	 * Formats a timestamp with the user's timezone and caches the result
+	 * @param {TimestampInput} input - The timestamp to format (string, number, or Date)
+	 * @param {string} [format='YYYY-MM-DD HH:mm:ss'] - The desired output format
+	 * @returns {string} The formatted timestamp string in the user's timezone
+	 * @example
+	 * // Input: UTC timestamp
+	 * // User timezone: 'UTC - 4'
+	 * // Returns: "2024-03-14 15:30:00"
+	 * formatTimezoneAdjustedTimestamp('2024-03-14T19:30:00Z')
+	 */
 	const formatTimezoneAdjustedTimestamp = useCallback(
 		(input: TimestampInput, format = 'YYYY-MM-DD HH:mm:ss'): string => {
 			const timestamp = dayjs(input).valueOf();
