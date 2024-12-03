@@ -111,6 +111,8 @@ function DashboardsList(): JSX.Element {
 		['action', 'create_new_dashboards'],
 		role,
 	);
+	// log the permissions to createNewDashboard
+	console.info('createNewDashboard permission: ', createNewDashboard);
 
 	const [
 		showNewDashboardTemplatesModal,
