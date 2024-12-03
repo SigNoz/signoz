@@ -125,7 +125,7 @@ function CustomTimePickerPopoverContent({
 				</div>
 			</div>
 
-			<div className="date-time-popover-footer">
+			<div className="date-time-popover__footer">
 				<div className="timezone-container">
 					<Clock color={Color.BG_VANILLA_400} height={12} width={12} />
 					<span className="timezone-text">You are at</span>
