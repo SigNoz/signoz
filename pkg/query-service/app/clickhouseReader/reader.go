@@ -171,6 +171,7 @@ func NewReader(
 	useTraceNewSchema bool,
 ) *ClickHouseReader {
 
+	// todo(remove): read from config
 	datasource := os.Getenv("ClickHouseUrl")
 	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
 	db, err := initialize(options)

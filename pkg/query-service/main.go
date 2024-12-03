@@ -13,7 +13,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
-	"go.signoz.io/signoz/pkg/query-service/version"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -72,7 +71,6 @@ func main() {
 	defer loggerMgr.Sync() // flushes buffer, if any
 
 	logger := loggerMgr.Sugar()
-	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
 		HTTPHostPort:      constants.HTTPHostPort,
@@ -93,6 +91,7 @@ func main() {
 	}
 
 	// Read the jwt secret key
+	// todo(remove): read from config
 	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
 
 	if len(auth.JwtSecret) == 0 {
@@ -125,8 +124,6 @@ func main() {
 
 	for {
 		select {
-		case status := <-server.HealthCheckStatus():
-			logger.Info("Received HealthCheck status: ", zap.Int("status", int(status)))
 		case <-signalsChannel:
 			logger.Info("Received OS Interrupt Signal ... ")
 			err := server.Stop()

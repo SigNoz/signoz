@@ -1,0 +1,126 @@
+##################### SigNoz Configuration Defaults #####################
+# Do not modify this file in signoz installs
+#----------------------------------------------
+# Version
+#----------------------------------------------
+version:
+  banner:
+    # Whether to show the banner on startup
+    enabled: true
+#----------------------------------------------
+# Instrumentation
+#----------------------------------------------
+instrumentation:
+  logs:
+    # Whether to enable log exports to an otlp compatible backend
+    enabled: false
+    # the level of the logger
+    level: error
+    processors:
+      - batch:
+          exporter:
+            otlp:
+              # the otlp endpoint
+              endpoint:
+              # the otlp protocol
+              protocol:
+  traces:
+    # Whether to enable trace exports to an otlp compatible backend
+    enabled: false
+    processors:
+      - batch:
+          exporter:
+            otlp:
+              # the otlp endpoint
+              endpoint:
+              # the otlp protocol
+              protocol:
+  metrics:
+    # Whether to enable metric exports to an otlp compatible backend or in prometheus format
+    enabled: true
+    readers:
+      - periodic:
+          exporter:
+            otlp:
+              # the otlp endpoint
+              endpoint:
+              # the otlp protocol
+              protocol:
+            prometheus:
+              host: 0.0.0.0
+              port: 9090
+#----------------------------------------------
+# Web
+#----------------------------------------------
+web:
+  # The prefix to serve web on
+  prefix: /
+  # The directory containing the static build files.
+  directory: /etc/signoz/web
+#----------------------------------------------
+# Cache
+#----------------------------------------------
+cache:
+  # Memory provider
+  provider: memory
+  memory:
+    ttl: -1
+    cleanup_interval: 60
+
+  # Redis Provider
+  # redis:
+  #   host: localhost
+  #   port: 6379
+  #   password: password
+  #   db: 0
+#----------------------------------------------
+# Auth
+#----------------------------------------------
+jwt:
+  auth:
+    # The JWT secret for authentication
+    secret: secret
+#----------------------------------------------
+# Database
+#----------------------------------------------
+database:
+  # Supported options are sqlite
+  provider: sqlite
+  # Path to the sqlite database
+  sqlite:
+    path: /var/lib/signoz
+#----------------------------------------------
+# Storage
+#----------------------------------------------
+storage:
+  provider: clickhouse
+  clickhouse:
+    dsn: tcp://localhost:9000
+    cluster: cluster
+    max_idle_connections:
+    max_open_connections:
+    dial_timeout:
+    settings:
+      optimize_read_in_order_regex:
+      max_execution_time_leaf:
+      timeout_before_checking_execution_speed:
+      max_bytes_to_read:
+#----------------------------------------------
+# Opamp
+#----------------------------------------------
+opamp:
+  address: 0.0.0.0:4320
+#----------------------------------------------
+# Http
+#----------------------------------------------
+http:
+  address: 0.0.0.0:8000
+  timeout: 60s
+  max_timeout: 600s
+#----------------------------------------------
+# Prometheus
+#----------------------------------------------
+prometheus:
+  remote_read:
+    config: 
+    url:

@@ -40,7 +40,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
-	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -84,13 +83,6 @@ type Server struct {
 	privateHTTP *http.Server
 
 	opampServer *opamp.Server
-
-	unavailableChannel chan healthcheck.Status
-}
-
-// HealthCheckStatus returns health check status channel a client can subscribe to
-func (s Server) HealthCheckStatus() chan healthcheck.Status {
-	return s.unavailableChannel
 }
 
 // NewServer creates and initializes Server
@@ -119,6 +111,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	readerReady := make(chan bool)
 
 	var reader interfaces.Reader
+	// todo(remove): read from config
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.L().Info("Using ClickHouse as datastore ...")
@@ -213,9 +206,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	s := &Server{
 		// logger: logger,
 		// tracer: tracer,
-		ruleManager:        rm,
-		serverOptions:      serverOptions,
-		unavailableChannel: make(chan healthcheck.Status),
+		ruleManager:   rm,
+		serverOptions: serverOptions,
 	}
 
 	httpServer, err := s.createPublicServer(apiHandler)
@@ -652,7 +644,6 @@ func (s *Server) Start() error {
 		default:
 			zap.L().Error("Could not start HTTP server", zap.Error(err))
 		}
-		s.unavailableChannel <- healthcheck.Unavailable
 	}()
 
 	go func() {
@@ -679,9 +670,6 @@ func (s *Server) Start() error {
 		default:
 			zap.L().Error("Could not start private HTTP server", zap.Error(err))
 		}
-
-		s.unavailableChannel <- healthcheck.Unavailable
-
 	}()
 
 	go func() {
@@ -689,7 +677,6 @@ func (s *Server) Start() error {
 		err := s.opampServer.Start(constants.OpAmpWsEndpoint)
 		if err != nil {
 			zap.L().Info("opamp ws server failed to start", zap.Error(err))
-			s.unavailableChannel <- healthcheck.Unavailable
 		}
 	}()
 
