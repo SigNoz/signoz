@@ -47,6 +47,7 @@ const afterLogin = async (
 
 		const { payload } = getUserResponse;
 
+		console.trace('[getUserResponse]:', payload);
 		store.dispatch<AppActions>({
 			type: UPDATE_USER,
 			payload: {

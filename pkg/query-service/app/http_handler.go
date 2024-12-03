@@ -2145,6 +2145,7 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 
 	// No need to send password hash for the user object.
 	user.Password = ""
+	zap.L().Info("[getUser] Response:", zap.String("userId", user.Id), zap.String("email", user.Email), zap.String("role", user.Role))
 	aH.WriteJSON(w, r, user)
 }
 

@@ -97,6 +97,8 @@ function DashboardsList(): JSX.Element {
 
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
+	// TODO remove this later, logging the role for debugging some issue
+	console.info(role);
 	const {
 		listSortOrder: sortOrder,
 		setListSortOrder: setSortOrder,
