@@ -3198,8 +3198,8 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		return
 	}
 
-	latencyColumn := &v3.Result{QueryName: "byte_rate"}
-	var latencySeries []*v3.Series
+	byteRateColumn := &v3.Result{QueryName: "byte_rate"}
+	var byteRateSeries []*v3.Series
 	for _, res := range resultFetchLatency {
 		for _, series := range res.Series {
 			topic, topicOk := series.Labels["topic"]
@@ -3208,14 +3208,14 @@ func (aH *APIHandler) getProducerThroughputOverview(
 			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if topicOk && serviceNameOk && ok {
-				latencySeries = append(latencySeries, series)
+				byteRateSeries = append(byteRateSeries, series)
 			}
 		}
 	}
 
-	latencyColumn.Series = latencySeries
+	byteRateColumn.Series = byteRateSeries
 	var latencyColumnResult []*v3.Result
-	latencyColumnResult = append(latencyColumnResult, latencyColumn)
+	latencyColumnResult = append(latencyColumnResult, byteRateColumn)
 
 	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(latencyColumnResult, queryRangeParams)
 
