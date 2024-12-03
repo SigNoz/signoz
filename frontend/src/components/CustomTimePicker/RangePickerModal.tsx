@@ -3,7 +3,7 @@ import './RangePickerModal.styles.scss';
 import { DatePicker } from 'antd';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import { LexicalContext } from 'container/TopNav/DateTimeSelectionV2/config';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
 import { Dispatch, SetStateAction } from 'react';
 import { useSelector } from 'react-redux';
@@ -32,7 +32,10 @@ function RangePickerModal(props: RangePickerModalProps): JSX.Element {
 		(state) => state.globalTime,
 	);
 
-	const disabledDate = (current: Dayjs): boolean => {
+	// Using any type here because antd's DatePicker expects its own internal Dayjs type
+	// which conflicts with our project's Dayjs type that has additional plugins (tz, utc etc).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+	const disabledDate = (current: any): boolean => {
 		const currentDay = dayjs(current);
 		return currentDay.isAfter(dayjs());
 	};

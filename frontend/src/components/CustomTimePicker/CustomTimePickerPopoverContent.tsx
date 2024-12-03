@@ -75,7 +75,7 @@ function CustomTimePickerPopoverContent({
 	}
 
 	return activeView === 'datetime' ? (
-		<div>
+		<>
 			<div className="date-time-popover">
 				<div className="date-time-options">
 					{isLogsExplorerPage && (
@@ -138,7 +138,7 @@ function CustomTimePickerPopoverContent({
 					</button>
 				</div>
 			</div>
-		</div>
+		</>
 	) : (
 		<div className="date-time-popover">
 			<TimezonePicker setActiveView={setActiveView} setIsOpen={setIsOpen} />
