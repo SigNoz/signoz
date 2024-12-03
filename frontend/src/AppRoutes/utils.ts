@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getUserApi from 'api/user/getUser';
@@ -47,6 +48,10 @@ const afterLogin = async (
 
 		const { payload } = getUserResponse;
 		// TODO remove this later, logging the role for debugging some issue
+		Sentry.captureEvent({
+			message: `getUserResponse: email: ${payload.email}, role: ${payload.role}`,
+			level: 'info',
+		});
 		console.trace('[getUserResponse]:', payload);
 		store.dispatch<AppActions>({
 			type: UPDATE_USER,
