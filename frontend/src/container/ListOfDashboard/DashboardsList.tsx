@@ -95,10 +95,10 @@ function DashboardsList(): JSX.Element {
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { role, user } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	// TODO remove this later, logging the role for debugging some issue
-	console.info(role);
+	console.info(user?.email, 'has role', role);
 	const {
 		listSortOrder: sortOrder,
 		setListSortOrder: setSortOrder,

@@ -46,7 +46,7 @@ const afterLogin = async (
 		});
 
 		const { payload } = getUserResponse;
-
+		// TODO remove this later, logging the role for debugging some issue
 		console.trace('[getUserResponse]:', payload);
 		store.dispatch<AppActions>({
 			type: UPDATE_USER,
