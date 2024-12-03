@@ -1,11 +1,13 @@
 import { Typography } from 'antd';
-import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
-import getFormattedDate from 'lib/getFormatedDate';
+import { useTimezone } from 'providers/Timezone';
 
 function Time({ CreatedOrUpdateTime }: DateProps): JSX.Element {
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const time = new Date(CreatedOrUpdateTime);
-	const date = getFormattedDate(time);
-	const timeString = `${date} ${convertDateToAmAndPm(time)}`;
+	const timeString = formatTimezoneAdjustedTimestamp(
+		time,
+		'MM/DD/YYYY hh:mm:ss A (UTC Z)',
+	);
 	return <Typography>{timeString}</Typography>;
 }
 
