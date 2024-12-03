@@ -3141,14 +3141,14 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		Hash: make(map[string]struct{}),
 	}
 
-	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
+	producerQueryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+	if err := validateQueryRangeParamsV3(producerQueryRangeParams); err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
 		return
@@ -3157,7 +3157,7 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), producerQueryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3179,7 +3179,7 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		}
 	}
 
-	queryRangeParams, err = mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-latency", attributeCache)
+	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-byte-rate", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3198,13 +3198,13 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		return
 	}
 
-	latencyColumn := &v3.Result{QueryName: "latency"}
+	latencyColumn := &v3.Result{QueryName: "byte_rate"}
 	var latencySeries []*v3.Series
 	for _, res := range resultFetchLatency {
 		for _, series := range res.Series {
 			topic, topicOk := series.Labels["topic"]
 			serviceName, serviceNameOk := series.Labels["service_name"]
-			params := []string{topic, serviceName}
+			params := []string{serviceName, topic}
 			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if topicOk && serviceNameOk && ok {
@@ -3214,12 +3214,16 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	}
 
 	latencyColumn.Series = latencySeries
-	result = append(result, latencyColumn)
+	var latencyColumnResult []*v3.Result
+	latencyColumnResult = append(latencyColumnResult, latencyColumn)
 
-	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(latencyColumnResult, queryRangeParams)
 
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	result = append(result, resultFetchLatency[0])
 	resp := v3.QueryRangeResponse{
-		Result: resultFetchLatency,
+		Result: result,
 	}
 	aH.Respond(w, resp)
 }

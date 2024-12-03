@@ -61,14 +61,17 @@ func buildClickHouseQueryNetwork(messagingQueue *MessagingQueue, queueType strin
 
 func buildBuilderQueriesProducerBytes(unixMilliStart, unixMilliEnd int64, attributeCache *Clients) (map[string]*v3.BuilderQuery, error) {
 	bq := make(map[string]*v3.BuilderQuery)
-	queryName := fmt.Sprintf("latency")
+	queryName := fmt.Sprintf("byte_rate")
 
 	chq := &v3.BuilderQuery{
 		QueryName:    queryName,
 		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
 		DataSource:   v3.DataSourceMetrics,
 		AggregateAttribute: v3.AttributeKey{
-			Key: "kafka_producer_byte_rate",
+			Key:      "kafka_producer_byte_rate",
+			DataType: v3.AttributeKeyDataTypeFloat64,
+			Type:     v3.AttributeKeyType("Gauge"),
+			IsColumn: true,
 		},
 		AggregateOperator: v3.AggregateOperatorAvg,
 		Temporality:       v3.Unspecified,
@@ -276,7 +279,7 @@ func BuildQRParamsWithCache(messagingQueue *MessagingQueue, queryContext string,
 		cq, err = buildCompositeQuery(&v3.ClickHouseQuery{
 			Query: query,
 		}, queryContext)
-	} else if queryContext == "producer-throughput-overview-latency" {
+	} else if queryContext == "producer-throughput-overview-byte-rate" {
 		bhq, err := buildBuilderQueriesProducerBytes(unixMilliStart, unixMilliEnd, attributeCache)
 		if err != nil {
 			return nil, err
@@ -285,6 +288,7 @@ func BuildQRParamsWithCache(messagingQueue *MessagingQueue, queryContext string,
 			QueryType:      v3.QueryTypeBuilder,
 			BuilderQueries: bhq,
 			PanelType:      v3.PanelTypeTable,
+			FillGaps:       false,
 		}
 	}
 
