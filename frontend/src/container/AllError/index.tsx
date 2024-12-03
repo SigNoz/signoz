@@ -364,7 +364,7 @@ function AllErrors(): JSX.Element {
 			),
 		},
 		{
-			title: 'Application',
+			title: 'Service Name',
 			dataIndex: 'serviceName',
 			width: 100,
 			key: 'serviceName',
@@ -376,7 +376,7 @@ function AllErrors(): JSX.Element {
 			),
 			...getFilter(
 				onApplicationTypeFilter,
-				'Search By Application',
+				'Search By Service Name',
 				'serviceName',
 			),
 		},
