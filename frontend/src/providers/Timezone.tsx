@@ -4,6 +4,9 @@ import {
 	Timezone,
 } from 'components/CustomTimePicker/timezoneUtils';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import useTimezoneFormatter, {
+	TimestampInput,
+} from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import React, {
 	createContext,
 	useCallback,
@@ -16,6 +19,10 @@ interface TimezoneContextType {
 	timezone: Timezone;
 	browserTimezone: Timezone;
 	updateTimezone: (timezone: Timezone) => void;
+	formatTimezoneAdjustedTimestamp: (
+		input: TimestampInput,
+		format?: string,
+	) => string;
 }
 
 const TimezoneContext = createContext<TimezoneContextType | undefined>(
@@ -59,13 +66,18 @@ function TimezoneProvider({
 		setTimezone(timezone);
 	}, []);
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezoneFormatter({
+		userTimezone: timezone,
+	});
+
 	const value = React.useMemo(
 		() => ({
 			timezone,
 			browserTimezone,
 			updateTimezone,
+			formatTimezoneAdjustedTimestamp,
 		}),
-		[timezone, browserTimezone, updateTimezone],
+		[timezone, browserTimezone, updateTimezone, formatTimezoneAdjustedTimestamp],
 	);
 
 	return (

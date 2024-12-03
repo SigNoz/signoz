@@ -57,6 +57,7 @@ import {
 // see more: https://github.com/lucide-icons/lucide/issues/94
 import { handleContactSupport } from 'pages/Integrations/utils';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useTimezone } from 'providers/Timezone';
 import {
 	ChangeEvent,
 	Key,
@@ -343,31 +344,13 @@ function DashboardsList(): JSX.Element {
 		}
 	}, [state.error, state.value, t, notifications]);
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	function getFormattedTime(dashboard: Dashboard, option: string): string {
-		const timeOptions: Intl.DateTimeFormatOptions = {
-			hour: '2-digit',
-			minute: '2-digit',
-			second: '2-digit',
-			hour12: false,
-		};
-		const formattedTime = new Date(get(dashboard, option, '')).toLocaleTimeString(
-			'en-US',
-			timeOptions,
+		return formatTimezoneAdjustedTimestamp(
+			get(dashboard, option, ''),
+			'MMM D, YYYY ⎯ HH:mm:ss',
 		);
-
-		const dateOptions: Intl.DateTimeFormatOptions = {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric',
-		};
-
-		const formattedDate = new Date(get(dashboard, option, '')).toLocaleDateString(
-			'en-US',
-			dateOptions,
-		);
-
-		// Combine time and date
-		return `${formattedDate} ⎯ ${formattedTime}`;
 	}
 
 	const onLastUpdated = (time: string): string => {
@@ -410,30 +393,10 @@ function DashboardsList(): JSX.Element {
 			title: 'Dashboards',
 			key: 'dashboard',
 			render: (dashboard: Data, _, index): JSX.Element => {
-				const timeOptions: Intl.DateTimeFormatOptions = {
-					hour: '2-digit',
-					minute: '2-digit',
-					second: '2-digit',
-					hour12: false,
-				};
-				const formattedTime = new Date(dashboard.createdAt).toLocaleTimeString(
-					'en-US',
-					timeOptions,
+				const formattedDateAndTime = formatTimezoneAdjustedTimestamp(
+					dashboard.createdAt,
+					'MMM D, YYYY ⎯ HH:mm:ss',
 				);
-
-				const dateOptions: Intl.DateTimeFormatOptions = {
-					month: 'short',
-					day: 'numeric',
-					year: 'numeric',
-				};
-
-				const formattedDate = new Date(dashboard.createdAt).toLocaleDateString(
-					'en-US',
-					dateOptions,
-				);
-
-				// Combine time and date
-				const formattedDateAndTime = `${formattedDate} ⎯ ${formattedTime}`;
 
 				const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.id}`;
 
