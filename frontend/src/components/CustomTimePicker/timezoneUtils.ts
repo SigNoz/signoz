@@ -103,11 +103,12 @@ export const getBrowserTimezone = (): Timezone => {
 const filterAndSortTimezones = (
 	allTimezones: ReturnType<typeof getTimeZones>,
 	browserTzName?: string,
+	includeEtcTimezones = false,
 ): Timezone[] =>
 	allTimezones
 		.filter(
 			(tz) =>
-				!tz.name.startsWith('Etc/') &&
+				(includeEtcTimezones || !tz.name.startsWith('Etc/')) &&
 				isValidTimezone(tz.name) &&
 				tz.name !== browserTzName,
 		)
