@@ -94,6 +94,12 @@ const getOffsetByTimezone = (timezone: string): number => {
 	return dayjsTimezone.utcOffset();
 };
 
+export const getBrowserTimezone = (): Timezone => {
+	const browserTz = dayjs.tz.guess();
+	const browserOffset = getOffsetByTimezone(browserTz);
+	return createTimezoneEntry(browserTz, browserOffset, TIMEZONE_TYPES.BROWSER);
+};
+
 const filterAndSortTimezones = (
 	allTimezones: ReturnType<typeof getTimeZones>,
 	browserTzName?: string,
@@ -113,24 +119,21 @@ const generateTimezoneData = (): Timezone[] => {
 	const timezones: Timezone[] = [];
 
 	// Add browser timezone
-	const browserTz = dayjs.tz.guess();
-	const browserOffset = getOffsetByTimezone(browserTz);
-	timezones.push(
-		createTimezoneEntry(browserTz, browserOffset, TIMEZONE_TYPES.BROWSER),
-	);
+	const browserTzObject = getBrowserTimezone();
+	timezones.push(browserTzObject);
 
 	// Add UTC timezone with divider
 	timezones.push(UTC_TIMEZONE);
 
 	// Add remaining timezones
-	timezones.push(...filterAndSortTimezones(allTimezones, browserTz));
+	timezones.push(...filterAndSortTimezones(allTimezones, browserTzObject.value));
 
 	return timezones;
 };
 
 export const getTimezoneObjectByTimezoneString = (
 	timezone: string,
-): Timezone | null => {
+): Timezone => {
 	const utcOffset = getOffsetByTimezone(timezone);
 
 	return createTimezoneEntry(timezone, utcOffset);
