@@ -124,6 +124,7 @@ function SideNav({
 	}, [featureResponse.data]);
 
 	// using a separate useEffect as the license fetching call takes few milliseconds
+	// when initially there is no licenses call and the role has also been set then billing will be wiped away from menu items and never come back!
 	useEffect(() => {
 		if (!isFetching) {
 			let items = [...menuItems];
@@ -232,6 +233,7 @@ function SideNav({
 		pathname,
 	]);
 
+	// there will be a race condition between the useEffect on line 95 which is setting userManagementMenuItems as well!
 	useEffect(() => {
 		if (isCloudUser() || isEECloudUser()) {
 			const updatedUserManagementMenuItems = [helpSupportMenuItem];
