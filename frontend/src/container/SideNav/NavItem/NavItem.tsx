@@ -16,7 +16,7 @@ export default function NavItem({
 	isActive: boolean;
 	onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
 }): JSX.Element {
-	const { label, icon, isBeta } = item;
+	const { label, icon, isBeta, isNew } = item;
 
 	return (
 		<div
@@ -33,6 +33,14 @@ export default function NavItem({
 					<div className="nav-item-beta">
 						<Tag bordered={false} color="geekblue">
 							Beta
+						</Tag>
+					</div>
+				)}
+
+				{isNew && (
+					<div className="nav-item-new">
+						<Tag bordered={false} className="sidenav-new-tag">
+							New
 						</Tag>
 					</div>
 				)}
