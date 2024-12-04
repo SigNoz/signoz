@@ -4038,9 +4038,26 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 		var t time.Time
 		for idx, v := range vars {
 			if columnNames[idx] == "timestamp" {
-				t = time.Unix(0, int64(*v.(*uint64)))
+				switch v := v.(type) {
+				case *uint64:
+					t = time.Unix(0, int64(*v))
+				case *time.Time:
+					t = *v
+				}
 			} else if columnNames[idx] == "timestamp_datetime" {
 				t = *v.(*time.Time)
+			} else if columnNames[idx] == "events" {
+				var events []map[string]interface{}
+				eventsFromDB, ok := v.(*[]string)
+				if !ok {
+					continue
+				}
+				for _, event := range *eventsFromDB {
+					var eventMap map[string]interface{}
+					json.Unmarshal([]byte(event), &eventMap)
+					events = append(events, eventMap)
+				}
+				row[columnNames[idx]] = events
 			} else {
 				row[columnNames[idx]] = v
 			}

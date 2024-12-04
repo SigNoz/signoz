@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"regexp"
+	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -42,6 +43,10 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 	logComment := c.getLogComment(ctx)
 	if logComment != "" {
 		settings["log_comment"] = logComment
+	}
+
+	if strings.Contains(query, "signoz_traces") {
+		settings["max_result_rows"] = 100000
 	}
 
 	if c.settings.MaxBytesToRead != "" {
