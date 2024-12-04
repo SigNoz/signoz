@@ -152,6 +152,8 @@ export default function LogsFormatOptionsMenu({
 
 		const itemLength = optionsData.length;
 
+		if (!optionsData?.length || currentIndex < 0) return;
+
 		switch (e.key) {
 			case 'ArrowUp': {
 				const newValue = optionsData[Math.max(0, currentIndex - 1)]?.value;
