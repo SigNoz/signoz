@@ -24,7 +24,7 @@ import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParse
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { debounce, isArray, isString } from 'lodash-es';
 import map from 'lodash-es/map';
-import { ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -54,6 +54,7 @@ interface VariableItemProps {
 		id: string,
 		arg1: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
+		isMountedCall?: boolean,
 	) => void;
 	variablesToGetUpdated: string[];
 	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
@@ -88,18 +89,26 @@ function VariableItem({
 		(state) => state.globalTime,
 	);
 
+	// logic to detect if its a rerender or a new render/mount
+	const isMounted = useRef(false);
+
 	useEffect(() => {
-		if (variableData.allSelected && variableData.type === 'QUERY') {
-			setVariablesToGetUpdated((prev) => {
-				const variablesQueue = [...prev.filter((v) => v !== variableData.name)];
-				if (variableData.name) {
-					variablesQueue.push(variableData.name);
-				}
-				return variablesQueue;
-			});
+		isMounted.current = true;
+	}, []);
+
+	const validVariableUpdate = (): boolean => {
+		if (!variableData.name) {
+			return false;
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [minTime, maxTime]);
+		if (!isMounted.current) {
+			// variableData.name is present as the top element or next in the queue - variablesToGetUpdated
+			return Boolean(
+				variablesToGetUpdated.length &&
+					variablesToGetUpdated[0] === variableData.name,
+			);
+		}
+		return variablesToGetUpdated.includes(variableData.name);
+	};
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
@@ -184,9 +193,7 @@ function VariableItem({
 						if (
 							variableData.type === 'QUERY' &&
 							variableData.name &&
-							(variablesToGetUpdated.includes(variableData.name) ||
-								valueNotInList ||
-								variableData.allSelected)
+							(validVariableUpdate() || valueNotInList || variableData.allSelected)
 						) {
 							let value = variableData.selectedValue;
 							let allSelected = false;
@@ -200,7 +207,16 @@ function VariableItem({
 							}
 
 							if (variableData && variableData?.name && variableData?.id) {
-								onValueUpdate(variableData.name, variableData.id, value, allSelected);
+								onValueUpdate(
+									variableData.name,
+									variableData.id,
+									value,
+									allSelected,
+									isMounted.current,
+								);
+								setVariablesToGetUpdated((prev) =>
+									prev.filter((name) => name !== variableData.name),
+								);
 							}
 						}
 
