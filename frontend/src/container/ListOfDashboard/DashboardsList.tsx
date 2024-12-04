@@ -27,6 +27,8 @@ import { AxiosError } from 'axios';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
+import { sanitizeDashboardData } from 'container/NewDashboard/DashboardDescription';
+import { downloadObjectAsJson } from 'container/NewDashboard/DashboardDescription/utils';
 import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
 import dayjs from 'dayjs';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
@@ -44,6 +46,7 @@ import {
 	EllipsisVertical,
 	Expand,
 	ExternalLink,
+	FileJson,
 	Github,
 	HdmiPort,
 	LayoutGrid,
@@ -450,6 +453,23 @@ function DashboardsList(): JSX.Element {
 					});
 				};
 
+				const handleJsonExport = (event: React.MouseEvent<HTMLElement>): void => {
+					event.stopPropagation();
+					event.preventDefault();
+					const selectedDashboardData = dashboards?.find(
+						(d) => d.uuid === dashboard.id,
+					);
+					if (selectedDashboardData) {
+						downloadObjectAsJson(
+							sanitizeDashboardData({
+								...selectedDashboardData.data,
+								uuid: selectedDashboardData.uuid,
+							}),
+							dashboard.name,
+						);
+					}
+				};
+
 				return (
 					<div className="dashboard-list-item" onClick={onClickHandler}>
 						<div className="title-with-action">
@@ -522,6 +542,14 @@ function DashboardsList(): JSX.Element {
 													}}
 												>
 													Copy Link
+												</Button>
+												<Button
+													type="text"
+													className="action-btn"
+													icon={<FileJson size={12} />}
+													onClick={handleJsonExport}
+												>
+													Export JSON
 												</Button>
 											</section>
 											<section className="section-2">
