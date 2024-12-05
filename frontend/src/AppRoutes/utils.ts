@@ -21,6 +21,16 @@ const afterLogin = async (
 ): Promise<SuccessResponse<PayloadProps> | undefined> => {
 	setLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN, authToken);
 	setLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN, refreshToken);
+	setLocalStorageApi(LOCALSTORAGE.USER_ID, userId);
+	window.dispatchEvent(
+		new CustomEvent('AFTER_LOGIN', {
+			detail: {
+				accessJWT: authToken,
+				refreshJWT: refreshToken,
+				id: userId,
+			},
+		}),
+	);
 
 	store.dispatch<AppActions>({
 		type: UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,

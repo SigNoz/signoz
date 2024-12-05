@@ -19,6 +19,7 @@ export const Logout = (): void => {
 	deleteLocalStorageKey(LOCALSTORAGE.LOGGED_IN_USER_EMAIL);
 	deleteLocalStorageKey(LOCALSTORAGE.LOGGED_IN_USER_NAME);
 	deleteLocalStorageKey(LOCALSTORAGE.CHAT_SUPPORT);
+	deleteLocalStorageKey(LOCALSTORAGE.USER_ID);
 
 	store.dispatch({
 		type: LOGGED_IN,

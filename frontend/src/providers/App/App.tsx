@@ -1,5 +1,9 @@
+import setLocalStorageApi from 'api/browser/localstorage/set';
+import { Logout } from 'api/utils';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
+import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
 import useLicense from 'hooks/useLicense';
 import useGetUser from 'hooks/user/useGetUser';
 import {
@@ -40,15 +44,22 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 				...prev,
 				...userData.payload,
 			}));
+			setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
 		}
 	}, [userData]);
+
+	useEffect(() => {
+		if (userFetchError) {
+			Logout();
+		}
+	}, [userFetchError]);
 
 	// fetcher for licenses v2
 	const {
 		data: licenseData,
 		isFetching: isFetchingLicenses,
 		error: licensesFetchError,
-	} = useLicense();
+	} = useLicense(user.email);
 	useEffect(() => {
 		if (licenseData && licenseData.payload) {
 			setLicenses(licenseData.payload);
@@ -60,7 +71,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		data: activeLicenseV3Data,
 		isFetching: isFetchingActiveLicenseV3,
 		error: activeLicenseV3FetchError,
-	} = useActiveLicenseV3();
+	} = useActiveLicenseV3(user.email);
 	useEffect(() => {
 		if (activeLicenseV3Data && activeLicenseV3Data.payload) {
 			setActiveLicenseV3(activeLicenseV3Data.payload);
@@ -74,6 +85,20 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	} = useGetFeatureFlag((allFlags: FeatureFlags[]) => {
 		setFeatureFlags(allFlags);
 	});
+
+	// global event listener for AFTER_LOGIN event to start the user fetch post all actions are complete
+	useGlobalEventListener('AFTER_LOGIN', (event) => {
+		if (event.detail) {
+			setUser((prev) => ({
+				...prev,
+				accessJwt: event.detail.accessJWT,
+				refreshJwt: event.detail.refreshJWT,
+				id: event.detail.id,
+			}));
+		}
+	});
+
+	console.log(user, licenseData, activeLicenseV3, featureFlags);
 
 	// return value for the context
 	const value: IAppContext = useMemo(
