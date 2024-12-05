@@ -27,7 +27,6 @@ import { AxiosError } from 'axios';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
-import { sanitizeDashboardData } from 'container/NewDashboard/DashboardDescription';
 import { downloadObjectAsJson } from 'container/NewDashboard/DashboardDescription/utils';
 import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
 import dayjs from 'dayjs';
@@ -456,18 +455,7 @@ function DashboardsList(): JSX.Element {
 				const handleJsonExport = (event: React.MouseEvent<HTMLElement>): void => {
 					event.stopPropagation();
 					event.preventDefault();
-					const selectedDashboardData = dashboards?.find(
-						(d) => d.uuid === dashboard.id,
-					);
-					if (selectedDashboardData) {
-						downloadObjectAsJson(
-							sanitizeDashboardData({
-								...selectedDashboardData.data,
-								uuid: selectedDashboardData.uuid,
-							}),
-							dashboard.name,
-						);
-					}
+					downloadObjectAsJson(dashboard, dashboard.name);
 				};
 
 				return (
