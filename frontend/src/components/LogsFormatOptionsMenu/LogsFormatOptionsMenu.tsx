@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './LogsFormatOptionsMenu.styles.scss';
@@ -100,82 +99,97 @@ export default function LogsFormatOptionsMenu({
 		if (maxLinesPerRow && config && config.maxLines?.onChange) {
 			config.maxLines.onChange(maxLinesPerRow);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [maxLinesPerRow]);
 
 	useEffect(() => {
 		if (fontSizeValue && config && config.fontSize?.onChange) {
 			config.fontSize.onChange(fontSizeValue);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [fontSizeValue]);
 
-	function handleColumnSelection(
-		currentIndex: number,
-		optionsData: DefaultOptionType[],
-	): void {
-		const currentItem = optionsData[currentIndex];
-		const itemLength = optionsData.length;
-		if (addColumn && addColumn?.onSelect) {
-			addColumn?.onSelect(selectedValue, {
-				label: currentItem.label,
-				disabled: false,
-			});
+	const handleColumnSelection = useCallback(
+		(currentIndex: number, optionsData: DefaultOptionType[]): void => {
+			const currentItem = optionsData[currentIndex];
+			const itemLength = optionsData.length;
+			if (addColumn && addColumn?.onSelect) {
+				addColumn?.onSelect(selectedValue, {
+					label: currentItem.label,
+					disabled: false,
+				});
 
-			// if the last element is selected then select the previous one
-			if (currentIndex === itemLength - 1) {
-				// there should be more than 1 element in the list
-				if (currentIndex - 1 >= 0) {
-					const prevValue = optionsData[currentIndex - 1]?.value || null;
-					setSelectedValue(prevValue as string | null);
+				// if the last element is selected then select the previous one
+				if (currentIndex === itemLength - 1) {
+					// there should be more than 1 element in the list
+					if (currentIndex - 1 >= 0) {
+						const prevValue = optionsData[currentIndex - 1]?.value || null;
+						setSelectedValue(prevValue as string | null);
+					} else {
+						// if there is only one element then just select and do nothing
+						setSelectedValue(null);
+					}
 				} else {
-					// if there is only one element then just select and do nothing
-					setSelectedValue(null);
+					// selecting any random element from the list except the last one
+					const nextIndex = currentIndex + 1;
+
+					const nextValue = optionsData[nextIndex]?.value || null;
+
+					setSelectedValue(nextValue as string | null);
 				}
-			} else {
-				// selecting any random element from the list except the last one
-				const nextIndex = currentIndex + 1;
-
-				const nextValue = optionsData[nextIndex]?.value || null;
-
-				setSelectedValue(nextValue as string | null);
 			}
-		}
-	}
+		},
+		[addColumn, selectedValue],
+	);
 
-	const handleKeyDown = (e: KeyboardEvent): void => {
-		if (!selectedValue) return;
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent): void => {
+			if (!addColumn?.options) return;
+			const optionsData = addColumn.options;
 
-		const optionsData = addColumn?.options || [];
+			const currentIndex = optionsData.findIndex(
+				(item) => item?.value === selectedValue,
+			);
 
-		const currentIndex = optionsData.findIndex(
-			(item) => item?.value === selectedValue,
-		);
+			const itemLength = optionsData.length;
 
-		const itemLength = optionsData.length;
-
-		switch (e.key) {
-			case 'ArrowUp': {
-				const newValue = optionsData[Math.max(0, currentIndex - 1)]?.value;
-
-				setSelectedValue(newValue as string | null);
-				e.preventDefault();
-				break;
+			if (!selectedValue && currentIndex === -1) {
+				if (e.key === 'ArrowDown' && optionsData.length > 0) {
+					setSelectedValue(optionsData[0].value as string);
+					e.preventDefault();
+					return;
+				}
+				if (e.key === 'ArrowUp' && optionsData.length > 0) {
+					setSelectedValue(optionsData[optionsData.length - 1].value as string);
+					e.preventDefault();
+					return;
+				}
 			}
-			case 'ArrowDown': {
-				const newValue =
-					optionsData[Math.min(itemLength - 1, currentIndex + 1)]?.value;
 
-				setSelectedValue(newValue as string | null);
-				e.preventDefault();
-				break;
+			switch (e.key) {
+				case 'ArrowUp': {
+					const newValue = optionsData[Math.max(0, currentIndex - 1)]?.value;
+					setSelectedValue(newValue as string | null);
+					e.preventDefault();
+					break;
+				}
+				case 'ArrowDown': {
+					const newValue =
+						optionsData[Math.min(itemLength - 1, currentIndex + 1)]?.value;
+					setSelectedValue(newValue as string | null);
+					e.preventDefault();
+					break;
+				}
+				case 'Enter':
+					e.preventDefault();
+					handleColumnSelection(currentIndex, optionsData);
+					break;
+				default:
+					break;
 			}
-			case 'Enter':
-				e.preventDefault();
-				handleColumnSelection(currentIndex, optionsData);
-				break;
-			default:
-				break;
-		}
-	};
+		},
+		[addColumn?.options, selectedValue, handleColumnSelection],
+	);
 
 	useEffect(() => {
 		// Scroll the selected item into view
@@ -193,14 +207,7 @@ export default function LogsFormatOptionsMenu({
 				});
 			}
 		}
-	}, [selectedValue]);
-
-	useEffect(() => {
-		window.addEventListener('keydown', handleKeyDown);
-		return (): void => {
-			window.removeEventListener('keydown', handleKeyDown);
-		};
-	}, [selectedValue]);
+	}, [addColumn?.options, selectedValue]);
 
 	return (
 		<div
@@ -266,7 +273,11 @@ export default function LogsFormatOptionsMenu({
 			) : null}
 
 			{showAddNewColumnContainer && (
-				<div className="add-new-column-container">
+				<div
+					className="add-new-column-container"
+					onKeyDown={handleKeyDown}
+					ref={(el): void => el?.focus()}
+				>
 					<div className="add-new-column-header">
 						<div className="title">
 							<div className="periscope-btn ghost" onClick={handleToggleAddNewColumn}>
