@@ -318,11 +318,9 @@ function SideNav(): JSX.Element {
 		isCurrentVersionError,
 		isLatestVersion,
 		licenses?.licenses,
-		menuItems,
 		onClickVersionHandler,
 		t,
 		user.role,
-		userManagementMenuItems,
 	]);
 
 	return (
