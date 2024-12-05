@@ -153,6 +153,9 @@ export default function LogsFormatOptionsMenu({
 
 			const itemLength = optionsData.length;
 
+			// if there is not option selected, and the user presses enter, do nothing
+			if (currentIndex === -1 && e.key === 'Enter') return;
+
 			if (!selectedValue && currentIndex === -1) {
 				if (e.key === 'ArrowDown' && optionsData.length > 0) {
 					setSelectedValue(optionsData[0].value as string);
