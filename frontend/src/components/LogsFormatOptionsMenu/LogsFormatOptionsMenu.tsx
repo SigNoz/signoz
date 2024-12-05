@@ -273,10 +273,12 @@ export default function LogsFormatOptionsMenu({
 			) : null}
 
 			{showAddNewColumnContainer && (
+				// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
 				<div
 					className="add-new-column-container"
 					onKeyDown={handleKeyDown}
-					ref={(el): void => el?.focus()}
+					role="dialog"
+					tabIndex={-1}
 				>
 					<div className="add-new-column-header">
 						<div className="title">
