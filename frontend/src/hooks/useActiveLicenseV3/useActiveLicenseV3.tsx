@@ -1,14 +1,13 @@
 import getActive from 'api/licensesV3/getActive';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { useAppContext } from 'providers/App/App';
 import { useQuery, UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { LicenseV3ResModel } from 'types/api/licensesV3/getActive';
-import AppReducer from 'types/reducer/app';
 
 const useActiveLicenseV3 = (): UseLicense => {
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
+	// const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	return useQuery({
 		queryFn: getActive,

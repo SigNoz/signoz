@@ -416,6 +416,7 @@ function DashboardsList(): JSX.Element {
 					second: '2-digit',
 					hour12: false,
 				};
+
 				const formattedTime = new Date(dashboard.createdAt).toLocaleTimeString(
 					'en-US',
 					timeOptions,
