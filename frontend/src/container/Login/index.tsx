@@ -158,20 +158,11 @@ function Login({
 				password,
 			});
 			if (response.statusCode === 200) {
-				await afterLogin(
+				afterLogin(
 					response.payload.userId,
 					response.payload.accessJwt,
 					response.payload.refreshJwt,
 				);
-				if (history?.location?.state) {
-					const historyState = history?.location?.state as any;
-
-					if (historyState?.from) {
-						history.push(historyState?.from);
-					} else {
-						history.push(ROUTES.APPLICATION);
-					}
-				}
 			} else {
 				notifications.error({
 					message: response.error || t('unexpected_error'),

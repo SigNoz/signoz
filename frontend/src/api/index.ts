@@ -47,37 +47,32 @@ const interceptorRejected = async (
 				});
 
 				if (response.statusCode === 200) {
-					const user = await afterLogin(
+					afterLogin(
 						response.payload.userId,
 						response.payload.accessJwt,
 						response.payload.refreshJwt,
+						true,
 					);
 
-					if (user) {
-						const reResponse = await axios(
-							`${value.config.baseURL}${value.config.url?.substring(1)}`,
-							{
-								method: value.config.method,
-								headers: {
-									...value.config.headers,
-									Authorization: `Bearer ${response.payload.accessJwt}`,
-								},
-								data: {
-									...JSON.parse(value.config.data || '{}'),
-								},
+					const reResponse = await axios(
+						`${value.config.baseURL}${value.config.url?.substring(1)}`,
+						{
+							method: value.config.method,
+							headers: {
+								...value.config.headers,
+								Authorization: `Bearer ${response.payload.accessJwt}`,
 							},
-						);
+							data: {
+								...JSON.parse(value.config.data || '{}'),
+							},
+						},
+					);
 
-						if (reResponse.status === 200) {
-							return await Promise.resolve(reResponse);
-						}
-						Logout();
-
-						return await Promise.reject(reResponse);
+					if (reResponse.status === 200) {
+						return await Promise.resolve(reResponse);
 					}
 					Logout();
-
-					return await Promise.reject(value);
+					return await Promise.reject(reResponse);
 				}
 				Logout();
 			}

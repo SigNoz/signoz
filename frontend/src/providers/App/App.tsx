@@ -47,7 +47,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		data: userData,
 		isFetching: isFetchingUser,
 		error: userFetchError,
-	} = useGetUser(user.id);
+	} = useGetUser(user.id, user.accessJwt);
 	useEffect(() => {
 		if (userData && userData.payload) {
 			setUser((prev) => ({
@@ -151,6 +151,16 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 				id: event.detail.id,
 			}));
 		}
+	});
+
+	useGlobalEventListener('LOGOUT', () => {
+		setIsLoggedIn(false);
+		setUser(getUserDefaults());
+		setActiveLicenseV3(null);
+		setLicenses(null);
+		setFeatureFlags(null);
+		setOrgPreferences(null);
+		setOrg(null);
 	});
 
 	// return value for the context

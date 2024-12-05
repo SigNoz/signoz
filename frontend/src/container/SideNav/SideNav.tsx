@@ -19,6 +19,7 @@ import {
 	RocketIcon,
 	UserCircle,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -59,14 +60,12 @@ function SideNav({
 	const [menuItems, setMenuItems] = useState(defaultMenuItems);
 
 	const { pathname, search } = useLocation();
-	const {
-		user,
-		role,
-		featureResponse,
-		currentVersion,
-		latestVersion,
-		isCurrentVersionError,
-	} = useSelector<AppState, AppReducer>((state) => state.app);
+	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
+		AppState,
+		AppReducer
+	>((state) => state.app);
+
+	const { user, featureFlags, isFetchingFeatureFlags } = useAppContext();
 
 	const [licenseTag, setLicenseTag] = useState('');
 
@@ -86,7 +85,7 @@ function SideNav({
 
 	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
-	const [inviteMembers] = useComponentPermission(['invite_members'], role);
+	const [inviteMembers] = useComponentPermission(['invite_members'], user.role);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -105,23 +104,24 @@ function SideNav({
 	}, [inviteMembers]);
 
 	useEffect((): void => {
-		const isOnboardingEnabled =
-			featureResponse.data?.find(
-				(feature) => feature.name === FeatureKeys.ONBOARDING,
-			)?.active || false;
+		if (!isFetchingFeatureFlags && featureFlags) {
+			const isOnboardingEnabled =
+				featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
+					?.active || false;
 
-		if (!isOnboardingEnabled || !isCloudUser()) {
-			let items = [...menuItems];
+			if (!isOnboardingEnabled || !isCloudUser()) {
+				let items = [...menuItems];
 
-			items = items.filter(
-				(item) => item.key !== ROUTES.GET_STARTED && item.key !== ROUTES.ONBOARDING,
-			);
+				items = items.filter(
+					(item) =>
+						item.key !== ROUTES.GET_STARTED && item.key !== ROUTES.ONBOARDING,
+				);
 
-			setMenuItems(items);
+				setMenuItems(items);
+			}
 		}
-
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [featureResponse.data]);
+	}, [featureFlags]);
 
 	// using a separate useEffect as the license fetching call takes few milliseconds
 	useEffect(() => {
@@ -135,7 +135,7 @@ function SideNav({
 				) || licenseData?.payload?.licenses === null;
 
 			if (
-				role !== USER_ROLES.ADMIN ||
+				user.role !== USER_ROLES.ADMIN ||
 				isOnBasicPlan ||
 				!(isCloudUserVal || isEECloudUser())
 			) {
@@ -145,7 +145,7 @@ function SideNav({
 			setMenuItems(items);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [licenseData?.payload?.licenses, isFetching, role]);
+	}, [licenseData?.payload?.licenses, isFetching, user.role]);
 
 	const { t } = useTranslation('');
 
@@ -302,7 +302,7 @@ function SideNav({
 
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
-		role,
+		user.role,
 	);
 
 	const settingsRoute = isCurrentOrgSettings

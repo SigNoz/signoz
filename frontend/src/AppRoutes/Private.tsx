@@ -95,8 +95,17 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		key: keyof typeof ROUTES,
 	): Promise<void> => {
 		const route = routePermission[key];
-		if (user && route && route.find((e) => e === user.role) === undefined) {
+		if (
+			user &&
+			isLoggedInState &&
+			route &&
+			route.find((e) => e === user.role) === undefined
+		) {
 			history.push(ROUTES.UN_AUTHORIZED);
+		}
+
+		if (!isLoggedInState) {
+			history.push(ROUTES.LOGIN);
 		}
 	};
 
@@ -149,8 +158,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 		if (showOrgOnboarding && isCloudUserVal) {
 			history.push(ROUTES.ONBOARDING);
-		} else {
+		} else if (isLoggedInState) {
 			history.push(ROUTES.APPLICATION);
+		} else {
+			history.push(ROUTES.LOGIN);
 		}
 	};
 
@@ -191,7 +202,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				history.push(ROUTES.SOMETHING_WENT_WRONG);
 			}
 		})();
-	}, [isLoggedInState, currentRoute, licenses, orgUsers, orgPreferences]);
+	}, [currentRoute, licenses, orgUsers, orgPreferences]);
 
 	// NOTE: disabling this rule as there is no need to have div
 	// eslint-disable-next-line react/jsx-no-useless-fragment
