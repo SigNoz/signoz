@@ -27,6 +27,7 @@ const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.BILLING]: 'Billing',
 	[ROUTES.SUPPORT]: 'Support',
 	[ROUTES.WORKSPACE_LOCKED]: 'Workspace Locked',
+	[ROUTES.WORKSPACE_SUSPENDED]: 'Workspace Suspended',
 	[ROUTES.MESSAGING_QUEUES]: 'Messaging Queues',
 };
 

@@ -45,6 +45,7 @@
 	"PASSWORD_RESET": "SigNoz | Password Reset",
 	"LIST_LICENSES": "SigNoz | List of Licenses",
 	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
+	"WORKSPACE_SUSPENDED": "SigNoz | Workspace Suspended",
 	"SUPPORT": "SigNoz | Support",
 	"LOGS_SAVE_VIEWS": "SigNoz | Logs Saved Views",
 	"TRACES_SAVE_VIEWS": "SigNoz | Traces Saved Views",

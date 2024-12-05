@@ -37,6 +37,7 @@
 	"PASSWORD_RESET": "SigNoz | Password Reset",
 	"LIST_LICENSES": "SigNoz | List of Licenses",
 	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
+	"WORKSPACE_SUSPENDED": "SigNoz | Workspace Suspended",
 	"SUPPORT": "SigNoz | Support",
 	"DEFAULT": "Open source Observability Platform | SigNoz",
 	"ALERT_HISTORY": "SigNoz | Alert Rule History",
