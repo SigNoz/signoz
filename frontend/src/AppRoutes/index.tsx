@@ -10,7 +10,6 @@ import AppLayout from 'container/AppLayout';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useThemeConfig } from 'hooks/useDarkMode';
-import useFeatureFlags from 'hooks/useFeatureFlag';
 import { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
@@ -44,7 +43,9 @@ function App(): JSX.Element {
 		isFetchingFeatureFlags,
 		userFetchError,
 		licensesFetchError,
+		featureFlagsFetchError,
 		isLoggedIn: isLoggedInState,
+		featureFlags,
 		org,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
@@ -54,18 +55,6 @@ function App(): JSX.Element {
 	const { hostname, pathname } = window.location;
 
 	const isCloudUserVal = isCloudUser();
-
-	const isChatSupportEnabled =
-		useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active || false;
-
-	const isPremiumSupportEnabled =
-		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
-
-	const isOnBasicPlan =
-		licenses?.licenses?.some(
-			(license) =>
-				license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
-		) || licenses?.licenses === null;
 
 	const enableAnalytics = (user: IUser): void => {
 		const orgName =
@@ -120,34 +109,49 @@ function App(): JSX.Element {
 		});
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
-		const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
+		if (licenses && !!user.email) {
+			const isOnBasicPlan =
+				licenses.licenses?.some(
+					(license) =>
+						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
+				) || licenses.licenses === null;
 
-		if (isLoggedInState && user && user.id && user.email && !isIdentifiedUser) {
-			setLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER, 'true');
-		}
+			const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
 
-		if (
-			isOnBasicPlan ||
-			(isLoggedInState && user.role && user.role !== 'ADMIN') ||
-			!(isCloudUserVal || isEECloudUser())
-		) {
-			const newRoutes = routes.filter((route) => route?.path !== ROUTES.BILLING);
-			setRoutes(newRoutes);
-		}
+			if (isLoggedInState && user && user.id && user.email && !isIdentifiedUser) {
+				setLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER, 'true');
+			}
 
-		if (isCloudUserVal || isEECloudUser()) {
-			const newRoutes = [...routes, SUPPORT_ROUTE];
-
-			setRoutes(newRoutes);
-		} else {
-			const newRoutes = [...routes, LIST_LICENSES];
-
-			setRoutes(newRoutes);
+			// if the user is a cloud user
+			if (isCloudUserVal || isEECloudUser()) {
+				let updatedRoutes = routes;
+				// if the user is on basic plan or is not an admin then remove billing
+				if (
+					isOnBasicPlan ||
+					(isLoggedInState && user.role && user.role !== 'ADMIN')
+				) {
+					updatedRoutes = updatedRoutes.filter(
+						(route) => route?.path !== ROUTES.BILLING,
+					);
+				}
+				// always add support route for cloud users
+				updatedRoutes = [...updatedRoutes, SUPPORT_ROUTE];
+				setRoutes(updatedRoutes);
+			} else {
+				// if not a cloud user then remove billing and add list licenses route
+				let updatedRoutes = routes;
+				updatedRoutes = updatedRoutes.filter(
+					(route) => route?.path !== ROUTES.BILLING,
+				);
+				updatedRoutes = [...updatedRoutes, LIST_LICENSES];
+				setRoutes(updatedRoutes);
+			}
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isLoggedInState, isOnBasicPlan, user]);
+	}, [isLoggedInState, user, licenses]);
 
 	useEffect(() => {
 		if (pathname === ROUTES.ONBOARDING) {
@@ -165,23 +169,45 @@ function App(): JSX.Element {
 	}, [pathname]);
 
 	useEffect(() => {
-		const showAddCreditCardModal =
-			!isPremiumSupportEnabled && !licenses?.trialConvertedToSubscription;
+		// feature flag shouldn't be loading and featureFlags or fetchError any one of this should be true indicating that req is complete
+		// licenses should also be present. there is no check for licenses for loading and error as that is mandatory if not present then routing
+		// to something went wrong which would ideally need a reload.
+		if (
+			!isFetchingFeatureFlags &&
+			(featureFlags || featureFlagsFetchError) &&
+			licenses
+		) {
+			let isChatSupportEnabled = false;
+			let isPremiumSupportEnabled = false;
+			if (featureFlags && featureFlags.length > 0) {
+				isChatSupportEnabled =
+					featureFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)
+						?.active || false;
 
-		if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
-			window.Intercom('boot', {
-				app_id: process.env.INTERCOM_APP_ID,
-				email: user?.email || '',
-				name: user?.name || '',
-			});
+				isPremiumSupportEnabled =
+					featureFlags.find((flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT)
+						?.active || false;
+			}
+			const showAddCreditCardModal =
+				!isPremiumSupportEnabled && !licenses.trialConvertedToSubscription;
+
+			if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
+				window.Intercom('boot', {
+					app_id: process.env.INTERCOM_APP_ID,
+					email: user?.email || '',
+					name: user?.name || '',
+				});
+			}
 		}
 	}, [
 		isLoggedInState,
-		isChatSupportEnabled,
 		user,
-		isPremiumSupportEnabled,
 		pathname,
 		licenses?.trialConvertedToSubscription,
+		featureFlags,
+		isFetchingFeatureFlags,
+		featureFlagsFetchError,
+		licenses,
 	]);
 
 	useEffect(() => {

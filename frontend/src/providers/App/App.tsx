@@ -36,9 +36,11 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		setActiveLicenseV3,
 	] = useState<LicenseV3ResModel | null>(null);
 	const [featureFlags, setFeatureFlags] = useState<FeatureFlags[] | null>(null);
-	const [orgPreferences, setOrgPreferences] = useState<OrgPreference[]>([]);
+	const [orgPreferences, setOrgPreferences] = useState<OrgPreference[] | null>(
+		null,
+	);
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-	const [org, setOrg] = useState<Organization[]>([]);
+	const [org, setOrg] = useState<Organization[] | null>(null);
 
 	// fetcher for user
 	const {
@@ -55,6 +57,17 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
 			setIsLoggedIn(true);
 			setOrg((prev) => {
+				if (!prev) {
+					return [
+						{
+							createdAt: 0,
+							hasOptedUpdates: false,
+							id: userData.payload.orgId,
+							isAnonymous: false,
+							name: userData.payload.organization,
+						},
+					];
+				}
 				const orgIndex = prev.findIndex((e) => e.id === userData.payload.orgId);
 
 				const updatedOrg: Organization[] = [
@@ -110,7 +123,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		error: featureFlagsFetchError,
 	} = useGetFeatureFlag((allFlags: FeatureFlags[]) => {
 		setFeatureFlags(allFlags);
-	});
+	}, user.email);
 
 	const {
 		data: orgPreferencesData,
@@ -139,8 +152,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			}));
 		}
 	});
-
-	console.log(user, licenseData, activeLicenseV3, featureFlags);
 
 	// return value for the context
 	const value: IAppContext = useMemo(

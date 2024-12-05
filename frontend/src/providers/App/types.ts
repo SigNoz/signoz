@@ -10,9 +10,9 @@ export interface IAppContext {
 	licenses: LicensesResModel | null;
 	activeLicenseV3: LicenseV3ResModel | null;
 	featureFlags: FeatureFlags[] | null;
-	orgPreferences: OrgPreference[];
+	orgPreferences: OrgPreference[] | null;
 	isLoggedIn: boolean;
-	org: Organization[];
+	org: Organization[] | null;
 	isFetchingUser: boolean;
 	isFetchingLicenses: boolean;
 	isFetchingActiveLicenseV3: boolean;
