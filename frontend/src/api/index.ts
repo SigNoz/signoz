@@ -7,7 +7,6 @@ import afterLogin from 'AppRoutes/utils';
 import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { ENVIRONMENT } from 'constants/env';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import store from 'store';
 
 import apiV1, {
 	apiAlertManager,
@@ -26,10 +25,7 @@ const interceptorsResponse = (
 const interceptorsRequestResponse = (
 	value: InternalAxiosRequestConfig,
 ): InternalAxiosRequestConfig => {
-	const token =
-		store.getState().app.user?.accessJwt ||
-		getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) ||
-		'';
+	const token = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) || '';
 
 	if (value && value.headers) {
 		value.headers.Authorization = token ? `Bearer ${token}` : '';
@@ -47,7 +43,7 @@ const interceptorRejected = async (
 			// reject the refresh token error
 			if (response.status === 401 && response.config.url !== '/login') {
 				const response = await loginApi({
-					refreshToken: store.getState().app.user?.refreshJwt,
+					refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
 				});
 
 				if (response.statusCode === 200) {

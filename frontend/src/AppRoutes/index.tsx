@@ -127,11 +127,8 @@ function App(): JSX.Element {
 			// if the user is a cloud user
 			if (isCloudUserVal || isEECloudUser()) {
 				let updatedRoutes = routes;
-				// if the user is on basic plan or is not an admin then remove billing
-				if (
-					isOnBasicPlan ||
-					(isLoggedInState && user.role && user.role !== 'ADMIN')
-				) {
+				// if the user is on basic plan then remove billing
+				if (isOnBasicPlan) {
 					updatedRoutes = updatedRoutes.filter(
 						(route) => route?.path !== ROUTES.BILLING,
 					);
