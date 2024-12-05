@@ -215,7 +215,14 @@ function App(): JSX.Element {
 	}, [user]);
 
 	// user, license and feature flags are blocking calls as the UI needs to adjust based on these
-	if (isFetchingLicenses || isFetchingUser || isFetchingFeatureFlags) {
+	if (
+		isFetchingLicenses ||
+		isFetchingUser ||
+		isFetchingFeatureFlags ||
+		!licenses ||
+		!user.email ||
+		!featureFlags
+	) {
 		return <Spinner tip="Loading..." />;
 	}
 
