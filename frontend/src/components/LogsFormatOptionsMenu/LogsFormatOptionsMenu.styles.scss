@@ -646,3 +646,8 @@
 		}
 	}
 }
+.add-new-column-container {
+	&:focus-visible {
+		outline: none;
+	}
+}
