@@ -1,7 +1,6 @@
 import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
@@ -12,31 +11,20 @@ import useAnalytics from 'hooks/analytics/useAnalytics';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import useFeatureFlags from 'hooks/useFeatureFlag';
-import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
-import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
+import { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
 import { identity, pickBy } from 'lodash-es';
 import posthog from 'posthog-js';
 import AlertRuleProvider from 'providers/Alert';
+import { useAppContext } from 'providers/App/App';
+import { IUser } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { Route, Router, Switch } from 'react-router-dom';
+import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
-import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import {
-	UPDATE_FEATURE_FLAG_RESPONSE,
-	UPDATE_IS_FETCHING_ORG_PREFERENCES,
-	UPDATE_ORG_PREFERENCES,
-} from 'types/actions/app';
-import AppReducer, { User } from 'types/reducer/app';
-import { USER_ROLES } from 'types/roles';
 import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
 
 import PrivateRoute from './Private';
@@ -48,14 +36,18 @@ import defaultRoutes, {
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
-	const { data: licenseData } = useLicense();
+	const {
+		licenses,
+		user,
+		isFetchingUser,
+		isFetchingLicenses,
+		isFetchingFeatureFlags,
+		userFetchError,
+		licensesFetchError,
+		isLoggedIn: isLoggedInState,
+		org,
+	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
-	const { role, isLoggedIn: isLoggedInState, user, org } = useSelector<
-		AppState,
-		AppReducer
-	>((state) => state.app);
-
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const { trackPageView } = useAnalytics();
 
@@ -69,74 +61,17 @@ function App(): JSX.Element {
 	const isPremiumSupportEnabled =
 		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
 
-	const { data: orgPreferences, isLoading: isLoadingOrgPreferences } = useQuery({
-		queryFn: () => getAllOrgPreferences(),
-		queryKey: ['getOrgPreferences'],
-		enabled: isLoggedInState && role === USER_ROLES.ADMIN,
-	});
-
-	useEffect(() => {
-		if (orgPreferences && !isLoadingOrgPreferences) {
-			dispatch({
-				type: UPDATE_IS_FETCHING_ORG_PREFERENCES,
-				payload: {
-					isFetchingOrgPreferences: false,
-				},
-			});
-
-			dispatch({
-				type: UPDATE_ORG_PREFERENCES,
-				payload: {
-					orgPreferences: orgPreferences.payload?.data || null,
-				},
-			});
-		}
-	}, [orgPreferences, dispatch, isLoadingOrgPreferences]);
-
-	useEffect(() => {
-		if (isLoggedInState && role !== USER_ROLES.ADMIN) {
-			dispatch({
-				type: UPDATE_IS_FETCHING_ORG_PREFERENCES,
-				payload: {
-					isFetchingOrgPreferences: false,
-				},
-			});
-		}
-	}, [isLoggedInState, role, dispatch]);
-
-	const featureResponse = useGetFeatureFlag((allFlags) => {
-		dispatch({
-			type: UPDATE_FEATURE_FLAG_RESPONSE,
-			payload: {
-				featureFlag: allFlags,
-				refetch: featureResponse.refetch,
-			},
-		});
-
-		const isOnboardingEnabled =
-			allFlags.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
-			false;
-
-		if (!isOnboardingEnabled || !isCloudUserVal) {
-			const newRoutes = routes.filter(
-				(route) => route?.path !== ROUTES.GET_STARTED,
-			);
-
-			setRoutes(newRoutes);
-		}
-	});
-
 	const isOnBasicPlan =
-		licenseData?.payload?.licenses?.some(
+		licenses?.licenses?.some(
 			(license) =>
 				license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
-		) || licenseData?.payload?.licenses === null;
+		) || licenses?.licenses === null;
 
-	const enableAnalytics = (user: User): void => {
+	const enableAnalytics = (user: IUser): void => {
 		const orgName =
 			org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
 
-		const { name, email } = user;
+		const { name, email, role } = user;
 
 		const identifyPayload = {
 			email,
@@ -171,7 +106,7 @@ function App(): JSX.Element {
 			tenant_url: hostname,
 			company_domain: domain,
 			source: 'signoz-ui',
-			isPaidUser: !!licenseData?.payload?.trialConvertedToSubscription,
+			isPaidUser: !!licenses?.trialConvertedToSubscription,
 		});
 
 		posthog?.group('company', domain, {
@@ -181,26 +116,20 @@ function App(): JSX.Element {
 			tenant_url: hostname,
 			company_domain: domain,
 			source: 'signoz-ui',
-			isPaidUser: !!licenseData?.payload?.trialConvertedToSubscription,
+			isPaidUser: !!licenses?.trialConvertedToSubscription,
 		});
 	};
 
 	useEffect(() => {
 		const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
 
-		if (
-			isLoggedInState &&
-			user &&
-			user.userId &&
-			user.email &&
-			!isIdentifiedUser
-		) {
+		if (isLoggedInState && user && user.id && user.email && !isIdentifiedUser) {
 			setLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER, 'true');
 		}
 
 		if (
 			isOnBasicPlan ||
-			(isLoggedInState && role && role !== 'ADMIN') ||
+			(isLoggedInState && user.role && user.role !== 'ADMIN') ||
 			!(isCloudUserVal || isEECloudUser())
 		) {
 			const newRoutes = routes.filter((route) => route?.path !== ROUTES.BILLING);
@@ -237,8 +166,7 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		const showAddCreditCardModal =
-			!isPremiumSupportEnabled &&
-			!licenseData?.payload?.trialConvertedToSubscription;
+			!isPremiumSupportEnabled && !licenses?.trialConvertedToSubscription;
 
 		if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
 			window.Intercom('boot', {
@@ -251,9 +179,9 @@ function App(): JSX.Element {
 		isLoggedInState,
 		isChatSupportEnabled,
 		user,
-		licenseData,
 		isPremiumSupportEnabled,
 		pathname,
+		licenses?.trialConvertedToSubscription,
 	]);
 
 	useEffect(() => {
@@ -262,6 +190,16 @@ function App(): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [user]);
+
+	// user, license and feature flags are blocking calls as the UI needs to adjust based on these
+	if (isFetchingLicenses || isFetchingUser || isFetchingFeatureFlags) {
+		return <Spinner tip="Loading..." />;
+	}
+
+	// user and license data is mandatory to show correct UI to users. absence of feature flags will be treated as falsy values
+	if (userFetchError || licensesFetchError) {
+		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
+	}
 
 	return (
 		<ConfigProvider theme={themeConfig}>

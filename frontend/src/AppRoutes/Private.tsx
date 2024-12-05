@@ -3,10 +3,8 @@ import getLocalStorageApi from 'api/browser/localstorage/get';
 import getOrgUser from 'api/user/getOrgUser';
 import loginApi from 'api/user/login';
 import { Logout } from 'api/utils';
-import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
-import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isEmpty, isNull } from 'lodash-es';
@@ -14,16 +12,14 @@ import { useAppContext } from 'providers/App/App';
 import { ReactChild, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { matchPath, Redirect, useLocation } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { matchPath, useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
 import { getInitialUserTokenRefreshToken } from 'store/utils';
 import AppActions from 'types/actions';
 import { UPDATE_USER_IS_FETCH } from 'types/actions/app';
 import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
-import AppReducer from 'types/reducer/app';
 import { isCloudUser } from 'utils/app';
 import { routePermission } from 'utils/permission';
 
@@ -38,20 +34,17 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const location = useLocation();
 	const { pathname } = location;
 
-	const [isLoading, setIsLoading] = useState<boolean>(true);
-
 	const {
 		org,
 		orgPreferences,
-		user,
-		role,
-		isUserFetching,
-		isUserFetchingError,
+		isFetchingUser,
 		isLoggedIn: isLoggedInState,
 		isFetchingOrgPreferences,
-	} = useSelector<AppState, AppReducer>((state) => state.app);
-
-	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
+		licenses,
+		isFetchingLicenses,
+		activeLicenseV3,
+		isFetchingActiveLicenseV3,
+	} = useAppContext();
 
 	const mapRoutes = useMemo(
 		() =>
@@ -73,11 +66,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			)?.value,
 		[orgPreferences],
 	);
-
-	const {
-		data: licensesData,
-		isFetching: isFetchingLicensesData,
-	} = useLicense();
 
 	const { t } = useTranslation(['common']);
 
@@ -218,7 +206,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		if (
 			localStorageUserAuthToken &&
 			localStorageUserAuthToken.refreshJwt &&
-			isUserFetching
+			isFetchingUser
 		) {
 			handleUserLoginIfTokenPresent(key);
 		} else {
@@ -244,14 +232,14 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (!isFetchingLicensesData) {
-			const shouldBlockWorkspace = licensesData?.payload?.workSpaceBlock;
+		if (!isFetchingLicenses) {
+			const shouldBlockWorkspace = licenses?.workSpaceBlock;
 
 			if (shouldBlockWorkspace) {
 				navigateToWorkSpaceBlocked(currentRoute);
 			}
 		}
-	}, [isFetchingLicensesData]);
+	}, [isFetchingLicenses]);
 
 	const navigateToWorkSpaceSuspended = (route: any): void => {
 		const { path } = route;
@@ -296,28 +284,28 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		}
 	};
 
-	useEffect(() => {
-		const { isPrivate } = currentRoute || {
-			isPrivate: false,
-		};
+	// useEffect(() => {
+	// 	const { isPrivate } = currentRoute || {
+	// 		isPrivate: false,
+	// 	};
 
-		if (isLoggedInState && role && role !== 'ADMIN') {
-			setIsLoading(false);
-		}
+	// 	if (isLoggedInState && role && role !== 'ADMIN') {
+	// 		setIsLoading(false);
+	// 	}
 
-		if (!isPrivate) {
-			setIsLoading(false);
-		}
+	// 	if (!isPrivate) {
+	// 		setIsLoading(false);
+	// 	}
 
-		if (
-			!isEmpty(user) &&
-			!isFetchingOrgPreferences &&
-			!isEmpty(orgUsers?.payload) &&
-			!isNull(orgPreferences)
-		) {
-			setIsLoading(false);
-		}
-	}, [currentRoute, user, role, orgUsers, orgPreferences]);
+	// 	if (
+	// 		!isEmpty(user) &&
+	// 		!isFetchingOrgPreferences &&
+	// 		!isEmpty(orgUsers?.payload) &&
+	// 		!isNull(orgPreferences)
+	// 	) {
+	// 		setIsLoading(false);
+	// 	}
+	// }, [currentRoute, user, role, orgUsers, orgPreferences]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
@@ -370,18 +358,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		dispatch,
 		isLoggedInState,
 		currentRoute,
-		licensesData,
+		licenses,
 		orgUsers,
 		orgPreferences,
 	]);
-
-	if (isUserFetchingError) {
-		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
-	}
-
-	if (isUserFetching || isLoading) {
-		return <Spinner tip="Loading..." />;
-	}
 
 	// NOTE: disabling this rule as there is no need to have div
 	// eslint-disable-next-line react/jsx-no-useless-fragment

@@ -1,4 +1,5 @@
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
 import { Logout } from 'api/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
@@ -14,9 +15,13 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { useQuery } from 'react-query';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import { PayloadProps as LicensesResModel } from 'types/api/licenses/getAll';
 import { LicenseV3ResModel } from 'types/api/licensesV3/getActive';
+import { Organization } from 'types/api/user/getOrganization';
+import { OrgPreference } from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
 
 import { IAppContext, IUser } from './types';
 import { getUserDefaults } from './utils';
@@ -31,6 +36,9 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		setActiveLicenseV3,
 	] = useState<LicenseV3ResModel | null>(null);
 	const [featureFlags, setFeatureFlags] = useState<FeatureFlags[] | null>(null);
+	const [orgPreferences, setOrgPreferences] = useState<OrgPreference[]>([]);
+	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+	const [org, setOrg] = useState<Organization[]>([]);
 
 	// fetcher for user
 	const {
@@ -45,6 +53,24 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 				...userData.payload,
 			}));
 			setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+			setIsLoggedIn(true);
+			setOrg((prev) => {
+				const orgIndex = prev.findIndex((e) => e.id === userData.payload.orgId);
+
+				const updatedOrg: Organization[] = [
+					...prev.slice(0, orgIndex),
+					{
+						createdAt: 0,
+						hasOptedUpdates: false,
+						id: userData.payload.orgId,
+						isAnonymous: false,
+						name: userData.payload.organization,
+					},
+					...prev.slice(orgIndex + 1, prev.length),
+				];
+
+				return updatedOrg;
+			});
 		}
 	}, [userData]);
 
@@ -86,6 +112,22 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		setFeatureFlags(allFlags);
 	});
 
+	const {
+		data: orgPreferencesData,
+		isFetching: isFetchingOrgPreferences,
+		error: orgPreferencesFetchError,
+	} = useQuery({
+		queryFn: () => getAllOrgPreferences(),
+		queryKey: ['getOrgPreferences'],
+		enabled: !!user.email && user.role === USER_ROLES.ADMIN,
+	});
+
+	useEffect(() => {
+		if (orgPreferencesData && orgPreferencesData.payload) {
+			setOrgPreferences(orgPreferencesData.payload.data);
+		}
+	}, [orgPreferencesData]);
+
 	// global event listener for AFTER_LOGIN event to start the user fetch post all actions are complete
 	useGlobalEventListener('AFTER_LOGIN', (event) => {
 		if (event.detail) {
@@ -107,6 +149,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			isFetchingActiveLicenseV3,
 			activeLicenseV3FetchError,
 			user,
+			org,
 			isFetchingUser,
 			userFetchError,
 			licenses,
@@ -115,6 +158,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			featureFlags,
 			isFetchingFeatureFlags,
 			featureFlagsFetchError,
+			orgPreferences,
+			isFetchingOrgPreferences,
+			orgPreferencesFetchError,
+			isLoggedIn,
 		}),
 		[
 			activeLicenseV3,
@@ -124,9 +171,14 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			isFetchingActiveLicenseV3,
 			isFetchingFeatureFlags,
 			isFetchingLicenses,
+			isFetchingOrgPreferences,
 			isFetchingUser,
+			isLoggedIn,
 			licenses,
 			licensesFetchError,
+			org,
+			orgPreferences,
+			orgPreferencesFetchError,
 			user,
 			userFetchError,
 		],
