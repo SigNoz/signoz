@@ -10,6 +10,7 @@ const afterLogin = (
 	setLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN, authToken);
 	setLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN, refreshToken);
 	setLocalStorageApi(LOCALSTORAGE.USER_ID, userId);
+	setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
 
 	if (!interceptorRejected) {
 		window.dispatchEvent(

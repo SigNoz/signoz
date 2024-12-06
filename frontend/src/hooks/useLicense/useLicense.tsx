@@ -5,11 +5,11 @@ import { useQuery, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/licenses/getAll';
 
-const useLicense = (userEmail: string): UseLicense =>
+const useLicense = (isLoggedIn: boolean): UseLicense =>
 	useQuery({
 		queryFn: getAll,
-		queryKey: [REACT_QUERY_KEY.GET_ALL_LICENCES, userEmail],
-		enabled: !!userEmail,
+		queryKey: [REACT_QUERY_KEY.GET_ALL_LICENCES],
+		enabled: !!isLoggedIn,
 	});
 
 type UseLicense = UseQueryResult<

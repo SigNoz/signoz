@@ -3,11 +3,11 @@ import { useQuery, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
 
-const useGetUser = (userId: string, token: string): UseGetUser =>
+const useGetUser = (userId: string, isLoggedIn: boolean): UseGetUser =>
 	useQuery({
-		queryFn: () => getUser({ userId, token }),
+		queryFn: () => getUser({ userId }),
 		queryKey: [userId],
-		enabled: !!userId && !!token,
+		enabled: !!userId && !!isLoggedIn,
 	});
 
 type UseGetUser = UseQueryResult<

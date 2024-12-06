@@ -21,7 +21,7 @@ import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
@@ -56,62 +56,74 @@ function App(): JSX.Element {
 
 	const isCloudUserVal = isCloudUser();
 
-	const enableAnalytics = (user: IUser): void => {
-		const orgName =
-			org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
+	const enableAnalytics = useCallback(
+		(user: IUser): void => {
+			// wait for the required data to be loaded before doing init for anything!
+			if (!isFetchingLicenses && licenses && org) {
+				const orgName =
+					org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
 
-		const { name, email, role } = user;
+				const { name, email, role } = user;
 
-		const identifyPayload = {
-			email,
-			name,
-			company_name: orgName,
-			role,
-			source: 'signoz-ui',
-		};
+				const identifyPayload = {
+					email,
+					name,
+					company_name: orgName,
+					role,
+					source: 'signoz-ui',
+				};
 
-		const sanitizedIdentifyPayload = pickBy(identifyPayload, identity);
-		const domain = extractDomain(email);
-		const hostNameParts = hostname.split('.');
+				const sanitizedIdentifyPayload = pickBy(identifyPayload, identity);
+				const domain = extractDomain(email);
+				const hostNameParts = hostname.split('.');
 
-		const groupTraits = {
-			name: orgName,
-			tenant_id: hostNameParts[0],
-			data_region: hostNameParts[1],
-			tenant_url: hostname,
-			company_domain: domain,
-			source: 'signoz-ui',
-		};
+				const groupTraits = {
+					name: orgName,
+					tenant_id: hostNameParts[0],
+					data_region: hostNameParts[1],
+					tenant_url: hostname,
+					company_domain: domain,
+					source: 'signoz-ui',
+				};
 
-		window.analytics.identify(email, sanitizedIdentifyPayload);
-		window.analytics.group(domain, groupTraits);
+				window.analytics.identify(email, sanitizedIdentifyPayload);
+				window.analytics.group(domain, groupTraits);
 
-		posthog?.identify(email, {
-			email,
-			name,
-			orgName,
-			tenant_id: hostNameParts[0],
-			data_region: hostNameParts[1],
-			tenant_url: hostname,
-			company_domain: domain,
-			source: 'signoz-ui',
-			isPaidUser: !!licenses?.trialConvertedToSubscription,
-		});
+				posthog?.identify(email, {
+					email,
+					name,
+					orgName,
+					tenant_id: hostNameParts[0],
+					data_region: hostNameParts[1],
+					tenant_url: hostname,
+					company_domain: domain,
+					source: 'signoz-ui',
+					isPaidUser: !!licenses?.trialConvertedToSubscription,
+				});
 
-		posthog?.group('company', domain, {
-			name: orgName,
-			tenant_id: hostNameParts[0],
-			data_region: hostNameParts[1],
-			tenant_url: hostname,
-			company_domain: domain,
-			source: 'signoz-ui',
-			isPaidUser: !!licenses?.trialConvertedToSubscription,
-		});
-	};
+				posthog?.group('company', domain, {
+					name: orgName,
+					tenant_id: hostNameParts[0],
+					data_region: hostNameParts[1],
+					tenant_url: hostname,
+					company_domain: domain,
+					source: 'signoz-ui',
+					isPaidUser: !!licenses?.trialConvertedToSubscription,
+				});
+			}
+		},
+		[hostname, isFetchingLicenses, licenses, org],
+	);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
-		if (licenses && !!user.email) {
+		if (
+			!isFetchingLicenses &&
+			licenses &&
+			!isFetchingUser &&
+			user &&
+			!!user.email
+		) {
 			const isOnBasicPlan =
 				licenses.licenses?.some(
 					(license) =>
@@ -124,9 +136,9 @@ function App(): JSX.Element {
 				setLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER, 'true');
 			}
 
+			let updatedRoutes = routes;
 			// if the user is a cloud user
 			if (isCloudUserVal || isEECloudUser()) {
-				let updatedRoutes = routes;
 				// if the user is on basic plan then remove billing
 				if (isOnBasicPlan) {
 					updatedRoutes = updatedRoutes.filter(
@@ -135,20 +147,24 @@ function App(): JSX.Element {
 				}
 				// always add support route for cloud users
 				updatedRoutes = [...updatedRoutes, SUPPORT_ROUTE];
-				setRoutes(updatedRoutes);
 			} else {
 				// if not a cloud user then remove billing and add list licenses route
-				let updatedRoutes = routes;
 				updatedRoutes = updatedRoutes.filter(
 					(route) => route?.path !== ROUTES.BILLING,
 				);
 				updatedRoutes = [...updatedRoutes, LIST_LICENSES];
-				setRoutes(updatedRoutes);
 			}
+			setRoutes(updatedRoutes);
 		}
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isLoggedInState, user, licenses]);
+	}, [
+		isLoggedInState,
+		user,
+		licenses,
+		isCloudUserVal,
+		routes,
+		isFetchingLicenses,
+		isFetchingUser,
+	]);
 
 	useEffect(() => {
 		if (pathname === ROUTES.ONBOARDING) {
@@ -162,8 +178,7 @@ function App(): JSX.Element {
 		}
 
 		trackPageView(pathname);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [pathname]);
+	}, [pathname, trackPageView]);
 
 	useEffect(() => {
 		// feature flag shouldn't be loading and featureFlags or fetchError any one of this should be true indicating that req is complete
@@ -208,20 +223,20 @@ function App(): JSX.Element {
 	]);
 
 	useEffect(() => {
-		if (isCloudUserVal && user && user.email) {
+		if (!isFetchingUser && isCloudUserVal && user && user.email) {
 			enableAnalytics(user);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [user]);
+	}, [user, isFetchingUser, isCloudUserVal, enableAnalytics]);
 
-	// user, license and feature flags are blocking calls as the UI needs to adjust based on these
+	// if the user is in logged in state then wait for all the blocking calls to complete and set the required data
 	if (
-		isFetchingLicenses ||
-		isFetchingUser ||
-		isFetchingFeatureFlags ||
-		!licenses ||
-		!user.email ||
-		!featureFlags
+		isLoggedInState &&
+		(isFetchingLicenses ||
+			isFetchingUser ||
+			isFetchingFeatureFlags ||
+			!licenses ||
+			!user.email ||
+			!featureFlags)
 	) {
 		return <Spinner tip="Loading..." />;
 	}

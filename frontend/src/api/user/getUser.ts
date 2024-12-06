@@ -8,11 +8,7 @@ const getUser = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(`/user/${props.userId}`, {
-			headers: {
-				Authorization: `bearer ${props.token}`,
-			},
-		});
+		const response = await axios.get(`/user/${props.userId}`);
 
 		return {
 			statusCode: 200,

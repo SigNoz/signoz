@@ -1,6 +1,5 @@
-import setLocalStorageApi from 'api/browser/localstorage/set';
+import getLocalStorageApi from 'api/browser/localstorage/get';
 import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
-import { Logout } from 'api/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
@@ -29,6 +28,7 @@ import { getUserDefaults } from './utils';
 const AppContext = createContext<IAppContext | undefined>(undefined);
 
 export function AppProvider({ children }: PropsWithChildren): JSX.Element {
+	// on load of the provider set the user defaults with access jwt , refresh jwt and user id from local storage
 	const [user, setUser] = useState<IUser>(() => getUserDefaults());
 	const [licenses, setLicenses] = useState<LicensesResModel | null>(null);
 	const [
@@ -39,25 +39,29 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const [orgPreferences, setOrgPreferences] = useState<OrgPreference[] | null>(
 		null,
 	);
-	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
+		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
+	);
 	const [org, setOrg] = useState<Organization[] | null>(null);
 
 	// fetcher for user
+	// user will only be fetched if the user id and token is present
+	// if logged out and trying to hit any route none of these calls will trigger
 	const {
 		data: userData,
 		isFetching: isFetchingUser,
 		error: userFetchError,
-	} = useGetUser(user.id, user.accessJwt);
+	} = useGetUser(user.id, isLoggedIn);
 	useEffect(() => {
-		if (userData && userData.payload) {
+		if (!isFetchingUser && userData && userData.payload) {
 			setUser((prev) => ({
 				...prev,
 				...userData.payload,
 			}));
-			setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
 			setIsLoggedIn(true);
 			setOrg((prev) => {
 				if (!prev) {
+					// if no org is present enter a new entry
 					return [
 						{
 							createdAt: 0,
@@ -68,8 +72,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 						},
 					];
 				}
+				// else mutate the existing entry
 				const orgIndex = prev.findIndex((e) => e.id === userData.payload.orgId);
-
 				const updatedOrg: Organization[] = [
 					...prev.slice(0, orgIndex),
 					{
@@ -81,41 +85,39 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					},
 					...prev.slice(orgIndex + 1, prev.length),
 				];
-
 				return updatedOrg;
 			});
 		}
-	}, [userData]);
-
-	useEffect(() => {
-		if (userFetchError) {
-			Logout();
-		}
-	}, [userFetchError]);
+	}, [userData, isFetchingUser]);
 
 	// fetcher for licenses v2
+	// license will be fetched if we are in logged in state
 	const {
 		data: licenseData,
 		isFetching: isFetchingLicenses,
 		error: licensesFetchError,
-	} = useLicense(user.email);
+	} = useLicense(isLoggedIn);
 	useEffect(() => {
-		if (licenseData && licenseData.payload) {
+		if (!isFetchingLicenses && licenseData && licenseData.payload) {
 			setLicenses(licenseData.payload);
 		}
-	}, [licenseData]);
+	}, [licenseData, isFetchingLicenses]);
 
 	// fetcher for licenses v3
 	const {
 		data: activeLicenseV3Data,
 		isFetching: isFetchingActiveLicenseV3,
 		error: activeLicenseV3FetchError,
-	} = useActiveLicenseV3(user.email);
+	} = useActiveLicenseV3(isLoggedIn);
 	useEffect(() => {
-		if (activeLicenseV3Data && activeLicenseV3Data.payload) {
+		if (
+			!isFetchingActiveLicenseV3 &&
+			activeLicenseV3Data &&
+			activeLicenseV3Data.payload
+		) {
 			setActiveLicenseV3(activeLicenseV3Data.payload);
 		}
-	}, [activeLicenseV3Data]);
+	}, [activeLicenseV3Data, isFetchingActiveLicenseV3]);
 
 	// fetcher for feature flags
 	const {
@@ -123,8 +125,9 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		error: featureFlagsFetchError,
 	} = useGetFeatureFlag((allFlags: FeatureFlags[]) => {
 		setFeatureFlags(allFlags);
-	}, user.email);
+	}, isLoggedIn);
 
+	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
 	const {
 		data: orgPreferencesData,
 		isFetching: isFetchingOrgPreferences,
@@ -132,14 +135,18 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	} = useQuery({
 		queryFn: () => getAllOrgPreferences(),
 		queryKey: ['getOrgPreferences'],
-		enabled: !!user.email && user.role === USER_ROLES.ADMIN,
+		enabled: !!isLoggedIn && !!user.email && user.role === USER_ROLES.ADMIN,
 	});
 
 	useEffect(() => {
-		if (orgPreferencesData && orgPreferencesData.payload) {
+		if (
+			!isFetchingOrgPreferences &&
+			orgPreferencesData &&
+			orgPreferencesData.payload
+		) {
 			setOrgPreferences(orgPreferencesData.payload.data);
 		}
-	}, [orgPreferencesData]);
+	}, [orgPreferencesData, isFetchingOrgPreferences]);
 
 	// global event listener for AFTER_LOGIN event to start the user fetch post all actions are complete
 	useGlobalEventListener('AFTER_LOGIN', (event) => {
@@ -153,6 +160,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		}
 	});
 
+	// global event listener for LOGOUT event to clean the app context state
 	useGlobalEventListener('LOGOUT', () => {
 		setIsLoggedIn(false);
 		setUser(getUserDefaults());

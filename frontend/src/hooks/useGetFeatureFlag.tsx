@@ -5,14 +5,14 @@ import { FeatureFlagProps } from 'types/api/features/getFeaturesFlags';
 
 const useGetFeatureFlag = (
 	onSuccessHandler: (routes: FeatureFlagProps[]) => void,
-	userEmail: string,
+	isLoggedIn: boolean,
 ): UseQueryResult<FeatureFlagProps[], unknown> =>
 	useQuery<FeatureFlagProps[]>({
 		queryFn: getFeaturesFlags,
-		queryKey: [REACT_QUERY_KEY.GET_FEATURES_FLAGS, userEmail],
+		queryKey: [REACT_QUERY_KEY.GET_FEATURES_FLAGS],
 		onSuccess: onSuccessHandler,
 		retryOnMount: false,
-		enabled: !!userEmail,
+		enabled: !!isLoggedIn,
 	});
 
 export default useGetFeatureFlag;
