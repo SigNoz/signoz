@@ -2540,7 +2540,7 @@ func (r *ClickHouseReader) GetTotalLogs(ctx context.Context) (uint64, error) {
 
 	var totalLogs uint64
 
-	queryStr := fmt.Sprintf("SELECT count() from %s.%s;", r.logsDB, r.logsTable)
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s;", r.logsDB, r.logsTableName)
 	r.db.QueryRow(ctx, queryStr).Scan(&totalLogs)
 
 	return totalLogs, nil

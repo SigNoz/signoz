@@ -347,6 +347,7 @@ func createTelemetry() {
 						"dashboardsWithTSV2":              dashboardsInfo.QueriesWithTSV2,
 						"dashboardWithLogsChQuery":        dashboardsInfo.DashboardsWithLogsChQuery,
 						"dashboardWithTraceChQuery":       dashboardsInfo.DashboardsWithTraceChQuery,
+						"dashboardNamesWithTraceChQuery":  dashboardsInfo.DashboardNamesWithTraceChQuery,
 						"totalAlerts":                     alertsInfo.TotalAlerts,
 						"alertsWithTSV2":                  alertsInfo.AlertsWithTSV2,
 						"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
