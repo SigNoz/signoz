@@ -24,6 +24,7 @@ import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -80,6 +81,8 @@ function ChartPreview({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const { featureFlags } = useAppContext();
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -261,7 +264,8 @@ function ChartPreview({
 		chartData && !queryResponse.isError && !queryResponse.isLoading;
 
 	const isAnomalyDetectionEnabled =
-		useFeatureFlags(FeatureKeys.ANOMALY_DETECTION)?.active || false;
+		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
+			?.active || false;
 
 	return (
 		<div className="alert-chart-container" ref={graphRef}>
