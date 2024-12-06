@@ -1,6 +1,7 @@
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
+import { AppProvider } from 'providers/App/App';
 import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
@@ -86,11 +87,13 @@ function AllTheProviders({
 	return (
 		<ResourceProvider>
 			<QueryClientProvider client={queryClient}>
-				<Provider store={mockStored(role)}>
-					{' '}
-					{/* Use the mock store with the provided role */}
-					<BrowserRouter>{children}</BrowserRouter>
-				</Provider>
+				<AppProvider>
+					<Provider store={mockStored(role)}>
+						{' '}
+						{/* Use the mock store with the provided role */}
+						<BrowserRouter>{children}</BrowserRouter>
+					</Provider>
+				</AppProvider>
 			</QueryClientProvider>
 		</ResourceProvider>
 	);
