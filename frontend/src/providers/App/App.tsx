@@ -10,6 +10,7 @@ import useGetUser from 'hooks/user/useGetUser';
 import {
 	createContext,
 	PropsWithChildren,
+	useCallback,
 	useContext,
 	useEffect,
 	useMemo,
@@ -20,6 +21,7 @@ import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeatures
 import { PayloadProps as LicensesResModel } from 'types/api/licenses/getAll';
 import { LicenseV3ResModel } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
+import { UserFlags } from 'types/api/user/setFlags';
 import { OrgPreference } from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
@@ -155,6 +157,45 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		}
 	}, [orgPreferencesData, isFetchingOrgPreferences]);
 
+	function setUserFlags(userflags: UserFlags): void {
+		setUser((prev) => ({
+			...prev,
+			flags: userflags,
+		}));
+	}
+
+	function updateUser(user: IUser): void {
+		setUser((prev) => ({
+			...prev,
+			...user,
+		}));
+	}
+
+	function updateOrgPreferences(orgPreferences: OrgPreference[]): void {
+		setOrgPreferences(orgPreferences);
+	}
+
+	const updateOrg = useCallback(
+		(orgId: string, updatedOrgName: string): void => {
+			if (org && org.length > 0) {
+				const orgIndex = org.findIndex((e) => e.id === orgId);
+				const updatedOrg: Organization[] = [
+					...org.slice(0, orgIndex),
+					{
+						createdAt: 0,
+						hasOptedUpdates: false,
+						id: orgId,
+						isAnonymous: false,
+						name: updatedOrgName,
+					},
+					...org.slice(orgIndex + 1, org.length),
+				];
+				setOrg(updatedOrg);
+			}
+		},
+		[org],
+	);
+
 	// global event listener for AFTER_LOGIN event to start the user fetch post all actions are complete
 	useGlobalEventListener('AFTER_LOGIN', (event) => {
 		if (event.detail) {
@@ -199,6 +240,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			isFetchingOrgPreferences,
 			orgPreferencesFetchError,
 			isLoggedIn,
+			setUserFlags,
+			updateUser,
+			updateOrgPreferences,
+			updateOrg,
 		}),
 		[
 			activeLicenseV3,
@@ -216,6 +261,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			org,
 			orgPreferences,
 			orgPreferencesFetchError,
+			updateOrg,
 			user,
 			userFetchError,
 		],

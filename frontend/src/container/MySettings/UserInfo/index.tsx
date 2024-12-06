@@ -8,17 +8,12 @@ import { PencilIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
-import { Dispatch } from 'redux';
-import AppActions from 'types/actions';
-import { UPDATE_USER } from 'types/actions/app';
 
 import { NameInput } from '../styles';
 
 function UserInfo(): JSX.Element {
-	const { user, org } = useAppContext();
+	const { user, org, updateUser } = useAppContext();
 	const { t } = useTranslation();
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const [changedName, setChangedName] = useState<string>(user?.name || '');
 	const [loading, setLoading] = useState<boolean>(false);
@@ -43,17 +38,9 @@ function UserInfo(): JSX.Element {
 						ns: 'common',
 					}),
 				});
-				dispatch({
-					type: UPDATE_USER,
-					payload: {
-						...user,
-						userId: user.id,
-						name: changedName,
-						ROLE: user.role || 'ADMIN',
-						orgId: org[0].id,
-						orgName: org[0].name,
-						userFlags: user.flags || {},
-					},
+				updateUser({
+					...user,
+					name: changedName,
 				});
 			} else {
 				notifications.error({

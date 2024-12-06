@@ -1,6 +1,5 @@
 import { Divider, Space } from 'antd';
 import { FeatureKeys } from 'constants/features';
-import { useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useAppContext } from 'providers/App/App';
 
 import AuthDomains from './AuthDomains';
@@ -9,11 +8,14 @@ import Members from './Members';
 import PendingInvitesContainer from './PendingInvitesContainer';
 
 function OrganizationSettings(): JSX.Element {
-	const { org } = useAppContext();
+	const { org, featureFlags } = useAppContext();
 
-	const isNotSSO = useIsFeatureDisabled(FeatureKeys.SSO);
+	const isNotSSO =
+		!featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
 
-	const isNoUpSell = useIsFeatureDisabled(FeatureKeys.DISABLE_UPSELL);
+	const isNoUpSell =
+		!featureFlags?.find((flag) => flag.name === FeatureKeys.DISABLE_UPSELL)
+			?.active || false;
 
 	const isAuthDomain = !isNoUpSell || (isNoUpSell && !isNotSSO);
 

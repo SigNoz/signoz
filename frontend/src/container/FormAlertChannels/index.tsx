@@ -15,6 +15,7 @@ import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isFeatureKeys } from 'utils/app';
 
 import EmailSettings from './Settings/Email';
 import MsTeamsSettings from './Settings/MsTeams';
@@ -45,11 +46,14 @@ function FormAlertChannels({
 
 	const feature = `ALERT_CHANNEL_${type.toUpperCase()}`;
 
-	const hasFeature = useFeatureFlags(
-		isFeatureKeys(feature) ? feature : FeatureKeys.ALERT_CHANNEL_SLACK,
-	);
+	const featureKey = isFeatureKeys(feature)
+		? feature
+		: FeatureKeys.ALERT_CHANNEL_SLACK;
+	const hasFeature = featureFlags?.find((flag) => flag.name === featureKey);
 
-	const isOssFeature = useFeatureFlags(FeatureKeys.OSS);
+	const isOssFeature = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.OSS,
+	);
 
 	const renderSettings = (): ReactElement | null => {
 		if (

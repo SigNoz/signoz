@@ -2,7 +2,7 @@
 import './NewWidget.styles.scss';
 
 import { WarningOutlined } from '@ant-design/icons';
-import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
+import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { FeatureKeys } from 'constants/features';
@@ -16,7 +16,6 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useAxiosError from 'hooks/useAxiosError';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
@@ -24,6 +23,7 @@ import history from 'lib/history';
 import { defaultTo, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
+import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
@@ -68,6 +68,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	} = useDashboard();
 
 	const { t } = useTranslation(['dashboard']);
+
+	const { featureFlags } = useAppContext();
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -506,9 +508,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const isQueryBuilderActive = useIsFeatureDisabled(
-		FeatureKeys.QUERY_BUILDER_PANELS,
-	);
+	const isQueryBuilderActive =
+		!featureFlags?.find((flag) => flag.name === FeatureKeys.QUERY_BUILDER_PANELS)
+			?.active || false;
 
 	const isNewTraceLogsAvailable =
 		isQueryBuilderActive &&
@@ -603,18 +605,16 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					</Flex>
 				</div>
 				{isSaveDisabled && (
-					<Tooltip title={MESSAGE.PANEL}>
-						<Button
-							type="primary"
-							data-testid="new-widget-save"
-							loading={updateDashboardMutation.isLoading}
-							disabled={isSaveDisabled}
-							onClick={onSaveDashboard}
-							className="save-btn"
-						>
-							Save Changes
-						</Button>
-					</Tooltip>
+					<Button
+						type="primary"
+						data-testid="new-widget-save"
+						loading={updateDashboardMutation.isLoading}
+						disabled={isSaveDisabled}
+						onClick={onSaveDashboard}
+						className="save-btn"
+					>
+						Save Changes
+					</Button>
 				)}
 				{!isSaveDisabled && (
 					<Button

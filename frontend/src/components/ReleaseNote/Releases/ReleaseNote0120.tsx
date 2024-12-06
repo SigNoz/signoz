@@ -3,10 +3,6 @@ import setFlags from 'api/user/setFlags';
 import MessageTip from 'components/MessageTip';
 import { useAppContext } from 'providers/App/App';
 import { useCallback } from 'react';
-import { useDispatch } from 'react-redux';
-import { Dispatch } from 'redux';
-import AppActions from 'types/actions';
-import { UPDATE_USER_FLAG } from 'types/actions/app';
 import { UserFlags } from 'types/api/user/setFlags';
 
 import ReleaseNoteProps from '../ReleaseNoteProps';
@@ -14,20 +10,13 @@ import ReleaseNoteProps from '../ReleaseNoteProps';
 export default function ReleaseNote0120({
 	release,
 }: ReleaseNoteProps): JSX.Element | null {
-	const { user } = useAppContext();
-
-	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const { user, setUserFlags } = useAppContext();
 
 	const handleDontShow = useCallback(async (): Promise<void> => {
 		const flags: UserFlags = { ReleaseNote0120Hide: 'Y' };
 
 		try {
-			dispatch({
-				type: UPDATE_USER_FLAG,
-				payload: {
-					flags,
-				},
-			});
+			setUserFlags(flags);
 			if (!user) {
 				// no user is set, so escape the routine
 				return;
@@ -43,7 +32,7 @@ export default function ReleaseNote0120({
 			// the user can switch the do no show option again in the further.
 			console.log('unexpected error: failed to complete do not show status', e);
 		}
-	}, [dispatch, user]);
+	}, [setUserFlags, user]);
 
 	return (
 		<MessageTip

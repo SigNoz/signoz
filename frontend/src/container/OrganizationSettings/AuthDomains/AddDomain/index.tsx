@@ -4,7 +4,6 @@ import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import createDomainApi from 'api/SAML/postDomain';
 import { FeatureKeys } from 'constants/features';
-import useFeatureFlag from 'hooks/useFeatureFlag/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
 import { useState } from 'react';
@@ -16,9 +15,9 @@ function AddDomain({ refetch }: Props): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
 	const [isAddDomains, setIsDomain] = useState(false);
 	const [form] = useForm<FormProps>();
-	const isSsoFlagEnabled = useFeatureFlag(FeatureKeys.SSO);
-
-	const { org } = useAppContext();
+	const { featureFlags, org } = useAppContext();
+	const isSsoFlagEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
 
 	const { notifications } = useNotifications();
 
