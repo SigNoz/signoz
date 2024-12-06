@@ -58,7 +58,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 				...prev,
 				...userData.payload,
 			}));
-			setIsLoggedIn(true);
 			setOrg((prev) => {
 				if (!prev) {
 					// if no org is present enter a new entry
@@ -157,6 +156,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 				refreshJwt: event.detail.refreshJWT,
 				id: event.detail.id,
 			}));
+			setIsLoggedIn(true);
 		}
 	});
 
