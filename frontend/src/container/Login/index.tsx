@@ -6,13 +6,11 @@ import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
-import AppReducer from 'types/reducer/app';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
 
@@ -37,7 +35,7 @@ function Login({
 }: LoginProps): JSX.Element {
 	const { t } = useTranslation(['login']);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const [precheckResult, setPrecheckResult] = useState<PrecheckResultType>({
 		sso: false,

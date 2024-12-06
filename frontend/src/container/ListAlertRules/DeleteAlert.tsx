@@ -25,6 +25,7 @@ function DeleteAlert({
 		payload: undefined,
 	});
 
+	// TODO[vikrantgupta25]: check with sagar
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);

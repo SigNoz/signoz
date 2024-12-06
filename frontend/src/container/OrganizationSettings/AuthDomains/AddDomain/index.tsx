@@ -6,11 +6,9 @@ import createDomainApi from 'api/SAML/postDomain';
 import { FeatureKeys } from 'constants/features';
 import useFeatureFlag from 'hooks/useFeatureFlag/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 
 import { Container } from '../styles';
 
@@ -20,7 +18,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 	const [form] = useForm<FormProps>();
 	const isSsoFlagEnabled = useFeatureFlag(FeatureKeys.SSO);
 
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { org } = useAppContext();
 
 	const { notifications } = useNotifications();
 

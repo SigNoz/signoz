@@ -1,9 +1,7 @@
 import { Divider, Space } from 'antd';
 import { FeatureKeys } from 'constants/features';
 import { useIsFeatureDisabled } from 'hooks/useFeatureFlag';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
+import { useAppContext } from 'providers/App/App';
 
 import AuthDomains from './AuthDomains';
 import DisplayName from './DisplayName';
@@ -11,7 +9,7 @@ import Members from './Members';
 import PendingInvitesContainer from './PendingInvitesContainer';
 
 function OrganizationSettings(): JSX.Element {
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { org } = useAppContext();
 
 	const isNotSSO = useIsFeatureDisabled(FeatureKeys.SSO);
 

@@ -1,21 +1,20 @@
 import { Button, Space } from 'antd';
 import setFlags from 'api/user/setFlags';
 import MessageTip from 'components/MessageTip';
+import { useAppContext } from 'providers/App/App';
 import { useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_USER_FLAG } from 'types/actions/app';
 import { UserFlags } from 'types/api/user/setFlags';
-import AppReducer from 'types/reducer/app';
 
 import ReleaseNoteProps from '../ReleaseNoteProps';
 
 export default function ReleaseNote0120({
 	release,
 }: ReleaseNoteProps): JSX.Element | null {
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
@@ -34,7 +33,7 @@ export default function ReleaseNote0120({
 				return;
 			}
 
-			const response = await setFlags({ userId: user?.userId, flags });
+			const response = await setFlags({ userId: user.id, flags });
 
 			if (response.statusCode !== 200) {
 				console.log('failed to complete do not show status', response.error);

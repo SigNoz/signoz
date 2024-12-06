@@ -22,11 +22,8 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
 import { v4 } from 'uuid';
 
 import WidgetHeader from '../WidgetHeader';
@@ -77,10 +74,6 @@ function WidgetGraphComponent({
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
-	const featureResponse = useSelector<AppState, AppReducer['featureResponse']>(
-		(state) => state.app.featureResponse,
-	);
-
 	const onToggleModal = useCallback(
 		(func: Dispatch<SetStateAction<boolean>>) => {
 			func((value) => !value);
@@ -117,7 +110,6 @@ function WidgetGraphComponent({
 					setSelectedDashboard(updatedDashboard.payload);
 				}
 				setDeleteModal(false);
-				featureResponse.refetch();
 			},
 			onError: () => {
 				notifications.error({

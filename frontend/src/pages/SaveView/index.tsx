@@ -31,15 +31,13 @@ import {
 	Trash2,
 	X,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
-import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
 import { ROUTES_VS_SOURCEPAGE, SOURCEPAGE_VS_ROUTES } from './constants';
@@ -68,7 +66,7 @@ function SaveView(): JSX.Element {
 		setIsDeleteModalOpen(false);
 	};
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const handleDeleteModelOpen = (uuid: string, name: string): void => {
 		setActiveViewKey(uuid);
@@ -243,7 +241,7 @@ function SaveView(): JSX.Element {
 				// Combine time and date
 				const formattedDateAndTime = `${formattedTime} ⎯ ${formattedDate}`;
 
-				const isEditDeleteSupported = allowedRoles.includes(role as string);
+				const isEditDeleteSupported = allowedRoles.includes(user.role as string);
 
 				return (
 					<div className="column-render">

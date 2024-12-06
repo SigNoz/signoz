@@ -18,7 +18,6 @@ import {
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import useFeatureFlags from 'hooks/useFeatureFlag';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';

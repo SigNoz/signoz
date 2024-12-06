@@ -10,13 +10,11 @@ import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import useFeatureFlag from 'hooks/useFeatureFlag/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
 import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { AuthDomain } from 'types/api/SAML/listDomain';
-import AppReducer from 'types/reducer/app';
 import { v4 } from 'uuid';
 
 import AddDomain from './AddDomain';
@@ -29,7 +27,7 @@ import SwitchComponent from './Switch';
 function AuthDomains(): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
 	const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { org } = useAppContext();
 	const [currentDomain, setCurrentDomain] = useState<AuthDomain>();
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 

@@ -44,14 +44,12 @@ import {
 	View,
 	X,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
-import { AppState } from 'store/reducers';
 import { APIKeyProps } from 'types/api/pat/types';
-import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
 export const showErrorNotification = (
@@ -99,7 +97,7 @@ export const getDateDifference = (
 };
 
 function APIKeys(): JSX.Element {
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 	const { notifications } = useNotifications();
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);

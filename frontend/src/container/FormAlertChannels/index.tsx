@@ -11,9 +11,8 @@ import {
 	SlackChannel,
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
-import useFeatureFlags from 'hooks/useFeatureFlag';
-import { isFeatureKeys } from 'hooks/useFeatureFlag/utils';
 import history from 'lib/history';
+import { useAppContext } from 'providers/App/App';
 import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -39,7 +38,10 @@ function FormAlertChannels({
 	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
-	const isUserOnEEPlan = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN);
+	const { featureFlags } = useAppContext();
+	const isUserOnEEPlan =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.ENTERPRISE_PLAN)
+			?.active || false;
 
 	const feature = `ALERT_CHANNEL_${type.toUpperCase()}`;
 

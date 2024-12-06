@@ -1,6 +1,5 @@
 import * as Sentry from '@sentry/react';
 import { FeatureKeys } from 'constants/features';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 
 import ServiceMetrics from './ServiceMetrics';

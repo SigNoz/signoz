@@ -5,21 +5,18 @@ import { Button, Card, Flex, Input, Space, Typography } from 'antd';
 import editUser from 'api/user/editUser';
 import { useNotifications } from 'hooks/useNotifications';
 import { PencilIcon } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_USER } from 'types/actions/app';
-import AppReducer from 'types/reducer/app';
 
 import { NameInput } from '../styles';
 
 function UserInfo(): JSX.Element {
-	const { user, role, org, userFlags } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const { user, org } = useAppContext();
 	const { t } = useTranslation();
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
@@ -37,7 +34,7 @@ function UserInfo(): JSX.Element {
 			setLoading(true);
 			const { statusCode } = await editUser({
 				name: changedName,
-				userId: user.userId,
+				userId: user.id,
 			});
 
 			if (statusCode === 200) {
@@ -50,11 +47,12 @@ function UserInfo(): JSX.Element {
 					type: UPDATE_USER,
 					payload: {
 						...user,
+						userId: user.id,
 						name: changedName,
-						ROLE: role || 'ADMIN',
+						ROLE: user.role || 'ADMIN',
 						orgId: org[0].id,
 						orgName: org[0].name,
-						userFlags: userFlags || {},
+						userFlags: user.flags || {},
 					},
 				});
 			} else {
@@ -132,7 +130,7 @@ function UserInfo(): JSX.Element {
 					</Typography>
 					<Input
 						className="userInfo-value"
-						value={role || ''}
+						value={user.role || ''}
 						disabled
 						data-testid="role-textbox"
 					/>

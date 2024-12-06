@@ -39,7 +39,6 @@ import { ColumnUnit, Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
-import AppReducer from 'types/reducer/app';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType, getGraphTypeForFormat } from 'utils/getGraphType';
 
@@ -85,9 +84,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		[currentQuery, stagedQuery],
 	);
 
-	const { featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -446,7 +442,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			onSuccess: () => {
 				setSelectedDashboard(dashboard);
 				setToScrollWidgetId(selectedWidget?.id || '');
-				featureResponse.refetch();
 				history.push({
 					pathname: generatePath(ROUTES.DASHBOARD, { dashboardId }),
 				});
@@ -467,7 +462,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		handleError,
 		setSelectedDashboard,
 		setToScrollWidgetId,
-		featureResponse,
 		dashboardId,
 	]);
 
