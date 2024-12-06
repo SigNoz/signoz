@@ -1,5 +1,6 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
+import { Logout } from 'api/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
@@ -43,6 +44,13 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	);
 	const [org, setOrg] = useState<Organization[] | null>(null);
+
+	// if the user.id is not present, for migration older cases then we need to logout
+	useEffect(() => {
+		if (!user.id) {
+			Logout();
+		}
+	}, [user]);
 
 	// fetcher for user
 	// user will only be fetched if the user id and token is present

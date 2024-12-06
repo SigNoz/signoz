@@ -136,7 +136,7 @@ function App(): JSX.Element {
 				setLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER, 'true');
 			}
 
-			let updatedRoutes = routes;
+			let updatedRoutes = defaultRoutes;
 			// if the user is a cloud user
 			if (isCloudUserVal || isEECloudUser()) {
 				// if the user is on basic plan then remove billing
@@ -161,7 +161,6 @@ function App(): JSX.Element {
 		user,
 		licenses,
 		isCloudUserVal,
-		routes,
 		isFetchingLicenses,
 		isFetchingUser,
 	]);

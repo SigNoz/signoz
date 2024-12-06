@@ -145,14 +145,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		}
 	}, [org]);
 
-	console.log(isLoggedInState);
-
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		// if it is an old route navigate to the new route
-		console.log('1');
 		if (isOldRoute) {
-			console.log('2');
 			const redirectUrl = oldNewRoutesMapping[pathname];
 
 			const newLocation = {
@@ -164,33 +160,24 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 		// if the current route
 		if (currentRoute) {
-			console.log('3');
 			const { isPrivate, key } = currentRoute;
 			if (isPrivate) {
-				console.log('4');
 				if (isLoggedInState) {
-					console.log('5');
 					const route = routePermission[key];
 					if (route && route.find((e) => e === user.role) === undefined) {
-						console.log('6');
 						history.push(ROUTES.UN_AUTHORIZED);
 					}
 				} else {
-					console.log('7');
 					history.push(ROUTES.LOGIN);
 				}
 			} else if (isLoggedInState) {
-				console.log('8');
 				history.push(ROUTES.APPLICATION);
 			} else {
-				console.log('9');
 				history.push(ROUTES.LOGIN);
 			}
 		} else if (isLoggedInState) {
-			console.log('10');
 			history.push(ROUTES.APPLICATION);
 		} else {
-			console.log('11');
 			history.push(ROUTES.LOGIN);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
