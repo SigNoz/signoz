@@ -27,6 +27,7 @@ import { AxiosError } from 'axios';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
+import { sanitizeDashboardData } from 'container/NewDashboard/DashboardDescription';
 import { downloadObjectAsJson } from 'container/NewDashboard/DashboardDescription/utils';
 import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
 import dayjs from 'dayjs';
@@ -68,12 +69,18 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, Link } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
-import { Dashboard } from 'types/api/dashboard/getAll';
+import {
+	Dashboard,
+	IDashboardVariable,
+	WidgetRow,
+	Widgets,
+} from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { isCloudUser } from 'utils/app';
 
@@ -262,6 +269,11 @@ function DashboardsList(): JSX.Element {
 			isLocked: !!e.isLocked || false,
 			lastUpdatedBy: e.updated_by,
 			image: e.data.image || Base64Icons[0],
+			variables: e.data.variables,
+			widgets: e.data.widgets,
+			layout: e.data.layout,
+			panelMap: e.data.panelMap,
+			version: e.data.version,
 			refetchDashboardList,
 		})) || [];
 
@@ -455,7 +467,10 @@ function DashboardsList(): JSX.Element {
 				const handleJsonExport = (event: React.MouseEvent<HTMLElement>): void => {
 					event.stopPropagation();
 					event.preventDefault();
-					downloadObjectAsJson(dashboard, dashboard.name);
+					downloadObjectAsJson(
+						sanitizeDashboardData({ ...dashboard, title: dashboard.name }),
+						dashboard.name,
+					);
 				};
 
 				return (
@@ -1121,6 +1136,11 @@ export interface Data {
 	isLocked: boolean;
 	id: string;
 	image?: string;
+	widgets?: Array<WidgetRow | Widgets>;
+	layout?: Layout[];
+	panelMap?: Record<string, { widgets: Layout[]; collapsed: boolean }>;
+	variables: Record<string, IDashboardVariable>;
+	version?: string;
 }
 
 export default DashboardsList;
