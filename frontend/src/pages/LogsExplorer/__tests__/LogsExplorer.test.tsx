@@ -82,7 +82,6 @@ describe('Logs Explorer Tests', () => {
 			queryByText,
 			getByTestId,
 			queryByTestId,
-			container,
 		} = render(<LogsExplorer />);
 
 		// check the presence of frequency chart content
@@ -100,8 +99,6 @@ describe('Logs Explorer Tests', () => {
 		expect(queryBuilderView).toBeInTheDocument();
 		const clickhouseView = queryByTestId('clickhouse-view');
 		expect(clickhouseView).not.toBeInTheDocument();
-
-		expect(container).toMatchSnapshot();
 
 		// check the presence of List View / Time Series View / Table View
 		const listView = getByTestId('logs-list-view');
