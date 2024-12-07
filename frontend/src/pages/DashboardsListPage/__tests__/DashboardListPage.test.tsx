@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import ROUTES from 'constants/routes';
 import DashboardsList from 'container/ListOfDashboard';
+import * as dashboardUtils from 'container/NewDashboard/DashboardDescription';
 import {
 	dashboardEmptyState,
 	dashboardSuccessResponse,
@@ -10,6 +11,10 @@ import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
+
+jest.mock('container/NewDashboard/DashboardDescription', () => ({
+	sanitizeDashboardData: jest.fn(),
+}));
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -208,7 +213,7 @@ describe('dashboard list page', () => {
 		);
 	});
 
-	it('ensure that the popover actions on each list item renders list of options', async () => {
+	it('ensure that the popover action renders list of options and export JSON works correctly', async () => {
 		const { getByText, getAllByTestId } = render(
 			<MemoryRouter initialEntries={['/dashbords']}>
 				<DashboardProvider>
@@ -226,5 +231,8 @@ describe('dashboard list page', () => {
 		expect(getByText('View')).toBeInTheDocument();
 		expect(getByText('Copy Link')).toBeInTheDocument();
 		expect(getByText('Export JSON')).toBeInTheDocument();
+
+		fireEvent.click(getByText('Export JSON'));
+		expect(dashboardUtils.sanitizeDashboardData).toHaveBeenCalled();
 	});
 });
