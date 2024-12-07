@@ -1,7 +1,10 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import ROUTES from 'constants/routes';
 import DashboardsList from 'container/ListOfDashboard';
-import { dashboardEmptyState } from 'mocks-server/__mockdata__/dashboards';
+import {
+	dashboardEmptyState,
+	dashboardSuccessResponse,
+} from 'mocks-server/__mockdata__/dashboards';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
@@ -203,5 +206,25 @@ describe('dashboard list page', () => {
 				'_blank',
 			),
 		);
+	});
+
+	it('ensure that the popover actions on each list item renders list of options', async () => {
+		const { getByText, getAllByTestId } = render(
+			<MemoryRouter initialEntries={['/dashbords']}>
+				<DashboardProvider>
+					<DashboardsList />
+				</DashboardProvider>
+			</MemoryRouter>,
+		);
+
+		await waitFor(() => {
+			const popovers = getAllByTestId('dashboard-action-popover');
+			expect(popovers).toHaveLength(dashboardSuccessResponse.data.length);
+			fireEvent.click([...popovers[0].children][0]);
+		});
+
+		expect(getByText('View')).toBeInTheDocument();
+		expect(getByText('Copy Link')).toBeInTheDocument();
+		expect(getByText('Export JSON')).toBeInTheDocument();
 	});
 });
