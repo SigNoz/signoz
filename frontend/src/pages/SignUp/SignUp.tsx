@@ -8,9 +8,9 @@ import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -61,7 +61,10 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
 
-	const isOnboardingEnabled = useFeatureFlag(FeatureKeys.ONBOARDING)?.active;
+	const { featureFlags } = useAppContext();
+	const isOnboardingEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
+		false;
 
 	const getInviteDetailsResponse = useQuery({
 		queryFn: () =>

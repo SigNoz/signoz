@@ -7,15 +7,13 @@ import { ResizeTable } from 'components/ResizeTable';
 import { INVITE_MEMBERS_HASH } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/user/getPendingInvites';
-import AppReducer from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
 import InviteUserModal from '../InviteUserModal/InviteUserModal';
@@ -30,7 +28,7 @@ function PendingInvitesContainer(): JSX.Element {
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const [state, setText] = useCopyToClipboard();
 	const { notifications } = useNotifications();
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	useEffect(() => {
 		if (state.error) {

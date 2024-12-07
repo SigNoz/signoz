@@ -5,14 +5,10 @@ import { Button, Divider, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
-import AppReducer from 'types/reducer/app';
 
 import AlertInfoCard from './AlertInfoCard';
 import { ALERT_CARDS, ALERT_INFO_LINKS } from './alertLinks';
@@ -32,36 +28,18 @@ const alertLogEvents = (
 };
 
 export function AlertsEmptyState(): JSX.Element {
-	const { t } = useTranslation('common');
-	const { role, featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const { user } = useAppContext();
 	const [addNewAlert] = useComponentPermission(
 		['add_new_alert', 'action'],
-		role,
+		user.role,
 	);
-
-	const { notifications: notificationsApi } = useNotifications();
-
-	const handleError = useCallback((): void => {
-		notificationsApi.error({
-			message: t('something_went_wrong'),
-		});
-	}, [notificationsApi, t]);
 
 	const [loading, setLoading] = useState(false);
 
 	const onClickNewAlertHandler = useCallback(() => {
-		setLoading(true);
-		featureResponse
-			.refetch()
-			.then(() => {
-				setLoading(false);
-				history.push(ROUTES.ALERTS_NEW);
-			})
-			.catch(handleError)
-			.finally(() => setLoading(false));
-	}, [featureResponse, handleError]);
+		setLoading(false);
+		history.push(ROUTES.ALERTS_NEW);
+	}, []);
 
 	return (
 		<div className="alert-list-container">
