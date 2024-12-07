@@ -218,7 +218,7 @@ describe('dashboard list page', () => {
 		);
 
 		await waitFor(() => {
-			const popovers = getAllByTestId('dashboard-action-popover');
+			const popovers = getAllByTestId('dashboard-action-icon');
 			expect(popovers).toHaveLength(dashboardSuccessResponse.data.length);
 			fireEvent.click([...popovers[0].children][0]);
 		});
