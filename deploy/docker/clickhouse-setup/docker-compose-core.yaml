@@ -72,7 +72,9 @@ services:
     image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.14}
     container_name: otel-migrator
     command:
+      - "sync" 
       - "--dsn=tcp://clickhouse:9000"
+      - "--up=" 
     depends_on:
       clickhouse:
         condition: service_healthy
