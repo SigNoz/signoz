@@ -12,5 +12,7 @@ env OTEL_PHP_AUTOLOAD_ENABLED=true \
     <your-run-command>
 ```
 
-- <COLLECTOR_ENDPOINT> - Endpoint at which the collector is running. Ex. -> `http://localhost:4317`
+- <COLLECTOR_ENDPOINT> - Endpoint at which the collector is running. Ex. -> `http://$(Otel-agent-IP):4317`
 - <your-run-command> - Run command for your PHP application
+
+**Note:** Checkout this [documentation](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/#send-data-from-instrumented-applications) to understand how to get the `Otel-agent-IP`.
