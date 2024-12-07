@@ -521,65 +521,64 @@ function DashboardsList(): JSX.Element {
 							</div>
 
 							{action && (
-								<div data-testid="dashboard-action-popover">
-									<Popover
-										trigger="click"
-										content={
-											<div className="dashboard-action-content">
-												<section className="section-1">
-													<Button
-														type="text"
-														className="action-btn"
-														icon={<Expand size={12} />}
-														onClick={onClickHandler}
-													>
-														View
-													</Button>
-													<Button
-														type="text"
-														className="action-btn"
-														icon={<Link2 size={12} />}
-														onClick={(e): void => {
-															e.stopPropagation();
-															e.preventDefault();
-															setCopy(`${window.location.origin}${getLink()}`);
-														}}
-													>
-														Copy Link
-													</Button>
-													<Button
-														type="text"
-														className="action-btn"
-														icon={<FileJson size={12} />}
-														onClick={handleJsonExport}
-													>
-														Export JSON
-													</Button>
-												</section>
-												<section className="section-2">
-													<DeleteButton
-														name={dashboard.name}
-														id={dashboard.id}
-														isLocked={dashboard.isLocked}
-														createdBy={dashboard.createdBy}
-													/>
-												</section>
-											</div>
-										}
-										placement="bottomRight"
-										arrow={false}
-										rootClassName="dashboard-actions"
-									>
-										<EllipsisVertical
-											className="dashboard-action-icon"
-											size={14}
-											onClick={(e): void => {
-												e.stopPropagation();
-												e.preventDefault();
-											}}
-										/>
-									</Popover>
-								</div>
+								<Popover
+									trigger="click"
+									content={
+										<div className="dashboard-action-content">
+											<section className="section-1">
+												<Button
+													type="text"
+													className="action-btn"
+													icon={<Expand size={12} />}
+													onClick={onClickHandler}
+												>
+													View
+												</Button>
+												<Button
+													type="text"
+													className="action-btn"
+													icon={<Link2 size={12} />}
+													onClick={(e): void => {
+														e.stopPropagation();
+														e.preventDefault();
+														setCopy(`${window.location.origin}${getLink()}`);
+													}}
+												>
+													Copy Link
+												</Button>
+												<Button
+													type="text"
+													className="action-btn"
+													icon={<FileJson size={12} />}
+													onClick={handleJsonExport}
+												>
+													Export JSON
+												</Button>
+											</section>
+											<section className="section-2">
+												<DeleteButton
+													name={dashboard.name}
+													id={dashboard.id}
+													isLocked={dashboard.isLocked}
+													createdBy={dashboard.createdBy}
+												/>
+											</section>
+										</div>
+									}
+									placement="bottomRight"
+									arrow={false}
+									rootClassName="dashboard-actions"
+								>
+									<EllipsisVertical
+										className="dashboard-action-icon"
+										size={14}
+										data-testid="dashboard-action-icon"
+										onClick={(e): void => {
+											e.stopPropagation();
+											e.preventDefault();
+										}}
+									/>
+								</Popover>
 							)}
 						</div>
 						<div className="dashboard-details">
