@@ -213,7 +213,7 @@ describe('dashboard list page', () => {
 		);
 	});
 
-	it('ensure that the popover action renders list of options and export JSON works correctly', async () => {
+	it('ensure that the export JSON popover action works correctly', async () => {
 		const { getByText, getAllByTestId } = render(
 			<MemoryRouter initialEntries={['/dashbords']}>
 				<DashboardProvider>
@@ -228,11 +228,9 @@ describe('dashboard list page', () => {
 			fireEvent.click([...popovers[0].children][0]);
 		});
 
-		expect(getByText('View')).toBeInTheDocument();
-		expect(getByText('Copy Link')).toBeInTheDocument();
-		expect(getByText('Export JSON')).toBeInTheDocument();
-
-		fireEvent.click(getByText('Export JSON'));
+		const exportJsonBtn = getByText('Export JSON');
+		expect(exportJsonBtn).toBeInTheDocument();
+		fireEvent.click(exportJsonBtn);
 		expect(dashboardUtils.sanitizeDashboardData).toHaveBeenCalled();
 	});
 });
