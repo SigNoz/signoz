@@ -82,10 +82,6 @@ function MessagingQueueOverview({
 					? 'producer'
 					: 'consumer'
 				: undefined,
-		evalTime:
-			selectedView === MessagingQueuesViewType.dropRate.value
-				? 2363404
-				: undefined,
 	};
 
 	return (
