@@ -5,11 +5,13 @@ import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
+import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
 import store from 'store';
 import {
 	LicenseEvent,
@@ -36,8 +38,7 @@ afterEach(() => {
 	jest.useRealTimers();
 });
 
-const mockStore = configureStore([]);
-
+const mockStore = configureStore([thunk]);
 const mockStored = (role?: string): any =>
 	mockStore({
 		...store.getState(),
@@ -321,16 +322,18 @@ function AllTheProviders({
 	role: string; // Define the role prop
 }): ReactElement {
 	return (
-		<ResourceProvider>
-			<QueryClientProvider client={queryClient}>
-				<AppContext.Provider value={getAppContextMock(role)}>
-					<Provider store={mockStored(role)}>
-						{/* Use the mock store with the provided role */}
-						<BrowserRouter>{children}</BrowserRouter>
-					</Provider>
-				</AppContext.Provider>
-			</QueryClientProvider>
-		</ResourceProvider>
+		<QueryClientProvider client={queryClient}>
+			<ResourceProvider>
+				<Provider store={mockStored(role)}>
+					<AppContext.Provider value={getAppContextMock(role)}>
+						<BrowserRouter>
+							{/* Use the mock store with the provided role */}
+							<QueryBuilderProvider>{children}</QueryBuilderProvider>
+						</BrowserRouter>
+					</AppContext.Provider>
+				</Provider>
+			</ResourceProvider>
+		</QueryClientProvider>
 	);
 }
 

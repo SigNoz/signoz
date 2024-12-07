@@ -1,6 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import userEvent from '@testing-library/user-event';
-import { findByText, render, waitFor } from 'tests/test-utils';
+import { findByText, fireEvent, render, waitFor } from 'tests/test-utils';
 
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
 import PipelineListsView from '../PipelineListsView';
@@ -89,7 +88,7 @@ describe('PipelinePage container test', () => {
 		expect(getByText('method = POST')).toBeInTheDocument();
 	});
 
-	it.only('should render expanded content and edit mode correctly', async () => {
+	it('should render expanded content and edit mode correctly', async () => {
 		const { getByText } = render(
 			<PipelineListsView
 				setActionType={jest.fn()}
@@ -111,7 +110,7 @@ describe('PipelinePage container test', () => {
 		);
 		expect(expandIcon.length).toBe(2);
 
-		await userEvent.click(expandIcon[0]);
+		await fireEvent.click(expandIcon[0]);
 
 		// assert expanded view
 		expect(document.querySelector('.anticon-down')).toBeInTheDocument();
@@ -140,14 +139,14 @@ describe('PipelinePage container test', () => {
 			'.ant-table-row-expand-icon-cell > span[class*="anticon-right"]',
 		);
 		expect(expandIcon.length).toBe(2);
-		await userEvent.click(expandIcon[0]);
+		await fireEvent.click(expandIcon[0]);
 
 		const switchToggle = document.querySelector(
 			'.ant-table-expanded-row .ant-switch',
 		);
 
 		expect(switchToggle).toBeChecked();
-		await userEvent.click(switchToggle as HTMLElement);
+		await fireEvent.click(switchToggle as HTMLElement);
 		expect(switchToggle).not.toBeChecked();
 
 		const deleteBtns = document.querySelectorAll(
@@ -157,7 +156,7 @@ describe('PipelinePage container test', () => {
 		expect(deleteBtns.length).toBe(2);
 
 		// delete pipeline
-		await userEvent.click(deleteBtns[0] as HTMLElement);
+		await fireEvent.click(deleteBtns[0] as HTMLElement);
 
 		let deleteConfirmationModal;
 
@@ -166,7 +165,7 @@ describe('PipelinePage container test', () => {
 			expect(deleteConfirmationModal).toBeInTheDocument();
 		});
 
-		await userEvent.click(
+		await fireEvent.click(
 			((deleteConfirmationModal as unknown) as HTMLElement)?.querySelector(
 				'.ant-modal-confirm-btns .ant-btn-primary',
 			) as HTMLElement,
@@ -196,12 +195,12 @@ describe('PipelinePage container test', () => {
 		const switchToggle = document.querySelectorAll('.ant-switch');
 
 		expect(switchToggle[0]).not.toBeChecked();
-		await userEvent.click(switchToggle[0] as HTMLElement);
+		await fireEvent.click(switchToggle[0] as HTMLElement);
 		expect(switchToggle[0]).toBeChecked();
 
 		// view pipeline
 		const viewBtn = document.querySelectorAll('[data-icon="eye"]');
-		await userEvent.click(viewBtn[0] as HTMLElement);
+		await fireEvent.click(viewBtn[0] as HTMLElement);
 
 		const viewPipelineModal = document.querySelector('.ant-modal-wrap');
 		expect(viewPipelineModal).toBeInTheDocument();
@@ -213,7 +212,7 @@ describe('PipelinePage container test', () => {
 			),
 		).toBeInTheDocument();
 
-		await userEvent.click(
+		await fireEvent.click(
 			viewPipelineModal?.querySelector(
 				'button[class*="ant-modal-close"]',
 			) as HTMLElement,
@@ -222,7 +221,7 @@ describe('PipelinePage container test', () => {
 		const deleteBtns = document.querySelectorAll('[data-icon="delete"]');
 
 		// delete pipeline
-		await userEvent.click(deleteBtns[0] as HTMLElement);
+		await fireEvent.click(deleteBtns[0] as HTMLElement);
 		let deleteConfirmationModal;
 
 		await waitFor(async () => {
@@ -230,7 +229,7 @@ describe('PipelinePage container test', () => {
 			expect(deleteConfirmationModal).toBeInTheDocument();
 		});
 
-		await userEvent.click(
+		await fireEvent.click(
 			((deleteConfirmationModal as unknown) as HTMLElement)?.querySelector(
 				'.ant-modal-confirm-btns .ant-btn-primary',
 			) as HTMLElement,
@@ -240,6 +239,6 @@ describe('PipelinePage container test', () => {
 
 		const saveBtn = getByText('save_configuration');
 		expect(saveBtn).toBeInTheDocument();
-		await userEvent.click(saveBtn);
+		await fireEvent.click(saveBtn);
 	});
 });
