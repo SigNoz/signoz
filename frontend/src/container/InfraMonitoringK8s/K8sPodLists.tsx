@@ -1,4 +1,4 @@
-import './InfraMonitoring.styles.scss';
+import './InfraMonitoringK8s.styles.scss';
 
 import { LoadingOutlined } from '@ant-design/icons';
 import {
@@ -11,26 +11,26 @@ import {
 } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
-import { HostListPayload } from 'api/infraMonitoring/getHostLists';
+import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
 import HostMetricDetail from 'components/HostMetricsDetail';
-import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
+import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
-import HostsListControls from './HostsListControls';
+import K8sEmptyOrIncorrectMetrics from './K8sEmptyOrIncorrectMetrics';
+import K8sHeader from './K8sHeader';
 import {
 	formatDataForTable,
-	getHostListsQuery,
-	getHostsListColumns,
-	HostRowData,
+	getK8sPodsListColumns,
+	getK8sPodsListQuery,
+	K8sPodsRowData,
 } from './utils';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function HostsList(): JSX.Element {
+function K8sPodsList(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -51,7 +51,7 @@ function HostsList(): JSX.Element {
 	const pageSize = 10;
 
 	const query = useMemo(() => {
-		const baseQuery = getHostListsQuery();
+		const baseQuery = getK8sPodsListQuery();
 		return {
 			...baseQuery,
 			limit: pageSize,
@@ -63,8 +63,8 @@ function HostsList(): JSX.Element {
 		};
 	}, [currentPage, filters, minTime, maxTime, orderBy]);
 
-	const { data, isFetching, isLoading, isError } = useGetHostList(
-		query as HostListPayload,
+	const { data, isFetching, isLoading, isError } = useGetK8sPodsList(
+		query as K8sPodsListPayload,
 		{
 			queryKey: ['hostList', query],
 			enabled: !!query,
@@ -91,13 +91,13 @@ function HostsList(): JSX.Element {
 		[hostMetricsData],
 	);
 
-	const columns = useMemo(() => getHostsListColumns(), []);
+	const columns = useMemo(() => getK8sPodsListColumns(), []);
 
-	const handleTableChange: TableProps<HostRowData>['onChange'] = useCallback(
+	const handleTableChange: TableProps<K8sPodsRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
 			_filters: Record<string, (string | number | boolean)[] | null>,
-			sorter: SorterResult<HostRowData> | SorterResult<HostRowData>[],
+			sorter: SorterResult<K8sPodsRowData> | SorterResult<K8sPodsRowData>[],
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
@@ -122,7 +122,7 @@ function HostsList(): JSX.Element {
 				setFilters(value);
 				setCurrentPage(1);
 
-				logEvent('Infra Monitoring: Hosts list filters applied', {
+				logEvent('Infra Monitoring: K8s list filters applied', {
 					filters: value,
 				});
 			}
@@ -131,7 +131,7 @@ function HostsList(): JSX.Element {
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Hosts list page visited', {});
+		logEvent('Infra Monitoring: K8s list page visited', {});
 	}, []);
 
 	const selectedHostData = useMemo(() => {
@@ -141,10 +141,10 @@ function HostsList(): JSX.Element {
 		);
 	}, [selectedHostName, hostMetricsData]);
 
-	const handleRowClick = (record: HostRowData): void => {
+	const handleRowClick = (record: K8sPodsRowData): void => {
 		setSelectedHostName(record.hostName);
 
-		logEvent('Infra Monitoring: Hosts list item clicked', {
+		logEvent('Infra Monitoring: K8s list item clicked', {
 			host: record.hostName,
 		});
 	};
@@ -172,12 +172,12 @@ function HostsList(): JSX.Element {
 		!filters.items.length;
 
 	return (
-		<div className="hosts-list">
-			<HostsListControls handleFiltersChange={handleFiltersChange} />
+		<div className="k8s-list">
+			<K8sHeader handleFiltersChange={handleFiltersChange} />
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
 			{showHostsEmptyState && (
-				<HostsEmptyOrIncorrectMetrics
+				<K8sEmptyOrIncorrectMetrics
 					noData={!sentAnyHostMetricsData}
 					incorrectData={isSendingIncorrectK8SAgentMetrics}
 				/>
@@ -200,21 +200,21 @@ function HostsList(): JSX.Element {
 			)}
 
 			{(isFetching || isLoading) && (
-				<div className="hosts-list-loading-state">
+				<div className="k8s-list-loading-state">
 					<Skeleton.Input
-						className="hosts-list-loading-state-item"
+						className="k8s-list-loading-state-item"
 						size="large"
 						block
 						active
 					/>
 					<Skeleton.Input
-						className="hosts-list-loading-state-item"
+						className="k8s-list-loading-state-item"
 						size="large"
 						block
 						active
 					/>
 					<Skeleton.Input
-						className="hosts-list-loading-state-item"
+						className="k8s-list-loading-state-item"
 						size="large"
 						block
 						active
@@ -224,7 +224,7 @@ function HostsList(): JSX.Element {
 
 			{showHostsTable && (
 				<Table
-					className="hosts-list-table"
+					className="k8s-list-table"
 					dataSource={isFetching || isLoading ? [] : formattedHostMetricsData}
 					columns={columns}
 					pagination={{
@@ -258,4 +258,4 @@ function HostsList(): JSX.Element {
 	);
 }
 
-export default HostsList;
+export default K8sPodsList;
