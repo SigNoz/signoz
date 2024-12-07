@@ -28,7 +28,7 @@ import { USER_ROLES } from 'types/roles';
 import { IAppContext, IUser } from './types';
 import { getUserDefaults } from './utils';
 
-const AppContext = createContext<IAppContext | undefined>(undefined);
+export const AppContext = createContext<IAppContext | undefined>(undefined);
 
 export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	// on load of the provider set the user defaults with access jwt , refresh jwt and user id from local storage
@@ -266,7 +266,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			userFetchError,
 		],
 	);
-
 	return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
