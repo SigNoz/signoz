@@ -4,8 +4,7 @@ import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
 import AlertStatus from 'container/TriggeredAlerts/TableComponents/AlertStatus';
-import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
-import getFormattedDate from 'lib/getFormatedDate';
+import { useTimezone } from 'providers/Timezone';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Value } from './Filter';
@@ -16,6 +15,7 @@ function NoFilterTable({
 	selectedFilter,
 }: NoFilterTableProps): JSX.Element {
 	const filteredAlerts = FilterAlerts(allAlerts, selectedFilter);
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	// need to add the filter
 	const columns: ColumnsType<Alerts> = [
@@ -83,15 +83,12 @@ function NoFilterTable({
 			width: 100,
 			sorter: (a, b): number =>
 				new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-			render: (date): JSX.Element => {
-				const formatedDate = new Date(date);
-
-				return (
-					<Typography>{`${getFormattedDate(formatedDate)} ${convertDateToAmAndPm(
-						formatedDate,
-					)}`}</Typography>
-				);
-			},
+			render: (date): JSX.Element => (
+				<Typography>{`${formatTimezoneAdjustedTimestamp(
+					date,
+					'MM/DD/YYYY hh:mm:ss A (UTC Z)',
+				)}`}</Typography>
+			),
 		},
 	];
 

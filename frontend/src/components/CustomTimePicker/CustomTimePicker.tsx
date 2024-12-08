@@ -15,11 +15,14 @@ import { isValidTimeFormat } from 'lib/getMinMax';
 import { defaultTo, isFunction, noop } from 'lodash-es';
 import debounce from 'lodash-es/debounce';
 import { CheckCircle, ChevronDown, Clock } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 import {
 	ChangeEvent,
 	Dispatch,
 	SetStateAction,
+	useCallback,
 	useEffect,
+	useMemo,
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -28,6 +31,8 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
 
 const maxAllowedMinTimeInMonths = 6;
+type ViewType = 'datetime' | 'timezone';
+const DEFAULT_VIEW: ViewType = 'datetime';
 
 interface CustomTimePickerProps {
 	onSelect: (value: string) => void;
@@ -81,6 +86,25 @@ function CustomTimePicker({
 	const location = useLocation();
 	const [isInputFocused, setIsInputFocused] = useState(false);
 
+	const [activeView, setActiveView] = useState<ViewType>(DEFAULT_VIEW);
+
+	const { timezone, browserTimezone } = useTimezone();
+	const activeTimezoneOffset = timezone?.offset;
+	const isTimezoneOverridden = useMemo(
+		() => timezone?.offset !== browserTimezone.offset,
+		[timezone, browserTimezone],
+	);
+
+	const handleViewChange = useCallback(
+		(newView: 'timezone' | 'datetime'): void => {
+			if (activeView !== newView) {
+				setActiveView(newView);
+			}
+			setOpen(!open);
+		},
+		[activeView, open, setOpen],
+	);
+
 	const getSelectedTimeRangeLabel = (
 		selectedTime: string,
 		selectedTimeValue: string,
@@ -131,6 +155,7 @@ function CustomTimePicker({
 		setOpen(newOpen);
 		if (!newOpen) {
 			setCustomDTPickerVisible?.(false);
+			setActiveView('datetime');
 		}
 	};
 
@@ -280,6 +305,8 @@ function CustomTimePicker({
 							handleGoLive={defaultTo(handleGoLive, noop)}
 							options={items}
 							selectedTime={selectedTime}
+							activeView={activeView}
+							setActiveView={setActiveView}
 						/>
 					) : (
 						content
@@ -316,12 +343,23 @@ function CustomTimePicker({
 						)
 					}
 					suffix={
-						<ChevronDown
-							size={14}
-							onClick={(): void => {
-								setOpen(!open);
-							}}
-						/>
+						<>
+							{!!isTimezoneOverridden && activeTimezoneOffset && (
+								<div
+									className="timezone-badge"
+									onClick={(e): void => {
+										e.stopPropagation();
+										handleViewChange('timezone');
+									}}
+								>
+									<span>{activeTimezoneOffset}</span>
+								</div>
+							)}
+							<ChevronDown
+								size={14}
+								onClick={(): void => handleViewChange('datetime')}
+							/>
+						</>
 					}
 				/>
 			</Popover>

@@ -186,6 +186,7 @@
 		"@types/webpack-dev-server": "^4.7.2",
 		"@typescript-eslint/eslint-plugin": "^4.33.0",
 		"@typescript-eslint/parser": "^4.33.0",
+		"@vvo/tzdb": "6.149.0",
 		"autoprefixer": "10.4.19",
 		"babel-plugin-styled-components": "^1.12.0",
 		"compression-webpack-plugin": "9.0.0",

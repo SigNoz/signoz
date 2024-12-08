@@ -1,8 +1,14 @@
-import dayjs from 'dayjs';
+import { useTimezone } from 'providers/Timezone';
 
 function DeploymentTime(deployTime: string): JSX.Element {
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	return (
-		<span>{dayjs(deployTime).locale('en').format('MMMM DD, YYYY hh:mm A')}</span>
+		<span>
+			{formatTimezoneAdjustedTimestamp(
+				deployTime,
+				'MMMM DD, YYYY hh:mm A (UTC Z)',
+			)}{' '}
+		</span>
 	);
 }
 
