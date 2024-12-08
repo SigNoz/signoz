@@ -4,6 +4,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './DashboardList.styles.scss';
 
+import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -95,8 +96,14 @@ function DashboardsList(): JSX.Element {
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { role, user } = useSelector<AppState, AppReducer>((state) => state.app);
 
+	// TODO remove this later, logging the role for debugging some issue
+	Sentry.captureEvent({
+		message: `${user?.email}, has role: ${role}`,
+		level: 'info',
+	});
+	console.info(user?.email, 'has role', role);
 	const {
 		listSortOrder: sortOrder,
 		setListSortOrder: setSortOrder,
@@ -109,6 +116,12 @@ function DashboardsList(): JSX.Element {
 		['action', 'create_new_dashboards'],
 		role,
 	);
+	// log the permissions to createNewDashboard
+	Sentry.captureEvent({
+		message: `createNewDashboard permission: ${createNewDashboard}, user: ${user?.email}`,
+		level: 'info',
+	});
+	console.info('createNewDashboard permission: ', createNewDashboard);
 
 	const [
 		showNewDashboardTemplatesModal,
