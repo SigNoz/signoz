@@ -56,7 +56,12 @@ function SearchBar({
 	return (
 		<div className="timezone-picker__search">
 			<div className="timezone-picker__input-container">
-				<Search color={Color.BG_VANILLA_400} height={ICON_SIZE} width={ICON_SIZE} />
+				<Search
+					color={Color.BG_VANILLA_400}
+					className="search-icon"
+					height={ICON_SIZE}
+					width={ICON_SIZE}
+				/>
 				<Input
 					type="text"
 					className="timezone-picker__input"
@@ -91,6 +96,7 @@ function TimezoneItem({
 				<div className="timezone-name-wrapper__selected-icon">
 					{isSelected && (
 						<Check
+							className="check-icon"
 							color={Color.BG_VANILLA_100}
 							height={ICON_SIZE}
 							width={ICON_SIZE}

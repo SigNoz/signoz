@@ -148,14 +148,23 @@ function CustomTimePickerPopoverContent({
 
 			<div className="date-time-popover__footer">
 				<div className="timezone-container">
-					<Clock color={Color.BG_VANILLA_400} height={12} width={12} />
-					<span className="timezone-text">Current timezone</span>
+					<Clock
+						color={Color.BG_VANILLA_400}
+						className="timezone-container__clock-icon"
+						height={12}
+						width={12}
+					/>
+					<span className="timezone__icon">Current timezone</span>
 					<button
 						type="button"
 						className="timezone"
 						onClick={handleTimezoneHintClick}
 					>
-						<Pencil color={Color.BG_VANILLA_100} size={10} />
+						<Pencil
+							color={Color.BG_VANILLA_100}
+							className="timezone__icon"
+							size={10}
+						/>
 						<span>{activeTimezoneOffset}</span>
 					</button>
 				</div>

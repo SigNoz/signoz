@@ -162,3 +162,23 @@
 	letter-spacing: -0.06px;
 	cursor: pointer;
 }
+
+.lightMode {
+	.timezone-container {
+		color: var(---bg-ink-400);
+		&__clock-icon {
+			stroke: var(--bg-ink-400);
+		}
+		.timezone {
+			color: var(--bg-ink-100);
+			background: rgb(179 179 179 / 15%);
+			&__icon {
+				stroke: var(--bg-ink-100);
+			}
+		}
+	}
+	.timezone-badge {
+		color: var(--bg-ink-100);
+		background: rgb(179 179 179 / 15%);
+	}
+}

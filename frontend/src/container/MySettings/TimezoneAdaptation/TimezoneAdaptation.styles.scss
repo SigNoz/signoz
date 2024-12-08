@@ -79,3 +79,18 @@
 		cursor: pointer;
 	}
 }
+
+.lightMode {
+	.timezone-adaption {
+		background-color: var(--bg-vanilla-100);
+		border-color: var(--bg-vanilla-300);
+
+		&__title {
+			color: var(--text-ink-300);
+		}
+
+		&__description {
+			color: var(--text-ink-400);
+		}
+	}
+}
