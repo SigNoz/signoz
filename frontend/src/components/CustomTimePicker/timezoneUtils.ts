@@ -1,4 +1,3 @@
-import { getTimeZones } from '@vvo/tzdb';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
@@ -14,7 +13,6 @@ export interface Timezone {
 	hasDivider?: boolean;
 }
 
-// Constants
 const TIMEZONE_TYPES = {
 	BROWSER: 'BROWSER',
 	UTC: 'UTC',
@@ -29,16 +27,6 @@ const UTC_TIMEZONE: Timezone = {
 	offset: 'UTC',
 	searchIndex: 'UTC',
 	hasDivider: true,
-};
-
-// Helper functions
-const isValidTimezone = (tzName: string): boolean => {
-	try {
-		dayjs.tz(dayjs(), tzName);
-		return true;
-	} catch {
-		return false;
-	}
 };
 
 const formatOffset = (offsetMinutes: number): string => {
@@ -100,23 +88,35 @@ export const getBrowserTimezone = (): Timezone => {
 	return createTimezoneEntry(browserTz, browserOffset, TIMEZONE_TYPES.BROWSER);
 };
 
+const normalizeTimezoneName = (timezone: string): string => {
+	// https://github.com/tc39/proposal-temporal/issues/1076
+	if (timezone === 'Asia/Calcutta') {
+		return 'Asia/Kolkata';
+	}
+	return timezone;
+};
+
 const filterAndSortTimezones = (
-	allTimezones: ReturnType<typeof getTimeZones>,
+	allTimezones: string[],
 	browserTzName?: string,
 	includeEtcTimezones = false,
 ): Timezone[] =>
 	allTimezones
-		.filter(
-			(tz) =>
-				(includeEtcTimezones || !tz.name.startsWith('Etc/')) &&
-				isValidTimezone(tz.name) &&
-				tz.name !== browserTzName,
-		)
-		.sort((a, b) => a.name.localeCompare(b.name))
-		.map((tz) => createTimezoneEntry(tz.name, tz.rawOffsetInMinutes));
+		.filter((tz) => {
+			const isNotBrowserTz = tz !== browserTzName;
+			const isNotEtcTz = includeEtcTimezones || !tz.startsWith('Etc/');
+			return isNotBrowserTz && isNotEtcTz;
+		})
+		.sort((a, b) => a.localeCompare(b))
+		.map((tz) => {
+			const normalizedTz = normalizeTimezoneName(tz);
+			const offset = getOffsetByTimezone(normalizedTz);
+			return createTimezoneEntry(normalizedTz, offset);
+		});
 
-const generateTimezoneData = (): Timezone[] => {
-	const allTimezones = getTimeZones();
+const generateTimezoneData = (includeEtcTimezones = false): Timezone[] => {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const allTimezones = (Intl as any).supportedValuesOf('timeZone');
 	const timezones: Timezone[] = [];
 
 	// Add browser timezone
@@ -126,8 +126,13 @@ const generateTimezoneData = (): Timezone[] => {
 	// Add UTC timezone with divider
 	timezones.push(UTC_TIMEZONE);
 
-	// Add remaining timezones
-	timezones.push(...filterAndSortTimezones(allTimezones, browserTzObject.value));
+	timezones.push(
+		...filterAndSortTimezones(
+			allTimezones,
+			browserTzObject.value,
+			includeEtcTimezones,
+		),
+	);
 
 	return timezones;
 };
@@ -136,7 +141,6 @@ export const getTimezoneObjectByTimezoneString = (
 	timezone: string,
 ): Timezone => {
 	const utcOffset = getOffsetByTimezone(timezone);
-
 	return createTimezoneEntry(timezone, utcOffset);
 };
 

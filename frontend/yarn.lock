@@ -4750,11 +4750,6 @@
     d3-time-format "4.1.0"
     internmap "2.0.3"
 
-"@vvo/tzdb@6.149.0":
-  version "6.149.0"
-  resolved "https://registry.yarnpkg.com/@vvo/tzdb/-/tzdb-6.149.0.tgz#e4fcca3c49b90d5910a8679267540cb532809075"
-  integrity sha512-d68+oW1TE60Ho9FlCDO5Ks4suk6hp5umjNIrtWytVB0B/X0/P1T9yWdnH7EhNb2fx1CQE+MM1qmLUGzT+QAqdw==
-
 "@webassemblyjs/ast@1.12.1":
   version "1.12.1"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.12.1.tgz#bb16a0e8b1914f979f45864c23819cc3e3f0d4bb"
