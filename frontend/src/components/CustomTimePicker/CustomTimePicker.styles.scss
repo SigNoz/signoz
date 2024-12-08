@@ -136,10 +136,14 @@
 		color: var(--bg-vanilla-400);
 		gap: 6px;
 		.timezone {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			border-radius: 2px;
+			background: rgba(171, 189, 255, 0.04);
 			cursor: pointer;
-			padding: 0;
+			padding: 0px 4px;
 			color: var(--bg-vanilla-100);
-			background-color: transparent;
 			border: none;
 		}
 	}

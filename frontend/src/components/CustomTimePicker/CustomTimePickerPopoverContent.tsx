@@ -10,7 +10,7 @@ import {
 	Option,
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
-import { Clock } from 'lucide-react';
+import { Clock, Pencil } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -128,13 +128,14 @@ function CustomTimePickerPopoverContent({
 			<div className="date-time-popover__footer">
 				<div className="timezone-container">
 					<Clock color={Color.BG_VANILLA_400} height={12} width={12} />
-					<span className="timezone-text">You are at</span>
+					<span className="timezone-text">Current timezone</span>
 					<button
 						type="button"
 						className="timezone"
 						onClick={(): void => setActiveView('timezone')}
 					>
-						{activeTimezoneOffset}
+						<Pencil color={Color.BG_VANILLA_100} size={10} />
+						<span>{activeTimezoneOffset}</span>
 					</button>
 				</div>
 			</div>
