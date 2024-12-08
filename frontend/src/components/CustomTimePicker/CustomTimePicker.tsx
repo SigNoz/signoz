@@ -100,10 +100,12 @@ function CustomTimePicker({
 			if (activeView !== newView) {
 				setActiveView(newView);
 			}
-			setOpen(!open);
+			setOpen(true);
 		},
-		[activeView, open, setOpen],
+		[activeView, setOpen],
 	);
+
+	const [isOpenedFromFooter, setIsOpenedFromFooter] = useState(false);
 
 	const getSelectedTimeRangeLabel = (
 		selectedTime: string,
@@ -269,6 +271,7 @@ function CustomTimePicker({
 
 	const handleFocus = (): void => {
 		setIsInputFocused(true);
+		setActiveView('datetime');
 	};
 
 	const handleBlur = (): void => {
@@ -307,6 +310,8 @@ function CustomTimePicker({
 							selectedTime={selectedTime}
 							activeView={activeView}
 							setActiveView={setActiveView}
+							setIsOpenedFromFooter={setIsOpenedFromFooter}
+							isOpenedFromFooter={isOpenedFromFooter}
 						/>
 					) : (
 						content
@@ -350,6 +355,7 @@ function CustomTimePicker({
 									onClick={(e): void => {
 										e.stopPropagation();
 										handleViewChange('timezone');
+										setIsOpenedFromFooter(false);
 									}}
 								>
 									<span>{activeTimezoneOffset}</span>

@@ -1,6 +1,7 @@
 import './TimezonePicker.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
+import { Input } from 'antd';
 import cx from 'classnames';
 import { TimezonePickerShortcuts } from 'constants/shortcuts/TimezonePickerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
@@ -19,6 +20,9 @@ import { Timezone, TIMEZONE_DATA } from './timezoneUtils';
 interface SearchBarProps {
 	value: string;
 	onChange: (value: string) => void;
+	setIsOpen: Dispatch<SetStateAction<boolean>>;
+	setActiveView: Dispatch<SetStateAction<'datetime' | 'timezone'>>;
+	isOpenedFromFooter: boolean;
 }
 
 interface TimezoneItemProps {
@@ -29,17 +33,39 @@ interface TimezoneItemProps {
 
 const ICON_SIZE = 14;
 
-function SearchBar({ value, onChange }: SearchBarProps): JSX.Element {
+function SearchBar({
+	value,
+	onChange,
+	setIsOpen,
+	setActiveView,
+	isOpenedFromFooter = false,
+}: SearchBarProps): JSX.Element {
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent): void => {
+			if (e.key === 'Escape') {
+				if (isOpenedFromFooter) {
+					setActiveView('datetime');
+				} else {
+					setIsOpen(false);
+				}
+			}
+		},
+		[setActiveView, setIsOpen, isOpenedFromFooter],
+	);
+
 	return (
 		<div className="timezone-picker__search">
 			<div className="timezone-picker__input-container">
 				<Search color={Color.BG_VANILLA_400} height={ICON_SIZE} width={ICON_SIZE} />
-				<input
+				<Input
 					type="text"
 					className="timezone-picker__input"
 					placeholder="Search timezones..."
 					value={value}
 					onChange={(e): void => onChange(e.target.value)}
+					onKeyDown={handleKeyDown}
+					tabIndex={0}
+					autoFocus
 				/>
 			</div>
 			<kbd className="timezone-picker__esc-key">esc</kbd>
@@ -86,12 +112,15 @@ TimezoneItem.defaultProps = {
 interface TimezonePickerProps {
 	setActiveView: Dispatch<SetStateAction<'datetime' | 'timezone'>>;
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
+	isOpenedFromFooter: boolean;
 }
 
 function TimezonePicker({
 	setActiveView,
 	setIsOpen,
+	isOpenedFromFooter,
 }: TimezonePickerProps): JSX.Element {
+	console.log({ isOpenedFromFooter });
 	const [searchTerm, setSearchTerm] = useState('');
 	const { timezone, updateTimezone } = useTimezone();
 	const [selectedTimezone, setSelectedTimezone] = useState<string>(
@@ -109,8 +138,12 @@ function TimezonePicker({
 	}, []);
 
 	const handleCloseTimezonePicker = useCallback(() => {
-		setActiveView('datetime');
-	}, [setActiveView]);
+		if (isOpenedFromFooter) {
+			setActiveView('datetime');
+		} else {
+			setIsOpen(false);
+		}
+	}, [isOpenedFromFooter, setActiveView, setIsOpen]);
 
 	const handleTimezoneSelect = useCallback(
 		(timezone: Timezone) => {
@@ -138,7 +171,13 @@ function TimezonePicker({
 
 	return (
 		<div className="timezone-picker">
-			<SearchBar value={searchTerm} onChange={setSearchTerm} />
+			<SearchBar
+				value={searchTerm}
+				onChange={setSearchTerm}
+				setIsOpen={setIsOpen}
+				setActiveView={setActiveView}
+				isOpenedFromFooter={isOpenedFromFooter}
+			/>
 			<div className="timezone-picker__list">
 				{getFilteredTimezones(searchTerm).map((timezone) => (
 					<TimezoneItem

@@ -44,6 +44,9 @@ $item-spacing: 8px;
 		line-height: 20px;
 		letter-spacing: -0.07px;
 		padding: 0;
+		&.ant-input:focus {
+			box-shadow: none;
+		}
 
 		&::placeholder {
 			color: var(--bg-vanilla-400);

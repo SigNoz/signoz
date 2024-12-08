@@ -32,6 +32,8 @@ interface CustomTimePickerPopoverContentProps {
 	selectedTime: string;
 	activeView: 'datetime' | 'timezone';
 	setActiveView: Dispatch<SetStateAction<'datetime' | 'timezone'>>;
+	isOpenedFromFooter: boolean;
+	setIsOpenedFromFooter: Dispatch<SetStateAction<boolean>>;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -46,6 +48,8 @@ function CustomTimePickerPopoverContent({
 	selectedTime,
 	activeView,
 	setActiveView,
+	isOpenedFromFooter,
+	setIsOpenedFromFooter,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { pathname } = useLocation();
 
@@ -74,7 +78,24 @@ function CustomTimePickerPopoverContent({
 		);
 	}
 
-	return activeView === 'datetime' ? (
+	const handleTimezoneHintClick = (): void => {
+		setActiveView('timezone');
+		setIsOpenedFromFooter(true);
+	};
+
+	if (activeView === 'timezone') {
+		return (
+			<div className="date-time-popover">
+				<TimezonePicker
+					setActiveView={setActiveView}
+					setIsOpen={setIsOpen}
+					isOpenedFromFooter={isOpenedFromFooter}
+				/>
+			</div>
+		);
+	}
+
+	return (
 		<>
 			<div className="date-time-popover">
 				<div className="date-time-options">
@@ -132,7 +153,7 @@ function CustomTimePickerPopoverContent({
 					<button
 						type="button"
 						className="timezone"
-						onClick={(): void => setActiveView('timezone')}
+						onClick={handleTimezoneHintClick}
 					>
 						<Pencil color={Color.BG_VANILLA_100} size={10} />
 						<span>{activeTimezoneOffset}</span>
@@ -140,10 +161,6 @@ function CustomTimePickerPopoverContent({
 				</div>
 			</div>
 		</>
-	) : (
-		<div className="date-time-popover">
-			<TimezonePicker setActiveView={setActiveView} setIsOpen={setIsOpen} />
-		</div>
 	);
 }
 
