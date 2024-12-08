@@ -349,7 +349,7 @@ function DashboardsList(): JSX.Element {
 	function getFormattedTime(dashboard: Dashboard, option: string): string {
 		return formatTimezoneAdjustedTimestamp(
 			get(dashboard, option, ''),
-			'MMM D, YYYY ⎯ HH:mm:ss',
+			'MMM D, YYYY ⎯ hh:mm:ss A (UTC Z)',
 		);
 	}
 
@@ -395,7 +395,7 @@ function DashboardsList(): JSX.Element {
 			render: (dashboard: Data, _, index): JSX.Element => {
 				const formattedDateAndTime = formatTimezoneAdjustedTimestamp(
 					dashboard.createdAt,
-					'MMM D, YYYY ⎯ HH:mm:ss',
+					'MMM D, YYYY ⎯ hh:mm:ss A (UTC Z)',
 				);
 
 				const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.id}`;
