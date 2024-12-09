@@ -161,12 +161,12 @@ function CustomTimePickerPopoverContent({
 						className="timezone"
 						onClick={handleTimezoneHintClick}
 					>
+						<span>{activeTimezoneOffset}</span>
 						<PenLine
 							color={Color.BG_VANILLA_100}
 							className="timezone__icon"
 							size={10}
 						/>
-						<span>{activeTimezoneOffset}</span>
 					</button>
 				</div>
 			</div>
