@@ -1,21 +1,104 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './InfraMonitoringK8s.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Tag } from 'antd';
+import { Progress } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	K8sPodsData,
 	K8sPodsListPayload,
 } from 'api/infraMonitoring/getK8sPodsList';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+
+export interface IPodColumn {
+	label: string;
+	value: string;
+	id: string;
+	canRemove: boolean;
+}
+
+export const defaultAddedColumns: IPodColumn[] = [
+	{
+		label: 'Pod name',
+		value: 'podName',
+		id: 'podName',
+		canRemove: false,
+	},
+	{
+		label: 'CPU Request Utilization (% of limit)',
+		value: 'cpuRequestUtilization',
+		id: 'cpuRequestUtilization',
+		canRemove: false,
+	},
+	{
+		label: 'CPU Limit Utilization (% of request)',
+		value: 'cpuLimitUtilization',
+		id: 'cpuLimitUtilization',
+		canRemove: false,
+	},
+	{
+		label: 'CPU Utilization (cores)',
+		value: 'cpuUtilization',
+		id: 'cpuUtilization',
+		canRemove: false,
+	},
+	{
+		label: 'Memory Request Utilization (% of limit)',
+		value: 'memoryRequestUtilization',
+		id: 'memoryRequestUtilization',
+		canRemove: false,
+	},
+	{
+		label: 'Memory Limit Utilization (% of request)',
+		value: 'memoryLimitUtilization',
+		id: 'memoryLimitUtilization',
+		canRemove: false,
+	},
+	{
+		label: 'Memory Utilization (bytes)',
+		value: 'memoryUtilization',
+		id: 'memoryUtilization',
+		canRemove: false,
+	},
+	{
+		label: 'Container Restarts',
+		value: 'containerRestarts',
+		id: 'containerRestarts',
+		canRemove: false,
+	},
+];
+
+export const defaultAvailableColumns = [
+	{
+		label: 'Namespace name',
+		value: 'namespace',
+		id: 'namespace',
+		canRemove: true,
+	},
+	{
+		label: 'Node name',
+		value: 'node',
+		id: 'node',
+		canRemove: true,
+	},
+	{
+		label: 'Cluster name',
+		value: 'cluster',
+		id: 'cluster',
+		canRemove: true,
+	},
+];
 
 export interface K8sPodsRowData {
-	hostName: string;
-	cpu: React.ReactNode;
-	memory: React.ReactNode;
-	wait: string;
-	load15: number;
-	active: React.ReactNode;
+	key: string;
+	podName: string;
+	podUID: string;
+	cpuRequestUtilization: React.ReactNode;
+	cpuLimitUtilization: React.ReactNode;
+	cpuUtilization: React.ReactNode;
+	memoryRequestUtilization: React.ReactNode;
+	memoryLimitUtilization: React.ReactNode;
+	memoryUtilization: React.ReactNode;
+	containerRestarts: number;
 }
 
 export const getK8sPodsListQuery = (): K8sPodsListPayload => ({
@@ -23,87 +106,159 @@ export const getK8sPodsListQuery = (): K8sPodsListPayload => ({
 		items: [],
 		op: 'and',
 	},
-	groupBy: [
-		{
-			key: 'k8s_deployment_name',
-			dataType: DataTypes.String,
-			isColumn: true,
-			type: 'string',
-		},
-	],
 	orderBy: { columnName: 'cpu', order: 'desc' },
 });
 
-export const getK8sPodsListColumns = (): ColumnType<K8sPodsRowData>[] => [
+const columnsConfig = [
 	{
-		title: <div className="hostname-column-header">Hostname</div>,
-		dataIndex: 'hostName',
-		key: 'hostName',
-		width: 250,
-		render: (value: string): React.ReactNode => (
-			<div className="hostname-column-value">{value}</div>
+		title: <div className="column-header-left">Pod Name</div>,
+		dataIndex: 'podName',
+		key: 'podName',
+		ellipsis: true,
+		width: 150,
+		sorter: true,
+		align: 'left',
+	},
+	{
+		title: (
+			<div className="column-header-left">
+				CPU Request Utilization (% of limit)
+			</div>
 		),
-	},
-	{
-		title: 'Status',
-		dataIndex: 'active',
-		key: 'active',
-		width: 100,
-	},
-	{
-		title: <div className="column-header-right">CPU Usage</div>,
-		dataIndex: 'cpu',
-		key: 'cpu',
+		dataIndex: 'cpuRequestUtilization',
+		key: 'cpuRequestUtilization',
 		width: 100,
 		sorter: true,
-		align: 'right',
+		align: 'left',
 	},
 	{
-		title: <div className="column-header-right">Memory Usage</div>,
-		dataIndex: 'memory',
-		key: 'memory',
+		title: (
+			<div className="column-header-left">
+				CPU Limit Utilization (% of request)
+			</div>
+		),
+		dataIndex: 'cpuLimitUtilization',
+		key: 'cpuLimitUtilization',
 		width: 100,
 		sorter: true,
-		align: 'right',
+		align: 'left',
 	},
 	{
-		title: <div className="column-header-right">IOWait</div>,
-		dataIndex: 'wait',
-		key: 'wait',
-		width: 100,
+		title: <div className="column-header-left">CPU Utilization (cores)</div>,
+		dataIndex: 'cpuUtilization',
+		key: 'cpuUtilization',
+		width: 80,
 		sorter: true,
-		align: 'right',
+		align: 'left',
 	},
 	{
-		title: <div className="column-header-right">Load Avg</div>,
-		dataIndex: 'load15',
-		key: 'load15',
+		title: (
+			<div className="column-header-left">
+				Memory Request Utilization (% of limit)
+			</div>
+		),
+		dataIndex: 'memoryRequestUtilization',
+		key: 'memoryRequestUtilization',
 		width: 100,
 		sorter: true,
-		align: 'right',
+		align: 'left',
+	},
+	{
+		title: (
+			<div className="column-header-left">
+				Memory Limit Utilization (% of request)
+			</div>
+		),
+		dataIndex: 'memoryLimitUtilization',
+		key: 'memoryLimitUtilization',
+		width: 100,
+		sorter: true,
+		align: 'left',
+	},
+	{
+		title: <div className="column-header-left">Memory Utilization (bytes)</div>,
+		dataIndex: 'memoryUtilization',
+		key: 'memoryUtilization',
+		width: 80,
+		sorter: true,
+		align: 'left',
+	},
+	{
+		title: <div className="column-header-left">Container Restarts</div>,
+		dataIndex: 'containerRestarts',
+		key: 'containerRestarts',
+		width: 50,
+		sorter: true,
+		align: 'left',
 	},
 ];
 
+export const namespaceColumnConfig = {
+	title: <div className="column-header-left">Namespace</div>,
+	dataIndex: 'namespace',
+	key: 'namespace',
+	width: 100,
+	sorter: true,
+	ellipsis: true,
+	align: 'left',
+};
+
+export const nodeColumnConfig = {
+	title: <div className="column-header-left">Node</div>,
+	dataIndex: 'node',
+	key: 'node',
+	width: 100,
+	sorter: true,
+	ellipsis: true,
+	align: 'left',
+};
+
+export const clusterColumnConfig = {
+	title: <div className="column-header-left">Cluster</div>,
+	dataIndex: 'cluster',
+	key: 'cluster',
+	width: 100,
+	sorter: true,
+	ellipsis: true,
+	align: 'left',
+};
+
+export const columnConfigMap = {
+	namespace: namespaceColumnConfig,
+	node: nodeColumnConfig,
+	cluster: clusterColumnConfig,
+};
+
+export const getK8sPodsListColumns = (
+	addedColumns: IPodColumn[],
+): ColumnType<K8sPodsRowData>[] => {
+	const updatedColumnsConfig = [...columnsConfig];
+
+	// eslint-disable-next-line no-restricted-syntax
+	for (const column of addedColumns) {
+		const config = columnConfigMap[column.id as keyof typeof columnConfigMap];
+		if (config) {
+			updatedColumnsConfig.push(config);
+		}
+	}
+
+	return updatedColumnsConfig as ColumnType<K8sPodsRowData>[];
+};
+
 export const formatDataForTable = (data: K8sPodsData[]): K8sPodsRowData[] =>
-	data.map((host, index) => ({
-		key: `${host.hostName}-${index}`,
-		hostName: host.hostName || '',
-		active: (
-			<Tag
-				bordered
-				className={`infra-monitoring-tags ${host.active ? 'active' : 'inactive'}`}
-			>
-				{host.active ? 'ACTIVE' : 'INACTIVE'}
-			</Tag>
-		),
-		cpu: (
+	data.map((pod, index) => ({
+		key: `${pod.podUID}-${index}`,
+		podName: pod.meta.k8s_pod_name || '',
+		podUID: pod.podUID || '',
+		cpuRequestUtilization: (
 			<div className="progress-container">
 				<Progress
-					percent={Number((host.cpu * 100).toFixed(1))}
+					percent={Number((pod.podCPURequest * 100).toFixed(1))}
 					strokeLinecap="butt"
 					size="small"
+					status="active"
 					strokeColor={((): string => {
-						const cpuPercent = Number((host.cpu * 100).toFixed(1));
+						const cpuPercent = Number((pod.podCPURequest * 100).toFixed(1));
 						if (cpuPercent >= 90) return Color.BG_SAKURA_500;
 						if (cpuPercent >= 60) return Color.BG_AMBER_500;
 						return Color.BG_FOREST_500;
@@ -112,15 +267,34 @@ export const formatDataForTable = (data: K8sPodsData[]): K8sPodsRowData[] =>
 				/>
 			</div>
 		),
-		memory: (
+		cpuLimitUtilization: (
 			<div className="progress-container">
 				<Progress
-					percent={Number((host.memory * 100).toFixed(1))}
+					percent={Number((pod.podCPULimit * 100).toFixed(1))}
 					strokeLinecap="butt"
 					size="small"
+					status="active"
 					strokeColor={((): string => {
-						const memoryPercent = Number((host.memory * 100).toFixed(1));
-						if (memoryPercent >= 90) return Color.BG_CHERRY_500;
+						const cpuPercent = Number((pod.podCPULimit * 100).toFixed(1));
+						if (cpuPercent >= 90) return Color.BG_SAKURA_500;
+						if (cpuPercent >= 60) return Color.BG_AMBER_500;
+						return Color.BG_FOREST_500;
+					})()}
+					className="progress-bar"
+				/>
+			</div>
+		),
+		cpuUtilization: pod.podCPU,
+		memoryRequestUtilization: (
+			<div className="progress-container">
+				<Progress
+					percent={Number((pod.podMemoryRequest * 100).toFixed(1))}
+					strokeLinecap="butt"
+					size="small"
+					status="active"
+					strokeColor={((): string => {
+						const memoryPercent = Number((pod.podMemoryRequest * 100).toFixed(1));
+						if (memoryPercent >= 90) return Color.BG_SAKURA_500;
 						if (memoryPercent >= 60) return Color.BG_AMBER_500;
 						return Color.BG_FOREST_500;
 					})()}
@@ -128,6 +302,26 @@ export const formatDataForTable = (data: K8sPodsData[]): K8sPodsRowData[] =>
 				/>
 			</div>
 		),
-		wait: `${Number((host.wait * 100).toFixed(1))}%`,
-		load15: host.load15,
+		memoryLimitUtilization: (
+			<div className="progress-container">
+				<Progress
+					percent={Number((pod.podMemoryLimit * 100).toFixed(1))}
+					strokeLinecap="butt"
+					size="small"
+					status="active"
+					strokeColor={((): string => {
+						const memoryPercent = Number((pod.podMemoryLimit * 100).toFixed(1));
+						if (memoryPercent >= 90) return Color.BG_SAKURA_500;
+						if (memoryPercent >= 60) return Color.BG_AMBER_500;
+						return Color.BG_FOREST_500;
+					})()}
+					className="progress-bar"
+				/>
+			</div>
+		),
+		memoryUtilization: pod.podMemory,
+		containerRestarts: pod.restartCount,
+		namespace: pod.meta.k8s_namespace_name,
+		node: pod.meta.k8s_node_name,
+		cluster: pod.meta.k8s_job_name, // TODO: Need to update this
 	}));

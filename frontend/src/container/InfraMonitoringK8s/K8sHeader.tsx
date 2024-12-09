@@ -9,11 +9,22 @@ import { useCallback, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import K8sFiltersSidePanel from './K8sFiltersSidePanel/K8sFiltersSidePanel';
+import { IPodColumn } from './utils';
 
-function HostsListControls({
+function K8sHeader({
+	defaultAddedColumns,
+	addedColumns,
+	availableColumns,
 	handleFiltersChange,
+	onAddColumn,
+	onRemoveColumn,
 }: {
+	defaultAddedColumns: IPodColumn[];
+	addedColumns: IPodColumn[];
+	availableColumns: IPodColumn[];
 	handleFiltersChange: (value: IBuilderQuery['filters']) => void;
+	onAddColumn: (column: IPodColumn) => void;
+	onRemoveColumn: (column: IPodColumn) => void;
 }): JSX.Element {
 	const [isFiltersSidePanelOpen, setIsFiltersSidePanelOpen] = useState(false);
 
@@ -83,23 +94,20 @@ function HostsListControls({
 
 			{isFiltersSidePanelOpen && (
 				<K8sFiltersSidePanel
-					addedColumns={[
-						'HostName',
-						'Status',
-						'CPU Usage',
-						'Memory Usage',
-						'Load Avg',
-					]}
-					availableColumns={['HostName', 'Status', 'CPU', 'Memory']}
+					defaultAddedColumns={defaultAddedColumns}
+					addedColumns={addedColumns}
+					availableColumns={availableColumns}
 					onClose={(): void => {
 						if (isFiltersSidePanelOpen) {
 							setIsFiltersSidePanelOpen(false);
 						}
 					}}
+					onAddColumn={onAddColumn}
+					onRemoveColumn={onRemoveColumn}
 				/>
 			)}
 		</div>
 	);
 }
 
-export default HostsListControls;
+export default K8sHeader;
