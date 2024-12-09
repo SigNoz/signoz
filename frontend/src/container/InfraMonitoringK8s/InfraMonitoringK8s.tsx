@@ -3,7 +3,7 @@ import './InfraMonitoringK8s.styles.scss';
 import * as Sentry from '@sentry/react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 
-import K8sPodLists from './K8sPodLists';
+import K8sPodLists from './Pods/K8sPodLists';
 
 export default function InfraMonitoringK8s(): JSX.Element {
 	return (

@@ -1,4 +1,4 @@
-import './InfraMonitoringK8s.styles.scss';
+import '../InfraMonitoringK8s.styles.scss';
 
 import { LoadingOutlined } from '@ant-design/icons';
 import {
@@ -23,8 +23,7 @@ import {
 	updateLocalStorage,
 } from 'utils/localStorageReadWrite';
 
-import K8sHeader from './K8sHeader';
-import PodDetails from './PodDetails';
+import K8sHeader from '../K8sHeader';
 import {
 	defaultAddedColumns,
 	defaultAvailableColumns,
@@ -33,7 +32,8 @@ import {
 	getK8sPodsListQuery,
 	IPodColumn,
 	K8sPodsRowData,
-} from './utils';
+} from '../utils';
+import PodDetails from './PodDetails/PodDetails';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sPodsList(): JSX.Element {
