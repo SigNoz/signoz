@@ -61,6 +61,7 @@ function RangePickerModal(props: RangePickerModalProps): JSX.Element {
 				disabledDate={disabledDate}
 				allowClear
 				showTime
+				format="YYYY-MM-DD hh:mm A"
 				onOk={onModalOkHandler}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...(selectedTime === 'custom' && {

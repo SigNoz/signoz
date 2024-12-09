@@ -112,6 +112,16 @@ function CustomTimePicker({
 		selectedTimeValue: string,
 	): string => {
 		if (selectedTime === 'custom') {
+			// Convert the date range string to 12-hour format
+			const dates = selectedTimeValue.split(' - ');
+			if (dates.length === 2) {
+				const startDate = dayjs(dates[0], 'DD/MM/YYYY HH:mm');
+				const endDate = dayjs(dates[1], 'DD/MM/YYYY HH:mm');
+
+				return `${startDate.format('DD/MM/YYYY hh:mm A')} - ${endDate.format(
+					'DD/MM/YYYY hh:mm A',
+				)}`;
+			}
 			return selectedTimeValue;
 		}
 
