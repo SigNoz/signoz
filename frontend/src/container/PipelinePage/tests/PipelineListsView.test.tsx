@@ -222,20 +222,22 @@ describe('PipelinePage container test', () => {
 
 		// delete pipeline
 		await fireEvent.click(deleteBtns[0] as HTMLElement);
-		let deleteConfirmationModal;
 
-		await waitFor(async () => {
-			deleteConfirmationModal = document.querySelector('.ant-modal-wrap');
-			expect(deleteConfirmationModal).toBeInTheDocument();
-		});
-
-		await fireEvent.click(
-			((deleteConfirmationModal as unknown) as HTMLElement)?.querySelector(
-				'.ant-modal-confirm-btns .ant-btn-primary',
-			) as HTMLElement,
+		await waitFor(() =>
+			expect(document.querySelector('.delete-pipeline')).toBeInTheDocument(),
 		);
 
-		expect(document.querySelectorAll('[data-icon="delete"]').length).toBe(2);
+		await waitFor(() =>
+			expect(
+				document.querySelector('.delete-pipeline-ok-text'),
+			).toBeInTheDocument(),
+		);
+
+		await fireEvent.click(
+			document.querySelector('.delete-pipeline-ok-text') as HTMLElement,
+		);
+
+		expect(document.querySelectorAll('[data-icon="delete"]').length).toBe(1);
 
 		const saveBtn = getByText('save_configuration');
 		expect(saveBtn).toBeInTheDocument();
