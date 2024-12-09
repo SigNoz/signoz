@@ -5,6 +5,11 @@
 
 	.k8s-quick-filters-container {
 		width: 280px;
+
+		.quick-filters {
+			overflow-y: auto;
+			overflow-x: hidden;
+		}
 	}
 
 	.k8s-list-container {
