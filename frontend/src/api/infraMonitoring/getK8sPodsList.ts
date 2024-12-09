@@ -7,7 +7,7 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface K8sPodsListPayload {
 	filters: TagFilter;
-	groupBy: BaseAutocompleteData[];
+	groupBy?: BaseAutocompleteData[];
 	offset?: number;
 	limit?: number;
 	orderBy?: {
@@ -28,17 +28,32 @@ export interface TimeSeries {
 }
 
 export interface K8sPodsData {
-	hostName: string;
-	active: boolean;
-	os: string;
-	cpu: number;
-	cpuTimeSeries: TimeSeries;
-	memory: number;
-	memoryTimeSeries: TimeSeries;
-	wait: number;
-	waitTimeSeries: TimeSeries;
-	load15: number;
-	load15TimeSeries: TimeSeries;
+	podUID: string;
+	podCPU: number;
+	podCPURequest: number;
+	podCPULimit: number;
+	podMemory: number;
+	podMemoryRequest: number;
+	podMemoryLimit: number;
+	restartCount: number;
+	meta: {
+		k8s_cronjob_name: string;
+		k8s_daemonset_name: string;
+		k8s_deployment_name: string;
+		k8s_job_name: string;
+		k8s_namespace_name: string;
+		k8s_node_name: string;
+		k8s_pod_name: string;
+		k8s_pod_uid: string;
+		k8s_statefulset_name: string;
+	};
+	countByPhase: {
+		pending: number;
+		running: number;
+		succeeded: number;
+		failed: number;
+		unknown: number;
+	};
 }
 
 export interface K8sPodsListResponse {
