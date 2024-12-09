@@ -12,7 +12,8 @@
 
 <h3 align="center">
   <a href="https://signoz.io/docs"><b>文档</b></a> •
-  <a href="https://github.com/SigNoz/signoz/blob/develop/README.zh-cn.md"><b>中文ReadMe</b></a> •
+  <a href="https://github.com/SigNoz/signoz/blob/develop/README.md"><b>英文ReadMe</b></a> •
+  <a href="https://github.com/SigNoz/signoz/blob/develop/README.zh-tw.md"><b>繁體ReadMe</b></a> •
   <a href="https://github.com/SigNoz/signoz/blob/develop/README.de-de.md"><b>德文ReadMe</b></a> •
   <a href="https://github.com/SigNoz/signoz/blob/develop/README.pt-br.md"><b>葡萄牙语ReadMe</b></a> •
   <a href="https://signoz.io/slack"><b>Slack 社区</b></a> •
