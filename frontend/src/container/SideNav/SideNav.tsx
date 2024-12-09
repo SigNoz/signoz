@@ -16,7 +16,7 @@ import history from 'lib/history';
 import {
 	AlertTriangle,
 	CheckSquare,
-	RocketIcon,
+	PackagePlus,
 	UserCircle,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
@@ -355,9 +355,9 @@ function SideNav(): JSX.Element {
 								onClickGetStarted(event);
 							}}
 						>
-							<RocketIcon size={16} />
+							<PackagePlus size={16} />
 
-							<div className="license tag nav-item-label"> Get Started </div>
+							<div className="license tag nav-item-label"> New source </div>
 						</Button>
 					</div>
 				)}
