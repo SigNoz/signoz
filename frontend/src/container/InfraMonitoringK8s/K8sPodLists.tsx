@@ -12,20 +12,26 @@ import {
 import { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
-import HostMetricDetail from 'components/HostMetricsDetail';
 import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
-
-import K8sEmptyOrIncorrectMetrics from './K8sEmptyOrIncorrectMetrics';
-import K8sHeader from './K8sHeader';
 import {
+	getFromLocalStorage,
+	updateLocalStorage,
+} from 'utils/localStorageReadWrite';
+
+import K8sHeader from './K8sHeader';
+import PodDetails from './PodDetails';
+import {
+	defaultAddedColumns,
+	defaultAvailableColumns,
 	formatDataForTable,
 	getK8sPodsListColumns,
 	getK8sPodsListQuery,
+	IPodColumn,
 	K8sPodsRowData,
 } from './utils';
 
@@ -36,17 +42,41 @@ function K8sPodsList(): JSX.Element {
 	);
 
 	const [currentPage, setCurrentPage] = useState(1);
+
+	const [addedColumns, setAddedColumns] = useState<IPodColumn[]>([]);
+
+	const [availableColumns, setAvailableColumns] = useState<IPodColumn[]>(
+		defaultAvailableColumns,
+	);
+
 	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
 		items: [],
 		op: 'and',
 	});
+
+	useEffect(() => {
+		const addedColumns = getFromLocalStorage('k8sPodsAddedColumns');
+
+		if (addedColumns && addedColumns.length > 0) {
+			const availableColumns = defaultAvailableColumns.filter(
+				(column) => !addedColumns.includes(column.id),
+			);
+
+			const newAddedColumns = defaultAvailableColumns.filter((column) =>
+				addedColumns.includes(column.id),
+			);
+
+			setAvailableColumns(availableColumns);
+			setAddedColumns(newAddedColumns);
+		}
+	}, []);
 
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
 		order: 'asc' | 'desc';
 	} | null>(null);
 
-	const [selectedHostName, setSelectedHostName] = useState<string | null>(null);
+	const [selectedPodUID, setSelectedPodUID] = useState<string | null>(null);
 
 	const pageSize = 10;
 
@@ -71,27 +101,16 @@ function K8sPodsList(): JSX.Element {
 		},
 	);
 
-	const sentAnyHostMetricsData = useMemo(
-		() => data?.payload?.data?.sentAnyHostMetricsData || false,
-		[data],
-	);
-
-	const isSendingIncorrectK8SAgentMetrics = useMemo(
-		() => data?.payload?.data?.isSendingK8SAgentMetrics || false,
-		[data],
-	);
-
-	const hostMetricsData = useMemo(() => data?.payload?.data?.records || [], [
-		data,
-	]);
+	const podsData = useMemo(() => data?.payload?.data?.records || [], [data]);
 	const totalCount = data?.payload?.data?.total || 0;
 
-	const formattedHostMetricsData = useMemo(
-		() => formatDataForTable(hostMetricsData),
-		[hostMetricsData],
-	);
+	const formattedPodsData = useMemo(() => formatDataForTable(podsData), [
+		podsData,
+	]);
 
-	const columns = useMemo(() => getK8sPodsListColumns(), []);
+	const columns = useMemo(() => getK8sPodsListColumns(addedColumns), [
+		addedColumns,
+	]);
 
 	const handleTableChange: TableProps<K8sPodsRowData>['onChange'] = useCallback(
 		(
@@ -134,56 +153,73 @@ function K8sPodsList(): JSX.Element {
 		logEvent('Infra Monitoring: K8s list page visited', {});
 	}, []);
 
-	const selectedHostData = useMemo(() => {
-		if (!selectedHostName) return null;
-		return (
-			hostMetricsData.find((host) => host.hostName === selectedHostName) || null
-		);
-	}, [selectedHostName, hostMetricsData]);
+	const selectedPodData = useMemo(() => {
+		if (!selectedPodUID) return null;
+		return podsData.find((pod) => pod.podUID === selectedPodUID) || null;
+	}, [selectedPodUID, podsData]);
 
 	const handleRowClick = (record: K8sPodsRowData): void => {
-		setSelectedHostName(record.hostName);
+		setSelectedPodUID(record.podUID);
 
 		logEvent('Infra Monitoring: K8s list item clicked', {
-			host: record.hostName,
+			podUID: record.podUID,
 		});
 	};
 
-	const handleCloseHostDetail = (): void => {
-		setSelectedHostName(null);
+	const handleClosePodDetail = (): void => {
+		setSelectedPodUID(null);
 	};
 
-	const showHostsTable =
+	const showPodsTable =
 		!isError &&
-		sentAnyHostMetricsData &&
-		!isSendingIncorrectK8SAgentMetrics &&
-		!(formattedHostMetricsData.length === 0 && filters.items.length > 0);
+		!isLoading &&
+		!isFetching &&
+		!(formattedPodsData.length === 0 && filters.items.length > 0);
 
-	const showNoFilteredHostsMessage =
+	const showNoFilteredPodsMessage =
 		!isFetching &&
 		!isLoading &&
-		formattedHostMetricsData.length === 0 &&
+		formattedPodsData.length === 0 &&
 		filters.items.length > 0;
 
-	const showHostsEmptyState =
-		!isFetching &&
-		!isLoading &&
-		(!sentAnyHostMetricsData || isSendingIncorrectK8SAgentMetrics) &&
-		!filters.items.length;
+	const handleAddColumn = useCallback(
+		(column: IPodColumn): void => {
+			setAddedColumns((prev) => [...prev, column]);
+
+			setAvailableColumns((prev) => prev.filter((c) => c.value !== column.value));
+		},
+		[setAddedColumns, setAvailableColumns],
+	);
+
+	// Update local storage when added columns updated
+	useEffect(() => {
+		const addedColumnIDs = addedColumns.map((column) => column.id);
+
+		updateLocalStorage('k8sPodsAddedColumns', addedColumnIDs);
+	}, [addedColumns]);
+
+	const handleRemoveColumn = useCallback(
+		(column: IPodColumn): void => {
+			setAddedColumns((prev) => prev.filter((c) => c.value !== column.value));
+
+			setAvailableColumns((prev) => [...prev, column]);
+		},
+		[setAddedColumns, setAvailableColumns],
+	);
 
 	return (
 		<div className="k8s-list">
-			<K8sHeader handleFiltersChange={handleFiltersChange} />
+			<K8sHeader
+				defaultAddedColumns={defaultAddedColumns}
+				addedColumns={addedColumns}
+				availableColumns={availableColumns}
+				handleFiltersChange={handleFiltersChange}
+				onAddColumn={handleAddColumn}
+				onRemoveColumn={handleRemoveColumn}
+			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
-			{showHostsEmptyState && (
-				<K8sEmptyOrIncorrectMetrics
-					noData={!sentAnyHostMetricsData}
-					incorrectData={isSendingIncorrectK8SAgentMetrics}
-				/>
-			)}
-
-			{showNoFilteredHostsMessage && (
+			{showNoFilteredPodsMessage && (
 				<div className="no-filtered-hosts-message-container">
 					<div className="no-filtered-hosts-message-content">
 						<img
@@ -222,10 +258,10 @@ function K8sPodsList(): JSX.Element {
 				</div>
 			)}
 
-			{showHostsTable && (
+			{showPodsTable && (
 				<Table
 					className="k8s-list-table"
-					dataSource={isFetching || isLoading ? [] : formattedHostMetricsData}
+					dataSource={isFetching || isLoading ? [] : formattedPodsData}
 					columns={columns}
 					pagination={{
 						current: currentPage,
@@ -240,7 +276,7 @@ function K8sPodsList(): JSX.Element {
 						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 					}}
 					tableLayout="fixed"
-					rowKey={(record): string => record.hostName}
+					rowKey={(record): string => record.podUID}
 					onChange={handleTableChange}
 					onRow={(record): { onClick: () => void; className: string } => ({
 						onClick: (): void => handleRowClick(record),
@@ -249,10 +285,10 @@ function K8sPodsList(): JSX.Element {
 				/>
 			)}
 
-			<HostMetricDetail
-				host={selectedHostData}
+			<PodDetails
+				pod={selectedPodData}
 				isModalTimeSelection
-				onClose={handleCloseHostDetail}
+				onClose={handleClosePodDetail}
 			/>
 		</div>
 	);
