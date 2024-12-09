@@ -29,6 +29,14 @@ const UTC_TIMEZONE: Timezone = {
 	hasDivider: true,
 };
 
+const normalizeTimezoneName = (timezone: string): string => {
+	// https://github.com/tc39/proposal-temporal/issues/1076
+	if (timezone === 'Asia/Calcutta') {
+		return 'Asia/Kolkata';
+	}
+	return timezone;
+};
+
 const formatOffset = (offsetMinutes: number): string => {
 	if (offsetMinutes === 0) return 'UTC';
 
@@ -84,16 +92,13 @@ const getOffsetByTimezone = (timezone: string): number => {
 
 export const getBrowserTimezone = (): Timezone => {
 	const browserTz = dayjs.tz.guess();
-	const browserOffset = getOffsetByTimezone(browserTz);
-	return createTimezoneEntry(browserTz, browserOffset, TIMEZONE_TYPES.BROWSER);
-};
-
-const normalizeTimezoneName = (timezone: string): string => {
-	// https://github.com/tc39/proposal-temporal/issues/1076
-	if (timezone === 'Asia/Calcutta') {
-		return 'Asia/Kolkata';
-	}
-	return timezone;
+	const normalizedTz = normalizeTimezoneName(browserTz);
+	const browserOffset = getOffsetByTimezone(normalizedTz);
+	return createTimezoneEntry(
+		normalizedTz,
+		browserOffset,
+		TIMEZONE_TYPES.BROWSER,
+	);
 };
 
 const filterAndSortTimezones = (
