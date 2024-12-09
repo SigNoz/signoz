@@ -87,7 +87,10 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
-export function getAppContextMock(role: string): IAppContext {
+export function getAppContextMock(
+	role: string,
+	appContextOverrides?: Partial<IAppContext>,
+): IAppContext {
 	return {
 		activeLicenseV3: {
 			event_queue: {
@@ -312,20 +315,23 @@ export function getAppContextMock(role: string): IAppContext {
 		setUserFlags: jest.fn(),
 		updateOrg: jest.fn(),
 		updateOrgPreferences: jest.fn(),
+		...appContextOverrides,
 	};
 }
 function AllTheProviders({
 	children,
 	role, // Accept the role as a prop
+	appContextOverrides,
 }: {
 	children: React.ReactNode;
 	role: string; // Define the role prop
+	appContextOverrides: Partial<IAppContext>;
 }): ReactElement {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ResourceProvider>
 				<Provider store={mockStored(role)}>
-					<AppContext.Provider value={getAppContextMock(role)}>
+					<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
 						<BrowserRouter>
 							{/* Use the mock store with the provided role */}
 							<QueryBuilderProvider>{children}</QueryBuilderProvider>
@@ -341,9 +347,14 @@ const customRender = (
 	ui: ReactElement,
 	options?: Omit<RenderOptions, 'wrapper'>,
 	role = 'ADMIN', // Set a default role
+	appContextOverrides?: Partial<IAppContext>,
 ): RenderResult =>
 	render(ui, {
-		wrapper: () => <AllTheProviders role={role}>{ui}</AllTheProviders>,
+		wrapper: () => (
+			<AllTheProviders role={role} appContextOverrides={appContextOverrides || {}}>
+				{ui}
+			</AllTheProviders>
+		),
 		...options,
 	});
 
