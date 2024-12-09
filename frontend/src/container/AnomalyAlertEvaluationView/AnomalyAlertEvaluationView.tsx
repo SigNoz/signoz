@@ -154,7 +154,7 @@ function AnomalyAlertEvaluationView({
 	const options = {
 		width: dimensions.width,
 		height: dimensions.height - 36,
-		plugins: [bandsPlugin, tooltipPlugin(isDarkMode, timezone?.value)],
+		plugins: [bandsPlugin, tooltipPlugin(isDarkMode, timezone.value)],
 		focus: {
 			alpha: 0.3,
 		},
@@ -260,7 +260,7 @@ function AnomalyAlertEvaluationView({
 		},
 		axes: getAxes(isDarkMode, yAxisUnit),
 		tzDate: (timestamp: number): Date =>
-			uPlot.tzDate(new Date(timestamp * 1e3), timezone?.value),
+			uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 	};
 
 	const handleSearch = (searchText: string): void => {

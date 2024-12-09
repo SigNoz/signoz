@@ -99,7 +99,7 @@ export const getGraphOptions = (
 			callbacks: {
 				title(context): string | string[] {
 					const date = dayjs(context[0].parsed.x);
-					return date.tz(timezone?.value).format('MMM DD, YYYY, HH:mm:ss');
+					return date.tz(timezone.value).format('MMM DD, YYYY, HH:mm:ss');
 				},
 				label(context): string | string[] {
 					let label = context.dataset.label || '';

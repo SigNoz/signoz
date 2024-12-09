@@ -120,7 +120,7 @@ function HorizontalTimelineGraph({
 					: [],
 
 			tzDate: (timestamp: number): Date =>
-				uPlot.tzDate(new Date(timestamp * 1e3), timezone?.value),
+				uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 		}),
 		[
 			width,
@@ -128,7 +128,7 @@ function HorizontalTimelineGraph({
 			transformedData.length,
 			urlQuery,
 			dispatch,
-			timezone?.value,
+			timezone.value,
 		],
 	);
 	return <Uplot data={transformedData} options={options} />;

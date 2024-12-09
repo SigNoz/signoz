@@ -71,7 +71,7 @@ function useTimezoneFormatter({
 	const formatTimezoneAdjustedTimestamp = useCallback(
 		(input: TimestampInput, format = 'YYYY-MM-DD HH:mm:ss'): string => {
 			const timestamp = dayjs(input).valueOf();
-			const cacheKey = `${timestamp}_${userTimezone?.value}`;
+			const cacheKey = `${timestamp}_${userTimezone.value}`;
 
 			// Check cache first
 			const cachedValue = cache.get(cacheKey);
@@ -79,7 +79,7 @@ function useTimezoneFormatter({
 				return cachedValue.value;
 			}
 			// Format timestamp
-			const formattedValue = dayjs(input).tz(userTimezone?.value).format(format);
+			const formattedValue = dayjs(input).tz(userTimezone.value).format(format);
 
 			// Update cache
 			cache.set(cacheKey, {
@@ -94,7 +94,7 @@ function useTimezoneFormatter({
 
 			return formattedValue;
 		},
-		[cache, clearCacheEntries, userTimezone],
+		[cache, clearCacheEntries, userTimezone.value],
 	);
 
 	return { formatTimezoneAdjustedTimestamp };

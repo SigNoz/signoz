@@ -89,9 +89,9 @@ function CustomTimePicker({
 	const [activeView, setActiveView] = useState<ViewType>(DEFAULT_VIEW);
 
 	const { timezone, browserTimezone } = useTimezone();
-	const activeTimezoneOffset = timezone?.offset;
+	const activeTimezoneOffset = timezone.offset;
 	const isTimezoneOverridden = useMemo(
-		() => timezone?.offset !== browserTimezone.offset,
+		() => timezone.offset !== browserTimezone.offset,
 		[timezone, browserTimezone],
 	);
 

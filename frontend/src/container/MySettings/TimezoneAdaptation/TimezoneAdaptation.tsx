@@ -10,7 +10,7 @@ function TimezoneAdaptation(): JSX.Element {
 	const { timezone, browserTimezone, updateTimezone } = useTimezone();
 
 	const isTimezoneOverridden = useMemo(
-		() => timezone?.offset !== browserTimezone.offset,
+		() => timezone.offset !== browserTimezone.offset,
 		[timezone, browserTimezone],
 	);
 
@@ -48,7 +48,7 @@ function TimezoneAdaptation(): JSX.Element {
 							<>
 								Your current timezone is overridden to
 								<span className="timezone-adaption__note-text-overridden">
-									{timezone?.offset}
+									{timezone.offset}
 								</span>
 							</>
 						) : (

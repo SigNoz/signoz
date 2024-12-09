@@ -130,7 +130,7 @@ function TimezonePicker({
 	const [searchTerm, setSearchTerm] = useState('');
 	const { timezone, updateTimezone } = useTimezone();
 	const [selectedTimezone, setSelectedTimezone] = useState<string>(
-		timezone?.name ?? TIMEZONE_DATA[0].name,
+		timezone.name ?? TIMEZONE_DATA[0].name,
 	);
 
 	const getFilteredTimezones = useCallback((searchTerm: string): Timezone[] => {

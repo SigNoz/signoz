@@ -78,8 +78,8 @@ function PodMetrics({
 					maxTimeScale: end,
 					verticalLineTimestamp,
 					tzDate: (timestamp: number) =>
-						uPlot.tzDate(new Date(timestamp * 1e3), timezone?.value),
-					timezone: timezone?.value,
+						uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
+					timezone: timezone.value,
 				}),
 			),
 		[
@@ -89,7 +89,7 @@ function PodMetrics({
 			start,
 			end,
 			verticalLineTimestamp,
-			timezone?.value,
+			timezone.value,
 		],
 	);
 

@@ -132,7 +132,7 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 		useEffect(() => {
 			_adapters._date.override({
 				format(time: number | Date, fmt: string) {
-					const dayjsTime = dayjs(time).tz(timezone?.value);
+					const dayjsTime = dayjs(time).tz(timezone.value);
 					const format = formatMap[fmt as keyof typeof formatMap];
 					if (!format) {
 						console.warn(`Missing datetime format for ${fmt}`);

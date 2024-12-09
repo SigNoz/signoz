@@ -57,7 +57,7 @@ function CustomTimePickerPopoverContent({
 		pathname,
 	]);
 	const { timezone } = useTimezone();
-	const activeTimezoneOffset = timezone?.offset;
+	const activeTimezoneOffset = timezone.offset;
 
 	function getTimeChips(options: Option[]): JSX.Element {
 		return (
