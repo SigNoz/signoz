@@ -152,6 +152,9 @@ $item-spacing: 8px;
 		&__item {
 			color: var(--bg-ink-400);
 		}
+		&__offset {
+			color: var(--bg-ink-100);
+		}
 	}
 	.timezone-name-wrapper {
 		&__selected-icon {

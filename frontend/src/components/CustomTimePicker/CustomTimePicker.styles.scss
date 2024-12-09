@@ -164,6 +164,9 @@
 }
 
 .lightMode {
+	.date-time-popover__footer {
+		border-color: var(--bg-vanilla-400);
+	}
 	.timezone-container {
 		color: var(---bg-ink-400);
 		&__clock-icon {
