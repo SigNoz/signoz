@@ -3141,14 +3141,14 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		Hash: make(map[string]struct{}),
 	}
 
-	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
+	producerQueryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+	if err := validateQueryRangeParamsV3(producerQueryRangeParams); err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
 		return
@@ -3157,7 +3157,7 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), producerQueryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3165,21 +3165,21 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	}
 
 	for _, res := range result {
-		for _, list := range res.List {
-			serviceName, serviceNameOk := list.Data["service_name"].(*string)
-			topicName, topicNameOk := list.Data["topic"].(*string)
-			params := []string{*serviceName, *topicName}
+		for _, series := range res.Series {
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			topicName, topicNameOk := series.Labels["topic"]
+			params := []string{serviceName, topicName}
 			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if topicNameOk && serviceNameOk && !ok {
 				attributeCache.Hash[hashKey] = struct{}{}
-				attributeCache.TopicName = append(attributeCache.TopicName, *topicName)
-				attributeCache.ServiceName = append(attributeCache.ServiceName, *serviceName)
+				attributeCache.TopicName = append(attributeCache.TopicName, topicName)
+				attributeCache.ServiceName = append(attributeCache.ServiceName, serviceName)
 			}
 		}
 	}
 
-	queryRangeParams, err = mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-latency", attributeCache)
+	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-byte-rate", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3198,26 +3198,32 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		return
 	}
 
-	latencyColumn := &v3.Result{QueryName: "latency"}
-	var latencySeries []*v3.Row
+	byteRateColumn := &v3.Result{QueryName: "byte_rate"}
+	var byteRateSeries []*v3.Series
 	for _, res := range resultFetchLatency {
-		for _, list := range res.List {
-			topic, topicOk := list.Data["topic"].(*string)
-			serviceName, serviceNameOk := list.Data["service_name"].(*string)
-			params := []string{*serviceName, *topic}
+		for _, series := range res.Series {
+			topic, topicOk := series.Labels["topic"]
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			params := []string{serviceName, topic}
 			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if topicOk && serviceNameOk && ok {
-				latencySeries = append(latencySeries, list)
+				byteRateSeries = append(byteRateSeries, series)
 			}
 		}
 	}
 
-	latencyColumn.List = latencySeries
-	result = append(result, latencyColumn)
+	byteRateColumn.Series = byteRateSeries
+	var latencyColumnResult []*v3.Result
+	latencyColumnResult = append(latencyColumnResult, byteRateColumn)
 
+	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(latencyColumnResult, queryRangeParams)
+
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	result = append(result, resultFetchLatency[0])
 	resp := v3.QueryRangeResponse{
-		Result: resultFetchLatency,
+		Result: result,
 	}
 	aH.Respond(w, resp)
 }
