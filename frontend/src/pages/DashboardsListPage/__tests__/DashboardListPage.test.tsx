@@ -1,12 +1,20 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import ROUTES from 'constants/routes';
 import DashboardsList from 'container/ListOfDashboard';
-import { dashboardEmptyState } from 'mocks-server/__mockdata__/dashboards';
+import * as dashboardUtils from 'container/NewDashboard/DashboardDescription';
+import {
+	dashboardEmptyState,
+	dashboardSuccessResponse,
+} from 'mocks-server/__mockdata__/dashboards';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
+
+jest.mock('container/NewDashboard/DashboardDescription', () => ({
+	sanitizeDashboardData: jest.fn(),
+}));
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -203,5 +211,26 @@ describe('dashboard list page', () => {
 				'_blank',
 			),
 		);
+	});
+
+	it('ensure that the export JSON popover action works correctly', async () => {
+		const { getByText, getAllByTestId } = render(
+			<MemoryRouter initialEntries={['/dashbords']}>
+				<DashboardProvider>
+					<DashboardsList />
+				</DashboardProvider>
+			</MemoryRouter>,
+		);
+
+		await waitFor(() => {
+			const popovers = getAllByTestId('dashboard-action-icon');
+			expect(popovers).toHaveLength(dashboardSuccessResponse.data.length);
+			fireEvent.click([...popovers[0].children][0]);
+		});
+
+		const exportJsonBtn = getByText('Export JSON');
+		expect(exportJsonBtn).toBeInTheDocument();
+		fireEvent.click(exportJsonBtn);
+		expect(dashboardUtils.sanitizeDashboardData).toHaveBeenCalled();
 	});
 });
