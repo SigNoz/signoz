@@ -42,6 +42,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { QUERY_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import Events from './Events/Events';
+import Metrics from './Metrics/Metrics';
 import { PodDetailProps } from './PodDetail.interfaces';
 import PodLogsDetailedView from './PodLogs/PodLogsDetailedView';
 import PodTraces from './PodTraces/PodTraces';
@@ -75,7 +76,7 @@ function PodDetails({
 		selectedTime as Time,
 	);
 
-	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.EVENTS);
+	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.METRICS);
 	const isDarkMode = useIsDarkMode();
 
 	const initialFilters = useMemo(
@@ -502,7 +503,15 @@ function PodDetails({
 						)}
 					</div>
 
-					{selectedView === VIEW_TYPES.METRICS && <div>Metrics</div>}
+					{selectedView === VIEW_TYPES.METRICS && (
+						<Metrics
+							pod={pod}
+							selectedInterval={selectedInterval}
+							timeRange={modalTimeRange}
+							handleTimeChange={handleTimeChange}
+							isModalTimeSelection={isModalTimeSelection}
+						/>
+					)}
 					{selectedView === VIEW_TYPES.LOGS && (
 						<PodLogsDetailedView
 							timeRange={modalTimeRange}
