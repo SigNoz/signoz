@@ -31,8 +31,6 @@ function NewExplorerCTA(): JSX.Element | null {
 		}
 	}, [location.pathname]);
 
-	console.log(location.pathname, location.pathname === ROUTES.LOGS_EXPLORER);
-
 	const button = useMemo(
 		() => (
 			<Button
