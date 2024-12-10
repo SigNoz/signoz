@@ -1,3 +1,22 @@
+.k8s-container {
+	display: flex;
+	flex-direction: row;
+	height: calc(100vh - 45px);
+
+	.k8s-quick-filters-container {
+		width: 280px;
+
+		.quick-filters {
+			overflow-y: auto;
+			overflow-x: hidden;
+		}
+	}
+
+	.k8s-list-container {
+		flex: 1;
+	}
+}
+
 .infra-monitoring-container {
 	display: flex;
 	height: 100%;
@@ -10,13 +29,13 @@
 		margin-bottom: 16px;
 	}
 
-	.hosts-list-controls {
+	.k8s-list-controls {
 		padding: 8px;
 
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: 16px;
+		gap: 8px;
 
 		.ant-select-selector {
 			border-radius: 2px;
@@ -32,8 +51,40 @@
 			}
 		}
 
-		.hosts-list-controls-left {
+		.k8s-list-controls-left {
 			flex: 1;
+
+			display: flex;
+			gap: 8px;
+
+			.k8s-qb-search-container {
+				width: 60%;
+			}
+
+			.k8s-attribute-search-container {
+				width: 40%;
+			}
+		}
+
+		.k8s-list-controls-right {
+			width: 240px;
+
+			display: flex;
+			align-items: center;
+			gap: 4px;
+
+			.periscope-btn {
+				padding: 4px 8px;
+
+				&.ghost {
+					border: none;
+					background: transparent;
+
+					&:hover {
+						color: var(--bg-vanilla-100);
+					}
+				}
+			}
 		}
 	}
 
@@ -51,7 +102,7 @@
 		cursor: pointer;
 	}
 
-	.hosts-list-table {
+	.k8s-list-table {
 		.ant-table {
 			.ant-table-thead > tr > th {
 				padding: 12px;
@@ -137,9 +188,6 @@
 			.column-header-right {
 				text-align: right;
 			}
-			.column-header-left {
-				text-align: left;
-			}
 			.ant-table-tbody > tr > td {
 				border-bottom: none;
 			}
@@ -209,13 +257,13 @@
 	}
 }
 
-.hosts-list-loading-state {
+.k8s-list-loading-state {
 	padding: 8px;
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
 
-	.hosts-list-loading-state-item {
+	.k8s-list-loading-state-item {
 		height: 48px;
 		width: 100%;
 	}
@@ -281,7 +329,7 @@
 		.ant-table-cell {
 			color: var(--bg-ink-500);
 		}
-		.hosts-list-controls {
+		.k8s-list-controls {
 			border-top: 1px solid var(--bg-vanilla-300);
 			border-bottom: 1px solid var(--bg-vanilla-300);
 
@@ -293,7 +341,7 @@
 		}
 	}
 
-	.hosts-list-table {
+	.k8s-list-table {
 		.ant-table {
 			.ant-table-thead > tr > th {
 				background: var(--bg-vanilla-100);
