@@ -50,6 +50,7 @@ import {
 } from 'lodash-es';
 import { Sliders } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
+import { useTimezone } from 'providers/Timezone';
 import {
 	memo,
 	MutableRefObject,
@@ -669,13 +670,19 @@ function LogsExplorerViews({
 		setIsLoadingQueries,
 	]);
 
+	const { timezone } = useTimezone();
+
 	const flattenLogData = useMemo(
 		() =>
 			logs.map((log) => {
 				const timestamp =
 					typeof log.timestamp === 'string'
-						? dayjs(log.timestamp).format('YYYY-MM-DD HH:mm:ss.SSS')
-						: dayjs(log.timestamp / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
+						? dayjs(log.timestamp)
+								.tz(timezone.value)
+								.format('YYYY-MM-DD HH:mm:ss.SSS')
+						: dayjs(log.timestamp / 1e6)
+								.tz(timezone.value)
+								.format('YYYY-MM-DD HH:mm:ss.SSS');
 
 				return FlatLogData({
 					timestamp,
@@ -683,7 +690,7 @@ function LogsExplorerViews({
 					...omit(log, 'timestamp', 'body'),
 				});
 			}),
-		[logs],
+		[logs, timezone.value],
 	);
 
 	return (

@@ -24,6 +24,7 @@ import history from 'lib/history';
 import { map } from 'lodash-es';
 import { PanelRight } from 'lucide-react';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
+import { useTimezone } from 'providers/Timezone';
 import { useEffect, useMemo, useState } from 'react';
 import { ITraceForest, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
@@ -139,6 +140,8 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 
+	const { timezone } = useTimezone();
+
 	return (
 		<StyledRow styledclass={[Flex({ flex: 1 })]}>
 			<StyledCol flex="auto" styledclass={styles.leftContainer}>
@@ -195,7 +198,9 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 					{isGlobalTimeVisible && (
 						<styles.TimeStampContainer flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}>
 							<Typography>
-								{dayjs(traceMetaData.globalStart).format('hh:mm:ss a MM/DD')}
+								{dayjs(traceMetaData.globalStart)
+									.tz(timezone.value)
+									.format('hh:mm:ss a (UTC Z) MM/DD')}
 							</Typography>
 						</styles.TimeStampContainer>
 					)}

@@ -31,7 +31,7 @@ import { AxiosError } from 'axios';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Tags from 'components/Tags/Tags';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
@@ -51,6 +51,7 @@ import {
 	Trash2,
 	X,
 } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
@@ -70,7 +71,10 @@ const { Option } = Select;
 
 const BYTES = 1073741824;
 
-export const disabledDate = (current: Dayjs): boolean =>
+// Using any type here because antd's DatePicker expects its own internal Dayjs type
+// which conflicts with our project's Dayjs type that has additional plugins (tz, utc etc).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+export const disabledDate = (current: any): boolean =>
 	// Disable all dates before today
 	current && current < dayjs().endOf('day');
 
@@ -393,8 +397,11 @@ function MultiIngestionSettings(): JSX.Element {
 
 	const gbToBytes = (gb: number): number => Math.round(gb * 1024 ** 3);
 
-	const getFormattedTime = (date: string): string =>
-		dayjs(date).format('MMM DD,YYYY, hh:mm a');
+	const getFormattedTime = (
+		date: string,
+		formatTimezoneAdjustedTimestamp: (date: string, format: string) => string,
+	): string =>
+		formatTimezoneAdjustedTimestamp(date, 'MMM DD,YYYY, hh:mm a (UTC Z)');
 
 	const showDeleteLimitModal = (
 		APIKey: IngestionKeyProps,
@@ -544,17 +551,27 @@ function MultiIngestionSettings(): JSX.Element {
 		}
 	};
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	const columns: AntDTableProps<IngestionKeyProps>['columns'] = [
 		{
 			title: 'Ingestion Key',
 			key: 'ingestion-key',
 			// eslint-disable-next-line sonarjs/cognitive-complexity
 			render: (APIKey: IngestionKeyProps): JSX.Element => {
-				const createdOn = getFormattedTime(APIKey.created_at);
+				const createdOn = getFormattedTime(
+					APIKey.created_at,
+					formatTimezoneAdjustedTimestamp,
+				);
 				const formattedDateAndTime =
-					APIKey && APIKey?.expires_at && getFormattedTime(APIKey?.expires_at);
+					APIKey &&
+					APIKey?.expires_at &&
+					getFormattedTime(APIKey?.expires_at, formatTimezoneAdjustedTimestamp);
 
-				const updatedOn = getFormattedTime(APIKey?.updated_at);
+				const updatedOn = getFormattedTime(
+					APIKey?.updated_at,
+					formatTimezoneAdjustedTimestamp,
+				);
 
 				const limits: { [key: string]: LimitProps } = {};
 

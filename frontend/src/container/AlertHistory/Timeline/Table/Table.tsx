@@ -7,6 +7,7 @@ import {
 	useGetAlertRuleDetailsTimelineTable,
 	useTimelineTable,
 } from 'pages/AlertDetails/hooks';
+import { useTimezone } from 'providers/Timezone';
 import { HTMLAttributes, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
@@ -41,6 +42,8 @@ function TimelineTable(): JSX.Element {
 
 	const { t } = useTranslation('common');
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	if (isError || !isValidRuleId || !ruleId) {
 		return <div>{t('something_went_wrong')}</div>;
 	}
@@ -64,6 +67,7 @@ function TimelineTable(): JSX.Element {
 					filters,
 					labels: labels ?? {},
 					setFilters,
+					formatTimezoneAdjustedTimestamp,
 				})}
 				onRow={handleRowClick}
 				dataSource={timelineData}

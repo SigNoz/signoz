@@ -11,7 +11,8 @@ import ROUTES from 'constants/routes';
 import dompurify from 'dompurify';
 import { isEmpty } from 'lodash-es';
 import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useTimezone } from 'providers/Timezone';
+import React, { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
@@ -68,6 +69,8 @@ export function TableViewActions(
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	if (record.field === 'body') {
 		const parsedBody = recursiveParseJSON(fieldData.value);
 		if (!isEmpty(parsedBody)) {
@@ -100,33 +103,44 @@ export function TableViewActions(
 		);
 	}
 
+	let cleanTimestamp: string;
+	if (record.field === 'timestamp') {
+		cleanTimestamp = fieldData.value.replace(/^["']|["']$/g, '');
+	}
+
+	const renderFieldContent = (): JSX.Element => {
+		const commonStyles: React.CSSProperties = {
+			color: Color.BG_SIENNA_400,
+			whiteSpace: 'pre-wrap',
+			tabSize: 4,
+		};
+
+		switch (record.field) {
+			case 'body':
+				return <span style={commonStyles} dangerouslySetInnerHTML={bodyHtml} />;
+
+			case 'timestamp':
+				return (
+					<span style={commonStyles}>
+						{formatTimezoneAdjustedTimestamp(
+							cleanTimestamp,
+							'MM/DD/YYYY, HH:mm:ss.SSS (UTC Z)',
+						)}
+					</span>
+				);
+
+			default:
+				return (
+					<span style={commonStyles}>{removeEscapeCharacters(fieldData.value)}</span>
+				);
+		}
+	};
+
 	return (
 		<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
-			{record.field === 'body' ? (
-				<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
-					<span
-						style={{
-							color: Color.BG_SIENNA_400,
-							whiteSpace: 'pre-wrap',
-							tabSize: 4,
-						}}
-						dangerouslySetInnerHTML={bodyHtml}
-					/>
-				</CopyClipboardHOC>
-			) : (
-				<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
-					<span
-						style={{
-							color: Color.BG_SIENNA_400,
-							whiteSpace: 'pre-wrap',
-							tabSize: 4,
-						}}
-					>
-						{removeEscapeCharacters(fieldData.value)}
-					</span>
-				</CopyClipboardHOC>
-			)}
-
+			<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
+				{renderFieldContent()}
+			</CopyClipboardHOC>
 			{!isListViewPanel && (
 				<span className="action-btn">
 					<Tooltip title="Filter for value">
