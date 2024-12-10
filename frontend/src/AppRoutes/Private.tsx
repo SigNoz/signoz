@@ -173,7 +173,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			} else if (isLoggedInState) {
 				history.push(ROUTES.APPLICATION);
 			} else {
-				history.push(ROUTES.LOGIN);
+				// do nothing as the unauthenticated routes are LOGIN and SIGNUP and the LOGIN container takes care of routing to signup if
+				// setup is not completed
 			}
 		} else if (isLoggedInState) {
 			history.push(ROUTES.APPLICATION);
