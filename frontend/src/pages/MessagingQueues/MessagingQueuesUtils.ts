@@ -179,10 +179,13 @@ export const convertToNanoseconds = (timestamp: number): bigint =>
 export const getStartAndEndTimesInMilliseconds = (
 	timestamp: number,
 ): { start: number; end: number } => {
-	const FIVE_MINUTES_IN_MILLISECONDS = 5 * 60 * 1000; // 5 minutes in milliseconds - check with Shivanshu once
+	const FIVE_MINUTES_IN_MILLISECONDS = 5 * 60 * 1000; // 300,000 milliseconds
 
-	const start = Math.floor(timestamp);
-	const end = Math.floor(start + FIVE_MINUTES_IN_MILLISECONDS);
+	const pointInTime = Math.floor(timestamp * 1000);
+
+	// Convert timestamp to milliseconds and floor it
+	const start = Math.floor(pointInTime - FIVE_MINUTES_IN_MILLISECONDS);
+	const end = Math.floor(pointInTime + FIVE_MINUTES_IN_MILLISECONDS);
 
 	return { start, end };
 };
@@ -311,8 +314,8 @@ export const getMetaDataAndAPIPerView = (
 	return {
 		[MessagingQueuesViewType.consumerLag.value]: {
 			tableApiPayload: {
-				start: (selectedTimelineQuery?.start || 0) * 1e9,
-				end: (selectedTimelineQuery?.end || 0) * 1e9,
+				start: (selectedTimelineQuery?.start || 0) * 1e6,
+				end: (selectedTimelineQuery?.end || 0) * 1e6,
 				variables: {
 					partition: selectedTimelineQuery?.partition,
 					topic: selectedTimelineQuery?.topic,
