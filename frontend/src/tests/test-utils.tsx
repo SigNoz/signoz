@@ -315,6 +315,7 @@ export function getAppContextMock(
 		setUserFlags: jest.fn(),
 		updateOrg: jest.fn(),
 		updateOrgPreferences: jest.fn(),
+		licensesRefetch: jest.fn(),
 		...appContextOverrides,
 	};
 }
