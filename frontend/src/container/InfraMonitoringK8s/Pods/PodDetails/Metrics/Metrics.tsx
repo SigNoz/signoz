@@ -52,7 +52,7 @@ function Metrics({
 
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
-			queryKey: ['host-metrics', payload, ENTITY_VERSION_V4, 'HOST'],
+			queryKey: ['pod-metrics', payload, ENTITY_VERSION_V4, 'POD'],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 			enabled: !!payload,

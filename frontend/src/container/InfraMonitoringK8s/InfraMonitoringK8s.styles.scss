@@ -9,6 +9,23 @@
 		.quick-filters {
 			overflow-y: auto;
 			overflow-x: hidden;
+
+			&::-webkit-scrollbar {
+				width: 0.1rem;
+				height: 0.1rem;
+			}
+
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				background: var(--bg-slate-300);
+			}
+
+			&::-webkit-scrollbar-thumb:hover {
+				background: var(--bg-slate-200);
+			}
 		}
 	}
 
@@ -55,6 +72,7 @@
 			flex: 1;
 
 			display: flex;
+			align-items: center;
 			gap: 8px;
 
 			.k8s-qb-search-container {
@@ -72,17 +90,17 @@
 			display: flex;
 			align-items: center;
 			gap: 4px;
+		}
 
-			.periscope-btn {
-				padding: 4px 8px;
+		.periscope-btn {
+			padding: 4px 8px;
 
-				&.ghost {
-					border: none;
-					background: transparent;
+			&.ghost {
+				border: none;
+				background: transparent;
 
-					&:hover {
-						color: var(--bg-vanilla-100);
-					}
+				&:hover {
+					color: var(--bg-vanilla-100);
 				}
 			}
 		}
@@ -225,6 +243,14 @@
 						color: var(--bg-ink-500) !important;
 					}
 				}
+			}
+		}
+	}
+
+	.k8s-list-container-filters-visible {
+		.k8s-list-table {
+			.ant-pagination {
+				width: calc(100% - 340px);
 			}
 		}
 	}

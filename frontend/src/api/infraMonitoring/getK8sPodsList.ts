@@ -46,6 +46,7 @@ export interface K8sPodsData {
 		k8s_pod_name: string;
 		k8s_pod_uid: string;
 		k8s_statefulset_name: string;
+		k8s_cluster_name: string;
 	};
 	countByPhase: {
 		pending: number;

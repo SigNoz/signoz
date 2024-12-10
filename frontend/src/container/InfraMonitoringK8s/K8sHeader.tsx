@@ -4,7 +4,7 @@ import { Button, Input } from 'antd';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { SlidersHorizontal } from 'lucide-react';
+import { Filter, SlidersHorizontal } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -18,6 +18,8 @@ function K8sHeader({
 	handleFiltersChange,
 	onAddColumn,
 	onRemoveColumn,
+	handleFilterVisibilityChange,
+	isFiltersVisible,
 }: {
 	defaultAddedColumns: IPodColumn[];
 	addedColumns: IPodColumn[];
@@ -25,6 +27,8 @@ function K8sHeader({
 	handleFiltersChange: (value: IBuilderQuery['filters']) => void;
 	onAddColumn: (column: IPodColumn) => void;
 	onRemoveColumn: (column: IPodColumn) => void;
+	handleFilterVisibilityChange: () => void;
+	isFiltersVisible: boolean;
 }): JSX.Element {
 	const [isFiltersSidePanelOpen, setIsFiltersSidePanelOpen] = useState(false);
 
@@ -59,6 +63,19 @@ function K8sHeader({
 	return (
 		<div className="k8s-list-controls">
 			<div className="k8s-list-controls-left">
+				{!isFiltersVisible && (
+					<div className="quick-filters-toggle-container">
+						<Button
+							className="periscope-btn ghost"
+							type="text"
+							size="small"
+							onClick={handleFilterVisibilityChange}
+						>
+							<Filter size={14} />
+						</Button>
+					</div>
+				)}
+
 				<div className="k8s-qb-search-container">
 					<QueryBuilderSearch
 						query={query}

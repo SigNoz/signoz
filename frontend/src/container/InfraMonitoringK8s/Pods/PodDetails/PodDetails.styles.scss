@@ -48,7 +48,7 @@
 			.labels-row,
 			.values-row {
 				display: grid;
-				grid-template-columns: 1fr 1.5fr 1.5fr;
+				grid-template-columns: 1fr 1.5fr 1.5fr 1.5fr;
 				gap: 30px;
 				align-items: center;
 			}
@@ -66,6 +66,21 @@
 				line-height: 18px; /* 163.636% */
 				letter-spacing: 0.44px;
 				text-transform: uppercase;
+			}
+
+			.pod-details-metadata-value {
+				color: var(--text-vanilla-400);
+				font-family: 'Geist Mono';
+				font-size: 12px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+
+				width: 100%;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
 			}
 
 			.status-tag {
