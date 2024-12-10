@@ -290,7 +290,7 @@ func GetDashboard(ctx context.Context, uuid string) (*Dashboard, *model.ApiError
 	}
 
 	if dashboard.Data["title"] == "Ingestion" && dashboard.Data["description"] != nil {
-		dashboard.Data["description"] = "This dashboard is deprecated. Please use the new dashboard which is Ingestion V2. Or add it from here https://github.com/SigNoz/dashboards/blob/main/signoz-ingestion-analysis/signoz-ingestion-analysis-v1.json. " + dashboard.Data["description"].(string)
+		dashboard.Data["description"] = "This dashboard is deprecated. Please use the new Ingestion V2 dashboard. " + dashboard.Data["description"].(string)
 	}
 
 	return &dashboard, nil
