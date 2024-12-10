@@ -291,6 +291,8 @@ function LogsExplorerViews({
 		},
 	);
 
+	console.log(data, isLoading, isFetching, isError, isSuccess);
+
 	const getRequestData = useCallback(
 		(
 			query: Query | null,

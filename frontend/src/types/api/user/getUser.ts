@@ -17,4 +17,5 @@ export interface PayloadProps {
 	organization: string;
 	role: ROLES;
 	flags: UserFlags;
+	groupId: string;
 }

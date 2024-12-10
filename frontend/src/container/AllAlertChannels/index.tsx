@@ -9,11 +9,9 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import useFetch from 'hooks/useFetch';
 import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 
 import AlertChannelsComponent from './AlertChannels';
 import { Button, ButtonContainer, RightActionContainer } from './styles';
@@ -22,10 +20,10 @@ const { Paragraph } = Typography;
 
 function AlertChannels(): JSX.Element {
 	const { t } = useTranslation(['channels']);
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 	const [addNewChannelPermission] = useComponentPermission(
 		['add_new_channel'],
-		role,
+		user.role,
 	);
 	const onToggleHandler = useCallback(() => {
 		history.push(ROUTES.CHANNELS_NEW);

@@ -1,15 +1,8 @@
-import { render } from '@testing-library/react';
-import { I18nextProvider } from 'react-i18next';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import i18n from 'ReactI18';
-import store from 'store';
+import { render } from 'tests/test-utils';
 import { Pipeline } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
 
 import PipelinePageLayout from '../Layouts/Pipeline';
-import { matchMedia } from './AddNewPipeline.test';
 
 jest.mock('uplot', () => {
 	const paths = {
@@ -26,15 +19,19 @@ jest.mock('uplot', () => {
 });
 
 beforeAll(() => {
-	matchMedia();
-});
-
-const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			refetchOnWindowFocus: false,
-		},
-	},
+	Object.defineProperty(window, 'matchMedia', {
+		writable: true,
+		value: jest.fn().mockImplementation((query) => ({
+			matches: false,
+			media: query,
+			onchange: null,
+			addListener: jest.fn(),
+			removeListener: jest.fn(),
+			addEventListener: jest.fn(),
+			removeEventListener: jest.fn(),
+			dispatchEvent: jest.fn(),
+		})),
+	});
 });
 
 describe('PipelinePage container test', () => {
@@ -58,18 +55,10 @@ describe('PipelinePage container test', () => {
 		const refetchPipelineLists = jest.fn();
 
 		const { asFragment } = render(
-			<MemoryRouter>
-				<QueryClientProvider client={queryClient}>
-					<Provider store={store}>
-						<I18nextProvider i18n={i18n}>
-							<PipelinePageLayout
-								pipelineData={pipelinedata}
-								refetchPipelineLists={refetchPipelineLists}
-							/>
-						</I18nextProvider>
-					</Provider>
-				</QueryClientProvider>
-			</MemoryRouter>,
+			<PipelinePageLayout
+				pipelineData={pipelinedata}
+				refetchPipelineLists={refetchPipelineLists}
+			/>,
 		);
 		expect(asFragment()).toMatchSnapshot();
 	});

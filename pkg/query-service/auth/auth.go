@@ -378,11 +378,13 @@ func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) *mode
 }
 
 type RegisterRequest struct {
-	Name        string `json:"name"`
-	OrgName     string `json:"orgName"`
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	InviteToken string `json:"token"`
+	Name            string `json:"name"`
+	OrgName         string `json:"orgName"`
+	Email           string `json:"email"`
+	Password        string `json:"password"`
+	InviteToken     string `json:"token"`
+	IsAnonymous     bool   `json:"isAnonymous"`
+	HasOptedUpdates bool   `json:"hasOptedUpdates"`
 
 	// reference URL to track where the register request is coming from
 	SourceUrl string `json:"sourceUrl"`
@@ -401,7 +403,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 	groupName := constants.AdminGroup
 
 	org, apierr := dao.DB().CreateOrg(ctx,
-		&model.Organization{Name: req.OrgName})
+		&model.Organization{Name: req.OrgName, IsAnonymous: req.IsAnonymous, HasOptedUpdates: req.HasOptedUpdates})
 	if apierr != nil {
 		zap.L().Error("CreateOrg failed", zap.Error(apierr.ToError()))
 		return nil, apierr

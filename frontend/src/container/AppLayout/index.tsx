@@ -18,8 +18,6 @@ import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import useFeatureFlags from 'hooks/useFeatureFlag';
-import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
@@ -29,10 +27,9 @@ import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {
 	UPDATE_CURRENT_ERROR,
@@ -43,7 +40,6 @@ import {
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
-import AppReducer from 'types/reducer/app';
 import { isCloudUser } from 'utils/app';
 import {
 	getFormattedDate,
@@ -56,11 +52,18 @@ import { getRouteKey } from './utils';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function AppLayout(props: AppLayoutProps): JSX.Element {
-	const { isLoggedIn, user, role } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const {
+		isLoggedIn,
+		user,
+		licenses,
+		isFetchingLicenses,
+		activeLicenseV3,
+		isFetchingActiveLicenseV3,
+		featureFlags,
+		isFetchingFeatureFlags,
+		featureFlagsFetchError,
+	} = useAppContext();
 
-	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
 	const { notifications } = useNotifications();
 
 	const [
@@ -97,23 +100,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	});
 
 	const isDarkMode = useIsDarkMode();
-
-	const { data: licenseData, isFetching } = useLicense();
-
-	const isPremiumChatSupportEnabled =
-		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
-
-	const isChatSupportEnabled =
-		useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active || false;
-
-	const isCloudUserVal = isCloudUser();
-
-	const showAddCreditCardModal =
-		isLoggedIn &&
-		isChatSupportEnabled &&
-		isCloudUserVal &&
-		!isPremiumChatSupportEnabled &&
-		!licenseData?.payload?.trialConvertedToSubscription;
 
 	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
@@ -248,15 +234,16 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		if (
-			!isFetching &&
-			licenseData?.payload?.onTrial &&
-			!licenseData?.payload?.trialConvertedToSubscription &&
-			!licenseData?.payload?.workSpaceBlock &&
-			getRemainingDays(licenseData?.payload.trialEnd) < 7
+			!isFetchingLicenses &&
+			licenses &&
+			licenses.onTrial &&
+			!licenses.trialConvertedToSubscription &&
+			!licenses.workSpaceBlock &&
+			getRemainingDays(licenses.trialEnd) < 7
 		) {
 			setShowTrialExpiryBanner(true);
 		}
-	}, [licenseData, isFetching]);
+	}, [isFetchingLicenses, licenses]);
 
 	useEffect(() => {
 		if (
@@ -272,11 +259,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		// after logging out hide the trial expiry banner
 		if (!isLoggedIn) {
 			setShowTrialExpiryBanner(false);
+			setShowPaymentFailedWarning(false);
 		}
 	}, [isLoggedIn]);
 
 	const handleUpgrade = (): void => {
-		if (role === 'ADMIN') {
+		if (user.role === 'ADMIN') {
 			history.push(ROUTES.BILLING);
 		}
 	};
@@ -327,6 +315,41 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [isDarkMode]);
 
+	const showAddCreditCardModal = useMemo(() => {
+		if (
+			!isFetchingFeatureFlags &&
+			(featureFlags || featureFlagsFetchError) &&
+			licenses
+		) {
+			let isChatSupportEnabled = false;
+			let isPremiumSupportEnabled = false;
+			const isCloudUserVal = isCloudUser();
+			if (featureFlags && featureFlags.length > 0) {
+				isChatSupportEnabled =
+					featureFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)
+						?.active || false;
+
+				isPremiumSupportEnabled =
+					featureFlags.find((flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT)
+						?.active || false;
+			}
+			return (
+				isLoggedIn &&
+				!isPremiumSupportEnabled &&
+				isChatSupportEnabled &&
+				!licenses.trialConvertedToSubscription &&
+				isCloudUserVal
+			);
+		}
+		return false;
+	}, [
+		featureFlags,
+		featureFlagsFetchError,
+		isFetchingFeatureFlags,
+		isLoggedIn,
+		licenses,
+	]);
+
 	return (
 		<Layout className={cx(isDarkMode ? 'darkMode' : 'lightMode')}>
 			<Helmet>
@@ -336,10 +359,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			{showTrialExpiryBanner && !showPaymentFailedWarning && (
 				<div className="trial-expiry-banner">
 					You are in free trial period. Your free trial will end on{' '}
-					<span>
-						{getFormattedDate(licenseData?.payload?.trialEnd || Date.now())}.
-					</span>
-					{role === 'ADMIN' ? (
+					<span>{getFormattedDate(licenses?.trialEnd || Date.now())}.</span>
+					{user.role === 'ADMIN' ? (
 						<span>
 							{' '}
 							Please{' '}
@@ -362,7 +383,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						)}
 						.
 					</span>
-					{role === 'ADMIN' ? (
+					{user.role === 'ADMIN' ? (
 						<span>
 							{' '}
 							Please{' '}
@@ -385,9 +406,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			)}
 
 			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
-				{isToDisplayLayout && !renderFullScreen && (
-					<SideNav licenseData={licenseData} isFetching={isFetching} />
-				)}
+				{isToDisplayLayout && !renderFullScreen && <SideNav />}
 				<div className="app-content" data-overlayscrollbars-initialize>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent data-overlayscrollbars-initialize>

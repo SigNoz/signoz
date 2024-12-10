@@ -92,8 +92,8 @@ func (mds *ModelDaoSqlite) CreateOrg(ctx context.Context,
 	org.Id = uuid.NewString()
 	org.CreatedAt = time.Now().Unix()
 	_, err := mds.db.ExecContext(ctx,
-		`INSERT INTO organizations (id, name, created_at) VALUES (?, ?, ?);`,
-		org.Id, org.Name, org.CreatedAt)
+		`INSERT INTO organizations (id, name, created_at,is_anonymous,has_opted_updates) VALUES (?, ?, ?, ?, ?);`,
+		org.Id, org.Name, org.CreatedAt, org.IsAnonymous, org.HasOptedUpdates)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}

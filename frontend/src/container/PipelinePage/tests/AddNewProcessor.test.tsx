@@ -1,13 +1,7 @@
-import { render } from '@testing-library/react';
-import { I18nextProvider } from 'react-i18next';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import i18n from 'ReactI18';
-import store from 'store';
+import { render } from 'tests/test-utils';
 
 import { pipelineMockData } from '../mocks/pipeline';
 import AddNewProcessor from '../PipelineListsView/AddNewProcessor';
-import { matchMedia } from './AddNewPipeline.test';
 
 jest.mock('uplot', () => {
 	const paths = {
@@ -24,7 +18,19 @@ jest.mock('uplot', () => {
 });
 
 beforeAll(() => {
-	matchMedia();
+	Object.defineProperty(window, 'matchMedia', {
+		writable: true,
+		value: jest.fn().mockImplementation((query) => ({
+			matches: false,
+			media: query,
+			onchange: null,
+			addListener: jest.fn(),
+			removeListener: jest.fn(),
+			addEventListener: jest.fn(),
+			removeEventListener: jest.fn(),
+			dispatchEvent: jest.fn(),
+		})),
+	});
 });
 
 const selectedProcessorData = {
@@ -40,20 +46,14 @@ describe('PipelinePage container test', () => {
 		const isActionType = 'add-processor';
 
 		const { asFragment } = render(
-			<MemoryRouter>
-				<Provider store={store}>
-					<I18nextProvider i18n={i18n}>
-						<AddNewProcessor
-							isActionType={isActionType}
-							setActionType={setActionType}
-							selectedProcessorData={selectedProcessorData}
-							setShowSaveButton={jest.fn()}
-							expandedPipelineData={pipelineMockData[0]}
-							setExpandedPipelineData={jest.fn()}
-						/>
-					</I18nextProvider>
-				</Provider>
-			</MemoryRouter>,
+			<AddNewProcessor
+				isActionType={isActionType}
+				setActionType={setActionType}
+				selectedProcessorData={selectedProcessorData}
+				setShowSaveButton={jest.fn()}
+				expandedPipelineData={pipelineMockData[0]}
+				setExpandedPipelineData={jest.fn()}
+			/>,
 		);
 		expect(asFragment()).toMatchSnapshot();
 	});

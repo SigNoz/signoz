@@ -5,8 +5,8 @@ import { ENTITY_VERSION_V4 } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
-import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -33,7 +33,7 @@ function ServiceMetricTable({
 	const { notifications } = useNotifications();
 	const { t: getText } = useTranslation(['services']);
 
-	const { data: licenseData, isFetching } = useLicense();
+	const { licenses, isFetchingLicenses } = useAppContext();
 	const isCloudUserVal = isCloudUser();
 
 	const queries = useGetQueriesRange(queryRangeRequestData, ENTITY_VERSION_V4, {
@@ -70,9 +70,9 @@ function ServiceMetricTable({
 
 	useEffect(() => {
 		if (
-			!isFetching &&
-			licenseData?.payload?.onTrial &&
-			!licenseData?.payload?.trialConvertedToSubscription &&
+			!isFetchingLicenses &&
+			licenses?.onTrial &&
+			!licenses?.trialConvertedToSubscription &&
 			isCloudUserVal
 		) {
 			if (services.length > 0) {
@@ -82,7 +82,13 @@ function ServiceMetricTable({
 				setRPS(0);
 			}
 		}
-	}, [services, licenseData, isFetching, isCloudUserVal]);
+	}, [
+		services,
+		isCloudUserVal,
+		isFetchingLicenses,
+		licenses?.onTrial,
+		licenses?.trialConvertedToSubscription,
+	]);
 
 	const paginationConfig = {
 		defaultPageSize: 10,
