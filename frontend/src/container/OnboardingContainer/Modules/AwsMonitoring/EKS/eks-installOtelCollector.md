@@ -21,9 +21,9 @@ global:
   cloud: aws
   clusterName: <CLUSTER_NAME>
   deploymentEnvironment: <DEPLOYMENT_ENVIRONMENT>
-otelCollectorEndpoint: ingest.{region}.signoz.cloud:443
+otelCollectorEndpoint: ingest.{{REGION}}.signoz.cloud:443
 otelInsecure: false
-signozApiKey: <SIGNOZ_INGESTION_KEY>
+signozApiKey: {{SIGNOZ_INGESTION_KEY}}
 presets:
   otlpExporter:
     enabled: true
