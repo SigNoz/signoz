@@ -1203,7 +1203,9 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
-func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams) (*[]model.SearchSpansResult, error) {
+func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
+	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1318,9 +1320,29 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	end = time.Now()
 	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
 
-	for i, item := range searchSpanResponses {
-		spanEvents := item.GetValues()
-		searchSpansResult[0].Events[i] = spanEvents
+	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
+	smartAlgoEnabled := err == nil
+	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
+		start = time.Now()
+		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
+		if err != nil {
+			return nil, err
+		}
+		end = time.Now()
+		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			data := map[string]interface{}{
+				"traceSize":        len(searchScanResponses),
+				"spansRenderLimit": params.SpansRenderLimit,
+			}
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
+		}
+	} else {
+		for i, item := range searchSpanResponses {
+			spanEvents := item.GetValues()
+			searchSpansResult[0].Events[i] = spanEvents
+		}
 	}
 
 	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
@@ -1334,7 +1356,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
-		return r.SearchTracesV2(ctx, params)
+		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
 	}
 
 	var countSpans uint64
