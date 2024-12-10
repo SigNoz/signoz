@@ -43,7 +43,6 @@ func createIngestionDashboardV2(conn *sqlx.DB) error {
 		Data: mapData,
 	}
 	userEmail := "admin@signoz.cloud"
-	dash.Uuid = uuid.New().String()
 	dash.CreatedAt = time.Now()
 	dash.CreateBy = &userEmail
 	dash.UpdatedAt = time.Now()
