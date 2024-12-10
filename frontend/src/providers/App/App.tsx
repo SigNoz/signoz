@@ -47,12 +47,12 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	);
 	const [org, setOrg] = useState<Organization[] | null>(null);
 
-	// if the user.id is not present, for migration older cases then we need to logout
+	// if the user.id is not present, for migration older cases then we need to logout only for current logged in users!
 	useEffect(() => {
-		if (!user.id) {
+		if (!user.id && isLoggedIn) {
 			Logout();
 		}
-	}, [user]);
+	}, [isLoggedIn, user]);
 
 	// fetcher for user
 	// user will only be fetched if the user id and token is present
