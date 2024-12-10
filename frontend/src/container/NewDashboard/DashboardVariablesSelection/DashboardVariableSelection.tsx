@@ -1,9 +1,14 @@
 import { Row } from 'antd';
-import { isNull } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
+import {
+	buildDependencies,
+	buildDependencyGraph,
+	onUpdateVariableNode,
+	VariableGraph,
+} from './util';
 import VariableItem from './VariableItem';
 
 function DashboardVariableSelection(): JSX.Element | null {
@@ -20,6 +25,11 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const { variables } = data || {};
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
+
+	const [dependencyData, setDependencyData] = useState<{
+		order: string[];
+		graph: VariableGraph;
+	} | null>(null);
 
 	useEffect(() => {
 		if (variables) {
@@ -43,35 +53,26 @@ function DashboardVariableSelection(): JSX.Element | null {
 		}
 	}, [variables]);
 
-	const onVarChanged = (name: string): void => {
-		/**
-		 * this function takes care of adding the dependent variables to current update queue and removing
-		 * the updated variable name from the queue
-		 */
-		const dependentVariables = variablesTableData
-			?.map((variable: any) => {
-				if (variable.type === 'QUERY') {
-					const re = new RegExp(`\\{\\{\\s*?\\.${name}\\s*?\\}\\}`); // regex for `{{.var}}`
-					const queryValue = variable.queryValue || '';
-					const dependVarReMatch = queryValue.match(re);
-					if (dependVarReMatch !== null && dependVarReMatch.length > 0) {
-						return variable.name;
-					}
-				}
-				return null;
-			})
-			.filter((val: string | null) => !isNull(val));
-		setVariablesToGetUpdated((prev) => [
-			...prev.filter((v) => v !== name),
-			...dependentVariables,
-		]);
-	};
+	const initializationRef = useRef(false);
+
+	useEffect(() => {
+		if (variablesTableData.length > 0 && !initializationRef.current) {
+			const depGrp = buildDependencies(variablesTableData);
+			const { order, graph } = buildDependencyGraph(depGrp);
+			setDependencyData({
+				order,
+				graph,
+			});
+			initializationRef.current = true;
+		}
+	}, [variablesTableData]);
 
 	const onValueUpdate = (
 		name: string,
 		id: string,
 		value: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
+		isMountedCall?: boolean,
 		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): void => {
 		if (id) {
@@ -111,7 +112,18 @@ function DashboardVariableSelection(): JSX.Element | null {
 				});
 			}
 
-			onVarChanged(name);
+			if (dependencyData && !isMountedCall) {
+				const updatedVariables: string[] = [];
+				onUpdateVariableNode(
+					name,
+					dependencyData.graph,
+					dependencyData.order,
+					(node) => updatedVariables.push(node),
+				);
+				setVariablesToGetUpdated(updatedVariables.filter((v) => v !== name)); // question?
+			} else if (isMountedCall) {
+				setVariablesToGetUpdated((prev) => prev.filter((v) => v !== name));
+			}
 		}
 	};
 
