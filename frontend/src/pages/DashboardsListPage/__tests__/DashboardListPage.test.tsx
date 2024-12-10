@@ -214,13 +214,7 @@ describe('dashboard list page', () => {
 	});
 
 	it('ensure that the export JSON popover action works correctly', async () => {
-		const { getByText, getAllByTestId } = render(
-			<MemoryRouter initialEntries={['/dashbords']}>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
-			</MemoryRouter>,
-		);
+		const { getByText, getAllByTestId } = render(<DashboardsList />);
 
 		await waitFor(() => {
 			const popovers = getAllByTestId('dashboard-action-icon');
@@ -231,6 +225,13 @@ describe('dashboard list page', () => {
 		const exportJsonBtn = getByText('Export JSON');
 		expect(exportJsonBtn).toBeInTheDocument();
 		fireEvent.click(exportJsonBtn);
-		expect(dashboardUtils.sanitizeDashboardData).toHaveBeenCalled();
+		const firstDashboardData = dashboardSuccessResponse.data[0];
+		expect(dashboardUtils.sanitizeDashboardData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				id: firstDashboardData.uuid,
+				title: firstDashboardData.data.title,
+				createdAt: firstDashboardData.created_at,
+			}),
+		);
 	});
 });
