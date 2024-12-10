@@ -136,3 +136,57 @@ export const onUpdateVariableNode = (
 		}
 	});
 };
+
+export const buildParentDependencyGraph = (
+	graph: VariableGraph,
+): VariableGraph => {
+	const parentGraph: VariableGraph = {};
+
+	// Initialize empty arrays for all nodes
+	Object.keys(graph).forEach((node) => {
+		parentGraph[node] = [];
+	});
+
+	// For each node and its children in the original graph
+	Object.entries(graph).forEach(([node, children]) => {
+		// For each child, add the current node as its parent
+		children.forEach((child) => {
+			parentGraph[child].push(node);
+		});
+	});
+
+	return parentGraph;
+};
+
+export const checkAPIInvocation = (
+	variablesToGetUpdated: string[],
+	variableData: IDashboardVariable,
+	dependencyData: {
+		order: string[];
+		graph: VariableGraph;
+	} | null,
+): boolean => {
+	console.log(variableData.name, dependencyData, variablesToGetUpdated);
+	if (!dependencyData) {
+		return true;
+	}
+
+	if (!variableData.name) {
+		return false;
+	}
+
+	const parentDependencies = buildParentDependencyGraph(dependencyData.graph);
+
+	// if no dependency then true
+	const haveDependency = parentDependencies[variableData.name]?.length > 0;
+	if (!haveDependency) {
+		return true;
+	}
+
+	// if variable is in the list and has dependency then check if its the top element in the queue then true else false
+	return (
+		variablesToGetUpdated &&
+		variablesToGetUpdated.includes(variableData.name) &&
+		variablesToGetUpdated[0] === variableData.name
+	);
+};
