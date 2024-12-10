@@ -56,7 +56,10 @@ func Migrate(dsn string) error {
 	return nil
 }
 
-func ClickHouseMigrate(conn driver.Conn, cluster string) error {
+func ClickHouseMigrate(conn driver.Conn, cluster string, config bool) error {
+	if !config {
+		return nil
+	}
 
 	database := "CREATE DATABASE IF NOT EXISTS signoz_analytics ON CLUSTER %s"
 
