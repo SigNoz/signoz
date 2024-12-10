@@ -227,22 +227,24 @@ function App(): JSX.Element {
 		}
 	}, [user, isFetchingUser, isCloudUserVal, enableAnalytics]);
 
-	// if the user is in logged in state then wait for all the blocking calls to complete and set the required data
-	if (
-		isLoggedInState &&
-		(isFetchingLicenses ||
-			isFetchingUser ||
-			isFetchingFeatureFlags ||
-			!licenses ||
-			!user.email ||
-			!featureFlags)
-	) {
-		return <Spinner tip="Loading..." />;
-	}
+	// if the user is in logged in state
+	if (isLoggedInState) {
+		// if the setup calls are loading then return a spinner
+		if (isFetchingLicenses || isFetchingUser || isFetchingFeatureFlags) {
+			return <Spinner tip="Loading..." />;
+		}
 
-	// user and license data is mandatory to show correct UI to users. absence of feature flags will be treated as falsy values
-	if (userFetchError || licensesFetchError) {
-		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
+		// if the required calls fails then return a something went wrong error
+		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
+		// move to indefinitive loading
+		if (userFetchError || licensesFetchError) {
+			return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
+		}
+
+		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
+		if (!licenses || !user.email || !featureFlags) {
+			return <Spinner tip="Loading..." />;
+		}
 	}
 
 	return (
