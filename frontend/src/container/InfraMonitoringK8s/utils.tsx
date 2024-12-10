@@ -8,6 +8,11 @@ import {
 	K8sPodsData,
 	K8sPodsListPayload,
 } from 'api/infraMonitoring/getK8sPodsList';
+import {
+	FiltersType,
+	IQuickFiltersConfig,
+} from 'components/QuickFilters/QuickFilters';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 export interface IPodColumn {
 	label: string;
@@ -100,6 +105,119 @@ export interface K8sPodsRowData {
 	memoryUtilization: React.ReactNode;
 	containerRestarts: number;
 }
+
+export const K8sQuickFiltersConfig: IQuickFiltersConfig[] = [
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Pods',
+		attributeKey: {
+			key: 'k8s.pod.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+			id: 'k8s.pod.name--string--resource--true',
+		},
+		defaultOpen: true,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Namespace',
+		attributeKey: {
+			key: 'k8s.namespace.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Nodes',
+		attributeKey: {
+			key: 'k8s.node.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+			id: 'k8s.node.name--string--resource--true',
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Cluster',
+		attributeKey: {
+			key: 'k8s.cluster.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Deployments',
+		attributeKey: {
+			key: 'k8s.deployment.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Statefulsets',
+		attributeKey: {
+			key: 'k8s.statefulset.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'DaemonSets',
+		attributeKey: {
+			key: 'k8s.daemonset.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Jobs',
+		attributeKey: {
+			key: 'k8s.job.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Volumes',
+		attributeKey: {
+			key: 'k8s.volume.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		defaultOpen: false,
+	},
+];
 
 export const getK8sPodsListQuery = (): K8sPodsListPayload => ({
 	filters: {
