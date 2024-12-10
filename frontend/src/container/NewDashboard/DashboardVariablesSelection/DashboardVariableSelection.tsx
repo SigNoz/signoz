@@ -151,6 +151,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 						onValueUpdate={onValueUpdate}
 						variablesToGetUpdated={variablesToGetUpdated}
 						setVariablesToGetUpdated={setVariablesToGetUpdated}
+						dependencyData={dependencyData}
 					/>
 				))}
 		</Row>
