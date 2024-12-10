@@ -36,7 +36,13 @@ import {
 import PodDetails from './PodDetails/PodDetails';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function K8sPodsList(): JSX.Element {
+function K8sPodsList({
+	isFiltersVisible,
+	handleFilterVisibilityChange,
+}: {
+	isFiltersVisible: boolean;
+	handleFilterVisibilityChange: () => void;
+}): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -210,6 +216,8 @@ function K8sPodsList(): JSX.Element {
 	return (
 		<div className="k8s-list">
 			<K8sHeader
+				isFiltersVisible={isFiltersVisible}
+				handleFilterVisibilityChange={handleFilterVisibilityChange}
 				defaultAddedColumns={defaultAddedColumns}
 				addedColumns={addedColumns}
 				availableColumns={availableColumns}

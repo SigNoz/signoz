@@ -11,3 +11,8 @@ export const VIEW_TYPES = {
 	TRACES: VIEWS.TRACES,
 	EVENTS: VIEWS.EVENTS,
 };
+
+export const QUERY_KEYS = {
+	K8S_OBJECT_KIND: 'k8s.object.kind',
+	K8S_OBJECT_NAME: 'k8s.object.name',
+};
