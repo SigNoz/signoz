@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { findByText, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import TimezoneProvider from 'providers/Timezone';
 import { I18nextProvider } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
@@ -70,14 +71,16 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<PipelineListsView
-							setActionType={jest.fn()}
-							isActionMode="viewing-mode"
-							setActionMode={jest.fn()}
-							pipelineData={pipelineApiResponseMockData}
-							isActionType=""
-							refetchPipelineLists={jest.fn()}
-						/>
+						<TimezoneProvider>
+							<PipelineListsView
+								setActionType={jest.fn()}
+								isActionMode="viewing-mode"
+								setActionMode={jest.fn()}
+								pipelineData={pipelineApiResponseMockData}
+								isActionType=""
+								refetchPipelineLists={jest.fn()}
+							/>
+						</TimezoneProvider>
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,
@@ -107,14 +110,16 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<PipelineListsView
-							setActionType={jest.fn()}
-							isActionMode="editing-mode"
-							setActionMode={jest.fn()}
-							pipelineData={pipelineApiResponseMockData}
-							isActionType=""
-							refetchPipelineLists={jest.fn()}
-						/>
+						<TimezoneProvider>
+							<PipelineListsView
+								setActionType={jest.fn()}
+								isActionMode="editing-mode"
+								setActionMode={jest.fn()}
+								pipelineData={pipelineApiResponseMockData}
+								isActionType=""
+								refetchPipelineLists={jest.fn()}
+							/>
+						</TimezoneProvider>
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,
@@ -144,14 +149,16 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<PipelineListsView
-							setActionType={jest.fn()}
-							isActionMode="editing-mode"
-							setActionMode={jest.fn()}
-							pipelineData={pipelineApiResponseMockData}
-							isActionType=""
-							refetchPipelineLists={jest.fn()}
-						/>
+						<TimezoneProvider>
+							<PipelineListsView
+								setActionType={jest.fn()}
+								isActionMode="editing-mode"
+								setActionMode={jest.fn()}
+								pipelineData={pipelineApiResponseMockData}
+								isActionType=""
+								refetchPipelineLists={jest.fn()}
+							/>
+						</TimezoneProvider>
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,
@@ -209,14 +216,16 @@ describe('PipelinePage container test', () => {
 				<MemoryRouter>
 					<Provider store={store}>
 						<I18nextProvider i18n={i18n}>
-							<PipelineListsView
-								setActionType={jest.fn()}
-								isActionMode="editing-mode"
-								setActionMode={jest.fn()}
-								pipelineData={pipelineApiResponseMockData}
-								isActionType=""
-								refetchPipelineLists={jest.fn()}
-							/>
+							<TimezoneProvider>
+								<PipelineListsView
+									setActionType={jest.fn()}
+									isActionMode="editing-mode"
+									setActionMode={jest.fn()}
+									pipelineData={pipelineApiResponseMockData}
+									isActionType=""
+									refetchPipelineLists={jest.fn()}
+								/>
+							</TimezoneProvider>
 						</I18nextProvider>
 					</Provider>
 				</MemoryRouter>

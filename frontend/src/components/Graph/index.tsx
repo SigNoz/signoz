@@ -1,4 +1,5 @@
 import {
+	_adapters,
 	BarController,
 	BarElement,
 	CategoryScale,
@@ -18,8 +19,10 @@ import {
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { generateGridTitle } from 'container/GridPanelSwitch/utils';
+import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import isEqual from 'lodash-es/isEqual';
+import { useTimezone } from 'providers/Timezone';
 import {
 	forwardRef,
 	memo,
@@ -62,6 +65,17 @@ Chart.register(
 
 Tooltip.positioners.custom = TooltipPositionHandler;
 
+// Map of Chart.js time formats to dayjs format strings
+const formatMap = {
+	'HH:mm:ss': 'HH:mm:ss',
+	'HH:mm': 'HH:mm',
+	'MM/DD HH:mm': 'MM/DD HH:mm',
+	'MM/dd HH:mm': 'MM/DD HH:mm',
+	'MM/DD': 'MM/DD',
+	'YY-MM': 'YY-MM',
+	YY: 'YY',
+};
+
 const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 	(
 		{
@@ -80,11 +94,13 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 			dragSelectColor,
 		},
 		ref,
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): JSX.Element => {
 		const nearestDatasetIndex = useRef<null | number>(null);
 		const chartRef = useRef<HTMLCanvasElement>(null);
 		const isDarkMode = useIsDarkMode();
 		const gridTitle = useMemo(() => generateGridTitle(title), [title]);
+		const { timezone } = useTimezone();
 
 		const currentTheme = isDarkMode ? 'dark' : 'light';
 		const xAxisTimeUnit = useXAxisTimeUnit(data); // Computes the relevant time unit for x axis by analyzing the time stamp data
@@ -112,6 +128,22 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 			return 'rgba(231,233,237,0.8)';
 		}, [currentTheme]);
 
+		// Override Chart.js date adapter to use dayjs with timezone support
+		useEffect(() => {
+			_adapters._date.override({
+				format(time: number | Date, fmt: string) {
+					const dayjsTime = dayjs(time).tz(timezone.value);
+					const format = formatMap[fmt as keyof typeof formatMap];
+					if (!format) {
+						console.warn(`Missing datetime format for ${fmt}`);
+						return dayjsTime.format('YYYY-MM-DD HH:mm:ss'); // fallback format
+					}
+
+					return dayjsTime.format(format);
+				},
+			});
+		}, [timezone]);
+
 		const buildChart = useCallback(() => {
 			if (lineChartRef.current !== undefined) {
 				lineChartRef.current.destroy();
@@ -132,6 +164,7 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 					isStacked,
 					onClickHandler,
 					data,
+					timezone,
 				);
 
 				const chartHasData = hasData(data);
@@ -166,6 +199,7 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 			isStacked,
 			onClickHandler,
 			data,
+			timezone,
 			name,
 			type,
 		]);

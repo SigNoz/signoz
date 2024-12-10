@@ -14,6 +14,7 @@ import {
 	QueryBuilderProvider,
 } from 'providers/QueryBuilder';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import TimezoneProvider from 'providers/Timezone';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
@@ -92,7 +93,9 @@ describe('Logs Explorer Tests', () => {
 					<I18nextProvider i18n={i18n}>
 						<MockQueryClientProvider>
 							<QueryBuilderProvider>
-								<LogsExplorer />
+								<TimezoneProvider>
+									<LogsExplorer />
+								</TimezoneProvider>
 							</QueryBuilderProvider>
 						</MockQueryClientProvider>
 					</I18nextProvider>
@@ -141,7 +144,9 @@ describe('Logs Explorer Tests', () => {
 								<VirtuosoMockContext.Provider
 									value={{ viewportHeight: 300, itemHeight: 100 }}
 								>
-									<LogsExplorer />
+									<TimezoneProvider>
+										<LogsExplorer />
+									</TimezoneProvider>
 								</VirtuosoMockContext.Provider>
 							</QueryBuilderProvider>
 						</MockQueryClientProvider>
@@ -225,7 +230,9 @@ describe('Logs Explorer Tests', () => {
 								<VirtuosoMockContext.Provider
 									value={{ viewportHeight: 300, itemHeight: 100 }}
 								>
-									<LogsExplorer />
+									<TimezoneProvider>
+										<LogsExplorer />
+									</TimezoneProvider>
 								</VirtuosoMockContext.Provider>
 							</QueryBuilderContext.Provider>
 						</MockQueryClientProvider>
@@ -253,7 +260,9 @@ describe('Logs Explorer Tests', () => {
 					<I18nextProvider i18n={i18n}>
 						<MockQueryClientProvider>
 							<QueryBuilderProvider>
-								<LogsExplorer />,
+								<TimezoneProvider>
+									<LogsExplorer />
+								</TimezoneProvider>
 							</QueryBuilderProvider>
 						</MockQueryClientProvider>
 					</I18nextProvider>
