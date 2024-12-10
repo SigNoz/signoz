@@ -40,10 +40,11 @@ export interface IQuickFiltersConfig {
 interface IQuickFiltersProps {
 	config: IQuickFiltersConfig[];
 	handleFilterVisibilityChange: () => void;
+	source?: string | null;
 }
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
-	const { config, handleFilterVisibilityChange } = props;
+	const { config, handleFilterVisibilityChange, source } = props;
 
 	const {
 		currentQuery,
@@ -83,16 +84,22 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	const lastQueryName =
 		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
+
+	const isInfraMonitoring = source === 'infra-monitoring';
+
 	return (
 		<div className="quick-filters">
 			<section className="header">
-				<section className="left-actions">
-					<FilterOutlined />
-					<Typography.Text className="text">Filters for</Typography.Text>
-					<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
-						<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
-					</Tooltip>
-				</section>
+				{!isInfraMonitoring && (
+					<section className="left-actions">
+						<FilterOutlined />
+						<Typography.Text className="text">Filters for</Typography.Text>
+						<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
+							<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
+						</Tooltip>
+					</section>
+				)}
+
 				<section className="right-actions">
 					<Tooltip title="Reset All">
 						<SyncOutlined className="sync-icon" onClick={handleReset} />
@@ -122,3 +129,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		</div>
 	);
 }
+
+QuickFilters.defaultProps = {
+	source: null,
+};

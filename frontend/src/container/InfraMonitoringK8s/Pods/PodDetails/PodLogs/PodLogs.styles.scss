@@ -1,0 +1,133 @@
+.host-metrics-logs-container {
+	margin-top: 1rem;
+
+	.filter-section {
+		flex: 1;
+
+		.ant-select-selector {
+			border-radius: 2px;
+			border: 1px solid var(--bg-slate-400) !important;
+			background-color: var(--bg-ink-300) !important;
+
+			input {
+				font-size: 12px;
+			}
+
+			.ant-tag .ant-typography {
+				font-size: 12px;
+			}
+		}
+	}
+
+	.host-metrics-logs-header {
+		display: flex;
+		justify-content: space-between;
+		gap: 8px;
+
+		padding: 12px;
+		border-radius: 3px;
+		border: 1px solid var(--bg-slate-500);
+	}
+
+	.host-metrics-logs {
+		margin-top: 1rem;
+
+		.virtuoso-list {
+			overflow-y: hidden !important;
+
+			&::-webkit-scrollbar {
+				width: 0.3rem;
+				height: 0.3rem;
+			}
+
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				background: var(--bg-slate-300);
+			}
+
+			&::-webkit-scrollbar-thumb:hover {
+				background: var(--bg-slate-200);
+			}
+
+			.ant-row {
+				width: fit-content;
+			}
+		}
+
+		.skeleton-container {
+			height: 100%;
+			padding: 16px;
+		}
+	}
+}
+
+.host-metrics-logs-list-container {
+	flex: 1;
+	height: calc(100vh - 272px) !important;
+	display: flex;
+	height: 100%;
+
+	.raw-log-content {
+		width: 100%;
+		text-wrap: inherit;
+		word-wrap: break-word;
+	}
+}
+
+.host-metrics-logs-list-card {
+	width: 100%;
+	margin-top: 12px;
+
+	.ant-card-body {
+		padding: 0;
+
+		height: 100%;
+		width: 100%;
+	}
+}
+
+.logs-loading-skeleton {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 8px 0;
+
+	.ant-skeleton-input-sm {
+		height: 18px;
+	}
+}
+
+.no-logs-found {
+	height: 50vh;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	padding: 24px;
+	box-sizing: border-box;
+
+	.ant-typography {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+	}
+}
+
+.lightMode {
+	.filter-section {
+		border-top: 1px solid var(--bg-vanilla-300);
+		border-bottom: 1px solid var(--bg-vanilla-300);
+
+		.ant-select-selector {
+			border-color: var(--bg-vanilla-300) !important;
+			background-color: var(--bg-vanilla-100) !important;
+			color: var(--bg-ink-200);
+		}
+	}
+}
