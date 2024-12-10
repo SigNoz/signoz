@@ -4,17 +4,21 @@ import { Color } from '@signozhq/design-tokens';
 import { Switch } from 'antd';
 import { Delete } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 function TimezoneAdaptation(): JSX.Element {
-	const { timezone, browserTimezone, updateTimezone } = useTimezone();
+	const {
+		timezone,
+		browserTimezone,
+		updateTimezone,
+		isAdaptationEnabled,
+		setIsAdaptationEnabled,
+	} = useTimezone();
 
 	const isTimezoneOverridden = useMemo(
 		() => timezone.offset !== browserTimezone.offset,
 		[timezone, browserTimezone],
 	);
-
-	const [isAdaptationEnabled, setIsAdaptationEnabled] = useState(true);
 
 	const getSwitchStyles = (): React.CSSProperties => ({
 		backgroundColor:

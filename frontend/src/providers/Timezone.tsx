@@ -2,6 +2,7 @@ import {
 	getBrowserTimezone,
 	getTimezoneObjectByTimezoneString,
 	Timezone,
+	UTC_TIMEZONE,
 } from 'components/CustomTimePicker/timezoneUtils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import useTimezoneFormatter, {
@@ -9,6 +10,8 @@ import useTimezoneFormatter, {
 } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import React, {
 	createContext,
+	Dispatch,
+	SetStateAction,
 	useCallback,
 	useContext,
 	useMemo,
@@ -23,6 +26,8 @@ interface TimezoneContextType {
 		input: TimestampInput,
 		format?: string,
 	) => string;
+	isAdaptationEnabled: boolean;
+	setIsAdaptationEnabled: Dispatch<SetStateAction<boolean>>;
 }
 
 const TimezoneContext = createContext<TimezoneContextType | undefined>(
@@ -60,12 +65,16 @@ function TimezoneProvider({
 		getStoredTimezoneValue() ?? browserTimezone,
 	);
 
+	const [isAdaptationEnabled, setIsAdaptationEnabled] = useState(true);
+
 	const updateTimezone = useCallback((timezone: Timezone): void => {
 		if (!timezone.value) return;
 
 		// TODO(shaheer): replace this with user preferences API
 		setStoredTimezoneValue(timezone.value);
 		setTimezone(timezone);
+		// Enable adaptation when a new timezone is set
+		setIsAdaptationEnabled(true);
 	}, []);
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezoneFormatter({
@@ -74,12 +83,20 @@ function TimezoneProvider({
 
 	const value = React.useMemo(
 		() => ({
+			timezone: isAdaptationEnabled ? timezone : UTC_TIMEZONE,
+			browserTimezone,
+			updateTimezone,
+			formatTimezoneAdjustedTimestamp,
+			isAdaptationEnabled,
+			setIsAdaptationEnabled,
+		}),
+		[
 			timezone,
 			browserTimezone,
 			updateTimezone,
 			formatTimezoneAdjustedTimestamp,
-		}),
-		[timezone, browserTimezone, updateTimezone, formatTimezoneAdjustedTimestamp],
+			isAdaptationEnabled,
+		],
 	);
 
 	return (

@@ -21,7 +21,7 @@ const TIMEZONE_TYPES = {
 
 type TimezoneType = typeof TIMEZONE_TYPES[keyof typeof TIMEZONE_TYPES];
 
-const UTC_TIMEZONE: Timezone = {
+export const UTC_TIMEZONE: Timezone = {
 	name: 'Coordinated Universal Time — UTC, GMT',
 	value: 'UTC',
 	offset: 'UTC',
