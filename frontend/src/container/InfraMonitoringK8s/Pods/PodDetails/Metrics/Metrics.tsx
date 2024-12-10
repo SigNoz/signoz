@@ -1,13 +1,10 @@
 import './Metrics.styles.scss';
 
 import { Card, Col, Row, Skeleton, Typography } from 'antd';
+import { K8sPodsData } from 'api/infraMonitoring/getK8sPodsList';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { ENTITY_VERSION_V4 } from 'constants/app';
-import {
-	getHostQueryPayload,
-	hostWidgetInfo,
-} from 'container/LogDetailedView/InfraMetrics/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
@@ -23,6 +20,8 @@ import { useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
+import { getPodQueryPayload, podWidgetInfo } from '../../constants';
+
 interface MetricsTabProps {
 	timeRange: {
 		startTime: number;
@@ -34,20 +33,19 @@ interface MetricsTabProps {
 		dateTimeRange?: [number, number],
 	) => void;
 	selectedInterval: Time;
-
-	hostName: string;
+	pod: K8sPodsData;
 }
 
 function Metrics({
 	selectedInterval,
-	hostName,
+	pod,
 	timeRange,
 	handleTimeChange,
 	isModalTimeSelection,
 }: MetricsTabProps): JSX.Element {
 	const queryPayloads = useMemo(
-		() => getHostQueryPayload(hostName, timeRange.startTime, timeRange.endTime),
-		[hostName, timeRange.startTime, timeRange.endTime],
+		() => getPodQueryPayload(pod, timeRange.startTime, timeRange.endTime),
+		[pod, timeRange.startTime, timeRange.endTime],
 	);
 
 	const queries = useQueries(
@@ -75,7 +73,7 @@ function Metrics({
 					apiResponse: data?.payload,
 					isDarkMode,
 					dimensions,
-					yAxisUnit: hostWidgetInfo[idx].yAxisUnit,
+					yAxisUnit: podWidgetInfo[idx].yAxisUnit,
 					softMax: null,
 					softMin: null,
 					minTimeScale: timeRange.startTime,
@@ -127,8 +125,8 @@ function Metrics({
 			</div>
 			<Row gutter={24} className="host-metrics-container">
 				{queries.map((query, idx) => (
-					<Col span={12} key={hostWidgetInfo[idx].title}>
-						<Typography.Text>{hostWidgetInfo[idx].title}</Typography.Text>
+					<Col span={12} key={podWidgetInfo[idx].title}>
+						<Typography.Text>{podWidgetInfo[idx].title}</Typography.Text>
 						<Card bordered className="host-metrics-card" ref={graphRef}>
 							{renderCardContent(query, idx)}
 						</Card>
