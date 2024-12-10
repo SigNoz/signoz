@@ -105,6 +105,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		data: licenseData,
 		isFetching: isFetchingLicenses,
 		error: licensesFetchError,
+		refetch: licensesRefetch,
 	} = useLicense(isLoggedIn);
 	useEffect(() => {
 		if (!isFetchingLicenses && licenseData && licenseData.payload) {
@@ -191,6 +192,15 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					...org.slice(orgIndex + 1, org.length),
 				];
 				setOrg(updatedOrg);
+				setUser((prev) => {
+					if (prev.orgId === orgId) {
+						return {
+							...prev,
+							organization: updatedOrgName,
+						};
+					}
+					return prev;
+				});
 			}
 		},
 		[org],
@@ -223,25 +233,26 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	// return value for the context
 	const value: IAppContext = useMemo(
 		() => ({
-			activeLicenseV3,
-			isFetchingActiveLicenseV3,
-			activeLicenseV3FetchError,
 			user,
+			licenses,
+			activeLicenseV3,
+			featureFlags,
+			orgPreferences,
+			isLoggedIn,
 			org,
 			isFetchingUser,
-			userFetchError,
-			licenses,
 			isFetchingLicenses,
-			licensesFetchError,
-			featureFlags,
+			isFetchingActiveLicenseV3,
 			isFetchingFeatureFlags,
-			featureFlagsFetchError,
-			orgPreferences,
 			isFetchingOrgPreferences,
+			userFetchError,
+			licensesFetchError,
+			activeLicenseV3FetchError,
+			featureFlagsFetchError,
 			orgPreferencesFetchError,
-			isLoggedIn,
-			setUserFlags,
+			licensesRefetch,
 			updateUser,
+			setUserFlags,
 			updateOrgPreferences,
 			updateOrg,
 		}),
@@ -258,6 +269,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			isLoggedIn,
 			licenses,
 			licensesFetchError,
+			licensesRefetch,
 			org,
 			orgPreferences,
 			orgPreferencesFetchError,

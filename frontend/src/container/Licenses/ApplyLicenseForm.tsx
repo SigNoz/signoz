@@ -3,9 +3,6 @@ import apply from 'api/licenses/apply';
 import { useNotifications } from 'hooks/useNotifications';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { QueryObserverResult, RefetchOptions } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/licenses/getAll';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import {
@@ -96,11 +93,7 @@ function ApplyLicenseForm({
 }
 
 interface ApplyLicenseFormProps {
-	licenseRefetch: (
-		options?: RefetchOptions,
-	) => Promise<
-		QueryObserverResult<SuccessResponse<PayloadProps> | ErrorResponse, unknown>
-	>;
+	licenseRefetch: () => void;
 }
 
 interface FormValues {

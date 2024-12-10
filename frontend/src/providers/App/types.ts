@@ -24,6 +24,7 @@ export interface IAppContext {
 	activeLicenseV3FetchError: unknown;
 	featureFlagsFetchError: unknown;
 	orgPreferencesFetchError: unknown;
+	licensesRefetch: () => void;
 	updateUser: (user: IUser) => void;
 	setUserFlags: (flags: UserFlags) => void;
 	updateOrgPreferences: (orgPreferences: OrgPreference[]) => void;
