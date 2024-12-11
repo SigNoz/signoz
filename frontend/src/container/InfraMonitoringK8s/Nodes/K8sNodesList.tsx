@@ -163,11 +163,7 @@ function K8sNodesList({
 				isFiltersVisible={isFiltersVisible}
 				handleFilterVisibilityChange={handleFilterVisibilityChange}
 				defaultAddedColumns={defaultAddedColumns}
-				addedColumns={[]}
-				availableColumns={[]}
 				handleFiltersChange={handleFiltersChange}
-				onAddColumn={() => {}}
-				onRemoveColumn={() => {}}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import './InfraMonitoringK8s.styles.scss';
 
 import { Button, Input } from 'antd';
@@ -13,20 +14,20 @@ import { IPodColumn } from './utils';
 
 function K8sHeader({
 	defaultAddedColumns,
-	addedColumns,
-	availableColumns,
+	addedColumns = [],
+	availableColumns = [],
 	handleFiltersChange,
-	onAddColumn,
-	onRemoveColumn,
+	onAddColumn = () => {},
+	onRemoveColumn = () => {},
 	handleFilterVisibilityChange,
 	isFiltersVisible,
 }: {
 	defaultAddedColumns: IPodColumn[];
-	addedColumns: IPodColumn[];
-	availableColumns: IPodColumn[];
+	addedColumns?: IPodColumn[];
+	availableColumns?: IPodColumn[];
 	handleFiltersChange: (value: IBuilderQuery['filters']) => void;
-	onAddColumn: (column: IPodColumn) => void;
-	onRemoveColumn: (column: IPodColumn) => void;
+	onAddColumn?: (column: IPodColumn) => void;
+	onRemoveColumn?: (column: IPodColumn) => void;
 	handleFilterVisibilityChange: () => void;
 	isFiltersVisible: boolean;
 }): JSX.Element {
@@ -126,5 +127,12 @@ function K8sHeader({
 		</div>
 	);
 }
+
+K8sHeader.defaultProps = {
+	addedColumns: [],
+	availableColumns: [],
+	onAddColumn: () => {},
+	onRemoveColumn: () => {},
+};
 
 export default K8sHeader;
