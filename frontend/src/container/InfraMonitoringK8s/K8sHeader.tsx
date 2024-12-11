@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import './InfraMonitoringK8s.styles.scss';
 
 import { Button, Select } from 'antd';
@@ -14,15 +15,15 @@ import { IPodColumn } from './utils';
 
 interface K8sHeaderProps {
 	selectedGroupBy: BaseAutocompleteData[];
-	defaultAddedColumns: IPodColumn[];
 	groupByOptions: { value: string; label: string }[];
-	addedColumns: IPodColumn[];
 	isLoadingGroupByFilters: boolean;
-	availableColumns: IPodColumn[];
 	handleFiltersChange: (value: IBuilderQuery['filters']) => void;
 	handleGroupByChange: (value: IBuilderQuery['groupBy']) => void;
-	onAddColumn: (column: IPodColumn) => void;
-	onRemoveColumn: (column: IPodColumn) => void;
+	defaultAddedColumns: IPodColumn[];
+	addedColumns?: IPodColumn[];
+	availableColumns?: IPodColumn[];
+	onAddColumn?: (column: IPodColumn) => void;
+	onRemoveColumn?: (column: IPodColumn) => void;
 	handleFilterVisibilityChange: () => void;
 	isFiltersVisible: boolean;
 }
@@ -32,12 +33,12 @@ function K8sHeader({
 	defaultAddedColumns,
 	groupByOptions,
 	isLoadingGroupByFilters,
-	addedColumns,
-	availableColumns,
+	addedColumns = [],
+	availableColumns = [],
 	handleFiltersChange,
 	handleGroupByChange,
-	onAddColumn,
-	onRemoveColumn,
+	onAddColumn = () => {},
+	onRemoveColumn = () => {},
 	handleFilterVisibilityChange,
 	isFiltersVisible,
 }: K8sHeaderProps): JSX.Element {
@@ -125,7 +126,7 @@ function K8sHeader({
 				<Button
 					type="text"
 					className="periscope-btn ghost"
-					disabled={selectedGroupBy.length > 0}
+					disabled={selectedGroupBy?.length > 0}
 					onClick={(): void => setIsFiltersSidePanelOpen(true)}
 				>
 					<SlidersHorizontal size={14} />
@@ -149,5 +150,12 @@ function K8sHeader({
 		</div>
 	);
 }
+
+K8sHeader.defaultProps = {
+	addedColumns: [],
+	availableColumns: [],
+	onAddColumn: () => {},
+	onRemoveColumn: () => {},
+};
 
 export default K8sHeader;
