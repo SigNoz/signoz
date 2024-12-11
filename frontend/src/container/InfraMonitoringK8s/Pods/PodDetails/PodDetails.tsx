@@ -86,7 +86,7 @@ function PodDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: 'k8s.pod.name',
+						key: QUERY_KEYS.K8S_POD_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
 						isColumn: false,
@@ -209,11 +209,12 @@ function PodDetails({
 		(value: IBuilderQuery['filters']) => {
 			setLogFilters((prevFilters) => {
 				const hostNameFilter = prevFilters.items.find(
-					(item) => item.key?.key === 'k8s_pod_name',
+					(item) => item.key?.key === QUERY_KEYS.K8S_POD_NAME,
 				);
 				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
 				const newFilters = value.items.filter(
-					(item) => item.key?.key !== 'id' && item.key?.key !== 'k8s_pod_name',
+					(item) =>
+						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_POD_NAME,
 				);
 
 				logEvent('Infra Monitoring: Pods list details logs filters applied', {
@@ -238,7 +239,7 @@ function PodDetails({
 		(value: IBuilderQuery['filters']) => {
 			setTracesFilters((prevFilters) => {
 				const hostNameFilter = prevFilters.items.find(
-					(item) => item.key?.key === 'k8s_pod_name',
+					(item) => item.key?.key === QUERY_KEYS.K8S_POD_NAME,
 				);
 
 				logEvent('Infra Monitoring: Pods list details traces filters applied', {
@@ -249,7 +250,9 @@ function PodDetails({
 					op: 'AND',
 					items: [
 						hostNameFilter,
-						...value.items.filter((item) => item.key?.key !== 'k8s_pod_name'),
+						...value.items.filter(
+							(item) => item.key?.key !== QUERY_KEYS.K8S_POD_NAME,
+						),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 			});
