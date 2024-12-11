@@ -740,7 +740,8 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 	filterAttributeKeyDataType := v3.AttributeKeyDataType(r.URL.Query().Get("filterAttributeKeyDataType")) // can be empty
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
 	tagType := v3.TagType(r.URL.Query().Get("tagType")) // can be empty
-
+	selectedAttributeValuesStr := r.URL.Query().Get("selectedAttributeValues")
+	metricNamesStr := r.URL.Query().Get("metricNames")
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
 		limit = 50
@@ -756,6 +757,24 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 		}
 	}
 
+	// parse json string to []FilterItem
+	var selectedAttributeValues []v3.FilterItem
+	if len(selectedAttributeValuesStr) > 0 {
+		err := json.Unmarshal([]byte(selectedAttributeValuesStr), &selectedAttributeValues)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// parse json string to []string
+	var metricNames []string
+	if len(metricNamesStr) > 0 {
+		err := json.Unmarshal([]byte(metricNamesStr), &metricNames)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	req = v3.FilterAttributeValueRequest{
 		DataSource:                 dataSource,
 		AggregateOperator:          aggregateOperator,
@@ -765,6 +784,8 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 		SearchText:                 r.URL.Query().Get("searchText"),
 		FilterAttributeKey:         r.URL.Query().Get("attributeKey"),
 		FilterAttributeKeyDataType: filterAttributeKeyDataType,
+		SelectedAttributeValues:    selectedAttributeValues,
+		MetricNames:                metricNames,
 	}
 	return &req, nil
 }

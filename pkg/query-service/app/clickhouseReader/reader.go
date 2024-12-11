@@ -161,6 +161,8 @@ type ClickHouseReader struct {
 
 	fluxIntervalForTraceDetail time.Duration
 	cache                      cache.Cache
+	metadataDB                 string
+	metadataTable              string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -256,6 +258,8 @@ func NewReaderFromClickhouseConnection(
 
 		fluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
 		cache:                      cache,
+		metadataDB:                 options.primary.MetadataDB,
+		metadataTable:              options.primary.MetadataTable,
 	}
 }
 
@@ -1454,7 +1458,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	var serviceNameIntervalMap = map[string][]tracedetail.Interval{}
 	var hasMissingSpans bool
 
-	userEmail , emailErr := auth.GetEmailFromJwt(ctx)
+	userEmail, emailErr := auth.GetEmailFromJwt(ctx)
 	cachedTraceData, err := r.GetWaterfallSpansForTraceWithMetadataCache(ctx, traceID)
 	if err == nil {
 		startTime = cachedTraceData.StartTime
@@ -1530,8 +1534,8 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			if startTime == 0 || startTimeUnixNano < startTime {
 				startTime = startTimeUnixNano
 			}
-			if endTime == 0 ||  (startTimeUnixNano + jsonItem.DurationNano )  > endTime {
-				endTime =  (startTimeUnixNano + jsonItem.DurationNano )
+			if endTime == 0 || (startTimeUnixNano+jsonItem.DurationNano) > endTime {
+				endTime = (startTimeUnixNano + jsonItem.DurationNano)
 			}
 			if durationNano == 0 || jsonItem.DurationNano > durationNano {
 				durationNano = jsonItem.DurationNano
@@ -1708,12 +1712,12 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 			}
 
 			// metadata calculation
-			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())	
+			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())
 			if startTime == 0 || startTimeUnixNano < startTime {
 				startTime = startTimeUnixNano
 			}
-			if endTime == 0 || ( startTimeUnixNano + jsonItem.DurationNano )  > endTime {
-				endTime =  (startTimeUnixNano + jsonItem.DurationNano )
+			if endTime == 0 || (startTimeUnixNano+jsonItem.DurationNano) > endTime {
+				endTime = (startTimeUnixNano + jsonItem.DurationNano)
 			}
 			if durationNano == 0 || jsonItem.DurationNano > durationNano {
 				durationNano = jsonItem.DurationNano
@@ -1777,7 +1781,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 
 	trace.Spans = selectedSpansForRequest
 	trace.StartTimestampMillis = startTime / 1000000
-	trace.EndTimestampMillis = endTime / 1000000	
+	trace.EndTimestampMillis = endTime / 1000000
 	return trace, nil
 }
 
@@ -4111,6 +4115,62 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	return &response, nil
 }
 
+func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.FilterAttributeValueRequest) ([]string, error) {
+	var conditions []string
+
+	if len(req.SelectedAttributeValues) != 0 {
+		for _, item := range req.SelectedAttributeValues {
+			fmtVal := utils.ClickHouseFormattedValue(item.Value)
+			var colName string
+			switch item.Key.Type {
+			case v3.AttributeKeyTypeResource:
+				colName = "resource_attributes"
+			case v3.AttributeKeyTypeTag:
+				colName = "attributes"
+			default:
+				colName = "attributes"
+			}
+			conditions = append(conditions, fmt.Sprintf("mapContains(%s, '%s') AND %s['%s'] IN %s", colName, item.Key.Key, colName, item.Key.Key, fmtVal))
+		}
+	}
+	whereClause := strings.Join(conditions, " OR ")
+
+	var selectColumn string
+	switch req.TagType {
+	case v3.TagTypeResource:
+		selectColumn = "resource_attributes" + "['" + req.FilterAttributeKey + "']"
+	case v3.TagTypeTag:
+		selectColumn = "attributes" + "['" + req.FilterAttributeKey + "']"
+	default:
+		selectColumn = "attributes" + "['" + req.FilterAttributeKey + "']"
+	}
+
+	filterSubQuery := fmt.Sprintf(
+		"SELECT DISTINCT %s FROM %s.%s WHERE %s",
+		selectColumn,
+		r.metadataDB,
+		r.metadataTable,
+		whereClause,
+	)
+
+	rows, err := r.db.Query(ctx, filterSubQuery)
+	if err != nil {
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var attributeValues []string
+	for rows.Next() {
+		var value string
+		if err := rows.Scan(&value); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		attributeValues = append(attributeValues, value)
+	}
+
+	return attributeValues, nil
+}
+
 func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	var err error
 	var filterValueColumn string
@@ -4210,6 +4270,11 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 			}
 			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
 		}
+	}
+
+	relatedValues, _ := r.FetchRelatedValues(ctx, req)
+	attributeValues.RelatedValues = &v3.FilterAttributeValueResponse{
+		StringAttributeValues: relatedValues,
 	}
 
 	return &attributeValues, nil
