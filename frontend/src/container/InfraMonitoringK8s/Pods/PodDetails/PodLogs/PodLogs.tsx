@@ -22,7 +22,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 } from 'uuid';
 
-import { getHostLogsQueryPayload } from './constants';
+import { getPodLogsQueryPayload } from './constants';
 import NoLogsContainer from './NoLogsContainer';
 
 interface Props {
@@ -46,7 +46,7 @@ function PodLogs({
 
 	useEffect(() => {
 		const newRestFilters = filters.items.filter(
-			(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
+			(item) => item.key?.key !== 'id' && item.key?.key !== 'pod.name',
 		);
 
 		const areFiltersSame = isEqual(restFilters, newRestFilters);
@@ -60,7 +60,7 @@ function PodLogs({
 	}, [filters]);
 
 	const queryPayload = useMemo(() => {
-		const basePayload = getHostLogsQueryPayload(
+		const basePayload = getPodLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
 			filters,
@@ -77,12 +77,7 @@ function PodLogs({
 	const [isPaginating, setIsPaginating] = useState(false);
 
 	const { data, isLoading, isFetching, isError } = useQuery({
-		queryKey: [
-			'hostMetricsLogs',
-			timeRange.startTime,
-			timeRange.endTime,
-			filters,
-		],
+		queryKey: ['PodLogs', timeRange.startTime, timeRange.endTime, filters],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
 		keepPreviousData: isPaginating,
@@ -181,11 +176,11 @@ function PodLogs({
 
 	const renderContent = useMemo(
 		() => (
-			<Card bordered={false} className="host-metrics-logs-list-card">
+			<Card bordered={false} className="pod-logs-list-card">
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
-						className="host-metrics-logs-virtuoso"
-						key="host-metrics-logs-virtuoso"
+						className="pod-logs-virtuoso"
+						key="pod-logs-virtuoso"
 						data={logs}
 						endReached={loadMoreLogs}
 						totalCount={logs.length}
@@ -202,12 +197,12 @@ function PodLogs({
 	);
 
 	return (
-		<div className="host-metrics-logs">
+		<div className="pod-logs">
 			{isLoading && <LogsLoading />}
 			{!isLoading && !isError && logs.length === 0 && <NoLogsContainer />}
 			{isError && !isLoading && <LogsError />}
 			{!isLoading && !isError && logs.length > 0 && (
-				<div className="host-metrics-logs-list-container">{renderContent}</div>
+				<div className="pod-logs-list-container">{renderContent}</div>
 			)}
 		</div>
 	);
