@@ -89,7 +89,7 @@ export const selectedColumns: BaseAutocompleteData[] = [
 	},
 ];
 
-export const getHostTracesQueryPayload = (
+export const getPodTracesQueryPayload = (
 	start: number,
 	end: number,
 	offset = 0,

@@ -5,6 +5,7 @@
 
 	.k8s-quick-filters-container {
 		width: 280px;
+		min-width: 280px;
 
 		.quick-filters {
 			overflow-y: auto;

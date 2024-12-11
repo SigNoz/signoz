@@ -18,8 +18,8 @@ import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import NoLogsContainer from '../PodLogs/NoLogsContainer';
 import { getPodsEventsQueryPayload } from './constants';
+import NoEventsContainer from './NoEventsContainer';
 
 interface EventDataType {
 	key: string;
@@ -233,7 +233,7 @@ export default function Events({
 			)}
 
 			{!isLoading && !isError && formattedPodEvents.length === 0 && (
-				<NoLogsContainer />
+				<NoEventsContainer />
 			)}
 
 			{isError && !isLoading && <LogsError />}
