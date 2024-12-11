@@ -24,7 +24,7 @@ import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { getHostTracesQueryPayload, selectedColumns } from './constants';
+import { getPodTracesQueryPayload, selectedColumns } from './constants';
 import { getListColumns } from './utils';
 
 interface Props {
@@ -82,7 +82,7 @@ function PodTraces({
 
 	const queryPayload = useMemo(
 		() =>
-			getHostTracesQueryPayload(
+			getPodTracesQueryPayload(
 				timeRange.startTime,
 				timeRange.endTime,
 				paginationQueryData?.offset || offset,
@@ -99,7 +99,7 @@ function PodTraces({
 
 	const { data, isLoading, isFetching, isError } = useQuery({
 		queryKey: [
-			'hostMetricTraces',
+			'podTraces',
 			timeRange.startTime,
 			timeRange.endTime,
 			offset,
