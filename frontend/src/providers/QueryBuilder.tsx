@@ -53,6 +53,7 @@ import { ViewProps } from 'types/api/saveViews/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
+	IsDefaultQueryProps,
 	QueryBuilderContextType,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
@@ -87,6 +88,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	initQueryBuilderData: () => {},
 	handleOnUnitsChange: () => {},
 	isStagedQueryUpdated: () => false,
+	isDefaultQuery: () => false,
 });
 
 export function QueryBuilderProvider({
@@ -249,6 +251,66 @@ export function QueryBuilderProvider({
 		[getElementWithActualOperator],
 	);
 
+	const isDefaultQuery = useCallback(
+		({ currentQuery, sourcePage }: IsDefaultQueryProps): boolean => {
+			// Get default query with updated operators
+			const defaultQuery = updateAllQueriesOperators(
+				initialQueriesMap[sourcePage],
+				PANEL_TYPES.LIST,
+				sourcePage,
+			);
+
+			// Early return if query types don't match
+			if (currentQuery.queryType !== defaultQuery.queryType) {
+				return false;
+			}
+
+			// Only compare builder queries
+			if (currentQuery.queryType !== EQueryType.QUERY_BUILDER) {
+				return false;
+			}
+
+			const defaultBuilderData = defaultQuery.builder
+				.queryData[0] as IBuilderQuery;
+
+			const currentBuilderData = currentQuery.builder
+				.queryData[0] as IBuilderQuery;
+
+			// Check if filters have same operator and length
+			const isFiltersEqual =
+				currentBuilderData.filters.op === defaultBuilderData.filters.op &&
+				currentBuilderData.filters.items.length ===
+					defaultBuilderData.filters.items.length;
+
+			// Compare builder data fields
+			const fieldsMatch =
+				currentBuilderData.dataSource === defaultBuilderData.dataSource &&
+				currentBuilderData.queryName === defaultBuilderData.queryName &&
+				currentBuilderData.aggregateOperator ===
+					defaultBuilderData.aggregateOperator &&
+				currentBuilderData.timeAggregation === defaultBuilderData.timeAggregation &&
+				currentBuilderData.spaceAggregation ===
+					defaultBuilderData.spaceAggregation &&
+				currentBuilderData.expression === defaultBuilderData.expression &&
+				currentBuilderData.disabled === defaultBuilderData.disabled &&
+				currentBuilderData.stepInterval === defaultBuilderData.stepInterval &&
+				currentBuilderData.reduceTo === defaultBuilderData.reduceTo &&
+				currentBuilderData.legend === defaultBuilderData.legend;
+
+			// Compare array fields
+			const arrayFieldsMatch =
+				isFiltersEqual &&
+				JSON.stringify(currentBuilderData.functions) ===
+					JSON.stringify(defaultBuilderData.functions) &&
+				JSON.stringify(currentBuilderData.having) ===
+					JSON.stringify(defaultBuilderData.having) &&
+				JSON.stringify(currentBuilderData.groupBy) ===
+					JSON.stringify(defaultBuilderData.groupBy);
+
+			return fieldsMatch && arrayFieldsMatch;
+		},
+		[updateAllQueriesOperators],
+	);
 	const updateQueriesData = useCallback(
 		<T extends keyof QueryBuilderData>(
 			query: Query,
@@ -883,6 +945,7 @@ export function QueryBuilderProvider({
 			handleRunQuery,
 			resetQuery,
 			updateAllQueriesOperators,
+			isDefaultQuery,
 			updateQueriesData,
 			initQueryBuilderData,
 			handleOnUnitsChange,
@@ -909,6 +972,7 @@ export function QueryBuilderProvider({
 			redirectWithQueryBuilderData,
 			handleRunQuery,
 			updateAllQueriesOperators,
+			isDefaultQuery,
 			updateQueriesData,
 			initQueryBuilderData,
 			handleOnUnitsChange,
