@@ -7,12 +7,10 @@ import updateRole from 'api/user/updateRole';
 import { ResizeTable } from 'components/ResizeTable';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
 import DeleteMembersDetails from '../DeleteMembersDetails';
@@ -230,7 +228,7 @@ function UserFunction({
 }
 
 function Members(): JSX.Element {
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { org } = useAppContext();
 	const { status, data, isLoading } = useQuery({
 		queryFn: () =>
 			getOrgUser({

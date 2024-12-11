@@ -1,25 +1,23 @@
-import { render, RenderResult } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import ROUTES from 'constants/routes';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
-import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
-import { I18nextProvider } from 'react-i18next';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import i18n from 'ReactI18';
-import store from 'store';
+import { fireEvent, render, RenderResult } from 'tests/test-utils';
 
 import LogsExplorerViews from '..';
 import { logsQueryRangeSuccessNewFormatResponse } from './mock';
 
-const logExplorerRoute = '/logs/logs-explorer';
-
 const queryRangeURL = 'http://localhost/api/v3/query_range';
+
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: (): { pathname: string } => ({
+		pathname: `${ROUTES.LOGS_EXPLORER}`,
+	}),
+}));
 
 const lodsQueryServerRequest = (): void =>
 	server.use(
@@ -86,27 +84,17 @@ beforeEach(() => {
 
 const renderer = (): RenderResult =>
 	render(
-		<MemoryRouter initialEntries={[logExplorerRoute]}>
-			<Provider store={store}>
-				<I18nextProvider i18n={i18n}>
-					<MockQueryClientProvider>
-						<QueryBuilderProvider>
-							<VirtuosoMockContext.Provider
-								value={{ viewportHeight: 300, itemHeight: 100 }}
-							>
-								<LogsExplorerViews
-									selectedView={SELECTED_VIEWS.SEARCH}
-									showFrequencyChart
-									setIsLoadingQueries={(): void => {}}
-									listQueryKeyRef={{ current: {} }}
-									chartQueryKeyRef={{ current: {} }}
-								/>
-							</VirtuosoMockContext.Provider>
-						</QueryBuilderProvider>
-					</MockQueryClientProvider>
-				</I18nextProvider>
-			</Provider>
-		</MemoryRouter>,
+		<VirtuosoMockContext.Provider
+			value={{ viewportHeight: 300, itemHeight: 100 }}
+		>
+			<LogsExplorerViews
+				selectedView={SELECTED_VIEWS.SEARCH}
+				showFrequencyChart
+				setIsLoadingQueries={(): void => {}}
+				listQueryKeyRef={{ current: {} }}
+				chartQueryKeyRef={{ current: {} }}
+			/>
+		</VirtuosoMockContext.Provider>,
 	);
 
 describe('LogsExplorerViews -', () => {
@@ -115,7 +103,7 @@ describe('LogsExplorerViews -', () => {
 		const { queryByText, queryByTestId } = renderer();
 
 		expect(queryByTestId('periscope-btn')).toBeInTheDocument();
-		await userEvent.click(queryByTestId('periscope-btn') as HTMLElement);
+		fireEvent.click(queryByTestId('periscope-btn') as HTMLElement);
 
 		expect(document.querySelector('.menu-container')).toBeInTheDocument();
 
@@ -124,7 +112,7 @@ describe('LogsExplorerViews -', () => {
 
 		// switch to table view
 		// eslint-disable-next-line sonarjs/no-duplicate-string
-		await userEvent.click(queryByTestId('table-view') as HTMLElement);
+		fireEvent.click(queryByTestId('table-view') as HTMLElement);
 
 		expect(
 			queryByText(
@@ -143,7 +131,7 @@ describe('LogsExplorerViews -', () => {
 		const { queryByText, queryByTestId } = renderer();
 
 		// switch to table view
-		await userEvent.click(queryByTestId('table-view') as HTMLElement);
+		fireEvent.click(queryByTestId('table-view') as HTMLElement);
 		expect(queryByText('pending_data_placeholder')).toBeInTheDocument();
 	});
 
@@ -162,7 +150,7 @@ describe('LogsExplorerViews -', () => {
 		).toBeInTheDocument();
 
 		// switch to table view
-		await userEvent.click(queryByTestId('table-view') as HTMLElement);
+		fireEvent.click(queryByTestId('table-view') as HTMLElement);
 
 		expect(
 			queryByText('Something went wrong. Please try again or contact support.'),

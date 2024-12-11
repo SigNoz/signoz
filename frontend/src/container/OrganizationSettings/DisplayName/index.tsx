@@ -1,14 +1,10 @@
 import { Button, Form, Input } from 'antd';
 import editOrg from 'api/user/editOrg';
 import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
+import { IUser } from 'providers/App/types';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { UPDATE_ORG_NAME } from 'types/actions/app';
-import AppReducer, { User } from 'types/reducer/app';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 function DisplayName({
@@ -20,10 +16,9 @@ function DisplayName({
 	const orgName = Form.useWatch('name', form);
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { org, updateOrg } = useAppContext();
 	const { name } = (org || [])[index];
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const { notifications } = useNotifications();
 
 	const onSubmit = async (values: FormValues): Promise<void> => {
@@ -41,13 +36,7 @@ function DisplayName({
 						ns: 'common',
 					}),
 				});
-				dispatch({
-					type: UPDATE_ORG_NAME,
-					payload: {
-						orgId,
-						name,
-					},
-				});
+				updateOrg(orgId, name);
 			} else {
 				notifications.error({
 					message:
@@ -105,7 +94,7 @@ function DisplayName({
 
 interface DisplayNameProps {
 	index: number;
-	id: User['userId'];
+	id: IUser['id'];
 	isAnonymous: boolean;
 }
 

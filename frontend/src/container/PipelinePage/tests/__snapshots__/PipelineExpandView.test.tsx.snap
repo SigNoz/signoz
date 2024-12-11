@@ -1,7 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`PipelinePage container test should render AddNewPipeline section 1`] = `<DocumentFragment />`;
-
 exports[`PipelinePage should render PipelineExpandView section 1`] = `
 <DocumentFragment>
   .c2 {

@@ -189,7 +189,7 @@ export function Filter(props: FilterProps): JSX.Element {
 							...item.filters,
 							items: props?.resetAll
 								? []
-								: (unionTagFilterItems(item.filters.items, preparePostData())
+								: (unionTagFilterItems(item.filters?.items, preparePostData())
 										.map((item) =>
 											item.key?.key === props?.clearByType ? undefined : item,
 										)
