@@ -14,6 +14,13 @@ import {
 } from 'components/QuickFilters/QuickFilters';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
+export interface IEntityColumn {
+	label: string;
+	value: string;
+	id: string;
+	canRemove: boolean;
+}
+
 export interface IPodColumn {
 	label: string;
 	value: string;
