@@ -5,6 +5,19 @@ import {
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
+export const K8sCategories = {
+	PODS: 'pods',
+	NODES: 'nodes',
+	NAMESPACES: 'namespaces',
+	CLUSTERS: 'clusters',
+	DEPLOYMENTS: 'deployments',
+	STATEFULSETS: 'statefulsets',
+	DAEMONSETS: 'daemonsets',
+	CONTAINERS: 'containers',
+	JOBS: 'jobs',
+	VOLUMES: 'volumes',
+};
+
 export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
