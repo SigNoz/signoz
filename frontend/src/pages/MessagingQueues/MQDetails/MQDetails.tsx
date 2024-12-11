@@ -108,13 +108,6 @@ const checkValidityOfDetailConfigs = (
 			return false;
 		}
 
-		if (currentTab === MessagingQueueServiceDetailType.ProducerDetails) {
-			return Boolean(
-				configDetails?.topic &&
-					configDetails?.partition &&
-					configDetails?.service_name,
-			);
-		}
 		return Boolean(configDetails?.topic && configDetails?.service_name);
 	}
 
