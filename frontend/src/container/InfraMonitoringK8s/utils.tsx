@@ -11,6 +11,13 @@ import {
 import { Group } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+export interface IEntityColumn {
+	label: string;
+	value: string;
+	id: string;
+	canRemove: boolean;
+}
+
 export interface IPodColumn {
 	label: string;
 	value: string;
