@@ -289,6 +289,10 @@ func GetDashboard(ctx context.Context, uuid string) (*Dashboard, *model.ApiError
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
 	}
 
+	if dashboard.Data["title"] == "Ingestion" && dashboard.Data["description"] != nil {
+		dashboard.Data["description"] = "This dashboard is deprecated. Please use the new Ingestion V2 dashboard. " + dashboard.Data["description"].(string)
+	}
+
 	return &dashboard, nil
 }
 
