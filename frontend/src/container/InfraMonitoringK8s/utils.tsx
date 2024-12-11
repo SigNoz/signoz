@@ -27,6 +27,13 @@ export interface IEntityColumn {
 	canRemove: boolean;
 }
 
+export interface IEntityColumn {
+	label: string;
+	value: string;
+	id: string;
+	canRemove: boolean;
+}
+
 export interface IPodColumn {
 	label: string;
 	value: string;
