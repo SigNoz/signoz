@@ -355,8 +355,9 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 					filterSubQuery = fmt.Sprintf("%s AND %s", filterSubQuery, subQuery)
 				}
 			} else {
-				column := getColumnName(mq.AggregateAttribute)
-				filterSubQuery = fmt.Sprintf("%s AND has(%s, '%s')", filterSubQuery, column, mq.AggregateAttribute.Key)
+				cType := getClickHouseTracesColumnType(mq.AggregateAttribute.Type)
+				cDataType := getClickHouseTracesColumnDataType(mq.AggregateAttribute.DataType)
+				filterSubQuery = fmt.Sprintf("%s AND mapContains(%s_%s, '%s')", filterSubQuery, cType, cDataType, mq.AggregateAttribute.Key)
 			}
 		}
 		op := "toFloat64(count())"
