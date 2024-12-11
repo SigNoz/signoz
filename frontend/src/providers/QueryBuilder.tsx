@@ -27,7 +27,7 @@ import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
-import { cloneDeep, get, merge, set } from 'lodash-es';
+import { cloneDeep, get, isEqual, merge, set } from 'lodash-es';
 import {
 	createContext,
 	PropsWithChildren,
@@ -270,44 +270,58 @@ export function QueryBuilderProvider({
 				return false;
 			}
 
-			const defaultBuilderData = defaultQuery.builder
-				.queryData[0] as IBuilderQuery;
+			const extractRelevantKeys = (queryData: IBuilderQuery): IBuilderQuery => {
+				const {
+					dataSource,
+					queryName,
+					aggregateOperator,
+					aggregateAttribute,
+					timeAggregation,
+					spaceAggregation,
+					functions,
+					filters,
+					expression,
+					disabled,
+					stepInterval,
+					having,
+					groupBy,
+					legend,
+				} = queryData;
 
-			const currentBuilderData = currentQuery.builder
-				.queryData[0] as IBuilderQuery;
+				return {
+					dataSource,
+					queryName,
+					aggregateOperator,
+					// remove id from aggregateAttribute
+					aggregateAttribute: {
+						...aggregateAttribute,
+						id: '',
+					},
+					timeAggregation,
+					spaceAggregation,
+					functions,
+					filters,
+					expression,
+					disabled,
+					stepInterval,
+					having,
+					groupBy,
+					legend,
+					// set to default values
+					orderBy: [],
+					limit: null,
+					reduceTo: 'avg',
+				};
+			};
 
-			// Check if filters have same operator and length
-			const isFiltersEqual =
-				currentBuilderData.filters.op === defaultBuilderData.filters.op &&
-				currentBuilderData.filters.items.length ===
-					defaultBuilderData.filters.items.length;
+			const currentBuilderData = extractRelevantKeys(
+				currentQuery.builder.queryData[0],
+			);
+			const defaultBuilderData = extractRelevantKeys(
+				defaultQuery.builder.queryData[0],
+			);
 
-			// Compare builder data fields
-			const fieldsMatch =
-				currentBuilderData.dataSource === defaultBuilderData.dataSource &&
-				currentBuilderData.queryName === defaultBuilderData.queryName &&
-				currentBuilderData.aggregateOperator ===
-					defaultBuilderData.aggregateOperator &&
-				currentBuilderData.timeAggregation === defaultBuilderData.timeAggregation &&
-				currentBuilderData.spaceAggregation ===
-					defaultBuilderData.spaceAggregation &&
-				currentBuilderData.expression === defaultBuilderData.expression &&
-				currentBuilderData.disabled === defaultBuilderData.disabled &&
-				currentBuilderData.stepInterval === defaultBuilderData.stepInterval &&
-				currentBuilderData.reduceTo === defaultBuilderData.reduceTo &&
-				currentBuilderData.legend === defaultBuilderData.legend;
-
-			// Compare array fields
-			const arrayFieldsMatch =
-				isFiltersEqual &&
-				JSON.stringify(currentBuilderData.functions) ===
-					JSON.stringify(defaultBuilderData.functions) &&
-				JSON.stringify(currentBuilderData.having) ===
-					JSON.stringify(defaultBuilderData.having) &&
-				JSON.stringify(currentBuilderData.groupBy) ===
-					JSON.stringify(defaultBuilderData.groupBy);
-
-			return fieldsMatch && arrayFieldsMatch;
+			return isEqual(currentBuilderData, defaultBuilderData);
 		},
 		[updateAllQueriesOperators],
 	);
