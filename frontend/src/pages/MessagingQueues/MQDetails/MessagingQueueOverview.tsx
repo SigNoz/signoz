@@ -1,6 +1,10 @@
 import './MQDetails.style.scss';
 
 import { Radio } from 'antd';
+import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
+import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
+import { getPartitionLatencyOverview } from 'api/messagingQueues/getPartitionLatencyOverview';
+import { getTopicThroughputOverview } from 'api/messagingQueues/getTopicThroughputOverview';
 import { Dispatch, SetStateAction } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -11,10 +15,6 @@ import {
 	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 } from '../MessagingQueuesUtils';
-import { MessagingQueueServicePayload } from './MQTables/getConsumerLagDetails';
-import { getKafkaSpanEval } from './MQTables/getKafkaSpanEval';
-import { getPartitionLatencyOverview } from './MQTables/getPartitionLatencyOverview';
-import { getTopicThroughputOverview } from './MQTables/getTopicThroughputOverview';
 import MessagingQueuesTable from './MQTables/MQTables';
 
 type SelectedViewType = keyof typeof MessagingQueuesViewType;

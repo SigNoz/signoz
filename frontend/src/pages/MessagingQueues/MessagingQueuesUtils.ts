@@ -1,3 +1,10 @@
+import {
+	getConsumerLagDetails,
+	MessagingQueueServicePayload,
+	MessagingQueuesPayloadProps,
+} from 'api/messagingQueues/getConsumerLagDetails';
+import { getPartitionLatencyDetails } from 'api/messagingQueues/getPartitionLatencyDetails';
+import { getTopicThroughputDetails } from 'api/messagingQueues/getTopicThroughputDetails';
 import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -10,14 +17,6 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
-
-import {
-	getConsumerLagDetails,
-	MessagingQueueServicePayload,
-	MessagingQueuesPayloadProps,
-} from './MQDetails/MQTables/getConsumerLagDetails';
-import { getPartitionLatencyDetails } from './MQDetails/MQTables/getPartitionLatencyDetails';
-import { getTopicThroughputDetails } from './MQDetails/MQTables/getTopicThroughputDetails';
 
 export const KAFKA_SETUP_DOC_LINK =
 	'https://signoz.io/docs/messaging-queues/kafka?utm_source=product&utm_medium=kafka-get-started';
