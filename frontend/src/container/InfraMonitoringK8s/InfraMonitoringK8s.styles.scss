@@ -6,6 +6,26 @@
 	.k8s-quick-filters-container {
 		width: 280px;
 		min-width: 280px;
+		border-right: 1px solid var(--bg-slate-400);
+
+		.ant-collapse-header {
+			border-bottom: 1px solid var(--bg-slate-400);
+
+			&[aria-expanded='true'] {
+				background: var(--bg-ink-400);
+			}
+		}
+
+		.ant-collapse-content-box {
+			padding: 0px;
+			padding-block: 0px !important;
+
+			.quick-filters {
+				.checkbox-filter {
+					padding-left: 18px;
+				}
+			}
+		}
 
 		.quick-filters {
 			overflow-y: auto;
@@ -26,6 +46,22 @@
 
 			&::-webkit-scrollbar-thumb:hover {
 				background: var(--bg-slate-200);
+			}
+		}
+
+		.k8s-quick-filters-category-label {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+
+			.k8s-quick-filters-category-label-icon {
+				margin-right: 8px;
+			}
+
+			.k8s-quick-filters-category-label-container {
+				display: flex;
+				align-items: center;
+				gap: 4px;
 			}
 		}
 	}

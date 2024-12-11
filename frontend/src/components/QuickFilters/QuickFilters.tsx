@@ -93,8 +93,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	return (
 		<div className="quick-filters">
-			<section className="header">
-				{!isInfraMonitoring && (
+			{!isInfraMonitoring && (
+				<section className="header">
 					<section className="left-actions">
 						<FilterOutlined />
 						<Typography.Text className="text">Filters for</Typography.Text>
@@ -102,21 +102,21 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 							<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
 						</Tooltip>
 					</section>
-				)}
 
-				<section className="right-actions">
-					<Tooltip title="Reset All">
-						<SyncOutlined className="sync-icon" onClick={handleReset} />
-					</Tooltip>
-					<div className="divider-filter" />
-					<Tooltip title="Collapse Filters">
-						<VerticalAlignTopOutlined
-							rotate={270}
-							onClick={handleFilterVisibilityChange}
-						/>
-					</Tooltip>
+					<section className="right-actions">
+						<Tooltip title="Reset All">
+							<SyncOutlined className="sync-icon" onClick={handleReset} />
+						</Tooltip>
+						<div className="divider-filter" />
+						<Tooltip title="Collapse Filters">
+							<VerticalAlignTopOutlined
+								rotate={270}
+								onClick={handleFilterVisibilityChange}
+							/>
+						</Tooltip>
+					</section>
 				</section>
-			</section>
+			)}
 
 			<section className="filters">
 				{config.map((filter) => {
