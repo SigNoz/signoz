@@ -10,6 +10,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import Slider from './FilterRenderers/Slider/Slider';
@@ -33,6 +34,9 @@ export interface IQuickFiltersConfig {
 	type: FiltersType;
 	title: string;
 	attributeKey: BaseAutocompleteData;
+	aggregateOperator?: string;
+	aggregateAttribute?: string;
+	dataSource?: DataSource;
 	customRendererForValue?: (value: string) => JSX.Element;
 	defaultOpen: boolean;
 }

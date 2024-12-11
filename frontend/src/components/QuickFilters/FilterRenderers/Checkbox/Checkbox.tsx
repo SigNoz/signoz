@@ -50,9 +50,9 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 	const { data, isLoading } = useGetAggregateValues(
 		{
-			aggregateOperator: 'noop',
-			dataSource: DataSource.LOGS,
-			aggregateAttribute: '',
+			aggregateOperator: filter.aggregateOperator || 'noop',
+			dataSource: filter.dataSource || DataSource.LOGS,
+			aggregateAttribute: filter.aggregateAttribute || '',
 			attributeKey: filter.attributeKey.key,
 			filterAttributeKeyDataType: filter.attributeKey.dataType || DataTypes.EMPTY,
 			tagType: filter.attributeKey.type || '',
