@@ -35,7 +35,12 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import { variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle } from './styles';
-import { areArraysEqual, checkAPIInvocation, VariableGraph } from './util';
+import {
+	areArraysEqual,
+	checkAPIInvocation,
+	onUpdateVariableNode,
+	VariableGraph,
+} from './util';
 
 const ALL_SELECT_VALUE = '__ALL__';
 
@@ -59,6 +64,7 @@ interface VariableItemProps {
 	dependencyData: {
 		order: string[];
 		graph: VariableGraph;
+		parentDependencyGraph: VariableGraph;
 	} | null;
 }
 
@@ -212,11 +218,14 @@ function VariableItem({
 			`${maxTime}`,
 		],
 		{
-			// enabled: variableData && variableData.type === 'QUERY',
 			enabled:
 				variableData &&
 				variableData.type === 'QUERY' &&
-				checkAPIInvocation(variablesToGetUpdated, variableData, dependencyData),
+				checkAPIInvocation(
+					variablesToGetUpdated,
+					variableData,
+					dependencyData?.parentDependencyGraph,
+				),
 			queryFn: () =>
 				dashboardVariablesQuery({
 					query: variableData.queryValue || '',
@@ -225,6 +234,21 @@ function VariableItem({
 			refetchOnWindowFocus: false,
 			onSuccess: (response) => {
 				getOptions(response.payload);
+				if (
+					dependencyData?.parentDependencyGraph[variableData.name || ''].length === 0
+				) {
+					const updatedVariables: string[] = [];
+					onUpdateVariableNode(
+						variableData.name || '',
+						dependencyData.graph,
+						dependencyData.order,
+						(node) => updatedVariables.push(node),
+					);
+					setVariablesToGetUpdated((prev) => [
+						...prev,
+						...updatedVariables.filter((v) => v !== variableData.name),
+					]);
+				}
 			},
 			onError: (error: {
 				details: {
@@ -246,6 +270,15 @@ function VariableItem({
 	);
 
 	const handleChange = (value: string | string[]): void => {
+		// if value is equal to selected value then return
+		if (
+			value === variableData.selectedValue ||
+			(Array.isArray(value) &&
+				Array.isArray(variableData.selectedValue) &&
+				areArraysEqual(value, variableData.selectedValue))
+		) {
+			return;
+		}
 		if (variableData.name) {
 			if (
 				value === ALL_SELECT_VALUE ||

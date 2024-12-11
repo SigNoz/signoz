@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 
 export function areArraysEqual(
@@ -161,32 +162,26 @@ export const buildParentDependencyGraph = (
 export const checkAPIInvocation = (
 	variablesToGetUpdated: string[],
 	variableData: IDashboardVariable,
-	dependencyData: {
-		order: string[];
-		graph: VariableGraph;
-	} | null,
+	parentDependencyGraph?: VariableGraph,
 ): boolean => {
-	console.log(variableData.name, dependencyData, variablesToGetUpdated);
-	if (!dependencyData) {
-		return true;
-	}
-
-	if (!variableData.name) {
+	if (isEmpty(variableData.name)) {
 		return false;
 	}
 
-	const parentDependencies = buildParentDependencyGraph(dependencyData.graph);
+	if (isEmpty(parentDependencyGraph)) {
+		return true;
+	}
 
 	// if no dependency then true
-	const haveDependency = parentDependencies[variableData.name]?.length > 0;
+	const haveDependency =
+		parentDependencyGraph?.[variableData.name || '']?.length > 0;
 	if (!haveDependency) {
 		return true;
 	}
 
 	// if variable is in the list and has dependency then check if its the top element in the queue then true else false
 	return (
-		variablesToGetUpdated &&
-		variablesToGetUpdated.includes(variableData.name) &&
+		variablesToGetUpdated.length > 0 &&
 		variablesToGetUpdated[0] === variableData.name
 	);
 };

@@ -6,6 +6,7 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import {
 	buildDependencies,
 	buildDependencyGraph,
+	buildParentDependencyGraph,
 	onUpdateVariableNode,
 	VariableGraph,
 } from './util';
@@ -29,6 +30,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const [dependencyData, setDependencyData] = useState<{
 		order: string[];
 		graph: VariableGraph;
+		parentDependencyGraph: VariableGraph;
 	} | null>(null);
 
 	useEffect(() => {
@@ -59,9 +61,11 @@ function DashboardVariableSelection(): JSX.Element | null {
 		if (variablesTableData.length > 0 && !initializationRef.current) {
 			const depGrp = buildDependencies(variablesTableData);
 			const { order, graph } = buildDependencyGraph(depGrp);
+			const parentDependencyGraph = buildParentDependencyGraph(graph);
 			setDependencyData({
 				order,
 				graph,
+				parentDependencyGraph,
 			});
 			initializationRef.current = true;
 		}
@@ -120,7 +124,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 					dependencyData.order,
 					(node) => updatedVariables.push(node),
 				);
-				setVariablesToGetUpdated(updatedVariables.filter((v) => v !== name)); // question?
+				setVariablesToGetUpdated(updatedVariables.filter((v) => v !== name));
 			} else if (isMountedCall) {
 				setVariablesToGetUpdated((prev) => prev.filter((v) => v !== name));
 			}
