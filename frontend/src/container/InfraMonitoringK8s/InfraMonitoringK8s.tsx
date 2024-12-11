@@ -25,6 +25,7 @@ import {
 	DaemonSetsQuickFiltersConfig,
 	DeploymentsQuickFiltersConfig,
 	JobsQuickFiltersConfig,
+	K8sCategories,
 	NamespaceQuickFiltersConfig,
 	NodesQuickFiltersConfig,
 	PodsQuickFiltersConfig,
@@ -32,11 +33,12 @@ import {
 	VolumesQuickFiltersConfig,
 } from './constants';
 import K8sPodLists from './Pods/K8sPodLists';
+import Volumes from './Volumes/Volumes';
 
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
 
-	const [selectedCategory, setSelectedCategory] = useState('pods');
+	const [selectedCategory, setSelectedCategory] = useState(K8sCategories.PODS);
 
 	const handleFilterVisibilityChange = (): void => {
 		setShowFilters(!showFilters);
@@ -54,7 +56,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					</div>
 				</div>
 			),
-			key: 'pods',
+			key: K8sCategories.PODS,
 			showArrow: false,
 			children: (
 				<QuickFilters
@@ -75,7 +77,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					</div>
 				</div>
 			),
-			key: 'nodes',
+			key: K8sCategories.NODES,
 			showArrow: false,
 			children: (
 				<QuickFilters
@@ -102,7 +104,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					</div>
 				</div>
 			),
-			key: 'namespace',
+			key: K8sCategories.NAMESPACES,
 			showArrow: false,
 			children: (
 				<QuickFilters
@@ -123,7 +125,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					</div>
 				</div>
 			),
-			key: 'clusters',
+			key: K8sCategories.CLUSTERS,
 			showArrow: false,
 			children: (
 				<QuickFilters
@@ -150,7 +152,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					</div>
 				</div>
 			),
-			key: 'containers',
+			key: K8sCategories.CONTAINERS,
 			showArrow: false,
 			children: (
 				<QuickFilters
@@ -171,7 +173,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					</div>
 				</div>
 			),
-			key: 'volumes',
+			key: K8sCategories.VOLUMES,
 			showArrow: false,
 			children: (
 				<QuickFilters
@@ -195,7 +197,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					</div>
 				</div>
 			),
-			key: 'deployments',
+			key: K8sCategories.DEPLOYMENTS,
 			showArrow: false,
 			children: (
 				<QuickFilters
@@ -216,7 +218,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					</div>
 				</div>
 			),
-			key: 'jobs',
+			key: K8sCategories.JOBS,
 			showArrow: false,
 			children: (
 				<QuickFilters
@@ -240,7 +242,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					</div>
 				</div>
 			),
-			key: 'daemonsets',
+			key: K8sCategories.DAEMONSETS,
 			showArrow: false,
 			children: (
 				<QuickFilters
@@ -267,7 +269,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					</div>
 				</div>
 			),
-			key: 'statefulsets',
+			key: K8sCategories.STATEFULSETS,
 			showArrow: false,
 			children: (
 				<QuickFilters
@@ -280,9 +282,9 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	];
 
 	const handleCategoryChange = (key: string | string[]): void => {
-		console.log(key);
-
-		setSelectedCategory(key[0] as string);
+		if (Array.isArray(key) && key.length > 0) {
+			setSelectedCategory(key[0] as string);
+		}
 	};
 
 	return (
@@ -307,10 +309,14 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							showFilters ? 'k8s-list-container-filters-visible' : ''
 						}`}
 					>
-						<K8sPodLists
-							isFiltersVisible={showFilters}
-							handleFilterVisibilityChange={handleFilterVisibilityChange}
-						/>
+						{selectedCategory === K8sCategories.PODS && (
+							<K8sPodLists
+								isFiltersVisible={showFilters}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
+							/>
+						)}
+
+						{selectedCategory === K8sCategories.VOLUMES && <Volumes />}
 					</div>
 				</div>
 			</div>
