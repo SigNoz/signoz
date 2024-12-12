@@ -32,7 +32,6 @@ export const convertVariablesToDbFormat = (
 	}, {});
 
 const getDependentVariables = (queryValue: string): string[] => {
-	console.log('getDependentVariables', queryValue);
 	const variableRegexPattern = /\{\{\s*?\.([^\s}]+)\s*?\}\}/g;
 
 	const matches = queryValue.match(variableRegexPattern);
@@ -80,7 +79,6 @@ export const buildDependencies = (
 export const buildDependencyGraph = (
 	dependencies: VariableGraph,
 ): { order: string[]; graph: VariableGraph } => {
-	console.log('buildDependencyGraph', dependencies);
 	const inDegree: Record<string, number> = {};
 	const adjList: VariableGraph = {};
 
@@ -144,7 +142,6 @@ export const onUpdateVariableNode = (
 export const buildParentDependencyGraph = (
 	graph: VariableGraph,
 ): VariableGraph => {
-	console.log('buildParentDependencyGraph', graph);
 	const parentGraph: VariableGraph = {};
 
 	// Initialize empty arrays for all nodes
@@ -168,12 +165,6 @@ export const checkAPIInvocation = (
 	variableData: IDashboardVariable,
 	parentDependencyGraph?: VariableGraph,
 ): boolean => {
-	console.log(
-		'checkAPIInvocation',
-		variablesToGetUpdated,
-		variableData,
-		parentDependencyGraph,
-	);
 	if (isEmpty(variableData.name)) {
 		return false;
 	}

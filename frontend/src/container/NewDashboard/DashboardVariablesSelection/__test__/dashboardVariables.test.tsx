@@ -1,5 +1,17 @@
-import { checkAPIInvocation, onUpdateVariableNode } from '../util';
-import { checkAPIInvocationMock, onUpdateVariableNodeMock } from './mock';
+import {
+	buildDependencies,
+	buildDependencyGraph,
+	buildParentDependencyGraph,
+	checkAPIInvocation,
+	onUpdateVariableNode,
+	VariableGraph,
+} from '../util';
+import {
+	buildDependenciesMock,
+	buildGraphMock,
+	checkAPIInvocationMock,
+	onUpdateVariableNodeMock,
+} from './mock';
 
 describe('dashboardVariables - utilities and processors', () => {
 	describe('onUpdateVariableNode', () => {
@@ -147,6 +159,82 @@ describe('dashboardVariables - utilities and processors', () => {
 				expect(
 					checkAPIInvocation([], mockRootElement, parentDependencyGraph),
 				).toBeTruthy();
+			});
+		});
+	});
+
+	describe('Graph Building Utilities', () => {
+		const { graph } = buildGraphMock;
+		const { variables } = buildDependenciesMock;
+
+		describe('buildParentDependencyGraph', () => {
+			it('should build parent dependency graph with correct relationships', () => {
+				const expected = {
+					deployment_environment: [],
+					service_name: ['deployment_environment'],
+					endpoint: ['deployment_environment', 'service_name'],
+					http_status_code: ['endpoint'],
+					k8s_cluster_name: [],
+					k8s_node_name: ['k8s_cluster_name'],
+					k8s_namespace_name: ['k8s_cluster_name', 'k8s_node_name'],
+					environment: [],
+				};
+
+				expect(buildParentDependencyGraph(graph)).toEqual(expected);
+			});
+
+			it('should handle empty graph', () => {
+				expect(buildParentDependencyGraph({})).toEqual({});
+			});
+		});
+
+		describe('buildDependencyGraph', () => {
+			it('should build complete dependency graph with correct structure and order', () => {
+				const expected = {
+					graph: {
+						deployment_environment: ['service_name', 'endpoint'],
+						service_name: ['endpoint'],
+						endpoint: ['http_status_code'],
+						http_status_code: [],
+						k8s_cluster_name: ['k8s_node_name', 'k8s_namespace_name'],
+						k8s_node_name: ['k8s_namespace_name'],
+						k8s_namespace_name: [],
+						environment: [],
+					},
+					order: [
+						'deployment_environment',
+						'k8s_cluster_name',
+						'environment',
+						'service_name',
+						'k8s_node_name',
+						'endpoint',
+						'k8s_namespace_name',
+						'http_status_code',
+					],
+				};
+
+				expect(buildDependencyGraph(graph)).toEqual(expected);
+			});
+		});
+
+		describe('buildDependencies', () => {
+			it('should build dependency map from variables array', () => {
+				const expected: VariableGraph = {
+					deployment_environment: ['service_name', 'endpoint'],
+					service_name: ['endpoint'],
+					endpoint: ['http_status_code'],
+					http_status_code: [],
+					k8s_cluster_name: ['k8s_node_name', 'k8s_namespace_name'],
+					k8s_node_name: ['k8s_namespace_name'],
+					k8s_namespace_name: [],
+					environment: [],
+				};
+
+				expect(buildDependencies(variables)).toEqual(expected);
+			});
+
+			it('should handle empty variables array', () => {
+				expect(buildDependencies([])).toEqual({});
 			});
 		});
 	});
