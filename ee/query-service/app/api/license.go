@@ -102,7 +102,7 @@ func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
 		return
 	}
-	license, apiError := ah.LM().Activate(r.Context(), l.Key)
+	license, apiError := ah.LM().ActivateV3(r.Context(), l.Key)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
