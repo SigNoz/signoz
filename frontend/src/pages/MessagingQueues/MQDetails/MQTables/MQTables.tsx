@@ -67,6 +67,8 @@ export function getColumns(
 			'throughput',
 			'avg_msg_size',
 			'error_percentage',
+			'ingestion_rate',
+			'byte_rate',
 		].includes(column.name)
 			? (value: number | string): string => {
 					if (!isNumber(value)) return value.toString();
