@@ -1,0 +1,56 @@
+export const checkAPIInvocationMock = {
+	variablesToGetUpdated: [],
+	variableData: {
+		name: 'k8s_namespace_name',
+		key: '937ecbae-b24b-4d6d-8cc4-5d5b8d53569b',
+		customValue: '',
+		description: '',
+		id: '937ecbae-b24b-4d6d-8cc4-5d5b8d53569b',
+		modificationUUID: '8ad2442d-8b4d-4c64-848e-af847d1d0eec',
+		multiSelect: false,
+		order: 7,
+		queryValue:
+			"SELECT JSONExtractString(labels, 'k8s_namespace_name') AS k8s_namespace_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'k8s_pod_cpu_time' AND JSONExtractString(labels, 'k8s_cluster_name') = {{.k8s_cluster_name}} AND JSONExtractString(labels, 'k8s_node_name') IN {{.k8s_node_name}}\nGROUP BY k8s_namespace_name",
+		showALLOption: false,
+		sort: 'DISABLED',
+		textboxValue: '',
+		type: 'QUERY',
+		selectedValue: 'saasmonitor',
+		allSelected: false,
+	},
+	parentDependencyGraph: {
+		deployment_environment: [],
+		service_name: ['deployment_environment'],
+		endpoint: ['deployment_environment', 'service_name'],
+		http_status_code: ['endpoint'],
+		k8s_cluster_name: [],
+		environment: [],
+		k8s_node_name: ['k8s_cluster_name'],
+		k8s_namespace_name: ['k8s_cluster_name', 'k8s_node_name'],
+	},
+};
+
+export const onUpdateVariableNodeMock = {
+	nodeToUpdate: 'deployment_environment',
+	graph: {
+		deployment_environment: ['service_name', 'endpoint'],
+		service_name: ['endpoint'],
+		endpoint: ['http_status_code'],
+		http_status_code: [],
+		k8s_cluster_name: ['k8s_node_name', 'k8s_namespace_name'],
+		environment: [],
+		k8s_node_name: ['k8s_namespace_name'],
+		k8s_namespace_name: [],
+	},
+	topologicalOrder: [
+		'deployment_environment',
+		'k8s_cluster_name',
+		'environment',
+		'service_name',
+		'k8s_node_name',
+		'endpoint',
+		'k8s_namespace_name',
+		'http_status_code',
+	],
+	callback: jest.fn(),
+};

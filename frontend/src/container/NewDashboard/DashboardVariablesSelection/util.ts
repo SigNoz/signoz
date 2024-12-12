@@ -32,6 +32,7 @@ export const convertVariablesToDbFormat = (
 	}, {});
 
 const getDependentVariables = (queryValue: string): string[] => {
+	console.log('getDependentVariables', queryValue);
 	const variableRegexPattern = /\{\{\s*?\.([^\s}]+)\s*?\}\}/g;
 
 	const matches = queryValue.match(variableRegexPattern);
@@ -46,6 +47,7 @@ export type VariableGraph = Record<string, string[]>;
 export const buildDependencies = (
 	variables: IDashboardVariable[],
 ): VariableGraph => {
+	console.log('buildDependencies', variables);
 	const graph: VariableGraph = {};
 
 	// Initialize empty arrays for all variables first
@@ -78,6 +80,7 @@ export const buildDependencies = (
 export const buildDependencyGraph = (
 	dependencies: VariableGraph,
 ): { order: string[]; graph: VariableGraph } => {
+	console.log('buildDependencyGraph', dependencies);
 	const inDegree: Record<string, number> = {};
 	const adjList: VariableGraph = {};
 
@@ -124,6 +127,7 @@ export const onUpdateVariableNode = (
 	topologicalOrder: string[],
 	callback: (node: string) => void,
 ): void => {
+	console.log('onUpdateVariableNode', nodeToUpdate, graph, topologicalOrder);
 	const visited = new Set<string>();
 
 	// Start processing from the node to update
@@ -141,6 +145,7 @@ export const onUpdateVariableNode = (
 export const buildParentDependencyGraph = (
 	graph: VariableGraph,
 ): VariableGraph => {
+	console.log('buildParentDependencyGraph', graph);
 	const parentGraph: VariableGraph = {};
 
 	// Initialize empty arrays for all nodes
