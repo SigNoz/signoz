@@ -63,16 +63,6 @@ export const getK8sDeploymentsListQuery = (): K8sDeploymentsListPayload => ({
 	orderBy: { columnName: 'cpu', order: 'desc' },
 });
 
-// - Available Replicas
-// - Desired Replicas
-// - CPU Request Utilization (% of limit)
-// - CPU Limit Utilization (% of request)
-// - CPU Utilization (cores)
-// - Memory Request Utilization (% of limit)
-// - Memory Limit Utilization (% of request)
-// - Memory Utilization (bytes)
-// - Container Restarts
-
 const columnsConfig = [
 	{
 		title: <div className="column-header-left">Deployment</div>,
