@@ -127,7 +127,6 @@ export const onUpdateVariableNode = (
 	topologicalOrder: string[],
 	callback: (node: string) => void,
 ): void => {
-	console.log('onUpdateVariableNode', nodeToUpdate, graph, topologicalOrder);
 	const visited = new Set<string>();
 
 	// Start processing from the node to update
@@ -169,6 +168,12 @@ export const checkAPIInvocation = (
 	variableData: IDashboardVariable,
 	parentDependencyGraph?: VariableGraph,
 ): boolean => {
+	console.log(
+		'checkAPIInvocation',
+		variablesToGetUpdated,
+		variableData,
+		parentDependencyGraph,
+	);
 	if (isEmpty(variableData.name)) {
 		return false;
 	}

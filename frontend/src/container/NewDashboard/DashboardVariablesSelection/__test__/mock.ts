@@ -1,22 +1,22 @@
 export const checkAPIInvocationMock = {
 	variablesToGetUpdated: [],
 	variableData: {
-		name: 'k8s_namespace_name',
-		key: '937ecbae-b24b-4d6d-8cc4-5d5b8d53569b',
+		name: 'k8s_node_name',
+		key: '4d71d385-beaf-4434-8dbf-c62be68049fc',
+		allSelected: false,
 		customValue: '',
 		description: '',
-		id: '937ecbae-b24b-4d6d-8cc4-5d5b8d53569b',
-		modificationUUID: '8ad2442d-8b4d-4c64-848e-af847d1d0eec',
+		id: '4d71d385-beaf-4434-8dbf-c62be68049fc',
+		modificationUUID: '77233d3c-96d7-4ccb-aa9d-11b04d563068',
 		multiSelect: false,
-		order: 7,
+		order: 6,
 		queryValue:
-			"SELECT JSONExtractString(labels, 'k8s_namespace_name') AS k8s_namespace_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'k8s_pod_cpu_time' AND JSONExtractString(labels, 'k8s_cluster_name') = {{.k8s_cluster_name}} AND JSONExtractString(labels, 'k8s_node_name') IN {{.k8s_node_name}}\nGROUP BY k8s_namespace_name",
+			"SELECT JSONExtractString(labels, 'k8s_node_name') AS k8s_node_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'k8s_node_cpu_time' AND JSONExtractString(labels, 'k8s_cluster_name') = {{.k8s_cluster_name}}\nGROUP BY k8s_node_name",
+		selectedValue: 'gke-signoz-saas-si-consumer-bsc-e2sd4-a6d430fa-gvm2',
 		showALLOption: false,
 		sort: 'DISABLED',
 		textboxValue: '',
 		type: 'QUERY',
-		selectedValue: 'saasmonitor',
-		allSelected: false,
 	},
 	parentDependencyGraph: {
 		deployment_environment: [],
@@ -28,7 +28,7 @@ export const checkAPIInvocationMock = {
 		k8s_node_name: ['k8s_cluster_name'],
 		k8s_namespace_name: ['k8s_cluster_name', 'k8s_node_name'],
 	},
-};
+} as any;
 
 export const onUpdateVariableNodeMock = {
 	nodeToUpdate: 'deployment_environment',
