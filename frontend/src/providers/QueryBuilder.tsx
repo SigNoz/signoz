@@ -270,6 +270,11 @@ export function QueryBuilderProvider({
 				return false;
 			}
 
+			// If there is more than one query, then it is not a default query
+			if (currentQuery.builder.queryData.length !== 1) {
+				return false;
+			}
+
 			const extractRelevantKeys = (queryData: IBuilderQuery): IBuilderQuery => {
 				const {
 					dataSource,
