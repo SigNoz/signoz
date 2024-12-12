@@ -251,6 +251,53 @@ export function QueryBuilderProvider({
 		[getElementWithActualOperator],
 	);
 
+	const extractRelevantKeys = useCallback(
+		(queryData: IBuilderQuery): IBuilderQuery => {
+			const {
+				dataSource,
+				queryName,
+				aggregateOperator,
+				aggregateAttribute,
+				timeAggregation,
+				spaceAggregation,
+				functions,
+				filters,
+				expression,
+				disabled,
+				stepInterval,
+				having,
+				groupBy,
+				legend,
+			} = queryData;
+
+			return {
+				dataSource,
+				queryName,
+				aggregateOperator,
+				// remove id from aggregateAttribute
+				aggregateAttribute: {
+					...aggregateAttribute,
+					id: '',
+				},
+				timeAggregation,
+				spaceAggregation,
+				functions,
+				filters,
+				expression,
+				disabled,
+				stepInterval,
+				having,
+				groupBy,
+				legend,
+				// set to default values
+				orderBy: [],
+				limit: null,
+				reduceTo: 'avg',
+			};
+		},
+		[],
+	);
+
 	const isDefaultQuery = useCallback(
 		({ currentQuery, sourcePage }: IsDefaultQueryProps): boolean => {
 			// Get default query with updated operators
@@ -271,53 +318,9 @@ export function QueryBuilderProvider({
 			}
 
 			// If there is more than one query, then it is not a default query
-			if (currentQuery.builder.queryData.length !== 1) {
+			if (currentQuery.builder.queryData.length > 1) {
 				return false;
 			}
-
-			const extractRelevantKeys = (queryData: IBuilderQuery): IBuilderQuery => {
-				const {
-					dataSource,
-					queryName,
-					aggregateOperator,
-					aggregateAttribute,
-					timeAggregation,
-					spaceAggregation,
-					functions,
-					filters,
-					expression,
-					disabled,
-					stepInterval,
-					having,
-					groupBy,
-					legend,
-				} = queryData;
-
-				return {
-					dataSource,
-					queryName,
-					aggregateOperator,
-					// remove id from aggregateAttribute
-					aggregateAttribute: {
-						...aggregateAttribute,
-						id: '',
-					},
-					timeAggregation,
-					spaceAggregation,
-					functions,
-					filters,
-					expression,
-					disabled,
-					stepInterval,
-					having,
-					groupBy,
-					legend,
-					// set to default values
-					orderBy: [],
-					limit: null,
-					reduceTo: 'avg',
-				};
-			};
 
 			const currentBuilderData = extractRelevantKeys(
 				currentQuery.builder.queryData[0],
@@ -328,7 +331,7 @@ export function QueryBuilderProvider({
 
 			return isEqual(currentBuilderData, defaultBuilderData);
 		},
-		[updateAllQueriesOperators],
+		[updateAllQueriesOperators, extractRelevantKeys],
 	);
 	const updateQueriesData = useCallback(
 		<T extends keyof QueryBuilderData>(
