@@ -32,9 +32,9 @@ https://ingest.{{REGION}}.signoz.cloud:443/logs/json
 ```
 &nbsp;
 
-* Enable **Custom Headers** and add the headers `signoz-access-token` and `x-vercel-verify`
+* Enable **Custom Headers** and add the headers `signoz-ingestion-key` and `x-vercel-verify`
 ```bash
-signoz-access-token: {{SIGNOZ_INGESTION_KEY}}
+signoz-ingestion-key: {{SIGNOZ_INGESTION_KEY}}
 ```
 ```bash
 x-vercel-verify: <YOUR_VERCEL_VERIFY_TOKEN>
