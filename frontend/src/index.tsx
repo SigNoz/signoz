@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { Provider } from 'react-redux';
 import store from 'store';
+import React from "react"
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -71,7 +72,9 @@ if (container) {
 				<ThemeProvider>
 					<QueryClientProvider client={queryClient}>
 						<Provider store={store}>
-							<AppRoutes />
+							<React.StrictMode>
+								<AppRoutes />
+							</React.StrictMode>
 						</Provider>
 						{process.env.NODE_ENV === 'development' && (
 							<ReactQueryDevtools initialIsOpen={false} />
