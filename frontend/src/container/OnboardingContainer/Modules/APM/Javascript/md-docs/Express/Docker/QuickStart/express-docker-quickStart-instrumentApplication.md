@@ -63,7 +63,7 @@ Set the SigNoz ingestion key Environment variable and update your run command to
 ```bash
 ...
 # Use an environment variable for the Signoz Ingestion Key
-ENV OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}"
+ENV OTEL_EXPORTER_OTLP_HEADERS="signoz-ingestion-key={{SIGNOZ_INGESTION_KEY}}"
 
 # Run the app with the required OpenTelemetry configuration. app.js is your application main file.
 CMD ["node", "-r", "./tracing.js", "app.js"]
