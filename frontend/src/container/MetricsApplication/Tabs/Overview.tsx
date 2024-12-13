@@ -185,6 +185,7 @@ function Application(): JSX.Element {
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: '%',
 				id: SERVICE_CHART_ID.errorPercentage,
+				fillSpans: true,
 			}),
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
