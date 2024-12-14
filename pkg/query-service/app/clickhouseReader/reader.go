@@ -118,7 +118,6 @@ type ClickHouseReader struct {
 	errorTable              string
 	usageExplorerTable      string
 	SpansTable              string
-	spanAttributeTable      string
 	spanAttributeTableV2    string
 	spanAttributesKeysTable string
 	dependencyGraphTable    string
@@ -128,7 +127,6 @@ type ClickHouseReader struct {
 	logsLocalTable          string
 	logsAttributeKeys       string
 	logsResourceKeys        string
-	logsTagAttributeTable   string
 	logsTagAttributeTableV2 string
 	queryEngine             *promql.Engine
 	remoteStorage           *remote.Storage
@@ -248,7 +246,6 @@ func NewReaderFromClickhouseConnection(
 		usageExplorerTable:      options.primary.UsageExplorerTable,
 		durationTable:           options.primary.DurationTable,
 		SpansTable:              options.primary.SpansTable,
-		spanAttributeTable:      options.primary.SpanAttributeTable,
 		spanAttributeTableV2:    options.primary.SpanAttributeTableV2,
 		spanAttributesKeysTable: options.primary.SpanAttributeKeysTable,
 		dependencyGraphTable:    options.primary.DependencyGraphTable,
@@ -258,7 +255,6 @@ func NewReaderFromClickhouseConnection(
 		logsLocalTable:          options.primary.LogsLocalTable,
 		logsAttributeKeys:       options.primary.LogsAttributeKeysTable,
 		logsResourceKeys:        options.primary.LogsResourceKeysTable,
-		logsTagAttributeTable:   options.primary.LogsTagAttributeTable,
 		logsTagAttributeTableV2: options.primary.LogsTagAttributeTableV2,
 		liveTailRefreshSeconds:  options.primary.LiveTailRefreshSeconds,
 		promConfigFile:          configFile,
@@ -1037,29 +1033,6 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 	}
 	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagOperatorPair, " OR ")), args
-}
-
-func excludeTags(_ context.Context, tags []string) []string {
-	excludedTagsMap := map[string]bool{
-		"http.code":           true,
-		"http.route":          true,
-		"http.method":         true,
-		"http.url":            true,
-		"http.status_code":    true,
-		"http.host":           true,
-		"messaging.system":    true,
-		"messaging.operation": true,
-		"error":               true,
-		"service.name":        true,
-	}
-	newTags := make([]string, 0)
-	for _, tag := range tags {
-		_, ok := excludedTagsMap[tag]
-		if !ok {
-			newTags = append(newTags, tag)
-		}
-	}
-	return newTags
 }
 
 func (r *ClickHouseReader) GetTopOperationsV2(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
@@ -3698,10 +3671,10 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
 			filterValueColumnWhere = fmt.Sprintf("toString(%s)", filterValueColumn)
 		}
-		query = fmt.Sprintf("select distinct %s  from  %s.%s where tag_key=$1 and %s ILIKE $2  and tag_type=$3 limit $4", filterValueColumn, r.logsDB, r.logsTagAttributeTableV2, filterValueColumnWhere)
+		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE tag_key=$1 AND %s ILIKE $2 AND tag_type=$3 LIMIT $4", filterValueColumn, r.logsDB, r.logsTagAttributeTableV2, filterValueColumnWhere)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, searchText, req.TagType, req.Limit)
 	} else {
-		query = fmt.Sprintf("select distinct %s from  %s.%s where tag_key=$1 and tag_type=$2 limit $3", filterValueColumn, r.logsDB, r.logsTagAttributeTableV2)
+		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE tag_key=$1 AND tag_type=$2 LIMIT $3", filterValueColumn, r.logsDB, r.logsTagAttributeTableV2)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
 	}
 
@@ -4339,10 +4312,10 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 		}, nil
 	}
 
-	query = "select distinct"
+	query = "SELECT DISTINCT"
 	switch req.FilterAttributeKeyDataType {
 	case v3.AttributeKeyDataTypeFloat64:
-		filterValueColumn = "float64_value"
+		filterValueColumn = "number_value"
 	case v3.AttributeKeyDataTypeString:
 		filterValueColumn = "string_value"
 	}
@@ -4365,14 +4338,14 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 		if r.useTraceNewSchema {
 			where += " AND ts_bucket_start >= toUInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR))"
 		}
-		query = fmt.Sprintf("select distinct %s from %s.%s where %s and %s ILIKE $1 limit $2", selectKey, r.TraceDB, r.traceTableName, where, filterValueColumnWhere)
+		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE %s AND %s ILIKE $1 LIMIT $2", selectKey, r.TraceDB, r.traceTableName, where, filterValueColumnWhere)
 		rows, err = r.db.Query(ctx, query, searchText, req.Limit)
 	} else {
 		filterValueColumnWhere := filterValueColumn
 		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
 			filterValueColumnWhere = fmt.Sprintf("toString(%s)", filterValueColumn)
 		}
-		query = fmt.Sprintf("select distinct %s from %s.%s where tag_key=$1 and %s ILIKE $2 and tag_type=$3 limit $4", filterValueColumn, r.TraceDB, r.spanAttributeTableV2, filterValueColumnWhere)
+		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE tag_key=$1 AND %s ILIKE $2 AND tag_type=$3 LIMIT $4", filterValueColumn, r.TraceDB, r.spanAttributeTableV2, filterValueColumnWhere)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, searchText, req.TagType, req.Limit)
 	}
 

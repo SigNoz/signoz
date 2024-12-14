@@ -139,14 +139,14 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 			select * from (
 				(
 					select tag_key, string_value, number_value
-					from signoz_logs.distributed_tag_attributes
+					from signoz_logs.distributed_tag_attributes_v2
 					where tag_key = $1 and (
 						string_value != '' or number_value is not null
 					)
 					limit 2
 				) UNION DISTINCT (
 					select tag_key, string_value, number_value
-					from signoz_logs.distributed_tag_attributes
+					from signoz_logs.distributed_tag_attributes_v2
 					where tag_key = $2 and (
 						string_value != '' or number_value is not null
 					)
@@ -156,9 +156,6 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 		```
 		Since tag_attributes table uses ReplacingMergeTree, the values would be distinct and no order by
 		is being used to ensure the `limit` clause minimizes the amount of data scanned.
-
-		This query scanned ~30k rows per attribute on fiscalnote-v2 for attributes like `message` and `time`
-		that had >~110M values each
 	*/
 
 	if len(attributes) > 10 {
