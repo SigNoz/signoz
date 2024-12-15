@@ -8,7 +8,7 @@ import { IEntityColumn } from '../utils';
 
 export const defaultAddedColumns: IEntityColumn[] = [
 	{
-		label: 'Node Status',
+		label: 'Node Name',
 		value: 'nodeStatus',
 		id: 'nodeStatus',
 		canRemove: false,
@@ -26,15 +26,15 @@ export const defaultAddedColumns: IEntityColumn[] = [
 		canRemove: false,
 	},
 	{
-		label: 'Memory Allocatable (bytes)',
-		value: 'memoryAllocatable',
-		id: 'memoryAllocatable',
+		label: 'Memory Utilization (bytes)',
+		value: 'memoryUtilization',
+		id: 'memoryUtilization',
 		canRemove: false,
 	},
 	{
-		label: 'Pods count by phase',
-		value: 'podsCount',
-		id: 'podsCount',
+		label: 'Memory Allocatable (bytes)',
+		value: 'memoryAllocatable',
+		id: 'memoryAllocatable',
 		canRemove: false,
 	},
 ];
@@ -42,12 +42,11 @@ export const defaultAddedColumns: IEntityColumn[] = [
 export interface K8sNodesRowData {
 	key: string;
 	nodeUID: string;
-	nodeStatus: string;
+	nodeName: string;
 	cpuUtilization: React.ReactNode;
 	cpuAllocatable: React.ReactNode;
 	memoryUtilization: React.ReactNode;
 	memoryAllocatable: React.ReactNode;
-	podsCount: number;
 }
 
 export const getK8sNodesListQuery = (): K8sNodesListPayload => ({
@@ -60,9 +59,9 @@ export const getK8sNodesListQuery = (): K8sNodesListPayload => ({
 
 const columnsConfig = [
 	{
-		title: <div className="column-header-left">Node Status</div>,
-		dataIndex: 'nodeStatus',
-		key: 'nodeStatus',
+		title: <div className="column-header-left">Node Name</div>,
+		dataIndex: 'nodeName',
+		key: 'nodeName',
 		ellipsis: true,
 		width: 150,
 		sorter: true,
@@ -72,7 +71,7 @@ const columnsConfig = [
 		title: <div className="column-header-left">CPU Utilization (cores)</div>,
 		dataIndex: 'cpuUtilization',
 		key: 'cpuUtilization',
-		width: 100,
+		width: 80,
 		sorter: true,
 		align: 'left',
 	},
@@ -80,7 +79,7 @@ const columnsConfig = [
 		title: <div className="column-header-left">CPU Allocatable (cores)</div>,
 		dataIndex: 'cpuAllocatable',
 		key: 'cpuAllocatable',
-		width: 100,
+		width: 80,
 		sorter: true,
 		align: 'left',
 	},
@@ -100,14 +99,6 @@ const columnsConfig = [
 		sorter: true,
 		align: 'left',
 	},
-	{
-		title: <div className="column-header-left">Pods count by phase</div>,
-		dataIndex: 'containerRestarts',
-		key: 'containerRestarts',
-		width: 50,
-		sorter: true,
-		align: 'left',
-	},
 ];
 
 export const getK8sNodesListColumns = (): ColumnType<K8sNodesRowData>[] =>
@@ -117,10 +108,9 @@ export const formatDataForTable = (data: K8sNodesData[]): K8sNodesRowData[] =>
 	data.map((node, index) => ({
 		key: `${node.nodeUID}-${index}`,
 		nodeUID: node.nodeUID || '',
+		nodeName: node.meta.k8s_node_name,
 		cpuUtilization: node.nodeCPUUsage,
 		memoryUtilization: node.nodeMemoryUsage,
 		cpuAllocatable: node.nodeCPUAllocatable,
 		memoryAllocatable: node.nodeMemoryAllocatable,
-		nodeStatus: node.meta.k8s_node_name,
-		podsCount: node.nodeCPUAllocatable,
 	}));
