@@ -203,6 +203,10 @@ export function Filter(props: FilterProps): JSX.Element {
 					selectedFilters,
 				});
 			}
+
+			if (isEqual(currentQuery, preparedQuery)) {
+				return;
+			}
 			redirectWithQueryBuilderData(preparedQuery);
 		},
 		[currentQuery, redirectWithQueryBuilderData, selectedFilters],
