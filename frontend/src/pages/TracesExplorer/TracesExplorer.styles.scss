@@ -49,7 +49,7 @@
 	}
 
 	.trace-explorer {
-		width: calc(100% - 260px);
+		width: 100%;
 		border-left: 1px solid var(--bg-slate-400);
 		background: var(--bg-ink-500);
 
@@ -58,6 +58,9 @@
 		}
 
 		border-color: var(--bg-slate-400);
+	}
+	.trace-explorer.filters-expanded {
+		width: calc(100% - 260px);
 	}
 }
 
