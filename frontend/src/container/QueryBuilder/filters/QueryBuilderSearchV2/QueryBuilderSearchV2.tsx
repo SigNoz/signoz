@@ -838,14 +838,6 @@ function QueryBuilderSearchV2(
 		[tags],
 	);
 
-	useEffect(() => {
-		// this is required because on change of query tags the Select component re-renders which looses focus.
-		// this was added because Select component was acting inconsistently for similar tags
-		if (selectRef.current && queryTags.length > 0 && isOpen) {
-			selectRef.current?.focus();
-		}
-	}, [queryTags, isOpen]);
-
 	const onTagRender = ({
 		value,
 		closable,
@@ -912,6 +904,7 @@ function QueryBuilderSearchV2(
 				transitionName=""
 				choiceTransitionName=""
 				filterOption={false}
+				autoFocus={isOpen}
 				open={isOpen}
 				suffixIcon={
 					// eslint-disable-next-line no-nested-ternary
