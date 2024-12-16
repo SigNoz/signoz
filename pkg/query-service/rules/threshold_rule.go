@@ -73,8 +73,9 @@ func NewThresholdRule(
 	}
 
 	t := ThresholdRule{
-		BaseRule: baseRule,
-		version:  p.Version,
+		BaseRule:          baseRule,
+		version:           p.Version,
+		useTraceNewSchema: useTraceNewSchema,
 	}
 
 	querierOption := querier.QuerierOptions{
