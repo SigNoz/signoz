@@ -3,7 +3,7 @@ import { ColumnsType } from 'antd/es/table';
 import ROUTES from 'constants/routes';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { formUrlParams } from 'container/TraceDetail/utils';
-import dayjs from 'dayjs';
+import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { Link } from 'react-router-dom';
 import { ILog } from 'types/api/logs/log';
@@ -46,6 +46,10 @@ export const getTraceLink = (record: RowData): string =>
 
 export const getListColumns = (
 	selectedColumns: BaseAutocompleteData[],
+	formatTimezoneAdjustedTimestamp: (
+		input: TimestampInput,
+		format?: string,
+	) => string | number,
 ): ColumnsType<RowData> => {
 	const initialColumns: ColumnsType<RowData> = [
 		{
@@ -56,8 +60,8 @@ export const getListColumns = (
 			render: (value, item): JSX.Element => {
 				const date =
 					typeof value === 'string'
-						? dayjs(value).format('YYYY-MM-DD HH:mm:ss.SSS')
-						: dayjs(value / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
+						? formatTimezoneAdjustedTimestamp(value, 'YYYY-MM-DD HH:mm:ss.SSS')
+						: formatTimezoneAdjustedTimestamp(value / 1e6, 'YYYY-MM-DD HH:mm:ss.SSS');
 				return (
 					<BlockLink to={getTraceLink(item)} openInNewTab={false}>
 						<Typography.Text>{date}</Typography.Text>

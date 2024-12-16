@@ -5,10 +5,10 @@ import { Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import cx from 'classnames';
 import { unescapeString } from 'container/LogDetailedView/utils';
-import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
+import { useTimezone } from 'providers/Timezone';
 import { useMemo } from 'react';
 import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
@@ -43,6 +43,8 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	const flattenLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
 		logs,
 	]);
+
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
@@ -81,8 +83,11 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				render: (field, item): ColumnTypeRender<Record<string, unknown>> => {
 					const date =
 						typeof field === 'string'
-							? dayjs(field).format('YYYY-MM-DD HH:mm:ss.SSS')
-							: dayjs(field / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
+							? formatTimezoneAdjustedTimestamp(field, 'YYYY-MM-DD HH:mm:ss.SSS')
+							: formatTimezoneAdjustedTimestamp(
+									field / 1e6,
+									'YYYY-MM-DD HH:mm:ss.SSS',
+							  );
 					return {
 						children: (
 							<div className="table-timestamp">
@@ -125,7 +130,15 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 			},
 			...(appendTo === 'end' ? fieldColumns : []),
 		];
-	}, [fields, isListViewPanel, appendTo, isDarkMode, linesPerRow, fontSize]);
+	}, [
+		fields,
+		isListViewPanel,
+		appendTo,
+		isDarkMode,
+		linesPerRow,
+		fontSize,
+		formatTimezoneAdjustedTimestamp,
+	]);
 
 	return { columns, dataSource: flattenLogData };
 };

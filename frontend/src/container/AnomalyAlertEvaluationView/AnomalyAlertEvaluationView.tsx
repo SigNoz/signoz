@@ -10,6 +10,7 @@ import getAxes from 'lib/uPlotLib/utils/getAxes';
 import { getUplotChartDataForAnomalyDetection } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getYAxisScaleForAnomalyDetection } from 'lib/uPlotLib/utils/getYAxisScale';
 import { LineChart } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 import { useEffect, useRef, useState } from 'react';
 import uPlot from 'uplot';
 
@@ -148,10 +149,12 @@ function AnomalyAlertEvaluationView({
 		  ]
 		: [];
 
+	const { timezone } = useTimezone();
+
 	const options = {
 		width: dimensions.width,
 		height: dimensions.height - 36,
-		plugins: [bandsPlugin, tooltipPlugin(isDarkMode)],
+		plugins: [bandsPlugin, tooltipPlugin(isDarkMode, timezone.value)],
 		focus: {
 			alpha: 0.3,
 		},
@@ -256,6 +259,8 @@ function AnomalyAlertEvaluationView({
 			show: true,
 		},
 		axes: getAxes(isDarkMode, yAxisUnit),
+		tzDate: (timestamp: number): Date =>
+			uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 	};
 
 	const handleSearch = (searchText: string): void => {
