@@ -22,7 +22,7 @@
     var (
         serviceName  = "{{MYAPP}}")
         collectorURL = "https://ingest.{{REGION}}.signoz.cloud:443"
-        headers="signoz-access-token={{SIGNOZ_INGESTION_KEY}}"
+        headers="signoz-ingestion-key={{SIGNOZ_INGESTION_KEY}}"
         insecure = os.Getenv("INSECURE_MODE")
     )
     ```
