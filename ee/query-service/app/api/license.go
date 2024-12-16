@@ -84,13 +84,6 @@ func (ah *APIHandler) listLicenses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
-	if ah.UseLicensesV3 {
-		// if the licenses v3 is toggled on then do not apply license in v2 and run the validator!
-		// TODO: remove after migration to v3 and deprecation from zeus
-		zap.L().Info("early return from apply license v2 call")
-		render.Success(w, http.StatusOK, nil)
-		return
-	}
 	var l model.License
 
 	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
@@ -102,7 +95,7 @@ func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
 		return
 	}
-	license, apiError := ah.LM().Activate(r.Context(), l.Key)
+	license, apiError := ah.LM().ActivateV3(r.Context(), l.Key)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -265,24 +258,12 @@ func convertLicenseV3ToLicenseV2(licenses []*model.LicenseV3) []model.License {
 }
 
 func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
-
-	var licenses []model.License
-
-	if ah.UseLicensesV3 {
-		licensesV3, err := ah.LM().GetLicensesV3(r.Context())
-		if err != nil {
-			RespondError(w, err, nil)
-			return
-		}
-		licenses = convertLicenseV3ToLicenseV2(licensesV3)
-	} else {
-		_licenses, apiError := ah.LM().GetLicenses(r.Context())
-		if apiError != nil {
-			RespondError(w, apiError, nil)
-			return
-		}
-		licenses = _licenses
+	licensesV3, apierr := ah.LM().GetLicensesV3(r.Context())
+	if apierr != nil {
+		RespondError(w, apierr, nil)
+		return
 	}
+	licenses := convertLicenseV3ToLicenseV2(licensesV3)
 
 	resp := model.Licenses{
 		TrialStart:                   -1,
