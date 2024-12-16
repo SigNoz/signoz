@@ -531,6 +531,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.AdminAccess(aH.insertIngestionKey)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.ViewAccess(aH.getIngestionKeys)).Methods(http.MethodGet)
 
+	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
+
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/configs", am.OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
@@ -4896,4 +4899,36 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV4(r.Context(), queryRangeParams, w, r)
+}
+
+func (aH *APIHandler) traceFields(w http.ResponseWriter, r *http.Request) {
+	fields, apiErr := aH.reader.GetTraceFields(r.Context())
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch fields from the DB")
+		return
+	}
+	aH.WriteJSON(w, r, fields)
+}
+
+func (aH *APIHandler) updateTraceField(w http.ResponseWriter, r *http.Request) {
+	field := model.UpdateField{}
+	if err := json.NewDecoder(r.Body).Decode(&field); err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErr, "Failed to decode payload")
+		return
+	}
+
+	err := logs.ValidateUpdateFieldPayload(&field)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErr, "Incorrect payload")
+		return
+	}
+
+	apiErr := aH.reader.UpdateTraceField(r.Context(), &field)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to update field in the DB")
+		return
+	}
+	aH.WriteJSON(w, r, field)
 }

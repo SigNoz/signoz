@@ -109,6 +109,10 @@ type Reader interface {
 	SubscribeToQueryProgress(queryId string) (<-chan model.QueryProgress, func(), *model.ApiError)
 
 	GetCountOfThings(ctx context.Context, query string) (uint64, error)
+
+	//trace
+	GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
+	UpdateTraceField(ctx context.Context, field *model.UpdateField) *model.ApiError
 }
 
 type Querier interface {

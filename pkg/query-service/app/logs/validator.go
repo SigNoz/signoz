@@ -6,6 +6,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 func ValidateUpdateFieldPayload(field *model.UpdateField) error {
@@ -19,7 +20,9 @@ func ValidateUpdateFieldPayload(field *model.UpdateField) error {
 		return fmt.Errorf("dataType cannot be empty")
 	}
 
-	matched, err := regexp.MatchString(fmt.Sprintf("^(%s|%s|%s)$", constants.Static, constants.Attributes, constants.Resources), field.Type)
+	// the logs api uses the old names i.e attributes and resources while traces use tag and attribute.
+	// update log api to use tag and attribute.
+	matched, err := regexp.MatchString(fmt.Sprintf("^(%s|%s|%s|%s|%s)$", constants.Static, constants.Attributes, constants.Resources, v3.AttributeKeyTypeTag, v3.AttributeKeyTypeResource), field.Type)
 	if err != nil {
 		return err
 	}
