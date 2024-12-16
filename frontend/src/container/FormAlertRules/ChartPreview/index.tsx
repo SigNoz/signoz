@@ -25,6 +25,7 @@ import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useAppContext } from 'providers/App/App';
+import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -35,6 +36,7 @@ import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import uPlot from 'uplot';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
@@ -203,6 +205,8 @@ function ChartPreview({
 		[dispatch, location.pathname, urlQuery],
 	);
 
+	const { timezone } = useTimezone();
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
@@ -238,6 +242,9 @@ function ChartPreview({
 				softMax: null,
 				softMin: null,
 				panelType: graphType,
+				tzDate: (timestamp: number) =>
+					uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
+				timezone: timezone.value,
 			}),
 		[
 			yAxisUnit,
@@ -252,6 +259,7 @@ function ChartPreview({
 			optionName,
 			alertDef?.condition.targetUnit,
 			graphType,
+			timezone.value,
 		],
 	);
 

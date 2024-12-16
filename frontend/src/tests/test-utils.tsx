@@ -6,6 +6,7 @@ import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
+import TimezoneProvider from 'providers/Timezone';
 import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
@@ -335,7 +336,9 @@ function AllTheProviders({
 					<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
 						<BrowserRouter>
 							{/* Use the mock store with the provided role */}
-							<QueryBuilderProvider>{children}</QueryBuilderProvider>
+							<TimezoneProvider>
+								<QueryBuilderProvider>{children}</QueryBuilderProvider>
+							</TimezoneProvider>
 						</BrowserRouter>
 					</AppContext.Provider>
 				</Provider>

@@ -8,6 +8,7 @@ import { ThemeProvider } from 'hooks/useDarkMode';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
 import { AppProvider } from 'providers/App/App';
+import TimezoneProvider from 'providers/Timezone';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -70,16 +71,18 @@ if (container) {
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<HelmetProvider>
 				<ThemeProvider>
-					<QueryClientProvider client={queryClient}>
-						<Provider store={store}>
-							<AppProvider>
-								<AppRoutes />
-							</AppProvider>
-						</Provider>
-						{process.env.NODE_ENV === 'development' && (
-							<ReactQueryDevtools initialIsOpen={false} />
-						)}
-					</QueryClientProvider>
+					<TimezoneProvider>
+						<QueryClientProvider client={queryClient}>
+							<Provider store={store}>
+								<AppProvider>
+									<AppRoutes />
+								</AppProvider>
+							</Provider>
+							{process.env.NODE_ENV === 'development' && (
+								<ReactQueryDevtools initialIsOpen={false} />
+							)}
+						</QueryClientProvider>
+					</TimezoneProvider>
 				</ThemeProvider>
 			</HelmetProvider>
 		</Sentry.ErrorBoundary>,
