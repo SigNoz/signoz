@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import { useTimezone } from 'providers/Timezone';
 import React from 'react';
 import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
@@ -6,13 +6,18 @@ import { PipelineIndexIcon } from '../AddNewProcessor/styles';
 import { ColumnDataStyle, ListDataStyle, ProcessorIndexIcon } from '../styles';
 import PipelineFilterSummary from './PipelineFilterSummary';
 
+function CreatedAtComponent({ record }: { record: Record }): JSX.Element {
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	return (
+		<ColumnDataStyle>
+			{formatTimezoneAdjustedTimestamp(record, 'MMMM DD, YYYY hh:mm A (UTC Z)')}
+		</ColumnDataStyle>
+	);
+}
+
 const componentMap: ComponentMap = {
 	orderId: ({ record }) => <PipelineIndexIcon>{record}</PipelineIndexIcon>,
-	createdAt: ({ record }) => (
-		<ColumnDataStyle>
-			{dayjs(record).locale('en').format('MMMM DD, YYYY hh:mm A')}
-		</ColumnDataStyle>
-	),
+	createdAt: ({ record }) => <CreatedAtComponent record={record} />,
 	id: ({ record }) => <ProcessorIndexIcon>{record}</ProcessorIndexIcon>,
 	name: ({ record }) => <ListDataStyle>{record}</ListDataStyle>,
 	filter: ({ record }) => <PipelineFilterSummary filter={record} />,
