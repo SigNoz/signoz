@@ -14,6 +14,12 @@ export const defaultAddedColumns: IEntityColumn[] = [
 		canRemove: false,
 	},
 	{
+		label: 'Cluster Name',
+		value: 'clusterStatus',
+		id: 'clusterStatus',
+		canRemove: false,
+	},
+	{
 		label: 'CPU Utilization (cores)',
 		value: 'cpuUtilization',
 		id: 'cpuUtilization',
@@ -43,6 +49,7 @@ export interface K8sNodesRowData {
 	key: string;
 	nodeUID: string;
 	nodeName: string;
+	clusterName: string;
 	cpuUtilization: React.ReactNode;
 	cpuAllocatable: React.ReactNode;
 	memoryUtilization: React.ReactNode;
@@ -62,6 +69,15 @@ const columnsConfig = [
 		title: <div className="column-header-left">Node Name</div>,
 		dataIndex: 'nodeName',
 		key: 'nodeName',
+		ellipsis: true,
+		width: 150,
+		sorter: true,
+		align: 'left',
+	},
+	{
+		title: <div className="column-header-left">Cluster Name</div>,
+		dataIndex: 'clusterName',
+		key: 'clusterName',
 		ellipsis: true,
 		width: 150,
 		sorter: true,
@@ -109,6 +125,7 @@ export const formatDataForTable = (data: K8sNodesData[]): K8sNodesRowData[] =>
 		key: `${node.nodeUID}-${index}`,
 		nodeUID: node.nodeUID || '',
 		nodeName: node.meta.k8s_node_name,
+		clusterName: node.meta.k8s_cluster_name,
 		cpuUtilization: node.nodeCPUUsage,
 		memoryUtilization: node.nodeMemoryUsage,
 		cpuAllocatable: node.nodeCPUAllocatable,

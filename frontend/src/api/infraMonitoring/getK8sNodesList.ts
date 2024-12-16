@@ -25,6 +25,7 @@ export interface K8sNodesData {
 	meta: {
 		k8s_node_name: string;
 		k8s_node_uid: string;
+		k8s_cluster_name: string;
 	};
 }
 
