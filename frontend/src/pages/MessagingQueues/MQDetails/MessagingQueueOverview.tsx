@@ -1,8 +1,11 @@
 import './MQDetails.style.scss';
 
 import { Radio } from 'antd';
-import { Dispatch, SetStateAction } from 'react';
+import { getTopicThroughputOverview } from 'api/messagingQueues/getTopicThroughputOverview';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -10,25 +13,32 @@ import {
 	MessagingQueuesViewType,
 	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
+	setConfigDetail,
 } from '../MessagingQueuesUtils';
 import { MessagingQueueServicePayload } from './MQTables/getConsumerLagDetails';
 import { getKafkaSpanEval } from './MQTables/getKafkaSpanEval';
 import { getPartitionLatencyOverview } from './MQTables/getPartitionLatencyOverview';
-import { getTopicThroughputOverview } from './MQTables/getTopicThroughputOverview';
 import MessagingQueuesTable from './MQTables/MQTables';
 
 type SelectedViewType = keyof typeof MessagingQueuesViewType;
 
-function PartitionLatencyTabs({
+function ProducerLatencyTabs({
 	option,
 	setOption,
 }: {
 	option: ProducerLatencyOptions;
 	setOption: Dispatch<SetStateAction<ProducerLatencyOptions>>;
 }): JSX.Element {
+	const urlQuery = useUrlQuery();
+	const location = useLocation();
+	const history = useHistory();
+
 	return (
 		<Radio.Group
-			onChange={(e): void => setOption(e.target.value)}
+			onChange={(e): void => {
+				setConfigDetail(urlQuery, location, history, {});
+				setOption(e.target.value);
+			}}
 			value={option}
 			className="mq-details-options"
 		>
@@ -71,27 +81,26 @@ function MessagingQueueOverview({
 		(state) => state.globalTime,
 	);
 
-	const tableApiPayload: MessagingQueueServicePayload = {
-		variables: {},
-		start: minTime,
-		end: maxTime,
-		detailType:
-			// eslint-disable-next-line no-nested-ternary
-			selectedView === MessagingQueuesViewType.producerLatency.value
-				? option === ProducerLatencyOptions.Producers
-					? 'producer'
-					: 'consumer'
-				: undefined,
-		evalTime:
-			selectedView === MessagingQueuesViewType.dropRate.value
-				? 2363404
-				: undefined,
-	};
+	const tableApiPayload: MessagingQueueServicePayload = useMemo(
+		() => ({
+			variables: {},
+			start: minTime,
+			end: maxTime,
+			detailType:
+				// eslint-disable-next-line no-nested-ternary
+				selectedView === MessagingQueuesViewType.producerLatency.value
+					? option === ProducerLatencyOptions.Producers
+						? 'producer'
+						: 'consumer'
+					: undefined,
+		}),
+		[minTime, maxTime, selectedView, option],
+	);
 
 	return (
 		<div className="mq-overview-container">
 			{selectedView === MessagingQueuesViewType.producerLatency.value ? (
-				<PartitionLatencyTabs option={option} setOption={setOption} />
+				<ProducerLatencyTabs option={option} setOption={setOption} />
 			) : (
 				<div className="mq-overview-title">
 					{MessagingQueuesViewType[selectedView as SelectedViewType].label}

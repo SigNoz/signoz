@@ -8,7 +8,7 @@ This should set these environment variables and start sending telemetry data to 
 
 ```bash
 set CATALINA_OPTS=%CATALINA_OPTS% -javaagent:C:\path\to\opentelemetry-javaagent.jar
-set OTEL_EXPORTER_OTLP_HEADERS=signoz-access-token={{SIGNOZ_INGESTION_KEY}}
+set OTEL_EXPORTER_OTLP_HEADERS=signoz-ingestion-key={{SIGNOZ_INGESTION_KEY}}
 set OTEL_EXPORTER_OTLP_ENDPOINT=https://ingest.{{REGION}}.signoz.cloud:443
 set OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}}
 ```
