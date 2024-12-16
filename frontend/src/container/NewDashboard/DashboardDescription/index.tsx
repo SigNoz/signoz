@@ -65,7 +65,7 @@ interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
 }
 
-function sanitizeDashboardData(
+export function sanitizeDashboardData(
 	selectedData: DashboardData,
 ): Omit<DashboardData, 'uuid'> {
 	if (!selectedData?.variables) {
