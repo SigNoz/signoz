@@ -2,6 +2,7 @@ import './TimezonePicker.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Input } from 'antd';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { TimezonePickerShortcuts } from 'constants/shortcuts/TimezonePickerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
@@ -157,6 +158,12 @@ function TimezonePicker({
 			updateTimezone(timezone);
 			handleCloseTimezonePicker();
 			setIsOpen(false);
+			logEvent('Timezone selected', {
+				timezone: {
+					name: timezone.name,
+					offset: timezone.offset,
+				},
+			});
 		},
 		[handleCloseTimezonePicker, setIsOpen, updateTimezone],
 	);
