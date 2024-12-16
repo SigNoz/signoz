@@ -59,6 +59,9 @@
 
 		border-color: var(--bg-slate-400);
 	}
+	.trace-explorer.filters-expanded {
+		width: calc(100% - 260px);
+	}
 }
 
 .lightMode {

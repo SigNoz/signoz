@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import TimezoneProvider from 'providers/Timezone';
 import { I18nextProvider } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
@@ -38,7 +39,9 @@ describe('ChangeHistory test', () => {
 				<QueryClientProvider client={queryClient}>
 					<Provider store={store}>
 						<I18nextProvider i18n={i18n}>
-							<ChangeHistory pipelineData={pipelineData} />
+							<TimezoneProvider>
+								<ChangeHistory pipelineData={pipelineData} />
+							</TimezoneProvider>
 						</I18nextProvider>
 					</Provider>
 				</QueryClientProvider>
@@ -65,12 +68,14 @@ describe('ChangeHistory test', () => {
 				<QueryClientProvider client={queryClient}>
 					<Provider store={store}>
 						<I18nextProvider i18n={i18n}>
-							<ChangeHistory
-								pipelineData={{
-									...pipelineData,
-									history: pipelineDataHistory,
-								}}
-							/>
+							<TimezoneProvider>
+								<ChangeHistory
+									pipelineData={{
+										...pipelineData,
+										history: pipelineDataHistory,
+									}}
+								/>
+							</TimezoneProvider>
 						</I18nextProvider>
 					</Provider>
 				</QueryClientProvider>
