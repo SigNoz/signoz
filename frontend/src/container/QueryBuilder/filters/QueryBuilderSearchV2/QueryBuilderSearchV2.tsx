@@ -841,10 +841,10 @@ function QueryBuilderSearchV2(
 	useEffect(() => {
 		// this is required because on change of query tags the Select component re-renders which looses focus.
 		// this was added because Select component was acting inconsistently for similar tags
-		if (selectRef.current && queryTags.length > 0) {
+		if (selectRef.current && queryTags.length > 0 && isOpen) {
 			selectRef.current?.focus();
 		}
-	}, [queryTags]);
+	}, [queryTags, isOpen]);
 
 	const onTagRender = ({
 		value,
