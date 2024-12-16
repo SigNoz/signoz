@@ -3028,26 +3028,37 @@ func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.Up
 		return model.ForbiddenError(errors.New("removing a selected field is not allowed, please reach out to support."))
 	}
 
+	// name of the materialized column
 	colname := utils.GetClickhouseColumnNameV2(field.Type, field.DataType, field.Name)
 
+	// dataType and chDataType of the materialized column
+	// dataType: string => string, bool => bool, int64, float64 => number
+	// chDataType: string => String, bool => Bool, int64 => Float64, => float64 => Float64
+	chDataType := strings.ToUpper(string(field.DataType[0])) + field.DataType[1:]
 	dataType := strings.ToLower(field.DataType)
 	if dataType == "int64" || dataType == "float64" {
 		dataType = "number"
+		chDataType = "Float64"
 	}
-	// if dataType == "string" {
-	// 	dataType = "String"
-	// }
-	attrColName := fmt.Sprintf("%s_%s", field.Type, dataType)
+
+	// typeName: tag => attributes, resource => resources
+	typeName := field.Type
+	if field.Type == string(v3.AttributeKeyTypeTag) {
+		typeName = constants.Attributes
+	} else if field.Type == string(v3.AttributeKeyTypeResource) {
+		typeName = constants.Resources
+	}
+
+	attrColName := fmt.Sprintf("%s_%s", typeName, dataType)
 	for _, table := range []string{r.traceLocalTableName, r.traceTableName} {
 		q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS `%s` %s DEFAULT %s['%s'] CODEC(ZSTD(1))"
 		query := fmt.Sprintf(q,
 			r.TraceDB, table,
 			r.cluster,
-			colname, field.DataType,
+			colname, chDataType,
 			attrColName,
 			field.Name,
 		)
-		fmt.Println(query)
 		err := r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}

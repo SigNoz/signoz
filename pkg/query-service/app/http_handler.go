@@ -4918,7 +4918,7 @@ func (aH *APIHandler) updateTraceField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := logs.ValidateUpdateFieldPayload(&field)
+	err := logs.ValidateUpdateFieldPayloadV2(&field)
 	if err != nil {
 		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErr, "Incorrect payload")
