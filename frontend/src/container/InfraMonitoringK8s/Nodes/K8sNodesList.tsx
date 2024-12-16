@@ -29,6 +29,7 @@ import { K8sCategory } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import { dummyColumnConfig } from '../utils';
+import NodeDetails from './NodeDetails';
 import {
 	defaultAddedColumns,
 	formatDataForTable,
@@ -58,7 +59,7 @@ function K8sNodesList({
 		order: 'asc' | 'desc';
 	} | null>(null);
 
-	// const [selectedNodeUID, setselectedNodeUID] = useState<string | null>(null);
+	const [selectedNodeUID, setselectedNodeUID] = useState<string | null>(null);
 
 	const pageSize = 10;
 
@@ -256,10 +257,10 @@ function K8sNodesList({
 		logEvent('Infra Monitoring: K8s list page visited', {});
 	}, []);
 
-	// const selectedNodeData = useMemo(() => {
-	// 	if (!selectedNodeUID) return null;
-	// 	return nodesData.find((node) => node.nodeUID === selectedNodeUID) || null;
-	// }, [selectedNodeUID, nodesData]);
+	const selectedNodeData = useMemo(() => {
+		if (!selectedNodeUID) return null;
+		return nodesData.find((node) => node.nodeUID === selectedNodeUID) || null;
+	}, [selectedNodeUID, nodesData]);
 
 	const handleRowClick = (record: K8sNodesRowData): void => {
 		if (groupBy.length === 0) {
@@ -485,7 +486,11 @@ function K8sNodesList({
 					}}
 				/>
 			)}
-			{/* TODO - Handle Node Details flow */}
+			<NodeDetails
+				node={selectedNodeData}
+				isModalTimeSelection
+				onClose={handleCloseNodeDetail}
+			/>
 		</div>
 	);
 }
