@@ -104,6 +104,33 @@ func (ic *LogParsingPipelineController) ValidatePipelines(
 		}
 	}
 
+	// Also run a collector simulation to ensure config is fit
+	// for e2e use with a collector
+	pipelines := []Pipeline{}
+	for _, pp := range postedPipelines {
+		pipelines = append(pipelines, Pipeline{
+			Id:          uuid.New().String(),
+			OrderId:     pp.OrderId,
+			Enabled:     pp.Enabled,
+			Name:        pp.Name,
+			Alias:       pp.Alias,
+			Description: &pp.Description,
+			Filter:      pp.Filter,
+			Config:      pp.Config,
+		})
+	}
+
+	sampleLogs := []model.SignozLog{{Body: ""}}
+	_, _, simulationErr := SimulatePipelinesProcessing(
+		ctx, pipelines, sampleLogs,
+	)
+	if simulationErr != nil {
+		return model.WrapApiError(
+			model.BadRequest(simulationErr.ToError()),
+			"invalid pipelines config",
+		)
+	}
+
 	return nil
 }
 
