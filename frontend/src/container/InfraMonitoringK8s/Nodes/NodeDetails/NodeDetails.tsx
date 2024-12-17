@@ -407,7 +407,7 @@ function NodeDetails({
 									type="secondary"
 									className="node-details-metadata-label"
 								>
-									NAMESPACE
+									Node Name
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
@@ -415,29 +415,15 @@ function NodeDetails({
 								>
 									Cluster Name
 								</Typography.Text>
-								<Typography.Text
-									type="secondary"
-									className="node-details-metadata-label"
-								>
-									Node
-								</Typography.Text>
 							</div>
-
 							<div className="values-row">
 								<Typography.Text className="node-details-metadata-value">
 									<Tooltip title={node.meta.k8s_node_name}>
 										{node.meta.k8s_node_name}
 									</Tooltip>
 								</Typography.Text>
-
 								<Typography.Text className="node-details-metadata-value">
 									<Tooltip title="Cluster name">{node.meta.k8s_cluster_name}</Tooltip>
-								</Typography.Text>
-
-								<Typography.Text className="node-details-metadata-value">
-									<Tooltip title={node.meta.k8s_node_name}>
-										{node.meta.k8s_node_name}
-									</Tooltip>
 								</Typography.Text>
 							</div>
 						</div>
