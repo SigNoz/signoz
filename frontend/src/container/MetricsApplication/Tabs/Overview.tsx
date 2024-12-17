@@ -187,6 +187,7 @@ function Application(): JSX.Element {
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: '%',
 				id: SERVICE_CHART_ID.errorPercentage,
+				fillSpans: true,
 			}),
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
@@ -224,12 +225,11 @@ function Application(): JSX.Element {
 			apmToTraceQuery: Query,
 			isViewLogsClicked?: boolean,
 		): (() => void) => (): void => {
-			const currentTime = timestamp;
-			const endTime = timestamp + stepInterval;
-			console.log(endTime, stepInterval);
+			const endTime = timestamp;
+			const startTime = timestamp - stepInterval;
 
 			const urlParams = new URLSearchParams(search);
-			urlParams.set(QueryParams.startTime, currentTime.toString());
+			urlParams.set(QueryParams.startTime, startTime.toString());
 			urlParams.set(QueryParams.endTime, endTime.toString());
 			urlParams.delete(QueryParams.relativeTime);
 			const avialableParams = routeConfig[ROUTES.TRACE];

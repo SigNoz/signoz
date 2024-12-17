@@ -65,11 +65,11 @@ export function onViewTracePopupClick({
 	stepInterval,
 }: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
-		const currentTime = timestamp;
-		const endTime = timestamp + (stepInterval || 60);
+		const endTime = timestamp;
+		const startTime = timestamp - (stepInterval || 60);
 
 		const urlParams = new URLSearchParams(window.location.search);
-		urlParams.set(QueryParams.startTime, currentTime.toString());
+		urlParams.set(QueryParams.startTime, startTime.toString());
 		urlParams.set(QueryParams.endTime, endTime.toString());
 		urlParams.delete(QueryParams.relativeTime);
 		const avialableParams = routeConfig[ROUTES.TRACE];
