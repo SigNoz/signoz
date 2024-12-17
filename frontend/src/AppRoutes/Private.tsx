@@ -157,7 +157,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			};
 			history.replace(newLocation);
 		}
-
 		// if the current route
 		if (currentRoute) {
 			const { isPrivate, key } = currentRoute;
@@ -181,8 +180,15 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		} else {
 			history.push(ROUTES.LOGIN);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [licenses, isLoggedInState, pathname, user, isOldRoute, currentRoute]);
+	}, [
+		licenses,
+		isLoggedInState,
+		pathname,
+		user,
+		isOldRoute,
+		currentRoute,
+		location,
+	]);
 
 	// NOTE: disabling this rule as there is no need to have div
 	// eslint-disable-next-line react/jsx-no-useless-fragment

@@ -229,6 +229,9 @@ function App(): JSX.Element {
 
 	// if the user is in logged in state
 	if (isLoggedInState) {
+		if (pathname === ROUTES.HOME_PAGE) {
+			history.replace(ROUTES.APPLICATION);
+		}
 		// if the setup calls are loading then return a spinner
 		if (isFetchingLicenses || isFetchingUser || isFetchingFeatureFlags) {
 			return <Spinner tip="Loading..." />;
