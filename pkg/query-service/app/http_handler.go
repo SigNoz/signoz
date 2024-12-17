@@ -4904,7 +4904,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) traceFields(w http.ResponseWriter, r *http.Request) {
 	fields, apiErr := aH.reader.GetTraceFields(r.Context())
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch fields from the DB")
+		RespondError(w, apiErr, "failed to fetch fields from the db")
 		return
 	}
 	aH.WriteJSON(w, r, fields)
@@ -4914,20 +4914,20 @@ func (aH *APIHandler) updateTraceField(w http.ResponseWriter, r *http.Request) {
 	field := model.UpdateField{}
 	if err := json.NewDecoder(r.Body).Decode(&field); err != nil {
 		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Failed to decode payload")
+		RespondError(w, apiErr, "failed to decode payload")
 		return
 	}
 
 	err := logs.ValidateUpdateFieldPayloadV2(&field)
 	if err != nil {
 		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect payload")
+		RespondError(w, apiErr, "incorrect payload")
 		return
 	}
 
 	apiErr := aH.reader.UpdateTraceField(r.Context(), &field)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to update field in the DB")
+		RespondError(w, apiErr, "failed to update field in the db")
 		return
 	}
 	aH.WriteJSON(w, r, field)
