@@ -41,6 +41,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import { QUERY_KEYS, VIEW_TYPES, VIEWS } from './constants';
+import NodeLogs from './Logs';
 import { NodeDetailsProps } from './NodeDetails.interfaces';
 
 function NodeDetails({
@@ -81,19 +82,19 @@ function NodeDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: 'host.name',
+						key: 'node.name',
 						dataType: DataTypes.String,
 						type: 'resource',
 						isColumn: false,
 						isJSON: false,
-						id: 'host.name--string--resource--false',
+						id: 'node.name--string--resource--false',
 					},
 					op: '=',
-					value: node?.nodeUID || '',
+					value: node?.meta.k8s_node_name || '',
 				},
 			],
 		}),
-		[node?.nodeUID],
+		[node?.meta.k8s_node_name],
 	);
 
 	const initialEventsFilters = useMemo(
@@ -111,7 +112,7 @@ function NodeDetails({
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
-					value: 'Pod',
+					value: 'node',
 				},
 				{
 					id: uuidv4(),
@@ -191,7 +192,7 @@ function NodeDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Pods list details time updated', {
+			logEvent('Infra Monitoring: Node list details time updated', {
 				node: node?.nodeUID,
 				interval,
 			});
@@ -211,7 +212,7 @@ function NodeDetails({
 					(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
 				);
 
-				logEvent('Infra Monitoring: Pods list details logs filters applied', {
+				logEvent('Infra Monitoring: Nodes list details logs filters applied', {
 					node: node?.nodeUID,
 				});
 
@@ -236,7 +237,7 @@ function NodeDetails({
 					(item) => item.key?.key === 'host.name',
 				);
 
-				logEvent('Infra Monitoring: Pods list details traces filters applied', {
+				logEvent('Infra Monitoring: Nodes list details traces filters applied', {
 					node: node?.nodeUID,
 				});
 
@@ -263,7 +264,7 @@ function NodeDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent('Infra Monitoring: Pods list details events filters applied', {
+				logEvent('Infra Monitoring: Nodes list details events filters applied', {
 					node: node?.nodeUID,
 				});
 
@@ -294,7 +295,7 @@ function NodeDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Pods list details explore clicked', {
+		logEvent('Infra Monitoring: Nodes list details explore clicked', {
 			node: node?.nodeUID,
 			view: selectedView,
 		});
@@ -430,7 +431,7 @@ function NodeDetails({
 								</Typography.Text>
 
 								<Typography.Text className="node-details-metadata-value">
-									<Tooltip title="Cluster name">Cluster name</Tooltip>
+									<Tooltip title="Cluster name">{node.meta.k8s_cluster_name}</Tooltip>
 								</Typography.Text>
 
 								<Typography.Text className="node-details-metadata-value">
@@ -505,7 +506,16 @@ function NodeDetails({
 						)}
 					</div>
 					{selectedView === VIEW_TYPES.METRICS && <h1>Metrics</h1>}
-					{selectedView === VIEW_TYPES.LOGS && <h1>Logs</h1>}
+					{selectedView === VIEW_TYPES.LOGS && (
+						<NodeLogs
+							timeRange={modalTimeRange}
+							isModalTimeSelection={isModalTimeSelection}
+							handleTimeChange={handleTimeChange}
+							handleChangeLogFilters={handleChangeLogFilters}
+							logFilters={logFilters}
+							selectedInterval={selectedInterval}
+						/>
+					)}
 					{selectedView === VIEW_TYPES.TRACES && <h1>Traces</h1>}
 					{selectedView === VIEW_TYPES.EVENTS && <h1>Events</h1>}
 				</>
