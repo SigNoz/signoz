@@ -46,6 +46,7 @@ export type VariableGraph = Record<string, string[]>;
 export const buildDependencies = (
 	variables: IDashboardVariable[],
 ): VariableGraph => {
+	console.log('buildDependencies', variables);
 	const graph: VariableGraph = {};
 
 	// Initialize empty arrays for all variables first
