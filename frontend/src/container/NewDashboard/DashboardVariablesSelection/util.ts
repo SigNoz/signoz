@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 
 export function areArraysEqual(
@@ -135,4 +136,52 @@ export const onUpdateVariableNode = (
 			});
 		}
 	});
+};
+
+export const buildParentDependencyGraph = (
+	graph: VariableGraph,
+): VariableGraph => {
+	const parentGraph: VariableGraph = {};
+
+	// Initialize empty arrays for all nodes
+	Object.keys(graph).forEach((node) => {
+		parentGraph[node] = [];
+	});
+
+	// For each node and its children in the original graph
+	Object.entries(graph).forEach(([node, children]) => {
+		// For each child, add the current node as its parent
+		children.forEach((child) => {
+			parentGraph[child].push(node);
+		});
+	});
+
+	return parentGraph;
+};
+
+export const checkAPIInvocation = (
+	variablesToGetUpdated: string[],
+	variableData: IDashboardVariable,
+	parentDependencyGraph?: VariableGraph,
+): boolean => {
+	if (isEmpty(variableData.name)) {
+		return false;
+	}
+
+	if (isEmpty(parentDependencyGraph)) {
+		return true;
+	}
+
+	// if no dependency then true
+	const haveDependency =
+		parentDependencyGraph?.[variableData.name || '']?.length > 0;
+	if (!haveDependency) {
+		return true;
+	}
+
+	// if variable is in the list and has dependency then check if its the top element in the queue then true else false
+	return (
+		variablesToGetUpdated.length > 0 &&
+		variablesToGetUpdated[0] === variableData.name
+	);
 };
