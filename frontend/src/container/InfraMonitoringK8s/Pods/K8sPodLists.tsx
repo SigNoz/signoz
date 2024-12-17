@@ -13,6 +13,8 @@ import { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
 import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
+import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -60,6 +62,31 @@ function K8sPodsList({
 		op: 'and',
 	});
 
+	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
+
+	const [groupByOptions, setGroupByOptions] = useState<
+		{ value: string; label: string }[]
+	>([]);
+
+	const { currentQuery } = useQueryBuilder();
+
+	const {
+		data: groupByFiltersData,
+		isLoading: isLoadingGroupByFilters,
+	} = useGetAggregateKeys(
+		{
+			dataSource: currentQuery.builder.queryData[0].dataSource,
+			aggregateAttribute: '',
+			aggregateOperator: 'noop',
+			searchText: '',
+			tagType: '',
+		},
+		{
+			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
+		},
+		true,
+	);
+
 	useEffect(() => {
 		const addedColumns = getFromLocalStorage('k8sPodsAddedColumns');
 
@@ -88,7 +115,8 @@ function K8sPodsList({
 
 	const query = useMemo(() => {
 		const baseQuery = getK8sPodsListQuery();
-		return {
+
+		const queryPayload = {
 			...baseQuery,
 			limit: pageSize,
 			offset: (currentPage - 1) * pageSize,
@@ -97,7 +125,13 @@ function K8sPodsList({
 			end: Math.floor(maxTime / 1000000),
 			orderBy,
 		};
-	}, [currentPage, filters, minTime, maxTime, orderBy]);
+
+		if (groupBy.length > 0) {
+			queryPayload.groupBy = groupBy;
+		}
+
+		return queryPayload;
+	}, [currentPage, filters, minTime, maxTime, orderBy, groupBy]);
 
 	const { data, isFetching, isLoading, isError } = useGetK8sPodsList(
 		query as K8sPodsListPayload,
@@ -110,12 +144,14 @@ function K8sPodsList({
 	const podsData = useMemo(() => data?.payload?.data?.records || [], [data]);
 	const totalCount = data?.payload?.data?.total || 0;
 
-	const formattedPodsData = useMemo(() => formatDataForTable(podsData), [
-		podsData,
-	]);
+	const formattedPodsData = useMemo(
+		() => formatDataForTable(podsData, groupBy),
+		[podsData, groupBy],
+	);
 
-	const columns = useMemo(() => getK8sPodsListColumns(addedColumns), [
+	const columns = useMemo(() => getK8sPodsListColumns(addedColumns, groupBy), [
 		addedColumns,
+		groupBy,
 	]);
 
 	const handleTableChange: TableProps<K8sPodsRowData>['onChange'] = useCallback(
@@ -153,6 +189,27 @@ function K8sPodsList({
 			}
 		},
 		[filters],
+	);
+
+	const handleGroupByChange = useCallback(
+		(value: IBuilderQuery['groupBy']) => {
+			const groupBy = [];
+
+			for (let index = 0; index < value.length; index++) {
+				const element = (value[index] as unknown) as string;
+
+				const key = groupByFiltersData?.payload?.attributeKeys?.find(
+					(key) => key.key === element,
+				);
+
+				if (key) {
+					groupBy.push(key);
+				}
+			}
+
+			setGroupBy(groupBy);
+		},
+		[groupByFiltersData],
 	);
 
 	useEffect(() => {
@@ -203,6 +260,16 @@ function K8sPodsList({
 
 		updateLocalStorage('k8sPodsAddedColumns', addedColumnIDs);
 	}, [addedColumns]);
+	useEffect(() => {
+		if (groupByFiltersData?.payload) {
+			setGroupByOptions(
+				groupByFiltersData?.payload?.attributeKeys?.map((filter) => ({
+					value: filter.key,
+					label: filter.key,
+				})) || [],
+			);
+		}
+	}, [groupByFiltersData]);
 
 	const handleRemoveColumn = useCallback(
 		(column: IPodColumn): void => {
@@ -216,12 +283,15 @@ function K8sPodsList({
 	return (
 		<div className="k8s-list">
 			<K8sHeader
+				groupByOptions={groupByOptions}
+				isLoadingGroupByFilters={isLoadingGroupByFilters}
 				isFiltersVisible={isFiltersVisible}
 				handleFilterVisibilityChange={handleFilterVisibilityChange}
 				defaultAddedColumns={defaultAddedColumns}
 				addedColumns={addedColumns}
 				availableColumns={availableColumns}
 				handleFiltersChange={handleFiltersChange}
+				handleGroupByChange={handleGroupByChange}
 				onAddColumn={handleAddColumn}
 				onRemoveColumn={handleRemoveColumn}
 			/>
@@ -284,7 +354,6 @@ function K8sPodsList({
 						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 					}}
 					tableLayout="fixed"
-					rowKey={(record): string => record.podUID}
 					onChange={handleTableChange}
 					onRow={(record): { onClick: () => void; className: string } => ({
 						onClick: (): void => handleRowClick(record),

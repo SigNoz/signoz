@@ -1,8 +1,9 @@
 import './InfraMonitoringK8s.styles.scss';
 
+import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import type { CollapseProps } from 'antd';
-import { Collapse, Typography } from 'antd';
+import { Collapse, Tooltip, Typography } from 'antd';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import {
 	ArrowUpDown,
@@ -293,10 +294,21 @@ export default function InfraMonitoringK8s(): JSX.Element {
 				<div className="k8s-container">
 					{showFilters && (
 						<div className="k8s-quick-filters-container">
+							<div className="k8s-quick-filters-container-header">
+								<Typography.Text>Filters</Typography.Text>
+
+								<Tooltip title="Collapse Filters">
+									<VerticalAlignTopOutlined
+										rotate={270}
+										onClick={handleFilterVisibilityChange}
+									/>
+								</Tooltip>
+							</div>
 							<Collapse
 								onChange={handleCategoryChange}
 								items={items}
 								defaultActiveKey={[selectedCategory]}
+								activeKey={[selectedCategory]}
 								accordion
 								bordered={false}
 								ghost
