@@ -94,6 +94,19 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	return ic.GetPipelinesByVersion(ctx, cfg.Version)
 }
 
+func (ic *LogParsingPipelineController) ValidatePipelines(
+	ctx context.Context,
+	postedPipelines []PostablePipeline,
+) *model.ApiError {
+	for _, p := range postedPipelines {
+		if err := p.IsValid(); err != nil {
+			return model.BadRequestStr(err.Error())
+		}
+	}
+
+	return nil
+}
+
 // Returns effective list of pipelines including user created
 // pipelines and pipelines for installed integrations
 func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
