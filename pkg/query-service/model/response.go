@@ -656,6 +656,7 @@ type DashboardsInfo struct {
 	TracesBasedPanels               int      `json:"tracesBasedPanels"`
 	DashboardNames                  []string `json:"dashboardNames"`
 	QueriesWithTSV2                 int      `json:"queriesWithTSV2"`
+	QueriesWithTagAttrs             int      `json:"queriesWithTagAttrs"`
 	DashboardsWithLogsChQuery       int      `json:"dashboardsWithLogsChQuery"`
 	DashboardsWithTraceChQuery      int      `json:"dashboardsWithTraceChQuery"`
 	DashboardNamesWithTraceChQuery  []string `json:"dashboardNamesWithTraceChQuery"`

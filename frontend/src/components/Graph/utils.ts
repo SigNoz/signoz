@@ -1,5 +1,6 @@
 import { Chart, ChartConfiguration, ChartData, Color } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
+import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import dayjs from 'dayjs';
 import { MutableRefObject } from 'react';
 
@@ -50,6 +51,7 @@ export const getGraphOptions = (
 	isStacked: boolean | undefined,
 	onClickHandler: GraphOnClickHandler | undefined,
 	data: ChartData,
+	timezone: Timezone,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): CustomChartOptions => ({
 	animation: {
@@ -97,7 +99,7 @@ export const getGraphOptions = (
 			callbacks: {
 				title(context): string | string[] {
 					const date = dayjs(context[0].parsed.x);
-					return date.format('MMM DD, YYYY, HH:mm:ss');
+					return date.tz(timezone.value).format('MMM DD, YYYY, HH:mm:ss');
 				},
 				label(context): string | string[] {
 					let label = context.dataset.label || '';
