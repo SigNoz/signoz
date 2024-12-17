@@ -125,10 +125,9 @@ func (ic *LogParsingPipelineController) ValidatePipelines(
 		ctx, pipelines, sampleLogs,
 	)
 	if simulationErr != nil {
-		return model.WrapApiError(
-			model.BadRequest(simulationErr.ToError()),
-			"invalid pipelines config",
-		)
+		return model.BadRequest(fmt.Errorf(
+			"invalid pipelines config: %w", simulationErr.ToError(),
+		))
 	}
 
 	return nil
