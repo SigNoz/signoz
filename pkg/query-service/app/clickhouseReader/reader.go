@@ -2979,17 +2979,19 @@ func (r *ClickHouseReader) GetTraceFields(ctx context.Context) (*model.GetFields
 
 	// get the top level selected fields
 	for _, field := range constants.NewStaticFieldsTraces {
+		if (v3.AttributeKey{} == field) {
+			continue
+		}
 		response.Selected = append(response.Selected, model.Field{
 			Name:     field.Key,
 			DataType: field.DataType.String(),
-			Type:     field.Type.String(),
+			Type:     constants.Static,
 		})
 	}
 
 	// get attribute keys
 	attributes := []model.Field{}
 	query := fmt.Sprintf("SELECT DISTINCT tagKey, tagType, dataType from %s.%s group by tagKey, tagType, dataType", r.TraceDB, r.spanAttributesKeysTable)
-	fmt.Println(query)
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
