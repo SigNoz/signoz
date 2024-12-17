@@ -113,7 +113,6 @@ type APIHandler struct {
 
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
-	UseLicensesV3     bool
 
 	hostsRepo      *inframetrics.HostsRepo
 	processesRepo  *inframetrics.ProcessesRepo
@@ -166,8 +165,6 @@ type APIHandlerOpts struct {
 	UseLogsNewSchema bool
 
 	UseTraceNewSchema bool
-	// Use Licenses V3 structure
-	UseLicensesV3 bool
 }
 
 // NewAPIHandler returns an APIHandler
@@ -230,7 +227,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		querierV2:                     querierv2,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
 		UseTraceNewSchema:             opts.UseTraceNewSchema,
-		UseLicensesV3:                 opts.UseLicensesV3,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
 		podsRepo:                      podsRepo,
