@@ -1,8 +1,11 @@
 import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import getUserVersion from 'api/user/getVersion';
 import loginApi from 'api/user/login';
 import loginPrecheckApi from 'api/user/loginPrecheck';
 import afterLogin from 'AppRoutes/utils';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -83,7 +86,15 @@ function Login({
 				setIsLoading(true);
 				await afterLogin(userId, jwt, refreshjwt);
 				setIsLoading(false);
-				history.push(ROUTES.APPLICATION);
+				const fromPathname = getLocalStorageApi(
+					LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
+				);
+				if (fromPathname) {
+					history.push(fromPathname);
+					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
+				} else {
+					history.push(ROUTES.APPLICATION);
+				}
 			}
 		}
 		processJwt();

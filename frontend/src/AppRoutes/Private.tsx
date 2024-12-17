@@ -1,4 +1,7 @@
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import getOrgUser from 'api/user/getOrgUser';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
@@ -167,17 +170,35 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 						history.push(ROUTES.UN_AUTHORIZED);
 					}
 				} else {
+					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
 					history.push(ROUTES.LOGIN);
 				}
 			} else if (isLoggedInState) {
-				history.push(ROUTES.APPLICATION);
+				const fromPathname = getLocalStorageApi(
+					LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
+				);
+				if (fromPathname) {
+					history.push(fromPathname);
+					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
+				} else {
+					history.push(ROUTES.APPLICATION);
+				}
 			} else {
 				// do nothing as the unauthenticated routes are LOGIN and SIGNUP and the LOGIN container takes care of routing to signup if
 				// setup is not completed
 			}
 		} else if (isLoggedInState) {
-			history.push(ROUTES.APPLICATION);
+			const fromPathname = getLocalStorageApi(
+				LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
+			);
+			if (fromPathname) {
+				history.push(fromPathname);
+				setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
+			} else {
+				history.push(ROUTES.APPLICATION);
+			}
 		} else {
+			setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
 			history.push(ROUTES.LOGIN);
 		}
 	}, [
