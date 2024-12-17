@@ -1,6 +1,6 @@
 import './InfraMonitoringK8s.styles.scss';
 
-import { Button, Input } from 'antd';
+import { Button, Select } from 'antd';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -13,18 +13,24 @@ import { IPodColumn } from './utils';
 
 function K8sHeader({
 	defaultAddedColumns,
+	groupByOptions,
+	isLoadingGroupByFilters,
 	addedColumns,
 	availableColumns,
 	handleFiltersChange,
+	handleGroupByChange,
 	onAddColumn,
 	onRemoveColumn,
 	handleFilterVisibilityChange,
 	isFiltersVisible,
 }: {
 	defaultAddedColumns: IPodColumn[];
+	groupByOptions: { value: string; label: string }[];
 	addedColumns: IPodColumn[];
+	isLoadingGroupByFilters: boolean;
 	availableColumns: IPodColumn[];
 	handleFiltersChange: (value: IBuilderQuery['filters']) => void;
+	handleGroupByChange: (value: IBuilderQuery['groupBy']) => void;
 	onAddColumn: (column: IPodColumn) => void;
 	onRemoveColumn: (column: IPodColumn) => void;
 	handleFilterVisibilityChange: () => void;
@@ -51,6 +57,7 @@ function K8sHeader({
 		}),
 		[currentQuery],
 	);
+
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	const handleChangeTagFilters = useCallback(
@@ -86,9 +93,16 @@ function K8sHeader({
 				</div>
 
 				<div className="k8s-attribute-search-container">
-					<Input
-						addonBefore={<div> Group by </div>}
+					<div className="group-by-label"> Group by </div>
+					<Select
+						className="group-by-select"
+						loading={isLoadingGroupByFilters}
+						mode="multiple"
+						maxTagCount="responsive"
 						placeholder="Search for attribute"
+						style={{ width: '100%' }}
+						options={groupByOptions}
+						onChange={handleGroupByChange}
 					/>
 				</div>
 			</div>
