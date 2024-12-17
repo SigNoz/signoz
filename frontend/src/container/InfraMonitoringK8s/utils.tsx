@@ -2,12 +2,14 @@
 import './InfraMonitoringK8s.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Progress } from 'antd';
+import { Button, Progress, Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	K8sPodsData,
 	K8sPodsListPayload,
 } from 'api/infraMonitoring/getK8sPodsList';
+import { ChevronRight, Group } from 'lucide-react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface IPodColumn {
 	label: string;
@@ -109,42 +111,62 @@ export const getK8sPodsListQuery = (): K8sPodsListPayload => ({
 	orderBy: { columnName: 'cpu', order: 'desc' },
 });
 
+const podGroupColumnConfig = {
+	title: (
+		<div className="column-header">
+			<Group size={14} /> POD GROUP
+		</div>
+	),
+	dataIndex: 'podGroup',
+	key: 'podGroup',
+	ellipsis: true,
+	width: 150,
+	align: 'left',
+	sorter: false,
+};
+
 const columnsConfig = [
 	{
-		title: <div className="column-header-left">Pod Name</div>,
-		dataIndex: 'podName',
+		title: <div className="column-header">Pod Name</div>,
+		dataIndex: 'k8s_pod_name',
 		key: 'podName',
 		ellipsis: true,
+		width: 120,
+		sorter: true,
+		align: 'left',
+	},
+	{
+		title: (
+			<div className="column-header">
+				<Tooltip title="CPU Request Utilization (% of limit)">CPU Req Util</Tooltip>
+			</div>
+		),
+		dataIndex: 'cpuRequestUtilization',
+		key: 'cpuRequestUtilization',
 		width: 150,
 		sorter: true,
 		align: 'left',
 	},
 	{
 		title: (
-			<div className="column-header-left">
-				CPU Request Utilization (% of limit)
+			<div className="column-header">
+				<Tooltip title="CPU Limit Utilization (% of request)">
+					CPU Limit Util
+				</Tooltip>
 			</div>
 		),
-		dataIndex: 'cpuRequestUtilization',
-		key: 'cpuRequestUtilization',
-		width: 100,
+		dataIndex: 'cpuLimitUtilization',
+		key: 'cpuLimitUtilization',
+		width: 150,
 		sorter: true,
 		align: 'left',
 	},
 	{
 		title: (
-			<div className="column-header-left">
-				CPU Limit Utilization (% of request)
+			<div className="column-header">
+				<Tooltip title="CPU Utilization (cores)">CPU Util (cores)</Tooltip>
 			</div>
 		),
-		dataIndex: 'cpuLimitUtilization',
-		key: 'cpuLimitUtilization',
-		width: 100,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: <div className="column-header-left">CPU Utilization (cores)</div>,
 		dataIndex: 'cpuUtilization',
 		key: 'cpuUtilization',
 		width: 80,
@@ -153,30 +175,38 @@ const columnsConfig = [
 	},
 	{
 		title: (
-			<div className="column-header-left">
-				Memory Request Utilization (% of limit)
+			<div className="column-header">
+				<Tooltip title="Memory Request Utilization (% of limit)">
+					Mem Req Util
+				</Tooltip>
 			</div>
 		),
 		dataIndex: 'memoryRequestUtilization',
 		key: 'memoryRequestUtilization',
-		width: 100,
+		width: 150,
 		sorter: true,
 		align: 'left',
 	},
 	{
 		title: (
-			<div className="column-header-left">
-				Memory Limit Utilization (% of request)
+			<div className="column-header">
+				<Tooltip title="Memory Limit Utilization (% of request)">
+					Mem Limit Util
+				</Tooltip>
 			</div>
 		),
 		dataIndex: 'memoryLimitUtilization',
 		key: 'memoryLimitUtilization',
-		width: 100,
+		width: 150,
 		sorter: true,
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Memory Utilization (bytes)</div>,
+		title: (
+			<div className="column-header">
+				<Tooltip title="Memory Utilization (bytes)">Mem Util (bytes)</Tooltip>
+			</div>
+		),
 		dataIndex: 'memoryUtilization',
 		key: 'memoryUtilization',
 		width: 80,
@@ -184,7 +214,11 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Container Restarts</div>,
+		title: (
+			<div className="column-header">
+				<Tooltip title="Container Restarts">Container Restarts</Tooltip>
+			</div>
+		),
 		dataIndex: 'containerRestarts',
 		key: 'containerRestarts',
 		width: 50,
@@ -194,7 +228,7 @@ const columnsConfig = [
 ];
 
 export const namespaceColumnConfig = {
-	title: <div className="column-header-left">Namespace</div>,
+	title: <div className="column-header">Namespace</div>,
 	dataIndex: 'namespace',
 	key: 'namespace',
 	width: 100,
@@ -204,7 +238,7 @@ export const namespaceColumnConfig = {
 };
 
 export const nodeColumnConfig = {
-	title: <div className="column-header-left">Node</div>,
+	title: <div className="column-header">Node</div>,
 	dataIndex: 'node',
 	key: 'node',
 	width: 100,
@@ -214,7 +248,7 @@ export const nodeColumnConfig = {
 };
 
 export const clusterColumnConfig = {
-	title: <div className="column-header-left">Cluster</div>,
+	title: <div className="column-header">Cluster</div>,
 	dataIndex: 'cluster',
 	key: 'cluster',
 	width: 100,
@@ -231,7 +265,18 @@ export const columnConfigMap = {
 
 export const getK8sPodsListColumns = (
 	addedColumns: IPodColumn[],
+	groupBy: IBuilderQuery['groupBy'],
 ): ColumnType<K8sPodsRowData>[] => {
+	if (groupBy.length > 0) {
+		const filteredColumns = [...columnsConfig].filter(
+			(column) => column.key !== 'podName',
+		);
+
+		filteredColumns.unshift(podGroupColumnConfig);
+
+		return filteredColumns as ColumnType<K8sPodsRowData>[];
+	}
+
 	const updatedColumnsConfig = [...columnsConfig];
 
 	// eslint-disable-next-line no-restricted-syntax
@@ -245,7 +290,39 @@ export const getK8sPodsListColumns = (
 	return updatedColumnsConfig as ColumnType<K8sPodsRowData>[];
 };
 
-export const formatDataForTable = (data: K8sPodsData[]): K8sPodsRowData[] =>
+const getGroupByEle = (
+	pod: K8sPodsData,
+	groupBy: IBuilderQuery['groupBy'],
+): React.ReactNode => {
+	const groupByValues: string[] = [];
+
+	groupBy.forEach((group) => {
+		groupByValues.push(pod.meta[group.key as keyof typeof pod.meta]);
+	});
+
+	return (
+		<div className="pod-group">
+			<div className="expand-group">
+				<Button
+					type="text"
+					className="expand-group-icon periscope-btn ghost"
+					icon={<ChevronRight size={14} />}
+				/>
+			</div>
+
+			{groupByValues.map((value) => (
+				<Tag key={value} color="#1D212D" className="pod-group-tag-item">
+					{value === '' ? '<no-value>' : value}
+				</Tag>
+			))}
+		</div>
+	);
+};
+
+export const formatDataForTable = (
+	data: K8sPodsData[],
+	groupBy: IBuilderQuery['groupBy'],
+): K8sPodsRowData[] =>
 	data.map((pod, index) => ({
 		key: `${pod.podUID}-${index}`,
 		podName: pod.meta.k8s_pod_name || '',
@@ -323,5 +400,7 @@ export const formatDataForTable = (data: K8sPodsData[]): K8sPodsRowData[] =>
 		containerRestarts: pod.restartCount,
 		namespace: pod.meta.k8s_namespace_name,
 		node: pod.meta.k8s_node_name,
-		cluster: pod.meta.k8s_job_name, // TODO: Need to update this
+		cluster: pod.meta.k8s_job_name,
+		...pod.meta,
+		podGroup: getGroupByEle(pod, groupBy),
 	}));
