@@ -126,7 +126,11 @@
 	.column-header {
 		display: flex;
 		align-items: center;
-		gap: 4px;
+		gap: 16px;
+
+		&.pod-group-header {
+			padding-left: 12px;
+		}
 	}
 }
 

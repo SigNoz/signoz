@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isFunction } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -45,10 +45,11 @@ interface IQuickFiltersProps {
 	config: IQuickFiltersConfig[];
 	handleFilterVisibilityChange: () => void;
 	source?: string | null;
+	onFilterChange?: (query: Query) => void;
 }
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
-	const { config, handleFilterVisibilityChange, source } = props;
+	const { config, handleFilterVisibilityChange, source, onFilterChange } = props;
 
 	const {
 		currentQuery,
@@ -83,7 +84,12 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				})),
 			},
 		};
-		redirectWithQueryBuilderData(preparedQuery);
+
+		if (onFilterChange && isFunction(onFilterChange)) {
+			onFilterChange(preparedQuery);
+		} else {
+			redirectWithQueryBuilderData(preparedQuery);
+		}
 	};
 
 	const lastQueryName =
@@ -124,11 +130,11 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				{config.map((filter) => {
 					switch (filter.type) {
 						case FiltersType.CHECKBOX:
-							return <Checkbox filter={filter} />;
+							return <Checkbox filter={filter} onFilterChange={onFilterChange} />;
 						case FiltersType.SLIDER:
 							return <Slider filter={filter} />;
 						default:
-							return <Checkbox filter={filter} />;
+							return <Checkbox filter={filter} onFilterChange={onFilterChange} />;
 					}
 				})}
 			</section>
@@ -138,4 +144,5 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 QuickFilters.defaultProps = {
 	source: null,
+	onFilterChange: null,
 };

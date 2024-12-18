@@ -11,7 +11,7 @@ import { OPERATORS } from 'constants/queryBuilder';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep, isArray, isEmpty, isEqual } from 'lodash-es';
+import { cloneDeep, isArray, isEmpty, isEqual, isFunction } from 'lodash-es';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -34,10 +34,11 @@ function setDefaultValues(
 }
 interface ICheckboxProps {
 	filter: IQuickFiltersConfig;
+	onFilterChange?: (query: Query) => void;
 }
 
 export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
-	const { filter } = props;
+	const { filter, onFilterChange } = props;
 	const [searchText, setSearchText] = useState<string>('');
 	const [isOpen, setIsOpen] = useState<boolean>(filter.defaultOpen);
 	const [visibleItemsCount, setVisibleItemsCount] = useState<number>(10);
@@ -45,12 +46,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	const {
 		lastUsedQuery,
 		currentQuery,
-		stagedQuery,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
-
-	console.log('currentQuery', cloneDeep(currentQuery));
-	console.log('stagedQuery', cloneDeep(stagedQuery));
 
 	const { data, isLoading } = useGetAggregateValues(
 		{
@@ -163,7 +160,12 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				})),
 			},
 		};
-		redirectWithQueryBuilderData(preparedQuery);
+
+		if (onFilterChange && isFunction(onFilterChange)) {
+			onFilterChange(preparedQuery);
+		} else {
+			redirectWithQueryBuilderData(preparedQuery);
+		}
 	};
 
 	const isSomeFilterPresentForCurrentAttribute = currentQuery.builder.queryData?.[
@@ -395,7 +397,11 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			},
 		};
 
-		redirectWithQueryBuilderData(finalQuery);
+		if (onFilterChange && isFunction(onFilterChange)) {
+			onFilterChange(finalQuery);
+		} else {
+			redirectWithQueryBuilderData(finalQuery);
+		}
 	};
 
 	return (
@@ -515,3 +521,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		</div>
 	);
 }
+
+CheckboxFilter.defaultProps = {
+	onFilterChange: null,
+};
