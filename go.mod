@@ -8,7 +8,7 @@ require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.25.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
-	github.com/SigNoz/signoz-otel-collector v0.111.15
+	github.com/SigNoz/signoz-otel-collector v0.111.16
 	github.com/SigNoz/zap_otlp/zap_otlp_encoder v0.0.0-20230822164844-1b861a431974
 	github.com/SigNoz/zap_otlp/zap_otlp_sync v0.0.0-20230822164844-1b861a431974
 	github.com/antonmedv/expr v1.15.3
