@@ -14,6 +14,9 @@ import { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sNodesListPayload } from 'api/infraMonitoring/getK8sNodesList';
 import { useGetK8sNodesList } from 'hooks/infraMonitoring/useGetK8sNodesList';
+import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -43,11 +46,6 @@ function K8sNodesList({
 
 	const [currentPage, setCurrentPage] = useState(1);
 
-	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
-		items: [],
-		op: 'and',
-	});
-
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
 		order: 'asc' | 'desc';
@@ -57,18 +55,56 @@ function K8sNodesList({
 
 	const pageSize = 10;
 
+	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
+
+	const [groupByOptions, setGroupByOptions] = useState<
+		{ value: string; label: string }[]
+	>([]);
+
+	const { currentQuery } = useQueryBuilder();
+
+	const {
+		data: groupByFiltersData,
+		isLoading: isLoadingGroupByFilters,
+	} = useGetAggregateKeys(
+		{
+			dataSource: currentQuery.builder.queryData[0].dataSource,
+			aggregateAttribute: '',
+			aggregateOperator: 'noop',
+			searchText: '',
+			tagType: '',
+		},
+		{
+			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
+		},
+		true,
+	);
+
+	const queryFilters = useMemo(
+		() =>
+			currentQuery?.builder?.queryData[0]?.filters || {
+				items: [],
+				op: 'and',
+			},
+		[currentQuery?.builder?.queryData],
+	);
+
 	const query = useMemo(() => {
 		const baseQuery = getK8sNodesListQuery();
-		return {
+		const queryPayload = {
 			...baseQuery,
 			limit: pageSize,
 			offset: (currentPage - 1) * pageSize,
-			filters,
+			filters: queryFilters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
 			orderBy,
 		};
-	}, [currentPage, filters, minTime, maxTime, orderBy]);
+		if (groupBy.length > 0) {
+			queryPayload.groupBy = groupBy;
+		}
+		return queryPayload;
+	}, [currentPage, minTime, maxTime, orderBy, groupBy, queryFilters]);
 
 	const { data, isFetching, isLoading, isError } = useGetK8sNodesList(
 		query as K8sNodesListPayload,
@@ -81,11 +117,12 @@ function K8sNodesList({
 	const nodesData = useMemo(() => data?.payload?.data?.records || [], [data]);
 	const totalCount = data?.payload?.data?.total || 0;
 
-	const formattedNodesData = useMemo(() => formatDataForTable(nodesData), [
-		nodesData,
-	]);
+	const formattedNodesData = useMemo(
+		() => formatDataForTable(nodesData, groupBy),
+		[nodesData, groupBy],
+	);
 
-	const columns = useMemo(() => getK8sNodesListColumns(), []);
+	const columns = useMemo(() => getK8sNodesListColumns(groupBy), [groupBy]);
 
 	const handleTableChange: TableProps<K8sNodesRowData>['onChange'] = useCallback(
 		(
@@ -109,19 +146,22 @@ function K8sNodesList({
 		[],
 	);
 
+	const { handleChangeQueryData } = useQueryOperations({
+		index: 0,
+		query: currentQuery.builder.queryData[0],
+		entityVersion: '',
+	});
+
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {
-			const isNewFilterAdded = value.items.length !== filters.items.length;
-			if (isNewFilterAdded) {
-				setFilters(value);
-				setCurrentPage(1);
+			handleChangeQueryData('filters', value);
+			setCurrentPage(1);
 
-				logEvent('Infra Monitoring: K8s list filters applied', {
-					filters: value,
-				});
-			}
+			logEvent('Infra Monitoring: K8s list filters applied', {
+				filters: value,
+			});
 		},
-		[filters],
+		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
@@ -149,13 +189,45 @@ function K8sNodesList({
 		!isError &&
 		!isLoading &&
 		!isFetching &&
-		!(formattedNodesData.length === 0 && filters.items.length > 0);
+		!(formattedNodesData.length === 0 && queryFilters.items.length > 0);
 
 	const showNoFilteredNodesMessage =
 		!isFetching &&
 		!isLoading &&
 		formattedNodesData.length === 0 &&
-		filters.items.length > 0;
+		queryFilters.items.length > 0;
+
+	const handleGroupByChange = useCallback(
+		(value: IBuilderQuery['groupBy']) => {
+			const groupBy = [];
+
+			for (let index = 0; index < value.length; index++) {
+				const element = (value[index] as unknown) as string;
+
+				const key = groupByFiltersData?.payload?.attributeKeys?.find(
+					(key) => key.key === element,
+				);
+
+				if (key) {
+					groupBy.push(key);
+				}
+			}
+
+			setGroupBy(groupBy);
+		},
+		[groupByFiltersData],
+	);
+
+	useEffect(() => {
+		if (groupByFiltersData?.payload) {
+			setGroupByOptions(
+				groupByFiltersData?.payload?.attributeKeys?.map((filter) => ({
+					value: filter.key,
+					label: filter.key,
+				})) || [],
+			);
+		}
+	}, [groupByFiltersData]);
 
 	return (
 		<div className="k8s-list">
@@ -164,6 +236,10 @@ function K8sNodesList({
 				handleFilterVisibilityChange={handleFilterVisibilityChange}
 				defaultAddedColumns={defaultAddedColumns}
 				handleFiltersChange={handleFiltersChange}
+				groupByOptions={groupByOptions}
+				isLoadingGroupByFilters={isLoadingGroupByFilters}
+				handleGroupByChange={handleGroupByChange}
+				selectedGroupBy={groupBy}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 

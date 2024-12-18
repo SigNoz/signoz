@@ -126,7 +126,7 @@ function K8sHeader({
 				<Button
 					type="text"
 					className="periscope-btn ghost"
-					disabled={selectedGroupBy.length > 0}
+					disabled={selectedGroupBy?.length > 0}
 					onClick={(): void => setIsFiltersSidePanelOpen(true)}
 				>
 					<SlidersHorizontal size={14} />
