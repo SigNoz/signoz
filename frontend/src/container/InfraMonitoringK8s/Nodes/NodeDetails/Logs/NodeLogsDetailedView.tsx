@@ -60,8 +60,8 @@ function NodeLogsDetailedView({
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	return (
-		<div className="node-metrics-logs-container">
-			<div className="node-metrics-logs-header">
+		<div className="node-logs-container">
+			<div className="node-logs-header">
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
