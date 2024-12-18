@@ -408,7 +408,6 @@ function K8sPodsList({
 						pagination={false}
 						scroll={{ x: true }}
 						tableLayout="fixed"
-						size="small"
 						loading={{
 							spinning: isFetchingGroupedByRowData || isLoadingGroupedByRowData,
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
