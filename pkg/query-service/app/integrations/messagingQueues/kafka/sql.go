@@ -329,7 +329,7 @@ func generateNetworkLatencyThroughputSQL(start, end int64, consumerGroup, partit
 	query := fmt.Sprintf(`
 SELECT
     attributes_string['messaging.client_id'] AS client_id,
-	attributes_string['service.instance.id'] AS service_instance_id,
+	resources_string['service.instance.id'] AS service_instance_id,
     resource_string_service$$name AS service_name,
     count(*) / %d AS throughput
 FROM signoz_traces.distributed_signoz_index_v3
@@ -374,7 +374,7 @@ SELECT
     COUNT(IF(has(attributes_string, 'messaging.kafka.consumer.group'), 1, NULL)) = 0 AS cgroup,
     COUNT(IF(has(attributes_number, 'messaging.message.body.size'), 1, NULL)) = 0 AS bodysize,
     COUNT(IF(has(attributes_string, 'messaging.client_id'), 1, NULL)) = 0 AS clientid,
-    COUNT(IF(has(attributes_string, 'service.instance.id'), 1, NULL)) = 0 AS instanceid
+    COUNT(IF(has(resources_string, 'service.instance.id'), 1, NULL)) = 0 AS instanceid
 FROM signoz_traces.distributed_signoz_index_v3
 WHERE 
     timestamp >= '%d'
