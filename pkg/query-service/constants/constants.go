@@ -90,7 +90,7 @@ func EnableHostsInfraMonitoring() bool {
 	return GetOrDefaultEnv("ENABLE_INFRA_METRICS", "true") == "true"
 }
 
-var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
+var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "true")
 
 func IsDurationSortFeatureEnabled() bool {
 	isDurationSortFeatureEnabledStr := DurationSortFeature
