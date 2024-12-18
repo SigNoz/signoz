@@ -1,21 +1,23 @@
+/* eslint-disable no-restricted-syntax */
 import '../InfraMonitoringK8s.styles.scss';
 
 import { LoadingOutlined } from '@ant-design/icons';
 import {
-	Skeleton,
+	Button,
 	Spin,
 	Table,
 	TablePaginationConfig,
 	TableProps,
 	Typography,
 } from 'antd';
-import { SorterResult } from 'antd/es/table/interface';
+import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
 import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -27,9 +29,11 @@ import {
 } from 'utils/localStorageReadWrite';
 
 import K8sHeader from '../K8sHeader';
+import LoadingContainer from '../LoadingContainer';
 import {
 	defaultAddedColumns,
 	defaultAvailableColumns,
+	dummyColumnConfig,
 	formatDataForTable,
 	getK8sPodsListColumns,
 	getK8sPodsListQuery,
@@ -59,6 +63,10 @@ function K8sPodsList({
 	);
 
 	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
+
+	const [selectedRowData, setSelectedRowData] = useState<K8sPodsRowData | null>(
+		null,
+	);
 
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
@@ -146,12 +154,72 @@ function K8sPodsList({
 		},
 	);
 
+	const createFiltersForSelectedRowData = (
+		selectedRowData: K8sPodsRowData,
+	): IBuilderQuery['filters'] => {
+		const baseFilters: IBuilderQuery['filters'] = {
+			items: [],
+			op: 'and',
+		};
+
+		if (!selectedRowData) return baseFilters;
+
+		const { groupedByMeta } = selectedRowData;
+
+		for (const key of Object.keys(groupedByMeta)) {
+			baseFilters.items.push({
+				key: {
+					key,
+				},
+				op: '=',
+				value: groupedByMeta[key],
+			});
+		}
+
+		return baseFilters;
+	};
+
+	const fetchGroupedByRowDataQuery = useMemo(() => {
+		if (!selectedRowData) return null;
+
+		const baseQuery = getK8sPodsListQuery();
+
+		const filters = createFiltersForSelectedRowData(selectedRowData);
+
+		return {
+			...baseQuery,
+			limit: 10,
+			offset: 0,
+			filters,
+			start: Math.floor(minTime / 1000000),
+			end: Math.floor(maxTime / 1000000),
+			orderBy,
+		};
+	}, [minTime, maxTime, orderBy, selectedRowData]);
+
+	const {
+		data: groupedByRowData,
+		isFetching: isFetchingGroupedByRowData,
+		isLoading: isLoadingGroupedByRowData,
+		isError: isErrorGroupedByRowData,
+		refetch: fetchGroupedByRowData,
+	} = useGetK8sPodsList(fetchGroupedByRowDataQuery as K8sPodsListPayload, {
+		queryKey: ['hostList', fetchGroupedByRowDataQuery],
+		enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
+	});
+
 	const podsData = useMemo(() => data?.payload?.data?.records || [], [data]);
 	const totalCount = data?.payload?.data?.total || 0;
 
 	const formattedPodsData = useMemo(
 		() => formatDataForTable(podsData, groupBy),
 		[podsData, groupBy],
+	);
+
+	const formattedGroupedByPodsData = useMemo(
+		() =>
+			formatDataForTable(groupedByRowData?.payload?.data?.records || [], groupBy),
+		[groupedByRowData, groupBy],
 	);
 
 	const columns = useMemo(() => getK8sPodsListColumns(addedColumns, groupBy), [
@@ -229,8 +297,23 @@ function K8sPodsList({
 		return podsData.find((pod) => pod.podUID === selectedPodUID) || null;
 	}, [selectedPodUID, podsData]);
 
+	const handleGroupByRowClick = (record: K8sPodsRowData): void => {
+		setSelectedRowData(record);
+	};
+
+	useEffect(() => {
+		if (selectedRowData) {
+			fetchGroupedByRowData();
+		}
+	}, [selectedRowData, fetchGroupedByRowData]);
+
 	const handleRowClick = (record: K8sPodsRowData): void => {
-		setSelectedPodUID(record.podUID);
+		if (groupBy.length === 0) {
+			setSelectedPodUID(record.podUID);
+			setSelectedRowData(null);
+		} else {
+			handleGroupByRowClick(record);
+		}
 
 		logEvent('Infra Monitoring: K8s list item clicked', {
 			podUID: record.podUID,
@@ -288,6 +371,107 @@ function K8sPodsList({
 		[setAddedColumns, setAvailableColumns],
 	);
 
+	const nestedColumns = useMemo(() => {
+		const nestedColumns = getK8sPodsListColumns(addedColumns, []);
+
+		return [dummyColumnConfig, ...nestedColumns];
+	}, [addedColumns]);
+
+	const isGroupedByAttribute = groupBy.length > 0;
+
+	const handleExpandedRowViewAllClick = (): void => {
+		if (!selectedRowData) return;
+
+		const filters = createFiltersForSelectedRowData(selectedRowData);
+
+		handleFiltersChange(filters);
+
+		setCurrentPage(1);
+		setSelectedRowData(null);
+		setGroupBy([]);
+		setOrderBy(null);
+	};
+
+	const expandedRowRender = (): JSX.Element => (
+		<div className="expanded-table-container">
+			{isErrorGroupedByRowData && (
+				<Typography>{groupedByRowData?.error || 'Something went wrong'}</Typography>
+			)}
+
+			{isFetchingGroupedByRowData || isLoadingGroupedByRowData ? (
+				<LoadingContainer />
+			) : (
+				<div className="expanded-table">
+					<Table
+						columns={nestedColumns as ColumnType<K8sPodsRowData>[]}
+						dataSource={formattedGroupedByPodsData}
+						pagination={false}
+						scroll={{ x: true }}
+						tableLayout="fixed"
+						size="small"
+						loading={{
+							spinning: isFetchingGroupedByRowData || isLoadingGroupedByRowData,
+							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+						}}
+					/>
+
+					{groupedByRowData?.payload?.data?.total &&
+						groupedByRowData?.payload?.data?.total > 10 && (
+							<div className="expanded-table-footer">
+								<Button
+									type="default"
+									size="small"
+									className="periscope-btn secondary"
+									onClick={handleExpandedRowViewAllClick}
+								>
+									View All
+								</Button>
+							</div>
+						)}
+				</div>
+			)}
+		</div>
+	);
+
+	const expandRowIconRenderer = ({
+		expanded,
+		onExpand,
+		record,
+	}: {
+		expanded: boolean;
+		onExpand: (
+			record: K8sPodsRowData,
+			e: React.MouseEvent<HTMLButtonElement>,
+		) => void;
+		record: K8sPodsRowData;
+	}): JSX.Element | null => {
+		if (!isGroupedByAttribute) {
+			return null;
+		}
+
+		return expanded ? (
+			<Button
+				className="periscope-btn ghost"
+				onClick={(e: React.MouseEvent<HTMLButtonElement>): void =>
+					onExpand(record, e)
+				}
+				role="button"
+			>
+				<ChevronDown size={14} />
+			</Button>
+		) : (
+			<Button
+				className="periscope-btn ghost"
+				onClick={(e: React.MouseEvent<HTMLButtonElement>): void =>
+					onExpand(record, e)
+				}
+				role="button"
+			>
+				<ChevronRight size={14} />
+			</Button>
+		);
+	};
+
 	return (
 		<div className="k8s-list">
 			<K8sHeader
@@ -322,28 +506,7 @@ function K8sPodsList({
 				</div>
 			)}
 
-			{(isFetching || isLoading) && (
-				<div className="k8s-list-loading-state">
-					<Skeleton.Input
-						className="k8s-list-loading-state-item"
-						size="large"
-						block
-						active
-					/>
-					<Skeleton.Input
-						className="k8s-list-loading-state-item"
-						size="large"
-						block
-						active
-					/>
-					<Skeleton.Input
-						className="k8s-list-loading-state-item"
-						size="large"
-						block
-						active
-					/>
-				</div>
-			)}
+			{(isFetching || isLoading) && <LoadingContainer />}
 
 			{showPodsTable && (
 				<Table
@@ -357,17 +520,21 @@ function K8sPodsList({
 						showSizeChanger: false,
 						hideOnSinglePage: true,
 					}}
-					scroll={{ x: true }}
 					loading={{
 						spinning: isFetching || isLoading,
 						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 					}}
+					scroll={{ x: true }}
 					tableLayout="fixed"
 					onChange={handleTableChange}
 					onRow={(record): { onClick: () => void; className: string } => ({
 						onClick: (): void => handleRowClick(record),
 						className: 'clickable-row',
 					})}
+					expandable={{
+						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
+						expandIcon: expandRowIconRenderer,
+					}}
 				/>
 			)}
 
