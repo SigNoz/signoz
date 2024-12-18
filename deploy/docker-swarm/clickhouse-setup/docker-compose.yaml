@@ -146,11 +146,12 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.63.0
+    image: signoz/query-service:0.64.0
     command:
       [
         "-config=/root/config/prometheus.yml",
-        "--use-logs-new-schema=true"
+        "--use-logs-new-schema=true",
+        "--use-trace-new-schema=true"
       ]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -186,7 +187,7 @@ services:
     <<: *db-depend
 
   frontend:
-    image: signoz/frontend:0.63.0
+    image: signoz/frontend:0.64.0
     deploy:
       restart_policy:
         condition: on-failure
