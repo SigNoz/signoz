@@ -106,19 +106,14 @@
 	}
 
 	.periscope-btn {
-		&.ghost {
+		&.ghost:not(:disabled) {
 			border: none;
 			background: transparent;
 
 			&:hover {
 				background: transparent;
-				color: var(--bg-robin-500);
+				color: var(--bg-robin-500) !important;
 				font-weight: 500;
-
-				svg {
-					height: 16px;
-					width: 16px;
-				}
 			}
 		}
 	}
@@ -271,13 +266,9 @@
 		.periscope-btn {
 			padding: 4px 8px;
 
-			&.ghost {
+			&.ghost:not(:disabled) {
 				border: none;
 				background: transparent;
-
-				&:hover {
-					color: var(--bg-vanilla-100);
-				}
 			}
 		}
 	}
