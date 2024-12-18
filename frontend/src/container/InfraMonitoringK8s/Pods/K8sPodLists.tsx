@@ -291,6 +291,7 @@ function K8sPodsList({
 	return (
 		<div className="k8s-list">
 			<K8sHeader
+				selectedGroupBy={groupBy}
 				groupByOptions={groupByOptions}
 				isLoadingGroupByFilters={isLoadingGroupByFilters}
 				isFiltersVisible={isFiltersVisible}

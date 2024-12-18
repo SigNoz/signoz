@@ -6,24 +6,14 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import K8sFiltersSidePanel from './K8sFiltersSidePanel/K8sFiltersSidePanel';
 import { IPodColumn } from './utils';
 
-function K8sHeader({
-	defaultAddedColumns,
-	groupByOptions,
-	isLoadingGroupByFilters,
-	addedColumns,
-	availableColumns,
-	handleFiltersChange,
-	handleGroupByChange,
-	onAddColumn,
-	onRemoveColumn,
-	handleFilterVisibilityChange,
-	isFiltersVisible,
-}: {
+interface K8sHeaderProps {
+	selectedGroupBy: BaseAutocompleteData[];
 	defaultAddedColumns: IPodColumn[];
 	groupByOptions: { value: string; label: string }[];
 	addedColumns: IPodColumn[];
@@ -35,10 +25,28 @@ function K8sHeader({
 	onRemoveColumn: (column: IPodColumn) => void;
 	handleFilterVisibilityChange: () => void;
 	isFiltersVisible: boolean;
-}): JSX.Element {
+}
+
+function K8sHeader({
+	selectedGroupBy,
+	defaultAddedColumns,
+	groupByOptions,
+	isLoadingGroupByFilters,
+	addedColumns,
+	availableColumns,
+	handleFiltersChange,
+	handleGroupByChange,
+	onAddColumn,
+	onRemoveColumn,
+	handleFilterVisibilityChange,
+	isFiltersVisible,
+}: K8sHeaderProps): JSX.Element {
 	const [isFiltersSidePanelOpen, setIsFiltersSidePanelOpen] = useState(false);
 
 	const { currentQuery } = useQueryBuilder();
+
+	console.log('selectedGroupBy', selectedGroupBy);
+
 	const updatedCurrentQuery = useMemo(
 		() => ({
 			...currentQuery,
@@ -117,6 +125,7 @@ function K8sHeader({
 				<Button
 					type="text"
 					className="periscope-btn ghost"
+					disabled={selectedGroupBy.length > 0}
 					onClick={(): void => setIsFiltersSidePanelOpen(true)}
 				>
 					<SlidersHorizontal size={14} />
