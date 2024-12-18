@@ -42,6 +42,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { QUERY_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import NodeLogs from './Logs';
+import NodeMetrics from './Metrics';
 import { NodeDetailsProps } from './NodeDetails.interfaces';
 
 function NodeDetails({
@@ -491,7 +492,15 @@ function NodeDetails({
 							/>
 						)}
 					</div>
-					{selectedView === VIEW_TYPES.METRICS && <h1>Metrics</h1>}
+					{selectedView === VIEW_TYPES.METRICS && (
+						<NodeMetrics
+							timeRange={modalTimeRange}
+							isModalTimeSelection={isModalTimeSelection}
+							handleTimeChange={handleTimeChange}
+							selectedInterval={selectedInterval}
+							node={node}
+						/>
+					)}
 					{selectedView === VIEW_TYPES.LOGS && (
 						<NodeLogs
 							timeRange={modalTimeRange}
