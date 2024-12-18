@@ -44,6 +44,7 @@ import { QUERY_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import NodeLogs from './Logs';
 import NodeMetrics from './Metrics';
 import { NodeDetailsProps } from './NodeDetails.interfaces';
+import NodeTraces from './Traces';
 
 function NodeDetails({
 	node,
@@ -511,7 +512,16 @@ function NodeDetails({
 							selectedInterval={selectedInterval}
 						/>
 					)}
-					{selectedView === VIEW_TYPES.TRACES && <h1>Traces</h1>}
+					{selectedView === VIEW_TYPES.TRACES && (
+						<NodeTraces
+							timeRange={modalTimeRange}
+							isModalTimeSelection={isModalTimeSelection}
+							handleTimeChange={handleTimeChange}
+							handleChangeTracesFilters={handleChangeTracesFilters}
+							tracesFilters={tracesFilters}
+							selectedInterval={selectedInterval}
+						/>
+					)}
 					{selectedView === VIEW_TYPES.EVENTS && <h1>Events</h1>}
 				</>
 			)}
