@@ -118,7 +118,7 @@ type ClickHouseReader struct {
 	errorTable              string
 	usageExplorerTable      string
 	SpansTable              string
-	spanAttributeTable      string
+	spanAttributeTableV2    string
 	spanAttributesKeysTable string
 	dependencyGraphTable    string
 	topLevelOperationsTable string
@@ -127,7 +127,7 @@ type ClickHouseReader struct {
 	logsLocalTable          string
 	logsAttributeKeys       string
 	logsResourceKeys        string
-	logsTagAttributeTable   string
+	logsTagAttributeTableV2 string
 	queryEngine             *promql.Engine
 	remoteStorage           *remote.Storage
 	fanoutStorage           *storage.Storage
@@ -246,7 +246,7 @@ func NewReaderFromClickhouseConnection(
 		usageExplorerTable:      options.primary.UsageExplorerTable,
 		durationTable:           options.primary.DurationTable,
 		SpansTable:              options.primary.SpansTable,
-		spanAttributeTable:      options.primary.SpanAttributeTable,
+		spanAttributeTableV2:    options.primary.SpanAttributeTableV2,
 		spanAttributesKeysTable: options.primary.SpanAttributeKeysTable,
 		dependencyGraphTable:    options.primary.DependencyGraphTable,
 		topLevelOperationsTable: options.primary.TopLevelOperationsTable,
@@ -255,7 +255,7 @@ func NewReaderFromClickhouseConnection(
 		logsLocalTable:          options.primary.LogsLocalTable,
 		logsAttributeKeys:       options.primary.LogsAttributeKeysTable,
 		logsResourceKeys:        options.primary.LogsResourceKeysTable,
-		logsTagAttributeTable:   options.primary.LogsTagAttributeTable,
+		logsTagAttributeTableV2: options.primary.LogsTagAttributeTableV2,
 		liveTailRefreshSeconds:  options.primary.LiveTailRefreshSeconds,
 		promConfigFile:          configFile,
 		featureFlags:            featureFlag,
@@ -1035,29 +1035,6 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagOperatorPair, " OR ")), args
 }
 
-func excludeTags(_ context.Context, tags []string) []string {
-	excludedTagsMap := map[string]bool{
-		"http.code":           true,
-		"http.route":          true,
-		"http.method":         true,
-		"http.url":            true,
-		"http.status_code":    true,
-		"http.host":           true,
-		"messaging.system":    true,
-		"messaging.operation": true,
-		"error":               true,
-		"service.name":        true,
-	}
-	newTags := make([]string, 0)
-	for _, tag := range tags {
-		_, ok := excludedTagsMap[tag]
-		if !ok {
-			newTags = append(newTags, tag)
-		}
-	}
-	return newTags
-}
-
 func (r *ClickHouseReader) GetTopOperationsV2(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
 
 	namedArgs := []interface{}{
@@ -1203,7 +1180,9 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
-func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams) (*[]model.SearchSpansResult, error) {
+func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
+	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1318,9 +1297,29 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	end = time.Now()
 	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
 
-	for i, item := range searchSpanResponses {
-		spanEvents := item.GetValues()
-		searchSpansResult[0].Events[i] = spanEvents
+	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
+	smartAlgoEnabled := err == nil
+	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
+		start = time.Now()
+		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
+		if err != nil {
+			return nil, err
+		}
+		end = time.Now()
+		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			data := map[string]interface{}{
+				"traceSize":        len(searchScanResponses),
+				"spansRenderLimit": params.SpansRenderLimit,
+			}
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
+		}
+	} else {
+		for i, item := range searchSpanResponses {
+			spanEvents := item.GetValues()
+			searchSpansResult[0].Events[i] = spanEvents
+		}
 	}
 
 	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
@@ -1334,7 +1333,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
-		return r.SearchTracesV2(ctx, params)
+		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
 	}
 
 	var countSpans uint64
@@ -3481,7 +3480,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	case
 		v3.AggregateOperatorCountDistinct,
 		v3.AggregateOperatorCount:
-		where = "tagKey ILIKE $1"
+		where = "tag_key ILIKE $1"
 		stringAllowed = true
 	case
 		v3.AggregateOperatorRateSum,
@@ -3502,7 +3501,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 		v3.AggregateOperatorSum,
 		v3.AggregateOperatorMin,
 		v3.AggregateOperatorMax:
-		where = "tagKey ILIKE $1 AND (tagDataType='int64' or tagDataType='float64')"
+		where = "tag_key ILIKE $1 AND (tag_data_type='int64' or tag_data_type='float64')"
 		stringAllowed = false
 	case
 		v3.AggregateOperatorNoOp:
@@ -3511,7 +3510,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 		return nil, fmt.Errorf("unsupported aggregate operator")
 	}
 
-	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, tagDataType from %s.%s WHERE %s limit $2", r.logsDB, r.logsTagAttributeTable, where)
+	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type from %s.%s WHERE %s limit $2", r.logsDB, r.logsTagAttributeTableV2, where)
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -3560,10 +3559,10 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	var response v3.FilterAttributeKeyResponse
 
 	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("select distinct tagKey, tagType, tagDataType from  %s.%s where tagKey ILIKE $1 limit $2", r.logsDB, r.logsTagAttributeTable)
+		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from  %s.%s where tag_key ILIKE $1 limit $2", r.logsDB, r.logsTagAttributeTableV2)
 		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 	} else {
-		query = fmt.Sprintf("select distinct tagKey, tagType, tagDataType from  %s.%s limit $1", r.logsDB, r.logsTagAttributeTable)
+		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from  %s.%s limit $1", r.logsDB, r.logsTagAttributeTableV2)
 		rows, err = r.db.Query(ctx, query, req.Limit)
 	}
 
@@ -3640,11 +3639,11 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	query := "select distinct"
 	switch req.FilterAttributeKeyDataType {
 	case v3.AttributeKeyDataTypeInt64:
-		filterValueColumn = "int64TagValue"
+		filterValueColumn = "number_value"
 	case v3.AttributeKeyDataTypeFloat64:
-		filterValueColumn = "float64TagValue"
+		filterValueColumn = "number_value"
 	case v3.AttributeKeyDataTypeString:
-		filterValueColumn = "stringTagValue"
+		filterValueColumn = "string_value"
 	}
 
 	searchText := fmt.Sprintf("%%%s%%", req.SearchText)
@@ -3672,10 +3671,10 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
 			filterValueColumnWhere = fmt.Sprintf("toString(%s)", filterValueColumn)
 		}
-		query = fmt.Sprintf("select distinct %s  from  %s.%s where tagKey=$1 and %s ILIKE $2  and tagType=$3 limit $4", filterValueColumn, r.logsDB, r.logsTagAttributeTable, filterValueColumnWhere)
+		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE tag_key=$1 AND %s ILIKE $2 AND tag_type=$3 LIMIT $4", filterValueColumn, r.logsDB, r.logsTagAttributeTableV2, filterValueColumnWhere)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, searchText, req.TagType, req.Limit)
 	} else {
-		query = fmt.Sprintf("select distinct %s from  %s.%s where tagKey=$1 and tagType=$2 limit $3", filterValueColumn, r.logsDB, r.logsTagAttributeTable)
+		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE tag_key=$1 AND tag_type=$2 LIMIT $3", filterValueColumn, r.logsDB, r.logsTagAttributeTableV2)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
 	}
 
@@ -4140,7 +4139,7 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 	case
 		v3.AggregateOperatorCountDistinct,
 		v3.AggregateOperatorCount:
-		where = "tagKey ILIKE $1"
+		where = "tag_key ILIKE $1"
 		stringAllowed = true
 	case
 		v3.AggregateOperatorRateSum,
@@ -4161,7 +4160,7 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 		v3.AggregateOperatorSum,
 		v3.AggregateOperatorMin,
 		v3.AggregateOperatorMax:
-		where = "tagKey ILIKE $1 AND dataType='float64'"
+		where = "tag_key ILIKE $1 AND tag_data_type='float64'"
 		stringAllowed = false
 	case
 		v3.AggregateOperatorNoOp:
@@ -4169,7 +4168,7 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 	default:
 		return nil, fmt.Errorf("unsupported aggregate operator")
 	}
-	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType FROM %s.%s WHERE %s", r.TraceDB, r.spanAttributeTable, where)
+	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type FROM %s.%s WHERE %s", r.TraceDB, r.spanAttributeTableV2, where)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
@@ -4231,7 +4230,7 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType FROM %s.%s WHERE tagKey ILIKE $1 LIMIT $2", r.TraceDB, r.spanAttributeTable)
+	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type FROM %s.%s WHERE tag_key ILIKE $1 LIMIT $2", r.TraceDB, r.spanAttributeTableV2)
 
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 
@@ -4313,12 +4312,12 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 		}, nil
 	}
 
-	query = "select distinct"
+	query = "SELECT DISTINCT"
 	switch req.FilterAttributeKeyDataType {
 	case v3.AttributeKeyDataTypeFloat64:
-		filterValueColumn = "float64TagValue"
+		filterValueColumn = "number_value"
 	case v3.AttributeKeyDataTypeString:
-		filterValueColumn = "stringTagValue"
+		filterValueColumn = "string_value"
 	}
 
 	searchText := fmt.Sprintf("%%%s%%", req.SearchText)
@@ -4339,14 +4338,14 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 		if r.useTraceNewSchema {
 			where += " AND ts_bucket_start >= toUInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR))"
 		}
-		query = fmt.Sprintf("select distinct %s from %s.%s where %s and %s ILIKE $1 limit $2", selectKey, r.TraceDB, r.traceTableName, where, filterValueColumnWhere)
+		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE %s AND %s ILIKE $1 LIMIT $2", selectKey, r.TraceDB, r.traceTableName, where, filterValueColumnWhere)
 		rows, err = r.db.Query(ctx, query, searchText, req.Limit)
 	} else {
 		filterValueColumnWhere := filterValueColumn
 		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
 			filterValueColumnWhere = fmt.Sprintf("toString(%s)", filterValueColumn)
 		}
-		query = fmt.Sprintf("select distinct %s  from  %s.%s where tagKey=$1 and %s ILIKE $2  and tagType=$3 limit $4", filterValueColumn, r.TraceDB, r.spanAttributeTable, filterValueColumnWhere)
+		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE tag_key=$1 AND %s ILIKE $2 AND tag_type=$3 LIMIT $4", filterValueColumn, r.TraceDB, r.spanAttributeTableV2, filterValueColumnWhere)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, searchText, req.TagType, req.Limit)
 	}
 
