@@ -1,8 +1,11 @@
+import { Button, Tag } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	K8sNodesData,
 	K8sNodesListPayload,
 } from 'api/infraMonitoring/getK8sNodesList';
+import { ChevronRight, Group } from 'lucide-react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { IEntityColumn } from '../utils';
 
@@ -55,6 +58,20 @@ export interface K8sNodesRowData {
 	memoryUtilization: React.ReactNode;
 	memoryAllocatable: React.ReactNode;
 }
+
+const podGroupColumnConfig = {
+	title: (
+		<div className="column-header node-group-header">
+			<Group size={14} /> NODE GROUP
+		</div>
+	),
+	dataIndex: 'nodeGroup',
+	key: 'nodeGroup',
+	ellipsis: true,
+	width: 150,
+	align: 'left',
+	sorter: false,
+};
 
 export const getK8sNodesListQuery = (): K8sNodesListPayload => ({
 	filters: {
@@ -117,10 +134,53 @@ const columnsConfig = [
 	},
 ];
 
-export const getK8sNodesListColumns = (): ColumnType<K8sNodesRowData>[] =>
-	columnsConfig as ColumnType<K8sNodesRowData>[];
+export const getK8sNodesListColumns = (
+	groupBy: IBuilderQuery['groupBy'],
+): ColumnType<K8sNodesRowData>[] => {
+	if (groupBy.length > 0) {
+		const filteredColumns = [...columnsConfig].filter(
+			(column) => column.key !== 'nodeName',
+		);
+		filteredColumns.unshift(podGroupColumnConfig);
+		return filteredColumns as ColumnType<K8sNodesRowData>[];
+	}
 
-export const formatDataForTable = (data: K8sNodesData[]): K8sNodesRowData[] =>
+	return columnsConfig as ColumnType<K8sNodesRowData>[];
+};
+
+const getGroupByEle = (
+	node: K8sNodesData,
+	groupBy: IBuilderQuery['groupBy'],
+): React.ReactNode => {
+	const groupByValues: string[] = [];
+
+	groupBy.forEach((group) => {
+		groupByValues.push(node.meta[group.key as keyof typeof node.meta]);
+	});
+
+	return (
+		<div className="pod-group">
+			<div className="expand-group">
+				<Button
+					type="text"
+					className="expand-group-icon periscope-btn ghost"
+					icon={<ChevronRight size={14} />}
+				/>
+			</div>
+
+			{groupByValues.map((value) => (
+				<Tag key={value} color="#1D212D" className="pod-group-tag-item">
+					{value === '' ? '<no-value>' : value}
+				</Tag>
+			))}
+		</div>
+	);
+};
+
+export const formatDataForTable = (
+	data: K8sNodesData[],
+	groupBy: IBuilderQuery['groupBy'],
+): K8sNodesRowData[] =>
 	data.map((node, index) => ({
 		key: `${node.nodeUID}-${index}`,
 		nodeUID: node.nodeUID || '',
@@ -130,4 +190,5 @@ export const formatDataForTable = (data: K8sNodesData[]): K8sNodesRowData[] =>
 		memoryUtilization: node.nodeMemoryUsage,
 		cpuAllocatable: node.nodeCPUAllocatable,
 		memoryAllocatable: node.nodeMemoryAllocatable,
+		nodeGroup: getGroupByEle(node, groupBy),
 	}));

@@ -36,6 +36,7 @@ import {
 	StatefulsetsQuickFiltersConfig,
 	VolumesQuickFiltersConfig,
 } from './constants';
+import K8sNodesList from './Nodes/K8sNodesList';
 import K8sPodLists from './Pods/K8sPodLists';
 import Volumes from './Volumes/Volumes';
 
@@ -318,6 +319,13 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					>
 						{selectedCategory === K8sCategories.PODS && (
 							<K8sPodLists
+								isFiltersVisible={showFilters}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
+							/>
+						)}
+
+						{selectedCategory === K8sCategories.NODES && (
+							<K8sNodesList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 							/>

@@ -157,14 +157,33 @@ export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 export const NodesQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Nodes',
+		title: 'Node Name',
 		attributeKey: {
 			key: 'k8s_node_name',
 			dataType: DataTypes.String,
 			type: 'resource',
 			isColumn: false,
 			isJSON: false,
+			// id: 'k8s_pod_name--string--tag--true',
 		},
+		aggregateOperator: 'noop',
+		aggregateAttribute: 'k8s_pod_cpu_utilization',
+		dataSource: DataSource.METRICS,
+		defaultOpen: true,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Cluster Name',
+		attributeKey: {
+			key: 'k8s_cluster_name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		aggregateOperator: 'noop',
+		aggregateAttribute: 'k8s_pod_cpu_utilization',
+		dataSource: DataSource.METRICS,
 		defaultOpen: true,
 	},
 ];
