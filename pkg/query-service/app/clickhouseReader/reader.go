@@ -2991,7 +2991,7 @@ func (r *ClickHouseReader) GetTraceFields(ctx context.Context) (*model.GetFields
 
 	// get attribute keys
 	attributes := []model.Field{}
-	query := fmt.Sprintf("SELECT DISTINCT tagKey, tagType, dataType from %s.%s group by tagKey, tagType, dataType", r.TraceDB, r.spanAttributesKeysTable)
+	query := fmt.Sprintf("SELECT tagKey, tagType, dataType from %s.%s group by tagKey, tagType, dataType", r.TraceDB, r.spanAttributesKeysTable)
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
@@ -3033,15 +3033,23 @@ func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.Up
 	// name of the materialized column
 	colname := utils.GetClickhouseColumnNameV2(field.Type, field.DataType, field.Name)
 
+	field.DataType = strings.ToLower(field.DataType)
+
 	// dataType and chDataType of the materialized column
-	// dataType: string => string, bool => bool, int64, float64 => number
-	// chDataType: string => String, bool => Bool, int64 => Float64, => float64 => Float64
-	chDataType := strings.ToUpper(string(field.DataType[0])) + field.DataType[1:]
-	dataType := strings.ToLower(field.DataType)
-	if dataType == "int64" || dataType == "float64" {
-		dataType = "number"
-		chDataType = "Float64"
+	var dataTypeMap = map[string]string{
+		"string":  "string",
+		"bool":    "bool",
+		"int64":   "number",
+		"float64": "number",
 	}
+	var chDataTypeMap = map[string]string{
+		"string":  "String",
+		"bool":    "Bool",
+		"int64":   "Float64",
+		"float64": "Float64",
+	}
+	chDataType := chDataTypeMap[field.DataType]
+	dataType := dataTypeMap[field.DataType]
 
 	// typeName: tag => attributes, resource => resources
 	typeName := field.Type
@@ -3103,6 +3111,22 @@ func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.Up
 	if err != nil {
 		return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
+
+	// add a default minmax index for numbers
+	if dataType == "number" {
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS `%s_minmax_idx` (`%s`) TYPE minmax  GRANULARITY %d",
+			r.TraceDB, r.traceLocalTableName,
+			r.cluster,
+			colname,
+			colname,
+			field.IndexGranularity,
+		)
+		err = r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+	}
+
 	return nil
 }
 
