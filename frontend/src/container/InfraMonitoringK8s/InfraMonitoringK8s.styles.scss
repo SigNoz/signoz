@@ -146,6 +146,13 @@
 			display: flex;
 			align-items: center;
 			gap: 4px;
+			flex-wrap: wrap;
+
+			min-width: 180px;
+			max-width: 180px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
 		}
 
 		.pod-group-tag-item {
@@ -154,9 +161,31 @@
 			font-weight: 400;
 			background: var(--bg-slate-400);
 			color: var(--bg-vanilla-400);
+
+			max-width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.pod-name {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			flex-wrap: wrap;
+
+			min-width: 180px;
+			max-width: 180px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
 		}
 
 		.ant-table-container {
+			.ant-table-row-expand-icon-cell {
+				padding: 0px;
+			}
+
 			.ant-table-content {
 				&::-webkit-scrollbar {
 					width: 0.1rem;
@@ -323,6 +352,7 @@
 				line-height: 20px;
 				color: var(--bg-vanilla-100);
 				background: var(--bg-ink-500);
+				border-bottom: none;
 			}
 
 			.ant-table-cell:has(.hostname-column-value) {
@@ -410,6 +440,67 @@
 					a {
 						color: var(--bg-ink-500) !important;
 					}
+				}
+			}
+		}
+
+		.ant-table-expanded-row {
+			&:hover {
+				background: var(--bg-ink-500);
+			}
+
+			.ant-table-cell {
+				background: var(--bg-ink-500) !important;
+			}
+
+			.ant-table .ant-table-thead > tr > th {
+				padding: 4px 16px !important;
+			}
+		}
+
+		.expanded-table-container {
+			border: 1px solid var(--bg-ink-400);
+			overflow-x: auto;
+			padding: 8px;
+
+			&::-webkit-scrollbar {
+				width: 0.1rem;
+				height: 0.1rem;
+			}
+
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				background: var(--bg-ink-200);
+			}
+
+			&::-webkit-scrollbar-thumb:hover {
+				background: var(--bg-ink-100);
+			}
+
+			.ant-table-expanded-row {
+				background: var(--bg-ink-500);
+
+				&:hover {
+					background: var(--bg-ink-500);
+				}
+
+				.ant-table-cell {
+					background: var(--bg-ink-500);
+				}
+			}
+
+			.expanded-table-footer {
+				display: flex;
+				justify-content: flex-start;
+				padding: 8px;
+				padding-left: 56px;
+				margin-top: 8px;
+
+				.periscope-btn {
+					font-size: 11px;
 				}
 			}
 		}

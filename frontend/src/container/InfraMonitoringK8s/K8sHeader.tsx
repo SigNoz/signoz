@@ -45,8 +45,6 @@ function K8sHeader({
 
 	const { currentQuery } = useQueryBuilder();
 
-	console.log('selectedGroupBy', selectedGroupBy);
-
 	const updatedCurrentQuery = useMemo(
 		() => ({
 			...currentQuery,
@@ -106,6 +104,8 @@ function K8sHeader({
 						className="group-by-select"
 						loading={isLoadingGroupByFilters}
 						mode="multiple"
+						value={selectedGroupBy}
+						allowClear
 						maxTagCount="responsive"
 						placeholder="Search for attribute"
 						style={{ width: '100%' }}

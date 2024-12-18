@@ -2,13 +2,13 @@
 import './InfraMonitoringK8s.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Progress, Tag, Tooltip } from 'antd';
+import { Progress, Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	K8sPodsData,
 	K8sPodsListPayload,
 } from 'api/infraMonitoring/getK8sPodsList';
-import { ChevronRight, Group } from 'lucide-react';
+import { Group } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface IPodColumn {
@@ -92,7 +92,7 @@ export const defaultAvailableColumns = [
 
 export interface K8sPodsRowData {
 	key: string;
-	podName: string;
+	podName: React.ReactNode;
 	podUID: string;
 	cpuRequestUtilization: React.ReactNode;
 	cpuLimitUtilization: React.ReactNode;
@@ -101,6 +101,7 @@ export interface K8sPodsRowData {
 	memoryLimitUtilization: React.ReactNode;
 	memoryUtilization: React.ReactNode;
 	containerRestarts: number;
+	groupedByMeta?: any;
 }
 
 export const getK8sPodsListQuery = (): K8sPodsListPayload => ({
@@ -119,18 +120,31 @@ const podGroupColumnConfig = {
 	),
 	dataIndex: 'podGroup',
 	key: 'podGroup',
-	ellipsis: true,
-	width: 150,
+	ellipsis: {
+		showTitle: false,
+	},
+	width: 120,
 	align: 'left',
 	sorter: false,
 };
 
+export const dummyColumnConfig = {
+	title: <div className="column-header dummy-column">&nbsp;</div>,
+	dataIndex: 'dummy',
+	key: 'dummy',
+	width: 25,
+	sorter: false,
+	align: 'left',
+};
+
 const columnsConfig = [
 	{
-		title: <div className="column-header">Pod Name</div>,
-		dataIndex: 'k8s_pod_name',
+		title: <div className="column-header pod-name-header">Pod Name</div>,
+		dataIndex: 'podName',
 		key: 'podName',
-		ellipsis: true,
+		ellipsis: {
+			showTitle: false,
+		},
 		width: 120,
 		sorter: true,
 		align: 'left',
@@ -209,7 +223,8 @@ const columnsConfig = [
 		),
 		dataIndex: 'memoryUtilization',
 		key: 'memoryUtilization',
-		width: 80,
+		width: 100,
+		ellipsis: true,
 		sorter: true,
 		align: 'left',
 	},
@@ -221,7 +236,8 @@ const columnsConfig = [
 		),
 		dataIndex: 'containerRestarts',
 		key: 'containerRestarts',
-		width: 50,
+		width: 100,
+		ellipsis: true,
 		sorter: true,
 		align: 'left',
 	},
@@ -302,14 +318,6 @@ const getGroupByEle = (
 
 	return (
 		<div className="pod-group">
-			<div className="expand-group">
-				<Button
-					type="text"
-					className="expand-group-icon periscope-btn ghost"
-					icon={<ChevronRight size={14} />}
-				/>
-			</div>
-
 			{groupByValues.map((value) => (
 				<Tag key={value} color="#1D212D" className="pod-group-tag-item">
 					{value === '' ? '<no-value>' : value}
@@ -325,7 +333,11 @@ export const formatDataForTable = (
 ): K8sPodsRowData[] =>
 	data.map((pod, index) => ({
 		key: `${pod.podUID}-${index}`,
-		podName: pod.meta.k8s_pod_name || '',
+		podName: (
+			<div className="pod-name-container">
+				<div className="pod-name">{pod.meta.k8s_pod_name || ''}</div>
+			</div>
+		),
 		podUID: pod.podUID || '',
 		cpuRequestUtilization: (
 			<div className="progress-container">
@@ -401,6 +413,8 @@ export const formatDataForTable = (
 		namespace: pod.meta.k8s_namespace_name,
 		node: pod.meta.k8s_node_name,
 		cluster: pod.meta.k8s_job_name,
-		...pod.meta,
+		meta: pod.meta,
 		podGroup: getGroupByEle(pod, groupBy),
+		...pod.meta,
+		groupedByMeta: pod.meta,
 	}));
