@@ -173,7 +173,8 @@ services:
       [
         "-config=/root/config/prometheus.yml",
         "-gateway-url=https://api.staging.signoz.cloud",
-        "--use-logs-new-schema=true"
+        "--use-logs-new-schema=true",
+        "--use-trace-new-schema=true"
       ]
     # ports:
     #   - "6060:6060"     # pprof port
