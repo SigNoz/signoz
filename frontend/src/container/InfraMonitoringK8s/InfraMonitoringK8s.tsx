@@ -5,6 +5,8 @@ import * as Sentry from '@sentry/react';
 import type { CollapseProps } from 'antd';
 import { Collapse, Tooltip, Typography } from 'antd';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import {
 	ArrowUpDown,
 	Bolt,
@@ -18,7 +20,8 @@ import {
 	Workflow,
 } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
 	ClustersQuickFiltersConfig,
@@ -41,9 +44,26 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	const [selectedCategory, setSelectedCategory] = useState(K8sCategories.PODS);
 
+	const { currentQuery } = useQueryBuilder();
+
 	const handleFilterVisibilityChange = (): void => {
 		setShowFilters(!showFilters);
 	};
+
+	const { handleChangeQueryData } = useQueryOperations({
+		index: 0,
+		query: currentQuery.builder.queryData[0],
+		entityVersion: '',
+	});
+
+	const handleFilterChange = useCallback(
+		(query: Query): void => {
+			// update the current query with the new filters
+			// in infra monitoring k8s, we are using only one query, hence updating the 0th index of queryData
+			handleChangeQueryData('filters', query.builder.queryData[0].filters);
+		},
+		[handleChangeQueryData],
+	);
 
 	const items: CollapseProps['items'] = [
 		{
@@ -64,6 +84,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					source="infra-monitoring"
 					config={PodsQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
 				/>
 			),
 		},
@@ -85,6 +106,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					source="infra-monitoring"
 					config={NodesQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
 				/>
 			),
 		},
@@ -112,6 +134,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					source="infra-monitoring"
 					config={NamespaceQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
 				/>
 			),
 		},
@@ -133,6 +156,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					source="infra-monitoring"
 					config={ClustersQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
 				/>
 			),
 		},
@@ -160,6 +184,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					source="infra-monitoring"
 					config={ContainersQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
 				/>
 			),
 		},
@@ -181,6 +206,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					source="infra-monitoring"
 					config={VolumesQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
 				/>
 			),
 		},
@@ -205,6 +231,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					source="infra-monitoring"
 					config={DeploymentsQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
 				/>
 			),
 		},
@@ -226,6 +253,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					source="infra-monitoring"
 					config={JobsQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
 				/>
 			),
 		},
@@ -250,6 +278,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					source="infra-monitoring"
 					config={DaemonSetsQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
 				/>
 			),
 		},
@@ -277,6 +306,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					source="infra-monitoring"
 					config={StatefulsetsQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
 				/>
 			),
 		},
