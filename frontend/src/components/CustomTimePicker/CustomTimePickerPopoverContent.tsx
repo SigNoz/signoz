@@ -83,7 +83,7 @@ function CustomTimePickerPopoverContent({
 		setActiveView('timezone');
 		setIsOpenedFromFooter(true);
 		logEvent(
-			'DateTimePicker: Timezone picker opened from "Current Timezone" hint inside date time picker popover',
+			'DateTimePicker: Timezone picker opened from time range picker footer',
 			{
 				page: pathname,
 			},

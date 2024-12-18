@@ -303,7 +303,7 @@ function CustomTimePicker({
 		handleViewChange('timezone');
 		setIsOpenedFromFooter(false);
 		logEvent(
-			'DateTimePicker: Timezone picker opened from Current timezone badge in date/time picker input',
+			'DateTimePicker: Timezone picker opened from time range input badge',
 			{
 				page: location.pathname,
 			},
