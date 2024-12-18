@@ -158,7 +158,7 @@ function TimezonePicker({
 			updateTimezone(timezone);
 			handleCloseTimezonePicker();
 			setIsOpen(false);
-			logEvent('Timezone selected', {
+			logEvent('DateTimePicker: New Timezone Selected', {
 				timezone: {
 					name: timezone.name,
 					offset: timezone.offset,

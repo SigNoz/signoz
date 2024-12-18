@@ -28,13 +28,16 @@ function TimezoneAdaptation(): JSX.Element {
 
 	const handleOverrideClear = (): void => {
 		updateTimezone(browserTimezone);
-		logEvent('Timezone override cleared', {});
+		logEvent('Settings: Timezone override cleared', {});
 	};
 
 	const handleSwitchChange = (): void => {
 		setIsAdaptationEnabled((prev) => {
 			const isEnabled = !prev;
-			logEvent(`Timezone adaptation ${isEnabled ? 'enabled' : 'disabled'}`, {});
+			logEvent(
+				`Settings: Timezone adaptation ${isEnabled ? 'enabled' : 'disabled'}`,
+				{},
+			);
 			return isEnabled;
 		});
 	};

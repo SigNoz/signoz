@@ -302,10 +302,12 @@ function CustomTimePicker({
 		e.stopPropagation();
 		handleViewChange('timezone');
 		setIsOpenedFromFooter(false);
-		logEvent('Timezone picker opened', {
-			source: `current timezone badge in date/time picker input`,
-			page: location.pathname,
-		});
+		logEvent(
+			'DateTimePicker: Timezone picker opened from Current timezone badge in date/time picker input',
+			{
+				page: location.pathname,
+			},
+		);
 	};
 
 	return (

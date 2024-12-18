@@ -82,10 +82,12 @@ function CustomTimePickerPopoverContent({
 	const handleTimezoneHintClick = (): void => {
 		setActiveView('timezone');
 		setIsOpenedFromFooter(true);
-		logEvent('Timezone picker opened', {
-			source: `"Current Timezone" hint inside date time picker popover`,
-			page: pathname,
-		});
+		logEvent(
+			'DateTimePicker: Timezone picker opened from "Current Timezone" hint inside date time picker popover',
+			{
+				page: pathname,
+			},
+		);
 	};
 
 	if (activeView === 'timezone') {
