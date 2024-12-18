@@ -91,6 +91,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	const isInfraMonitoring = source === 'infra-monitoring';
 
+	console.log('currentQuery', currentQuery);
+
 	return (
 		<div className="quick-filters">
 			{!isInfraMonitoring && (

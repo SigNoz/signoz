@@ -45,8 +45,12 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	const {
 		lastUsedQuery,
 		currentQuery,
+		stagedQuery,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+
+	console.log('currentQuery', cloneDeep(currentQuery));
+	console.log('stagedQuery', cloneDeep(stagedQuery));
 
 	const { data, isLoading } = useGetAggregateValues(
 		{
@@ -72,7 +76,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	);
 	const currentAttributeKeys = attributeValues.slice(0, visibleItemsCount);
 
-	// derive the state of each filter key here in the renderer itself and keep it in sync with staged query
+	// derive the state of each filter key here in the renderer itself and keep it in sync with current query
 	// also we need to keep a note of last focussed query.
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const currentFilterState = useMemo(() => {
