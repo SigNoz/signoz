@@ -457,7 +457,7 @@ export const Query = memo(function Query({
 										</Col>
 									)}
 									<Col flex="1" className="qb-search-container">
-										{isLogsExplorerPage ? (
+										{isLogsExplorerPage || query.dataSource === DataSource.LOGS ? (
 											<QueryBuilderSearchV2
 												query={query}
 												onChange={handleChangeTagFilters}
