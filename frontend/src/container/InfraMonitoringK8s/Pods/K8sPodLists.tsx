@@ -15,6 +15,7 @@ import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
 import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -57,11 +58,6 @@ function K8sPodsList({
 		defaultAvailableColumns,
 	);
 
-	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
-		items: [],
-		op: 'and',
-	});
-
 	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
 
 	const [groupByOptions, setGroupByOptions] = useState<
@@ -69,6 +65,15 @@ function K8sPodsList({
 	>([]);
 
 	const { currentQuery } = useQueryBuilder();
+
+	const queryFilters = useMemo(
+		() =>
+			currentQuery?.builder?.queryData[0]?.filters || {
+				items: [],
+				op: 'and',
+			},
+		[currentQuery?.builder?.queryData],
+	);
 
 	const {
 		data: groupByFiltersData,
@@ -120,7 +125,7 @@ function K8sPodsList({
 			...baseQuery,
 			limit: pageSize,
 			offset: (currentPage - 1) * pageSize,
-			filters,
+			filters: queryFilters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
 			orderBy,
@@ -131,7 +136,7 @@ function K8sPodsList({
 		}
 
 		return queryPayload;
-	}, [currentPage, filters, minTime, maxTime, orderBy, groupBy]);
+	}, [currentPage, minTime, maxTime, orderBy, groupBy, queryFilters]);
 
 	const { data, isFetching, isLoading, isError } = useGetK8sPodsList(
 		query as K8sPodsListPayload,
@@ -176,19 +181,22 @@ function K8sPodsList({
 		[],
 	);
 
+	const { handleChangeQueryData } = useQueryOperations({
+		index: 0,
+		query: currentQuery.builder.queryData[0],
+		entityVersion: '',
+	});
+
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {
-			const isNewFilterAdded = value.items.length !== filters.items.length;
-			if (isNewFilterAdded) {
-				setFilters(value);
-				setCurrentPage(1);
+			handleChangeQueryData('filters', value);
+			setCurrentPage(1);
 
-				logEvent('Infra Monitoring: K8s list filters applied', {
-					filters: value,
-				});
-			}
+			logEvent('Infra Monitoring: K8s list filters applied', {
+				filters: value,
+			});
 		},
-		[filters],
+		[handleChangeQueryData],
 	);
 
 	const handleGroupByChange = useCallback(
@@ -237,13 +245,13 @@ function K8sPodsList({
 		!isError &&
 		!isLoading &&
 		!isFetching &&
-		!(formattedPodsData.length === 0 && filters.items.length > 0);
+		!(formattedPodsData.length === 0 && queryFilters.items.length > 0);
 
 	const showNoFilteredPodsMessage =
 		!isFetching &&
 		!isLoading &&
 		formattedPodsData.length === 0 &&
-		filters.items.length > 0;
+		queryFilters.items.length > 0;
 
 	const handleAddColumn = useCallback(
 		(column: IPodColumn): void => {
