@@ -114,6 +114,7 @@ function ExplorerOptions({
 		panelType,
 		isStagedQueryUpdated,
 		redirectWithQueryBuilderData,
+		isDefaultQuery,
 	} = useQueryBuilder();
 
 	const handleSaveViewModalToggle = (): void => {
@@ -480,6 +481,11 @@ function ExplorerOptions({
 	] = useState(false);
 
 	useEffect(() => {
+		// If the query is not the default query, don't set the recently used saved view
+		if (!isDefaultQuery({ currentQuery, sourcePage: sourcepage })) {
+			return;
+		}
+
 		const parsedPreservedView = JSON.parse(
 			localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY) || '{}',
 		);
@@ -501,12 +507,18 @@ function ExplorerOptions({
 			setIsRecentlyUsedSavedViewSelected(false);
 		}
 
-		return (): void => clearTimeout(timeoutId);
+		// eslint-disable-next-line consistent-return
+		return (): void => {
+			clearTimeout(timeoutId);
+		};
 	}, [
 		PRESERVED_VIEW_LOCAL_STORAGE_KEY,
 		PRESERVED_VIEW_TYPE,
+		currentQuery,
+		isDefaultQuery,
 		isRecentlyUsedSavedViewSelected,
 		onMenuItemSelectHandler,
+		sourcepage,
 		viewKey,
 		viewName,
 		viewsData?.data?.data,
