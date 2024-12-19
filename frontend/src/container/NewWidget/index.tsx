@@ -88,7 +88,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
-	const { selectedTime: globalSelectedInterval } = useSelector<
+	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
@@ -350,6 +350,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				formatForWeb:
 					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
 					PANEL_TYPES.TABLE,
+				timeRange: { start: minTime, end: maxTime },
 			}));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -358,6 +359,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedTime,
 		selectedWidget.fillSpans,
 		globalSelectedInterval,
+		minTime,
+		maxTime,
 	]);
 
 	const onClickSaveHandler = useCallback(() => {
