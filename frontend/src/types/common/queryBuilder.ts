@@ -13,6 +13,7 @@ import {
 import { ViewProps } from 'types/api/saveViews/types';
 
 import { EQueryType } from './dashboard';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 
 export enum DataSource {
 	METRICS = 'metrics',
@@ -246,6 +247,7 @@ export type QueryBuilderContextType = {
 	isStagedQueryUpdated: (
 		viewData: ViewProps[] | undefined,
 		viewKey: string,
+		options: OptionsQuery
 	) => boolean;
 };
 
