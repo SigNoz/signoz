@@ -307,18 +307,18 @@ function K8sNodesList({
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
-						groupedByRowData?.payload?.data?.total > 10 && (
-							<div className="expanded-table-footer">
-								<Button
-									type="default"
-									size="small"
-									className="periscope-btn secondary"
-									onClick={handleExpandedRowViewAllClick}
-								>
-									View All
-								</Button>
-							</div>
-						)}
+					groupedByRowData?.payload?.data?.total > 10 ? (
+						<div className="expanded-table-footer">
+							<Button
+								type="default"
+								size="small"
+								className="periscope-btn secondary"
+								onClick={handleExpandedRowViewAllClick}
+							>
+								View All
+							</Button>
+						</div>
+					) : null}
 				</div>
 			)}
 		</div>
