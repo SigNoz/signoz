@@ -499,7 +499,7 @@ func AddOffsetToQuery(query string, offset uint64) string {
 // PrepareTracesQuery returns the query string for traces
 // start and end are in epoch millisecond
 // step is in seconds
-func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
+func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions, sortBy string) (string, error) {
 	// adjust the start and end time to the step interval
 	if panelType == v3.PanelTypeGraph {
 		// adjust the start and end time to the step interval for graph panel types

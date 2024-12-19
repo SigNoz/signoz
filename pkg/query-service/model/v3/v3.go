@@ -379,6 +379,7 @@ type QueryRangeParamsV3 struct {
 	NoCache        bool                   `json:"noCache"`
 	Version        string                 `json:"-"`
 	FormatForWeb   bool                   `json:"formatForWeb,omitempty"`
+	SortBy         string                 `json:"sortBy,omitempty"`
 }
 
 func (q *QueryRangeParamsV3) Clone() *QueryRangeParamsV3 {

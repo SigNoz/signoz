@@ -53,6 +53,8 @@ const LogsTTL = "logs"
 const DurationSort = "DurationSort"
 const TimestampSort = "TimestampSort"
 const PreferRPM = "PreferRPM"
+const TraceSortBySpanCount = "span_count"
+const TraceSortByTraceDuration = "trace_duration"
 
 func GetAlertManagerApiPrefix() string {
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
@@ -248,6 +250,7 @@ const (
 	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME  = "time_series_v4_1day"
 	SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME = "time_series_v4_1week"
 	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME        = "distributed_time_series_v4_1day"
+	SIGNOZ_TRACE_SPAN_COUNT_MV                 = "trace_summary_mv"
 )
 
 var TimeoutExcludedRoutes = map[string]bool{
@@ -353,6 +356,8 @@ const (
 	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
 		"span_count, subQuery.durationNano, traceID FROM %s.%s GLOBAL INNER JOIN subQuery ON %s.traceID = subQuery.traceID GROUP " +
 		"BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc;"
+	TraceExplorerSpanCountSubQuery    = "SELECT t.trace_id, t.num_spans FROM %s.%s as t GLOBAL INNER JOIN (SELECT * FROM (SELECT trace_id FROM %s.%s WHERE %s %s LIMIT 1 BY trace_id) AS inner_filtered ) AS filtered_traces ON t.trace_id = filtered_traces.trace_id ORDER BY t.num_spans DESC "
+	TraceExplorerEnrichSpanCountQuery = "SELECT name, serviceName, duration_nano FROM %s.%s WHERE trace_id = %s"
 )
 
 // ReservedColumnTargetAliases identifies result value from a user
