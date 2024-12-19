@@ -24,13 +24,13 @@ const MQServiceDetailTypePerView = (
 	producerLatencyOption: ProducerLatencyOptions,
 ): Record<string, MessagingQueueServiceDetailType[]> => ({
 	[MessagingQueuesViewType.consumerLag.value]: [
-		MessagingQueueServiceDetailType.ConsumerDetails,
 		MessagingQueueServiceDetailType.ProducerDetails,
+		MessagingQueueServiceDetailType.ConsumerDetails,
 		MessagingQueueServiceDetailType.NetworkLatency,
 	],
 	[MessagingQueuesViewType.partitionLatency.value]: [
-		MessagingQueueServiceDetailType.ConsumerDetails,
 		MessagingQueueServiceDetailType.ProducerDetails,
+		MessagingQueueServiceDetailType.ConsumerDetails,
 	],
 	[MessagingQueuesViewType.producerLatency.value]: [
 		producerLatencyOption === ProducerLatencyOptions.Consumers
@@ -122,7 +122,7 @@ function MessagingQueuesDetails({
 	producerLatencyOption: ProducerLatencyOptions;
 }): JSX.Element {
 	const [currentTab, setCurrentTab] = useState<MessagingQueueServiceDetailType>(
-		MessagingQueueServiceDetailType.ConsumerDetails,
+		MessagingQueueServiceDetailType.ProducerDetails,
 	);
 
 	useEffect(() => {
