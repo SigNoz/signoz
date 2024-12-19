@@ -238,14 +238,14 @@ func TestParseColumn(t *testing.T) {
 func TestReplaceInterestingFields(t *testing.T) {
 	queryTokens := []string{"id.userid IN (100) ", "and id_key >= 50 ", `AND body ILIKE '%searchstring%'`}
 	allFields := model.GetFieldsResponse{
-		Selected: []model.LogField{
+		Selected: []model.Field{
 			{
 				Name:     "id_key",
 				DataType: "int64",
 				Type:     "attributes",
 			},
 		},
-		Interesting: []model.LogField{
+		Interesting: []model.Field{
 			{
 				Name:     "id.userid",
 				DataType: "int64",
@@ -326,7 +326,7 @@ func TestCheckIfPrevousPaginateAndModifyOrder(t *testing.T) {
 }
 
 var generateSQLQueryFields = model.GetFieldsResponse{
-	Selected: []model.LogField{
+	Selected: []model.Field{
 		{
 			Name:     "field1",
 			DataType: "int64",
@@ -348,7 +348,7 @@ var generateSQLQueryFields = model.GetFieldsResponse{
 			Type:     "static",
 		},
 	},
-	Interesting: []model.LogField{
+	Interesting: []model.Field{
 		{
 			Name:     "FielD1",
 			DataType: "int64",
