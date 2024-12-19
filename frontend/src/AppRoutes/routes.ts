@@ -407,6 +407,13 @@ const routes: AppRoutes[] = [
 		key: 'INFRASTRUCTURE_MONITORING_HOSTS',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES,
+		exact: true,
+		component: InfrastructureMonitoring,
+		key: 'INFRASTRUCTURE_MONITORING_KUBERNETES',
+		isPrivate: true,
+	},
 ];
 
 export const SUPPORT_ROUTE: AppRoutes = {
