@@ -4,13 +4,13 @@ import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 var (
 	metricNamesForWorkloads = map[string]string{
-		"cpu":          "k8s_pod_cpu_utilization",
-		"cpu_req":      "k8s_pod_cpu_request_utilization",
-		"cpu_limit":    "k8s_pod_cpu_limit_utilization",
-		"memory":       "k8s_pod_memory_usage",
-		"memory_req":   "k8s_pod_memory_request_utilization",
-		"memory_limit": "k8s_pod_memory_limit_utilization",
-		"restarts":     "k8s_container_restarts",
+		"cpu":            "k8s_pod_cpu_utilization",
+		"cpu_request":    "k8s_pod_cpu_request_utilization",
+		"cpu_limit":      "k8s_pod_cpu_limit_utilization",
+		"memory":         "k8s_pod_memory_usage",
+		"memory_request": "k8s_pod_memory_request_utilization",
+		"memory_limit":   "k8s_pod_memory_limit_utilization",
+		"restarts":       "k8s_container_restarts",
 	}
 )
 
@@ -54,7 +54,7 @@ var WorkloadTableListQuery = v3.QueryRangeParamsV3{
 				Expression:       "B",
 				ReduceTo:         v3.ReduceToOperatorAvg,
 				TimeAggregation:  v3.TimeAggregationAvg,
-				SpaceAggregation: v3.SpaceAggregationSum,
+				SpaceAggregation: v3.SpaceAggregationAvg,
 				Disabled:         false,
 			},
 			// pod cpu limit utilization
@@ -74,7 +74,7 @@ var WorkloadTableListQuery = v3.QueryRangeParamsV3{
 				Expression:       "C",
 				ReduceTo:         v3.ReduceToOperatorAvg,
 				TimeAggregation:  v3.TimeAggregationAvg,
-				SpaceAggregation: v3.SpaceAggregationSum,
+				SpaceAggregation: v3.SpaceAggregationAvg,
 				Disabled:         false,
 			},
 			// pod memory utilization
@@ -114,7 +114,7 @@ var WorkloadTableListQuery = v3.QueryRangeParamsV3{
 				Expression:       "E",
 				ReduceTo:         v3.ReduceToOperatorAvg,
 				TimeAggregation:  v3.TimeAggregationAvg,
-				SpaceAggregation: v3.SpaceAggregationSum,
+				SpaceAggregation: v3.SpaceAggregationAvg,
 				Disabled:         false,
 			},
 			// pod memory limit utilization
@@ -134,7 +134,7 @@ var WorkloadTableListQuery = v3.QueryRangeParamsV3{
 				Expression:       "F",
 				ReduceTo:         v3.ReduceToOperatorAvg,
 				TimeAggregation:  v3.TimeAggregationAvg,
-				SpaceAggregation: v3.SpaceAggregationSum,
+				SpaceAggregation: v3.SpaceAggregationAvg,
 				Disabled:         false,
 			},
 			"G": {

@@ -228,8 +228,8 @@ func parseColumn(s string) (*string, error) {
 	return &colName, nil
 }
 
-func arrayToMap(fields []model.LogField) map[string]model.LogField {
-	res := map[string]model.LogField{}
+func arrayToMap(fields []model.Field) map[string]model.Field {
+	res := map[string]model.Field{}
 	for _, field := range fields {
 		res[field.Name] = field
 	}
@@ -251,7 +251,7 @@ func replaceInterestingFields(allFields *model.GetFieldsResponse, queryTokens []
 	return queryTokens, nil
 }
 
-func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]model.LogField, interestingFieldLookup map[string]model.LogField) (string, error) {
+func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]model.Field, interestingFieldLookup map[string]model.Field) (string, error) {
 	op := strings.TrimSpace(operatorRegex.FindString(queryToken))
 	opLower := strings.ToLower(op)
 
@@ -283,7 +283,7 @@ func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]mode
 			}
 		} else {
 			// creating the query token here as we have the metadata
-			field := model.LogField{}
+			field := model.Field{}
 
 			if sfield, ok := selectedFieldsLookup[sqlColName]; ok {
 				field = sfield

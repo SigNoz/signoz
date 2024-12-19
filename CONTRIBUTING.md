@@ -339,7 +339,7 @@ to make SigNoz UI available at [localhost:3301](http://localhost:3301)
 **5.1.1 To install the HotROD sample app:**
 
 ```bash
-curl -sL https://github.com/SigNoz/signoz/raw/develop/sample-apps/hotrod/hotrod-install.sh \
+curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-install.sh \
   | HELM_RELEASE=my-release SIGNOZ_NAMESPACE=platform bash
 ```
 
@@ -362,7 +362,7 @@ kubectl -n sample-application run strzal --image=djbingham/curl \
 **5.1.4 To delete the HotROD sample app:**
 
 ```bash
-curl -sL https://github.com/SigNoz/signoz/raw/develop/sample-apps/hotrod/hotrod-delete.sh \
+curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-delete.sh \
   | HOTROD_NAMESPACE=sample-application bash
 ```
 

@@ -270,6 +270,10 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
+			if item.Key.Key == "__value" {
+				continue
+			}
+
 			toFormat := item.Value
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
 			if op == v3.FilterOperatorContains || op == v3.FilterOperatorNotContains {
