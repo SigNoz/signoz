@@ -337,3 +337,30 @@ type JobListRecord struct {
 	SuccessfulPods        int               `json:"successfulPods"`
 	Meta                  map[string]string `json:"meta"`
 }
+
+type VolumeListRequest struct {
+	Start   int64             `json:"start"` // epoch time in ms
+	End     int64             `json:"end"`   // epoch time in ms
+	Filters *v3.FilterSet     `json:"filters"`
+	GroupBy []v3.AttributeKey `json:"groupBy"`
+	OrderBy *v3.OrderBy       `json:"orderBy"`
+	Offset  int               `json:"offset"`
+	Limit   int               `json:"limit"`
+}
+
+type VolumeListResponse struct {
+	Type    ResponseType       `json:"type"`
+	Records []VolumeListRecord `json:"records"`
+	Total   int                `json:"total"`
+}
+
+type VolumeListRecord struct {
+	PersistentVolumeClaimName string            `json:"persistentVolumeClaimName"`
+	VolumeAvailable           float64           `json:"volumeAvailable"`
+	VolumeCapacity            float64           `json:"volumeCapacity"`
+	VolumeInodes              float64           `json:"volumeInodes"`
+	VolumeInodesFree          float64           `json:"volumeInodesFree"`
+	VolumeInodesUsed          float64           `json:"volumeInodesUsed"`
+	VolumeUsage               float64           `json:"volumeUsage"`
+	Meta                      map[string]string `json:"meta"`
+}

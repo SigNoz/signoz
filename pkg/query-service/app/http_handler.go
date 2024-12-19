@@ -125,6 +125,8 @@ type APIHandler struct {
 	daemonsetsRepo   *inframetrics.DaemonSetsRepo
 	statefulsetsRepo *inframetrics.StatefulSetsRepo
 	jobsRepo         *inframetrics.JobsRepo
+
+	pvcsRepo *inframetrics.PvcsRepo
 }
 
 type APIHandlerOpts struct {
@@ -208,6 +210,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	daemonsetsRepo := inframetrics.NewDaemonSetsRepo(opts.Reader, querierv2)
 	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
+	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -237,6 +240,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		daemonsetsRepo:                daemonsetsRepo,
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
+		pvcsRepo:                      pvcsRepo,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -407,6 +411,11 @@ func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMid
 	podsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getPodAttributeKeys)).Methods(http.MethodGet)
 	podsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getPodAttributeValues)).Methods(http.MethodGet)
 	podsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getPodList)).Methods(http.MethodPost)
+
+	pvcsSubRouter := router.PathPrefix("/api/v1/pvcs").Subrouter()
+	pvcsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getPvcAttributeKeys)).Methods(http.MethodGet)
+	pvcsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getPvcAttributeValues)).Methods(http.MethodGet)
+	pvcsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getPvcList)).Methods(http.MethodPost)
 
 	nodesSubRouter := router.PathPrefix("/api/v1/nodes").Subrouter()
 	nodesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNodeAttributeKeys)).Methods(http.MethodGet)
