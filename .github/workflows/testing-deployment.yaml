@@ -44,7 +44,7 @@ jobs:
           git add .
           git stash push -m "stashed on $(date --iso-8601=seconds)"
           git fetch origin
-          git checkout develop
+          git checkout main
           git pull
           # This is added to include the scenerio when new commit in PR is force-pushed
           git branch -D ${GITHUB_BRANCH}

@@ -24,7 +24,7 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 const exporterOptions = {
   //highlight-start
   url: 'https://ingest.{{REGION}}.signoz.cloud:443/v1/traces',
-  headers: { 'signoz-access-token': '{{SIGNOZ_INGESTION_KEY}}' },
+  headers: { 'signoz-ingestion-key': '{{SIGNOZ_INGESTION_KEY}}' },
   //highlight-end
 };
 

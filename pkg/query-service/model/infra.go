@@ -151,13 +151,20 @@ type NodeListResponse struct {
 	Total   int              `json:"total"`
 }
 
+type NodeCountByCondition struct {
+	Ready    int `json:"ready"`
+	NotReady int `json:"notReady"`
+	Unknown  int `json:"unknown"`
+}
+
 type NodeListRecord struct {
-	NodeUID               string            `json:"nodeUID,omitempty"`
-	NodeCPUUsage          float64           `json:"nodeCPUUsage"`
-	NodeCPUAllocatable    float64           `json:"nodeCPUAllocatable"`
-	NodeMemoryUsage       float64           `json:"nodeMemoryUsage"`
-	NodeMemoryAllocatable float64           `json:"nodeMemoryAllocatable"`
-	Meta                  map[string]string `json:"meta"`
+	NodeUID               string               `json:"nodeUID,omitempty"`
+	NodeCPUUsage          float64              `json:"nodeCPUUsage"`
+	NodeCPUAllocatable    float64              `json:"nodeCPUAllocatable"`
+	NodeMemoryUsage       float64              `json:"nodeMemoryUsage"`
+	NodeMemoryAllocatable float64              `json:"nodeMemoryAllocatable"`
+	CountByCondition      NodeCountByCondition `json:"countByCondition"`
+	Meta                  map[string]string    `json:"meta"`
 }
 
 type NamespaceListRequest struct {
@@ -180,6 +187,7 @@ type NamespaceListRecord struct {
 	NamespaceName string            `json:"namespaceName"`
 	CPUUsage      float64           `json:"cpuUsage"`
 	MemoryUsage   float64           `json:"memoryUsage"`
+	CountByPhase  PodCountByPhase   `json:"countByPhase"`
 	Meta          map[string]string `json:"meta"`
 }
 

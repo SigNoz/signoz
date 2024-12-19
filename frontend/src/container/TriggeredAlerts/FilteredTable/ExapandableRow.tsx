@@ -1,12 +1,12 @@
 import { Tag, Typography } from 'antd';
-import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
-import getFormattedDate from 'lib/getFormatedDate';
+import { useTimezone } from 'providers/Timezone';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import Status from '../TableComponents/AlertStatus';
 import { TableCell, TableRow } from './styles';
 
 function ExapandableRow({ allAlerts }: ExapandableRowProps): JSX.Element {
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	return (
 		<>
 			{allAlerts.map((alert) => {
@@ -40,8 +40,9 @@ function ExapandableRow({ allAlerts }: ExapandableRowProps): JSX.Element {
 						</TableCell>
 
 						<TableCell>
-							<Typography>{`${getFormattedDate(formatedDate)} ${convertDateToAmAndPm(
+							<Typography>{`${formatTimezoneAdjustedTimestamp(
 								formatedDate,
+								'MM/DD/YYYY hh:mm:ss A (UTC Z)',
 							)}`}</Typography>
 						</TableCell>
 

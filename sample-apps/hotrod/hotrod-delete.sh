@@ -7,7 +7,7 @@ HOTROD_NAMESPACE=${HOTROD_NAMESPACE:-"sample-application"}
 if [[ "${HOTROD_NAMESPACE}" == "default" || "${HOTROD_NAMESPACE}" == "kube-system" || "${HOTROD_NAMESPACE}" == "platform" ]]; then
     echo "Default k8s namespace and SigNoz namespace must not be deleted"
     echo "Deleting components only"
-    kubectl delete --namespace="${HOTROD_NAMESPACE}" -f <(cat hotrod-template.yaml || curl -sL https://github.com/SigNoz/signoz/raw/develop/sample-apps/hotrod/hotrod-template.yaml)
+    kubectl delete --namespace="${HOTROD_NAMESPACE}" -f <(cat hotrod-template.yaml || curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-template.yaml)
 else
     echo "Delete HotROD sample app namespace ${HOTROD_NAMESPACE}"
     kubectl delete namespace "${HOTROD_NAMESPACE}"

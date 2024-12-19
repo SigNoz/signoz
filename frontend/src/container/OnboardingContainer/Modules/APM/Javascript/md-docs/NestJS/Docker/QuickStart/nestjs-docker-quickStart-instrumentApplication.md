@@ -92,7 +92,7 @@ Set the SigNoz ingestion key Environment variable and expose port 3001 in Docker
 ```bash
 ...
 # Use an environment variable for the Signoz Ingestion Key
-ENV OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}"
+ENV OTEL_EXPORTER_OTLP_HEADERS="signoz-ingestion-key={{SIGNOZ_INGESTION_KEY}}"
 
 # In step 4 above, you are configuring your NestJS application to listen on port 3001
 EXPOSE 3001

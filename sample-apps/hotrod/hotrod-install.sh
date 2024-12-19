@@ -37,7 +37,7 @@ kubectl create namespace "$HOTROD_NAMESPACE" --save-config --dry-run -o yaml 2>/
 
 # Setup sample apps into specified namespace
 kubectl apply --namespace="${HOTROD_NAMESPACE}" -f <( \
-    (cat hotrod-template.yaml 2>/dev/null || curl -sL https://github.com/SigNoz/signoz/raw/develop/sample-apps/hotrod/hotrod-template.yaml) | \
+    (cat hotrod-template.yaml 2>/dev/null || curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-template.yaml) | \
         HOTROD_NAMESPACE="${HOTROD_NAMESPACE}" \
         HOTROD_IMAGE="${HOTROD_IMAGE}" \
         LOCUST_IMAGE="${LOCUST_IMAGE}" \

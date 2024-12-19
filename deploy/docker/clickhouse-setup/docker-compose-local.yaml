@@ -25,7 +25,8 @@ services:
     command:
       [
         "-config=/root/config/prometheus.yml",
-        "--use-logs-new-schema=true"
+        "--use-logs-new-schema=true",
+        "--use-trace-new-schema=true"
       ]
     ports:
       - "6060:6060"

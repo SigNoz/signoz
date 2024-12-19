@@ -17,14 +17,15 @@ import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
 import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
-import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
+import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
@@ -155,8 +156,16 @@ function AllErrors(): JSX.Element {
 		}
 	}, [data?.error, data?.payload, t, notifications]);
 
-	const getDateValue = (value: string): JSX.Element => (
-		<Typography>{dayjs(value).format('DD/MM/YYYY HH:mm:ss A')}</Typography>
+	const getDateValue = (
+		value: string,
+		formatTimezoneAdjustedTimestamp: (
+			input: TimestampInput,
+			format?: string,
+		) => string,
+	): JSX.Element => (
+		<Typography>
+			{formatTimezoneAdjustedTimestamp(value, 'DD/MM/YYYY hh:mm:ss A')}
+		</Typography>
 	);
 
 	const filterIcon = useCallback(() => <SearchOutlined />, []);
@@ -283,6 +292,8 @@ function AllErrors(): JSX.Element {
 		[filterIcon, filterDropdownWrapper],
 	);
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	const columns: ColumnsType<Exception> = [
 		{
 			title: 'Exception Type',
@@ -342,7 +353,8 @@ function AllErrors(): JSX.Element {
 			dataIndex: 'lastSeen',
 			width: 80,
 			key: 'lastSeen',
-			render: getDateValue,
+			render: (value): JSX.Element =>
+				getDateValue(value, formatTimezoneAdjustedTimestamp),
 			sorter: true,
 			defaultSortOrder: getDefaultOrder(
 				getUpdatedParams,
@@ -355,7 +367,8 @@ function AllErrors(): JSX.Element {
 			dataIndex: 'firstSeen',
 			width: 80,
 			key: 'firstSeen',
-			render: getDateValue,
+			render: (value): JSX.Element =>
+				getDateValue(value, formatTimezoneAdjustedTimestamp),
 			sorter: true,
 			defaultSortOrder: getDefaultOrder(
 				getUpdatedParams,

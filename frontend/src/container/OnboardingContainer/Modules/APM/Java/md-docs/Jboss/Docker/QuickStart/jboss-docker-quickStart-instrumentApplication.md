@@ -18,7 +18,7 @@ RUN wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/re
 # Open and update the configuration file
 RUN sed -i 's/\(JAVA_OPTS=".*\)/\1 -javaagent:\/opt\/jboss-eap-7.1\/opentelemetry-javaagent.jar \
 -Dotel.exporter.otlp.endpoint=https:\/\/ingest.{{REGION}}.signoz.cloud:443 \
--Dotel.exporter.otlp.headers="signoz-access-token={{SIGNOZ_INGESTION_KEY}}" \
+-Dotel.exporter.otlp.headers="signoz-ingestion-key={{SIGNOZ_INGESTION_KEY}}" \
 -Dotel.resource.attributes="service.name={{MYAPP}}"/' /opt/jboss-eap-7.1/bin/standalone.conf
 ...
 ```

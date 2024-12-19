@@ -1,6 +1,7 @@
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
+import TimezoneProvider from 'providers/Timezone';
 import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
@@ -89,7 +90,9 @@ function AllTheProviders({
 				<Provider store={mockStored(role)}>
 					{' '}
 					{/* Use the mock store with the provided role */}
-					<BrowserRouter>{children}</BrowserRouter>
+					<BrowserRouter>
+						<TimezoneProvider>{children}</TimezoneProvider>
+					</BrowserRouter>
 				</Provider>
 			</QueryClientProvider>
 		</ResourceProvider>

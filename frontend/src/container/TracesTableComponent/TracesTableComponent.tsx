@@ -15,6 +15,7 @@ import { Pagination } from 'hooks/queryPagination';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
 	HTMLAttributes,
@@ -49,7 +50,12 @@ function TracesTableComponent({
 		}));
 	}, [pagination, setRequestData]);
 
-	const columns = getListColumns(widget.selectedTracesFields || []);
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
+	const columns = getListColumns(
+		widget.selectedTracesFields || [],
+		formatTimezoneAdjustedTimestamp,
+	);
 
 	const dataLength =
 		queryResponse.data?.payload?.data?.newResult?.data?.result[0]?.list?.length;

@@ -8,10 +8,12 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { useTimezone } from 'providers/Timezone';
 import { useMemo, useRef } from 'react';
 import { useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import uPlot from 'uplot';
 
 import {
 	getHostQueryPayload,
@@ -73,6 +75,8 @@ function NodeMetrics({
 		[queries],
 	);
 
+	const { timezone } = useTimezone();
+
 	const options = useMemo(
 		() =>
 			queries.map(({ data }, idx) =>
@@ -86,6 +90,9 @@ function NodeMetrics({
 					minTimeScale: start,
 					maxTimeScale: end,
 					verticalLineTimestamp,
+					tzDate: (timestamp: number) =>
+						uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
+					timezone: timezone.value,
 				}),
 			),
 		[
@@ -96,6 +103,7 @@ function NodeMetrics({
 			start,
 			verticalLineTimestamp,
 			end,
+			timezone.value,
 		],
 	);
 

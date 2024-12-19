@@ -2,7 +2,8 @@ name: Jest Coverage - changed files
 
 on:
   pull_request:
-    branches: develop
+    branches:
+      - main
 
 jobs:
   build:
@@ -11,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: "refs/heads/develop"
+          ref: "refs/heads/main"
           token: ${{ secrets.GITHUB_TOKEN }} # Provide the GitHub token for authentication
 
       - name: Fetch branch

@@ -95,7 +95,6 @@ func main() {
 
 	var useLogsNewSchema bool
 	var useTraceNewSchema bool
-	var useLicensesV3 bool
 	var cacheConfigPath, fluxInterval string
 	var enableQueryServiceLogOTLPExport bool
 	var preferSpanMetrics bool
@@ -104,10 +103,10 @@ func main() {
 	var maxOpenConns int
 	var dialTimeout time.Duration
 	var gatewayUrl string
+	var useLicensesV3 bool
 
 	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
 	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", false, "use new schema for traces")
-	flag.BoolVar(&useLicensesV3, "use-licenses-v3", false, "use licenses_v3 schema for licenses")
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
@@ -121,6 +120,7 @@ func main() {
 	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 	flag.StringVar(&gatewayUrl, "gateway-url", "", "(url to the gateway)")
+	flag.BoolVar(&useLicensesV3, "use-licenses-v3", false, "use licenses_v3 schema for licenses")
 
 	flag.Parse()
 
@@ -148,7 +148,6 @@ func main() {
 		GatewayUrl:        gatewayUrl,
 		UseLogsNewSchema:  useLogsNewSchema,
 		UseTraceNewSchema: useTraceNewSchema,
-		UseLicensesV3:     useLicensesV3,
 	}
 
 	// Read the jwt secret key

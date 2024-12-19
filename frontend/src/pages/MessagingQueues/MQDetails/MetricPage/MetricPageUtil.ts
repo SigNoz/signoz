@@ -517,7 +517,7 @@ export const consumerOffsetWidgetData = getWidgetQueryBuilder(
 				timeAggregation: 'avg',
 			},
 		],
-		title: 'Consumer Offest',
+		title: 'Consumer Offset',
 		description: 'Current offset of each consumer group for each topic partition',
 	}),
 );

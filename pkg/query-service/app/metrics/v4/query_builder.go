@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/cumulative"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/delta"
@@ -19,6 +20,9 @@ import (
 // step is in seconds
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, error) {
 
+	if valFilter := metrics.AddMetricValueFilter(mq); valFilter != nil {
+		mq.MetricValueFilter = valFilter
+	}
 	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, *mq)
 
 	var quantile float64

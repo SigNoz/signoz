@@ -34,8 +34,8 @@ func enrichKeyWithMetadata(key v3.AttributeKey, keys map[string]v3.AttributeKey)
 		return v
 	}
 
-	for _, key := range utils.GenerateEnrichmentKeys(key) {
-		if val, ok := keys[key]; ok {
+	for _, tkey := range utils.GenerateEnrichmentKeys(key) {
+		if val, ok := keys[tkey]; ok {
 			return val
 		}
 	}

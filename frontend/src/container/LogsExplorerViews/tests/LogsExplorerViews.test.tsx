@@ -7,6 +7,7 @@ import { rest } from 'msw';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import TimezoneProvider from 'providers/Timezone';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
@@ -91,17 +92,19 @@ const renderer = (): RenderResult =>
 				<I18nextProvider i18n={i18n}>
 					<MockQueryClientProvider>
 						<QueryBuilderProvider>
-							<VirtuosoMockContext.Provider
-								value={{ viewportHeight: 300, itemHeight: 100 }}
-							>
-								<LogsExplorerViews
-									selectedView={SELECTED_VIEWS.SEARCH}
-									showFrequencyChart
-									setIsLoadingQueries={(): void => {}}
-									listQueryKeyRef={{ current: {} }}
-									chartQueryKeyRef={{ current: {} }}
-								/>
-							</VirtuosoMockContext.Provider>
+							<TimezoneProvider>
+								<VirtuosoMockContext.Provider
+									value={{ viewportHeight: 300, itemHeight: 100 }}
+								>
+									<LogsExplorerViews
+										selectedView={SELECTED_VIEWS.SEARCH}
+										showFrequencyChart
+										setIsLoadingQueries={(): void => {}}
+										listQueryKeyRef={{ current: {} }}
+										chartQueryKeyRef={{ current: {} }}
+									/>
+								</VirtuosoMockContext.Provider>
+							</TimezoneProvider>
 						</QueryBuilderProvider>
 					</MockQueryClientProvider>
 				</I18nextProvider>

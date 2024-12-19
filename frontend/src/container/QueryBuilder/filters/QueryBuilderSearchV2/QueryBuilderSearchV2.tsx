@@ -897,12 +897,14 @@ function QueryBuilderSearchV2(
 			<Select
 				ref={selectRef}
 				getPopupContainer={popupContainer}
+				key={queryTags.join('.')}
 				virtual={false}
 				showSearch
 				tagRender={onTagRender}
 				transitionName=""
 				choiceTransitionName=""
 				filterOption={false}
+				autoFocus={isOpen}
 				open={isOpen}
 				suffixIcon={
 					// eslint-disable-next-line no-nested-ternary

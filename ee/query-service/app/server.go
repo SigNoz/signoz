@@ -78,7 +78,6 @@ type ServerOptions struct {
 	GatewayUrl        string
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
-	UseLicensesV3     bool
 }
 
 // Server runs HTTP api service
@@ -135,7 +134,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", localDB, serverOptions.UseLicensesV3)
+	lm, err := licensepkg.StartManager("sqlite", localDB)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +273,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		Gateway:                       gatewayProxy,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
-		UseLicensesV3:                 serverOptions.UseLicensesV3,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)

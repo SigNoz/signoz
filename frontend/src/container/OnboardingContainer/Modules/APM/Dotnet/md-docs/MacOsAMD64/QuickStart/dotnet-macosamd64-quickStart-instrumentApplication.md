@@ -48,7 +48,7 @@ builder.Services.AddOpenTelemetry()
             otlpOptions.Protocol = OtlpExportProtocol.Grpc;
                         
                         //SigNoz Cloud account Ingestion key
-            string headerKey = "signoz-access-token";
+            string headerKey = "signoz-ingestion-key";
             string headerValue = "{{SIGNOZ_INGESTION_KEY}}";
 
             string formattedHeader = $"{headerKey}={headerValue}";

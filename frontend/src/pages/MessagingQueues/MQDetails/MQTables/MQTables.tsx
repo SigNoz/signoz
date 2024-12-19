@@ -32,6 +32,7 @@ import {
 	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
 } from './getConsumerLagDetails';
+import { getTableDataForProducerLatencyOverview } from './MQTableUtils';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -39,16 +40,24 @@ const INITIAL_PAGE_SIZE = 10;
 export function getColumns(
 	data: MessagingQueuesPayloadProps['payload'],
 	history: History<unknown>,
+	isProducerOverview?: boolean,
 ): RowData[] {
 	if (data?.result?.length === 0) {
 		return [];
 	}
 
+	const mergedColumns = isProducerOverview
+		? [
+				...(data?.result?.[0]?.table?.columns || []),
+				{ name: 'byte_rate', queryName: 'byte_rate' },
+		  ]
+		: data?.result?.[0]?.table?.columns;
+
 	const columns: {
 		title: string;
 		dataIndex: string;
 		key: string;
-	}[] = data?.result?.[0]?.table?.columns.map((column) => ({
+	}[] = mergedColumns.map((column) => ({
 		title: convertToTitleCase(column.name),
 		dataIndex: column.name,
 		key: column.name,
@@ -58,6 +67,8 @@ export function getColumns(
 			'throughput',
 			'avg_msg_size',
 			'error_percentage',
+			'ingestion_rate',
+			'byte_rate',
 		].includes(column.name)
 			? (value: number | string): string => {
 					if (!isNumber(value)) return value.toString();
@@ -172,13 +183,25 @@ function MessagingQueuesTable({
 		});
 	};
 
+	const isProducerOverview = useMemo(
+		() =>
+			type === 'Overview' &&
+			selectedView === MessagingQueuesViewType.producerLatency.value &&
+			tableApiPayload?.detailType === 'producer',
+		[type, selectedView, tableApiPayload],
+	);
+
 	const { mutate: getViewDetails, isLoading, error, isError } = useMutation(
 		tableApi,
 		{
 			onSuccess: (data) => {
 				if (data.payload) {
-					setColumns(getColumns(data?.payload, history));
-					setTableData(getTableData(data?.payload));
+					setColumns(getColumns(data?.payload, history, isProducerOverview));
+					setTableData(
+						isProducerOverview
+							? getTableDataForProducerLatencyOverview(data?.payload)
+							: getTableData(data?.payload),
+					);
 				}
 			},
 			onError: handleConsumerDetailsOnError,
@@ -199,15 +222,29 @@ function MessagingQueuesTable({
 	const [, setSelectedRows] = useState<any>();
 	const location = useLocation();
 
-	const onRowClick = (record: { [key: string]: string }): void => {
-		const selectedKey = record.key;
+	const selectedRowKeyGenerator = (record: {
+		[key: string]: string;
+	}): React.Key => {
+		if (!isEmpty(tableApiPayload?.detailType)) {
+			return `${record.key}_${selectedView}_${tableApiPayload?.detailType}`;
+		}
+		return `${record.key}_${selectedView}`;
+	};
 
-		if (`${selectedKey}_${selectedView}` === selectedRowKey) {
+	useEffect(() => {
+		if (isEmpty(configDetailQueryData)) {
+			setSelectedRowKey(undefined);
+			setSelectedRows({});
+		}
+	}, [configDetailQueryData]);
+
+	const onRowClick = (record: { [key: string]: string }): void => {
+		if (selectedRowKeyGenerator(record) === selectedRowKey) {
 			setSelectedRowKey(undefined);
 			setSelectedRows({});
 			setConfigDetail(urlQuery, location, history, {});
 		} else {
-			setSelectedRowKey(`${selectedKey}_${selectedView}`);
+			setSelectedRowKey(selectedRowKeyGenerator(record));
 			setSelectedRows(record);
 
 			if (!isEmpty(record)) {
@@ -267,7 +304,7 @@ function MessagingQueuesTable({
 								: {}
 						}
 						rowClassName={(record): any =>
-							`${record.key}_${selectedView}` === selectedRowKey
+							selectedRowKeyGenerator(record) === selectedRowKey
 								? 'ant-table-row-selected'
 								: ''
 						}

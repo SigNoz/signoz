@@ -73,7 +73,7 @@ Step 3. Run the application
 
 Make sure you set the `OTEL_EXPORTER_OTLP_HEADERS` env as follows
 ```bash
-OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}" node -r ./tracing.js app.js
+OTEL_EXPORTER_OTLP_HEADERS="signoz-ingestion-key={{SIGNOZ_INGESTION_KEY}}" node -r ./tracing.js app.js
 ```
 ---
 

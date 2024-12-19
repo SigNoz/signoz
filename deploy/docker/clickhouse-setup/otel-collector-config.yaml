@@ -119,6 +119,7 @@ exporters:
   clickhousetraces:
     datasource: tcp://clickhouse:9000/signoz_traces
     low_cardinal_exception_grouping: ${env:LOW_CARDINAL_EXCEPTION_GROUPING}
+    use_new_schema: true
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/signoz_metrics
     resource_to_telemetry_conversion:

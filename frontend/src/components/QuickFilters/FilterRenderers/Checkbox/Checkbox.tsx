@@ -396,23 +396,22 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 	return (
 		<div className="checkbox-filter">
-			<section className="filter-header-checkbox">
+			<section
+				className="filter-header-checkbox"
+				onClick={(): void => {
+					if (isOpen) {
+						setIsOpen(false);
+						setVisibleItemsCount(10);
+					} else {
+						setIsOpen(true);
+					}
+				}}
+			>
 				<section className="left-action">
 					{isOpen ? (
-						<ChevronDown
-							size={13}
-							cursor="pointer"
-							onClick={(): void => {
-								setIsOpen(false);
-								setVisibleItemsCount(10);
-							}}
-						/>
+						<ChevronDown size={13} cursor="pointer" />
 					) : (
-						<ChevronRight
-							size={13}
-							onClick={(): void => setIsOpen(true)}
-							cursor="pointer"
-						/>
+						<ChevronRight size={13} cursor="pointer" />
 					)}
 					<Typography.Text className="title">{filter.title}</Typography.Text>
 				</section>
@@ -420,7 +419,11 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					{isOpen && (
 						<Typography.Text
 							className="clear-all"
-							onClick={handleClearFilterAttribute}
+							onClick={(e): void => {
+								e.stopPropagation();
+								e.preventDefault();
+								handleClearFilterAttribute();
+							}}
 						>
 							Clear All
 						</Typography.Text>

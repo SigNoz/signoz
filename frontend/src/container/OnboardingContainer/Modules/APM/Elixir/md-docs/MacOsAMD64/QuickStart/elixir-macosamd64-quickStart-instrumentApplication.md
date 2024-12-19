@@ -53,7 +53,7 @@ config :opentelemetry, :processors,
       %{
         endpoints: ["https://ingest.{{REGION}}.signoz.cloud:443"],
         headers: [
-          {"signoz-access-token", {{SIGNOZ_ACCESS_TOKEN}} }
+          {"signoz-ingestion-key", {{SIGNOZ_ACCESS_TOKEN}} }
         ]
       }
     }

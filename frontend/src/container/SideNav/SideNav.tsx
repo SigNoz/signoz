@@ -16,7 +16,7 @@ import history from 'lib/history';
 import {
 	AlertTriangle,
 	CheckSquare,
-	RocketIcon,
+	PackagePlus,
 	UserCircle,
 } from 'lucide-react';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
@@ -115,21 +115,6 @@ function SideNav({
 
 			items = items.filter(
 				(item) => item.key !== ROUTES.GET_STARTED && item.key !== ROUTES.ONBOARDING,
-			);
-
-			setMenuItems(items);
-		}
-
-		const isInfraMonitoringEnabled =
-			featureResponse.data?.find(
-				(feature) => feature.name === FeatureKeys.HOSTS_INFRA_MONITORING,
-			)?.active || false;
-
-		if (!isInfraMonitoringEnabled) {
-			let items = [...menuItems];
-
-			items = items.filter(
-				(item) => item.key !== ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 			);
 
 			setMenuItems(items);
@@ -410,9 +395,9 @@ function SideNav({
 								onClickGetStarted(event);
 							}}
 						>
-							<RocketIcon size={16} />
+							<PackagePlus size={16} />
 
-							<div className="license tag nav-item-label"> Get Started </div>
+							<div className="license tag nav-item-label"> New source </div>
 						</Button>
 					</div>
 				)}

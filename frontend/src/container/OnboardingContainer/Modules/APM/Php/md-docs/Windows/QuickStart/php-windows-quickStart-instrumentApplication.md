@@ -102,7 +102,7 @@ function initOpenTelemetry()
 
 
  $headers = [
- 'signoz-access-token' => "{{SIGNOZ_INGESTION_KEY}}",
+ 'signoz-ingestion-key' => "{{SIGNOZ_INGESTION_KEY}}",
  ];
  $transport = (new GrpcTransportFactory())->create('https://ingest.{{REGION}}.signoz.cloud:443/v1/traces"' . OtlpUtil::method(Signals::TRACE), 'application/x-protobuf', $headers);
  $spanExporter = new SpanExporter($transport);

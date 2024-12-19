@@ -13,7 +13,7 @@ RUN wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/re
 
 # Set environment variables and run your Spring Boot application
 ENV OTEL_RESOURCE_ATTRIBUTES="service.name={{MYAPP}}" \
-    OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}" \
+    OTEL_EXPORTER_OTLP_HEADERS="signoz-ingestion-key={{SIGNOZ_INGESTION_KEY}}" \
     OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.{{REGION}}.signoz.cloud:443"
 
 # Copy the Spring Boot application JAR file into the container

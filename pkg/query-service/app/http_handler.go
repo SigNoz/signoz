@@ -113,7 +113,6 @@ type APIHandler struct {
 
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
-	UseLicensesV3     bool
 
 	hostsRepo      *inframetrics.HostsRepo
 	processesRepo  *inframetrics.ProcessesRepo
@@ -166,8 +165,6 @@ type APIHandlerOpts struct {
 	UseLogsNewSchema bool
 
 	UseTraceNewSchema bool
-	// Use Licenses V3 structure
-	UseLicensesV3 bool
 }
 
 // NewAPIHandler returns an APIHandler
@@ -230,7 +227,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		querierV2:                     querierv2,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
 		UseTraceNewSchema:             opts.UseTraceNewSchema,
-		UseLicensesV3:                 opts.UseLicensesV3,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
 		podsRepo:                      podsRepo,
@@ -530,6 +526,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.AdminAccess(aH.insertIngestionKey)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.ViewAccess(aH.getIngestionKeys)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
@@ -3141,14 +3140,14 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		Hash: make(map[string]struct{}),
 	}
 
-	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
+	producerQueryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+	if err := validateQueryRangeParamsV3(producerQueryRangeParams); err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
 		return
@@ -3157,7 +3156,7 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), producerQueryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3165,21 +3164,21 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	}
 
 	for _, res := range result {
-		for _, list := range res.List {
-			serviceName, serviceNameOk := list.Data["service_name"].(*string)
-			topicName, topicNameOk := list.Data["topic"].(*string)
-			params := []string{*serviceName, *topicName}
+		for _, series := range res.Series {
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			topicName, topicNameOk := series.Labels["topic"]
+			params := []string{serviceName, topicName}
 			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if topicNameOk && serviceNameOk && !ok {
 				attributeCache.Hash[hashKey] = struct{}{}
-				attributeCache.TopicName = append(attributeCache.TopicName, *topicName)
-				attributeCache.ServiceName = append(attributeCache.ServiceName, *serviceName)
+				attributeCache.TopicName = append(attributeCache.TopicName, topicName)
+				attributeCache.ServiceName = append(attributeCache.ServiceName, serviceName)
 			}
 		}
 	}
 
-	queryRangeParams, err = mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-latency", attributeCache)
+	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-byte-rate", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3198,26 +3197,32 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		return
 	}
 
-	latencyColumn := &v3.Result{QueryName: "latency"}
-	var latencySeries []*v3.Row
+	byteRateColumn := &v3.Result{QueryName: "byte_rate"}
+	var byteRateSeries []*v3.Series
 	for _, res := range resultFetchLatency {
-		for _, list := range res.List {
-			topic, topicOk := list.Data["topic"].(*string)
-			serviceName, serviceNameOk := list.Data["service_name"].(*string)
-			params := []string{*serviceName, *topic}
+		for _, series := range res.Series {
+			topic, topicOk := series.Labels["topic"]
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			params := []string{serviceName, topic}
 			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if topicOk && serviceNameOk && ok {
-				latencySeries = append(latencySeries, list)
+				byteRateSeries = append(byteRateSeries, series)
 			}
 		}
 	}
 
-	latencyColumn.List = latencySeries
-	result = append(result, latencyColumn)
+	byteRateColumn.Series = byteRateSeries
+	var latencyColumnResult []*v3.Result
+	latencyColumnResult = append(latencyColumnResult, byteRateColumn)
 
+	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(latencyColumnResult, queryRangeParams)
+
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	result = append(result, resultFetchLatency[0])
 	resp := v3.QueryRangeResponse{
-		Result: resultFetchLatency,
+		Result: result,
 	}
 	aH.Respond(w, resp)
 }
@@ -4073,10 +4078,9 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")
 		}
 
-		for _, p := range postable {
-			if err := p.IsValid(); err != nil {
-				return nil, model.BadRequestStr(err.Error())
-			}
+		validationErr := aH.LogsParsingPipelineController.ValidatePipelines(ctx, postable)
+		if validationErr != nil {
+			return nil, validationErr
 		}
 
 		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
@@ -4890,4 +4894,36 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV4(r.Context(), queryRangeParams, w, r)
+}
+
+func (aH *APIHandler) traceFields(w http.ResponseWriter, r *http.Request) {
+	fields, apiErr := aH.reader.GetTraceFields(r.Context())
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to fetch fields from the db")
+		return
+	}
+	aH.WriteJSON(w, r, fields)
+}
+
+func (aH *APIHandler) updateTraceField(w http.ResponseWriter, r *http.Request) {
+	field := model.UpdateField{}
+	if err := json.NewDecoder(r.Body).Decode(&field); err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErr, "failed to decode payload")
+		return
+	}
+
+	err := logs.ValidateUpdateFieldPayloadV2(&field)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErr, "incorrect payload")
+		return
+	}
+
+	apiErr := aH.reader.UpdateTraceField(r.Context(), &field)
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to update field in the db")
+		return
+	}
+	aH.WriteJSON(w, r, field)
 }

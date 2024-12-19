@@ -1,12 +1,12 @@
 name: staging-deployment
-# Trigger deployment only on push to develop branch
+# Trigger deployment only on push to main branch
 on:
   push:
     branches:
-      - develop
+      - main
 jobs:
   deploy:
-    name: Deploy latest develop branch to staging
+    name: Deploy latest main branch to staging
     runs-on: ubuntu-latest
     environment: staging
     permissions:

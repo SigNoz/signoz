@@ -45,7 +45,7 @@ provider.addSpanProcessor(
     new OTLPTraceExporter({
       url: 'https://ingest.{{REGION}}.signoz.cloud:443/v1/traces',
       headers: {
-        'signoz-access-token': '{{SIGNOZ_INGESTION_KEY}}',
+        'signoz-ingestion-key': '{{SIGNOZ_INGESTION_KEY}}',
       },
     })
   )

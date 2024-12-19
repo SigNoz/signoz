@@ -350,6 +350,27 @@ func TestLogPipelinesValidation(t *testing.T) {
 				},
 			},
 			ExpectedResponseStatusCode: 400,
+		}, {
+			Name: "Invalid from field path",
+			Pipeline: logparsingpipeline.PostablePipeline{
+				OrderId: 1,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  validPipelineFilterSet,
+				Config: []logparsingpipeline.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "move",
+						Type:    "move",
+						From:    `attributes.temp_parsed_body."@l"`,
+						To:      "attributes.test",
+						Enabled: true,
+						Name:    "test move",
+					},
+				},
+			},
+			ExpectedResponseStatusCode: 400,
 		},
 	}
 

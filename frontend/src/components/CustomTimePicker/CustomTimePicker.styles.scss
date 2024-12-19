@@ -40,7 +40,7 @@
 
 	&.custom-time {
 		input:not(:focus) {
-			min-width: 240px;
+			min-width: 280px;
 		}
 	}
 
@@ -117,5 +117,71 @@
 
 	.info-text {
 		color: var(--bg-slate-400) !important;
+	}
+}
+
+.date-time-popover__footer {
+	border-top: 1px solid var(--bg-ink-200);
+	padding: 8px 14px;
+	.timezone-container {
+		&,
+		.timezone {
+			font-family: Inter;
+			font-size: 12px;
+			line-height: 16px;
+			letter-spacing: -0.06px;
+		}
+		display: flex;
+		align-items: center;
+		color: var(--bg-vanilla-400);
+		gap: 6px;
+		.timezone {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			border-radius: 2px;
+			background: rgba(171, 189, 255, 0.04);
+			cursor: pointer;
+			padding: 0px 4px;
+			color: var(--bg-vanilla-100);
+			border: none;
+		}
+	}
+}
+.timezone-badge {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 4px;
+	border-radius: 2px;
+	background: rgba(171, 189, 255, 0.04);
+	color: var(--bg-vanilla-100);
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 16px;
+	letter-spacing: -0.06px;
+	cursor: pointer;
+}
+
+.lightMode {
+	.date-time-popover__footer {
+		border-color: var(--bg-vanilla-400);
+	}
+	.timezone-container {
+		color: var(--bg-ink-400);
+		&__clock-icon {
+			stroke: var(--bg-ink-400);
+		}
+		.timezone {
+			color: var(--bg-ink-100);
+			background: rgb(179 179 179 / 15%);
+			&__icon {
+				stroke: var(--bg-ink-100);
+			}
+		}
+	}
+	.timezone-badge {
+		color: var(--bg-ink-100);
+		background: rgb(179 179 179 / 15%);
 	}
 }

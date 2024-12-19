@@ -69,7 +69,7 @@ exporters:
     tls:
       insecure: false
     headers:
-      "signoz-access-token": "{{SIGNOZ_INGESTION_KEY}}"
+      "signoz-ingestion-key": "{{SIGNOZ_INGESTION_KEY}}"
   logging:
     verbosity: normal
 service:

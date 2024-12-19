@@ -44,7 +44,7 @@ OpenTelemetry::SDK.configure do |c|
     OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(
       OpenTelemetry::Exporter::OTLP::Exporter.new(
         endpoint: '<SIGNOZ_URL>',
-        headers: { 'signoz-access-token' => '{{SIGNOZ_INGESTION_KEY}}' } 
+        headers: { 'signoz-ingestion-key' => '{{SIGNOZ_INGESTION_KEY}}' } 
       )
     )
   )

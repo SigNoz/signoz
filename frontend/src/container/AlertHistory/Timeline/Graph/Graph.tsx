@@ -7,6 +7,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import heatmapPlugin from 'lib/uPlotLib/plugins/heatmapPlugin';
 import timelinePlugin from 'lib/uPlotLib/plugins/timelinePlugin';
+import { useTimezone } from 'providers/Timezone';
 import { useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
@@ -48,6 +49,7 @@ function HorizontalTimelineGraph({
 
 	const urlQuery = useUrlQuery();
 	const dispatch = useDispatch();
+	const { timezone } = useTimezone();
 
 	const options: uPlot.Options = useMemo(
 		() => ({
@@ -116,8 +118,18 @@ function HorizontalTimelineGraph({
 							}),
 					  ]
 					: [],
+
+			tzDate: (timestamp: number): Date =>
+				uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 		}),
-		[width, isDarkMode, transformedData.length, urlQuery, dispatch],
+		[
+			width,
+			isDarkMode,
+			transformedData.length,
+			urlQuery,
+			dispatch,
+			timezone.value,
+		],
 	);
 	return <Uplot data={transformedData} options={options} />;
 }

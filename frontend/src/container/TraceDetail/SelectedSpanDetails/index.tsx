@@ -86,8 +86,10 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 		history.push(
 			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
 				[QueryParams.compositeQuery]: JSON.stringify(query),
-				[QueryParams.startTime]: minTime,
-				[QueryParams.endTime]: maxTime,
+				// we subtract 1000 milliseconds from the start time to handle the cases when the trace duration is in nanoseconds
+				[QueryParams.startTime]: traceStartTime - 1000,
+				// we add 1000 milliseconds to the end time for nano second duration traces
+				[QueryParams.endTime]: traceEndTime + 1000,
 			})}`,
 		);
 	};
