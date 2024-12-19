@@ -5,4 +5,6 @@ export interface Props {
 	password: string;
 	token?: string;
 	sourceUrl?: string;
+	isAnonymous?: boolean;
+	hasOptedUpdates?: boolean;
 }

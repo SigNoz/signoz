@@ -2,9 +2,9 @@ import { Button, Modal, Typography } from 'antd';
 import updateCreditCardApi from 'api/billing/checkout';
 import logEvent from 'api/common/logEvent';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { CreditCard, X } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useLocation } from 'react-router-dom';
@@ -20,16 +20,16 @@ export default function ChatSupportGateway(): JSX.Element {
 		false,
 	);
 
-	const { data: licenseData, isFetching } = useLicense();
+	const { licenses, isFetchingLicenses } = useAppContext();
 
 	useEffect(() => {
-		const activeValidLicense =
-			licenseData?.payload?.licenses?.find(
-				(license) => license.isCurrent === true,
-			) || null;
+		if (!isFetchingLicenses && licenses) {
+			const activeValidLicense =
+				licenses.licenses?.find((license) => license.isCurrent === true) || null;
 
-		setActiveLicense(activeValidLicense);
-	}, [licenseData, isFetching]);
+			setActiveLicense(activeValidLicense);
+		}
+	}, [licenses, isFetchingLicenses]);
 
 	const handleBillingOnSuccess = (
 		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,

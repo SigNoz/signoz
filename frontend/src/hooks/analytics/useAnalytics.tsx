@@ -1,19 +1,21 @@
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
+import { useAppContext } from 'providers/App/App';
+import { useCallback } from 'react';
 import { extractDomain } from 'utils/app';
 
 const useAnalytics = (): any => {
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	// Segment Page View - analytics.page([category], [name], [properties], [options], [callback]);
-	const trackPageView = (pageName: string): void => {
-		if (user && user.email) {
-			window.analytics.page(null, pageName, {
-				userId: user.email,
-			});
-		}
-	};
+	const trackPageView = useCallback(
+		(pageName: string): void => {
+			if (user && user.email) {
+				window.analytics.page(null, pageName, {
+					userId: user.email,
+				});
+			}
+		},
+		[user],
+	);
 
 	const trackEvent = (
 		eventName: string,

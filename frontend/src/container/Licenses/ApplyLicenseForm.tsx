@@ -3,12 +3,6 @@ import apply from 'api/licenses/apply';
 import { useNotifications } from 'hooks/useNotifications';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { QueryObserverResult, RefetchOptions } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/licenses/getAll';
-import AppReducer from 'types/reducer/app';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import {
@@ -24,9 +18,6 @@ function ApplyLicenseForm({
 	const { t } = useTranslation(['licenses']);
 	const [isLoading, setIsLoading] = useState(false);
 	const [form] = Form.useForm<FormValues>();
-	const { featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
 
 	const { notifications } = useNotifications();
 	const key = Form.useWatch('key', form);
@@ -50,7 +41,7 @@ function ApplyLicenseForm({
 			});
 
 			if (response.statusCode === 200) {
-				await Promise.all([featureResponse?.refetch(), licenseRefetch()]);
+				await Promise.all([licenseRefetch()]);
 
 				notifications.success({
 					message: 'Success',
@@ -102,11 +93,7 @@ function ApplyLicenseForm({
 }
 
 interface ApplyLicenseFormProps {
-	licenseRefetch: (
-		options?: RefetchOptions,
-	) => Promise<
-		QueryObserverResult<SuccessResponse<PayloadProps> | ErrorResponse, unknown>
-	>;
+	licenseRefetch: () => void;
 }
 
 interface FormValues {

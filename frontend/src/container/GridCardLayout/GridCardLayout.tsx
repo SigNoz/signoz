@@ -26,17 +26,16 @@ import {
 	LockKeyhole,
 	X,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FullScreen, FullScreenHandle } from 'react-full-screen';
 import { ItemCallback, Layout } from 'react-grid-layout';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -69,9 +68,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const { widgets, variables } = data || {};
 
-	const { featureResponse, role, user } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const { user } = useAppContext();
 
 	const isDarkMode = useIsDarkMode();
 
@@ -111,7 +108,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const userRole: ROLES | null =
 		selectedDashboard?.created_by === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
-			: role;
+			: user.role;
 
 	const [saveLayoutPermission, addPanelPermission] = useComponentPermission(
 		permissions,
@@ -120,7 +117,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const [deleteWidget, editWidget] = useComponentPermission(
 		['delete_widget', 'edit_widget'],
-		role,
+		user.role,
 	);
 
 	useEffect(() => {
@@ -160,8 +157,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 					setSelectedDashboard(updatedDashboard.payload);
 					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
 				}
-
-				featureResponse.refetch();
 			},
 			onError: () => {
 				notifications.error({
@@ -258,7 +253,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				form.setFieldValue('title', '');
 				setIsSettingsModalOpen(false);
 				setCurrentSelectRowId(null);
-				featureResponse.refetch();
 			},
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			onError: () => {
@@ -421,7 +415,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
 				setIsDeleteModalOpen(false);
 				setCurrentSelectRowId(null);
-				featureResponse.refetch();
 			},
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			onError: () => {

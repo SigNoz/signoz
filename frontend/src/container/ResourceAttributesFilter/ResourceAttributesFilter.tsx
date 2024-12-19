@@ -86,7 +86,7 @@ function ResourceAttributesFilter({
 					mode="multiple"
 					value={selectedEnvironments}
 					placeholder="Select Environment/s"
-					data-testId="resource-environment-filter"
+					data-testid="resource-environment-filter"
 					style={{ minWidth: 200, height: 34 }}
 					onChange={handleEnvironmentChange}
 					onBlur={handleBlur}
@@ -122,8 +122,7 @@ function ResourceAttributesFilter({
 						style={{ flex: 1 }}
 						options={optionsData.options}
 						mode={optionsData?.mode}
-						data-testId="resource-attributes-filter"
-						showArrow={!!suffixIcon}
+						data-testid="resource-attributes-filter"
 						onClick={handleFocus}
 						onBlur={handleBlur}
 						onClear={handleClearAll}

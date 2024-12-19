@@ -7,6 +7,7 @@ import { AxiosError } from 'axios';
 import { ThemeProvider } from 'hooks/useDarkMode';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
+import { AppProvider } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
@@ -73,7 +74,9 @@ if (container) {
 					<TimezoneProvider>
 						<QueryClientProvider client={queryClient}>
 							<Provider store={store}>
-								<AppRoutes />
+								<AppProvider>
+									<AppRoutes />
+								</AppProvider>
 							</Provider>
 							{process.env.NODE_ENV === 'development' && (
 								<ReactQueryDevtools initialIsOpen={false} />

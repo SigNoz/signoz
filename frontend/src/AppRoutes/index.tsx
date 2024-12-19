@@ -1,8 +1,6 @@
 import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import logEvent from 'api/common/logEvent';
-import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
@@ -11,35 +9,21 @@ import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
-import { THEME_MODE } from 'hooks/useDarkMode/constant';
-import useFeatureFlags from 'hooks/useFeatureFlag';
-import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
-import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
+import { useThemeConfig } from 'hooks/useDarkMode';
+import { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
-import { identity, pick, pickBy } from 'lodash-es';
+import { identity, pickBy } from 'lodash-es';
 import posthog from 'posthog-js';
 import AlertRuleProvider from 'providers/Alert';
-import { AppProvider } from 'providers/App/App';
+import { useAppContext } from 'providers/App/App';
+import { IUser } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import { Suspense, useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { Route, Router, Switch } from 'react-router-dom';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
-import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import {
-	UPDATE_FEATURE_FLAG_RESPONSE,
-	UPDATE_IS_FETCHING_ORG_PREFERENCES,
-	UPDATE_ORG_PREFERENCES,
-} from 'types/actions/app';
-import AppReducer, { User } from 'types/reducer/app';
-import { USER_ROLES } from 'types/roles';
 import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
 
 import PrivateRoute from './Private';
@@ -51,14 +35,20 @@ import defaultRoutes, {
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
-	const { data: licenseData } = useLicense();
+	const {
+		licenses,
+		user,
+		isFetchingUser,
+		isFetchingLicenses,
+		isFetchingFeatureFlags,
+		userFetchError,
+		licensesFetchError,
+		featureFlagsFetchError,
+		isLoggedIn: isLoggedInState,
+		featureFlags,
+		org,
+	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
-	const { role, isLoggedIn: isLoggedInState, user, org } = useSelector<
-		AppState,
-		AppReducer
-	>((state) => state.app);
-
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const { trackPageView } = useAnalytics();
 
@@ -66,164 +56,114 @@ function App(): JSX.Element {
 
 	const isCloudUserVal = isCloudUser();
 
-	const isDarkMode = useIsDarkMode();
+	const enableAnalytics = useCallback(
+		(user: IUser): void => {
+			// wait for the required data to be loaded before doing init for anything!
+			if (!isFetchingLicenses && licenses && org) {
+				const orgName =
+					org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
 
-	const isChatSupportEnabled =
-		useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active || false;
+				const { name, email, role } = user;
 
-	const isPremiumSupportEnabled =
-		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
+				const identifyPayload = {
+					email,
+					name,
+					company_name: orgName,
+					role,
+					source: 'signoz-ui',
+				};
 
-	const { data: orgPreferences, isLoading: isLoadingOrgPreferences } = useQuery({
-		queryFn: () => getAllOrgPreferences(),
-		queryKey: ['getOrgPreferences'],
-		enabled: isLoggedInState && role === USER_ROLES.ADMIN,
-	});
+				const sanitizedIdentifyPayload = pickBy(identifyPayload, identity);
+				const domain = extractDomain(email);
+				const hostNameParts = hostname.split('.');
 
+				const groupTraits = {
+					name: orgName,
+					tenant_id: hostNameParts[0],
+					data_region: hostNameParts[1],
+					tenant_url: hostname,
+					company_domain: domain,
+					source: 'signoz-ui',
+				};
+
+				window.analytics.identify(email, sanitizedIdentifyPayload);
+				window.analytics.group(domain, groupTraits);
+
+				posthog?.identify(email, {
+					email,
+					name,
+					orgName,
+					tenant_id: hostNameParts[0],
+					data_region: hostNameParts[1],
+					tenant_url: hostname,
+					company_domain: domain,
+					source: 'signoz-ui',
+					isPaidUser: !!licenses?.trialConvertedToSubscription,
+				});
+
+				posthog?.group('company', domain, {
+					name: orgName,
+					tenant_id: hostNameParts[0],
+					data_region: hostNameParts[1],
+					tenant_url: hostname,
+					company_domain: domain,
+					source: 'signoz-ui',
+					isPaidUser: !!licenses?.trialConvertedToSubscription,
+				});
+			}
+		},
+		[hostname, isFetchingLicenses, licenses, org],
+	);
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
-		if (orgPreferences && !isLoadingOrgPreferences) {
-			dispatch({
-				type: UPDATE_IS_FETCHING_ORG_PREFERENCES,
-				payload: {
-					isFetchingOrgPreferences: false,
-				},
-			});
-
-			dispatch({
-				type: UPDATE_ORG_PREFERENCES,
-				payload: {
-					orgPreferences: orgPreferences.payload?.data || null,
-				},
-			});
-		}
-	}, [orgPreferences, dispatch, isLoadingOrgPreferences]);
-
-	useEffect(() => {
-		if (isLoggedInState && role !== USER_ROLES.ADMIN) {
-			dispatch({
-				type: UPDATE_IS_FETCHING_ORG_PREFERENCES,
-				payload: {
-					isFetchingOrgPreferences: false,
-				},
-			});
-		}
-	}, [isLoggedInState, role, dispatch]);
-
-	const featureResponse = useGetFeatureFlag((allFlags) => {
-		dispatch({
-			type: UPDATE_FEATURE_FLAG_RESPONSE,
-			payload: {
-				featureFlag: allFlags,
-				refetch: featureResponse.refetch,
-			},
-		});
-
-		const isOnboardingEnabled =
-			allFlags.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
-			false;
-
-		if (!isOnboardingEnabled || !isCloudUserVal) {
-			const newRoutes = routes.filter(
-				(route) => route?.path !== ROUTES.GET_STARTED,
-			);
-
-			setRoutes(newRoutes);
-		}
-	});
-
-	const isOnBasicPlan =
-		licenseData?.payload?.licenses?.some(
-			(license) =>
-				license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
-		) || licenseData?.payload?.licenses === null;
-
-	const enableAnalytics = (user: User): void => {
-		const orgName =
-			org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
-
-		const { name, email } = user;
-
-		const identifyPayload = {
-			email,
-			name,
-			company_name: orgName,
-			role,
-			source: 'signoz-ui',
-		};
-
-		const sanitizedIdentifyPayload = pickBy(identifyPayload, identity);
-		const domain = extractDomain(email);
-		const hostNameParts = hostname.split('.');
-
-		const groupTraits = {
-			name: orgName,
-			tenant_id: hostNameParts[0],
-			data_region: hostNameParts[1],
-			tenant_url: hostname,
-			company_domain: domain,
-			source: 'signoz-ui',
-		};
-
-		window.analytics.identify(email, sanitizedIdentifyPayload);
-		window.analytics.group(domain, groupTraits);
-
-		posthog?.identify(email, {
-			email,
-			name,
-			orgName,
-			tenant_id: hostNameParts[0],
-			data_region: hostNameParts[1],
-			tenant_url: hostname,
-			company_domain: domain,
-			source: 'signoz-ui',
-			isPaidUser: !!licenseData?.payload?.trialConvertedToSubscription,
-		});
-
-		posthog?.group('company', domain, {
-			name: orgName,
-			tenant_id: hostNameParts[0],
-			data_region: hostNameParts[1],
-			tenant_url: hostname,
-			company_domain: domain,
-			source: 'signoz-ui',
-			isPaidUser: !!licenseData?.payload?.trialConvertedToSubscription,
-		});
-	};
-
-	useEffect(() => {
-		const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
-
 		if (
-			isLoggedInState &&
+			!isFetchingLicenses &&
+			licenses &&
+			!isFetchingUser &&
 			user &&
-			user.userId &&
-			user.email &&
-			!isIdentifiedUser
+			!!user.email
 		) {
-			setLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER, 'true');
+			const isOnBasicPlan =
+				licenses.licenses?.some(
+					(license) =>
+						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
+				) || licenses.licenses === null;
+
+			const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
+
+			if (isLoggedInState && user && user.id && user.email && !isIdentifiedUser) {
+				setLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER, 'true');
+			}
+
+			let updatedRoutes = defaultRoutes;
+			// if the user is a cloud user
+			if (isCloudUserVal || isEECloudUser()) {
+				// if the user is on basic plan then remove billing
+				if (isOnBasicPlan) {
+					updatedRoutes = updatedRoutes.filter(
+						(route) => route?.path !== ROUTES.BILLING,
+					);
+				}
+				// always add support route for cloud users
+				updatedRoutes = [...updatedRoutes, SUPPORT_ROUTE];
+			} else {
+				// if not a cloud user then remove billing and add list licenses route
+				updatedRoutes = updatedRoutes.filter(
+					(route) => route?.path !== ROUTES.BILLING,
+				);
+				updatedRoutes = [...updatedRoutes, LIST_LICENSES];
+			}
+			setRoutes(updatedRoutes);
 		}
-
-		if (
-			isOnBasicPlan ||
-			(isLoggedInState && role && role !== 'ADMIN') ||
-			!(isCloudUserVal || isEECloudUser())
-		) {
-			const newRoutes = routes.filter((route) => route?.path !== ROUTES.BILLING);
-			setRoutes(newRoutes);
-		}
-
-		if (isCloudUserVal || isEECloudUser()) {
-			const newRoutes = [...routes, SUPPORT_ROUTE];
-
-			setRoutes(newRoutes);
-		} else {
-			const newRoutes = [...routes, LIST_LICENSES];
-
-			setRoutes(newRoutes);
-		}
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isLoggedInState, isOnBasicPlan, user]);
+	}, [
+		isLoggedInState,
+		user,
+		licenses,
+		isCloudUserVal,
+		isFetchingLicenses,
+		isFetchingUser,
+	]);
 
 	useEffect(() => {
 		if (pathname === ROUTES.ONBOARDING) {
@@ -237,99 +177,116 @@ function App(): JSX.Element {
 		}
 
 		trackPageView(pathname);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [pathname]);
+	}, [pathname, trackPageView]);
 
 	useEffect(() => {
-		const showAddCreditCardModal =
-			!isPremiumSupportEnabled &&
-			!licenseData?.payload?.trialConvertedToSubscription;
+		// feature flag shouldn't be loading and featureFlags or fetchError any one of this should be true indicating that req is complete
+		// licenses should also be present. there is no check for licenses for loading and error as that is mandatory if not present then routing
+		// to something went wrong which would ideally need a reload.
+		if (
+			!isFetchingFeatureFlags &&
+			(featureFlags || featureFlagsFetchError) &&
+			licenses
+		) {
+			let isChatSupportEnabled = false;
+			let isPremiumSupportEnabled = false;
+			if (featureFlags && featureFlags.length > 0) {
+				isChatSupportEnabled =
+					featureFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)
+						?.active || false;
 
-		if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
-			window.Intercom('boot', {
-				app_id: process.env.INTERCOM_APP_ID,
-				email: user?.email || '',
-				name: user?.name || '',
-			});
+				isPremiumSupportEnabled =
+					featureFlags.find((flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT)
+						?.active || false;
+			}
+			const showAddCreditCardModal =
+				!isPremiumSupportEnabled && !licenses.trialConvertedToSubscription;
+
+			if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
+				window.Intercom('boot', {
+					app_id: process.env.INTERCOM_APP_ID,
+					email: user?.email || '',
+					name: user?.name || '',
+				});
+			}
 		}
 	}, [
 		isLoggedInState,
-		isChatSupportEnabled,
 		user,
-		licenseData,
-		isPremiumSupportEnabled,
 		pathname,
+		licenses?.trialConvertedToSubscription,
+		featureFlags,
+		isFetchingFeatureFlags,
+		featureFlagsFetchError,
+		licenses,
 	]);
 
 	useEffect(() => {
-		if (user && user?.email && user?.userId && user?.name) {
-			try {
-				const isThemeAnalyticsSent = getLocalStorageApi(
-					LOCALSTORAGE.THEME_ANALYTICS_V1,
-				);
-				if (!isThemeAnalyticsSent) {
-					logEvent('Theme Analytics', {
-						theme: isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT,
-						user: pick(user, ['email', 'userId', 'name']),
-						org,
-					});
-					setLocalStorageApi(LOCALSTORAGE.THEME_ANALYTICS_V1, 'true');
-				}
-			} catch {
-				console.error('Failed to parse local storage theme analytics event');
-			}
-		}
-
-		if (isCloudUserVal && user && user.email) {
+		if (!isFetchingUser && isCloudUserVal && user && user.email) {
 			enableAnalytics(user);
 		}
+	}, [user, isFetchingUser, isCloudUserVal, enableAnalytics]);
 
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [user]);
+	// if the user is in logged in state
+	if (isLoggedInState) {
+		if (pathname === ROUTES.HOME_PAGE) {
+			history.replace(ROUTES.APPLICATION);
+		}
+		// if the setup calls are loading then return a spinner
+		if (isFetchingLicenses || isFetchingUser || isFetchingFeatureFlags) {
+			return <Spinner tip="Loading..." />;
+		}
 
-	useEffect(() => {
-		console.info('We are hiring! https://jobs.gem.com/signoz');
-	}, []);
+		// if the required calls fails then return a something went wrong error
+		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
+		// move to indefinitive loading
+		if (userFetchError || licensesFetchError) {
+			return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
+		}
+
+		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
+		if (!licenses || !user.email || !featureFlags) {
+			return <Spinner tip="Loading..." />;
+		}
+	}
 
 	return (
-		<AppProvider>
-			<ConfigProvider theme={themeConfig}>
-				<Router history={history}>
-					<CompatRouter>
-						<NotificationProvider>
-							<PrivateRoute>
-								<ResourceProvider>
-									<QueryBuilderProvider>
-										<DashboardProvider>
-											<KeyboardHotkeysProvider>
-												<AlertRuleProvider>
-													<AppLayout>
-														<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-															<Switch>
-																{routes.map(({ path, component, exact }) => (
-																	<Route
-																		key={`${path}`}
-																		exact={exact}
-																		path={path}
-																		component={component}
-																	/>
-																))}
+		<ConfigProvider theme={themeConfig}>
+			<Router history={history}>
+				<CompatRouter>
+					<NotificationProvider>
+						<PrivateRoute>
+							<ResourceProvider>
+								<QueryBuilderProvider>
+									<DashboardProvider>
+										<KeyboardHotkeysProvider>
+											<AlertRuleProvider>
+												<AppLayout>
+													<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+														<Switch>
+															{routes.map(({ path, component, exact }) => (
+																<Route
+																	key={`${path}`}
+																	exact={exact}
+																	path={path}
+																	component={component}
+																/>
+															))}
 
-																<Route path="*" component={NotFound} />
-															</Switch>
-														</Suspense>
-													</AppLayout>
-												</AlertRuleProvider>
-											</KeyboardHotkeysProvider>
-										</DashboardProvider>
-									</QueryBuilderProvider>
-								</ResourceProvider>
-							</PrivateRoute>
-						</NotificationProvider>
-					</CompatRouter>
-				</Router>
-			</ConfigProvider>
-		</AppProvider>
+															<Route path="*" component={NotFound} />
+														</Switch>
+													</Suspense>
+												</AppLayout>
+											</AlertRuleProvider>
+										</KeyboardHotkeysProvider>
+									</DashboardProvider>
+								</QueryBuilderProvider>
+							</ResourceProvider>
+						</PrivateRoute>
+					</NotificationProvider>
+				</CompatRouter>
+			</Router>
+		</ConfigProvider>
 	);
 }
 

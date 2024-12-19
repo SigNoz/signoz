@@ -1,16 +1,13 @@
 import { billingSuccessResponse } from 'mocks-server/__mockdata__/billing';
 import {
+	licensesSuccessResponse,
 	notOfTrailResponse,
 	trialConvertedToSubscriptionResponse,
 } from 'mocks-server/__mockdata__/licenses';
-import { server } from 'mocks-server/server';
-import { rest } from 'msw';
-import { act, render, screen } from 'tests/test-utils';
+import { act, render, screen, waitFor } from 'tests/test-utils';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import BillingContainer from './BillingContainer';
-
-const lisenceUrl = 'http://localhost/api/v2/licenses';
 
 jest.mock('uplot', () => {
 	const paths = {
@@ -38,9 +35,7 @@ window.ResizeObserver =
 
 describe('BillingContainer', () => {
 	test('Component should render', async () => {
-		act(() => {
-			render(<BillingContainer />);
-		});
+		render(<BillingContainer />);
 
 		const dataInjection = screen.getByRole('columnheader', {
 			name: /data ingested/i,
@@ -55,13 +50,18 @@ describe('BillingContainer', () => {
 		});
 		expect(cost).toBeInTheDocument();
 
+		const dayRemainingInBillingPeriod = await screen.findByText(
+			/11 days_remaining/i,
+		);
+		expect(dayRemainingInBillingPeriod).toBeInTheDocument();
+
 		const manageBilling = screen.getByRole('button', {
 			name: 'manage_billing',
 		});
 		expect(manageBilling).toBeInTheDocument();
 
-		const dollar = screen.getByText(/\$0/i);
-		expect(dollar).toBeInTheDocument();
+		const dollar = screen.getByText(/\$1,278.3/i);
+		await waitFor(() => expect(dollar).toBeInTheDocument());
 
 		const currentBill = screen.getByText('billing');
 		expect(currentBill).toBeInTheDocument();
@@ -69,7 +69,9 @@ describe('BillingContainer', () => {
 
 	test('OnTrail', async () => {
 		act(() => {
-			render(<BillingContainer />);
+			render(<BillingContainer />, undefined, undefined, {
+				licenses: licensesSuccessResponse.data,
+			});
 		});
 
 		const freeTrailText = await screen.findByText('Free Trial');
@@ -100,14 +102,10 @@ describe('BillingContainer', () => {
 	});
 
 	test('OnTrail but trialConvertedToSubscription', async () => {
-		server.use(
-			rest.get(lisenceUrl, (req, res, ctx) =>
-				res(ctx.status(200), ctx.json(trialConvertedToSubscriptionResponse)),
-			),
-		);
-
 		act(() => {
-			render(<BillingContainer />);
+			render(<BillingContainer />, undefined, undefined, {
+				licenses: trialConvertedToSubscriptionResponse.data,
+			});
 		});
 
 		const currentBill = screen.getByText('billing');
@@ -138,12 +136,9 @@ describe('BillingContainer', () => {
 	});
 
 	test('Not on ontrail', async () => {
-		server.use(
-			rest.get(lisenceUrl, (req, res, ctx) =>
-				res(ctx.status(200), ctx.json(notOfTrailResponse)),
-			),
-		);
-		const { findByText } = render(<BillingContainer />);
+		const { findByText } = render(<BillingContainer />, undefined, undefined, {
+			licenses: notOfTrailResponse.data,
+		});
 
 		const billingPeriodText = `Your current billing period is from ${getFormattedDate(
 			billingSuccessResponse.data.billingPeriodStart,
@@ -167,18 +162,5 @@ describe('BillingContainer', () => {
 			name: /Logs 497 GB 0.4 \$ 198.8/i,
 		});
 		expect(logRow).toBeInTheDocument();
-	});
-
-	test('Should render corrent day remaining in billing period', async () => {
-		server.use(
-			rest.get(lisenceUrl, (req, res, ctx) =>
-				res(ctx.status(200), ctx.json(notOfTrailResponse)),
-			),
-		);
-		render(<BillingContainer />);
-		const dayRemainingInBillingPeriod = await screen.findByText(
-			/11 days_remaining/i,
-		);
-		expect(dayRemainingInBillingPeriod).toBeInTheDocument();
 	});
 });

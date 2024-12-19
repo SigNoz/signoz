@@ -59,6 +59,7 @@ import {
 // #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
 // see more: https://github.com/lucide-icons/lucide/issues/94
 import { handleContactSupport } from 'pages/Integrations/utils';
+import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -72,17 +73,14 @@ import {
 } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
 import { generatePath, Link } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import { AppState } from 'store/reducers';
 import {
 	Dashboard,
 	IDashboardVariable,
 	WidgetRow,
 	Widgets,
 } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
 import { isCloudUser } from 'utils/app';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
@@ -105,7 +103,7 @@ function DashboardsList(): JSX.Element {
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const {
 		listSortOrder: sortOrder,
@@ -117,7 +115,7 @@ function DashboardsList(): JSX.Element {
 	);
 	const [action, createNewDashboard] = useComponentPermission(
 		['action', 'create_new_dashboards'],
-		role,
+		user.role,
 	);
 
 	const [

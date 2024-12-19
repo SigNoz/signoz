@@ -17,6 +17,7 @@ import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
 import omitBy from 'lodash-es/omitBy';
+import { useAppContext } from 'providers/App/App';
 import {
 	createContext,
 	PropsWithChildren,
@@ -36,7 +37,6 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
@@ -157,7 +157,7 @@ export function DashboardProvider({
 		Record<string, { widgets: Layout[]; collapsed: boolean }>
 	>({});
 
-	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { isLoggedIn } = useAppContext();
 
 	const dashboardId =
 		(isDashboardPage
