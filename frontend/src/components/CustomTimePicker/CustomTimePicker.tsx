@@ -336,6 +336,8 @@ function CustomTimePicker({
 				}}
 			>
 				<Input
+					autoComplete="off"
+					data-testid="timeSelection-input"
 					className="timeSelection-input"
 					type="text"
 					status={inputValue && inputStatus === 'error' ? 'error' : ''}
