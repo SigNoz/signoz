@@ -76,11 +76,27 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 
 		return [
 			{
+				// We do not need any title and data index for the log state indicator
+				title: '',
+				dataIndex: '',
+				key: 'state-indicator',
+				render: (_, item): ColumnTypeRender<Record<string, unknown>> => ({
+					children: (
+						<div className={cx('state-indicator', fontSize)}>
+							<LogStateIndicator
+								type={getLogIndicatorTypeForTable(item)}
+								fontSize={fontSize}
+							/>
+						</div>
+					),
+				}),
+			},
+			{
 				title: 'timestamp',
 				dataIndex: 'timestamp',
 				key: 'timestamp',
 				// https://github.com/ant-design/ant-design/discussions/36886
-				render: (field, item): ColumnTypeRender<Record<string, unknown>> => {
+				render: (field): ColumnTypeRender<Record<string, unknown>> => {
 					const date =
 						typeof field === 'string'
 							? formatTimezoneAdjustedTimestamp(field, 'YYYY-MM-DD HH:mm:ss.SSS')
@@ -91,10 +107,6 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					return {
 						children: (
 							<div className="table-timestamp">
-								<LogStateIndicator
-									type={getLogIndicatorTypeForTable(item)}
-									fontSize={fontSize}
-								/>
 								<Typography.Paragraph ellipsis className={cx('text', fontSize)}>
 									{date}
 								</Typography.Paragraph>
