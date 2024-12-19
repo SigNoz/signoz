@@ -2694,8 +2694,8 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 }
 
 // remove this after sometime
-func removeUnderscoreDuplicateFields(fields []model.LogField) []model.LogField {
-	lookup := map[string]model.LogField{}
+func removeUnderscoreDuplicateFields(fields []model.Field) []model.Field {
+	lookup := map[string]model.Field{}
 	for _, v := range fields {
 		lookup[v.Name+v.DataType] = v
 	}
@@ -2706,7 +2706,7 @@ func removeUnderscoreDuplicateFields(fields []model.LogField) []model.LogField {
 		}
 	}
 
-	updatedFields := []model.LogField{}
+	updatedFields := []model.Field{}
 	for _, v := range lookup {
 		updatedFields = append(updatedFields, v)
 	}
@@ -2717,11 +2717,11 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	// response will contain top level fields from the otel log model
 	response := model.GetFieldsResponse{
 		Selected:    constants.StaticSelectedLogFields,
-		Interesting: []model.LogField{},
+		Interesting: []model.Field{},
 	}
 
 	// get attribute keys
-	attributes := []model.LogField{}
+	attributes := []model.Field{}
 	query := fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s group by name, datatype", r.logsDB, r.logsAttributeKeys)
 	err := r.db.Select(ctx, &attributes, query)
 	if err != nil {
@@ -2729,7 +2729,7 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	}
 
 	// get resource keys
-	resources := []model.LogField{}
+	resources := []model.Field{}
 	query = fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s group by name, datatype", r.logsDB, r.logsResourceKeys)
 	err = r.db.Select(ctx, &resources, query)
 	if err != nil {
@@ -2753,9 +2753,11 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	return &response, nil
 }
 
-func (r *ClickHouseReader) extractSelectedAndInterestingFields(tableStatement string, fieldType string, fields *[]model.LogField, response *model.GetFieldsResponse) {
+func (r *ClickHouseReader) extractSelectedAndInterestingFields(tableStatement string, overrideFieldType string, fields *[]model.Field, response *model.GetFieldsResponse) {
 	for _, field := range *fields {
-		field.Type = fieldType
+		if overrideFieldType != "" {
+			field.Type = overrideFieldType
+		}
 		// all static fields are assumed to be selected as we don't allow changing them
 		if isColumn(r.useLogsNewSchema, tableStatement, field.Type, field.Name, field.DataType) {
 			response.Selected = append(response.Selected, field)
@@ -2942,6 +2944,165 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		// 	}
 		// }
 	}
+	return nil
+}
+
+func (r *ClickHouseReader) GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
+	// response will contain top level fields from the otel trace model
+	response := model.GetFieldsResponse{
+		Selected:    []model.Field{},
+		Interesting: []model.Field{},
+	}
+
+	// get the top level selected fields
+	for _, field := range constants.NewStaticFieldsTraces {
+		if (v3.AttributeKey{} == field) {
+			continue
+		}
+		response.Selected = append(response.Selected, model.Field{
+			Name:     field.Key,
+			DataType: field.DataType.String(),
+			Type:     constants.Static,
+		})
+	}
+
+	// get attribute keys
+	attributes := []model.Field{}
+	query := fmt.Sprintf("SELECT tagKey, tagType, dataType from %s.%s group by tagKey, tagType, dataType", r.TraceDB, r.spanAttributesKeysTable)
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+	defer rows.Close()
+
+	var tagKey string
+	var dataType string
+	var tagType string
+	for rows.Next() {
+		if err := rows.Scan(&tagKey, &tagType, &dataType); err != nil {
+			return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+		attributes = append(attributes, model.Field{
+			Name:     tagKey,
+			DataType: dataType,
+			Type:     tagType,
+		})
+	}
+
+	statements := []model.ShowCreateTableStatement{}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.TraceDB, r.traceLocalTableName)
+	err = r.db.Select(ctx, &statements, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	r.extractSelectedAndInterestingFields(statements[0].Statement, "", &attributes, &response)
+
+	return &response, nil
+
+}
+
+func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.UpdateField) *model.ApiError {
+	if !field.Selected {
+		return model.ForbiddenError(errors.New("removing a selected field is not allowed, please reach out to support."))
+	}
+
+	// name of the materialized column
+	colname := utils.GetClickhouseColumnNameV2(field.Type, field.DataType, field.Name)
+
+	field.DataType = strings.ToLower(field.DataType)
+
+	// dataType and chDataType of the materialized column
+	var dataTypeMap = map[string]string{
+		"string":  "string",
+		"bool":    "bool",
+		"int64":   "number",
+		"float64": "number",
+	}
+	var chDataTypeMap = map[string]string{
+		"string":  "String",
+		"bool":    "Bool",
+		"int64":   "Float64",
+		"float64": "Float64",
+	}
+	chDataType := chDataTypeMap[field.DataType]
+	dataType := dataTypeMap[field.DataType]
+
+	// typeName: tag => attributes, resource => resources
+	typeName := field.Type
+	if field.Type == string(v3.AttributeKeyTypeTag) {
+		typeName = constants.Attributes
+	} else if field.Type == string(v3.AttributeKeyTypeResource) {
+		typeName = constants.Resources
+	}
+
+	attrColName := fmt.Sprintf("%s_%s", typeName, dataType)
+	for _, table := range []string{r.traceLocalTableName, r.traceTableName} {
+		q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS `%s` %s DEFAULT %s['%s'] CODEC(ZSTD(1))"
+		query := fmt.Sprintf(q,
+			r.TraceDB, table,
+			r.cluster,
+			colname, chDataType,
+			attrColName,
+			field.Name,
+		)
+		err := r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS `%s_exists` bool DEFAULT if(mapContains(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
+			r.TraceDB, table,
+			r.cluster,
+			colname,
+			attrColName,
+			field.Name,
+		)
+		err = r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+	}
+
+	// create the index
+	if strings.ToLower(field.DataType) == "bool" {
+		// there is no point in creating index for bool attributes as the cardinality is just 2
+		return nil
+	}
+
+	if field.IndexType == "" {
+		field.IndexType = constants.DefaultLogSkipIndexType
+	}
+	if field.IndexGranularity == 0 {
+		field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
+	}
+	query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS `%s_idx` (`%s`) TYPE %s  GRANULARITY %d",
+		r.TraceDB, r.traceLocalTableName,
+		r.cluster,
+		colname,
+		colname,
+		field.IndexType,
+		field.IndexGranularity,
+	)
+	err := r.db.Exec(ctx, query)
+	if err != nil {
+		return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	// add a default minmax index for numbers
+	if dataType == "number" {
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS `%s_minmax_idx` (`%s`) TYPE minmax  GRANULARITY 1",
+			r.TraceDB, r.traceLocalTableName,
+			r.cluster,
+			colname,
+			colname,
+		)
+		err = r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+	}
+
 	return nil
 }
 

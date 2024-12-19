@@ -42,7 +42,7 @@ jobs:
           kubectl create ns sample-application
 
           # apply hotrod k8s manifest file
-          kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/develop/sample-apps/hotrod/hotrod.yaml
+          kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/main/sample-apps/hotrod/hotrod.yaml
 
           # wait for all deployments in sample-application namespace to be READY
           kubectl -n sample-application get deploy --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
