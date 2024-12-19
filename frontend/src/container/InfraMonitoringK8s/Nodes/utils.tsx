@@ -1,10 +1,10 @@
-import { Button, Tag } from 'antd';
+import { Tag } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	K8sNodesData,
 	K8sNodesListPayload,
 } from 'api/infraMonitoring/getK8sNodesList';
-import { ChevronRight, Group } from 'lucide-react';
+import { Group } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { IEntityColumn } from '../utils';
@@ -51,15 +51,16 @@ export const defaultAddedColumns: IEntityColumn[] = [
 export interface K8sNodesRowData {
 	key: string;
 	nodeUID: string;
-	nodeName: string;
+	nodeName: React.ReactNode;
 	clusterName: string;
 	cpuUtilization: React.ReactNode;
 	cpuAllocatable: React.ReactNode;
 	memoryUtilization: React.ReactNode;
 	memoryAllocatable: React.ReactNode;
+	groupedByMeta?: any;
 }
 
-const podGroupColumnConfig = {
+const nodeGroupColumnConfig = {
 	title: (
 		<div className="column-header node-group-header">
 			<Group size={14} /> NODE GROUP
@@ -141,7 +142,7 @@ export const getK8sNodesListColumns = (
 		const filteredColumns = [...columnsConfig].filter(
 			(column) => column.key !== 'nodeName',
 		);
-		filteredColumns.unshift(podGroupColumnConfig);
+		filteredColumns.unshift(nodeGroupColumnConfig);
 		return filteredColumns as ColumnType<K8sNodesRowData>[];
 	}
 
@@ -160,14 +161,6 @@ const getGroupByEle = (
 
 	return (
 		<div className="pod-group">
-			<div className="expand-group">
-				<Button
-					type="text"
-					className="expand-group-icon periscope-btn ghost"
-					icon={<ChevronRight size={14} />}
-				/>
-			</div>
-
 			{groupByValues.map((value) => (
 				<Tag key={value} color="#1D212D" className="pod-group-tag-item">
 					{value === '' ? '<no-value>' : value}
@@ -184,11 +177,18 @@ export const formatDataForTable = (
 	data.map((node, index) => ({
 		key: `${node.nodeUID}-${index}`,
 		nodeUID: node.nodeUID || '',
-		nodeName: node.meta.k8s_node_name,
+		nodeName: (
+			<div className="pod-name-container">
+				<div className="pod-name">{node.meta.k8s_node_name || ''}</div>
+			</div>
+		),
 		clusterName: node.meta.k8s_cluster_name,
 		cpuUtilization: node.nodeCPUUsage,
 		memoryUtilization: node.nodeMemoryUsage,
 		cpuAllocatable: node.nodeCPUAllocatable,
 		memoryAllocatable: node.nodeMemoryAllocatable,
 		nodeGroup: getGroupByEle(node, groupBy),
+		meta: node.meta,
+		...node.meta,
+		groupedByMeta: node.meta,
 	}));

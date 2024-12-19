@@ -1,22 +1,24 @@
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import '../InfraMonitoringK8s.styles.scss';
 
 import { LoadingOutlined } from '@ant-design/icons';
 import {
-	Skeleton,
+	Button,
 	Spin,
 	Table,
 	TablePaginationConfig,
 	TableProps,
 	Typography,
 } from 'antd';
-import { SorterResult } from 'antd/es/table/interface';
+import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sNodesListPayload } from 'api/infraMonitoring/getK8sNodesList';
 import { useGetK8sNodesList } from 'hooks/infraMonitoring/useGetK8sNodesList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -24,6 +26,8 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import K8sHeader from '../K8sHeader';
+import LoadingContainer from '../LoadingContainer';
+import { dummyColumnConfig } from '../utils';
 import {
 	defaultAddedColumns,
 	formatDataForTable,
@@ -57,9 +61,67 @@ function K8sNodesList({
 
 	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
 
+	const [selectedRowData, setSelectedRowData] = useState<K8sNodesRowData | null>(
+		null,
+	);
+
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
 	>([]);
+
+	const createFiltersForSelectedRowData = (
+		selectedRowData: K8sNodesRowData,
+	): IBuilderQuery['filters'] => {
+		const baseFilters: IBuilderQuery['filters'] = {
+			items: [],
+			op: 'and',
+		};
+
+		if (!selectedRowData) return baseFilters;
+
+		const { groupedByMeta } = selectedRowData;
+
+		for (const key of Object.keys(groupedByMeta)) {
+			baseFilters.items.push({
+				key: {
+					key,
+				},
+				op: '=',
+				value: groupedByMeta[key],
+			});
+		}
+
+		return baseFilters;
+	};
+
+	const fetchGroupedByRowDataQuery = useMemo(() => {
+		if (!selectedRowData) return null;
+
+		const baseQuery = getK8sNodesListQuery();
+
+		const filters = createFiltersForSelectedRowData(selectedRowData);
+
+		return {
+			...baseQuery,
+			limit: 10,
+			offset: 0,
+			filters,
+			start: Math.floor(minTime / 1000000),
+			end: Math.floor(maxTime / 1000000),
+			orderBy,
+		};
+	}, [minTime, maxTime, orderBy, selectedRowData]);
+
+	const {
+		data: groupedByRowData,
+		isFetching: isFetchingGroupedByRowData,
+		isLoading: isLoadingGroupedByRowData,
+		isError: isErrorGroupedByRowData,
+		refetch: fetchGroupedByRowData,
+	} = useGetK8sNodesList(fetchGroupedByRowDataQuery as K8sNodesListPayload, {
+		queryKey: ['nodeList', fetchGroupedByRowDataQuery],
+		enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
+	});
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -106,10 +168,16 @@ function K8sNodesList({
 		return queryPayload;
 	}, [currentPage, minTime, maxTime, orderBy, groupBy, queryFilters]);
 
+	const formattedGroupedByNodesData = useMemo(
+		() =>
+			formatDataForTable(groupedByRowData?.payload?.data?.records || [], groupBy),
+		[groupedByRowData, groupBy],
+	);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sNodesList(
 		query as K8sNodesListPayload,
 		{
-			queryKey: ['hostList', query],
+			queryKey: ['nodeList', query],
 			enabled: !!query,
 		},
 	);
@@ -123,6 +191,16 @@ function K8sNodesList({
 	);
 
 	const columns = useMemo(() => getK8sNodesListColumns(groupBy), [groupBy]);
+
+	const handleGroupByRowClick = (record: K8sNodesRowData): void => {
+		setSelectedRowData(record);
+	};
+
+	useEffect(() => {
+		if (selectedRowData) {
+			fetchGroupedByRowData();
+		}
+	}, [selectedRowData, fetchGroupedByRowData]);
 
 	const handleTableChange: TableProps<K8sNodesRowData>['onChange'] = useCallback(
 		(
@@ -174,11 +252,115 @@ function K8sNodesList({
 	// }, [selectedNodeUID, nodesData]);
 
 	const handleRowClick = (record: K8sNodesRowData): void => {
-		// setselectedNodeUID(record.nodeUID);
+		if (groupBy.length === 0) {
+			setSelectedRowData(null);
+			// setselectedNodeUID(record.nodeUID);
+		} else {
+			handleGroupByRowClick(record);
+		}
 
 		logEvent('Infra Monitoring: K8s node list item clicked', {
 			nodeUID: record.nodeUID,
 		});
+	};
+
+	const nestedColumns = useMemo(() => {
+		const nestedColumns = getK8sNodesListColumns([]);
+		return [dummyColumnConfig, ...nestedColumns];
+	}, []);
+
+	const isGroupedByAttribute = groupBy.length > 0;
+
+	const handleExpandedRowViewAllClick = (): void => {
+		if (!selectedRowData) return;
+
+		const filters = createFiltersForSelectedRowData(selectedRowData);
+
+		handleFiltersChange(filters);
+
+		setCurrentPage(1);
+		setSelectedRowData(null);
+		setGroupBy([]);
+		setOrderBy(null);
+	};
+
+	const expandedRowRender = (): JSX.Element => (
+		<div className="expanded-table-container">
+			{isErrorGroupedByRowData && (
+				<Typography>{groupedByRowData?.error || 'Something went wrong'}</Typography>
+			)}
+			{isFetchingGroupedByRowData || isLoadingGroupedByRowData ? (
+				<LoadingContainer />
+			) : (
+				<div className="expanded-table">
+					<Table
+						columns={nestedColumns as ColumnType<K8sNodesRowData>[]}
+						dataSource={formattedGroupedByNodesData}
+						pagination={false}
+						scroll={{ x: true }}
+						tableLayout="fixed"
+						size="small"
+						loading={{
+							spinning: isFetchingGroupedByRowData || isLoadingGroupedByRowData,
+							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+						}}
+					/>
+
+					{groupedByRowData?.payload?.data?.total &&
+						groupedByRowData?.payload?.data?.total > 10 && (
+							<div className="expanded-table-footer">
+								<Button
+									type="default"
+									size="small"
+									className="periscope-btn secondary"
+									onClick={handleExpandedRowViewAllClick}
+								>
+									View All
+								</Button>
+							</div>
+						)}
+				</div>
+			)}
+		</div>
+	);
+
+	const expandRowIconRenderer = ({
+		expanded,
+		onExpand,
+		record,
+	}: {
+		expanded: boolean;
+		onExpand: (
+			record: K8sNodesRowData,
+			e: React.MouseEvent<HTMLButtonElement>,
+		) => void;
+		record: K8sNodesRowData;
+	}): JSX.Element | null => {
+		if (!isGroupedByAttribute) {
+			return null;
+		}
+
+		return expanded ? (
+			<Button
+				className="periscope-btn ghost"
+				onClick={(e: React.MouseEvent<HTMLButtonElement>): void =>
+					onExpand(record, e)
+				}
+				role="button"
+			>
+				<ChevronDown size={14} />
+			</Button>
+		) : (
+			<Button
+				className="periscope-btn ghost"
+				onClick={(e: React.MouseEvent<HTMLButtonElement>): void =>
+					onExpand(record, e)
+				}
+				role="button"
+			>
+				<ChevronRight size={14} />
+			</Button>
+		);
 	};
 
 	// const handleCloseNodeDetail = (): void => {
@@ -259,28 +441,7 @@ function K8sNodesList({
 				</div>
 			)}
 
-			{(isFetching || isLoading) && (
-				<div className="k8s-list-loading-state">
-					<Skeleton.Input
-						className="k8s-list-loading-state-item"
-						size="large"
-						block
-						active
-					/>
-					<Skeleton.Input
-						className="k8s-list-loading-state-item"
-						size="large"
-						block
-						active
-					/>
-					<Skeleton.Input
-						className="k8s-list-loading-state-item"
-						size="large"
-						block
-						active
-					/>
-				</div>
-			)}
+			{(isFetching || isLoading) && <LoadingContainer />}
 
 			{showsNodesTable && (
 				<Table
@@ -300,12 +461,15 @@ function K8sNodesList({
 						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 					}}
 					tableLayout="fixed"
-					rowKey={(record): string => record.nodeUID}
 					onChange={handleTableChange}
 					onRow={(record): { onClick: () => void; className: string } => ({
 						onClick: (): void => handleRowClick(record),
 						className: 'clickable-row',
 					})}
+					expandable={{
+						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
+						expandIcon: expandRowIconRenderer,
+					}}
 				/>
 			)}
 			{/* TODO - Handle Node Details flow */}
