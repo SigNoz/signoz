@@ -17,6 +17,7 @@ function Controls({
 	handleNavigateNext,
 	handleCountItemsPerPageChange,
 	isLogPanel = false,
+	showSizeChanger = true,
 }: ControlsProps): JSX.Element | null {
 	const isNextAndPreviousDisabled = useMemo(
 		() => isLoading || countPerPage < 0 || totalCount === 0,
@@ -52,20 +53,23 @@ function Controls({
 			>
 				Next <RightOutlined />
 			</Button>
-			<Select<Pagination['limit']>
-				style={defaultSelectStyle}
-				loading={isLoading}
-				value={countPerPage}
-				onChange={handleCountItemsPerPageChange}
-				getPopupContainer={popupContainer}
-			>
-				{perPageOptions.map((count) => (
-					<Select.Option
-						key={count}
-						value={count}
-					>{`${count} / page`}</Select.Option>
-				))}
-			</Select>
+
+			{showSizeChanger && (
+				<Select<Pagination['limit']>
+					style={defaultSelectStyle}
+					loading={isLoading}
+					value={countPerPage}
+					onChange={handleCountItemsPerPageChange}
+					getPopupContainer={popupContainer}
+				>
+					{perPageOptions.map((count) => (
+						<Select.Option
+							key={count}
+							value={count}
+						>{`${count} / page`}</Select.Option>
+					))}
+				</Select>
+			)}
 		</Container>
 	);
 }
@@ -74,6 +78,7 @@ Controls.defaultProps = {
 	offset: 0,
 	perPageOptions: DEFAULT_PER_PAGE_OPTIONS,
 	isLogPanel: false,
+	showSizeChanger: true,
 };
 
 export interface ControlsProps {
@@ -86,6 +91,7 @@ export interface ControlsProps {
 	handleNavigateNext: () => void;
 	handleCountItemsPerPageChange: (value: Pagination['limit']) => void;
 	isLogPanel?: boolean;
+	showSizeChanger?: boolean;
 }
 
 export default memo(Controls);

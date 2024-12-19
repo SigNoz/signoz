@@ -74,6 +74,19 @@ func getSelectLabels(groupBy []v3.AttributeKey) string {
 	return strings.Join(labels, ",")
 }
 
+// TODO(nitya): use the _exists columns as well in the future similar to logs
+func existsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (string, error) {
+	if key.DataType == v3.AttributeKeyDataTypeString {
+		if op == v3.FilterOperatorExists {
+			return fmt.Sprintf("%s %s ''", getColumnName(key), tracesOperatorMappingV3[v3.FilterOperatorNotEqual]), nil
+		} else {
+			return fmt.Sprintf("%s %s ''", getColumnName(key), tracesOperatorMappingV3[v3.FilterOperatorEqual]), nil
+		}
+	} else {
+		return "", fmt.Errorf("unsupported operation, exists and not exists can only be applied on custom attributes or string type columns")
+	}
+}
+
 func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 	var conditions []string
 
@@ -110,7 +123,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
 					if item.Key.IsColumn {
-						subQuery, err := tracesV3.ExistsSubQueryForFixedColumn(item.Key, item.Operator)
+						subQuery, err := existsSubQueryForFixedColumn(item.Key, item.Operator)
 						if err != nil {
 							return "", err
 						}
@@ -255,6 +268,8 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 				withSubQuery = tracesV3.AddOffsetToQuery(withSubQuery, mq.Offset)
 			}
 			query = fmt.Sprintf(constants.TracesExplorerViewSQLSelectBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3) + withSubQuery + ") " + fmt.Sprintf(constants.TracesExplorerViewSQLSelectAfterSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3, timeFilter)
+			// adding this to avoid the distributed product mode error which doesn't allow global in
+			query += " settings distributed_product_mode='allow', max_memory_usage=10000000000"
 		} else if panelType == v3.PanelTypeList {
 			if len(mq.SelectColumns) == 0 {
 				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
@@ -310,7 +325,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	}
 
 	if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", tracesV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
+		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", tracesV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "#LIMIT_PLACEHOLDER)"
 	}
 
 	switch mq.AggregateOperator {
@@ -348,13 +363,14 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
 			if mq.AggregateAttribute.IsColumn {
-				subQuery, err := tracesV3.ExistsSubQueryForFixedColumn(mq.AggregateAttribute, v3.FilterOperatorExists)
+				subQuery, err := existsSubQueryForFixedColumn(mq.AggregateAttribute, v3.FilterOperatorExists)
 				if err == nil {
 					filterSubQuery = fmt.Sprintf("%s AND %s", filterSubQuery, subQuery)
 				}
 			} else {
-				column := getColumnName(mq.AggregateAttribute)
-				filterSubQuery = fmt.Sprintf("%s AND has(%s, '%s')", filterSubQuery, column, mq.AggregateAttribute.Key)
+				cType := getClickHouseTracesColumnType(mq.AggregateAttribute.Type)
+				cDataType := getClickHouseTracesColumnDataType(mq.AggregateAttribute.DataType)
+				filterSubQuery = fmt.Sprintf("%s AND mapContains(%s_%s, '%s')", filterSubQuery, cType, cDataType, mq.AggregateAttribute.Key)
 			}
 		}
 		op := "toFloat64(count())"

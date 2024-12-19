@@ -41,6 +41,8 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 				}
 			}
 			return x, nil
+		case []string:
+			return x, nil
 		default:
 			return nil, fmt.Errorf("invalid data type, expected string, got %v", reflect.TypeOf(v))
 		}

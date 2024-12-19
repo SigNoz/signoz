@@ -28,6 +28,7 @@ import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { isObject } from 'lodash-es';
 import { Check, Copy, Info, Send, Undo } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { connect, useSelector } from 'react-redux';
@@ -68,6 +69,9 @@ function DateTimeSelection({
 	showResetButton = false,
 	showOldExplorerCTA = false,
 	defaultRelativeTime = RelativeTimeMap['6hr'] as Time,
+	isModalTimeSelection = false,
+	onTimeChange,
+	modalSelectedInterval,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
@@ -205,7 +209,6 @@ function DateTimeSelection({
 
 			return `${startString} - ${endString}`;
 		}
-
 		return timeInterval;
 	};
 
@@ -218,6 +221,12 @@ function DateTimeSelection({
 			setCustomDTPickerVisible(false);
 		}
 	}, [selectedTime]);
+
+	useEffect(() => {
+		if (isModalTimeSelection && modalSelectedInterval === 'custom') {
+			setCustomDTPickerVisible(true);
+		}
+	}, [isModalTimeSelection, modalSelectedInterval]);
 
 	const getDefaultTime = (pathName: string): Time => {
 		const defaultSelectedOption = getDefaultOption(pathName);
@@ -306,6 +315,15 @@ function DateTimeSelection({
 
 	const onSelectHandler = useCallback(
 		(value: Time | CustomTimeType): void => {
+			if (isModalTimeSelection) {
+				if (value === 'custom') {
+					setCustomDTPickerVisible(true);
+					setIsValidteRelativeTime(false);
+					return;
+				}
+				onTimeChange?.(value);
+				return;
+			}
 			if (value !== 'custom') {
 				setIsOpen(false);
 				updateTimeInterval(value);
@@ -345,7 +363,9 @@ function DateTimeSelection({
 		[
 			initQueryBuilderData,
 			isLogsExplorerPage,
+			isModalTimeSelection,
 			location.pathname,
+			onTimeChange,
 			refreshButtonHidden,
 			stagedQuery,
 			updateLocalStorageForRoutes,
@@ -364,9 +384,34 @@ function DateTimeSelection({
 		}
 	}, [defaultRelativeTime, onSelectHandler]);
 
+	const [modalStartTime, setModalStartTime] = useState<number>(0);
+	const [modalEndTime, setModalEndTime] = useState<number>(0);
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
+			if (isModalTimeSelection) {
+				if (!startTimeMoment || !endTimeMoment) {
+					setHasSelectedTimeError(true);
+					return;
+				}
+
+				const startTs = startTimeMoment.toDate().getTime();
+				const endTs = endTimeMoment.toDate().getTime();
+
+				if (startTs >= endTs) {
+					setHasSelectedTimeError(true);
+					return;
+				}
+
+				setCustomDTPickerVisible(false);
+				setHasSelectedTimeError(false);
+				setModalStartTime(startTs);
+				setModalEndTime(endTs);
+				onTimeChange?.('custom', [startTs, endTs]);
+				return;
+			}
 			if (startTimeMoment && endTimeMoment) {
 				const startTime = startTimeMoment;
 				const endTime = endTimeMoment;
@@ -397,6 +442,10 @@ function DateTimeSelection({
 	};
 
 	const onValidCustomDateHandler = (dateTimeStr: CustomTimeType): void => {
+		if (isModalTimeSelection) {
+			onTimeChange?.(dateTimeStr);
+			return;
+		}
 		setIsOpen(false);
 		updateTimeInterval(dateTimeStr);
 		updateLocalStorageForRoutes(dateTimeStr);
@@ -452,7 +501,6 @@ function DateTimeSelection({
 		if (OLD_RELATIVE_TIME_VALUES.indexOf(time) > -1) {
 			return convertOldTimeToNewValidCustomTimeFormat(time);
 		}
-
 		return time;
 	};
 
@@ -613,6 +661,8 @@ function DateTimeSelection({
 		);
 	};
 
+	const { timezone } = useTimezone();
+
 	return (
 		<div className="date-time-selector">
 			{showResetButton && selectedTime !== defaultRelativeTime && (
@@ -656,7 +706,9 @@ function DateTimeSelection({
 						onError={(hasError: boolean): void => {
 							setHasSelectedTimeError(hasError);
 						}}
-						selectedTime={selectedTime}
+						selectedTime={
+							isModalTimeSelection ? (modalSelectedInterval as Time) : selectedTime
+						}
 						onValidCustomDateChange={(dateTime): void => {
 							onValidCustomDateHandler(dateTime.timeStr as CustomTimeType);
 						}}
@@ -664,9 +716,13 @@ function DateTimeSelection({
 							setIsValidteRelativeTime(isValid);
 						}}
 						selectedValue={getInputLabel(
-							dayjs(minTime / 1000000),
-							dayjs(maxTime / 1000000),
-							selectedTime,
+							dayjs(isModalTimeSelection ? modalStartTime : minTime / 1000000).tz(
+								timezone.value,
+							),
+							dayjs(isModalTimeSelection ? modalEndTime : maxTime / 1000000).tz(
+								timezone.value,
+							),
+							isModalTimeSelection ? modalSelectedInterval : selectedTime,
 						)}
 						data-testid="dropDown"
 						items={options}
@@ -722,6 +778,12 @@ interface DateTimeSelectionV2Props {
 	showOldExplorerCTA?: boolean;
 	showResetButton?: boolean;
 	defaultRelativeTime?: Time;
+	isModalTimeSelection?: boolean;
+	onTimeChange?: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	) => void;
+	modalSelectedInterval?: Time;
 }
 
 DateTimeSelection.defaultProps = {
@@ -730,6 +792,9 @@ DateTimeSelection.defaultProps = {
 	showRefreshText: true,
 	showResetButton: false,
 	defaultRelativeTime: RelativeTimeMap['6hr'] as Time,
+	isModalTimeSelection: false,
+	onTimeChange: (): void => {},
+	modalSelectedInterval: RelativeTimeMap['5m'] as Time,
 };
 interface DispatchProps {
 	updateTimeInterval: (
@@ -741,8 +806,31 @@ interface DispatchProps {
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+	{ isModalTimeSelection }: DateTimeSelectionV2Props,
 ): DispatchProps => ({
-	updateTimeInterval: bindActionCreators(UpdateTimeInterval, dispatch),
+	updateTimeInterval: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	): ((dispatch: Dispatch<AppActions>) => void) => {
+		/**
+		 * Updates the global time interval only when not in modal view
+		 *
+		 * @param interval - Selected time interval or custom time range
+		 * @param dateTimeRange - Optional tuple of [startTime, endTime]
+		 * @returns Function that updates redux store with new time interval, or empty function for modal view
+		 *
+		 * When in modal view (isModalTimeSelection=true), we don't want to update the global time state
+		 * as the selection is temporary until the modal is confirmed
+		 */
+		if (!isModalTimeSelection) {
+			return bindActionCreators(UpdateTimeInterval, dispatch)(
+				interval,
+				dateTimeRange,
+			);
+		}
+		// Return empty function for modal view as we don't want to update global state
+		return (): void => {};
+	},
 	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 });
 

@@ -509,15 +509,15 @@ type ShowCreateTableStatement struct {
 	Statement string `json:"statement" ch:"statement"`
 }
 
-type LogField struct {
+type Field struct {
 	Name     string `json:"name" ch:"name"`
 	DataType string `json:"dataType" ch:"datatype"`
 	Type     string `json:"type"`
 }
 
 type GetFieldsResponse struct {
-	Selected    []LogField `json:"selected"`
-	Interesting []LogField `json:"interesting"`
+	Selected    []Field `json:"selected"`
+	Interesting []Field `json:"interesting"`
 }
 
 // Represents a log record in query service requests and responses.
@@ -636,6 +636,7 @@ type AlertsInfo struct {
 	AlertNames                   []string `json:"alertNames"`
 	AlertsWithTSV2               int      `json:"alertsWithTSv2"`
 	AlertsWithLogsChQuery        int      `json:"alertsWithLogsChQuery"`
+	AlertsWithTraceChQuery       int      `json:"alertsWithTraceChQuery"`
 	AlertsWithLogsContainsOp     int      `json:"alertsWithLogsContainsOp"`
 }
 
@@ -655,7 +656,10 @@ type DashboardsInfo struct {
 	TracesBasedPanels               int      `json:"tracesBasedPanels"`
 	DashboardNames                  []string `json:"dashboardNames"`
 	QueriesWithTSV2                 int      `json:"queriesWithTSV2"`
+	QueriesWithTagAttrs             int      `json:"queriesWithTagAttrs"`
 	DashboardsWithLogsChQuery       int      `json:"dashboardsWithLogsChQuery"`
+	DashboardsWithTraceChQuery      int      `json:"dashboardsWithTraceChQuery"`
+	DashboardNamesWithTraceChQuery  []string `json:"dashboardNamesWithTraceChQuery"`
 	LogsPanelsWithAttrContainsOp    int      `json:"logsPanelsWithAttrContainsOp"`
 }
 

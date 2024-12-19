@@ -95,7 +95,7 @@ func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
 		return
 	}
-	license, apiError := ah.LM().Activate(r.Context(), l.Key)
+	license, apiError := ah.LM().ActivateV3(r.Context(), l.Key)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -113,6 +113,23 @@ func (ah *APIHandler) listLicensesV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ah.Respond(w, convertLicenseV3ToListLicenseResponse(licenses))
+}
+
+func (ah *APIHandler) getActiveLicenseV3(w http.ResponseWriter, r *http.Request) {
+	activeLicense, err := ah.LM().GetRepo().GetActiveLicenseV3(r.Context())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	// return 404 not found if there is no active license
+	if activeLicense == nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no active license found")}, nil)
+		return
+	}
+
+	// TODO deprecate this when we move away from key for stripe
+	activeLicense.Data["key"] = activeLicense.Key
+	render.Success(w, http.StatusOK, activeLicense.Data)
 }
 
 // this function is called by zeus when inserting licenses in the query-service
@@ -241,24 +258,12 @@ func convertLicenseV3ToLicenseV2(licenses []*model.LicenseV3) []model.License {
 }
 
 func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
-
-	var licenses []model.License
-
-	if ah.UseLicensesV3 {
-		licensesV3, err := ah.LM().GetLicensesV3(r.Context())
-		if err != nil {
-			RespondError(w, err, nil)
-			return
-		}
-		licenses = convertLicenseV3ToLicenseV2(licensesV3)
-	} else {
-		_licenses, apiError := ah.LM().GetLicenses(r.Context())
-		if apiError != nil {
-			RespondError(w, apiError, nil)
-			return
-		}
-		licenses = _licenses
+	licensesV3, apierr := ah.LM().GetLicensesV3(r.Context())
+	if apierr != nil {
+		RespondError(w, apierr, nil)
+		return
 	}
+	licenses := convertLicenseV3ToLicenseV2(licensesV3)
 
 	resp := model.Licenses{
 		TrialStart:                   -1,

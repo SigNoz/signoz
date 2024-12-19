@@ -39,6 +39,7 @@ import (
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/common"
@@ -110,8 +111,8 @@ type APIHandler struct {
 	// Websocket connection upgrader
 	Upgrader *websocket.Upgrader
 
-	UseLogsNewSchema bool
-	UseLicensesV3    bool
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 
 	hostsRepo      *inframetrics.HostsRepo
 	processesRepo  *inframetrics.ProcessesRepo
@@ -163,8 +164,7 @@ type APIHandlerOpts struct {
 	// Use Logs New schema
 	UseLogsNewSchema bool
 
-	// Use Licenses V3 structure
-	UseLicensesV3 bool
+	UseTraceNewSchema bool
 }
 
 // NewAPIHandler returns an APIHandler
@@ -176,21 +176,23 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	querierOpts := querier.QuerierOptions{
-		Reader:           opts.Reader,
-		Cache:            opts.Cache,
-		KeyGenerator:     queryBuilder.NewKeyGenerator(),
-		FluxInterval:     opts.FluxInterval,
-		FeatureLookup:    opts.FeatureFlags,
-		UseLogsNewSchema: opts.UseLogsNewSchema,
+		Reader:            opts.Reader,
+		Cache:             opts.Cache,
+		KeyGenerator:      queryBuilder.NewKeyGenerator(),
+		FluxInterval:      opts.FluxInterval,
+		FeatureLookup:     opts.FeatureFlags,
+		UseLogsNewSchema:  opts.UseLogsNewSchema,
+		UseTraceNewSchema: opts.UseTraceNewSchema,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:           opts.Reader,
-		Cache:            opts.Cache,
-		KeyGenerator:     queryBuilder.NewKeyGenerator(),
-		FluxInterval:     opts.FluxInterval,
-		FeatureLookup:    opts.FeatureFlags,
-		UseLogsNewSchema: opts.UseLogsNewSchema,
+		Reader:            opts.Reader,
+		Cache:             opts.Cache,
+		KeyGenerator:      queryBuilder.NewKeyGenerator(),
+		FluxInterval:      opts.FluxInterval,
+		FeatureLookup:     opts.FeatureFlags,
+		UseLogsNewSchema:  opts.UseLogsNewSchema,
+		UseTraceNewSchema: opts.UseTraceNewSchema,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
@@ -224,7 +226,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		querier:                       querier,
 		querierV2:                     querierv2,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
-		UseLicensesV3:                 opts.UseLicensesV3,
+		UseTraceNewSchema:             opts.UseTraceNewSchema,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
 		podsRepo:                      podsRepo,
@@ -242,9 +244,14 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		logsQueryBuilder = logsv4.PrepareLogsQuery
 	}
 
+	tracesQueryBuilder := tracesV3.PrepareTracesQuery
+	if opts.UseTraceNewSchema {
+		tracesQueryBuilder = tracesV4.PrepareTracesQuery
+	}
+
 	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
-		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
+		BuildTraceQuery:  tracesQueryBuilder,
 		BuildLogQuery:    logsQueryBuilder,
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
@@ -508,7 +515,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/overview", am.ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_operations", am.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", am.ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
@@ -520,6 +526,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.AdminAccess(aH.insertIngestionKey)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.ViewAccess(aH.getIngestionKeys)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
@@ -1625,22 +1634,6 @@ func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
 
 	result, err := aH.reader.GetUsage(r.Context(), query)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServiceOverviewRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetServiceOverview(r.Context(), query, aH.skipConfig)
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -3147,14 +3140,14 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		Hash: make(map[string]struct{}),
 	}
 
-	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
+	producerQueryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+	if err := validateQueryRangeParamsV3(producerQueryRangeParams); err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
 		return
@@ -3163,7 +3156,7 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), producerQueryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3171,21 +3164,21 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	}
 
 	for _, res := range result {
-		for _, list := range res.List {
-			serviceName, serviceNameOk := list.Data["service_name"].(*string)
-			topicName, topicNameOk := list.Data["topic"].(*string)
-			params := []string{*serviceName, *topicName}
+		for _, series := range res.Series {
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			topicName, topicNameOk := series.Labels["topic"]
+			params := []string{serviceName, topicName}
 			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if topicNameOk && serviceNameOk && !ok {
 				attributeCache.Hash[hashKey] = struct{}{}
-				attributeCache.TopicName = append(attributeCache.TopicName, *topicName)
-				attributeCache.ServiceName = append(attributeCache.ServiceName, *serviceName)
+				attributeCache.TopicName = append(attributeCache.TopicName, topicName)
+				attributeCache.ServiceName = append(attributeCache.ServiceName, serviceName)
 			}
 		}
 	}
 
-	queryRangeParams, err = mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-latency", attributeCache)
+	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-byte-rate", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3204,26 +3197,32 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		return
 	}
 
-	latencyColumn := &v3.Result{QueryName: "latency"}
-	var latencySeries []*v3.Row
+	byteRateColumn := &v3.Result{QueryName: "byte_rate"}
+	var byteRateSeries []*v3.Series
 	for _, res := range resultFetchLatency {
-		for _, list := range res.List {
-			topic, topicOk := list.Data["topic"].(*string)
-			serviceName, serviceNameOk := list.Data["service_name"].(*string)
-			params := []string{*serviceName, *topic}
+		for _, series := range res.Series {
+			topic, topicOk := series.Labels["topic"]
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			params := []string{serviceName, topic}
 			hashKey := uniqueIdentifier(params, "#")
 			_, ok := attributeCache.Hash[hashKey]
 			if topicOk && serviceNameOk && ok {
-				latencySeries = append(latencySeries, list)
+				byteRateSeries = append(byteRateSeries, series)
 			}
 		}
 	}
 
-	latencyColumn.List = latencySeries
-	result = append(result, latencyColumn)
+	byteRateColumn.Series = byteRateSeries
+	var latencyColumnResult []*v3.Result
+	latencyColumnResult = append(latencyColumnResult, byteRateColumn)
 
+	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(latencyColumnResult, queryRangeParams)
+
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	result = append(result, resultFetchLatency[0])
 	resp := v3.QueryRangeResponse{
-		Result: resultFetchLatency,
+		Result: result,
 	}
 	aH.Respond(w, resp)
 }
@@ -4079,10 +4078,9 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")
 		}
 
-		for _, p := range postable {
-			if err := p.IsValid(); err != nil {
-				return nil, model.BadRequestStr(err.Error())
-			}
+		validationErr := aH.LogsParsingPipelineController.ValidatePipelines(ctx, postable)
+		if validationErr != nil {
+			return nil, validationErr
 		}
 
 		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
@@ -4347,7 +4345,12 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		tracesV3.Enrich(queryRangeParams, spanKeys)
+		if aH.UseTraceNewSchema {
+			tracesV4.Enrich(queryRangeParams, spanKeys)
+		} else {
+			tracesV3.Enrich(queryRangeParams, spanKeys)
+		}
+
 	}
 
 	// WARN: Only works for AND operator in traces query
@@ -4817,7 +4820,11 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		tracesV3.Enrich(queryRangeParams, spanKeys)
+		if aH.UseTraceNewSchema {
+			tracesV4.Enrich(queryRangeParams, spanKeys)
+		} else {
+			tracesV3.Enrich(queryRangeParams, spanKeys)
+		}
 	}
 
 	// WARN: Only works for AND operator in traces query
@@ -4887,4 +4894,36 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV4(r.Context(), queryRangeParams, w, r)
+}
+
+func (aH *APIHandler) traceFields(w http.ResponseWriter, r *http.Request) {
+	fields, apiErr := aH.reader.GetTraceFields(r.Context())
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to fetch fields from the db")
+		return
+	}
+	aH.WriteJSON(w, r, fields)
+}
+
+func (aH *APIHandler) updateTraceField(w http.ResponseWriter, r *http.Request) {
+	field := model.UpdateField{}
+	if err := json.NewDecoder(r.Body).Decode(&field); err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErr, "failed to decode payload")
+		return
+	}
+
+	err := logs.ValidateUpdateFieldPayloadV2(&field)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErr, "incorrect payload")
+		return
+	}
+
+	apiErr := aH.reader.UpdateTraceField(r.Context(), &field)
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to update field in the db")
+		return
+	}
+	aH.WriteJSON(w, r, field)
 }

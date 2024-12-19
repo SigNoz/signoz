@@ -8,6 +8,7 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { isNaN } from 'lodash-es';
 import { useRef, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -44,7 +45,7 @@ function PiePanelWrapper({
 
 	const isDarkMode = useIsDarkMode();
 
-	const pieChartData: {
+	let pieChartData: {
 		label: string;
 		value: string;
 		color: string;
@@ -66,6 +67,10 @@ function PiePanelWrapper({
 				})),
 			)
 			.filter((d) => d !== undefined) as never[]),
+	);
+	pieChartData = pieChartData.filter(
+		(arc) =>
+			arc.value && !isNaN(parseFloat(arc.value)) && parseFloat(arc.value) > 0,
 	);
 
 	let size = 0;
@@ -108,7 +113,7 @@ function PiePanelWrapper({
 										if (!active) return half - 3;
 										return data.label === active.label ? half : half - 3;
 									}}
-									padAngle={0.02}
+									padAngle={0.01}
 									cornerRadius={3}
 									width={size}
 									height={size}

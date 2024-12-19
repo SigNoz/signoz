@@ -146,11 +146,12 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.56.0
+    image: signoz/query-service:0.61.0
     command:
       [
         "-config=/root/config/prometheus.yml",
-        "--use-logs-new-schema=true"
+        "--use-logs-new-schema=true",
+        "--use-trace-new-schema=true"
       ]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -186,7 +187,7 @@ services:
     <<: *db-depend
 
   frontend:
-    image: signoz/frontend:0.56.0
+    image: signoz/frontend:0.61.0
     deploy:
       restart_policy:
         condition: on-failure
@@ -199,7 +200,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.111.5
+    image: signoz/signoz-otel-collector:0.111.14
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
@@ -237,13 +238,15 @@ services:
       - query-service
 
   otel-collector-migrator:
-      image: signoz/signoz-schema-migrator:0.111.5
+      image: signoz/signoz-schema-migrator:0.111.14
       deploy:
         restart_policy:
           condition: on-failure
           delay: 5s
       command:
-        - "--dsn=tcp://clickhouse:9000"
+        - "sync" 
+        - "--dsn=tcp://clickhouse:9000" 
+        - "--up=" 
       depends_on:
         - clickhouse
         # - clickhouse-2

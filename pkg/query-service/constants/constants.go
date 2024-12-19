@@ -243,6 +243,7 @@ const (
 	SIGNOZ_SPAN_INDEX_LOCAL_TABLENAME          = "signoz_index_v2"
 	SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME       = "signoz_index_v3"
 	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME       = "time_series_v4"
+	SIGNOZ_TIMESERIES_V4_TABLENAME             = "distributed_time_series_v4"
 	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME  = "time_series_v4_6hrs"
 	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME  = "time_series_v4_1day"
 	SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME = "time_series_v4_1week"
@@ -289,7 +290,7 @@ const (
 	UINT8                 = "Uint8"
 )
 
-var StaticSelectedLogFields = []model.LogField{
+var StaticSelectedLogFields = []model.Field{
 	{
 		Name:     "timestamp",
 		DataType: UINT32,
@@ -348,7 +349,7 @@ const (
 	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
 		"span_count, subQuery.durationNano, subQuery.traceID AS traceID FROM %s.%s INNER JOIN ( SELECT * FROM "
 	TracesExplorerViewSQLSelectAfterSubQuery = "AS inner_subquery ) AS subQuery ON %s.%s.traceID = subQuery.traceID WHERE %s " +
-		"GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc LIMIT 1 BY subQuery.traceID;"
+		"GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc LIMIT 1 BY subQuery.traceID"
 	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
 		"span_count, subQuery.durationNano, traceID FROM %s.%s GLOBAL INNER JOIN subQuery ON %s.traceID = subQuery.traceID GROUP " +
 		"BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc;"
@@ -579,6 +580,21 @@ var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
 	},
 	"parentSpanID": {
 		Key:      "parentSpanID",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"flags": {
+		Key:      "flags",
+		DataType: v3.AttributeKeyDataTypeInt64,
+		IsColumn: true,
+	},
+	"name": {
+		Key:      "name",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"kind": {
+		Key:      "kind",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},

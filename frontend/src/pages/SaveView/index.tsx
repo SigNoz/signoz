@@ -31,6 +31,7 @@ import {
 	Trash2,
 	X,
 } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -207,6 +208,8 @@ function SaveView(): JSX.Element {
 		}
 	};
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	const columns: TableProps<ViewProps>['columns'] = [
 		{
 			title: 'Save View',
@@ -218,31 +221,10 @@ function SaveView(): JSX.Element {
 					bgColor = extraData.color;
 				}
 
-				const timeOptions: Intl.DateTimeFormatOptions = {
-					hour: '2-digit',
-					minute: '2-digit',
-					second: '2-digit',
-					hour12: false,
-				};
-				const formattedTime = new Date(view.createdAt).toLocaleTimeString(
-					'en-US',
-					timeOptions,
+				const formattedDateAndTime = formatTimezoneAdjustedTimestamp(
+					view.createdAt,
+					'HH:mm:ss ⎯ MMM D, YYYY (UTC Z)',
 				);
-
-				const dateOptions: Intl.DateTimeFormatOptions = {
-					month: 'short',
-					day: 'numeric',
-					year: 'numeric',
-				};
-
-				const formattedDate = new Date(view.createdAt).toLocaleDateString(
-					'en-US',
-					dateOptions,
-				);
-
-				// Combine time and date
-				const formattedDateAndTime = `${formattedTime} ⎯ ${formattedDate}`;
-
 				const isEditDeleteSupported = allowedRoles.includes(role as string);
 
 				return (

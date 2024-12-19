@@ -128,7 +128,7 @@ Set the environment variables in your Dockerfile.
 # Set environment variables
 ENV SERVICE_NAME={{MYAPP}} \
     INSECURE_MODE=false \
-    OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=b{{SIGNOZ_INGESTION_KEY}}" \
+    OTEL_EXPORTER_OTLP_HEADERS="signoz-ingestion-key=b{{SIGNOZ_INGESTION_KEY}}" \
     OTEL_EXPORTER_OTLP_ENDPOINT=ingest.{{REGION}}.signoz.cloud:443
 ...
 ```

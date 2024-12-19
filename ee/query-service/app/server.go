@@ -77,7 +77,7 @@ type ServerOptions struct {
 	Cluster           string
 	GatewayUrl        string
 	UseLogsNewSchema  bool
-	UseLicensesV3     bool
+	UseTraceNewSchema bool
 }
 
 // Server runs HTTP api service
@@ -134,7 +134,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", localDB, serverOptions.UseLicensesV3)
+	lm, err := licensepkg.StartManager("sqlite", localDB)
 	if err != nil {
 		return nil, err
 	}
@@ -156,6 +156,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.DialTimeout,
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
+			serverOptions.UseTraceNewSchema,
 		)
 		go qb.Start(readerReady)
 		reader = qb
@@ -189,6 +190,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.DisableRules,
 		lm,
 		serverOptions.UseLogsNewSchema,
+		serverOptions.UseTraceNewSchema,
 	)
 
 	if err != nil {
@@ -270,7 +272,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FluxInterval:                  fluxInterval,
 		Gateway:                       gatewayProxy,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
-		UseLicensesV3:                 serverOptions.UseLicensesV3,
+		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -313,10 +315,10 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 	r := baseapp.NewRouter()
 
-	r.Use(baseapp.LogCommentEnricher)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddlewarePrivate)
+	r.Use(baseapp.LogCommentEnricher)
 
 	apiHandler.RegisterPrivateRoutes(r)
 
@@ -356,10 +358,10 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	}
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
-	r.Use(baseapp.LogCommentEnricher)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
+	r.Use(baseapp.LogCommentEnricher)
 
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
@@ -737,7 +739,8 @@ func makeRulesManager(
 	cache cache.Cache,
 	disableRules bool,
 	fm baseint.FeatureLookup,
-	useLogsNewSchema bool) (*baserules.Manager, error) {
+	useLogsNewSchema bool,
+	useTraceNewSchema bool) (*baserules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
@@ -767,8 +770,9 @@ func makeRulesManager(
 		EvalDelay:    baseconst.GetEvalDelay(),
 
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
-		PrepareTestRuleFunc: rules.TestNotification,
 		UseLogsNewSchema:    useLogsNewSchema,
+		UseTraceNewSchema:   useTraceNewSchema,
+		PrepareTestRuleFunc: rules.TestNotification,
 	}
 
 	// create Manager
