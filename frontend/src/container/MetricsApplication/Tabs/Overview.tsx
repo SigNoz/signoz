@@ -145,41 +145,50 @@ function Application(): JSX.Element {
 		[servicename, topLevelOperations],
 	);
 
-	const operationPerSecWidget = getWidgetQueryBuilder({
-		query: {
-			queryType: EQueryType.QUERY_BUILDER,
-			promql: [],
-			builder: operationPerSec({
-				servicename,
-				tagFilterItems,
-				topLevelOperations: topLevelOperationsRoute,
+	const operationPerSecWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: operationPerSec({
+						servicename,
+						tagFilterItems,
+						topLevelOperations: topLevelOperationsRoute,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.RATE_PER_OPS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ops',
+				id: SERVICE_CHART_ID.rps,
 			}),
-			clickhouse_sql: [],
-			id: uuid(),
-		},
-		title: GraphTitle.RATE_PER_OPS,
-		panelTypes: PANEL_TYPES.TIME_SERIES,
-		yAxisUnit: 'ops',
-		id: SERVICE_CHART_ID.rps,
-	});
+		[servicename, tagFilterItems, topLevelOperationsRoute],
+	);
 
-	const errorPercentageWidget = getWidgetQueryBuilder({
-		query: {
-			queryType: EQueryType.QUERY_BUILDER,
-			promql: [],
-			builder: errorPercentage({
-				servicename,
-				tagFilterItems,
-				topLevelOperations: topLevelOperationsRoute,
+	const errorPercentageWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: errorPercentage({
+						servicename,
+						tagFilterItems,
+						topLevelOperations: topLevelOperationsRoute,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.ERROR_PERCENTAGE,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: '%',
+				id: SERVICE_CHART_ID.errorPercentage,
+				fillSpans: true,
 			}),
-			clickhouse_sql: [],
-			id: uuid(),
-		},
-		title: GraphTitle.ERROR_PERCENTAGE,
-		panelTypes: PANEL_TYPES.TIME_SERIES,
-		yAxisUnit: '%',
-		id: SERVICE_CHART_ID.errorPercentage,
-	});
+		[servicename, tagFilterItems, topLevelOperationsRoute],
+	);
 
 	const stepInterval = useMemo(
 		() =>
@@ -214,12 +223,11 @@ function Application(): JSX.Element {
 			apmToTraceQuery: Query,
 			isViewLogsClicked?: boolean,
 		): (() => void) => (): void => {
-			const currentTime = timestamp;
-			const endTime = timestamp + stepInterval;
-			console.log(endTime, stepInterval);
+			const endTime = timestamp;
+			const startTime = timestamp - stepInterval;
 
 			const urlParams = new URLSearchParams(search);
-			urlParams.set(QueryParams.startTime, currentTime.toString());
+			urlParams.set(QueryParams.startTime, startTime.toString());
 			urlParams.set(QueryParams.endTime, endTime.toString());
 			urlParams.delete(QueryParams.relativeTime);
 			const avialableParams = routeConfig[ROUTES.TRACE];

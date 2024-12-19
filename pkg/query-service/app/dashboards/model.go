@@ -289,6 +289,10 @@ func GetDashboard(ctx context.Context, uuid string) (*Dashboard, *model.ApiError
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
 	}
 
+	if dashboard.Data["title"] == "Ingestion" && dashboard.Data["description"] != nil {
+		dashboard.Data["description"] = "This dashboard is deprecated. Please use the new Ingestion V2 dashboard. " + dashboard.Data["description"].(string)
+	}
+
 	return &dashboard, nil
 }
 
@@ -454,6 +458,7 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 	totalDashboardsWithPanelAndName := 0
 	var dashboardNames []string
 	count := 0
+	queriesWithTagAttrs := 0
 	for _, dashboard := range dashboardsData {
 		if isDashboardWithPanelAndName(dashboard.Data) {
 			totalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName + 1
@@ -473,6 +478,10 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 			count = count + 1
 		}
 
+		if isDashboardWithTagAttrs(dashboard.Data) {
+			queriesWithTagAttrs += 1
+		}
+
 		if dashboardInfo.DashboardsWithTraceChQuery > 0 {
 			dashboardsInfo.DashboardNamesWithTraceChQuery = append(dashboardsInfo.DashboardNamesWithTraceChQuery, dashboardName)
 		}
@@ -484,6 +493,7 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 	dashboardsInfo.TotalDashboards = len(dashboardsData)
 	dashboardsInfo.TotalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName
 	dashboardsInfo.QueriesWithTSV2 = count
+	dashboardsInfo.QueriesWithTagAttrs = queriesWithTagAttrs
 	return &dashboardsInfo, nil
 }
 
@@ -493,6 +503,15 @@ func isDashboardWithTSV2(data map[string]interface{}) bool {
 		return false
 	}
 	return strings.Contains(string(jsonData), "time_series_v2")
+}
+
+func isDashboardWithTagAttrs(data map[string]interface{}) bool {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(jsonData), "span_attributes") ||
+		strings.Contains(string(jsonData), "tag_attributes")
 }
 
 func isDashboardWithLogsClickhouseQuery(data map[string]interface{}) bool {
