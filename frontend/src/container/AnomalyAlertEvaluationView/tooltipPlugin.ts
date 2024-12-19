@@ -1,8 +1,10 @@
 import { themeColors } from 'constants/theme';
+import dayjs from 'dayjs';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 
 const tooltipPlugin = (
 	isDarkMode: boolean,
+	timezone: string,
 ): { hooks: { init: (u: any) => void } } => {
 	let tooltip: HTMLDivElement;
 	const tooltipLeftOffset = 10;
@@ -17,7 +19,7 @@ const tooltipPlugin = (
 			return value.toFixed(3);
 		}
 		if (value instanceof Date) {
-			return value.toLocaleString();
+			return dayjs(value).tz(timezone).format('MM/DD/YYYY, h:mm:ss A');
 		}
 		if (value == null) {
 			return 'N/A';
