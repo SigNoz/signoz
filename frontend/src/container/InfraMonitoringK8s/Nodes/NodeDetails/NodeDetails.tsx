@@ -41,6 +41,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import { QUERY_KEYS, VIEW_TYPES, VIEWS } from './constants';
+import NodeEvents from './Events';
 import NodeLogs from './Logs';
 import NodeMetrics from './Metrics';
 import { NodeDetailsProps } from './NodeDetails.interfaces';
@@ -522,7 +523,16 @@ function NodeDetails({
 							selectedInterval={selectedInterval}
 						/>
 					)}
-					{selectedView === VIEW_TYPES.EVENTS && <h1>Events</h1>}
+					{selectedView === VIEW_TYPES.EVENTS && (
+						<NodeEvents
+							timeRange={modalTimeRange}
+							handleChangeEventFilters={handleChangeEventsFilters}
+							filters={eventsFilters}
+							isModalTimeSelection={isModalTimeSelection}
+							handleTimeChange={handleTimeChange}
+							selectedInterval={selectedInterval}
+						/>
+					)}
 				</>
 			)}
 		</Drawer>
