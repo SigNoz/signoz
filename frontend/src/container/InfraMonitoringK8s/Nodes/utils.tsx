@@ -1,4 +1,4 @@
-import { Tag } from 'antd';
+import { Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	K8sNodesData,
@@ -88,7 +88,7 @@ const columnsConfig = [
 		dataIndex: 'nodeName',
 		key: 'nodeName',
 		ellipsis: true,
-		width: 150,
+		width: 120,
 		sorter: true,
 		align: 'left',
 	},
@@ -97,7 +97,7 @@ const columnsConfig = [
 		dataIndex: 'clusterName',
 		key: 'clusterName',
 		ellipsis: true,
-		width: 150,
+		width: 120,
 		sorter: true,
 		align: 'left',
 	},
@@ -179,14 +179,18 @@ export const formatDataForTable = (
 		nodeUID: node.nodeUID || '',
 		nodeName: (
 			<div className="pod-name-container">
-				<div className="pod-name">{node.meta.k8s_node_name || ''}</div>
+				<Tooltip title={node.meta.k8s_node_name}>
+					<div className="pod-name">{node.meta.k8s_node_name || ''}</div>
+				</Tooltip>
 			</div>
 		),
 		clusterName: node.meta.k8s_cluster_name,
-		cpuUtilization: node.nodeCPUUsage,
-		memoryUtilization: node.nodeMemoryUsage,
-		cpuAllocatable: node.nodeCPUAllocatable,
-		memoryAllocatable: node.nodeMemoryAllocatable,
+		cpuUtilization: node.nodeCPUUsage === -1 ? '-' : node.nodeCPUUsage,
+		memoryUtilization: node.nodeMemoryUsage === -1 ? '-' : node.nodeMemoryUsage,
+		cpuAllocatable:
+			node.nodeCPUAllocatable === -1 ? '-' : node.nodeCPUAllocatable,
+		memoryAllocatable:
+			node.nodeMemoryAllocatable === -1 ? '-' : node.nodeMemoryAllocatable,
 		nodeGroup: getGroupByEle(node, groupBy),
 		meta: node.meta,
 		...node.meta,
