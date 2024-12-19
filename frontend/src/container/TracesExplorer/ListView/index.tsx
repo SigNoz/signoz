@@ -15,6 +15,7 @@ import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { useTimezone } from 'providers/Timezone';
 import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -97,10 +98,15 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		queryTableDataResult,
 	]);
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	const columns = useMemo(() => {
-		const updatedColumns = getListColumns(options?.selectColumns || []);
+		const updatedColumns = getListColumns(
+			options?.selectColumns || [],
+			formatTimezoneAdjustedTimestamp,
+		);
 		return getDraggedColumns(updatedColumns, draggedColumns);
-	}, [options?.selectColumns, draggedColumns]);
+	}, [options?.selectColumns, formatTimezoneAdjustedTimestamp, draggedColumns]);
 
 	const transformedQueryTableData = useMemo(
 		() => transformDataWithDate(queryTableData) || [],
@@ -148,7 +154,7 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				<ResizeTable
 					tableLayout="fixed"
 					pagination={false}
-					scroll={{ x: true }}
+					scroll={{ x: 'max-content' }}
 					loading={isFetching}
 					style={tableStyles}
 					dataSource={transformedQueryTableData}

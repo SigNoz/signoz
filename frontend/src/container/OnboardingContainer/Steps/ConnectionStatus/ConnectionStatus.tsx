@@ -9,7 +9,7 @@ import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
-import { useOnboardingStatus } from 'hooks/messagingQueue / onboarding/useOnboardingStatus';
+import { useOnboardingStatus } from 'hooks/messagingQueue/useOnboardingStatus';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';

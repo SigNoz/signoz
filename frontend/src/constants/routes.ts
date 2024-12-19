@@ -55,10 +55,12 @@ const ROUTES = {
 	LOGS_SAVE_VIEWS: '/logs/saved-views',
 	TRACES_SAVE_VIEWS: '/traces/saved-views',
 	WORKSPACE_LOCKED: '/workspace-locked',
+	WORKSPACE_SUSPENDED: '/workspace-suspended',
 	SHORTCUTS: '/shortcuts',
 	INTEGRATIONS: '/integrations',
 	MESSAGING_QUEUES: '/messaging-queues',
 	MESSAGING_QUEUES_DETAIL: '/messaging-queues/detail',
+	INFRASTRUCTURE_MONITORING_HOSTS: '/infrastructure-monitoring/hosts',
 } as const;
 
 export default ROUTES;

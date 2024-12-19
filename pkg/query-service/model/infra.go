@@ -1,6 +1,10 @@
 package model
 
-import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+import (
+	"sort"
+
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+)
 
 type (
 	ResponseType string
@@ -33,9 +37,39 @@ type HostListRecord struct {
 }
 
 type HostListResponse struct {
-	Type    ResponseType     `json:"type"`
-	Records []HostListRecord `json:"records"`
-	Total   int              `json:"total"`
+	Type                     ResponseType     `json:"type"`
+	Records                  []HostListRecord `json:"records"`
+	Total                    int              `json:"total"`
+	SentAnyHostMetricsData   bool             `json:"sentAnyHostMetricsData"`
+	IsSendingK8SAgentMetrics bool             `json:"isSendingK8SAgentMetrics"`
+}
+
+func (r *HostListResponse) SortBy(orderBy *v3.OrderBy) {
+	switch orderBy.ColumnName {
+	case "cpu":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPU > r.Records[j].CPU
+		})
+	case "memory":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].Memory > r.Records[j].Memory
+		})
+	case "load15":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].Load15 > r.Records[j].Load15
+		})
+	case "wait":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].Wait > r.Records[j].Wait
+		})
+	}
+	// the default is descending
+	if orderBy.Order == v3.DirectionAsc {
+		// reverse the list
+		for i, j := 0, len(r.Records)-1; i < j; i, j = i+1, j-1 {
+			r.Records[i], r.Records[j] = r.Records[j], r.Records[i]
+		}
+	}
 }
 
 type ProcessListRequest struct {
@@ -117,13 +151,20 @@ type NodeListResponse struct {
 	Total   int              `json:"total"`
 }
 
+type NodeCountByCondition struct {
+	Ready    int `json:"ready"`
+	NotReady int `json:"notReady"`
+	Unknown  int `json:"unknown"`
+}
+
 type NodeListRecord struct {
-	NodeUID               string            `json:"nodeUID,omitempty"`
-	NodeCPUUsage          float64           `json:"nodeCPUUsage"`
-	NodeCPUAllocatable    float64           `json:"nodeCPUAllocatable"`
-	NodeMemoryUsage       float64           `json:"nodeMemoryUsage"`
-	NodeMemoryAllocatable float64           `json:"nodeMemoryAllocatable"`
-	Meta                  map[string]string `json:"meta"`
+	NodeUID               string               `json:"nodeUID,omitempty"`
+	NodeCPUUsage          float64              `json:"nodeCPUUsage"`
+	NodeCPUAllocatable    float64              `json:"nodeCPUAllocatable"`
+	NodeMemoryUsage       float64              `json:"nodeMemoryUsage"`
+	NodeMemoryAllocatable float64              `json:"nodeMemoryAllocatable"`
+	CountByCondition      NodeCountByCondition `json:"countByCondition"`
+	Meta                  map[string]string    `json:"meta"`
 }
 
 type NamespaceListRequest struct {
@@ -146,6 +187,7 @@ type NamespaceListRecord struct {
 	NamespaceName string            `json:"namespaceName"`
 	CPUUsage      float64           `json:"cpuUsage"`
 	MemoryUsage   float64           `json:"memoryUsage"`
+	CountByPhase  PodCountByPhase   `json:"countByPhase"`
 	Meta          map[string]string `json:"meta"`
 }
 
@@ -294,4 +336,31 @@ type JobListRecord struct {
 	FailedPods            int               `json:"failedPods"`
 	SuccessfulPods        int               `json:"successfulPods"`
 	Meta                  map[string]string `json:"meta"`
+}
+
+type VolumeListRequest struct {
+	Start   int64             `json:"start"` // epoch time in ms
+	End     int64             `json:"end"`   // epoch time in ms
+	Filters *v3.FilterSet     `json:"filters"`
+	GroupBy []v3.AttributeKey `json:"groupBy"`
+	OrderBy *v3.OrderBy       `json:"orderBy"`
+	Offset  int               `json:"offset"`
+	Limit   int               `json:"limit"`
+}
+
+type VolumeListResponse struct {
+	Type    ResponseType       `json:"type"`
+	Records []VolumeListRecord `json:"records"`
+	Total   int                `json:"total"`
+}
+
+type VolumeListRecord struct {
+	PersistentVolumeClaimName string            `json:"persistentVolumeClaimName"`
+	VolumeAvailable           float64           `json:"volumeAvailable"`
+	VolumeCapacity            float64           `json:"volumeCapacity"`
+	VolumeInodes              float64           `json:"volumeInodes"`
+	VolumeInodesFree          float64           `json:"volumeInodesFree"`
+	VolumeInodesUsed          float64           `json:"volumeInodesUsed"`
+	VolumeUsage               float64           `json:"volumeUsage"`
+	Meta                      map[string]string `json:"meta"`
 }

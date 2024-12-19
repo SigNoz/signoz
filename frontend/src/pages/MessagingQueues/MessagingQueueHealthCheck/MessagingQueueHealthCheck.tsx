@@ -3,7 +3,7 @@ import './MessagingQueueHealthCheck.styles.scss';
 
 import { Button } from 'antd';
 import cx from 'classnames';
-import { useOnboardingStatus } from 'hooks/messagingQueue / onboarding/useOnboardingStatus';
+import { useOnboardingStatus } from 'hooks/messagingQueue/useOnboardingStatus';
 import { Bolt, FolderTree } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 

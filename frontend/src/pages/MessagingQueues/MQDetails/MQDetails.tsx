@@ -24,13 +24,13 @@ const MQServiceDetailTypePerView = (
 	producerLatencyOption: ProducerLatencyOptions,
 ): Record<string, MessagingQueueServiceDetailType[]> => ({
 	[MessagingQueuesViewType.consumerLag.value]: [
-		MessagingQueueServiceDetailType.ConsumerDetails,
 		MessagingQueueServiceDetailType.ProducerDetails,
+		MessagingQueueServiceDetailType.ConsumerDetails,
 		MessagingQueueServiceDetailType.NetworkLatency,
 	],
 	[MessagingQueuesViewType.partitionLatency.value]: [
-		MessagingQueueServiceDetailType.ConsumerDetails,
 		MessagingQueueServiceDetailType.ProducerDetails,
+		MessagingQueueServiceDetailType.ConsumerDetails,
 	],
 	[MessagingQueuesViewType.producerLatency.value]: [
 		producerLatencyOption === ProducerLatencyOptions.Consumers
@@ -108,13 +108,6 @@ const checkValidityOfDetailConfigs = (
 			return false;
 		}
 
-		if (currentTab === MessagingQueueServiceDetailType.ProducerDetails) {
-			return Boolean(
-				configDetails?.topic &&
-					configDetails?.partition &&
-					configDetails?.service_name,
-			);
-		}
 		return Boolean(configDetails?.topic && configDetails?.service_name);
 	}
 
@@ -129,7 +122,7 @@ function MessagingQueuesDetails({
 	producerLatencyOption: ProducerLatencyOptions;
 }): JSX.Element {
 	const [currentTab, setCurrentTab] = useState<MessagingQueueServiceDetailType>(
-		MessagingQueueServiceDetailType.ConsumerDetails,
+		MessagingQueueServiceDetailType.ProducerDetails,
 	);
 
 	useEffect(() => {

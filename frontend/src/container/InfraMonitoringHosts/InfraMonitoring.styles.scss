@@ -1,0 +1,337 @@
+.infra-monitoring-container {
+	display: flex;
+	height: 100%;
+	flex-direction: column;
+
+	.infra-monitoring-header {
+		display: flex;
+		justify-content: space-between;
+		width: 100%;
+		margin-bottom: 16px;
+	}
+
+	.hosts-list-controls {
+		padding: 8px;
+
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 16px;
+
+		.ant-select-selector {
+			border-radius: 2px;
+			border: 1px solid var(--bg-slate-400) !important;
+			background-color: var(--bg-ink-300) !important;
+
+			input {
+				font-size: 12px;
+			}
+
+			.ant-tag .ant-typography {
+				font-size: 12px;
+			}
+		}
+
+		.hosts-list-controls-left {
+			flex: 1;
+		}
+	}
+
+	.progress-container {
+		display: flex;
+		align-items: center;
+	}
+
+	.progress-bar {
+		flex: 1;
+		margin-right: 8px;
+	}
+
+	.clickable-row {
+		cursor: pointer;
+	}
+
+	.hosts-list-table {
+		.ant-table {
+			.ant-table-thead > tr > th {
+				padding: 12px;
+				font-weight: 500;
+				font-size: 12px;
+				line-height: 18px;
+
+				background: var(--bg-ink-500);
+				border-bottom: none;
+
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: Inter;
+				font-size: 11px;
+				font-style: normal;
+				font-weight: 600;
+				line-height: 18px; /* 163.636% */
+				letter-spacing: 0.44px;
+				text-transform: uppercase;
+
+				&::before {
+					background-color: transparent;
+				}
+			}
+
+			.ant-table-thead > tr > th:has(.hostname-column-header) {
+				background: var(--bg-ink-400);
+			}
+
+			.ant-table-cell {
+				padding: 12px;
+				font-size: 13px;
+				line-height: 20px;
+				color: var(--bg-vanilla-100);
+				background: var(--bg-ink-500);
+			}
+
+			.ant-table-cell:has(.hostname-column-value) {
+				background: var(--bg-ink-400);
+			}
+
+			.hostname-column-value {
+				color: var(--Vanilla-100, #fff);
+				font-family: 'Geist Mono';
+				font-style: normal;
+				font-weight: 600;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+
+			.status-cell {
+				.active-tag {
+					color: var(--bg-forest-500);
+					padding: 4px 8px;
+					border-radius: 4px;
+					font-size: 12px;
+					font-weight: 500;
+				}
+			}
+
+			.progress-container {
+				.ant-progress-bg {
+					height: 8px !important;
+					border-radius: 4px;
+				}
+			}
+
+			.ant-table-tbody > tr:hover > td {
+				background: rgba(255, 255, 255, 0.04);
+			}
+
+			.ant-table-cell:first-child {
+				text-align: justify;
+			}
+
+			.ant-table-cell:nth-child(2) {
+				padding-left: 16px;
+				padding-right: 16px;
+			}
+
+			.ant-table-cell:nth-child(n + 3) {
+				padding-right: 24px;
+			}
+			.column-header-right {
+				text-align: right;
+			}
+			.ant-table-tbody > tr > td {
+				border-bottom: none;
+			}
+
+			.ant-table-thead
+				> tr
+				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				background-color: transparent;
+			}
+
+			.ant-empty-normal {
+				visibility: hidden;
+			}
+		}
+
+		.ant-pagination {
+			position: fixed;
+			bottom: 0;
+			width: calc(100% - 64px);
+			background: var(--bg-ink-500);
+			padding: 16px;
+			margin: 0;
+
+			// this is to offset intercom icon till we improve the design
+			padding-right: 72px;
+
+			.ant-pagination-item {
+				border-radius: 4px;
+
+				&-active {
+					background: var(--bg-robin-500);
+					border-color: var(--bg-robin-500);
+
+					a {
+						color: var(--bg-ink-500) !important;
+					}
+				}
+			}
+		}
+	}
+}
+
+.infra-monitoring-tags {
+	width: fit-content;
+
+	font-family: Inter;
+	font-size: 11px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 18px; /* 163.636% */
+	letter-spacing: 0.44px;
+	text-transform: uppercase;
+
+	border-radius: 50px;
+	padding: 2px 8px;
+
+	&.active {
+		color: var(--Forest-500, #25e192);
+		border: 1px solid rgba(37, 225, 146, 0.2);
+		background: rgba(37, 225, 146, 0.1);
+	}
+
+	&.inactive {
+		color: var(--Slate-50, #62687c);
+		border: 1px solid rgba(98, 104, 124, 0.2);
+		background: rgba(98, 104, 124, 0.1);
+	}
+}
+
+.hosts-list-loading-state {
+	padding: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+
+	.hosts-list-loading-state-item {
+		height: 48px;
+		width: 100%;
+	}
+}
+
+.no-filtered-hosts-message-container {
+	height: 30vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+
+	.no-filtered-hosts-message-content {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+
+		width: fit-content;
+		padding: 24px;
+	}
+
+	.no-filtered-hosts-message {
+		margin-top: 8px;
+	}
+}
+
+.hosts-empty-state-container {
+	padding: 16px;
+	height: 40vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+
+	.hosts-empty-state-container-content {
+		padding: 16px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+
+		width: fit-content;
+
+		.no-hosts-message {
+			margin-bottom: 16px;
+
+			.no-hosts-message-title {
+				margin-top: 8px;
+				margin-bottom: 4px;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.infra-monitoring-container {
+		.ant-table-thead > tr > th {
+			background: var(--bg-vanilla-100);
+			color: var(--bg-ink-500);
+		}
+
+		.ant-table-cell {
+			color: var(--bg-ink-500);
+		}
+		.hosts-list-controls {
+			border-top: 1px solid var(--bg-vanilla-300);
+			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.ant-select-selector {
+				border-color: var(--bg-vanilla-300) !important;
+				background-color: var(--bg-vanilla-100) !important;
+				color: var(--bg-ink-200);
+			}
+		}
+	}
+
+	.hosts-list-table {
+		.ant-table {
+			.ant-table-thead > tr > th {
+				background: var(--bg-vanilla-100);
+				color: var(--text-ink-300);
+			}
+
+			.ant-table-thead > tr > th:has(.hostname-column-header) {
+				background: var(--bg-vanilla-100);
+			}
+
+			.ant-table-cell {
+				background: var(--bg-vanilla-100);
+				color: var(--bg-ink-500);
+			}
+
+			.ant-table-cell:has(.hostname-column-value) {
+				background: var(--bg-vanilla-100);
+			}
+
+			.hostname-column-value {
+				color: var(--bg-ink-300);
+			}
+
+			.ant-table-tbody > tr:hover > td {
+				background: rgba(0, 0, 0, 0.04);
+			}
+		}
+
+		.ant-pagination {
+			background: var(--bg-vanilla-100);
+
+			.ant-pagination-item {
+				&-active {
+					background: var(--bg-robin-500);
+					border-color: var(--bg-robin-500);
+
+					a {
+						color: var(--bg-vanilla-100) !important;
+					}
+				}
+			}
+		}
+	}
+}

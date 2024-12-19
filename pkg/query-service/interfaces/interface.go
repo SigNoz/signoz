@@ -16,7 +16,6 @@ import (
 type Reader interface {
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
-	GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams, skipConfig *model.SkipConfig) (*[]model.ServiceOverviewItem, *model.ApiError)
 	GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig, start, end time.Time, services []string) (*map[string][]string, *model.ApiError)
 	GetServices(ctx context.Context, query *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError)
 	GetTopOperations(ctx context.Context, query *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError)
@@ -29,15 +28,10 @@ type Reader interface {
 	// GetDisks returns a list of disks configured in the underlying DB. It is supported by
 	// clickhouse only.
 	GetDisks(ctx context.Context) (*[]model.DiskItem, *model.ApiError)
-	GetSpanFilters(ctx context.Context, query *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError)
 	GetTraceAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error)
 	GetTraceAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error)
 	GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error)
 	GetSpanAttributeKeys(ctx context.Context) (map[string]v3.AttributeKey, error)
-	GetTagFilters(ctx context.Context, query *model.TagFilterParams) (*model.TagFilters, *model.ApiError)
-	GetTagValues(ctx context.Context, query *model.TagFilterParams) (*model.TagValues, *model.ApiError)
-	GetFilteredSpans(ctx context.Context, query *model.GetFilteredSpansParams) (*model.GetFilterSpansResponse, *model.ApiError)
-	GetFilteredSpansAggregates(ctx context.Context, query *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError)
 
 	ListErrors(ctx context.Context, params *model.ListErrorsParams) (*[]model.Error, *model.ApiError)
 	CountErrors(ctx context.Context, params *model.CountErrorsParams) (uint64, *model.ApiError)
@@ -113,6 +107,12 @@ type Reader interface {
 	// Query Progress tracking helpers.
 	ReportQueryStartForProgressTracking(queryId string) (reportQueryFinished func(), err *model.ApiError)
 	SubscribeToQueryProgress(queryId string) (<-chan model.QueryProgress, func(), *model.ApiError)
+
+	GetCountOfThings(ctx context.Context, query string) (uint64, error)
+
+	//trace
+	GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
+	UpdateTraceField(ctx context.Context, field *model.UpdateField) *model.ApiError
 }
 
 type Querier interface {

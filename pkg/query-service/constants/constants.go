@@ -1,6 +1,7 @@
 package constants
 
 import (
+	"maps"
 	"os"
 	"strconv"
 	"testing"
@@ -253,10 +254,11 @@ const (
 	SIGNOZ_EXP_HISTOGRAM_TABLENAME             = "distributed_exp_hist"
 	SIGNOZ_TRACE_DBNAME                        = "signoz_traces"
 	SIGNOZ_SPAN_INDEX_TABLENAME                = "distributed_signoz_index_v2"
-	SIGNOZ_SPAN_INDEX_LOCAL_TABLENAME          = "signoz_index_v2"
 	SIGNOZ_SPAN_INDEX_V3                       = "distributed_signoz_index_v3"
+	SIGNOZ_SPAN_INDEX_LOCAL_TABLENAME          = "signoz_index_v2"
 	SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME       = "signoz_index_v3"
 	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME       = "time_series_v4"
+	SIGNOZ_TIMESERIES_V4_TABLENAME             = "distributed_time_series_v4"
 	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME  = "time_series_v4_6hrs"
 	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME  = "time_series_v4_1day"
 	SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME = "time_series_v4_1week"
@@ -303,7 +305,7 @@ const (
 	UINT8                 = "Uint8"
 )
 
-var StaticSelectedLogFields = []model.LogField{
+var StaticSelectedLogFields = []model.Field{
 	{
 		Name:     "timestamp",
 		DataType: UINT32,
@@ -362,7 +364,7 @@ const (
 	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
 		"span_count, subQuery.durationNano, subQuery.traceID AS traceID FROM %s.%s INNER JOIN ( SELECT * FROM "
 	TracesExplorerViewSQLSelectAfterSubQuery = "AS inner_subquery ) AS subQuery ON %s.%s.traceID = subQuery.traceID WHERE %s " +
-		"GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc LIMIT 1 BY subQuery.traceID;"
+		"GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc LIMIT 1 BY subQuery.traceID"
 	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
 		"span_count, subQuery.durationNano, traceID FROM %s.%s GLOBAL INNER JOIN subQuery ON %s.traceID = subQuery.traceID GROUP " +
 		"BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc;"
@@ -462,8 +464,125 @@ const MaxFilterSuggestionsExamplesLimit = 10
 var SpanRenderLimitStr = GetOrDefaultEnv("SPAN_RENDER_LIMIT", "2500")
 var MaxSpansInTraceStr = GetOrDefaultEnv("MAX_SPANS_IN_TRACE", "250000")
 
-var StaticFieldsTraces = map[string]v3.AttributeKey{
+var NewStaticFieldsTraces = map[string]v3.AttributeKey{
 	"timestamp": {},
+	"trace_id": {
+		Key:      "trace_id",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"span_id": {
+		Key:      "span_id",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"trace_state": {
+		Key:      "trace_state",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"parent_span_id": {
+		Key:      "parent_span_id",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"flags": {
+		Key:      "flags",
+		DataType: v3.AttributeKeyDataTypeInt64,
+		IsColumn: true,
+	},
+	"name": {
+		Key:      "name",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"kind": {
+		Key:      "kind",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"kind_string": {
+		Key:      "kind_string",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"duration_nano": {
+		Key:      "duration_nano",
+		DataType: v3.AttributeKeyDataTypeFloat64,
+		IsColumn: true,
+	},
+	"status_code": {
+		Key:      "status_code",
+		DataType: v3.AttributeKeyDataTypeFloat64,
+		IsColumn: true,
+	},
+	"status_message": {
+		Key:      "status_message",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"status_code_string": {
+		Key:      "status_code_string",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+
+	// new support for composite attributes
+	"response_status_code": {
+		Key:      "response_status_code",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"external_http_url": {
+		Key:      "external_http_url",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"http_url": {
+		Key:      "http_url",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"external_http_method": {
+		Key:      "external_http_method",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"http_method": {
+		Key:      "http_method",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"http_host": {
+		Key:      "http_host",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"db_name": {
+		Key:      "db_name",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"db_operation": {
+		Key:      "db_operation",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"has_error": {
+		Key:      "has_error",
+		DataType: v3.AttributeKeyDataTypeBool,
+		IsColumn: true,
+	},
+	"is_remote": {
+		Key:      "is_remote",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	// the simple attributes are not present here as
+	// they are taken care by new format <attribute_type>_<attribute_datatype>_'<attribute_key>'
+}
+
+var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
 	"traceID": {
 		Key:      "traceID",
 		DataType: v3.AttributeKeyDataTypeString,
@@ -479,13 +598,13 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"name": {
-		Key:      "name",
-		DataType: v3.AttributeKeyDataTypeString,
+	"flags": {
+		Key:      "flags",
+		DataType: v3.AttributeKeyDataTypeInt64,
 		IsColumn: true,
 	},
-	"serviceName": {
-		Key:      "serviceName",
+	"name": {
+		Key:      "name",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
@@ -509,11 +628,6 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{
 		DataType: v3.AttributeKeyDataTypeFloat64,
 		IsColumn: true,
 	},
-	"hasError": {
-		Key:      "hasError",
-		DataType: v3.AttributeKeyDataTypeBool,
-		IsColumn: true,
-	},
 	"statusMessage": {
 		Key:      "statusMessage",
 		DataType: v3.AttributeKeyDataTypeString,
@@ -524,8 +638,10 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"externalHttpMethod": {
-		Key:      "externalHttpMethod",
+
+	// old support for composite attributes
+	"responseStatusCode": {
+		Key:      "responseStatusCode",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
@@ -534,8 +650,23 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"dbSystem": {
-		Key:      "dbSystem",
+	"httpUrl": {
+		Key:      "httpUrl",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"externalHttpMethod": {
+		Key:      "externalHttpMethod",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"httpMethod": {
+		Key:      "httpMethod",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"httpHost": {
+		Key:      "httpHost",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
@@ -549,28 +680,27 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"peerService": {
-		Key:      "peerService",
+	"hasError": {
+		Key:      "hasError",
+		DataType: v3.AttributeKeyDataTypeBool,
+		IsColumn: true,
+	},
+	"isRemote": {
+		Key:      "isRemote",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"httpMethod": {
-		Key:      "httpMethod",
+
+	// old support for resource attributes
+	"serviceName": {
+		Key:      "serviceName",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"httpUrl": {
-		Key:      "httpUrl",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
+
+	// old support for simple attributes
 	"httpRoute": {
 		Key:      "httpRoute",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
-	"httpHost": {
-		Key:      "httpHost",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
@@ -581,6 +711,11 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{
 	},
 	"msgOperation": {
 		Key:      "msgOperation",
+		DataType: v3.AttributeKeyDataTypeString,
+		IsColumn: true,
+	},
+	"dbSystem": {
+		Key:      "dbSystem",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
@@ -599,9 +734,18 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"responseStatusCode": {
-		Key:      "responseStatusCode",
+	"peerService": {
+		Key:      "peerService",
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
 }
+
+var StaticFieldsTraces = map[string]v3.AttributeKey{}
+
+func init() {
+	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
+	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
+}
+
+const TRACE_V4_MAX_PAGINATION_LIMIT = 10000

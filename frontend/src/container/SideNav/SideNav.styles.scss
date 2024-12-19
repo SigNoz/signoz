@@ -184,8 +184,14 @@
 		display: none;
 	}
 
-	.nav-item-beta {
+	.nav-item-beta,
+	.nav-item-new {
 		display: none;
+	}
+
+	.sidenav-new-tag {
+		background-color: rgba(37, 225, 146, 0.1);
+		color: var(--text-forest-500);
 	}
 
 	&:hover {
@@ -221,7 +227,8 @@
 			display: block;
 		}
 
-		.nav-item-beta {
+		.nav-item-beta,
+		.nav-item-new {
 			display: block;
 		}
 	}
