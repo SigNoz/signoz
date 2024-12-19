@@ -12,6 +12,8 @@ import (
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
+	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
@@ -27,7 +29,7 @@ func generatePATToken() string {
 func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
-	req := model.PAT{}
+	req := model.CreatePATRequestBody{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
@@ -40,20 +42,87 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
+	pat := model.PAT{
+		Name:      req.Name,
+		Role:      req.Role,
+		ExpiresAt: req.ExpiresInDays,
+	}
+	err = validatePATRequest(pat)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
 
-	// All the PATs are associated with the user creating the PAT. Hence, the permissions
-	// associated with the PAT is also equivalent to that of the user.
-	req.UserID = user.Id
-	req.CreatedAt = time.Now().Unix()
-	req.Token = generatePATToken()
+	// All the PATs are associated with the user creating the PAT.
+	pat.UserID = user.Id
+	pat.CreatedAt = time.Now().Unix()
+	pat.UpdatedAt = time.Now().Unix()
+	pat.LastUsed = 0
+	pat.Token = generatePATToken()
 
-	zap.S().Debugf("Got PAT request: %+v", req)
-	if apierr := ah.AppDao().CreatePAT(ctx, &req); apierr != nil {
+	if pat.ExpiresAt != 0 {
+		// convert expiresAt to unix timestamp from days
+		pat.ExpiresAt = time.Now().Unix() + (pat.ExpiresAt * 24 * 60 * 60)
+	}
+
+	zap.L().Info("Got Create PAT request", zap.Any("pat", pat))
+	var apierr basemodel.BaseApiError
+	if pat, apierr = ah.AppDao().CreatePAT(ctx, pat); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}
 
-	ah.Respond(w, &req)
+	ah.Respond(w, &pat)
+}
+
+func validatePATRequest(req model.PAT) error {
+	if req.Role == "" || (req.Role != baseconstants.ViewerGroup && req.Role != baseconstants.EditorGroup && req.Role != baseconstants.AdminGroup) {
+		return fmt.Errorf("valid role is required")
+	}
+	if req.ExpiresAt < 0 {
+		return fmt.Errorf("valid expiresAt is required")
+	}
+	if req.Name == "" {
+		return fmt.Errorf("valid name is required")
+	}
+	return nil
+}
+
+func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+
+	req := model.PAT{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	user, err := auth.GetUserFromRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorUnauthorized,
+			Err: err,
+		}, nil)
+		return
+	}
+
+	err = validatePATRequest(req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	req.UpdatedByUserID = user.Id
+	id := mux.Vars(r)["id"]
+	req.UpdatedAt = time.Now().Unix()
+	zap.L().Info("Got Update PAT request", zap.Any("pat", req))
+	var apierr basemodel.BaseApiError
+	if apierr = ah.AppDao().UpdatePAT(ctx, req, id); apierr != nil {
+		RespondError(w, apierr, nil)
+		return
+	}
+
+	ah.Respond(w, map[string]string{"data": "pat updated successfully"})
 }
 
 func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
@@ -66,8 +135,8 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	zap.S().Infof("Get PATs for user: %+v", user.Id)
-	pats, apierr := ah.AppDao().ListPATs(ctx, user.Id)
+	zap.L().Info("Get PATs for user", zap.String("user_id", user.Id))
+	pats, apierr := ah.AppDao().ListPATs(ctx)
 	if apierr != nil {
 		RespondError(w, apierr, nil)
 		return
@@ -75,7 +144,7 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 	ah.Respond(w, pats)
 }
 
-func (ah *APIHandler) deletePAT(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	id := mux.Vars(r)["id"]
 	user, err := auth.GetUserFromRequest(r)
@@ -86,22 +155,11 @@ func (ah *APIHandler) deletePAT(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	pat, apierr := ah.AppDao().GetPATByID(ctx, id)
-	if apierr != nil {
+
+	zap.L().Info("Revoke PAT with id", zap.String("id", id))
+	if apierr := ah.AppDao().RevokePAT(ctx, id, user.Id); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}
-	if pat.UserID != user.Id {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
-			Err: fmt.Errorf("unauthorized PAT delete request"),
-		}, nil)
-		return
-	}
-	zap.S().Debugf("Delete PAT with id: %+v", id)
-	if apierr := ah.AppDao().DeletePAT(ctx, id); apierr != nil {
-		RespondError(w, apierr, nil)
-		return
-	}
-	ah.Respond(w, map[string]string{"data": "pat deleted successfully"})
+	ah.Respond(w, map[string]string{"data": "pat revoked successfully"})
 }

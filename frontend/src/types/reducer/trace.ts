@@ -72,9 +72,7 @@ export type OperatorValues =
 	| 'NotStartsWith';
 
 export type TraceFilterEnum =
-	| 'component'
 	| 'duration'
-	| 'httpCode'
 	| 'httpHost'
 	| 'httpMethod'
 	| 'httpRoute'
@@ -91,16 +89,8 @@ export const AllPanelHeading: {
 	displayValue: string;
 }[] = [
 	{
-		displayValue: 'Component',
-		key: 'component',
-	},
-	{
 		key: 'duration',
 		displayValue: 'Duration',
-	},
-	{
-		displayValue: 'HTTP Code',
-		key: 'httpCode',
 	},
 	{
 		key: 'httpHost',

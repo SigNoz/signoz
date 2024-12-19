@@ -1,0 +1,114 @@
+.mq-tables-container {
+	width: 100%;
+	height: 100%;
+
+	.mq-table-title {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding-bottom: 16px;
+
+		color: var(--bg-vanilla-100);
+		font-family: Inter;
+		font-size: 18px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 28px;
+		letter-spacing: -0.09px;
+
+		.mq-table-subtitle {
+			color: var(--bg-vanilla-400);
+			font-size: 14px;
+		}
+	}
+
+	.mq-table {
+		width: 100%;
+
+		.ant-table-content {
+			border-radius: 6px;
+			border: 1px solid var(--bg-slate-500);
+			box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.1);
+		}
+
+		.ant-table-tbody {
+			.ant-table-cell {
+				max-width: 250px;
+				border-bottom: none;
+			}
+		}
+
+		.ant-table-thead {
+			.ant-table-cell {
+				background-color: var(--bg-ink-500);
+				border-bottom: 1px solid var(--bg-slate-500);
+			}
+		}
+	}
+
+	.no-data-style {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 100%;
+		flex-direction: column;
+		gap: 24px;
+		padding: 24px;
+		border: 1px solid var(--bg-slate-500);
+		border-radius: 6px;
+
+		.ant-typography {
+			font-size: 14px;
+		}
+	}
+}
+
+.mq-table {
+	&.mq-overview-row-clickable {
+		.ant-table-row {
+			background-color: var(--bg-ink-400);
+
+			&:hover {
+				cursor: pointer;
+				background-color: var(--bg-slate-400) !important;
+				color: var(--bg-vanilla-400);
+				transition: background-color 0.3s ease, color 0.3s ease;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.mq-tables-container {
+		.mq-table-title {
+			color: var(--bg-slate-200);
+
+			.mq-table-subtitle {
+				color: var(--bg-slate-300);
+			}
+		}
+
+		.mq-table {
+			.ant-table-content {
+				border: 1px solid var(--bg-vanilla-300);
+			}
+
+			.ant-table-tbody {
+				.ant-table-cell {
+					background-color: var(--bg-vanilla-100);
+				}
+			}
+
+			.ant-table-thead {
+				.ant-table-cell {
+					background-color: var(--bg-vanilla-100);
+					border-bottom: 1px solid var(--bg-vanilla-300);
+				}
+			}
+		}
+
+		.no-data-style {
+			border: 1px solid var(--bg-vanilla-300);
+		}
+	}
+}

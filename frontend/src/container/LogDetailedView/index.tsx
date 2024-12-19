@@ -1,5 +1,7 @@
 import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ROUTES from 'constants/routes';
+import { getOldLogsOperatorFromNew } from 'hooks/logs/useActiveLog';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import getStep from 'lib/getStep';
 import { getIdConditions } from 'pages/Logs/utils';
@@ -56,24 +58,26 @@ function LogDetailedView({
 
 	const handleAddToQuery = useCallback(
 		(fieldKey: string, fieldValue: string, operator: string) => {
+			const newOperator = getOldLogsOperatorFromNew(operator);
 			const updatedQueryString = getGeneratedFilterQueryString(
 				fieldKey,
 				fieldValue,
-				operator,
+				newOperator,
 				queryString,
 			);
 
-			history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
+			history.replace(`${ROUTES.OLD_LOGS_EXPLORER}?q=${updatedQueryString}`);
 		},
 		[history, queryString],
 	);
 
 	const handleClickActionItem = useCallback(
 		(fieldKey: string, fieldValue: string, operator: string): void => {
+			const newOperator = getOldLogsOperatorFromNew(operator);
 			const updatedQueryString = getGeneratedFilterQueryString(
 				fieldKey,
 				fieldValue,
-				operator,
+				newOperator,
 				queryString,
 			);
 
@@ -136,6 +140,7 @@ function LogDetailedView({
 
 	return (
 		<LogDetail
+			selectedTab={VIEW_TYPES.OVERVIEW}
 			log={detailedLog}
 			onClose={onDrawerClose}
 			onAddToQuery={handleAddToQuery}

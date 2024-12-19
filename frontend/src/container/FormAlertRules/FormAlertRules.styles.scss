@@ -1,0 +1,141 @@
+.create-alert-modal {
+	.ant-modal-content {
+		background-color: var(--bg-ink-300);
+		.ant-modal-confirm-title {
+			color: var(--bg-vanilla-100);
+		}
+
+		.ant-modal-confirm-content {
+			.ant-typography {
+				color: var(--bg-vanilla-100);
+			}
+		}
+
+		.ant-modal-confirm-btns {
+			button:nth-of-type(1) {
+				background-color: var(--bg-slate-400);
+				border: none;
+				color: var(--bg-vanilla-100);
+			}
+		}
+	}
+}
+
+.steps-container {
+	width: 80%;
+}
+
+.qb-chart-preview-container {
+	margin-bottom: 1rem;
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+
+.overview-header {
+	margin-bottom: 1rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+
+	.alert-type-container {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+
+		.alert-type-title {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.ant-typography {
+			margin: 0;
+		}
+	}
+}
+
+.chart-preview-container {
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+
+	.ant-card {
+		flex: 1;
+	}
+}
+
+.detection-method-container {
+	margin: 24px 0;
+
+	.ant-tabs-nav {
+		margin-bottom: 0;
+
+		.ant-tabs-tab {
+			padding: 12px 0;
+		}
+	}
+
+	.detection-method-description {
+		padding: 8px 0;
+		font-size: 12px;
+	}
+}
+
+.info-help-btns {
+	display: grid;
+	grid-template-columns: auto auto;
+	gap: 12px;
+	margin-top: 20px;
+
+	.doc-redirection-btn {
+		color: var(--bg-aqua-500) !important;
+		border-color: var(--bg-aqua-500) !important;
+	}
+
+	.facing-issue-btn {
+		width: 100% !important;
+	}
+}
+
+.lightMode {
+	.main-container {
+		.plot-tag {
+			background: var(--bg-vanilla-300);
+		}
+	}
+	.ant-modal-content {
+		background-color: var(--bg-vanilla-100);
+		.ant-modal-confirm-title {
+			color: var(--bg-ink-500);
+		}
+
+		.ant-modal-confirm-content {
+			.ant-typography {
+				color: var(--bg-ink-500);
+			}
+		}
+
+		.ant-modal-confirm-btns {
+			button:nth-of-type(1) {
+				background-color: var(--bg-vanilla-300);
+				border: none;
+				color: var(--bg-ink-500);
+			}
+		}
+	}
+
+	.info-help-btns {
+		.doc-redirection-btn {
+			color: var(--bg-aqua-600) !important;
+			border-color: var(--bg-aqua-600) !important;
+		}
+	}
+}
+
+.create-notification-btn {
+	box-shadow: none;
+}

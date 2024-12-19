@@ -1,44 +1,58 @@
-import GridPanelSwitch from 'container/GridPanelSwitch';
-import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
-import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useCallback, useMemo, useRef } from 'react';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import GetMinMax from 'lib/getMinMax';
+import getTimeString from 'lib/getTimeString';
+import history from 'lib/history';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useRef,
+} from 'react';
 import { UseQueryResult } from 'react-query';
 import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 function WidgetGraph({
-	getWidgetQueryRange,
 	selectedWidget,
-	yAxisUnit,
-	thresholds,
-	fillSpans,
+	queryResponse,
+	setRequestData,
+	selectedGraph,
 }: WidgetGraphProps): JSX.Element {
-	const { stagedQuery } = useQueryBuilder();
-
 	const graphRef = useRef<HTMLDivElement>(null);
-
-	const containerDimensions = useResizeObserver(graphRef);
-
-	const chartData = getUPlotChartData(
-		getWidgetQueryRange?.data?.payload,
-		fillSpans,
-	);
-
-	const isDarkMode = useIsDarkMode();
-
-	const params = useUrlQuery();
-
-	const widgetId = params.get('widgetId');
-
 	const dispatch = useDispatch();
+	const urlQuery = useUrlQuery();
+	const location = useLocation();
+
+	const handleBackNavigation = (): void => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const startTime = searchParams.get(QueryParams.startTime);
+		const endTime = searchParams.get(QueryParams.endTime);
+		const relativeTime = searchParams.get(
+			QueryParams.relativeTime,
+		) as CustomTimeType;
+
+		if (relativeTime) {
+			dispatch(UpdateTimeInterval(relativeTime));
+		} else if (startTime && endTime && startTime !== endTime) {
+			dispatch(
+				UpdateTimeInterval('custom', [
+					parseInt(getTimeString(startTime), 10),
+					parseInt(getTimeString(endTime), 10),
+				]),
+			);
+		}
+	};
 
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
@@ -48,61 +62,66 @@ function WidgetGraph({
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
+
+			const { maxTime, minTime } = GetMinMax('custom', [
+				startTimestamp,
+				endTimestamp,
+			]);
+
+			urlQuery.set(QueryParams.startTime, minTime.toString());
+			urlQuery.set(QueryParams.endTime, maxTime.toString());
+			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			history.push(generatedUrl);
 		},
-		[dispatch],
+		[dispatch, location.pathname, urlQuery],
 	);
 
-	const options = useMemo(
-		() =>
-			getUPlotChartOptions({
-				id: widgetId || 'legend_widget',
-				yAxisUnit,
-				apiResponse: getWidgetQueryRange?.data?.payload,
-				dimensions: containerDimensions,
-				isDarkMode,
-				onDragSelect,
-				thresholds,
-				fillSpans,
-			}),
-		[
-			widgetId,
-			yAxisUnit,
-			getWidgetQueryRange?.data?.payload,
-			containerDimensions,
-			isDarkMode,
-			onDragSelect,
-			thresholds,
-			fillSpans,
-		],
-	);
+	useEffect(() => {
+		window.addEventListener('popstate', handleBackNavigation);
+
+		return (): void => {
+			window.removeEventListener('popstate', handleBackNavigation);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const isDarkMode = useIsDarkMode();
 
 	return (
-		<div ref={graphRef} style={{ height: '100%' }}>
-			<GridPanelSwitch
-				data={chartData}
-				options={options}
-				panelType={selectedWidget.panelTypes}
-				name={widgetId || 'legend_widget'}
-				yAxisUnit={yAxisUnit}
-				panelData={
-					getWidgetQueryRange.data?.payload.data.newResult.data.result || []
-				}
-				query={stagedQuery || selectedWidget.query}
-				thresholds={thresholds}
+		<div
+			ref={graphRef}
+			style={{
+				height: '100%',
+				width: '100%',
+				marginTop: '16px',
+				borderRadius: '3px',
+				border: isDarkMode
+					? '1px solid var(--bg-slate-500)'
+					: '1px solid var(--bg-vanilla-300)',
+				background: isDarkMode
+					? 'linear-gradient(0deg, rgba(171, 189, 255, 0.00) 0%, rgba(171, 189, 255, 0.00) 100%), #0B0C0E'
+					: 'var(--bg-vanilla-100)',
+			}}
+		>
+			<PanelWrapper
+				widget={selectedWidget}
+				queryResponse={queryResponse}
+				setRequestData={setRequestData}
+				onDragSelect={onDragSelect}
+				selectedGraph={selectedGraph}
 			/>
 		</div>
 	);
 }
 
 interface WidgetGraphProps {
-	thresholds: ThresholdProps[];
-	yAxisUnit: string;
 	selectedWidget: Widgets;
-	fillSpans: boolean;
-	getWidgetQueryRange: UseQueryResult<
+	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
+	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
+	selectedGraph: PANEL_TYPES;
 }
 
 export default WidgetGraph;

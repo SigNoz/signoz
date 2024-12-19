@@ -4,10 +4,12 @@ const config: Config.InitialOptions = {
 	clearMocks: true,
 	coverageDirectory: 'coverage',
 	coverageReporters: ['text', 'cobertura', 'html', 'json-summary'],
+	collectCoverageFrom: ['src/**/*.{ts,tsx}'],
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
 		'\\.(css|less|scss)$': '<rootDir>/__mocks__/cssMock.ts',
+		'\\.md$': '<rootDir>/__mocks__/cssMock.ts',
 	},
 	globals: {
 		extensionsToTreatAsEsm: ['.ts'],
@@ -22,7 +24,7 @@ const config: Config.InitialOptions = {
 		'^.+\\.(js|jsx)$': 'babel-jest',
 	},
 	transformIgnorePatterns: [
-		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend)/)',
+		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens|d3-interpolate|d3-color)/)',
 	],
 	setupFilesAfterEnv: ['<rootDir>jest.setup.ts'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],
@@ -31,6 +33,14 @@ const config: Config.InitialOptions = {
 	testEnvironmentOptions: {
 		'jest-playwright': {
 			browsers: ['chromium', 'firefox', 'webkit'],
+		},
+	},
+	coverageThreshold: {
+		global: {
+			statements: 80,
+			branches: 65,
+			functions: 80,
+			lines: 80,
 		},
 	},
 };

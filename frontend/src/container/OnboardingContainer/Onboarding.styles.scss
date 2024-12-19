@@ -1,16 +1,6 @@
 .container {
 	width: 100%;
-	// max-width: 1440px;
 	margin: 0 auto;
-
-	&.darkMode {
-	}
-
-	&.lightMode {
-		.onboardingHeader {
-			color: #1d1d1d;
-		}
-	}
 }
 
 .moduleSelectContainer {
@@ -31,13 +21,13 @@
 
 .onboardingHeader {
 	text-align: center;
-	margin-top: 48px;
-	margin-bottom: 24px;
+	margin-top: 24px;
 }
 
 .onboardingHeader h1 {
 	font-size: 24px;
 	font-weight: 500;
+	margin: 0;
 }
 
 .modulesContainer {
@@ -51,16 +41,24 @@
 	justify-content: center;
 	gap: 36px;
 	margin: 36px;
+	flex-wrap: wrap;
 }
 
 .moduleStyles {
 	padding: 0;
 	box-sizing: border-box;
 	cursor: pointer;
-	width: 400px;
+	width: 300px;
+	transition: 0.3s;
+
+	background-color: #000;
 
 	.ant-card-body {
 		padding: 0px;
+	}
+
+	&:hover {
+		transform: scale(1.05);
 	}
 }
 
@@ -73,6 +71,10 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	text-align: center;
+
+	border-bottom: 1px solid #303030;
+	background-color: var(--bg-ink-400);
 }
 
 .moduleStyles.selected {
@@ -107,8 +109,8 @@
 
 .actionButtonsContainer {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
+	gap: 8px;
 	box-sizing: border-box;
 	align-items: center;
 }
@@ -135,5 +137,122 @@
 
 	a {
 		padding-left: 4px;
+	}
+}
+
+.request-entity-container {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+
+	border-radius: 4px;
+	border: 0.5px solid rgba(78, 116, 248, 0.2);
+	background: rgba(69, 104, 220, 0.1);
+	padding: 12px;
+	margin: 24px 0;
+}
+
+.invite-member-wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin: 32px 0;
+	flex-direction: column;
+	gap: 12px;
+
+	.invite-member {
+		display: flex;
+		width: 480px;
+		height: 64px;
+		padding: 16px;
+		justify-content: space-between;
+		align-items: center;
+		flex-shrink: 0;
+		border-radius: 4px;
+		border: 1px solid var(--bg-slate-500);
+		background: var(--bg-ink-400);
+
+		.ant-typography {
+			color: var(--bg-vanilla-400);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 20px;
+		}
+
+		> button {
+			display: flex;
+			align-items: center;
+			border-radius: 2px;
+		}
+	}
+}
+
+.onboarding-page {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.skip-to-console {
+	color: var(--bg-vanilla-400);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 20px;
+	position: absolute;
+	top: 40px;
+	right: 40px;
+	cursor: pointer;
+
+	&:hover {
+		color: var(--bg-vanilla-200);
+	}
+}
+
+.lightMode {
+	.invite-member-wrapper {
+		.invite-member {
+			border: 1px solid var(--bg-vanilla-200);
+			background: var(--bg-vanilla-100);
+
+			.ant-typography {
+				color: var(--bg-slate-200);
+			}
+		}
+	}
+
+	.skip-to-console {
+		color: var(--bg-slate-200);
+
+		&:hover {
+			color: var(--bg-slate-200);
+		}
+	}
+}
+
+.lightMode {
+	.container {
+		.onboardingHeader {
+			color: var(--bg-slate-200);
+		}
+	}
+
+	.moduleStyles {
+		background-color: var(--bg-vanilla-100);
+	}
+
+	.moduleTitleStyle {
+		border-bottom: 1px solid var(--bg-vanilla-300);
+		background-color: var(--bg-vanilla-100);
+	}
+
+	.moduleDesc {
+		background-color: var(--bg-vanilla-100);
 	}
 }

@@ -1,0 +1,29 @@
+.billing-graph-card {
+	.ant-card-body {
+		height: 40vh;
+		.uplot-graph-container {
+			padding: 8px;
+		}
+	}
+	.total-spent {
+		font-family: 'SF Mono' monospace;
+		font-size: 16px;
+		font-style: normal;
+		font-weight: 600;
+		line-height: 24px;
+	}
+
+	.total-spent-title {
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 22px;
+		letter-spacing: 0.48px;
+		color: rgba(255, 255, 255, 0.5);
+	}
+}
+
+.lightMode {
+	.total-spent-title {
+		color: var(--bg-ink-100);
+	}
+}

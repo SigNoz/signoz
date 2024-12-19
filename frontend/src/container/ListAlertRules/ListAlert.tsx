@@ -1,8 +1,9 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import { Flex, Input, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
+import logEvent from 'api/common/logEvent';
 import DropDown from 'components/DropDown/DropDown';
 import {
 	DynamicColumnsKey,
@@ -14,9 +15,12 @@ import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import useSortableTable from 'hooks/ResizeTable/useSortableTable';
 import useComponentPermission from 'hooks/useComponentPermission';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useInterval from 'hooks/useInterval';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useCallback, useState } from 'react';
@@ -29,12 +33,14 @@ import { GettableAlert } from 'types/api/alerts/get';
 import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
-import { Button, ButtonContainer, ColumnButton } from './styles';
+import { Button, ColumnButton, SearchContainer } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
+import { alertActionLogEvent, filterAlerts } from './utils';
+
+const { Search } = Input;
 
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
-	const [data, setData] = useState<GettableAlert[]>(allAlertRules || []);
 	const { t } = useTranslation('common');
 	const { role, featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -44,13 +50,42 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		role,
 	);
 
+	const [editLoader, setEditLoader] = useState<boolean>(false);
+	const [cloneLoader, setCloneLoader] = useState<boolean>(false);
+
+	const params = useUrlQuery();
+	const orderColumnParam = params.get('columnKey');
+	const orderQueryParam = params.get('order');
+	const paginationParam = params.get('page');
+	const searchParams = params.get('search');
+	const [searchString, setSearchString] = useState<string>(searchParams || '');
+	const [data, setData] = useState<GettableAlert[]>(() => {
+		const value = searchString.toLowerCase();
+		const filteredData = filterAlerts(allAlertRules, value);
+		return filteredData || [];
+	});
+
+	// Type asuring
+	const sortingOrder: 'ascend' | 'descend' | null =
+		orderQueryParam === 'ascend' || orderQueryParam === 'descend'
+			? orderQueryParam
+			: null;
+
+	const { sortedInfo, handleChange } = useSortableTable<GettableAlert>(
+		sortingOrder,
+		orderColumnParam || '',
+		searchString,
+	);
+
 	const { notifications: notificationsApi } = useNotifications();
 
 	useInterval(() => {
 		(async (): Promise<void> => {
 			const { data: refetchData, status } = await refetch();
 			if (status === 'success') {
-				setData(refetchData?.payload || []);
+				const value = searchString.toLowerCase();
+				const filteredData = filterAlerts(refetchData.payload || [], value);
+				setData(filteredData || []);
 			}
 			if (status === 'error') {
 				notificationsApi.error({
@@ -67,27 +102,41 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	}, [notificationsApi, t]);
 
 	const onClickNewAlertHandler = useCallback(() => {
+		logEvent('Alert: New alert button clicked', {
+			number: allAlertRules?.length,
+		});
 		featureResponse
 			.refetch()
 			.then(() => {
 				history.push(ROUTES.ALERTS_NEW);
 			})
 			.catch(handleError);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [featureResponse, handleError]);
 
 	const onEditHandler = (record: GettableAlert) => (): void => {
+		setEditLoader(true);
 		featureResponse
 			.refetch()
 			.then(() => {
 				const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
-
-				history.push(
-					`${ROUTES.EDIT_ALERTS}?ruleId=${record.id.toString()}&${
-						QueryParams.compositeQuery
-					}=${encodeURIComponent(JSON.stringify(compositeQuery))}`,
+				params.set(
+					QueryParams.compositeQuery,
+					encodeURIComponent(JSON.stringify(compositeQuery)),
 				);
+
+				params.set(
+					QueryParams.panelTypes,
+					record.condition.compositeQuery.panelType,
+				);
+
+				params.set(QueryParams.ruleId, record.id.toString());
+
+				setEditLoader(false);
+				history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 			})
-			.catch(handleError);
+			.catch(handleError)
+			.finally(() => setEditLoader(false));
 	};
 
 	const onCloneHandler = (
@@ -99,34 +148,50 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		};
 		const apiReq = { data: copyAlert };
 
-		const response = await saveAlertApi(apiReq);
+		try {
+			setCloneLoader(true);
+			const response = await saveAlertApi(apiReq);
 
-		if (response.statusCode === 200) {
-			notificationsApi.success({
-				message: 'Success',
-				description: 'Alert cloned successfully',
-			});
+			if (response.statusCode === 200) {
+				notificationsApi.success({
+					message: 'Success',
+					description: 'Alert cloned successfully',
+				});
 
-			const { data: refetchData, status } = await refetch();
-			if (status === 'success' && refetchData.payload) {
-				setData(refetchData.payload || []);
-				setTimeout(() => {
-					const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
-					history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${clonedAlert.id}`);
-				}, 2000);
-			}
-			if (status === 'error') {
+				const { data: refetchData, status } = await refetch();
+				if (status === 'success' && refetchData.payload) {
+					setData(refetchData.payload || []);
+					setTimeout(() => {
+						const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
+						params.set(QueryParams.ruleId, String(clonedAlert.id));
+						history.push(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
+					}, 2000);
+				}
+				if (status === 'error') {
+					notificationsApi.error({
+						message: t('something_went_wrong'),
+					});
+				}
+			} else {
 				notificationsApi.error({
-					message: t('something_went_wrong'),
+					message: 'Error',
+					description: response.error || t('something_went_wrong'),
 				});
 			}
-		} else {
-			notificationsApi.error({
-				message: 'Error',
-				description: response.error || t('something_went_wrong'),
-			});
+		} catch (error) {
+			handleError();
+			console.error(error);
+		} finally {
+			setCloneLoader(false);
 		}
 	};
+
+	const handleSearch = useDebouncedFn((e: unknown) => {
+		const value = (e as React.BaseSyntheticEvent).target.value.toLowerCase();
+		setSearchString(value);
+		const filteredData = filterAlerts(allAlertRules, value);
+		setData(filteredData);
+	});
 
 	const dynamicColumns: ColumnsType<GettableAlert> = [
 		{
@@ -142,6 +207,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				return prev - next;
 			},
 			render: DateComponent,
+			sortOrder:
+				sortedInfo.columnKey === DynamicColumnsKey.CreatedAt
+					? sortedInfo.order
+					: null,
 		},
 		{
 			title: 'Created By',
@@ -163,6 +232,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				return prev - next;
 			},
 			render: DateComponent,
+			sortOrder:
+				sortedInfo.columnKey === DynamicColumnsKey.UpdatedAt
+					? sortedInfo.order
+					: null,
 		},
 		{
 			title: 'Updated By',
@@ -183,6 +256,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				(b.state ? b.state.charCodeAt(0) : 1000) -
 				(a.state ? a.state.charCodeAt(0) : 1000),
 			render: (value): JSX.Element => <Status status={value} />,
+			sortOrder: sortedInfo.columnKey === 'state' ? sortedInfo.order : null,
 		},
 		{
 			title: 'Alert Name',
@@ -198,6 +272,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			render: (value, record): JSX.Element => (
 				<Typography.Link onClick={onEditHandler(record)}>{value}</Typography.Link>
 			),
+			sortOrder: sortedInfo.columnKey === 'name' ? sortedInfo.order : null,
 		},
 		{
 			title: 'Severity',
@@ -214,6 +289,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 				return <Typography>{severityValue}</Typography>;
 			},
+			sortOrder: sortedInfo.columnKey === 'severity' ? sortedInfo.order : null,
 		},
 		{
 			title: 'Labels',
@@ -244,6 +320,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 10,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
 				<DropDown
+					onDropDownItemClick={(item): void => alertActionLogEvent(item.key, record)}
 					element={[
 						<ToggleAlertState
 							key="1"
@@ -251,10 +328,20 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 							setData={setData}
 							id={id}
 						/>,
-						<ColumnButton key="2" onClick={onEditHandler(record)} type="link">
+						<ColumnButton
+							key="2"
+							onClick={onEditHandler(record)}
+							type="link"
+							loading={editLoader}
+						>
 							Edit
 						</ColumnButton>,
-						<ColumnButton key="3" onClick={onCloneHandler(record)} type="link">
+						<ColumnButton
+							key="3"
+							onClick={onCloneHandler(record)}
+							type="link"
+							loading={cloneLoader}
+						>
 							Clone
 						</ColumnButton>,
 						<DeleteAlert
@@ -269,28 +356,46 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		});
 	}
 
+	const paginationConfig = {
+		defaultCurrent: Number(paginationParam) || 1,
+	};
 	return (
 		<>
-			<ButtonContainer>
-				<TextToolTip
-					{...{
-						text: `More details on how to create alerts`,
-						url: 'https://signoz.io/docs/userguide/alerts-management/',
-					}}
+			<SearchContainer>
+				<Search
+					placeholder="Search by Alert Name, Severity and Labels"
+					onChange={handleSearch}
+					defaultValue={searchString}
 				/>
-
-				{addNewAlert && (
-					<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
-						New Alert
-					</Button>
-				)}
-			</ButtonContainer>
+				<Flex gap={12}>
+					{addNewAlert && (
+						<Button
+							type="primary"
+							onClick={onClickNewAlertHandler}
+							icon={<PlusOutlined />}
+						>
+							New Alert
+						</Button>
+					)}
+					<TextToolTip
+						{...{
+							text: `More details on how to create alerts`,
+							url:
+								'https://signoz.io/docs/alerts/?utm_source=product&utm_medium=list-alerts',
+							urlText: 'Learn More',
+						}}
+					/>
+				</Flex>
+			</SearchContainer>
 			<DynamicColumnTable
 				tablesource={TableDataSource.Alert}
 				columns={columns}
 				rowKey="id"
 				dataSource={data}
+				shouldSendAlertsLogEvent
 				dynamicColumns={dynamicColumns}
+				onChange={handleChange}
+				pagination={paginationConfig}
 			/>
 		</>
 	);

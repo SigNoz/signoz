@@ -3,6 +3,7 @@ import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import history from 'lib/history';
 import {
 	MouseEventHandler,
 	useCallback,
@@ -24,18 +25,33 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	const { pathname } = useLocation();
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
-	const {
-		queryData: timeRange,
-		redirectWithQuery: onTimeRangeChange,
-	} = useUrlQueryData<LogTimeRange | null>(QueryParams.timeRange, null);
 
 	const { queryData: activeLogId } = useUrlQueryData<string | null>(
 		QueryParams.activeLogId,
 		null,
+	);
+
+	const { selectedTime, minTime, maxTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
+	const onTimeRangeChange = useCallback(
+		(newTimeRange: LogTimeRange | null): void => {
+			if (selectedTime !== 'custom') {
+				urlQuery.delete(QueryParams.startTime);
+				urlQuery.delete(QueryParams.endTime);
+				urlQuery.set(QueryParams.relativeTime, selectedTime);
+			} else {
+				urlQuery.set(QueryParams.startTime, newTimeRange?.start.toString() || '');
+				urlQuery.set(QueryParams.endTime, newTimeRange?.end.toString() || '');
+				urlQuery.delete(QueryParams.relativeTime);
+			}
+
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			history.replace(generatedUrl);
+		},
+		[pathname, urlQuery, selectedTime],
 	);
 
 	const isActiveLog = useMemo(() => activeLogId === logId, [activeLogId, logId]);
@@ -52,14 +68,12 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 			event.preventDefault();
 			event.stopPropagation();
 
-			const range = JSON.stringify(timeRange);
-
 			urlQuery.delete(QueryParams.activeLogId);
-			urlQuery.delete(QueryParams.timeRange);
+			urlQuery.delete(QueryParams.relativeTime);
+
 			urlQuery.set(QueryParams.activeLogId, `"${logId}"`);
-			urlQuery.set(QueryParams.timeRange, range);
-			urlQuery.set(QueryParams.startTime, minTime.toString());
-			urlQuery.set(QueryParams.endTime, maxTime.toString());
+			urlQuery.set(QueryParams.startTime, minTime?.toString() || '');
+			urlQuery.set(QueryParams.endTime, maxTime?.toString() || '');
 
 			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
 
@@ -68,16 +82,7 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 				message: 'Copied to clipboard',
 			});
 		},
-		[
-			logId,
-			timeRange,
-			urlQuery,
-			minTime,
-			maxTime,
-			pathname,
-			setCopy,
-			notifications,
-		],
+		[logId, urlQuery, minTime, maxTime, pathname, setCopy, notifications],
 	);
 
 	useEffect(() => {
@@ -95,7 +100,6 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 		isHighlighted,
 		isLogsExplorerPage,
 		activeLogId,
-		timeRange,
 		onLogCopy,
 		onTimeRangeChange,
 	};

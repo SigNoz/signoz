@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable react/jsx-no-comment-textnodes */
 /* eslint-disable sonarjs/prefer-single-boolean-return */
 import './ModuleStepsContainer.styles.scss';
 
@@ -7,14 +10,17 @@ import {
 	LeftCircleOutlined,
 } from '@ant-design/icons';
 import { Button, Space, Steps, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { onboardingHelpMessage } from 'components/LaunchChatSupport/util';
 import ROUTES from 'constants/routes';
 import { stepsMap } from 'container/OnboardingContainer/constants/stepsConfig';
 import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import history from 'lib/history';
-import { isEmpty } from 'lodash-es';
-import { useState } from 'react';
+import { isEmpty, isNull } from 'lodash-es';
+import { UserPlus } from 'lucide-react';
+import { SetStateAction, useState } from 'react';
 
 import { useOnboardingContext } from '../../context/OnboardingContext';
 import {
@@ -28,6 +34,7 @@ interface ModuleStepsContainerProps {
 	onReselectModule: any;
 	selectedModule: ModuleProps;
 	selectedModuleSteps: SelectedModuleStepProps[];
+	setIsInviteTeamMemberModalOpen: (value: SetStateAction<boolean>) => void;
 }
 
 interface MetaDataProps {
@@ -58,6 +65,7 @@ export default function ModuleStepsContainer({
 	onReselectModule,
 	selectedModule,
 	selectedModuleSteps,
+	setIsInviteTeamMemberModalOpen,
 }: ModuleStepsContainerProps): JSX.Element {
 	const {
 		activeStep,
@@ -65,6 +73,7 @@ export default function ModuleStepsContainer({
 		selectedDataSource,
 		selectedEnvironment,
 		selectedFramework,
+		selectedMethod,
 		updateActiveStep,
 		updateErrorDetails,
 		resetProgress,
@@ -72,9 +81,9 @@ export default function ModuleStepsContainer({
 
 	const [current, setCurrent] = useState(0);
 	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
-	const { trackEvent } = useAnalytics();
 	const lastStepIndex = selectedModuleSteps.length - 1;
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const isValidForm = (): boolean => {
 		const { id: selectedModuleID } = selectedModule;
 		const dataSourceStep = stepsMap.dataSource;
@@ -86,7 +95,10 @@ export default function ModuleStepsContainer({
 			name: selectedDataSourceName = '',
 		} = selectedDataSource as DataSourceType;
 
-		if (step.id === environmentDetailsStep && selectedEnvironment === '') {
+		if (
+			step.id === environmentDetailsStep &&
+			(selectedEnvironment === '' || isNull(selectedEnvironment))
+		) {
 			updateErrorDetails('Please select environment');
 			return false;
 		}
@@ -103,7 +115,10 @@ export default function ModuleStepsContainer({
 					dataSource: selectedDataSource,
 				});
 
-				if (doesHaveFrameworks && selectedFramework === '') {
+				if (
+					doesHaveFrameworks &&
+					(selectedFramework === null || selectedFramework === '')
+				) {
 					return false;
 				}
 
@@ -128,15 +143,24 @@ export default function ModuleStepsContainer({
 	};
 
 	const redirectToModules = (): void => {
-		trackEvent('Onboarding Complete', {
+		logEvent('Onboarding V2 Complete', {
 			module: selectedModule.id,
+			dataSource: selectedDataSource?.id,
+			framework: selectedFramework,
+			environment: selectedEnvironment,
+			selectedMethod,
+			serviceName,
 		});
 
 		if (selectedModule.id === ModulesMap.APM) {
 			history.push(ROUTES.APPLICATION);
 		} else if (selectedModule.id === ModulesMap.LogsManagement) {
-			history.push(ROUTES.LOGS);
+			history.push(ROUTES.LOGS_EXPLORER);
 		} else if (selectedModule.id === ModulesMap.InfrastructureMonitoring) {
+			history.push(ROUTES.APPLICATION);
+		} else if (selectedModule.id === ModulesMap.AwsMonitoring) {
+			history.push(ROUTES.APPLICATION);
+		} else {
 			history.push(ROUTES.APPLICATION);
 		}
 	};
@@ -159,6 +183,164 @@ export default function ModuleStepsContainer({
 					module: selectedModule,
 					step: selectedModuleSteps[current + 1],
 				});
+				// on next step click track events
+				switch (selectedModuleSteps[current].id) {
+					case stepsMap.dataSource:
+						logEvent('Onboarding V2: Data Source Selected', {
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.environmentDetails:
+						logEvent('Onboarding V2: Environment Selected', {
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.selectMethod:
+						logEvent('Onboarding V2: Method Selected', {
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							environment: selectedEnvironment,
+							selectedMethod,
+							module: activeStep?.module?.id,
+						});
+						break;
+
+					case stepsMap.setupOtelCollector:
+						logEvent('Onboarding V2: Setup Otel Collector', {
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							environment: selectedEnvironment,
+							selectedMethod,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.instrumentApplication:
+						logEvent('Onboarding V2: Instrument Application', {
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							environment: selectedEnvironment,
+							selectedMethod,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.cloneRepository:
+						logEvent('Onboarding V2: Clone Repository', {
+							dataSource: selectedDataSource?.id,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.runApplication:
+						logEvent('Onboarding V2: Run Application', {
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							environment: selectedEnvironment,
+							selectedMethod,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.addHttpDrain:
+						logEvent('Onboarding V2: Add HTTP Drain', {
+							dataSource: selectedDataSource?.id,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.startContainer:
+						logEvent('Onboarding V2: Start Container', {
+							dataSource: selectedDataSource?.id,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.setupLogDrains:
+						logEvent('Onboarding V2: Setup Log Drains', {
+							dataSource: selectedDataSource?.id,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.configureReceiver:
+						logEvent('Onboarding V2: Configure Receiver', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.configureAws:
+						logEvent('Onboarding V2: Configure AWS', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.sendLogsCloudwatch:
+						logEvent('Onboarding V2: Send Logs Cloudwatch', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.setupDaemonService:
+						logEvent('Onboarding V2: Setup ECS Daemon Service', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.createOtelConfig:
+						logEvent('Onboarding V2: Create ECS OTel Config', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.createDaemonService:
+						logEvent('Onboarding V2: Create ECS Daemon Service', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.ecsSendData:
+						logEvent('Onboarding V2: ECS send traces data', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.createSidecarCollectorContainer:
+						logEvent('Onboarding V2: ECS create Sidecar Container', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.deployTaskDefinition:
+						logEvent('Onboarding V2: ECS deploy task definition', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.ecsSendLogsData:
+						logEvent('Onboarding V2: ECS Fargate send logs data', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.monitorDashboard:
+						logEvent('Onboarding V2: EKS monitor dashboard', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					default:
+						break;
+				}
 			}
 
 			// set meta data
@@ -174,7 +356,7 @@ export default function ModuleStepsContainer({
 					},
 					{
 						name: 'Framework',
-						value: selectedFramework,
+						value: selectedFramework || '',
 					},
 					{
 						name: 'Environment',
@@ -197,27 +379,54 @@ export default function ModuleStepsContainer({
 		}
 	};
 
+	const handleLogoClick = (): void => {
+		history.push('/');
+	};
+
 	return (
 		<div className="onboarding-module-steps">
 			<div className="steps-container">
-				<Space style={{ marginBottom: '24px' }}>
-					<Button
-						style={{ display: 'flex', alignItems: 'center' }}
-						type="default"
-						icon={<LeftCircleOutlined />}
-						onClick={onReselectModule}
-					>
-						{selectedModule.title}
-					</Button>
-				</Space>
+				<div>
+					<div className="steps-container-header">
+						<div className="brand-logo" onClick={handleLogoClick}>
+							<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
 
-				<Steps
-					direction="vertical"
-					size="small"
-					status="finish"
-					current={current}
-					items={selectedModuleSteps}
-				/>
+							<div className="brand-logo-name">SigNoz</div>
+						</div>
+					</div>
+
+					<Space style={{ marginBottom: '24px' }}>
+						<Button
+							style={{ display: 'flex', alignItems: 'center' }}
+							type="default"
+							icon={<LeftCircleOutlined />}
+							onClick={onReselectModule}
+						>
+							{selectedModule.title}
+						</Button>
+					</Space>
+
+					<Steps
+						direction="vertical"
+						size="small"
+						status="finish"
+						current={current}
+						items={selectedModuleSteps}
+					/>
+				</div>
+				<Button
+					onClick={(): void => {
+						logEvent('Onboarding V2: Invite Member', {
+							module: selectedModule?.id,
+							page: 'sidebar',
+						});
+						setIsInviteTeamMemberModalOpen(true);
+					}}
+					icon={<UserPlus size={16} />}
+					className="invite-user-btn"
+				>
+					Invite teammates
+				</Button>
 			</div>
 
 			<div className="selected-step-content">
@@ -261,10 +470,26 @@ export default function ModuleStepsContainer({
 					>
 						Back
 					</Button>
-
 					<Button onClick={handleNext} type="primary" icon={<ArrowRightOutlined />}>
 						{current < lastStepIndex ? 'Continue to next step' : 'Done'}
 					</Button>
+					<LaunchChatSupport
+						attributes={{
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+							step: activeStep?.step?.id,
+							screen: 'Onboarding',
+						}}
+						eventName="Onboarding V2: Facing Issues Sending Data to SigNoz"
+						message={onboardingHelpMessage(
+							selectedDataSource?.name || '',
+							activeStep?.module?.id,
+						)}
+						buttonText="Facing issues sending data to SigNoz?"
+						onHoverText="Click here to get help with sending data to SigNoz"
+					/>
 				</div>
 			</div>
 		</div>

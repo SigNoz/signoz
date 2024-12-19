@@ -1,3 +1,4 @@
+import ROUTES from 'constants/routes';
 import { parseQuery } from 'lib/logql';
 import { OrderPreferenceItems } from 'pages/Logs/config';
 import {
@@ -29,6 +30,30 @@ import {
 } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
 
+const supportedLogsOrder = [
+	OrderPreferenceItems.ASC,
+	OrderPreferenceItems.DESC,
+];
+
+function getLogsOrder(): OrderPreferenceItems {
+	// set the value of order from the URL only when order query param is present and the user is landing on the old logs explorer page
+	if (window.location.pathname === ROUTES.OLD_LOGS_EXPLORER) {
+		const orderParam = new URLSearchParams(window.location.search).get('order');
+
+		if (orderParam) {
+			// check if the order passed is supported else pass the default order
+			if (supportedLogsOrder.includes(orderParam as OrderPreferenceItems)) {
+				return orderParam as OrderPreferenceItems;
+			}
+
+			return OrderPreferenceItems.DESC;
+		}
+		return OrderPreferenceItems.DESC;
+	}
+
+	return OrderPreferenceItems.DESC;
+}
+
 const initialState: ILogsReducer = {
 	fields: {
 		interesting: [],
@@ -51,10 +76,7 @@ const initialState: ILogsReducer = {
 	liveTailStartRange: 15,
 	selectedLogId: null,
 	detailedLog: null,
-	order:
-		(new URLSearchParams(window.location.search).get(
-			'order',
-		) as ILogsReducer['order']) ?? OrderPreferenceItems.DESC,
+	order: getLogsOrder(),
 };
 
 export const LogsReducer = (

@@ -27,6 +27,7 @@ export const ReduceToFilter = memo(function ReduceToFilter({
 			style={{ width: '100%' }}
 			options={REDUCE_TO_VALUES}
 			value={currentValue}
+			data-testid="reduce-to"
 			labelInValue
 			onChange={handleChange}
 		/>

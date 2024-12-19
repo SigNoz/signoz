@@ -30,8 +30,8 @@ export const constructCompositeQuery = ({
 }: GetDefaultCompositeQueryParams): Query => ({
 	...query,
 	builder: {
-		...query.builder,
-		queryData: query.builder.queryData.map((item) => ({
+		...query?.builder,
+		queryData: query?.builder?.queryData?.map((item) => ({
 			...initialQueryData,
 			...item,
 			...customQueryData,

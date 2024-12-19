@@ -86,6 +86,7 @@ module.exports = {
 			},
 		],
 		'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
+		'no-plusplus': 'off',
 		'jsx-a11y/label-has-associated-control': [
 			'error',
 			{
@@ -109,7 +110,6 @@ module.exports = {
 		// eslint rules need to remove
 		'@typescript-eslint/no-shadow': 'off',
 		'import/no-cycle': 'off',
-
 		'prettier/prettier': [
 			'error',
 			{},

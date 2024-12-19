@@ -12,3 +12,5 @@ export function downloadObjectAsJson(
 	downloadAnchorNode.click();
 	downloadAnchorNode.remove();
 }
+
+export const DEFAULT_ROW_NAME = 'Sample Row';

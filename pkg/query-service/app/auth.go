@@ -64,7 +64,7 @@ func (am *AuthMiddleware) EditAccess(f func(http.ResponseWriter, *http.Request))
 		if !(auth.IsEditor(user) || auth.IsAdmin(user)) {
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API is accessible to editors/admins."),
+				Err: errors.New("API is accessible to editors/admins"),
 			}, nil)
 			return
 		}
@@ -88,7 +88,7 @@ func (am *AuthMiddleware) SelfAccess(f func(http.ResponseWriter, *http.Request))
 		if !(auth.IsSelfAccessRequest(user, id) || auth.IsAdmin(user)) {
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API is accessible for self access or to the admins."),
+				Err: errors.New("API is accessible for self access or to the admins"),
 			}, nil)
 			return
 		}

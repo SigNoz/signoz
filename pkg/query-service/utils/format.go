@@ -14,6 +14,8 @@ import (
 
 // ValidateAndCastValue validates and casts the value of a key to the corresponding data type of the key
 func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (interface{}, error) {
+	// get the actual value if it's a pointer
+	v = getPointerValue(v)
 	switch dataType {
 	case v3.AttributeKeyDataTypeString:
 		switch x := v.(type) {
@@ -38,6 +40,8 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 					return nil, fmt.Errorf("invalid data type, expected string, got %v", reflect.TypeOf(val))
 				}
 			}
+			return x, nil
+		case []string:
 			return x, nil
 		default:
 			return nil, fmt.Errorf("invalid data type, expected string, got %v", reflect.TypeOf(v))
@@ -91,6 +95,10 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 			return x, nil
 		case int, int64:
 			return x, nil
+		case float32:
+			return int64(x), nil
+		case float64:
+			return int64(x), nil
 		case string:
 			int64val, err := strconv.ParseInt(x, 10, 64)
 			if err != nil {
@@ -143,10 +151,27 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 	}
 }
 
-func quoteEscapedString(str string) string {
+func QuoteEscapedString(str string) string {
 	// https://clickhouse.com/docs/en/sql-reference/syntax#string
 	str = strings.ReplaceAll(str, `\`, `\\`)
 	str = strings.ReplaceAll(str, `'`, `\'`)
+	return str
+}
+
+func QuoteEscapedStringForContains(str string, isIndex bool) string {
+	// https: //clickhouse.com/docs/en/sql-reference/functions/string-search-functions#like
+	str = QuoteEscapedString(str)
+
+	// we are adding this because if a string contains quote `"` it will be stored as \" in clickhouse
+	// to query that using like our query should be \\\\"
+	if isIndex {
+		// isIndex is true means that the extra slash is present
+		// [\"a\",\"b\",\"sdf\"]
+		str = strings.ReplaceAll(str, `"`, `\\\\"`)
+	}
+
+	str = strings.ReplaceAll(str, `%`, `\%`)
+	str = strings.ReplaceAll(str, `_`, `\_`)
 	return str
 }
 
@@ -161,19 +186,19 @@ func ClickHouseFormattedValue(v interface{}) string {
 	case float32, float64:
 		return fmt.Sprintf("%f", x)
 	case string:
-		return fmt.Sprintf("'%s'", quoteEscapedString(x))
+		return fmt.Sprintf("'%s'", QuoteEscapedString(x))
 	case bool:
 		return fmt.Sprintf("%v", x)
 
 	case []interface{}:
 		if len(x) == 0 {
-			return ""
+			return "[]"
 		}
 		switch x[0].(type) {
 		case string:
 			str := "["
 			for idx, sVal := range x {
-				str += fmt.Sprintf("'%s'", quoteEscapedString(sVal.(string)))
+				str += fmt.Sprintf("'%s'", QuoteEscapedString(sVal.(string)))
 				if idx != len(x)-1 {
 					str += ","
 				}
@@ -183,11 +208,24 @@ func ClickHouseFormattedValue(v interface{}) string {
 		case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64, float32, float64, bool:
 			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
 		default:
-			zap.S().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
-			return ""
+			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
+			return "[]"
 		}
+	case []string:
+		if len(x) == 0 {
+			return "[]"
+		}
+		str := "["
+		for idx, sVal := range x {
+			str += fmt.Sprintf("'%s'", QuoteEscapedString(sVal))
+			if idx != len(x)-1 {
+				str += ","
+			}
+		}
+		str += "]"
+		return str
 	default:
-		zap.S().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
+		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
 		return ""
 	}
 }
@@ -240,7 +278,32 @@ func GetClickhouseColumnName(typeName string, dataType, field string) string {
 		typeName = typeName[:len(typeName)-1]
 	}
 
-	colName := fmt.Sprintf("%s_%s_%s", strings.ToLower(typeName), strings.ToLower(dataType), field)
+	// if name contains . replace it with `$$`
+	field = strings.ReplaceAll(field, ".", "$$")
+
+	colName := fmt.Sprintf("`%s_%s_%s`", strings.ToLower(typeName), strings.ToLower(dataType), field)
+	return colName
+}
+
+func GetClickhouseColumnNameV2(typeName string, dataType, field string) string {
+	if typeName == string(v3.AttributeKeyTypeTag) {
+		typeName = constants.Attributes
+	}
+
+	if typeName != string(v3.AttributeKeyTypeResource) {
+		typeName = typeName[:len(typeName)-1]
+	}
+
+	dataType = strings.ToLower(dataType)
+
+	if dataType == "int64" || dataType == "float64" {
+		dataType = "number"
+	}
+
+	// if name contains . replace it with `$$`
+	field = strings.ReplaceAll(field, ".", "$$")
+
+	colName := fmt.Sprintf("%s_%s_%s", strings.ToLower(typeName), dataType, field)
 	return colName
 }
 

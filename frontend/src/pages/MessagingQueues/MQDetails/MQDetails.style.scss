@@ -1,0 +1,180 @@
+.mq-details {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+.mq-overview-container {
+	display: flex;
+	padding: 24px;
+	flex-direction: column;
+	align-items: start;
+	gap: 16px;
+
+	border-radius: 6px;
+	border: 1px solid var(--bg-slate-500);
+	background: var(--bg-ink-500);
+
+	.mq-overview-title {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+
+		color: var(--bg-vanilla-200);
+
+		font-family: Inter;
+		font-size: 18px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 28px;
+	}
+
+	.mq-details-options {
+		letter-spacing: -0.06px;
+		cursor: pointer;
+
+		.ant-radio-button-wrapper {
+			border-color: var(--bg-slate-400);
+			color: var(--bg-vanilla-400);
+		}
+		.ant-radio-button-wrapper-checked {
+			background: var(--bg-slate-400);
+			color: var(--bg-vanilla-100);
+		}
+		.ant-radio-button-wrapper::before {
+			width: 0px;
+		}
+	}
+}
+
+.droprate-view {
+	.mq-table {
+		width: 100%;
+
+		.ant-table-content {
+			border-radius: 6px;
+			border: 1px solid var(--bg-slate-500);
+			box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.1);
+		}
+
+		.ant-table-tbody {
+			.ant-table-cell {
+				max-width: 250px;
+				border-bottom: none;
+			}
+		}
+
+		.ant-table-thead {
+			.ant-table-cell {
+				background-color: var(--bg-ink-500);
+				border-bottom: 1px solid var(--bg-slate-500);
+			}
+		}
+	}
+
+	.trace-id-list {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		width: max-content;
+
+		.traceid-style {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+
+			.traceid-text {
+				border-radius: 2px;
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-slate-400);
+				padding: 2px;
+				cursor: pointer;
+			}
+
+			.remaing-count {
+				cursor: pointer;
+				color: var(--bg-vanilla-100);
+				font-family: Inter;
+				font-size: 12px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: normal;
+				letter-spacing: -0.06px;
+			}
+		}
+	}
+}
+
+.pagination-left {
+	&.mq-table {
+		.ant-pagination {
+			justify-content: flex-start;
+		}
+	}
+}
+
+.lightMode {
+	.mq-overview-container {
+		background: var(--bg-vanilla-200);
+		border: 1px solid var(--bg-vanilla-300);
+
+		.mq-overview-title {
+			color: var(--bg-ink-400);
+		}
+
+		.mq-details-options {
+			.ant-radio-button-wrapper {
+				border-color: var(--bg-vanilla-300);
+				color: var(--bg-slate-200);
+			}
+			.ant-radio-button-wrapper-checked {
+				color: var(--bg-slate-200);
+				background: var(--bg-vanilla-300);
+			}
+			.ant-radio-button-wrapper-disabled {
+				background: var(--bg-vanilla-100);
+				color: var(--bg-vanilla-400);
+			}
+		}
+	}
+
+	.droprate-view {
+		.mq-table {
+			.ant-table-content {
+				border: 1px solid var(--bg-vanilla-300);
+			}
+
+			.ant-table-tbody {
+				.ant-table-cell {
+					background-color: var(--bg-vanilla-100);
+				}
+			}
+
+			.ant-table-thead {
+				.ant-table-cell {
+					background-color: var(--bg-vanilla-100);
+					border-bottom: 1px solid var(--bg-vanilla-300);
+				}
+			}
+		}
+
+		.no-data-style {
+			border: 1px solid var(--bg-vanilla-300);
+		}
+	}
+
+	.trace-id-list {
+		.traceid-style {
+			.traceid-text {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-300);
+			}
+
+			.remaing-count {
+				color: var(--bg-ink-400);
+			}
+		}
+	}
+}

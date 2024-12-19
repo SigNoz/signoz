@@ -17,9 +17,10 @@ const (
 	ARRAY_INT64   = "Array(Int64)"
 	ARRAY_FLOAT64 = "Array(Float64)"
 	ARRAY_BOOL    = "Array(Bool)"
+	NGRAM_SIZE    = 4
 )
 
-var dataTypeMapping = map[string]string{
+var DataTypeMapping = map[string]string{
 	"string":         STRING,
 	"int64":          INT64,
 	"float64":        FLOAT64,
@@ -30,7 +31,7 @@ var dataTypeMapping = map[string]string{
 	"array(bool)":    ARRAY_BOOL,
 }
 
-var arrayValueTypeMapping = map[string]string{
+var ArrayValueTypeMapping = map[string]string{
 	"array(string)":  "string",
 	"array(int64)":   "int64",
 	"array(float64)": "float64",
@@ -58,7 +59,7 @@ var jsonLogOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotHas:          "NOT has(%s, %s)",
 }
 
-func getPath(keyArr []string) string {
+func GetPath(keyArr []string) string {
 	path := []string{}
 	for i := 0; i < len(keyArr); i++ {
 		if strings.HasSuffix(keyArr[i], "[*]") {
@@ -70,8 +71,9 @@ func getPath(keyArr []string) string {
 	return strings.Join(path, ".")
 }
 
-func getJSONFilterKey(key v3.AttributeKey, op v3.FilterOperator, isArray bool) (string, error) {
+func GetJSONFilterKey(key v3.AttributeKey, op v3.FilterOperator, isArray bool) (string, error) {
 	keyArr := strings.Split(key.Key, ".")
+	// i.e it should be at least body.name, and not something like body
 	if len(keyArr) < 2 {
 		return "", fmt.Errorf("incorrect key, should contain at least 2 parts")
 	}
@@ -87,11 +89,11 @@ func getJSONFilterKey(key v3.AttributeKey, op v3.FilterOperator, isArray bool) (
 
 	var dataType string
 	var ok bool
-	if dataType, ok = dataTypeMapping[string(key.DataType)]; !ok {
+	if dataType, ok = DataTypeMapping[string(key.DataType)]; !ok {
 		return "", fmt.Errorf("unsupported dataType for JSON: %s", key.DataType)
 	}
 
-	path := getPath(keyArr[1:])
+	path := GetPath(keyArr[1:])
 
 	if isArray {
 		return fmt.Sprintf("JSONExtract(JSON_QUERY(%s, '$.%s'), '%s')", keyArr[0], path, dataType), nil
@@ -106,12 +108,35 @@ func getJSONFilterKey(key v3.AttributeKey, op v3.FilterOperator, isArray bool) (
 	return keyname, nil
 }
 
+// takes the path and the values and generates where clauses for better usage of index
+func GetPathIndexFilter(path string) string {
+	filters := []string{}
+	keyArr := strings.Split(path, ".")
+	if len(keyArr) < 2 {
+		return ""
+	}
+
+	for i, key := range keyArr {
+		if i == 0 {
+			continue
+		}
+		key = strings.TrimSuffix(key, "[*]")
+		if len(key) >= NGRAM_SIZE {
+			filters = append(filters, strings.ToLower(key))
+		}
+	}
+	if len(filters) > 0 {
+		return fmt.Sprintf("lower(body) like lower('%%%s%%')", strings.Join(filters, "%"))
+	}
+	return ""
+}
+
 func GetJSONFilter(item v3.FilterItem) (string, error) {
 
 	dataType := item.Key.DataType
 	isArray := false
 	// check if its an array and handle it
-	if val, ok := arrayValueTypeMapping[string(item.Key.DataType)]; ok {
+	if val, ok := ArrayValueTypeMapping[string(item.Key.DataType)]; ok {
 		if item.Operator != v3.FilterOperatorHas && item.Operator != v3.FilterOperatorNotHas {
 			return "", fmt.Errorf("only has operator is supported for array")
 		}
@@ -119,7 +144,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 		dataType = v3.AttributeKeyDataType(val)
 	}
 
-	key, err := getJSONFilterKey(item.Key, item.Operator, isArray)
+	key, err := GetJSONFilterKey(item.Key, item.Operator, isArray)
 	if err != nil {
 		return "", err
 	}
@@ -139,12 +164,13 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 	if logsOp, ok := jsonLogOperators[op]; ok {
 		switch op {
 		case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
-			filter = fmt.Sprintf(logsOp, key, getPath(strings.Split(item.Key.Key, ".")[1:]))
+			filter = fmt.Sprintf(logsOp, key, GetPath(strings.Split(item.Key.Key, ".")[1:]))
 		case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex, v3.FilterOperatorHas, v3.FilterOperatorNotHas:
 			fmtVal := utils.ClickHouseFormattedValue(value)
 			filter = fmt.Sprintf(logsOp, key, fmtVal)
 		case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
-			filter = fmt.Sprintf("%s %s '%%%s%%'", key, logsOp, item.Value)
+			val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+			filter = fmt.Sprintf("%s %s '%%%s%%'", key, logsOp, val)
 		default:
 			fmtVal := utils.ClickHouseFormattedValue(value)
 			filter = fmt.Sprintf("%s %s %s", key, logsOp, fmtVal)
@@ -153,11 +179,28 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 		return "", fmt.Errorf("unsupported operator: %s", op)
 	}
 
+	filters := []string{}
+
+	pathFilter := GetPathIndexFilter(item.Key.Key)
+	if pathFilter != "" {
+		filters = append(filters, pathFilter)
+	}
+	if op == v3.FilterOperatorContains ||
+		op == v3.FilterOperatorEqual ||
+		op == v3.FilterOperatorHas {
+		val, ok := item.Value.(string)
+		if ok && len(val) >= NGRAM_SIZE {
+			filters = append(filters, fmt.Sprintf("lower(body) like lower('%%%s%%')", utils.QuoteEscapedString(strings.ToLower(val))))
+		}
+	}
+
 	// add exists check for non array items as default values of int/float/bool will corrupt the results
 	if !isArray && !(item.Operator == v3.FilterOperatorExists || item.Operator == v3.FilterOperatorNotExists) {
-		existsFilter := fmt.Sprintf("JSON_EXISTS(body, '$.%s')", getPath(strings.Split(item.Key.Key, ".")[1:]))
+		existsFilter := fmt.Sprintf("JSON_EXISTS(body, '$.%s')", GetPath(strings.Split(item.Key.Key, ".")[1:]))
 		filter = fmt.Sprintf("%s AND %s", existsFilter, filter)
 	}
 
-	return filter, nil
+	filters = append(filters, filter)
+
+	return strings.Join(filters, " AND "), nil
 }

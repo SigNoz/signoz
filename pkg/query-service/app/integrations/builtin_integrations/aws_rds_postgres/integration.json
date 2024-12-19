@@ -1,0 +1,919 @@
+{
+  "id": "aws_rds_postgresql",
+  "title": "AWS RDS (PostgreSQL)",
+  "description": "Monitor AWS RDS (PostgreSQL) with metrics and logs",
+  "author": {
+    "name": "SigNoz",
+    "email": "integrations@signoz.io",
+    "homepage": "https://signoz.io"
+  },
+  "icon": "file://icon.svg",
+  "categories": [
+    "Database"
+  ],
+  "overview": "file://overview.md",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "file://config/prerequisites.md"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "file://config/collect-metrics.md"
+    },
+    {
+      "title": "Collect Logs",
+      "instructions": "file://config/collect-logs.md"
+    }
+  ],
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": [
+      "file://assets/dashboards/overview.json",
+      "file://assets/dashboards/db_metrics_overview.json"
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "logs": {
+      "attribute_key": "source",
+      "attribute_value": "rds_postgres"
+    }
+  },
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Timestamp",
+        "path": "timestamp",
+        "type": "timestamp"
+      },
+      {
+        "name": "Body",
+        "path": "body",
+        "type": "string"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "aws_rds_cpuutilization_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: null Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: null Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: null Statistic: Minimum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: null Statistic: SampleCount Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: null Statistic: Sum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_checkpoint_lag_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CheckpointLag Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_checkpoint_lag_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CheckpointLag Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_cpuutilization_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_database_connections_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DatabaseConnections Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_rds_database_connections_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DatabaseConnections Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Count"
+      },
+      {
+        "name": "aws_rds_dbload_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DBLoad Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: None"
+      },
+      {
+        "name": "aws_rds_dbload_cpu_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DBLoadCPU Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: None"
+      },
+      {
+        "name": "aws_rds_dbload_cpu_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DBLoadCPU Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: None"
+      },
+      {
+        "name": "aws_rds_dbload_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DBLoad Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: None"
+      },
+      {
+        "name": "aws_rds_dbload_non_cpu_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DBLoadNonCPU Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: None"
+      },
+      {
+        "name": "aws_rds_dbload_non_cpu_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DBLoadNonCPU Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: None"
+      },
+      {
+        "name": "aws_rds_disk_queue_depth_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DiskQueueDepth Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_rds_ebsbyte_balance__average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSByteBalance% Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsiobalance__average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSIOBalance% Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_rds_free_local_storage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeLocalStorage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_free_storage_space_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeStorageSpace Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_freeable_memory_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeableMemory Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_freeable_memory_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeableMemory Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_maximum_used_transaction_ids_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS MaximumUsedTransactionIDs Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_rds_network_receive_throughput_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkReceiveThroughput Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_receive_throughput_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkReceiveThroughput Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_transmit_throughput_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkTransmitThroughput Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_transmit_throughput_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkTransmitThroughput Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_oldest_replication_slot_lag_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS OldestReplicationSlotLag Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_oldest_replication_slot_lag_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS OldestReplicationSlotLag Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_read_iops_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPS Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_iops_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPS Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_iopslocal_storage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPSLocalStorage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_iopslocal_storage_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPSLocalStorage Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_latency_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatency Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_latency_local_storage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatencyLocalStorage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_latency_local_storage_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatencyLocalStorage Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_latency_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatency Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_throughput_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadThroughput Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_read_throughput_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadThroughput Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_replica_lag_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReplicaLag Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_replica_lag_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReplicaLag Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_replication_slot_disk_usage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReplicationSlotDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_swap_usage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS SwapUsage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_swap_usage_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS SwapUsage Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_transaction_logs_disk_usage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS TransactionLogsDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_transaction_logs_generation_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS TransactionLogsGeneration Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_write_iops_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteIOPS Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_write_iops_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteIOPS Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_write_latency_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteLatency Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_write_latency_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteLatency Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_write_throughput_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteThroughput Dimensions: [DBInstanceIdentifier] Statistic: Average Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_write_throughput_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteThroughput Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: null Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: null Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: null Statistic: Minimum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: null Statistic: SampleCount Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: null Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_bin_log_disk_usage_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS BinLogDiskUsage Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_cpuutilization_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Percent"
+      },
+      {
+        "name": "aws_rds_cpuutilization_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS CPUUtilization Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_database_connections_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DatabaseConnections Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Count"
+      },
+      {
+        "name": "aws_rds_database_connections_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DatabaseConnections Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Count"
+      },
+      {
+        "name": "aws_rds_database_connections_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DatabaseConnections Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_rds_disk_queue_depth_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DiskQueueDepth Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Count"
+      },
+      {
+        "name": "aws_rds_disk_queue_depth_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DiskQueueDepth Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Count"
+      },
+      {
+        "name": "aws_rds_disk_queue_depth_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DiskQueueDepth Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Count"
+      },
+      {
+        "name": "aws_rds_disk_queue_depth_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS DiskQueueDepth Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_rds_ebsbyte_balance__maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSByteBalance% Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsbyte_balance__minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSByteBalance% Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsbyte_balance__sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSByteBalance% Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsbyte_balance__sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSByteBalance% Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsiobalance__maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSIOBalance% Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsiobalance__minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSIOBalance% Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsiobalance__sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSIOBalance% Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Percent"
+      },
+      {
+        "name": "aws_rds_ebsiobalance__sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS EBSIOBalance% Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Percent"
+      },
+      {
+        "name": "aws_rds_free_storage_space_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeStorageSpace Dimensions: [DBInstanceIdentifier] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_free_storage_space_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeStorageSpace Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_free_storage_space_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeStorageSpace Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_free_storage_space_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeStorageSpace Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_freeable_memory_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeableMemory Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_freeable_memory_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeableMemory Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_freeable_memory_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS FreeableMemory Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_network_receive_throughput_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkReceiveThroughput Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_receive_throughput_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkReceiveThroughput Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_receive_throughput_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkReceiveThroughput Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_transmit_throughput_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkTransmitThroughput Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_transmit_throughput_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkTransmitThroughput Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_network_transmit_throughput_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS NetworkTransmitThroughput Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_read_iops_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPS Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_iops_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPS Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_iops_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadIOPS Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_read_latency_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatency Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_latency_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatency Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_latency_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadLatency Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_read_throughput_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadThroughput Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_read_throughput_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadThroughput Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_read_throughput_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS ReadThroughput Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_swap_usage_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS SwapUsage Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_swap_usage_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS SwapUsage Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_swap_usage_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS SwapUsage Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_rds_write_iops_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteIOPS Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_write_iops_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteIOPS Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_write_iops_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteIOPS Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Count/Second"
+      },
+      {
+        "name": "aws_rds_write_latency_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteLatency Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_write_latency_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteLatency Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_write_latency_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteLatency Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Seconds"
+      },
+      {
+        "name": "aws_rds_write_throughput_minimum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteThroughput Dimensions: [DBInstanceIdentifier] Statistic: Minimum Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_write_throughput_sample_count",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteThroughput Dimensions: [DBInstanceIdentifier] Statistic: SampleCount Unit: Bytes/Second"
+      },
+      {
+        "name": "aws_rds_write_throughput_sum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric AWS/RDS WriteThroughput Dimensions: [DBInstanceIdentifier] Statistic: Sum Unit: Bytes/Second"
+      },
+      {
+        "name": "postgresql_backends",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of backends."
+      },
+      {
+        "name": "postgresql_bgwriter_buffers_allocated",
+        "type": "sum",
+        "unit": "number",
+        "description": "Number of buffers allocated."
+      },
+      {
+        "name": "postgresql_bgwriter_buffers_writes",
+        "type": "sum",
+        "unit": "number",
+        "description": "Number of buffers written."
+      },
+      {
+        "name": "postgresql_bgwriter_checkpoint_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of checkpoints performed."
+      },
+      {
+        "name": "postgresql_bgwriter_duration",
+        "type": "sum",
+        "unit": "ms",
+        "description": "Total time spent writing and syncing files to disk by checkpoints."
+      },
+      {
+        "name": "postgresql_bgwriter_maxwritten",
+        "type": "sum",
+        "unit": "number",
+        "description": "Number of times the background writer stopped a cleaning scan because it had written too many buffers."
+      },
+      {
+        "name": "postgresql_blocks_read",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of blocks read."
+      },
+      {
+        "name": "postgresql_commits",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of commits."
+      },
+      {
+        "name": "postgresql_connection_max",
+        "type": "gauge",
+        "unit": "number",
+        "description": "Configured maximum number of client connections allowed"
+      },
+      {
+        "name": "postgresql_database_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "Number of user databases."
+      },
+      {
+        "name": "postgresql_database_locks",
+        "type": "gauge",
+        "unit": "number",
+        "description": "The number of database locks."
+      },
+      {
+        "name": "postgresql_db_size",
+        "type": "sum",
+        "unit": "Bytes",
+        "description": "The database disk usage."
+      },
+      {
+        "name": "postgresql_deadlocks",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of deadlocks."
+      },
+      {
+        "name": "postgresql_index_scans",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of index scans on a table."
+      },
+      {
+        "name": "postgresql_index_size",
+        "type": "gauge",
+        "unit": "Bytes",
+        "description": "The size of the index on disk."
+      },
+      {
+        "name": "postgresql_operations",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of db row operations."
+      },
+      {
+        "name": "postgresql_replication_data_delay",
+        "type": "gauge",
+        "unit": "Bytes",
+        "description": "The amount of data delayed in replication."
+      },
+      {
+        "name": "postgresql_rollbacks",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of rollbacks."
+      },
+      {
+        "name": "postgresql_rows",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of rows in the database."
+      },
+      {
+        "name": "postgresql_sequential_scans",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of sequential scans."
+      },
+      {
+        "name": "postgresql_table_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "Number of user tables in a database."
+      },
+      {
+        "name": "postgresql_table_size",
+        "type": "sum",
+        "unit": "Bytes",
+        "description": "Disk space used by a table."
+      },
+      {
+        "name": "postgresql_table_vacuum_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "Number of times a table has manually been vacuumed."
+      },
+      {
+        "name": "postgresql_temp_files",
+        "type": "sum",
+        "unit": "number",
+        "description": "The number of temp files."
+      },
+      {
+        "name": "postgresql_wal_age",
+        "type": "gauge",
+        "unit": "seconds",
+        "description": "Age of the oldest WAL file."
+      },
+      {
+        "name": "postgresql_wal_delay",
+        "type": "gauge",
+        "unit": "seconds",
+        "description": "Time between flushing recent WAL locally and receiving notification that the standby server has completed an operation with it."
+      },
+      {
+        "name": "postgresql_wal_lag",
+        "type": "gauge",
+        "unit": "seconds",
+        "description": "Time between flushing recent WAL locally and receiving notification that the standby server has completed an operation with it."
+      }
+    ]
+  }
+}

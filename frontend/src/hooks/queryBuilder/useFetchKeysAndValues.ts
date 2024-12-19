@@ -1,3 +1,4 @@
+import { getInfraAttributesValues } from 'api/infraMonitoring/getInfraAttributeValues';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
@@ -6,17 +7,21 @@ import {
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import useDebounceValue from 'hooks/useDebounce';
-import { isEqual, uniqWith } from 'lodash-es';
+import { cloneDeep, isEqual, uniqWith, unset } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { useGetAggregateKeys } from './useGetAggregateKeys';
+import { useGetAttributeSuggestions } from './useGetAttributeSuggestions';
 
 type IuseFetchKeysAndValues = {
 	keys: BaseAutocompleteData[];
@@ -24,6 +29,7 @@ type IuseFetchKeysAndValues = {
 	isFetching: boolean;
 	sourceKeys: BaseAutocompleteData[];
 	handleRemoveSourceKey: (newSourceKey: string) => void;
+	exampleQueries: TagFilter[];
 };
 
 /**
@@ -37,10 +43,14 @@ export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQuery,
 	searchKey: string,
+	shouldUseSuggestions?: boolean,
+	isInfraMonitoring?: boolean,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
+	const [exampleQueries, setExampleQueries] = useState<TagFilter[]>([]);
 	const [sourceKeys, setSourceKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
+	const [isAggregateFetching, setAggregateFetching] = useState<boolean>(false);
 
 	const memoizedSearchParams = useMemo(
 		() => [
@@ -59,18 +69,34 @@ export const useFetchKeysAndValues = (
 
 	const searchParams = useDebounceValue(memoizedSearchParams, DEBOUNCE_DELAY);
 
+	const queryFiltersWithoutId = useMemo(
+		() => ({
+			...query.filters,
+			items: query.filters?.items?.map((item) => {
+				const filterWithoutId = cloneDeep(item);
+				unset(filterWithoutId, 'id');
+				return filterWithoutId;
+			}),
+		}),
+		[query.filters],
+	);
+
+	const memoizedSuggestionsParams = useMemo(
+		() => [searchKey, query.dataSource, queryFiltersWithoutId],
+		[query.dataSource, queryFiltersWithoutId, searchKey],
+	);
+
+	const suggestionsParams = useDebounceValue(
+		memoizedSuggestionsParams,
+		DEBOUNCE_DELAY,
+	);
+
 	const isQueryEnabled = useMemo(
 		() =>
-			query.dataSource === DataSource.METRICS
-				? !!query.aggregateOperator &&
-				  !!query.dataSource &&
-				  !!query.aggregateAttribute.dataType
+			query.dataSource === DataSource.METRICS && !isInfraMonitoring
+				? !!query.dataSource && !!query.aggregateAttribute.dataType
 				: true,
-		[
-			query.aggregateAttribute.dataType,
-			query.aggregateOperator,
-			query.dataSource,
-		],
+		[isInfraMonitoring, query.aggregateAttribute.dataType, query.dataSource],
 	);
 
 	const { data, isFetching, status } = useGetAggregateKeys(
@@ -81,7 +107,27 @@ export const useFetchKeysAndValues = (
 			aggregateAttribute: query.aggregateAttribute.key,
 			tagType: query.aggregateAttribute.type ?? null,
 		},
-		{ queryKey: [searchParams], enabled: isQueryEnabled },
+		{
+			queryKey: [searchParams],
+			enabled: isQueryEnabled && !shouldUseSuggestions,
+		},
+		isInfraMonitoring,
+	);
+
+	const {
+		data: suggestionsData,
+		isFetching: isFetchingSuggestions,
+		status: fetchingSuggestionsStatus,
+	} = useGetAttributeSuggestions(
+		{
+			searchText: searchKey,
+			dataSource: query.dataSource,
+			filters: query.filters,
+		},
+		{
+			queryKey: [suggestionsParams],
+			enabled: isQueryEnabled && shouldUseSuggestions,
+		},
 	);
 
 	/**
@@ -93,6 +139,7 @@ export const useFetchKeysAndValues = (
 		value: string,
 		query: IBuilderQuery,
 		keys: BaseAutocompleteData[],
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): Promise<void> => {
 		if (!value) {
 			return;
@@ -106,22 +153,48 @@ export const useFetchKeysAndValues = (
 		if (!tagKey || !tagOperator) {
 			return;
 		}
+		setAggregateFetching(true);
 
-		const { payload } = await getAttributesValues({
-			aggregateOperator: query.aggregateOperator,
-			dataSource: query.dataSource,
-			aggregateAttribute: query.aggregateAttribute.key,
-			attributeKey: filterAttributeKey?.key ?? tagKey,
-			filterAttributeKeyDataType: filterAttributeKey?.dataType ?? DataTypes.EMPTY,
-			tagType: filterAttributeKey?.type ?? '',
-			searchText: isInNInOperator(tagOperator)
-				? tagValue[tagValue.length - 1]?.toString() ?? '' // last element of tagvalue will be always user search value
-				: tagValue?.toString() ?? '',
-		});
+		try {
+			let payload;
+			if (isInfraMonitoring) {
+				const response = await getInfraAttributesValues({
+					dataSource: DataSource.METRICS,
+					attributeKey: filterAttributeKey?.key ?? tagKey,
+					filterAttributeKeyDataType:
+						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
+					tagType: filterAttributeKey?.type ?? '',
+					searchText: isInNInOperator(tagOperator)
+						? tagValue[tagValue.length - 1]?.toString() ?? ''
+						: tagValue?.toString() ?? '',
+					aggregateOperator: query.aggregateOperator,
+					aggregateAttribute: query.aggregateAttribute.key,
+				});
+				payload = response.payload;
+			} else {
+				const response = await getAttributesValues({
+					aggregateOperator: query.aggregateOperator,
+					dataSource: query.dataSource,
+					aggregateAttribute: query.aggregateAttribute.key,
+					attributeKey: filterAttributeKey?.key ?? tagKey,
+					filterAttributeKeyDataType:
+						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
+					tagType: filterAttributeKey?.type ?? '',
+					searchText: isInNInOperator(tagOperator)
+						? tagValue[tagValue.length - 1]?.toString() ?? ''
+						: tagValue?.toString() ?? '',
+				});
+				payload = response.payload;
+			}
 
-		if (payload) {
-			const values = Object.values(payload).find((el) => !!el) || [];
-			setResults(values);
+			if (payload) {
+				const values = Object.values(payload).find((el) => !!el) || [];
+				setResults(values);
+			}
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setAggregateFetching(false);
 		}
 	};
 
@@ -154,11 +227,41 @@ export const useFetchKeysAndValues = (
 		}
 	}, [data?.payload?.attributeKeys, status]);
 
+	useEffect(() => {
+		if (
+			fetchingSuggestionsStatus === 'success' &&
+			suggestionsData?.payload?.attributes
+		) {
+			setKeys(suggestionsData.payload.attributes);
+			setSourceKeys((prevState) =>
+				uniqWith(
+					[...(suggestionsData.payload.attributes ?? []), ...prevState],
+					isEqual,
+				),
+			);
+		} else {
+			setKeys([]);
+		}
+		if (
+			fetchingSuggestionsStatus === 'success' &&
+			suggestionsData?.payload?.example_queries
+		) {
+			setExampleQueries(suggestionsData.payload.example_queries);
+		} else {
+			setExampleQueries([]);
+		}
+	}, [
+		suggestionsData?.payload?.attributes,
+		fetchingSuggestionsStatus,
+		suggestionsData?.payload?.example_queries,
+	]);
+
 	return {
 		keys,
 		results,
-		isFetching,
+		isFetching: isFetching || isAggregateFetching || isFetchingSuggestions,
 		sourceKeys,
 		handleRemoveSourceKey,
+		exampleQueries,
 	};
 };

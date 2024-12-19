@@ -1,57 +1,135 @@
-import { orange } from '@ant-design/colors';
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+import './TableView.styles.scss';
+
 import { LinkOutlined } from '@ant-design/icons';
-import { Input, Space, Tooltip, Tree } from 'antd';
+import { Color } from '@signozhq/design-tokens';
+import { Button, Space, Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import cx from 'classnames';
 import AddToQueryHOC, {
 	AddToQueryHOCProps,
 } from 'components/Logs/AddToQueryHOC';
-import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
+import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
-import { isEmpty } from 'lodash-es';
-import { useMemo, useState } from 'react';
+import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
+import { Pin } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
+import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import ActionItem, { ActionItemProps } from './ActionItem';
+import { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
-import {
-	flattenObject,
-	jsonToDataNodes,
-	recursiveParseJSON,
-	removeEscapeCharacters,
-} from './utils';
+import { TableViewActions } from './TableView/TableViewActions';
+import { filterKeyForField, findKeyPath, flattenObject } from './utils';
 
 // Fields which should be restricted from adding it to query
 const RESTRICTED_FIELDS = ['timestamp'];
 
 interface TableViewProps {
 	logData: ILog;
+	fieldSearchInput: string;
+	selectedOptions: OptionsQuery;
+	isListViewPanel?: boolean;
+	listViewPanelSelectedFields?: IField[] | null;
+	onGroupByAttribute?: (
+		fieldKey: string,
+		isJSON?: boolean,
+		dataType?: DataTypes,
+	) => Promise<void>;
 }
 
 type Props = TableViewProps &
-	Pick<AddToQueryHOCProps, 'onAddToQuery'> &
-	Pick<ActionItemProps, 'onClickActionItem'>;
+	Partial<Pick<ActionItemProps, 'onClickActionItem'>> &
+	Pick<AddToQueryHOCProps, 'onAddToQuery'>;
 
 function TableView({
 	logData,
+	fieldSearchInput,
 	onAddToQuery,
 	onClickActionItem,
+	isListViewPanel = false,
+	selectedOptions,
+	onGroupByAttribute,
+	listViewPanelSelectedFields,
 }: Props): JSX.Element | null {
-	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
-
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
+	const [isfilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
+	const isDarkMode = useIsDarkMode();
+
+	const [pinnedAttributes, setPinnedAttributes] = useState<
+		Record<string, boolean>
+	>({});
+
+	useEffect(() => {
+		const pinnedAttributes: Record<string, boolean> = {};
+
+		if (isListViewPanel) {
+			listViewPanelSelectedFields?.forEach((val) => {
+				const path = findKeyPath(logData, val.name, '');
+				if (path) {
+					pinnedAttributes[path] = true;
+				}
+			});
+		} else {
+			selectedOptions.selectColumns.forEach((val) => {
+				const path = findKeyPath(logData, val.key, '');
+				if (path) {
+					pinnedAttributes[path] = true;
+				}
+			});
+		}
+
+		setPinnedAttributes(pinnedAttributes);
+	}, [
+		logData,
+		selectedOptions.selectColumns,
+		listViewPanelSelectedFields,
+		isListViewPanel,
+	]);
 
 	const flattenLogData: Record<string, string> | null = useMemo(
 		() => (logData ? flattenObject(logData) : null),
 		[logData],
 	);
+
+	const handleClick = (
+		operator: string,
+		fieldKey: string,
+		fieldValue: string,
+	): void => {
+		const validatedFieldValue = removeJSONStringifyQuotes(fieldValue);
+		if (onClickActionItem) {
+			onClickActionItem(fieldKey, validatedFieldValue, operator);
+		}
+	};
+
+	const onClickHandler = (
+		operator: string,
+		fieldKey: string,
+		fieldValue: string,
+	) => (): void => {
+		handleClick(operator, fieldKey, fieldValue);
+		if (operator === OPERATORS['=']) {
+			setIsFilterInLoading(true);
+		}
+		if (operator === OPERATORS['!=']) {
+			setIsFilterOutLoading(true);
+		}
+	};
+
 	if (logData === null) {
 		return null;
 	}
@@ -66,7 +144,10 @@ function TableView({
 				value: JSON.stringify(flattenLogData[key]),
 			}));
 
-	const onTraceHandler = (record: DataType) => (): void => {
+	const onTraceHandler = (
+		record: DataType,
+		event: React.MouseEvent<HTMLDivElement, MouseEvent>,
+	): void => {
 		if (flattenLogData === null) return;
 
 		const traceId = flattenLogData[record.field];
@@ -85,7 +166,12 @@ function TableView({
 
 			const route = spanId ? `${basePath}?spanId=${spanId}` : basePath;
 
-			history.push(route);
+			if (event.ctrlKey || event.metaKey) {
+				// open the trace in new tab
+				window.open(route, '_blank');
+			} else {
+				history.push(route);
+			}
 		}
 	};
 
@@ -95,20 +181,31 @@ function TableView({
 
 	const columns: ColumnsType<DataType> = [
 		{
-			title: 'Action',
-			width: 11,
-			render: (fieldData: Record<string, string>): JSX.Element | null => {
-				const fieldKey = fieldData.field.split('.').slice(-1);
-				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
-					return (
-						<ActionItem
-							fieldKey={fieldKey[0]}
-							fieldValue={fieldData.value}
-							onClickActionItem={onClickActionItem}
-						/>
-					);
+			title: '',
+			dataIndex: 'pin',
+			key: 'pin',
+			width: 5,
+			align: 'left',
+			className: 'attribute-pin value-field-container',
+			render: (fieldData: Record<string, string>, record): JSX.Element => {
+				let pinColor = isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500;
+
+				if (pinnedAttributes[record?.key]) {
+					pinColor = Color.BG_ROBIN_500;
 				}
-				return null;
+
+				return (
+					<div className="log-attribute-pin value-field">
+						<div
+							className={cx(
+								'pin-attribute-icon',
+								pinnedAttributes[record?.key] ? 'pinned' : '',
+							)}
+						>
+							{pinnedAttributes[record?.key] && <Pin size={14} color={pinColor} />}
+						</div>
+					</div>
+				);
 			},
 		},
 		{
@@ -118,42 +215,47 @@ function TableView({
 			width: 50,
 			align: 'left',
 			ellipsis: true,
+			className: 'attribute-name',
 			render: (field: string, record): JSX.Element => {
-				const fieldKey = field.split('.').slice(-1);
 				const renderedField = <FieldRenderer field={field} />;
 
 				if (record.field === 'trace_id') {
 					const traceId = flattenLogData[record.field];
 
 					return (
-						<Space size="middle">
-							{renderedField}
+						<Space size="middle" className="log-attribute">
+							<Typography.Text>{renderedField}</Typography.Text>
 
 							{traceId && (
 								<Tooltip title="Inspect in Trace">
-									<div
-										style={{ cursor: 'pointer' }}
-										role="presentation"
-										onClick={onTraceHandler(record)}
+									<Button
+										className="periscope-btn"
+										onClick={(
+											event: React.MouseEvent<HTMLDivElement, MouseEvent>,
+										): void => {
+											onTraceHandler(record, event);
+										}}
 									>
 										<LinkOutlined
 											style={{
 												width: '15px',
 											}}
 										/>
-									</div>
+									</Button>
 								</Tooltip>
 							)}
 						</Space>
 					);
 				}
 
-				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
+				const fieldFilterKey = filterKeyForField(field);
+				if (!RESTRICTED_FIELDS.includes(fieldFilterKey)) {
 					return (
 						<AddToQueryHOC
-							fieldKey={fieldKey[0]}
+							fieldKey={fieldFilterKey}
 							fieldValue={flattenLogData[field]}
 							onAddToQuery={onAddToQuery}
+							fontSize={FontSize.SMALL}
 						>
 							{renderedField}
 						</AddToQueryHOC>
@@ -164,50 +266,65 @@ function TableView({
 		},
 		{
 			title: 'Value',
-			dataIndex: 'value',
 			key: 'value',
 			width: 70,
 			ellipsis: false,
-			render: (field, record): JSX.Element => {
-				const textToCopy = field.slice(1, -1);
-
-				if (record.field === 'body') {
-					const parsedBody = recursiveParseJSON(field);
-					if (!isEmpty(parsedBody)) {
-						return (
-							<Tree defaultExpandAll showLine treeData={jsonToDataNodes(parsedBody)} />
-						);
-					}
-				}
-
-				return (
-					<CopyClipboardHOC textToCopy={textToCopy}>
-						<span style={{ color: orange[6] }}>{removeEscapeCharacters(field)}</span>
-					</CopyClipboardHOC>
-				);
-			},
+			className: 'value-field-container attribute-value',
+			render: (fieldData: Record<string, string>, record): JSX.Element => (
+				<TableViewActions
+					fieldData={fieldData}
+					record={record}
+					isListViewPanel={isListViewPanel}
+					isfilterInLoading={isfilterInLoading}
+					isfilterOutLoading={isfilterOutLoading}
+					onClickHandler={onClickHandler}
+					onGroupByAttribute={onGroupByAttribute}
+				/>
+			),
 		},
 	];
+	function sortPinnedAttributes(
+		data: Record<string, string>[],
+		sortingObj: Record<string, boolean>,
+	): Record<string, string>[] {
+		const sortingKeys = Object.keys(sortingObj);
+		return data.sort((a, b) => {
+			const aKey = a.key;
+			const bKey = b.key;
+			const aSortIndex = sortingKeys.indexOf(aKey);
+			const bSortIndex = sortingKeys.indexOf(bKey);
+
+			if (sortingObj[aKey] && !sortingObj[bKey]) {
+				return -1;
+			}
+			if (!sortingObj[aKey] && sortingObj[bKey]) {
+				return 1;
+			}
+			return aSortIndex - bSortIndex;
+		});
+	}
+
+	const sortedAttributes = sortPinnedAttributes(dataSource, pinnedAttributes);
 
 	return (
-		<>
-			<Input
-				placeholder="Search field names"
-				size="large"
-				value={fieldSearchInput}
-				onChange={(e): void => setFieldSearchInput(e.target.value)}
-			/>
-			<ResizeTable
-				columns={columns}
-				tableLayout="fixed"
-				dataSource={dataSource}
-				pagination={false}
-			/>
-		</>
+		<ResizeTable
+			columns={columns}
+			tableLayout="fixed"
+			dataSource={sortedAttributes}
+			pagination={false}
+			showHeader={false}
+			className="attribute-table-container"
+		/>
 	);
 }
 
-interface DataType {
+TableView.defaultProps = {
+	isListViewPanel: false,
+	listViewPanelSelectedFields: null,
+	onGroupByAttribute: undefined,
+};
+
+export interface DataType {
 	key: string;
 	field: string;
 	value: string;

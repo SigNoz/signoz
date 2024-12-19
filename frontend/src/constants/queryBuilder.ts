@@ -36,6 +36,11 @@ import { v4 as uuid } from 'uuid';
 import {
 	logsAggregateOperatorOptions,
 	metricAggregateOperatorOptions,
+	metricsGaugeAggregateOperatorOptions,
+	metricsGaugeSpaceAggregateOperatorOptions,
+	metricsHistogramSpaceAggregateOperatorOptions,
+	metricsSumAggregateOperatorOptions,
+	metricsSumSpaceAggregateOperatorOptions,
 	tracesAggregateOperatorOptions,
 } from './queryBuilderOperators';
 
@@ -47,7 +52,7 @@ export const selectValueDivider = '__';
 
 export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 	BaseAutocompleteData,
-	'id' | 'isJSON'
+	'id' | 'isJSON' | 'isIndexed'
 >)[] = ['key', 'dataType', 'type', 'isColumn'];
 
 export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
@@ -66,12 +71,25 @@ export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
 export enum QueryBuilderKeys {
 	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
 	GET_AGGREGATE_KEYS = 'GET_AGGREGATE_KEYS',
+	GET_ATTRIBUTE_SUGGESTIONS = 'GET_ATTRIBUTE_SUGGESTIONS',
 }
 
 export const mapOfOperators = {
 	metrics: metricAggregateOperatorOptions,
 	logs: logsAggregateOperatorOptions,
 	traces: tracesAggregateOperatorOptions,
+};
+
+export const metricsOperatorsByType = {
+	Sum: metricsSumAggregateOperatorOptions,
+	Gauge: metricsGaugeAggregateOperatorOptions,
+};
+
+export const metricsSpaceAggregationOperatorsByType = {
+	Sum: metricsSumSpaceAggregateOperatorOptions,
+	Gauge: metricsGaugeSpaceAggregateOperatorOptions,
+	Histogram: metricsHistogramSpaceAggregateOperatorOptions,
+	ExponentialHistogram: metricsHistogramSpaceAggregateOperatorOptions,
 };
 
 export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
@@ -148,19 +166,22 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	aggregateOperator: MetricAggregateOperator.COUNT,
 	aggregateAttribute: initialAutocompleteData,
+	timeAggregation: MetricAggregateOperator.RATE,
+	spaceAggregation: MetricAggregateOperator.SUM,
+	functions: [],
 	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({
 		existNames: [],
 		sourceNames: alphabet,
 	}),
 	disabled: false,
-	having: [],
 	stepInterval: 60,
+	having: [],
 	limit: null,
 	orderBy: [],
 	groupBy: [],
 	legend: '',
-	reduceTo: 'sum',
+	reduceTo: 'avg',
 };
 
 const initialQueryBuilderFormLogsValues: IBuilderQuery = {
@@ -264,7 +285,23 @@ export enum PANEL_TYPES {
 	TABLE = 'table',
 	LIST = 'list',
 	TRACE = 'trace',
+	BAR = 'bar',
+	PIE = 'pie',
+	HISTOGRAM = 'histogram',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum PANEL_GROUP_TYPES {
+	ROW = 'row',
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum ATTRIBUTE_TYPES {
+	SUM = 'Sum',
+	GAUGE = 'Gauge',
+	HISTOGRAM = 'Histogram',
+	EXPONENTIAL_HISTOGRAM = 'ExponentialHistogram',
 }
 
 export type IQueryBuilderState = 'search';

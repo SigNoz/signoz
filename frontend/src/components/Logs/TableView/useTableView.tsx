@@ -1,22 +1,26 @@
-import {
-	ExpandAltOutlined,
-	LinkOutlined,
-	MonitorOutlined,
-} from '@ant-design/icons';
-import Convert from 'ansi-to-html';
-import { Button, Space, Typography } from 'antd';
-import { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs';
-import dompurify from 'dompurify';
-import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
-import { FlatLogData } from 'lib/logs/flatLogData';
-import { useCallback, useMemo } from 'react';
+import './useTableView.styles.scss';
 
-import { ExpandIconWrapper } from '../RawLogView/styles';
-import { defaultCellStyle, defaultTableStyle } from './config';
+import Convert from 'ansi-to-html';
+import { Typography } from 'antd';
+import { ColumnsType } from 'antd/es/table';
+import cx from 'classnames';
+import { unescapeString } from 'container/LogDetailedView/utils';
+import dompurify from 'dompurify';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { FlatLogData } from 'lib/logs/flatLogData';
+import { useTimezone } from 'providers/Timezone';
+import { useMemo } from 'react';
+import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
+
+import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
+import { getLogIndicatorTypeForTable } from '../LogStateIndicator/utils';
+import {
+	defaultListViewPanelStyle,
+	defaultTableStyle,
+	getDefaultCellStyle,
+} from './config';
 import { TableBodyContent } from './styles';
 import {
-	ActionsColumnProps,
 	ColumnTypeRender,
 	UseTableViewProps,
 	UseTableViewResult,
@@ -24,59 +28,23 @@ import {
 
 const convert = new Convert();
 
-function ActionsColumn({
-	logId,
-	logs,
-	onOpenLogsContext,
-}: ActionsColumnProps): JSX.Element {
-	const currentLog = useMemo(() => logs.find(({ id }) => id === logId), [
-		logs,
-		logId,
-	]);
-
-	const { onLogCopy } = useCopyLogLink(currentLog?.id);
-
-	const handleShowContext = useCallback(() => {
-		if (!onOpenLogsContext || !currentLog) return;
-
-		onOpenLogsContext(currentLog);
-	}, [currentLog, onOpenLogsContext]);
-
-	return (
-		<Space>
-			<Button
-				size="small"
-				onClick={handleShowContext}
-				icon={<MonitorOutlined />}
-			/>
-			<Button size="small" onClick={onLogCopy} icon={<LinkOutlined />} />
-		</Space>
-	);
-}
-
 export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	const {
 		logs,
 		fields,
 		linesPerRow,
+		fontSize,
 		appendTo = 'center',
-		onOpenLogsContext,
-		onClickExpand,
+		isListViewPanel,
 	} = props;
-	const { isLogsExplorerPage } = useCopyLogLink();
+
+	const isDarkMode = useIsDarkMode();
 
 	const flattenLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
 		logs,
 	]);
 
-	const handleClickExpand = useCallback(
-		(index: number): void => {
-			if (!onClickExpand) return;
-
-			onClickExpand(logs[index]);
-		},
-		[logs, onClickExpand],
-	);
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
@@ -87,49 +55,51 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				key: name,
 				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
-						style: defaultCellStyle,
+						style: isListViewPanel
+							? defaultListViewPanelStyle
+							: getDefaultCellStyle(isDarkMode),
 					},
 					children: (
-						<Typography.Paragraph ellipsis={{ rows: linesPerRow }}>
+						<Typography.Paragraph
+							ellipsis={{ rows: linesPerRow }}
+							className={cx('paragraph', fontSize)}
+						>
 							{field}
 						</Typography.Paragraph>
 					),
 				}),
 			}));
 
+		if (isListViewPanel) {
+			return [...fieldColumns];
+		}
+
 		return [
-			{
-				title: '',
-				dataIndex: 'id',
-				key: 'expand',
-				// https://github.com/ant-design/ant-design/discussions/36886
-				render: (_, item, index): ColumnTypeRender<Record<string, unknown>> => ({
-					props: {
-						style: defaultCellStyle,
-					},
-					children: (
-						<ExpandIconWrapper
-							onClick={(): void => {
-								handleClickExpand(index);
-							}}
-						>
-							<ExpandAltOutlined />
-						</ExpandIconWrapper>
-					),
-				}),
-			},
 			{
 				title: 'timestamp',
 				dataIndex: 'timestamp',
 				key: 'timestamp',
 				// https://github.com/ant-design/ant-design/discussions/36886
-				render: (field): ColumnTypeRender<Record<string, unknown>> => {
+				render: (field, item): ColumnTypeRender<Record<string, unknown>> => {
 					const date =
 						typeof field === 'string'
-							? dayjs(field).format()
-							: dayjs(field / 1e6).format();
+							? formatTimezoneAdjustedTimestamp(field, 'YYYY-MM-DD HH:mm:ss.SSS')
+							: formatTimezoneAdjustedTimestamp(
+									field / 1e6,
+									'YYYY-MM-DD HH:mm:ss.SSS',
+							  );
 					return {
-						children: <Typography.Paragraph ellipsis>{date}</Typography.Paragraph>,
+						children: (
+							<div className="table-timestamp">
+								<LogStateIndicator
+									type={getLogIndicatorTypeForTable(item)}
+									fontSize={fontSize}
+								/>
+								<Typography.Paragraph ellipsis className={cx('text', fontSize)}>
+									{date}
+								</Typography.Paragraph>
+							</div>
+						),
 					};
 				},
 			},
@@ -145,41 +115,29 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					children: (
 						<TableBodyContent
 							dangerouslySetInnerHTML={{
-								__html: convert.toHtml(dompurify.sanitize(field)),
+								__html: convert.toHtml(
+									dompurify.sanitize(unescapeString(field), {
+										FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+									}),
+								),
 							}}
+							fontSize={fontSize}
 							linesPerRow={linesPerRow}
+							isDarkMode={isDarkMode}
 						/>
 					),
 				}),
 			},
 			...(appendTo === 'end' ? fieldColumns : []),
-			...(isLogsExplorerPage
-				? ([
-						{
-							title: 'actions',
-							dataIndex: 'actions',
-							key: 'actions',
-							render: (_, log): ColumnTypeRender<Record<string, unknown>> => ({
-								children: (
-									<ActionsColumn
-										logId={(log.id as unknown) as string}
-										logs={logs}
-										onOpenLogsContext={onOpenLogsContext}
-									/>
-								),
-							}),
-						},
-				  ] as ColumnsType<Record<string, unknown>>)
-				: []),
 		];
 	}, [
-		logs,
 		fields,
+		isListViewPanel,
 		appendTo,
+		isDarkMode,
 		linesPerRow,
-		isLogsExplorerPage,
-		handleClickExpand,
-		onOpenLogsContext,
+		fontSize,
+		formatTimezoneAdjustedTimestamp,
 	]);
 
 	return { columns, dataSource: flattenLogData };

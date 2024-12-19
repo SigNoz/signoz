@@ -102,6 +102,6 @@ func PrepareRequest(issuer, acsUrl, audience, entity, idp, certString string) (*
 		IDPCertificateStore: certStore,
 		SPKeyStore:          randomKeyStore,
 	}
-	zap.S().Debugf("SAML request:", sp)
+	zap.L().Debug("SAML request", zap.Any("sp", sp))
 	return sp, nil
 }

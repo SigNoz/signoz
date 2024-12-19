@@ -8,9 +8,11 @@ import (
 	"syscall"
 	"time"
 
+	prommodel "github.com/prometheus/common/model"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
 
 	"go.uber.org/zap"
@@ -18,12 +20,16 @@ import (
 )
 
 func initZapLog() *zap.Logger {
-	config := zap.NewDevelopmentConfig()
+	config := zap.NewProductionConfig()
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
 	return logger
+}
+
+func init() {
+	prommodel.NameValidationScheme = prommodel.UTF8Validation
 }
 
 func main() {
@@ -32,29 +38,33 @@ func main() {
 	// disables rule execution but allows change to the rule definition
 	var disableRules bool
 
+	var useLogsNewSchema bool
+	var useTraceNewSchema bool
 	// the url used to build link in the alert messages in slack and other systems
 	var ruleRepoURL, cacheConfigPath, fluxInterval string
 	var cluster string
 
-	var preferDelta bool
 	var preferSpanMetrics bool
 
 	var maxIdleConns int
 	var maxOpenConns int
 	var dialTimeout time.Duration
 
+	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
+	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", false, "use new schema for traces")
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
-	flag.BoolVar(&preferDelta, "prefer-delta", false, "(prefer delta over cumulative metrics)")
 	flag.BoolVar(&preferSpanMetrics, "prefer-span-metrics", false, "(prefer span metrics for service level metrics)")
-	flag.IntVar(&maxIdleConns, "max-idle-conns", 50, "(number of connections to maintain in the pool.)")
-	flag.IntVar(&maxOpenConns, "max-open-conns", 100, "(max connections for use at any time.)")
-	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection.)")
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", constants.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
-	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
+	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(the interval to exclude data from being cached to avoid incorrect cache for data in motion)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
+	// Allow using the consistent naming with the signoz collector
+	flag.StringVar(&cluster, "cluster-name", "cluster", "(cluster name - defaults to 'cluster')")
+	flag.IntVar(&maxIdleConns, "max-idle-conns", 50, "(number of connections to maintain in the pool, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
+	flag.IntVar(&maxOpenConns, "max-open-conns", 100, "(max connections for use at any time, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
+	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
 	flag.Parse()
 
 	loggerMgr := initZapLog()
@@ -68,7 +78,6 @@ func main() {
 		HTTPHostPort:      constants.HTTPHostPort,
 		PromConfigPath:    promConfigPath,
 		SkipTopLvlOpsPath: skipTopLvlOpsPath,
-		PreferDelta:       preferDelta,
 		PreferSpanMetrics: preferSpanMetrics,
 		PrivateHostPort:   constants.PrivateHostPort,
 		DisableRules:      disableRules,
@@ -79,15 +88,23 @@ func main() {
 		CacheConfigPath:   cacheConfigPath,
 		FluxInterval:      fluxInterval,
 		Cluster:           cluster,
+		UseLogsNewSchema:  useLogsNewSchema,
+		UseTraceNewSchema: useTraceNewSchema,
 	}
 
 	// Read the jwt secret key
 	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
 
 	if len(auth.JwtSecret) == 0 {
-		zap.S().Warn("No JWT secret key is specified.")
+		zap.L().Warn("No JWT secret key is specified.")
 	} else {
-		zap.S().Info("No JWT secret key set successfully.")
+		zap.L().Info("JWT secret key set successfully.")
+	}
+
+	if err := migrate.Migrate(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+		zap.L().Error("Failed to migrate", zap.Error(err))
+	} else {
+		zap.L().Info("Migration successful")
 	}
 
 	server, err := app.NewServer(serverOptions)

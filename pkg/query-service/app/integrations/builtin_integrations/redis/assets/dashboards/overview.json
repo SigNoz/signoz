@@ -1,0 +1,924 @@
+{
+    "id": "redis-overview",
+    "description": "This dashboard shows the Redis instance overview. It includes latency, hit/miss rate, connections, and memory information.\n",
+    "layout": [
+        {
+            "h": 3,
+            "i": "d4c164bc-8fc2-4dbc-aadd-8d17479ca649",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 9
+        },
+        {
+            "h": 3,
+            "i": "2fbaef0d-3cdb-4ce3-aa3c-9bbbb41786d9",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 3,
+            "y": 6
+        },
+        {
+            "h": 3,
+            "i": "f5ee1511-0d2b-4404-9ce0-e991837decc2",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 3
+        },
+        {
+            "h": 3,
+            "i": "b19c7058-b806-4ea2-974a-ca555b168991",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 3
+        },
+        {
+            "h": 3,
+            "i": "bf0deeeb-e926-4234-944c-82bacd96af47",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 0
+        },
+        {
+            "h": 3,
+            "i": "a77227c7-16f5-4353-952e-b183c715a61c",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 0
+        },
+        {
+            "h": 3,
+            "i": "9698cee2-b1f3-4c0b-8c9f-3da4f0e05f17",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 9
+        },
+        {
+            "h": 3,
+            "i": "64a5f303-d7db-44ff-9a0e-948e5c653320",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 12
+        },
+        {
+            "h": 3,
+            "i": "3e80a918-69af-4c9a-bc57-a94e1d41b05c",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 12
+        }
+    ],
+    "name": "",
+    "tags": [
+        "redis",
+        "database"
+    ],
+    "title": "Redis overview",
+    "variables": {
+        "94f19b3c-ad9f-4b47-a9b2-f312c09fa965": {
+            "allSelected": true,
+            "customValue": "",
+            "description": "List of hosts sending Redis metrics",
+            "id": "94f19b3c-ad9f-4b47-a9b2-f312c09fa965",
+            "key": "94f19b3c-ad9f-4b47-a9b2-f312c09fa965",
+            "modificationUUID": "4c5b0c03-9cbc-425b-8d8e-7152e5c39ba8",
+            "multiSelect": true,
+            "name": "host_name",
+            "order": 0,
+            "queryValue": "SELECT JSONExtractString(labels, 'host_name') AS host_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'redis_cpu_time'\nGROUP BY host_name",
+            "selectedValue": [
+                "Srikanths-MacBook-Pro.local"
+            ],
+            "showALLOption": true,
+            "sort": "ASC",
+            "textboxValue": "",
+            "type": "QUERY"
+        }
+    },
+    "widgets": [
+        {
+            "description": "Rate successful lookup of keys in the main dictionary",
+            "fillSpans": false,
+            "id": "a77227c7-16f5-4353-952e-b183c715a61c",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "redis_keyspace_hits--float64--Sum--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "redis_keyspace_hits",
+                                "type": "Sum"
+                            },
+                            "aggregateOperator": "sum_rate",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "e99669ea",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [],
+                            "having": [],
+                            "legend": "Hit/s across all hosts",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "42c9c117-bfaf-49f7-b528-aad099392295",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Hits/s",
+            "yAxisUnit": "none"
+        },
+        {
+            "description": "Number of clients pending on a blocking call",
+            "fillSpans": false,
+            "id": "bf0deeeb-e926-4234-944c-82bacd96af47",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "redis_clients_blocked--float64--Sum--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "redis_clients_blocked",
+                                "type": "Sum"
+                            },
+                            "aggregateOperator": "sum",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "97247f25",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [],
+                            "having": [],
+                            "legend": "Blocked clients across all hosts",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "b77a9e11-fb98-4a95-88a8-c3ad25c14369",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Clients blocked",
+            "yAxisUnit": "none"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "b19c7058-b806-4ea2-974a-ca555b168991",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "",
+                                "id": "redis_db_keys------false",
+                                "isColumn": false,
+                                "key": "redis_db_keys",
+                                "type": ""
+                            },
+                            "aggregateOperator": "sum",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [],
+                                "op": "AND"
+                            },
+                            "groupBy": [],
+                            "having": [],
+                            "legend": "",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "b77a9e11-fb98-4a95-88a8-c3ad25c14369",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Keyspace Keys",
+            "yAxisUnit": "none"
+        },
+        {
+            "description": "Number of changes since the last dump",
+            "fillSpans": false,
+            "id": "f5ee1511-0d2b-4404-9ce0-e991837decc2",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "redis_rdb_changes_since_last_save--float64--Sum--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "redis_rdb_changes_since_last_save",
+                                "type": "Sum"
+                            },
+                            "aggregateOperator": "sum",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "d4aef346",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [],
+                            "having": [],
+                            "legend": "Number of unsaved changes",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "32cedddf-606d-4de1-8c1d-4b7049e6430c",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Unsaved changes",
+            "yAxisUnit": "none"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "2fbaef0d-3cdb-4ce3-aa3c-9bbbb41786d9",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "redis_commands--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "redis_commands",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "sum",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "458dc402",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [],
+                            "having": [],
+                            "legend": "ops/s",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "c70de4dd-a68a-42df-a249-6610c296709c",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Command/s",
+            "yAxisUnit": "ops"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "d4c164bc-8fc2-4dbc-aadd-8d17479ca649",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "redis_memory_used--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "redis_memory_used",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "sum",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "394a537e",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "host_name--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "host_name",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "Used::{{host_name}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        },
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "redis_maxmemory--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "redis_maxmemory",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "max",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "B",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "0c0754da",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "host_name--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "host_name",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "Max::{{host_name}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "B",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "2f47df76-f09e-4152-8623-971f0fe66bfe",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Memory usage",
+            "yAxisUnit": "bytes"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "9698cee2-b1f3-4c0b-8c9f-3da4f0e05f17",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "redis_memory_rss--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "redis_memory_rss",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "sum",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "4dc9ae49",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "host_name--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "host_name",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "Rss::{{host_name}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "fddd043c-1385-481c-9f4c-381f261e1dd9",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "RSS Memory",
+            "yAxisUnit": "bytes"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "64a5f303-d7db-44ff-9a0e-948e5c653320",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "redis_memory_fragmentation_ratio--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "redis_memory_fragmentation_ratio",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "avg",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "79dc25f3",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "host_name--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "host_name",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "Rss::{{host_name}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "3e802b07-0249-4d79-a5c7-6580ab535ad0",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Fragmentation ratio",
+            "yAxisUnit": "short"
+        },
+        {
+            "description": "Number of evicted keys due to maxmemory limit",
+            "fillSpans": false,
+            "id": "3e80a918-69af-4c9a-bc57-a94e1d41b05c",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "redis_keys_evicted--float64--Sum--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "redis_keys_evicted",
+                                "type": "Sum"
+                            },
+                            "aggregateOperator": "sum_rate",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "53d189ac",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "host_name--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "host_name",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "Rss::{{host_name}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "15d1d9d7-eb10-464b-aa7b-33ff211996f7",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Eviction rate",
+            "yAxisUnit": "short"
+        }
+    ]
+}

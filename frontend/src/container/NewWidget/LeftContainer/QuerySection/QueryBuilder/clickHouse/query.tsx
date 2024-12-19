@@ -1,9 +1,13 @@
+import MEditor, { Monaco } from '@monaco-editor/react';
+import { Color } from '@signozhq/design-tokens';
 import { Input } from 'antd';
-import MonacoEditor from 'components/Editor';
+import { LEGEND } from 'constants/global';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChangeEvent, useCallback } from 'react';
 import { IClickHouseQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { getFormatedLegend } from 'utils/getFormatedLegend';
 
 import QueryHeader from '../QueryHeader';
 
@@ -49,19 +53,41 @@ function ClickHouseQueryBuilder({
 	}, [handleSetQueryItemData, queryData, queryIndex]);
 
 	const handleUpdateEditor = useCallback(
-		(value: string) => {
-			handleUpdateQuery('query', value);
+		(value: string | undefined) => {
+			if (value !== undefined) {
+				handleUpdateQuery('query', value);
+			}
 		},
 		[handleUpdateQuery],
 	);
 
 	const handleUpdateInput = useCallback(
 		(e: ChangeEvent<HTMLInputElement>) => {
-			const { name, value } = e.target;
+			const { name } = e.target;
+			let { value } = e.target;
+			if (name === LEGEND) {
+				value = getFormatedLegend(value);
+			}
 			handleUpdateQuery(name as keyof IClickHouseQuery, value);
 		},
 		[handleUpdateQuery],
 	);
+
+	const isDarkMode = useIsDarkMode();
+
+	function setEditorTheme(monaco: Monaco): void {
+		monaco.editor.defineTheme('my-theme', {
+			base: 'vs-dark',
+			inherit: true,
+			rules: [
+				{ token: 'string.key.json', foreground: Color.BG_VANILLA_400 },
+				{ token: 'string.value.json', foreground: Color.BG_ROBIN_400 },
+			],
+			colors: {
+				'editor.background': Color.BG_INK_300,
+			},
+		});
+	}
 
 	return (
 		<QueryHeader
@@ -71,11 +97,16 @@ function ClickHouseQueryBuilder({
 			onDelete={handleRemoveQuery}
 			deletable={deletable}
 		>
-			<MonacoEditor
+			<MEditor
 				language="sql"
 				height="200px"
 				onChange={handleUpdateEditor}
 				value={queryData.query}
+				onMount={(_, monaco): void => {
+					document.fonts.ready.then(() => {
+						monaco.editor.remeasureFonts();
+					});
+				}}
 				options={{
 					scrollbar: {
 						alwaysConsumeMouseWheel: false,
@@ -83,7 +114,12 @@ function ClickHouseQueryBuilder({
 					minimap: {
 						enabled: false,
 					},
+					fontSize: 14,
+					fontFamily: 'Space Mono',
 				}}
+				theme={isDarkMode ? 'my-theme' : 'light'}
+				// eslint-disable-next-line react/jsx-no-bind
+				beforeMount={setEditorTheme}
 			/>
 			<Input
 				onChange={handleUpdateInput}

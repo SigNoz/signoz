@@ -1,3 +1,4 @@
+import { OPERATORS } from 'constants/queryBuilder';
 import {
 	getRemovePrefixFromKey,
 	getTagToken,
@@ -7,10 +8,13 @@ import {
 import { Option } from 'container/QueryBuilder/type';
 import { parse } from 'papaparse';
 import { KeyboardEvent, useCallback, useState } from 'react';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
-import { useOptions } from './useOptions';
+import { useOptions, WHERE_CLAUSE_CUSTOM_SUFFIX } from './useOptions';
 import { useSetCurrentKeyAndOperator } from './useSetCurrentKeyAndOperator';
 import { useTag } from './useTag';
 import { useTagValidation } from './useTagValidation';
@@ -23,14 +27,18 @@ export type WhereClauseConfig = {
 export const useAutoComplete = (
 	query: IBuilderQuery,
 	whereClauseConfig?: WhereClauseConfig,
+	shouldUseSuggestions?: boolean,
+	isInfraMonitoring?: boolean,
 ): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [searchKey, setSearchKey] = useState<string>('');
 
-	const { keys, results, isFetching } = useFetchKeysAndValues(
+	const { keys, results, isFetching, exampleQueries } = useFetchKeysAndValues(
 		searchValue,
 		query,
 		searchKey,
+		shouldUseSuggestions,
+		isInfraMonitoring,
 	);
 
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
@@ -98,6 +106,23 @@ export const useAutoComplete = (
 		[handleAddTag, handleClearTag, isMulti, isValidTag, searchValue, tags],
 	);
 
+	const handleOnBlur = (event: React.FocusEvent<HTMLInputElement>): void => {
+		event.preventDefault();
+		if (searchValue) {
+			if (
+				key &&
+				!operator &&
+				whereClauseConfig?.customKey === 'body' &&
+				whereClauseConfig.customOp === OPERATORS.CONTAINS
+			) {
+				const value = `${searchValue}${WHERE_CLAUSE_CUSTOM_SUFFIX}`;
+				handleAddTag(value);
+				return;
+			}
+			handleAddTag(searchValue);
+		}
+	};
+
 	const options = useOptions(
 		key,
 		keys,
@@ -108,6 +133,7 @@ export const useAutoComplete = (
 		isExist,
 		results,
 		result,
+		isFetching,
 		whereClauseConfig,
 	);
 
@@ -117,6 +143,7 @@ export const useAutoComplete = (
 		handleClearTag,
 		handleSelect,
 		handleKeyDown,
+		handleOnBlur,
 		options,
 		tags,
 		searchValue,
@@ -124,6 +151,8 @@ export const useAutoComplete = (
 		isFetching,
 		setSearchKey,
 		searchKey,
+		key,
+		exampleQueries,
 	};
 };
 
@@ -133,6 +162,7 @@ interface IAutoComplete {
 	handleClearTag: (value: string) => void;
 	handleSelect: (value: string) => void;
 	handleKeyDown: (event: React.KeyboardEvent) => void;
+	handleOnBlur: (event: React.FocusEvent<HTMLInputElement>) => void;
 	options: Option[];
 	tags: string[];
 	searchValue: string;
@@ -140,4 +170,7 @@ interface IAutoComplete {
 	isFetching: boolean;
 	setSearchKey: (value: string) => void;
 	searchKey: string;
+	key: string;
+	exampleQueries: TagFilter[];
+	isInfraMonitoring?: boolean;
 }

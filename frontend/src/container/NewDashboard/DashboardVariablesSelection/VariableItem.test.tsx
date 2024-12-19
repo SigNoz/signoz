@@ -1,19 +1,14 @@
 import '@testing-library/jest-dom/extend-expect';
 
-import {
-	act,
-	fireEvent,
-	render,
-	screen,
-	waitFor,
-} from '@testing-library/react';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import React, { useEffect } from 'react';
+import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import VariableItem from './VariableItem';
 
 const mockVariableData: IDashboardVariable = {
+	id: 'test_variable',
 	description: 'Test Variable',
 	type: 'TEXTBOX',
 	textboxValue: 'defaultValue',
@@ -52,7 +47,8 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -67,7 +63,8 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -81,7 +78,8 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -95,6 +93,7 @@ describe('VariableItem', () => {
 			// expect(mockOnValueUpdate).toHaveBeenCalledTimes(1);
 			expect(mockOnValueUpdate).toHaveBeenCalledWith(
 				'testVariable',
+				'test_variable',
 				'newValue',
 				false,
 			);
@@ -108,7 +107,8 @@ describe('VariableItem', () => {
 					variableData={mockCustomVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -121,6 +121,8 @@ describe('VariableItem', () => {
 		const customVariableData = {
 			...mockCustomVariableData,
 			allSelected: true,
+			showALLOption: true,
+			multiSelect: true,
 		};
 
 		render(
@@ -129,7 +131,8 @@ describe('VariableItem', () => {
 					variableData={customVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -144,7 +147,8 @@ describe('VariableItem', () => {
 					variableData={mockCustomVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
+					setVariablesToGetUpdated={(): void => {}}
 				/>
 			</MockQueryClientProvider>,
 		);

@@ -66,7 +66,11 @@ export const Logout = (): void => {
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
-	window.Intercom('shutdown');
+	if (window && window.Intercom) {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		window.Intercom('shutdown');
+	}
 
 	history.push(ROUTES.LOGIN);
 };

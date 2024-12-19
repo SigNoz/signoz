@@ -1,0 +1,14 @@
+.reset-button {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	background: var(--bg-ink-300);
+	border: 1px solid var(--bg-slate-400);
+}
+
+.lightMode {
+	.reset-button {
+		background: var(--bg-vanilla-100);
+		border-color: var(--bg-vanilla-300);
+	}
+}

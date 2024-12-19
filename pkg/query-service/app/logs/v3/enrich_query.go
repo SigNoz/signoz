@@ -7,6 +7,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
@@ -17,7 +18,7 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 
 	// Build queries for each builder query
 	for queryName, query := range compositeQuery.BuilderQueries {
-		if query.Expression != queryName && query.DataSource != v3.DataSourceLogs {
+		if query.Expression != queryName || query.DataSource != v3.DataSourceLogs {
 			continue
 		}
 
@@ -61,20 +62,23 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 	return false
 }
 
+// if the field is timestamp/id/value we don't need to enrich
+// if the field is static we don't need to enrich
+// for all others we need to enrich
+// an attribute/resource can be materialized/dematerialized
+// but the query should work regardless and shouldn't fail
 func isEnriched(field v3.AttributeKey) bool {
 	// if it is timestamp/id dont check
-	if field.Key == "timestamp" || field.Key == "id" || field.Key == constants.SigNozOrderByValue {
+	if field.Key == "timestamp" || field.Key == "id" || field.Key == constants.SigNozOrderByValue || field.Type == v3.AttributeKeyTypeInstrumentationScope {
 		return true
 	}
 
-	if field.IsColumn {
+	// don't need to enrich the static fields as they will be always used a column
+	if _, ok := constants.StaticFieldsLogsV3[field.Key]; ok && field.IsColumn {
 		return true
 	}
 
-	if field.Type == v3.AttributeKeyTypeUnspecified || field.DataType == v3.AttributeKeyDataTypeUnspecified {
-		return false
-	}
-	return true
+	return false
 }
 
 func Enrich(params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey) {
@@ -88,11 +92,11 @@ func Enrich(params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey) {
 		if query.Expression != queryName && query.DataSource != v3.DataSourceLogs {
 			continue
 		}
-		enrichLogsQuery(query, fields)
+		EnrichLogsQuery(query, fields)
 	}
 }
 
-func enrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) error {
+func EnrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) error {
 	// enrich aggregation attribute
 	if query.AggregateAttribute.Key != "" {
 		query.AggregateAttribute = enrichFieldWithMetadata(query.AggregateAttribute, fields)
@@ -103,6 +107,7 @@ func enrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) 
 		for i := 0; i < len(query.Filters.Items); i++ {
 			query.Filters.Items[i] = jsonFilterEnrich(query.Filters.Items[i])
 			if query.Filters.Items[i].Key.IsJSON {
+				query.Filters.Items[i] = jsonReplaceField(query.Filters.Items[i], fields)
 				continue
 			}
 			query.Filters.Items[i].Key = enrichFieldWithMetadata(query.Filters.Items[i].Key, fields)
@@ -137,18 +142,19 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 	}
 
 	// check if the field is present in the fields map
-	if existingField, ok := fields[field.Key]; ok {
-		if existingField.IsColumn {
-			return existingField
+	for _, key := range utils.GenerateEnrichmentKeys(field) {
+		if val, ok := fields[key]; ok {
+			return val
 		}
-		field.Type = existingField.Type
-		field.DataType = existingField.DataType
-		return field
 	}
 
 	// enrich with default values if metadata is not found
-	field.Type = v3.AttributeKeyTypeTag
-	field.DataType = v3.AttributeKeyDataTypeString
+	if field.Type == "" {
+		field.Type = v3.AttributeKeyTypeTag
+	}
+	if field.DataType == "" {
+		field.DataType = v3.AttributeKeyDataTypeString
+	}
 	return field
 }
 
@@ -178,6 +184,19 @@ func jsonFilterEnrich(filter v3.FilterItem) v3.FilterItem {
 
 	filter.Key.DataType = v3.AttributeKeyDataType(valueType)
 	filter.Key.IsJSON = true
+	return filter
+}
+
+func jsonReplaceField(filter v3.FilterItem, fields map[string]v3.AttributeKey) v3.FilterItem {
+	key, found := strings.CutPrefix(filter.Key.Key, "body.")
+	if !found {
+		return filter
+	}
+
+	if field, ok := fields[key]; ok && field.DataType == filter.Key.DataType {
+		filter.Key = field
+	}
+
 	return filter
 }
 

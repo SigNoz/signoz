@@ -11,6 +11,7 @@ export const Wrapper = styled.ul`
 		border-left: 1px solid #434343;
 		padding-left: 1rem;
 		width: 100%;
+		margin: 0px;
 	}
 
 	ul li {
@@ -44,6 +45,4 @@ export const CardContainer = styled.li`
 export const CollapseButton = styled.div`
 	position: absolute;
 	top: 0;
-	left: 0;
-	font-size: 1.2rem;
 `;

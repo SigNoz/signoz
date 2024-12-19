@@ -132,6 +132,16 @@ export const generateFieldKeyForArray = (
 export const removeObjectFromString = (str: string): string =>
 	str.replace(/\[object Object\]./g, '');
 
+// Split `str` on the first occurrence of `delimiter`
+// For example, will return `['a', 'b.c']` when splitting `'a.b.c'` at dots
+const splitOnce = (str: string, delimiter: string): string[] => {
+	const parts = str.split(delimiter);
+	if (parts.length < 2) {
+		return parts;
+	}
+	return [parts[0], parts.slice(1).join(delimiter)];
+};
+
 export const getFieldAttributes = (field: string): IFieldAttributes => {
 	let dataType;
 	let newField;
@@ -140,16 +150,33 @@ export const getFieldAttributes = (field: string): IFieldAttributes => {
 	if (field.startsWith('attributes_')) {
 		logType = MetricsType.Tag;
 		const stringWithoutPrefix = field.slice('attributes_'.length);
-		const parts = stringWithoutPrefix.split('.');
+		const parts = splitOnce(stringWithoutPrefix, '.');
 		[dataType, newField] = parts;
 	} else if (field.startsWith('resources_')) {
 		logType = MetricsType.Resource;
 		const stringWithoutPrefix = field.slice('resources_'.length);
-		const parts = stringWithoutPrefix.split('.');
+		const parts = splitOnce(stringWithoutPrefix, '.');
+		[dataType, newField] = parts;
+	} else if (field.startsWith('scope_string')) {
+		logType = MetricsType.Scope;
+		const stringWithoutPrefix = field.slice('scope_'.length);
+		const parts = splitOnce(stringWithoutPrefix, '.');
 		[dataType, newField] = parts;
 	}
 
 	return { dataType, newField, logType };
+};
+
+// Returns key to be used when filtering for `field` via
+// the query builder. This is useful for powering filtering
+// by field values from log details view.
+export const filterKeyForField = (field: string): string => {
+	// Must work for all 3 of the following types of cases
+	// timestamp -> timestamp
+	// attributes_string.log.file -> log.file
+	// resources_string.k8s.pod.name -> k8s.pod.name
+	const fieldAttribs = getFieldAttributes(field);
+	return fieldAttribs?.newField || field;
 };
 
 export const aggregateAttributesResourcesToString = (logData: ILog): string => {
@@ -165,7 +192,9 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 		traceId: logData.traceId,
 		attributes: {},
 		resources: {},
+		scope: {},
 		severity_text: logData.severity_text,
+		severity_number: logData.severity_number,
 	};
 
 	Object.keys(logData).forEach((key) => {
@@ -175,6 +204,9 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 		} else if (key.startsWith('resources_')) {
 			outputJson.resources = outputJson.resources || {};
 			Object.assign(outputJson.resources, logData[key as keyof ILog]);
+		} else if (key.startsWith('scope_string')) {
+			outputJson.scope = outputJson.scope || {};
+			Object.assign(outputJson.scope, logData[key as keyof ILog]);
 		} else {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
@@ -227,16 +259,62 @@ export const getDataTypes = (value: unknown): DataTypes => {
 	return determineType(value);
 };
 
+// now we do not want to render colors everywhere like in tooltip and monaco editor hence we remove such codes to make
+// the log line readable
 export const removeEscapeCharacters = (str: string): string =>
-	str.replace(/\\([ntfr'"\\])/g, (_: string, char: string) => {
-		const escapeMap: Record<string, string> = {
-			n: '\n',
-			t: '\t',
-			f: '\f',
-			r: '\r',
-			"'": "'",
-			'"': '"',
-			'\\': '\\',
-		};
-		return escapeMap[char as keyof typeof escapeMap];
+	str
+		.replace(/\\x1[bB][[0-9;]*m/g, '')
+		.replace(/\\u001[bB][[0-9;]*m/g, '')
+		.replace(/\\x[0-9A-Fa-f]{2}/g, '')
+		.replace(/\\u[0-9A-Fa-f]{4}/g, '')
+		.replace(/\\[btnfrv0'"\\]/g, '');
+
+// we need to remove the escape from the escaped characters as some recievers like file log escape the unicode escape characters.
+// example: Log [\u001B[32;1mThis is bright green\u001B[0m] is being sent as [\\u001B[32;1mThis is bright green\\u001B[0m]
+//
+// so we need to remove this escapes to render the color properly
+export const unescapeString = (str: string): string =>
+	str
+		.replace(/\\n/g, '\n') // Replaces escaped newlines
+		.replace(/\\r/g, '\r') // Replaces escaped carriage returns
+		.replace(/\\t/g, '\t') // Replaces escaped tabs
+		.replace(/\\b/g, '\b') // Replaces escaped backspaces
+		.replace(/\\f/g, '\f') // Replaces escaped form feeds
+		.replace(/\\v/g, '\v') // Replaces escaped vertical tabs
+		.replace(/\\'/g, "'") // Replaces escaped single quotes
+		.replace(/\\"/g, '"') // Replaces escaped double quotes
+		.replace(/\\\\/g, '\\') // Replaces escaped backslashes
+		.replace(/\\x([0-9A-Fa-f]{2})/g, (_, hex) =>
+			String.fromCharCode(parseInt(hex, 16)),
+		) // Replaces hexadecimal escape sequences
+		.replace(/\\u([0-9A-Fa-f]{4})/g, (_, hex) =>
+			String.fromCharCode(parseInt(hex, 16)),
+		); // Replaces Unicode escape sequences
+
+export function removeExtraSpaces(input: string): string {
+	return input.replace(/\s+/g, ' ').trim();
+}
+
+export function findKeyPath(
+	obj: AnyObject,
+	targetKey: string,
+	currentPath = '',
+): string | null {
+	let finalPath = null;
+	Object.keys(obj).forEach((key) => {
+		const value = obj[key];
+		const newPath = currentPath ? `${currentPath}.${key}` : key;
+
+		if (key === targetKey) {
+			finalPath = newPath;
+		}
+
+		if (typeof value === 'object' && value !== null) {
+			const result = findKeyPath(value, targetKey, newPath);
+			if (result) {
+				finalPath = result;
+			}
+		}
 	});
+	return finalPath;
+}

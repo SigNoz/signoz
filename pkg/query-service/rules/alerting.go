@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
@@ -15,15 +17,9 @@ import (
 // this file contains common structs and methods used by
 // rule engine
 
-// how long before re-sending the alert
-const resolvedRetention = 15 * time.Minute
-
 const (
-	// AlertMetricName is the metric name for synthetic alert timeseries.
-	alertMetricName = "ALERTS"
-
-	// AlertForStateMetricName is the metric name for 'for' state of alert.
-	alertForStateMetricName = "ALERTS_FOR_STATE"
+	// how long before re-sending the alert
+	ResolvedRetention = 15 * time.Minute
 
 	TestAlertPostFix = "_TEST_ALERT"
 )
@@ -33,6 +29,7 @@ type RuleType string
 const (
 	RuleTypeThreshold = "threshold_rule"
 	RuleTypeProm      = "promql_rule"
+	RuleTypeAnomaly   = "anomaly_rule"
 )
 
 type RuleHealth string
@@ -43,35 +40,13 @@ const (
 	HealthBad     RuleHealth = "err"
 )
 
-// AlertState denotes the state of an active alert.
-type AlertState int
-
-const (
-	StateInactive AlertState = iota
-	StatePending
-	StateFiring
-	StateDisabled
-)
-
-func (s AlertState) String() string {
-	switch s {
-	case StateInactive:
-		return "inactive"
-	case StatePending:
-		return "pending"
-	case StateFiring:
-		return "firing"
-	case StateDisabled:
-		return "disabled"
-	}
-	panic(errors.Errorf("unknown alert state: %d", s))
-}
-
 type Alert struct {
-	State AlertState
+	State model.AlertState
 
 	Labels      labels.BaseLabels
 	Annotations labels.BaseLabels
+
+	QueryResultLables labels.BaseLabels
 
 	GeneratorURL string
 
@@ -84,10 +59,12 @@ type Alert struct {
 	ResolvedAt time.Time
 	LastSentAt time.Time
 	ValidUntil time.Time
+
+	Missing bool
 }
 
 func (a *Alert) needsSending(ts time.Time, resendDelay time.Duration) bool {
-	if a.State == StatePending {
+	if a.State == model.StatePending {
 		return false
 	}
 
@@ -107,26 +84,15 @@ type NamedAlert struct {
 type CompareOp string
 
 const (
-	CompareOpNone CompareOp = "0"
-	ValueIsAbove  CompareOp = "1"
-	ValueIsBelow  CompareOp = "2"
-	ValueIsEq     CompareOp = "3"
-	ValueIsNotEq  CompareOp = "4"
+	CompareOpNone      CompareOp = "0"
+	ValueIsAbove       CompareOp = "1"
+	ValueIsBelow       CompareOp = "2"
+	ValueIsEq          CompareOp = "3"
+	ValueIsNotEq       CompareOp = "4"
+	ValueAboveOrEq     CompareOp = "5"
+	ValueBelowOrEq     CompareOp = "6"
+	ValueOutsideBounds CompareOp = "7"
 )
-
-func ResolveCompareOp(cop CompareOp) string {
-	switch cop {
-	case ValueIsAbove:
-		return ">"
-	case ValueIsBelow:
-		return "<"
-	case ValueIsEq:
-		return "=="
-	case ValueIsNotEq:
-		return "!="
-	}
-	return ""
-}
 
 type MatchType string
 
@@ -136,15 +102,63 @@ const (
 	AllTheTimes   MatchType = "2"
 	OnAverage     MatchType = "3"
 	InTotal       MatchType = "4"
+	Last          MatchType = "5"
 )
 
 type RuleCondition struct {
-	CompositeQuery *v3.CompositeQuery `json:"compositeQuery,omitempty" yaml:"compositeQuery,omitempty"`
-	CompareOp      CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
-	Target         *float64           `yaml:"target,omitempty" json:"target,omitempty"`
-	MatchType      `json:"matchType,omitempty"`
-	TargetUnit     string `json:"targetUnit,omitempty"`
-	SelectedQuery  string `json:"selectedQueryName,omitempty"`
+	CompositeQuery    *v3.CompositeQuery `json:"compositeQuery,omitempty" yaml:"compositeQuery,omitempty"`
+	CompareOp         CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
+	Target            *float64           `yaml:"target,omitempty" json:"target,omitempty"`
+	AlertOnAbsent     bool               `yaml:"alertOnAbsent,omitempty" json:"alertOnAbsent,omitempty"`
+	AbsentFor         uint64             `yaml:"absentFor,omitempty" json:"absentFor,omitempty"`
+	MatchType         MatchType          `json:"matchType,omitempty"`
+	TargetUnit        string             `json:"targetUnit,omitempty"`
+	Algorithm         string             `json:"algorithm,omitempty"`
+	Seasonality       string             `json:"seasonality,omitempty"`
+	SelectedQuery     string             `json:"selectedQueryName,omitempty"`
+	RequireMinPoints  bool               `yaml:"requireMinPoints,omitempty" json:"requireMinPoints,omitempty"`
+	RequiredNumPoints int                `yaml:"requiredNumPoints,omitempty" json:"requiredNumPoints,omitempty"`
+}
+
+func (rc *RuleCondition) GetSelectedQueryName() string {
+	if rc != nil {
+		if rc.SelectedQuery != "" {
+			return rc.SelectedQuery
+		}
+
+		queryNames := map[string]struct{}{}
+
+		if rc.CompositeQuery != nil {
+			if rc.QueryType() == v3.QueryTypeBuilder {
+				for name := range rc.CompositeQuery.BuilderQueries {
+					queryNames[name] = struct{}{}
+				}
+			} else if rc.QueryType() == v3.QueryTypeClickHouseSQL {
+				for name := range rc.CompositeQuery.ClickHouseQueries {
+					queryNames[name] = struct{}{}
+				}
+			}
+		}
+
+		// The following logic exists for backward compatibility
+		// If there is no selected query, then
+		// - check if F1 is present, if yes, return F1
+		// - else return the query with max ascii value
+		// this logic is not really correct. we should be considering
+		// whether the query is enabled or not. but this is a temporary
+		// fix to support backward compatibility
+		if _, ok := queryNames["F1"]; ok {
+			return "F1"
+		}
+		keys := make([]string, 0, len(queryNames))
+		for k := range queryNames {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		return keys[len(keys)-1]
+	}
+	// This should never happen
+	return ""
 }
 
 func (rc *RuleCondition) IsValid() bool {
@@ -225,7 +239,7 @@ func prepareRuleGeneratorURL(ruleId string, source string) string {
 	}
 
 	// check if source is a valid url
-	_, err := url.Parse(source)
+	parsedSource, err := url.Parse(source)
 	if err != nil {
 		return ""
 	}
@@ -239,5 +253,12 @@ func prepareRuleGeneratorURL(ruleId string, source string) string {
 		return ruleURL
 	}
 
-	return source
+	// The source contains the encoded query, start and end time
+	// and other parameters. We don't want to include them in the generator URL
+	// mainly to keep the URL short and lower the alert body contents
+	// The generator URL with /alerts/edit?ruleId= is enough
+	if parsedSource.Port() != "" {
+		return fmt.Sprintf("%s://%s:%s/alerts/edit?ruleId=%s", parsedSource.Scheme, parsedSource.Hostname(), parsedSource.Port(), ruleId)
+	}
+	return fmt.Sprintf("%s://%s/alerts/edit?ruleId=%s", parsedSource.Scheme, parsedSource.Hostname(), ruleId)
 }

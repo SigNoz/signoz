@@ -258,8 +258,8 @@ func (agent *Agent) processStatusUpdate(
 	// If remote config is changed and different from what the Agent has then
 	// send the new remote config to the Agent.
 	if configChanged ||
-		(agent.Status.RemoteConfigStatus != nil &&
-			bytes.Compare(agent.Status.RemoteConfigStatus.LastRemoteConfigHash, agent.remoteConfig.ConfigHash) != 0) {
+		(agent.Status.RemoteConfigStatus != nil && agent.remoteConfig != nil &&
+			!bytes.Equal(agent.Status.RemoteConfigStatus.LastRemoteConfigHash, agent.remoteConfig.ConfigHash)) {
 		// The new status resulted in a change in the config of the Agent or the Agent
 		// does not have this config (hash is different). Send the new config the Agent.
 		response.RemoteConfig = agent.remoteConfig
@@ -276,7 +276,7 @@ func (agent *Agent) processStatusUpdate(
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
 	recommendedConfig, confId, err := configProvider.RecommendAgentConfig([]byte(agent.EffectiveConfig))
 	if err != nil {
-		zap.S().Errorf("could not generate config recommendation for agent %d: %w", agent.ID, err)
+		zap.L().Error("could not generate config recommendation for agent", zap.String("agentID", agent.ID), zap.Error(err))
 		return false
 	}
 
@@ -293,7 +293,7 @@ func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool 
 
 	if len(confId) < 1 {
 		// Should never happen. Handle gracefully if it does by some chance.
-		zap.S().Errorf("config provider recommended a config with empty confId. Using content hash for configId")
+		zap.L().Error("config provider recommended a config with empty confId. Using content hash for configId")
 
 		hash := sha256.New()
 		for k, v := range cfg.Config.ConfigMap {
@@ -352,7 +352,7 @@ func isEqualConfigFile(f1, f2 *protobufs.AgentConfigFile) bool {
 	if f1 == nil || f2 == nil {
 		return false
 	}
-	return bytes.Compare(f1.Body, f2.Body) == 0 && f1.ContentType == f2.ContentType
+	return bytes.Equal(f1.Body, f2.Body) && f1.ContentType == f2.ContentType
 }
 
 func (agent *Agent) SendToAgent(msg *protobufs.ServerToAgent) {

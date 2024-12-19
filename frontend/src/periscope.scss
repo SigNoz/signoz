@@ -1,0 +1,53 @@
+.periscope-btn-group {
+	display: inline-flex;
+
+	.ant-btn {
+		border-radius: 0;
+	}
+}
+
+.periscope-btn {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	padding: 6px;
+
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	border-radius: 3px;
+	background: var(--bg-ink-400, #121317);
+	box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+	color: var(--bg-vanilla-400, #c0c1c3);
+
+	&.ghost {
+		box-shadow: none;
+		border: none;
+	}
+
+	cursor: pointer;
+
+	&.primary {
+		color: var(--bg-vanilla-100) !important;
+		background-color: var(--bg-robin-500) !important;
+		border: none;
+		box-shadow: 0 2px 0 rgba(62, 86, 245, 0.09);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+	}
+}
+
+.periscope-tab {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.lightMode {
+	.periscope-btn {
+		border-color: var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
+		color: var(--bg-ink-200);
+	}
+}

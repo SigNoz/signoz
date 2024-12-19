@@ -1,0 +1,332 @@
+.explorer-options-container {
+	position: fixed;
+	bottom: 24px;
+	left: calc(50% + 240px);
+	transform: translate(calc(-50% - 120px), 0);
+	transition: left 0.2s linear;
+
+	display: flex;
+	gap: 16px;
+	background-color: transparent;
+}
+
+.hide-update {
+	left: calc(50% - 72px) !important;
+}
+
+.explorer-update {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 10px;
+	border-radius: 50px;
+	border: 1px solid var(--bg-slate-400);
+	background: rgba(22, 24, 29, 0.6);
+	backdrop-filter: blur(20px);
+
+	.action-icon {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		padding: 8px;
+		border-radius: 50px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-slate-500);
+		cursor: pointer;
+		box-shadow: none;
+	}
+
+	.hidden {
+		display: none;
+	}
+
+	.ant-divider {
+		margin: 0;
+		height: 28px;
+		border: 1px solid var(--bg-slate-400);
+	}
+}
+
+.explorer-options {
+	padding: 10px 12px;
+	border: 1px solid var(--bg-slate-400);
+	border-radius: 50px;
+	background: rgba(22, 24, 29, 0.6);
+	backdrop-filter: blur(20px);
+
+	cursor: default;
+	display: flex;
+	gap: 16px;
+	z-index: 1;
+	.ant-select-selector {
+		padding: 0 !important;
+	}
+
+	hr {
+		border-color: #1d212d;
+	}
+
+	.view-options,
+	.actions {
+		.info-icon {
+			padding: 8px;
+		}
+
+		.hidden {
+			display: none;
+		}
+
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 8px;
+
+		button {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			border: none;
+
+			border: 1px solid #1d2023;
+
+			box-shadow: none !important;
+
+			&.ant-btn-round {
+				padding: 8px 12px 8px 10px;
+				font-weight: 500;
+			}
+
+			&.ant-btn-round:disabled {
+				background-color: rgba(209, 209, 209, 0.074);
+				color: #5f5f5f;
+			}
+		}
+
+		.ant-select-focused {
+			border-color: transparent !important;
+
+			.ant-select-selector {
+				border-color: transparent !important;
+				box-shadow: none !important;
+			}
+		}
+
+		.ant-select-selector {
+			border: transparent !important;
+			background-color: transparent !important;
+
+			.ant-select-selection-placeholder {
+				margin-left: 12px;
+			}
+		}
+	}
+	.hidden {
+		display: none;
+	}
+}
+
+.app-content {
+	&.collapsed {
+		.explorer-options-container {
+			left: calc(50% + 72px);
+		}
+	}
+}
+
+.render-options {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 0 2px;
+	color: var(--bg-vanilla-400);
+	font-family: Inter;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px; /* 142.857% */
+	letter-spacing: -0.07px;
+
+	.dot {
+		margin-left: 6px;
+		min-height: 6px;
+		min-width: 6px;
+		border-radius: 50%;
+		backdrop-filter: blur(20px);
+	}
+}
+
+.save-view-modal {
+	width: 384px !important;
+	.ant-modal-content {
+		padding: 0;
+		border-radius: 4px;
+		border: 1px solid var(--bg-slate-500);
+		background: var(--bg-ink-400);
+		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
+
+		.ant-modal-header {
+			padding: 16px;
+			background: var(--bg-ink-400);
+			border-bottom: 1px solid var(--bg-slate-500);
+		}
+
+		.ant-modal-body {
+			padding: 12px 16px 0px 16px;
+
+			.ant-typography {
+				color: var(--bg-vanilla-100);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 20px; /* 142.857% */
+			}
+
+			.save-view-input {
+				margin-top: 8px;
+				display: flex;
+				gap: 8px;
+			}
+
+			.ant-color-picker-trigger {
+				padding: 6px;
+				border-radius: 2px;
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-300);
+				width: 32px;
+				height: 32px;
+
+				.ant-color-picker-color-block {
+					border-radius: 50px;
+					width: 16px;
+					height: 16px;
+					flex-shrink: 0;
+
+					.ant-color-picker-color-block-inner {
+						display: flex;
+						justify-content: center;
+						align-items: center;
+					}
+				}
+			}
+		}
+
+		.ant-modal-footer {
+			display: flex;
+			justify-content: flex-end;
+			padding: 16px 16px;
+			margin: 0;
+
+			> button {
+				display: flex;
+				align-items: center;
+				border-radius: 2px;
+				background-color: var(--bg-robin-500) !important;
+				color: var(--bg-vanilla-100) !important;
+				font-family: Inter;
+				font-size: 12px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 24px;
+			}
+		}
+	}
+	.title {
+		color: var(--bg-vanilla-100);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px;
+	}
+}
+
+.lightMode {
+	.explorer-options {
+		background: transparent;
+		box-shadow: none;
+		border: 1px solid var(--bg-vanilla-300);
+		backdrop-filter: blur(20px);
+
+		hr {
+			border-color: var(--bg-vanilla-300);
+		}
+
+		.view-options,
+		.actions {
+			button {
+				border: 1px solid var(--bg-vanilla-300);
+				color: var(--bg-ink-200);
+				background-color: var(--bg-vanilla-300);
+			}
+
+			.info-icon {
+				color: var(--bg-ink-200);
+			}
+		}
+	}
+
+	.render-options {
+		color: var(--bg-ink-200);
+	}
+
+	.explorer-update {
+		border: 1px solid var(--bg-vanilla-300);
+		background: transparent;
+		box-shadow: 4px 4px 16px 4px rgba(255, 255, 255, 0.55);
+		backdrop-filter: blur(20px);
+
+		.action-icon {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-300);
+		}
+
+		.ant-divider {
+			border-color: var(--bg-vanilla-300);
+		}
+	}
+
+	.ant-tooltip-arrow {
+		border-top-color: var(--bg-vanilla-300) !important;
+	}
+
+	.ant-tooltip-inner {
+		background-color: var(--bg-vanilla-300);
+		color: var(--bg-ink-200);
+	}
+
+	.save-view-modal {
+		.ant-modal-content {
+			background: var(--bg-vanilla-200);
+			border-color: var(--bg-vanilla-300);
+
+			.ant-modal-header {
+				background: var(--bg-vanilla-200);
+				border-bottom: 1px solid var(--bg-vanilla-300);
+			}
+
+			.ant-modal-body {
+				.ant-typography {
+					color: var(--bg-ink-200);
+				}
+
+				.ant-color-picker-trigger {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-100);
+
+					.ant-color-picker-color-block {
+						.ant-color-picker-color-block-inner {
+							svg {
+								fill: var(--bg-ink-200);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		.title {
+			color: var(--bg-ink-200);
+		}
+	}
+}

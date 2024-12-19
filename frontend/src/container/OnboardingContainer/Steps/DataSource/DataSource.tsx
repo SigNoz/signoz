@@ -2,17 +2,29 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './DataSource.styles.scss';
 
-import { Card, Form, Input, Select, Typography } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Input, Select, Space, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
-import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
+import {
+	ModulesMap,
+	useCases,
+} from 'container/OnboardingContainer/OnboardingContainer';
 import {
 	getDataSources,
 	getSupportedFrameworks,
 	hasFrameworks,
+	messagingQueueKakfaSupportedDataSources,
 } from 'container/OnboardingContainer/utils/dataSourceUtils';
-import useAnalytics from 'hooks/analytics/useAnalytics';
+import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { Blocks, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useHistory } from 'react-router-dom';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 export interface DataSourceType {
@@ -24,21 +36,24 @@ export interface DataSourceType {
 
 export default function DataSource(): JSX.Element {
 	const [form] = Form.useForm();
+	const { t } = useTranslation(['common']);
+	const history = useHistory();
 
-	const { trackEvent } = useAnalytics();
+	const getStartedSource = useUrlQuery().get(QueryParams.getStartedSource);
 
 	const {
-		activeStep,
 		serviceName,
 		selectedModule,
 		selectedDataSource,
 		selectedFramework,
 		updateSelectedDataSource,
-		updateServiceName,
 		updateSelectedEnvironment,
+		updateServiceName,
 		updateSelectedFramework,
-		updateErrorDetails,
 	} = useOnboardingContext();
+
+	const isKafkaAPM =
+		getStartedSource === 'kafka' && selectedModule?.id === ModulesMap.APM;
 
 	const [supportedDataSources, setSupportedDataSources] = useState<
 		DataSourceType[]
@@ -46,6 +61,15 @@ export default function DataSource(): JSX.Element {
 	const [supportedframeworks, setSupportedframeworks] = useState<
 		DataSourceType[]
 	>([]);
+
+	const requestedDataSourceName = Form.useWatch('requestedDataSourceName', form);
+
+	const [
+		isSubmittingRequestForDataSource,
+		setIsSubmittingRequestForDataSource,
+	] = useState(false);
+
+	const { notifications } = useNotifications();
 
 	const [enableFrameworks, setEnableFrameworks] = useState(false);
 
@@ -55,46 +79,8 @@ export default function DataSource(): JSX.Element {
 
 			setSupportedDataSources(dataSource);
 		}
-
-		updateSelectedEnvironment('');
-		updateErrorDetails('');
-		updateServiceName('');
-		updateSelectedFramework('');
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
-
-	useEffect(() => {
-		// on language select
-		trackEvent('Onboarding: Data Source Selected', {
-			dataSource: selectedDataSource,
-			module: {
-				name: activeStep?.module?.title,
-				id: activeStep?.module?.id,
-			},
-			step: {
-				name: activeStep?.step?.title,
-				id: activeStep?.step?.id,
-			},
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedDataSource]);
-
-	useEffect(() => {
-		// on framework select
-		trackEvent('Onboarding: Framework Selected', {
-			dataSource: selectedDataSource,
-			framework: selectedFramework,
-			module: {
-				name: activeStep?.module?.title,
-				id: activeStep?.module?.id,
-			},
-			step: {
-				name: activeStep?.step?.title,
-				id: activeStep?.step?.id,
-			},
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedFramework]);
 
 	useEffect(() => {
 		if (selectedModule && selectedDataSource) {
@@ -117,23 +103,77 @@ export default function DataSource(): JSX.Element {
 		}
 	}, [selectedModule, selectedDataSource]);
 
+	const handleRequestDataSourceSubmit = async (): Promise<void> => {
+		try {
+			setIsSubmittingRequestForDataSource(true);
+			const response = await logEvent('Onboarding V2: Data Source Requested', {
+				module: selectedModule?.id,
+				dataSource: requestedDataSourceName,
+			});
+
+			if (response.statusCode === 200) {
+				notifications.success({
+					message: 'Data Source Request Submitted',
+				});
+
+				form.setFieldValue('requestedDataSourceName', '');
+
+				setIsSubmittingRequestForDataSource(false);
+			} else {
+				notifications.error({
+					message:
+						response.error ||
+						t('something_went_wrong', {
+							ns: 'common',
+						}),
+				});
+
+				setIsSubmittingRequestForDataSource(false);
+			}
+		} catch (error) {
+			notifications.error({
+				message: t('something_went_wrong', {
+					ns: 'common',
+				}),
+			});
+
+			setIsSubmittingRequestForDataSource(false);
+		}
+	};
+
+	const goToIntegrationsPage = (): void => {
+		logEvent('Onboarding V2: Go to integrations', {
+			module: selectedModule?.id,
+			dataSource: selectedDataSource?.name,
+			framework: selectedFramework,
+		});
+		history.push(ROUTES.INTEGRATIONS);
+	};
+
 	return (
 		<div className="module-container">
 			<Typography.Text className="data-source-title">
 				<span className="required-symbol">*</span> Select Data Source
 			</Typography.Text>
-
 			<div className="supported-languages-container">
 				{supportedDataSources?.map((dataSource) => (
 					<Card
 						className={cx(
 							'supported-language',
 							selectedDataSource?.name === dataSource.name ? 'selected' : '',
+							isKafkaAPM &&
+								!messagingQueueKakfaSupportedDataSources.includes(dataSource?.id || '')
+								? 'disabled'
+								: '',
 						)}
 						key={dataSource.name}
 						onClick={(): void => {
-							updateSelectedFramework('');
-							updateSelectedDataSource(dataSource);
+							if (!isKafkaAPM) {
+								updateSelectedFramework(null);
+								updateSelectedEnvironment(null);
+								updateSelectedDataSource(dataSource);
+								form.setFieldsValue({ selectFramework: null });
+							}
 						}}
 					>
 						<div>
@@ -145,7 +185,7 @@ export default function DataSource(): JSX.Element {
 						</div>
 
 						<div>
-							<Typography.Text className="serviceName">
+							<Typography.Text className="dataSourceName">
 								{dataSource.name}
 							</Typography.Text>
 						</div>
@@ -153,58 +193,108 @@ export default function DataSource(): JSX.Element {
 				))}
 			</div>
 
-			{selectedModule?.id === useCases.APM.id && (
-				<div className="form-container">
-					<div className="service-name-container">
-						<Form
-							initialValues={{
-								serviceName,
-							}}
-							form={form}
-							onValuesChange={(): void => {
-								const serviceName = form.getFieldValue('serviceName');
+			<div className="form-container">
+				<div className="service-name-container">
+					<Form
+						initialValues={{
+							serviceName,
+							selectFramework: selectedFramework,
+						}}
+						form={form}
+						onValuesChange={(): void => {
+							const serviceName = form.getFieldValue('serviceName');
 
-								updateServiceName(serviceName);
-							}}
-							name="data-source-form"
-							style={{ minWidth: '300px' }}
-							layout="vertical"
-							validateTrigger="onBlur"
-						>
-							<Form.Item
-								hasFeedback
-								name="serviceName"
-								label="Service Name"
-								rules={[{ required: true, message: 'Please enter service name' }]}
-								validateTrigger="onBlur"
+							updateServiceName(serviceName);
+						}}
+						name="data-source-form"
+						layout="vertical"
+						validateTrigger="onBlur"
+					>
+						{selectedModule?.id === useCases.APM.id && (
+							<>
+								<Form.Item
+									name="serviceName"
+									label="Service Name"
+									style={{ width: 300 }}
+									rules={[{ required: true, message: 'Please enter service name' }]}
+									validateTrigger="onBlur"
+								>
+									<Input autoFocus />
+								</Form.Item>
+
+								{enableFrameworks && (
+									<div className="framework-selector">
+										<Form.Item
+											label="Select Framework"
+											name="selectFramework"
+											rules={[{ required: true, message: 'Please select framework' }]}
+										>
+											<Select
+												value={selectedFramework}
+												getPopupContainer={popupContainer}
+												style={{ width: 300 }}
+												placeholder="Select Framework"
+												onChange={(value): void => updateSelectedFramework(value)}
+												options={supportedframeworks}
+											/>
+										</Form.Item>
+									</div>
+								)}
+							</>
+						)}
+
+						<div className="request-entity-container intgeration-page-container">
+							<Typography.Text className="intgeration-page-container-text">
+								Not able to find datasources you are looking for, check our Integrations
+								page which allows more sources of sending data
+							</Typography.Text>
+							<Button
+								onClick={goToIntegrationsPage}
+								icon={<Blocks size={14} />}
+								className="navigate-integrations-page-btn"
 							>
-								<Input autoFocus />
-							</Form.Item>
+								Go to integrations
+							</Button>
+						</div>
 
-							{enableFrameworks && (
-								<div className="framework-selector">
+						<div className="request-entity-container">
+							<Typography.Text>
+								Cannot find what you’re looking for? Request a data source
+							</Typography.Text>
+
+							<div className="form-section">
+								<Space.Compact style={{ width: '100%' }}>
 									<Form.Item
-										label="Select Framework"
-										name="select-framework"
-										hasFeedback
-										rules={[{ required: true, message: 'Please select framework' }]}
-										validateTrigger=""
+										name="requestedDataSourceName"
+										style={{ width: 300, marginBottom: 0 }}
 									>
-										<Select
-											defaultValue={selectedFramework}
-											getPopupContainer={popupContainer}
-											style={{ minWidth: 120 }}
-											placeholder="Select Framework"
-											onChange={(value): void => updateSelectedFramework(value)}
-											options={supportedframeworks}
-										/>
+										<Input placeholder="Enter data source name..." />
 									</Form.Item>
-								</div>
-							)}
-						</Form>
-					</div>
+									<Button
+										className="periscope-btn primary"
+										icon={
+											isSubmittingRequestForDataSource ? (
+												<LoadingOutlined />
+											) : (
+												<Check size={12} />
+											)
+										}
+										type="primary"
+										onClick={handleRequestDataSourceSubmit}
+										disabled={
+											isSubmittingRequestForDataSource ||
+											!requestedDataSourceName ||
+											requestedDataSourceName?.trim().length === 0
+										}
+									>
+										Submit
+									</Button>
+								</Space.Compact>
+							</div>
+						</div>
+					</Form>
 				</div>
-			)}
+			</div>
 		</div>
 	);
 }

@@ -1,0 +1,58 @@
+.logs-table {
+	.ant-table {
+		background: unset;
+		border: none;
+	}
+
+	.ant-table-thead {
+		.ant-table-cell {
+			background: unset !important;
+			border-bottom: unset !important;
+			color: var(--bg-vanilla-400) !important;
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 20px;
+			letter-spacing: -0.07px;
+		}
+
+		.ant-table-cell::before {
+			background-color: unset !important;
+		}
+	}
+
+	.ant-table-row {
+		color: var(--bg-vanilla-400) !important;
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400 !important;
+		line-height: 20px;
+		letter-spacing: -0.07px;
+
+		.ant-table-cell-row-hover {
+			background: rgba(171, 189, 255, 0.04) !important;
+		}
+	}
+}
+
+.lightMode {
+	.ant-table {
+		color: var(--bg-slate-400) !important;
+	}
+
+	.ant-table-thead {
+		.ant-table-cell {
+			color: var(--bg-slate-400) !important;
+		}
+	}
+
+	.ant-table-row {
+		color: var(--bg-slate-400) !important;
+
+		.ant-table-cell-row-hover {
+			background: var(--bg-vanilla-300) !important;
+		}
+	}
+}

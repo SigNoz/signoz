@@ -1,0 +1,16 @@
+.addToQueryContainer {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	&.small {
+		line-height: 16px;
+	}
+
+	&.medium {
+		line-height: 20px;
+	}
+
+	&.large {
+		line-height: 24px;
+	}
+}

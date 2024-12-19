@@ -15,11 +15,19 @@ export const getColumnSearchProps = (
 ): ColumnType<ServicesList> => ({
 	filterDropdown,
 	filterIcon: <SearchOutlined />,
-	onFilter: (value: string | number | boolean, record: ServicesList): boolean =>
-		record[dataIndex]
-			.toString()
-			.toLowerCase()
-			.includes(value.toString().toLowerCase()),
+	onFilter: (
+		value: string | number | boolean,
+		record: ServicesList,
+	): boolean => {
+		if (record[dataIndex]) {
+			record[dataIndex]
+				?.toString()
+				.toLowerCase()
+				.includes(value.toString().toLowerCase());
+		}
+
+		return false;
+	},
 	render: (metrics: string): JSX.Element => {
 		const urlParams = new URLSearchParams(search);
 		const avialableParams = routeConfig[ROUTES.SERVICE_METRICS];

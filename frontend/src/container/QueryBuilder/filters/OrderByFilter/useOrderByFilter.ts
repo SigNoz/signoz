@@ -33,6 +33,7 @@ export type UseOrderByFilterResult = {
 export const useOrderByFilter = ({
 	query,
 	onChange,
+	entityVersion,
 }: OrderByFilterProps): UseOrderByFilterResult => {
 	const [searchText, setSearchText] = useState<string>('');
 
@@ -58,9 +59,10 @@ export const useOrderByFilter = ({
 		];
 	}, [searchText]);
 
-	const selectedValue = useMemo(() => transformToOrderByStringValues(query), [
-		query,
-	]);
+	const selectedValue = useMemo(
+		() => transformToOrderByStringValues(query, entityVersion),
+		[query, entityVersion],
+	);
 
 	const generateOptions = useCallback(
 		(options: IOption[]): IOption[] => {
@@ -124,15 +126,19 @@ export const useOrderByFilter = ({
 	const aggregationOptions = useMemo(
 		() => [
 			{
-				label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) ${ORDERBY_FILTERS.ASC}`,
+				label: `${
+					entityVersion === 'v4' ? query.spaceAggregation : query.aggregateOperator
+				}(${query.aggregateAttribute.key}) ${ORDERBY_FILTERS.ASC}`,
 				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${ORDERBY_FILTERS.ASC}`,
 			},
 			{
-				label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) ${ORDERBY_FILTERS.DESC}`,
+				label: `${
+					entityVersion === 'v4' ? query.spaceAggregation : query.aggregateOperator
+				}(${query.aggregateAttribute.key}) ${ORDERBY_FILTERS.DESC}`,
 				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${ORDERBY_FILTERS.DESC}`,
 			},
 		],
-		[query],
+		[query, entityVersion],
 	);
 
 	return {

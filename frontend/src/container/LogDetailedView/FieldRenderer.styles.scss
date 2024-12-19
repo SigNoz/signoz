@@ -1,0 +1,24 @@
+.field-renderer-container {
+	display: flex !important;
+	gap: 8px;
+	align-items: flex-start;
+	justify-content: space-between;
+	flex-direction: column;
+
+	.label {
+		color: var(--text-robin-400);
+		font-family: SF Mono;
+		font-family: 'Geist Mono';
+		font-size: 13px;
+		font-weight: var(--font-weight-normal);
+		line-height: 18px;
+		letter-spacing: -0.005em;
+		text-align: left;
+	}
+
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+}

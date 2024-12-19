@@ -1,4 +1,4 @@
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { ErrorResponse } from 'types/api';
 import { ErrorStatusCode } from 'types/common';
 
@@ -9,14 +9,14 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 		// making the error status code as standard Error Status Code
 		const statusCode = response.status as ErrorStatusCode;
 
-		if (statusCode >= 400 && statusCode < 500) {
-			const { data } = response;
+		const { data } = response as AxiosResponse;
 
+		if (statusCode >= 400 && statusCode < 500) {
 			if (statusCode === 404) {
 				return {
 					statusCode,
 					payload: null,
-					error: data.errorType,
+					error: data.errorType || data.type,
 					message: null,
 				};
 			}
@@ -30,15 +30,15 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 				statusCode,
 				payload: null,
 				error: errorMessage,
-				message: null,
+				message: (response.data as any)?.status,
+				body: JSON.stringify((response.data as any).data),
 			};
 		}
-
 		return {
 			statusCode,
 			payload: null,
 			error: 'Something went wrong',
-			message: null,
+			message: data?.error,
 		};
 	}
 	if (request) {

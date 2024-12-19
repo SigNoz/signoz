@@ -71,6 +71,9 @@ export const spanToTreeUtil = (inputSpanList: Span[]): ITraceForest => {
 					time: null as never,
 					value: null as never,
 					isMissing: true,
+					statusMessage: '',
+					statusCodeString: '',
+					spanKind: '',
 				};
 			}
 		});
@@ -93,6 +96,9 @@ export const spanToTreeUtil = (inputSpanList: Span[]): ITraceForest => {
 			event: span[10]?.map((e) => JSON.parse(e || '{}') || {}),
 			childReferences,
 			nonChildReferences,
+			statusMessage: span[12],
+			statusCodeString: span[13],
+			spanKind: span[14],
 		};
 		spanMap[span[1]] = spanObject;
 	});

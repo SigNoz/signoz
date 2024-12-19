@@ -14,10 +14,8 @@ import (
 var opAmpServer *Server
 
 type Server struct {
-	server       server.OpAMPServer
-	agents       *model.Agents
-	logger       *zap.Logger
-	capabilities int32
+	server server.OpAMPServer
+	agents *model.Agents
 
 	agentConfigProvider AgentConfigProvider
 
@@ -40,7 +38,7 @@ func InitializeServer(
 		agents:              agents,
 		agentConfigProvider: agentConfigProvider,
 	}
-	opAmpServer.server = server.New(zap.S())
+	opAmpServer.server = server.New(zap.L().Sugar())
 	return opAmpServer
 }
 
@@ -58,8 +56,8 @@ func (srv *Server) Start(listener string) error {
 	unsubscribe := srv.agentConfigProvider.SubscribeToConfigUpdates(func() {
 		err := srv.agents.RecommendLatestConfigToAll(srv.agentConfigProvider)
 		if err != nil {
-			zap.S().Errorf(
-				"could not roll out latest config recommendation to connected agents: %w", err,
+			zap.L().Error(
+				"could not roll out latest config recommendation to connected agents", zap.Error(err),
 			)
 		}
 	})
@@ -85,22 +83,20 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 
 	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn)
 	if err != nil {
-		zap.S().Error("Failed to find or create agent %q: %v", agentID, err)
+		zap.L().Error("Failed to find or create agent", zap.String("agentID", agentID), zap.Error(err))
 		// TODO: handle error
 	}
 
 	if created {
 		agent.CanLB = model.ExtractLbFlag(msg.AgentDescription)
-		zap.S().Debugf(
-			"New agent added:",
-			zap.Bool("canLb", agent.CanLB),
+		zap.L().Debug(
+			"New agent added", zap.Bool("canLb", agent.CanLB),
 			zap.String("ID", agent.ID),
 			zap.Any("status", agent.CurrentStatus),
 		)
 	}
 
-	var response *protobufs.ServerToAgent
-	response = &protobufs.ServerToAgent{
+	response := &protobufs.ServerToAgent{
 		InstanceUid:  agentID,
 		Capabilities: uint64(capabilities),
 	}
@@ -117,7 +113,7 @@ func Ready() bool {
 		return false
 	}
 	if opAmpServer.agents.Count() == 0 {
-		zap.S().Warnf("no agents available, all agent config requests will be rejected")
+		zap.L().Warn("no agents available, all agent config requests will be rejected")
 		return false
 	}
 	return true

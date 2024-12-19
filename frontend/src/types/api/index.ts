@@ -6,7 +6,8 @@ export interface ErrorResponse {
 	statusCode: ErrorStatusCode;
 	payload: null;
 	error: string;
-	message: null;
+	message: string | null;
+	body?: string | null;
 }
 
 export interface SuccessResponse<T, P = unknown> {

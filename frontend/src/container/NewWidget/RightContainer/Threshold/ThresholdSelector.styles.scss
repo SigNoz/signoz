@@ -1,18 +1,54 @@
 .threshold-selector-container {
-    .threshold-selector-button {
-        margin-top: 20px;
-        width: 100%;
-        border-radius: 10px;
-        padding: 10px 0;
-        height: 50px;
-        border-color: #1C64F2;
-        color: #1C64F2;
-        
-        span {
-            font-size: 14px;
-            font-weight: 400;
-            line-height: 22px;
-            letter-spacing: 0.5px;
-        }
-    }
+	padding: 12px;
+	padding-bottom: 80px;
+
+	.threshold-select {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		cursor: pointer;
+
+		.icon {
+			color: var(--bg-vanilla-400);
+			cursor: pointer;
+		}
+
+		.left-section {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.icon {
+				color: var(--bg-vanilla-400);
+			}
+			.text {
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: 0.14px;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.threshold-selector-container {
+		.threshold-select {
+			.icon {
+				color: var(--bg-ink-400);
+			}
+
+			.left-section {
+				.icon {
+					color: var(--bg-ink-400);
+				}
+				.text {
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+	}
 }

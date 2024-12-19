@@ -1,5 +1,6 @@
 import { QueryParams } from 'constants/query';
 import { initialAutocompleteData, PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import { useCallback } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -12,6 +13,7 @@ export const useHandleExplorerTabChange = (): {
 	handleExplorerTabChange: (
 		type: string,
 		querySearchParameters?: ICurrentQueryData,
+		redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
 	) => void;
 } => {
 	const {
@@ -51,18 +53,34 @@ export const useHandleExplorerTabChange = (): {
 	);
 
 	const handleExplorerTabChange = useCallback(
-		(type: string, currentQueryData?: ICurrentQueryData) => {
+		(
+			type: string,
+			currentQueryData?: ICurrentQueryData,
+			redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
+		) => {
 			const newPanelType = type as PANEL_TYPES;
 
 			if (newPanelType === panelType && !currentQueryData) return;
 
 			const query = currentQueryData?.query || getUpdateQuery(newPanelType);
 
-			redirectWithQueryBuilderData(query, {
-				[QueryParams.panelTypes]: newPanelType,
-				[QueryParams.viewName]: currentQueryData?.name || viewName,
-				[QueryParams.viewKey]: currentQueryData?.uuid || viewKey,
-			});
+			if (redirectToUrl) {
+				redirectWithQueryBuilderData(
+					query,
+					{
+						[QueryParams.panelTypes]: newPanelType,
+						[QueryParams.viewName]: currentQueryData?.name || viewName,
+						[QueryParams.viewKey]: currentQueryData?.uuid || viewKey,
+					},
+					redirectToUrl,
+				);
+			} else {
+				redirectWithQueryBuilderData(query, {
+					[QueryParams.panelTypes]: newPanelType,
+					[QueryParams.viewName]: currentQueryData?.name || viewName,
+					[QueryParams.viewKey]: currentQueryData?.uuid || viewKey,
+				});
+			}
 		},
 		[panelType, getUpdateQuery, redirectWithQueryBuilderData, viewName, viewKey],
 	);

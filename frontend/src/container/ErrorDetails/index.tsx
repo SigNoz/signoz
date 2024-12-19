@@ -1,16 +1,18 @@
 import './styles.scss';
 
 import { Button, Divider, Space, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
 import { ResizeTable } from 'components/ResizeTable';
 import { getNanoSeconds } from 'container/AllError/utils';
-import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
+import { isUndefined } from 'lodash-es';
 import { urlKey } from 'pages/ErrorDetails/utils';
-import { useMemo, useState } from 'react';
+import { useTimezone } from 'providers/Timezone';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
@@ -101,8 +103,6 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		}
 	};
 
-	const timeStamp = dayjs(errorDetail.timestamp);
-
 	const data: { key: string; value: string }[] = Object.keys(errorDetail)
 		.filter((e) => !keyToExclude.includes(e))
 		.map((key) => ({
@@ -111,8 +111,30 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		}));
 
 	const onClickTraceHandler = (): void => {
+		logEvent('Exception: Navigate to trace detail page', {
+			groupId: errorDetail?.groupID,
+			spanId: errorDetail.spanID,
+			traceId: errorDetail.traceID,
+			exceptionId: errorDetail?.errorId,
+		});
 		history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
 	};
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (!logEventCalledRef.current && !isUndefined(data)) {
+			logEvent('Exception: Detail page visited', {
+				groupId: errorDetail?.groupID,
+				spanId: errorDetail.spanID,
+				traceId: errorDetail.traceID,
+				exceptionId: errorDetail?.errorId,
+			});
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data]);
+
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	return (
 		<>
@@ -123,7 +145,12 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			<EventContainer>
 				<div>
 					<Typography>Event {errorDetail.errorId}</Typography>
-					<Typography>{timeStamp.format('MMM DD YYYY hh:mm:ss A')}</Typography>
+					<Typography>
+						{formatTimezoneAdjustedTimestamp(
+							errorDetail.timestamp,
+							'DD/MM/YYYY hh:mm:ss A (UTC Z)',
+						)}
+					</Typography>
 				</div>
 				<div>
 					<Space align="end" direction="horizontal">

@@ -1,0 +1,242 @@
+.mq-health-check-modal {
+	.ant-modal-content {
+		border-radius: 4px;
+		border: 1px solid var(--bg-slate-500);
+		background: var(--bg-ink-400);
+		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
+
+		.ant-modal-close {
+			margin-top: 4px;
+		}
+
+		.ant-modal-header {
+			border-bottom: 1px solid var(--bg-slate-500);
+			background: var(--bg-ink-400);
+			margin-bottom: 16px;
+			padding-bottom: 4px;
+
+			.ant-modal-title {
+				color: var(--bg-vanilla-100);
+				font-family: Inter;
+				font-size: 13px;
+				font-style: normal;
+				font-weight: 600;
+				line-height: 22px;
+				letter-spacing: 0.52px;
+			}
+		}
+
+		.modal-content {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			padding: 8px;
+			background: var(--bg-ink-300);
+
+			.attribute-select {
+				align-items: center;
+				display: flex;
+				gap: 8px;
+				width: 170px;
+
+				.ant-select-selector {
+					display: flex;
+					height: 28px !important;
+					padding: 8px;
+					align-items: center;
+					gap: 4px;
+
+					border-radius: 2px;
+					border: 1px solid var(--bg-slate-400);
+					background: var(--bg-ink-300);
+				}
+			}
+
+			.attribute-tree {
+				padding: 8px;
+			}
+
+			.tree-text {
+				color: var(--bg-vanilla-400);
+				font-family: 'Geist Mono';
+				font-size: 12px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 16px;
+				width: 328px;
+			}
+
+			.ant-tree {
+				.ant-tree-title {
+					cursor: default;
+
+					.attribute-error-title {
+						display: flex;
+						align-items: center;
+						color: var(--bg-amber-400);
+						height: 24px;
+
+						.tree-text {
+							color: var(--bg-amber-400);
+						}
+
+						.attribute-error-warning {
+							display: flex;
+							align-items: center;
+							gap: 6px;
+
+							font-family: 'Geist Mono';
+							font-size: 12px;
+							font-style: normal;
+							font-weight: 400;
+							line-height: 16px;
+							cursor: pointer;
+						}
+					}
+
+					.attribute-success-title {
+						display: flex;
+						align-items: center;
+						height: 24px;
+
+						.success-attribute-icon {
+							width: 44px;
+							color: var(--bg-vanilla-400);
+							display: flex;
+
+							> svg {
+								margin-left: auto;
+							}
+						}
+					}
+				}
+
+				.ant-tree-treenode {
+					width: 100%;
+
+					.ant-tree-node-content-wrapper {
+						width: 100%;
+						max-width: 380px;
+					}
+				}
+			}
+		}
+
+		.loader-container {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100%;
+			padding: 8px;
+			background: var(--bg-ink-300);
+			height: 156px;
+		}
+	}
+}
+
+.attribute-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.config-btn {
+	display: flex;
+	align-items: center;
+	height: 28px;
+	border-radius: 2px;
+	border: none;
+	box-shadow: none;
+	background: var(--bg-slate-500);
+
+	&.missing-config-btn {
+		background: rgba(255, 205, 86, 0.1);
+		color: var(--bg-amber-400);
+
+		&:hover {
+			color: var(--bg-amber-300) !important;
+		}
+	}
+
+	.config-btn-content {
+		display: flex;
+		align-items: center;
+		margin-right: 8px;
+		border-right: 1px solid rgba(255, 215, 120, 0.1);
+		padding-right: 8px;
+	}
+}
+
+.lightMode {
+	.mq-health-check-modal {
+		.ant-modal-content {
+			border: 1px solid var(--bg-vanilla-400);
+			background: var(--bg-vanilla-200);
+
+			.ant-modal-header {
+				border-bottom: 1px solid var(--bg-vanilla-400);
+				background: var(--bg-vanilla-200);
+
+				.ant-modal-title {
+					color: var(--bg-ink-300);
+				}
+			}
+
+			.modal-content {
+				background: var(--bg-vanilla-100);
+
+				.attribute-select {
+					.ant-select-selector {
+						border: 1px solid var(--bg-vanilla-300);
+						background: var(--bg-vanilla-200);
+					}
+				}
+
+				.tree-text {
+					color: var(--bg-ink-300);
+				}
+
+				.ant-tree {
+					.ant-tree-title {
+						.attribute-error-title {
+							color: var(--bg-amber-500);
+
+							.tree-text {
+								color: var(--bg-amber-500);
+							}
+						}
+
+						.attribute-success-title {
+							.success-attribute-icon {
+								color: var(--bg-ink-300);
+							}
+						}
+					}
+				}
+			}
+
+			.loader-container {
+				background: var(--bg-ink-300);
+			}
+		}
+	}
+
+	.config-btn {
+		background: var(--bg-vanilla-300);
+
+		&.missing-config-btn {
+			background: var(--bg-amber-100);
+			color: var(--bg-amber-500);
+
+			&:hover {
+				color: var(--bg-amber-600) !important;
+			}
+		}
+
+		.missing-config-btn {
+			.config-btn-content {
+				border-right: 1px solid var(--bg-amber-600);
+			}
+		}
+	}
+}

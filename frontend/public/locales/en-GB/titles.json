@@ -26,6 +26,7 @@
 	"MY_SETTINGS": "SigNoz | My Settings",
 	"ORG_SETTINGS": "SigNoz | Organization Settings",
 	"INGESTION_SETTINGS": "SigNoz | Ingestion Settings",
+	"API_KEYS": "SigNoz | Access Tokens",
 	"SOMETHING_WENT_WRONG": "SigNoz | Something Went Wrong",
 	"UN_AUTHORIZED": "SigNoz | Unauthorized",
 	"NOT_FOUND": "SigNoz | Page Not Found",
@@ -36,6 +37,10 @@
 	"PASSWORD_RESET": "SigNoz | Password Reset",
 	"LIST_LICENSES": "SigNoz | List of Licenses",
 	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
+	"WORKSPACE_SUSPENDED": "SigNoz | Workspace Suspended",
 	"SUPPORT": "SigNoz | Support",
-	"DEFAULT": "Open source Observability Platform | SigNoz"
+	"DEFAULT": "Open source Observability Platform | SigNoz",
+	"ALERT_HISTORY": "SigNoz | Alert Rule History",
+	"ALERT_OVERVIEW": "SigNoz | Alert Rule Overview",
+	"INFRASTRUCTURE_MONITORING_HOSTS": "SigNoz | Infra Monitoring"
 }

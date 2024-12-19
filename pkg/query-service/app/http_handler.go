@@ -7,7 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
+	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,6 +19,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
@@ -23,23 +27,30 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/inframetrics"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	logsv4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
-	"go.signoz.io/signoz/pkg/query-service/app/parser"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
+	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/contextlinks"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
+	"go.signoz.io/signoz/pkg/query-service/postprocess"
 
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
+	mq "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -64,27 +75,31 @@ func NewRouter() *mux.Router {
 	return mux.NewRouter().UseEncodedPath()
 }
 
-// APIHandler implements the query service public API by registering routes at httpPrefix
+// APIHandler implements the query service public API
 type APIHandler struct {
-	// queryService *querysvc.QueryService
-	// queryParser  queryParser
-	basePath          string
-	apiPrefix         string
 	reader            interfaces.Reader
 	skipConfig        *model.SkipConfig
 	appDao            dao.ModelDao
 	alertManager      am.Manager
 	ruleManager       *rules.Manager
 	featureFlags      interfaces.FeatureLookup
-	ready             func(http.HandlerFunc) http.HandlerFunc
 	querier           interfaces.Querier
+	querierV2         interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
-	preferDelta       bool
 	preferSpanMetrics bool
+
+	// temporalityMap is a map of metric name to temporality
+	// to avoid fetching temporality for the same metric multiple times
+	// querying the v4 table on low cardinal temporality column
+	// should be fast but we can still avoid the query if we have the data in memory
+	temporalityMap map[string]map[v3.Temporality]bool
+	temporalityMux sync.Mutex
 
 	maxIdleConns int
 	maxOpenConns int
 	dialTimeout  time.Duration
+
+	IntegrationsController *integrations.Controller
 
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
@@ -92,6 +107,26 @@ type APIHandler struct {
 	// at the moment, we mark the app ready when the first user
 	// is registers.
 	SetupCompleted bool
+
+	// Websocket connection upgrader
+	Upgrader *websocket.Upgrader
+
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
+
+	hostsRepo      *inframetrics.HostsRepo
+	processesRepo  *inframetrics.ProcessesRepo
+	podsRepo       *inframetrics.PodsRepo
+	nodesRepo      *inframetrics.NodesRepo
+	namespacesRepo *inframetrics.NamespacesRepo
+	clustersRepo   *inframetrics.ClustersRepo
+	// workloads
+	deploymentsRepo  *inframetrics.DeploymentsRepo
+	daemonsetsRepo   *inframetrics.DaemonSetsRepo
+	statefulsetsRepo *inframetrics.StatefulSetsRepo
+	jobsRepo         *inframetrics.JobsRepo
+
+	pvcsRepo *inframetrics.PvcsRepo
 }
 
 type APIHandlerOpts struct {
@@ -101,7 +136,6 @@ type APIHandlerOpts struct {
 
 	SkipConfig *model.SkipConfig
 
-	PerferDelta       bool
 	PreferSpanMetrics bool
 
 	MaxIdleConns int
@@ -117,57 +151,114 @@ type APIHandlerOpts struct {
 	// feature flags querier
 	FeatureFlags interfaces.FeatureLookup
 
+	// Integrations
+	IntegrationsController *integrations.Controller
+
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
+
 	// cache
 	Cache cache.Cache
 
 	// Querier Influx Interval
 	FluxInterval time.Duration
+
+	// Use Logs New schema
+	UseLogsNewSchema bool
+
+	UseTraceNewSchema bool
 }
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
-	alertManager, err := am.New("")
+	alertManager, err := am.New()
 	if err != nil {
 		return nil, err
 	}
 
 	querierOpts := querier.QuerierOptions{
-		Reader:        opts.Reader,
-		Cache:         opts.Cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  opts.FluxInterval,
-		FeatureLookup: opts.FeatureFlags,
+		Reader:            opts.Reader,
+		Cache:             opts.Cache,
+		KeyGenerator:      queryBuilder.NewKeyGenerator(),
+		FluxInterval:      opts.FluxInterval,
+		FeatureLookup:     opts.FeatureFlags,
+		UseLogsNewSchema:  opts.UseLogsNewSchema,
+		UseTraceNewSchema: opts.UseTraceNewSchema,
+	}
+
+	querierOptsV2 := querierV2.QuerierOptions{
+		Reader:            opts.Reader,
+		Cache:             opts.Cache,
+		KeyGenerator:      queryBuilder.NewKeyGenerator(),
+		FluxInterval:      opts.FluxInterval,
+		FeatureLookup:     opts.FeatureFlags,
+		UseLogsNewSchema:  opts.UseLogsNewSchema,
+		UseTraceNewSchema: opts.UseTraceNewSchema,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
+	querierv2 := querierV2.NewQuerier(querierOptsV2)
+
+	hostsRepo := inframetrics.NewHostsRepo(opts.Reader, querierv2)
+	processesRepo := inframetrics.NewProcessesRepo(opts.Reader, querierv2)
+	podsRepo := inframetrics.NewPodsRepo(opts.Reader, querierv2)
+	nodesRepo := inframetrics.NewNodesRepo(opts.Reader, querierv2)
+	namespacesRepo := inframetrics.NewNamespacesRepo(opts.Reader, querierv2)
+	clustersRepo := inframetrics.NewClustersRepo(opts.Reader, querierv2)
+	deploymentsRepo := inframetrics.NewDeploymentsRepo(opts.Reader, querierv2)
+	daemonsetsRepo := inframetrics.NewDaemonSetsRepo(opts.Reader, querierv2)
+	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
+	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
+	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
 		appDao:                        opts.AppDao,
 		skipConfig:                    opts.SkipConfig,
-		preferDelta:                   opts.PerferDelta,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
+		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		maxIdleConns:                  opts.MaxIdleConns,
 		maxOpenConns:                  opts.MaxOpenConns,
 		dialTimeout:                   opts.DialTimeout,
 		alertManager:                  alertManager,
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
+		IntegrationsController:        opts.IntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
+		querierV2:                     querierv2,
+		UseLogsNewSchema:              opts.UseLogsNewSchema,
+		UseTraceNewSchema:             opts.UseTraceNewSchema,
+		hostsRepo:                     hostsRepo,
+		processesRepo:                 processesRepo,
+		podsRepo:                      podsRepo,
+		nodesRepo:                     nodesRepo,
+		namespacesRepo:                namespacesRepo,
+		clustersRepo:                  clustersRepo,
+		deploymentsRepo:               deploymentsRepo,
+		daemonsetsRepo:                daemonsetsRepo,
+		statefulsetsRepo:              statefulsetsRepo,
+		jobsRepo:                      jobsRepo,
+		pvcsRepo:                      pvcsRepo,
+	}
+
+	logsQueryBuilder := logsv3.PrepareLogsQuery
+	if opts.UseLogsNewSchema {
+		logsQueryBuilder = logsv4.PrepareLogsQuery
+	}
+
+	tracesQueryBuilder := tracesV3.PrepareTracesQuery
+	if opts.UseTraceNewSchema {
+		tracesQueryBuilder = tracesV4.PrepareTracesQuery
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
-		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
-		BuildLogQuery:    logsv3.PrepareLogsQuery,
+		BuildTraceQuery:  tracesQueryBuilder,
+		BuildLogQuery:    logsQueryBuilder,
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
-
-	aH.ready = aH.testReady
 
 	dashboards.LoadDashboardFiles(aH.featureFlags)
 	// if errReadingDashboards != nil {
@@ -178,7 +269,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	hasUsers, err := aH.appDao.GetUsersWithOpts(context.Background(), 1)
 	if err.Error() != "" {
 		// raise warning but no panic as this is a recoverable condition
-		zap.S().Warnf("unexpected error while fetch user count while initializing base api handler", err.Error())
+		zap.L().Warn("unexpected error while fetch user count while initializing base api handler", zap.Error(err))
 	}
 	if len(hasUsers) != 0 {
 		// first user is already created, we can mark the app ready for general use.
@@ -186,9 +277,17 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		// to signup signoz through invite link only.
 		aH.SetupCompleted = true
 	}
+
+	aH.Upgrader = &websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+
 	return aH, nil
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 type structuredResponse struct {
 	Data   interface{}       `json:"data"`
 	Total  int               `json:"total"`
@@ -197,37 +296,13 @@ type structuredResponse struct {
 	Errors []structuredError `json:"errors"`
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 type structuredError struct {
 	Code int    `json:"code,omitempty"`
 	Msg  string `json:"msg"`
-	// TraceID ui.TraceID `json:"traceID,omitempty"`
 }
 
-var corsHeaders = map[string]string{
-	"Access-Control-Allow-Headers":  "Accept, Authorization, Content-Type, Origin",
-	"Access-Control-Allow-Methods":  "GET, OPTIONS",
-	"Access-Control-Allow-Origin":   "*",
-	"Access-Control-Expose-Headers": "Date",
-}
-
-// Enables cross-site script calls.
-func setCORS(w http.ResponseWriter) {
-	for h, v := range corsHeaders {
-		w.Header().Set(h, v)
-	}
-}
-
-type apiFunc func(r *http.Request) (interface{}, *model.ApiError, func())
-
-// Checks if server is ready, calls f if it is, returns 503 if it is not.
-func (aH *APIHandler) testReady(f http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		f(w, r)
-
-	}
-}
-
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 type ApiResponse struct {
 	Status    status          `json:"status"`
 	Data      interface{}     `json:"data,omitempty"`
@@ -235,6 +310,7 @@ type ApiResponse struct {
 	Error     string          `json:"error,omitempty"`
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -244,7 +320,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 		Data:      data,
 	})
 	if err != nil {
-		zap.S().Error("msg", "error marshalling json response", "err", err)
+		zap.L().Error("error marshalling json response", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -267,6 +343,8 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 		code = http.StatusUnauthorized
 	case model.ErrorForbidden:
 		code = http.StatusForbidden
+	case model.ErrorConflict:
+		code = http.StatusConflict
 	default:
 		code = http.StatusInternalServerError
 	}
@@ -274,10 +352,11 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	if n, err := w.Write(b); err != nil {
-		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
+		zap.L().Error("error writing response", zap.Int("bytesWritten", n), zap.Error(err))
 	}
 }
 
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -285,7 +364,7 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 		Data:   data,
 	})
 	if err != nil {
-		zap.S().Error("msg", "error marshalling json response", "err", err)
+		zap.L().Error("error marshalling json response", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -293,16 +372,8 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if n, err := w.Write(b); err != nil {
-		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
+		zap.L().Error("error writing response", zap.Int("bytesWritten", n), zap.Error(err))
 	}
-}
-
-func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router, am *AuthMiddleware) {
-	subRouter := router.PathPrefix("/api/v2/metrics").Subrouter()
-	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeMetricsV2)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/autocomplete/list", am.ViewAccess(aH.metricAutocompleteMetricName)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/tagKey", am.ViewAccess(aH.metricAutocompleteTagKey)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/tagValue", am.ViewAccess(aH.metricAutocompleteTagValue)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMiddleware) {
@@ -314,11 +385,86 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/autocomplete/attribute_values", am.ViewAccess(
 		withCacheControl(AutoCompleteCacheControlAge, aH.autoCompleteAttributeValues))).Methods(http.MethodGet)
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/query_range/format", am.ViewAccess(aH.QueryRangeV3Format)).Methods(http.MethodPost)
+
+	subRouter.HandleFunc("/filter_suggestions", am.ViewAccess(aH.getQueryBuilderSuggestions)).Methods(http.MethodGet)
+
+	// TODO(Raj): Remove this handler after /ws based path has been completely rolled out.
+	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
 }
 
+func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMiddleware) {
+	hostsSubRouter := router.PathPrefix("/api/v1/hosts").Subrouter()
+	hostsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getHostAttributeKeys)).Methods(http.MethodGet)
+	hostsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getHostAttributeValues)).Methods(http.MethodGet)
+	hostsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getHostList)).Methods(http.MethodPost)
+
+	processesSubRouter := router.PathPrefix("/api/v1/processes").Subrouter()
+	processesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getProcessAttributeKeys)).Methods(http.MethodGet)
+	processesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getProcessAttributeValues)).Methods(http.MethodGet)
+	processesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getProcessList)).Methods(http.MethodPost)
+
+	podsSubRouter := router.PathPrefix("/api/v1/pods").Subrouter()
+	podsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getPodAttributeKeys)).Methods(http.MethodGet)
+	podsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getPodAttributeValues)).Methods(http.MethodGet)
+	podsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getPodList)).Methods(http.MethodPost)
+
+	pvcsSubRouter := router.PathPrefix("/api/v1/pvcs").Subrouter()
+	pvcsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getPvcAttributeKeys)).Methods(http.MethodGet)
+	pvcsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getPvcAttributeValues)).Methods(http.MethodGet)
+	pvcsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getPvcList)).Methods(http.MethodPost)
+
+	nodesSubRouter := router.PathPrefix("/api/v1/nodes").Subrouter()
+	nodesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNodeAttributeKeys)).Methods(http.MethodGet)
+	nodesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNodeAttributeValues)).Methods(http.MethodGet)
+	nodesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getNodeList)).Methods(http.MethodPost)
+
+	namespacesSubRouter := router.PathPrefix("/api/v1/namespaces").Subrouter()
+	namespacesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNamespaceAttributeKeys)).Methods(http.MethodGet)
+	namespacesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNamespaceAttributeValues)).Methods(http.MethodGet)
+	namespacesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getNamespaceList)).Methods(http.MethodPost)
+
+	clustersSubRouter := router.PathPrefix("/api/v1/clusters").Subrouter()
+	clustersSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getClusterAttributeKeys)).Methods(http.MethodGet)
+	clustersSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getClusterAttributeValues)).Methods(http.MethodGet)
+	clustersSubRouter.HandleFunc("/list", am.ViewAccess(aH.getClusterList)).Methods(http.MethodPost)
+
+	deploymentsSubRouter := router.PathPrefix("/api/v1/deployments").Subrouter()
+	deploymentsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getDeploymentAttributeKeys)).Methods(http.MethodGet)
+	deploymentsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getDeploymentAttributeValues)).Methods(http.MethodGet)
+	deploymentsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getDeploymentList)).Methods(http.MethodPost)
+
+	daemonsetsSubRouter := router.PathPrefix("/api/v1/daemonsets").Subrouter()
+	daemonsetsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getDaemonSetAttributeKeys)).Methods(http.MethodGet)
+	daemonsetsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getDaemonSetAttributeValues)).Methods(http.MethodGet)
+	daemonsetsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getDaemonSetList)).Methods(http.MethodPost)
+
+	statefulsetsSubRouter := router.PathPrefix("/api/v1/statefulsets").Subrouter()
+	statefulsetsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getStatefulSetAttributeKeys)).Methods(http.MethodGet)
+	statefulsetsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getStatefulSetAttributeValues)).Methods(http.MethodGet)
+	statefulsetsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getStatefulSetList)).Methods(http.MethodPost)
+
+	jobsSubRouter := router.PathPrefix("/api/v1/jobs").Subrouter()
+	jobsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getJobAttributeKeys)).Methods(http.MethodGet)
+	jobsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getJobAttributeValues)).Methods(http.MethodGet)
+	jobsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getJobList)).Methods(http.MethodPost)
+}
+
+func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/ws").Subrouter()
+	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v4").Subrouter()
+	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV4)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
+}
+
+// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }
@@ -348,27 +494,36 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
 	router.HandleFunc("/api/v1/testRule", am.EditAccess(aH.testRule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/history/stats", am.ViewAccess(aH.getRuleStats)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/history/timeline", am.ViewAccess(aH.getRuleStateHistory)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/history/top_contributors", am.ViewAccess(aH.getRuleStateHistoryTopContributors)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/history/overall_status", am.ViewAccess(aH.getOverallStateTransitions)).Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/downtime_schedules", am.ViewAccess(aH.listDowntimeSchedules)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.ViewAccess(aH.getDowntimeSchedule)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/downtime_schedules", am.EditAccess(aH.createDowntimeSchedule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/grafana", am.EditAccess(aH.createDashboardsTransform)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/variables/query", am.ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.getSavedViews)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.createSavedViews)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/explorer/views", am.EditAccess(aH.createSavedViews)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.getSavedView)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.updateSavedView)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.updateSavedView)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
+
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/overview", am.ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_operations", am.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", am.ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
@@ -381,18 +536,13 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.AdminAccess(aH.insertIngestionKey)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.ViewAccess(aH.getIngestionKeys)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/metric_meta", am.ViewAccess(aH.getLatencyMetricMetadata)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/configs", am.OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/health", am.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/getSpanFilters", am.ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getTagFilters", am.ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getFilteredSpans", am.ViewAccess(aH.getFilteredSpans)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", am.ViewAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getTagValues", am.ViewAccess(aH.getTagValues)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/countErrors", am.ViewAccess(aH.countErrors)).Methods(http.MethodPost)
@@ -402,8 +552,25 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
+	// === Preference APIs ===
+
+	// user actions
+	router.HandleFunc("/api/v1/user/preferences", am.ViewAccess(aH.getAllUserPreferences)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.getUserPreference)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.updateUserPreference)).Methods(http.MethodPut)
+
+	// org actions
+	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.getAllOrgPreferences)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.getOrgPreference)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.updateOrgPreference)).Methods(http.MethodPut)
+
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/invite/bulk", am.AdminAccess(aH.inviteUsers)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.getInvite)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/invite/{email}", am.AdminAccess(aH.revokeInvite)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.listPendingInvites)).Methods(http.MethodGet)
@@ -457,311 +624,381 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, ruleResponse)
 }
 
-func (aH *APIHandler) metricAutocompleteMetricName(w http.ResponseWriter, r *http.Request) {
-	matchText := r.URL.Query().Get("match")
-	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
-	if err != nil {
-		limit = 0 // no limit
-	}
+// populateTemporality adds the temporality to the query if it is not present
+func (aH *APIHandler) PopulateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
 
-	metricNameList, apiErrObj := aH.reader.GetMetricAutocompleteMetricNames(r.Context(), matchText, limit)
+	aH.temporalityMux.Lock()
+	defer aH.temporalityMux.Unlock()
 
-	if apiErrObj != nil {
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-	aH.Respond(w, metricNameList)
-
-}
-
-func (aH *APIHandler) metricAutocompleteTagKey(w http.ResponseWriter, r *http.Request) {
-	metricsAutocompleteTagKeyParams, apiErrorObj := parser.ParseMetricAutocompleteTagParams(r)
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	tagKeyList, apiErrObj := aH.reader.GetMetricAutocompleteTagKey(r.Context(), metricsAutocompleteTagKeyParams)
-
-	if apiErrObj != nil {
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-	aH.Respond(w, tagKeyList)
-}
-
-func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.Request) {
-	metricsAutocompleteTagValueParams, apiErrorObj := parser.ParseMetricAutocompleteTagParams(r)
-
-	if len(metricsAutocompleteTagValueParams.TagKey) == 0 {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("tagKey not present in params")}
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	tagValueList, apiErrObj := aH.reader.GetMetricAutocompleteTagValue(r.Context(), metricsAutocompleteTagValueParams)
-
-	if apiErrObj != nil {
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-
-	aH.Respond(w, tagValueList)
-}
-
-func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
-
-	metricNames := make([]string, 0)
+	missingTemporality := make([]string, 0)
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
 		for _, query := range qp.CompositeQuery.BuilderQueries {
-			if query.DataSource == v3.DataSourceMetrics {
-				metricNames = append(metricNames, query.AggregateAttribute.Key)
-				if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
-					metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
+			// if there is no temporality specified in the query but we have it in the map
+			// then use the value from the map
+			if query.Temporality == "" && aH.temporalityMap[query.AggregateAttribute.Key] != nil {
+				// We prefer delta if it is available
+				if aH.temporalityMap[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if aH.temporalityMap[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
 				}
+			}
+			// we don't have temporality for this metric
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				missingTemporality = append(missingTemporality, query.AggregateAttribute.Key)
+			}
+			if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
+				metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
 			}
 		}
 	}
 
-	var err error
-
-	if aH.preferDelta {
-		zap.S().Debug("fetching metric temporality")
-		metricNameToTemporality, err = aH.reader.FetchTemporality(ctx, metricNames)
-		if err != nil {
-			return err
-		}
+	nameToTemporality, err := aH.reader.FetchTemporality(ctx, missingTemporality)
+	if err != nil {
+		return err
 	}
 
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
 		for name := range qp.CompositeQuery.BuilderQueries {
 			query := qp.CompositeQuery.BuilderQueries[name]
-			if query.DataSource == v3.DataSourceMetrics {
-				if aH.preferDelta && metricNameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				if nameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
 					query.Temporality = v3.Delta
-				} else if metricNameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
+				} else if nameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
 					query.Temporality = v3.Cumulative
 				} else {
 					query.Temporality = v3.Unspecified
 				}
+				aH.temporalityMap[query.AggregateAttribute.Key] = nameToTemporality[query.AggregateAttribute.Key]
 			}
 		}
 	}
 	return nil
 }
 
-func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
-	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
-
-	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	// prometheus instant query needs same timestamp
-	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
-		metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.PROM {
-		metricsQueryRangeParams.Start = metricsQueryRangeParams.End
-	}
-
-	// round up the end to neaerest multiple
-	if metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
-		end := (metricsQueryRangeParams.End) / 1000
-		step := metricsQueryRangeParams.Step
-		metricsQueryRangeParams.End = (end / step * step) * 1000
-	}
-
-	type channelResult struct {
-		Series []*model.Series
-		Err    error
-		Name   string
-		Query  string
-	}
-
-	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, error, map[string]string) {
-		var seriesList []*model.Series
-		ch := make(chan channelResult, len(queries))
-		var wg sync.WaitGroup
-
-		for name, query := range queries {
-			wg.Add(1)
-			go func(name, query string) {
-				defer wg.Done()
-				seriesList, err := aH.reader.GetMetricResult(r.Context(), query)
-				for _, series := range seriesList {
-					series.QueryName = name
-				}
-
-				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
-					return
-				}
-				ch <- channelResult{Series: seriesList}
-			}(name, query)
-		}
-
-		wg.Wait()
-		close(ch)
-
-		var errs []error
-		errQuriesByName := make(map[string]string)
-		// read values from the channel
-		for r := range ch {
-			if r.Err != nil {
-				errs = append(errs, r.Err)
-				errQuriesByName[r.Name] = r.Query
-				continue
-			}
-			seriesList = append(seriesList, r.Series...)
-		}
-		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
-		}
-		return seriesList, nil, nil
-	}
-
-	execPromQueries := func(metricsQueryRangeParams *model.QueryRangeParamsV2) ([]*model.Series, error, map[string]string) {
-		var seriesList []*model.Series
-		ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeMetricQuery.PromQueries))
-		var wg sync.WaitGroup
-
-		for name, query := range metricsQueryRangeParams.CompositeMetricQuery.PromQueries {
-			if query.Disabled {
-				continue
-			}
-			wg.Add(1)
-			go func(name string, query *model.PromQuery) {
-				var seriesList []*model.Series
-				defer wg.Done()
-				tmpl := template.New("promql-query")
-				tmpl, tmplErr := tmpl.Parse(query.Query)
-				if tmplErr != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
-					return
-				}
-				var queryBuf bytes.Buffer
-				tmplErr = tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
-				if tmplErr != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
-					return
-				}
-				query.Query = queryBuf.String()
-				queryModel := model.QueryRangeParams{
-					Start: time.UnixMilli(metricsQueryRangeParams.Start),
-					End:   time.UnixMilli(metricsQueryRangeParams.End),
-					Step:  time.Duration(metricsQueryRangeParams.Step * int64(time.Second)),
-					Query: query.Query,
-				}
-				promResult, _, err := aH.reader.GetQueryRangeResult(r.Context(), &queryModel)
-				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query.Query}
-					return
-				}
-				matrix, _ := promResult.Matrix()
-				for _, v := range matrix {
-					var s model.Series
-					s.QueryName = name
-					s.Labels = v.Metric.Copy().Map()
-					for _, p := range v.Floats {
-						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.F})
-					}
-					seriesList = append(seriesList, &s)
-				}
-				ch <- channelResult{Series: seriesList}
-			}(name, query)
-		}
-
-		wg.Wait()
-		close(ch)
-
-		var errs []error
-		errQuriesByName := make(map[string]string)
-		// read values from the channel
-		for r := range ch {
-			if r.Err != nil {
-				errs = append(errs, r.Err)
-				errQuriesByName[r.Name] = r.Query
-				continue
-			}
-			seriesList = append(seriesList, r.Series...)
-		}
-		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
-		}
-		return seriesList, nil, nil
-	}
-
-	var seriesList []*model.Series
-	var err error
-	var errQuriesByName map[string]string
-	switch metricsQueryRangeParams.CompositeMetricQuery.QueryType {
-	case model.QUERY_BUILDER:
-		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, constants.SIGNOZ_TIMESERIES_TABLENAME)
-		if runQueries.Err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
-			return
-		}
-		seriesList, err, errQuriesByName = execClickHouseQueries(runQueries.Queries)
-
-	case model.CLICKHOUSE:
-		queries := make(map[string]string)
-		for name, chQuery := range metricsQueryRangeParams.CompositeMetricQuery.ClickHouseQueries {
-			if chQuery.Disabled {
-				continue
-			}
-			tmpl := template.New("clickhouse-query")
-			tmpl, err := tmpl.Parse(chQuery.Query)
-			if err != nil {
-				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-				return
-			}
-			var query bytes.Buffer
-
-			// replace go template variables
-			querytemplate.AssignReservedVars(metricsQueryRangeParams)
-
-			err = tmpl.Execute(&query, metricsQueryRangeParams.Variables)
-			if err != nil {
-				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-				return
-			}
-
-			queries[name] = query.String()
-		}
-		seriesList, err, errQuriesByName = execClickHouseQueries(queries)
-	case model.PROM:
-		seriesList, err, errQuriesByName = execPromQueries(metricsQueryRangeParams)
-	default:
-		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
-		return
-	}
-
+func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Request) {
+	schedules, err := aH.ruleManager.RuleDB().GetAllPlannedMaintenance(r.Context())
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
-		return
-	}
-	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
-		len(seriesList) > 1 &&
-		(metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER ||
-			metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.CLICKHOUSE) {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid: query resulted in more than one series for value type")}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	type ResponseFormat struct {
-		ResultType string          `json:"resultType"`
-		Result     []*model.Series `json:"result"`
+	// The schedules are stored as JSON in the database, so we need to filter them here
+	// Since the number of schedules is expected to be small, this should be fine
+
+	if r.URL.Query().Get("active") != "" {
+		activeSchedules := make([]rules.PlannedMaintenance, 0)
+		active, _ := strconv.ParseBool(r.URL.Query().Get("active"))
+		for _, schedule := range schedules {
+			now := time.Now().In(time.FixedZone(schedule.Schedule.Timezone, 0))
+			if schedule.IsActive(now) == active {
+				activeSchedules = append(activeSchedules, schedule)
+			}
+		}
+		schedules = activeSchedules
 	}
-	resp := ResponseFormat{ResultType: "matrix", Result: seriesList}
-	aH.Respond(w, resp)
+
+	if r.URL.Query().Get("recurring") != "" {
+		recurringSchedules := make([]rules.PlannedMaintenance, 0)
+		recurring, _ := strconv.ParseBool(r.URL.Query().Get("recurring"))
+		for _, schedule := range schedules {
+			if schedule.IsRecurring() == recurring {
+				recurringSchedules = append(recurringSchedules, schedule)
+			}
+		}
+		schedules = recurringSchedules
+	}
+
+	aH.Respond(w, schedules)
+}
+
+func (aH *APIHandler) getDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	schedule, err := aH.ruleManager.RuleDB().GetPlannedMaintenanceByID(r.Context(), id)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, schedule)
+}
+
+func (aH *APIHandler) createDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	var schedule rules.PlannedMaintenance
+	err := json.NewDecoder(r.Body).Decode(&schedule)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := schedule.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	_, err = aH.ruleManager.RuleDB().CreatePlannedMaintenance(r.Context(), schedule)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	var schedule rules.PlannedMaintenance
+	err := json.NewDecoder(r.Body).Decode(&schedule)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := schedule.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	_, err = aH.ruleManager.RuleDB().EditPlannedMaintenance(r.Context(), schedule, id)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	_, err := aH.ruleManager.RuleDB().DeletePlannedMaintenance(r.Context(), id)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := model.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	totalCurrentTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	currentTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	currentAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	currentAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	if params.End-params.Start >= 86400000 {
+		days := int64(math.Ceil(float64(params.End-params.Start) / 86400000))
+		params.Start -= days * 86400000
+		params.End -= days * 86400000
+	} else {
+		params.Start -= 86400000
+		params.End -= 86400000
+	}
+
+	totalPastTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	pastTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	pastAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	pastAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	if math.IsNaN(currentAvgResolutionTime) || math.IsInf(currentAvgResolutionTime, 0) {
+		currentAvgResolutionTime = 0
+	}
+	if math.IsNaN(pastAvgResolutionTime) || math.IsInf(pastAvgResolutionTime, 0) {
+		pastAvgResolutionTime = 0
+	}
+
+	stats := model.Stats{
+		TotalCurrentTriggers:           totalCurrentTriggers,
+		TotalPastTriggers:              totalPastTriggers,
+		CurrentTriggersSeries:          currentTriggersSeries,
+		PastTriggersSeries:             pastTriggersSeries,
+		CurrentAvgResolutionTime:       strconv.FormatFloat(currentAvgResolutionTime, 'f', -1, 64),
+		PastAvgResolutionTime:          strconv.FormatFloat(pastAvgResolutionTime, 'f', -1, 64),
+		CurrentAvgResolutionTimeSeries: currentAvgResolutionTimeSeries,
+		PastAvgResolutionTimeSeries:    pastAvgResolutionTimeSeries,
+	}
+
+	aH.Respond(w, stats)
+}
+
+func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := model.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	stateItems, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, stateItems)
+}
+
+func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule) ([]v3.FilterItem, []v3.AttributeKey, map[string]v3.AttributeKey) {
+	filterItems := []v3.FilterItem{}
+	groupBy := []v3.AttributeKey{}
+	keys := make(map[string]v3.AttributeKey)
+
+	if rule.AlertType == rules.AlertTypeLogs {
+		logFields, err := aH.reader.GetLogFields(ctx)
+		if err == nil {
+			params := &v3.QueryRangeParamsV3{
+				CompositeQuery: rule.RuleCondition.CompositeQuery,
+			}
+			keys = model.GetLogFieldsV3(ctx, params, logFields)
+		} else {
+			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
+		}
+	} else if rule.AlertType == rules.AlertTypeTraces {
+		traceFields, err := aH.reader.GetSpanAttributeKeys(ctx)
+		if err == nil {
+			keys = traceFields
+		} else {
+			zap.L().Error("failed to get span attributes using empty keys; the link might not work as expected", zap.Error(err))
+		}
+	}
+
+	if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
+		if rule.RuleCondition.CompositeQuery != nil {
+			if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
+				selectedQuery := rule.RuleCondition.GetSelectedQueryName()
+				if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+					rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters != nil {
+					filterItems = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items
+				}
+				if rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+					rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy != nil {
+					groupBy = rule.RuleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy
+				}
+			}
+		}
+	}
+	return filterItems, groupBy, keys
+}
+
+func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := model.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := params.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	if err == nil {
+		for idx := range res.Items {
+			lbls := make(map[string]string)
+			err := json.Unmarshal([]byte(res.Items[idx].Labels), &lbls)
+			if err != nil {
+				continue
+			}
+			filterItems, groupBy, keys := aH.metaForLinks(r.Context(), rule)
+			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy, keys)
+			end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
+			// why are we subtracting 3 minutes?
+			// the query range is calculated based on the rule's evalWindow and evalDelay
+			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
+			// to get the correct query range
+			start := end.Add(-time.Duration(rule.EvalWindow)).Add(-3 * time.Minute)
+			if rule.AlertType == rules.AlertTypeLogs {
+				res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
+			} else if rule.AlertType == rules.AlertTypeTraces {
+				res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
+			}
+		}
+	}
+
+	aH.Respond(w, res)
+}
+
+func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := model.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	if err == nil {
+		for idx := range res {
+			lbls := make(map[string]string)
+			err := json.Unmarshal([]byte(res[idx].Labels), &lbls)
+			if err != nil {
+				continue
+			}
+			filterItems, groupBy, keys := aH.metaForLinks(r.Context(), rule)
+			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy, keys)
+			end := time.Unix(params.End/1000, 0)
+			start := time.Unix(params.Start/1000, 0)
+			if rule.AlertType == rules.AlertTypeLogs {
+				res[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
+			} else if rule.AlertType == rules.AlertTypeTraces {
+				res[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
+			}
+		}
+	}
+
+	aH.Respond(w, res)
 }
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
@@ -780,11 +1017,18 @@ func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 	allDashboards, err := dashboards.GetDashboards(r.Context())
-
 	if err != nil {
 		RespondError(w, err, nil)
 		return
 	}
+
+	ic := aH.IntegrationsController
+	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context())
+	if err != nil {
+		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(err))
+	}
+	allDashboards = append(allDashboards, installedIntegrationDashboards...)
+
 	tagsFromReq, ok := r.URL.Query()["tags"]
 	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
 		aH.Respond(w, allDashboards)
@@ -841,25 +1085,6 @@ func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) queryDashboardVars(w http.ResponseWriter, r *http.Request) {
-
-	query := r.URL.Query().Get("query")
-	if query == "" {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query is required")}, nil)
-		return
-	}
-	if strings.Contains(strings.ToLower(query), "alter table") {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query shouldn't alter data")}, nil)
-		return
-	}
-	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-	aH.Respond(w, dashboardVars)
-}
-
 func prepareQuery(r *http.Request) (string, error) {
 	var postData *model.DashboardVars
 
@@ -884,7 +1109,7 @@ func prepareQuery(r *http.Request) (string, error) {
 
 	for _, op := range notAllowedOps {
 		if strings.Contains(strings.ToLower(query), op) {
-			return "", fmt.Errorf("Operation %s is not allowed", op)
+			return "", fmt.Errorf("operation %s is not allowed", op)
 		}
 	}
 
@@ -953,46 +1178,23 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 	dashboard, apiError := dashboards.GetDashboard(r.Context(), uuid)
 
 	if apiError != nil {
-		RespondError(w, apiError, nil)
-		return
+		if apiError.Type() != model.ErrorNotFound {
+			RespondError(w, apiError, nil)
+			return
+		}
+
+		dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
+			r.Context(), uuid,
+		)
+		if apiError != nil {
+			RespondError(w, apiError, nil)
+			return
+		}
+
 	}
 
 	aH.Respond(w, dashboard)
 
-}
-
-func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, r *http.Request, signozDashboard model.DashboardData) {
-	toSave := make(map[string]interface{})
-	toSave["title"] = signozDashboard.Title
-	toSave["description"] = signozDashboard.Description
-	toSave["tags"] = signozDashboard.Tags
-	toSave["layout"] = signozDashboard.Layout
-	toSave["widgets"] = signozDashboard.Widgets
-	toSave["variables"] = signozDashboard.Variables
-
-	dashboard, apiError := dashboards.CreateDashboard(r.Context(), toSave, aH.featureFlags)
-	if apiError != nil {
-		RespondError(w, apiError, nil)
-		return
-	}
-	aH.Respond(w, dashboard)
-	return
-}
-
-func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.Request) {
-
-	defer r.Body.Close()
-	b, err := io.ReadAll(r.Body)
-
-	var importData model.GrafanaJSON
-
-	err = json.Unmarshal(b, &importData)
-	if err == nil {
-		signozDashboard := dashboards.TransformGrafanaJSONToSignoz(importData)
-		aH.saveAndReturn(w, r, signozDashboard)
-		return
-	}
-	RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error while creating dashboard from grafana json")
 }
 
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
@@ -1027,7 +1229,7 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body in test rule API\n", err)
+		zap.L().Error("Error in getting req body in test rule API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1070,7 +1272,7 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("msg: error in getting req body of patch rule API\n", "\t error:", err)
+		zap.L().Error("error in getting req body of patch rule API\n", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1091,7 +1293,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("msg: error in getting req body of edit rule API\n", "\t error:", err)
+		zap.L().Error("error in getting req body of edit rule API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1109,7 +1311,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	channel, apiErrorObj := aH.reader.GetChannel(id)
+	channel, apiErrorObj := aH.ruleManager.RuleDB().GetChannel(id)
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
 		return
@@ -1119,7 +1321,7 @@ func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	apiErrorObj := aH.reader.DeleteChannel(id)
+	apiErrorObj := aH.ruleManager.RuleDB().DeleteChannel(id)
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
 		return
@@ -1128,7 +1330,7 @@ func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
-	channels, apiErrorObj := aH.reader.GetChannels()
+	channels, apiErrorObj := aH.ruleManager.RuleDB().GetChannels()
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
 		return
@@ -1142,14 +1344,14 @@ func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body of testChannel API\n", err)
+		zap.L().Error("Error in getting req body of testChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.S().Errorf("Error in parsing req body of testChannel API\n", err)
+		zap.L().Error("Error in parsing req body of testChannel API\n", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1169,19 +1371,19 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body of editChannel API\n", err)
+		zap.L().Error("Error in getting req body of editChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.S().Errorf("Error in parsing req body of editChannel API\n", err)
+		zap.L().Error("Error in parsing req body of editChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	_, apiErrorObj := aH.reader.EditChannel(receiver, id)
+	_, apiErrorObj := aH.ruleManager.RuleDB().EditChannel(receiver, id)
 
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
@@ -1197,19 +1399,19 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body of createChannel API\n", err)
+		zap.L().Error("Error in getting req body of createChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.S().Errorf("Error in parsing req body of createChannel API\n", err)
+		zap.L().Error("Error in parsing req body of createChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	_, apiErrorObj := aH.reader.CreateChannel(receiver)
+	_, apiErrorObj := aH.ruleManager.RuleDB().CreateChannel(receiver)
 
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
@@ -1244,7 +1446,7 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body for create rule API\n", err)
+		zap.L().Error("Error in getting req body for create rule API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1259,9 +1461,6 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) queryRangeMetricsFromClickhouse(w http.ResponseWriter, r *http.Request) {
-
-}
 func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
 
 	query, apiErrorObj := parseQueryRangeRequest(r)
@@ -1271,7 +1470,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// zap.S().Info(query, apiError)
+	// zap.L().Info(query, apiError)
 
 	ctx := r.Context()
 	if to := r.FormValue("timeout"); to != "" {
@@ -1293,17 +1492,17 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if res.Err != nil {
-		zap.S().Error(res.Err)
+		zap.L().Error("error in query range metrics", zap.Error(res.Err))
 	}
 
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			RespondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			RespondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
 		}
-		RespondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 		return
 	}
 
@@ -1326,7 +1525,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// zap.S().Info(query, apiError)
+	// zap.L().Info(query, apiError)
 
 	ctx := r.Context()
 	if to := r.FormValue("timeout"); to != "" {
@@ -1348,17 +1547,17 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if res.Err != nil {
-		zap.S().Error(res.Err)
+		zap.L().Error("error in query range metrics", zap.Error(res.Err))
 	}
 
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			RespondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			RespondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
 		}
-		RespondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{
@@ -1399,7 +1598,22 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
 	if err == nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail, true, false)
+	}
+}
+
+func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
+
+	request, err := parseRegisterEventRequest(r)
+	if aH.HandleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	userEmail, err := auth.GetEmailFromJwt(r.Context())
+	if err == nil {
+		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, userEmail, request.RateLimited, true)
+		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
+	} else {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 	}
 }
 
@@ -1436,25 +1650,47 @@ func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServiceOverviewRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetServiceOverview(r.Context(), query, aH.skipConfig)
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-
-}
-
 func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
 
-	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig)
+	var start, end time.Time
+	var services []string
+
+	type topLevelOpsParams struct {
+		Service string `json:"service"`
+		Start   string `json:"start"`
+		End     string `json:"end"`
+	}
+
+	var params topLevelOpsParams
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		zap.L().Error("Error in getting req body for get top operations API", zap.Error(err))
+	}
+
+	if params.Service != "" {
+		services = []string{params.Service}
+	}
+
+	startEpoch := params.Start
+	if startEpoch != "" {
+		startEpochInt, err := strconv.ParseInt(startEpoch, 10, 64)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading start time")
+			return
+		}
+		start = time.Unix(0, startEpochInt)
+	}
+	endEpoch := params.End
+	if endEpoch != "" {
+		endEpochInt, err := strconv.ParseInt(endEpoch, 10, 64)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading end time")
+			return
+		}
+		end = time.Unix(0, endEpochInt)
+	}
+
+	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end, services)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -1480,7 +1716,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
 	if err == nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail, true, false)
 	}
 
 	if (data["number"] != 0) && (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
@@ -1518,13 +1754,13 @@ func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 
-	traceId, spanId, levelUpInt, levelDownInt, err := ParseSearchTracesParams(r)
+	params, err := ParseSearchTracesParams(r)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading params")
 		return
 	}
 
-	result, err := aH.reader.SearchTraces(r.Context(), traceId, spanId, levelUpInt, levelDownInt, 0, nil)
+	result, err := aH.reader.SearchTraces(r.Context(), params, nil)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1601,86 +1837,6 @@ func (aH *APIHandler) getErrorFromGroupID(w http.ResponseWriter, r *http.Request
 	result, apiErr := aH.reader.GetErrorFromGroupID(r.Context(), query)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
-func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseSpanFilterRequestBody(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetSpanFilters(r.Context(), query)
-
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
-func (aH *APIHandler) getFilteredSpans(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseFilteredSpansRequest(r, aH)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetFilteredSpans(r.Context(), query)
-
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
-func (aH *APIHandler) getFilteredSpanAggregates(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseFilteredSpanAggregatesRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetFilteredSpansAggregates(r.Context(), query)
-
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
-func (aH *APIHandler) getTagFilters(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseTagFilterRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetTagFilters(r.Context(), query)
-
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
-func (aH *APIHandler) getTagValues(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseTagValueRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetTagValues(r.Context(), query)
-
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1807,6 +1963,32 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.WriteJSON(w, r, resp)
+}
+
+func (aH *APIHandler) inviteUsers(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	req, err := parseInviteUsersRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	response, err := auth.InviteUsers(ctx, req)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	// Check the response status and set the appropriate HTTP status code
+	if response.Status == "failure" {
+		w.WriteHeader(http.StatusBadRequest) // 400 Bad Request for failure
+	} else if response.Status == "partial_success" {
+		w.WriteHeader(http.StatusPartialContent) // 206 Partial Content
+	} else {
+		w.WriteHeader(http.StatusOK) // 200 OK for success
+	}
+
+	aH.WriteJSON(w, r, response)
 }
 
 // getInvite returns the invite object details for the given invite token. We do not need to
@@ -1940,7 +2122,7 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := dao.DB().GetUsers(context.Background())
 	if err != nil {
-		zap.S().Debugf("[listUsers] Failed to query list of users, err: %v", err)
+		zap.L().Error("[listUsers] Failed to query list of users", zap.Error(err))
 		RespondError(w, err, nil)
 		return
 	}
@@ -1957,14 +2139,14 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	user, err := dao.DB().GetUser(ctx, id)
 	if err != nil {
-		zap.S().Debugf("[getUser] Failed to query user, err: %v", err)
+		zap.L().Error("[getUser] Failed to query user", zap.Error(err))
 		RespondError(w, err, "Failed to get user")
 		return
 	}
 	if user == nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
-			Err: errors.New("User not found"),
+			Err: errors.New("user not found"),
 		}, nil)
 		return
 	}
@@ -1987,7 +2169,7 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	old, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
-		zap.S().Debugf("[editUser] Failed to query user, err: %v", err)
+		zap.L().Error("[editUser] Failed to query user", zap.Error(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2031,7 +2213,7 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorNotFound,
-			Err: errors.New("User not found"),
+			Err: errors.New("no user found"),
 		}, nil)
 		return
 	}
@@ -2071,7 +2253,7 @@ func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("failed read user flags from http request for userId ", userId, "with error: ", err)
+		zap.L().Error("failed read user flags from http request for userId ", zap.String("userId", userId), zap.Error(err))
 		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
 		return
 	}
@@ -2079,7 +2261,7 @@ func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(b, &flags)
 	if err != nil {
-		zap.S().Errorf("failed parsing user flags for userId ", userId, "with error: ", err)
+		zap.L().Error("failed parsing user flags for userId ", zap.String("userId", userId), zap.Error(err))
 		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
 		return
 	}
@@ -2104,7 +2286,7 @@ func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorNotFound,
-			Err: errors.New("No user found"),
+			Err: errors.New("no user found"),
 		}, nil)
 		return
 	}
@@ -2153,7 +2335,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 
 		if len(adminUsers) == 1 {
 			RespondError(w, &model.ApiError{
-				Err: errors.New("Cannot demote the last admin"),
+				Err: errors.New("cannot demote the last admin"),
 				Typ: model.ErrorInternal}, nil)
 			return
 		}
@@ -2205,7 +2387,10 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		"organizationName": req.Name,
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail)
+	if err != nil {
+		zap.L().Error("failed to get user email from jwt", zap.Error(err))
+	}
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail, true, false)
 
 	aH.WriteJSON(w, r, map[string]string{"data": "org updated successfully"})
 }
@@ -2243,7 +2428,7 @@ func (aH *APIHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := auth.ResetPassword(context.Background(), req); err != nil {
-		zap.S().Debugf("resetPassword failed, err: %v\n", err)
+		zap.L().Error("resetPassword failed", zap.Error(err))
 		if aH.HandleError(w, err, http.StatusInternalServerError) {
 			return
 		}
@@ -2258,10 +2443,9 @@ func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := auth.ChangePassword(context.Background(), req); err != nil {
-		if aH.HandleError(w, err, http.StatusInternalServerError) {
-			return
-		}
+	if apiErr := auth.ChangePassword(context.Background(), req); apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
 
 	}
 	aH.WriteJSON(w, r, map[string]string{"data": "password changed successfully"})
@@ -2287,7 +2471,7 @@ func (aH *APIHandler) HandleError(w http.ResponseWriter, err error, statusCode i
 		return false
 	}
 	if statusCode == http.StatusInternalServerError {
-		zap.S().Error("HTTP handler, Internal Server Error", zap.Error(err))
+		zap.L().Error("HTTP handler, Internal Server Error", zap.Error(err))
 	}
 	structuredResp := structuredResponse{
 		Errors: []structuredError{
@@ -2312,6 +2496,1340 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	resp, _ := marshall(response)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resp)
+}
+
+// RegisterMessagingQueuesRoutes adds messaging-queues routes
+func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *AuthMiddleware) {
+
+	// SubRouter for kafka
+	kafkaRouter := router.PathPrefix("/api/v1/messaging-queues/kafka").Subrouter()
+
+	onboardingRouter := kafkaRouter.PathPrefix("/onboarding").Subrouter()
+	onboardingRouter.HandleFunc("/producers", am.ViewAccess(aH.onboardProducers)).Methods(http.MethodPost)
+	onboardingRouter.HandleFunc("/consumers", am.ViewAccess(aH.onboardConsumers)).Methods(http.MethodPost)
+	onboardingRouter.HandleFunc("/kafka", am.ViewAccess(aH.onboardKafka)).Methods(http.MethodPost)
+
+	partitionLatency := kafkaRouter.PathPrefix("/partition-latency").Subrouter()
+	partitionLatency.HandleFunc("/overview", am.ViewAccess(aH.getPartitionOverviewLatencyData)).Methods(http.MethodPost)
+	partitionLatency.HandleFunc("/consumer", am.ViewAccess(aH.getConsumerPartitionLatencyData)).Methods(http.MethodPost)
+
+	consumerLagRouter := kafkaRouter.PathPrefix("/consumer-lag").Subrouter()
+	consumerLagRouter.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerData)).Methods(http.MethodPost)
+	consumerLagRouter.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerData)).Methods(http.MethodPost)
+	consumerLagRouter.HandleFunc("/network-latency", am.ViewAccess(aH.getNetworkData)).Methods(http.MethodPost)
+
+	topicThroughput := kafkaRouter.PathPrefix("/topic-throughput").Subrouter()
+	topicThroughput.HandleFunc("/producer", am.ViewAccess(aH.getProducerThroughputOverview)).Methods(http.MethodPost)
+	topicThroughput.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerThroughputDetails)).Methods(http.MethodPost)
+	topicThroughput.HandleFunc("/consumer", am.ViewAccess(aH.getConsumerThroughputOverview)).Methods(http.MethodPost)
+	topicThroughput.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerThroughputDetails)).Methods(http.MethodPost)
+
+	spanEvaluation := kafkaRouter.PathPrefix("/span").Subrouter()
+	spanEvaluation.HandleFunc("/evaluation", am.ViewAccess(aH.getProducerConsumerEval)).Methods(http.MethodPost)
+
+	// for other messaging queues, add SubRouters here
+}
+
+// not using md5 hashing as the plain string would work
+func uniqueIdentifier(params []string, separator string) string {
+	return strings.Join(params, separator)
+}
+
+func (aH *APIHandler) onboardProducers(
+
+	w http.ResponseWriter, r *http.Request,
+
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_producers")
+
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, err)
+		return
+	}
+
+	var entries []mq.OnboardingResponse
+
+	for _, result := range results {
+
+		for key, value := range result.Data {
+			var message, attribute, status string
+
+			intValue := int(*value.(*uint8))
+
+			if key == "entries" {
+				attribute = "telemetry ingestion"
+				if intValue != 0 {
+					entries = nil
+					entry := mq.OnboardingResponse{
+						Attribute: attribute,
+						Message:   "No data available in the given time range",
+						Status:    "0",
+					}
+					entries = append(entries, entry)
+					break
+				} else {
+					status = "1"
+				}
+			} else if key == "queue" {
+				attribute = "messaging.system"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.system attribute is not present or not equal to kafka in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "kind" {
+				attribute = "kind"
+				if intValue != 0 {
+					status = "0"
+					message = "check if your producer spans has kind=4 as attribute"
+				} else {
+					status = "1"
+				}
+			} else if key == "destination" {
+				attribute = "messaging.destination.name"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.destination.name attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "partition" {
+				attribute = "messaging.destination.partition.id"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.destination.partition.id attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			}
+
+			entry := mq.OnboardingResponse{
+				Attribute: attribute,
+				Message:   message,
+				Status:    status,
+			}
+
+			entries = append(entries, entry)
+		}
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Attribute < entries[j].Attribute
+	})
+
+	aH.Respond(w, entries)
+}
+
+func (aH *APIHandler) onboardConsumers(
+
+	w http.ResponseWriter, r *http.Request,
+
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_consumers")
+
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	result, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, err)
+		return
+	}
+
+	var entries []mq.OnboardingResponse
+
+	for _, result := range result {
+		for key, value := range result.Data {
+			var message, attribute, status string
+
+			intValue := int(*value.(*uint8))
+
+			if key == "entries" {
+				attribute = "telemetry ingestion"
+				if intValue != 0 {
+					entries = nil
+					entry := mq.OnboardingResponse{
+						Attribute: attribute,
+						Message:   "No data available in the given time range",
+						Status:    "0",
+					}
+					entries = append(entries, entry)
+					break
+				} else {
+					status = "1"
+				}
+			} else if key == "queue" {
+				attribute = "messaging.system"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.system attribute is not present or not equal to kafka in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "kind" {
+				attribute = "kind"
+				if intValue != 0 {
+					status = "0"
+					message = "check if your consumer spans has kind=5 as attribute"
+				} else {
+					status = "1"
+				}
+			} else if key == "destination" {
+				attribute = "messaging.destination.name"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.destination.name attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "partition" {
+				attribute = "messaging.destination.partition.id"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.destination.partition.id attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "svc" {
+				attribute = "service_name"
+				if intValue != 0 {
+					status = "0"
+					message = "service_name attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "cgroup" {
+				attribute = "messaging.kafka.consumer.group"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.kafka.consumer.group attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "bodysize" {
+				attribute = "messaging.message.body.size"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.message.body.size attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "clientid" {
+				attribute = "messaging.client_id"
+				if intValue != 0 {
+					status = "0"
+					message = "messaging.client_id attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			} else if key == "instanceid" {
+				attribute = "service.instance.id"
+				if intValue != 0 {
+					status = "0"
+					message = "service.instance.id attribute is not present in your spans"
+				} else {
+					status = "1"
+				}
+			}
+
+			entry := mq.OnboardingResponse{
+				Attribute: attribute,
+				Message:   message,
+				Status:    status,
+			}
+			entries = append(entries, entry)
+		}
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Attribute < entries[j].Attribute
+	})
+
+	aH.Respond(w, entries)
+}
+
+func (aH *APIHandler) onboardKafka(
+
+	w http.ResponseWriter, r *http.Request,
+
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildBuilderQueriesKafkaOnboarding(messagingQueue)
+
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	results, errQueriesByName, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQueriesByName)
+		return
+	}
+
+	var entries []mq.OnboardingResponse
+
+	var fetchLatencyState, consumerLagState bool
+
+	for _, result := range results {
+		for _, series := range result.Series {
+			for _, point := range series.Points {
+				pointValue := point.Value
+				if pointValue > 0 {
+					if result.QueryName == "fetch_latency" {
+						fetchLatencyState = true
+						break
+					}
+					if result.QueryName == "consumer_lag" {
+						consumerLagState = true
+						break
+					}
+				}
+
+			}
+		}
+	}
+
+	if !fetchLatencyState && !consumerLagState {
+		entries = append(entries, mq.OnboardingResponse{
+			Attribute: "telemetry ingestion",
+			Message:   "No data available in the given time range",
+			Status:    "0",
+		})
+	}
+
+	if !fetchLatencyState {
+		entries = append(entries, mq.OnboardingResponse{
+			Attribute: "kafka_consumer_fetch_latency_avg",
+			Message:   "Metric kafka_consumer_fetch_latency_avg is not present in the given time range.",
+			Status:    "0",
+		})
+	} else {
+		entries = append(entries, mq.OnboardingResponse{
+			Attribute: "kafka_consumer_fetch_latency_avg",
+			Status:    "1",
+		})
+	}
+
+	if !consumerLagState {
+		entries = append(entries, mq.OnboardingResponse{
+			Attribute: "kafka_consumer_group_lag",
+			Message:   "Metric kafka_consumer_group_lag is not present in the given time range.",
+			Status:    "0",
+		})
+	} else {
+		entries = append(entries, mq.OnboardingResponse{
+			Attribute: "kafka_consumer_group_lag",
+			Status:    "1",
+		})
+	}
+
+	aH.Respond(w, entries)
+}
+
+func (aH *APIHandler) getNetworkData(
+	w http.ResponseWriter, r *http.Request,
+) {
+	attributeCache := &mq.Clients{
+		Hash: make(map[string]struct{}),
+	}
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "throughput", attributeCache)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQueriesByName map[string]error
+
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQueriesByName)
+		return
+	}
+
+	for _, res := range result {
+		for _, series := range res.Series {
+			clientID, clientIDOk := series.Labels["client_id"]
+			serviceInstanceID, serviceInstanceIDOk := series.Labels["service_instance_id"]
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			params := []string{clientID, serviceInstanceID, serviceName}
+			hashKey := uniqueIdentifier(params, "#")
+			_, ok := attributeCache.Hash[hashKey]
+			if clientIDOk && serviceInstanceIDOk && serviceNameOk && !ok {
+				attributeCache.Hash[hashKey] = struct{}{}
+				attributeCache.ClientID = append(attributeCache.ClientID, clientID)
+				attributeCache.ServiceInstanceID = append(attributeCache.ServiceInstanceID, serviceInstanceID)
+				attributeCache.ServiceName = append(attributeCache.ServiceName, serviceName)
+			}
+		}
+	}
+
+	queryRangeParams, err = mq.BuildQRParamsWithCache(messagingQueue, "fetch-latency", attributeCache)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
+		return
+	}
+
+	latencyColumn := &v3.Result{QueryName: "latency"}
+	var latencySeries []*v3.Series
+	for _, res := range resultFetchLatency {
+		for _, series := range res.Series {
+			clientID, clientIDOk := series.Labels["client_id"]
+			serviceInstanceID, serviceInstanceIDOk := series.Labels["service_instance_id"]
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			params := []string{clientID, serviceInstanceID, serviceName}
+			hashKey := uniqueIdentifier(params, "#")
+			_, ok := attributeCache.Hash[hashKey]
+			if clientIDOk && serviceInstanceIDOk && serviceNameOk && ok {
+				latencySeries = append(latencySeries, series)
+			}
+		}
+	}
+
+	latencyColumn.Series = latencySeries
+	result = append(result, latencyColumn)
+
+	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+
+	resp := v3.QueryRangeResponse{
+		Result: resultFetchLatency,
+	}
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) getProducerData(
+	w http.ResponseWriter, r *http.Request,
+) {
+	// parse the query params to retrieve the messaging queue struct
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) getConsumerData(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "consumer")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s1
+func (aH *APIHandler) getPartitionOverviewLatencyData(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer-topic-throughput")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s1
+func (aH *APIHandler) getConsumerPartitionLatencyData(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "consumer_partition_latency")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s3 p overview
+// fetch traces
+// cache attributes
+// fetch byte rate metrics
+func (aH *APIHandler) getProducerThroughputOverview(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	attributeCache := &mq.Clients{
+		Hash: make(map[string]struct{}),
+	}
+
+	producerQueryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(producerQueryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), producerQueryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
+	for _, res := range result {
+		for _, series := range res.Series {
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			topicName, topicNameOk := series.Labels["topic"]
+			params := []string{serviceName, topicName}
+			hashKey := uniqueIdentifier(params, "#")
+			_, ok := attributeCache.Hash[hashKey]
+			if topicNameOk && serviceNameOk && !ok {
+				attributeCache.Hash[hashKey] = struct{}{}
+				attributeCache.TopicName = append(attributeCache.TopicName, topicName)
+				attributeCache.ServiceName = append(attributeCache.ServiceName, serviceName)
+			}
+		}
+	}
+
+	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-byte-rate", attributeCache)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
+		return
+	}
+
+	byteRateColumn := &v3.Result{QueryName: "byte_rate"}
+	var byteRateSeries []*v3.Series
+	for _, res := range resultFetchLatency {
+		for _, series := range res.Series {
+			topic, topicOk := series.Labels["topic"]
+			serviceName, serviceNameOk := series.Labels["service_name"]
+			params := []string{serviceName, topic}
+			hashKey := uniqueIdentifier(params, "#")
+			_, ok := attributeCache.Hash[hashKey]
+			if topicOk && serviceNameOk && ok {
+				byteRateSeries = append(byteRateSeries, series)
+			}
+		}
+	}
+
+	byteRateColumn.Series = byteRateSeries
+	var latencyColumnResult []*v3.Result
+	latencyColumnResult = append(latencyColumnResult, byteRateColumn)
+
+	resultFetchLatency = postprocess.TransformToTableForBuilderQueries(latencyColumnResult, queryRangeParams)
+
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	result = append(result, resultFetchLatency[0])
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s3 p details
+func (aH *APIHandler) getProducerThroughputDetails(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer-throughput-details")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s3 c overview
+func (aH *APIHandler) getConsumerThroughputOverview(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "consumer-throughput-overview")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s3 c details
+func (aH *APIHandler) getConsumerThroughputDetails(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "consumer-throughput-details")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	result = postprocess.TransformToTableForClickHouseQueries(result)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// s4
+// needs logic to parse duration
+// needs logic to get the percentage
+// show 10 traces
+func (aH *APIHandler) getProducerConsumerEval(
+	w http.ResponseWriter, r *http.Request,
+) {
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval")
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+// ParseMessagingQueueBody parse for messaging queue params
+func ParseMessagingQueueBody(r *http.Request) (*mq.MessagingQueue, *model.ApiError) {
+	messagingQueue := new(mq.MessagingQueue)
+	if err := json.NewDecoder(r.Body).Decode(messagingQueue); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	return messagingQueue, nil
+}
+
+// Preferences
+
+func (aH *APIHandler) getUserPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
+
+	preference, apiErr := preferences.GetUserPreference(
+		r.Context(), preferenceId, user.User.OrgId, user.User.Id,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (aH *APIHandler) updateUserPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
+	req := preferences.UpdatePreference{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.Id)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (aH *APIHandler) getAllUserPreferences(
+	w http.ResponseWriter, r *http.Request,
+) {
+	user := common.GetUserFromContext(r.Context())
+	preference, apiErr := preferences.GetAllUserPreferences(
+		r.Context(), user.User.OrgId, user.User.Id,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (aH *APIHandler) getOrgPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	user := common.GetUserFromContext(r.Context())
+	preference, apiErr := preferences.GetOrgPreference(
+		r.Context(), preferenceId, user.User.OrgId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (aH *APIHandler) updateOrgPreference(
+	w http.ResponseWriter, r *http.Request,
+) {
+	preferenceId := mux.Vars(r)["preferenceId"]
+	req := preferences.UpdatePreference{}
+	user := common.GetUserFromContext(r.Context())
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.OrgId)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+func (aH *APIHandler) getAllOrgPreferences(
+	w http.ResponseWriter, r *http.Request,
+) {
+	user := common.GetUserFromContext(r.Context())
+	preference, apiErr := preferences.GetAllOrgPreferences(
+		r.Context(), user.User.OrgId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, preference)
+}
+
+// RegisterIntegrationRoutes Registers all Integrations
+func (aH *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()
+
+	subRouter.HandleFunc(
+		"/install", am.ViewAccess(aH.InstallIntegration),
+	).Methods(http.MethodPost)
+
+	subRouter.HandleFunc(
+		"/uninstall", am.ViewAccess(aH.UninstallIntegration),
+	).Methods(http.MethodPost)
+
+	// Used for polling for status in v0
+	subRouter.HandleFunc(
+		"/{integrationId}/connection_status", am.ViewAccess(aH.GetIntegrationConnectionStatus),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"/{integrationId}", am.ViewAccess(aH.GetIntegration),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"", am.ViewAccess(aH.ListIntegrations),
+	).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) ListIntegrations(
+	w http.ResponseWriter, r *http.Request,
+) {
+	params := map[string]string{}
+	for k, values := range r.URL.Query() {
+		params[k] = values[0]
+	}
+
+	resp, apiErr := aH.IntegrationsController.ListIntegrations(
+		r.Context(), params,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integrations")
+		return
+	}
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) GetIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	integration, apiErr := aH.IntegrationsController.GetIntegration(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration details")
+		return
+	}
+
+	aH.Respond(w, integration)
+}
+
+func (aH *APIHandler) GetIntegrationConnectionStatus(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	isInstalled, apiErr := aH.IntegrationsController.IsIntegrationInstalled(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to check if integration is installed")
+		return
+	}
+
+	// Do not spend resources calculating connection status unless installed.
+	if !isInstalled {
+		aH.Respond(w, &integrations.IntegrationConnectionStatus{})
+		return
+	}
+
+	connectionTests, apiErr := aH.IntegrationsController.GetIntegrationConnectionTests(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to fetch integration connection tests")
+		return
+	}
+
+	lookbackSecondsStr := r.URL.Query().Get("lookback_seconds")
+	lookbackSeconds, err := strconv.ParseInt(lookbackSecondsStr, 10, 64)
+	if err != nil {
+		lookbackSeconds = 15 * 60
+	}
+
+	connectionStatus, apiErr := aH.calculateConnectionStatus(
+		r.Context(), connectionTests, lookbackSeconds,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to calculate integration connection status")
+		return
+	}
+
+	aH.Respond(w, connectionStatus)
+}
+
+func (aH *APIHandler) calculateConnectionStatus(
+	ctx context.Context,
+	connectionTests *integrations.IntegrationConnectionTests,
+	lookbackSeconds int64,
+) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
+	// Calculate connection status for signals in parallel
+
+	result := &integrations.IntegrationConnectionStatus{}
+	errors := []*model.ApiError{}
+	var resultLock sync.Mutex
+
+	var wg sync.WaitGroup
+
+	// Calculate logs connection status
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		logsConnStatus, apiErr := aH.calculateLogsConnectionStatus(
+			ctx, connectionTests.Logs, lookbackSeconds,
+		)
+
+		resultLock.Lock()
+		defer resultLock.Unlock()
+
+		if apiErr != nil {
+			errors = append(errors, apiErr)
+		} else {
+			result.Logs = logsConnStatus
+		}
+	}()
+
+	// Calculate metrics connection status
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		if connectionTests.Metrics == nil || len(connectionTests.Metrics) < 1 {
+			return
+		}
+
+		statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
+			ctx, connectionTests.Metrics,
+		)
+
+		resultLock.Lock()
+		defer resultLock.Unlock()
+
+		if apiErr != nil {
+			errors = append(errors, apiErr)
+
+		} else if statusForLastReceivedMetric != nil {
+			resourceSummaryParts := []string{}
+			for k, v := range statusForLastReceivedMetric.LastReceivedLabels {
+				interestingLabels := []string{
+					"container_name", "host_name", "node_name",
+					"pod_name", "deployment_name", "cluster_name",
+					"namespace_name", "job_name", "service_name",
+				}
+				isInterestingKey := !strings.HasPrefix(k, "_") && slices.ContainsFunc(
+					interestingLabels, func(l string) bool { return strings.Contains(k, l) },
+				)
+				if isInterestingKey {
+					resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+						"%s=%s", k, v,
+					))
+				}
+			}
+
+			result.Metrics = &integrations.SignalConnectionStatus{
+				LastReceivedFrom:     strings.Join(resourceSummaryParts, ", "),
+				LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
+			}
+		}
+	}()
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return nil, errors[0]
+	}
+
+	return result, nil
+}
+
+func (aH *APIHandler) calculateLogsConnectionStatus(
+	ctx context.Context,
+	logsConnectionTest *integrations.LogsConnectionTest,
+	lookbackSeconds int64,
+) (*integrations.SignalConnectionStatus, *model.ApiError) {
+	if logsConnectionTest == nil {
+		return nil, nil
+	}
+
+	logsConnTestFilter := &v3.FilterSet{
+		Operator: "AND",
+		Items: []v3.FilterItem{
+			{
+				Key: v3.AttributeKey{
+					Key:      logsConnectionTest.AttributeKey,
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+				},
+				Operator: "=",
+				Value:    logsConnectionTest.AttributeValue,
+			},
+		},
+	}
+
+	qrParams := &v3.QueryRangeParamsV3{
+		Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
+		End:   time.Now().UnixMilli(),
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelTypeList,
+			QueryType: v3.QueryTypeBuilder,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					PageSize:          1,
+					Filters:           logsConnTestFilter,
+					QueryName:         "A",
+					DataSource:        v3.DataSourceLogs,
+					Expression:        "A",
+					AggregateOperator: v3.AggregateOperatorNoOp,
+				},
+			},
+		},
+	}
+	queryRes, _, err := aH.querier.QueryRange(
+		ctx, qrParams,
+	)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query for integration connection status: %w", err,
+		))
+	}
+	if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+		lastLog := queryRes[0].List[0]
+
+		resourceSummaryParts := []string{}
+		lastLogResourceAttribs := lastLog.Data["resources_string"]
+		if lastLogResourceAttribs != nil {
+			resourceAttribs, ok := lastLogResourceAttribs.(*map[string]string)
+			if !ok {
+				return nil, model.InternalError(fmt.Errorf(
+					"could not cast log resource attribs",
+				))
+			}
+			for k, v := range *resourceAttribs {
+				resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+					"%s=%s", k, v,
+				))
+			}
+		}
+		lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
+
+		return &integrations.SignalConnectionStatus{
+			LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+			LastReceivedFrom:     lastLogResourceSummary,
+		}, nil
+	}
+
+	return nil, nil
+}
+
+func (aH *APIHandler) InstallIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.InstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	integration, apiErr := aH.IntegrationsController.Install(
+		r.Context(), &req,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, integration)
+}
+
+func (aH *APIHandler) UninstallIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.UninstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	apiErr := aH.IntegrationsController.Uninstall(r.Context(), &req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, map[string]interface{}{})
 }
 
 // logs
@@ -2355,7 +3873,7 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 
 	apiErr := aH.reader.UpdateLogField(r.Context(), &field)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to update filed in the DB")
+		RespondError(w, apiErr, "Failed to update field in the DB")
 		return
 	}
 	aH.WriteJSON(w, r, field)
@@ -2412,10 +3930,10 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "data: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
-			zap.S().Debug("done!")
+			zap.L().Debug("done!")
 			return
 		case err := <-client.Error:
-			zap.S().Error("error occured!", err)
+			zap.L().Error("error occured", zap.Error(err))
 			return
 		}
 	}
@@ -2458,7 +3976,7 @@ func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	return int(version64), nil
 }
 
-func (ah *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
 	req := logparsingpipeline.PipelinesPreviewRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -2466,7 +3984,7 @@ func (ah *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	resultLogs, apiErr := ah.LogsParsingPipelineController.PreviewLogsPipelines(
+	resultLogs, apiErr := aH.LogsParsingPipelineController.PreviewLogsPipelines(
 		r.Context(), &req,
 	)
 
@@ -2475,10 +3993,10 @@ func (ah *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	ah.Respond(w, resultLogs)
+	aH.Respond(w, resultLogs)
 }
 
-func (ah *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
@@ -2490,33 +4008,34 @@ func (ah *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 	var apierr *model.ApiError
 
 	if version != -1 {
-		payload, apierr = ah.listLogsPipelinesByVersion(context.Background(), version)
+		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), version)
 	} else {
-		payload, apierr = ah.listLogsPipelines(context.Background())
+		payload, apierr = aH.listLogsPipelines(context.Background())
 	}
 
 	if apierr != nil {
 		RespondError(w, apierr, payload)
 		return
 	}
-	ah.Respond(w, payload)
+	aH.Respond(w, payload)
 }
 
 // listLogsPipelines lists logs piplines for latest version
-func (ah *APIHandler) listLogsPipelines(ctx context.Context) (
+func (aH *APIHandler) listLogsPipelines(ctx context.Context) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	// get lateset agent config
+	latestVersion := -1
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
-	if err != nil {
-		if err.Type() != model.ErrorNotFound {
-			return nil, model.WrapApiError(err, "failed to get latest agent config version")
-		} else {
-			return nil, nil
-		}
+	if err != nil && err.Type() != model.ErrorNotFound {
+		return nil, model.WrapApiError(err, "failed to get latest agent config version")
 	}
 
-	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, lastestConfig.Version)
+	if lastestConfig != nil {
+		latestVersion = lastestConfig.Version
+	}
+
+	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, latestVersion)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get pipelines")
 	}
@@ -2532,10 +4051,10 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (
 }
 
 // listLogsPipelinesByVersion lists pipelines along with config version history
-func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (
+func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
-	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
+	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get pipelines by version")
 	}
@@ -2551,7 +4070,7 @@ func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version in
 	return payload, nil
 }
 
-func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request) {
 
 	req := logparsingpipeline.PostablePipelines{}
 
@@ -2565,16 +4084,15 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		postable []logparsingpipeline.PostablePipeline,
 	) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 		if len(postable) == 0 {
-			zap.S().Warnf("found no pipelines in the http request, this will delete all the pipelines")
+			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")
 		}
 
-		for _, p := range postable {
-			if err := p.IsValid(); err != nil {
-				return nil, model.BadRequestStr(err.Error())
-			}
+		validationErr := aH.LogsParsingPipelineController.ValidatePipelines(ctx, postable)
+		if validationErr != nil {
+			return nil, validationErr
 		}
 
-		return ah.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
+		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
 	}
 
 	res, err := createPipeline(r.Context(), req.Pipelines)
@@ -2583,7 +4101,7 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ah.Respond(w, res)
+	aH.Respond(w, res)
 }
 
 func (aH *APIHandler) getSavedViews(w http.ResponseWriter, r *http.Request) {
@@ -2678,7 +4196,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req)
+		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req, true)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -2690,6 +4208,30 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
+func (aH *APIHandler) getQueryBuilderSuggestions(w http.ResponseWriter, r *http.Request) {
+	req, err := parseQBFilterSuggestionsRequest(r)
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	if req.DataSource != v3.DataSourceLogs {
+		// Support for traces and metrics might come later
+		RespondError(w, model.BadRequest(
+			fmt.Errorf("suggestions not supported for %s", req.DataSource),
+		), nil)
+		return
+	}
+
+	response, err := aH.reader.GetQBFilterSuggestionsForLogs(r.Context(), req)
+	if err != nil {
+		RespondError(w, err, nil)
 		return
 	}
 
@@ -2754,234 +4296,6 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	aH.Respond(w, response)
 }
 
-func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]string) {
-	type channelResult struct {
-		Series []*v3.Series
-		Err    error
-		Name   string
-		Query  string
-	}
-
-	ch := make(chan channelResult, len(queries))
-	var wg sync.WaitGroup
-
-	for name, query := range queries {
-		wg.Add(1)
-		go func(name, query string) {
-			defer wg.Done()
-
-			seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
-
-			if err != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
-				return
-			}
-			ch <- channelResult{Series: seriesList, Name: name, Query: query}
-		}(name, query)
-	}
-
-	wg.Wait()
-	close(ch)
-
-	var errs []error
-	errQuriesByName := make(map[string]string)
-	res := make([]*v3.Result, 0)
-	// read values from the channel
-	for r := range ch {
-		if r.Err != nil {
-			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Query
-			continue
-		}
-		res = append(res, &v3.Result{
-			QueryName: r.Name,
-			Series:    r.Series,
-		})
-	}
-	if len(errs) != 0 {
-		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
-	}
-	return res, nil, nil
-}
-
-func (aH *APIHandler) execClickHouseListQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]string) {
-	type channelResult struct {
-		List  []*v3.Row
-		Err   error
-		Name  string
-		Query string
-	}
-
-	ch := make(chan channelResult, len(queries))
-	var wg sync.WaitGroup
-
-	for name, query := range queries {
-		wg.Add(1)
-		go func(name, query string) {
-			defer wg.Done()
-			rowList, err := aH.reader.GetListResultV3(ctx, query)
-
-			if err != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
-				return
-			}
-			ch <- channelResult{List: rowList, Name: name, Query: query}
-		}(name, query)
-	}
-
-	wg.Wait()
-	close(ch)
-
-	var errs []error
-	errQuriesByName := make(map[string]string)
-	res := make([]*v3.Result, 0)
-	// read values from the channel
-	for r := range ch {
-		if r.Err != nil {
-			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Query
-			continue
-		}
-		res = append(res, &v3.Result{
-			QueryName: r.Name,
-			List:      r.List,
-		})
-	}
-	if len(errs) != 0 {
-		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
-	}
-	return res, nil, nil
-}
-
-func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangeParams *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]string) {
-	type channelResult struct {
-		Series []*v3.Series
-		Err    error
-		Name   string
-		Query  string
-	}
-
-	ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeQuery.PromQueries))
-	var wg sync.WaitGroup
-
-	for name, query := range metricsQueryRangeParams.CompositeQuery.PromQueries {
-		if query.Disabled {
-			continue
-		}
-		wg.Add(1)
-		go func(name string, query *v3.PromQuery) {
-			var seriesList []*v3.Series
-			defer wg.Done()
-			tmpl := template.New("promql-query")
-			tmpl, tmplErr := tmpl.Parse(query.Query)
-			if tmplErr != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
-				return
-			}
-			var queryBuf bytes.Buffer
-			tmplErr = tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
-			if tmplErr != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
-				return
-			}
-			query.Query = queryBuf.String()
-			queryModel := model.QueryRangeParams{
-				Start: time.UnixMilli(metricsQueryRangeParams.Start),
-				End:   time.UnixMilli(metricsQueryRangeParams.End),
-				Step:  time.Duration(metricsQueryRangeParams.Step * int64(time.Second)),
-				Query: query.Query,
-			}
-			promResult, _, err := aH.reader.GetQueryRangeResult(ctx, &queryModel)
-			if err != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query.Query}
-				return
-			}
-			matrix, _ := promResult.Matrix()
-			for _, v := range matrix {
-				var s v3.Series
-				s.Labels = v.Metric.Copy().Map()
-				for _, p := range v.Floats {
-					s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.F})
-				}
-				seriesList = append(seriesList, &s)
-			}
-			ch <- channelResult{Series: seriesList, Name: name, Query: query.Query}
-		}(name, query)
-	}
-
-	wg.Wait()
-	close(ch)
-
-	var errs []error
-	errQuriesByName := make(map[string]string)
-	res := make([]*v3.Result, 0)
-	// read values from the channel
-	for r := range ch {
-		if r.Err != nil {
-			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Query
-			continue
-		}
-		res = append(res, &v3.Result{
-			QueryName: r.Name,
-			Series:    r.Series,
-		})
-	}
-	if len(errs) != 0 {
-		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
-	}
-	return res, nil, nil
-}
-
-func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
-	data := map[string]v3.AttributeKey{}
-	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
-		if query.DataSource == v3.DataSourceLogs {
-			fields, apiError := aH.reader.GetLogFields(ctx)
-			if apiError != nil {
-				return nil, apiError.Err
-			}
-
-			// top level fields meta will always be present in the frontend. (can be support for that as enchancement)
-			getType := func(t string) (v3.AttributeKeyType, bool) {
-				if t == "attributes" {
-					return v3.AttributeKeyTypeTag, false
-				} else if t == "resources" {
-					return v3.AttributeKeyTypeResource, false
-				}
-				return "", true
-			}
-
-			for _, selectedField := range fields.Selected {
-				fieldType, pass := getType(selectedField.Type)
-				if pass {
-					continue
-				}
-				data[selectedField.Name] = v3.AttributeKey{
-					Key:      selectedField.Name,
-					Type:     fieldType,
-					DataType: v3.AttributeKeyDataType(strings.ToLower(selectedField.DataType)),
-					IsColumn: true,
-				}
-			}
-			for _, interestingField := range fields.Interesting {
-				fieldType, pass := getType(interestingField.Type)
-				if pass {
-					continue
-				}
-				data[interestingField.Name] = v3.AttributeKey{
-					Key:      interestingField.Name,
-					Type:     fieldType,
-					DataType: v3.AttributeKeyDataType(strings.ToLower(interestingField.DataType)),
-					IsColumn: false,
-				}
-			}
-			break
-		}
-	}
-	return data, nil
-}
-
 func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
 	data := map[string]v3.AttributeKey{}
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
@@ -3001,23 +4315,36 @@ func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.Qu
 	return data, nil
 }
 
+func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request) {
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+
+	if apiErrorObj != nil {
+		zap.L().Error(apiErrorObj.Err.Error())
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+	queryRangeParams.Version = "v3"
+
+	aH.Respond(w, queryRangeParams)
+}
+
 func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
 
 	var result []*v3.Result
 	var err error
-	var errQuriesByName map[string]string
+	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
-			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+			logsFields, err := aH.reader.GetLogFields(ctx)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, errQuriesByName)
 				return
 			}
+			// get the fields if any logs query is present
+			fields := model.GetLogFieldsV3(ctx, queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
@@ -3027,24 +4354,92 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
+		if aH.UseTraceNewSchema {
+			tracesV4.Enrich(queryRangeParams, spanKeys)
+		} else {
+			tracesV3.Enrich(queryRangeParams, spanKeys)
+		}
+
 	}
 
-	result, err, errQuriesByName = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
+	// WARN: Only works for AND operator in traces query
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
+		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
+		if isUsed && len(traceIDs) > 0 {
+			zap.L().Debug("traceID used as filter in traces query")
+			// query signoz_spans table with traceID to get min and max timestamp
+			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
+			if err == nil {
+				// add timestamp filter to queryRange params
+				tracesV3.AddTimestampFilters(min, max, queryRangeParams)
+				zap.L().Debug("post adding timestamp filter in traces query", zap.Any("queryRangeParams", queryRangeParams))
+			}
+		}
+	}
+
+	// Hook up query progress tracking if requested
+	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
+	if len(queryIdHeader) > 0 {
+		onQueryFinished, err := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
+
+		if err != nil {
+			zap.L().Error(
+				"couldn't report query start for progress tracking",
+				zap.String("queryId", queryIdHeader), zap.Error(err),
+			)
+
+		} else {
+			// Adding queryId to the context signals clickhouse queries to report progress
+			//lint:ignore SA1029 ignore for now
+			ctx = context.WithValue(ctx, "queryId", queryIdHeader)
+
+			defer func() {
+				go onQueryFinished()
+			}()
+		}
+	}
+
+	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams)
 
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		queryErrors := map[string]string{}
+		for name, err := range errQuriesByName {
+			queryErrors[fmt.Sprintf("Query-%s", name)] = err.Error()
+		}
+		apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		RespondError(w, apiErrObj, queryErrors)
 		return
 	}
 
-	applyMetricLimit(result, queryRangeParams)
+	postprocess.ApplyHavingClause(result, queryRangeParams)
+	postprocess.ApplyMetricLimit(result, queryRangeParams)
+
+	sendQueryResultEvents(r, result, queryRangeParams)
+	// only adding applyFunctions instead of postProcess since experssion are
+	// are executed in clickhouse directly and we wanted to add support for timeshift
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		postprocess.ApplyFunctions(result, queryRangeParams)
+	}
+
+	if queryRangeParams.CompositeQuery.FillGaps {
+		postprocess.FillGaps(result, queryRangeParams)
+	}
+
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable && queryRangeParams.FormatForWeb {
+		if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+			result = postprocess.TransformToTableForClickHouseQueries(result)
+		} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+			result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+		}
+	}
 
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
 
 	// This checks if the time for context to complete has exceeded.
-	// it adds flag to notify the user of incomplete respone
+	// it adds flag to notify the user of incomplete response
 	select {
 	case <-ctx.Done():
 		resp.ContextTimeout = true
@@ -3056,20 +4451,101 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	aH.Respond(w, resp)
 }
 
+func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	referrer := r.Header.Get("Referer")
+
+	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the referrer", zap.Error(err))
+	}
+	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the alert: ", zap.Error(err))
+	}
+
+	if alertMatched || dashboardMatched {
+
+		if len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0) {
+
+			userEmail, err := auth.GetEmailFromJwt(r.Context())
+			if err == nil {
+				signozLogsUsed, signozMetricsUsed, signozTracesUsed := telemetry.GetInstance().CheckSigNozSignals(queryRangeParams)
+				if signozLogsUsed || signozMetricsUsed || signozTracesUsed {
+
+					if dashboardMatched {
+						var dashboardID, widgetID string
+						var dashboardIDMatch, widgetIDMatch []string
+						dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`)
+						if err == nil {
+							dashboardIDMatch = dashboardIDRegex.FindStringSubmatch(referrer)
+						} else {
+							zap.S().Errorf("error while matching the dashboardIDRegex: %v", err)
+						}
+						widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`)
+						if err == nil {
+							widgetIDMatch = widgetIDRegex.FindStringSubmatch(referrer)
+						} else {
+							zap.S().Errorf("error while matching the widgetIDRegex: %v", err)
+						}
+
+						if len(dashboardIDMatch) > 1 {
+							dashboardID = dashboardIDMatch[1]
+						}
+
+						if len(widgetIDMatch) > 1 {
+							widgetID = widgetIDMatch[1]
+						}
+						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY, map[string]interface{}{
+							"queryType":   queryRangeParams.CompositeQuery.QueryType,
+							"panelType":   queryRangeParams.CompositeQuery.PanelType,
+							"tracesUsed":  signozTracesUsed,
+							"logsUsed":    signozLogsUsed,
+							"metricsUsed": signozMetricsUsed,
+							"dashboardId": dashboardID,
+							"widgetId":    widgetID,
+						}, userEmail, true, false)
+					}
+					if alertMatched {
+						var alertID string
+						var alertIDMatch []string
+						alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`)
+						if err != nil {
+							zap.S().Errorf("error while matching the alertIDRegex: %v", err)
+						} else {
+							alertIDMatch = alertIDRegex.FindStringSubmatch(referrer)
+						}
+
+						if len(alertIDMatch) > 1 {
+							alertID = alertIDMatch[1]
+						}
+						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY, map[string]interface{}{
+							"queryType":   queryRangeParams.CompositeQuery.QueryType,
+							"panelType":   queryRangeParams.CompositeQuery.PanelType,
+							"tracesUsed":  signozTracesUsed,
+							"logsUsed":    signozLogsUsed,
+							"metricsUsed": signozMetricsUsed,
+							"alertId":     alertID,
+						}, userEmail, true, false)
+					}
+				}
+			}
+		}
+	}
+}
+
 func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
+		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
 
 	// add temporality for each metric
-
-	temporalityErr := aH.addTemporality(r.Context(), queryRangeParams)
+	temporalityErr := aH.PopulateTemporality(r.Context(), queryRangeParams)
 	if temporalityErr != nil {
-		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
+		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
 		return
 	}
@@ -3077,79 +4553,78 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
 }
 
-func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
-	// apply limit if any for metrics
-	// use the grouping set points to apply the limit
+func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Request) {
+	// Upgrade connection to websocket, sending back the requested protocol
+	// value for sec-websocket-protocol
+	//
+	// Since js websocket API doesn't allow setting headers, this header is often
+	// used for passing auth tokens. As per websocket spec the connection will only
+	// succeed if the requested `Sec-Websocket-Protocol` is sent back as a header
+	// in the upgrade response (signifying that the protocol is supported by the server).
+	upgradeResponseHeaders := http.Header{}
+	requestedProtocol := r.Header.Get("Sec-WebSocket-Protocol")
+	if len(requestedProtocol) > 0 {
+		upgradeResponseHeaders.Add("Sec-WebSocket-Protocol", requestedProtocol)
+	}
 
-	for _, result := range results {
-		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
+	c, err := aH.Upgrader.Upgrade(w, r, upgradeResponseHeaders)
+	if err != nil {
+		RespondError(w, model.InternalError(fmt.Errorf(
+			"couldn't upgrade connection: %w", err,
+		)), nil)
+		return
+	}
+	defer c.Close()
 
-		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics ||
-			result.QueryName != builderQueries[result.QueryName].Expression) {
-			limit := builderQueries[result.QueryName].Limit
+	// Websocket upgrade complete. Subscribe to query progress and send updates to client
+	//
+	// Note: we handle any subscription problems (queryId query param missing or query already complete etc)
+	// after the websocket connection upgrade by closing the channel.
+	// The other option would be to handle the errors before websocket upgrade by sending an
+	// error response instead of the upgrade response, but that leads to a generic websocket
+	// connection failure on the client.
 
-			orderByList := builderQueries[result.QueryName].OrderBy
-			if limit >= 0 {
-				if len(orderByList) == 0 {
-					// If no orderBy is specified, sort by value in descending order
-					orderByList = []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "desc"}}
-				}
-				sort.SliceStable(result.Series, func(i, j int) bool {
-					for _, orderBy := range orderByList {
-						if orderBy.ColumnName == constants.SigNozOrderByValue {
+	queryId := r.URL.Query().Get("q")
 
-							// For table type queries (we rely on the fact that one value for row), sort
-							// based on final aggregation value
-							if len(result.Series[i].Points) == 1 && len(result.Series[j].Points) == 1 {
-								if orderBy.Order == "asc" {
-									return result.Series[i].Points[0].Value < result.Series[j].Points[0].Value
-								} else if orderBy.Order == "desc" {
-									return result.Series[i].Points[0].Value > result.Series[j].Points[0].Value
-								}
-							}
+	progressCh, unsubscribe, apiErr := aH.reader.SubscribeToQueryProgress(queryId)
+	if apiErr != nil {
+		// Shouldn't happen unless query progress requested after query finished
+		zap.L().Warn(
+			"couldn't subscribe to query progress",
+			zap.String("queryId", queryId), zap.Any("error", apiErr),
+		)
+		return
+	}
+	defer func() { go unsubscribe() }()
 
-							// For graph type queries, sort based on GroupingSetsPoint
-							if result.Series[i].GroupingSetsPoint == nil || result.Series[j].GroupingSetsPoint == nil {
-								// Handle nil GroupingSetsPoint, if needed
-								// Here, we assume non-nil values are always less than nil values
-								return result.Series[i].GroupingSetsPoint != nil
-							}
-							if orderBy.Order == "asc" {
-								return result.Series[i].GroupingSetsPoint.Value < result.Series[j].GroupingSetsPoint.Value
-							} else if orderBy.Order == "desc" {
-								return result.Series[i].GroupingSetsPoint.Value > result.Series[j].GroupingSetsPoint.Value
-							}
-						} else {
-							// Sort based on Labels map
-							labelI, existsI := result.Series[i].Labels[orderBy.ColumnName]
-							labelJ, existsJ := result.Series[j].Labels[orderBy.ColumnName]
+	for queryProgress := range progressCh {
+		msg, err := json.Marshal(queryProgress)
+		if err != nil {
+			zap.L().Error(
+				"failed to serialize progress message",
+				zap.String("queryId", queryId), zap.Any("progress", queryProgress), zap.Error(err),
+			)
+			continue
+		}
 
-							if !existsI || !existsJ {
-								// Handle missing labels, if needed
-								// Here, we assume non-existent labels are always less than existing ones
-								return existsI
-							}
+		err = c.WriteMessage(websocket.TextMessage, msg)
+		if err != nil {
+			zap.L().Error(
+				"failed to write progress msg to websocket",
+				zap.String("queryId", queryId), zap.String("msg", string(msg)), zap.Error(err),
+			)
+			break
 
-							if orderBy.Order == "asc" {
-								return strings.Compare(labelI, labelJ) < 0
-							} else if orderBy.Order == "desc" {
-								return strings.Compare(labelI, labelJ) > 0
-							}
-						}
-					}
-					// Preserve original order if no matching orderBy is found
-					return i < j
-				})
-
-				if limit > 0 && len(result.Series) > int(limit) {
-					result.Series = result.Series[:limit]
-				}
-			}
+		} else {
+			zap.L().Debug(
+				"wrote progress msg to websocket",
+				zap.String("queryId", queryId), zap.String("msg", string(msg)), zap.Error(err),
+			)
 		}
 	}
 }
 
-func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
 
 	// get the param from url and add it to body
 	stringReader := strings.NewReader(r.URL.Query().Get("q"))
@@ -3157,7 +4632,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
+		zap.L().Error(apiErrorObj.Err.Error())
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -3169,13 +4644,99 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
 			// get the fields if any logs query is present
-			var fields map[string]v3.AttributeKey
-			fields, err = aH.getLogFieldsV3(r.Context(), queryRangeParams)
+			logsFields, err := aH.reader.GetLogFields(r.Context())
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, nil)
 				return
 			}
+			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
+			logsv3.Enrich(queryRangeParams, fields)
+		}
+
+		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+			return
+		}
+
+	default:
+		err = fmt.Errorf("invalid query type")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(200)
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
+		RespondError(w, &err, "streaming is not supported")
+		return
+	}
+
+	// flush the headers
+	flusher.Flush()
+
+	// create the client
+	client := &model.LogsLiveTailClientV2{Name: r.RemoteAddr, Logs: make(chan *model.SignozLogV2, 1000), Done: make(chan *bool), Error: make(chan error)}
+	go aH.reader.LiveTailLogsV4(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
+	for {
+		select {
+		case log := <-client.Logs:
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			enc.Encode(log)
+			fmt.Fprintf(w, "data: %v\n\n", buf.String())
+			flusher.Flush()
+		case <-client.Done:
+			zap.L().Debug("done!")
+			return
+		case err := <-client.Error:
+			zap.L().Error("error occurred", zap.Error(err))
+			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
+			flusher.Flush()
+			return
+		}
+	}
+
+}
+
+func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
+	if aH.UseLogsNewSchema {
+		aH.liveTailLogsV2(w, r)
+		return
+	}
+
+	// get the param from url and add it to body
+	stringReader := strings.NewReader(r.URL.Query().Get("q"))
+	r.Body = io.NopCloser(stringReader)
+
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+	if apiErrorObj != nil {
+		zap.L().Error(apiErrorObj.Err.Error())
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	var err error
+	var queryString string
+	switch queryRangeParams.CompositeQuery.QueryType {
+	case v3.QueryTypeBuilder:
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(queryRangeParams) {
+			logsFields, err := aH.reader.GetLogFields(r.Context())
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, nil)
+				return
+			}
+			// get the fields if any logs query is present
+			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
@@ -3192,7 +4753,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create the client
-	client := &v3.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
+	client := &model.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
 	go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
 
 	w.Header().Set("Connection", "keep-alive")
@@ -3218,13 +4779,160 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "data: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
-			zap.S().Debug("done!")
+			zap.L().Debug("done!")
 			return
 		case err := <-client.Error:
-			zap.S().Error("error occured!", err)
+			zap.L().Error("error occurred", zap.Error(err))
 			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
 			flusher.Flush()
 			return
 		}
 	}
+
+}
+
+func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
+	metricName := r.URL.Query().Get("metricName")
+	serviceName := r.URL.Query().Get("serviceName")
+	metricMetadata, err := aH.reader.GetMetricMetadata(r.Context(), metricName, serviceName)
+	if err != nil {
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		return
+	}
+
+	aH.WriteJSON(w, r, metricMetadata)
+}
+
+func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
+
+	var result []*v3.Result
+	var err error
+	var errQuriesByName map[string]error
+	var spanKeys map[string]v3.AttributeKey
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(queryRangeParams) {
+			// get the fields if any logs query is present
+			logsFields, err := aH.reader.GetLogFields(r.Context())
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, nil)
+				return
+			}
+			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
+			logsv3.Enrich(queryRangeParams, fields)
+		}
+
+		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+		if err != nil {
+			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+			RespondError(w, apiErrObj, errQuriesByName)
+			return
+		}
+		if aH.UseTraceNewSchema {
+			tracesV4.Enrich(queryRangeParams, spanKeys)
+		} else {
+			tracesV3.Enrich(queryRangeParams, spanKeys)
+		}
+	}
+
+	// WARN: Only works for AND operator in traces query
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
+		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
+		if isUsed && len(traceIDs) > 0 {
+			zap.L().Debug("traceID used as filter in traces query")
+			// query signoz_spans table with traceID to get min and max timestamp
+			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
+			if err == nil {
+				// add timestamp filter to queryRange params
+				tracesV3.AddTimestampFilters(min, max, queryRangeParams)
+				zap.L().Debug("post adding timestamp filter in traces query", zap.Any("queryRangeParams", queryRangeParams))
+			}
+		}
+	}
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams)
+
+	if err != nil {
+		queryErrors := map[string]string{}
+		for name, err := range errQuriesByName {
+			queryErrors[fmt.Sprintf("Query-%s", name)] = err.Error()
+		}
+		apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		RespondError(w, apiErrObj, queryErrors)
+		return
+	}
+
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		result, err = postprocess.PostProcessResult(result, queryRangeParams)
+	} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL &&
+		queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable && queryRangeParams.FormatForWeb {
+		result = postprocess.TransformToTableForClickHouseQueries(result)
+	}
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	sendQueryResultEvents(r, result, queryRangeParams)
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+
+	if apiErrorObj != nil {
+		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+	queryRangeParams.Version = "v4"
+
+	// add temporality for each metric
+	temporalityErr := aH.PopulateTemporality(r.Context(), queryRangeParams)
+	if temporalityErr != nil {
+		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
+		return
+	}
+
+	aH.queryRangeV4(r.Context(), queryRangeParams, w, r)
+}
+
+func (aH *APIHandler) traceFields(w http.ResponseWriter, r *http.Request) {
+	fields, apiErr := aH.reader.GetTraceFields(r.Context())
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to fetch fields from the db")
+		return
+	}
+	aH.WriteJSON(w, r, fields)
+}
+
+func (aH *APIHandler) updateTraceField(w http.ResponseWriter, r *http.Request) {
+	field := model.UpdateField{}
+	if err := json.NewDecoder(r.Body).Decode(&field); err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErr, "failed to decode payload")
+		return
+	}
+
+	err := logs.ValidateUpdateFieldPayloadV2(&field)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErr, "incorrect payload")
+		return
+	}
+
+	apiErr := aH.reader.UpdateTraceField(r.Context(), &field)
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to update field in the db")
+		return
+	}
+	aH.WriteJSON(w, r, field)
 }

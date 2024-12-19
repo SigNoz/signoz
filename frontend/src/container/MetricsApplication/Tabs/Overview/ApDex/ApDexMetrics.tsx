@@ -5,6 +5,7 @@ import {
 	apDexToolTipUrl,
 	apDexToolTipUrlText,
 } from 'constants/apDex';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import DisplayThreshold from 'container/GridCardLayout/WidgetHeader/DisplayThreshold';
@@ -31,7 +32,8 @@ function ApDexMetrics({
 	topLevelOperationsRoute,
 	handleGraphClick,
 }: ApDexMetricsProps): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
 
 	const apDexMetricsWidget = useMemo(
 		() =>
@@ -87,13 +89,12 @@ function ApDexMetrics({
 
 	return (
 		<Graph
-			name="apdex"
-			fillSpans={false}
 			widget={apDexMetricsWidget}
 			onDragSelect={onDragSelect}
 			onClickHandler={handleGraphClick('ApDex')}
 			threshold={threshold}
 			isQueryEnabled={isQueryEnabled}
+			version={ENTITY_VERSION_V4}
 		/>
 	);
 }

@@ -1,6 +1,7 @@
-import { Button, Space, Typography } from 'antd';
+import { Button, Card, Space, Typography } from 'antd';
 import changeMyPassword from 'api/user/changeMyPassword';
 import { useNotifications } from 'hooks/useNotifications';
+import { Save } from 'lucide-react';
 import { isPasswordNotValidMessage, isPasswordValid } from 'pages/SignUp/utils';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,9 +21,7 @@ function PasswordContainer(): JSX.Element {
 		false,
 	);
 
-	const defaultPlaceHolder = t('input_password', {
-		ns: 'settings',
-	});
+	const defaultPlaceHolder = '*************';
 
 	const { notifications } = useNotifications();
 
@@ -89,66 +88,81 @@ function PasswordContainer(): JSX.Element {
 		currentPassword === updatePassword;
 
 	return (
-		<Space direction="vertical" size="large">
-			<Typography.Title level={3}>
-				{t('change_password', {
-					ns: 'settings',
-				})}
-			</Typography.Title>
-			<Space direction="vertical">
-				<Typography>
-					{t('current_password', {
+		<Card>
+			<Space direction="vertical" size="small">
+				<Typography.Title
+					level={4}
+					style={{ marginTop: 0 }}
+					data-testid="change-password-header"
+				>
+					{t('change_password', {
 						ns: 'settings',
 					})}
-				</Typography>
-				<Password
-					disabled={isLoading}
-					placeholder={defaultPlaceHolder}
-					onChange={(event): void => {
-						setCurrentPassword(event.target.value);
-					}}
-					value={currentPassword}
-				/>
-			</Space>
-			<Space direction="vertical">
-				<Typography>
-					{t('new_password', {
-						ns: 'settings',
-					})}
-				</Typography>
-				<Password
-					disabled={isLoading}
-					placeholder={defaultPlaceHolder}
-					onChange={(event): void => {
-						const updatedValue = event.target.value;
-						setUpdatePassword(updatedValue);
-					}}
-					value={updatePassword}
-				/>
-			</Space>
-			<Space>
-				{isPasswordPolicyError && (
-					<Typography.Paragraph
-						style={{
-							color: '#D89614',
-							marginTop: '0.50rem',
+				</Typography.Title>
+				<Space direction="vertical">
+					<Typography data-testid="current-password-label">
+						{t('current_password', {
+							ns: 'settings',
+						})}
+					</Typography>
+					<Password
+						data-testid="current-password-textbox"
+						disabled={isLoading}
+						placeholder={defaultPlaceHolder}
+						onChange={(event): void => {
+							setCurrentPassword(event.target.value);
 						}}
-					>
-						{isPasswordNotValidMessage}
-					</Typography.Paragraph>
-				)}
+						value={currentPassword}
+					/>
+				</Space>
+				<Space direction="vertical">
+					<Typography data-testid="new-password-label">
+						{t('new_password', {
+							ns: 'settings',
+						})}
+					</Typography>
+					<Password
+						data-testid="new-password-textbox"
+						disabled={isLoading}
+						placeholder={defaultPlaceHolder}
+						onChange={(event): void => {
+							const updatedValue = event.target.value;
+							setUpdatePassword(updatedValue);
+						}}
+						value={updatePassword}
+					/>
+				</Space>
+				<Space>
+					{isPasswordPolicyError && (
+						<Typography.Paragraph
+							data-testid="validation-message"
+							style={{
+								color: '#D89614',
+								marginTop: '0.50rem',
+							}}
+						>
+							{isPasswordNotValidMessage}
+						</Typography.Paragraph>
+					)}
+				</Space>
+				<Button
+					disabled={isDisabled}
+					loading={isLoading}
+					onClick={onChangePasswordClickHandler}
+					type="primary"
+					data-testid="update-password-button"
+				>
+					<Save
+						size={12}
+						style={{ marginRight: '8px' }}
+						data-testid="update-password-icon"
+					/>{' '}
+					{t('change_password', {
+						ns: 'settings',
+					})}
+				</Button>
 			</Space>
-			<Button
-				disabled={isDisabled}
-				loading={isLoading}
-				onClick={onChangePasswordClickHandler}
-				type="primary"
-			>
-				{t('change_password', {
-					ns: 'settings',
-				})}
-			</Button>
-		</Space>
+		</Card>
 	);
 }
 

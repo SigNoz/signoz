@@ -1,5 +1,5 @@
 # use a minimal alpine image
-FROM alpine:3.18.5
+FROM alpine:3.20.3
 
 # Add Maintainer Info
 LABEL maintainer="signoz"
@@ -18,6 +18,7 @@ COPY ee/query-service/bin/query-service-${TARGETOS}-${TARGETARCH} /root/query-se
 
 # copy prometheus YAML config
 COPY pkg/query-service/config/prometheus.yml /root/config/prometheus.yml
+COPY pkg/query-service/templates /root/templates
 
 # Make query-service executable for non-root users
 RUN chmod 755 /root /root/query-service

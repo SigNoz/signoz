@@ -9,7 +9,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
+var AggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
 	v3.AggregateOperatorP05: 0.05,
 	v3.AggregateOperatorP10: 0.10,
 	v3.AggregateOperatorP20: 0.20,
@@ -21,7 +21,7 @@ var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
 	v3.AggregateOperatorP99: 0.99,
 }
 
-var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
+var AggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 	v3.AggregateOperatorAvg:     "avg",
 	v3.AggregateOperatorMax:     "max",
 	v3.AggregateOperatorMin:     "min",
@@ -51,9 +51,14 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotExists:       "not has(%s_%s_key, '%s')",
 }
 
-func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
+const BODY = "body"
+
+func GetClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
 	if columnType == v3.AttributeKeyTypeTag {
 		return "attributes"
+	}
+	if columnType == v3.AttributeKeyTypeInstrumentationScope {
+		return "scope"
 	}
 	return "resources"
 }
@@ -81,7 +86,7 @@ func getClickhouseColumnName(key v3.AttributeKey) string {
 	//if the key is present in the topLevelColumn then it will be only searched in those columns,
 	//regardless if it is indexed/present again in resource or column attribute
 	if !key.IsColumn {
-		columnType := getClickhouseLogsColumnType(key.Type)
+		columnType := GetClickhouseLogsColumnType(key.Type)
 		columnDataType := getClickhouseLogsColumnDataType(key.DataType)
 		clickhouseColumn = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", columnType, columnDataType, columnType, columnDataType, key.Key)
 		return clickhouseColumn
@@ -106,19 +111,19 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 	} else {
 		for _, tag := range groupBy {
 			columnName := getClickhouseColumnName(tag)
-			selectLabels += fmt.Sprintf(" %s as %s,", columnName, tag.Key)
+			selectLabels += fmt.Sprintf(" %s as `%s`,", columnName, tag.Key)
 		}
 	}
 	return selectLabels
 }
 
-func getSelectKeys(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey) string {
+func GetSelectKeys(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey) string {
 	var selectLabels []string
 	if aggregatorOperator == v3.AggregateOperatorNoOp {
 		return ""
 	} else {
 		for _, tag := range groupBy {
-			selectLabels = append(selectLabels, tag.Key)
+			selectLabels = append(selectLabels, "`"+tag.Key+"`")
 		}
 	}
 	return strings.Join(selectLabels, ",")
@@ -150,9 +155,9 @@ func GetExistsNexistsFilter(op v3.FilterOperator, item v3.FilterItem) string {
 		if op == v3.FilterOperatorNotExists {
 			val = false
 		}
-		return fmt.Sprintf("%s_exists=%v", getClickhouseColumnName(item.Key), val)
+		return fmt.Sprintf("%s_exists`=%v", strings.TrimSuffix(getClickhouseColumnName(item.Key), "`"), val)
 	}
-	columnType := getClickhouseLogsColumnType(item.Key.Type)
+	columnType := GetClickhouseLogsColumnType(item.Key.Type)
 	columnDataType := getClickhouseLogsColumnDataType(item.Key.DataType)
 	return fmt.Sprintf(logOperators[op], columnType, columnDataType, item.Key.Key)
 }
@@ -192,10 +197,25 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					conditions = append(conditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					columnName := getClickhouseColumnName(item.Key)
-					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, item.Value))
+					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					if columnName == BODY {
+						logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
+						conditions = append(conditions, fmt.Sprintf("lower(%s) %s lower('%%%s%%')", columnName, logsOp, val))
+					} else {
+						conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
+					}
 				default:
 					columnName := getClickhouseColumnName(item.Key)
 					fmtVal := utils.ClickHouseFormattedValue(value)
+
+					// for use lower for like and ilike
+					if op == v3.FilterOperatorLike || op == v3.FilterOperatorNotLike {
+						if columnName == BODY {
+							logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
+							columnName = fmt.Sprintf("lower(%s)", columnName)
+							fmtVal = fmt.Sprintf("lower(%s)", fmtVal)
+						}
+					}
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 				}
 			} else {
@@ -207,12 +227,12 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 	// add group by conditions to filter out log lines which doesn't have the key
 	for _, attr := range groupBy {
 		if !attr.IsColumn {
-			columnType := getClickhouseLogsColumnType(attr.Type)
+			columnType := GetClickhouseLogsColumnType(attr.Type)
 			columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
-			conditions = append(conditions, fmt.Sprintf("indexOf(%s_%s_key, '%s') > 0", columnType, columnDataType, attr.Key))
+			conditions = append(conditions, fmt.Sprintf("has(%s_%s_key, '%s')", columnType, columnDataType, attr.Key))
 		} else if attr.Type != v3.AttributeKeyTypeUnspecified {
 			// for materialzied columns
-			conditions = append(conditions, fmt.Sprintf("%s_exists=true", getClickhouseColumnName(attr)))
+			conditions = append(conditions, fmt.Sprintf("%s_exists`=true", strings.TrimSuffix(getClickhouseColumnName(attr), "`")))
 		}
 	}
 
@@ -241,7 +261,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 
 	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
 
-	having := having(mq.Having)
+	having := Having(mq.Having)
 	if having != "" {
 		having = " having " + having
 	}
@@ -252,6 +272,8 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	} else if panelType == v3.PanelTypeTable {
 		queryTmpl =
 			"SELECT now() as ts,"
+		// step or aggregate interval is whole time period in case of table panel
+		step = (utils.GetEpochNanoSecs(end) - utils.GetEpochNanoSecs(start)) / 1000000000
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmpl =
@@ -269,10 +291,10 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	// we dont need value for first query
 	// going with this route as for a cleaner approach on implementation
 	if graphLimitQtype == constants.FirstQueryGraphLimit {
-		queryTmpl = "SELECT " + getSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + queryTmpl + ")"
+		queryTmpl = "SELECT " + GetSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + queryTmpl + ")"
 	}
 
-	groupBy := groupByAttributeKeyTags(panelType, graphLimitQtype, mq.GroupBy...)
+	groupBy := GroupByAttributeKeyTags(panelType, graphLimitQtype, mq.GroupBy...)
 	if panelType != v3.PanelTypeList && groupBy != "" {
 		groupBy = " group by " + groupBy
 	}
@@ -282,7 +304,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	if graphLimitQtype == constants.SecondQueryGraphLimit {
-		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "#LIMIT_PLACEHOLDER)"
+		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", GetSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "#LIMIT_PLACEHOLDER)"
 	}
 
 	aggregationKey := ""
@@ -310,7 +332,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 			rate = rate / 60.0
 		}
 
-		op := fmt.Sprintf("%s(%s)/%f", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)
+		op := fmt.Sprintf("%s(%s)/%f", AggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case
@@ -323,11 +345,11 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		v3.AggregateOperatorP90,
 		v3.AggregateOperatorP95,
 		v3.AggregateOperatorP99:
-		op := fmt.Sprintf("quantile(%v)(%s)", aggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
+		op := fmt.Sprintf("quantile(%v)(%s)", AggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
-		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
+		op := fmt.Sprintf("%s(%s)", AggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
@@ -375,10 +397,10 @@ func groupBy(panelType v3.PanelType, graphLimitQtype string, tags ...string) str
 	return strings.Join(tags, ",")
 }
 
-func groupByAttributeKeyTags(panelType v3.PanelType, graphLimitQtype string, tags ...v3.AttributeKey) string {
+func GroupByAttributeKeyTags(panelType v3.PanelType, graphLimitQtype string, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
-		groupTags = append(groupTags, tag.Key)
+		groupTags = append(groupTags, "`"+tag.Key+"`")
 	}
 	return groupBy(panelType, graphLimitQtype, groupTags...)
 }
@@ -393,7 +415,7 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 		if item.ColumnName == constants.SigNozOrderByValue {
 			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
 		} else if _, ok := tagLookup[item.ColumnName]; ok {
-			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
+			orderBy = append(orderBy, fmt.Sprintf("`%s` %s", item.ColumnName, item.Order))
 		} else if panelType == v3.PanelTypeList {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name := getClickhouseColumnName(attr)
@@ -424,7 +446,7 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 	return str
 }
 
-func having(items []v3.Having) string {
+func Having(items []v3.Having) string {
 	// aggregate something and filter on that aggregate
 	var having []string
 	for _, item := range items {
@@ -433,45 +455,39 @@ func having(items []v3.Having) string {
 	return strings.Join(having, " AND ")
 }
 
-func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v3.AggregateOperator) (string, error) {
+func ReduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v3.AggregateOperator) (string, error) {
 	// the timestamp picked is not relevant here since the final value used is show the single
 	// chart with just the query value.
 	switch reduceTo {
 	case v3.ReduceToOperatorLast:
-		query = fmt.Sprintf("SELECT anyLast(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT anyLast(value) as value, now() as ts FROM (%s)", query)
 	case v3.ReduceToOperatorSum:
-		query = fmt.Sprintf("SELECT sum(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT sum(value) as value, now() as ts FROM (%s)", query)
 	case v3.ReduceToOperatorAvg:
-		query = fmt.Sprintf("SELECT avg(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT avg(value) as value, now() as ts FROM (%s)", query)
 	case v3.ReduceToOperatorMax:
-		query = fmt.Sprintf("SELECT max(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT max(value) as value, now() as ts FROM (%s)", query)
 	case v3.ReduceToOperatorMin:
-		query = fmt.Sprintf("SELECT min(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT min(value) as value, now() as ts FROM (%s)", query)
 	default:
 		return "", fmt.Errorf("unsupported reduce operator")
 	}
 	return query, nil
 }
 
-func addLimitToQuery(query string, limit uint64) string {
+func AddLimitToQuery(query string, limit uint64) string {
 	if limit == 0 {
 		return query
 	}
 	return fmt.Sprintf("%s LIMIT %d", query, limit)
 }
 
-func addOffsetToQuery(query string, offset uint64) string {
+func AddOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
-type Options struct {
-	GraphLimitQtype string
-	IsLivetailQuery bool
-	PreferRPM       bool
-}
-
-func isOrderByTs(orderBy []v3.OrderBy) bool {
-	if len(orderBy) == 1 && orderBy[0].Key == constants.TIMESTAMP {
+func IsOrderByTs(orderBy []v3.OrderBy) bool {
+	if len(orderBy) == 1 && (orderBy[0].Key == constants.TIMESTAMP || orderBy[0].ColumnName == constants.TIMESTAMP) {
 		return true
 	}
 	return false
@@ -480,11 +496,14 @@ func isOrderByTs(orderBy []v3.OrderBy) bool {
 // PrepareLogsQuery prepares the query for logs
 // start and end are in epoch millisecond
 // step is in seconds
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
 
 	// adjust the start and end time to the step interval
-	start = start - (start % (mq.StepInterval * 1000))
-	end = end - (end % (mq.StepInterval * 1000))
+	// NOTE: Disabling this as it's creating confusion between charts and actual data
+	// if panelType != v3.PanelTypeList {
+	// 	start = start - (start % (mq.StepInterval * 1000))
+	// 	end = end - (end % (mq.StepInterval * 1000))
+	// }
 
 	if options.IsLivetailQuery {
 		query, err := buildLogsLiveTailQuery(mq)
@@ -498,7 +517,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		if err != nil {
 			return "", err
 		}
-		query = addLimitToQuery(query, mq.Limit)
+		query = AddLimitToQuery(query, mq.Limit)
 
 		return query, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
@@ -514,7 +533,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		return "", err
 	}
 	if panelType == v3.PanelTypeValue {
-		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
+		query, err = ReduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
 
 	if panelType == v3.PanelTypeList {
@@ -525,21 +544,21 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 
 		if mq.PageSize > 0 {
 			if mq.Limit > 0 && mq.Offset+mq.PageSize > mq.Limit {
-				query = addLimitToQuery(query, mq.Limit-mq.Offset)
+				query = AddLimitToQuery(query, mq.Limit-mq.Offset)
 			} else {
-				query = addLimitToQuery(query, mq.PageSize)
+				query = AddLimitToQuery(query, mq.PageSize)
 			}
 
 			// add offset to the query only if it is not orderd by timestamp.
-			if !isOrderByTs(mq.OrderBy) {
-				query = addOffsetToQuery(query, mq.Offset)
+			if !IsOrderByTs(mq.OrderBy) {
+				query = AddOffsetToQuery(query, mq.Offset)
 			}
 
 		} else {
-			query = addLimitToQuery(query, mq.Limit)
+			query = AddLimitToQuery(query, mq.Limit)
 		}
 	} else if panelType == v3.PanelTypeTable {
-		query = addLimitToQuery(query, mq.Limit)
+		query = AddLimitToQuery(query, mq.Limit)
 	}
 
 	return query, err

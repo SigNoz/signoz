@@ -140,7 +140,7 @@ var testGetJSONFilterKeyData = []struct {
 func TestGetJSONFilterKey(t *testing.T) {
 	for _, tt := range testGetJSONFilterKeyData {
 		Convey("testgetKey", t, func() {
-			columnName, err := getJSONFilterKey(tt.Key, tt.Operator, tt.IsArray)
+			columnName, err := GetJSONFilterKey(tt.Key, tt.Operator, tt.IsArray)
 			if tt.Error {
 				So(err, ShouldNotBeNil)
 			} else {
@@ -168,7 +168,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "has",
 			Value:    "index_service",
 		},
-		Filter: "has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service')",
+		Filter: "lower(body) like lower('%requestor_list%') AND lower(body) like lower('%index_service%') AND has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service')",
 	},
 	{
 		Name: "Array membership int64",
@@ -181,7 +181,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "has",
 			Value:    2,
 		},
-		Filter: "has(JSONExtract(JSON_QUERY(body, '$.\"int_numbers\"[*]'), '" + ARRAY_INT64 + "'), 2)",
+		Filter: "lower(body) like lower('%int_numbers%') AND has(JSONExtract(JSON_QUERY(body, '$.\"int_numbers\"[*]'), '" + ARRAY_INT64 + "'), 2)",
 	},
 	{
 		Name: "Array membership float64",
@@ -194,7 +194,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "nhas",
 			Value:    2.2,
 		},
-		Filter: "NOT has(JSONExtract(JSON_QUERY(body, '$.\"nested_num\"[*].\"float_nums\"[*]'), '" + ARRAY_FLOAT64 + "'), 2.200000)",
+		Filter: "lower(body) like lower('%nested_num%float_nums%') AND NOT has(JSONExtract(JSON_QUERY(body, '$.\"nested_num\"[*].\"float_nums\"[*]'), '" + ARRAY_FLOAT64 + "'), 2.200000)",
 	},
 	{
 		Name: "Array membership bool",
@@ -207,7 +207,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "has",
 			Value:    true,
 		},
-		Filter: "has(JSONExtract(JSON_QUERY(body, '$.\"bool\"[*]'), '" + ARRAY_BOOL + "'), true)",
+		Filter: "lower(body) like lower('%bool%') AND has(JSONExtract(JSON_QUERY(body, '$.\"bool\"[*]'), '" + ARRAY_BOOL + "'), true)",
 	},
 	{
 		Name: "eq operator",
@@ -220,7 +220,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "=",
 			Value:    "hello",
 		},
-		Filter: "JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') = 'hello'",
+		Filter: "lower(body) like lower('%message%') AND lower(body) like lower('%hello%') AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') = 'hello'",
 	},
 	{
 		Name: "eq operator number",
@@ -233,7 +233,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "=",
 			Value:    1,
 		},
-		Filter: "JSON_EXISTS(body, '$.\"status\"') AND JSONExtract(JSON_VALUE(body, '$.\"status\"'), '" + INT64 + "') = 1",
+		Filter: "lower(body) like lower('%status%') AND JSON_EXISTS(body, '$.\"status\"') AND JSONExtract(JSON_VALUE(body, '$.\"status\"'), '" + INT64 + "') = 1",
 	},
 	{
 		Name: "neq operator number",
@@ -246,7 +246,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "=",
 			Value:    1.1,
 		},
-		Filter: "JSON_EXISTS(body, '$.\"status\"') AND JSONExtract(JSON_VALUE(body, '$.\"status\"'), '" + FLOAT64 + "') = 1.100000",
+		Filter: "lower(body) like lower('%status%') AND JSON_EXISTS(body, '$.\"status\"') AND JSONExtract(JSON_VALUE(body, '$.\"status\"'), '" + FLOAT64 + "') = 1.100000",
 	},
 	{
 		Name: "eq operator bool",
@@ -259,7 +259,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "=",
 			Value:    true,
 		},
-		Filter: "JSON_EXISTS(body, '$.\"boolkey\"') AND JSONExtract(JSON_VALUE(body, '$.\"boolkey\"'), '" + BOOL + "') = true",
+		Filter: "lower(body) like lower('%boolkey%') AND JSON_EXISTS(body, '$.\"boolkey\"') AND JSONExtract(JSON_VALUE(body, '$.\"boolkey\"'), '" + BOOL + "') = true",
 	},
 	{
 		Name: "greater than operator",
@@ -272,7 +272,7 @@ var testGetJSONFilterData = []struct {
 			Operator: ">",
 			Value:    1,
 		},
-		Filter: "JSON_EXISTS(body, '$.\"status\"') AND JSONExtract(JSON_VALUE(body, '$.\"status\"'), '" + INT64 + "') > 1",
+		Filter: "lower(body) like lower('%status%') AND JSON_EXISTS(body, '$.\"status\"') AND JSONExtract(JSON_VALUE(body, '$.\"status\"'), '" + INT64 + "') > 1",
 	},
 	{
 		Name: "regex operator",
@@ -285,7 +285,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "regex",
 			Value:    "a*",
 		},
-		Filter: "JSON_EXISTS(body, '$.\"message\"') AND match(JSON_VALUE(body, '$.\"message\"'), 'a*')",
+		Filter: "lower(body) like lower('%message%') AND JSON_EXISTS(body, '$.\"message\"') AND match(JSON_VALUE(body, '$.\"message\"'), 'a*')",
 	},
 	{
 		Name: "contains operator",
@@ -298,7 +298,20 @@ var testGetJSONFilterData = []struct {
 			Operator: "contains",
 			Value:    "a",
 		},
-		Filter: "JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%'",
+		Filter: "lower(body) like lower('%message%') AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%'",
+	},
+	{
+		Name: "contains operator with quotes",
+		FilterItem: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.message",
+				DataType: "string",
+				IsJSON:   true,
+			},
+			Operator: "contains",
+			Value:    "hello 'world'",
+		},
+		Filter: "lower(body) like lower('%message%') AND lower(body) like lower('%hello \\'world\\'%') AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%hello \\'world\\'%'",
 	},
 	{
 		Name: "exists",
@@ -311,7 +324,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "exists",
 			Value:    "",
 		},
-		Filter: "JSON_EXISTS(body, '$.\"message\"')",
+		Filter: "lower(body) like lower('%message%') AND JSON_EXISTS(body, '$.\"message\"')",
 	},
 }
 

@@ -29,14 +29,9 @@ func (a *Agents) Count() int {
 	return len(a.connections)
 }
 
-// InitDB initializes the database and creates the agents table.
-func InitDB(dataSourceName string) (*sqlx.DB, error) {
-	var err error
-
-	db, err = sqlx.Open("sqlite3", dataSourceName)
-	if err != nil {
-		return nil, err
-	}
+// Initialize the database and create schema if needed
+func InitDB(qsDB *sqlx.DB) (*sqlx.DB, error) {
+	db = qsDB
 
 	tableSchema := `CREATE TABLE IF NOT EXISTS agents (
 		agent_id TEXT PRIMARY KEY UNIQUE,
@@ -46,9 +41,9 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		effective_config TEXT NOT NULL
 	);`
 
-	_, err = db.Exec(tableSchema)
+	_, err := db.Exec(tableSchema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating agents table: %s", err.Error())
+		return nil, fmt.Errorf("error in creating agents table: %s", err.Error())
 	}
 
 	AllAgents = Agents{
@@ -136,8 +131,8 @@ func (agents *Agents) RecommendLatestConfigToAll(
 
 		// Recommendation is same as current config
 		if string(newConfig) == agent.EffectiveConfig {
-			zap.S().Infof(
-				"Recommended config same as current effective config for agent %s", agent.ID,
+			zap.L().Info(
+				"Recommended config same as current effective config for agent", zap.String("agentID", agent.ID),
 			)
 			return nil
 		}

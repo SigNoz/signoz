@@ -1,3 +1,4 @@
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { topOperationMetricsDownloadOptions } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
@@ -23,7 +24,8 @@ import ColumnWithLink from './TableRenderer/ColumnWithLink';
 import { getTableColumnRenderer } from './TableRenderer/TableColumnRenderer';
 
 function TopOperationMetrics(): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
 
 	const { notifications } = useNotifications();
 
@@ -67,6 +69,7 @@ function TopOperationMetrics(): JSX.Element {
 			globalSelectedInterval,
 			variables: {},
 		},
+		ENTITY_VERSION_V4,
 		{
 			queryKey: [
 				`GetMetricsQueryRange-${keyOperationWidget?.timePreferance}-${globalSelectedInterval}-${keyOperationWidget?.id}`,
@@ -84,7 +87,7 @@ function TopOperationMetrics(): JSX.Element {
 		},
 	);
 
-	const queryTableData = data?.payload.data.newResult.data.result || [];
+	const queryTableData = data?.payload?.data?.newResult?.data?.result || [];
 
 	const renderColumnCell = useMemo(
 		() =>
@@ -111,6 +114,7 @@ function TopOperationMetrics(): JSX.Element {
 			loading={isLoading}
 			renderColumnCell={renderColumnCell}
 			downloadOption={topOperationMetricsDownloadOptions}
+			sticky
 		/>
 	);
 }

@@ -1,9 +1,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './DynamicColumnTable.syles.scss';
 
-import { SettingOutlined } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps, Switch } from 'antd';
+import { Button, Dropdown, Flex, MenuProps, Switch } from 'antd';
+import { ColumnGroupType, ColumnType } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
+import logEvent from 'api/common/logEvent';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { SlidersHorizontal } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -20,6 +23,8 @@ function DynamicColumnTable({
 	columns,
 	dynamicColumns,
 	onDragColumn,
+	facingIssueBtn,
+	shouldSendAlertsLogEvent,
 	...restProps
 }: DynamicColumnTableProps): JSX.Element {
 	const [columnsData, setColumnsData] = useState<ColumnsType | undefined>(
@@ -27,6 +32,7 @@ function DynamicColumnTable({
 	);
 
 	useEffect(() => {
+		setColumnsData(columns);
 		const visibleColumns = getVisibleColumns({
 			tablesource,
 			columnsData: columns,
@@ -42,13 +48,20 @@ function DynamicColumnTable({
 				: undefined,
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [columns, dynamicColumns]);
 
-	const onToggleHandler = (index: number) => (
-		checked: boolean,
-		event: React.MouseEvent<HTMLButtonElement>,
-	): void => {
+	const onToggleHandler = (
+		index: number,
+		column: ColumnGroupType<any> | ColumnType<any>,
+	) => (checked: boolean, event: React.MouseEvent<HTMLButtonElement>): void => {
 		event.stopPropagation();
+
+		if (shouldSendAlertsLogEvent) {
+			logEvent('Alert: Column toggled', {
+				column: column?.title,
+				action: checked ? 'Enable' : 'Disable',
+			});
+		}
 		setVisibleColumns({
 			tablesource,
 			dynamicColumns,
@@ -72,7 +85,7 @@ function DynamicColumnTable({
 					<div>{column.title?.toString()}</div>
 					<Switch
 						checked={columnsData?.findIndex((c) => c.key === column.key) !== -1}
-						onChange={onToggleHandler(index)}
+						onChange={onToggleHandler(index, column)}
 					/>
 				</div>
 			),
@@ -82,19 +95,23 @@ function DynamicColumnTable({
 
 	return (
 		<div className="DynamicColumnTable">
-			{dynamicColumns && (
-				<Dropdown
-					getPopupContainer={popupContainer}
-					menu={{ items }}
-					trigger={['click']}
-				>
-					<Button
-						className="dynamicColumnTable-button"
-						size="middle"
-						icon={<SettingOutlined />}
-					/>
-				</Dropdown>
-			)}
+			<Flex justify="flex-end" align="center" gap={8}>
+				{facingIssueBtn && <LaunchChatSupport {...facingIssueBtn} />}
+				{dynamicColumns && (
+					<Dropdown
+						getPopupContainer={popupContainer}
+						menu={{ items }}
+						trigger={['click']}
+					>
+						<Button
+							className="dynamicColumnTable-button filter-btn"
+							size="middle"
+							icon={<SlidersHorizontal size={14} />}
+							data-testid="additional-filters-button"
+						/>
+					</Dropdown>
+				)}
+			</Flex>
 
 			<ResizeTable
 				columns={columnsData}

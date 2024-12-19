@@ -1,0 +1,60 @@
+.text {
+	color: var(--bg-vanilla-400);
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 18px; /* 128.571% */
+	letter-spacing: -0.07px;
+
+	&.small {
+		font-size: 11px;
+		line-height: 16px;
+	}
+
+	&.medium {
+		font-size: 13px;
+		line-height: 20px;
+	}
+
+	&.large {
+		font-size: 14px;
+		line-height: 24px;
+	}
+}
+
+.table-timestamp {
+	display: flex;
+	align-items: center;
+
+	.ant-typography {
+		margin-bottom: 0;
+	}
+
+	.log-state-indicator {
+		padding: 0px;
+	}
+}
+
+.lightMode {
+	.text {
+		color: var(--bg-slate-400);
+	}
+}
+
+.paragraph {
+	padding: 0px !important;
+	&.small {
+		font-size: 11px !important;
+		line-height: 16px !important;
+	}
+
+	&.medium {
+		font-size: 13px !important;
+		line-height: 20px !important;
+	}
+
+	&.large {
+		font-size: 14px !important;
+		line-height: 24px !important;
+	}
+}

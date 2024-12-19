@@ -9,6 +9,7 @@ import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useState } from 'react';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
+import { Widgets } from 'types/api/dashboard/getAll';
 
 function DashboardWidget(): JSX.Element | null {
 	const { search } = useLocation();
@@ -24,7 +25,7 @@ function DashboardWidget(): JSX.Element | null {
 	const { data } = selectedDashboard || {};
 	const { widgets } = data || {};
 
-	const selectedWidget = widgets?.find((e) => e.id === widgetId);
+	const selectedWidget = widgets?.find((e) => e.id === widgetId) as Widgets;
 
 	useEffect(() => {
 		const params = new URLSearchParams(search);
@@ -49,15 +50,11 @@ function DashboardWidget(): JSX.Element | null {
 		);
 	}
 
-	if (selectedWidget === undefined) {
-		return null;
-	}
-
 	return (
 		<NewWidget
-			yAxisUnit={selectedWidget.yAxisUnit}
+			yAxisUnit={selectedWidget?.yAxisUnit}
 			selectedGraph={selectedGraph}
-			fillSpans={selectedWidget.fillSpans}
+			fillSpans={selectedWidget?.fillSpans}
 		/>
 	);
 }

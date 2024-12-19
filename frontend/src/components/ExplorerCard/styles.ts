@@ -3,6 +3,7 @@ import styled, { CSSProperties } from 'styled-components';
 
 export const ExplorerCardHeadContainer = styled(Card)`
 	margin: 1rem 0;
+	padding: 0;
 `;
 
 export const OffSetCol = styled(Col)`

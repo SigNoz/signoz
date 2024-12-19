@@ -1,0 +1,95 @@
+.qb-entity-options {
+	display: flex;
+	justify-content: space-between;
+	margin: 4px 0;
+	width: 100%;
+
+	.left-col-items {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		max-width: 100%;
+
+		.title {
+			font-weight: 500;
+			font-style: italic;
+			.entityType {
+				text-transform: capitalize;
+			}
+		}
+	}
+
+	.options {
+		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+		border-radius: 2px;
+		margin-left: -32px;
+		max-width: 100%;
+
+		border-radius: 2px;
+
+		.periscope-btn {
+			border: 1px solid var(--bg-slate-200);
+			background: var(--bg-ink-200);
+			min-width: 32px;
+		}
+
+		.query-name {
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 400;
+			// line-height: 18px;
+
+			color: var(--bg-sakura-400) !important;
+
+			border: 1px solid rgba(242, 71, 105, 0.2) !important;
+			background: rgba(242, 71, 105, 0.1) !important;
+
+			&.sync-btn {
+				border: 1px solid rgba(78, 116, 248, 0.2) !important;
+				background: rgba(78, 116, 248, 0.1) !important;
+				color: var(--bg-robin-500) !important;
+			}
+
+			&:hover {
+				border: 1px solid rgba(242, 71, 105, 0.4) !important;
+				color: var(--bg-sakura-400) !important;
+			}
+		}
+
+		.formula-name {
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 400;
+			// line-height: 18px;
+
+			color: var(--bg-sienna-400) !important;
+
+			border: 1px solid rgba(189, 153, 121, 0.2) !important;
+			background: rgba(189, 153, 121, 0.1);
+
+			&:hover {
+				border: 1px solid rgba(189, 153, 121, 0.4) !important;
+				color: var(--bg-sienna-400) !important;
+			}
+		}
+
+		.options-group {
+			max-width: 100%;
+		}
+	}
+}
+
+.lightMode {
+	.qb-entity-options {
+		.options {
+			border-color: var(--bg-vanilla-300);
+			box-shadow: none;
+
+			.periscope-btn {
+				border-color: var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+				color: var(--bg-ink-200);
+			}
+		}
+	}
+}

@@ -1,0 +1,29 @@
+.span-details-sider {
+	padding-top: 16px;
+
+	::-webkit-scrollbar {
+		width: 0.2em;
+	}
+
+	::-webkit-scrollbar-track {
+		box-shadow: inset 0 0 6px rgba(18, 18, 18, 0.3);
+	}
+
+	&.dark {
+		.ant-layout-sider-trigger {
+			background-color: #0b0c0e !important;
+		}
+	}
+
+	&.light {
+		.ant-layout-sider-trigger {
+			background-color: white !important;
+		}
+	}
+
+	.expand-collapse-btn {
+		padding: 4px;
+		height: auto;
+		width: auto;
+	}
+}

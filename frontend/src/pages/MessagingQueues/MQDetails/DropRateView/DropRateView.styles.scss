@@ -1,0 +1,43 @@
+.evaluation-time-selector {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	.eval-title {
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 28px;
+		color: var(--bg-vanilla-200);
+	}
+
+	.ant-selector {
+		background-color: var(--bg-ink-400);
+		border-radius: 4px;
+		border: 1px solid var(--bg-slate-400);
+		box-shadow: none;
+	}
+}
+
+.select-dropdown-render {
+	padding: 8px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 200px;
+	margin: 6px;
+}
+
+.lightMode {
+	.evaluation-time-selector {
+		.eval-title {
+			color: var(--bg-ink-400);
+		}
+
+		.ant-selector {
+			background-color: var(--bg-vanilla-200);
+			border: 1px solid var(--bg-ink-400);
+		}
+	}
+}

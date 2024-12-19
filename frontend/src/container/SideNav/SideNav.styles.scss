@@ -1,0 +1,273 @@
+.sidenav-container {
+	width: 64px;
+	height: 100%;
+	position: relative;
+	z-index: 1;
+}
+
+.sideNav {
+	flex: 0 0 64px;
+	height: 100%;
+	max-width: 64px;
+	min-width: 64px;
+	width: 64px;
+	border-right: 1px solid var(--bg-slate-400);
+	padding-bottom: 48px;
+	transition: all 0.2s, background 0s, border 0s;
+
+	.brand-company-meta {
+		display: flex;
+		gap: 8px;
+	}
+
+	.brand {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 12px;
+		padding: var(--padding-4);
+		height: 64px;
+
+		.brand-logo {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+
+			cursor: pointer;
+
+			img {
+				height: var(--font-size-xl);
+			}
+
+			.brand-logo-name {
+				font-family: 'Work Sans', sans-serif;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 18px;
+
+				color: #fff;
+			}
+		}
+
+		.license {
+			&.tag {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+				color: rgba(255, 255, 255, 0.85);
+				font-size: 8px;
+				font-weight: var(--font-weight-medium);
+				letter-spacing: 0.6px;
+				padding: 4px 8px;
+				text-transform: uppercase;
+				white-space: nowrap;
+				background: var(--bg-slate-400);
+				border: 1px solid var(--bg-slate-400);
+				border-radius: 20px;
+				opacity: 1;
+				transition: all 0.2s;
+			}
+		}
+
+		.dockBtn {
+			cursor: pointer;
+			background: none;
+			border: none;
+			padding: 0;
+			height: 16px;
+			width: 16px;
+		}
+	}
+
+	.get-started-nav-items {
+		display: flex;
+		margin: 4px 13px 4px 10px;
+
+		.get-started-btn {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 8px;
+			margin-left: 2px;
+			gap: 8px;
+
+			width: 100%;
+			height: 36px;
+
+			border: 1px solid var(--bg-slate-400);
+
+			border-radius: 2px;
+			box-shadow: none !important;
+		}
+	}
+	.nav-wrapper {
+		height: calc(100% - 52px);
+
+		.primary-nav-items {
+			max-height: 65%;
+			overflow-y: auto;
+			overflow-x: hidden;
+
+			&::-webkit-scrollbar {
+				width: 0.1rem;
+			}
+		}
+		.secondary-nav-items {
+			max-height: 35%;
+			overflow-y: auto;
+			overflow-x: hidden;
+			border-top: 1px solid var(--bg-slate-400);
+			padding: 8px 0;
+			max-width: 100%;
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			width: 64px;
+
+			transition: all 0.2s, background 0s, border 0s;
+
+			&::-webkit-scrollbar {
+				width: 0.1rem;
+			}
+
+			.collapse-expand-handlers {
+				position: absolute;
+
+				top: -9px;
+				right: -9px;
+				cursor: pointer;
+
+				display: none;
+
+				transition: display 0.3s;
+
+				svg {
+					fill: var(--bg-vanilla-400);
+					color: var(--bg-slate-300);
+				}
+			}
+		}
+	}
+
+	.nav-wrapper-cloud {
+		height: calc(100% - 88px);
+
+		.secondary-nav-items {
+			max-height: 30%;
+		}
+
+		.primary-nav-items {
+			max-height: 70%;
+		}
+	}
+
+	&.collapsed {
+		flex: 0 0 64px;
+		max-width: 64px;
+		min-width: 64px;
+		width: 64px;
+
+		.secondary-nav-items {
+			width: 64px;
+		}
+
+		.get-started-nav-items {
+			.get-started-btn {
+				justify-content: center;
+			}
+		}
+	}
+
+	.nav-item-label {
+		display: none;
+	}
+
+	.nav-item-beta,
+	.nav-item-new {
+		display: none;
+	}
+
+	.sidenav-new-tag {
+		background-color: rgba(37, 225, 146, 0.1);
+		color: var(--text-forest-500);
+	}
+
+	&:hover {
+		flex: 0 0 240px;
+		max-width: 240px;
+		min-width: 240px;
+		width: 240px;
+
+		position: absolute;
+		height: 100%;
+		z-index: 10;
+		background: #0b0c0e;
+
+		.secondary-nav-items {
+			width: 240px;
+		}
+
+		.brand {
+			justify-content: space-between;
+		}
+
+		.get-started-nav-items {
+			.get-started-btn {
+				justify-content: flex-start;
+			}
+		}
+
+		.collapse-expand-handlers {
+			display: block;
+		}
+
+		.nav-item-label {
+			display: block;
+		}
+
+		.nav-item-beta,
+		.nav-item-new {
+			display: block;
+		}
+	}
+}
+
+.lightMode {
+	.sideNav {
+		background: var(--bg-vanilla-100);
+		border-right: 1px solid var(--bg-vanilla-300);
+
+		.get-started-nav-items {
+			.get-started-btn {
+				border: 1px solid var(--bg-vanilla-300);
+			}
+		}
+
+		.brand {
+			.brand-logo {
+				.brand-logo-name {
+					color: var(--bg-slate-400);
+				}
+			}
+		}
+
+		.nav-wrapper {
+			.secondary-nav-items {
+				border-top: 1px solid var(--bg-vanilla-300);
+
+				.collapse-expand-handlers {
+					svg {
+						color: var(--bg-slate-300);
+						fill: var(--bg-vanilla-300);
+					}
+				}
+			}
+		}
+
+		&:hover {
+			background: var(--bg-vanilla-100);
+		}
+	}
+}

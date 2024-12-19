@@ -1,4 +1,5 @@
 import { initialAutocompleteData, OPERATORS } from 'constants/queryBuilder';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import getStep from 'lib/getStep';
 import {
 	BaseAutocompleteData,
@@ -27,7 +28,8 @@ export const getTraceToLogsQuery = (
 		items: [
 			{
 				id: uuid(),
-				op: OPERATORS.IN,
+				// for generating query we use in instead of IN
+				op: getOperatorValue(OPERATORS.IN),
 				value: traceId,
 				key,
 			},
@@ -49,13 +51,16 @@ export const getTraceToLogsQuery = (
 					limit: null,
 					aggregateAttribute: initialAutocompleteData,
 					aggregateOperator: LogsAggregatorOperator.NOOP,
+					timeAggregation: '',
+					spaceAggregation: '',
+					functions: [],
 					expression: 'A',
 					groupBy: [],
 					having: [],
 					legend: '',
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'min',
+					reduceTo: 'avg',
 					stepInterval: getStep({
 						start: minTime,
 						end: maxTime,

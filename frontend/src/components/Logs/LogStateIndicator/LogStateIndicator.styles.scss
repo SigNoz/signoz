@@ -1,0 +1,44 @@
+.log-state-indicator {
+	padding-left: 8px;
+
+	.line {
+		margin: 0 8px;
+		min-height: 24px;
+		height: 100%;
+		width: 3px;
+		border-radius: 50px;
+		background-color: transparent;
+
+		&.small {
+			min-height: 16px;
+		}
+
+		&.medium {
+			min-height: 20px;
+		}
+
+		&.large {
+			min-height: 24px;
+		}
+
+		&.INFO {
+			background-color: var(--bg-robin-500);
+		}
+		&.WARNING,
+		&.WARN {
+			background-color: var(--bg-amber-500);
+		}
+		&.ERROR {
+			background-color: var(--bg-cherry-500);
+		}
+		&.TRACE {
+			background-color: var(--bg-forest-400);
+		}
+		&.DEBUG {
+			background-color: var(--bg-aqua-500);
+		}
+		&.FATAL {
+			background-color: var(--bg-sakura-500);
+		}
+	}
+}

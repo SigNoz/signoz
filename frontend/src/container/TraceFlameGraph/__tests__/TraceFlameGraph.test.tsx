@@ -37,6 +37,9 @@ test('loads and displays greeting', () => {
 						event: [],
 						hasError: false,
 						parent: undefined,
+						spanKind: '',
+						statusCodeString: '',
+						statusMessage: '',
 					},
 				}}
 			/>

@@ -1,0 +1,29 @@
+.toolbar {
+	display: grid;
+	grid-template-columns: 3fr auto auto;
+	padding: 8px 16px;
+	gap: 8px;
+
+	.timeRange {
+		display: flex;
+		padding-right: 8px;
+		align-items: center;
+		gap: 16px;
+	}
+}
+
+@media screen and (width <= 1300px) {
+	.toolbar {
+		grid-template-columns: repeat(1, 1fr);
+
+		.timeRange {
+			justify-content: flex-end;
+			padding-right: 0;
+		}
+
+		.rightActions {
+			display: flex;
+			justify-content: flex-end;
+		}
+	}
+}

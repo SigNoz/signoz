@@ -1,0 +1,23 @@
+.not-found {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 0;
+	height: 85%;
+	position: absolute;
+	left: 50%;
+	transform: translate(-50%, 0);
+}
+
+.uplot-graph-container {
+	height: 100%;
+	width: 100%;
+}
+
+.uplot-no-data {
+	position: relative;
+	display: flex;
+	width: 100%;
+	flex-direction: column;
+	gap: 8px;
+}

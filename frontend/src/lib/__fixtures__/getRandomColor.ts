@@ -16,6 +16,9 @@ const spans: Span[] = [
 		[''],
 		[''],
 		false,
+		'Server',
+		'Unset',
+		'Lorem Ipsum',
 	],
 	[
 		2,
@@ -30,6 +33,9 @@ const spans: Span[] = [
 		[''],
 		[''],
 		false,
+		'Server2',
+		'Unset2',
+		'Lorem Ipsum2',
 	],
 	[
 		3,
@@ -44,6 +50,9 @@ const spans: Span[] = [
 		[''],
 		[''],
 		false,
+		'Server3',
+		'Unset3',
+		'Lorem Ipsum3',
 	],
 ];
 

@@ -1,13 +1,26 @@
 import { rest } from 'msw';
 
+import { allAlertChannels } from './__mockdata__/alerts';
 import { billingSuccessResponse } from './__mockdata__/billing';
+import {
+	dashboardSuccessResponse,
+	getDashboardById,
+} from './__mockdata__/dashboards';
+import { explorerView } from './__mockdata__/explorer_views';
+import { inviteUser } from './__mockdata__/invite_user';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
+import { membersResponse } from './__mockdata__/members';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
 import { serviceSuccessResponse } from './__mockdata__/services';
 import { topLevelOperationSuccessResponse } from './__mockdata__/top_level_operations';
+import { traceDetailResponse } from './__mockdata__/tracedetail';
 
 export const handlers = [
 	rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(queryRangeSuccessResponse)),
+	),
+
+	rest.post('http://localhost/api/v4/query_range', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(queryRangeSuccessResponse)),
 	),
 
@@ -21,8 +34,11 @@ export const handlers = [
 			res(ctx.status(200), ctx.json(topLevelOperationSuccessResponse)),
 	),
 
+	rest.get('http://localhost/api/v1/orgUsers/*', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(membersResponse)),
+	),
 	rest.get(
-		'http://localhost/api/v2/metrics/autocomplete/tagKey',
+		'http://localhost/api/v3/autocomplete/attribute_keys',
 		(req, res, ctx) => {
 			const metricName = req.url.searchParams.get('metricName');
 			const match = req.url.searchParams.get('match');
@@ -39,11 +55,56 @@ export const handlers = [
 	),
 
 	rest.get(
-		'http://localhost/api/v2/metrics/autocomplete/tagValue',
+		'http://localhost/api/v3/autocomplete/attribute_values',
 		(req, res, ctx) => {
 			// ?metricName=signoz_calls_total&tagKey=resource_signoz_collector_id
 			const metricName = req.url.searchParams.get('metricName');
 			const tagKey = req.url.searchParams.get('tagKey');
+
+			const attributeKey = req.url.searchParams.get('attributeKey');
+
+			if (attributeKey === 'serviceName') {
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							stringAttributeValues: [
+								'customer',
+								'demo-app',
+								'driver',
+								'frontend',
+								'mysql',
+								'redis',
+								'route',
+								'go-grpc-otel-server',
+								'test',
+							],
+							numberAttributeValues: null,
+							boolAttributeValues: null,
+						},
+					}),
+				);
+			}
+
+			if (attributeKey === 'name') {
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							stringAttributeValues: [
+								'HTTP GET',
+								'HTTP GET /customer',
+								'HTTP GET /dispatch',
+								'HTTP GET /route',
+							],
+							numberAttributeValues: null,
+							boolAttributeValues: null,
+						},
+					}),
+				);
+			}
 
 			if (
 				metricName === 'signoz_calls_total' &&
@@ -72,13 +133,120 @@ export const handlers = [
 			return res(ctx.status(500));
 		},
 	),
+	rest.get('http://localhost/api/v1/loginPrecheck', (req, res, ctx) => {
+		const email = req.url.searchParams.get('email');
+		if (email === 'failEmail@signoz.io') {
+			return res(ctx.status(500));
+		}
+
+		return res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: {
+					sso: true,
+					ssoUrl: '',
+					canSelfRegister: false,
+					isUser: true,
+					ssoError: '',
+				},
+			}),
+		);
+	}),
 
 	rest.get('http://localhost/api/v2/licenses', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(licensesSuccessResponse)),
 	),
 
-	// ?licenseKey=58707e3d-3bdb-44e7-8c89-a9be237939f4
 	rest.get('http://localhost/api/v1/billing', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(billingSuccessResponse)),
+	),
+
+	rest.get('http://localhost/api/v1/dashboards', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(dashboardSuccessResponse)),
+	),
+
+	rest.get('http://localhost/api/v1/dashboards/4', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(getDashboardById)),
+	),
+
+	rest.get('http://localhost/api/v1/invite', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(inviteUser)),
+	),
+	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(inviteUser)),
+	),
+	rest.put('http://localhost/api/v1/user/:id', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				data: 'user updated successfully',
+			}),
+		),
+	),
+	rest.post('http://localhost/api/v1/changePassword', (_, res, ctx) =>
+		res(
+			ctx.status(403),
+			ctx.json({
+				status: 'error',
+				errorType: 'forbidden',
+				error: 'invalid credentials',
+			}),
+		),
+	),
+
+	rest.get(
+		'http://localhost/api/v3/autocomplete/aggregate_attributes',
+		(req, res, ctx) =>
+			res(
+				ctx.status(200),
+				ctx.json({
+					status: 'success',
+					data: { attributeKeys: null },
+				}),
+			),
+	),
+
+	rest.get('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(explorerView)),
+	),
+
+	rest.post('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: '7731ece1-3fa3-4ed4-8b1c-58b4c28723b2',
+			}),
+		),
+	),
+
+	rest.post('http://localhost/api/v1/event', (req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				statusCode: 200,
+				error: null,
+				payload: 'Event Processed Successfully',
+			}),
+		),
+	),
+
+	rest.get(
+		'http://localhost/api/v1/traces/000000000000000071dc9b0a338729b4',
+		(req, res, ctx) => res(ctx.status(200), ctx.json(traceDetailResponse)),
+	),
+
+	rest.post('http://localhost/api/v1//channels', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(allAlertChannels)),
+	),
+	rest.delete('http://localhost/api/v1/channels/:id', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: 'notification channel successfully deleted',
+			}),
+		),
 	),
 ];

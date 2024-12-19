@@ -1,106 +1,144 @@
 import { Row } from 'antd';
-import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useNotifications } from 'hooks/useNotifications';
-import { map, sortBy } from 'lodash-es';
+import { isNull } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { memo, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
+import { memo, useEffect, useState } from 'react';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import VariableItem from './VariableItem';
 
 function DashboardVariableSelection(): JSX.Element | null {
-	const { selectedDashboard, setSelectedDashboard } = useDashboard();
+	const {
+		selectedDashboard,
+		setSelectedDashboard,
+		updateLocalStorageDashboardVariables,
+		variablesToGetUpdated,
+		setVariablesToGetUpdated,
+	} = useDashboard();
 
 	const { data } = selectedDashboard || {};
 
 	const { variables } = data || {};
 
-	const [update, setUpdate] = useState<boolean>(false);
-	const [lastUpdatedVar, setLastUpdatedVar] = useState<string>('');
+	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	useEffect(() => {
+		if (variables) {
+			const tableRowData = [];
+
+			// eslint-disable-next-line no-restricted-syntax
+			for (const [key, value] of Object.entries(variables)) {
+				const { id } = value;
+
+				tableRowData.push({
+					key,
+					name: key,
+					...variables[key],
+					id,
+				});
+			}
+
+			tableRowData.sort((a, b) => a.order - b.order);
+
+			setVariablesTableData(tableRowData);
+		}
+	}, [variables]);
 
 	const onVarChanged = (name: string): void => {
-		setLastUpdatedVar(name);
-		setUpdate(!update);
-	};
-
-	const updateMutation = useUpdateDashboard();
-	const { notifications } = useNotifications();
-
-	const updateVariables = (
-		name: string,
-		updatedVariablesData: Dashboard['data']['variables'],
-	): void => {
-		if (!selectedDashboard) {
-			return;
-		}
-
-		updateMutation.mutateAsync(
-			{
-				...selectedDashboard,
-				data: {
-					...selectedDashboard.data,
-					variables: updatedVariablesData,
-				},
-			},
-			{
-				onSuccess: (updatedDashboard) => {
-					if (updatedDashboard.payload) {
-						setSelectedDashboard(updatedDashboard.payload);
+		/**
+		 * this function takes care of adding the dependent variables to current update queue and removing
+		 * the updated variable name from the queue
+		 */
+		const dependentVariables = variablesTableData
+			?.map((variable: any) => {
+				if (variable.type === 'QUERY') {
+					const re = new RegExp(`\\{\\{\\s*?\\.${name}\\s*?\\}\\}`); // regex for `{{.var}}`
+					const queryValue = variable.queryValue || '';
+					const dependVarReMatch = queryValue.match(re);
+					if (dependVarReMatch !== null && dependVarReMatch.length > 0) {
+						return variable.name;
 					}
-				},
-				onError: () => {
-					notifications.error({
-						message: `Error updating ${name} variable`,
-					});
-				},
-			},
-		);
+				}
+				return null;
+			})
+			.filter((val: string | null) => !isNull(val));
+		setVariablesToGetUpdated((prev) => [
+			...prev.filter((v) => v !== name),
+			...dependentVariables,
+		]);
 	};
 
 	const onValueUpdate = (
 		name: string,
+		id: string,
 		value: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): void => {
-		const updatedVariablesData = { ...variables };
-		updatedVariablesData[name].selectedValue = value;
-		updatedVariablesData[name].allSelected = allSelected;
+		if (id) {
+			updateLocalStorageDashboardVariables(name, value, allSelected);
 
-		console.log('onValue Update', name);
+			if (selectedDashboard) {
+				setSelectedDashboard((prev) => {
+					if (prev) {
+						const oldVariables = prev?.data.variables;
+						// this is added to handle case where we have two different
+						// schemas for variable response
+						if (oldVariables[id]) {
+							oldVariables[id] = {
+								...oldVariables[id],
+								selectedValue: value,
+								allSelected,
+							};
+						}
+						if (oldVariables[name]) {
+							oldVariables[name] = {
+								...oldVariables[name],
+								selectedValue: value,
+								allSelected,
+							};
+						}
+						return {
+							...prev,
+							data: {
+								...prev?.data,
+								variables: {
+									...oldVariables,
+								},
+							},
+						};
+					}
+					return prev;
+				});
+			}
 
-		if (role !== 'VIEWER' && selectedDashboard) {
-			updateVariables(name, updatedVariablesData);
+			onVarChanged(name);
 		}
-		onVarChanged(name);
-
-		setUpdate(!update);
 	};
 
 	if (!variables) {
 		return null;
 	}
 
-	const variablesKeys = sortBy(Object.keys(variables));
+	const orderBasedSortedVariables = variablesTableData.sort(
+		(a: { order: number }, b: { order: number }) => a.order - b.order,
+	);
 
 	return (
-		<Row>
-			{variablesKeys &&
-				map(variablesKeys, (variableName) => (
+		<Row style={{ display: 'flex', gap: '12px' }}>
+			{orderBasedSortedVariables &&
+				Array.isArray(orderBasedSortedVariables) &&
+				orderBasedSortedVariables.length > 0 &&
+				orderBasedSortedVariables.map((variable) => (
 					<VariableItem
-						key={`${variableName}${variables[variableName].modificationUUID}`}
+						key={`${variable.name}${variable.id}}${variable.order}`}
 						existingVariables={variables}
-						lastUpdatedVar={lastUpdatedVar}
 						variableData={{
-							name: variableName,
-							...variables[variableName],
-							change: update,
+							name: variable.name,
+							...variable,
 						}}
 						onValueUpdate={onValueUpdate}
+						variablesToGetUpdated={variablesToGetUpdated}
+						setVariablesToGetUpdated={setVariablesToGetUpdated}
 					/>
 				))}
 		</Row>

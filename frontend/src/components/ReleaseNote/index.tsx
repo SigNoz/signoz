@@ -25,11 +25,12 @@ const allComponentMap: ComponentMapType[] = [
 			if (!path) {
 				return false;
 			}
-			const allowedPaths = [
+			const allowedPaths: string[] = [
 				ROUTES.LIST_ALL_ALERT,
 				ROUTES.APPLICATION,
 				ROUTES.ALL_DASHBOARD,
 			];
+
 			return (
 				userFlags?.ReleaseNote0120Hide !== 'Y' &&
 				allowedPaths.includes(path) &&

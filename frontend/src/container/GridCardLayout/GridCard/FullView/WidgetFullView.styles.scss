@@ -10,12 +10,27 @@
 	.graph-container {
 		height: calc(60% - 40px);
 		min-height: 300px;
-		border: 1px solid #333;
 		width: 100%;
 		padding: 12px;
 		box-sizing: border-box;
 		margin: 16px 0;
 		border-radius: 3px;
+
+		.global-search {
+			.ant-input-group-addon {
+				border: none;
+				background-color: var(--bg-ink-300);
+			}
+		}
+	}
+
+	.height-widget {
+		height: calc(100% - 40px);
+	}
+
+	.list-graph-container {
+		height: calc(100% - 40px);
+		overflow-y: auto;
 	}
 
 	.disabled {
@@ -44,6 +59,18 @@
 
 		.save-cancel-button {
 			margin: 0 0.313rem;
+		}
+	}
+}
+
+.lightMode {
+	.full-view-container {
+		.graph-container {
+			.global-search {
+				.ant-input-group-addon {
+					background-color: var(--bg-vanilla-200);
+				}
+			}
 		}
 	}
 }

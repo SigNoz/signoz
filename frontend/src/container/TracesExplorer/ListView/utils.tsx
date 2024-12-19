@@ -1,16 +1,35 @@
-import { Tag } from 'antd';
+import { Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import Typography from 'antd/es/typography/Typography';
 import ROUTES from 'constants/routes';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { formUrlParams } from 'container/TraceDetail/utils';
-import dayjs from 'dayjs';
+import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { Link } from 'react-router-dom';
 import { ILog } from 'types/api/logs/log';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
-import { DateText } from './styles';
+export function BlockLink({
+	children,
+	to,
+	openInNewTab,
+}: {
+	children: React.ReactNode;
+	to: string;
+	openInNewTab: boolean;
+}): any {
+	// Display block to make the whole cell clickable
+	return (
+		<Link
+			to={to}
+			style={{ display: 'block' }}
+			target={openInNewTab ? '_blank' : '_self'}
+		>
+			{children}
+		</Link>
+	);
+}
 
 export const transformDataWithDate = (
 	data: QueryDataV3[],
@@ -27,19 +46,26 @@ export const getTraceLink = (record: RowData): string =>
 
 export const getListColumns = (
 	selectedColumns: BaseAutocompleteData[],
+	formatTimezoneAdjustedTimestamp: (
+		input: TimestampInput,
+		format?: string,
+	) => string | number,
 ): ColumnsType<RowData> => {
 	const initialColumns: ColumnsType<RowData> = [
 		{
-			title: 'date',
 			dataIndex: 'date',
 			key: 'date',
+			title: 'Timestamp',
 			width: 145,
-			render: (date: string): JSX.Element => {
-				const day = dayjs(date);
+			render: (value, item): JSX.Element => {
+				const date =
+					typeof value === 'string'
+						? formatTimezoneAdjustedTimestamp(value, 'YYYY-MM-DD HH:mm:ss.SSS')
+						: formatTimezoneAdjustedTimestamp(value / 1e6, 'YYYY-MM-DD HH:mm:ss.SSS');
 				return (
-					<DateText data-testid="trace-explorer-date">
-						{day.format('YYYY/MM/DD HH:mm:ss')}
-					</DateText>
+					<BlockLink to={getTraceLink(item)} openInNewTab={false}>
+						<Typography.Text>{date}</Typography.Text>
+					</BlockLink>
 				);
 			},
 		},
@@ -50,25 +76,41 @@ export const getListColumns = (
 			title: key,
 			dataIndex: key,
 			key: `${key}-${dataType}-${type}`,
-			render: (value): JSX.Element => {
+			width: 145,
+			render: (value, item): JSX.Element => {
 				if (value === '') {
-					return <Typography data-testid={key}>N/A</Typography>;
+					return (
+						<BlockLink to={getTraceLink(item)} openInNewTab={false}>
+							<Typography data-testid={key}>N/A</Typography>
+						</BlockLink>
+					);
 				}
 
 				if (key === 'httpMethod' || key === 'responseStatusCode') {
 					return (
-						<Tag data-testid={key} color="magenta">
-							{value}
-						</Tag>
+						<BlockLink to={getTraceLink(item)} openInNewTab={false}>
+							<Tag data-testid={key} color="magenta">
+								{value}
+							</Tag>
+						</BlockLink>
 					);
 				}
 
 				if (key === 'durationNano') {
-					return <Typography data-testid={key}>{getMs(value)}ms</Typography>;
+					return (
+						<BlockLink to={getTraceLink(item)} openInNewTab={false}>
+							<Typography data-testid={key}>{getMs(value)}ms</Typography>
+						</BlockLink>
+					);
 				}
 
-				return <Typography data-testid={key}>{value}</Typography>;
+				return (
+					<BlockLink to={getTraceLink(item)} openInNewTab={false}>
+						<Typography data-testid={key}>{value}</Typography>
+					</BlockLink>
+				);
 			},
+			responsive: ['md'],
 		})) || [];
 
 	return [...initialColumns, ...columns];

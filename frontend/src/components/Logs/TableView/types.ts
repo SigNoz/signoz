@@ -1,4 +1,5 @@
 import { ColumnsType, ColumnType } from 'antd/es/table';
+import { FontSize } from 'container/OptionsMenu/types';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
@@ -10,6 +11,7 @@ export type LogsTableViewProps = {
 	logs: ILog[];
 	fields: IField[];
 	linesPerRow: number;
+	fontSize: FontSize;
 	onClickExpand?: (log: ILog) => void;
 };
 
@@ -22,6 +24,10 @@ export type UseTableViewProps = {
 	appendTo?: 'center' | 'end';
 	onOpenLogsContext?: (log: ILog) => void;
 	onClickExpand?: (log: ILog) => void;
+	activeLog?: ILog | null;
+	activeLogIndex?: number;
+	activeContextLog?: ILog | null;
+	isListViewPanel?: boolean;
 } & LogsTableViewProps;
 
 export type ActionsColumnProps = {

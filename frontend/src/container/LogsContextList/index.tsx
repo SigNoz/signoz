@@ -1,6 +1,11 @@
+import './LogsContextList.styles.scss';
+
 import RawLogView from 'components/Logs/RawLogView';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -21,6 +26,7 @@ import { EmptyText, ListContainer } from './styles';
 import { getRequestData } from './utils';
 
 interface LogsContextListProps {
+	className?: string;
 	isEdit: boolean;
 	query: Query;
 	log: ILog;
@@ -29,6 +35,7 @@ interface LogsContextListProps {
 }
 
 function LogsContextList({
+	className,
 	isEdit,
 	query,
 	log,
@@ -79,7 +86,7 @@ function LogsContextList({
 
 	const handleSuccess = useCallback(
 		(data: SuccessResponse<MetricRangePayloadProps, unknown>) => {
-			const currentData = data?.payload.data.newResult.data.result || [];
+			const currentData = data?.payload?.data?.newResult?.data?.result || [];
 
 			if (currentData.length > 0 && currentData[0].list) {
 				const currentLogs: ILog[] = currentData[0].list.map((item) => ({
@@ -101,6 +108,7 @@ function LogsContextList({
 	const { isError, isFetching } = useGetExplorerQueryRange(
 		requestData,
 		PANEL_TYPES.LIST,
+		DEFAULT_ENTITY_VERSION,
 		{
 			keepPreviousData: true,
 			enabled: !!requestData,
@@ -160,13 +168,14 @@ function LogsContextList({
 				key={log.id}
 				data={log}
 				linesPerRow={1}
+				fontSize={FontSize.SMALL}
 			/>
 		),
 		[],
 	);
 
 	return (
-		<>
+		<div className={`context-logs-list ${className}`}>
 			{order === ORDERBY_FILTERS.ASC && (
 				<ShowButton
 					isLoading={isFetching}
@@ -181,13 +190,15 @@ function LogsContextList({
 					<EmptyText>No Data</EmptyText>
 				)}
 				{isFetching && <Spinner size="large" height="10rem" />}
-
-				<Virtuoso
-					initialTopMostItemIndex={0}
-					data={logs}
-					itemContent={getItemContent}
-					followOutput={order === ORDERBY_FILTERS.DESC}
-				/>
+				<OverlayScrollbar isVirtuoso>
+					<Virtuoso
+						className="virtuoso-list"
+						initialTopMostItemIndex={0}
+						data={logs}
+						itemContent={getItemContent}
+						followOutput={order === ORDERBY_FILTERS.DESC}
+					/>
+				</OverlayScrollbar>
 			</ListContainer>
 
 			{order === ORDERBY_FILTERS.DESC && (
@@ -198,8 +209,12 @@ function LogsContextList({
 					onClick={handleShowNextLines}
 				/>
 			)}
-		</>
+		</div>
 	);
 }
+
+LogsContextList.defaultProps = {
+	className: '',
+};
 
 export default memo(LogsContextList);

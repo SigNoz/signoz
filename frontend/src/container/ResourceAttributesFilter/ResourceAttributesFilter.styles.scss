@@ -1,0 +1,33 @@
+.resourceAttributesFilter-container {
+	display: flex;
+	align-items: center;
+	justify-content: stretch;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 16px;
+
+	.resource-attributes-selector {
+		flex: 1;
+		border-radius: 3px;
+
+		background-color: var(--bg-ink-400);
+		border: 1px solid #454c58;
+	}
+
+	.environment-selector {
+		min-width: 200px;
+	}
+
+	.ant-form-item {
+		margin-bottom: 0;
+	}
+}
+
+.lightMode {
+	.resourceAttributesFilter-container {
+		.resource-attributes-selector {
+			border: 1px solid #d9d9d9;
+			background: var(--bg-vanilla-100);
+		}
+	}
+}

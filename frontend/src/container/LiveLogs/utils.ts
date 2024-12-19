@@ -42,7 +42,7 @@ export const prepareQueryByFilter = (
 		...query,
 		builder: {
 			...query.builder,
-			queryData: query.builder.queryData.map((item) => ({
+			queryData: query.builder.queryData?.map((item) => ({
 				...item,
 				filters: value ? getFilter(item.filters, tagFilter, value) : item.filters,
 			})),
@@ -57,7 +57,7 @@ export const getQueryWithoutFilterId = (query: Query): Query => {
 		...query,
 		builder: {
 			...query.builder,
-			queryData: query.builder.queryData.map((item) => ({
+			queryData: query.builder.queryData?.map((item) => ({
 				...item,
 				filters: {
 					...item.filters,

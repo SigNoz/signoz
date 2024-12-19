@@ -1,0 +1,250 @@
+.text {
+	color: var(--bg-vanilla-400);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}
+
+.dot {
+	height: 5px;
+	width: 5px;
+	border-radius: 50%;
+	background-color: var(--bg-slate-300);
+	flex-shrink: 0;
+}
+
+.option {
+	.container {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+
+		.left-section {
+			display: flex;
+			align-items: center;
+			width: 90%;
+			gap: 8px;
+
+			.value {
+			}
+		}
+		.right-section {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+
+			.data-type {
+				display: flex;
+				height: 20px;
+				padding: 4px 8px;
+				justify-content: center;
+				align-items: center;
+				gap: 4px;
+				border-radius: 20px;
+				background: rgba(255, 255, 255, 0.08);
+			}
+
+			.type-tag {
+				display: flex;
+				align-items: center;
+				height: 20px;
+				padding: 0px 6px;
+				justify-content: center;
+				gap: 4px;
+				border-radius: 50px;
+				text-transform: capitalize;
+
+				&.tag {
+					border-radius: 50px;
+					background: rgba(189, 153, 121, 0.1) !important;
+					color: var(--bg-sienna-400) !important;
+
+					.dot {
+						background-color: var(--bg-sienna-400);
+					}
+					.text {
+						color: var(--bg-sienna-400);
+						font-family: Inter;
+						font-size: 12px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: 18px; /* 150% */
+						letter-spacing: -0.06px;
+					}
+				}
+
+				&.resource {
+					border-radius: 50px;
+					background: #4bcff910 !important;
+					color: var(--bg-aqua-400) !important;
+
+					.dot {
+						background-color: var(--bg-aqua-400);
+					}
+					.text {
+						color: var(--bg-aqua-400);
+						font-family: Inter;
+						font-size: 12px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: 18px; /* 150% */
+						letter-spacing: -0.06px;
+					}
+				}
+
+				&.scope {
+					border-radius: 50px;
+					background: rgba(113, 144, 249, 0.1) !important;
+					color: var(--bg-robin-400) !important;
+
+					.dot {
+						background-color: var(--bg-robin-400);
+					}
+					.text {
+						color: var(--bg-robin-400);
+						font-family: Inter;
+						font-size: 12px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: 18px; /* 150% */
+						letter-spacing: -0.06px;
+					}
+				}
+			}
+		}
+		.option-meta-data-container {
+			display: flex;
+			gap: 8px;
+		}
+	}
+
+	.container-without-tag {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		justify-content: space-between;
+
+		.left {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.OPERATOR {
+				color: var(--bg-vanilla-400);
+				font-family: 'Space Mono';
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+				text-transform: uppercase;
+				width: 100%;
+			}
+
+			.VALUE {
+				color: var(--bg-vanilla-400);
+				font-family: 'Space Mono';
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+				text-transform: uppercase;
+				width: 100%;
+			}
+		}
+
+		.right {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			.data-type {
+				display: flex;
+				height: 20px;
+				padding: 4px 8px;
+				justify-content: center;
+				align-items: center;
+				gap: 4px;
+				border-radius: 20px;
+				background: rgba(255, 255, 255, 0.08);
+			}
+		}
+	}
+}
+.option:hover {
+	.container {
+		.left-section {
+			.value {
+				color: var(--bg-vanilla-100);
+			}
+		}
+	}
+	.container-without-tag {
+		.value {
+			color: var(--bg-vanilla-100);
+		}
+	}
+}
+
+.lightMode {
+	.text {
+		color: var(--bg-ink-400);
+	}
+
+	.option {
+		.container {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+
+			.right-section {
+				.data-type {
+					background: var(--bg-vanilla-300);
+				}
+			}
+			.option-meta-data-container {
+				display: flex;
+				gap: 8px;
+			}
+		}
+
+		.container-without-tag {
+			.left {
+				.OPERATOR {
+					color: var(--bg-ink-400);
+				}
+
+				.VALUE {
+					color: var(--bg-ink-400);
+				}
+			}
+
+			.right {
+				.data-type {
+					background: var(--bg-vanilla-300);
+				}
+			}
+
+			.value {
+				color: var(--bg-ink-100);
+			}
+		}
+	}
+	.option:hover {
+		.container {
+			.left-section {
+				.value {
+					color: var(--bg-ink-100);
+				}
+			}
+		}
+		.container-without-tag {
+			.value {
+				color: var(--bg-ink-100);
+			}
+		}
+	}
+}

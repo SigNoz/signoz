@@ -166,11 +166,17 @@ export const serviceMetricsQuery = (
 		operationPrSecondAdditionalItems,
 	];
 
-	const aggregateOperators = [
-		MetricAggregateOperator.HIST_QUANTILE_99,
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
+	const timeAggregateOperators = [
+		MetricAggregateOperator.EMPTY,
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+	];
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.P99,
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
 
 	const disabled = [false, true, true, false];
@@ -201,7 +207,8 @@ export const serviceMetricsQuery = (
 		additionalItems,
 		disabled,
 		legends,
-		aggregateOperators,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 		expressions,
 		legendFormulas,
 		groupBy,

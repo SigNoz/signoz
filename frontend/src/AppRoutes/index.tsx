@@ -1,6 +1,8 @@
 import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import logEvent from 'api/common/logEvent';
+import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
@@ -8,31 +10,48 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import useAnalytics from 'hooks/analytics/useAnalytics';
-import { useThemeConfig } from 'hooks/useDarkMode';
+import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
+import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
+import { THEME_MODE } from 'hooks/useDarkMode/constant';
+import useFeatureFlags from 'hooks/useFeatureFlag';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
 import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
-import { identity, pickBy } from 'lodash-es';
+import { identity, pick, pickBy } from 'lodash-es';
+import posthog from 'posthog-js';
+import AlertRuleProvider from 'providers/Alert';
+import { AppProvider } from 'providers/App/App';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, Router, Switch } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_FEATURE_FLAG_RESPONSE } from 'types/actions/app';
+import {
+	UPDATE_FEATURE_FLAG_RESPONSE,
+	UPDATE_IS_FETCHING_ORG_PREFERENCES,
+	UPDATE_ORG_PREFERENCES,
+} from 'types/actions/app';
 import AppReducer, { User } from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
 import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
 
 import PrivateRoute from './Private';
-import defaultRoutes, { AppRoutes, SUPPORT_ROUTE } from './routes';
+import defaultRoutes, {
+	AppRoutes,
+	LIST_LICENSES,
+	SUPPORT_ROUTE,
+} from './routes';
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
-	const { data } = useLicense();
+	const { data: licenseData } = useLicense();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
 	const { role, isLoggedIn: isLoggedInState, user, org } = useSelector<
 		AppState,
@@ -47,15 +66,50 @@ function App(): JSX.Element {
 
 	const isCloudUserVal = isCloudUser();
 
+	const isDarkMode = useIsDarkMode();
+
+	const isChatSupportEnabled =
+		useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active || false;
+
+	const isPremiumSupportEnabled =
+		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
+
+	const { data: orgPreferences, isLoading: isLoadingOrgPreferences } = useQuery({
+		queryFn: () => getAllOrgPreferences(),
+		queryKey: ['getOrgPreferences'],
+		enabled: isLoggedInState && role === USER_ROLES.ADMIN,
+	});
+
+	useEffect(() => {
+		if (orgPreferences && !isLoadingOrgPreferences) {
+			dispatch({
+				type: UPDATE_IS_FETCHING_ORG_PREFERENCES,
+				payload: {
+					isFetchingOrgPreferences: false,
+				},
+			});
+
+			dispatch({
+				type: UPDATE_ORG_PREFERENCES,
+				payload: {
+					orgPreferences: orgPreferences.payload?.data || null,
+				},
+			});
+		}
+	}, [orgPreferences, dispatch, isLoadingOrgPreferences]);
+
+	useEffect(() => {
+		if (isLoggedInState && role !== USER_ROLES.ADMIN) {
+			dispatch({
+				type: UPDATE_IS_FETCHING_ORG_PREFERENCES,
+				payload: {
+					isFetchingOrgPreferences: false,
+				},
+			});
+		}
+	}, [isLoggedInState, role, dispatch]);
+
 	const featureResponse = useGetFeatureFlag((allFlags) => {
-		const isOnboardingEnabled =
-			allFlags.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
-			false;
-
-		const isChatSupportEnabled =
-			allFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)?.active ||
-			false;
-
 		dispatch({
 			type: UPDATE_FEATURE_FLAG_RESPONSE,
 			payload: {
@@ -64,6 +118,10 @@ function App(): JSX.Element {
 			},
 		});
 
+		const isOnboardingEnabled =
+			allFlags.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
+			false;
+
 		if (!isOnboardingEnabled || !isCloudUserVal) {
 			const newRoutes = routes.filter(
 				(route) => route?.path !== ROUTES.GET_STARTED,
@@ -71,23 +129,13 @@ function App(): JSX.Element {
 
 			setRoutes(newRoutes);
 		}
-
-		if (isLoggedInState && isChatSupportEnabled) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			window.Intercom('boot', {
-				app_id: process.env.INTERCOM_APP_ID,
-				email: user?.email || '',
-				name: user?.name || '',
-			});
-		}
 	});
 
 	const isOnBasicPlan =
-		data?.payload?.licenses?.some(
+		licenseData?.payload?.licenses?.some(
 			(license) =>
 				license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
-		) || data?.payload?.licenses === null;
+		) || licenseData?.payload?.licenses === null;
 
 	const enableAnalytics = (user: User): void => {
 		const orgName =
@@ -104,9 +152,7 @@ function App(): JSX.Element {
 		};
 
 		const sanitizedIdentifyPayload = pickBy(identifyPayload, identity);
-
 		const domain = extractDomain(email);
-
 		const hostNameParts = hostname.split('.');
 
 		const groupTraits = {
@@ -119,10 +165,29 @@ function App(): JSX.Element {
 		};
 
 		window.analytics.identify(email, sanitizedIdentifyPayload);
-
 		window.analytics.group(domain, groupTraits);
 
-		window.clarity('identify', email, name);
+		posthog?.identify(email, {
+			email,
+			name,
+			orgName,
+			tenant_id: hostNameParts[0],
+			data_region: hostNameParts[1],
+			tenant_url: hostname,
+			company_domain: domain,
+			source: 'signoz-ui',
+			isPaidUser: !!licenseData?.payload?.trialConvertedToSubscription,
+		});
+
+		posthog?.group('company', domain, {
+			name: orgName,
+			tenant_id: hostNameParts[0],
+			data_region: hostNameParts[1],
+			tenant_url: hostname,
+			company_domain: domain,
+			source: 'signoz-ui',
+			isPaidUser: !!licenseData?.payload?.trialConvertedToSubscription,
+		});
 	};
 
 	useEffect(() => {
@@ -136,13 +201,13 @@ function App(): JSX.Element {
 			!isIdentifiedUser
 		) {
 			setLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER, 'true');
-
-			if (isCloudUserVal) {
-				enableAnalytics(user);
-			}
 		}
 
-		if (isOnBasicPlan || (isLoggedInState && role && role !== 'ADMIN')) {
+		if (
+			isOnBasicPlan ||
+			(isLoggedInState && role && role !== 'ADMIN') ||
+			!(isCloudUserVal || isEECloudUser())
+		) {
 			const newRoutes = routes.filter((route) => route?.path !== ROUTES.BILLING);
 			setRoutes(newRoutes);
 		}
@@ -151,47 +216,120 @@ function App(): JSX.Element {
 			const newRoutes = [...routes, SUPPORT_ROUTE];
 
 			setRoutes(newRoutes);
+		} else {
+			const newRoutes = [...routes, LIST_LICENSES];
+
+			setRoutes(newRoutes);
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isLoggedInState, isOnBasicPlan, user]);
 
 	useEffect(() => {
+		if (pathname === ROUTES.ONBOARDING) {
+			window.Intercom('update', {
+				hide_default_launcher: true,
+			});
+		} else {
+			window.Intercom('update', {
+				hide_default_launcher: false,
+			});
+		}
+
 		trackPageView(pathname);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [pathname]);
 
-	return (
-		<ConfigProvider theme={themeConfig}>
-			<Router history={history}>
-				<NotificationProvider>
-					<PrivateRoute>
-						<ResourceProvider>
-							<QueryBuilderProvider>
-								<DashboardProvider>
-									<AppLayout>
-										<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-											<Switch>
-												{routes.map(({ path, component, exact }) => (
-													<Route
-														key={`${path}`}
-														exact={exact}
-														path={path}
-														component={component}
-													/>
-												))}
+	useEffect(() => {
+		const showAddCreditCardModal =
+			!isPremiumSupportEnabled &&
+			!licenseData?.payload?.trialConvertedToSubscription;
 
-												<Route path="*" component={NotFound} />
-											</Switch>
-										</Suspense>
-									</AppLayout>
-								</DashboardProvider>
-							</QueryBuilderProvider>
-						</ResourceProvider>
-					</PrivateRoute>
-				</NotificationProvider>
-			</Router>
-		</ConfigProvider>
+		if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
+			window.Intercom('boot', {
+				app_id: process.env.INTERCOM_APP_ID,
+				email: user?.email || '',
+				name: user?.name || '',
+			});
+		}
+	}, [
+		isLoggedInState,
+		isChatSupportEnabled,
+		user,
+		licenseData,
+		isPremiumSupportEnabled,
+		pathname,
+	]);
+
+	useEffect(() => {
+		if (user && user?.email && user?.userId && user?.name) {
+			try {
+				const isThemeAnalyticsSent = getLocalStorageApi(
+					LOCALSTORAGE.THEME_ANALYTICS_V1,
+				);
+				if (!isThemeAnalyticsSent) {
+					logEvent('Theme Analytics', {
+						theme: isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT,
+						user: pick(user, ['email', 'userId', 'name']),
+						org,
+					});
+					setLocalStorageApi(LOCALSTORAGE.THEME_ANALYTICS_V1, 'true');
+				}
+			} catch {
+				console.error('Failed to parse local storage theme analytics event');
+			}
+		}
+
+		if (isCloudUserVal && user && user.email) {
+			enableAnalytics(user);
+		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [user]);
+
+	useEffect(() => {
+		console.info('We are hiring! https://jobs.gem.com/signoz');
+	}, []);
+
+	return (
+		<AppProvider>
+			<ConfigProvider theme={themeConfig}>
+				<Router history={history}>
+					<CompatRouter>
+						<NotificationProvider>
+							<PrivateRoute>
+								<ResourceProvider>
+									<QueryBuilderProvider>
+										<DashboardProvider>
+											<KeyboardHotkeysProvider>
+												<AlertRuleProvider>
+													<AppLayout>
+														<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+															<Switch>
+																{routes.map(({ path, component, exact }) => (
+																	<Route
+																		key={`${path}`}
+																		exact={exact}
+																		path={path}
+																		component={component}
+																	/>
+																))}
+
+																<Route path="*" component={NotFound} />
+															</Switch>
+														</Suspense>
+													</AppLayout>
+												</AlertRuleProvider>
+											</KeyboardHotkeysProvider>
+										</DashboardProvider>
+									</QueryBuilderProvider>
+								</ResourceProvider>
+							</PrivateRoute>
+						</NotificationProvider>
+					</CompatRouter>
+				</Router>
+			</ConfigProvider>
+		</AppProvider>
 	);
 }
 

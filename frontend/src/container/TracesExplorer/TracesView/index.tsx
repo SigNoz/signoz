@@ -1,8 +1,11 @@
 import { Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
+import NoLogs from 'container/NoLogs/NoLogs';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
@@ -10,13 +13,20 @@ import useUrlQueryData from 'hooks/useUrlQueryData';
 import { memo, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import DOCLINKS from 'utils/docLinks';
 
 import TraceExplorerControls from '../Controls';
-import { columns, PER_PAGE_OPTIONS, TRACES_DETAILS_LINK } from './configs';
+import { TracesLoading } from '../TraceLoading/TraceLoading';
+import { columns, PER_PAGE_OPTIONS } from './configs';
 import { ActionsContainer, Container } from './styles';
 
-function TracesView(): JSX.Element {
+interface TracesViewProps {
+	isFilterApplied: boolean;
+}
+
+function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
@@ -28,7 +38,7 @@ function TracesView(): JSX.Element {
 		QueryParams.pagination,
 	);
 
-	const { data, isLoading } = useGetQueryRange(
+	const { data, isLoading, isFetching, isError } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.traces,
 			graphType: panelType || PANEL_TYPES.TRACE,
@@ -41,6 +51,7 @@ function TracesView(): JSX.Element {
 				pagination: paginationQueryData,
 			},
 		},
+		DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -63,28 +74,51 @@ function TracesView(): JSX.Element {
 
 	return (
 		<Container>
-			<ActionsContainer>
-				<Typography>
-					This tab only shows Root Spans. More details
-					<Typography.Link href={TRACES_DETAILS_LINK} target="_blank">
-						{' '}
-						here
-					</Typography.Link>
-				</Typography>
-				<TraceExplorerControls
-					isLoading={isLoading}
-					totalCount={responseData?.length || 0}
-					perPageOptions={PER_PAGE_OPTIONS}
+			{(tableData || []).length !== 0 && (
+				<ActionsContainer>
+					<Typography>
+						This tab only shows Root Spans. More details
+						<Typography.Link href={DOCLINKS.TRACES_DETAILS_LINK} target="_blank">
+							{' '}
+							here
+						</Typography.Link>
+					</Typography>
+					<TraceExplorerControls
+						isLoading={isLoading}
+						totalCount={responseData?.length || 0}
+						perPageOptions={PER_PAGE_OPTIONS}
+					/>
+				</ActionsContainer>
+			)}
+
+			{(isLoading || (isFetching && (tableData || []).length === 0)) && (
+				<TracesLoading />
+			)}
+
+			{!isLoading &&
+				!isFetching &&
+				!isError &&
+				!isFilterApplied &&
+				(tableData || []).length === 0 && <NoLogs dataSource={DataSource.TRACES} />}
+
+			{!isLoading &&
+				!isFetching &&
+				(tableData || []).length === 0 &&
+				!isError &&
+				isFilterApplied && (
+					<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="TRACE" />
+				)}
+
+			{(tableData || []).length !== 0 && (
+				<ResizeTable
+					loading={isLoading}
+					columns={columns}
+					tableLayout="fixed"
+					dataSource={tableData}
+					scroll={{ x: true }}
+					pagination={false}
 				/>
-			</ActionsContainer>
-			<ResizeTable
-				loading={isLoading}
-				columns={columns}
-				tableLayout="fixed"
-				dataSource={tableData}
-				scroll={{ x: true }}
-				pagination={false}
-			/>
+			)}
 		</Container>
 	);
 }

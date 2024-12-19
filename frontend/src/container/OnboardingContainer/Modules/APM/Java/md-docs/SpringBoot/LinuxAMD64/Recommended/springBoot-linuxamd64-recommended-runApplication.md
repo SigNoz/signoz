@@ -25,11 +25,12 @@ kill "$(< otel-pid)"
 ### Step 2: Run your application
 
 ```bash
-java -javaagent:<path>/opentelemetry-javaagent.jar -jar {{MYAPP}}.jar
+java -javaagent:<path>/opentelemetry-javaagent.jar -jar <my-app>.jar
 ```
 &nbsp;
 
 <path> - update it to the path where you downloaded the Java JAR agent in previous step
+<my-app> - Jar file of your application
 
 &nbsp;
 

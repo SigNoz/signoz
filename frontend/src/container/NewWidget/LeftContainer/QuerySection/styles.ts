@@ -20,8 +20,8 @@ export const QueryButton = styled(Button)`
 
 export const QueryWrapper = styled.div`
 	width: 100%;
-	margin: 1rem 0;
-	padding: 1rem 0.5rem;
+	margin: 0;
+	padding: 0.5rem 0;
 	display: flex;
 	flex-direction: column;
 `;

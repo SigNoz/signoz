@@ -99,7 +99,7 @@ func (r *Repo) insertPipeline(
 		insertRow.RawConfig)
 
 	if err != nil {
-		zap.S().Errorf("error in inserting pipeline data: ", zap.Error(err))
+		zap.L().Error("error in inserting pipeline data", zap.Error(err))
 		return nil, model.InternalError(errors.Wrap(err, "failed to insert pipeline"))
 	}
 
@@ -171,19 +171,19 @@ func (r *Repo) GetPipeline(
 
 	err := r.db.SelectContext(ctx, &pipelines, pipelineQuery, id)
 	if err != nil {
-		zap.S().Errorf("failed to get ingestion pipeline from db", err)
+		zap.L().Error("failed to get ingestion pipeline from db", zap.Error(err))
 		return nil, model.InternalError(errors.Wrap(err, "failed to get ingestion pipeline from db"))
 	}
 
 	if len(pipelines) == 0 {
-		zap.S().Warnf("No row found for ingestion pipeline id", id)
-		return nil, model.NotFoundError(fmt.Errorf("No row found for ingestion pipeline id %v", id))
+		zap.L().Warn("No row found for ingestion pipeline id", zap.String("id", id))
+		return nil, model.NotFoundError(fmt.Errorf("no row found for ingestion pipeline id %v", id))
 	}
 
 	if len(pipelines) == 1 {
 		err := pipelines[0].ParseRawConfig()
 		if err != nil {
-			zap.S().Errorf("invalid pipeline config found", id, err)
+			zap.L().Error("invalid pipeline config found", zap.String("id", id), zap.Error(err))
 			return nil, model.InternalError(
 				errors.Wrap(err, "found an invalid pipeline config"),
 			)

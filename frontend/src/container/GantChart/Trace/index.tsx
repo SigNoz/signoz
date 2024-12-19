@@ -16,7 +16,7 @@ import {
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import { ITraceMetaData } from '..';
-import SpanLength from '../SpanLength';
+import Span from '../Span';
 import SpanName from '../SpanName';
 import { getMetaDataFromSpanTree, getTopLeftFromBody } from '../utils';
 import {
@@ -158,7 +158,7 @@ function Trace(props: TraceProps): JSX.Element {
 									isDarkMode={isDarkMode}
 									onClick={onClickTreeExpansion}
 								>
-									<Typography>{totalSpans}</Typography>
+									<Typography style={{ wordBreak: 'normal' }}>{totalSpans}</Typography>
 									<CaretContainer>{icon}</CaretContainer>
 								</CardComponent>
 							)}
@@ -169,7 +169,10 @@ function Trace(props: TraceProps): JSX.Element {
 					</StyledRow>
 				</StyledCol>
 				<Col flex="1">
-					<SpanLength
+					<Span
+						globalStart={globalStart}
+						startTime={startTime}
+						name={name}
 						leftOffset={nodeLeftOffset.toString()}
 						width={width.toString()}
 						bgColor={serviceColour}

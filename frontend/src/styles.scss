@@ -1,3 +1,8 @@
+@import '@signozhq/design-tokens/dist/style.css';
+@import 'overlayscrollbars/overlayscrollbars.css';
+
+@import './periscope.scss';
+
 #root,
 html,
 body {
@@ -127,4 +132,183 @@ body {
 ::-webkit-scrollbar-thumb:hover {
 	--tw-bg-opacity: 1;
 	background-color: rgba(236, 236, 241, var(--tw-bg-opacity));
+}
+
+.flexBtn {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+// =================================================================
+// AntD style overrides
+.ant-dropdown-menu {
+	margin-top: 2px !important;
+	min-width: 160px;
+
+	border-radius: 4px;
+	padding: 16px;
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	background: linear-gradient(
+		139deg,
+		rgba(18, 19, 23, 0.8) 0%,
+		rgba(18, 19, 23, 0.9) 98.68%
+	);
+	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+	backdrop-filter: blur(20px);
+
+	.ant-dropdown-menu-item-group-title {
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 18px;
+		letter-spacing: 0.08em;
+		text-align: left;
+	}
+
+	.ant-dropdown-menu-item-group {
+		.ant-dropdown-menu-item-group-list {
+			margin: 0 !important;
+
+			.ant-dropdown-menu-item {
+				font-size: 13px;
+				font-weight: 400;
+				line-height: 17px;
+				letter-spacing: 0.01em;
+				text-align: left;
+			}
+		}
+	}
+}
+
+// https://github.com/ant-design/ant-design/issues/41307
+.ant-picker-panels > *:first-child button.ant-picker-header-next-btn {
+	visibility: visible !important;
+}
+
+.ant-picker-panels > *:first-child button.ant-picker-header-super-next-btn {
+	visibility: visible !important;
+}
+
+.ant-picker-panels > *:last-child:not(:only-child) {
+	display: none !important;
+}
+
+.ant-picker-panel-container,
+.ant-picker-footer-extra > div {
+	flex-wrap: wrap !important;
+}
+
+.ant-picker-range-arrow {
+	display: none !important;
+}
+
+.ant-picker-panel-container {
+	background: none !important;
+	box-shadow: none !important;
+}
+
+.ant-tooltip {
+	--antd-arrow-background-color: var(--bg-slate-400, #1d212d);
+
+	.ant-tooltip-inner {
+		background-color: var(--bg-slate-400, #1d212d);
+	}
+	.flexBtn {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+}
+
+.members-count {
+	display: inline-block;
+	margin-left: 8px;
+	margin-right: 8px;
+}
+
+.lightMode {
+	.ant-dropdown-menu {
+		border: 1px solid var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
+		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+	}
+
+	.ant-dropdown-menu-item {
+		&:hover {
+			background-color: var(--bg-vanilla-300) !important;
+
+			&.ant-dropdown-menu-item-danger {
+				background-color: var(--bg-cherry-500) !important;
+			}
+		}
+	}
+}
+
+.ant-notification-notice-message {
+	padding-right: 20px;
+}
+
+// we want the z-index to be less than 1000 (z-index for antd drawers) as we do not want intercom to interfare when drawers are open
+.intercom-lightweight-app {
+	z-index: 980 !important;
+}
+
+/**
+
+z-index chart for components across application
+
+intercom        -  980
+tooltip			-  1070
+popover 		-  1030
+drawer  		-  1000
+time picker 	-  1050
+dropdown 		-  1050
+modal 			-  1000
+notifications	-  2050
+
+*/
+
+@font-face {
+	font-family: 'Geist Mono';
+	src: local('Geist Mono'),
+		url('../public/fonts/GeistMonoVF.woff2') format('woff');
+	/* Add other formats if needed (e.g., woff2, truetype, opentype, svg) */
+}
+
+@font-face {
+	font-family: 'Inter';
+	src: url('../public/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+	font-weight: 300 700;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Work Sans';
+	src: url('../public/fonts/WorkSans-VariableFont_wght.ttf') format('truetype');
+	font-weight: 500;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Space Mono';
+	src: url('../public/fonts/SpaceMono-Regular.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Fira Code';
+	src: url('../public/fonts/FiraCode-VariableFont_wght.ttf') format('truetype');
+	font-weight: 300 700;
+	font-style: normal;
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.animate-spin {
+	animation: spin 1s linear infinite;
 }

@@ -3,6 +3,7 @@ import resetPasswordApi from 'api/user/resetPassword';
 import { Logout } from 'api/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { Label } from 'pages/SignUp/styles';
@@ -20,6 +21,8 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
 		false,
 	);
+
+	const [isValidPassword, setIsValidPassword] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const { t } = useTranslation(['common']);
 	const { search } = useLocation();
@@ -35,7 +38,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 		}
 	}, [token]);
 
-	const handleSubmit: () => Promise<void> = async () => {
+	const handleFormSubmit: () => Promise<void> = async () => {
 		try {
 			setLoading(true);
 			const { password } = form.getFieldsValue();
@@ -72,38 +75,88 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			});
 		}
 	};
-	const handleValuesChange: (changedValues: FormValues) => void = (
-		changedValues,
-	) => {
-		if ('confirmPassword' in changedValues) {
-			const { confirmPassword } = changedValues;
 
-			const isSamePassword = form.getFieldValue('password') === confirmPassword;
-			setConfirmPasswordError(!isSamePassword);
+	const validatePassword = (): boolean => {
+		const { password, confirmPassword } = form.getFieldsValue();
+
+		if (
+			password &&
+			confirmPassword &&
+			password.trim() &&
+			confirmPassword.trim() &&
+			password.length > 0 &&
+			confirmPassword.length > 0
+		) {
+			return password === confirmPassword;
+		}
+
+		return false;
+	};
+
+	const handleValuesChange = useDebouncedFn((): void => {
+		const { password, confirmPassword } = form.getFieldsValue();
+
+		if (!password || !confirmPassword) {
+			setIsValidPassword(false);
+		}
+
+		if (
+			password &&
+			confirmPassword &&
+			password.trim() &&
+			confirmPassword.trim()
+		) {
+			const isValid = validatePassword();
+
+			setIsValidPassword(isValid);
+			setConfirmPasswordError(!isValid);
+		}
+	}, 100);
+
+	const handleSubmit = (): void => {
+		const isValid = validatePassword();
+		setIsValidPassword(isValid);
+
+		if (token) {
+			handleFormSubmit();
 		}
 	};
 
 	return (
 		<WelcomeLeftContainer version={version}>
 			<FormWrapper>
-				<FormContainer
-					form={form}
-					onValuesChange={handleValuesChange}
-					onFinish={handleSubmit}
-				>
+				<FormContainer form={form} onFinish={handleSubmit}>
 					<Title level={4}>Reset Your Password</Title>
 
 					<div>
-						<Label htmlFor="Password">Password</Label>
-						<FormContainer.Item noStyle name="password">
-							<Input.Password required id="currentPassword" />
-						</FormContainer.Item>
+						<Label htmlFor="password">Password</Label>
+						<Form.Item
+							name="password"
+							validateTrigger="onBlur"
+							rules={[{ required: true, message: 'Please enter  password!' }]}
+						>
+							<Input.Password
+								tabIndex={0}
+								onChange={handleValuesChange}
+								id="password"
+								data-testid="password"
+							/>
+						</Form.Item>
 					</div>
 					<div>
-						<Label htmlFor="ConfirmPassword">Confirm Password</Label>
-						<FormContainer.Item noStyle name="confirmPassword">
-							<Input.Password required id="UpdatePassword" />
-						</FormContainer.Item>
+						<Label htmlFor="confirmPassword">Confirm Password</Label>
+						<Form.Item
+							name="confirmPassword"
+							// validateTrigger="onChange"
+							validateTrigger="onBlur"
+							rules={[{ required: true, message: 'Please enter confirm password!' }]}
+						>
+							<Input.Password
+								onChange={handleValuesChange}
+								id="confirmPassword"
+								data-testid="confirmPassword"
+							/>
+						</Form.Item>
 
 						{confirmPasswordError && (
 							<Typography.Paragraph
@@ -113,7 +166,8 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 									marginTop: '0.50rem',
 								}}
 							>
-								Passwords don’t match. Please try again
+								The passwords entered do not match. Please double-check and re-enter
+								your passwords.
 							</Typography.Paragraph>
 						)}
 					</div>
@@ -124,13 +178,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							htmlType="submit"
 							data-attr="signup"
 							loading={loading}
-							disabled={
-								loading ||
-								!form.getFieldValue('password') ||
-								!form.getFieldValue('confirmPassword') ||
-								confirmPasswordError ||
-								token === null
-							}
+							disabled={!isValidPassword || loading}
 						>
 							Get Started
 						</Button>

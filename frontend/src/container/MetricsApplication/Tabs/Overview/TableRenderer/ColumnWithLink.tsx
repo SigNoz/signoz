@@ -1,6 +1,10 @@
 import { Tooltip, Typography } from 'antd';
 import { navigateToTrace } from 'container/MetricsApplication/utils';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { v4 as uuid } from 'uuid';
+
+import { useGetAPMToTracesQueries } from '../../util';
 
 function ColumnWithLink({
 	servicename,
@@ -11,6 +15,25 @@ function ColumnWithLink({
 }: LinkColumnProps): JSX.Element {
 	const text = record.toString();
 
+	const apmToTraceQuery = useGetAPMToTracesQueries({
+		servicename,
+		filters: [
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'name',
+					dataType: DataTypes.String,
+					type: 'tag',
+					isColumn: true,
+					isJSON: false,
+					id: 'name--string--tag--true',
+				},
+				op: 'in',
+				value: [text],
+			},
+		],
+	});
+
 	const handleOnClick = (operation: string) => (): void => {
 		navigateToTrace({
 			servicename,
@@ -18,6 +41,7 @@ function ColumnWithLink({
 			minTime,
 			maxTime,
 			selectedTraceTags,
+			apmToTraceQuery,
 		});
 	};
 

@@ -4,13 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.uber.org/zap"
 )
 
 var db *sqlx.DB
@@ -56,6 +60,8 @@ func InitWithDSN(dataSourceName string) (*sqlx.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error in creating saved views table: %s", err.Error())
 	}
+
+	telemetry.GetInstance().SetSavedViewsInfoCallback(GetSavedViewsInfo)
 
 	return db, nil
 }
@@ -227,4 +233,34 @@ func DeleteView(uuid_ string) error {
 		return fmt.Errorf("error in deleting explorer query: %s", err.Error())
 	}
 	return nil
+}
+
+func GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error) {
+	savedViewsInfo := model.SavedViewsInfo{}
+	savedViews, err := GetViews()
+	if err != nil {
+		zap.S().Debug("Error in fetching saved views info: ", err)
+		return &savedViewsInfo, err
+	}
+	savedViewsInfo.TotalSavedViews = len(savedViews)
+	for _, view := range savedViews {
+		if view.SourcePage == "traces" {
+			savedViewsInfo.TracesSavedViews += 1
+		} else if view.SourcePage == "logs" {
+			savedViewsInfo.LogsSavedViews += 1
+
+			for _, query := range view.CompositeQuery.BuilderQueries {
+				if query.Filters != nil {
+					for _, item := range query.Filters.Items {
+						if slices.Contains([]string{"contains", "ncontains", "like", "nlike"}, string(item.Operator)) {
+							if item.Key.Key != "body" {
+								savedViewsInfo.LogsSavedViewWithContainsOp += 1
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return &savedViewsInfo, nil
 }

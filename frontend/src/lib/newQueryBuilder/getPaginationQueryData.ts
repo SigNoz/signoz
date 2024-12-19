@@ -36,7 +36,7 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 
 	const updatedFilters: TagFilter = {
 		...filters,
-		items: filters.items.filter((item) => item.key?.key !== 'id'),
+		items: filters?.items?.filter((item) => item.key?.key !== 'id'),
 	};
 
 	const tagFilters: TagFilter = {

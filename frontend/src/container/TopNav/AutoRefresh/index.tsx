@@ -31,7 +31,10 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import { getMinMax, options } from './config';
 import { ButtonContainer, Container } from './styles';
 
-function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
+function AutoRefresh({
+	disabled = false,
+	showAutoRefreshBtnPrimary = true,
+}: AutoRefreshProps): JSX.Element {
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -176,7 +179,10 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 				</Container>
 			}
 		>
-			<ButtonContainer title="Set auto refresh" type="primary">
+			<ButtonContainer
+				title="Set auto refresh"
+				type={showAutoRefreshBtnPrimary ? 'primary' : 'default'}
+			>
 				<CaretDownFilled />
 			</ButtonContainer>
 		</Popover>
@@ -185,10 +191,12 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 
 interface AutoRefreshProps {
 	disabled?: boolean;
+	showAutoRefreshBtnPrimary?: boolean;
 }
 
 AutoRefresh.defaultProps = {
 	disabled: false,
+	showAutoRefreshBtnPrimary: true,
 };
 
 export default AutoRefresh;

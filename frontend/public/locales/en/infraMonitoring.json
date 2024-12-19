@@ -1,0 +1,8 @@
+{
+	"containers_visualization_message": "The ability to visualise containers is in active development and should be available to you soon.",
+	"processes_visualization_message": "The ability to visualise processes is in active development and should be available to you soon.",
+	"working_message": "We're working to extend infrastructure monitoring to take care of a bunch of different cases. Thank you for your patience.",
+	"waitlist_message": "Join the waitlist for early access.",
+	"waitlist_success_message": "We have received your request for early access. We will get back to you as soon as we launch the feature.",
+	"contact_support": "Contact Support"
+}

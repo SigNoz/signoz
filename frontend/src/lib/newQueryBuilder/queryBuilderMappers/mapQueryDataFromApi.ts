@@ -7,9 +7,13 @@ import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataMode
 
 export const mapQueryDataFromApi = (
 	compositeQuery: ICompositeMetricQuery,
+	query?: Query,
 ): Query => {
 	const builder = compositeQuery.builderQueries
-		? transformQueryBuilderDataModel(compositeQuery.builderQueries)
+		? transformQueryBuilderDataModel(
+				compositeQuery.builderQueries,
+				query?.builder,
+		  )
 		: initialQueryState.builder;
 
 	const promql = compositeQuery.promQueries

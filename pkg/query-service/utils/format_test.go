@@ -275,6 +275,24 @@ var testValidateAndCastValueData = []struct {
 		want:    nil,
 		wantErr: true,
 	},
+	{
+		name: "v3.AttributeKeyDataTypeInt64: valid float32",
+		args: args{
+			v:        float32(1000),
+			dataType: v3.AttributeKeyDataTypeInt64,
+		},
+		want:    int64(1000),
+		wantErr: false,
+	},
+	{
+		name: "v3.AttributeKeyDataTypeInt64: valid float64",
+		args: args{
+			v:        float64(1000),
+			dataType: v3.AttributeKeyDataTypeInt64,
+		},
+		want:    int64(1000),
+		wantErr: false,
+	},
 }
 
 // Test cases for ValidateAndCastValue function in pkg/query-service/utils/format.go
@@ -401,28 +419,28 @@ var testGetClickhouseColumnName = []struct {
 		typeName: string(v3.AttributeKeyTypeTag),
 		dataType: string(v3.AttributeKeyDataTypeInt64),
 		field:    "tag1",
-		want:     "attribute_int64_tag1",
+		want:     "`attribute_int64_tag1`",
 	},
 	{
 		name:     "resource",
 		typeName: string(v3.AttributeKeyTypeResource),
 		dataType: string(v3.AttributeKeyDataTypeInt64),
 		field:    "tag1",
-		want:     "resource_int64_tag1",
+		want:     "`resource_int64_tag1`",
 	},
 	{
 		name:     "attribute old parser",
 		typeName: constants.Attributes,
 		dataType: string(v3.AttributeKeyDataTypeInt64),
 		field:    "tag1",
-		want:     "attribute_int64_tag1",
+		want:     "`attribute_int64_tag1`",
 	},
 	{
 		name:     "resource old parser",
 		typeName: constants.Resources,
 		dataType: string(v3.AttributeKeyDataTypeInt64),
 		field:    "tag1",
-		want:     "resource_int64_tag1",
+		want:     "`resource_int64_tag1`",
 	},
 }
 

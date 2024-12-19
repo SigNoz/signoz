@@ -83,6 +83,17 @@ export const latency = ({
 	const dataSource = isSpanMetricEnable ? DataSource.METRICS : DataSource.TRACES;
 	const queryNameAndExpression = QUERYNAME_AND_EXPRESSION;
 
+	const timeAggregateOperators = [
+		MetricAggregateOperator.EMPTY,
+		MetricAggregateOperator.EMPTY,
+		MetricAggregateOperator.EMPTY,
+	];
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.P50,
+		MetricAggregateOperator.P90,
+		MetricAggregateOperator.P99,
+	];
+
 	return getQueryBuilderQueries({
 		autocompleteData,
 		legends,
@@ -90,6 +101,8 @@ export const latency = ({
 		aggregateOperator,
 		dataSource,
 		queryNameAndExpression,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 	});
 };
 
@@ -250,10 +263,15 @@ export const apDexTracesQueryBuilderQueries = ({
 	const disabled = Array(3).fill(true);
 	const expressions = [FORMULA.APDEX_TRACES];
 	const legendFormulas = [GraphTitle.APDEX];
-	const aggregateOperators = [
+	const timeAggregateOperators = [
 		MetricAggregateOperator.COUNT,
 		MetricAggregateOperator.COUNT,
 		MetricAggregateOperator.COUNT,
+	];
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.EMPTY,
+		MetricAggregateOperator.EMPTY,
+		MetricAggregateOperator.EMPTY,
 	];
 	const dataSource = DataSource.TRACES;
 
@@ -264,7 +282,8 @@ export const apDexTracesQueryBuilderQueries = ({
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 		dataSource,
 	});
 };
@@ -433,10 +452,16 @@ export const apDexMetricsQueryBuilderQueries = ({
 		? [FORMULA.APDEX_DELTA_SPAN_METRICS]
 		: [FORMULA.APDEX_CUMULATIVE_SPAN_METRICS];
 	const legendFormulas = [GraphTitle.APDEX];
-	const aggregateOperators = [
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
+	const timeAggregateOperators = [
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+	];
+
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
 	const dataSource = DataSource.METRICS;
 
@@ -447,7 +472,8 @@ export const apDexMetricsQueryBuilderQueries = ({
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 		dataSource,
 	});
 };
@@ -497,11 +523,16 @@ export const operationPerSec = ({
 	const legends = OPERATION_LEGENDS;
 	const dataSource = DataSource.METRICS;
 
+	const timeAggregateOperators = [MetricAggregateOperator.RATE];
+	const spaceAggregateOperators = [MetricAggregateOperator.SUM];
+
 	return getQueryBuilderQueries({
 		autocompleteData,
 		legends,
 		filterItems,
 		dataSource,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 	});
 };
 
@@ -593,9 +624,13 @@ export const errorPercentage = ({
 	const disabled = [true, true];
 	const expressions = [FORMULA.ERROR_PERCENTAGE];
 	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];
-	const aggregateOperators = [
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
+	const timeAggregateOperators = [
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+	];
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
 	const dataSource = DataSource.METRICS;
 
@@ -606,7 +641,8 @@ export const errorPercentage = ({
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 		dataSource,
 	});
 };

@@ -14,7 +14,7 @@ import (
 
 	old_ctx "golang.org/x/net/context"
 
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 
 	"go.uber.org/zap"
@@ -87,11 +87,11 @@ func NewNotifier(o *NotifierOptions, logger log.Logger) (*Notifier, error) {
 
 	amset, err := newAlertmanagerSet(o.AlertManagerURLs, timeout, logger)
 	if err != nil {
-		zap.S().Errorf("failed to parse alert manager urls")
+		zap.L().Error("failed to parse alert manager urls")
 		return n, err
 	}
 	n.alertmanagers = amset
-	zap.S().Info("Starting notifier with alert manager:", o.AlertManagerURLs)
+	zap.L().Info("Starting notifier with alert manager", zap.Strings("urls", o.AlertManagerURLs))
 	return n, nil
 }
 
@@ -123,7 +123,7 @@ func (n *Notifier) nextBatch() []*Alert {
 
 // Run dispatches notifications continuously.
 func (n *Notifier) Run() {
-	zap.S().Info("msg: Initiating alert notifier...")
+	zap.L().Info("msg: Initiating alert notifier...")
 	for {
 		select {
 		case <-n.ctx.Done():
@@ -133,7 +133,7 @@ func (n *Notifier) Run() {
 		alerts := n.nextBatch()
 
 		if !n.sendAll(alerts...) {
-			zap.S().Warn("msg: dropped alerts", "\t count:", len(alerts))
+			zap.L().Warn("msg: dropped alerts", zap.Int("count", len(alerts)))
 			// n.metrics.dropped.Add(float64(len(alerts)))
 		}
 		// If the queue still has items left, kick off the next iteration.
@@ -205,7 +205,7 @@ func (n *Notifier) sendAll(alerts ...*Alert) bool {
 
 	b, err := json.Marshal(alerts)
 	if err != nil {
-		zap.S().Errorf("msg", "Encoding alerts failed", "err", err)
+		zap.L().Error("Encoding alerts failed", zap.Error(err))
 		return false
 	}
 
@@ -229,7 +229,7 @@ func (n *Notifier) sendAll(alerts ...*Alert) bool {
 		go func(ams *alertmanagerSet, am Manager) {
 			u := am.URLPath(alertPushEndpoint).String()
 			if err := n.sendOne(ctx, ams.client, u, b); err != nil {
-				zap.S().Errorf("alertmanager", u, "count", len(alerts), "msg", "Error calling alert API", "err", err)
+				zap.L().Error("Error calling alert API", zap.String("alertmanager", u), zap.Int("count", len(alerts)), zap.Error(err))
 			} else {
 				atomic.AddUint64(&numSuccess, 1)
 			}
@@ -295,7 +295,7 @@ func newAlertmanagerSet(urls []string, timeout time.Duration, logger log.Logger)
 
 	ams := []Manager{}
 	for _, u := range urls {
-		am, err := New(u)
+		am, err := New(WithURL(u))
 		if err != nil {
 			level.Error(s.logger).Log(fmt.Sprintf("invalid alert manager url %s: %s", u, err))
 		} else {

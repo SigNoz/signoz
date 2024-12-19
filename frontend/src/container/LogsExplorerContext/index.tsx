@@ -1,8 +1,8 @@
 import { EditFilled } from '@ant-design/icons';
-import { Typography } from 'antd';
-import Modal from 'antd/es/modal/Modal';
+import { Modal, Typography } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import LogsContextList from 'container/LogsContextList';
+import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -100,6 +100,7 @@ function LogsExplorerContext({
 					isTextOverflowEllipsisDisabled
 					data={log}
 					linesPerRow={1}
+					fontSize={FontSize.SMALL}
 				/>
 			</LogContainer>
 			<LogsContextList

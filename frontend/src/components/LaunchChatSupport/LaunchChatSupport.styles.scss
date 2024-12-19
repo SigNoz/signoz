@@ -1,0 +1,28 @@
+.facing-issue-button {
+	color: var(--bg-amber-500);
+	border-color: var(--bg-amber-500);
+
+	> .ant-btn:hover {
+		color: var(--bg-amber-400) !important;
+		border-color: var(--bg-amber-300) !important;
+	}
+}
+
+.lightMode {
+	.facing-issue-button {
+		color: var(--bg-vanilla-500);
+		border-color: var(--bg-vanilla-300);
+
+		> .ant-btn:hover {
+			color: var(--bg-vanilla-500) !important;
+			border-color: var(--bg-vanilla-300) !important;
+		}
+	}
+}
+
+.tooltip-overlay {
+	text-wrap: nowrap;
+	.ant-tooltip-inner {
+		width: max-content;
+	}
+}

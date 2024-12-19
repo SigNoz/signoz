@@ -21,6 +21,9 @@ const AlertChannelWebhook = "ALERT_CHANNEL_WEBHOOK"
 const AlertChannelPagerduty = "ALERT_CHANNEL_PAGERDUTY"
 const AlertChannelMsTeams = "ALERT_CHANNEL_MSTEAMS"
 const AlertChannelOpsgenie = "ALERT_CHANNEL_OPSGENIE"
+const AlertChannelEmail = "ALERT_CHANNEL_EMAIL"
+const AnomalyDetection = "ANOMALY_DETECTION"
+const HostsInfraMonitoring = "HOSTS_INFRA_MONITORING"
 
 var BasicPlan = FeatureSet{
 	Feature{
@@ -55,14 +58,14 @@ var BasicPlan = FeatureSet{
 		Name:       QueryBuilderPanels,
 		Active:     true,
 		Usage:      0,
-		UsageLimit: 5,
+		UsageLimit: -1,
 		Route:      "",
 	},
 	Feature{
 		Name:       QueryBuilderAlerts,
 		Active:     true,
 		Usage:      0,
-		UsageLimit: 5,
+		UsageLimit: -1,
 		Route:      "",
 	},
 	Feature{
@@ -101,7 +104,21 @@ var BasicPlan = FeatureSet{
 		Route:      "",
 	},
 	Feature{
+		Name:       AlertChannelEmail,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	Feature{
 		Name:       AlertChannelMsTeams,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	Feature{
+		Name:       AnomalyDetection,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,

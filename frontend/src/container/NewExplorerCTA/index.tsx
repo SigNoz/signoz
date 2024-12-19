@@ -14,17 +14,20 @@ function NewExplorerCTA(): JSX.Element | null {
 		() =>
 			location.pathname === ROUTES.LOGS_EXPLORER ||
 			location.pathname === ROUTES.TRACE ||
-			location.pathname === ROUTES.LOGS,
+			location.pathname === ROUTES.OLD_LOGS_EXPLORER ||
+			location.pathname === ROUTES.TRACES_EXPLORER,
 		[location.pathname],
 	);
 
 	const onClickHandler = useCallback((): void => {
 		if (location.pathname === ROUTES.LOGS_EXPLORER) {
-			history.push(ROUTES.LOGS);
+			history.push(ROUTES.OLD_LOGS_EXPLORER);
 		} else if (location.pathname === ROUTES.TRACE) {
 			history.push(ROUTES.TRACES_EXPLORER);
-		} else if (location.pathname === ROUTES.LOGS) {
+		} else if (location.pathname === ROUTES.OLD_LOGS_EXPLORER) {
 			history.push(ROUTES.LOGS_EXPLORER);
+		} else if (location.pathname === ROUTES.TRACES_EXPLORER) {
+			history.push(ROUTES.TRACE);
 		}
 	}, [location.pathname]);
 
@@ -45,6 +48,10 @@ function NewExplorerCTA(): JSX.Element | null {
 
 	if (!isTraceOrLogsExplorerPage) {
 		return null;
+	}
+
+	if (location.pathname === ROUTES.TRACES_EXPLORER) {
+		return button;
 	}
 
 	if (location.pathname === ROUTES.LOGS_EXPLORER) {

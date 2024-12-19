@@ -1,0 +1,16 @@
+.query-section-left-container {
+	border: none;
+	border-top: 1px solid var(--Slate-400, #1d212d);
+	background: var(--Ink-500, #0b0c0e);
+
+	.ant-card-body {
+		padding: 0px;
+	}
+}
+
+.lightMode {
+	.query-section-left-container {
+		border-top: 1px solid var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
+	}
+}

@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 // Constants
 import {
 	HAVING_OPERATORS,
@@ -31,6 +32,7 @@ describe('Having filter behaviour', () => {
 			<HavingFilter
 				query={initialQueryBuilderFormValuesMap.metrics}
 				onChange={mockFn}
+				entityVersion={DEFAULT_ENTITY_VERSION}
 			/>,
 		);
 
@@ -49,6 +51,7 @@ describe('Having filter behaviour', () => {
 			<HavingFilter
 				query={initialQueryBuilderFormValuesMap.metrics}
 				onChange={mockFn}
+				entityVersion={DEFAULT_ENTITY_VERSION}
 			/>,
 		);
 
@@ -62,7 +65,11 @@ describe('Having filter behaviour', () => {
 	test('Is having filter is enable', () => {
 		const mockFn = jest.fn();
 		const { unmount } = render(
-			<HavingFilter query={valueWithAttributeAndOperator} onChange={mockFn} />,
+			<HavingFilter
+				query={valueWithAttributeAndOperator}
+				onChange={mockFn}
+				entityVersion={DEFAULT_ENTITY_VERSION}
+			/>,
 		);
 
 		const input = screen.getByRole('combobox');
@@ -80,7 +87,11 @@ describe('Having filter behaviour', () => {
 		const optionTestTitle = 'havingOption';
 
 		const { unmount } = render(
-			<HavingFilter query={valueWithAttributeAndOperator} onChange={onChange} />,
+			<HavingFilter
+				query={valueWithAttributeAndOperator}
+				onChange={onChange}
+				entityVersion={DEFAULT_ENTITY_VERSION}
+			/>,
 		);
 
 		// get input

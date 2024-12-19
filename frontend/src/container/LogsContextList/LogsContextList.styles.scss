@@ -1,0 +1,32 @@
+.context-logs-list {
+	position: relative;
+
+	.show-more-button {
+		position: absolute;
+		opacity: 1;
+		z-index: 1;
+
+		cursor: pointer;
+
+		&.up {
+			top: -1px;
+			left: -1px;
+		}
+
+		&.down {
+			bottom: -1px;
+			left: -1px;
+		}
+
+		&.disabled {
+			cursor: not-allowed;
+		}
+	}
+
+	.virtuoso-list {
+		&::-webkit-scrollbar {
+			width: 0.3rem;
+			height: 0.3rem;
+		}
+	}
+}

@@ -8,7 +8,7 @@ export const saveView = ({
 	viewName,
 	extraData,
 }: SaveViewProps): Promise<AxiosResponse<SaveViewPayloadProps>> =>
-	axios.post('explorer/views', {
+	axios.post('/explorer/views', {
 		name: viewName,
 		sourcePage,
 		compositeQuery,

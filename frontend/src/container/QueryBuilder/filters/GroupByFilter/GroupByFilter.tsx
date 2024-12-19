@@ -1,11 +1,7 @@
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
-import {
-	idDivider,
-	QueryBuilderKeys,
-	selectValueDivider,
-} from 'constants/queryBuilder';
+import { idDivider, QueryBuilderKeys } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import useDebounce from 'hooks/useDebounce';
@@ -14,14 +10,16 @@ import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAut
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { isEqual, uniqWith } from 'lodash-es';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
+import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
+import { removePrefix } from './utils';
 
 export const GroupByFilter = memo(function GroupByFilter({
 	query,
@@ -30,9 +28,9 @@ export const GroupByFilter = memo(function GroupByFilter({
 }: GroupByFilterProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const [searchText, setSearchText] = useState<string>('');
-	const [optionsData, setOptionsData] = useState<SelectOption<string, string>[]>(
-		[],
-	);
+	const [optionsData, setOptionsData] = useState<
+		SelectOption<string, ReactNode>[]
+	>([]);
 	const [localValues, setLocalValues] = useState<SelectOption<string, string>[]>(
 		[],
 	);
@@ -61,18 +59,29 @@ export const GroupByFilter = memo(function GroupByFilter({
 						(attrKey) => !keys.includes(attrKey.key),
 					) || [];
 
-				const options: SelectOption<string, string>[] =
+				const options: SelectOption<string, ReactNode>[] =
 					filteredOptions.map((item) => ({
-						label: transformStringWithPrefix({
-							str: item.key,
-							prefix: item.type || '',
-							condition: !item.isColumn,
-						}),
-						value: `${transformStringWithPrefix({
-							str: item.key,
-							prefix: item.type || '',
-							condition: !item.isColumn,
-						})}${selectValueDivider}${item.id}`,
+						label: (
+							<OptionRenderer
+								key={item.key}
+								label={transformStringWithPrefix({
+									str: item.key,
+									prefix: item.type || '',
+									condition: !item.isColumn,
+								})}
+								value={removePrefix(
+									transformStringWithPrefix({
+										str: item.key,
+										prefix: item.type || '',
+										condition: !item.isColumn,
+									}),
+									!item.isColumn && item.type ? item.type : '',
+								)}
+								dataType={item.dataType || ''}
+								type={item.type || ''}
+							/>
+						),
+						value: `${item.id}`,
 					})) || [];
 
 				setOptionsData(options);
@@ -120,7 +129,8 @@ export const GroupByFilter = memo(function GroupByFilter({
 			const keys = await getAttributeKeys();
 
 			const groupByValues: BaseAutocompleteData[] = values.map((item) => {
-				const [currentValue, id] = item.value.split(selectValueDivider);
+				const id = item.value;
+				const currentValue = item.value.split(idDivider)[0];
 
 				if (id && id.includes(idDivider)) {
 					const attribute = keys.find((item) => item.id === id);
@@ -152,16 +162,15 @@ export const GroupByFilter = memo(function GroupByFilter({
 	useEffect(() => {
 		const currentValues: SelectOption<string, string>[] = query.groupBy.map(
 			(item) => ({
-				label: `${transformStringWithPrefix({
-					str: item.key,
-					prefix: item.type || '',
-					condition: !item.isColumn,
-				})}`,
-				value: `${transformStringWithPrefix({
-					str: item.key,
-					prefix: item.type || '',
-					condition: !item.isColumn,
-				})}${selectValueDivider}${item.id}`,
+				label: `${removePrefix(
+					transformStringWithPrefix({
+						str: item.key,
+						prefix: item.type || '',
+						condition: !item.isColumn,
+					}),
+					!item.isColumn && item.type ? item.type : '',
+				)}`,
+				value: `${item.id}`,
 			}),
 		);
 
@@ -176,7 +185,6 @@ export const GroupByFilter = memo(function GroupByFilter({
 			onSearch={handleSearchKeys}
 			showSearch
 			disabled={disabled}
-			showArrow={false}
 			filterOption={false}
 			onBlur={handleBlur}
 			onFocus={handleFocus}
@@ -186,6 +194,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			labelInValue
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
+			data-testid="group-by"
 		/>
 	);
 });

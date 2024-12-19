@@ -203,7 +203,7 @@ func (mds *ModelDaoSqlite) CreateUser(ctx context.Context,
 	}
 
 	telemetry.GetInstance().IdentifyUser(user)
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data, user.Email)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data, user.Email, true, false)
 
 	return user, nil
 }
@@ -611,4 +611,20 @@ func (mds *ModelDaoSqlite) PrecheckLogin(ctx context.Context, email, sourceUrl s
 	}
 
 	return resp, nil
+}
+
+func (mds *ModelDaoSqlite) GetUserRole(ctx context.Context, groupId string) (string, error) {
+	role, err := mds.GetGroup(ctx, groupId)
+	if err != nil || role == nil {
+		return "", err
+	}
+	return role.Name, nil
+}
+
+func (mds *ModelDaoSqlite) GetUserCount(ctx context.Context) (int, error) {
+	users, err := mds.GetUsers(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return len(users), nil
 }

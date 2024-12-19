@@ -1,0 +1,26 @@
+.title {
+	font-weight: 500;
+	font-size: 14px;
+
+	margin: 16px 0;
+}
+
+.info-alert {
+	margin: 16px 0;
+}
+
+.top-level-operations-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.breadcrumb {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.top-level-operations-list {
+	margin-top: 16px;
+}

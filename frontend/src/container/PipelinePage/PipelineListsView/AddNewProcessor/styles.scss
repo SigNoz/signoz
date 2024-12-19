@@ -1,0 +1,27 @@
+
+.processor-form-container {
+  position: relative;
+  width: 100%;
+
+  display: flex;
+  flex-wrap: wrap
+}
+
+.processor-field-container {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 0rem;
+  gap: 1rem;
+  width: 100%;
+}
+
+.compact-processor-field-container {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 0rem;
+  min-width: 40%;
+  flex-grow: 1;
+  margin-left: 2.5rem;
+}

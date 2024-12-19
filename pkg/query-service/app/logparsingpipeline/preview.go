@@ -2,19 +2,18 @@ package logparsingpipeline
 
 import (
 	"context"
-	"fmt"
 	"sort"
+	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz-otel-collector/pkg/collectorsimulator"
 	_ "github.com/SigNoz/signoz-otel-collector/pkg/parser/grok"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/logstransformprocessor"
+	"github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/processor"
-	"go.signoz.io/signoz/pkg/query-service/collectorsimulator"
 	"go.signoz.io/signoz/pkg/query-service/model"
-	"gopkg.in/yaml.v3"
 )
 
 func SimulatePipelinesProcessing(
@@ -42,16 +41,8 @@ func SimulatePipelinesProcessing(
 	}
 	simulatorInputPLogs := SignozLogsToPLogs(logs)
 
-	// Simulate processing of logs through an otel collector
-	processorConfigs, err := collectorProcessorsForPipelines(pipelines)
-	if err != nil {
-		return nil, nil, model.BadRequest(errors.Wrap(
-			err, "could not prepare otel processors for pipelines",
-		))
-	}
-
 	processorFactories, err := processor.MakeFactoryMap(
-		logstransformprocessor.NewFactory(),
+		signozlogspipelineprocessor.NewFactory(),
 	)
 	if err != nil {
 		return nil, nil, model.InternalError(errors.Wrap(
@@ -65,19 +56,33 @@ func SimulatePipelinesProcessing(
 	// the number of logtransformprocessors involved.
 	// See defaultFlushInterval at https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/adapter/emitter.go
 	// TODO(Raj): Remove this after flushInterval is exposed in logtransformprocessor config
-	timeout := time.Millisecond * time.Duration(len(processorConfigs)*100+100)
+	timeout := time.Millisecond * time.Duration(len(pipelines)*100+100)
 
-	outputPLogs, collectorErrs, apiErr := collectorsimulator.SimulateLogsProcessing(
+	configGenerator := func(baseConf []byte) ([]byte, error) {
+		updatedConf, apiErr := GenerateCollectorConfigWithPipelines(baseConf, pipelines)
+		if apiErr != nil {
+			return nil, apiErr.ToError()
+		}
+		return updatedConf, nil
+	}
+
+	outputPLogs, collectorErrs, simulationErr := collectorsimulator.SimulateLogsProcessing(
 		ctx,
 		processorFactories,
-		processorConfigs,
+		configGenerator,
 		simulatorInputPLogs,
 		timeout,
 	)
-	if apiErr != nil {
-		return nil, collectorErrs, model.WrapApiError(apiErr, fmt.Sprintf(
+	if simulationErr != nil {
+		if errors.Is(simulationErr, collectorsimulator.ErrInvalidConfig) {
+			apiErr = model.BadRequest(simulationErr)
+		} else {
+			apiErr = model.InternalError(simulationErr)
+		}
+
+		return nil, collectorErrs, model.WrapApiError(apiErr,
 			"could not simulate log pipelines processing.\nCollector errors",
-		))
+		)
 	}
 
 	outputSignozLogs := PLogsToSignozLogs(outputPLogs)
@@ -92,37 +97,15 @@ func SimulatePipelinesProcessing(
 		delete(sigLog.Attributes_int64, inputOrderAttribute)
 	}
 
-	return outputSignozLogs, collectorErrs, nil
-}
-
-func collectorProcessorsForPipelines(pipelines []Pipeline) (
-	[]collectorsimulator.ProcessorConfig, error,
-) {
-	processors, procNames, err := PreparePipelineProcessor(pipelines)
-	if err != nil {
-		return nil, err
+	for _, log := range collectorErrs {
+		// if log is empty or log comes from featuregate.go, then remove it
+		if log == "" || strings.Contains(log, "featuregate.go") {
+			continue
+		}
+		collectorWarnAndErrorLogs = append(collectorWarnAndErrorLogs, log)
 	}
 
-	processorConfigs := []collectorsimulator.ProcessorConfig{}
-	for _, procName := range procNames {
-		// convert `Processor` structs to map[string]interface{}
-		procYaml, err := yaml.Marshal(processors[procName])
-		if err != nil {
-			return nil, errors.Wrap(err, "could not marshal Processor struct")
-		}
-		var procConfRaw map[string]interface{}
-		err = yaml.Unmarshal(procYaml, &procConfRaw)
-		if err != nil {
-			return nil, errors.Wrap(err, "could not unmarshal proc yaml")
-		}
-
-		processorConfigs = append(processorConfigs, collectorsimulator.ProcessorConfig{
-			Name:   procName,
-			Config: procConfRaw,
-		})
-	}
-
-	return processorConfigs, nil
+	return outputSignozLogs, collectorWarnAndErrorLogs, nil
 }
 
 // plog doesn't contain an ID field.

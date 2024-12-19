@@ -232,6 +232,11 @@ const unitsMapping = [
 			{
 				label: 'Percent (0.0-1.0)',
 				value: 'percentunit',
+				factor: 100,
+			},
+			{
+				label: 'Percent (0 - 100)',
+				value: 'percent',
 				factor: 1,
 			},
 		],

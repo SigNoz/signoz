@@ -24,42 +24,62 @@ type Manager interface {
 	TestReceiver(receiver *Receiver) *model.ApiError
 }
 
-func New(url string) (Manager, error) {
+func defaultOptions() []ManagerOptions {
+	return []ManagerOptions{
+		WithURL(constants.GetAlertManagerApiPrefix()),
+		WithChannelApiPath(constants.AmChannelApiPath),
+	}
+}
 
-	if url == "" {
-		url = constants.GetAlertManagerApiPrefix()
+type ManagerOptions func(m *manager) error
+
+func New(opts ...ManagerOptions) (Manager, error) {
+	m := &manager{}
+
+	newOpts := defaultOptions()
+	newOpts = append(newOpts, opts...)
+
+	for _, opt := range newOpts {
+		err := opt(m)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	urlParsed, err := neturl.Parse(url)
-	if err != nil {
-		return nil, err
-	}
+	return m, nil
+}
 
-	return &manager{
-		url:       url,
-		parsedURL: urlParsed,
-	}, nil
+func WithURL(url string) ManagerOptions {
+	return func(m *manager) error {
+		m.url = url
+		parsedURL, err := neturl.Parse(url)
+		if err != nil {
+			return err
+		}
+		m.parsedURL = parsedURL
+		return nil
+	}
+}
+
+func WithChannelApiPath(path string) ManagerOptions {
+	return func(m *manager) error {
+		m.channelApiPath = path
+		return nil
+	}
 }
 
 type manager struct {
-	url       string
-	parsedURL *neturl.URL
+	url            string
+	parsedURL      *neturl.URL
+	channelApiPath string
 }
 
-func prepareAmChannelApiURL() string {
-	basePath := constants.GetAlertManagerApiPrefix()
-	AmChannelApiPath := constants.AmChannelApiPath
-
-	if len(AmChannelApiPath) > 0 && rune(AmChannelApiPath[0]) == rune('/') {
-		AmChannelApiPath = AmChannelApiPath[1:]
-	}
-
-	return fmt.Sprintf("%s%s", basePath, AmChannelApiPath)
+func (m *manager) prepareAmChannelApiURL() string {
+	return fmt.Sprintf("%s%s", m.url, m.channelApiPath)
 }
 
-func prepareTestApiURL() string {
-	basePath := constants.GetAlertManagerApiPrefix()
-	return fmt.Sprintf("%s%s", basePath, "v1/testReceiver")
+func (m *manager) prepareTestApiURL() string {
+	return fmt.Sprintf("%s%s", m.url, "v1/testReceiver")
 }
 
 func (m *manager) URL() *neturl.URL {
@@ -79,17 +99,16 @@ func (m *manager) AddRoute(receiver *Receiver) *model.ApiError {
 
 	receiverString, _ := json.Marshal(receiver)
 
-	amURL := prepareAmChannelApiURL()
+	amURL := m.prepareAmChannelApiURL()
 	response, err := http.Post(amURL, contentType, bytes.NewBuffer(receiverString))
 
 	if err != nil {
-		zap.S().Errorf(fmt.Sprintf("Error in getting response of API call to alertmanager(POST %s)\n", amURL), err)
+		zap.L().Error("Error in getting response of API call to alertmanager", zap.String("url", amURL), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if response.StatusCode > 299 {
-		err := fmt.Errorf(fmt.Sprintf("Error in getting 2xx response in API call to alertmanager(POST %s)\n", amURL), response.Status)
-		zap.S().Error(err)
+		zap.L().Error("Error in getting 2xx response in API call to alertmanager", zap.String("url", amURL), zap.String("status", response.Status))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -98,11 +117,11 @@ func (m *manager) AddRoute(receiver *Receiver) *model.ApiError {
 func (m *manager) EditRoute(receiver *Receiver) *model.ApiError {
 	receiverString, _ := json.Marshal(receiver)
 
-	amURL := prepareAmChannelApiURL()
+	amURL := m.prepareAmChannelApiURL()
 	req, err := http.NewRequest(http.MethodPut, amURL, bytes.NewBuffer(receiverString))
 
 	if err != nil {
-		zap.S().Errorf(fmt.Sprintf("Error creating new update request for API call to alertmanager(PUT %s)\n", amURL), err)
+		zap.L().Error("Error creating new update request for API call to alertmanager", zap.String("url", amURL), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -112,13 +131,12 @@ func (m *manager) EditRoute(receiver *Receiver) *model.ApiError {
 	response, err := client.Do(req)
 
 	if err != nil {
-		zap.S().Errorf(fmt.Sprintf("Error in getting response of API call to alertmanager(PUT %s)\n", amURL), err)
+		zap.L().Error("Error in getting response of API call to alertmanager", zap.String("url", amURL), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if response.StatusCode > 299 {
-		err := fmt.Errorf(fmt.Sprintf("Error in getting 2xx response in PUT API call to alertmanager(PUT %s)\n", amURL), response.Status)
-		zap.S().Error(err)
+		zap.L().Error("Error in getting 2xx response in PUT API call to alertmanager", zap.String("url", amURL), zap.String("status", response.Status))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -128,11 +146,11 @@ func (m *manager) DeleteRoute(name string) *model.ApiError {
 	values := map[string]string{"name": name}
 	requestData, _ := json.Marshal(values)
 
-	amURL := prepareAmChannelApiURL()
+	amURL := m.prepareAmChannelApiURL()
 	req, err := http.NewRequest(http.MethodDelete, amURL, bytes.NewBuffer(requestData))
 
 	if err != nil {
-		zap.S().Errorf("Error in creating new delete request to alertmanager/v1/receivers\n", err)
+		zap.L().Error("Error in creating new delete request to alertmanager/v1/receivers", zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -142,13 +160,13 @@ func (m *manager) DeleteRoute(name string) *model.ApiError {
 	response, err := client.Do(req)
 
 	if err != nil {
-		zap.S().Errorf(fmt.Sprintf("Error in getting response of API call to alertmanager(DELETE %s)\n", amURL), err)
+		zap.L().Error("Error in getting response of API call to alertmanager", zap.String("url", amURL), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if response.StatusCode > 299 {
 		err := fmt.Errorf(fmt.Sprintf("Error in getting 2xx response in PUT API call to alertmanager(DELETE %s)\n", amURL), response.Status)
-		zap.S().Error(err)
+		zap.L().Error("Error in getting 2xx response in PUT API call to alertmanager", zap.String("url", amURL), zap.String("status", response.Status))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -158,23 +176,23 @@ func (m *manager) TestReceiver(receiver *Receiver) *model.ApiError {
 
 	receiverBytes, _ := json.Marshal(receiver)
 
-	amTestURL := prepareTestApiURL()
+	amTestURL := m.prepareTestApiURL()
 	response, err := http.Post(amTestURL, contentType, bytes.NewBuffer(receiverBytes))
 
 	if err != nil {
-		zap.S().Errorf(fmt.Sprintf("Error in getting response of API call to alertmanager(POST %s)\n", amTestURL), err)
+		zap.L().Error("Error in getting response of API call to alertmanager", zap.String("url", amTestURL), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if response.StatusCode > 201 && response.StatusCode < 400 {
 		err := fmt.Errorf(fmt.Sprintf("Invalid parameters in test alert api for alertmanager(POST %s)\n", amTestURL), response.Status)
-		zap.S().Error(err)
+		zap.L().Error("Invalid parameters in test alert api for alertmanager", zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if response.StatusCode > 400 {
 		err := fmt.Errorf(fmt.Sprintf("Received Server Error response for API call to alertmanager(POST %s)\n", amTestURL), response.Status)
-		zap.S().Error(err)
+		zap.L().Error("Received Server Error response for API call to alertmanager", zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 

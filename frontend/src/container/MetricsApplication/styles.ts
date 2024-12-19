@@ -8,12 +8,13 @@ import styled from 'styled-components';
 
 export const Card = styled(CardComponent)`
 	&&& {
-		padding: 10px;
+		height: 40vh;
+		overflow: hidden;
 	}
 
 	.ant-card-body {
+		height: 100%;
 		padding: 0;
-		min-height: 40vh;
 	}
 `;
 
@@ -38,7 +39,8 @@ export const ColErrorContainer = styled(ColComponent)`
 `;
 
 export const GraphContainer = styled.div`
-	height: 40vh;
+	min-height: calc(40vh - 40px);
+	height: 100%;
 `;
 
 export const GraphTitle = styled(Typography)`

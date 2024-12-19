@@ -31,9 +31,7 @@ function OptionsMenu({
 				{selectedOptionFormat === OptionFormatTypes.RAW && config?.maxLines && (
 					<MaxLinesField config={config.maxLines} />
 				)}
-				{(selectedOptionFormat === OptionFormatTypes.LIST ||
-					selectedOptionFormat === OptionFormatTypes.TABLE) &&
-					config?.addColumn && <AddColumnField config={config.addColumn} />}
+				{config?.addColumn && <AddColumnField config={config.addColumn} />}
 			</OptionsContentWrapper>
 		),
 		[config, selectedOptionFormat],

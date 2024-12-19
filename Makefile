@@ -8,6 +8,7 @@ BUILD_HASH      ?= $(shell git rev-parse --short HEAD)
 BUILD_TIME      ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILD_BRANCH    ?= $(shell git rev-parse --abbrev-ref HEAD)
 DEV_LICENSE_SIGNOZ_IO ?= https://staging-license.signoz.io/api/v1
+ZEUS_URL ?= https://api.signoz.cloud
 DEV_BUILD ?= "" # set to any non-empty value to enable dev build
 
 # Internal variables or constants.
@@ -33,8 +34,9 @@ buildHash=${PACKAGE}/pkg/query-service/version.buildHash
 buildTime=${PACKAGE}/pkg/query-service/version.buildTime
 gitBranch=${PACKAGE}/pkg/query-service/version.gitBranch
 licenseSignozIo=${PACKAGE}/ee/query-service/constants.LicenseSignozIo
+zeusURL=${PACKAGE}/ee/query-service/constants.ZeusURL
 
-LD_FLAGS=-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH}
+LD_FLAGS=-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH} -X ${zeusURL}=${ZEUS_URL}
 DEV_LD_FLAGS=-X ${licenseSignozIo}=${DEV_LICENSE_SIGNOZ_IO}
 
 all: build-push-frontend build-push-query-service
@@ -79,7 +81,7 @@ build-query-service-static:
 	@if [ $(DEV_BUILD) != "" ]; then \
 		cd $(QUERY_SERVICE_DIRECTORY) && \
 		CGO_ENABLED=1 go build -tags timetzdata -a -o ./bin/query-service-${GOOS}-${GOARCH} \
-    	-ldflags "-linkmode external -extldflags '-static' -s -w ${LD_FLAGS} ${DEV_LD_FLAGS}"; \
+		-ldflags "-linkmode external -extldflags '-static' -s -w ${LD_FLAGS} ${DEV_LD_FLAGS}"; \
 	else \
 		cd $(QUERY_SERVICE_DIRECTORY) && \
 		CGO_ENABLED=1 go build -tags timetzdata -a -o ./bin/query-service-${GOOS}-${GOARCH} \
@@ -156,6 +158,9 @@ pull-signoz:
 run-signoz:
 	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml up --build -d
 
+run-testing:
+	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.testing.yaml up --build -d
+
 down-signoz:
 	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml down -v
 
@@ -175,13 +180,14 @@ clear-swarm-ch:
 	@docker run --rm -v "$(PWD)/$(SWARM_DIRECTORY)/data:/pwd" busybox \
 	sh -c "cd /pwd && rm -rf clickhouse*/* zookeeper-*/*"
 
+check-no-ee-references:
+	@echo "Checking for 'ee' package references in 'pkg' directory..."
+	@if grep -R --include="*.go" '.*/ee/.*' pkg/; then \
+		echo "Error: Found references to 'ee' packages in 'pkg' directory"; \
+		exit 1; \
+	else \
+		echo "No references to 'ee' packages found in 'pkg' directory"; \
+	fi
+
 test:
-	go test ./pkg/query-service/app/metrics/...
-	go test ./pkg/query-service/cache/...
-	go test ./pkg/query-service/app/...
-	go test ./pkg/query-service/app/querier/...
-	go test ./pkg/query-service/converter/...
-	go test ./pkg/query-service/formatter/...
-	go test ./pkg/query-service/tests/integration/...
-	go test ./pkg/query-service/rules/...
-	go test ./pkg/query-service/collectorsimulator/...
+	go test ./pkg/query-service/...

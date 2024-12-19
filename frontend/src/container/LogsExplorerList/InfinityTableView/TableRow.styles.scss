@@ -1,0 +1,26 @@
+.logs-table-row {
+	cursor: pointer;
+	position: relative;
+}
+
+.table-row-backdrop {
+	&.INFO {
+		background-color: var(--bg-robin-500) 10;
+	}
+	&.WARNING,
+	&.WARN {
+		background-color: var(--bg-amber-500) 10;
+	}
+	&.ERROR {
+		background-color: var(--bg-cherry-500) 10;
+	}
+	&.TRACE {
+		background-color: var(--bg-forest-400) 10;
+	}
+	&.DEBUG {
+		background-color: var(--bg-aqua-500) 10;
+	}
+	&.FATAL {
+		background-color: var(--bg-sakura-500) 10;
+	}
+}

@@ -1,5 +1,8 @@
 version: "2.4"
 
+include:
+  - test-app-docker-compose.yaml
+
 services:
   zookeeper-1:
     image: bitnami/zookeeper:3.7.1
@@ -19,7 +22,7 @@ services:
       - ZOO_AUTOPURGE_INTERVAL=1
 
   clickhouse:
-    image: clickhouse/clickhouse-server:23.7.3-alpine
+    image: clickhouse/clickhouse-server:24.1.2-alpine
     container_name: signoz-clickhouse
     # ports:
     # - "9000:9000"
@@ -46,7 +49,7 @@ services:
           "wget",
           "--spider",
           "-q",
-          "localhost:8123/ping"
+          "0.0.0.0:8123/ping"
         ]
       interval: 30s
       timeout: 5s
@@ -54,7 +57,7 @@ services:
 
   alertmanager:
     container_name: signoz-alertmanager
-    image: signoz/alertmanager:0.23.4
+    image: signoz/alertmanager:0.23.7
     volumes:
       - ./data/alertmanager:/data
     depends_on:
@@ -66,10 +69,12 @@ services:
       - --storage.path=/data
 
   otel-collector-migrator:
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.88.1}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.16}
     container_name: otel-migrator
     command:
+      - "sync" 
       - "--dsn=tcp://clickhouse:9000"
+      - "--up=" 
     depends_on:
       clickhouse:
         condition: service_healthy
@@ -81,7 +86,7 @@ services:
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
   otel-collector:
     container_name: signoz-otel-collector
-    image: signoz/signoz-otel-collector:0.88.1
+    image: signoz/signoz-otel-collector:0.111.16
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
@@ -93,6 +98,8 @@ services:
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
       - ./otel-collector-opamp-config.yaml:/etc/manager-config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /:/hostfs:ro
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
     ports:
@@ -116,28 +123,6 @@ services:
       query-service:
         condition: service_healthy
 
-  otel-collector-metrics:
-    container_name: signoz-otel-collector-metrics
-    image: signoz/signoz-otel-collector:0.88.1
-    command:
-      [
-        "--config=/etc/otel-collector-metrics-config.yaml",
-        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
-      ]
-    volumes:
-      - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
-    # ports:
-    #   - "1777:1777"     # pprof extension
-    #   - "8888:8888"     # OtelCollector internal metrics
-    #   - "13133:13133"   # Health check extension
-    #   - "55679:55679"   # zPages extension
-    restart: on-failure
-    depends_on:
-      clickhouse:
-        condition: service_healthy
-      otel-collector-migrator:
-        condition: service_completed_successfully
-
   logspout:
     image: "gliderlabs/logspout:v3.2.14"
     container_name: signoz-logspout
@@ -148,29 +133,3 @@ services:
     depends_on:
       - otel-collector
     restart: on-failure
-
-  hotrod:
-    image: jaegertracing/example-hotrod:1.30
-    container_name: hotrod
-    logging:
-      options:
-        max-size: 50m
-        max-file: "3"
-    command: [ "all" ]
-    environment:
-      - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
-
-  load-hotrod:
-    image: "signoz/locust:1.2.3"
-    container_name: load-hotrod
-    hostname: load-hotrod
-    environment:
-      ATTACKED_HOST: http://hotrod:8080
-      LOCUST_MODE: standalone
-      NO_PROXY: standalone
-      TASK_DELAY_FROM: 5
-      TASK_DELAY_TO: 30
-      QUIET_MODE: "${QUIET_MODE:-false}"
-      LOCUST_OPTS: "--headless -u 10 -r 1"
-    volumes:
-      - ../common/locust-scripts:/locust

@@ -12,7 +12,7 @@ const editMsTeams = async (
 			name: props.name,
 			msteams_configs: [
 				{
-					send_resolved: true,
+					send_resolved: props.send_resolved,
 					webhook_url: props.webhook_url,
 					title: props.title,
 					text: props.text,

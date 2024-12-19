@@ -78,6 +78,7 @@ export const alertsCategory = [
 		name: CategoryNames.Miscellaneous,
 		formats: [
 			{ name: 'Percent (0.0-1.0)', id: MiscellaneousFormats.PercentUnit },
+			{ name: 'Percent (0 - 100)', id: MiscellaneousFormats.Percent },
 		],
 	},
 	{

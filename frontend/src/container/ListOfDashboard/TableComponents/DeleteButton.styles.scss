@@ -1,0 +1,15 @@
+.delete-modal {
+	.ant-modal-confirm-body {
+		align-items: center;
+	}
+}
+
+.delete-btn:hover {
+	background-color: rgba(255, 255, 255, 0.12);
+}
+
+.lightMode {
+	.delete-btn:hover {
+		background-color: rgba(0, 0, 0, 0.06) !important;
+	}
+}

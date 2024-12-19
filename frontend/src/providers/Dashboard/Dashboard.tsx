@@ -1,14 +1,19 @@
-import Modal from 'antd/es/modal';
-import get from 'api/dashboard/get';
+/* eslint-disable no-nested-ternary */
+import { Modal } from 'antd';
+import getDashboard from 'api/dashboard/get';
 import lockDashboardApi from 'api/dashboard/lockDashboard';
 import unlockDashboardApi from 'api/dashboard/unlockDashboard';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
+import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import useAxiosError from 'hooks/useAxiosError';
 import useTabVisibility from 'hooks/useTabFocus';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
+import history from 'lib/history';
+import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
 import omitBy from 'lodash-es/omitBy';
@@ -30,11 +35,13 @@ import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { v4 as generateUUID } from 'uuid';
 
-import { IDashboardContext } from './types';
+import { DashboardSortOrder, IDashboardContext } from './types';
+import { sortLayout } from './util';
 
 const DashboardContext = createContext<IDashboardContext>({
 	isDashboardSliderOpen: false,
@@ -45,17 +52,30 @@ const DashboardContext = createContext<IDashboardContext>({
 	selectedDashboard: {} as Dashboard,
 	dashboardId: '',
 	layouts: [],
+	panelMap: {},
+	setPanelMap: () => {},
+	listSortOrder: {
+		columnKey: 'createdAt',
+		order: 'descend',
+		pagination: '1',
+		search: '',
+	},
+	setListSortOrder: () => {},
 	setLayouts: () => {},
 	setSelectedDashboard: () => {},
 	updatedTimeRef: {} as React.MutableRefObject<Dayjs | null>,
 	toScrollWidgetId: '',
 	setToScrollWidgetId: () => {},
+	updateLocalStorageDashboardVariables: () => {},
+	variablesToGetUpdated: [],
+	setVariablesToGetUpdated: () => {},
 });
 
 interface Props {
 	dashboardId: string;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function DashboardProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
@@ -70,6 +90,50 @@ export function DashboardProvider({
 		exact: true,
 	});
 
+	const isDashboardListPage = useRouteMatch<Props>({
+		path: ROUTES.ALL_DASHBOARD,
+		exact: true,
+	});
+
+	// added extra checks here in case wrong values appear use the default values rather than empty dashboards
+	const supportedOrderColumnKeys = ['createdAt', 'updatedAt'];
+
+	const supportedOrderKeys = ['ascend', 'descend'];
+
+	const params = useUrlQuery();
+	// since the dashboard provider is wrapped at the very top of the application hence it initialises these values from other pages as well.
+	// pick the below params from URL only if the user is on the dashboards list page.
+	const orderColumnParam = isDashboardListPage && params.get('columnKey');
+	const orderQueryParam = isDashboardListPage && params.get('order');
+	const paginationParam = isDashboardListPage && params.get('page');
+	const searchParam = isDashboardListPage && params.get('search');
+
+	const [listSortOrder, setListOrder] = useState({
+		columnKey: orderColumnParam
+			? supportedOrderColumnKeys.includes(orderColumnParam)
+				? orderColumnParam
+				: 'updatedAt'
+			: 'updatedAt',
+		order: orderQueryParam
+			? supportedOrderKeys.includes(orderQueryParam)
+				? orderQueryParam
+				: 'descend'
+			: 'descend',
+		pagination: paginationParam || '1',
+		search: searchParam || '',
+	});
+
+	function setListSortOrder(sortOrder: DashboardSortOrder): void {
+		if (!isEqual(sortOrder, listSortOrder)) {
+			setListOrder(sortOrder);
+		}
+		params.set('columnKey', sortOrder.columnKey as string);
+		params.set('order', sortOrder.order as string);
+		params.set('page', sortOrder.pagination || '1');
+		params.set('search', sortOrder.search || '');
+		history.replace({ search: params.toString() });
+	}
+
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const globalTime = useSelector<AppState, GlobalReducer>(
@@ -83,7 +147,15 @@ export function DashboardProvider({
 		exact: true,
 	});
 
+	const [variablesToGetUpdated, setVariablesToGetUpdated] = useState<string[]>(
+		[],
+	);
+
 	const [layouts, setLayouts] = useState<Layout[]>([]);
+
+	const [panelMap, setPanelMap] = useState<
+		Record<string, { widgets: Layout[]; collapsed: boolean }>
+	>({});
 
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 
@@ -94,6 +166,11 @@ export function DashboardProvider({
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
 
+	const {
+		currentDashboard,
+		updateLocalStorageDashboardVariables,
+	} = useDashboardVariablesFromLocalStorage(dashboardId);
+
 	const updatedTimeRef = useRef<Dayjs | null>(null); // Using ref to store the updated time
 	const modalRef = useRef<any>(null);
 
@@ -102,36 +179,99 @@ export function DashboardProvider({
 	const { t } = useTranslation(['dashboard']);
 	const dashboardRef = useRef<Dashboard>();
 
+	const mergeDBWithLocalStorage = (
+		data: Dashboard,
+		localStorageVariables: any,
+	): Dashboard => {
+		const updatedData = data;
+		if (data && localStorageVariables) {
+			const updatedVariables = data.data.variables;
+			Object.keys(data.data.variables).forEach((variable) => {
+				const variableData = data.data.variables[variable];
+				const updatedVariable = {
+					...data.data.variables[variable],
+					...localStorageVariables[variableData.name as any],
+				};
+
+				updatedVariables[variable] = updatedVariable;
+			});
+			updatedData.data.variables = updatedVariables;
+		}
+		return updatedData;
+	};
+	// As we do not have order and ID's in the variables object, we have to process variables to add order and ID if they do not exist in the variables object
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const transformDashboardVariables = (data: Dashboard): Dashboard => {
+		if (data && data.data && data.data.variables) {
+			const clonedDashboardData = mergeDBWithLocalStorage(
+				JSON.parse(JSON.stringify(data)),
+				currentDashboard,
+			);
+			const { variables } = clonedDashboardData.data;
+			const existingOrders: Set<number> = new Set();
+
+			// eslint-disable-next-line no-restricted-syntax
+			for (const key in variables) {
+				// eslint-disable-next-line no-prototype-builtins
+				if (variables.hasOwnProperty(key)) {
+					const variable: IDashboardVariable = variables[key];
+
+					// Check if 'order' property doesn't exist or is undefined
+					if (variable.order === undefined) {
+						// Find a unique order starting from 0
+						let order = 0;
+						while (existingOrders.has(order)) {
+							order += 1;
+						}
+
+						variable.order = order;
+						existingOrders.add(order);
+					}
+
+					if (variable.id === undefined) {
+						variable.id = generateUUID();
+					}
+				}
+			}
+
+			return clonedDashboardData;
+		}
+
+		return data;
+	};
 	const dashboardResponse = useQuery(
 		[REACT_QUERY_KEY.DASHBOARD_BY_ID, isDashboardPage?.params],
 		{
 			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
 			queryFn: () =>
-				get({
+				getDashboard({
 					uuid: dashboardId,
 				}),
 			refetchOnWindowFocus: false,
 			onSuccess: (data) => {
-				const updatedDate = dayjs(data.updated_at);
+				const updatedDashboardData = transformDashboardVariables(data);
+				const updatedDate = dayjs(updatedDashboardData.updated_at);
 
-				setIsDashboardLocked(data?.isLocked || false);
+				setIsDashboardLocked(updatedDashboardData?.isLocked || false);
 
 				// on first render
 				if (updatedTimeRef.current === null) {
-					setSelectedDashboard(data);
+					setSelectedDashboard(updatedDashboardData);
 
 					updatedTimeRef.current = updatedDate;
 
-					dashboardRef.current = data;
+					dashboardRef.current = updatedDashboardData;
 
-					setLayouts(getUpdatedLayout(data.data.layout));
+					setLayouts(sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)));
+
+					setPanelMap(defaultTo(updatedDashboardData?.data?.panelMap, {}));
 				}
 
 				if (
 					updatedTimeRef.current !== null &&
 					updatedDate.isAfter(updatedTimeRef.current) &&
 					isVisible &&
-					dashboardRef.current?.id === data.id
+					dashboardRef.current?.id === updatedDashboardData.id
 				) {
 					// show modal when state is out of sync
 					const modal = onModal.confirm({
@@ -139,7 +279,7 @@ export function DashboardProvider({
 						title: t('dashboard_has_been_updated'),
 						content: t('do_you_want_to_refresh_the_dashboard'),
 						onOk() {
-							setSelectedDashboard(data);
+							setSelectedDashboard(updatedDashboardData);
 
 							const { maxTime, minTime } = getMinMax(
 								globalTime.selectedTime,
@@ -156,32 +296,40 @@ export function DashboardProvider({
 								},
 							});
 
-							dashboardRef.current = data;
+							dashboardRef.current = updatedDashboardData;
 
-							updatedTimeRef.current = dayjs(data.updated_at);
+							updatedTimeRef.current = dayjs(updatedDashboardData.updated_at);
 
-							setLayouts(getUpdatedLayout(data.data.layout));
+							setLayouts(
+								sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)),
+							);
+
+							setPanelMap(defaultTo(updatedDashboardData.data.panelMap, {}));
 						},
 					});
 
 					modalRef.current = modal;
 				} else {
 					// normal flow
-					updatedTimeRef.current = dayjs(data.updated_at);
+					updatedTimeRef.current = dayjs(updatedDashboardData.updated_at);
 
-					dashboardRef.current = data;
+					dashboardRef.current = updatedDashboardData;
 
-					if (!isEqual(selectedDashboard, data)) {
-						setSelectedDashboard(data);
+					if (!isEqual(selectedDashboard, updatedDashboardData)) {
+						setSelectedDashboard(updatedDashboardData);
 					}
 
 					if (
 						!isEqual(
 							[omitBy(layouts, (value): boolean => isUndefined(value))[0]],
-							data.data.layout,
+							updatedDashboardData.data.layout,
 						)
 					) {
-						setLayouts(getUpdatedLayout(data.data.layout));
+						setLayouts(
+							sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)),
+						);
+
+						setPanelMap(defaultTo(updatedDashboardData.data.panelMap, {}));
 					}
 				}
 			},
@@ -248,10 +396,17 @@ export function DashboardProvider({
 			selectedDashboard,
 			dashboardId,
 			layouts,
+			listSortOrder,
+			setListSortOrder,
+			panelMap,
 			setLayouts,
+			setPanelMap,
 			setSelectedDashboard,
 			updatedTimeRef,
 			setToScrollWidgetId,
+			updateLocalStorageDashboardVariables,
+			variablesToGetUpdated,
+			setVariablesToGetUpdated,
 		}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -261,7 +416,14 @@ export function DashboardProvider({
 			selectedDashboard,
 			dashboardId,
 			layouts,
+			listSortOrder,
+			setListSortOrder,
+			panelMap,
 			toScrollWidgetId,
+			updateLocalStorageDashboardVariables,
+			currentDashboard,
+			variablesToGetUpdated,
+			setVariablesToGetUpdated,
 		],
 	);
 

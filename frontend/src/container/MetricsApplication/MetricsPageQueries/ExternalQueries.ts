@@ -93,9 +93,13 @@ export const externalCallErrorPercent = ({
 
 	const additionalItems = [additionalItemsA, additionalItemsB];
 
-	const aggregateOperators = [
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
+	const timeAggregateOperators = [
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+	];
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
 	const legends = [legend, legend];
 	const dataSource = DataSource.METRICS;
@@ -108,7 +112,8 @@ export const externalCallErrorPercent = ({
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 		dataSource,
 	});
 };
@@ -152,9 +157,13 @@ export const externalCallDuration = ({
 
 	const additionalItems = [additionalItemsA, additionalItemsA];
 	const legends = [legend, legend];
-	const aggregateOperators = [
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
+	const timeAggregateOperators = [
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+	];
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
 	const dataSource = DataSource.METRICS;
 
@@ -165,7 +174,8 @@ export const externalCallDuration = ({
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 		dataSource,
 	});
 };
@@ -203,12 +213,17 @@ export const externalCallRpsByAddress = ({
 	const legends = [legend];
 	const dataSource = DataSource.METRICS;
 
+	const timeAggregateOperators = [MetricAggregateOperator.RATE];
+	const spaceAggregateOperators = [MetricAggregateOperator.SUM];
+
 	return getQueryBuilderQueries({
 		autocompleteData,
 		groupBy,
 		legends,
 		filterItems,
 		dataSource,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 	});
 };
 
@@ -250,9 +265,13 @@ export const externalCallDurationByAddress = ({
 	const autocompleteData = [autocompleteDataA, autocompleteDataB];
 	const additionalItems = [additionalItemsA, additionalItemsA];
 	const legends = [legend, legend];
-	const aggregateOperators = [
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
+	const timeAggregateOperators = [
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+	];
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
 	const dataSource = DataSource.METRICS;
 
@@ -264,7 +283,8 @@ export const externalCallDurationByAddress = ({
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 		dataSource,
 	});
 };

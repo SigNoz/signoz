@@ -90,7 +90,7 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating tables: %v", err.Error())
+		return nil, fmt.Errorf("error in creating tables: %v", err.Error())
 	}
 
 	mds := &ModelDaoSqlite{db: db}
@@ -102,6 +102,10 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	if err := mds.initializeRBAC(ctx); err != nil {
 		return nil, err
 	}
+
+	telemetry.GetInstance().SetUserCountCallback(mds.GetUserCount)
+	telemetry.GetInstance().SetUserRoleCallback(mds.GetUserRole)
+	telemetry.GetInstance().SetGetUsersCallback(mds.GetUsers)
 
 	return mds, nil
 }
@@ -140,7 +144,6 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 
 	users, _ := mds.GetUsers(ctx)
 	countUsers := len(users)
-	telemetry.GetInstance().SetCountUsers(int8(countUsers))
 	if countUsers > 0 {
 		telemetry.GetInstance().SetCompanyDomain(users[countUsers-1].Email)
 		telemetry.GetInstance().SetUserEmail(users[countUsers-1].Email)
@@ -180,7 +183,7 @@ func (mds *ModelDaoSqlite) createGroupIfNotPresent(ctx context.Context,
 		return group, nil
 	}
 
-	zap.S().Debugf("%s is not found, creating it", name)
+	zap.L().Debug("group is not found, creating it", zap.String("group_name", name))
 	group, cErr := mds.CreateGroup(ctx, &model.Group{Name: name})
 	if cErr != nil {
 		return nil, cErr.Err

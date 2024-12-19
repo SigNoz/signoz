@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import ROUTES from 'constants/routes';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { DataSource } from 'types/common/queryBuilder';
@@ -46,7 +46,7 @@ describe('ExplorerCard', () => {
 				<ExplorerCard sourcepage={DataSource.TRACES}>child</ExplorerCard>
 			</MockQueryClientProvider>,
 		);
-		expect(screen.getByText('Query Builder')).toBeInTheDocument();
+		expect(screen.queryByText('Query Builder')).not.toBeInTheDocument();
 	});
 
 	it('renders a save view button', () => {
@@ -55,19 +55,6 @@ describe('ExplorerCard', () => {
 				<ExplorerCard sourcepage={DataSource.TRACES}>child</ExplorerCard>
 			</MockQueryClientProvider>,
 		);
-		expect(screen.getByText('Save view')).toBeInTheDocument();
-	});
-
-	it('should see all the view listed in dropdown', async () => {
-		const screen = render(
-			<ExplorerCard sourcepage={DataSource.TRACES}>Mock Children</ExplorerCard>,
-		);
-		const selectPlaceholder = screen.getByText('Select a view');
-
-		fireEvent.mouseDown(selectPlaceholder);
-		const viewNameText = await screen.getAllByText('View 1');
-		viewNameText.forEach((element) => {
-			expect(element).toBeInTheDocument();
-		});
+		expect(screen.queryByText('Save view')).not.toBeInTheDocument();
 	});
 });

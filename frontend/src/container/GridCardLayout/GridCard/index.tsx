@@ -1,51 +1,84 @@
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useResizeObserver } from 'hooks/useDimensions';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
-import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import getTimeString from 'lib/getTimeString';
+import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
-import _noop from 'lodash-es/noop';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getGraphType } from 'utils/getGraphType';
+import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
 import { GridCardGraphProps } from './types';
+import { isDataAvailableByPanelType } from './utils';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
 function GridCardGraph({
 	widget,
-	name,
-	onClickHandler = _noop,
 	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
 	threshold,
 	variables,
-	fillSpans = false,
+	version,
+	onClickHandler,
+	onDragSelect,
+	customTooltipElement,
+	dataAvailable,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
+	const {
+		toScrollWidgetId,
+		setToScrollWidgetId,
+		variablesToGetUpdated,
+	} = useDashboard();
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+	const queryClient = useQueryClient();
 
-	const onDragSelect = useCallback(
-		(start: number, end: number): void => {
-			const startTimestamp = Math.trunc(start);
-			const endTimestamp = Math.trunc(end);
+	const handleBackNavigation = (): void => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const startTime = searchParams.get(QueryParams.startTime);
+		const endTime = searchParams.get(QueryParams.endTime);
+		const relativeTime = searchParams.get(
+			QueryParams.relativeTime,
+		) as CustomTimeType;
 
-			if (startTimestamp !== endTimestamp) {
-				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
-			}
-		},
-		[dispatch],
-	);
+		if (relativeTime) {
+			dispatch(UpdateTimeInterval(relativeTime));
+		} else if (startTime && endTime && startTime !== endTime) {
+			dispatch(
+				UpdateTimeInterval('custom', [
+					parseInt(getTimeString(startTime), 10),
+					parseInt(getTimeString(endTime), 10),
+				]),
+			);
+		}
+	};
+
+	useEffect(() => {
+		window.addEventListener('popstate', handleBackNavigation);
+
+		return (): void => {
+			window.removeEventListener('popstate', handleBackNavigation);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -62,24 +95,86 @@ function GridCardGraph({
 		}
 	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
-
-	const updatedQuery = useStepInterval(widget?.query);
+	const updatedQuery = widget?.query;
 
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
 
+	const queryEnabledCondition =
+		isVisible &&
+		!isEmptyWidget &&
+		isQueryEnabled &&
+		isEmpty(variablesToGetUpdated);
+
+	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
+		if (widget.panelTypes !== PANEL_TYPES.LIST) {
+			return {
+				selectedTime: widget?.timePreferance,
+				graphType: getGraphType(widget.panelTypes),
+				query: updatedQuery,
+				globalSelectedInterval,
+				variables: getDashboardVariables(variables),
+				fillGaps: widget.fillSpans,
+				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
+			};
+		}
+		updatedQuery.builder.queryData[0].pageSize = 10;
+		const initialDataSource = updatedQuery.builder.queryData[0].dataSource;
+		return {
+			query: updatedQuery,
+			graphType: PANEL_TYPES.LIST,
+			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
+			globalSelectedInterval,
+			tableParams: {
+				pagination: {
+					offset: 0,
+					limit: updatedQuery.builder.queryData[0].limit || 0,
+				},
+				// we do not need select columns in case of logs
+				selectColumns:
+					initialDataSource === DataSource.TRACES && widget.selectedTracesFields,
+			},
+			fillGaps: widget.fillSpans,
+		};
+	});
+
+	// TODO [vikrantgupta25] remove this useEffect with refactor as this is prone to race condition
+	// this is added to tackle the case of async communication between VariableItem.tsx and GridCard.tsx
+	useEffect(() => {
+		if (variablesToGetUpdated.length > 0) {
+			queryClient.cancelQueries([
+				maxTime,
+				minTime,
+				globalSelectedInterval,
+				variables,
+				widget?.query,
+				widget?.panelTypes,
+				widget.timePreferance,
+				widget.fillSpans,
+				requestData,
+			]);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [variablesToGetUpdated]);
+
+	useEffect(() => {
+		if (!isEqual(updatedQuery, requestData.query)) {
+			setRequestData((prev) => ({
+				...prev,
+				query: updatedQuery,
+			}));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [updatedQuery]);
+
 	const queryResponse = useGetQueryRange(
 		{
-			selectedTime: widget?.timePreferance,
-			graphType: widget?.panelTypes,
-			query: updatedQuery,
-			globalSelectedInterval,
+			...requestData,
 			variables: getDashboardVariables(variables),
+			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
+			globalSelectedInterval,
 		},
+		version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				maxTime,
@@ -89,52 +184,48 @@ function GridCardGraph({
 				widget?.query,
 				widget?.panelTypes,
 				widget.timePreferance,
+				widget.fillSpans,
+				requestData,
 			],
+			retry(failureCount, error): boolean {
+				if (
+					String(error).includes('status: error') &&
+					String(error).includes('i/o timeout')
+				) {
+					return false;
+				}
+
+				return failureCount < 2;
+			},
 			keepPreviousData: true,
-			enabled: isVisible && !isEmptyWidget && isQueryEnabled,
+			enabled: queryEnabledCondition,
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
+			},
+			onSettled: (data) => {
+				dataAvailable?.(
+					isDataAvailableByPanelType(data?.payload?.data, widget?.panelTypes),
+				);
 			},
 		},
 	);
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 
-	const containerDimensions = useResizeObserver(graphRef);
-
-	const chartData = getUPlotChartData(queryResponse?.data?.payload, fillSpans);
-
-	const isDarkMode = useIsDarkMode();
+	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.BAR) {
+		const sortedSeriesData = getSortedSeriesData(
+			queryResponse.data?.payload.data.result,
+		);
+		queryResponse.data.payload.data.result = sortedSeriesData;
+	}
 
 	const menuList =
-		widget.panelTypes === PANEL_TYPES.TABLE
+		widget.panelTypes === PANEL_TYPES.TABLE ||
+		widget.panelTypes === PANEL_TYPES.LIST ||
+		widget.panelTypes === PANEL_TYPES.PIE
 			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
 			: headerMenuList;
-
-	const options = useMemo(
-		() =>
-			getUPlotChartOptions({
-				id: widget?.id,
-				apiResponse: queryResponse.data?.payload,
-				dimensions: containerDimensions,
-				isDarkMode,
-				onDragSelect,
-				yAxisUnit: widget?.yAxisUnit,
-				onClickHandler,
-				thresholds: widget.thresholds,
-			}),
-		[
-			widget?.id,
-			widget?.yAxisUnit,
-			widget.thresholds,
-			queryResponse.data?.payload,
-			containerDimensions,
-			isDarkMode,
-			onDragSelect,
-			onClickHandler,
-		],
-	);
 
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
@@ -142,17 +233,18 @@ function GridCardGraph({
 				<EmptyWidget />
 			) : (
 				<WidgetGraphComponent
-					data={chartData}
-					options={options}
 					widget={widget}
 					queryResponse={queryResponse}
 					errorMessage={errorMessage}
 					isWarning={false}
-					name={name}
-					onDragSelect={onDragSelect}
+					version={version}
 					threshold={threshold}
 					headerMenuList={menuList}
+					isFetchingResponse={queryResponse.isFetching}
+					setRequestData={setRequestData}
 					onClickHandler={onClickHandler}
+					onDragSelect={onDragSelect}
+					customTooltipElement={customTooltipElement}
 				/>
 			)}
 		</div>
@@ -165,6 +257,7 @@ GridCardGraph.defaultProps = {
 	isQueryEnabled: true,
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
+	version: 'v3',
 };
 
 export default memo(GridCardGraph);

@@ -1,10 +1,13 @@
-import { Card, Typography } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Input, Space, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
-import useAnalytics from 'hooks/analytics/useAnalytics';
-import { Server } from 'lucide-react';
-import { useEffect } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { Check, Server } from 'lucide-react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface SupportedEnvironmentsProps {
 	name: string;
@@ -32,42 +35,89 @@ const supportedEnvironments: SupportedEnvironmentsProps[] = [
 		name: 'MacOS ARM64',
 		id: 'macOsARM64',
 	},
+	{
+		name: 'Docker',
+		id: 'docker',
+	},
+	{
+		name: 'Windows',
+		id: 'windows',
+	},
 ];
 
 export default function EnvironmentDetails(): JSX.Element {
+	const [form] = Form.useForm();
+	const { t } = useTranslation(['common']);
+
 	const {
-		activeStep,
-		selectedDataSource,
-		selectedFramework,
 		selectedEnvironment,
 		updateSelectedEnvironment,
 		selectedModule,
+		selectedDataSource,
+		selectedFramework,
 		errorDetails,
 		updateErrorDetails,
 	} = useOnboardingContext();
 
-	const { trackEvent } = useAnalytics();
+	const requestedEnvironmentName = Form.useWatch(
+		'requestedEnvironmentName',
+		form,
+	);
 
-	useEffect(() => {
-		// on language select
-		trackEvent('Onboarding: Environment Selected', {
-			dataSource: selectedDataSource,
-			framework: selectedFramework,
-			environment: selectedEnvironment,
-			module: {
-				name: activeStep?.module?.title,
-				id: activeStep?.module?.id,
-			},
-			step: {
-				name: activeStep?.step?.title,
-				id: activeStep?.step?.id,
-			},
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedEnvironment]);
+	const { notifications } = useNotifications();
+
+	const [
+		isSubmittingRequestForEnvironment,
+		setIsSubmittingRequestForEnvironment,
+	] = useState(false);
+
+	const handleRequestedEnvironmentSubmit = async (): Promise<void> => {
+		try {
+			setIsSubmittingRequestForEnvironment(true);
+			const response = await logEvent('Onboarding V2: Environment Requested', {
+				module: selectedModule?.id,
+				dataSource: selectedDataSource?.id,
+				framework: selectedFramework,
+				environment: requestedEnvironmentName,
+			});
+
+			if (response.statusCode === 200) {
+				notifications.success({
+					message: 'Environment Request Submitted',
+				});
+
+				form.setFieldValue('requestedEnvironmentName', '');
+
+				setIsSubmittingRequestForEnvironment(false);
+			} else {
+				notifications.error({
+					message:
+						response.error ||
+						t('something_went_wrong', {
+							ns: 'common',
+						}),
+				});
+
+				setIsSubmittingRequestForEnvironment(false);
+			}
+		} catch (error) {
+			notifications.error({
+				message: t('something_went_wrong', {
+					ns: 'common',
+				}),
+			});
+
+			setIsSubmittingRequestForEnvironment(false);
+		}
+	};
 
 	return (
-		<>
+		<Form
+			initialValues={{}}
+			form={form}
+			name="environment-form"
+			layout="vertical"
+		>
 			<Typography.Text className="environment-title">
 				<span className="required-symbol">*</span> Select Environment
 			</Typography.Text>
@@ -77,6 +127,18 @@ export default function EnvironmentDetails(): JSX.Element {
 					if (
 						selectedModule?.id !== useCases.APM.id &&
 						environment.id === 'kubernetes'
+					) {
+						return null;
+					}
+					if (
+						selectedModule?.id !== useCases.APM.id &&
+						environment.id === 'docker'
+					) {
+						return null;
+					}
+					if (
+						selectedModule?.id !== useCases.APM.id &&
+						environment.id === 'windows'
 					) {
 						return null;
 					}
@@ -105,11 +167,47 @@ export default function EnvironmentDetails(): JSX.Element {
 				})}
 			</div>
 
+			<div className="request-entity-container">
+				<Typography.Text>
+					Cannot find what you’re looking for? Request an environment
+				</Typography.Text>
+
+				<div className="form-section">
+					<Space.Compact style={{ width: '100%' }}>
+						<Form.Item
+							name="requestedEnvironmentName"
+							style={{ width: 300, marginBottom: 0 }}
+						>
+							<Input placeholder="Enter environment name..." />
+						</Form.Item>
+						<Button
+							className="periscope-btn primary"
+							icon={
+								isSubmittingRequestForEnvironment ? (
+									<LoadingOutlined />
+								) : (
+									<Check size={12} />
+								)
+							}
+							type="primary"
+							onClick={handleRequestedEnvironmentSubmit}
+							disabled={
+								isSubmittingRequestForEnvironment ||
+								!requestedEnvironmentName ||
+								requestedEnvironmentName?.trim().length === 0
+							}
+						>
+							Submit
+						</Button>
+					</Space.Compact>
+				</div>
+			</div>
+
 			{errorDetails && (
 				<div className="error-container">
 					<Typography.Text type="danger"> {errorDetails} </Typography.Text>
 				</div>
 			)}
-		</>
+		</Form>
 	);
 }

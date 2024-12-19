@@ -5,6 +5,7 @@ import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import isEqual from 'lodash-es/isEqual';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
 	DeleteViewHandlerProps,
@@ -13,7 +14,7 @@ import {
 	SaveViewHandlerProps,
 } from './types';
 
-const showErrorNotification = (
+export const showErrorNotification = (
 	notifications: NotificationInstance,
 	err: Error,
 ): void => {
@@ -28,12 +29,51 @@ export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
 ) => {
 	const selectedView = data?.find((view) => view.uuid === viewKey);
 	if (selectedView) {
-		const { compositeQuery, name, uuid } = selectedView;
+		const { compositeQuery, name, uuid, extraData } = selectedView;
 		const query = mapQueryDataFromApi(compositeQuery);
-		return { query, name, uuid, panelType: compositeQuery.panelType };
+		return { query, name, uuid, panelType: compositeQuery.panelType, extraData };
 	}
 	return undefined;
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const omitIdFromQuery = (query: Query | null): any => ({
+	...query,
+	builder: {
+		...query?.builder,
+		queryData: query?.builder.queryData.map((queryData) => {
+			const { id, ...rest } = queryData.aggregateAttribute;
+			const newAggregateAttribute = rest;
+			const newGroupByAttributes = queryData.groupBy.map((groupByAttribute) => {
+				const { id, ...rest } = groupByAttribute;
+				return rest;
+			});
+			const newItems = queryData.filters.items.map((item) => {
+				const { id, ...newItem } = item;
+				if (item.key) {
+					const { id, ...rest } = item.key;
+					return {
+						...newItem,
+						key: rest,
+					};
+				}
+				return newItem;
+			});
+			return {
+				...queryData,
+				aggregateAttribute: newAggregateAttribute,
+				groupBy: newGroupByAttributes,
+				filters: {
+					...queryData.filters,
+					items: newItems,
+				},
+				limit: queryData.limit ? queryData.limit : 0,
+				offset: queryData.offset ? queryData.offset : 0,
+				pageSize: queryData.pageSize ? queryData.pageSize : 0,
+			};
+		}),
+	},
+});
 
 export const isQueryUpdatedInView = ({
 	viewKey,
@@ -48,43 +88,15 @@ export const isQueryUpdatedInView = ({
 	const { query, panelType } = currentViewDetails;
 
 	// Omitting id from aggregateAttribute and groupBy
-	const updatedCurrentQuery = {
-		...stagedQuery,
-		builder: {
-			...stagedQuery?.builder,
-			queryData: stagedQuery?.builder.queryData.map((queryData) => {
-				const { id, ...rest } = queryData.aggregateAttribute;
-				const newAggregateAttribute = rest;
-				const newGroupByAttributes = queryData.groupBy.map((groupByAttribute) => {
-					const { id, ...rest } = groupByAttribute;
-					return rest;
-				});
-				const newItems = queryData.filters.items.map((item) => {
-					const { id, ...newItem } = item;
-					if (item.key) {
-						const { id, ...rest } = item.key;
-						return {
-							...newItem,
-							key: rest,
-						};
-					}
-					return newItem;
-				});
-				return {
-					...queryData,
-					aggregateAttribute: newAggregateAttribute,
-					groupBy: newGroupByAttributes,
-					filters: {
-						...queryData.filters,
-						items: newItems,
-					},
-					limit: queryData.limit ? queryData.limit : 0,
-					offset: queryData.offset ? queryData.offset : 0,
-					pageSize: queryData.pageSize ? queryData.pageSize : 0,
-				};
-			}),
-		},
-	};
+	const updatedCurrentQuery = omitIdFromQuery(stagedQuery);
+
+	if (
+		updatedCurrentQuery?.builder === undefined ||
+		updatedCurrentQuery.clickhouse_sql === undefined ||
+		updatedCurrentQuery.promql === undefined
+	) {
+		return false;
+	}
 
 	return (
 		panelType !== currentPanelType ||

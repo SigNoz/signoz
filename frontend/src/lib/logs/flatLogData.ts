@@ -1,3 +1,4 @@
+import { defaultTo } from 'lodash-es';
 import { ILog } from 'types/api/logs/log';
 
 export function FlatLogData(log: ILog): Record<string, string> {
@@ -7,7 +8,7 @@ export function FlatLogData(log: ILog): Record<string, string> {
 		if (typeof log[key as never] !== 'object') {
 			flattenLogObject[key] = log[key as never];
 		} else {
-			Object.keys(log[key as never]).forEach((childKey) => {
+			Object.keys(defaultTo(log[key as never], {})).forEach((childKey) => {
 				flattenLogObject[childKey] = log[key as never][childKey];
 			});
 		}

@@ -1,17 +1,17 @@
 import GridGraphLayout from 'container/GridCardLayout';
-import ComponentsSlider from 'container/NewDashboard/ComponentsSlider';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { FullScreenHandle } from 'react-full-screen';
 
 import { GridComponentSliderContainer } from './styles';
 
-function GridGraphs(): JSX.Element {
-	const { isDashboardSliderOpen } = useDashboard();
+interface GridGraphsProps {
+	handle: FullScreenHandle;
+}
 
+function GridGraphs(props: GridGraphsProps): JSX.Element {
+	const { handle } = props;
 	return (
 		<GridComponentSliderContainer>
-			{isDashboardSliderOpen && <ComponentsSlider />}
-
-			<GridGraphLayout />
+			<GridGraphLayout handle={handle} />
 		</GridComponentSliderContainer>
 	);
 }

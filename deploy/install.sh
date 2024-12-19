@@ -389,7 +389,7 @@ trap bye EXIT
 
 URL="https://api.segment.io/v1/track"
 HEADER_1="Content-Type: application/json"
-HEADER_2="Authorization: Basic NEdtb2E0aXhKQVVIeDJCcEp4c2p3QTFiRWZud0VlUno6"
+HEADER_2="Authorization: Basic OWtScko3b1BDR1BFSkxGNlFqTVBMdDVibGpGaFJRQnI="
 
 send_event() {
     error=""

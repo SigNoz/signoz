@@ -1,0 +1,50 @@
+.piechart-no-data {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.piechart-container {
+    height: 90%;
+    width: 100%;
+}
+
+.piechart-tooltip {
+
+    .piechart-indicator {
+        width: 15px;
+        height: 3px;
+        border-radius: 2px;
+    }
+
+    .tooltip-value {
+        font-size: 12px;
+        font-weight: 600;
+    }
+}
+
+.piechart-legend {
+    width: 100%;
+    height: 40px;
+    overflow-y: scroll;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+
+    .piechart-legend-item {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+
+        .piechart-legend-label {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+    }
+}

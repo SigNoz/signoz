@@ -2,7 +2,7 @@ import { Breadcrumb } from 'antd';
 import ROUTES from 'constants/routes';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 
-const breadcrumbNameMap = {
+const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.APPLICATION]: 'Services',
 	[ROUTES.TRACE]: 'Traces',
 	[ROUTES.TRACES_EXPLORER]: 'Traces Explorer',
@@ -20,13 +20,15 @@ const breadcrumbNameMap = {
 	[ROUTES.ERROR_DETAIL]: 'Exceptions',
 	[ROUTES.LIST_ALL_ALERT]: 'Alerts',
 	[ROUTES.ALL_DASHBOARD]: 'Dashboard',
-	[ROUTES.LOGS]: 'Logs',
 	[ROUTES.LOGS_EXPLORER]: 'Logs Explorer',
+	[ROUTES.OLD_LOGS_EXPLORER]: 'Old Logs Explorer',
 	[ROUTES.LIVE_LOGS]: 'Live View',
 	[ROUTES.LOGS_PIPELINES]: 'Logs Pipelines',
 	[ROUTES.BILLING]: 'Billing',
 	[ROUTES.SUPPORT]: 'Support',
 	[ROUTES.WORKSPACE_LOCKED]: 'Workspace Locked',
+	[ROUTES.WORKSPACE_SUSPENDED]: 'Workspace Suspended',
+	[ROUTES.MESSAGING_QUEUES]: 'Messaging Queues',
 };
 
 function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {

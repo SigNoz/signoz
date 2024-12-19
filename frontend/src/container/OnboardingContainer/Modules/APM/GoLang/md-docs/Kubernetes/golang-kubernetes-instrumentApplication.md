@@ -37,7 +37,8 @@ To configure your application to send data we will need a function to initialize
      
  import (
      .....
-
+     
+     "google.golang.org/grpc/credentials"
      "github.com/gin-gonic/gin"
      "go.opentelemetry.io/otel"
      "go.opentelemetry.io/otel/attribute"

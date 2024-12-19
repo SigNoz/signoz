@@ -1,0 +1,113 @@
+.nav-item {
+	border-radius: 2px;
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+
+	height: 36px;
+	margin-bottom: 4px;
+	cursor: pointer;
+
+	&.active {
+		.nav-item-active-marker {
+			background: #3f5ecc;
+		}
+	}
+
+	&:hover {
+		cursor: pointer;
+
+		.nav-item-data {
+			color: white;
+			background: #121317;
+		}
+	}
+
+	&.active {
+		.nav-item-data {
+			color: white;
+			background: #121317;
+			// color: #3f5ecc;
+		}
+	}
+
+	.nav-item-active-marker {
+		margin: 8px 0;
+		width: 8px;
+		height: 24px;
+		background: transparent;
+		border-radius: 3px;
+		margin-left: -5px;
+	}
+
+	.nav-item-data {
+		flex-grow: 1;
+		max-width: calc(100% - 24px);
+		display: flex;
+		margin: 0px 8px;
+		padding: 4px 12px;
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+		align-self: stretch;
+		color: #c0c1c3;
+
+		border-radius: 3px;
+		font-family: Inter;
+		font-size: 13px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px;
+
+		background: transparent;
+
+		transition: 0.2s all linear;
+
+		.nav-item-icon {
+			height: 16px;
+		}
+
+		.nav-item-label {
+			// width: 220px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+	}
+
+	.beta-tag {
+		padding-right: 0;
+	}
+}
+
+.lightMode {
+	.nav-item {
+		&.active {
+			.nav-item-active-marker {
+				background: #3f5ecc;
+			}
+		}
+
+		&:hover {
+			cursor: pointer;
+
+			.nav-item-data {
+				color: #121317;
+
+				background: var(--bg-vanilla-300);
+			}
+		}
+
+		&.active {
+			.nav-item-data {
+				color: #121317;
+				background: var(--bg-vanilla-300);
+			}
+		}
+
+		.nav-item-data {
+			color: #121317;
+		}
+	}
+}

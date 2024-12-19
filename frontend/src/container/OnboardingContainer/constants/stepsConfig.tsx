@@ -22,6 +22,25 @@ export const stepsMap = {
 	plotMetrics: 'plotMetrics',
 	configureHostmetricsJson: 'configureHostmetricsJson',
 	configureMetricsReceiver: 'configureMetricsReceiver',
+	addHttpDrain: 'addHttpDrain',
+	setupLogDrains: `setupLogDrains`,
+	createHttpPayload: `createHttpPayload`,
+	configureAws: `configureAws`,
+	sendLogsCloudwatch: `sendLogsCloudwatch`,
+	setupDaemonService: `setupDaemonService`,
+	createOtelConfig: `createOtelConfig`,
+	createDaemonService: `createDaemonService`,
+	ecsSendData: `ecsSendData`,
+	createSidecarCollectorContainer: `createSidecarCollectorContainer`,
+	deployTaskDefinition: `deployTaskDefinition`,
+	ecsSendLogsData: `ecsSendLogsData`,
+	monitorDashboard: `monitorDashboard`,
+	setupCentralCollector: `setupCentralCollector`,
+	setupAzureEventsHub: `setupAzureEventsHub`,
+	sendTraces: `sendTraces`,
+	sendLogs: `sendLogs`,
+	sendMetrics: `sendMetrics`,
+	sendHostmetricsLogs: `sendHostmetricsLogs`,
 };
 
 export const DataSourceStep: SelectedModuleStepProps = {
@@ -117,5 +136,104 @@ export const ConfigureHostmetricsJSON: SelectedModuleStepProps = {
 export const ConfigureMetricsReceiver: SelectedModuleStepProps = {
 	id: stepsMap.configureMetricsReceiver,
 	title: 'Configure Metrics Receiver',
+	component: <MarkdownStep />,
+};
+
+export const AddHttpDrain: SelectedModuleStepProps = {
+	id: stepsMap.addHttpDrain,
+	title: 'Add HTTP Drain',
+	component: <MarkdownStep />,
+};
+
+export const SetupLogDrains: SelectedModuleStepProps = {
+	id: stepsMap.setupLogDrains,
+	title: 'Setup Log Drains',
+	component: <MarkdownStep />,
+};
+
+export const CreateHttpPayload: SelectedModuleStepProps = {
+	id: stepsMap.createHttpPayload,
+	title: 'Create Json Payload',
+	component: <MarkdownStep />,
+};
+
+export const ConfigureAws: SelectedModuleStepProps = {
+	id: stepsMap.configureAws,
+	title: 'Configure AWS',
+	component: <MarkdownStep />,
+};
+export const SendLogsCloudwatch: SelectedModuleStepProps = {
+	id: stepsMap.sendLogsCloudwatch,
+	title: 'Send Logs',
+	component: <MarkdownStep />,
+};
+export const SetupDaemonService: SelectedModuleStepProps = {
+	id: stepsMap.setupDaemonService,
+	title: 'Setup Daemon Service',
+	component: <MarkdownStep />,
+};
+export const CreateOtelConfig: SelectedModuleStepProps = {
+	id: stepsMap.createOtelConfig,
+	title: 'Create OTel Config',
+	component: <MarkdownStep />,
+};
+export const CreateDaemonService: SelectedModuleStepProps = {
+	id: stepsMap.createDaemonService,
+	title: 'Create Daemon Service',
+	component: <MarkdownStep />,
+};
+export const EcsSendData: SelectedModuleStepProps = {
+	id: stepsMap.ecsSendData,
+	title: 'Send Traces Data',
+	component: <MarkdownStep />,
+};
+export const CreateSidecarCollectorContainer: SelectedModuleStepProps = {
+	id: stepsMap.createSidecarCollectorContainer,
+	title: 'Create Sidecar Collector',
+	component: <MarkdownStep />,
+};
+export const DeployTaskDefinition: SelectedModuleStepProps = {
+	id: stepsMap.deployTaskDefinition,
+	title: 'Deploy Task Definition',
+	component: <MarkdownStep />,
+};
+export const EcsSendLogsData: SelectedModuleStepProps = {
+	id: stepsMap.ecsSendLogsData,
+	title: 'Send Logs Data',
+	component: <MarkdownStep />,
+};
+export const MonitorDashboard: SelectedModuleStepProps = {
+	id: stepsMap.monitorDashboard,
+	title: 'Monitor using Dashboard ',
+	component: <MarkdownStep />,
+};
+export const SetupCentralCollectorStep: SelectedModuleStepProps = {
+	id: stepsMap.setupCentralCollector,
+	title: 'Setup Central Collector ',
+	component: <MarkdownStep />,
+};
+export const SetupAzureEventsHub: SelectedModuleStepProps = {
+	id: stepsMap.setupAzureEventsHub,
+	title: 'Setup EventsHub',
+	component: <MarkdownStep />,
+};
+export const SendTraces: SelectedModuleStepProps = {
+	id: stepsMap.sendTraces,
+	title: 'Send Traces',
+	component: <MarkdownStep />,
+};
+export const SendLogs: SelectedModuleStepProps = {
+	id: stepsMap.sendLogs,
+	title: 'Send Logs',
+	component: <MarkdownStep />,
+};
+export const SendMetrics: SelectedModuleStepProps = {
+	id: stepsMap.sendMetrics,
+	title: 'Send Metrics',
+	component: <MarkdownStep />,
+};
+export const SendHostmetricsLogs: SelectedModuleStepProps = {
+	id: stepsMap.sendHostmetricsLogs,
+	title: 'HostMetrics and Logging',
 	component: <MarkdownStep />,
 };

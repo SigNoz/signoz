@@ -48,13 +48,13 @@ func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url
 	if domainIdStr != "" {
 		domainId, err := uuid.Parse(domainIdStr)
 		if err != nil {
-			zap.S().Errorf("failed to parse domainId from relay state", err)
+			zap.L().Error("failed to parse domainId from relay state", zap.Error(err))
 			return nil, fmt.Errorf("failed to parse domainId from IdP response")
 		}
 
 		domain, err = m.GetDomain(ctx, domainId)
 		if (err != nil) || domain == nil {
-			zap.S().Errorf("failed to find domain from domainId received in IdP response", err.Error())
+			zap.L().Error("failed to find domain from domainId received in IdP response", zap.Error(err))
 			return nil, fmt.Errorf("invalid credentials")
 		}
 	}
@@ -64,7 +64,7 @@ func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url
 		domainFromDB, err := m.GetDomainByName(ctx, domainNameStr)
 		domain = domainFromDB
 		if (err != nil) || domain == nil {
-			zap.S().Errorf("failed to find domain from domainName received in IdP response", err.Error())
+			zap.L().Error("failed to find domain from domainName received in IdP response", zap.Error(err))
 			return nil, fmt.Errorf("invalid credentials")
 		}
 	}
@@ -132,7 +132,7 @@ func (m *modelDao) ListDomains(ctx context.Context, orgId string) ([]model.OrgDo
 	for _, s := range stored {
 		domain := model.OrgDomain{Id: s.Id, Name: s.Name, OrgId: s.OrgId}
 		if err := domain.LoadConfig(s.Data); err != nil {
-			zap.S().Errorf("ListDomains() failed", zap.Error(err))
+			zap.L().Error("ListDomains() failed", zap.Error(err))
 		}
 		domains = append(domains, domain)
 	}
@@ -153,7 +153,7 @@ func (m *modelDao) CreateDomain(ctx context.Context, domain *model.OrgDomain) ba
 
 	configJson, err := json.Marshal(domain)
 	if err != nil {
-		zap.S().Errorf("failed to unmarshal domain config", zap.Error(err))
+		zap.L().Error("failed to unmarshal domain config", zap.Error(err))
 		return model.InternalError(fmt.Errorf("domain creation failed"))
 	}
 
@@ -167,7 +167,7 @@ func (m *modelDao) CreateDomain(ctx context.Context, domain *model.OrgDomain) ba
 		time.Now().Unix())
 
 	if err != nil {
-		zap.S().Errorf("failed to insert domain in db", zap.Error(err))
+		zap.L().Error("failed to insert domain in db", zap.Error(err))
 		return model.InternalError(fmt.Errorf("domain creation failed"))
 	}
 
@@ -178,13 +178,13 @@ func (m *modelDao) CreateDomain(ctx context.Context, domain *model.OrgDomain) ba
 func (m *modelDao) UpdateDomain(ctx context.Context, domain *model.OrgDomain) basemodel.BaseApiError {
 
 	if domain.Id == uuid.Nil {
-		zap.S().Errorf("domain update failed", zap.Error(fmt.Errorf("OrgDomain.Id is null")))
+		zap.L().Error("domain update failed", zap.Error(fmt.Errorf("OrgDomain.Id is null")))
 		return model.InternalError(fmt.Errorf("domain update failed"))
 	}
 
 	configJson, err := json.Marshal(domain)
 	if err != nil {
-		zap.S().Errorf("domain update failed", zap.Error(err))
+		zap.L().Error("domain update failed", zap.Error(err))
 		return model.InternalError(fmt.Errorf("domain update failed"))
 	}
 
@@ -195,7 +195,7 @@ func (m *modelDao) UpdateDomain(ctx context.Context, domain *model.OrgDomain) ba
 		domain.Id)
 
 	if err != nil {
-		zap.S().Errorf("domain update failed", zap.Error(err))
+		zap.L().Error("domain update failed", zap.Error(err))
 		return model.InternalError(fmt.Errorf("domain update failed"))
 	}
 
@@ -206,7 +206,7 @@ func (m *modelDao) UpdateDomain(ctx context.Context, domain *model.OrgDomain) ba
 func (m *modelDao) DeleteDomain(ctx context.Context, id uuid.UUID) basemodel.BaseApiError {
 
 	if id == uuid.Nil {
-		zap.S().Errorf("domain delete failed", zap.Error(fmt.Errorf("OrgDomain.Id is null")))
+		zap.L().Error("domain delete failed", zap.Error(fmt.Errorf("OrgDomain.Id is null")))
 		return model.InternalError(fmt.Errorf("domain delete failed"))
 	}
 
@@ -215,7 +215,7 @@ func (m *modelDao) DeleteDomain(ctx context.Context, id uuid.UUID) basemodel.Bas
 		id)
 
 	if err != nil {
-		zap.S().Errorf("domain delete failed", zap.Error(err))
+		zap.L().Error("domain delete failed", zap.Error(err))
 		return model.InternalError(fmt.Errorf("domain delete failed"))
 	}
 

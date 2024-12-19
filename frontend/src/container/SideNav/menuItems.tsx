@@ -1,96 +1,141 @@
-import {
-	AlertOutlined,
-	AlignLeftOutlined,
-	BarChartOutlined,
-	BugOutlined,
-	DashboardFilled,
-	DeploymentUnitOutlined,
-	FileDoneOutlined,
-	LineChartOutlined,
-	MenuOutlined,
-	RocketOutlined,
-	SearchOutlined,
-	SettingOutlined,
-} from '@ant-design/icons';
+import { RocketOutlined } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
+import {
+	BarChart2,
+	BellDot,
+	Boxes,
+	BugIcon,
+	Cloudy,
+	DraftingCompass,
+	FileKey2,
+	Layers2,
+	LayoutGrid,
+	ListMinus,
+	MessageSquare,
+	Receipt,
+	Route,
+	ScrollText,
+	Settings,
+	Slack,
+	Unplug,
+	// Unplug,
+	UserPlus,
+} from 'lucide-react';
 
-import { SidebarMenu } from './sideNav.types';
+import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
 
-const menuItems: SidebarMenu[] = [
-	{
-		key: ROUTES.GET_STARTED,
-		label: 'Get Started',
-		icon: <RocketOutlined rotate={45} />,
-	},
+export const getStartedMenuItem = {
+	key: ROUTES.GET_STARTED,
+	label: 'Get Started',
+	icon: <RocketOutlined rotate={45} />,
+};
+
+export const inviteMemberMenuItem = {
+	key: `${ROUTES.ORG_SETTINGS}#invite-team-members`,
+	label: 'Invite Team Member',
+	icon: <UserPlus size={16} />,
+};
+
+export const manageLicenseMenuItem = {
+	key: ROUTES.LIST_LICENSES,
+	label: 'Manage Licenses',
+	icon: <FileKey2 size={16} />,
+};
+
+export const helpSupportMenuItem = {
+	key: ROUTES.SUPPORT,
+	label: 'Help & Support',
+	icon: <MessageSquare size={16} />,
+};
+
+export const shortcutMenuItem = {
+	key: ROUTES.SHORTCUTS,
+	label: 'Keyboard Shortcuts',
+	icon: <Layers2 size={16} />,
+};
+
+export const slackSupportMenuItem = {
+	key: SecondaryMenuItemKey.Slack,
+	label: 'Slack Support',
+	icon: <Slack size={16} />,
+};
+
+export const trySignozCloudMenuItem: SidebarItem = {
+	key: 'trySignozCloud',
+	label: 'Try Signoz Cloud',
+	icon: <Cloudy size={16} />,
+};
+
+const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',
-		icon: <BarChartOutlined />,
+		icon: <BarChart2 size={16} />,
 	},
 	{
-		key: ROUTES.TRACE,
+		key: ROUTES.TRACES_EXPLORER,
 		label: 'Traces',
-		icon: <MenuOutlined />,
+		icon: <DraftingCompass size={16} />,
 	},
 	{
-		key: ROUTES.LOGS_EXPLORER,
+		key: ROUTES.LOGS,
 		label: 'Logs',
-		icon: <AlignLeftOutlined />,
-		children: [
-			{
-				key: ROUTES.LOGS_EXPLORER,
-				icon: <SearchOutlined />,
-				label: 'Logs Explorer',
-			},
-			{
-				key: ROUTES.LOGS_PIPELINES,
-				icon: <DeploymentUnitOutlined />,
-				label: 'Logs Pipelines',
-			},
-		],
+		icon: <ScrollText size={16} />,
+	},
+	{
+		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+		label: 'Infra Monitoring',
+		icon: <Boxes size={16} />,
+		isNew: true,
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,
 		label: 'Dashboards',
-		icon: <DashboardFilled />,
+		icon: <LayoutGrid size={16} />,
+	},
+	{
+		key: ROUTES.MESSAGING_QUEUES,
+		label: 'Messaging Queues',
+		icon: <ListMinus size={16} />,
 	},
 	{
 		key: ROUTES.LIST_ALL_ALERT,
 		label: 'Alerts',
-		icon: <AlertOutlined />,
+		icon: <BellDot size={16} />,
+	},
+	{
+		key: ROUTES.INTEGRATIONS,
+		label: 'Integrations',
+		icon: <Unplug size={16} />,
 	},
 	{
 		key: ROUTES.ALL_ERROR,
 		label: 'Exceptions',
-		icon: <BugOutlined />,
+		icon: <BugIcon size={16} />,
 	},
 	{
 		key: ROUTES.SERVICE_MAP,
 		label: 'Service Map',
-		icon: <DeploymentUnitOutlined />,
-	},
-	{
-		key: ROUTES.USAGE_EXPLORER,
-		label: 'Usage Explorer',
-		icon: <LineChartOutlined />,
+		icon: <Route size={16} />,
+		isBeta: true,
 	},
 	{
 		key: ROUTES.BILLING,
 		label: 'Billing',
-		icon: <FileDoneOutlined />,
+		icon: <Receipt size={16} />,
 	},
 	{
 		key: ROUTES.SETTINGS,
 		label: 'Settings',
-		icon: <SettingOutlined />,
+		icon: <Settings size={16} />,
 	},
 ];
 
 /** Mapping of some newly added routes and their corresponding active sidebar menu key */
-export const NEW_ROUTES_MENU_ITEM_KEY_MAP = {
-	[ROUTES.TRACES_EXPLORER]: ROUTES.TRACE,
-	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACE,
-	[ROUTES.LOGS_EXPLORER]: ROUTES.LOGS_EXPLORER,
+export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
+	[ROUTES.TRACE]: ROUTES.TRACES_EXPLORER,
+	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACES_EXPLORER,
+	[ROUTES.LOGS_BASE]: ROUTES.LOGS_EXPLORER,
 };
 
 export default menuItems;

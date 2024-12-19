@@ -4,14 +4,8 @@ import { useMemo } from 'react';
 import { matchPath, useHistory } from 'react-router-dom';
 
 import NewExplorerCTA from '../NewExplorerCTA';
-import ShowBreadcrumbs from './Breadcrumbs';
-import DateTimeSelector from './DateTimeSelection';
-import {
-	routesToDisable,
-	routesToHideBreadCrumbs,
-	routesToSkip,
-} from './DateTimeSelection/config';
-import { Container } from './styles';
+import DateTimeSelector from './DateTimeSelectionV2';
+import { routesToDisable, routesToSkip } from './DateTimeSelectionV2/config';
 
 function TopNav(): JSX.Element | null {
 	const { location } = useHistory();
@@ -19,14 +13,6 @@ function TopNav(): JSX.Element | null {
 	const isRouteToSkip = useMemo(
 		() =>
 			routesToSkip.some((route) =>
-				matchPath(location.pathname, { path: route, exact: true }),
-			),
-		[location.pathname],
-	);
-
-	const isRouteToHideBreadCrumbs = useMemo(
-		() =>
-			routesToHideBreadCrumbs.some((route) =>
 				matchPath(location.pathname, { path: route, exact: true }),
 			),
 		[location.pathname],
@@ -45,32 +31,31 @@ function TopNav(): JSX.Element | null {
 		[location.pathname],
 	);
 
-	if (isSignUpPage || isDisabled) {
+	const isNewAlertsLandingPage = useMemo(
+		() =>
+			matchPath(location.pathname, { path: ROUTES.ALERTS_NEW, exact: true }) &&
+			!location.search,
+		[location.pathname, location.search],
+	);
+
+	if (isSignUpPage || isDisabled || isRouteToSkip || isNewAlertsLandingPage) {
 		return null;
 	}
 
-	return (
-		<Container>
-			{!isRouteToHideBreadCrumbs && (
-				<Col span={16}>
-					<ShowBreadcrumbs />
-				</Col>
-			)}
-
-			{!isRouteToSkip && (
-				<Col span={isRouteToHideBreadCrumbs ? 24 : 8}>
-					<Row justify="end">
-						<Space align="start" size={60} direction="horizontal">
-							<NewExplorerCTA />
-							<div>
-								<DateTimeSelector />
-							</div>
-						</Space>
-					</Row>
-				</Col>
-			)}
-		</Container>
-	);
+	return !isRouteToSkip ? (
+		<Row style={{ marginBottom: '1rem' }}>
+			<Col span={24} style={{ marginTop: '1rem' }}>
+				<Row justify="end">
+					<Space align="center" size={16} direction="horizontal">
+						<NewExplorerCTA />
+						<div>
+							<DateTimeSelector showAutoRefresh />
+						</div>
+					</Space>
+				</Row>
+			</Col>
+		</Row>
+	) : null;
 }
 
 export default TopNav;

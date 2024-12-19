@@ -17,13 +17,6 @@ export const GetService = (
 	try {
 		const { globalTime } = getState();
 
-		if (
-			props.maxTime !== globalTime.maxTime &&
-			props.minTime !== globalTime.minTime
-		) {
-			return;
-		}
-
 		const { maxTime, minTime } = GetMinMax(globalTime.selectedTime, [
 			globalTime.minTime / 1000000,
 			globalTime.maxTime / 1000000,

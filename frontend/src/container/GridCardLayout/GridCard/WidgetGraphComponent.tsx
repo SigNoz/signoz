@@ -1,20 +1,24 @@
+import '../GridCardLayout.styles.scss';
+
 import { Skeleton, Typography } from 'antd';
+import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
-import GridPanelSwitch from 'container/GridPanelSwitch';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
 	SetStateAction,
 	useCallback,
 	useEffect,
-	useMemo,
 	useRef,
 	useState,
 } from 'react';
@@ -29,20 +33,21 @@ import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
-import { getGraphVisibilityStateOnDataChange } from './utils';
+import { getLocalStorageGraphVisibilityState } from './utils';
 
 function WidgetGraphComponent({
 	widget,
 	queryResponse,
 	errorMessage,
-	name,
-	onClickHandler,
+	version,
 	threshold,
 	headerMenuList,
 	isWarning,
-	data,
-	options,
+	isFetchingResponse,
+	setRequestData,
+	onClickHandler,
 	onDragSelect,
+	customTooltipElement,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -54,31 +59,21 @@ function WidgetGraphComponent({
 	const isFullViewOpen = params.get(QueryParams.expandedWidgetId) === widget.id;
 
 	const lineChartRef = useRef<ToggleGraphProps>();
+	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
+		Array(queryResponse.data?.payload?.data?.result?.length || 0).fill(true),
+	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
-	const { graphVisibilityStates: localStoredVisibilityStates } = useMemo(
-		() =>
-			getGraphVisibilityStateOnDataChange({
-				options,
-				isExpandedName: true,
-				name,
-			}),
-		[options, name],
-	);
-
-	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
-		boolean[]
-	>(localStoredVisibilityStates);
-
 	useEffect(() => {
-		setGraphsVisibilityStates(localStoredVisibilityStates);
 		if (!lineChartRef.current) return;
 
-		localStoredVisibilityStates.forEach((state, index) => {
+		graphVisibility.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);
 		});
-		setGraphsVisibilityStates(localStoredVisibilityStates);
-	}, [localStoredVisibilityStates]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const tableProcessedDataRef = useRef<RowData[]>([]);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -121,6 +116,7 @@ function WidgetGraphComponent({
 				if (setSelectedDashboard && updatedDashboard.payload) {
 					setSelectedDashboard(updatedDashboard.payload);
 				}
+				setDeleteModal(false);
 				featureResponse.refetch();
 			},
 			onError: () => {
@@ -136,15 +132,22 @@ function WidgetGraphComponent({
 
 		const uuid = v4();
 
+		// this is added to make sure the cloned panel is of the same dimensions as the original one
+		const originalPanelLayout = selectedDashboard.data.layout?.find(
+			(l) => l.i === widget.id,
+		);
+
+		// added the cloned panel on the top as it is given most priority when arranging
+		// in the layout. React_grid_layout assigns priority from top, hence no random position for cloned panel
 		const layout = [
-			...(selectedDashboard.data.layout || []),
 			{
 				i: uuid,
-				w: 6,
+				w: originalPanelLayout?.w || 6,
 				x: 0,
-				h: 3,
+				h: originalPanelLayout?.h || 6,
 				y: 0,
 			},
+			...(selectedDashboard.data.layout || []),
 		];
 
 		updateDashboardMutation.mutateAsync(
@@ -165,7 +168,11 @@ function WidgetGraphComponent({
 				},
 			},
 			{
-				onSuccess: () => {
+				onSuccess: (updatedDashboard) => {
+					if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
+					if (setSelectedDashboard && updatedDashboard.payload) {
+						setSelectedDashboard(updatedDashboard.payload);
+					}
 					notifications.success({
 						message: 'Panel cloned successfully, redirecting to new copy.',
 					});
@@ -212,13 +219,28 @@ function WidgetGraphComponent({
 		const existingSearchParams = new URLSearchParams(search);
 		existingSearchParams.delete(QueryParams.expandedWidgetId);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
+		if (queryResponse.data?.payload) {
+			const {
+				graphVisibilityStates: localStoredVisibilityState,
+			} = getLocalStorageGraphVisibilityState({
+				apiResponse: queryResponse.data?.payload?.data?.result,
+				name: widget.id,
+			});
+			setGraphVisibility(localStoredVisibilityState);
+		}
 		history.push({
 			pathname,
 			search: createQueryParams(updatedQueryParams),
 		});
 	};
 
-	if (queryResponse.isLoading || queryResponse.status === 'idle') {
+	const [searchTerm, setSearchTerm] = useState<string>('');
+
+	const loadingState =
+		(queryResponse.isLoading || queryResponse.status === 'idle') &&
+		widget.panelTypes !== PANEL_TYPES.LIST;
+
+	if (loadingState) {
 		return (
 			<Skeleton
 				style={{
@@ -246,12 +268,13 @@ function WidgetGraphComponent({
 			onBlur={(): void => {
 				setHovered(false);
 			}}
-			id={name}
+			id={widget.id}
 		>
 			<Modal
 				destroyOnClose
 				onCancel={onDeleteModelHandler}
 				open={deleteModal}
+				confirmLoading={updateDashboardMutation.isLoading}
 				title="Delete"
 				height="10vh"
 				onOk={onDeleteHandler}
@@ -268,16 +291,16 @@ function WidgetGraphComponent({
 				onCancel={onToggleModelHandler}
 				width="85%"
 				destroyOnClose
+				className="widget-full-view"
 			>
 				<FullView
-					name={`${name}expanded`}
+					name={`${widget.id}expanded`}
+					version={version}
+					originalName={widget.id}
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
-					parentChartRef={lineChartRef}
-					onDragSelect={onDragSelect}
-					setGraphsVisibilityStates={setGraphsVisibilityStates}
-					graphsVisibilityStates={graphsVisibilityStates}
+					tableProcessedDataRef={tableProcessedDataRef}
 				/>
 			</Modal>
 
@@ -294,22 +317,30 @@ function WidgetGraphComponent({
 					threshold={threshold}
 					headerMenuList={headerMenuList}
 					isWarning={isWarning}
+					isFetchingResponse={isFetchingResponse}
+					tableProcessedDataRef={tableProcessedDataRef}
+					setSearchTerm={setSearchTerm}
 				/>
 			</div>
-			{queryResponse.isLoading && <Skeleton />}
-			{queryResponse.isSuccess && (
-				<div style={{ height: '90%' }} ref={graphRef}>
-					<GridPanelSwitch
-						panelType={widget.panelTypes}
-						data={data}
-						name={name}
-						ref={lineChartRef}
-						options={options}
-						yAxisUnit={widget.yAxisUnit}
+			{queryResponse.isLoading && widget.panelTypes !== PANEL_TYPES.LIST && (
+				<Skeleton />
+			)}
+			{(queryResponse.isSuccess || widget.panelTypes === PANEL_TYPES.LIST) && (
+				<div
+					className={cx('widget-graph-container', widget.panelTypes)}
+					ref={graphRef}
+				>
+					<PanelWrapper
+						widget={widget}
+						queryResponse={queryResponse}
+						setRequestData={setRequestData}
+						setGraphVisibility={setGraphVisibility}
+						graphVisibility={graphVisibility}
 						onClickHandler={onClickHandler}
-						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
-						query={widget.query}
-						thresholds={widget.thresholds}
+						onDragSelect={onDragSelect}
+						tableProcessedDataRef={tableProcessedDataRef}
+						customTooltipElement={customTooltipElement}
+						searchTerm={searchTerm}
 					/>
 				</div>
 			)}

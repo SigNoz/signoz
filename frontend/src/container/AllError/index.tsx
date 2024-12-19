@@ -12,18 +12,21 @@ import { ColumnType, TablePaginationConfig } from 'antd/es/table';
 import { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { ColumnsType } from 'antd/lib/table';
 import { FilterConfirmProps } from 'antd/lib/table/interface';
+import logEvent from 'api/common/logEvent';
 import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
 import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
-import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import { useCallback, useEffect, useMemo } from 'react';
+import { isUndefined } from 'lodash-es';
+import { useTimezone } from 'providers/Timezone';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -47,6 +50,15 @@ import {
 	getUpdatePageSize,
 	urlKey,
 } from './utils';
+
+type QueryParams = {
+	order: string;
+	offset: number;
+	orderParam: string;
+	pageSize: number;
+	exceptionType?: string;
+	serviceName?: string;
+};
 
 function AllErrors(): JSX.Element {
 	const { maxTime, minTime, loading } = useSelector<AppState, GlobalReducer>(
@@ -144,8 +156,16 @@ function AllErrors(): JSX.Element {
 		}
 	}, [data?.error, data?.payload, t, notifications]);
 
-	const getDateValue = (value: string): JSX.Element => (
-		<Typography>{dayjs(value).format('DD/MM/YYYY HH:mm:ss A')}</Typography>
+	const getDateValue = (
+		value: string,
+		formatTimezoneAdjustedTimestamp: (
+			input: TimestampInput,
+			format?: string,
+		) => string,
+	): JSX.Element => (
+		<Typography>
+			{formatTimezoneAdjustedTimestamp(value, 'DD/MM/YYYY hh:mm:ss A')}
+		</Typography>
 	);
 
 	const filterIcon = useCallback(() => <SearchOutlined />, []);
@@ -162,16 +182,23 @@ function AllErrors(): JSX.Element {
 				filterKey,
 				filterValue || '',
 			);
-			history.replace(
-				`${pathname}?${createQueryParams({
-					order: updatedOrder,
-					offset: getUpdatedOffset,
-					orderParam: getUpdatedParams,
-					pageSize: getUpdatedPageSize,
-					exceptionType: exceptionFilterValue,
-					serviceName: serviceFilterValue,
-				})}`,
-			);
+
+			const queryParams: QueryParams = {
+				order: updatedOrder,
+				offset: getUpdatedOffset,
+				orderParam: getUpdatedParams,
+				pageSize: getUpdatedPageSize,
+			};
+
+			if (exceptionFilterValue && exceptionFilterValue !== 'undefined') {
+				queryParams.exceptionType = exceptionFilterValue;
+			}
+
+			if (serviceFilterValue && serviceFilterValue !== 'undefined') {
+				queryParams.serviceName = serviceFilterValue;
+			}
+
+			history.replace(`${pathname}?${createQueryParams(queryParams)}`);
 			confirm();
 		},
 		[
@@ -198,8 +225,10 @@ function AllErrors(): JSX.Element {
 					<Input
 						placeholder={placeholder}
 						value={selectedKeys[0]}
-						onChange={(e): void =>
-							setSelectedKeys(e.target.value ? [e.target.value] : [])
+						onChange={
+							(e): void => setSelectedKeys(e.target.value ? [e.target.value] : [])
+
+							// Need to fix this logic, when the value in empty, it's setting undefined string as value
 						}
 						allowClear
 						defaultValue={getDefaultFilterValue(
@@ -263,6 +292,8 @@ function AllErrors(): JSX.Element {
 		[filterIcon, filterDropdownWrapper],
 	);
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	const columns: ColumnsType<Exception> = [
 		{
 			title: 'Exception Type',
@@ -322,7 +353,8 @@ function AllErrors(): JSX.Element {
 			dataIndex: 'lastSeen',
 			width: 80,
 			key: 'lastSeen',
-			render: getDateValue,
+			render: (value): JSX.Element =>
+				getDateValue(value, formatTimezoneAdjustedTimestamp),
 			sorter: true,
 			defaultSortOrder: getDefaultOrder(
 				getUpdatedParams,
@@ -335,7 +367,8 @@ function AllErrors(): JSX.Element {
 			dataIndex: 'firstSeen',
 			width: 80,
 			key: 'firstSeen',
-			render: getDateValue,
+			render: (value): JSX.Element =>
+				getDateValue(value, formatTimezoneAdjustedTimestamp),
 			sorter: true,
 			defaultSortOrder: getDefaultOrder(
 				getUpdatedParams,
@@ -391,6 +424,26 @@ function AllErrors(): JSX.Element {
 		},
 		[pathname],
 	);
+
+	const logEventCalledRef = useRef(false);
+	useEffect(() => {
+		if (
+			!logEventCalledRef.current &&
+			!isUndefined(errorCountResponse.data?.payload)
+		) {
+			const selectedEnvironments = queries.find(
+				(val) => val.tagKey === 'resource_deployment_environment',
+			)?.tagValue;
+
+			logEvent('Exception: List page visited', {
+				numberOfExceptions: errorCountResponse?.data?.payload,
+				selectedEnvironments,
+				resourceAttributeUsed: !!queries?.length,
+			});
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [errorCountResponse.data?.payload]);
 
 	return (
 		<ResizeTable

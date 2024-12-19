@@ -2,7 +2,6 @@ package opamp
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/knadh/koanf"
@@ -13,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 	"golang.org/x/exp/maps"
 )
 
@@ -165,16 +165,8 @@ type testbed struct {
 }
 
 func newTestbed(t *testing.T) *testbed {
-	// Init opamp model.
-	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
-	if err != nil {
-		t.Fatalf("could not create temp file for test db: %v", err)
-	}
-	testDBFilePath := testDBFile.Name()
-	t.Cleanup(func() { os.Remove(testDBFilePath) })
-	testDBFile.Close()
-
-	_, err = model.InitDB(testDBFilePath)
+	testDB := utils.NewQueryServiceDBForTests(t)
+	_, err := model.InitDB(testDB)
 	if err != nil {
 		t.Fatalf("could not init opamp model: %v", err)
 	}

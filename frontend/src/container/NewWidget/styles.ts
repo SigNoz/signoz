@@ -4,34 +4,49 @@ import styled from 'styled-components';
 export const Container = styled.div`
 	min-height: 78vh;
 	display: flex;
-	margin-top: 1rem;
 	flex-direction: column;
+	overflow-y: hidden;
 `;
 
 export const RightContainerWrapper = styled(Col)`
 	&&& {
-		min-width: 200px;
-		margin-bottom: 1rem;
+		max-width: 400px;
+		width: 30%;
+		overflow-y: auto;
+	}
+	&::-webkit-scrollbar {
+		width: 0rem;
 	}
 `;
 
-export const LeftContainerWrapper = styled(Col)`
+interface LeftContainerWrapperProps {
+	isDarkMode: boolean;
+}
+
+export const LeftContainerWrapper = styled(Col)<LeftContainerWrapperProps>`
 	&&& {
-		margin-right: 1rem;
-		margin-bottom: 1rem;
-		max-width: 70%;
+		width: 100%;
+		overflow-y: auto;
+		border-right: ${({ isDarkMode }): string =>
+			isDarkMode
+				? '1px solid var(--bg-slate-300)'
+				: '1px solid var(--bg-vanilla-300)'};
+	}
+	&::-webkit-scrollbar {
+		width: 0rem;
 	}
 `;
 
 export const ButtonContainer = styled.div`
 	display: flex;
-	gap: 1rem;
+	gap: 8px;
 	margin-bottom: 1rem;
 	justify-content: flex-end;
 `;
 
 export const PanelContainer = styled.div`
 	display: flex;
+	overflow-y: auto;
 `;
 
 export const Tag = styled(AntDTag)`

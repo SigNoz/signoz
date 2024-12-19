@@ -1,0 +1,200 @@
+.logs-explorer-views-container {
+	margin-bottom: 24px;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+
+	.logs-explorer-views-types {
+		width: -webkit-fill-available;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		padding-bottom: 60px;
+
+		.views-tabs-container {
+			padding: 8px 16px;
+			border: 1px solid var(--text-slate-400);
+			border-left: none;
+			border-right: none;
+
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+
+			.views-tabs {
+				color: var(--text-vanilla-400);
+
+				.view-title {
+					display: flex;
+					gap: var(--margin-2);
+					align-items: center;
+					justify-content: center;
+					font-size: var(--font-size-xs);
+					font-style: normal;
+					font-weight: var(--font-weight-normal);
+				}
+
+				.ant-btn {
+					box-shadow: none;
+				}
+
+				.tab {
+					border: 1px solid var(--bg-slate-400);
+					width: 114px;
+				}
+
+				.tab::before {
+					background: var(--bg-slate-400);
+				}
+
+				.selected_view {
+					background: var(--bg-slate-300);
+					color: var(--text-vanilla-100);
+					border: 1px solid var(--bg-slate-400);
+				}
+
+				.selected_view::before {
+					background: var(--bg-slate-400);
+				}
+
+				.ant-radio-button-wrapper {
+					min-width: 120px;
+					text-align: center;
+
+					font-style: normal;
+					font-weight: 400;
+					font-size: 12px;
+				}
+			}
+
+			.tab-options {
+				display: flex;
+				gap: 8px;
+				align-items: center;
+
+				.ant-btn {
+					border: 1px solid var(--bg-slate-400);
+				}
+
+				.format-options-container {
+					position: relative;
+				}
+			}
+			.query-stats {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				.rows {
+					color: var(--bg-vanilla-400);
+					font-family: 'Geist Mono';
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 18px; /* 150% */
+					letter-spacing: 0.36px;
+				}
+
+				.divider {
+					width: 1px;
+					height: 14px;
+					background: #242834;
+				}
+
+				.time {
+					color: var(--bg-vanilla-400);
+					font-family: 'Geist Mono';
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 18px; /* 150% */
+					letter-spacing: 0.36px;
+				}
+			}
+		}
+
+		.logs-actions-container {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: 8px;
+
+			.ant-btn {
+				border: none;
+			}
+		}
+
+		.logs-explorer-views-type-content {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+
+			.ant-card {
+				border: none !important;
+			}
+
+			.query-table {
+				.ant-table {
+					table {
+						min-width: 99% !important;
+					}
+				}
+			}
+		}
+	}
+
+	.ant-card-body {
+		background-color: var(--bg-ink-500);
+	}
+
+	.logs-histogram {
+		.ant-card-body {
+			height: 140px;
+			min-height: 140px;
+			padding: 0 16px 22px 16px;
+			font-family: 'Geist Mono';
+		}
+
+		margin-bottom: 0px;
+	}
+}
+
+.lightMode {
+	.logs-explorer-views-container {
+		.ant-card-body {
+			background-color: var(--bg-vanilla-100);
+		}
+
+		.views-tabs-container {
+			border: 1px solid var(--text-vanilla-300);
+
+			.views-tabs {
+				.tab {
+					border: 1px solid var(--bg-vanilla-300);
+				}
+
+				.tab::before {
+					background: var(--bg-vanilla-300);
+				}
+
+				.selected_view {
+					background: white;
+					color: var(--text-robin-400);
+					border: 1px solid var(--bg-robin-400);
+				}
+
+				.selected_view::before {
+					background: var(--bg-robin-400);
+				}
+			}
+			.query-stats {
+				.rows {
+					color: var(--bg-ink-400);
+				}
+
+				.time {
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+	}
+}

@@ -4,6 +4,7 @@ export enum MenuItemKeys {
 	Delete = 'delete',
 	Clone = 'clone',
 	CreateAlerts = 'createAlerts',
+	Download = 'download',
 }
 
 export const MENUITEM_KEYS_VS_LABELS = {
@@ -12,4 +13,5 @@ export const MENUITEM_KEYS_VS_LABELS = {
 	[MenuItemKeys.Delete]: 'Delete',
 	[MenuItemKeys.Clone]: 'Clone',
 	[MenuItemKeys.CreateAlerts]: 'Create Alerts',
+	[MenuItemKeys.Download]: 'Download as CSV',
 };

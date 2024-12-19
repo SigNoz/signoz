@@ -1,3 +1,6 @@
+import './Pipelines.styles.scss';
+
+import * as Sentry from '@sentry/react';
 import type { TabsProps } from 'antd';
 import { Tabs } from 'antd';
 import getPipeline from 'api/pipeline/get';
@@ -5,6 +8,7 @@ import Spinner from 'components/Spinner';
 import ChangeHistory from 'container/PipelinePage/Layouts/ChangeHistory';
 import PipelinePage from 'container/PipelinePage/Layouts/Pipeline';
 import { useNotifications } from 'hooks/useNotifications';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -77,7 +81,15 @@ function Pipelines(): JSX.Element {
 		return <Spinner height="75vh" tip="Loading Pipelines..." />;
 	}
 
-	return <Tabs defaultActiveKey="pipelines" items={tabItems} />;
+	return (
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+			<Tabs
+				className="pipeline-tabs"
+				defaultActiveKey="pipelines"
+				items={tabItems}
+			/>
+		</Sentry.ErrorBoundary>
+	);
 }
 
 export default Pipelines;

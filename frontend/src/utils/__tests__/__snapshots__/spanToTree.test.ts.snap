@@ -49,7 +49,10 @@ Object {
               "nonChildReferences": Array [],
               "serviceColour": "",
               "serviceName": "frontend",
+              "spanKind": "Lorem Ipsum2",
               "startTime": 1657275433246,
+              "statusCodeString": "Unset2",
+              "statusMessage": "Server2",
               "tags": Array [
                 Object {
                   "key": "host.name.span3",
@@ -78,7 +81,10 @@ Object {
           "nonChildReferences": Array [],
           "serviceColour": "",
           "serviceName": "frontend",
+          "spanKind": "Lorem Ipsum1",
           "startTime": 1657275433246,
+          "statusCodeString": "Unset1",
+          "statusMessage": "Server1",
           "tags": Array [
             Object {
               "key": "host.name.span2",
@@ -106,7 +112,10 @@ Object {
       "nonChildReferences": Array [],
       "serviceColour": "",
       "serviceName": "frontend",
+      "spanKind": "Lorem Ipsum",
       "startTime": 1657275433246,
+      "statusCodeString": "Unset",
+      "statusMessage": "Server",
       "tags": Array [
         Object {
           "key": "host.name.span1",
@@ -152,7 +161,10 @@ Object {
           "nonChildReferences": Array [],
           "serviceColour": "",
           "serviceName": "frontend",
+          "spanKind": "Lorem Ipsum2",
           "startTime": 1657275433246,
+          "statusCodeString": "Unset2",
+          "statusMessage": "Server2",
           "tags": Array [
             Object {
               "key": "host.name.span3",
@@ -168,7 +180,10 @@ Object {
       "name": "Missing Span (span_2)",
       "serviceColour": "",
       "serviceName": "",
+      "spanKind": "",
       "startTime": null,
+      "statusCodeString": "",
+      "statusMessage": "",
       "tags": Array [],
       "time": null,
       "value": null,
@@ -201,7 +216,10 @@ Object {
       "nonChildReferences": Array [],
       "serviceColour": "",
       "serviceName": "frontend",
+      "spanKind": "Lorem Ipsum",
       "startTime": 1657275433246,
+      "statusCodeString": "Unset",
+      "statusMessage": "Server",
       "tags": Array [
         Object {
           "key": "host.name.span1",

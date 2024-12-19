@@ -1,0 +1,31 @@
+.column-unit-selector {
+	margin-top: 16px;
+
+	.heading {
+		color: var(--bg-vanilla-400);
+		font-family: 'Space Mono';
+		font-size: 13px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px; /* 138.462% */
+		letter-spacing: 0.52px;
+		text-transform: uppercase;
+	}
+
+	.y-axis-unit-selector {
+		flex-direction: row !important;
+		align-items: center;
+
+		.heading {
+			width: 20px;
+		}
+	}
+}
+
+.lightMode {
+	.column-unit-selector {
+		.heading {
+			color: var(--bg-ink-400);
+		}
+	}
+}

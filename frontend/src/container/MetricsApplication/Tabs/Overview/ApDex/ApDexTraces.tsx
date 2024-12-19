@@ -1,5 +1,6 @@
 // This component is not been used in the application as we support only metrics for ApDex as of now.
 // This component is been kept for future reference.
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import { GraphTitle } from 'container/MetricsApplication/constant';
@@ -20,7 +21,8 @@ function ApDexTraces({
 	tagFilterItems,
 	thresholdValue,
 }: ApDexDataSwitcherProps): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
 
 	const apDexTracesWidget = useMemo(
 		() =>
@@ -48,12 +50,12 @@ function ApDexTraces({
 
 	return (
 		<Graph
-			name="apdex"
 			widget={apDexTracesWidget}
 			onDragSelect={onDragSelect}
 			onClickHandler={handleGraphClick('ApDex')}
 			threshold={thresholdValue}
 			isQueryEnabled={isQueryEnabled}
+			version={ENTITY_VERSION_V4}
 		/>
 	);
 }

@@ -1,0 +1,250 @@
+{
+  "id": "mongo",
+  "title": "Mongo",
+  "description": "Monitor mongo using logs and metrics.",
+  "author": {
+    "name": "SigNoz",
+    "email": "integrations@signoz.io",
+    "homepage": "https://signoz.io"
+  },
+  "icon": "file://icon.svg",
+  "categories": [
+    "Database"
+  ],
+  "overview": "file://overview.md",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "file://config/prerequisites.md"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "file://config/collect-metrics.md"
+    },
+    {
+      "title": "Collect Logs",
+      "instructions": "file://config/collect-logs.md"
+    }
+  ],
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": [
+      "file://assets/dashboards/overview.json"
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "logs": {
+      "attribute_key": "source",
+      "attribute_value": "mongodb"
+    }
+  },
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Timestamp",
+        "path": "timestamp",
+        "type": "timestamp"
+      },
+      {
+        "name": "Severity Text",
+        "path": "severity_text",
+        "type": "string"
+      },
+      {
+        "name": "Severity Number",
+        "path": "severity_number",
+        "type": "number"
+      },
+      {
+        "name": "MongoDB Component",
+        "path": "attributes.component",
+        "type": "string"
+      }
+    ],
+    "metrics": [
+      {
+        "description": "The number of cache operations of the instance.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_cache_operations"
+      },
+      {
+        "description": "The number of collections.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_collection_count"
+      },
+      {
+        "description": "The size of the collection. Data compression does not affect this value.",
+        "unit": "Bytes",
+        "type": "Sum",
+        "name": "mongodb_data_size"
+      },
+      {
+        "description": "The number of connections.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_connection_count"
+      },
+      {
+        "description": "The number of extents.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_extent_count"
+      },
+      {
+        "description": "The time the global lock has been held.",
+        "unit": "ms",
+        "type": "Sum",
+        "name": "mongodb_global_lock_time"
+      },
+      {
+        "description": "The number of indexes.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_index_count"
+      },
+      {
+        "description": "Sum of the space allocated to all indexes in the database, including free index space.",
+        "unit": "Bytes",
+        "type": "Sum",
+        "name": "mongodb_index_size"
+      },
+      {
+        "description": "The amount of memory used.",
+        "unit": "Bytes",
+        "type": "Sum",
+        "name": "mongodb_memory_usage"
+      },
+      {
+        "description": "The number of objects.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_object_count"
+      },
+      {
+        "description": "The latency of operations.",
+        "unit": "us",
+        "type": "Gauge",
+        "name": "mongodb_operation_latency_time"
+      },
+      {
+        "description": "The number of operations executed.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_operation_count"
+      },
+      {
+        "description": "The number of replicated operations executed.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_operation_repl_count"
+      },
+      {
+        "description": "The total amount of storage allocated to this collection.",
+        "unit": "Bytes",
+        "type": "Sum",
+        "name": "mongodb_storage_size"
+      },
+      {
+        "description": "The number of existing databases.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_database_count"
+      },
+      {
+        "description": "The number of times an index has been accessed.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_index_access_count"
+      },
+      {
+        "description": "The number of document operations executed.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_document_operation_count"
+      },
+      {
+        "description": "The number of bytes received.",
+        "unit": "Bytes",
+        "type": "Sum",
+        "name": "mongodb_network_io_receive"
+      },
+      {
+        "description": "The number of by transmitted.",
+        "unit": "Bytes",
+        "type": "Sum",
+        "name": "mongodb_network_io_transmit"
+      },
+      {
+        "description": "The number of requests received by the server.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_network_request_count"
+      },
+      {
+        "description": "The total time spent performing operations.",
+        "unit": "ms",
+        "type": "Sum",
+        "name": "mongodb_operation_time"
+      },
+      {
+        "description": "The total number of active sessions.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_session_count"
+      },
+      {
+        "description": "The number of open cursors maintained for clients.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_cursor_count"
+      },
+      {
+        "description": "The number of cursors that have timed out.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_cursor_timeout_count"
+      },
+      {
+        "description": "Number of times the lock was acquired in the specified mode.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_lock_acquire_count"
+      },
+      {
+        "description": "Number of times the lock acquisitions encountered waits because the locks were held in a conflicting mode.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_lock_acquire_wait_count"
+      },
+      {
+        "description": "Cumulative wait time for the lock acquisitions.",
+        "unit": "microseconds",
+        "type": "Sum",
+        "name": "mongodb_lock_acquire_time"
+      },
+      {
+        "description": "Number of times the lock acquisitions encountered deadlocks.",
+        "unit": "number",
+        "type": "Sum",
+        "name": "mongodb_lock_deadlock_count"
+      },
+      {
+        "description": "The health status of the server.",
+        "unit": "number",
+        "type": "Gauge",
+        "name": "mongodb_health"
+      },
+      {
+        "description": "The amount of time that the server has been running.",
+        "unit": "ms",
+        "type": "Sum",
+        "name": "mongodb_uptime"
+      }
+    ]
+  }
+}

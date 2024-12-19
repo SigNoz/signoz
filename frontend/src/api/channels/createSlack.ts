@@ -12,7 +12,7 @@ const create = async (
 			name: props.name,
 			slack_configs: [
 				{
-					send_resolved: true,
+					send_resolved: props.send_resolved,
 					api_url: props.api_url,
 					channel: props.channel,
 					title: props.title,

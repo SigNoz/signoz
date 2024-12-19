@@ -7,7 +7,14 @@ export const ServicesTablePage = Loadable(
 export const ServiceMetricsPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/MetricsApplication'
+			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/MetricsApplication/MetricsApplication'
+		),
+);
+
+export const ServiceTopLevelOperationsPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/ServiceTopLevelOperations'
 		),
 );
 
@@ -15,9 +22,20 @@ export const ServiceMapPage = Loadable(
 	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
 );
 
+export const LogsSaveViews = Loadable(
+	() => import(/* webpackChunkName: "LogsSaveViews" */ 'pages/LogsModulePage'), // TODO: Add a wrapper so that the same component can be used in traces
+);
+
 export const TracesExplorer = Loadable(
 	() =>
-		import(/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesExplorer'),
+		import(
+			/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesModulePage'
+		),
+);
+
+export const TracesSaveViews = Loadable(
+	() =>
+		import(/* webpackChunkName: "Traces Save Views" */ 'pages/TracesModulePage'),
 );
 
 export const TraceFilter = Loadable(
@@ -48,6 +66,10 @@ export const Onboarding = Loadable(
 	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPage'),
 );
 
+export const OrgOnboarding = Loadable(
+	() => import(/* webpackChunkName: "OrgOnboarding" */ 'pages/OrgOnboarding'),
+);
+
 export const DashboardPage = Loadable(
 	() =>
 		import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardsListPage'),
@@ -72,6 +94,14 @@ export const ListAllALertsPage = Loadable(
 
 export const CreateNewAlerts = Loadable(
 	() => import(/* webpackChunkName: "Create Alerts" */ 'pages/CreateAlert'),
+);
+
+export const AlertHistory = Loadable(
+	() => import(/* webpackChunkName: "Alert History" */ 'pages/AlertList'),
+);
+
+export const AlertOverview = Loadable(
+	() => import(/* webpackChunkName: "Alert Overview" */ 'pages/AlertList'),
 );
 
 export const CreateAlertChannelAlerts = Loadable(
@@ -107,20 +137,32 @@ export const IngestionSettings = Loadable(
 	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
 );
 
+export const APIKeys = Loadable(
+	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
+);
+
 export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
 );
 
 export const Logs = Loadable(
-	() => import(/* webpackChunkName: "Logs" */ 'pages/Logs'),
+	() => import(/* webpackChunkName: "Logs" */ 'pages/LogsModulePage'),
 );
 
 export const LogsExplorer = Loadable(
-	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsExplorer'),
+	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsModulePage'),
+);
+
+export const OldLogsExplorer = Loadable(
+	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/Logs'),
 );
 
 export const LiveLogs = Loadable(
 	() => import(/* webpackChunkName: "Live Logs" */ 'pages/LiveLogs'),
+);
+
+export const PipelinePage = Loadable(
+	() => import(/* webpackChunkName: "Pipelines" */ 'pages/LogsModulePage'),
 );
 
 export const Login = Loadable(
@@ -151,10 +193,6 @@ export const LogsIndexToFields = Loadable(
 		import(/* webpackChunkName: "LogsIndexToFields Page" */ 'pages/LogsSettings'),
 );
 
-export const PipelinePage = Loadable(
-	() => import(/* webpackChunkName: "Pipelines" */ 'pages/Pipelines'),
-);
-
 export const BillingPage = Loadable(
 	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Billing'),
 );
@@ -166,4 +204,41 @@ export const SupportPage = Loadable(
 export const WorkspaceBlocked = Loadable(
 	() =>
 		import(/* webpackChunkName: "WorkspaceLocked" */ 'pages/WorkspaceLocked'),
+);
+
+export const WorkspaceSuspended = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "WorkspaceSuspended" */ 'pages/WorkspaceSuspended/WorkspaceSuspended'
+		),
+);
+
+export const ShortcutsPage = Loadable(
+	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
+);
+
+export const InstalledIntegrations = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
+		),
+);
+
+export const MessagingQueues = Loadable(
+	() =>
+		import(/* webpackChunkName: "MessagingQueues" */ 'pages/MessagingQueues'),
+);
+
+export const MQDetailPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "MQDetailPage" */ 'pages/MessagingQueues/MQDetailPage'
+		),
+);
+
+export const InfrastructureMonitoring = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "InfrastructureMonitoring" */ 'pages/InfrastructureMonitoring'
+		),
 );

@@ -6,5 +6,6 @@
 	"share": "Share",
 	"save": "Save",
 	"edit": "Edit",
-	"logged_in": "Logged In"
+	"logged_in": "Logged In",
+	"pending_data_placeholder": "Retrieving your {{dataSource}}!"
 }

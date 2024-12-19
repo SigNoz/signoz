@@ -1,12 +1,8 @@
-import { Button, Card, Col, Form, Input, Row, Select, Typography } from 'antd';
+import { Button, Card, Col, Form, Input, Select, Typography } from 'antd';
 import styled from 'styled-components';
 
 const { TextArea } = Input;
 const { Item } = Form;
-
-export const PanelContainer = styled(Row)`
-	flex-wrap: nowrap;
-`;
 
 export const StyledLeftContainer = styled(Col)`
 	&&& {
@@ -67,6 +63,13 @@ export const SeveritySelect = styled(Select)`
 	width: 25% !important;
 `;
 
+export const VerticalLine = styled.div`
+	border-left: 2px solid #e8e8e8; /* Adjust color and thickness as desired */
+	padding-left: 20px; /* Adjust spacing to content as needed */
+	margin-left: 20px; /* Adjust margin as desired */
+	height: 100%; /* Adjust based on your layout needs */
+`;
+
 export const InputSmall = styled(Input)`
 	width: 40% !important;
 `;
@@ -76,6 +79,10 @@ export const FormContainer = styled(Card)`
 	display: flex;
 	flex-direction: column;
 	border-radius: 4px;
+
+	.ant-card-body {
+		padding: 12px;
+	}
 `;
 
 export const TextareaMedium = styled(TextArea)`

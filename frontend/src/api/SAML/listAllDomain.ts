@@ -8,7 +8,7 @@ const listAllDomain = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(`orgs/${props.orgId}/domains`);
+		const response = await axios.get(`/orgs/${props.orgId}/domains`);
 
 		return {
 			statusCode: 200,

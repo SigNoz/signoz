@@ -50,7 +50,7 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 										<Input placeholder={t('name_placeholder')} />
 									</Form.Item>
 									<Form.Item name={[name, 'role']} initialValue="VIEWER">
-										<SelectDrawer>
+										<SelectDrawer data-testid="role-select">
 											<Select.Option value="ADMIN">ADMIN</Select.Option>
 											<Select.Option value="VIEWER">VIEWER</Select.Option>
 											<Select.Option value="EDITOR">EDITOR</Select.Option>

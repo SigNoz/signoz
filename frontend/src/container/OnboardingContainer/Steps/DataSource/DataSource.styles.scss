@@ -22,6 +22,7 @@ div[class*='-setup-instructions-container'] {
 
 .form-container {
 	display: flex;
+	flex-direction: column;
 	align-items: flex-start;
 	width: 100%;
 	gap: 16px;
@@ -35,4 +36,49 @@ div[class*='-setup-instructions-container'] {
 	text-overflow: ellipsis;
 	text-align: center;
 	font-size: 12px;
+}
+
+.service-name-container {
+	width: 100%;
+}
+
+.intgeration-page-container {
+	background-color: var(--bg-ink-400);
+	border-color: var(--bg-slate-500);
+}
+
+.intgeration-page-container-text {
+	color: var(--bg-vanilla-400);
+}
+
+.navigate-integrations-page-btn {
+	display: flex;
+	align-items: center;
+	color: var(--bg-vanilla-100);
+	background-color: var(--bg-slate-300);
+	box-shadow: none;
+	border: none;
+}
+
+.dataSourceName {
+	color: var(--bg-vanilla-100);
+	font-weight: 600;
+	cursor: pointer;
+
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.lightMode {
+	.dataSourceName {
+		color: var(--bg-slate-500);
+	}
+}
+
+.supported-languages-container {
+	.disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
 }

@@ -1,0 +1,38 @@
+.tags-container {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+
+	.tags {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-wrap: wrap;
+	}
+
+	.ant-form-item {
+		margin-bottom: 0;
+	}
+
+	.ant-tag {
+		margin-right: 0;
+		background: var(--bg-vanilla-100);
+	}
+}
+
+.add-tag-container {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+
+	.ant-form-item {
+		margin-bottom: 0;
+	}
+
+	.confirm-cancel-actions {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+	}
+}

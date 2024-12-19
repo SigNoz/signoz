@@ -1,8 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './uplot.scss';
+import './Uplot.styles.scss';
 
+import * as Sentry from '@sentry/react';
 import { Typography } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
+import { LineChart } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import {
 	forwardRef,
@@ -12,7 +14,6 @@ import {
 	useImperativeHandle,
 	useRef,
 } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 import UPlot from 'uplot';
 
 import { dataMatch, optionsUpdateState } from './utils';
@@ -127,8 +128,18 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 			}
 		}, [data, resetScales, create]);
 
+		if (data && data[0] && data[0]?.length === 0) {
+			return (
+				<div className="uplot-no-data not-found">
+					<LineChart size={48} strokeWidth={0.5} />
+
+					<Typography>No Data</Typography>
+				</div>
+			);
+		}
+
 		return (
-			<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+			<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 				<div className="uplot-graph-container" ref={targetRef}>
 					{data && data[0] && data[0]?.length === 0 ? (
 						<div className="not-found">
@@ -136,7 +147,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 						</div>
 					) : null}
 				</div>
-			</ErrorBoundary>
+			</Sentry.ErrorBoundary>
 		);
 	},
 );

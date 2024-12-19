@@ -30,7 +30,7 @@ const create = async (
 			name: props.name,
 			webhook_configs: [
 				{
-					send_resolved: true,
+					send_resolved: props.send_resolved,
 					url: props.api_url,
 					http_config: httpConfig,
 				},

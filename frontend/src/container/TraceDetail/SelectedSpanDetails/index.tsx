@@ -1,4 +1,4 @@
-import { Button, Modal, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Modal, Row, Tabs, Tooltip, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
 import { QueryParams } from 'constants/query';
@@ -6,7 +6,8 @@ import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import { useMemo, useState } from 'react';
+import { PanelRight } from 'lucide-react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -15,30 +16,25 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { getTraceToLogsQuery } from './config';
 import Events from './Events';
-import {
-	CardContainer,
-	CustomSubText,
-	CustomText,
-	CustomTitle,
-	styles,
-} from './styles';
+import { CardContainer, CustomSubText, styles } from './styles';
 import Tags from './Tags';
 
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
-	const { tree, firstSpanStartTime } = props;
-
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
+	const {
+		tree,
+		firstSpanStartTime,
+		traceStartTime = minTime,
+		traceEndTime = maxTime,
+		setCollapsed,
+	} = props;
+
 	const { id: traceId } = useParams<Params>();
 
 	const isDarkMode = useIsDarkMode();
-
-	const OverLayComponentName = useMemo(() => tree?.name, [tree?.name]);
-	const OverLayComponentServiceName = useMemo(() => tree?.serviceName, [
-		tree?.serviceName,
-	]);
 
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -85,13 +81,15 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	];
 
 	const onLogsHandler = (): void => {
-		const query = getTraceToLogsQuery(traceId, minTime, maxTime);
+		const query = getTraceToLogsQuery(traceId, traceStartTime, traceEndTime);
 
 		history.push(
 			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
 				[QueryParams.compositeQuery]: JSON.stringify(query),
-				[QueryParams.startTime]: minTime,
-				[QueryParams.endTime]: maxTime,
+				// we subtract 1000 milliseconds from the start time to handle the cases when the trace duration is in nanoseconds
+				[QueryParams.startTime]: traceStartTime - 1000,
+				// we add 1000 milliseconds to the end time for nano second duration traces
+				[QueryParams.endTime]: traceEndTime + 1000,
 			})}`,
 		);
 	};
@@ -102,20 +100,50 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				styledclass={[styles.selectedSpanDetailsContainer, styles.overflow]}
 				direction="vertical"
 			>
-				<Typography.Text strong> Details for selected Span </Typography.Text>
+				<Row align="middle" justify="space-between">
+					<Typography.Text strong>Details for selected Span</Typography.Text>
+					<Button
+						className="periscope-btn nav-item-label expand-collapse-btn"
+						icon={<PanelRight size={16} />}
+						onClick={(): void => setCollapsed((prev) => !prev)}
+					/>
+				</Row>
 
-				<CustomTitle>Service</CustomTitle>
+				<Typography.Text style={{ fontWeight: 700 }}>Service</Typography.Text>
 
-				<Tooltip overlay={OverLayComponentServiceName}>
-					<CustomText ellipsis>{tree.serviceName}</CustomText>
+				<Typography>{tree.serviceName}</Typography>
+
+				<Typography.Text style={{ fontWeight: 700 }}>Operation</Typography.Text>
+
+				<Typography>{tree.name}</Typography>
+
+				<Typography.Text style={{ fontWeight: 700 }}>SpanKind</Typography.Text>
+
+				<Typography>{tree.spanKind}</Typography>
+
+				<Typography.Text style={{ fontWeight: 700 }}>
+					StatusCodeString
+				</Typography.Text>
+
+				<Tooltip placement="left" title={tree.statusCodeString}>
+					<Typography>{tree.statusCodeString}</Typography>
 				</Tooltip>
 
-				<CustomTitle>Operation</CustomTitle>
-				<Tooltip overlay={OverLayComponentName}>
-					<CustomText ellipsis>{tree.name}</CustomText>
-				</Tooltip>
+				{tree.statusMessage && (
+					<>
+						<Typography.Text style={{ fontWeight: 700 }}>
+							StatusMessage
+						</Typography.Text>
 
-				<Button onClick={onLogsHandler}>Go to Related logs</Button>
+						<Tooltip placement="left" title={tree.statusMessage}>
+							<Typography>{tree.statusMessage}</Typography>
+						</Tooltip>
+					</>
+				)}
+
+				<Button size="small" style={{ marginTop: '8px' }} onClick={onLogsHandler}>
+					Go to Related logs
+				</Button>
 			</StyledSpace>
 
 			<Modal
@@ -136,7 +164,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				)}
 			</Modal>
 
-			<Tabs defaultActiveKey="1" items={items} />
+			<Tabs style={{ padding: '8px' }} defaultActiveKey="1" items={items} />
 		</CardContainer>
 	);
 }
@@ -144,10 +172,15 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 interface SelectedSpanDetailsProps {
 	tree?: ITraceTree;
 	firstSpanStartTime: number;
+	traceStartTime?: number;
+	traceEndTime?: number;
+	setCollapsed: Dispatch<SetStateAction<boolean>>;
 }
 
 SelectedSpanDetails.defaultProps = {
 	tree: undefined,
+	traceStartTime: undefined,
+	traceEndTime: undefined,
 };
 
 export interface ModalText {

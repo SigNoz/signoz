@@ -2,6 +2,7 @@ import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { UplotProps } from 'components/Uplot/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -50,13 +51,12 @@ export interface FullViewProps {
 	fullViewOptions?: boolean;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	name: string;
+	tableProcessedDataRef: MutableRefObject<RowData[]>;
+	version?: string;
+	originalName: string;
 	yAxisUnit?: string;
-	onDragSelect: (start: number, end: number) => void;
 	isDependedDataLoaded?: boolean;
-	graphsVisibilityStates?: boolean[];
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
-	setGraphsVisibilityStates: Dispatch<SetStateAction<boolean[]>>;
-	parentChartRef: GraphManagerProps['lineChartRef'];
 }
 
 export interface GraphManagerProps extends UplotProps {
@@ -64,8 +64,8 @@ export interface GraphManagerProps extends UplotProps {
 	yAxisUnit?: string;
 	onToggleModelHandler?: () => void;
 	options: uPlot.Options;
-	setGraphsVisibilityStates: FullViewProps['setGraphsVisibilityStates'];
-	graphsVisibilityStates: FullViewProps['graphsVisibilityStates'];
+	graphsVisibilityStates?: boolean[];
+	setGraphsVisibilityStates: Dispatch<SetStateAction<boolean[]>>;
 	lineChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
 	parentChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
 }

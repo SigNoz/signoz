@@ -1,0 +1,42 @@
+.widget-graph {
+	border: none;
+	background-color: unset;
+	background-image: radial-gradient(var(--bg-slate-400) 1px, transparent 0);
+	background-size: 20px 20px;
+	padding: 16px;
+
+	.header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+
+		.plot-tag {
+			display: inline-flex;
+			padding: 4px 4px 4px 6px;
+			align-items: center;
+			gap: 6px;
+			border-radius: 4px;
+			background: var(--Slate-400, #1d212d);
+			backdrop-filter: blur(6px);
+			width: fit-content;
+		}
+	}
+
+	.header:has(.date-time-selector:only-child) {
+		justify-content: end;
+	}
+}
+
+.lightMode {
+	.widget-graph {
+		background-color: var(--bg-vanilla-100);
+		background-image: radial-gradient(var(--bg-vanilla-400) 1px, transparent 0);
+		background-size: 20px 20px;
+
+		.header {
+			.plot-tag {
+				background: var(--bg-vanilla-300);
+			}
+		}
+	}
+}

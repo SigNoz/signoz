@@ -1,0 +1,90 @@
+.dashboard-navigation {
+	.ant-tabs-tab {
+		border: none !important;
+		margin-left: 0px !important;
+		padding: 0px !important;
+
+		.nav-btns {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 4px;
+			color: #fff;
+			font-family: Inter;
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 18px; /* 150% */
+			letter-spacing: -0.06px;
+			padding: 7px 23px;
+
+			.prom-ql-icon {
+				height: 14px;
+				width: 14px;
+				color: var(--bg-vanilla-200);
+			}
+		}
+		.ant-btn-default {
+			border-color: transparent;
+			box-shadow: none;
+		}
+	}
+	.ant-tabs-tab-active {
+		.nav-btns {
+			background: var(--bg-slate-400) !important;
+		}
+	}
+
+	.ant-tabs-nav {
+		margin: 0px;
+
+		.ant-tabs-nav-wrap {
+			padding: 8px 16px;
+		}
+
+		.ant-tabs-extra-content {
+			padding-right: 8px;
+		}
+	}
+	.ant-tabs-nav::before {
+		border-bottom: none !important;
+	}
+	.ant-tabs-nav-list {
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-400);
+		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+	}
+	.ant-tabs-tab + .ant-tabs-tab {
+		border-left: 1px solid var(--bg-slate-400) !important;
+	}
+	.stage-run-query {
+		display: flex;
+		align-items: center;
+	}
+}
+
+.lightMode {
+	.dashboard-navigation {
+		.nav-btns {
+			color: var(---bg-ink-300);
+			background-color: var(--bg-vanilla-200);
+		}
+		.ant-tabs-nav-list {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-300);
+		}
+		.ant-tabs-tab + .ant-tabs-tab {
+			border-left: 1px solid var(--bg-vanilla-100) !important;
+		}
+		.ant-tabs-tab-active {
+			.nav-btns {
+				background: var(--bg-vanilla-300) !important;
+
+				.prom-ql-icon {
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+	}
+}

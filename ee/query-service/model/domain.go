@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	saml2 "github.com/russellhaering/gosaml2"
-	"go.signoz.io/signoz/ee/query-service/sso/saml"
 	"go.signoz.io/signoz/ee/query-service/sso"
+	"go.signoz.io/signoz/ee/query-service/sso/saml"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
@@ -24,16 +24,16 @@ const (
 
 // OrgDomain identify org owned web domains for auth and other purposes
 type OrgDomain struct {
-	Id         uuid.UUID   `json:"id"`
-	Name       string      `json:"name"`
-	OrgId      string      `json:"orgId"`
-	SsoEnabled bool        `json:"ssoEnabled"`
-	SsoType    SSOType     `json:"ssoType"`
+	Id         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	OrgId      string    `json:"orgId"`
+	SsoEnabled bool      `json:"ssoEnabled"`
+	SsoType    SSOType   `json:"ssoType"`
 
-	SamlConfig *SamlConfig `json:"samlConfig"`
+	SamlConfig       *SamlConfig        `json:"samlConfig"`
 	GoogleAuthConfig *GoogleOAuthConfig `json:"googleAuthConfig"`
 
-	Org        *basemodel.Organization
+	Org *basemodel.Organization
 }
 
 func (od *OrgDomain) String() string {
@@ -100,11 +100,11 @@ func (od *OrgDomain) GetSAMLCert() string {
 	return ""
 }
 
-// PrepareGoogleOAuthProvider creates GoogleProvider that is used in 
-// requesting OAuth and also used in processing response from google 
+// PrepareGoogleOAuthProvider creates GoogleProvider that is used in
+// requesting OAuth and also used in processing response from google
 func (od *OrgDomain) PrepareGoogleOAuthProvider(siteUrl *url.URL) (sso.OAuthCallbackProvider, error) {
 	if od.GoogleAuthConfig == nil {
-		return nil, fmt.Errorf("Google auth is not setup correctly for this domain")
+		return nil, fmt.Errorf("GOOGLE OAUTH is not setup correctly for this domain")
 	}
 
 	return od.GoogleAuthConfig.GetProvider(od.Name, siteUrl)
@@ -137,38 +137,36 @@ func (od *OrgDomain) PrepareSamlRequest(siteUrl *url.URL) (*saml2.SAMLServicePro
 }
 
 func (od *OrgDomain) BuildSsoUrl(siteUrl *url.URL) (ssoUrl string, err error) {
-	
 
 	fmtDomainId := strings.Replace(od.Id.String(), "-", ":", -1)
-	
+
 	// build redirect url from window.location sent by frontend
 	redirectURL := fmt.Sprintf("%s://%s%s", siteUrl.Scheme, siteUrl.Host, siteUrl.Path)
 
 	// prepare state that gets relayed back when the auth provider
 	// calls back our url. here we pass the app url (where signoz runs)
 	// and the domain Id. The domain Id helps in identifying sso config
-	// when the call back occurs and the app url is useful in redirecting user 
-	// back to the right path. 
+	// when the call back occurs and the app url is useful in redirecting user
+	// back to the right path.
 	// why do we need to pass app url? the callback typically is handled by backend
 	// and sometimes backend might right at a different port or is unaware of frontend
 	// endpoint (unless SITE_URL param is set). hence, we receive this build sso request
-	// along with frontend window.location and use it to relay the information through 
-	// auth provider to the backend (HandleCallback or HandleSSO method). 
+	// along with frontend window.location and use it to relay the information through
+	// auth provider to the backend (HandleCallback or HandleSSO method).
 	relayState := fmt.Sprintf("%s?domainId=%s", redirectURL, fmtDomainId)
-		
 
-	switch (od.SsoType) {
+	switch od.SsoType {
 	case SAML:
 
 		sp, err := od.PrepareSamlRequest(siteUrl)
 		if err != nil {
 			return "", err
 		}
-	
+
 		return sp.BuildAuthURL(relayState)
-	
+
 	case GoogleAuth:
-		
+
 		googleProvider, err := od.PrepareGoogleOAuthProvider(siteUrl)
 		if err != nil {
 			return "", err
@@ -176,9 +174,8 @@ func (od *OrgDomain) BuildSsoUrl(siteUrl *url.URL) (ssoUrl string, err error) {
 		return googleProvider.BuildAuthURL(relayState)
 
 	default:
-		zap.S().Errorf("found unsupported SSO config for the org domain", zap.String("orgDomain", od.Name))
-		return "", fmt.Errorf("unsupported SSO config for the domain") 
+		zap.L().Error("found unsupported SSO config for the org domain", zap.String("orgDomain", od.Name))
+		return "", fmt.Errorf("unsupported SSO config for the domain")
 	}
-
 
 }

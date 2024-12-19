@@ -1,13 +1,14 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './ThresholdSelector.styles.scss';
 
-import { Button, Typography } from 'antd';
-import { ColumnsType } from 'antd/es/table';
-import { Events } from 'constants/events';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { useCallback, useEffect, useState } from 'react';
+import { Typography } from 'antd';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { Antenna, Plus } from 'lucide-react';
+import { useCallback } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { eventEmitter } from 'utils/getEventEmitter';
+import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
 import Threshold from './Threshold';
@@ -18,22 +19,23 @@ function ThresholdSelector({
 	setThresholds,
 	yAxisUnit,
 	selectedGraph,
+	columnUnits,
 }: ThresholdSelectorProps): JSX.Element {
-	const [tableOptions, setTableOptions] = useState<
-		Array<{ value: string; label: string }>
-	>([]);
-	useEffect(() => {
-		eventEmitter.on(
-			Events.TABLE_COLUMNS_DATA,
-			(data: { columns: ColumnsType<RowData>; dataSource: RowData[] }) => {
-				const newTableOptions = data.columns.map((e) => ({
-					value: e.title as string,
-					label: e.title as string,
-				}));
-				setTableOptions([...newTableOptions]);
-			},
-		);
-	}, []);
+	const { currentQuery } = useQueryBuilder();
+
+	function getAggregateColumnsNamesAndLabels(): string[] {
+		if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
+			const queries = currentQuery.builder.queryData.map((q) => q.queryName);
+			const formulas = currentQuery.builder.queryFormulas.map((q) => q.queryName);
+			return [...queries, ...formulas];
+		}
+		if (currentQuery.queryType === EQueryType.CLICKHOUSE) {
+			return currentQuery.clickhouse_sql.map((q) => q.name);
+		}
+		return currentQuery.promql.map((q) => q.name);
+	}
+
+	const aggregationQueries = getAggregateColumnsNamesAndLabels();
 
 	const moveThreshold = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
@@ -52,7 +54,6 @@ function ThresholdSelector({
 
 	const addThresholdHandler = (): void => {
 		setThresholds([
-			...thresholds,
 			{
 				index: uuid(),
 				isEditEnabled: true,
@@ -64,8 +65,9 @@ function ThresholdSelector({
 				moveThreshold,
 				keyIndex: thresholds.length,
 				selectedGraph,
-				thresholdTableOptions: tableOptions[0]?.value || '',
+				thresholdTableOptions: aggregationQueries[0] || '',
 			},
+			...thresholds,
 		]);
 	};
 
@@ -79,7 +81,13 @@ function ThresholdSelector({
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<div className="threshold-selector-container">
-				<Typography.Text>Thresholds</Typography.Text>
+				<div className="threshold-select" onClick={addThresholdHandler}>
+					<div className="left-section">
+						<Antenna size={14} className="icon" />
+						<Typography.Text className="text">Thresholds</Typography.Text>
+					</div>
+					<Plus size={14} onClick={addThresholdHandler} className="icon" />
+				</div>
 				{thresholds.map((threshold, idx) => (
 					<Threshold
 						key={threshold.index}
@@ -96,13 +104,14 @@ function ThresholdSelector({
 						moveThreshold={moveThreshold}
 						selectedGraph={selectedGraph}
 						thresholdLabel={threshold.thresholdLabel}
-						tableOptions={tableOptions}
+						tableOptions={aggregationQueries.map((query) => ({
+							value: query,
+							label: query,
+						}))}
 						thresholdTableOptions={threshold.thresholdTableOptions}
+						columnUnits={columnUnits}
 					/>
 				))}
-				<Button className="threshold-selector-button" onClick={addThresholdHandler}>
-					+ Add threshold
-				</Button>
 			</div>
 		</DndProvider>
 	);

@@ -15,6 +15,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+
       - name: Build query-service image
         env:
           DEV_BUILD: 1
@@ -37,7 +42,7 @@ jobs:
           kubectl create ns sample-application
 
           # apply hotrod k8s manifest file
-          kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/develop/sample-apps/hotrod/hotrod.yaml
+          kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/main/sample-apps/hotrod/hotrod.yaml
 
           # wait for all deployments in sample-application namespace to be READY
           kubectl -n sample-application get deploy --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
@@ -65,9 +70,9 @@ jobs:
       - name: Kick off a sample-app workload
         run: |
           # start the locust swarm
-          kubectl -n sample-application run strzal --image=djbingham/curl \
-            --restart='OnFailure' -i --rm --command -- curl -X POST -F \
-            'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
+          kubectl --namespace sample-application run strzal --image=djbingham/curl \
+            --restart='OnFailure' -i --tty --rm --command -- curl -X POST -F \
+            'user_count=6' -F 'spawn_rate=2' http://locust-master:8089/swarm
 
       - name: Get short commit SHA, display tunnel URL and IP Address of the worker node
         id: get-subdomain

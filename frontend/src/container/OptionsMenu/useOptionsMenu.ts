@@ -7,6 +7,10 @@ import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import {
+	AllTraceFilterKeys,
+	AllTraceFilterKeyValue,
+} from 'pages/TracesExplorer/Filter/filterUtils';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -16,8 +20,17 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { defaultOptionsQuery, URL_OPTIONS } from './constants';
-import { InitialOptions, OptionsMenuConfig, OptionsQuery } from './types';
+import {
+	defaultOptionsQuery,
+	defaultTraceSelectedColumns,
+	URL_OPTIONS,
+} from './constants';
+import {
+	FontSize,
+	InitialOptions,
+	OptionsMenuConfig,
+	OptionsQuery,
+} from './types';
 import { getOptionsFromKeys } from './utils';
 
 interface UseOptionsMenuProps {
@@ -102,15 +115,45 @@ const useOptionsMenu = ({
 			[] as BaseAutocompleteData[],
 		);
 
-		return (
-			(initialOptions.selectColumns
-				?.map((column) => attributesData.find(({ key }) => key === column))
-				.filter(Boolean) as BaseAutocompleteData[]) || []
-		);
+		let initialSelected = initialOptions.selectColumns
+			?.map((column) => attributesData.find(({ key }) => key === column))
+			.filter(Boolean) as BaseAutocompleteData[];
+
+		if (dataSource === DataSource.TRACES) {
+			initialSelected = initialSelected
+				?.map((col) => {
+					if (col && Object.keys(AllTraceFilterKeyValue).includes(col?.key)) {
+						const metaData = defaultTraceSelectedColumns.find(
+							(coln) => coln.key === (col.key as AllTraceFilterKeys),
+						);
+
+						return {
+							...metaData,
+							key: metaData?.key,
+							dataType: metaData?.dataType,
+							type: metaData?.type,
+							isColumn: metaData?.isColumn,
+							isJSON: metaData?.isJSON,
+							id: metaData?.id,
+						};
+					}
+					return col;
+				})
+				.filter(Boolean) as BaseAutocompleteData[];
+
+			// this is the last point where we can set the default columns and if uptil now also we have an empty array then we will set the default columns
+			if (!initialSelected || !initialSelected?.length) {
+				initialSelected = defaultTraceSelectedColumns;
+			}
+		}
+
+		return initialSelected || [];
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isFetchedInitialAttributes,
 		initialOptions?.selectColumns,
 		initialAttributesResult,
+		dataSource,
 	]);
 
 	const {
@@ -124,20 +167,29 @@ const useOptionsMenu = ({
 		{ queryKey: [debouncedSearchText, isFocused], enabled: isFocused },
 	);
 
-	const searchedAttributeKeys = useMemo(
-		() => searchedAttributesData?.payload?.attributeKeys || [],
-		[searchedAttributesData?.payload?.attributeKeys],
-	);
+	const searchedAttributeKeys = useMemo(() => {
+		if (searchedAttributesData?.payload?.attributeKeys?.length) {
+			return searchedAttributesData.payload.attributeKeys;
+		}
+		if (dataSource === DataSource.TRACES) {
+			return defaultTraceSelectedColumns;
+		}
+
+		return [];
+	}, [dataSource, searchedAttributesData?.payload?.attributeKeys]);
 
 	const initialOptionsQuery: OptionsQuery = useMemo(
 		() => ({
 			...defaultOptionsQuery,
 			...initialOptions,
+			// eslint-disable-next-line no-nested-ternary
 			selectColumns: initialOptions?.selectColumns
 				? initialSelectedColumns
+				: dataSource === DataSource.TRACES
+				? defaultTraceSelectedColumns
 				: defaultOptionsQuery.selectColumns,
 		}),
-		[initialOptions, initialSelectedColumns],
+		[dataSource, initialOptions, initialSelectedColumns],
 	);
 
 	const selectedColumnKeys = useMemo(
@@ -235,6 +287,17 @@ const useOptionsMenu = ({
 		},
 		[handleRedirectWithOptionsData, optionsQueryData],
 	);
+	const handleFontSizeChange = useCallback(
+		(value: FontSize) => {
+			const optionsData: OptionsQuery = {
+				...optionsQueryData,
+				fontSize: value,
+			};
+
+			handleRedirectWithOptionsData(optionsData);
+		},
+		[handleRedirectWithOptionsData, optionsQueryData],
+	);
 
 	const handleSearchAttribute = useCallback((value: string) => {
 		setSearchText(value);
@@ -269,18 +332,24 @@ const useOptionsMenu = ({
 				value: optionsQueryData.maxLines || defaultOptionsQuery.maxLines,
 				onChange: handleMaxLinesChange,
 			},
+			fontSize: {
+				value: optionsQueryData?.fontSize || defaultOptionsQuery.fontSize,
+				onChange: handleFontSizeChange,
+			},
 		}),
 		[
-			optionsFromAttributeKeys,
-			optionsQueryData?.maxLines,
-			optionsQueryData?.format,
-			optionsQueryData?.selectColumns,
 			isSearchedAttributesFetching,
-			handleSearchAttribute,
+			optionsQueryData?.selectColumns,
+			optionsQueryData.format,
+			optionsQueryData.maxLines,
+			optionsQueryData?.fontSize,
+			optionsFromAttributeKeys,
 			handleSelectColumns,
 			handleRemoveSelectedColumn,
+			handleSearchAttribute,
 			handleFormatChange,
 			handleMaxLinesChange,
+			handleFontSizeChange,
 		],
 	);
 

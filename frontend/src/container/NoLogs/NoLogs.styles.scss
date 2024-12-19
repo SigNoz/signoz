@@ -1,0 +1,45 @@
+.no-logs-container {
+	height: 240px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+
+	// border: 1px solid #1d212d;
+	border-radius: 3px;
+
+	.no-logs-container-content {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+
+		.eyes-emoji {
+			height: 32px;
+			width: 32px;
+		}
+
+		.no-logs-text {
+			font-size: 14px;
+			font-weight: 500;
+
+			.sub-text {
+				font-weight: 400;
+				color: #c0c1c3;
+			}
+		}
+
+		.send-logs-link {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			color: #7190f9;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 18px; /* 128.571% */
+			letter-spacing: -0.07px;
+			cursor: pointer;
+		}
+	}
+}

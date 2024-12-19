@@ -64,7 +64,9 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 		});
 	}
 
-	return <ResizeTable columns={columns} dataSource={channels} rowKey="id" />;
+	return (
+		<ResizeTable columns={columns} dataSource={channels} rowKey="id" bordered />
+	);
 }
 
 interface AlertChannelsProps {

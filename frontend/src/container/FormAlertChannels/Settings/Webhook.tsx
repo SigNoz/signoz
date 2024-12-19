@@ -17,6 +17,7 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 							api_url: event.target.value,
 						}));
 					}}
+					data-testid="webhook-url-textbox"
 				/>
 			</Form.Item>
 			<Form.Item
@@ -31,6 +32,7 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 							username: event.target.value,
 						}));
 					}}
+					data-testid="webhook-username-textbox"
 				/>
 			</Form.Item>
 			<Form.Item
@@ -46,6 +48,7 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 							password: event.target.value,
 						}));
 					}}
+					data-testid="webhook-password-textbox"
 				/>
 			</Form.Item>
 		</>

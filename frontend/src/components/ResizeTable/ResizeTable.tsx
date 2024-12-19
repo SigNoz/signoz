@@ -3,6 +3,7 @@
 import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { dragColumnParams } from 'hooks/useDragColumns/configs';
+import { set } from 'lodash-es';
 import {
 	SyntheticEvent,
 	useCallback,
@@ -20,6 +21,7 @@ import { ResizeTableProps } from './types';
 function ResizeTable({
 	columns,
 	onDragColumn,
+	pagination,
 	...restProps
 }: ResizeTableProps): JSX.Element {
 	const [columnsData, setColumns] = useState<ColumnsType>([]);
@@ -58,14 +60,21 @@ function ResizeTable({
 		[columnsData, onDragColumn, handleResize],
 	);
 
-	const tableParams = useMemo(
-		() => ({
+	const tableParams = useMemo(() => {
+		const props = {
 			...restProps,
 			components: { header: { cell: ResizableHeader } },
 			columns: mergedColumns,
-		}),
-		[mergedColumns, restProps],
-	);
+		};
+
+		set(
+			props,
+			'pagination',
+			pagination ? { ...pagination, hideOnSinglePage: true } : false,
+		);
+
+		return props;
+	}, [mergedColumns, pagination, restProps]);
 
 	useEffect(() => {
 		if (columns) {

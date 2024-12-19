@@ -18,6 +18,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 							routing_key: event.target.value,
 						}));
 					}}
+					data-testid="pager-routing-key-textbox"
 				/>
 			</Form.Item>
 
@@ -36,6 +37,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 						}))
 					}
 					placeholder={t('placeholder_pager_description')}
+					data-testid="pager-description-textarea"
 				/>
 			</Form.Item>
 
@@ -51,6 +53,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 							severity: event.target.value,
 						}))
 					}
+					data-testid="pager-severity-textbox"
 				/>
 			</Form.Item>
 
@@ -67,6 +70,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 							details: event.target.value,
 						}))
 					}
+					data-testid="pager-additional-details-textarea"
 				/>
 			</Form.Item>
 
@@ -97,6 +101,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 							group: event.target.value,
 						}))
 					}
+					data-testid="pager-group-textarea"
 				/>
 			</Form.Item>
 
@@ -112,6 +117,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 							class: event.target.value,
 						}))
 					}
+					data-testid="pager-class-textarea"
 				/>
 			</Form.Item>
 			<Form.Item
@@ -126,6 +132,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 							client: event.target.value,
 						}))
 					}
+					data-testid="pager-client-textarea"
 				/>
 			</Form.Item>
 
@@ -141,6 +148,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 							client_url: event.target.value,
 						}))
 					}
+					data-testid="pager-client-url-textarea"
 				/>
 			</Form.Item>
 		</>

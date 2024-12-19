@@ -1,0 +1,32 @@
+name: Jest Coverage - changed files
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: "refs/heads/main"
+          token: ${{ secrets.GITHUB_TOKEN }} # Provide the GitHub token for authentication
+
+      - name: Fetch branch
+        run: git fetch origin ${{ github.event.pull_request.head.ref }}
+
+      - run: |
+          git checkout ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install dependencies
+        run: cd frontend && npm install -g yarn && yarn
+
+      - name: npm run test:changedsince
+        run: cd frontend && npm run i18n:generate-hash && npm run test:changedsince

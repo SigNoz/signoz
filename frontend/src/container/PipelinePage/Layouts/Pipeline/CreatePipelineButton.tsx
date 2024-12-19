@@ -1,6 +1,6 @@
 import { EditFilled, PlusOutlined } from '@ant-design/icons';
+import logEvent from 'api/common/logEvent';
 import TextToolTip from 'components/TextToolTip';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
@@ -15,7 +15,6 @@ function CreatePipelineButton({
 	pipelineData,
 }: CreatePipelineButtonProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
-	const { trackEvent } = useAnalytics();
 
 	const isAddNewPipelineVisible = useMemo(
 		() => checkDataLength(pipelineData?.pipelines),
@@ -26,7 +25,7 @@ function CreatePipelineButton({
 	const onEnterEditMode = (): void => {
 		setActionMode(ActionMode.Editing);
 
-		trackEvent('Logs: Pipelines: Entered Edit Mode', {
+		logEvent('Logs: Pipelines: Entered Edit Mode', {
 			source: 'signoz-ui',
 		});
 	};
@@ -34,7 +33,7 @@ function CreatePipelineButton({
 		setActionMode(ActionMode.Editing);
 		setActionType(ActionType.AddPipeline);
 
-		trackEvent('Logs: Pipelines: Clicked Add New Pipeline', {
+		logEvent('Logs: Pipelines: Clicked Add New Pipeline', {
 			source: 'signoz-ui',
 		});
 	};
@@ -43,7 +42,7 @@ function CreatePipelineButton({
 		<ButtonContainer>
 			<TextToolTip
 				text={t('learn_more')}
-				url="https://signoz.io/docs/logs-pipelines/introduction/"
+				url="https://signoz.io/docs/logs-pipelines/introduction/?utm_source=product&utm_medium=pipelines-tab"
 			/>
 			{isAddNewPipelineVisible && (
 				<CustomButton

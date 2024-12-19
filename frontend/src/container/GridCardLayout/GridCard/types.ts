@@ -1,9 +1,9 @@
 import { ToggleGraphProps } from 'components/Graph/types';
-import { UplotProps } from 'components/Uplot/Uplot';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { MutableRefObject, ReactNode } from 'react';
+import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponse } from 'types/api';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
@@ -16,30 +16,35 @@ export interface GraphVisibilityLegendEntryProps {
 	legendEntry: LegendEntryProps[];
 }
 
-export interface WidgetGraphComponentProps extends UplotProps {
+export interface WidgetGraphComponentProps {
 	widget: Widgets;
 	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+		SuccessResponse<MetricRangePayloadProps, unknown>,
+		Error
 	>;
 	errorMessage: string | undefined;
-	name: string;
-	onDragSelect: (start: number, end: number) => void;
-	onClickHandler?: OnClickPluginOpts['onClick'];
+	version?: string;
 	threshold?: ReactNode;
 	headerMenuList: MenuItemKeys[];
 	isWarning: boolean;
+	isFetchingResponse: boolean;
+	setRequestData?: Dispatch<SetStateAction<GetQueryResultsProps>>;
+	onClickHandler?: OnClickPluginOpts['onClick'];
+	onDragSelect: (start: number, end: number) => void;
+	customTooltipElement?: HTMLDivElement;
 }
 
 export interface GridCardGraphProps {
 	widget: Widgets;
-	name: string;
-	onDragSelect?: (start: number, end: number) => void;
-	onClickHandler?: OnClickPluginOpts['onClick'];
 	threshold?: ReactNode;
 	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
+	onClickHandler?: OnClickPluginOpts['onClick'];
 	isQueryEnabled: boolean;
 	variables?: Dashboard['data']['variables'];
-	fillSpans?: boolean;
+	version?: string;
+	onDragSelect: (start: number, end: number) => void;
+	customTooltipElement?: HTMLDivElement;
+	dataAvailable?: (isDataAvailable: boolean) => void;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

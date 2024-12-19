@@ -1,0 +1,797 @@
+{
+    "id": "mongo-overview",
+    "description": "This dashboard provides a high-level overview of your MongoDB. It includes read/write performance, most-used replicas, collection metrics etc...",
+    "layout": [
+        {
+            "h": 3,
+            "i": "0c3d2b15-89be-4d62-a821-b26d93332ed3",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 3
+        },
+        {
+            "h": 3,
+            "i": "14504a3c-4a05-4d22-bab3-e22e94f51380",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 6
+        },
+        {
+            "h": 3,
+            "i": "dcfb3829-c3f2-44bb-907d-8dc8a6dc4aab",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 3
+        },
+        {
+            "h": 3,
+            "i": "bfc9e80b-02bf-4122-b3da-3dd943d35012",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 0
+        },
+        {
+            "h": 3,
+            "i": "4c07a7d2-893a-46c2-bcdb-a19b6efeac3a",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 0
+        },
+        {
+            "h": 3,
+            "i": "a5a64eec-1034-4aa6-8cb1-05673c4426c6",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 6
+        },
+        {
+            "h": 3,
+            "i": "503af589-ef4d-4fe3-8934-c8f7eb480d9a",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 9
+        }
+    ],
+    "name": "",
+    "tags": [
+        "mongo",
+        "database"
+    ],
+    "title": "Mongo overview",
+    "variables": {
+        "a2c21714-a814-4d31-9b56-7367c3208801": {
+            "allSelected": true,
+            "customValue": "",
+            "description": "List of hosts sending mongo metrics",
+            "id": "a2c21714-a814-4d31-9b56-7367c3208801",
+            "modificationUUID": "448e675a-4531-45b1-b434-a9ee809470d6",
+            "multiSelect": true,
+            "name": "host_name",
+            "order": 0,
+            "queryValue": "SELECT JSONExtractString(labels, 'host_name') AS host_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'mongodb_memory_usage'\nGROUP BY host_name",
+            "selectedValue": [
+                "Srikanths-MacBook-Pro.local"
+            ],
+            "showALLOption": true,
+            "sort": "ASC",
+            "textboxValue": "",
+            "type": "QUERY"
+        }
+    },
+    "widgets": [
+        {
+            "description": "Total number of operations",
+            "fillSpans": false,
+            "id": "4c07a7d2-893a-46c2-bcdb-a19b6efeac3a",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "mongodb_operation_count--float64--Sum--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "mongodb_operation_count",
+                                "type": "Sum"
+                            },
+                            "aggregateOperator": "sum_rate",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "a468a30b",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "operation--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "operation",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "{{operation}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "7da5d899-8b06-4139-9a89-47baf9551ff8",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Operations count",
+            "yAxisUnit": "none"
+        },
+        {
+            "description": "The total time spent performing operations.",
+            "fillSpans": false,
+            "id": "bfc9e80b-02bf-4122-b3da-3dd943d35012",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "mongodb_operation_time--float64--Sum--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "mongodb_operation_time",
+                                "type": "Sum"
+                            },
+                            "aggregateOperator": "sum_rate",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "31be3166",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "operation--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "operation",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "{{operation}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "2ca35957-894a-46ae-a2a6-95d7e400d8e1",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Total operations time",
+            "yAxisUnit": "ms"
+        },
+        {
+            "description": "The number of cache operations",
+            "fillSpans": false,
+            "id": "dcfb3829-c3f2-44bb-907d-8dc8a6dc4aab",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "mongodb_cache_operations--float64--Sum--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "mongodb_cache_operations",
+                                "type": "Sum"
+                            },
+                            "aggregateOperator": "sum_rate",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "01b45814",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "type--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "type",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "{{type}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "bb439198-dcf5-4767-b0d0-ab5785159b8d",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Cache operations",
+            "yAxisUnit": "none"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "14504a3c-4a05-4d22-bab3-e22e94f51380",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "mongodb_operation_latency_time--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "mongodb_operation_latency_time",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "max",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "2e165319",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "operation--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "operation",
+                                            "type": "tag"
+                                        },
+                                        "op": "=",
+                                        "value": "read"
+                                    },
+                                    {
+                                        "id": "888e920b",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [],
+                            "having": [],
+                            "legend": "Latency",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "4a9cafe8-778b-476c-b825-c04e165bf285",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Read latency",
+            "yAxisUnit": "µs"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "a5a64eec-1034-4aa6-8cb1-05673c4426c6",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "mongodb_operation_latency_time--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "mongodb_operation_latency_time",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "max",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "53b37ca7",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    },
+                                    {
+                                        "id": "9862c46c",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "operation--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "operation",
+                                            "type": "tag"
+                                        },
+                                        "op": "=",
+                                        "value": "write"
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [],
+                            "having": [],
+                            "legend": "Latency",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "446827eb-a4f2-4ff3-966b-fb65288c983b",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Write latency",
+            "yAxisUnit": "µs"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "503af589-ef4d-4fe3-8934-c8f7eb480d9a",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "mongodb_operation_latency_time--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "mongodb_operation_latency_time",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "max",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "c33ad4b6",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    },
+                                    {
+                                        "id": "c70ecfd0",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "operation--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "operation",
+                                            "type": "tag"
+                                        },
+                                        "op": "=",
+                                        "value": "command"
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [],
+                            "having": [],
+                            "legend": "Latency",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "7b7b977d-0921-4552-8cfe-d82dfde63ef4",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Command latency",
+            "yAxisUnit": "µs"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "0c3d2b15-89be-4d62-a821-b26d93332ed3",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "mongodb_network_io_receive--float64--Sum--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "mongodb_network_io_receive",
+                                "type": "Sum"
+                            },
+                            "aggregateOperator": "avg",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "5c9d7fe3",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "host_name--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "host_name",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "Bytes received :: {{host_name}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        },
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "mongodb_network_io_transmit--float64--Sum--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "mongodb_network_io_transmit",
+                                "type": "Sum"
+                            },
+                            "aggregateOperator": "avg",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "B",
+                            "filters": {
+                                "items": [
+                                    {
+                                        "id": "96520885",
+                                        "key": {
+                                            "dataType": "string",
+                                            "id": "host_name--string--tag--false",
+                                            "isColumn": false,
+                                            "isJSON": false,
+                                            "key": "host_name",
+                                            "type": "tag"
+                                        },
+                                        "op": "in",
+                                        "value": [
+                                            "{{.host_name}}"
+                                        ]
+                                    }
+                                ],
+                                "op": "AND"
+                            },
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "host_name--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "host_name",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "Bytes transmitted :: {{host_name}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "B",
+                            "reduceTo": "sum",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "41eea5bc-f9cf-45c2-92fb-ef226d6b540b",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Network IO",
+            "yAxisUnit": "bytes"
+        }
+    ]
+}

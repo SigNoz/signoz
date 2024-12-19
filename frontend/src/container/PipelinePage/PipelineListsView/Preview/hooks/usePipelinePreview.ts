@@ -53,7 +53,7 @@ const usePipelinePreview = ({
 		isLoading: isFetching,
 		outputLogs,
 		isError,
-		errorMsg: error?.response?.data?.error || '',
+		errorMsg: error?.message || '',
 	};
 };
 

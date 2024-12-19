@@ -11,6 +11,8 @@ import { useOrderByFilter } from './useOrderByFilter';
 export function OrderByFilter({
 	query,
 	onChange,
+	isListViewPanel = false,
+	entityVersion,
 }: OrderByFilterProps): JSX.Element {
 	const {
 		debouncedSearchText,
@@ -20,7 +22,7 @@ export function OrderByFilter({
 		createOptions,
 		handleChange,
 		handleSearchKeys,
-	} = useOrderByFilter({ query, onChange });
+	} = useOrderByFilter({ query, onChange, entityVersion });
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
@@ -30,7 +32,7 @@ export function OrderByFilter({
 			searchText: debouncedSearchText,
 		},
 		{
-			enabled: !!query.aggregateAttribute.key,
+			enabled: !!query.aggregateAttribute.key || isListViewPanel,
 			keepPreviousData: true,
 		},
 	);

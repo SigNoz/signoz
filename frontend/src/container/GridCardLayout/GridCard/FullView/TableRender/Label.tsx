@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { LabelContainer } from '../styles';
@@ -23,7 +24,9 @@ function Label({
 			disabled={disabled}
 			onClick={onClickHandler}
 		>
-			{getAbbreviatedLabel(label)}
+			<Tooltip title={label} placement="topLeft">
+				{getAbbreviatedLabel(label)}
+			</Tooltip>
 		</LabelContainer>
 	);
 }

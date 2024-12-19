@@ -1,4 +1,7 @@
 import { Col } from 'antd';
+import logEvent from 'api/common/logEvent';
+import { ENTITY_VERSION_V4 } from 'constants/app';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import {
@@ -10,8 +13,14 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
-import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import useUrlQuery from 'hooks/useUrlQuery';
+import getStep from 'lib/getStep';
+import history from 'lib/history';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useLocation, useParams } from 'react-router-dom';
+import store from 'store';
+import { UpdateTimeInterval } from 'store/actions';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
@@ -26,12 +35,35 @@ import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
+	useGetAPMToTracesQueries,
 } from './util';
 
 function DBCall(): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+
+	const servicename = decodeURIComponent(encodedServiceName);
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
+	const urlQuery = useUrlQuery();
+	const { pathname } = useLocation();
+	const dispatch = useDispatch();
+
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			history.push(generatedUrl);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch, pathname, urlQuery],
+	);
 
 	const tagFilterItems: TagFilterItem[] = useMemo(
 		() =>
@@ -67,6 +99,7 @@ function DBCall(): JSX.Element {
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'reqps',
 				id: SERVICE_CHART_ID.dbCallsRPS,
+				fillSpans: false,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -86,10 +119,44 @@ function DBCall(): JSX.Element {
 				title: GraphTitle.DATABASE_CALLS_AVG_DURATION,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'ms',
-				id: SERVICE_CHART_ID.dbCallsAvgDuration,
+				id: GraphTitle.DATABASE_CALLS_AVG_DURATION,
+				fillSpans: true,
 			}),
 		[servicename, tagFilterItems],
 	);
+
+	const stepInterval = useMemo(
+		() =>
+			getStep({
+				end: store.getState().globalTime.maxTime,
+				inputFormat: 'ns',
+				start: store.getState().globalTime.minTime,
+			}),
+		[],
+	);
+
+	const logEventCalledRef = useRef(false);
+
+	useEffect(() => {
+		if (!logEventCalledRef.current) {
+			const selectedEnvironments = queries.find(
+				(val) => val.tagKey === 'resource_deployment_environment',
+			)?.tagValue;
+
+			logEvent('APM: Service detail page visited', {
+				selectedEnvironments,
+				resourceAttributeUsed: !!queries?.length,
+				section: 'dbMetrics',
+			});
+			logEventCalledRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const apmToTraceQuery = useGetAPMToTracesQueries({
+		servicename,
+		isDBCall: true,
+	});
 
 	return (
 		<Row gutter={24}>
@@ -102,6 +169,8 @@ function DBCall(): JSX.Element {
 						servicename,
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
+						apmToTraceQuery,
+						stepInterval,
 					})}
 				>
 					View Traces
@@ -109,8 +178,6 @@ function DBCall(): JSX.Element {
 				<Card data-testid="database_call_rps">
 					<GraphContainer>
 						<Graph
-							fillSpans={false}
-							name="database_call_rps"
 							widget={databaseCallsRPSWidget}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
@@ -121,6 +188,8 @@ function DBCall(): JSX.Element {
 									'database_call_rps',
 								);
 							}}
+							onDragSelect={onDragSelect}
+							version={ENTITY_VERSION_V4}
 						/>
 					</GraphContainer>
 				</Card>
@@ -135,6 +204,8 @@ function DBCall(): JSX.Element {
 						servicename,
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
+						apmToTraceQuery,
+						stepInterval,
 					})}
 				>
 					View Traces
@@ -143,8 +214,6 @@ function DBCall(): JSX.Element {
 				<Card data-testid="database_call_avg_duration">
 					<GraphContainer>
 						<Graph
-							fillSpans
-							name="database_call_avg_duration"
 							widget={databaseCallsAverageDurationWidget}
 							headerMenuList={MENU_ITEMS}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
@@ -156,6 +225,8 @@ function DBCall(): JSX.Element {
 									'database_call_avg_duration',
 								);
 							}}
+							onDragSelect={onDragSelect}
+							version={ENTITY_VERSION_V4}
 						/>
 					</GraphContainer>
 				</Card>

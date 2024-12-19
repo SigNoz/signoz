@@ -1,6 +1,5 @@
 import { SearchOutlined } from '@ant-design/icons';
-import { Input, Spin } from 'antd';
-import Typography from 'antd/es/typography/Typography';
+import { Input, Spin, Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTranslation } from 'react-i18next';
 

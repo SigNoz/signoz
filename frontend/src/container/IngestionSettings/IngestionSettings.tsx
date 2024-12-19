@@ -84,6 +84,7 @@ export default function IngestionSettings(): JSX.Element {
 				pagination={false}
 				columns={columns}
 				dataSource={data}
+				bordered
 			/>
 		</div>
 	);

@@ -1,3 +1,4 @@
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import {
 	initialFilters,
 	initialQueriesMap,
@@ -42,12 +43,15 @@ const useSampleLogs = ({
 		return q;
 	}, [count, filter]);
 
-	const response = useGetQueryRange({
-		graphType: PANEL_TYPES.LIST,
-		query,
-		selectedTime: 'GLOBAL_TIME',
-		globalSelectedInterval: timeInterval,
-	});
+	const response = useGetQueryRange(
+		{
+			graphType: PANEL_TYPES.LIST,
+			query,
+			selectedTime: 'GLOBAL_TIME',
+			globalSelectedInterval: timeInterval,
+		},
+		DEFAULT_ENTITY_VERSION,
+	);
 
 	const { isFetching: isLoading, data } = response;
 

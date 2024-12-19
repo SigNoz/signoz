@@ -1,6 +1,8 @@
 package logs
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -236,14 +238,14 @@ func TestParseColumn(t *testing.T) {
 func TestReplaceInterestingFields(t *testing.T) {
 	queryTokens := []string{"id.userid IN (100) ", "and id_key >= 50 ", `AND body ILIKE '%searchstring%'`}
 	allFields := model.GetFieldsResponse{
-		Selected: []model.LogField{
+		Selected: []model.Field{
 			{
 				Name:     "id_key",
 				DataType: "int64",
 				Type:     "attributes",
 			},
 		},
-		Interesting: []model.LogField{
+		Interesting: []model.Field{
 			{
 				Name:     "id.userid",
 				DataType: "int64",
@@ -252,7 +254,7 @@ func TestReplaceInterestingFields(t *testing.T) {
 		},
 	}
 
-	expectedTokens := []string{"attributes_int64_value[indexOf(attributes_int64_key, 'id.userid')] IN (100) ", "and attribute_int64_id_key >= 50 ", `AND body ILIKE '%searchstring%'`}
+	expectedTokens := []string{"attributes_int64_value[indexOf(attributes_int64_key, 'id.userid')] IN (100) ", "and `attribute_int64_id_key` >= 50 ", `AND body ILIKE '%searchstring%'`}
 	Convey("testInterestingFields", t, func() {
 		tokens, err := replaceInterestingFields(&allFields, queryTokens)
 		So(err, ShouldBeNil)
@@ -324,7 +326,7 @@ func TestCheckIfPrevousPaginateAndModifyOrder(t *testing.T) {
 }
 
 var generateSQLQueryFields = model.GetFieldsResponse{
-	Selected: []model.LogField{
+	Selected: []model.Field{
 		{
 			Name:     "field1",
 			DataType: "int64",
@@ -346,7 +348,7 @@ var generateSQLQueryFields = model.GetFieldsResponse{
 			Type:     "static",
 		},
 	},
-	Interesting: []model.LogField{
+	Interesting: []model.Field{
 		{
 			Name:     "FielD1",
 			DataType: "int64",
@@ -374,7 +376,7 @@ var generateSQLQueryTestCases = []struct {
 			IdGt:           "2BsKLKv8cZrLCn6rkOcRGkdjBdM",
 			IdLT:           "2BsKG6tRpFWjYMcWsAGKfSxoQdU",
 		},
-		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' and id > '2BsKLKv8cZrLCn6rkOcRGkdjBdM' and id < '2BsKG6tRpFWjYMcWsAGKfSxoQdU' ) and ( attribute_int64_field1 < 100 and attribute_int64_field1 > 50 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 ) ",
+		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' and id > '2BsKLKv8cZrLCn6rkOcRGkdjBdM' and id < '2BsKG6tRpFWjYMcWsAGKfSxoQdU' ) and ( `attribute_int64_field1` < 100 and `attribute_int64_field1` > 50 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 ) ",
 	},
 	{
 		Name: "second query with only timestamp range",
@@ -383,7 +385,7 @@ var generateSQLQueryTestCases = []struct {
 			TimestampStart: uint64(1657689292000),
 			TimestampEnd:   uint64(1657689294000),
 		},
-		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' ) and ( attribute_int64_field1 < 100 and attribute_int64_field1 > 50 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 ) ",
+		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' ) and ( `attribute_int64_field1` < 100 and `attribute_int64_field1` > 50 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 ) ",
 	},
 	{
 		Name: "generate case sensitive query",
@@ -392,7 +394,7 @@ var generateSQLQueryTestCases = []struct {
 			TimestampStart: uint64(1657689292000),
 			TimestampEnd:   uint64(1657689294000),
 		},
-		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' ) and ( attribute_int64_field1 < 100 and attributes_int64_value[indexOf(attributes_int64_key, 'FielD1')] > 50 and attribute_double64_Field2 > 10 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 ) ",
+		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' ) and ( `attribute_int64_field1` < 100 and attributes_int64_value[indexOf(attributes_int64_key, 'FielD1')] > 50 and `attribute_double64_Field2` > 10 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 ) ",
 	},
 	{
 		Name: "Check exists and not exists",
@@ -401,7 +403,7 @@ var generateSQLQueryTestCases = []struct {
 			TimestampStart: uint64(1657689292000),
 			TimestampEnd:   uint64(1657689294000),
 		},
-		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' ) and ( has(attributes_int64_key, 'field1') and NOT has(attributes_double64_key, 'Field2') and attribute_double64_Field2 > 10 ) ",
+		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' ) and ( has(attributes_int64_key, 'field1') and NOT has(attributes_double64_key, 'Field2') and `attribute_double64_Field2` > 10 ) ",
 	},
 	{
 		Name: "Check top level key filter",
@@ -429,6 +431,54 @@ func TestGenerateSQLQuery(t *testing.T) {
 			res, _, err := GenerateSQLWhere(&generateSQLQueryFields, &test.Filter)
 			So(err, ShouldBeNil)
 			So(res, ShouldEqual, test.SqlFilter)
+		})
+	}
+}
+
+var parseLogFilterParams = []struct {
+	Name                    string
+	ReqParams               string
+	ExpectedLogFilterParams *model.LogsFilterParams
+}{
+	{
+		Name:      "test with proper order by",
+		ReqParams: "order=desc&q=service.name='myservice'&limit=10",
+		ExpectedLogFilterParams: &model.LogsFilterParams{
+			Limit:   10,
+			OrderBy: "timestamp",
+			Order:   DESC,
+			Query:   "service.name='myservice'",
+		},
+	},
+	{
+		Name:      "test with proper order by asc",
+		ReqParams: "order=asc&q=service.name='myservice'&limit=10",
+		ExpectedLogFilterParams: &model.LogsFilterParams{
+			Limit:   10,
+			OrderBy: "timestamp",
+			Order:   ASC,
+			Query:   "service.name='myservice'",
+		},
+	},
+	{
+		Name:      "test with incorrect order by",
+		ReqParams: "order=undefined&q=service.name='myservice'&limit=10",
+		ExpectedLogFilterParams: &model.LogsFilterParams{
+			Limit:   10,
+			OrderBy: "timestamp",
+			Order:   DESC,
+			Query:   "service.name='myservice'",
+		},
+	},
+}
+
+func TestParseLogFilterParams(t *testing.T) {
+	for _, test := range parseLogFilterParams {
+		Convey(test.Name, t, func() {
+			req := httptest.NewRequest(http.MethodGet, "/logs?"+test.ReqParams, nil)
+			params, err := ParseLogFilterParams(req)
+			So(err, ShouldBeNil)
+			So(params, ShouldEqual, test.ExpectedLogFilterParams)
 		})
 	}
 }

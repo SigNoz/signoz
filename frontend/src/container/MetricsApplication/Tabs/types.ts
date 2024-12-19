@@ -29,6 +29,8 @@ export interface BuilderQueriesProps {
 	aggregateOperator?: string[];
 	dataSource: DataSource;
 	queryNameAndExpression?: string[];
+	timeAggregateOperators: MetricAggregateOperator[];
+	spaceAggregateOperators: MetricAggregateOperator[];
 }
 
 export interface BuilderQuerieswithFormulaProps {
@@ -39,7 +41,8 @@ export interface BuilderQuerieswithFormulaProps {
 	expressions: string[];
 	legendFormulas: string[];
 	additionalItems: TagFilterItem[][];
-	aggregateOperators: MetricAggregateOperator[];
+	timeAggregateOperators: MetricAggregateOperator[];
+	spaceAggregateOperators: MetricAggregateOperator[];
 	dataSource: DataSource;
 }
 

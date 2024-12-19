@@ -1,5 +1,4 @@
 import { Typography } from 'antd';
-import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 export const Container = styled.div`
@@ -9,7 +8,7 @@ export const Container = styled.div`
 export const Name = styled(Typography)`
 	&&& {
 		font-weight: 600;
-		color: ${themeColors.lightBlue};
+		color: #4e74f8;
 		cursor: pointer;
 	}
 `;

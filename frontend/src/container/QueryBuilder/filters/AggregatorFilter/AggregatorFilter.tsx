@@ -25,7 +25,9 @@ import { ExtendedSelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
+import { removePrefix } from '../GroupByFilter/utils';
 import { selectStyle } from '../QueryBuilderSearch/config';
+import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
 // ** Types
 import { AgregatorFilterProps } from './AggregatorFilter.intefaces';
 
@@ -60,15 +62,31 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				dataSource: query.dataSource,
 			}),
 		{
-			enabled: !!query.aggregateOperator && !!query.dataSource,
+			enabled:
+				query.dataSource === DataSource.METRICS ||
+				(!!query.aggregateOperator && !!query.dataSource),
 			onSuccess: (data) => {
 				const options: ExtendedSelectOption[] =
 					data?.payload?.attributeKeys?.map(({ id: _, ...item }) => ({
-						label: transformStringWithPrefix({
-							str: item.key,
-							prefix: item.type || '',
-							condition: !item.isColumn,
-						}),
+						label: (
+							<OptionRenderer
+								label={transformStringWithPrefix({
+									str: item.key,
+									prefix: item.type || '',
+									condition: !item.isColumn,
+								})}
+								value={removePrefix(
+									transformStringWithPrefix({
+										str: item.key,
+										prefix: item.type || '',
+										condition: !item.isColumn,
+									}),
+									!item.isColumn && item.type ? item.type : '',
+								)}
+								dataType={item.dataType}
+								type={item.type || ''}
+							/>
+						),
 						value: `${item.key}${selectValueDivider}${createIdFromObjectFields(
 							item,
 							baseAutoCompleteIdKeysOrder,
@@ -97,7 +115,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				debouncedValue,
 				query.aggregateOperator,
 				query.dataSource,
-			])?.payload.attributeKeys || [],
+			])?.payload?.attributeKeys || [],
 		[debouncedValue, query.aggregateOperator, query.dataSource, queryClient],
 	);
 
@@ -165,18 +183,22 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		[getAttributesData, handleChangeCustomValue, onChange],
 	);
 
-	const value = transformStringWithPrefix({
-		str: query.aggregateAttribute.key,
-		prefix: query.aggregateAttribute.type || '',
-		condition: !query.aggregateAttribute.isColumn,
-	});
+	const value = removePrefix(
+		transformStringWithPrefix({
+			str: query.aggregateAttribute.key,
+			prefix: query.aggregateAttribute.type || '',
+			condition: !query.aggregateAttribute.isColumn,
+		}),
+		!query.aggregateAttribute.isColumn && query.aggregateAttribute.type
+			? query.aggregateAttribute.type
+			: '',
+	);
 
 	return (
 		<AutoComplete
 			getPopupContainer={popupContainer}
 			placeholder={placeholder}
 			style={selectStyle}
-			showArrow={false}
 			filterOption={false}
 			onSearch={handleSearchText}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
