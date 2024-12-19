@@ -55,12 +55,12 @@ function RangePickerModal(props: RangePickerModalProps): JSX.Element {
 	};
 	const { timezone } = useTimezone();
 
-	const defaultValue = useMemo(
-		(): [Dayjs, Dayjs] => [
+	const rangeValue: [Dayjs, Dayjs] = useMemo(
+		() => [
 			dayjs(minTime / 1000_000).tz(timezone.value),
 			dayjs(maxTime / 1000_000).tz(timezone.value),
 		],
-		[minTime, maxTime, timezone.value],
+		[maxTime, minTime, timezone.value],
 	);
 
 	return (
@@ -78,7 +78,7 @@ function RangePickerModal(props: RangePickerModalProps): JSX.Element {
 				onOk={onModalOkHandler}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...(selectedTime === 'custom' && {
-					defaultValue,
+					value: rangeValue,
 				})}
 			/>
 		</div>
