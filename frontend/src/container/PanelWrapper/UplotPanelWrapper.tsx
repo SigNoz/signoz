@@ -14,7 +14,9 @@ import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { cloneDeep, isEqual, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useTimezone } from 'providers/Timezone';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import uPlot from 'uplot';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
@@ -105,6 +107,8 @@ function UplotPanelWrapper({
 		}
 	}, [graphVisibility, hiddenGraph, widget.panelTypes, widget?.stackedBarChart]);
 
+	const { timezone } = useTimezone();
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
@@ -128,6 +132,9 @@ function UplotPanelWrapper({
 				hiddenGraph,
 				setHiddenGraph,
 				customTooltipElement,
+				tzDate: (timestamp: number) =>
+					uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
+				timezone: timezone.value,
 			}),
 		[
 			widget?.id,
@@ -150,6 +157,7 @@ function UplotPanelWrapper({
 			currentQuery,
 			hiddenGraph,
 			customTooltipElement,
+			timezone.value,
 		],
 	);
 
