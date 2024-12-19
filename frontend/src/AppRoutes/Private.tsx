@@ -62,7 +62,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			return undefined;
 		},
 		queryKey: ['getOrgUser'],
-		enabled: !isEmpty(orgData),
+		enabled: !isEmpty(orgData) && user.role === 'ADMIN',
 	});
 
 	const checkFirstTimeUser = useCallback((): boolean => {
@@ -100,6 +100,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		isFetchingOrgUsers,
 		orgPreferences,
 		orgUsers,
+		pathname,
 	]);
 
 	const navigateToWorkSpaceBlocked = (route: any): void => {
@@ -115,11 +116,11 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			const currentRoute = mapRoutes.get('current');
 			const shouldBlockWorkspace = licenses?.workSpaceBlock;
 
-			if (shouldBlockWorkspace) {
+			if (shouldBlockWorkspace && currentRoute) {
 				navigateToWorkSpaceBlocked(currentRoute);
 			}
 		}
-	}, [isFetchingLicenses, licenses?.workSpaceBlock, mapRoutes]);
+	}, [isFetchingLicenses, licenses?.workSpaceBlock, mapRoutes, pathname]);
 
 	const navigateToWorkSpaceSuspended = (route: any): void => {
 		const { path } = route;
@@ -136,11 +137,11 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
 				activeLicenseV3.state === LicenseState.PAYMENT_FAILED;
 
-			if (shouldSuspendWorkspace) {
+			if (shouldSuspendWorkspace && currentRoute) {
 				navigateToWorkSpaceSuspended(currentRoute);
 			}
 		}
-	}, [isFetchingActiveLicenseV3, activeLicenseV3, mapRoutes]);
+	}, [isFetchingActiveLicenseV3, activeLicenseV3, mapRoutes, pathname]);
 
 	useEffect(() => {
 		if (org && org.length > 0 && org[0].id !== undefined) {
