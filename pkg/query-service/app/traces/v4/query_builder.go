@@ -28,8 +28,8 @@ var tracesOperatorMappingV3 = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorContains:        "ILIKE",
 	v3.FilterOperatorNotContains:     "NOT ILIKE",
-	v3.FilterOperatorExists:          "mapContains(%s, '%s')",
-	v3.FilterOperatorNotExists:       "NOT mapContains(%s, '%s')",
+	v3.FilterOperatorExists:          "mapContains(%s_%s, '%s')",
+	v3.FilterOperatorNotExists:       "NOT mapContains(%s_%s, '%s')",
 }
 
 func getClickHouseTracesColumnType(columnType v3.AttributeKeyType) string {
@@ -74,17 +74,36 @@ func getSelectLabels(groupBy []v3.AttributeKey) string {
 	return strings.Join(labels, ",")
 }
 
-// TODO(nitya): use the _exists columns as well in the future similar to logs
-func existsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (string, error) {
-	if key.DataType == v3.AttributeKeyDataTypeString {
-		if op == v3.FilterOperatorExists {
-			return fmt.Sprintf("%s %s ''", getColumnName(key), tracesOperatorMappingV3[v3.FilterOperatorNotEqual]), nil
-		} else {
-			return fmt.Sprintf("%s %s ''", getColumnName(key), tracesOperatorMappingV3[v3.FilterOperatorEqual]), nil
+func getExistsNexistsFilter(op v3.FilterOperator, item v3.FilterItem) string {
+	if _, ok := constants.StaticFieldsTraces[item.Key.Key]; ok {
+		chOp := "!="
+		if op == v3.FilterOperatorNotExists {
+			chOp = "="
 		}
-	} else {
-		return "", fmt.Errorf("unsupported operation, exists and not exists can only be applied on custom attributes or string type columns")
+		key := getColumnName(item.Key)
+		if item.Key.DataType == v3.AttributeKeyDataTypeString {
+			return fmt.Sprintf("%s %s ''", key, chOp)
+		}
+
+		// top level number columns are duration_nano, kind, status_code
+		if item.Key.DataType == v3.AttributeKeyDataTypeInt64 || item.Key.DataType == v3.AttributeKeyDataTypeFloat64 {
+			return fmt.Sprintf("%s %s 0", key, chOp)
+		}
+
+		// do noting for other types right now
+		return ""
+	} else if item.Key.IsColumn {
+		// get filter for materialized columns
+		val := true
+		if op == v3.FilterOperatorNotExists {
+			val = false
+		}
+		return fmt.Sprintf("%s_exists` = %v", strings.TrimSuffix(getColumnName(item.Key), "`"), val)
 	}
+	// filter for non materialized attributes
+	columnType := getClickHouseTracesColumnType(item.Key.Type)
+	columnDataType := getClickHouseTracesColumnDataType(item.Key.DataType)
+	return fmt.Sprintf(tracesOperatorMappingV3[op], columnType, columnDataType, item.Key.Key)
 }
 
 func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
@@ -122,19 +141,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
-					if item.Key.IsColumn {
-						subQuery, err := existsSubQueryForFixedColumn(item.Key, item.Operator)
-						if err != nil {
-							return "", err
-						}
-						conditions = append(conditions, subQuery)
-					} else {
-						cType := getClickHouseTracesColumnType(item.Key.Type)
-						cDataType := getClickHouseTracesColumnDataType(item.Key.DataType)
-						col := fmt.Sprintf("%s_%s", cType, cDataType)
-						conditions = append(conditions, fmt.Sprintf(operator, col, item.Key.Key))
-					}
-
+					conditions = append(conditions, getExistsNexistsFilter(item.Operator, item))
 				default:
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, operator, fmtVal))
 				}
@@ -362,16 +369,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		return query, nil
 	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
-			if mq.AggregateAttribute.IsColumn {
-				subQuery, err := existsSubQueryForFixedColumn(mq.AggregateAttribute, v3.FilterOperatorExists)
-				if err == nil {
-					filterSubQuery = fmt.Sprintf("%s AND %s", filterSubQuery, subQuery)
-				}
-			} else {
-				cType := getClickHouseTracesColumnType(mq.AggregateAttribute.Type)
-				cDataType := getClickHouseTracesColumnDataType(mq.AggregateAttribute.DataType)
-				filterSubQuery = fmt.Sprintf("%s AND mapContains(%s_%s, '%s')", filterSubQuery, cType, cDataType, mq.AggregateAttribute.Key)
-			}
+			filterSubQuery = filterSubQuery + " AND " + getExistsNexistsFilter(v3.FilterOperatorExists, v3.FilterItem{Key: mq.AggregateAttribute, Operator: v3.FilterOperatorExists})
 		}
 		op := "toFloat64(count())"
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
