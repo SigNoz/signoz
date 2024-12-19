@@ -113,7 +113,6 @@ type APIHandler struct {
 
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
-	UseLicensesV3     bool
 
 	hostsRepo      *inframetrics.HostsRepo
 	processesRepo  *inframetrics.ProcessesRepo
@@ -126,6 +125,8 @@ type APIHandler struct {
 	daemonsetsRepo   *inframetrics.DaemonSetsRepo
 	statefulsetsRepo *inframetrics.StatefulSetsRepo
 	jobsRepo         *inframetrics.JobsRepo
+
+	pvcsRepo *inframetrics.PvcsRepo
 }
 
 type APIHandlerOpts struct {
@@ -166,8 +167,6 @@ type APIHandlerOpts struct {
 	UseLogsNewSchema bool
 
 	UseTraceNewSchema bool
-	// Use Licenses V3 structure
-	UseLicensesV3 bool
 }
 
 // NewAPIHandler returns an APIHandler
@@ -211,6 +210,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	daemonsetsRepo := inframetrics.NewDaemonSetsRepo(opts.Reader, querierv2)
 	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
+	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -230,7 +230,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		querierV2:                     querierv2,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
 		UseTraceNewSchema:             opts.UseTraceNewSchema,
-		UseLicensesV3:                 opts.UseLicensesV3,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
 		podsRepo:                      podsRepo,
@@ -241,6 +240,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		daemonsetsRepo:                daemonsetsRepo,
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
+		pvcsRepo:                      pvcsRepo,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -412,6 +412,11 @@ func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMid
 	podsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getPodAttributeValues)).Methods(http.MethodGet)
 	podsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getPodList)).Methods(http.MethodPost)
 
+	pvcsSubRouter := router.PathPrefix("/api/v1/pvcs").Subrouter()
+	pvcsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getPvcAttributeKeys)).Methods(http.MethodGet)
+	pvcsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getPvcAttributeValues)).Methods(http.MethodGet)
+	pvcsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getPvcList)).Methods(http.MethodPost)
+
 	nodesSubRouter := router.PathPrefix("/api/v1/nodes").Subrouter()
 	nodesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNodeAttributeKeys)).Methods(http.MethodGet)
 	nodesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNodeAttributeValues)).Methods(http.MethodGet)
@@ -530,6 +535,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.AdminAccess(aH.insertIngestionKey)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.ViewAccess(aH.getIngestionKeys)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
@@ -4079,10 +4087,9 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")
 		}
 
-		for _, p := range postable {
-			if err := p.IsValid(); err != nil {
-				return nil, model.BadRequestStr(err.Error())
-			}
+		validationErr := aH.LogsParsingPipelineController.ValidatePipelines(ctx, postable)
+		if validationErr != nil {
+			return nil, validationErr
 		}
 
 		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
@@ -4896,4 +4903,36 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV4(r.Context(), queryRangeParams, w, r)
+}
+
+func (aH *APIHandler) traceFields(w http.ResponseWriter, r *http.Request) {
+	fields, apiErr := aH.reader.GetTraceFields(r.Context())
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to fetch fields from the db")
+		return
+	}
+	aH.WriteJSON(w, r, fields)
+}
+
+func (aH *APIHandler) updateTraceField(w http.ResponseWriter, r *http.Request) {
+	field := model.UpdateField{}
+	if err := json.NewDecoder(r.Body).Decode(&field); err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErr, "failed to decode payload")
+		return
+	}
+
+	err := logs.ValidateUpdateFieldPayloadV2(&field)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErr, "incorrect payload")
+		return
+	}
+
+	apiErr := aH.reader.UpdateTraceField(r.Context(), &field)
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to update field in the db")
+		return
+	}
+	aH.WriteJSON(w, r, field)
 }

@@ -58,7 +58,7 @@ from the HotROD application, you should see the data generated from hotrod in Si
 ```sh
 kubectl create ns sample-application
 
-kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/develop/sample-apps/hotrod/hotrod.yaml
+kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/main/sample-apps/hotrod/hotrod.yaml
 ```
 
 To generate load:
