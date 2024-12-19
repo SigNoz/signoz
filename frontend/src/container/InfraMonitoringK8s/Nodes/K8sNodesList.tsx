@@ -265,7 +265,7 @@ function K8sNodesList({
 	const handleRowClick = (record: K8sNodesRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
-			// setselectedNodeUID(record.nodeUID);
+			setselectedNodeUID(record.nodeUID);
 		} else {
 			handleGroupByRowClick(record);
 		}
