@@ -418,6 +418,12 @@ function ExplorerOptions({
 	});
 
 	const onSaveHandler = (): void => {
+		if(newViewName.trim() === '' || !newViewName){
+			notifications.error({
+				 message: 'Please enter a valid label name to save this view.'
+			})
+			return
+		}
 		saveNewViewHandler({
 			compositeQuery,
 			handlePopOverClose: hideSaveViewModal,
