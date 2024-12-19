@@ -40,8 +40,8 @@
 		"@monaco-editor/react": "^4.3.1",
 		"@radix-ui/react-tabs": "1.0.4",
 		"@radix-ui/react-tooltip": "1.0.7",
-		"@sentry/react": "7.102.1",
-		"@sentry/webpack-plugin": "2.16.0",
+		"@sentry/react": "8.41.0",
+		"@sentry/webpack-plugin": "2.22.6",
 		"@signozhq/design-tokens": "1.1.4",
 		"@uiw/react-md-editor": "3.23.5",
 		"@visx/group": "3.3.0",
@@ -76,7 +76,7 @@
 		"fontfaceobserver": "2.3.0",
 		"history": "4.10.1",
 		"html-webpack-plugin": "5.5.0",
-		"http-proxy-middleware": "2.0.7",
+		"http-proxy-middleware": "3.0.3",
 		"i18next": "^21.6.12",
 		"i18next-browser-languagedetector": "^6.1.3",
 		"i18next-http-backend": "^1.3.2",
@@ -128,7 +128,7 @@
 		"uuid": "^8.3.2",
 		"web-vitals": "^0.2.4",
 		"webpack": "5.94.0",
-		"webpack-dev-server": "^4.15.1",
+		"webpack-dev-server": "^4.15.2",
 		"webpack-retry-chunk-load-plugin": "3.1.1",
 		"xstate": "^4.31.0"
 	},
@@ -241,6 +241,7 @@
 		"semver": "7.5.4",
 		"xml2js": "0.5.0",
 		"phin": "^3.7.1",
-		"body-parser": "1.20.3"
+		"body-parser": "1.20.3",
+		"http-proxy-middleware": "3.0.3"
 	}
 }

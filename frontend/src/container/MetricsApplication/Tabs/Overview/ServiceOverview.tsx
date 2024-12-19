@@ -53,24 +53,28 @@ function ServiceOverview({
 		[isSpanMetricEnable, queries],
 	);
 
-	const latencyWidget = getWidgetQueryBuilder({
-		query: {
-			queryType: EQueryType.QUERY_BUILDER,
-			promql: [],
-			builder: latency({
-				servicename,
-				tagFilterItems,
-				isSpanMetricEnable,
-				topLevelOperationsRoute,
+	const latencyWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: latency({
+						servicename,
+						tagFilterItems,
+						isSpanMetricEnable,
+						topLevelOperationsRoute,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.LATENCY,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ns',
+				id: SERVICE_CHART_ID.latency,
 			}),
-			clickhouse_sql: [],
-			id: uuid(),
-		},
-		title: GraphTitle.LATENCY,
-		panelTypes: PANEL_TYPES.TIME_SERIES,
-		yAxisUnit: 'ns',
-		id: SERVICE_CHART_ID.latency,
-	});
+		[isSpanMetricEnable, servicename, tagFilterItems, topLevelOperationsRoute],
+	);
 
 	const isQueryEnabled =
 		!topLevelOperationsIsLoading && topLevelOperationsRoute.length > 0;

@@ -18,7 +18,7 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 
 	// Build queries for each builder query
 	for queryName, query := range compositeQuery.BuilderQueries {
-		if query.Expression != queryName && query.DataSource != v3.DataSourceLogs {
+		if query.Expression != queryName || query.DataSource != v3.DataSourceLogs {
 			continue
 		}
 
@@ -142,7 +142,7 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 	}
 
 	// check if the field is present in the fields map
-	for _, key := range utils.GenerateLogEnrichmentKeys(field) {
+	for _, key := range utils.GenerateEnrichmentKeys(field) {
 		if val, ok := fields[key]; ok {
 			return val
 		}

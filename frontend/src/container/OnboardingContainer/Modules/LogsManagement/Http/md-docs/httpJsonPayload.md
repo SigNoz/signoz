@@ -62,7 +62,7 @@ This is a **sample cURL request** which can be used as a template:
 ```bash
 curl --location 'https://ingest.{{REGION}}.signoz.cloud:443/logs/json' \
 --header 'Content-Type: application/json' \
---header 'signoz-access-token: {{SIGNOZ_INGESTION_KEY}}' \
+--header 'signoz-ingestion-key: {{SIGNOZ_INGESTION_KEY}}' \
 --data '[
     {
         "trace_id": "000000000000000018c51935df0b93b9",

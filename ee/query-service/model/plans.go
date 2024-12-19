@@ -17,6 +17,10 @@ var (
 )
 
 var (
+	MapOldPlanKeyToNewPlanName map[string]string = map[string]string{PlanNameBasic: Basic, PlanNameTeams: Pro, PlanNameEnterprise: Enterprise}
+)
+
+var (
 	LicenseStatusInactive = "INACTIVE"
 )
 

@@ -45,6 +45,7 @@
 	"PASSWORD_RESET": "SigNoz | Password Reset",
 	"LIST_LICENSES": "SigNoz | List of Licenses",
 	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
+	"WORKSPACE_SUSPENDED": "SigNoz | Workspace Suspended",
 	"SUPPORT": "SigNoz | Support",
 	"LOGS_SAVE_VIEWS": "SigNoz | Logs Saved Views",
 	"TRACES_SAVE_VIEWS": "SigNoz | Traces Saved Views",
@@ -53,5 +54,6 @@
 	"INTEGRATIONS": "SigNoz | Integrations",
 	"ALERT_HISTORY": "SigNoz | Alert Rule History",
 	"ALERT_OVERVIEW": "SigNoz | Alert Rule Overview",
-	"MESSAGING_QUEUES": "SigNoz | Messaging Queues"
+	"MESSAGING_QUEUES": "SigNoz | Messaging Queues",
+	"INFRASTRUCTURE_MONITORING_HOSTS": "SigNoz | Infra Monitoring"
 }

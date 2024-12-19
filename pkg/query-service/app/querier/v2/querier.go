@@ -11,7 +11,9 @@ import (
 	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 	"go.signoz.io/signoz/pkg/query-service/querycache"
 	"go.signoz.io/signoz/pkg/query-service/utils"
@@ -48,10 +50,11 @@ type querier struct {
 	testingMode     bool
 	queriesExecuted []string
 	// tuple of start and end time in milliseconds
-	timeRanges       [][]int
-	returnedSeries   []*v3.Series
-	returnedErr      error
-	UseLogsNewSchema bool
+	timeRanges        [][]int
+	returnedSeries    []*v3.Series
+	returnedErr       error
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 type QuerierOptions struct {
@@ -62,16 +65,22 @@ type QuerierOptions struct {
 	FeatureLookup interfaces.FeatureLookup
 
 	// used for testing
-	TestingMode      bool
-	ReturnedSeries   []*v3.Series
-	ReturnedErr      error
-	UseLogsNewSchema bool
+	TestingMode       bool
+	ReturnedSeries    []*v3.Series
+	ReturnedErr       error
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 func NewQuerier(opts QuerierOptions) interfaces.Querier {
 	logsQueryBuilder := logsV3.PrepareLogsQuery
 	if opts.UseLogsNewSchema {
 		logsQueryBuilder = logsV4.PrepareLogsQuery
+	}
+
+	tracesQueryBuilder := tracesV3.PrepareTracesQuery
+	if opts.UseTraceNewSchema {
+		tracesQueryBuilder = tracesV4.PrepareTracesQuery
 	}
 
 	qc := querycache.NewQueryCache(querycache.WithCache(opts.Cache), querycache.WithFluxInterval(opts.FluxInterval))
@@ -84,16 +93,17 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 		fluxInterval: opts.FluxInterval,
 
 		builder: queryBuilder.NewQueryBuilder(queryBuilder.QueryBuilderOptions{
-			BuildTraceQuery:  tracesV3.PrepareTracesQuery,
+			BuildTraceQuery:  tracesQueryBuilder,
 			BuildLogQuery:    logsQueryBuilder,
 			BuildMetricQuery: metricsV4.PrepareMetricQuery,
 		}, opts.FeatureLookup),
 		featureLookUp: opts.FeatureLookup,
 
-		testingMode:      opts.TestingMode,
-		returnedSeries:   opts.ReturnedSeries,
-		returnedErr:      opts.ReturnedErr,
-		UseLogsNewSchema: opts.UseLogsNewSchema,
+		testingMode:       opts.TestingMode,
+		returnedSeries:    opts.ReturnedSeries,
+		returnedErr:       opts.ReturnedErr,
+		UseLogsNewSchema:  opts.UseLogsNewSchema,
+		UseTraceNewSchema: opts.UseTraceNewSchema,
 	}
 }
 
@@ -308,56 +318,121 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	return results, errQueriesByName, err
 }
 
-func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangeParamsV3, tsRanges []utils.LogsListTsRange) ([]*v3.Result, map[string]error, error) {
+func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryRangeParamsV3, tsRanges []utils.LogsListTsRange) ([]*v3.Result, map[string]error, error) {
 	res := make([]*v3.Result, 0)
 	qName := ""
 	pageSize := uint64(0)
+	limit := uint64(0)
+	offset := uint64(0)
 
 	// se we are considering only one query
 	for name, v := range params.CompositeQuery.BuilderQueries {
 		qName = name
 		pageSize = v.PageSize
+
+		// for traces specifically
+		limit = v.Limit
+		offset = v.Offset
 	}
 	data := []*v3.Row{}
+
+	tracesLimit := limit + offset
 
 	for _, v := range tsRanges {
 		params.Start = v.Start
 		params.End = v.End
 
-		params.CompositeQuery.BuilderQueries[qName].PageSize = pageSize - uint64(len(data))
-		queries, err := q.builder.PrepareQueries(params)
-		if err != nil {
-			return nil, nil, err
-		}
-
+		length := uint64(0)
 		// this will to run only once
-		for name, query := range queries {
-			rowList, err := q.reader.GetListResultV3(ctx, query)
+
+		// appending the filter to get the next set of data
+		if params.CompositeQuery.BuilderQueries[qName].DataSource == v3.DataSourceLogs {
+			params.CompositeQuery.BuilderQueries[qName].PageSize = pageSize - uint64(len(data))
+			queries, err := q.builder.PrepareQueries(params)
 			if err != nil {
-				errs := []error{err}
-				errQuriesByName := map[string]error{
-					name: err,
-				}
-				return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+				return nil, nil, err
 			}
-			data = append(data, rowList...)
-		}
+			for name, query := range queries {
+				rowList, err := q.reader.GetListResultV3(ctx, query)
+				if err != nil {
+					errs := []error{err}
+					errQueriesByName := map[string]error{
+						name: err,
+					}
+					return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+				}
+				length += uint64(len(rowList))
+				data = append(data, rowList...)
+			}
 
-		// append a filter to the params
-		if len(data) > 0 {
-			params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
-				Key: v3.AttributeKey{
-					Key:      "id",
-					IsColumn: true,
-					DataType: "string",
-				},
-				Operator: v3.FilterOperatorLessThan,
-				Value:    data[len(data)-1].Data["id"],
-			})
-		}
+			if length > 0 {
+				params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
+					Key: v3.AttributeKey{
+						Key:      "id",
+						IsColumn: true,
+						DataType: "string",
+					},
+					Operator: v3.FilterOperatorLessThan,
+					Value:    data[len(data)-1].Data["id"],
+				})
+			}
 
-		if uint64(len(data)) >= pageSize {
-			break
+			if uint64(len(data)) >= pageSize {
+				break
+			}
+		} else {
+			// TRACE
+			// we are updating the offset and limit based on the number of traces we have found in the current timerange
+			// eg -
+			// 1)offset = 0, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
+			//
+			// if 100 traces are there in [t1, t10] then 100 will return immediately.
+			// if 10 traces are there in [t1, t10] then we get 10, set offset to 0 and limit to 90, search in the next timerange of [t10, 20]
+			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with offset=0, limit=100
+
+			//
+			// 2) offset = 50, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
+			//
+			// If we find 150 traces with limit=150 and offset=0 in [t1, t10] then we return immediately 100 traces
+			// If we find 50 in [t1, t10] with limit=150 and offset=0 then it will set limit = 100 and offset=0 and search in the next timerange of [t10, 20]
+			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with limit=150 and offset=0
+
+			// max limit + offset is 10k for pagination
+			if tracesLimit > constants.TRACE_V4_MAX_PAGINATION_LIMIT {
+				return nil, nil, fmt.Errorf("maximum traces that can be paginated is 10000")
+			}
+
+			params.CompositeQuery.BuilderQueries[qName].Offset = 0
+			params.CompositeQuery.BuilderQueries[qName].Limit = tracesLimit
+			queries, err := q.builder.PrepareQueries(params)
+			if err != nil {
+				return nil, nil, err
+			}
+			for name, query := range queries {
+				rowList, err := q.reader.GetListResultV3(ctx, query)
+				if err != nil {
+					errs := []error{err}
+					errQueriesByName := map[string]error{
+						name: err,
+					}
+					return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+				}
+				length += uint64(len(rowList))
+
+				// skip the traces unless offset is 0
+				for _, row := range rowList {
+					if offset == 0 {
+						data = append(data, row)
+					} else {
+						offset--
+					}
+				}
+			}
+			tracesLimit = tracesLimit - length
+
+			if uint64(len(data)) >= limit {
+				break
+			}
 		}
 	}
 	res = append(res, &v3.Result{
@@ -369,14 +444,24 @@ func (q *querier) runLogsListQuery(ctx context.Context, params *v3.QueryRangePar
 
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
 	// List query has support for only one query.
-	if q.UseLogsNewSchema && params.CompositeQuery != nil && len(params.CompositeQuery.BuilderQueries) == 1 {
+	// we are skipping for PanelTypeTrace as it has a custom order by regardless of what's in the payload
+	if params.CompositeQuery != nil &&
+		len(params.CompositeQuery.BuilderQueries) == 1 &&
+		params.CompositeQuery.PanelType != v3.PanelTypeTrace {
 		for _, v := range params.CompositeQuery.BuilderQueries {
+			if (v.DataSource == v3.DataSourceLogs && !q.UseLogsNewSchema) ||
+				(v.DataSource == v3.DataSourceTraces && !q.UseTraceNewSchema) {
+				break
+			}
+
 			// only allow of logs queries with timestamp ordering desc
-			if v.DataSource == v3.DataSourceLogs && len(v.OrderBy) == 1 && v.OrderBy[0].ColumnName == "timestamp" && v.OrderBy[0].Order == "desc" {
-				startEndArr := utils.GetLogsListTsRanges(params.Start, params.End)
-				if len(startEndArr) > 0 {
-					return q.runLogsListQuery(ctx, params, startEndArr)
-				}
+			// TODO(nitya): allow for timestamp asc
+			if (v.DataSource == v3.DataSourceLogs || v.DataSource == v3.DataSourceTraces) &&
+				len(v.OrderBy) == 1 &&
+				v.OrderBy[0].ColumnName == "timestamp" &&
+				v.OrderBy[0].Order == "desc" {
+				startEndArr := utils.GetListTsRanges(params.Start, params.End)
+				return q.runWindowBasedListQuery(ctx, params, startEndArr)
 			}
 		}
 	}
@@ -416,13 +501,13 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 	close(ch)
 
 	var errs []error
-	errQuriesByName := make(map[string]error)
+	errQueriesByName := make(map[string]error)
 	res := make([]*v3.Result, 0)
 	// read values from the channel
 	for r := range ch {
 		if r.Err != nil {
 			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Err
+			errQueriesByName[r.Name] = r.Err
 			continue
 		}
 		res = append(res, &v3.Result{
@@ -431,7 +516,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 		})
 	}
 	if len(errs) != 0 {
-		return nil, errQuriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+		return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
 	}
 	return res, nil, nil
 }

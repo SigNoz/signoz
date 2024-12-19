@@ -1,3 +1,4 @@
+import { getInfraAttributesValues } from 'api/infraMonitoring/getInfraAttributeValues';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
@@ -43,6 +44,7 @@ export const useFetchKeysAndValues = (
 	query: IBuilderQuery,
 	searchKey: string,
 	shouldUseSuggestions?: boolean,
+	isInfraMonitoring?: boolean,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [exampleQueries, setExampleQueries] = useState<TagFilter[]>([]);
@@ -91,10 +93,10 @@ export const useFetchKeysAndValues = (
 
 	const isQueryEnabled = useMemo(
 		() =>
-			query.dataSource === DataSource.METRICS
+			query.dataSource === DataSource.METRICS && !isInfraMonitoring
 				? !!query.dataSource && !!query.aggregateAttribute.dataType
 				: true,
-		[query.aggregateAttribute.dataType, query.dataSource],
+		[isInfraMonitoring, query.aggregateAttribute.dataType, query.dataSource],
 	);
 
 	const { data, isFetching, status } = useGetAggregateKeys(
@@ -109,6 +111,7 @@ export const useFetchKeysAndValues = (
 			queryKey: [searchParams],
 			enabled: isQueryEnabled && !shouldUseSuggestions,
 		},
+		isInfraMonitoring,
 	);
 
 	const {
@@ -136,6 +139,7 @@ export const useFetchKeysAndValues = (
 		value: string,
 		query: IBuilderQuery,
 		keys: BaseAutocompleteData[],
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): Promise<void> => {
 		if (!value) {
 			return;
@@ -152,17 +156,36 @@ export const useFetchKeysAndValues = (
 		setAggregateFetching(true);
 
 		try {
-			const { payload } = await getAttributesValues({
-				aggregateOperator: query.aggregateOperator,
-				dataSource: query.dataSource,
-				aggregateAttribute: query.aggregateAttribute.key,
-				attributeKey: filterAttributeKey?.key ?? tagKey,
-				filterAttributeKeyDataType: filterAttributeKey?.dataType ?? DataTypes.EMPTY,
-				tagType: filterAttributeKey?.type ?? '',
-				searchText: isInNInOperator(tagOperator)
-					? tagValue[tagValue.length - 1]?.toString() ?? '' // last element of tagvalue will be always user search value
-					: tagValue?.toString() ?? '',
-			});
+			let payload;
+			if (isInfraMonitoring) {
+				const response = await getInfraAttributesValues({
+					dataSource: DataSource.METRICS,
+					attributeKey: filterAttributeKey?.key ?? tagKey,
+					filterAttributeKeyDataType:
+						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
+					tagType: filterAttributeKey?.type ?? '',
+					searchText: isInNInOperator(tagOperator)
+						? tagValue[tagValue.length - 1]?.toString() ?? ''
+						: tagValue?.toString() ?? '',
+					aggregateOperator: query.aggregateOperator,
+					aggregateAttribute: query.aggregateAttribute.key,
+				});
+				payload = response.payload;
+			} else {
+				const response = await getAttributesValues({
+					aggregateOperator: query.aggregateOperator,
+					dataSource: query.dataSource,
+					aggregateAttribute: query.aggregateAttribute.key,
+					attributeKey: filterAttributeKey?.key ?? tagKey,
+					filterAttributeKeyDataType:
+						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
+					tagType: filterAttributeKey?.type ?? '',
+					searchText: isInNInOperator(tagOperator)
+						? tagValue[tagValue.length - 1]?.toString() ?? ''
+						: tagValue?.toString() ?? '',
+				});
+				payload = response.payload;
+			}
 
 			if (payload) {
 				const values = Object.values(payload).find((el) => !!el) || [];

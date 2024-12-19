@@ -16,7 +16,7 @@ import history from 'lib/history';
 import {
 	AlertTriangle,
 	CheckSquare,
-	RocketIcon,
+	PackagePlus,
 	UserCircle,
 } from 'lucide-react';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
@@ -119,6 +119,7 @@ function SideNav({
 
 			setMenuItems(items);
 		}
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [featureResponse.data]);
 
@@ -394,9 +395,9 @@ function SideNav({
 								onClickGetStarted(event);
 							}}
 						>
-							<RocketIcon size={16} />
+							<PackagePlus size={16} />
 
-							<div className="license tag nav-item-label"> Get Started </div>
+							<div className="license tag nav-item-label"> New source </div>
 						</Button>
 					</div>
 				)}

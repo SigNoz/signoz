@@ -247,3 +247,24 @@ func NewLicenseV3WithIDAndKey(id string, key string, data map[string]interface{}
 	licenseDataWithIdAndKey["key"] = key
 	return NewLicenseV3(licenseDataWithIdAndKey)
 }
+
+func ConvertLicenseV3ToLicenseV2(l *LicenseV3) *License {
+	planKeyFromPlanName, ok := MapOldPlanKeyToNewPlanName[l.PlanName]
+	if !ok {
+		planKeyFromPlanName = Basic
+	}
+	return &License{
+		Key:               l.Key,
+		ActivationId:      "",
+		PlanDetails:       "",
+		FeatureSet:        l.Features,
+		ValidationMessage: "",
+		IsCurrent:         l.IsCurrent,
+		LicensePlan: LicensePlan{
+			PlanKey:    planKeyFromPlanName,
+			ValidFrom:  l.ValidFrom,
+			ValidUntil: l.ValidUntil,
+			Status:     l.Status},
+	}
+
+}

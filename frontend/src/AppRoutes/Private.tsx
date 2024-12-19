@@ -10,6 +10,7 @@ import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isEmpty, isNull } from 'lodash-es';
+import { useAppContext } from 'providers/App/App';
 import { ReactChild, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -20,8 +21,10 @@ import { AppState } from 'store/reducers';
 import { getInitialUserTokenRefreshToken } from 'store/utils';
 import AppActions from 'types/actions';
 import { UPDATE_USER_IS_FETCH } from 'types/actions/app';
+import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
 import AppReducer from 'types/reducer/app';
+import { isCloudUser } from 'utils/app';
 import { routePermission } from 'utils/permission';
 
 import routes, {
@@ -47,6 +50,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		isLoggedIn: isLoggedInState,
 		isFetchingOrgPreferences,
 	} = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
 
 	const mapRoutes = useMemo(
 		() =>
@@ -75,6 +80,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	} = useLicense();
 
 	const { t } = useTranslation(['common']);
+
+	const isCloudUserVal = isCloudUser();
 
 	const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
 
@@ -143,6 +150,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const handleRedirectForOrgOnboarding = (key: string): void => {
 		if (
 			isLoggedInState &&
+			isCloudUserVal &&
 			!isFetchingOrgPreferences &&
 			!isLoadingOrgUsers &&
 			!isEmpty(orgUsers?.payload) &&
@@ -157,6 +165,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			if (isFirstTimeUser && !isOnboardingComplete) {
 				history.push(ROUTES.ONBOARDING);
 			}
+		}
+
+		if (!isCloudUserVal && key === 'ONBOARDING') {
+			history.push(ROUTES.APPLICATION);
 		}
 	};
 
@@ -241,6 +253,33 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		}
 	}, [isFetchingLicensesData]);
 
+	const navigateToWorkSpaceSuspended = (route: any): void => {
+		const { path } = route;
+
+		if (path && path !== ROUTES.WORKSPACE_SUSPENDED) {
+			history.push(ROUTES.WORKSPACE_SUSPENDED);
+
+			dispatch({
+				type: UPDATE_USER_IS_FETCH,
+				payload: {
+					isUserFetching: false,
+				},
+			});
+		}
+	};
+
+	useEffect(() => {
+		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+			const shouldSuspendWorkspace =
+				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
+				activeLicenseV3.state === LicenseState.PAYMENT_FAILED;
+
+			if (shouldSuspendWorkspace) {
+				navigateToWorkSpaceSuspended(currentRoute);
+			}
+		}
+	}, [isFetchingActiveLicenseV3, activeLicenseV3]);
+
 	useEffect(() => {
 		if (org && org.length > 0 && org[0].id !== undefined) {
 			setOrgData(org[0]);
@@ -250,7 +289,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const handleRouting = (): void => {
 		const showOrgOnboarding = shouldShowOnboarding();
 
-		if (showOrgOnboarding && !isOnboardingComplete) {
+		if (showOrgOnboarding && !isOnboardingComplete && isCloudUserVal) {
 			history.push(ROUTES.ONBOARDING);
 		} else {
 			history.push(ROUTES.APPLICATION);

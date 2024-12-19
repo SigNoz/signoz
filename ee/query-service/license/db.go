@@ -78,9 +78,7 @@ func (r *Repo) GetLicensesV3(ctx context.Context) ([]*model.LicenseV3, error) {
 	return licenseV3Data, nil
 }
 
-// GetActiveLicense fetches the latest active license from DB.
-// If the license is not present, expect a nil license and a nil error in the output.
-func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel.ApiError) {
+func (r *Repo) GetActiveLicenseV2(ctx context.Context) (*model.License, *basemodel.ApiError) {
 	var err error
 	licenses := []model.License{}
 
@@ -107,6 +105,21 @@ func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel
 	}
 
 	return active, nil
+}
+
+// GetActiveLicense fetches the latest active license from DB.
+// If the license is not present, expect a nil license and a nil error in the output.
+func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel.ApiError) {
+	activeLicenseV3, err := r.GetActiveLicenseV3(ctx)
+	if err != nil {
+		return nil, basemodel.InternalError(fmt.Errorf("failed to get active licenses from db: %v", err))
+	}
+
+	if activeLicenseV3 == nil {
+		return nil, nil
+	}
+	activeLicenseV2 := model.ConvertLicenseV3ToLicenseV2(activeLicenseV3)
+	return activeLicenseV2, nil
 }
 
 func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3, error) {

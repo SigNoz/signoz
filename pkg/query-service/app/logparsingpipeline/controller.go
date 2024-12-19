@@ -94,6 +94,45 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	return ic.GetPipelinesByVersion(ctx, cfg.Version)
 }
 
+func (ic *LogParsingPipelineController) ValidatePipelines(
+	ctx context.Context,
+	postedPipelines []PostablePipeline,
+) *model.ApiError {
+	for _, p := range postedPipelines {
+		if err := p.IsValid(); err != nil {
+			return model.BadRequestStr(err.Error())
+		}
+	}
+
+	// Also run a collector simulation to ensure config is fit
+	// for e2e use with a collector
+	pipelines := []Pipeline{}
+	for _, pp := range postedPipelines {
+		pipelines = append(pipelines, Pipeline{
+			Id:          uuid.New().String(),
+			OrderId:     pp.OrderId,
+			Enabled:     pp.Enabled,
+			Name:        pp.Name,
+			Alias:       pp.Alias,
+			Description: &pp.Description,
+			Filter:      pp.Filter,
+			Config:      pp.Config,
+		})
+	}
+
+	sampleLogs := []model.SignozLog{{Body: ""}}
+	_, _, simulationErr := SimulatePipelinesProcessing(
+		ctx, pipelines, sampleLogs,
+	)
+	if simulationErr != nil {
+		return model.BadRequest(fmt.Errorf(
+			"invalid pipelines config: %w", simulationErr.ToError(),
+		))
+	}
+
+	return nil
+}
+
 // Returns effective list of pipelines including user created
 // pipelines and pipelines for installed integrations
 func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(

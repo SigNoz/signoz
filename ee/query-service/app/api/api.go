@@ -38,9 +38,9 @@ type APIHandlerOptions struct {
 	Cache                         cache.Cache
 	Gateway                       *httputil.ReverseProxy
 	// Querier Influx Interval
-	FluxInterval     time.Duration
-	UseLogsNewSchema bool
-	UseLicensesV3    bool
+	FluxInterval      time.Duration
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 type APIHandler struct {
@@ -66,7 +66,7 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		Cache:                         opts.Cache,
 		FluxInterval:                  opts.FluxInterval,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
-		UseLicensesV3:                 opts.UseLicensesV3,
+		UseTraceNewSchema:             opts.UseTraceNewSchema,
 	})
 
 	if err != nil {
@@ -181,23 +181,16 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 		Methods(http.MethodGet)
 
 	// v3
-	router.HandleFunc("/api/v3/licenses",
-		am.ViewAccess(ah.listLicensesV3)).
-		Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v3/licenses",
-		am.AdminAccess(ah.applyLicenseV3)).
-		Methods(http.MethodPost)
-
-	router.HandleFunc("/api/v3/licenses",
-		am.AdminAccess(ah.refreshLicensesV3)).
-		Methods(http.MethodPut)
+	router.HandleFunc("/api/v3/licenses", am.ViewAccess(ah.listLicensesV3)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.applyLicenseV3)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.refreshLicensesV3)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(ah.getActiveLicenseV3)).Methods(http.MethodGet)
 
 	// v4
 	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)
 
 	// Gateway
-	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.AdminAccess(ah.ServeGatewayHTTP))
+	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.EditAccess(ah.ServeGatewayHTTP))
 
 	ah.APIHandler.RegisterRoutes(router, am)
 

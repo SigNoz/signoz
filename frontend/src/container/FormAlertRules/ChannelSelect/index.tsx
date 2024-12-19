@@ -1,24 +1,33 @@
-import { Select } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import { Select, Spin } from 'antd';
+import useComponentPermission from 'hooks/useComponentPermission';
 import { State } from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/channels/getAll';
+import AppReducer from 'types/reducer/app';
 
-import { StyledSelect } from './styles';
+import { StyledCreateChannelOption, StyledSelect } from './styles';
 
 export interface ChannelSelectProps {
 	disabled?: boolean;
 	currentValue?: string[];
 	onSelectChannels: (s: string[]) => void;
+	onDropdownOpen: () => void;
 	channels: State<PayloadProps | undefined>;
+	handleCreateNewChannels: () => void;
 }
 
 function ChannelSelect({
 	disabled,
 	currentValue,
 	onSelectChannels,
+	onDropdownOpen,
 	channels,
+	handleCreateNewChannels,
 }: ChannelSelectProps): JSX.Element | null {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -26,6 +35,10 @@ function ChannelSelect({
 	const { notifications } = useNotifications();
 
 	const handleChange = (value: string[]): void => {
+		if (value.includes('add-new-channel')) {
+			handleCreateNewChannels();
+			return;
+		}
 		onSelectChannels(value);
 	};
 
@@ -35,8 +48,26 @@ function ChannelSelect({
 			description: channels.errorMessage,
 		});
 	}
+
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const [addNewChannelPermission] = useComponentPermission(
+		['add_new_channel'],
+		role,
+	);
+
 	const renderOptions = (): ReactNode[] => {
 		const children: ReactNode[] = [];
+
+		if (!channels.loading && addNewChannelPermission) {
+			children.push(
+				<Select.Option key="add-new-channel" value="add-new-channel">
+					<StyledCreateChannelOption>
+						<PlusOutlined />
+						Create a new channel
+					</StyledCreateChannelOption>
+				</Select.Option>,
+			);
+		}
 
 		if (
 			channels.loading ||
@@ -56,6 +87,7 @@ function ChannelSelect({
 
 		return children;
 	};
+
 	return (
 		<StyledSelect
 			disabled={disabled}
@@ -65,6 +97,12 @@ function ChannelSelect({
 			placeholder={t('placeholder_channel_select')}
 			data-testid="alert-channel-select"
 			value={currentValue}
+			notFoundContent={channels.loading && <Spin size="small" />}
+			onDropdownVisibleChange={(open): void => {
+				if (open) {
+					onDropdownOpen();
+				}
+			}}
 			onChange={(value): void => {
 				handleChange(value as string[]);
 			}}
