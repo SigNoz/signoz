@@ -114,6 +114,7 @@ function TopOperationMetrics(): JSX.Element {
 			loading={isLoading}
 			renderColumnCell={renderColumnCell}
 			downloadOption={topOperationMetricsDownloadOptions}
+			sticky
 		/>
 	);
 }

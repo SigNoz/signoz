@@ -19,13 +19,14 @@ import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { Button } from '../styles';
 import { IServiceName } from '../types';
 import {
 	handleNonInQueryRange,
 	onViewTracePopupClick,
+	useGetAPMToLogsQueries,
 	useGetAPMToTracesQueries,
 } from '../util';
+import GraphControlsPanel from './GraphControlsPanel/GraphControlsPanel';
 
 function ServiceOverview({
 	onDragSelect,
@@ -34,6 +35,7 @@ function ServiceOverview({
 	selectedTimeStamp,
 	topLevelOperationsRoute,
 	topLevelOperationsIsLoading,
+	stepInterval,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
@@ -51,45 +53,56 @@ function ServiceOverview({
 		[isSpanMetricEnable, queries],
 	);
 
-	const latencyWidget = getWidgetQueryBuilder({
-		query: {
-			queryType: EQueryType.QUERY_BUILDER,
-			promql: [],
-			builder: latency({
-				servicename,
-				tagFilterItems,
-				isSpanMetricEnable,
-				topLevelOperationsRoute,
+	const latencyWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: latency({
+						servicename,
+						tagFilterItems,
+						isSpanMetricEnable,
+						topLevelOperationsRoute,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.LATENCY,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ns',
+				id: SERVICE_CHART_ID.latency,
 			}),
-			clickhouse_sql: [],
-			id: uuid(),
-		},
-		title: GraphTitle.LATENCY,
-		panelTypes: PANEL_TYPES.TIME_SERIES,
-		yAxisUnit: 'ns',
-		id: SERVICE_CHART_ID.latency,
-	});
+		[isSpanMetricEnable, servicename, tagFilterItems, topLevelOperationsRoute],
+	);
 
 	const isQueryEnabled =
 		!topLevelOperationsIsLoading && topLevelOperationsRoute.length > 0;
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
 
+	const apmToLogQuery = useGetAPMToLogsQueries({ servicename });
+
 	return (
 		<>
-			<Button
-				type="default"
-				size="small"
+			<GraphControlsPanel
 				id="Service_button"
-				onClick={onViewTracePopupClick({
+				onViewLogsClick={onViewTracePopupClick({
+					servicename,
+					selectedTraceTags,
+					timestamp: selectedTimeStamp,
+					apmToTraceQuery: apmToLogQuery,
+					isViewLogsClicked: true,
+					stepInterval,
+				})}
+				onViewTracesClick={onViewTracePopupClick({
 					servicename,
 					selectedTraceTags,
 					timestamp: selectedTimeStamp,
 					apmToTraceQuery,
+					stepInterval,
 				})}
-			>
-				View Traces
-			</Button>
+			/>
 			<Card data-testid="service_latency">
 				<GraphContainer>
 					{topLevelOperationsIsLoading && (
@@ -114,8 +127,8 @@ function ServiceOverview({
 		</>
 	);
 }
-
 interface ServiceOverviewProps {
+	stepInterval: number;
 	selectedTimeStamp: number;
 	selectedTraceTags: string;
 	onDragSelect: (start: number, end: number) => void;

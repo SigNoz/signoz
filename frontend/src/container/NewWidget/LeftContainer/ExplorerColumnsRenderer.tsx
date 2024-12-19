@@ -309,6 +309,7 @@ function ExplorerColumnsRenderer({
 						>
 							<Button
 								className="action-btn"
+								data-testid="add-columns-button"
 								icon={
 									<PlusCircle
 										size={16}

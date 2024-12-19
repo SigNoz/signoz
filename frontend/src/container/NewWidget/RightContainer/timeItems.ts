@@ -36,6 +36,10 @@ export const timeItems: timePreferance[] = [
 		name: 'Last 1 week',
 		enum: 'LAST_1_WEEK',
 	},
+	{
+		name: 'Last 1 month',
+		enum: 'LAST_1_MONTH',
+	},
 ];
 
 export interface timePreferance {
@@ -52,7 +56,8 @@ export type timePreferenceType =
 	| LAST_6_HR
 	| LAST_1_DAY
 	| LAST_3_DAYS
-	| LAST_1_WEEK;
+	| LAST_1_WEEK
+	| LAST_1_MONTH;
 
 type GLOBAL_TIME = 'GLOBAL_TIME';
 type LAST_5_MIN = 'LAST_5_MIN';
@@ -63,5 +68,6 @@ type LAST_6_HR = 'LAST_6_HR';
 type LAST_1_DAY = 'LAST_1_DAY';
 type LAST_3_DAYS = 'LAST_3_DAYS';
 type LAST_1_WEEK = 'LAST_1_WEEK';
+type LAST_1_MONTH = 'LAST_1_MONTH';
 
 export default timeItems;

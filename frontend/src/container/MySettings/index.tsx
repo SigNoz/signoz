@@ -1,12 +1,13 @@
 import './MySettings.styles.scss';
 
-import { Button, Radio, RadioChangeEvent, Space, Typography } from 'antd';
+import { Button, Radio, RadioChangeEvent, Space, Tag, Typography } from 'antd';
 import { Logout } from 'api/utils';
 import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
 import { LogOut, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 
 import Password from './Password';
+import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
 import UserInfo from './UserInfo';
 
 function MySettings(): JSX.Element {
@@ -17,7 +18,7 @@ function MySettings(): JSX.Element {
 		{
 			label: (
 				<div className="theme-option">
-					<Moon size={12} /> Dark{' '}
+					<Moon data-testid="dark-theme-icon" size={12} /> Dark{' '}
 				</div>
 			),
 			value: 'dark',
@@ -25,7 +26,10 @@ function MySettings(): JSX.Element {
 		{
 			label: (
 				<div className="theme-option">
-					<Sun size={12} /> Light{' '}
+					<Sun size={12} data-testid="light-theme-icon" /> Light{' '}
+					<Tag bordered={false} color="geekblue">
+						Beta
+					</Tag>
 				</div>
 			),
 			value: 'light',
@@ -63,6 +67,7 @@ function MySettings(): JSX.Element {
 					value={theme}
 					optionType="button"
 					buttonStyle="solid"
+					data-testid="theme-selector"
 				/>
 			</div>
 
@@ -74,7 +79,14 @@ function MySettings(): JSX.Element {
 				<Password />
 			</div>
 
-			<Button className="flexBtn" onClick={(): void => Logout()} type="primary">
+			<TimezoneAdaptation />
+
+			<Button
+				className="flexBtn"
+				onClick={(): void => Logout()}
+				type="primary"
+				data-testid="logout-button"
+			>
 				<LogOut size={12} /> Logout
 			</Button>
 		</Space>

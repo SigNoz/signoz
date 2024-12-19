@@ -31,6 +31,7 @@ import {
 	Trash2,
 	X,
 } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -207,6 +208,8 @@ function SaveView(): JSX.Element {
 		}
 	};
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	const columns: TableProps<ViewProps>['columns'] = [
 		{
 			title: 'Save View',
@@ -218,31 +221,10 @@ function SaveView(): JSX.Element {
 					bgColor = extraData.color;
 				}
 
-				const timeOptions: Intl.DateTimeFormatOptions = {
-					hour: '2-digit',
-					minute: '2-digit',
-					second: '2-digit',
-					hour12: false,
-				};
-				const formattedTime = new Date(view.createdAt).toLocaleTimeString(
-					'en-US',
-					timeOptions,
+				const formattedDateAndTime = formatTimezoneAdjustedTimestamp(
+					view.createdAt,
+					'HH:mm:ss ⎯ MMM D, YYYY (UTC Z)',
 				);
-
-				const dateOptions: Intl.DateTimeFormatOptions = {
-					month: 'short',
-					day: 'numeric',
-					year: 'numeric',
-				};
-
-				const formattedDate = new Date(view.createdAt).toLocaleDateString(
-					'en-US',
-					dateOptions,
-				);
-
-				// Combine time and date
-				const formattedDateAndTime = `${formattedTime} ⎯ ${formattedDate}`;
-
 				const isEditDeleteSupported = allowedRoles.includes(role as string);
 
 				return (
@@ -263,13 +245,19 @@ function SaveView(): JSX.Element {
 								<PenLine
 									size={14}
 									className={isEditDeleteSupported ? '' : 'hidden'}
+									data-testid="edit-view"
 									onClick={(): void => handleEditModelOpen(view, bgColor)}
 								/>
-								<Compass size={14} onClick={(): void => handleRedirectQuery(view)} />
+								<Compass
+									size={14}
+									onClick={(): void => handleRedirectQuery(view)}
+									data-testid="go-to-explorer"
+								/>
 								<Trash2
 									size={14}
 									className={isEditDeleteSupported ? '' : 'hidden'}
 									color={Color.BG_CHERRY_500}
+									data-testid="delete-view"
 									onClick={(): void => handleDeleteModelOpen(view.uuid, view.name)}
 								/>
 							</div>
@@ -347,6 +335,7 @@ function SaveView(): JSX.Element {
 						onClick={onDeleteHandler}
 						className="delete-btn"
 						disabled={isDeleteLoading}
+						data-testid="confirm-delete"
 					>
 						Delete view
 					</Button>,
@@ -371,6 +360,7 @@ function SaveView(): JSX.Element {
 						icon={<Check size={16} color={Color.BG_VANILLA_100} />}
 						onClick={onUpdateQueryHandler}
 						disabled={isViewUpdating}
+						data-testid="save-view"
 					>
 						Save changes
 					</Button>,
@@ -385,6 +375,7 @@ function SaveView(): JSX.Element {
 					<Input
 						placeholder="e.g. Crash landing view"
 						value={newViewName}
+						data-testid="view-name"
 						onChange={(e): void => setNewViewName(e.target.value)}
 					/>
 				</div>

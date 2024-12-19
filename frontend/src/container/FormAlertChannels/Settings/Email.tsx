@@ -27,6 +27,7 @@ function EmailForm({ setSelectedConfig }: EmailFormProps): JSX.Element {
 				<Input
 					onChange={handleInputChange('to')}
 					placeholder={t('placeholder_email_to')}
+					data-testid="email-to-textbox"
 				/>
 			</Form.Item>
 

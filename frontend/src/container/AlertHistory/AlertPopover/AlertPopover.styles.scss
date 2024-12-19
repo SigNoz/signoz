@@ -1,0 +1,21 @@
+.alert-popover-trigger-action {
+	cursor: pointer;
+}
+
+.alert-history-popover {
+	.ant-popover-inner {
+		border: 1px solid var(--bg-slate-400);
+
+		.lightMode & {
+			background: var(--bg-vanilla-100) !important;
+			border: 1px solid var(--bg-vanilla-300);
+		}
+	}
+	.ant-popover-arrow {
+		&::before {
+			.lightMode & {
+				background: var(--bg-vanilla-100);
+			}
+		}
+	}
+}

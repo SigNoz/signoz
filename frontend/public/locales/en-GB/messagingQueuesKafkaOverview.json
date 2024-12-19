@@ -1,0 +1,54 @@
+{
+	"breadcrumb": "Messaging Queues",
+	"header": "Kafka / Overview",
+	"overview": {
+		"title": "Start sending data in as little as 20 minutes",
+		"subtitle": "Connect and Monitor Your Data Streams"
+	},
+	"configureConsumer": {
+		"title": "Configure Consumer",
+		"description": "Add consumer data sources to gain insights and enhance monitoring.",
+		"button": "Get Started"
+	},
+	"configureProducer": {
+		"title": "Configure Producer",
+		"description": "Add producer data sources to gain insights and enhance monitoring.",
+		"button": "Get Started"
+	},
+	"monitorKafka": {
+		"title": "Monitor kafka",
+		"description": "Add your Kafka source to gain insights and enhance activity tracking.",
+		"button": "Get Started"
+	},
+	"summarySection": {
+		"viewDetailsButton": "View Details",
+		"consumer": {
+			"title": "Consumer lag view",
+			"description": "Connect and Monitor Your Data Streams"
+		},
+		"producer": {
+			"title": "Producer latency view",
+			"description": "Connect and Monitor Your Data Streams"
+		},
+		"partition": {
+			"title": "Partition Latency view",
+			"description": "Connect and Monitor Your Data Streams"
+		},
+		"dropRate": {
+			"title": "Drop Rate view",
+			"description": "Connect and Monitor Your Data Streams"
+		},
+		"metricPage": {
+			"title": "Metric View",
+			"description": "Connect and Monitor Your Data Streams"
+		}
+	},
+	"confirmModal": {
+		"content": "Before navigating to the details page, please make sure you have configured all the required setup to ensure correct data monitoring.",
+		"okText": "Proceed"
+	},
+	"overviewSummarySection": {
+		"title": "Monitor Your Data Streams",
+		"subtitle": "Monitor key Kafka metrics like consumer lag and latency to ensure efficient data flow and troubleshoot in real time."
+	}
+}

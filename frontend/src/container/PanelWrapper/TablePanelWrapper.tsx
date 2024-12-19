@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridTableComponent from 'container/GridTableComponent';
 import { GRID_TABLE_CONFIG } from 'container/GridTableComponent/config';
 
@@ -7,6 +8,7 @@ function TablePanelWrapper({
 	widget,
 	queryResponse,
 	tableProcessedDataRef,
+	searchTerm,
 }: PanelWrapperProps): JSX.Element {
 	const panelData =
 		(queryResponse.data?.payload?.data?.result?.[0] as any)?.table || [];
@@ -18,6 +20,8 @@ function TablePanelWrapper({
 			thresholds={thresholds}
 			columnUnits={widget.columnUnits}
 			tableProcessedDataRef={tableProcessedDataRef}
+			sticky={widget.panelTypes === PANEL_TYPES.TABLE}
+			searchTerm={searchTerm}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}
 		/>

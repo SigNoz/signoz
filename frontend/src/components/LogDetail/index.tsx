@@ -2,17 +2,28 @@
 import './LogDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
+import Convert from 'ansi-to-html';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ContextView from 'container/LogDetailedView/ContextView/ContextView';
+import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
-import { aggregateAttributesResourcesToString } from 'container/LogDetailedView/utils';
+import {
+	aggregateAttributesResourcesToString,
+	removeEscapeCharacters,
+	unescapeString,
+} from 'container/LogDetailedView/utils';
+import { useOptionsMenu } from 'container/OptionsMenu';
+import dompurify from 'dompurify';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import {
+	BarChart2,
 	Braces,
 	Copy,
 	Filter,
@@ -21,21 +32,27 @@ import {
 	TextSelect,
 	X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
-import { VIEW_TYPES, VIEWS } from './constants';
+import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailProps } from './LogDetail.interfaces';
 import QueryBuilderSearchWrapper from './QueryBuilderSearchWrapper';
+
+const convert = new Convert();
 
 function LogDetail({
 	log,
 	onClose,
 	onAddToQuery,
+	onGroupByAttribute,
 	onClickActionItem,
 	selectedTab,
 	isListViewPanel = false,
+	listViewPanelSelectedFields,
 }: LogDetailProps): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
@@ -45,6 +62,19 @@ function LogDetail({
 	const [contextQuery, setContextQuery] = useState<Query | undefined>();
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
+	const { initialDataSource, stagedQuery } = useQueryBuilder();
+
+	const listQuery = useMemo(() => {
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+
+		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
+	}, [stagedQuery]);
+
+	const { options } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: initialDataSource || DataSource.LOGS,
+		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
+	});
 
 	const isDarkMode = useIsDarkMode();
 
@@ -71,6 +101,17 @@ function LogDetail({
 		}
 	};
 
+	const htmlBody = useMemo(
+		() => ({
+			__html: convert.toHtml(
+				dompurify.sanitize(unescapeString(log?.body || ''), {
+					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				}),
+			),
+		}),
+		[log?.body],
+	);
+
 	const handleJSONCopy = (): void => {
 		copyToClipboard(LogJsonData);
 		notifications.success({
@@ -88,6 +129,7 @@ function LogDetail({
 	return (
 		<Drawer
 			width="60%"
+			maskStyle={{ background: 'none' }}
 			title={
 				<>
 					<Divider type="vertical" className={cx('log-type-indicator', LogType)} />
@@ -108,8 +150,8 @@ function LogDetail({
 		>
 			<div className="log-detail-drawer__log">
 				<Divider type="vertical" className={cx('log-type-indicator', logType)} />
-				<Tooltip title={log?.body} placement="left">
-					<Typography.Text className="log-body">{log?.body}</Typography.Text>
+				<Tooltip title={removeEscapeCharacters(log?.body)} placement="left">
+					<div className="log-body" dangerouslySetInnerHTML={htmlBody} />
 				</Tooltip>
 
 				<div className="log-overflow-shadow">&nbsp;</div>
@@ -153,6 +195,17 @@ function LogDetail({
 							Context
 						</div>
 					</Radio.Button>
+					<Radio.Button
+						className={
+							selectedView === VIEW_TYPES.INFRAMETRICS ? 'selected_view tab' : 'tab'
+						}
+						value={VIEW_TYPES.INFRAMETRICS}
+					>
+						<div className="view-title">
+							<BarChart2 size={14} />
+							Metrics
+						</div>
+					</Radio.Button>
 				</Radio.Group>
 
 				{selectedView === VIEW_TYPES.JSON && (
@@ -191,7 +244,10 @@ function LogDetail({
 					logData={log}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onClickActionItem}
+					onGroupByAttribute={onGroupByAttribute}
 					isListViewPanel={isListViewPanel}
+					selectedOptions={options}
+					listViewPanelSelectedFields={listViewPanelSelectedFields}
 				/>
 			)}
 			{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}
@@ -202,6 +258,15 @@ function LogDetail({
 					filters={filters}
 					contextQuery={contextQuery}
 					isEdit={isEdit}
+				/>
+			)}
+			{selectedView === VIEW_TYPES.INFRAMETRICS && (
+				<InfraMetrics
+					clusterName={log.resources_string?.[RESOURCE_KEYS.CLUSTER_NAME] || ''}
+					podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] || ''}
+					nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] || ''}
+					hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] || ''}
+					logLineTimestamp={log.timestamp.toString()}
 				/>
 			)}
 		</Drawer>

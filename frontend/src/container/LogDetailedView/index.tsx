@@ -1,6 +1,7 @@
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ROUTES from 'constants/routes';
+import { getOldLogsOperatorFromNew } from 'hooks/logs/useActiveLog';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import getStep from 'lib/getStep';
 import { getIdConditions } from 'pages/Logs/utils';
@@ -57,10 +58,11 @@ function LogDetailedView({
 
 	const handleAddToQuery = useCallback(
 		(fieldKey: string, fieldValue: string, operator: string) => {
+			const newOperator = getOldLogsOperatorFromNew(operator);
 			const updatedQueryString = getGeneratedFilterQueryString(
 				fieldKey,
 				fieldValue,
-				operator,
+				newOperator,
 				queryString,
 			);
 
@@ -71,10 +73,11 @@ function LogDetailedView({
 
 	const handleClickActionItem = useCallback(
 		(fieldKey: string, fieldValue: string, operator: string): void => {
+			const newOperator = getOldLogsOperatorFromNew(operator);
 			const updatedQueryString = getGeneratedFilterQueryString(
 				fieldKey,
 				fieldValue,
-				operator,
+				newOperator,
 				queryString,
 			);
 

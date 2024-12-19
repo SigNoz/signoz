@@ -14,9 +14,9 @@ import { Pagination } from 'hooks/queryPagination';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { HTMLAttributes, memo, useCallback, useMemo } from 'react';
+import { useTimezone } from 'providers/Timezone';
+import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
@@ -25,7 +25,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { TracesLoading } from '../TraceLoading/TraceLoading';
 import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
 import { Container, ErrorText, tableStyles } from './styles';
-import { getListColumns, getTraceLink, transformDataWithDate } from './utils';
+import { getListColumns, transformDataWithDate } from './utils';
 
 interface ListViewProps {
 	isFilterApplied: boolean;
@@ -98,29 +98,19 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		queryTableDataResult,
 	]);
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	const columns = useMemo(() => {
-		const updatedColumns = getListColumns(options?.selectColumns || []);
+		const updatedColumns = getListColumns(
+			options?.selectColumns || [],
+			formatTimezoneAdjustedTimestamp,
+		);
 		return getDraggedColumns(updatedColumns, draggedColumns);
-	}, [options?.selectColumns, draggedColumns]);
+	}, [options?.selectColumns, formatTimezoneAdjustedTimestamp, draggedColumns]);
 
 	const transformedQueryTableData = useMemo(
 		() => transformDataWithDate(queryTableData) || [],
 		[queryTableData],
-	);
-
-	const handleRow = useCallback(
-		(record: RowData): HTMLAttributes<RowData> => ({
-			onClick: (event): void => {
-				event.preventDefault();
-				event.stopPropagation();
-				if (event.metaKey || event.ctrlKey) {
-					window.open(getTraceLink(record), '_blank');
-				} else {
-					history.push(getTraceLink(record));
-				}
-			},
-		}),
-		[],
 	);
 
 	const handleDragColumn = useCallback(
@@ -164,12 +154,11 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				<ResizeTable
 					tableLayout="fixed"
 					pagination={false}
-					scroll={{ x: true }}
+					scroll={{ x: 'max-content' }}
 					loading={isFetching}
 					style={tableStyles}
 					dataSource={transformedQueryTableData}
 					columns={columns}
-					onRow={handleRow}
 					onDragColumn={handleDragColumn}
 				/>
 			)}

@@ -12,10 +12,13 @@ export const getMetricsQueryRange = async (
 	props: QueryRangePayload,
 	version: string,
 	signal: AbortSignal,
+	headers?: Record<string, string>,
 ): Promise<SuccessResponse<MetricRangePayloadV3> | ErrorResponse> => {
 	try {
 		if (version && version === ENTITY_VERSION_V4) {
-			const response = await ApiV4Instance.post('/query_range', props, { signal });
+			const response = await ApiV4Instance.post('/query_range', props, {
+				signal,
+			});
 
 			return {
 				statusCode: 200,
@@ -26,7 +29,10 @@ export const getMetricsQueryRange = async (
 			};
 		}
 
-		const response = await ApiV3Instance.post('/query_range', props, { signal });
+		const response = await ApiV3Instance.post('/query_range', props, {
+			signal,
+			headers,
+		});
 
 		return {
 			statusCode: 200,

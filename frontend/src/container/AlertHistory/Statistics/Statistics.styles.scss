@@ -1,0 +1,14 @@
+.statistics {
+	display: flex;
+	justify-content: space-between;
+	height: 280px;
+	border: 1px solid var(--bg-slate-500);
+	border-radius: 4px;
+	margin: 0 16px;
+}
+
+.lightMode {
+	.statistics {
+		border: 1px solid var(--bg-vanilla-300);
+	}
+}

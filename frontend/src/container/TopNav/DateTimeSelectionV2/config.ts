@@ -19,6 +19,7 @@ type TenDay = '10d';
 type OneWeek = '1w';
 type TwoWeek = '2w';
 type SixWeek = '6w';
+type OneMonth = '1month';
 type TwoMonths = '2months';
 type Custom = 'custom';
 
@@ -42,6 +43,7 @@ export type Time =
 	| TwelveHour
 	| TenDay
 	| TwoWeek
+	| OneMonth
 	| TwoMonths;
 
 export type TimeUnit = 'm' | 'h' | 'd' | 'w';
@@ -57,6 +59,7 @@ export const Options: Option[] = [
 	{ value: '1d', label: 'Last 1 day' },
 	{ value: '3d', label: 'Last 3 days' },
 	{ value: '1w', label: 'Last 1 week' },
+	{ value: '1month', label: 'Last 1 month' },
 	{ value: 'custom', label: 'Custom' },
 ];
 
@@ -95,6 +98,7 @@ export const RelativeDurationOptions: Option[] = [
 	{ value: '1d', label: 'Last 1 day' },
 	{ value: '3d', label: 'Last 3 days' },
 	{ value: '1w', label: 'Last 1 week' },
+	{ value: '1month', label: 'Last 1 month' },
 ];
 
 export const RelativeDurationSuggestionOptions: Option[] = [
@@ -192,6 +196,7 @@ export const routesToSkip = [
 	ROUTES.BILLING,
 	ROUTES.SUPPORT,
 	ROUTES.WORKSPACE_LOCKED,
+	ROUTES.WORKSPACE_SUSPENDED,
 	ROUTES.LOGS,
 	ROUTES.MY_SETTINGS,
 	ROUTES.LIST_LICENSES,
@@ -204,6 +209,11 @@ export const routesToSkip = [
 	ROUTES.DASHBOARD,
 	ROUTES.DASHBOARD_WIDGET,
 	ROUTES.SERVICE_TOP_LEVEL_OPERATIONS,
+	ROUTES.ALERT_HISTORY,
+	ROUTES.ALERT_OVERVIEW,
+	ROUTES.MESSAGING_QUEUES,
+	ROUTES.MESSAGING_QUEUES_DETAIL,
+	ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 ];
 
 export const routesToDisable = [ROUTES.LOGS_EXPLORER, ROUTES.LIVE_LOGS];

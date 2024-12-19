@@ -1,7 +1,10 @@
 import './Toolbar.styles.scss';
 
+import ROUTES from 'constants/routes';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 
 interface ToolbarProps {
 	showAutoRefresh: boolean;
@@ -16,12 +19,20 @@ export default function Toolbar({
 	rightActions,
 	showOldCTA,
 }: ToolbarProps): JSX.Element {
+	const { pathname } = useLocation();
+
+	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
+		pathname,
+	]);
 	return (
 		<div className="toolbar">
 			<div className="leftActions">{leftActions}</div>
 			<div className="timeRange">
 				{showOldCTA && <NewExplorerCTA />}
-				<DateTimeSelectionV2 showAutoRefresh={showAutoRefresh} />
+				<DateTimeSelectionV2
+					showAutoRefresh={showAutoRefresh}
+					showRefreshText={!isLogsExplorerPage}
+				/>
 			</div>
 			<div className="rightActions">{rightActions}</div>
 		</div>

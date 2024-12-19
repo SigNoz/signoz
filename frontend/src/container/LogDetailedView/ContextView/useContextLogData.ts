@@ -1,11 +1,14 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	getOrderByTimestamp,
 	INITIAL_PAGE_SIZE,
+	INITIAL_PAGE_SIZE_SMALL_FONT,
 	LOGS_MORE_PAGE_SIZE,
 } from 'container/LogsContextList/configs';
 import { getRequestData } from 'container/LogsContextList/utils';
+import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import {
@@ -29,6 +32,7 @@ export const useContextLogData = ({
 	filters,
 	page,
 	setPage,
+	fontSize,
 }: {
 	log: ILog;
 	query: Query;
@@ -37,6 +41,7 @@ export const useContextLogData = ({
 	filters: TagFilter | null;
 	page: number;
 	setPage: Dispatch<SetStateAction<number>>;
+	fontSize?: FontSize;
 }): {
 	logs: ILog[];
 	handleShowNextLines: () => void;
@@ -46,14 +51,21 @@ export const useContextLogData = ({
 } => {
 	const [logs, setLogs] = useState<ILog[]>([]);
 
+	const [lastLog, setLastLog] = useState<ILog>(log);
+
 	const orderByTimestamp = useMemo(() => getOrderByTimestamp(order), [order]);
 
 	const logsMorePageSize = useMemo(() => (page - 1) * LOGS_MORE_PAGE_SIZE, [
 		page,
 	]);
+
+	const initialPageSize =
+		fontSize && fontSize === FontSize.SMALL
+			? INITIAL_PAGE_SIZE_SMALL_FONT
+			: INITIAL_PAGE_SIZE;
 	const pageSize = useMemo(
-		() => (page <= 1 ? INITIAL_PAGE_SIZE : logsMorePageSize + INITIAL_PAGE_SIZE),
-		[page, logsMorePageSize],
+		() => (page <= 1 ? initialPageSize : logsMorePageSize + initialPageSize),
+		[page, initialPageSize, logsMorePageSize],
 	);
 	const isDisabledFetch = useMemo(() => logs.length < pageSize, [
 		logs.length,
@@ -71,11 +83,19 @@ export const useContextLogData = ({
 			getRequestData({
 				stagedQueryData: currentStagedQueryData,
 				query,
-				log,
+				log: lastLog,
 				orderByTimestamp,
 				page,
+				pageSize: initialPageSize,
 			}),
-		[currentStagedQueryData, page, log, query, orderByTimestamp],
+		[
+			currentStagedQueryData,
+			query,
+			lastLog,
+			orderByTimestamp,
+			page,
+			initialPageSize,
+		],
 	);
 
 	const [requestData, setRequestData] = useState<Query | null>(
@@ -95,8 +115,10 @@ export const useContextLogData = ({
 				if (order === ORDERBY_FILTERS.ASC) {
 					const reversedCurrentLogs = currentLogs.reverse();
 					setLogs([...reversedCurrentLogs]);
+					setLastLog(reversedCurrentLogs[0]);
 				} else {
 					setLogs([...currentLogs]);
+					setLastLog(currentLogs[currentLogs.length - 1]);
 				}
 			}
 		},
@@ -118,7 +140,7 @@ export const useContextLogData = ({
 		const newRequestData = getRequestData({
 			stagedQueryData: currentStagedQueryData,
 			query,
-			log,
+			log: lastLog,
 			orderByTimestamp,
 			page: page + 1,
 			pageSize: LOGS_MORE_PAGE_SIZE,
@@ -131,6 +153,7 @@ export const useContextLogData = ({
 		query,
 		page,
 		order,
+		lastLog,
 		currentStagedQueryData,
 		isDisabledFetch,
 		orderByTimestamp,
@@ -142,7 +165,7 @@ export const useContextLogData = ({
 		const newRequestData = getRequestData({
 			stagedQueryData: currentStagedQueryData,
 			query,
-			log,
+			log: lastLog,
 			orderByTimestamp,
 			page: 1,
 		});

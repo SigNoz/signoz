@@ -5,8 +5,6 @@ import './IntegrationDetailPage.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Skeleton, Typography } from 'antd';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
-import { integrationDetailMessage } from 'components/facingIssueBtn/util';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
 import { defaultTo } from 'lodash-es';
@@ -77,18 +75,6 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 				>
 					All Integrations
 				</Button>
-				<FacingIssueBtn
-					attributes={{
-						screen: 'Integrations detail page',
-						activeTab: activeDetailTab,
-						integrationTitle: integrationData?.title || '',
-						integrationId: selectedIntegration,
-					}}
-					eventName="Integrations: Facing issues in integrations"
-					buttonText="Facing issues with integration"
-					message={integrationDetailMessage(selectedIntegration)}
-					onHoverText="Click here to get help with this integration"
-				/>
 			</Flex>
 
 			{loading ? (

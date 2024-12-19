@@ -31,7 +31,7 @@ type Task interface {
 // rule type
 func newTask(taskType TaskType, name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) Task {
 	if taskType == TaskTypeCh {
-		return newRuleTask(name, file, frequency, rules, opts, notify, ruleDB)
+		return NewRuleTask(name, file, frequency, rules, opts, notify, ruleDB)
 	}
-	return newPromRuleTask(name, file, frequency, rules, opts, notify, ruleDB)
+	return NewPromRuleTask(name, file, frequency, rules, opts, notify, ruleDB)
 }

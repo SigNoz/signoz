@@ -1,0 +1,22 @@
+.alert-status-info {
+	gap: 6px;
+	color: var(--text-vanilla-400);
+	&__icon {
+		display: flex;
+		align-items: baseline;
+	}
+	&,
+	&__details {
+		display: flex;
+		align-items: center;
+	}
+	&__details {
+		gap: 3px;
+	}
+}
+
+.lightMode {
+	.alert-status-info {
+		color: var(--text-ink-400);
+	}
+}

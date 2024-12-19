@@ -10,28 +10,52 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
-
-	"github.com/go-kit/log"
-
 	"go.uber.org/zap"
 
 	"errors"
 
 	"github.com/jmoiron/sqlx"
 
-	// opentracing "github.com/opentracing/opentracing-go"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
+
+type PrepareTaskOptions struct {
+	Rule        *PostableRule
+	TaskName    string
+	RuleDB      RuleDB
+	Logger      *zap.Logger
+	Reader      interfaces.Reader
+	Cache       cache.Cache
+	FF          interfaces.FeatureLookup
+	ManagerOpts *ManagerOptions
+	NotifyFunc  NotifyFunc
+
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
+}
+
+type PrepareTestRuleOptions struct {
+	Rule        *PostableRule
+	RuleDB      RuleDB
+	Logger      *zap.Logger
+	Reader      interfaces.Reader
+	Cache       cache.Cache
+	FF          interfaces.FeatureLookup
+	ManagerOpts *ManagerOptions
+	NotifyFunc  NotifyFunc
+
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
+}
 
 const taskNamesuffix = "webAppEditor"
 
-func ruleIdFromTaskName(n string) string {
+func RuleIdFromTaskName(n string) string {
 	return strings.Split(n, "-groupname")[0]
 }
 
@@ -49,7 +73,7 @@ func prepareTaskName(ruleId interface{}) string {
 // ManagerOptions bundles options for the Manager.
 type ManagerOptions struct {
 	NotifierOpts am.NotifierOptions
-	Queriers     *Queriers
+	PqlEngine    *pqle.PqlEngine
 
 	// RepoURL is used to generate a backlink in sent alert messages
 	RepoURL string
@@ -58,11 +82,20 @@ type ManagerOptions struct {
 	DBConn *sqlx.DB
 
 	Context      context.Context
-	Logger       log.Logger
+	Logger       *zap.Logger
 	ResendDelay  time.Duration
 	DisableRules bool
 	FeatureFlags interfaces.FeatureLookup
 	Reader       interfaces.Reader
+	Cache        cache.Cache
+
+	EvalDelay time.Duration
+
+	PrepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
+
+	UseLogsNewSchema    bool
+	UseTraceNewSchema   bool
+	PrepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
 }
 
 // The Manager manages recording and alerting rules.
@@ -78,10 +111,16 @@ type Manager struct {
 	// datastore to store alert definitions
 	ruleDB RuleDB
 
-	logger log.Logger
+	logger *zap.Logger
 
-	featureFlags interfaces.FeatureLookup
-	reader       interfaces.Reader
+	featureFlags        interfaces.FeatureLookup
+	reader              interfaces.Reader
+	cache               cache.Cache
+	prepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
+	prepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
+
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -94,7 +133,70 @@ func defaultOptions(o *ManagerOptions) *ManagerOptions {
 	if o.ResendDelay == time.Duration(0) {
 		o.ResendDelay = 1 * time.Minute
 	}
+	if o.Logger == nil {
+		o.Logger = zap.L()
+	}
+	if o.PrepareTaskFunc == nil {
+		o.PrepareTaskFunc = defaultPrepareTaskFunc
+	}
+	if o.PrepareTestRuleFunc == nil {
+		o.PrepareTestRuleFunc = defaultTestNotification
+	}
 	return o
+}
+
+func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
+
+	rules := make([]Rule, 0)
+	var task Task
+
+	ruleId := RuleIdFromTaskName(opts.TaskName)
+	if opts.Rule.RuleType == RuleTypeThreshold {
+		// create a threshold rule
+		tr, err := NewThresholdRule(
+			ruleId,
+			opts.Rule,
+			opts.FF,
+			opts.Reader,
+			opts.UseLogsNewSchema,
+			opts.UseTraceNewSchema,
+			WithEvalDelay(opts.ManagerOpts.EvalDelay),
+		)
+
+		if err != nil {
+			return task, err
+		}
+
+		rules = append(rules, tr)
+
+		// create ch rule task for evalution
+		task = newTask(TaskTypeCh, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+
+	} else if opts.Rule.RuleType == RuleTypeProm {
+
+		// create promql rule
+		pr, err := NewPromRule(
+			ruleId,
+			opts.Rule,
+			opts.Logger,
+			opts.Reader,
+			opts.ManagerOpts.PqlEngine,
+		)
+
+		if err != nil {
+			return task, err
+		}
+
+		rules = append(rules, pr)
+
+		// create promql rule task for evalution
+		task = newTask(TaskTypeProm, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+
+	} else {
+		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, RuleTypeProm, RuleTypeThreshold)
+	}
+
+	return task, nil
 }
 
 // NewManager returns an implementation of Manager, ready to be started
@@ -111,20 +213,28 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		return nil, err
 	}
 
-	db := NewRuleDB(o.DBConn)
+	amManager, err := am.New()
+	if err != nil {
+		return nil, err
+	}
+
+	db := NewRuleDB(o.DBConn, amManager)
 
 	telemetry.GetInstance().SetAlertsInfoCallback(db.GetAlertsInfo)
 
 	m := &Manager{
-		tasks:        map[string]Task{},
-		rules:        map[string]Rule{},
-		notifier:     notifier,
-		ruleDB:       db,
-		opts:         o,
-		block:        make(chan struct{}),
-		logger:       o.Logger,
-		featureFlags: o.FeatureFlags,
-		reader:       o.Reader,
+		tasks:               map[string]Task{},
+		rules:               map[string]Rule{},
+		notifier:            notifier,
+		ruleDB:              db,
+		opts:                o,
+		block:               make(chan struct{}),
+		logger:              o.Logger,
+		featureFlags:        o.FeatureFlags,
+		reader:              o.Reader,
+		cache:               o.Cache,
+		prepareTaskFunc:     o.PrepareTaskFunc,
+		prepareTestRuleFunc: o.PrepareTestRuleFunc,
 	}
 	return m, nil
 }
@@ -160,32 +270,20 @@ func (m *Manager) initiate() error {
 
 	for _, rec := range storedRules {
 		taskName := fmt.Sprintf("%d-groupname", rec.Id)
-		parsedRule, errs := ParsePostableRule([]byte(rec.Data))
+		parsedRule, err := ParsePostableRule([]byte(rec.Data))
 
-		if len(errs) > 0 {
-			if errs[0].Error() == "failed to load json" {
+		if err != nil {
+			if errors.Is(err, ErrFailedToParseJSON) {
 				zap.L().Info("failed to load rule in json format, trying yaml now:", zap.String("name", taskName))
 
 				// see if rule is stored in yaml format
-				parsedRule, errs = parsePostableRule([]byte(rec.Data), "yaml")
+				parsedRule, err = parsePostableRule([]byte(rec.Data), RuleDataKindYaml)
 
-				if parsedRule == nil {
+				if err != nil {
 					zap.L().Error("failed to parse and initialize yaml rule", zap.String("name", taskName), zap.Error(err))
 					// just one rule is being parsed so expect just one error
-					loadErrors = append(loadErrors, errs[0])
+					loadErrors = append(loadErrors, err)
 					continue
-				} else {
-					// rule stored in yaml, so migrate it to json
-					zap.L().Info("migrating rule from JSON to yaml", zap.String("name", taskName))
-					ruleJSON, err := json.Marshal(parsedRule)
-					if err == nil {
-						taskName, _, err := m.ruleDB.EditRuleTx(context.Background(), string(ruleJSON), fmt.Sprintf("%d", rec.Id))
-						if err != nil {
-							zap.L().Error("failed to migrate rule", zap.String("name", taskName), zap.Error(err))
-						} else {
-							zap.L().Info("migrated rule from yaml to json", zap.String("name", taskName))
-						}
-					}
 				}
 			} else {
 				zap.L().Error("failed to parse and initialize rule", zap.String("name", taskName), zap.Error(err))
@@ -236,26 +334,10 @@ func (m *Manager) Stop() {
 // datastore and also updates the rule executor
 func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error {
 
-	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
+	parsedRule, err := ParsePostableRule([]byte(ruleStr))
 
-	currentRule, err := m.GetRule(ctx, id)
 	if err != nil {
-		zap.L().Error("failed to get the rule from rule db", zap.String("id", id), zap.Error(err))
 		return err
-	}
-
-	if !checkIfTraceOrLogQB(&currentRule.PostableRule) {
-		// check if the new rule uses any feature that is not enabled
-		err = m.checkFeatureUsage(parsedRule)
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(errs) > 0 {
-		zap.L().Error("failed to parse rules", zap.Errors("errors", errs))
-		// just one rule is being parsed so expect just one error
-		return errs[0]
 	}
 
 	taskName, _, err := m.ruleDB.EditRuleTx(ctx, ruleStr, id)
@@ -270,20 +352,6 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error
 		}
 	}
 
-	// update feature usage if the current rule is not a trace or log query builder
-	if !checkIfTraceOrLogQB(&currentRule.PostableRule) {
-		err = m.updateFeatureUsage(parsedRule, 1)
-		if err != nil {
-			zap.L().Error("error updating feature usage", zap.Error(err))
-		}
-		// update feature usage if the new rule is not a trace or log query builder and the current rule is
-	} else if !checkIfTraceOrLogQB(parsedRule) {
-		err = m.updateFeatureUsage(&currentRule.PostableRule, -1)
-		if err != nil {
-			zap.L().Error("error updating feature usage", zap.Error(err))
-		}
-	}
-
 	return nil
 }
 
@@ -293,11 +361,28 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 
 	zap.L().Debug("editing a rule task", zap.String("name", taskName))
 
-	newTask, err := m.prepareTask(false, rule, taskName)
+	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
+		Rule:        rule,
+		TaskName:    taskName,
+		RuleDB:      m.ruleDB,
+		Logger:      m.logger,
+		Reader:      m.reader,
+		Cache:       m.cache,
+		FF:          m.featureFlags,
+		ManagerOpts: m.opts,
+		NotifyFunc:  m.prepareNotifyFunc(),
+
+		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
+		UseTraceNewSchema: m.opts.UseTraceNewSchema,
+	})
 
 	if err != nil {
 		zap.L().Error("loading tasks failed", zap.Error(err))
 		return errors.New("error preparing rule with given parameters, previous rule set restored")
+	}
+
+	for _, r := range newTask.Rules() {
+		m.rules[r.ID()] = r
 	}
 
 	// If there is an old task with the same identifier, stop it and wait for
@@ -333,13 +418,6 @@ func (m *Manager) DeleteRule(ctx context.Context, id string) error {
 		return fmt.Errorf("delete rule received an rule id in invalid format, must be a number")
 	}
 
-	// update feature usage
-	rule, err := m.GetRule(ctx, id)
-	if err != nil {
-		zap.L().Error("failed to get the rule from rule db", zap.String("id", id), zap.Error(err))
-		return err
-	}
-
 	taskName := prepareTaskName(int64(idInt))
 	if !m.opts.DisableRules {
 		m.deleteTask(taskName)
@@ -348,11 +426,6 @@ func (m *Manager) DeleteRule(ctx context.Context, id string) error {
 	if _, _, err := m.ruleDB.DeleteRuleTx(ctx, id); err != nil {
 		zap.L().Error("failed to delete the rule from rule db", zap.String("id", id), zap.Error(err))
 		return err
-	}
-
-	err = m.updateFeatureUsage(&rule.PostableRule, -1)
-	if err != nil {
-		zap.L().Error("error updating feature usage", zap.Error(err))
 	}
 
 	return nil
@@ -367,7 +440,7 @@ func (m *Manager) deleteTask(taskName string) {
 	if ok {
 		oldg.Stop()
 		delete(m.tasks, taskName)
-		delete(m.rules, ruleIdFromTaskName(taskName))
+		delete(m.rules, RuleIdFromTaskName(taskName))
 		zap.L().Debug("rule task deleted", zap.String("name", taskName))
 	} else {
 		zap.L().Info("rule not found for deletion", zap.String("name", taskName))
@@ -377,18 +450,10 @@ func (m *Manager) deleteTask(taskName string) {
 // CreateRule stores rule def into db and also
 // starts an executor for the rule
 func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule, error) {
-	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
+	parsedRule, err := ParsePostableRule([]byte(ruleStr))
 
-	// check if the rule uses any feature that is not enabled
-	err := m.checkFeatureUsage(parsedRule)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(errs) > 0 {
-		zap.L().Error("failed to parse rules", zap.Errors("errors", errs))
-		// just one rule is being parsed so expect just one error
-		return nil, errs[0]
 	}
 
 	lastInsertId, tx, err := m.ruleDB.CreateRuleTx(ctx, ruleStr)
@@ -407,11 +472,6 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 		return nil, err
 	}
 
-	// update feature usage
-	err = m.updateFeatureUsage(parsedRule, 1)
-	if err != nil {
-		zap.L().Error("error updating feature usage", zap.Error(err))
-	}
 	gettableRule := &GettableRule{
 		Id:           fmt.Sprintf("%d", lastInsertId),
 		PostableRule: *parsedRule,
@@ -419,69 +479,33 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 	return gettableRule, nil
 }
 
-func (m *Manager) updateFeatureUsage(parsedRule *PostableRule, usage int64) error {
-	isTraceOrLogQB := checkIfTraceOrLogQB(parsedRule)
-	if isTraceOrLogQB {
-		feature, err := m.featureFlags.GetFeatureFlag(model.QueryBuilderAlerts)
-		if err != nil {
-			return err
-		}
-		feature.Usage += usage
-		if feature.Usage == feature.UsageLimit && feature.UsageLimit != -1 {
-			feature.Active = false
-		}
-		if feature.Usage < feature.UsageLimit || feature.UsageLimit == -1 {
-			feature.Active = true
-		}
-		err = m.featureFlags.UpdateFeatureFlag(feature)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (m *Manager) checkFeatureUsage(parsedRule *PostableRule) error {
-	isTraceOrLogQB := checkIfTraceOrLogQB(parsedRule)
-	if isTraceOrLogQB {
-		err := m.featureFlags.CheckFeature(model.QueryBuilderAlerts)
-		if err != nil {
-			switch err.(type) {
-			case model.ErrFeatureUnavailable:
-				zap.L().Error("feature unavailable", zap.String("featureKey", model.QueryBuilderAlerts), zap.Error(err))
-				return model.BadRequest(err)
-			default:
-				zap.L().Error("feature check failed", zap.String("featureKey", model.QueryBuilderAlerts), zap.Error(err))
-				return model.BadRequest(err)
-			}
-		}
-	}
-	return nil
-}
-
-func checkIfTraceOrLogQB(parsedRule *PostableRule) bool {
-	if parsedRule != nil {
-		if parsedRule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
-			for _, query := range parsedRule.RuleCondition.CompositeQuery.BuilderQueries {
-				if query.DataSource == v3.DataSourceTraces || query.DataSource == v3.DataSourceLogs {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
 func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
 	zap.L().Debug("adding a new rule task", zap.String("name", taskName))
-	newTask, err := m.prepareTask(false, rule, taskName)
+	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
+		Rule:        rule,
+		TaskName:    taskName,
+		RuleDB:      m.ruleDB,
+		Logger:      m.logger,
+		Reader:      m.reader,
+		Cache:       m.cache,
+		FF:          m.featureFlags,
+		ManagerOpts: m.opts,
+		NotifyFunc:  m.prepareNotifyFunc(),
+
+		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
+		UseTraceNewSchema: m.opts.UseTraceNewSchema,
+	})
 
 	if err != nil {
 		zap.L().Error("creating rule task failed", zap.String("name", taskName), zap.Error(err))
 		return errors.New("error loading rules, previous rule set restored")
+	}
+
+	for _, r := range newTask.Rules() {
+		m.rules[r.ID()] = r
 	}
 
 	// If there is an another task with the same identifier, raise an error
@@ -500,74 +524,6 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 
 	m.tasks[taskName] = newTask
 	return nil
-}
-
-// prepareTask prepares a rule task from postable rule
-func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string) (Task, error) {
-
-	if acquireLock {
-		m.mtx.Lock()
-		defer m.mtx.Unlock()
-	}
-
-	rules := make([]Rule, 0)
-	var task Task
-
-	if r.AlertName == "" {
-		zap.L().Error("task load failed, at least one rule must be set", zap.String("name", taskName))
-		return task, fmt.Errorf("task load failed, at least one rule must be set")
-	}
-
-	ruleId := ruleIdFromTaskName(taskName)
-	if r.RuleType == RuleTypeThreshold {
-		// create a threshold rule
-		tr, err := NewThresholdRule(
-			ruleId,
-			r,
-			ThresholdRuleOpts{},
-			m.featureFlags,
-			m.reader,
-		)
-
-		if err != nil {
-			return task, err
-		}
-
-		rules = append(rules, tr)
-
-		// create ch rule task for evalution
-		task = newTask(TaskTypeCh, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc(), m.ruleDB)
-
-		// add rule to memory
-		m.rules[ruleId] = tr
-
-	} else if r.RuleType == RuleTypeProm {
-
-		// create promql rule
-		pr, err := NewPromRule(
-			ruleId,
-			r,
-			log.With(m.logger, "alert", r.AlertName),
-			PromRuleOpts{},
-		)
-
-		if err != nil {
-			return task, err
-		}
-
-		rules = append(rules, pr)
-
-		// create promql rule task for evalution
-		task = newTask(TaskTypeProm, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc(), m.ruleDB)
-
-		// add rule to memory
-		m.rules[ruleId] = pr
-
-	} else {
-		return nil, fmt.Errorf(fmt.Sprintf("unsupported rule type. Supported types: %s, %s", RuleTypeProm, RuleTypeThreshold))
-	}
-
-	return task, nil
 }
 
 // RuleTasks returns the list of manager's rule tasks.
@@ -705,10 +661,10 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*GettableRules, error) {
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
-			ruleResponse.State = StateDisabled.String()
+			ruleResponse.State = model.StateDisabled
 			ruleResponse.Disabled = true
 		} else {
-			ruleResponse.State = rm.State().String()
+			ruleResponse.State = rm.State()
 		}
 		ruleResponse.CreatedAt = s.CreatedAt
 		ruleResponse.CreatedBy = s.CreatedBy
@@ -732,10 +688,10 @@ func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error)
 	r.Id = fmt.Sprintf("%d", s.Id)
 	// fetch state of rule from memory
 	if rm, ok := m.rules[r.Id]; !ok {
-		r.State = StateDisabled.String()
+		r.State = model.StateDisabled
 		r.Disabled = true
 	} else {
-		r.State = rm.State().String()
+		r.State = rm.State()
 	}
 	r.CreatedAt = s.CreatedAt
 	r.CreatedBy = s.CreatedBy
@@ -802,11 +758,9 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 	}
 
 	// patchedRule is combo of stored rule and patch received in the request
-	patchedRule, errs := parseIntoRule(storedRule, []byte(ruleStr), "json")
-	if len(errs) > 0 {
-		zap.L().Error("failed to parse rules", zap.Errors("errors", errs))
-		// just one rule is being parsed so expect just one error
-		return nil, errs[0]
+	patchedRule, err := parseIntoRule(storedRule, []byte(ruleStr), "json")
+	if err != nil {
+		return nil, err
 	}
 
 	// deploy or un-deploy task according to patched (new) rule state
@@ -841,10 +795,10 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 
 	// fetch state of rule from memory
 	if rm, ok := m.rules[ruleId]; !ok {
-		response.State = StateDisabled.String()
+		response.State = model.StateDisabled
 		response.Disabled = true
 	} else {
-		response.State = rm.State().String()
+		response.State = rm.State()
 	}
 
 	return &response, nil
@@ -854,83 +808,24 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 // sends a test notification. returns alert count and error (if any)
 func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *model.ApiError) {
 
-	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
+	parsedRule, err := ParsePostableRule([]byte(ruleStr))
 
-	if len(errs) > 0 {
-		zap.L().Error("failed to parse rule from request", zap.Errors("errors", errs))
-		return 0, newApiErrorBadData(errs[0])
-	}
-
-	var alertname = parsedRule.AlertName
-	if alertname == "" {
-		// alertname is not mandatory for testing, so picking
-		// a random string here
-		alertname = uuid.New().String()
-	}
-
-	// append name to indicate this is test alert
-	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, TestAlertPostFix)
-
-	var rule Rule
-	var err error
-
-	if parsedRule.RuleType == RuleTypeThreshold {
-
-		// add special labels for test alerts
-		parsedRule.Annotations[labels.AlertSummaryLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
-		parsedRule.Labels[labels.RuleSourceLabel] = ""
-		parsedRule.Labels[labels.AlertRuleIdLabel] = ""
-
-		// create a threshold rule
-		rule, err = NewThresholdRule(
-			alertname,
-			parsedRule,
-			ThresholdRuleOpts{
-				SendUnmatched: true,
-				SendAlways:    true,
-			},
-			m.featureFlags,
-			m.reader,
-		)
-
-		if err != nil {
-			zap.L().Error("failed to prepare a new threshold rule for test", zap.String("name", rule.Name()), zap.Error(err))
-			return 0, newApiErrorBadData(err)
-		}
-
-	} else if parsedRule.RuleType == RuleTypeProm {
-
-		// create promql rule
-		rule, err = NewPromRule(
-			alertname,
-			parsedRule,
-			log.With(m.logger, "alert", alertname),
-			PromRuleOpts{
-				SendAlways: true,
-			},
-		)
-
-		if err != nil {
-			zap.L().Error("failed to prepare a new promql rule for test", zap.String("name", rule.Name()), zap.Error(err))
-			return 0, newApiErrorBadData(err)
-		}
-	} else {
-		return 0, newApiErrorBadData(fmt.Errorf("failed to derive ruletype with given information"))
-	}
-
-	// set timestamp to current utc time
-	ts := time.Now().UTC()
-
-	count, err := rule.Eval(ctx, ts, m.opts.Queriers)
 	if err != nil {
-		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
-		return 0, newApiErrorInternal(fmt.Errorf("rule evaluation failed"))
+		return 0, model.BadRequest(err)
 	}
-	alertsFound, ok := count.(int)
-	if !ok {
-		return 0, newApiErrorInternal(fmt.Errorf("something went wrong"))
-	}
-	rule.SendAlerts(ctx, ts, 0, time.Duration(1*time.Minute), m.prepareNotifyFunc())
 
-	return alertsFound, nil
+	alertCount, apiErr := m.prepareTestRuleFunc(PrepareTestRuleOptions{
+		Rule:              parsedRule,
+		RuleDB:            m.ruleDB,
+		Logger:            m.logger,
+		Reader:            m.reader,
+		Cache:             m.cache,
+		FF:                m.featureFlags,
+		ManagerOpts:       m.opts,
+		NotifyFunc:        m.prepareNotifyFunc(),
+		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
+		UseTraceNewSchema: m.opts.UseTraceNewSchema,
+	})
+
+	return alertCount, apiErr
 }

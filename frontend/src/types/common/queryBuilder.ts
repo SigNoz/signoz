@@ -153,11 +153,13 @@ export enum LogsAggregatorOperator {
 }
 
 export enum QueryFunctionsTypes {
+	ANOMALY = 'anomaly',
 	CUTOFF_MIN = 'cutOffMin',
 	CUTOFF_MAX = 'cutOffMax',
 	CLAMP_MIN = 'clampMin',
 	CLAMP_MAX = 'clampMax',
 	ABSOLUTE = 'absolute',
+	RUNNING_DIFF = 'runningDiff',
 	LOG_2 = 'log2',
 	LOG_10 = 'log10',
 	CUMULATIVE_SUM = 'cumSum',
@@ -188,6 +190,8 @@ export type QueryBuilderData = {
 export type QueryBuilderContextType = {
 	currentQuery: Query;
 	stagedQuery: Query | null;
+	lastUsedQuery: number | null;
+	setLastUsedQuery: Dispatch<SetStateAction<number | null>>;
 	supersetQuery: Query;
 	setSupersetQuery: Dispatch<SetStateAction<QueryState>>;
 	initialDataSource: DataSource | null;

@@ -12,7 +12,7 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
-import { isEmpty, cloneDeep } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -23,13 +23,15 @@ export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
 	version: string,
 	signal?: AbortSignal,
+	headers?: Record<string, string>,
+	isInfraMonitoring?: boolean,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
-
 	const response = await getMetricsQueryRange(
 		queryPayload,
 		version || 'v3',
 		signal,
+		headers,
 	);
 
 	if (response.statusCode >= 400) {
@@ -69,6 +71,19 @@ export async function GetMetricQueryRange(
 			},
 		);
 	}
+
+	if (response.payload?.data?.newResult?.data?.resultType === 'anomaly') {
+		response.payload.data.newResult.data.result = response.payload.data.newResult.data.result.map(
+			(queryData) => {
+				if (legendMap[queryData.queryName]) {
+					queryData.legend = legendMap[queryData.queryName];
+				}
+
+				return queryData;
+			},
+		);
+	}
+
 	return response;
 }
 
@@ -76,7 +91,7 @@ export interface GetQueryResultsProps {
 	query: Query;
 	graphType: PANEL_TYPES;
 	selectedTime: timePreferenceType;
-	globalSelectedInterval: Time | TimeV2 | CustomTimeType;
+	globalSelectedInterval?: Time | TimeV2 | CustomTimeType;
 	variables?: Record<string, unknown>;
 	params?: Record<string, unknown>;
 	fillGaps?: boolean;
@@ -85,4 +100,6 @@ export interface GetQueryResultsProps {
 		pagination?: Pagination;
 		selectColumns?: any;
 	};
+	start?: number;
+	end?: number;
 }

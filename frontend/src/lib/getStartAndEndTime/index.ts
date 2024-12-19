@@ -56,6 +56,10 @@ const GetStartAndEndTime = ({
 		return calculateStartAndEndTime(24 * 60 * 7, endString);
 	}
 
+	if (type === 'LAST_1_MONTH') {
+		return calculateStartAndEndTime(24 * 60 * 30, endString);
+	}
+
 	return {
 		start: getMicroSeconds({ time: minTime / 1000000 }),
 		end: getMicroSeconds({ time: maxTime / 1000000 }),

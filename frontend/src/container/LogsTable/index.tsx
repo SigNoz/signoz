@@ -10,11 +10,14 @@ import LogsTableView from 'components/Logs/TableView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import { useOptionsMenu } from 'container/OptionsMenu';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';
 import { AppState } from 'store/reducers';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
 // interfaces
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -35,6 +38,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		activeLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 		onSetActiveLog,
 	} = useActiveLog();
 
@@ -55,6 +59,14 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		liveTail,
 	]);
 
+	const { options } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		// this component will alwyays be called on old logs explorer page itself!
+		dataSource: DataSource.LOGS,
+		// and we do not have table / timeseries aggregated views in the old logs explorer!
+		aggregateOperator: StringOperators.NOOP,
+	});
+
 	const getItemContent = useCallback(
 		(index: number): JSX.Element => {
 			const log = logs[index];
@@ -66,6 +78,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 						data={log}
 						linesPerRow={linesPerRow}
 						selectedFields={selected}
+						fontSize={options.fontSize}
 					/>
 				);
 			}
@@ -78,10 +91,19 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 					linesPerRow={linesPerRow}
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
+					fontSize={options.fontSize}
 				/>
 			);
 		},
-		[logs, viewMode, selected, onAddToQuery, onSetActiveLog, linesPerRow],
+		[
+			logs,
+			viewMode,
+			selected,
+			linesPerRow,
+			onAddToQuery,
+			onSetActiveLog,
+			options.fontSize,
+		],
 	);
 
 	const renderContent = useMemo(() => {
@@ -92,6 +114,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 					logs={logs}
 					fields={selected}
 					linesPerRow={linesPerRow}
+					fontSize={options.fontSize}
 				/>
 			);
 		}
@@ -103,7 +126,15 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 				</OverlayScrollbar>
 			</Card>
 		);
-	}, [getItemContent, linesPerRow, logs, onSetActiveLog, selected, viewMode]);
+	}, [
+		getItemContent,
+		linesPerRow,
+		logs,
+		onSetActiveLog,
+		options.fontSize,
+		selected,
+		viewMode,
+	]);
 
 	if (isLoading) {
 		return <Spinner height={20} tip="Getting Logs" />;
@@ -126,6 +157,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 				selectedTab={VIEW_TYPES.OVERVIEW}
 				log={activeLog}
 				onClose={onClearActiveLog}
+				onGroupByAttribute={onGroupByAttribute}
 				onAddToQuery={onAddToQuery}
 				onClickActionItem={onAddToQuery}
 			/>

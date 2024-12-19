@@ -15,6 +15,10 @@
 	.y-axis-unit-selector {
 		flex-direction: row !important;
 		align-items: center;
+
+		.heading {
+			width: 20px;
+		}
 	}
 }
 

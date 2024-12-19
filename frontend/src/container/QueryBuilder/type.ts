@@ -15,4 +15,6 @@ export type Option = {
 	label: string;
 	selected?: boolean;
 	dataType?: string;
+	isIndexed?: boolean;
+	type?: string;
 };

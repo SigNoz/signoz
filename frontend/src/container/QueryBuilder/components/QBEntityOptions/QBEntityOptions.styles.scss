@@ -44,6 +44,12 @@
 			border: 1px solid rgba(242, 71, 105, 0.2) !important;
 			background: rgba(242, 71, 105, 0.1) !important;
 
+			&.sync-btn {
+				border: 1px solid rgba(78, 116, 248, 0.2) !important;
+				background: rgba(78, 116, 248, 0.1) !important;
+				color: var(--bg-robin-500) !important;
+			}
+
 			&:hover {
 				border: 1px solid rgba(242, 71, 105, 0.4) !important;
 				color: var(--bg-sakura-400) !important;

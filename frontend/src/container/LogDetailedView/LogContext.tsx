@@ -2,6 +2,7 @@ import './LogContext.styles.scss';
 
 import RawLogView from 'components/Logs/RawLogView';
 import LogsContextList from 'container/LogsContextList';
+import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -37,6 +38,7 @@ function LogContext({
 				isTextOverflowEllipsisDisabled={false}
 				data={log}
 				linesPerRow={1}
+				fontSize={FontSize.SMALL}
 			/>
 			<LogsContextList
 				order={ORDERBY_FILTERS.DESC}

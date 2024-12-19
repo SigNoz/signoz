@@ -1,4 +1,5 @@
 import { Button, Form, Input, Space, Switch, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import editOrg from 'api/user/editOrg';
 import getInviteDetails from 'api/user/getInviteDetails';
 import loginApi from 'api/user/login';
@@ -7,7 +8,6 @@ import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -57,7 +57,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		false,
 	);
 	const { search } = useLocation();
-	const { trackEvent } = useAnalytics();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
@@ -88,7 +87,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			form.setFieldValue('organizationName', responseDetails.organization);
 			setIsDetailsDisable(true);
 
-			trackEvent('Account Creation Page Visited', {
+			logEvent('Account Creation Page Visited', {
 				email: responseDetails.email,
 				name: responseDetails.name,
 				company_name: responseDetails.organization,
@@ -241,7 +240,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				setLoading(true);
 
 				if (!isPasswordValid(values.password)) {
-					trackEvent('Account Creation Page - Invalid Password', {
+					logEvent('Account Creation Page - Invalid Password', {
 						email: values.email,
 						name: values.firstName,
 					});
@@ -253,7 +252,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				if (isPreferenceVisible) {
 					await commonHandler(values, onAdminAfterLogin);
 				} else {
-					trackEvent('Account Created Successfully', {
+					logEvent('Account Created Successfully', {
 						email: values.email,
 						name: values.firstName,
 					});
@@ -304,7 +303,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		return (
 			loading ||
 			!values.email ||
-			!values.organizationName ||
 			(!precheck.sso && (!values.password || !values.confirmPassword)) ||
 			(!isDetailsDisable && !values.firstName) ||
 			confirmPasswordError ||
@@ -355,7 +353,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						<FormContainer.Item noStyle name="organizationName">
 							<Input
 								placeholder={t('placeholder_orgname')}
-								required
 								id="organizationName"
 								disabled={isDetailsDisable}
 							/>

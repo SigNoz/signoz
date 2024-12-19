@@ -6,17 +6,25 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Input, Select, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
-import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
+import {
+	ModulesMap,
+	useCases,
+} from 'container/OnboardingContainer/OnboardingContainer';
 import {
 	getDataSources,
 	getSupportedFrameworks,
 	hasFrameworks,
+	messagingQueueKakfaSupportedDataSources,
 } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check } from 'lucide-react';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { Blocks, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useHistory } from 'react-router-dom';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 export interface DataSourceType {
@@ -29,6 +37,9 @@ export interface DataSourceType {
 export default function DataSource(): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation(['common']);
+	const history = useHistory();
+
+	const getStartedSource = useUrlQuery().get(QueryParams.getStartedSource);
 
 	const {
 		serviceName,
@@ -40,6 +51,9 @@ export default function DataSource(): JSX.Element {
 		updateServiceName,
 		updateSelectedFramework,
 	} = useOnboardingContext();
+
+	const isKafkaAPM =
+		getStartedSource === 'kafka' && selectedModule?.id === ModulesMap.APM;
 
 	const [supportedDataSources, setSupportedDataSources] = useState<
 		DataSourceType[]
@@ -127,6 +141,15 @@ export default function DataSource(): JSX.Element {
 		}
 	};
 
+	const goToIntegrationsPage = (): void => {
+		logEvent('Onboarding V2: Go to integrations', {
+			module: selectedModule?.id,
+			dataSource: selectedDataSource?.name,
+			framework: selectedFramework,
+		});
+		history.push(ROUTES.INTEGRATIONS);
+	};
+
 	return (
 		<div className="module-container">
 			<Typography.Text className="data-source-title">
@@ -138,13 +161,19 @@ export default function DataSource(): JSX.Element {
 						className={cx(
 							'supported-language',
 							selectedDataSource?.name === dataSource.name ? 'selected' : '',
+							isKafkaAPM &&
+								!messagingQueueKakfaSupportedDataSources.includes(dataSource?.id || '')
+								? 'disabled'
+								: '',
 						)}
 						key={dataSource.name}
 						onClick={(): void => {
-							updateSelectedFramework(null);
-							updateSelectedEnvironment(null);
-							updateSelectedDataSource(dataSource);
-							form.setFieldsValue({ selectFramework: null });
+							if (!isKafkaAPM) {
+								updateSelectedFramework(null);
+								updateSelectedEnvironment(null);
+								updateSelectedDataSource(dataSource);
+								form.setFieldsValue({ selectFramework: null });
+							}
 						}}
 					>
 						<div>
@@ -156,7 +185,7 @@ export default function DataSource(): JSX.Element {
 						</div>
 
 						<div>
-							<Typography.Text className="serviceName">
+							<Typography.Text className="dataSourceName">
 								{dataSource.name}
 							</Typography.Text>
 						</div>
@@ -213,6 +242,20 @@ export default function DataSource(): JSX.Element {
 								)}
 							</>
 						)}
+
+						<div className="request-entity-container intgeration-page-container">
+							<Typography.Text className="intgeration-page-container-text">
+								Not able to find datasources you are looking for, check our Integrations
+								page which allows more sources of sending data
+							</Typography.Text>
+							<Button
+								onClick={goToIntegrationsPage}
+								icon={<Blocks size={14} />}
+								className="navigate-integrations-page-btn"
+							>
+								Go to integrations
+							</Button>
+						</div>
 
 						<div className="request-entity-container">
 							<Typography.Text>

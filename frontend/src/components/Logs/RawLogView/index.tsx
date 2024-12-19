@@ -4,8 +4,8 @@ import Convert from 'ansi-to-html';
 import { DrawerProps } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES, VIEWS } from 'components/LogDetail/constants';
+import { unescapeString } from 'container/LogDetailedView/utils';
 import LogsExplorerContext from 'container/LogsExplorerContext';
-import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
@@ -13,6 +13,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { isEmpty, isNumber, isUndefined } from 'lodash-es';
+import { useTimezone } from 'providers/Timezone';
 import {
 	KeyboardEvent,
 	MouseEvent,
@@ -39,6 +40,7 @@ function RawLogView({
 	linesPerRow,
 	isTextOverflowEllipsisDisabled,
 	selectedFields = [],
+	fontSize,
 }: RawLogViewProps): JSX.Element {
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
@@ -54,6 +56,7 @@ function RawLogView({
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 	} = useActiveLog();
 
 	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
@@ -86,16 +89,24 @@ function RawLogView({
 		attributesText += ' | ';
 	}
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	const text = useMemo(() => {
 		const date =
 			typeof data.timestamp === 'string'
-				? dayjs(data.timestamp)
-				: dayjs(data.timestamp / 1e6);
+				? formatTimezoneAdjustedTimestamp(data.timestamp, 'YYYY-MM-DD HH:mm:ss.SSS')
+				: formatTimezoneAdjustedTimestamp(
+						data.timestamp / 1e6,
+						'YYYY-MM-DD HH:mm:ss.SSS',
+				  );
 
-		return `${date.format('YYYY-MM-DD HH:mm:ss.SSS')} | ${attributesText} ${
-			data.body
-		}`;
-	}, [data.timestamp, data.body, attributesText]);
+		return `${date} | ${attributesText} ${data.body}`;
+	}, [
+		data.timestamp,
+		data.body,
+		attributesText,
+		formatTimezoneAdjustedTimestamp,
+	]);
 
 	const handleClickExpand = useCallback(() => {
 		if (activeContextLog || isReadOnly) return;
@@ -143,7 +154,9 @@ function RawLogView({
 	const html = useMemo(
 		() => ({
 			__html: convert.toHtml(
-				dompurify.sanitize(text, { FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS] }),
+				dompurify.sanitize(unescapeString(text), {
+					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				}),
 			),
 		}),
 		[text],
@@ -157,25 +170,24 @@ function RawLogView({
 			$isDarkMode={isDarkMode}
 			$isReadOnly={isReadOnly}
 			$isHightlightedLog={isHighlighted}
-			$isActiveLog={isActiveLog}
+			$isActiveLog={
+				activeLog?.id === data.id || activeContextLog?.id === data.id || isActiveLog
+			}
+			$logType={logType}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
+			fontSize={fontSize}
 		>
-			<LogStateIndicator
-				type={logType}
-				isActive={
-					activeLog?.id === data.id ||
-					activeContextLog?.id === data.id ||
-					isActiveLog
-				}
-			/>
+			<LogStateIndicator type={logType} fontSize={fontSize} />
 
 			<RawLogContent
+				className="raw-log-content"
 				$isReadOnly={isReadOnly}
 				$isActiveLog={isActiveLog}
 				$isDarkMode={isDarkMode}
 				$isTextOverflowEllipsisDisabled={isTextOverflowEllipsisDisabled}
 				linesPerRow={linesPerRow}
+				fontSize={fontSize}
 				dangerouslySetInnerHTML={html}
 			/>
 
@@ -199,6 +211,7 @@ function RawLogView({
 					onClose={handleCloseLogDetail}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
+					onGroupByAttribute={onGroupByAttribute}
 				/>
 			)}
 		</RawLogViewContainer>

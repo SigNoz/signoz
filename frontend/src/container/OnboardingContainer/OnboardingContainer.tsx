@@ -11,7 +11,6 @@ import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/InviteUserModal';
 import { InviteMemberFormValues } from 'container/OrganizationSettings/PendingInvitesContainer';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import history from 'lib/history';
 import { UserPlus } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -104,7 +103,6 @@ export default function Onboarding(): JSX.Element {
 	const [selectedModuleSteps, setSelectedModuleSteps] = useState(APM_STEPS);
 	const [activeStep, setActiveStep] = useState(1);
 	const [current, setCurrent] = useState(0);
-	const { trackEvent } = useAnalytics();
 	const { location } = history;
 	const { t } = useTranslation(['onboarding']);
 
@@ -120,7 +118,7 @@ export default function Onboarding(): JSX.Element {
 	} = useOnboardingContext();
 
 	useEffectOnce(() => {
-		trackEvent('Onboarding V2 Started');
+		logEvent('Onboarding V2 Started', {});
 	});
 
 	const { status, data: ingestionData } = useQuery({
@@ -231,7 +229,7 @@ export default function Onboarding(): JSX.Element {
 			const nextStep = activeStep + 1;
 
 			// on next
-			trackEvent('Onboarding V2: Get Started', {
+			logEvent('Onboarding V2: Get Started', {
 				selectedModule: selectedModule.id,
 				nextStepId: nextStep,
 			});
@@ -249,8 +247,7 @@ export default function Onboarding(): JSX.Element {
 
 	const handleNext = (): void => {
 		if (activeStep <= 3) {
-			handleNextStep();
-			history.replace(moduleRouteMap[selectedModule.id as ModulesMap]);
+			history.push(moduleRouteMap[selectedModule.id as ModulesMap]);
 		}
 	};
 
@@ -258,6 +255,13 @@ export default function Onboarding(): JSX.Element {
 		setSelectedModule(module);
 		updateSelectedModule(module);
 		updateSelectedDataSource(null);
+	};
+
+	const handleBackNavigation = (): void => {
+		setCurrent(0);
+		setActiveStep(1);
+		setSelectedModule(useCases.APM);
+		resetProgress();
 	};
 
 	useEffect(() => {
@@ -279,9 +283,11 @@ export default function Onboarding(): JSX.Element {
 		} else if (pathname === ROUTES.GET_STARTED_AZURE_MONITORING) {
 			handleModuleSelect(useCases.AzureMonitoring);
 			handleNextStep();
+		} else {
+			handleBackNavigation();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [location.pathname]);
 
 	const [form] = Form.useForm<InviteMemberFormValues>();
 	const [
@@ -306,7 +312,7 @@ export default function Onboarding(): JSX.Element {
 					<div
 						onClick={(): void => {
 							logEvent('Onboarding V2: Skip Button Clicked', {});
-							history.push('/');
+							history.push(ROUTES.APPLICATION);
 						}}
 						className="skip-to-console"
 					>

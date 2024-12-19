@@ -1,6 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import getLabelName from 'lib/getLabelName';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 import { LegendEntryProps } from './FullView/types';
@@ -130,4 +132,22 @@ export const toggleGraphsVisibilityInChart = ({
 	graphsVisibilityStates?.forEach((showLegendData, index) => {
 		lineChartRef?.current?.toggleGraph(index, showLegendData);
 	});
+};
+
+export const isDataAvailableByPanelType = (
+	data?: MetricRangePayloadProps['data'],
+	panelType?: string,
+): boolean => {
+	const getPanelData = (): any[] | undefined => {
+		switch (panelType) {
+			case PANEL_TYPES.TABLE:
+				return (data?.result?.[0] as any)?.table?.rows;
+			case PANEL_TYPES.LIST:
+				return data?.newResult?.data?.result?.[0]?.list as any[];
+			default:
+				return data?.result;
+		}
+	};
+
+	return Boolean(getPanelData()?.length);
 };

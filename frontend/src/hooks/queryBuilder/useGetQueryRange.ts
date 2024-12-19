@@ -13,12 +13,14 @@ type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
 	version: string,
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
+	headers?: Record<string, string>,
 ) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
 
 export const useGetQueryRange: UseGetQueryRange = (
 	requestData,
 	version,
 	options,
+	headers,
 ) => {
 	const newRequestData: GetQueryResultsProps = useMemo(
 		() => ({
@@ -45,7 +47,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 
 	return useQuery<SuccessResponse<MetricRangePayloadProps>, Error>({
 		queryFn: async ({ signal }) =>
-			GetMetricQueryRange(requestData, version, signal),
+			GetMetricQueryRange(requestData, version, signal, headers),
 		...options,
 		queryKey,
 	});

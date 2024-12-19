@@ -15,17 +15,20 @@ import {
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
+import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
+import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { GraphTitle, SERVICE_CHART_ID } from '../constant';
@@ -36,6 +39,7 @@ import {
 } from '../MetricsPageQueries/OverviewQueries';
 import { Col, ColApDexContainer, ColErrorContainer, Row } from '../styles';
 import ApDex from './Overview/ApDex';
+import GraphControlsPanel from './Overview/GraphControlsPanel/GraphControlsPanel';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
@@ -43,15 +47,22 @@ import TopOperationMetrics from './Overview/TopOperationMetrics';
 import { Button, Card } from './styles';
 import { IServiceName } from './types';
 import {
+	generateExplorerPath,
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
+	useGetAPMToLogsQueries,
 	useGetAPMToTracesQueries,
 } from './util';
 
 function Application(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
+
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { search, pathname } = useLocation();
 	const { queries } = useResourceAttribute();
@@ -105,8 +116,13 @@ function Application(): JSX.Element {
 		isLoading: topLevelOperationsIsLoading,
 		isError: topLevelOperationsIsError,
 	} = useQuery<ServiceDataProps>({
-		queryKey: [servicename],
-		queryFn: getTopLevelOperations,
+		queryKey: [servicename, minTime, maxTime],
+		queryFn: (): Promise<ServiceDataProps> =>
+			getTopLevelOperations({
+				service: servicename || '',
+				start: minTime,
+				end: maxTime,
+			}),
 	});
 
 	const selectedTraceTags: string = JSON.stringify(
@@ -129,41 +145,60 @@ function Application(): JSX.Element {
 		[servicename, topLevelOperations],
 	);
 
-	const operationPerSecWidget = getWidgetQueryBuilder({
-		query: {
-			queryType: EQueryType.QUERY_BUILDER,
-			promql: [],
-			builder: operationPerSec({
-				servicename,
-				tagFilterItems,
-				topLevelOperations: topLevelOperationsRoute,
+	const operationPerSecWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: operationPerSec({
+						servicename,
+						tagFilterItems,
+						topLevelOperations: topLevelOperationsRoute,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.RATE_PER_OPS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ops',
+				id: SERVICE_CHART_ID.rps,
 			}),
-			clickhouse_sql: [],
-			id: uuid(),
-		},
-		title: GraphTitle.RATE_PER_OPS,
-		panelTypes: PANEL_TYPES.TIME_SERIES,
-		yAxisUnit: 'ops',
-		id: SERVICE_CHART_ID.rps,
-	});
+		[servicename, tagFilterItems, topLevelOperationsRoute],
+	);
 
-	const errorPercentageWidget = getWidgetQueryBuilder({
-		query: {
-			queryType: EQueryType.QUERY_BUILDER,
-			promql: [],
-			builder: errorPercentage({
-				servicename,
-				tagFilterItems,
-				topLevelOperations: topLevelOperationsRoute,
+	const errorPercentageWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: errorPercentage({
+						servicename,
+						tagFilterItems,
+						topLevelOperations: topLevelOperationsRoute,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.ERROR_PERCENTAGE,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: '%',
+				id: SERVICE_CHART_ID.errorPercentage,
+				fillSpans: true,
 			}),
-			clickhouse_sql: [],
-			id: uuid(),
-		},
-		title: GraphTitle.ERROR_PERCENTAGE,
-		panelTypes: PANEL_TYPES.TIME_SERIES,
-		yAxisUnit: '%',
-		id: SERVICE_CHART_ID.errorPercentage,
-	});
+		[servicename, tagFilterItems, topLevelOperationsRoute],
+	);
+
+	const stepInterval = useMemo(
+		() =>
+			getStep({
+				end: maxTime,
+				inputFormat: 'ns',
+				start: minTime,
+			}),
+		[maxTime, minTime],
+	);
 
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {
@@ -173,7 +208,7 @@ function Application(): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
+			history.push(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
@@ -182,33 +217,59 @@ function Application(): JSX.Element {
 		[dispatch, pathname, urlQuery],
 	);
 
-	const onErrorTrackHandler = (
-		timestamp: number,
-		apmToTraceQuery: Query,
-	): (() => void) => (): void => {
-		const currentTime = timestamp;
-		const tPlusOne = timestamp + 60 * 1000;
+	const onErrorTrackHandler = useCallback(
+		(
+			timestamp: number,
+			apmToTraceQuery: Query,
+			isViewLogsClicked?: boolean,
+		): (() => void) => (): void => {
+			const endTime = timestamp;
+			const startTime = timestamp - stepInterval;
 
-		const urlParams = new URLSearchParams(search);
-		urlParams.set(QueryParams.startTime, currentTime.toString());
-		urlParams.set(QueryParams.endTime, tPlusOne.toString());
+			const urlParams = new URLSearchParams(search);
+			urlParams.set(QueryParams.startTime, startTime.toString());
+			urlParams.set(QueryParams.endTime, endTime.toString());
+			urlParams.delete(QueryParams.relativeTime);
+			const avialableParams = routeConfig[ROUTES.TRACE];
+			const queryString = getQueryString(avialableParams, urlParams);
 
-		const avialableParams = routeConfig[ROUTES.TRACE];
-		const queryString = getQueryString(avialableParams, urlParams);
+			const JSONCompositeQuery = encodeURIComponent(
+				JSON.stringify(apmToTraceQuery),
+			);
 
-		const JSONCompositeQuery = encodeURIComponent(
-			JSON.stringify(apmToTraceQuery),
-		);
+			const newPath = generateExplorerPath(
+				isViewLogsClicked,
+				urlParams,
+				servicename,
+				selectedTraceTags,
+				JSONCompositeQuery,
+				queryString,
+			);
 
-		const newTraceExplorerPath = `${
-			ROUTES.TRACES_EXPLORER
-		}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
-			QueryParams.compositeQuery
-		}=${JSONCompositeQuery}&${queryString.join('&')}`;
+			history.push(newPath);
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[stepInterval],
+	);
 
-		history.push(newTraceExplorerPath);
-	};
-
+	const logErrorQuery = useGetAPMToLogsQueries({
+		servicename,
+		filters: [
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'severity_text',
+					dataType: DataTypes.String,
+					type: '',
+					isColumn: true,
+					isJSON: false,
+					id: 'severity_text--string----true',
+				},
+				op: 'in',
+				value: ['ERROR', 'FATAL', 'error', 'fatal'],
+			},
+		],
+	});
 	const errorTrackQuery = useGetAPMToTracesQueries({
 		servicename,
 		filters: [
@@ -239,6 +300,7 @@ function Application(): JSX.Element {
 						selectedTraceTags={selectedTraceTags}
 						topLevelOperationsRoute={topLevelOperationsRoute}
 						topLevelOperationsIsLoading={topLevelOperationsIsLoading}
+						stepInterval={stepInterval}
 					/>
 				</Col>
 
@@ -252,6 +314,7 @@ function Application(): JSX.Element {
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery,
+							stepInterval,
 						})}
 					>
 						View Traces
@@ -280,6 +343,7 @@ function Application(): JSX.Element {
 								selectedTraceTags,
 								timestamp: selectedTimeStamp,
 								apmToTraceQuery,
+								stepInterval,
 							})}
 						>
 							View Traces
@@ -292,14 +356,18 @@ function Application(): JSX.Element {
 						/>
 					</ColApDexContainer>
 					<ColErrorContainer>
-						<Button
-							type="default"
-							size="small"
+						<GraphControlsPanel
 							id="Error_button"
-							onClick={onErrorTrackHandler(selectedTimeStamp, errorTrackQuery)}
-						>
-							View Traces
-						</Button>
+							onViewLogsClick={onErrorTrackHandler(
+								selectedTimeStamp,
+								logErrorQuery,
+								true,
+							)}
+							onViewTracesClick={onErrorTrackHandler(
+								selectedTimeStamp,
+								errorTrackQuery,
+							)}
+						/>
 
 						<TopLevelOperation
 							handleGraphClick={handleGraphClick}

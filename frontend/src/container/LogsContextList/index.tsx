@@ -5,6 +5,7 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -167,6 +168,7 @@ function LogsContextList({
 				key={log.id}
 				data={log}
 				linesPerRow={1}
+				fontSize={FontSize.SMALL}
 			/>
 		),
 		[],

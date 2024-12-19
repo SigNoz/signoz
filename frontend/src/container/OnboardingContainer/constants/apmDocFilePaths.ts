@@ -4,6 +4,8 @@
 
 // SpringBoot-Kubernetes
 // ----------------------------------------------------------------------------
+// //// Windows
+// dotnet-windows-instrument-app
 /// ////// JavaScript Done
 /// ///// Go Start
 // Go-Kubernetes
@@ -48,6 +50,12 @@ import APM_dotnet_macOsARM64_quickStart_runApplication from '../Modules/APM/Dotn
 import APM_dotnet_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Dotnet/md-docs/MacOsARM64/Recommended/dotnet-macosarm64-recommended-installOtelCollector.md';
 import APM_dotnet_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Dotnet/md-docs/MacOsARM64/Recommended/dotnet-macosarm64-recommended-instrumentApplication.md';
 import APM_dotnet_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Dotnet/md-docs/MacOsARM64/Recommended/dotnet-macosarm64-recommended-runApplication.md';
+import APM_dotnet_windows_quickStart_instrumentApplication from '../Modules/APM/Dotnet/md-docs/Windows/QuickStart/dotnet-windows-quickStart-instrumentApplication.md';
+import APM_dotnet_windows_quickStart_runApplication from '../Modules/APM/Dotnet/md-docs/Windows/QuickStart/dotnet-windows-quickStart-runApplication.md';
+// dotnet-Windows-recommended
+import APM_dotnet_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Dotnet/md-docs/Windows/Recommended/dotnet-windows-recommended-installOtelCollector.md';
+import APM_dotnet_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Dotnet/md-docs/Windows/Recommended/dotnet-windows-recommended-instrumentApplication.md';
+import APM_dotnet_windows_recommendedSteps_runApplication from '../Modules/APM/Dotnet/md-docs/Windows/Recommended/dotnet-windows-recommended-runApplication.md';
 // Elixir Docker
 import APM_elixir_docker_quickStart_instrumentApplication from '../Modules/APM/Elixir/md-docs/Docker/QuickStart/elixir-docker-quickStart-instrumentApplication.md';
 import APM_elixir_docker_quickStart_runApplication from '../Modules/APM/Elixir/md-docs/Docker/QuickStart/elixir-docker-quickStart-runApplication.md';
@@ -87,6 +95,13 @@ import APM_elixir_macOsARM64_quickStart_runApplication from '../Modules/APM/Elix
 import APM_elixir_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Elixir/md-docs/MacOsARM64/Recommended/elixir-macosarm64-recommended-installOtelCollector.md';
 import APM_elixir_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Elixir/md-docs/MacOsARM64/Recommended/elixir-macosarm64-recommended-instrumentApplication.md';
 import APM_elixir_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Elixir/md-docs/MacOsARM64/Recommended/elixir-macosarm64-recommended-runApplication.md';
+// Elixir Docker
+import APM_elixir_windows_quickStart_instrumentApplication from '../Modules/APM/Elixir/md-docs/Windows/QuickStart/elixir-windows-quickStart-instrumentApplication.md';
+import APM_elixir_windows_quickStart_runApplication from '../Modules/APM/Elixir/md-docs/Windows/QuickStart/elixir-windows-quickStart-runApplication.md';
+// Elixir-LinuxAMD64-recommended
+import APM_elixir_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Elixir/md-docs/Windows/Recommended/elixir-windows-recommended-installOtelCollector.md';
+import APM_elixir_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Elixir/md-docs/Windows/Recommended/elixir-windows-recommended-instrumentApplication.md';
+import APM_elixir_windows_recommendedSteps_runApplication from '../Modules/APM/Elixir/md-docs/Windows/Recommended/elixir-windows-recommended-runApplication.md';
 // Golang Docker
 import APM_go_docker_quickStart_instrumentApplication from '../Modules/APM/GoLang/md-docs/Docker/QuickStart/golang-docker-quickStart-instrumentApplication.md';
 import APM_go_docker_quickStart_runApplication from '../Modules/APM/GoLang/md-docs/Docker/QuickStart/golang-docker-quickStart-runApplication.md';
@@ -126,6 +141,13 @@ import APM_go_macOsARM64_quickStart_runApplication from '../Modules/APM/GoLang/m
 import APM_go_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/GoLang/md-docs/MacOsARM64/Recommended/golang-macosarm64-recommended-installOtelCollector.md';
 import APM_go_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/GoLang/md-docs/MacOsARM64/Recommended/golang-macosarm64-recommended-instrumentApplication.md';
 import APM_go_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/GoLang/md-docs/MacOsARM64/Recommended/golang-macosarm64-recommended-runApplication.md';
+// Golang Docker
+import APM_go_windows_quickStart_instrumentApplication from '../Modules/APM/GoLang/md-docs/Windows/QuickStart/golang-windows-quickStart-instrumentApplication.md';
+import APM_go_windows_quickStart_runApplication from '../Modules/APM/GoLang/md-docs/Windows/QuickStart/golang-windows-quickStart-runApplication.md';
+// Go-LinuxAMD64-recommended
+import APM_go_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/GoLang/md-docs/Windows/Recommended/golang-windows-recommended-installOtelCollector.md';
+import APM_go_windows_recommendedSteps_instrumentApplication from '../Modules/APM/GoLang/md-docs/Windows/Recommended/golang-windows-recommended-instrumentApplication.md';
+import APM_go_windows_recommendedSteps_runApplication from '../Modules/APM/GoLang/md-docs/Windows/Recommended/golang-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 // JBoss DOcker
 import APM_java_jboss_docker_quickStart_instrumentApplication from '../Modules/APM/Java/md-docs/Jboss/Docker/QuickStart/jboss-docker-quickStart-instrumentApplication.md';
@@ -166,6 +188,13 @@ import APM_java_jboss_macOsARM64_quickStart_runApplication from '../Modules/APM/
 import APM_java_jboss_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Java/md-docs/Jboss/MacOsARM64/Recommended/jboss-macosarm64-recommended-installOtelCollector.md';
 import APM_java_jboss_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Java/md-docs/Jboss/MacOsARM64/Recommended/jboss-macosarm64-recommended-instrumentApplication.md';
 import APM_java_jboss_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Java/md-docs/Jboss/MacOsARM64/Recommended/jboss-macosarm64-recommended-runApplication.md';
+// JBoss DOcker
+import APM_java_jboss_windows_quickStart_instrumentApplication from '../Modules/APM/Java/md-docs/Jboss/Windows/QuickStart/jboss-windows-quickStart-instrumentApplication.md';
+import APM_java_jboss_windows_quickStart_runApplication from '../Modules/APM/Java/md-docs/Jboss/Windows/QuickStart/jboss-windows-quickStart-runApplication.md';
+// Jboss-LinuxAMD64-recommended
+import APM_java_jboss_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Java/md-docs/Jboss/Windows/Recommended/jboss-windows-recommended-installOtelCollector.md';
+import APM_java_jboss_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Java/md-docs/Jboss/Windows/Recommended/jboss-windows-recommended-instrumentApplication.md';
+import APM_java_jboss_windows_recommendedSteps_runApplication from '../Modules/APM/Java/md-docs/Jboss/Windows/Recommended/jboss-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 // Other Docker
 import APM_java_other_docker_quickStart_instrumentApplication from '../Modules/APM/Java/md-docs/Others/Docker/QuickStart/others-docker-quickStart-instrumentApplication.md';
@@ -206,6 +235,12 @@ import APM_java_other_macOsARM64_quickStart_runApplication from '../Modules/APM/
 import APM_java_other_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Java/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-installOtelCollector.md';
 import APM_java_other_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Java/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-instrumentApplication.md';
 import APM_java_other_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Java/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-runApplication.md';
+import APM_java_other_windows_quickStart_instrumentApplication from '../Modules/APM/Java/md-docs/Others/Windows/QuickStart/others-windows-quickStart-instrumentApplication.md';
+import APM_java_other_windows_quickStart_runApplication from '../Modules/APM/Java/md-docs/Others/Windows/QuickStart/others-windows-quickStart-runApplication.md';
+// Other-LinuxAMD64-recommended
+import APM_java_other_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Java/md-docs/Others/Windows/Recommended/others-windows-recommended-installOtelCollector.md';
+import APM_java_other_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Java/md-docs/Others/Windows/Recommended/others-windows-recommended-instrumentApplication.md';
+import APM_java_other_windows_recommendedSteps_runApplication from '../Modules/APM/Java/md-docs/Others/Windows/Recommended/others-windows-recommended-runApplication.md';
 // SpringBoot Docker
 import APM_java_springBoot_docker_quickStart_instrumentApplication from '../Modules/APM/Java/md-docs/SpringBoot/Docker/QuickStart/springBoot-docker-quickStart-instrumentApplication.md';
 import APM_java_springBoot_docker_quickStart_runApplication from '../Modules/APM/Java/md-docs/SpringBoot/Docker/QuickStart/springBoot-docker-quickStart-runApplication.md';
@@ -217,6 +252,8 @@ import APM_java_springBoot_docker_recommendedSteps_runApplication from '../Modul
 import APM_java_springBoot_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Java/md-docs/SpringBoot/Kubernetes/springBoot-kubernetes-installOtelCollector.md';
 import APM_java_springBoot_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Java/md-docs/SpringBoot/Kubernetes/springBoot-kubernetes-instrumentApplication.md';
 import APM_java_springBoot_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Java/md-docs/SpringBoot/Kubernetes/springBoot-kubernetes-runApplication.md';
+import APM_java_springBoot_kubernetes_recommendedSteps_runApplication_consumers from '../Modules/APM/Java/md-docs/SpringBoot/Kubernetes/springBoot-kubernetes-runApplication-consumers.md';
+import APM_java_springBoot_kubernetes_recommendedSteps_runApplication_producers from '../Modules/APM/Java/md-docs/SpringBoot/Kubernetes/springBoot-kubernetes-runApplication-producers.md';
 // SpringBoot-LinuxAMD64-quickstart
 import APM_java_springBoot_linuxAMD64_quickStart_instrumentApplication from '../Modules/APM/Java/md-docs/SpringBoot/LinuxAMD64/QuickStart/springBoot-linuxamd64-quickStart-instrumentApplication.md';
 import APM_java_springBoot_linuxAMD64_quickStart_runApplication from '../Modules/APM/Java/md-docs/SpringBoot/LinuxAMD64/QuickStart/springBoot-linuxamd64-quickStart-runApplication.md';
@@ -245,6 +282,13 @@ import APM_java_springBoot_macOsARM64_quickStart_runApplication from '../Modules
 import APM_java_springBoot_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Java/md-docs/SpringBoot/MacOsARM64/Recommended/springBoot-macosarm64-recommended-installOtelCollector.md';
 import APM_java_springBoot_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Java/md-docs/SpringBoot/MacOsARM64/Recommended/springBoot-macosarm64-recommended-instrumentApplication.md';
 import APM_java_springBoot_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Java/md-docs/SpringBoot/MacOsARM64/Recommended/springBoot-macosarm64-recommended-runApplication.md';
+// SpringBoot Docker
+import APM_java_springBoot_windows_quickStart_instrumentApplication from '../Modules/APM/Java/md-docs/SpringBoot/Windows/QuickStart/springBoot-windows-quickStart-instrumentApplication.md';
+import APM_java_springBoot_windows_quickStart_runApplication from '../Modules/APM/Java/md-docs/SpringBoot/Windows/QuickStart/springBoot-windows-quickStart-runApplication.md';
+// SpringBoot-LinuxAMD64-recommended
+import APM_java_springBoot_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Java/md-docs/SpringBoot/Windows/Recommended/springBoot-windows-recommended-installOtelCollector.md';
+import APM_java_springBoot_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Java/md-docs/SpringBoot/Windows/Recommended/springBoot-windows-recommended-instrumentApplication.md';
+import APM_java_springBoot_windows_recommendedSteps_runApplication from '../Modules/APM/Java/md-docs/SpringBoot/Windows/Recommended/springBoot-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 // Tomcat Docker
 import APM_java_tomcat_docker_quickStart_instrumentApplication from '../Modules/APM/Java/md-docs/Tomcat/Docker/QuickStart/tomcat-docker-quickStart-instrumentApplication.md';
@@ -285,6 +329,13 @@ import APM_java_tomcat_macOsARM64_quickStart_runApplication from '../Modules/APM
 import APM_java_tomcat_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Java/md-docs/Tomcat/MacOsARM64/Recommended/tomcat-macosarm64-recommended-installOtelCollector.md';
 import APM_java_tomcat_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Java/md-docs/Tomcat/MacOsARM64/Recommended/tomcat-macosarm64-recommended-instrumentApplication.md';
 import APM_java_tomcat_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Java/md-docs/Tomcat/MacOsARM64/Recommended/tomcat-macosarm64-recommended-runApplication.md';
+// Tomcat Docker
+import APM_java_tomcat_windows_quickStart_instrumentApplication from '../Modules/APM/Java/md-docs/Tomcat/Windows/QuickStart/tomcat-windows-quickStart-instrumentApplication.md';
+import APM_java_tomcat_windows_quickStart_runApplication from '../Modules/APM/Java/md-docs/Tomcat/Windows/QuickStart/tomcat-windows-quickStart-runApplication.md';
+// Tomcat-LinuxAMD64-recommended
+import APM_java_tomcat_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Java/md-docs/Tomcat/Windows/Recommended/tomcat-windows-recommended-installOtelCollector.md';
+import APM_java_tomcat_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Java/md-docs/Tomcat/Windows/Recommended/tomcat-windows-recommended-instrumentApplication.md';
+import APM_java_tomcat_windows_recommendedSteps_runApplication from '../Modules/APM/Java/md-docs/Tomcat/Windows/Recommended/tomcat-windows-recommended-runApplication.md';
 // Angular
 import APM_javascript_angular_docker_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/Docker/QuickStart/angular-docker-quickStart-instrumentApplication.md';
 import APM_javascript_angular_docker_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Angular/Docker/QuickStart/angular-docker-quickStart-runApplication.md';
@@ -324,6 +375,12 @@ import APM_javascript_angular_macOsARM64_quickStart_runApplication from '../Modu
 import APM_javascript_angular_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Angular/MacOsARM64/Recommended/angular-macosarm64-recommended-installOtelCollector.md';
 import APM_javascript_angular_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/MacOsARM64/Recommended/angular-macosarm64-recommended-instrumentApplication.md';
 import APM_javascript_angular_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Angular/MacOsARM64/Recommended/angular-macosarm64-recommended-runApplication.md';
+import APM_javascript_angular_windows_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/Windows/QuickStart/angular-windows-quickStart-instrumentApplication.md';
+import APM_javascript_angular_windows_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Angular/Windows/QuickStart/angular-windows-quickStart-runApplication.md';
+// Angular-Docker-recommended
+import APM_javascript_angular_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Angular/Windows/Recommended/angular-windows-recommended-installOtelCollector.md';
+import APM_javascript_angular_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/Windows/Recommended/angular-windows-recommended-instrumentApplication.md';
+import APM_javascript_angular_windows_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Angular/Windows/Recommended/angular-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 /// ////// Python Done
 /// ///// JavaScript Start
@@ -367,6 +424,12 @@ import APM_javascript_express_macOsARM64_quickStart_runApplication from '../Modu
 import APM_javascript_express_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Express/MacOsARM64/Recommended/express-macosarm64-recommended-installOtelCollector.md';
 import APM_javascript_express_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Express/MacOsARM64/Recommended/express-macosarm64-recommended-instrumentApplication.md';
 import APM_javascript_express_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Express/MacOsARM64/Recommended/express-macosarm64-recommended-runApplication.md';
+import APM_javascript_express_windows_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Express/Windows/QuickStart/express-windows-quickStart-instrumentApplication.md';
+import APM_javascript_express_windows_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Express/Windows/QuickStart/express-windows-quickStart-runApplication.md';
+// Express-LinuxAMD64-recommended
+import APM_javascript_express_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Express/Windows/Recommended/express-windows-recommended-installOtelCollector.md';
+import APM_javascript_express_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Express/Windows/Recommended/express-windows-recommended-instrumentApplication.md';
+import APM_javascript_express_windows_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Express/Windows/Recommended/express-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 // NestJS
 // NestJS Docker
@@ -408,6 +471,14 @@ import APM_javascript_nestjs_macOsARM64_quickStart_runApplication from '../Modul
 import APM_javascript_nestjs_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/NestJS/MacOsARM64/Recommended/nestjs-macosarm64-recommended-installOtelCollector.md';
 import APM_javascript_nestjs_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/NestJS/MacOsARM64/Recommended/nestjs-macosarm64-recommended-instrumentApplication.md';
 import APM_javascript_nestjs_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/NestJS/MacOsARM64/Recommended/nestjs-macosarm64-recommended-runApplication.md';
+// NestJS
+// NestJS Docker
+import APM_javascript_nestjs_windows_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/NestJS/Windows/QuickStart/nestjs-windows-quickStart-instrumentApplication.md';
+import APM_javascript_nestjs_windows_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/NestJS/Windows/QuickStart/nestjs-windows-quickStart-runApplication.md';
+// NestJS-LinuxAMD64-recommended
+import APM_javascript_nestjs_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/NestJS/Windows/Recommended/nestjs-windows-recommended-installOtelCollector.md';
+import APM_javascript_nestjs_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/NestJS/Windows/Recommended/nestjs-windows-recommended-instrumentApplication.md';
+import APM_javascript_nestjs_windows_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/NestJS/Windows/Recommended/nestjs-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 // NodeJS
 // NodeJS Docker
@@ -449,6 +520,13 @@ import APM_javascript_nodejs_macOsARM64_quickStart_runApplication from '../Modul
 import APM_javascript_nodejs_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/NodeJS/MacOsARM64/Recommended/nodejs-macosarm64-recommended-installOtelCollector.md';
 import APM_javascript_nodejs_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/NodeJS/MacOsARM64/Recommended/nodejs-macosarm64-recommended-instrumentApplication.md';
 import APM_javascript_nodejs_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/NodeJS/MacOsARM64/Recommended/nodejs-macosarm64-recommended-runApplication.md';
+// NodeJS Docker
+import APM_javascript_nodejs_windows_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/NodeJS/Windows/QuickStart/nodejs-windows-quickStart-instrumentApplication.md';
+import APM_javascript_nodejs_windows_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/NodeJS/Windows/QuickStart/nodejs-windows-quickStart-runApplication.md';
+// NodeJS-LinuxAMD64-recommended
+import APM_javascript_nodejs_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/NodeJS/Windows/Recommended/nodejs-windows-recommended-installOtelCollector.md';
+import APM_javascript_nodejs_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/NodeJS/Windows/Recommended/nodejs-windows-recommended-instrumentApplication.md';
+import APM_javascript_nodejs_windows_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/NodeJS/Windows/Recommended/nodejs-windows-recommended-runApplication.md';
 /// // JavaScript Others
 // Others Docker
 import APM_javascript_others_docker_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/Docker/QuickStart/others-docker-quickStart-instrumentApplication.md';
@@ -489,6 +567,13 @@ import APM_javascript_others_macOsARM64_quickStart_runApplication from '../Modul
 import APM_javascript_others_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-installOtelCollector.md';
 import APM_javascript_others_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-instrumentApplication.md';
 import APM_javascript_others_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-runApplication.md';
+// Others Docker
+import APM_javascript_others_windows_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/Windows/QuickStart/others-windows-quickStart-instrumentApplication.md';
+import APM_javascript_others_windows_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Others/Windows/QuickStart/others-windows-quickStart-runApplication.md';
+// // Others-JavaScript-LinuxAMD64-recommended
+import APM_javascript_others_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Others/Windows/Recommended/others-windows-recommended-installOtelCollector.md';
+import APM_javascript_others_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/Windows/Recommended/others-windows-recommended-instrumentApplication.md';
+import APM_javascript_others_windows_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Others/Windows/Recommended/others-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 // ReactJS Docker
 import APM_javascript_reactjs_docker_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/Docker/QuickStart/reactjs-docker-quickStart-instrumentApplication.md';
@@ -529,6 +614,13 @@ import APM_javascript_reactjs_macOsARM64_quickStart_runApplication from '../Modu
 import APM_javascript_reactjs_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-installOtelCollector.md';
 import APM_javascript_reactjs_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-instrumentApplication.md';
 import APM_javascript_reactjs_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-runApplication.md';
+// ReactJS Docker
+import APM_javascript_reactjs_windows_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/Windows/QuickStart/reactjs-windows-quickStart-instrumentApplication.md';
+import APM_javascript_reactjs_windows_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/Windows/QuickStart/reactjs-windows-quickStart-runApplication.md';
+// // ReactJS-LinuxAMD64-recommended
+import APM_javascript_reactjs_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/ReactJS/Windows/Recommended/reactjs-windows-recommended-installOtelCollector.md';
+import APM_javascript_reactjs_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/Windows/Recommended/reactjs-windows-recommended-instrumentApplication.md';
+import APM_javascript_reactjs_windows_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/Windows/Recommended/reactjs-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 // PHP Docker
 import APM_php_docker_quickStart_instrumentApplication from '../Modules/APM/Php/md-docs/Docker/QuickStart/php-docker-quickStart-instrumentApplication.md';
@@ -569,6 +661,13 @@ import APM_php_macOsARM64_quickStart_runApplication from '../Modules/APM/Php/md-
 import APM_php_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Php/md-docs/MacOsARM64/Recommended/php-macosarm64-recommended-installOtelCollector.md';
 import APM_php_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Php/md-docs/MacOsARM64/Recommended/php-macosarm64-recommended-instrumentApplication.md';
 import APM_php_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Php/md-docs/MacOsARM64/Recommended/php-macosarm64-recommended-runApplication.md';
+// PHP Docker
+import APM_php_windows_quickStart_instrumentApplication from '../Modules/APM/Php/md-docs/Windows/QuickStart/php-windows-quickStart-instrumentApplication.md';
+import APM_php_windows_quickStart_runApplication from '../Modules/APM/Php/md-docs/Windows/QuickStart/php-windows-quickStart-runApplication.md';
+// PHP-LinuxAMD64-recommended
+import APM_php_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Php/md-docs/Windows/Recommended/php-windows-recommended-installOtelCollector.md';
+import APM_php_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Php/md-docs/Windows/Recommended/php-windows-recommended-instrumentApplication.md';
+import APM_php_windows_recommendedSteps_runApplication from '../Modules/APM/Php/md-docs/Windows/Recommended/php-windows-recommended-runApplication.md';
 /// ////// Docker instructions
 import APM_python_django_docker_quickStart_instrumentApplication from '../Modules/APM/Python/md-docs/Django/Docker/QuickStart/django-docker-quickStart-instrumentApplication.md';
 import APM_python_django_docker_quickStart_runApplication from '../Modules/APM/Python/md-docs/Django/Docker/QuickStart/django-docker-quickStart-runApplication.md';
@@ -611,6 +710,12 @@ import APM_python_django_macOsARM64_quickStart_runApplication from '../Modules/A
 import APM_python_django_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/Django/MacOsARM64/Recommended/django-macosarm64-recommended-installOtelCollector.md';
 import APM_python_django_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Django/MacOsARM64/Recommended/django-macosarm64-recommended-instrumentApplication.md';
 import APM_python_django_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Django/MacOsARM64/Recommended/django-macosarm64-recommended-runApplication.md';
+import APM_python_django_windows_quickStart_instrumentApplication from '../Modules/APM/Python/md-docs/Django/Windows/QuickStart/django-windows-quickStart-instrumentApplication.md';
+import APM_python_django_windows_quickStart_runApplication from '../Modules/APM/Python/md-docs/Django/Windows/QuickStart/django-windows-quickStart-runApplication.md';
+// Django-LinuxAMD64-recommended
+import APM_python_django_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/Django/Windows/Recommended/django-windows-recommended-installOtelCollector.md';
+import APM_python_django_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Django/Windows/Recommended/django-windows-recommended-instrumentApplication.md';
+import APM_python_django_windows_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Django/Windows/Recommended/django-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 // Falcon
 // Falcon Docker
@@ -652,6 +757,12 @@ import APM_python_falcon_macOsARM64_quickStart_runApplication from '../Modules/A
 import APM_python_falcon_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/Falcon/MacOsARM64/Recommended/falcon-macosarm64-recommended-installOtelCollector.md';
 import APM_python_falcon_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Falcon/MacOsARM64/Recommended/falcon-macosarm64-recommended-instrumentApplication.md';
 import APM_python_falcon_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Falcon/MacOsARM64/Recommended/falcon-macosarm64-recommended-runApplication.md';
+import APM_python_falcon_windows_quickStart_instrumentApplication from '../Modules/APM/Python/md-docs/Falcon/Windows/QuickStart/falcon-windows-quickStart-instrumentApplication.md';
+import APM_python_falcon_windows_quickStart_runApplication from '../Modules/APM/Python/md-docs/Falcon/Windows/QuickStart/falcon-windows-quickStart-runApplication.md';
+// Falcon-LinuxAMD64-recommended
+import APM_python_falcon_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/Falcon/Windows/Recommended/falcon-windows-recommended-installOtelCollector.md';
+import APM_python_falcon_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Falcon/Windows/Recommended/falcon-windows-recommended-instrumentApplication.md';
+import APM_python_falcon_windows_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Falcon/Windows/Recommended/falcon-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 // FastAPI
 // FastAPI Docker
@@ -693,6 +804,13 @@ import APM_python_fastAPI_macOsARM64_quickStart_runApplication from '../Modules/
 import APM_python_fastAPI_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/FastAPI/MacOsARM64/Recommended/fastapi-macosarm64-recommended-installOtelCollector.md';
 import APM_python_fastAPI_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/FastAPI/MacOsARM64/Recommended/fastapi-macosarm64-recommended-instrumentApplication.md';
 import APM_python_fastAPI_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/FastAPI/MacOsARM64/Recommended/fastapi-macosarm64-recommended-runApplication.md';
+// FastAPI Docker
+import APM_python_fastAPI_windows_quickStart_instrumentApplication from '../Modules/APM/Python/md-docs/FastAPI/Windows/QuickStart/fastapi-windows-quickStart-instrumentApplication.md';
+import APM_python_fastAPI_windows_quickStart_runApplication from '../Modules/APM/Python/md-docs/FastAPI/Windows/QuickStart/fastapi-windows-quickStart-runApplication.md';
+// FastAPI-LinuxAMD64-recommended
+import APM_python_fastAPI_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/FastAPI/Windows/Recommended/fastapi-windows-recommended-installOtelCollector.md';
+import APM_python_fastAPI_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/FastAPI/Windows/Recommended/fastapi-windows-recommended-instrumentApplication.md';
+import APM_python_fastAPI_windows_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/FastAPI/Windows/Recommended/fastapi-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 // Flask
 // Flask Docker
@@ -733,6 +851,12 @@ import APM_python_flask_macOsARM64_quickStart_runApplication from '../Modules/AP
 import APM_python_flask_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/Flask/MacOsARM64/Recommended/flask-macosarm64-recommended-installOtelCollector.md';
 import APM_python_flask_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Flask/MacOsARM64/Recommended/flask-macosarm64-recommended-instrumentApplication.md';
 import APM_python_flask_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Flask/MacOsARM64/Recommended/flask-macosarm64-recommended-runApplication.md';
+// Flask Docker
+import APM_python_flask_windows_quickStart_instrumentApplication from '../Modules/APM/Python/md-docs/Flask/Windows/QuickStart/flask-windows-quickStart-instrumentApplication.md';
+import APM_python_flask_windows_quickStart_runApplication from '../Modules/APM/Python/md-docs/Flask/Windows/QuickStart/flask-windows-quickStart-runApplication.md';
+import APM_python_flask_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/Flask/Windows/Recommended/flask-windows-recommended-installOtelCollector.md';
+import APM_python_flask_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Flask/Windows/Recommended/flask-windows-recommended-instrumentApplication.md';
+import APM_python_flask_windows_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Flask/Windows/Recommended/flask-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 // Others
 // Others Docker
@@ -774,6 +898,13 @@ import APM_python_other_macOsARM64_quickStart_runApplication from '../Modules/AP
 import APM_python_other_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-installOtelCollector.md';
 import APM_python_other_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-instrumentApplication.md';
 import APM_python_other_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-runApplication.md';
+// Others Docker
+import APM_python_other_windows_quickStart_instrumentApplication from '../Modules/APM/Python/md-docs/Others/Windows/QuickStart/others-windows-quickStart-instrumentApplication.md';
+import APM_python_other_windows_quickStart_runApplication from '../Modules/APM/Python/md-docs/Others/Windows/QuickStart/others-windows-quickStart-runApplication.md';
+// Others-LinuxAMD64-recommended
+import APM_python_other_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/Others/Windows/Recommended/others-windows-recommended-installOtelCollector.md';
+import APM_python_other_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Others/Windows/Recommended/others-windows-recommended-instrumentApplication.md';
+import APM_python_other_windows_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Others/Windows/Recommended/others-windows-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 /// ///// ROR Start
 // ROR Docker
@@ -815,6 +946,13 @@ import APM_rails_macOsARM64_quickStart_runApplication from '../Modules/APM/RubyO
 import APM_rails_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/RubyOnRails/md-docs/MacOsARM64/Recommended/ror-macosarm64-recommended-installOtelCollector.md';
 import APM_rails_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/RubyOnRails/md-docs/MacOsARM64/Recommended/ror-macosarm64-recommended-instrumentApplication.md';
 import APM_rails_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/RubyOnRails/md-docs/MacOsARM64/Recommended/ror-macosarm64-recommended-runApplication.md';
+// ROR Docker
+import APM_rails_windows_quickStart_instrumentApplication from '../Modules/APM/RubyOnRails/md-docs/Windows/QuickStart/ror-windows-quickStart-instrumentApplication.md';
+import APM_rails_windows_quickStart_runApplication from '../Modules/APM/RubyOnRails/md-docs/Windows/QuickStart/ror-windows-quickStart-runApplication.md';
+// ROR-LinuxAMD64-recommended
+import APM_rails_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/RubyOnRails/md-docs/Windows/Recommended/ror-windows-recommended-installOtelCollector.md';
+import APM_rails_windows_recommendedSteps_instrumentApplication from '../Modules/APM/RubyOnRails/md-docs/Windows/Recommended/ror-windows-recommended-instrumentApplication.md';
+import APM_rails_windows_recommendedSteps_runApplication from '../Modules/APM/RubyOnRails/md-docs/Windows/Recommended/ror-windows-recommended-runApplication.md';
 // Rust DOcker
 import APM_rust_docker_quickStart_instrumentApplication from '../Modules/APM/Rust/md-docs/Docker/QuickStart/rust-docker-quickStart-instrumentApplication.md';
 import APM_rust_docker_quickStart_runApplication from '../Modules/APM/Rust/md-docs/Docker/QuickStart/rust-docker-quickStart-runApplication.md';
@@ -854,6 +992,13 @@ import APM_rust_macOsARM64_quickStart_runApplication from '../Modules/APM/Rust/m
 import APM_rust_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Rust/md-docs/MacOsARM64/Recommended/rust-macosarm64-recommended-installOtelCollector.md';
 import APM_rust_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Rust/md-docs/MacOsARM64/Recommended/rust-macosarm64-recommended-instrumentApplication.md';
 import APM_rust_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Rust/md-docs/MacOsARM64/Recommended/rust-macosarm64-recommended-runApplication.md';
+// Rust DOcker
+import APM_rust_windows_quickStart_instrumentApplication from '../Modules/APM/Rust/md-docs/Windows/QuickStart/rust-windows-quickStart-instrumentApplication.md';
+import APM_rust_windows_quickStart_runApplication from '../Modules/APM/Rust/md-docs/Windows/QuickStart/rust-windows-quickStart-runApplication.md';
+// Rust-LinuxAMD64-recommended
+import APM_rust_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Rust/md-docs/Windows/Recommended/rust-windows-recommended-installOtelCollector.md';
+import APM_rust_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Rust/md-docs/Windows/Recommended/rust-windows-recommended-instrumentApplication.md';
+import APM_rust_windows_recommendedSteps_runApplication from '../Modules/APM/Rust/md-docs/Windows/Recommended/rust-windows-recommended-runApplication.md';
 // Swift Docker
 import APM_swift_docker_quickStart_instrumentApplication from '../Modules/APM/Swift/md-docs/Docker/QuickStart/swift-docker-quickStart-instrumentApplication.md';
 import APM_swift_docker_quickStart_runApplication from '../Modules/APM/Swift/md-docs/Docker/QuickStart/swift-docker-quickStart-runApplication.md';
@@ -893,6 +1038,13 @@ import APM_swift_macOsARM64_quickStart_runApplication from '../Modules/APM/Swift
 import APM_swift_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Swift/md-docs/MacOsARM64/Recommended/swift-macosarm64-recommended-installOtelCollector.md';
 import APM_swift_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Swift/md-docs/MacOsARM64/Recommended/swift-macosarm64-recommended-instrumentApplication.md';
 import APM_swift_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Swift/md-docs/MacOsARM64/Recommended/swift-macosarm64-recommended-runApplication.md';
+// Swift Docker
+import APM_swift_windows_quickStart_instrumentApplication from '../Modules/APM/Swift/md-docs/Windows/QuickStart/swift-windows-quickStart-instrumentApplication.md';
+import APM_swift_windows_quickStart_runApplication from '../Modules/APM/Swift/md-docs/Windows/QuickStart/swift-windows-quickStart-runApplication.md';
+// Swift-LinuxAMD64-recommended
+import APM_swift_windows_recommendedSteps_setupOtelCollector from '../Modules/APM/Swift/md-docs/Windows/Recommended/swift-windows-recommended-installOtelCollector.md';
+import APM_swift_windows_recommendedSteps_instrumentApplication from '../Modules/APM/Swift/md-docs/Windows/Recommended/swift-windows-recommended-instrumentApplication.md';
+import APM_swift_windows_recommendedSteps_runApplication from '../Modules/APM/Swift/md-docs/Windows/Recommended/swift-windows-recommended-runApplication.md';
 
 export const ApmDocFilePaths = {
 	// Aust
@@ -903,6 +1055,8 @@ export const ApmDocFilePaths = {
 	APM_java_springBoot_kubernetes_recommendedSteps_setupOtelCollector,
 	APM_java_springBoot_kubernetes_recommendedSteps_instrumentApplication,
 	APM_java_springBoot_kubernetes_recommendedSteps_runApplication,
+	APM_java_springBoot_kubernetes_recommendedSteps_runApplication_producers,
+	APM_java_springBoot_kubernetes_recommendedSteps_runApplication_consumers,
 
 	// SpringBoot-LinuxAMD64-recommended
 	APM_java_springBoot_linuxAMD64_recommendedSteps_setupOtelCollector,
@@ -1999,4 +2153,160 @@ export const ApmDocFilePaths = {
 	APM_php_docker_recommendedSteps_setupOtelCollector,
 	APM_php_docker_recommendedSteps_instrumentApplication,
 	APM_php_docker_recommendedSteps_runApplication,
+
+	/// ///// Windows Steps
+
+	APM_python_django_windows_quickStart_instrumentApplication,
+	APM_python_django_windows_quickStart_runApplication,
+
+	APM_python_django_windows_recommendedSteps_setupOtelCollector,
+	APM_python_django_windows_recommendedSteps_instrumentApplication,
+	APM_python_django_windows_recommendedSteps_runApplication,
+
+	APM_python_flask_windows_quickStart_instrumentApplication,
+	APM_python_flask_windows_quickStart_runApplication,
+
+	APM_python_flask_windows_recommendedSteps_setupOtelCollector,
+	APM_python_flask_windows_recommendedSteps_instrumentApplication,
+	APM_python_flask_windows_recommendedSteps_runApplication,
+
+	APM_python_fastAPI_windows_quickStart_instrumentApplication,
+	APM_python_fastAPI_windows_quickStart_runApplication,
+
+	APM_python_fastAPI_windows_recommendedSteps_setupOtelCollector,
+	APM_python_fastAPI_windows_recommendedSteps_instrumentApplication,
+	APM_python_fastAPI_windows_recommendedSteps_runApplication,
+
+	APM_python_falcon_windows_quickStart_instrumentApplication,
+	APM_python_falcon_windows_quickStart_runApplication,
+
+	APM_python_falcon_windows_recommendedSteps_setupOtelCollector,
+	APM_python_falcon_windows_recommendedSteps_instrumentApplication,
+	APM_python_falcon_windows_recommendedSteps_runApplication,
+
+	APM_python_other_windows_quickStart_instrumentApplication,
+	APM_python_other_windows_quickStart_runApplication,
+
+	APM_python_other_windows_recommendedSteps_setupOtelCollector,
+	APM_python_other_windows_recommendedSteps_instrumentApplication,
+	APM_python_other_windows_recommendedSteps_runApplication,
+
+	APM_javascript_nodejs_windows_quickStart_instrumentApplication,
+	APM_javascript_nodejs_windows_quickStart_runApplication,
+
+	APM_javascript_nodejs_windows_recommendedSteps_setupOtelCollector,
+	APM_javascript_nodejs_windows_recommendedSteps_instrumentApplication,
+	APM_javascript_nodejs_windows_recommendedSteps_runApplication,
+
+	APM_javascript_nestjs_windows_quickStart_instrumentApplication,
+	APM_javascript_nestjs_windows_quickStart_runApplication,
+
+	APM_javascript_nestjs_windows_recommendedSteps_instrumentApplication,
+	APM_javascript_nestjs_windows_recommendedSteps_setupOtelCollector,
+	APM_javascript_nestjs_windows_recommendedSteps_runApplication,
+
+	APM_javascript_express_windows_quickStart_instrumentApplication,
+	APM_javascript_express_windows_quickStart_runApplication,
+
+	APM_javascript_express_windows_recommendedSteps_setupOtelCollector,
+	APM_javascript_express_windows_recommendedSteps_instrumentApplication,
+	APM_javascript_express_windows_recommendedSteps_runApplication,
+
+	APM_javascript_reactjs_windows_quickStart_instrumentApplication,
+	APM_javascript_reactjs_windows_quickStart_runApplication,
+
+	APM_javascript_reactjs_windows_recommendedSteps_setupOtelCollector,
+	APM_javascript_reactjs_windows_recommendedSteps_instrumentApplication,
+	APM_javascript_reactjs_windows_recommendedSteps_runApplication,
+
+	APM_javascript_angular_windows_quickStart_instrumentApplication,
+	APM_javascript_angular_windows_quickStart_runApplication,
+
+	APM_javascript_angular_windows_recommendedSteps_setupOtelCollector,
+	APM_javascript_angular_windows_recommendedSteps_instrumentApplication,
+	APM_javascript_angular_windows_recommendedSteps_runApplication,
+
+	APM_javascript_others_windows_quickStart_instrumentApplication,
+	APM_javascript_others_windows_quickStart_runApplication,
+
+	APM_javascript_others_windows_recommendedSteps_setupOtelCollector,
+	APM_javascript_others_windows_recommendedSteps_instrumentApplication,
+	APM_javascript_others_windows_recommendedSteps_runApplication,
+
+	APM_java_jboss_windows_quickStart_instrumentApplication,
+	APM_java_jboss_windows_quickStart_runApplication,
+
+	APM_java_jboss_windows_recommendedSteps_setupOtelCollector,
+	APM_java_jboss_windows_recommendedSteps_instrumentApplication,
+	APM_java_jboss_windows_recommendedSteps_runApplication,
+
+	APM_java_springBoot_windows_quickStart_instrumentApplication,
+	APM_java_springBoot_windows_quickStart_runApplication,
+
+	APM_java_springBoot_windows_recommendedSteps_setupOtelCollector,
+	APM_java_springBoot_windows_recommendedSteps_instrumentApplication,
+	APM_java_springBoot_windows_recommendedSteps_runApplication,
+
+	APM_java_tomcat_windows_quickStart_instrumentApplication,
+	APM_java_tomcat_windows_quickStart_runApplication,
+
+	APM_java_tomcat_windows_recommendedSteps_setupOtelCollector,
+	APM_java_tomcat_windows_recommendedSteps_instrumentApplication,
+	APM_java_tomcat_windows_recommendedSteps_runApplication,
+
+	APM_java_other_windows_quickStart_instrumentApplication,
+	APM_java_other_windows_quickStart_runApplication,
+
+	APM_java_other_windows_recommendedSteps_setupOtelCollector,
+	APM_java_other_windows_recommendedSteps_instrumentApplication,
+	APM_java_other_windows_recommendedSteps_runApplication,
+
+	APM_go_windows_quickStart_instrumentApplication,
+	APM_go_windows_quickStart_runApplication,
+
+	APM_go_windows_recommendedSteps_setupOtelCollector,
+	APM_go_windows_recommendedSteps_instrumentApplication,
+	APM_go_windows_recommendedSteps_runApplication,
+
+	APM_rust_windows_quickStart_instrumentApplication,
+	APM_rust_windows_quickStart_runApplication,
+
+	APM_rust_windows_recommendedSteps_setupOtelCollector,
+	APM_rust_windows_recommendedSteps_instrumentApplication,
+	APM_rust_windows_recommendedSteps_runApplication,
+
+	APM_elixir_windows_quickStart_instrumentApplication,
+	APM_elixir_windows_quickStart_runApplication,
+
+	APM_elixir_windows_recommendedSteps_setupOtelCollector,
+	APM_elixir_windows_recommendedSteps_instrumentApplication,
+	APM_elixir_windows_recommendedSteps_runApplication,
+
+	APM_dotnet_windows_quickStart_instrumentApplication,
+	APM_dotnet_windows_quickStart_runApplication,
+
+	APM_dotnet_windows_recommendedSteps_setupOtelCollector,
+	APM_dotnet_windows_recommendedSteps_instrumentApplication,
+	APM_dotnet_windows_recommendedSteps_runApplication,
+
+	APM_rails_windows_quickStart_instrumentApplication,
+	APM_rails_windows_quickStart_runApplication,
+
+	APM_rails_windows_recommendedSteps_setupOtelCollector,
+	APM_rails_windows_recommendedSteps_instrumentApplication,
+	APM_rails_windows_recommendedSteps_runApplication,
+
+	APM_swift_windows_quickStart_instrumentApplication,
+	APM_swift_windows_quickStart_runApplication,
+
+	APM_swift_windows_recommendedSteps_setupOtelCollector,
+	APM_swift_windows_recommendedSteps_instrumentApplication,
+	APM_swift_windows_recommendedSteps_runApplication,
+
+	APM_php_windows_quickStart_instrumentApplication,
+	APM_php_windows_quickStart_runApplication,
+
+	APM_php_windows_recommendedSteps_setupOtelCollector,
+	APM_php_windows_recommendedSteps_instrumentApplication,
+	APM_php_windows_recommendedSteps_runApplication,
 };

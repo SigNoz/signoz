@@ -40,6 +40,7 @@ const GridPanelSwitch = forwardRef<
 					data: panelData,
 					query,
 					thresholds,
+					sticky: true,
 				},
 				[PANEL_TYPES.LIST]: null,
 				[PANEL_TYPES.PIE]: null,

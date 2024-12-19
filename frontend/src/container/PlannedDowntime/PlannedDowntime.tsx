@@ -13,7 +13,7 @@ import {
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { Search } from 'lucide-react';
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 
 import { PlannedDowntimeDeleteModal } from './PlannedDowntimeDeleteModal';
@@ -47,6 +47,12 @@ export function PlannedDowntime(): JSX.Element {
 			})),
 		[data],
 	);
+
+	useEffect(() => {
+		if (!isOpen) {
+			form.resetFields();
+		}
+	}, [form, isOpen]);
 
 	const [searchValue, setSearchValue] = React.useState<string | number>('');
 	const [deleteData, setDeleteData] = useState<{ id: number; name: string }>();
@@ -128,17 +134,19 @@ export function PlannedDowntime(): JSX.Element {
 					setEditMode={setEditMode}
 					searchValue={searchValue}
 				/>
-				<PlannedDowntimeForm
-					alertOptions={alertOptions || []}
-					initialValues={initialValues}
-					isError={isError}
-					isLoading={isLoading}
-					isOpen={isOpen}
-					setIsOpen={setIsOpen}
-					refetchAllSchedules={refetchAllSchedules}
-					isEditMode={isEditMode}
-					form={form}
-				/>
+				{isOpen && (
+					<PlannedDowntimeForm
+						alertOptions={alertOptions || []}
+						initialValues={initialValues}
+						isError={isError}
+						isLoading={isLoading}
+						isOpen={isOpen}
+						setIsOpen={setIsOpen}
+						refetchAllSchedules={refetchAllSchedules}
+						isEditMode={isEditMode}
+						form={form}
+					/>
+				)}
 				<PlannedDowntimeDeleteModal
 					isDeleteLoading={isDeleteLoading}
 					isDeleteModalOpen={isDeleteModalOpen}

@@ -5,5 +5,5 @@ import (
 )
 
 func NewNoopProxy() (*httputil.ReverseProxy, error) {
-	return nil, nil
+	return &httputil.ReverseProxy{}, nil
 }

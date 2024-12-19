@@ -1,10 +1,17 @@
 import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
+import {
+	Button,
+	Card,
+	Input,
+	Modal,
+	Popover,
+	Tag,
+	Tooltip,
+	Typography,
+} from 'antd';
 import logEvent from 'api/common/logEvent';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
-import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -38,7 +45,11 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
-import { Dashboard, DashboardData } from 'types/api/dashboard/getAll';
+import {
+	Dashboard,
+	DashboardData,
+	IDashboardVariable,
+} from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
@@ -52,6 +63,30 @@ import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
 
 interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
+}
+
+export function sanitizeDashboardData(
+	selectedData: DashboardData,
+): Omit<DashboardData, 'uuid'> {
+	if (!selectedData?.variables) {
+		const { uuid, ...rest } = selectedData;
+		return rest;
+	}
+
+	const updatedVariables = Object.entries(selectedData.variables).reduce(
+		(acc, [key, value]) => {
+			const { selectedValue, ...rest } = value;
+			acc[key] = rest;
+			return acc;
+		},
+		{} as Record<string, IDashboardVariable>,
+	);
+
+	const { uuid, ...restData } = selectedData;
+	return {
+		...restData,
+		variables: updatedVariables,
+	};
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -173,6 +208,15 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const { t } = useTranslation(['dashboard', 'common']);
 
+	// used to set the initial value for the updatedTitle
+	// the context value is sometimes not available during the initial render
+	// due to which the updatedTitle is set to some previous value
+	useEffect(() => {
+		if (selectedDashboard) {
+			setUpdatedTitle(selectedDashboard.data.title);
+		}
+	}, [selectedDashboard]);
+
 	useEffect(() => {
 		if (state.error) {
 			notifications.error({
@@ -285,41 +329,28 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					>
 						Dashboard /
 					</Button>
-					<Button
-						type="text"
-						className="id-btn"
-						icon={
-							// eslint-disable-next-line jsx-a11y/img-redundant-alt
-							<img
-								src={image}
-								alt="dashboard-image"
-								style={{ height: '14px', width: '14px' }}
-							/>
-						}
-					>
+					<Button type="text" className="id-btn dashboard-name-btn">
+						<img
+							src={image}
+							alt="dashboard-icon"
+							style={{ height: '14px', width: '14px' }}
+						/>
 						{title}
 					</Button>
 				</section>
-				<FacingIssueBtn
-					attributes={{
-						uuid: selectedDashboard?.uuid,
-						title: updatedTitle,
-						screen: 'Dashboard Details',
-					}}
-					eventName="Dashboard: Facing Issues in dashboard"
-					message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
-					buttonText="Facing issues with dashboards?"
-					onHoverText="Click here to get help with dashboard details"
-				/>
 			</div>
-			<section className="dashbord-details">
+			<section className="dashboard-details">
 				<div className="left-section">
-					<img
-						src={image}
-						alt="dashboard-img"
-						style={{ width: '16px', height: '16px' }}
-					/>
-					<Typography.Text className="dashboard-title">{title}</Typography.Text>
+					<img src={image} alt="dashboard-img" className="dashboard-img" />
+					<Tooltip title={title.length > 30 ? title : ''}>
+						<Typography.Text
+							className="dashboard-title"
+							data-testid="dashboard-title"
+						>
+							{' '}
+							{title}
+						</Typography.Text>
+					</Tooltip>
 					{isDashboardLocked && <LockKeyhole size={14} />}
 				</div>
 				<div className="right-section">
@@ -333,13 +364,22 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							<div className="menu-content">
 								<section className="section-1">
 									{(isAuthor || role === USER_ROLES.ADMIN) && (
-										<Button
-											type="text"
-											icon={<LockKeyhole size={14} />}
-											onClick={handleLockDashboardToggle}
+										<Tooltip
+											title={
+												selectedDashboard?.created_by === 'integration' &&
+												'Dashboards created by integrations cannot be unlocked'
+											}
 										>
-											{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
-										</Button>
+											<Button
+												type="text"
+												icon={<LockKeyhole size={14} />}
+												disabled={selectedDashboard?.created_by === 'integration'}
+												onClick={handleLockDashboardToggle}
+												data-testid="lock-unlock-dashboard"
+											>
+												{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
+											</Button>
+										</Tooltip>
 									)}
 
 									{!isDashboardLocked && editDashboard && (
@@ -381,7 +421,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 										type="text"
 										icon={<FileJson size={14} />}
 										onClick={(): void => {
-											downloadObjectAsJson(selectedData, selectedData.title);
+											downloadObjectAsJson(
+												sanitizeDashboardData(selectedData),
+												selectedData.title,
+											);
 											setIsDashbordSettingsOpen(false);
 										}}
 									>
@@ -391,7 +434,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 										type="text"
 										icon={<ClipboardCopy size={14} />}
 										onClick={(): void => {
-											setCopy(JSON.stringify(selectedData, null, 2));
+											setCopy(
+												JSON.stringify(sanitizeDashboardData(selectedData), null, 2),
+											);
 											setIsDashbordSettingsOpen(false);
 										}}
 									>

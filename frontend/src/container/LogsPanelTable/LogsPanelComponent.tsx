@@ -15,6 +15,7 @@ import { useLogsData } from 'hooks/useLogsData';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
 	HTMLAttributes,
@@ -76,7 +77,12 @@ function LogsPanelComponent({
 		});
 	};
 
-	const columns = getLogPanelColumnsList(widget.selectedLogFields);
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
+	const columns = getLogPanelColumnsList(
+		widget.selectedLogFields,
+		formatTimezoneAdjustedTimestamp,
+	);
 
 	const dataLength =
 		queryResponse.data?.payload?.data?.newResult?.data?.result[0]?.list?.length;
@@ -108,6 +114,7 @@ function LogsPanelComponent({
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 	} = useActiveLog();
 
 	const handleRow = useCallback(
@@ -244,7 +251,9 @@ function LogsPanelComponent({
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}
 				onClickActionItem={onAddToQuery}
+				onGroupByAttribute={onGroupByAttribute}
 				isListViewPanel
+				listViewPanelSelectedFields={widget?.selectedLogFields}
 			/>
 		</>
 	);

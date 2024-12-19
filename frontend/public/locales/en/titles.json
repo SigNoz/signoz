@@ -4,6 +4,7 @@
 	"SERVICE_METRICS": "SigNoz | Service Metrics",
 	"SERVICE_MAP": "SigNoz | Service Map",
 	"GET_STARTED": "SigNoz | Get Started",
+	"ONBOARDING": "SigNoz | Get Started",
 	"GET_STARTED_APPLICATION_MONITORING": "SigNoz | Get Started | APM",
 	"GET_STARTED_LOGS_MANAGEMENT": "SigNoz | Get Started | Logs",
 	"GET_STARTED_INFRASTRUCTURE_MONITORING": "SigNoz | Get Started | Infrastructure",
@@ -44,10 +45,15 @@
 	"PASSWORD_RESET": "SigNoz | Password Reset",
 	"LIST_LICENSES": "SigNoz | List of Licenses",
 	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
+	"WORKSPACE_SUSPENDED": "SigNoz | Workspace Suspended",
 	"SUPPORT": "SigNoz | Support",
 	"LOGS_SAVE_VIEWS": "SigNoz | Logs Saved Views",
 	"TRACES_SAVE_VIEWS": "SigNoz | Traces Saved Views",
 	"DEFAULT": "Open source Observability Platform | SigNoz",
 	"SHORTCUTS": "SigNoz | Shortcuts",
-	"INTEGRATIONS": "SigNoz | Integrations"
+	"INTEGRATIONS": "SigNoz | Integrations",
+	"ALERT_HISTORY": "SigNoz | Alert Rule History",
+	"ALERT_OVERVIEW": "SigNoz | Alert Rule Overview",
+	"MESSAGING_QUEUES": "SigNoz | Messaging Queues",
+	"INFRASTRUCTURE_MONITORING_HOSTS": "SigNoz | Infra Monitoring"
 }

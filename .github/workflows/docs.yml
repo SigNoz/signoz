@@ -1,0 +1,83 @@
+name: "Update PR labels and Block PR until related docs are shipped for the feature"
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, edited, labeled, unlabeled]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  docs_label_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR Title and Manage Labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prTitle = context.payload.pull_request.title;
+            const prNumber = context.payload.pull_request.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Fetch the current PR details to get labels
+            const pr = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: prNumber
+            });
+
+            const labels = pr.data.labels.map(label => label.name);
+
+            if (prTitle.startsWith('feat:')) {
+              const hasDocsRequired = labels.includes('docs required');
+              const hasDocsShipped = labels.includes('docs shipped');
+              const hasDocsNotRequired = labels.includes('docs not required');
+
+              // If "docs not required" is present, skip the checks
+              if (hasDocsNotRequired && !hasDocsRequired) {
+                console.log("Skipping checks due to 'docs not required' label.");
+                return; // Exit the script early
+              }
+              
+              // If "docs shipped" is present, remove "docs required" if it exists
+              if (hasDocsShipped && hasDocsRequired) {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  name: 'docs required'
+                });
+                console.log("Removed 'docs required' label.");
+              }
+
+              // Add "docs required" label if neither "docs shipped" nor "docs required" are present
+              if (!hasDocsRequired && !hasDocsShipped) {
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  labels: ['docs required']
+                });
+                console.log("Added 'docs required' label.");
+              }
+            }
+
+            // Fetch the updated labels after any changes
+            const updatedPr = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: prNumber
+            });
+
+            const updatedLabels = updatedPr.data.labels.map(label => label.name);
+            const updatedHasDocsRequired = updatedLabels.includes('docs required');
+            const updatedHasDocsShipped = updatedLabels.includes('docs shipped');
+
+            // Block PR if "docs required" is still present and "docs shipped" is missing
+            if (updatedHasDocsRequired && !updatedHasDocsShipped) {
+              core.setFailed("This PR requires documentation. Please remove the 'docs required' label and add the 'docs shipped' label to proceed.");
+            }

@@ -1,3 +1,5 @@
+/* eslint-disable no-nested-ternary */
+/* eslint-disable sonarjs/no-identical-functions */
 import './PlannedDowntime.styles.scss';
 import 'dayjs/locale/en';
 
@@ -26,25 +28,34 @@ import {
 	ModalTitle,
 } from 'container/PipelinePage/PipelineListsView/styles';
 import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo, isEmpty } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 
-import {
-	DropdownWithSubMenu,
-	Option,
-	recurrenceOption,
-} from './DropdownWithSubMenu/DropdownWithSubMenu';
 import { AlertRuleTags } from './PlannedDowntimeList';
 import {
 	createEditDowntimeSchedule,
 	getAlertOptionsFromIds,
 	getDurationInfo,
+	getEndTime,
+	handleTimeConversion,
+	isScheduleRecurring,
 	recurrenceOptions,
+	recurrenceOptionWithSubmenu,
+	recurrenceWeeklyOptions,
 } from './PlannedDowntimeutils';
 
 dayjs.locale('en');
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const TIME_FORMAT = 'HH:mm';
+const DATE_FORMAT = 'Do MMM YYYY';
+const ORDINAL_FORMAT = 'Do';
+
 interface PlannedDowntimeFormData {
 	name: string;
 	startTime: dayjs.Dayjs | string;
@@ -93,10 +104,23 @@ export function PlannedDowntimeForm(
 	>([]);
 	const alertRuleFormName = 'alertRules';
 	const [saveLoading, setSaveLoading] = useState(false);
-	const [durationUnit, setDurationUnit] = useState<string>('m');
-	const [selectedRecurrenceOption, setSelectedRecurrenceOption] = useState<
-		string | null
-	>();
+	const [durationUnit, setDurationUnit] = useState<string>(
+		getDurationInfo(initialValues.schedule?.recurrence?.duration as string)
+			?.unit || 'm',
+	);
+
+	const [formData, setFormData] = useState<PlannedDowntimeFormData>(
+		initialValues?.schedule as PlannedDowntimeFormData,
+	);
+
+	const [recurrenceType, setRecurrenceType] = useState<string | null>(
+		(initialValues.schedule?.recurrence?.repeatType as string) ||
+			recurrenceOptions.doesNotRepeat.value,
+	);
+
+	const timezoneInitialValue = !isEmpty(initialValues.schedule?.timezone)
+		? (initialValues.schedule?.timezone as string)
+		: undefined;
 
 	const { notifications } = useNotifications();
 
@@ -107,9 +131,7 @@ export function PlannedDowntimeForm(
 
 	const saveHanlder = useCallback(
 		async (values: PlannedDowntimeFormData) => {
-			const formatDate = (date: string | dayjs.Dayjs): string | undefined =>
-				!isEmpty(date) ? dayjs(date).format('YYYY-MM-DDTHH:mm:ss[Z]') : undefined;
-
+			const shouldKeepLocalTime = !isEditMode;
 			const createEditProps: DowntimeScheduleUpdatePayload = {
 				data: {
 					alertIds: values.alertRules
@@ -117,9 +139,21 @@ export function PlannedDowntimeForm(
 						.filter((alert) => alert !== undefined) as string[],
 					name: values.name,
 					schedule: {
-						startTime: formatDate(values.startTime),
+						startTime: handleTimeConversion(
+							values.startTime,
+							timezoneInitialValue,
+							values.timezone,
+							shouldKeepLocalTime,
+						),
 						timezone: values.timezone,
-						endTime: formatDate(values.endTime),
+						endTime: values.endTime
+							? handleTimeConversion(
+									values.endTime,
+									timezoneInitialValue,
+									values.timezone,
+									shouldKeepLocalTime,
+							  )
+							: undefined,
 						recurrence: values.recurrence as Recurrence,
 					},
 				},
@@ -152,25 +186,41 @@ export function PlannedDowntimeForm(
 			}
 			setSaveLoading(false);
 		},
-		[initialValues.id, isEditMode, notifications, refetchAllSchedules, setIsOpen],
+		[
+			initialValues.id,
+			isEditMode,
+			notifications,
+			refetchAllSchedules,
+			setIsOpen,
+			timezoneInitialValue,
+		],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
 		const recurrenceData: Recurrence | undefined =
-			(values?.recurrenceSelect?.repeatType as Option)?.value ===
-			recurrenceOptions.doesNotRepeat.value
+			values?.recurrence?.repeatType === recurrenceOptions.doesNotRepeat.value
 				? undefined
 				: {
 						duration: values.recurrence?.duration
 							? `${values.recurrence?.duration}${durationUnit}`
 							: undefined,
 						endTime: !isEmpty(values.endTime)
-							? (values.endTime as string)
+							? handleTimeConversion(
+									values.endTime,
+									timezoneInitialValue,
+									values.timezone,
+									!isEditMode,
+							  )
 							: undefined,
-						startTime: values.startTime as string,
-						repeatOn: !values?.recurrenceSelect?.repeatOn?.length
+						startTime: handleTimeConversion(
+							values.startTime,
+							timezoneInitialValue,
+							values.timezone,
+							!isEditMode,
+						),
+						repeatOn: !values.recurrence?.repeatOn?.length
 							? undefined
-							: values?.recurrenceSelect?.repeatOn,
-						repeatType: (values?.recurrenceSelect?.repeatType as Option)?.value,
+							: values.recurrence?.repeatOn,
+						repeatType: values.recurrence?.repeatType,
 				  };
 
 		const payloadValues = { ...values, recurrence: recurrenceData };
@@ -226,19 +276,15 @@ export function PlannedDowntimeForm(
 				initialValues.alertIds || [],
 				alertOptions,
 			),
-			endTime: initialValues.schedule?.endTime
-				? dayjs(initialValues.schedule?.endTime)
-				: '',
+			endTime: getEndTime(initialValues) ? dayjs(getEndTime(initialValues)) : '',
 			startTime: initialValues.schedule?.startTime
 				? dayjs(initialValues.schedule?.startTime)
 				: '',
-			recurrenceSelect: initialValues.schedule?.recurrence
-				? initialValues.schedule?.recurrence
-				: {
-						repeatType: recurrenceOptions.doesNotRepeat,
-				  },
 			recurrence: {
 				...initialValues.schedule?.recurrence,
+				repeatType: !isScheduleRecurring(initialValues?.schedule)
+					? recurrenceOptions.doesNotRepeat.value
+					: (initialValues.schedule?.recurrence?.repeatType as string),
 				duration: getDurationInfo(
 					initialValues.schedule?.recurrence?.duration as string,
 				)?.value,
@@ -262,6 +308,116 @@ export function PlannedDowntimeForm(
 		}),
 	);
 
+	const getTimezoneFormattedTime = (
+		time: string | dayjs.Dayjs,
+		timeZone?: string,
+		isEditMode?: boolean,
+		format?: string,
+	): string => {
+		if (!time) {
+			return '';
+		}
+		if (!timeZone) {
+			return dayjs(time).format(format);
+		}
+		return dayjs(time).tz(timeZone, isEditMode).format(format);
+	};
+
+	const startTimeText = useMemo((): string => {
+		let startTime = formData?.startTime;
+		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
+			startTime = formData?.recurrence?.startTime || formData?.startTime || '';
+		}
+
+		if (!startTime) {
+			return '';
+		}
+
+		if (formData.timezone) {
+			startTime = handleTimeConversion(
+				startTime,
+				timezoneInitialValue,
+				formData?.timezone,
+				!isEditMode,
+			);
+		}
+		const daysOfWeek = formData?.recurrence?.repeatOn;
+
+		const formattedStartTime = getTimezoneFormattedTime(
+			startTime,
+			formData.timezone,
+			!isEditMode,
+			TIME_FORMAT,
+		);
+
+		const formattedStartDate = getTimezoneFormattedTime(
+			startTime,
+			formData.timezone,
+			!isEditMode,
+			DATE_FORMAT,
+		);
+
+		const ordinalFormat = getTimezoneFormattedTime(
+			startTime,
+			formData.timezone,
+			!isEditMode,
+			ORDINAL_FORMAT,
+		);
+
+		const formattedDaysOfWeek = daysOfWeek?.join(', ');
+		switch (recurrenceType) {
+			case 'daily':
+				return `Scheduled from ${formattedStartDate}, daily starting at ${formattedStartTime}.`;
+			case 'monthly':
+				return `Scheduled from ${formattedStartDate}, monthly on the ${ordinalFormat} starting at ${formattedStartTime}.`;
+			case 'weekly':
+				return `Scheduled from ${formattedStartDate}, weekly ${
+					formattedDaysOfWeek ? `on [${formattedDaysOfWeek}]` : ''
+				} starting at ${formattedStartTime}`;
+			default:
+				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
+		}
+	}, [formData, recurrenceType, isEditMode, timezoneInitialValue]);
+
+	const endTimeText = useMemo((): string => {
+		let endTime = formData?.endTime;
+		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
+			endTime = formData?.recurrence?.endTime || '';
+
+			if (!isEditMode && !endTime) {
+				endTime = formData?.endTime || '';
+			}
+		}
+
+		if (!endTime) {
+			return '';
+		}
+
+		if (formData.timezone) {
+			endTime = handleTimeConversion(
+				endTime,
+				timezoneInitialValue,
+				formData?.timezone,
+				!isEditMode,
+			);
+		}
+
+		const formattedEndTime = getTimezoneFormattedTime(
+			endTime,
+			formData.timezone,
+			!isEditMode,
+			TIME_FORMAT,
+		);
+
+		const formattedEndDate = getTimezoneFormattedTime(
+			endTime,
+			formData.timezone,
+			!isEditMode,
+			DATE_FORMAT,
+		);
+		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
+	}, [formData, recurrenceType, isEditMode, timezoneInitialValue]);
+
 	return (
 		<Modal
 			title={
@@ -283,101 +439,125 @@ export function PlannedDowntimeForm(
 				layout="vertical"
 				className="createForm"
 				onFinish={onFinish}
+				onValuesChange={(): void => {
+					setRecurrenceType(form.getFieldValue('recurrence')?.repeatType as string);
+					setFormData(form.getFieldsValue());
+				}}
 				autoComplete="off"
 			>
-				<Form.Item
-					label="Name"
-					name="name"
-					required={false}
-					rules={formValidationRules}
-				>
+				<Form.Item label="Name" name="name" rules={formValidationRules}>
 					<Input placeholder="e.g. Upgrade downtime" />
 				</Form.Item>
 				<Form.Item
 					label="Starts from"
 					name="startTime"
-					required={false}
 					rules={formValidationRules}
-					className="formItemWithBullet"
+					className={!isEmpty(startTimeText) ? 'formItemWithBullet' : ''}
+					getValueProps={(value): any => ({
+						value: value ? dayjs(value).tz(timezoneInitialValue) : undefined,
+					})}
 				>
 					<DatePicker
-						format={customFormat}
+						format={(date): string =>
+							dayjs(date).tz(timezoneInitialValue).format(customFormat)
+						}
 						showTime
 						renderExtraFooter={datePickerFooter}
+						showNow={false}
 						popupClassName="datePicker"
 					/>
 				</Form.Item>
+				{!isEmpty(startTimeText) && (
+					<div className="scheduleTimeInfoText">{startTimeText}</div>
+				)}
 				<Form.Item
 					label="Repeats every"
-					name="recurrenceSelect"
-					required={false}
+					name={['recurrence', 'repeatType']}
 					rules={formValidationRules}
 				>
-					<DropdownWithSubMenu
-						options={recurrenceOption}
-						form={form}
-						setRecurrenceOption={setSelectedRecurrenceOption}
+					<Select
+						placeholder="Select option..."
+						options={recurrenceOptionWithSubmenu}
 					/>
 				</Form.Item>
-				{selectedRecurrenceOption !== recurrenceOptions.doesNotRepeat.value && (
+				{recurrenceType === recurrenceOptions.weekly.value && (
 					<Form.Item
-						label="Duration"
-						name={['recurrence', 'duration']}
-						required={false}
+						label="Weekly occurernce"
+						name={['recurrence', 'repeatOn']}
 						rules={formValidationRules}
 					>
-						<Input
-							addonAfter={
-								<Select
-									defaultValue="m"
-									value={
-										getDurationInfo(
-											initialValues.schedule?.recurrence?.duration as string,
-										)?.unit
-									}
-									onChange={(value): void => setDurationUnit(value)}
-								>
-									<Select.Option value="m">Mins</Select.Option>
-									<Select.Option value="h">Hours</Select.Option>
-								</Select>
-							}
-							className="duration-input"
-							type="number"
-							placeholder="Enter duration"
-							min={1}
-							onWheel={(e): void => e.currentTarget.blur()}
+						<Select
+							placeholder="Select option..."
+							mode="multiple"
+							options={Object.values(recurrenceWeeklyOptions)}
 						/>
 					</Form.Item>
-				)}{' '}
-				<Form.Item
-					label="Timezone"
-					name="timezone"
-					required={false}
-					rules={formValidationRules}
-				>
+				)}
+				{recurrenceType &&
+					recurrenceType !== recurrenceOptions.doesNotRepeat.value && (
+						<Form.Item
+							label="Duration"
+							name={['recurrence', 'duration']}
+							rules={formValidationRules}
+						>
+							<Input
+								addonAfter={
+									<Select
+										defaultValue="m"
+										value={durationUnit}
+										onChange={(value): void => {
+											setDurationUnit(value);
+										}}
+									>
+										<Select.Option value="m">Mins</Select.Option>
+										<Select.Option value="h">Hours</Select.Option>
+									</Select>
+								}
+								className="duration-input"
+								type="number"
+								placeholder="Enter duration"
+								min={1}
+								onWheel={(e): void => e.currentTarget.blur()}
+							/>
+						</Form.Item>
+					)}
+				<Form.Item label="Timezone" name="timezone" rules={formValidationRules}>
 					<Select options={timeZoneItems} placeholder="Select timezone" showSearch />
 				</Form.Item>
 				<Form.Item
 					label="Ends on"
 					name="endTime"
-					required={false}
+					required={recurrenceType === recurrenceOptions.doesNotRepeat.value}
 					rules={[
 						{
-							required:
-								selectedRecurrenceOption === recurrenceOptions.doesNotRepeat.value,
+							required: recurrenceType === recurrenceOptions.doesNotRepeat.value,
 						},
 					]}
-					className="formItemWithBullet"
+					className={!isEmpty(endTimeText) ? 'formItemWithBullet' : ''}
+					getValueProps={(value): any => ({
+						value: value ? dayjs(value).tz(timezoneInitialValue) : undefined,
+					})}
 				>
 					<DatePicker
-						format={customFormat}
+						format={(date): string =>
+							dayjs(date).tz(timezoneInitialValue).format(customFormat)
+						}
 						showTime
+						showNow={false}
 						renderExtraFooter={datePickerFooter}
 						popupClassName="datePicker"
 					/>
 				</Form.Item>
+				{!isEmpty(endTimeText) && (
+					<div className="scheduleTimeInfoText">{endTimeText}</div>
+				)}
 				<div>
-					<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
+					<div className="alert-rule-form">
+						<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
+						<Typography style={{ marginBottom: 8 }} className="alert-rule-info">
+							(Leave empty to silence all alerts)
+						</Typography>
+					</div>
 					<Form.Item noStyle shouldUpdate>
 						<AlertRuleTags
 							closable
@@ -385,7 +565,7 @@ export function PlannedDowntimeForm(
 							handleClose={handleClose}
 						/>
 					</Form.Item>
-					<Form.Item name={alertRuleFormName} rules={formValidationRules}>
+					<Form.Item name={alertRuleFormName}>
 						<Select
 							placeholder="Search for alerts rules or groups..."
 							mode="multiple"
@@ -393,7 +573,11 @@ export function PlannedDowntimeForm(
 							loading={isLoading}
 							tagRender={noTagRenderer}
 							onChange={handleChange}
+							showSearch
 							options={alertOptions}
+							filterOption={(input, option): boolean =>
+								(option?.label as string)?.toLowerCase()?.includes(input.toLowerCase())
+							}
 							notFoundContent={
 								isLoading ? (
 									<span>

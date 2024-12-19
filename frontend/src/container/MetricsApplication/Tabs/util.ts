@@ -4,7 +4,10 @@ import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { resourceAttributesToTracesFilterItems } from 'hooks/useResourceAttribute/utils';
 import history from 'lib/history';
+import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
 import { traceFilterKeys } from 'pages/TracesExplorer/Filter/filterUtils';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import {
@@ -31,21 +34,44 @@ interface OnViewTracePopupClickProps {
 	selectedTraceTags: string;
 	timestamp: number;
 	apmToTraceQuery: Query;
+	isViewLogsClicked?: boolean;
+	stepInterval?: number;
 }
+
+export function generateExplorerPath(
+	isViewLogsClicked: boolean | undefined,
+	urlParams: URLSearchParams,
+	servicename: string | undefined,
+	selectedTraceTags: string,
+	JSONCompositeQuery: string,
+	queryString: string[],
+): string {
+	const basePath = isViewLogsClicked
+		? ROUTES.LOGS_EXPLORER
+		: ROUTES.TRACES_EXPLORER;
+
+	return `${basePath}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
+		QueryParams.compositeQuery
+	}=${JSONCompositeQuery}&${queryString.join('&')}`;
+}
+
+// TODO(@rahul-signoz): update the name of this function once we have view logs button in every panel
 export function onViewTracePopupClick({
 	selectedTraceTags,
 	servicename,
 	timestamp,
 	apmToTraceQuery,
+	isViewLogsClicked,
+	stepInterval,
 }: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
-		const currentTime = timestamp;
-
-		const tPlusOne = timestamp + 60;
+		const endTime = timestamp;
+		const startTime = timestamp - (stepInterval || 60);
 
 		const urlParams = new URLSearchParams(window.location.search);
-		urlParams.set(QueryParams.startTime, currentTime.toString());
-		urlParams.set(QueryParams.endTime, tPlusOne.toString());
+		urlParams.set(QueryParams.startTime, startTime.toString());
+		urlParams.set(QueryParams.endTime, endTime.toString());
+		urlParams.delete(QueryParams.relativeTime);
 		const avialableParams = routeConfig[ROUTES.TRACE];
 		const queryString = getQueryString(avialableParams, urlParams);
 
@@ -53,13 +79,16 @@ export function onViewTracePopupClick({
 			JSON.stringify(apmToTraceQuery),
 		);
 
-		const newTraceExplorerPath = `${
-			ROUTES.TRACES_EXPLORER
-		}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
-			QueryParams.compositeQuery
-		}=${JSONCompositeQuery}&${queryString.join('&')}`;
+		const newPath = generateExplorerPath(
+			isViewLogsClicked,
+			urlParams,
+			servicename,
+			selectedTraceTags,
+			JSONCompositeQuery,
+			queryString,
+		);
 
-		history.push(newTraceExplorerPath);
+		history.push(newPath);
 	};
 }
 
@@ -106,12 +135,13 @@ export function handleQueryChange(
 	attributeKeys: BaseAutocompleteData,
 	serviceAttribute: string,
 	filters?: TagFilterItem[],
+	logs?: boolean,
 ): Query {
 	const filterItem: TagFilterItem[] = [
 		{
 			id: uuid().slice(0, 8),
 			key: attributeKeys,
-			op: 'in',
+			op: logs ? '=' : 'in',
 			value: serviceAttribute,
 		},
 	];
@@ -130,6 +160,42 @@ export function handleQueryChange(
 	};
 }
 
+export function useGetAPMToLogsQueries({
+	servicename,
+	filters,
+}: {
+	servicename: string;
+	filters?: TagFilterItem[];
+}): Query {
+	const finalFilters: TagFilterItem[] = [];
+	const { updateAllQueriesOperators } = useQueryBuilder();
+	let updatedQuery = updateAllQueriesOperators(
+		initialQueriesMap.logs,
+		PANEL_TYPES.LIST,
+		DataSource.LOGS,
+	);
+	const serviceName = {
+		id: 'service.name--string--resource--true',
+		dataType: DataTypes.String,
+		isColumn: false,
+		key: 'service.name',
+		type: 'resource',
+		isJSON: false,
+	};
+
+	if (filters?.length) {
+		finalFilters.push(...filters);
+	}
+	updatedQuery = prepareQueryWithDefaultTimestamp(updatedQuery);
+	return handleQueryChange(
+		updatedQuery,
+		serviceName,
+		servicename,
+		finalFilters,
+		true,
+	);
+}
+
 export function useGetAPMToTracesQueries({
 	servicename,
 	isExternalCall,
@@ -142,7 +208,12 @@ export function useGetAPMToTracesQueries({
 	filters?: TagFilterItem[];
 }): Query {
 	const { updateAllQueriesOperators } = useQueryBuilder();
+	const { queries } = useResourceAttribute();
 
+	const resourceAttributesFilters = useMemo(
+		() => resourceAttributesToTracesFilterItems(queries),
+		[queries],
+	);
 	const finalFilters: TagFilterItem[] = [];
 	let spanKindFilter: TagFilterItem;
 	let dbCallFilter: TagFilterItem;
@@ -185,6 +256,10 @@ export function useGetAPMToTracesQueries({
 		finalFilters.push(...filters);
 	}
 
+	if (resourceAttributesFilters?.length) {
+		finalFilters.push(...resourceAttributesFilters);
+	}
+
 	return useMemo(() => {
 		const updatedQuery = updateAllQueriesOperators(
 			initialQueriesMap.traces,
@@ -199,5 +274,5 @@ export function useGetAPMToTracesQueries({
 			finalFilters,
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [servicename, updateAllQueriesOperators]);
+	}, [servicename, queries, updateAllQueriesOperators]);
 }

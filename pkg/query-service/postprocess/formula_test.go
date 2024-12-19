@@ -1,7 +1,6 @@
 package postprocess
 
 import (
-	"math"
 	"reflect"
 	"testing"
 
@@ -204,9 +203,10 @@ func TestFindUniqueLabelSets(t *testing.T) {
 
 func TestProcessResults(t *testing.T) {
 	tests := []struct {
-		name    string
-		results []*v3.Result
-		want    *v3.Result
+		name       string
+		results    []*v3.Result
+		want       *v3.Result
+		expression string
 	}{
 		{
 			name: "test1",
@@ -288,12 +288,68 @@ func TestProcessResults(t *testing.T) {
 					},
 				},
 			},
+			expression: "A + B",
+		},
+		{
+			name: "test2",
+			results: []*v3.Result{
+				{
+					QueryName: "A",
+					Series: []*v3.Series{
+						{
+							Labels: map[string]string{},
+							Points: []v3.Point{
+								{
+									Timestamp: 1,
+									Value:     10,
+								},
+								{
+									Timestamp: 2,
+									Value:     0,
+								},
+							},
+						},
+					},
+				},
+				{
+					QueryName: "B",
+					Series: []*v3.Series{
+						{
+							Labels: map[string]string{},
+							Points: []v3.Point{
+								{
+									Timestamp: 1,
+									Value:     0,
+								},
+								{
+									Timestamp: 3,
+									Value:     10,
+								},
+							},
+						},
+					},
+				},
+			},
+			want: &v3.Result{
+				Series: []*v3.Series{
+					{
+						Labels: map[string]string{},
+						Points: []v3.Point{
+							{
+								Timestamp: 3,
+								Value:     0,
+							},
+						},
+					},
+				},
+			},
+			expression: "A/B",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			expression, err := govaluate.NewEvaluableExpression("A + B")
+			expression, err := govaluate.NewEvaluableExpression(tt.expression)
 			if err != nil {
 				t.Errorf("Error parsing expression: %v", err)
 			}
@@ -835,10 +891,6 @@ func TestFormula(t *testing.T) {
 								Timestamp: 5,
 								Value:     1,
 							},
-							{
-								Timestamp: 7,
-								Value:     math.Inf(1),
-							},
 						},
 					},
 					{
@@ -854,10 +906,6 @@ func TestFormula(t *testing.T) {
 							{
 								Timestamp: 2,
 								Value:     0.6923076923076923,
-							},
-							{
-								Timestamp: 3,
-								Value:     math.Inf(1),
 							},
 							{
 								Timestamp: 4,
@@ -997,62 +1045,6 @@ func TestFormula(t *testing.T) {
 			},
 			want: &v3.Result{
 				Series: []*v3.Series{
-					{
-						Labels: map[string]string{
-							"host_name": "ip-10-420-69-1",
-							"state":     "running",
-						},
-						Points: []v3.Point{
-							{
-								Timestamp: 1,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 2,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 4,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 5,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 7,
-								Value:     math.Inf(0),
-							},
-						},
-					},
-					{
-						Labels: map[string]string{
-							"host_name": "ip-10-420-69-2",
-							"state":     "idle",
-						},
-						Points: []v3.Point{
-							{
-								Timestamp: 1,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 2,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 3,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 4,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 5,
-								Value:     math.Inf(0),
-							},
-						},
-					},
 					{
 						Labels: map[string]string{
 							"host_name": "ip-10-420-69-1",
@@ -1261,39 +1253,6 @@ func TestFormula(t *testing.T) {
 							{
 								Timestamp: 5,
 								Value:     1,
-							},
-							{
-								Timestamp: 7,
-								Value:     math.Inf(1),
-							},
-						},
-					},
-					{
-						Labels: map[string]string{
-							"host_name": "ip-10-420-69-2",
-							"state":     "idle",
-							"os.type":   "linux",
-						},
-						Points: []v3.Point{
-							{
-								Timestamp: 1,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 2,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 3,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 4,
-								Value:     math.Inf(0),
-							},
-							{
-								Timestamp: 5,
-								Value:     math.Inf(0),
 							},
 						},
 					},
@@ -1537,10 +1496,6 @@ func TestFormula(t *testing.T) {
 								Timestamp: 5,
 								Value:     51,
 							},
-							{
-								Timestamp: 7,
-								Value:     math.Inf(1),
-							},
 						},
 					},
 					{
@@ -1557,10 +1512,6 @@ func TestFormula(t *testing.T) {
 							{
 								Timestamp: 2,
 								Value:     45.6923076923076923,
-							},
-							{
-								Timestamp: 3,
-								Value:     math.Inf(1),
 							},
 							{
 								Timestamp: 4,

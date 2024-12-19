@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.uber.org/zap"
 )
 
 type DataSource string
@@ -229,13 +229,14 @@ type AggregateAttributeRequest struct {
 type TagType string
 
 const (
-	TagTypeTag      TagType = "tag"
-	TagTypeResource TagType = "resource"
+	TagTypeTag                  TagType = "tag"
+	TagTypeResource             TagType = "resource"
+	TagTypeInstrumentationScope TagType = "scope"
 )
 
 func (q TagType) Validate() error {
 	switch q {
-	case TagTypeTag, TagTypeResource:
+	case TagTypeTag, TagTypeResource, TagTypeInstrumentationScope:
 		return nil
 	default:
 		return fmt.Errorf("invalid tag type: %s", q)
@@ -250,6 +251,19 @@ type FilterAttributeKeyRequest struct {
 	AggregateAttribute string            `json:"aggregateAttribute"`
 	SearchText         string            `json:"searchText"`
 	Limit              int               `json:"limit"`
+}
+
+type QBFilterSuggestionsRequest struct {
+	DataSource      DataSource `json:"dataSource"`
+	SearchText      string     `json:"searchText"`
+	ExistingFilter  *FilterSet `json:"existingFilter"`
+	AttributesLimit uint64     `json:"attributesLimit"`
+	ExamplesLimit   uint64     `json:"examplesLimit"`
+}
+
+type QBFilterSuggestionsResponse struct {
+	AttributeKeys  []AttributeKey `json:"attributes"`
+	ExampleQueries []FilterSet    `json:"example_queries"`
 }
 
 type AttributeKeyDataType string
@@ -273,6 +287,10 @@ func (q AttributeKeyDataType) Validate() error {
 	default:
 		return fmt.Errorf("invalid tag data type: %s", q)
 	}
+}
+
+func (q AttributeKeyDataType) String() string {
+	return string(q)
 }
 
 // FilterAttributeValueRequest is a request to fetch possible attribute values
@@ -300,10 +318,15 @@ type FilterAttributeKeyResponse struct {
 type AttributeKeyType string
 
 const (
-	AttributeKeyTypeUnspecified AttributeKeyType = ""
-	AttributeKeyTypeTag         AttributeKeyType = "tag"
-	AttributeKeyTypeResource    AttributeKeyType = "resource"
+	AttributeKeyTypeUnspecified          AttributeKeyType = ""
+	AttributeKeyTypeTag                  AttributeKeyType = "tag"
+	AttributeKeyTypeResource             AttributeKeyType = "resource"
+	AttributeKeyTypeInstrumentationScope AttributeKeyType = "scope"
 )
+
+func (t AttributeKeyType) String() string {
+	return string(t)
+}
 
 type AttributeKey struct {
 	Key      string               `json:"key"`
@@ -327,7 +350,7 @@ func (a AttributeKey) Validate() error {
 
 	if a.IsColumn {
 		switch a.Type {
-		case AttributeKeyTypeResource, AttributeKeyTypeTag, AttributeKeyTypeUnspecified:
+		case AttributeKeyTypeResource, AttributeKeyTypeTag, AttributeKeyTypeUnspecified, AttributeKeyTypeInstrumentationScope:
 			break
 		default:
 			return fmt.Errorf("invalid attribute type: %s", a.Type)
@@ -358,11 +381,39 @@ type QueryRangeParamsV3 struct {
 	FormatForWeb   bool                   `json:"formatForWeb,omitempty"`
 }
 
+func (q *QueryRangeParamsV3) Clone() *QueryRangeParamsV3 {
+	if q == nil {
+		return nil
+	}
+	return &QueryRangeParamsV3{
+		Start:          q.Start,
+		End:            q.End,
+		Step:           q.Step,
+		CompositeQuery: q.CompositeQuery.Clone(),
+		Variables:      q.Variables,
+		NoCache:        q.NoCache,
+		Version:        q.Version,
+		FormatForWeb:   q.FormatForWeb,
+	}
+}
+
 type PromQuery struct {
 	Query    string `json:"query"`
 	Stats    string `json:"stats,omitempty"`
 	Disabled bool   `json:"disabled"`
 	Legend   string `json:"legend,omitempty"`
+}
+
+func (p *PromQuery) Clone() *PromQuery {
+	if p == nil {
+		return nil
+	}
+	return &PromQuery{
+		Query:    p.Query,
+		Stats:    p.Stats,
+		Disabled: p.Disabled,
+		Legend:   p.Legend,
+	}
 }
 
 func (p *PromQuery) Validate() error {
@@ -383,6 +434,16 @@ type ClickHouseQuery struct {
 	Legend   string `json:"legend,omitempty"`
 }
 
+func (c *ClickHouseQuery) Clone() *ClickHouseQuery {
+	if c == nil {
+		return nil
+	}
+	return &ClickHouseQuery{
+		Query:    c.Query,
+		Disabled: c.Disabled,
+		Legend:   c.Legend,
+	}
+}
 func (c *ClickHouseQuery) Validate() error {
 	if c == nil {
 		return nil
@@ -406,6 +467,43 @@ type CompositeQuery struct {
 	Unit string `json:"unit,omitempty"`
 	// FillGaps is used to fill the gaps in the time series data
 	FillGaps bool `json:"fillGaps,omitempty"`
+}
+
+func (c *CompositeQuery) Clone() *CompositeQuery {
+	if c == nil {
+		return nil
+	}
+	var builderQueries map[string]*BuilderQuery
+	if c.BuilderQueries != nil {
+		builderQueries = make(map[string]*BuilderQuery)
+		for name, query := range c.BuilderQueries {
+			builderQueries[name] = query.Clone()
+		}
+	}
+	var clickHouseQueries map[string]*ClickHouseQuery
+	if c.ClickHouseQueries != nil {
+		clickHouseQueries = make(map[string]*ClickHouseQuery)
+		for name, query := range c.ClickHouseQueries {
+			clickHouseQueries[name] = query.Clone()
+		}
+	}
+	var promQueries map[string]*PromQuery
+	if c.PromQueries != nil {
+		promQueries = make(map[string]*PromQuery)
+		for name, query := range c.PromQueries {
+			promQueries[name] = query.Clone()
+		}
+	}
+	return &CompositeQuery{
+		BuilderQueries:    builderQueries,
+		ClickHouseQueries: clickHouseQueries,
+		PromQueries:       promQueries,
+		PanelType:         c.PanelType,
+		QueryType:         c.QueryType,
+		Unit:              c.Unit,
+		FillGaps:          c.FillGaps,
+	}
+
 }
 
 func (c *CompositeQuery) EnabledQueries() int {
@@ -434,13 +532,15 @@ func (c *CompositeQuery) EnabledQueries() int {
 }
 
 func (c *CompositeQuery) Sanitize() {
+	if c == nil {
+		return
+	}
 	// remove groupBy for queries with list panel type
 	for _, query := range c.BuilderQueries {
 		if len(query.GroupBy) > 0 && c.PanelType == PanelTypeList {
 			query.GroupBy = []AttributeKey{}
 		}
 	}
-
 }
 
 func (c *CompositeQuery) Validate() error {
@@ -615,21 +715,23 @@ func GetPercentileFromOperator(operator SpaceAggregation) float64 {
 type FunctionName string
 
 const (
-	FunctionNameCutOffMin FunctionName = "cutOffMin"
-	FunctionNameCutOffMax FunctionName = "cutOffMax"
-	FunctionNameClampMin  FunctionName = "clampMin"
-	FunctionNameClampMax  FunctionName = "clampMax"
-	FunctionNameAbsolute  FunctionName = "absolute"
-	FunctionNameLog2      FunctionName = "log2"
-	FunctionNameLog10     FunctionName = "log10"
-	FunctionNameCumSum    FunctionName = "cumSum"
-	FunctionNameEWMA3     FunctionName = "ewma3"
-	FunctionNameEWMA5     FunctionName = "ewma5"
-	FunctionNameEWMA7     FunctionName = "ewma7"
-	FunctionNameMedian3   FunctionName = "median3"
-	FunctionNameMedian5   FunctionName = "median5"
-	FunctionNameMedian7   FunctionName = "median7"
-	FunctionNameTimeShift FunctionName = "timeShift"
+	FunctionNameCutOffMin   FunctionName = "cutOffMin"
+	FunctionNameCutOffMax   FunctionName = "cutOffMax"
+	FunctionNameClampMin    FunctionName = "clampMin"
+	FunctionNameClampMax    FunctionName = "clampMax"
+	FunctionNameAbsolute    FunctionName = "absolute"
+	FunctionNameRunningDiff FunctionName = "runningDiff"
+	FunctionNameLog2        FunctionName = "log2"
+	FunctionNameLog10       FunctionName = "log10"
+	FunctionNameCumSum      FunctionName = "cumSum"
+	FunctionNameEWMA3       FunctionName = "ewma3"
+	FunctionNameEWMA5       FunctionName = "ewma5"
+	FunctionNameEWMA7       FunctionName = "ewma7"
+	FunctionNameMedian3     FunctionName = "median3"
+	FunctionNameMedian5     FunctionName = "median5"
+	FunctionNameMedian7     FunctionName = "median7"
+	FunctionNameTimeShift   FunctionName = "timeShift"
+	FunctionNameAnomaly     FunctionName = "anomaly"
 )
 
 func (f FunctionName) Validate() error {
@@ -639,6 +741,7 @@ func (f FunctionName) Validate() error {
 		FunctionNameClampMin,
 		FunctionNameClampMax,
 		FunctionNameAbsolute,
+		FunctionNameRunningDiff,
 		FunctionNameLog2,
 		FunctionNameLog10,
 		FunctionNameCumSum,
@@ -648,7 +751,8 @@ func (f FunctionName) Validate() error {
 		FunctionNameMedian3,
 		FunctionNameMedian5,
 		FunctionNameMedian7,
-		FunctionNameTimeShift:
+		FunctionNameTimeShift,
+		FunctionNameAnomaly:
 		return nil
 	default:
 		return fmt.Errorf("invalid function name: %s", f)
@@ -656,33 +760,121 @@ func (f FunctionName) Validate() error {
 }
 
 type Function struct {
-	Name FunctionName  `json:"name"`
-	Args []interface{} `json:"args,omitempty"`
+	Name      FunctionName           `json:"name"`
+	Args      []interface{}          `json:"args,omitempty"`
+	NamedArgs map[string]interface{} `json:"namedArgs,omitempty"`
+}
+
+type MetricTableHints struct {
+	TimeSeriesTableName string
+	SamplesTableName    string
+}
+
+type MetricValueFilter struct {
+	Value float64
+}
+
+func (m *MetricValueFilter) Clone() *MetricValueFilter {
+	if m == nil {
+		return nil
+	}
+	return &MetricValueFilter{
+		Value: m.Value,
+	}
 }
 
 type BuilderQuery struct {
-	QueryName          string            `json:"queryName"`
-	StepInterval       int64             `json:"stepInterval"`
-	DataSource         DataSource        `json:"dataSource"`
-	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
-	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
-	Temporality        Temporality       `json:"temporality,omitempty"`
-	Filters            *FilterSet        `json:"filters,omitempty"`
-	GroupBy            []AttributeKey    `json:"groupBy,omitempty"`
-	Expression         string            `json:"expression"`
-	Disabled           bool              `json:"disabled"`
-	Having             []Having          `json:"having,omitempty"`
-	Legend             string            `json:"legend,omitempty"`
-	Limit              uint64            `json:"limit"`
-	Offset             uint64            `json:"offset"`
-	PageSize           uint64            `json:"pageSize"`
-	OrderBy            []OrderBy         `json:"orderBy,omitempty"`
-	ReduceTo           ReduceToOperator  `json:"reduceTo,omitempty"`
-	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
-	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
-	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
-	Functions          []Function        `json:"functions,omitempty"`
-	ShiftBy            int64
+	QueryName            string            `json:"queryName"`
+	StepInterval         int64             `json:"stepInterval"`
+	DataSource           DataSource        `json:"dataSource"`
+	AggregateOperator    AggregateOperator `json:"aggregateOperator"`
+	AggregateAttribute   AttributeKey      `json:"aggregateAttribute,omitempty"`
+	Temporality          Temporality       `json:"temporality,omitempty"`
+	Filters              *FilterSet        `json:"filters,omitempty"`
+	GroupBy              []AttributeKey    `json:"groupBy,omitempty"`
+	Expression           string            `json:"expression"`
+	Disabled             bool              `json:"disabled"`
+	Having               []Having          `json:"having,omitempty"`
+	Legend               string            `json:"legend,omitempty"`
+	Limit                uint64            `json:"limit"`
+	Offset               uint64            `json:"offset"`
+	PageSize             uint64            `json:"pageSize"`
+	OrderBy              []OrderBy         `json:"orderBy,omitempty"`
+	ReduceTo             ReduceToOperator  `json:"reduceTo,omitempty"`
+	SelectColumns        []AttributeKey    `json:"selectColumns,omitempty"`
+	TimeAggregation      TimeAggregation   `json:"timeAggregation,omitempty"`
+	SpaceAggregation     SpaceAggregation  `json:"spaceAggregation,omitempty"`
+	Functions            []Function        `json:"functions,omitempty"`
+	ShiftBy              int64
+	IsAnomaly            bool
+	QueriesUsedInFormula []string
+	MetricTableHints     *MetricTableHints  `json:"-"`
+	MetricValueFilter    *MetricValueFilter `json:"-"`
+}
+
+func (b *BuilderQuery) SetShiftByFromFunc() {
+	// Remove the time shift function from the list of functions and set the shift by value
+	var timeShiftBy int64
+	if len(b.Functions) > 0 {
+		for idx := range b.Functions {
+			function := &b.Functions[idx]
+			if function.Name == FunctionNameTimeShift {
+				// move the function to the beginning of the list
+				// so any other function can use the shifted time
+				var fns []Function
+				fns = append(fns, *function)
+				fns = append(fns, b.Functions[:idx]...)
+				fns = append(fns, b.Functions[idx+1:]...)
+				b.Functions = fns
+				if len(function.Args) > 0 {
+					if shift, ok := function.Args[0].(float64); ok {
+						timeShiftBy = int64(shift)
+					} else if shift, ok := function.Args[0].(string); ok {
+						shiftBy, err := strconv.ParseFloat(shift, 64)
+						if err != nil {
+							zap.L().Error("failed to parse time shift by", zap.String("shift", shift), zap.Error(err))
+						}
+						timeShiftBy = int64(shiftBy)
+					}
+				}
+				break
+			}
+		}
+	}
+	b.ShiftBy = timeShiftBy
+}
+
+func (b *BuilderQuery) Clone() *BuilderQuery {
+	if b == nil {
+		return nil
+	}
+	return &BuilderQuery{
+		QueryName:            b.QueryName,
+		StepInterval:         b.StepInterval,
+		DataSource:           b.DataSource,
+		AggregateOperator:    b.AggregateOperator,
+		AggregateAttribute:   b.AggregateAttribute,
+		Temporality:          b.Temporality,
+		Filters:              b.Filters.Clone(),
+		GroupBy:              b.GroupBy,
+		Expression:           b.Expression,
+		Disabled:             b.Disabled,
+		Having:               b.Having,
+		Legend:               b.Legend,
+		Limit:                b.Limit,
+		Offset:               b.Offset,
+		PageSize:             b.PageSize,
+		OrderBy:              b.OrderBy,
+		ReduceTo:             b.ReduceTo,
+		SelectColumns:        b.SelectColumns,
+		TimeAggregation:      b.TimeAggregation,
+		SpaceAggregation:     b.SpaceAggregation,
+		Functions:            b.Functions,
+		ShiftBy:              b.ShiftBy,
+		IsAnomaly:            b.IsAnomaly,
+		QueriesUsedInFormula: b.QueriesUsedInFormula,
+		MetricValueFilter:    b.MetricValueFilter.Clone(),
+	}
 }
 
 // CanDefaultZero returns true if the missing value can be substituted by zero
@@ -861,6 +1053,16 @@ type FilterSet struct {
 	Items    []FilterItem `json:"items"`
 }
 
+func (f *FilterSet) Clone() *FilterSet {
+	if f == nil {
+		return nil
+	}
+	return &FilterSet{
+		Operator: f.Operator,
+		Items:    f.Items,
+	}
+}
+
 func (f *FilterSet) Validate() error {
 	if f == nil {
 		return nil
@@ -907,7 +1109,8 @@ const (
 	FilterOperatorNotContains     FilterOperator = "ncontains"
 	FilterOperatorRegex           FilterOperator = "regex"
 	FilterOperatorNotRegex        FilterOperator = "nregex"
-	// (I)LIKE is faster than REGEX and supports index
+	// (I)LIKE is faster than REGEX
+	// ilike doesn't support index so internally we use lower(body) like for query
 	FilterOperatorLike    FilterOperator = "like"
 	FilterOperatorNotLike FilterOperator = "nlike"
 
@@ -928,9 +1131,16 @@ func (f *FilterItem) CacheKey() string {
 	return fmt.Sprintf("key:%s,op:%s,value:%v", f.Key.CacheKey(), f.Operator, f.Value)
 }
 
+type Direction string
+
+const (
+	DirectionAsc  Direction = "asc"
+	DirectionDesc Direction = "desc"
+)
+
 type OrderBy struct {
 	ColumnName string               `json:"columnName"`
-	Order      string               `json:"order"`
+	Order      Direction            `json:"order"`
 	Key        string               `json:"-"`
 	DataType   AttributeKeyDataType `json:"-"`
 	Type       AttributeKeyType     `json:"-"`
@@ -1011,17 +1221,14 @@ type Table struct {
 }
 
 type Result struct {
-	QueryName string    `json:"queryName,omitempty"`
-	Series    []*Series `json:"series,omitempty"`
-	List      []*Row    `json:"list,omitempty"`
-	Table     *Table    `json:"table,omitempty"`
-}
-
-type LogsLiveTailClient struct {
-	Name  string
-	Logs  chan *model.SignozLog
-	Done  chan *bool
-	Error chan error
+	QueryName        string    `json:"queryName,omitempty"`
+	Series           []*Series `json:"series,omitempty"`
+	PredictedSeries  []*Series `json:"predictedSeries,omitempty"`
+	UpperBoundSeries []*Series `json:"upperBoundSeries,omitempty"`
+	LowerBoundSeries []*Series `json:"lowerBoundSeries,omitempty"`
+	AnomalyScores    []*Series `json:"anomalyScores,omitempty"`
+	List             []*Row    `json:"list,omitempty"`
+	Table            *Table    `json:"table,omitempty"`
 }
 
 type Series struct {
@@ -1140,4 +1347,32 @@ type MetricMetadataResponse struct {
 	Type        string    `json:"type"`
 	IsMonotonic bool      `json:"isMonotonic"`
 	Temporality string    `json:"temporality"`
+}
+
+type URLShareableTimeRange struct {
+	Start    int64 `json:"start"`
+	End      int64 `json:"end"`
+	PageSize int64 `json:"pageSize"`
+}
+
+type URLShareableBuilderQuery struct {
+	QueryData     []BuilderQuery `json:"queryData"`
+	QueryFormulas []string       `json:"queryFormulas"`
+}
+
+type URLShareableCompositeQuery struct {
+	QueryType string                   `json:"queryType"`
+	Builder   URLShareableBuilderQuery `json:"builder"`
+}
+
+type URLShareableOptions struct {
+	MaxLines      int            `json:"maxLines"`
+	Format        string         `json:"format"`
+	SelectColumns []AttributeKey `json:"selectColumns"`
+}
+
+type QBOptions struct {
+	GraphLimitQtype string
+	IsLivetailQuery bool
+	PreferRPM       bool
 }

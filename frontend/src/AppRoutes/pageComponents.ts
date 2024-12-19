@@ -66,6 +66,10 @@ export const Onboarding = Loadable(
 	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPage'),
 );
 
+export const OrgOnboarding = Loadable(
+	() => import(/* webpackChunkName: "OrgOnboarding" */ 'pages/OrgOnboarding'),
+);
+
 export const DashboardPage = Loadable(
 	() =>
 		import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardsListPage'),
@@ -90,6 +94,14 @@ export const ListAllALertsPage = Loadable(
 
 export const CreateNewAlerts = Loadable(
 	() => import(/* webpackChunkName: "Create Alerts" */ 'pages/CreateAlert'),
+);
+
+export const AlertHistory = Loadable(
+	() => import(/* webpackChunkName: "Alert History" */ 'pages/AlertList'),
+);
+
+export const AlertOverview = Loadable(
+	() => import(/* webpackChunkName: "Alert Overview" */ 'pages/AlertList'),
 );
 
 export const CreateAlertChannelAlerts = Loadable(
@@ -194,6 +206,13 @@ export const WorkspaceBlocked = Loadable(
 		import(/* webpackChunkName: "WorkspaceLocked" */ 'pages/WorkspaceLocked'),
 );
 
+export const WorkspaceSuspended = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "WorkspaceSuspended" */ 'pages/WorkspaceSuspended/WorkspaceSuspended'
+		),
+);
+
 export const ShortcutsPage = Loadable(
 	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
 );
@@ -202,5 +221,24 @@ export const InstalledIntegrations = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
+		),
+);
+
+export const MessagingQueues = Loadable(
+	() =>
+		import(/* webpackChunkName: "MessagingQueues" */ 'pages/MessagingQueues'),
+);
+
+export const MQDetailPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "MQDetailPage" */ 'pages/MessagingQueues/MQDetailPage'
+		),
+);
+
+export const InfrastructureMonitoring = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "InfrastructureMonitoring" */ 'pages/InfrastructureMonitoring'
 		),
 );

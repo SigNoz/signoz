@@ -1,0 +1,455 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Table panel wrappper tests table should render fine with the query response and column units 1`] = `
+.c1 {
+  position: absolute;
+  right: -0.313rem;
+  bottom: 0;
+  z-index: 1;
+  width: 0.625rem;
+  height: 100%;
+  cursor: col-resize;
+}
+
+.c0 {
+  height: 95%;
+  overflow: hidden;
+}
+
+.c0 .ant-table-wrapper {
+  height: 100%;
+}
+
+.c0 .ant-spin-nested-loading {
+  height: 100%;
+}
+
+.c0 .ant-spin-container {
+  height: 100%;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.c0 .ant-table {
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  overflow: auto;
+}
+
+.c0 .ant-table > .ant-table-container > .ant-table-content > table {
+  min-width: 99% !important;
+}
+
+<div>
+   
+  <div
+    class="c0"
+  >
+    <div
+      class="query-table"
+    >
+      <div
+        class="ant-table-wrapper css-dev-only-do-not-override-2i2tap"
+      >
+        <div
+          class="ant-spin-nested-loading css-dev-only-do-not-override-2i2tap"
+        >
+          <div
+            class="ant-spin-container"
+          >
+            <div
+              class="ant-table ant-table-small ant-table-layout-fixed ant-table-scroll-horizontal"
+            >
+              <div
+                class="ant-table-container"
+              >
+                <div
+                  class="ant-table-header ant-table-sticky-holder"
+                  style="overflow: hidden; top: 0px;"
+                >
+                  <table
+                    style="table-layout: fixed; visibility: hidden;"
+                  >
+                    <colgroup />
+                    <thead
+                      class="ant-table-thead"
+                    >
+                      <tr>
+                        <th
+                          aria-label="service_name"
+                          class="ant-table-cell ant-table-column-has-sorters react-resizable"
+                          scope="col"
+                          tabindex="0"
+                        >
+                          <div
+                            class="ant-table-column-sorters"
+                          >
+                            <span
+                              class="ant-table-column-title"
+                            >
+                              service_name
+                            </span>
+                            <span
+                              class="ant-table-column-sorter ant-table-column-sorter-full"
+                            >
+                              <span
+                                aria-hidden="true"
+                                class="ant-table-column-sorter-inner"
+                              >
+                                <span
+                                  aria-label="caret-up"
+                                  class="anticon anticon-caret-up ant-table-column-sorter-up"
+                                  role="img"
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    data-icon="caret-up"
+                                    fill="currentColor"
+                                    focusable="false"
+                                    height="1em"
+                                    viewBox="0 0 1024 1024"
+                                    width="1em"
+                                  >
+                                    <path
+                                      d="M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z"
+                                    />
+                                  </svg>
+                                </span>
+                                <span
+                                  aria-label="caret-down"
+                                  class="anticon anticon-caret-down ant-table-column-sorter-down"
+                                  role="img"
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    data-icon="caret-down"
+                                    fill="currentColor"
+                                    focusable="false"
+                                    height="1em"
+                                    viewBox="0 0 1024 1024"
+                                    width="1em"
+                                  >
+                                    <path
+                                      d="M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z"
+                                    />
+                                  </svg>
+                                </span>
+                              </span>
+                            </span>
+                          </div>
+                          <span
+                            class="c1 react-resizable-handle"
+                          />
+                        </th>
+                        <th
+                          aria-label="latency-per-service"
+                          class="ant-table-cell ant-table-column-has-sorters react-resizable"
+                          scope="col"
+                          tabindex="0"
+                        >
+                          <div
+                            class="ant-table-column-sorters"
+                          >
+                            <span
+                              class="ant-table-column-title"
+                            >
+                              latency-per-service
+                            </span>
+                            <span
+                              class="ant-table-column-sorter ant-table-column-sorter-full"
+                            >
+                              <span
+                                aria-hidden="true"
+                                class="ant-table-column-sorter-inner"
+                              >
+                                <span
+                                  aria-label="caret-up"
+                                  class="anticon anticon-caret-up ant-table-column-sorter-up"
+                                  role="img"
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    data-icon="caret-up"
+                                    fill="currentColor"
+                                    focusable="false"
+                                    height="1em"
+                                    viewBox="0 0 1024 1024"
+                                    width="1em"
+                                  >
+                                    <path
+                                      d="M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z"
+                                    />
+                                  </svg>
+                                </span>
+                                <span
+                                  aria-label="caret-down"
+                                  class="anticon anticon-caret-down ant-table-column-sorter-down"
+                                  role="img"
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    data-icon="caret-down"
+                                    fill="currentColor"
+                                    focusable="false"
+                                    height="1em"
+                                    viewBox="0 0 1024 1024"
+                                    width="1em"
+                                  >
+                                    <path
+                                      d="M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z"
+                                    />
+                                  </svg>
+                                </span>
+                              </span>
+                            </span>
+                          </div>
+                          <span
+                            class="c1 react-resizable-handle"
+                          />
+                        </th>
+                      </tr>
+                    </thead>
+                  </table>
+                </div>
+                <div
+                  class="ant-table-body"
+                  style="overflow-x: auto; overflow-y: hidden;"
+                >
+                  <table
+                    style="width: auto; min-width: 100%; table-layout: fixed;"
+                  >
+                    <colgroup>
+                      <col
+                        style="width: 145px;"
+                      />
+                      <col
+                        style="width: 145px;"
+                      />
+                    </colgroup>
+                    <tbody
+                      class="ant-table-tbody"
+                    >
+                      <tr
+                        aria-hidden="true"
+                        class="ant-table-measure-row"
+                        style="height: 0px; font-size: 0px;"
+                      >
+                        <td
+                          style="padding: 0px; border: 0px; height: 0px;"
+                        >
+                          <div
+                            style="height: 0px; overflow: hidden;"
+                          >
+                             
+                          </div>
+                        </td>
+                        <td
+                          style="padding: 0px; border: 0px; height: 0px;"
+                        >
+                          <div
+                            style="height: 0px; overflow: hidden;"
+                          >
+                             
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              demo-app
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              4.35 s
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              customer
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              431 ms
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              mysql
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              431 ms
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              frontend
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              287 ms
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              driver
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              230 ms
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              route
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              66.4 ms
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              redis
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-text"
+                            >
+                              31.3 ms
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;

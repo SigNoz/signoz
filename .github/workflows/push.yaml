@@ -4,12 +4,10 @@ on:
   push:
     branches:
       - main
-      - develop
     tags:
       - v*
 
 jobs:
-
   image-build-and-push-query-service:
     runs-on: ubuntu-latest
     steps:
@@ -151,7 +149,6 @@ jobs:
         run: |
           echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > frontend/.env
           echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> frontend/.env
-          echo 'CLARITY_PROJECT_ID="${{ secrets.CLARITY_PROJECT_ID }}"' >> frontend/.env
           echo 'SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> frontend/.env
           echo 'SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> frontend/.env
           echo 'SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> frontend/.env

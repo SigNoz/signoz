@@ -32,7 +32,10 @@ function ServicesUsingMetrics(): JSX.Element {
 		selectedTags,
 		globalSelectedInterval,
 	];
-	const { data, isLoading, isError } = useGetTopLevelOperations(queryKey);
+	const { data, isLoading, isError } = useGetTopLevelOperations(queryKey, {
+		start: minTime,
+		end: maxTime,
+	});
 
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',

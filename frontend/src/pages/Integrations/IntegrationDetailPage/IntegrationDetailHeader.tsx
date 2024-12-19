@@ -2,12 +2,12 @@
 import './IntegrationDetailPage.styles.scss';
 
 import { Button, Modal, Tooltip, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import installIntegration from 'api/Integrations/installIntegration';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs from 'dayjs';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowLeftRight, Check } from 'lucide-react';
 import { useState } from 'react';
@@ -42,8 +42,6 @@ function IntegrationDetailHeader(
 		setActiveDetailTab,
 	} = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
-
-	const { trackEvent } = useAnalytics();
 
 	const { notifications } = useNotifications();
 
@@ -137,11 +135,11 @@ function IntegrationDetailHeader(
 					disabled={isInstallLoading}
 					onClick={(): void => {
 						if (connectionState === ConnectionStates.NotInstalled) {
-							trackEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_DETAIL_CONNECT, {
+							logEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_DETAIL_CONNECT, {
 								integration: id,
 							});
 						} else {
-							trackEvent(
+							logEvent(
 								INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_DETAIL_TEST_CONNECTION,
 								{
 									integration: id,

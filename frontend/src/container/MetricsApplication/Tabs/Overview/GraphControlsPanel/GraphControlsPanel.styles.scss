@@ -1,0 +1,25 @@
+.graph-controls-panel {
+    position: absolute;
+	z-index: 999;
+	display: none;
+	width: 110px;
+	padding: 5px;
+	border-radius: 5px;
+	background: var(--bg-slate-400);
+
+	.ant-btn-link {
+		padding: 0;
+		margin: 0;
+		text-decoration: none;
+		color: var(--bg-vanilla-100);
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		gap: 2px;
+		border: none;
+	}
+
+	.ant-btn-link:hover {
+		color: var(--bg-vanilla-100);
+	}
+}

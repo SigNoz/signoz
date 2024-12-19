@@ -1,9 +1,11 @@
 package app
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -27,7 +29,9 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/migrate"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
@@ -62,6 +66,8 @@ type ServerOptions struct {
 	CacheConfigPath   string
 	FluxInterval      string
 	Cluster           string
+	UseLogsNewSchema  bool
+	UseTraceNewSchema bool
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -94,6 +100,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	if err := preferences.InitDB(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+		return nil, err
+	}
+
 	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
 	explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
 
@@ -120,6 +130,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.MaxOpenConns,
 			serverOptions.DialTimeout,
 			serverOptions.Cluster,
+			serverOptions.UseLogsNewSchema,
+			serverOptions.UseTraceNewSchema,
 		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
@@ -134,13 +146,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			return nil, err
 		}
 	}
-
-	<-readerReady
-	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules, fm)
-	if err != nil {
-		return nil, err
-	}
-
 	var c cache.Cache
 	if serverOptions.CacheConfigPath != "" {
 		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
@@ -149,6 +154,22 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		}
 		c = cache.NewCache(cacheOpts)
 	}
+
+	<-readerReady
+	rm, err := makeRulesManager(
+		serverOptions.PromConfigPath,
+		constants.GetAlertManagerApiPrefix(),
+		serverOptions.RuleRepoURL, localDB, reader, c, serverOptions.DisableRules, fm, serverOptions.UseLogsNewSchema, serverOptions.UseTraceNewSchema)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
+		if err != nil {
+			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
+		}
+	}()
 
 	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 	if err != nil {
@@ -182,6 +203,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
+		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
+		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
 	})
 	if err != nil {
 		return nil, err
@@ -248,7 +271,7 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 		// ip here for alert manager
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
 	})
 
 	handler := c.Handler(r)
@@ -263,23 +286,40 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 
 	r := NewRouter()
 
-	r.Use(LogCommentEnricher)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
+	r.Use(LogCommentEnricher)
 
-	am := NewAuthMiddleware(auth.GetUserFromRequest)
+	// add auth middleware
+	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
+		user, err := auth.GetUserFromRequest(r)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if user.User.OrgId == "" {
+			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
+		}
+
+		return user, nil
+	}
+	am := NewAuthMiddleware(getUserFromRequest)
 
 	api.RegisterRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterIntegrationRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
+	api.RegisterInfraMetricsRoutes(r, am)
+	api.RegisterWebSocketPaths(r, am)
 	api.RegisterQueryRangeV4Routes(r, am)
+	api.RegisterMessagingQueuesRoutes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
 	})
 
 	handler := c.Handler(r)
@@ -291,6 +331,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	}, nil
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 // loggingMiddleware is used for logging public api calls
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -346,6 +387,8 @@ func LogCommentEnricher(next http.Handler) http.Handler {
 			client = "api"
 		}
 
+		email, _ := auth.GetEmailFromJwt(r.Context())
+
 		kvs := map[string]string{
 			"path":        path,
 			"dashboardID": dashboardID,
@@ -354,6 +397,7 @@ func LogCommentEnricher(next http.Handler) http.Handler {
 			"client":      client,
 			"viewName":    viewName,
 			"servicesTab": tab,
+			"email":       email,
 		}
 
 		r = r.WithContext(context.WithValue(r.Context(), common.LogCommentKey, kvs))
@@ -361,6 +405,7 @@ func LogCommentEnricher(next http.Handler) http.Handler {
 	})
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 // loggingMiddlewarePrivate is used for logging private api calls
 // from internal services like alert manager
 func loggingMiddlewarePrivate(next http.Handler) http.Handler {
@@ -373,25 +418,39 @@ func loggingMiddlewarePrivate(next http.Handler) http.Handler {
 	})
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 type loggingResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 func NewLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
 	// WriteHeader(int) is not called if our response implicitly returns 200 OK, so
 	// we default to that status code.
 	return &loggingResponseWriter{w, http.StatusOK}
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 func (lrw *loggingResponseWriter) WriteHeader(code int) {
 	lrw.statusCode = code
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
 // Flush implements the http.Flush interface.
 func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
+}
+
+// TODO(remove): Implemented at pkg/http/middleware/logging.go
+// Support websockets
+func (lrw *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := lrw.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("hijack not supported")
+	}
+	return h.Hijack()
 }
 
 func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface{}, bool) {
@@ -498,6 +557,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/timeout.go
 func getRouteContextTimeout(overrideTimeout string) time.Duration {
 	var timeout time.Duration
 	var err error
@@ -514,6 +574,7 @@ func getRouteContextTimeout(overrideTimeout string) time.Duration {
 	return constants.ContextTimeout
 }
 
+// TODO(remove): Implemented at pkg/http/middleware/timeout.go
 func setTimeoutMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -658,13 +719,16 @@ func (s *Server) Stop() error {
 }
 
 func makeRulesManager(
-	promConfigPath,
+	_,
 	alertManagerURL string,
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch interfaces.Reader,
+	cache cache.Cache,
 	disableRules bool,
-	fm interfaces.FeatureLookup) (*rules.Manager, error) {
+	fm interfaces.FeatureLookup,
+	useLogsNewSchema bool,
+	useTraceNewSchema bool) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromReader(ch)
@@ -681,18 +745,19 @@ func makeRulesManager(
 
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		NotifierOpts: notifierOpts,
-		Queriers: &rules.Queriers{
-			PqlEngine: pqle,
-			Ch:        ch.GetConn(),
-		},
-		RepoURL:      ruleRepoURL,
-		DBConn:       db,
-		Context:      context.Background(),
-		Logger:       nil,
-		DisableRules: disableRules,
-		FeatureFlags: fm,
-		Reader:       ch,
+		NotifierOpts:      notifierOpts,
+		PqlEngine:         pqle,
+		RepoURL:           ruleRepoURL,
+		DBConn:            db,
+		Context:           context.Background(),
+		Logger:            zap.L(),
+		DisableRules:      disableRules,
+		FeatureFlags:      fm,
+		Reader:            ch,
+		Cache:             cache,
+		EvalDelay:         constants.GetEvalDelay(),
+		UseLogsNewSchema:  useLogsNewSchema,
+		UseTraceNewSchema: useTraceNewSchema,
 	}
 
 	// create Manager

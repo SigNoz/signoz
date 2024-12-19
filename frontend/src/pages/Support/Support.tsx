@@ -1,17 +1,27 @@
 import './Support.styles.scss';
 
-import { Button, Card, Typography } from 'antd';
-import useAnalytics from 'hooks/analytics/useAnalytics';
+import { Button, Card, Modal, Typography } from 'antd';
+import updateCreditCardApi from 'api/billing/checkout';
+import logEvent from 'api/common/logEvent';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { FeatureKeys } from 'constants/features';
+import useFeatureFlags from 'hooks/useFeatureFlag';
+import useLicense from 'hooks/useLicense';
+import { useNotifications } from 'hooks/useNotifications';
 import {
 	Book,
-	Cable,
-	Calendar,
+	CreditCard,
 	Github,
 	MessageSquare,
 	Slack,
+	X,
 } from 'lucide-react';
-import { useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useMutation } from 'react-query';
+import { useHistory, useLocation } from 'react-router-dom';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
+import { License } from 'types/api/licenses/def';
 
 const { Title, Text } = Typography;
 
@@ -66,28 +76,18 @@ const supportChannels = [
 		url: '',
 		btnText: 'Launch chat',
 	},
-	{
-		key: 'schedule_call',
-		name: 'Schedule a call',
-		icon: <Calendar />,
-		title: 'Schedule a call with the founders.',
-		url: 'https://calendly.com/pranay-signoz/signoz-intro-calls',
-		btnText: 'Schedule call',
-	},
-	{
-		key: 'slack_connect',
-		name: 'Slack Connect',
-		icon: <Cable />,
-		title: 'Get a dedicated support channel for your team.',
-		url: '',
-		btnText: 'Request Slack connect',
-	},
 ];
 
 export default function Support(): JSX.Element {
-	const { trackEvent } = useAnalytics();
 	const history = useHistory();
+	const { notifications } = useNotifications();
+	const { data: licenseData, isFetching } = useLicense();
+	const [activeLicense, setActiveLicense] = useState<License | null>(null);
+	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
+		false,
+	);
 
+	const { pathname } = useLocation();
 	const handleChannelWithRedirects = (url: string): void => {
 		window.open(url, '_blank');
 	};
@@ -97,31 +97,78 @@ export default function Support(): JSX.Element {
 			const histroyState = history?.location?.state as any;
 
 			if (histroyState && histroyState?.from) {
-				trackEvent(`Support : From URL : ${histroyState.from}`);
+				logEvent(`Support : From URL : ${histroyState.from}`, {});
 			}
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const handleSlackConnectRequest = (): void => {
-		const recipient = 'support@signoz.io';
-		const subject = 'Slack Connect Request';
-		const body = `I'd like to request a dedicated Slack Connect channel for me and my team. Users (emails) to include besides mine:`;
+	const isPremiumChatSupportEnabled =
+		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
 
-		// Create the mailto link
-		const mailtoLink = `mailto:${recipient}?subject=${encodeURIComponent(
-			subject,
-		)}&body=${encodeURIComponent(body)}`;
+	const showAddCreditCardModal =
+		!isPremiumChatSupportEnabled &&
+		!licenseData?.payload?.trialConvertedToSubscription;
 
-		// Open the default email client
-		window.location.href = mailtoLink;
+	useEffect(() => {
+		const activeValidLicense =
+			licenseData?.payload?.licenses?.find(
+				(license) => license.isCurrent === true,
+			) || null;
+
+		setActiveLicense(activeValidLicense);
+	}, [licenseData, isFetching]);
+
+	const handleBillingOnSuccess = (
+		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
+	): void => {
+		if (data?.payload?.redirectURL) {
+			const newTab = document.createElement('a');
+			newTab.href = data.payload.redirectURL;
+			newTab.target = '_blank';
+			newTab.rel = 'noopener noreferrer';
+			newTab.click();
+		}
+	};
+
+	const handleBillingOnError = (): void => {
+		notifications.error({
+			message: SOMETHING_WENT_WRONG,
+		});
+	};
+
+	const { mutate: updateCreditCard, isLoading: isLoadingBilling } = useMutation(
+		updateCreditCardApi,
+		{
+			onSuccess: (data) => {
+				handleBillingOnSuccess(data);
+			},
+			onError: handleBillingOnError,
+		},
+	);
+
+	const handleAddCreditCard = (): void => {
+		logEvent('Add Credit card modal: Clicked', {
+			source: `help & support`,
+			page: pathname,
+		});
+
+		updateCreditCard({
+			licenseKey: activeLicense?.key || '',
+			successURL: window.location.href,
+			cancelURL: window.location.href,
+		});
 	};
 
 	const handleChat = (): void => {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		if (window.Intercom) {
+		if (showAddCreditCardModal) {
+			logEvent('Disabled Chat Support: Clicked', {
+				source: `help & support`,
+				page: pathname,
+			});
+			setIsAddCreditCardModalOpen(true);
+		} else if (window.Intercom) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			window.Intercom('show');
@@ -129,20 +176,16 @@ export default function Support(): JSX.Element {
 	};
 
 	const handleChannelClick = (channel: Channel): void => {
-		trackEvent(`Support : ${channel.name}`);
+		logEvent(`Support : ${channel.name}`, {});
 
 		switch (channel.key) {
 			case channelsMap.documentation:
 			case channelsMap.github:
 			case channelsMap.slack_community:
-			case channelsMap.schedule_call:
 				handleChannelWithRedirects(channel.url);
 				break;
 			case channelsMap.chat:
 				handleChat();
-				break;
-			case channelsMap.slack_connect:
-				handleSlackConnectRequest();
 				break;
 			default:
 				handleChannelWithRedirects('https://signoz.io/slack');
@@ -184,6 +227,43 @@ export default function Support(): JSX.Element {
 					),
 				)}
 			</div>
+
+			{/* Add Credit Card Modal */}
+			<Modal
+				className="add-credit-card-modal"
+				title={<span className="title">Add Credit Card for Chat Support</span>}
+				open={isAddCreditCardModalOpen}
+				closable
+				onCancel={(): void => setIsAddCreditCardModalOpen(false)}
+				destroyOnClose
+				footer={[
+					<Button
+						key="cancel"
+						onClick={(): void => setIsAddCreditCardModalOpen(false)}
+						className="cancel-btn"
+						icon={<X size={16} />}
+					>
+						Cancel
+					</Button>,
+					<Button
+						key="submit"
+						type="primary"
+						icon={<CreditCard size={16} />}
+						size="middle"
+						loading={isLoadingBilling}
+						disabled={isLoadingBilling}
+						onClick={handleAddCreditCard}
+						className="add-credit-card-btn"
+					>
+						Add Credit Card
+					</Button>,
+				]}
+			>
+				<Typography.Text className="add-credit-card-text">
+					You&apos;re currently on <span className="highlight-text">Trial plan</span>
+					. Add a credit card to access SigNoz chat support to your workspace.
+				</Typography.Text>
+			</Modal>
 		</div>
 	);
 }

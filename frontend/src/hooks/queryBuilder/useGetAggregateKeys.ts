@@ -1,3 +1,4 @@
+import { getHostAttributeKeys } from 'api/infra/getHostAttributeKeys';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { useMemo } from 'react';
@@ -11,6 +12,7 @@ type UseGetAttributeKeys = (
 	options?: UseQueryOptions<
 		SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
 	>,
+	isInfraMonitoring?: boolean,
 ) => UseQueryResult<
 	SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
 >;
@@ -18,17 +20,25 @@ type UseGetAttributeKeys = (
 export const useGetAggregateKeys: UseGetAttributeKeys = (
 	requestData,
 	options,
+	isInfraMonitoring,
 ) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
-			return [QueryBuilderKeys.GET_AGGREGATE_KEYS, ...options.queryKey];
+			return [
+				QueryBuilderKeys.GET_AGGREGATE_KEYS,
+				...options.queryKey,
+				isInfraMonitoring,
+			];
 		}
-		return [QueryBuilderKeys.GET_AGGREGATE_KEYS, requestData];
-	}, [options?.queryKey, requestData]);
+		return [QueryBuilderKeys.GET_AGGREGATE_KEYS, requestData, isInfraMonitoring];
+	}, [options?.queryKey, requestData, isInfraMonitoring]);
 
 	return useQuery<SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse>({
 		queryKey,
-		queryFn: () => getAggregateKeys(requestData),
+		queryFn: () =>
+			isInfraMonitoring
+				? getHostAttributeKeys(requestData.searchText)
+				: getAggregateKeys(requestData),
 		...options,
 	});
 };

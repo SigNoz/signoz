@@ -24,6 +24,10 @@ export const metricQueryFunctionOptions: SelectOption<string, string>[] = [
 		label: 'Absolute',
 	},
 	{
+		value: QueryFunctionsTypes.RUNNING_DIFF,
+		label: 'Running Diff',
+	},
+	{
 		value: QueryFunctionsTypes.LOG_2,
 		label: 'Log2',
 	},
@@ -63,6 +67,10 @@ export const metricQueryFunctionOptions: SelectOption<string, string>[] = [
 		value: QueryFunctionsTypes.TIME_SHIFT,
 		label: 'Time Shift',
 	},
+	{
+		value: QueryFunctionsTypes.TIME_SHIFT,
+		label: 'Time Shift',
+	},
 ];
 
 export const logsQueryFunctionOptions: SelectOption<string, string>[] = [
@@ -76,10 +84,15 @@ interface QueryFunctionConfigType {
 		showInput: boolean;
 		inputType?: string;
 		placeholder?: string;
+		disabled?: boolean;
 	};
 }
 
 export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
+	anomaly: {
+		showInput: false,
+		disabled: true,
+	},
 	cutOffMin: {
 		showInput: true,
 		inputType: 'text',
@@ -101,6 +114,9 @@ export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
 		placeholder: 'Threshold',
 	},
 	absolute: {
+		showInput: false,
+	},
+	runningDiff: {
 		showInput: false,
 	},
 	log2: {

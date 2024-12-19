@@ -14,6 +14,7 @@ import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { FontSize } from 'container/OptionsMenu/types';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -50,6 +51,7 @@ function LogsExplorerList({
 		activeLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 		onSetActiveLog,
 	} = useActiveLog();
 
@@ -79,6 +81,7 @@ function LogsExplorerList({
 						data={log}
 						linesPerRow={options.maxLines}
 						selectedFields={selectedFields}
+						fontSize={options.fontSize}
 					/>
 				);
 			}
@@ -91,6 +94,7 @@ function LogsExplorerList({
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
 					activeLog={activeLog}
+					fontSize={options.fontSize}
 					linesPerRow={options.maxLines}
 				/>
 			);
@@ -99,6 +103,7 @@ function LogsExplorerList({
 			activeLog,
 			onAddToQuery,
 			onSetActiveLog,
+			options.fontSize,
 			options.format,
 			options.maxLines,
 			selectedFields,
@@ -121,6 +126,7 @@ function LogsExplorerList({
 						logs,
 						fields: selectedFields,
 						linesPerRow: options.maxLines,
+						fontSize: options.fontSize,
 						appendTo: 'end',
 						activeLogIndex,
 					}}
@@ -129,13 +135,27 @@ function LogsExplorerList({
 			);
 		}
 
+		function getMarginTop(): string {
+			switch (options.fontSize) {
+				case FontSize.SMALL:
+					return '10px';
+				case FontSize.MEDIUM:
+					return '12px';
+				case FontSize.LARGE:
+					return '15px';
+				default:
+					return '15px';
+			}
+		}
+
 		return (
 			<Card
-				style={{ width: '100%', marginTop: '20px' }}
+				style={{ width: '100%', marginTop: getMarginTop() }}
 				bodyStyle={CARD_BODY_STYLE}
 			>
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
+						key={activeLogIndex || 'logs-virtuoso'}
 						ref={ref}
 						initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
 						data={logs}
@@ -151,6 +171,7 @@ function LogsExplorerList({
 		isLoading,
 		options.format,
 		options.maxLines,
+		options.fontSize,
 		activeLogIndex,
 		logs,
 		onEndReached,
@@ -189,6 +210,7 @@ function LogsExplorerList({
 						log={activeLog}
 						onClose={onClearActiveLog}
 						onAddToQuery={onAddToQuery}
+						onGroupByAttribute={onGroupByAttribute}
 						onClickActionItem={onAddToQuery}
 					/>
 				</>

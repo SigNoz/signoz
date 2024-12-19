@@ -1,0 +1,40 @@
+@mixin severity-styles($background, $text-color) {
+	.alert-severity__icon {
+		background: $background;
+	}
+	.alert-severity__text {
+		color: $text-color;
+	}
+}
+
+.alert-severity {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	overflow: hidden;
+	&__icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 14px;
+		width: 14px;
+		border-radius: 3.5px;
+	}
+	&__text {
+		color: var(--text-sakura-400);
+		font-size: 14px;
+		line-height: 18px;
+	}
+
+	&--critical,
+	&--error {
+		@include severity-styles(rgba(245, 108, 135, 0.2), var(--text-sakura-400));
+	}
+	&--warning {
+		@include severity-styles(rgba(255, 215, 120, 0.2), var(--text-amber-400));
+	}
+	&--info {
+		@include severity-styles(rgba(113, 144, 249, 0.2), var(--text-robin-400));
+	}
+}

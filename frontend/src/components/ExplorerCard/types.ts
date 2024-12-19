@@ -22,7 +22,13 @@ export type GetViewDetailsUsingViewKey = (
 	viewKey: string,
 	data: ViewProps[] | undefined,
 ) =>
-	| { query: Query; name: string; uuid: string; panelType: PANEL_TYPES }
+	| {
+			query: Query;
+			name: string;
+			uuid: string;
+			panelType: PANEL_TYPES;
+			extraData?: string;
+	  }
 	| undefined;
 
 export interface IsQueryUpdatedInViewProps {

@@ -5,12 +5,17 @@ import {
 	CloseCircleTwoTone,
 	LoadingOutlined,
 } from '@ant-design/icons';
+import logEvent from 'api/common/logEvent';
+import { QueryParams } from 'constants/query';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
-import useAnalytics from 'hooks/analytics/useAnalytics';
+import { useOnboardingStatus } from 'hooks/messagingQueue/useOnboardingStatus';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import useUrlQuery from 'hooks/useUrlQuery';
+import MessagingQueueHealthCheck from 'pages/MessagingQueues/MessagingQueueHealthCheck/MessagingQueueHealthCheck';
+import { getAttributeDataFromOnboardingStatus } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -27,6 +32,12 @@ export default function ConnectionStatus(): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 
+	const urlQuery = useUrlQuery();
+	const getStartedSource = urlQuery.get(QueryParams.getStartedSource);
+	const getStartedSourceService = urlQuery.get(
+		QueryParams.getStartedSourceService,
+	);
+
 	const {
 		serviceName,
 		selectedDataSource,
@@ -40,8 +51,6 @@ export default function ConnectionStatus(): JSX.Element {
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
 		[queries],
 	);
-
-	const { trackEvent } = useAnalytics();
 
 	const [retryCount, setRetryCount] = useState(20); // Retry for 3 mins 20s
 	const [loading, setLoading] = useState(true);
@@ -59,7 +68,68 @@ export default function ConnectionStatus(): JSX.Element {
 		maxTime,
 		selectedTime,
 		selectedTags,
+		options: {
+			enabled: getStartedSource !== 'kafka',
+		},
 	});
+
+	const [pollInterval, setPollInterval] = useState<number | false>(10000);
+	const {
+		data: onbData,
+		error: onbErr,
+		isFetching: onbFetching,
+	} = useOnboardingStatus(
+		{
+			enabled: getStartedSource === 'kafka',
+			refetchInterval: pollInterval,
+		},
+		getStartedSourceService || '',
+		'query-key-onboarding-status',
+	);
+
+	const [
+		shouldRetryOnboardingCall,
+		setShouldRetryOnboardingCall,
+	] = useState<boolean>(false);
+
+	useEffect(() => {
+		// runs only when the caller is coming from 'kafka' i.e. coming from Messaging Queues - setup helper
+		if (getStartedSource === 'kafka') {
+			if (onbData?.statusCode !== 200) {
+				setShouldRetryOnboardingCall(true);
+			} else if (onbData?.payload?.status === 'success') {
+				const attributeData = getAttributeDataFromOnboardingStatus(
+					onbData?.payload,
+				);
+				if (attributeData.overallStatus === 'success') {
+					setLoading(false);
+					setIsReceivingData(true);
+					setPollInterval(false);
+				} else {
+					setShouldRetryOnboardingCall(true);
+				}
+			}
+		}
+	}, [
+		shouldRetryOnboardingCall,
+		onbData,
+		onbErr,
+		onbFetching,
+		getStartedSource,
+	]);
+
+	useEffect(() => {
+		if (retryCount < 0 && getStartedSource === 'kafka') {
+			setPollInterval(false);
+			setLoading(false);
+		}
+	}, [retryCount, getStartedSource]);
+
+	useEffect(() => {
+		if (getStartedSource === 'kafka' && !onbFetching) {
+			setRetryCount((prevCount) => prevCount - 1);
+		}
+	}, [getStartedSource, onbData, onbFetching]);
 
 	const renderDocsReference = (): JSX.Element => {
 		switch (selectedDataSource?.name) {
@@ -155,7 +225,7 @@ export default function ConnectionStatus(): JSX.Element {
 		if (data || isError) {
 			setRetryCount(retryCount - 1);
 			if (retryCount < 0) {
-				trackEvent('Onboarding V2: Connection Status', {
+				logEvent('Onboarding V2: Connection Status', {
 					dataSource: selectedDataSource?.id,
 					framework: selectedFramework,
 					environment: selectedEnvironment,
@@ -174,7 +244,7 @@ export default function ConnectionStatus(): JSX.Element {
 					setLoading(false);
 					setIsReceivingData(true);
 
-					trackEvent('Onboarding V2: Connection Status', {
+					logEvent('Onboarding V2: Connection Status', {
 						dataSource: selectedDataSource?.id,
 						framework: selectedFramework,
 						environment: selectedEnvironment,
@@ -194,25 +264,27 @@ export default function ConnectionStatus(): JSX.Element {
 	useEffect(() => {
 		let pollingTimer: string | number | NodeJS.Timer | undefined;
 
-		if (loading) {
-			pollingTimer = setInterval(() => {
-				// Trigger a refetch with the updated parameters
-				const updatedMinTime = (Date.now() - 15 * 60 * 1000) * 1000000;
-				const updatedMaxTime = Date.now() * 1000000;
+		if (getStartedSource !== 'kafka') {
+			if (loading) {
+				pollingTimer = setInterval(() => {
+					// Trigger a refetch with the updated parameters
+					const updatedMinTime = (Date.now() - 15 * 60 * 1000) * 1000000;
+					const updatedMaxTime = Date.now() * 1000000;
 
-				const payload = {
-					maxTime: updatedMaxTime,
-					minTime: updatedMinTime,
-					selectedTime,
-				};
+					const payload = {
+						maxTime: updatedMaxTime,
+						minTime: updatedMinTime,
+						selectedTime,
+					};
 
-				dispatch({
-					type: UPDATE_TIME_INTERVAL,
-					payload,
-				});
-			}, pollingInterval); // Same interval as pollingInterval
-		} else if (!loading && pollingTimer) {
-			clearInterval(pollingTimer);
+					dispatch({
+						type: UPDATE_TIME_INTERVAL,
+						payload,
+					});
+				}, pollingInterval); // Same interval as pollingInterval
+			} else if (!loading && pollingTimer) {
+				clearInterval(pollingTimer);
+			}
 		}
 
 		// Clean up the interval when the component unmounts
@@ -223,14 +295,23 @@ export default function ConnectionStatus(): JSX.Element {
 	}, [refetch, selectedTags, selectedTime, loading]);
 
 	useEffect(() => {
-		verifyApplicationData(data);
+		if (getStartedSource !== 'kafka') {
+			verifyApplicationData(data);
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isServiceLoading, data, error, isError]);
 
 	useEffect(() => {
-		refetch();
+		if (getStartedSource !== 'kafka') {
+			refetch();
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	const isQueryServiceLoading = useMemo(
+		() => isServiceLoading || loading || onbFetching,
+		[isServiceLoading, loading, onbFetching],
+	);
 
 	return (
 		<div className="connection-status-container">
@@ -252,30 +333,42 @@ export default function ConnectionStatus(): JSX.Element {
 					<div className="label"> Status </div>
 
 					<div className="status">
-						{(loading || isServiceLoading) && <LoadingOutlined />}
-						{!(loading || isServiceLoading) && isReceivingData && (
-							<>
-								<CheckCircleTwoTone twoToneColor="#52c41a" />
-								<span> Success </span>
-							</>
-						)}
-						{!(loading || isServiceLoading) && !isReceivingData && (
-							<>
-								<CloseCircleTwoTone twoToneColor="#e84749" />
-								<span> Failed </span>
-							</>
-						)}
+						{isQueryServiceLoading && <LoadingOutlined />}
+						{!isQueryServiceLoading &&
+							isReceivingData &&
+							(getStartedSource !== 'kafka' ? (
+								<>
+									<CheckCircleTwoTone twoToneColor="#52c41a" />
+									<span> Success </span>
+								</>
+							) : (
+								<MessagingQueueHealthCheck
+									serviceToInclude={[getStartedSourceService || '']}
+								/>
+							))}
+						{!isQueryServiceLoading &&
+							!isReceivingData &&
+							(getStartedSource !== 'kafka' ? (
+								<>
+									<CloseCircleTwoTone twoToneColor="#e84749" />
+									<span> Failed </span>
+								</>
+							) : (
+								<MessagingQueueHealthCheck
+									serviceToInclude={[getStartedSourceService || '']}
+								/>
+							))}
 					</div>
 				</div>
 				<div className="details-info">
 					<div className="label"> Details </div>
 
 					<div className="details">
-						{(loading || isServiceLoading) && <div> Waiting for Update </div>}
-						{!(loading || isServiceLoading) && isReceivingData && (
+						{isQueryServiceLoading && <div> Waiting for Update </div>}
+						{!isQueryServiceLoading && isReceivingData && (
 							<div> Received data from the application successfully. </div>
 						)}
-						{!(loading || isServiceLoading) && !isReceivingData && (
+						{!isQueryServiceLoading && !isReceivingData && (
 							<div> Could not detect the install </div>
 						)}
 					</div>

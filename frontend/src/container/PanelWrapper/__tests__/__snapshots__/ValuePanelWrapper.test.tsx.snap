@@ -1,0 +1,76 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Value panel wrappper tests should render tooltip when there are conflicting thresholds 1`] = `
+.c1 {
+  height: 100%;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.c0 {
+  text-align: center;
+  padding-top: 1rem;
+}
+
+<div>
+   
+  <div
+    class="c0"
+  >
+    <article
+      class="ant-typography css-dev-only-do-not-override-2i2tap"
+    />
+  </div>
+  <div
+    class="c1"
+  >
+    <div
+      class="value-graph-container"
+    >
+      <span
+        class="ant-typography value-graph-text css-dev-only-do-not-override-2i2tap"
+        style="color: Blue;"
+      >
+        295 ms
+      </span>
+      <div
+        class="value-graph-textconflict"
+      >
+        <span
+          aria-label="exclamation-circle"
+          class="anticon anticon-exclamation-circle value-graph-icon"
+          data-testid="conflicting-thresholds"
+          role="img"
+        >
+          <svg
+            aria-hidden="true"
+            data-icon="exclamation-circle"
+            fill="currentColor"
+            focusable="false"
+            height="1em"
+            viewBox="64 64 896 896"
+            width="1em"
+          >
+            <path
+              d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm-32 232c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V296zm32 440a48.01 48.01 0 010-96 48.01 48.01 0 010 96z"
+            />
+          </svg>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+`;

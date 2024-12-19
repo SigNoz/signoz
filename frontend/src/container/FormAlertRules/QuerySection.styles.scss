@@ -42,6 +42,10 @@
 		display: flex;
 		align-items: center;
 	}
+
+	.ant-tabs-tab-btn {
+		padding: 0 !important;
+	}
 }
 
 .lightMode {

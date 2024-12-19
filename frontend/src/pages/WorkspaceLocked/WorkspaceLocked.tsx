@@ -1,21 +1,30 @@
 /* eslint-disable react/no-unescaped-entities */
 import './WorkspaceLocked.styles.scss';
 
+import type { TabsProps } from 'antd';
 import {
-	CreditCardOutlined,
-	LockOutlined,
-	SendOutlined,
-} from '@ant-design/icons';
-import { Button, Card, Skeleton, Typography } from 'antd';
+	Alert,
+	Button,
+	Col,
+	Collapse,
+	Flex,
+	List,
+	Modal,
+	Row,
+	Skeleton,
+	Space,
+	Tabs,
+	Typography,
+} from 'antd';
 import updateCreditCardApi from 'api/billing/checkout';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { CircleArrowRight } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -23,19 +32,46 @@ import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
 import { getFormattedDate } from 'utils/timeUtils';
 
+import CustomerStoryCard from './CustomerStoryCard';
+import InfoBlocks from './InfoBlocks';
+import {
+	customerStoriesData,
+	enterpriseGradeValuesData,
+	faqData,
+	infoData,
+} from './workspaceLocked.data';
+
 export default function WorkspaceBlocked(): JSX.Element {
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const isAdmin = role === 'ADMIN';
 	const [activeLicense, setActiveLicense] = useState<License | null>(null);
-	const { trackEvent } = useAnalytics();
-
 	const { notifications } = useNotifications();
 
+	const { t } = useTranslation(['workspaceLocked']);
 	const {
 		isFetching: isFetchingLicenseData,
 		isLoading: isLoadingLicenseData,
 		data: licensesData,
 	} = useLicense();
+
+	useEffect((): void => {
+		logEvent('Workspace Blocked: Screen Viewed', {});
+	}, []);
+
+	const handleContactUsClick = (): void => {
+		logEvent('Workspace Blocked: Contact Us Clicked', {});
+	};
+
+	const handleTabClick = (key: string): void => {
+		logEvent('Workspace Blocked: Screen Tabs Clicked', { tabKey: key });
+	};
+
+	const handleCollapseChange = (key: string | string[]): void => {
+		const lastKey = Array.isArray(key) ? key.slice(-1)[0] : key;
+		logEvent('Workspace Blocked: Screen Tab FAQ Item Clicked', {
+			panelKey: lastKey,
+		});
+	};
 
 	useEffect(() => {
 		if (!isFetchingLicenseData) {
@@ -68,13 +104,13 @@ export default function WorkspaceBlocked(): JSX.Element {
 			},
 			onError: () =>
 				notifications.error({
-					message: SOMETHING_WENT_WRONG,
+					message: t('somethingWentWrong'),
 				}),
 		},
 	);
 
 	const handleUpdateCreditCard = useCallback(async () => {
-		trackEvent('Workspace Blocked: User Clicked Update Credit Card');
+		logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
 
 		updateCreditCard({
 			licenseKey: activeLicense?.key || '',
@@ -85,76 +121,274 @@ export default function WorkspaceBlocked(): JSX.Element {
 	}, [activeLicense?.key, updateCreditCard]);
 
 	const handleExtendTrial = (): void => {
-		trackEvent('Workspace Blocked: User Clicked Extend Trial');
+		logEvent('Workspace Blocked: User Clicked Extend Trial', {});
 
 		notifications.info({
-			message: 'Extend Trial',
+			message: t('extendTrial'),
+			duration: 0,
 			description: (
 				<Typography>
-					If you have a specific reason why you were not able to finish your PoC in
-					the trial period, please write to us on
-					<a href="mailto:cloud-support@signoz.io"> cloud-support@signoz.io </a>
-					with the reason. Sometimes we can extend trial by a few days on a case by
-					case basis
+					{t('extendTrialMsgPart1')}{' '}
+					<a href="mailto:cloud-support@signoz.io">cloud-support@signoz.io</a>{' '}
+					{t('extendTrialMsgPart2')}
 				</Typography>
 			),
 		});
 	};
 
-	return (
-		<>
-			<FullScreenHeader overrideRoute={ROUTES.WORKSPACE_LOCKED} />
+	const renderCustomerStories = (
+		filterCondition: (index: number) => boolean,
+	): JSX.Element[] =>
+		customerStoriesData
+			.filter((_, index) => filterCondition(index))
+			.map((story) => (
+				<CustomerStoryCard
+					avatar={story.avatar}
+					personName={story.personName}
+					role={story.role}
+					message={story.message}
+					link={story.link}
+					key={story.key}
+				/>
+			));
 
-			<Card className="workspace-locked-container">
-				{isLoadingLicenseData || !licensesData?.payload?.workSpaceBlock ? (
-					<Skeleton />
-				) : (
-					<>
-						<LockOutlined style={{ fontSize: '36px', color: '#08c' }} />
-						<Typography.Title level={4}> Workspace Locked </Typography.Title>
-						<Typography.Paragraph className="workpace-locked-details">
-							You have been locked out of your workspace because your trial ended
-							without an upgrade to a paid plan. Your data will continue to be ingested
-							till{' '}
-							{getFormattedDate(licensesData?.payload?.gracePeriodEnd || Date.now())} ,
-							at which point we will drop all the ingested data and terminate the
-							account.
-							{!isAdmin && 'Please contact your administrator for further help'}
-						</Typography.Paragraph>
-
-						<div className="cta">
+	const tabItems: TabsProps['items'] = [
+		{
+			key: 'whyChooseSignoz',
+			label: t('whyChooseSignoz'),
+			children: (
+				<Row align="middle" justify="center">
+					<Col span={12}>
+						<Row gutter={[24, 48]}>
+							<Col span={24}>
+								<InfoBlocks items={infoData} />
+							</Col>
+							<Col span={24}>
+								<Space size="large" direction="vertical">
+									<Flex vertical>
+										<Typography.Title level={3}>
+											{t('enterpriseGradeObservability')}
+										</Typography.Title>
+										<Typography>{t('observabilityDescription')}</Typography>
+									</Flex>
+									<List
+										itemLayout="horizontal"
+										dataSource={enterpriseGradeValuesData}
+										renderItem={(item, index): React.ReactNode => (
+											<List.Item key={index}>
+												<List.Item.Meta avatar={<CircleArrowRight />} title={item.title} />
+											</List.Item>
+										)}
+									/>
+								</Space>
+							</Col>
 							{isAdmin && (
+								<Col span={24}>
+									<Button
+										type="primary"
+										shape="round"
+										size="middle"
+										loading={isLoading}
+										onClick={handleUpdateCreditCard}
+									>
+										{t('continueToUpgrade')}
+									</Button>
+								</Col>
+							)}
+						</Row>
+					</Col>
+				</Row>
+			),
+		},
+		{
+			key: 'youAreInGoodCompany',
+			label: t('youAreInGoodCompany'),
+			children: (
+				<Row gutter={[24, 16]} justify="center">
+					{/* #FIXME: please suggest if there is any better way to loop in different columns to get the masonry layout */}
+					<Col
+						span={10}
+						className="workspace-locked__customer-stories__left-container"
+					>
+						{renderCustomerStories((index) => index % 2 === 0)}
+					</Col>
+					<Col
+						span={10}
+						className="workspace-locked__customer-stories__right-container"
+					>
+						{renderCustomerStories((index) => index % 2 !== 0)}
+					</Col>
+					{isAdmin && (
+						<Col span={24}>
+							<Flex justify="center">
 								<Button
-									className="update-credit-card-btn"
 									type="primary"
-									icon={<CreditCardOutlined />}
+									shape="round"
 									size="middle"
 									loading={isLoading}
 									onClick={handleUpdateCreditCard}
 								>
-									Update Credit Card
+									{t('continueToUpgrade')}
+								</Button>
+							</Flex>
+						</Col>
+					)}
+				</Row>
+			),
+		},
+		// #TODO: comming soon
+		// {
+		// 	key: '3',
+		// 	label: 'Our Pricing',
+		// 	children: 'Our Pricing',
+		// },
+		{
+			key: 'faqs',
+			label: t('faqs'),
+			children: (
+				<Row align="middle" justify="center">
+					<Col span={12}>
+						<Space
+							size="large"
+							direction="vertical"
+							className="workspace-locked__faq-container"
+						>
+							<Collapse
+								items={faqData}
+								defaultActiveKey={['signoz-cloud-vs-community']}
+								onChange={handleCollapseChange}
+							/>
+							{isAdmin && (
+								<Button
+									type="primary"
+									shape="round"
+									size="middle"
+									loading={isLoading}
+									onClick={handleUpdateCreditCard}
+								>
+									{t('continueToUpgrade')}
 								</Button>
 							)}
+						</Space>
+					</Col>
+				</Row>
+			),
+		},
+	];
 
+	return (
+		<div>
+			<Modal
+				rootClassName="workspace-locked__modal"
+				title={
+					<div className="workspace-locked__modal__header">
+						<span className="workspace-locked__modal__title">
+							{t('trialPlanExpired')}
+						</span>
+						<span className="workspace-locked__modal__header__actions">
+							<Typography.Text className="workspace-locked__modal__title">
+								Got Questions?
+							</Typography.Text>
 							<Button
-								className="extend-trial-btn"
 								type="default"
-								icon={<SendOutlined />}
+								shape="round"
 								size="middle"
-								onClick={handleExtendTrial}
+								href="mailto:cloud-support@signoz.io"
+								role="button"
+								onClick={handleContactUsClick}
 							>
-								Extend Trial
+								Contact Us
 							</Button>
-						</div>
-						<div className="contact-us">
-							Got Questions?
-							<span>
-								<a href="mailto:cloud-support@signoz.io"> Contact Us </a>
-							</span>
-						</div>
-					</>
-				)}
-			</Card>
-		</>
+						</span>
+					</div>
+				}
+				open
+				closable={false}
+				footer={null}
+				width="65%"
+			>
+				<div className="workspace-locked__container">
+					{isLoadingLicenseData || !licensesData ? (
+						<Skeleton />
+					) : (
+						<>
+							<Row justify="center" align="middle">
+								<Col>
+									<Space direction="vertical" align="center">
+										<Typography.Title level={2}>
+											<div className="workspace-locked__title">Upgrade to Continue</div>
+										</Typography.Title>
+										<Typography.Paragraph className="workspace-locked__details">
+											{t('upgradeNow')}
+											<br />
+											{t('yourDataIsSafe')}{' '}
+											<span className="workspace-locked__details__highlight">
+												{getFormattedDate(
+													licensesData.payload?.gracePeriodEnd || Date.now(),
+												)}
+											</span>{' '}
+											{t('actNow')}
+										</Typography.Paragraph>
+									</Space>
+								</Col>
+							</Row>
+							{!isAdmin && (
+								<Row
+									justify="center"
+									align="middle"
+									className="workspace-locked__modal__cta"
+									gutter={[16, 16]}
+								>
+									<Col>
+										<Alert
+											message="Contact your admin to proceed with the upgrade."
+											type="info"
+										/>
+									</Col>
+								</Row>
+							)}
+							{isAdmin && (
+								<Row
+									justify="center"
+									align="middle"
+									className="workspace-locked__modal__cta"
+									gutter={[16, 16]}
+								>
+									<Col>
+										<Button
+											type="primary"
+											shape="round"
+											size="middle"
+											loading={isLoading}
+											onClick={handleUpdateCreditCard}
+										>
+											Continue my Journey
+										</Button>
+									</Col>
+									<Col>
+										<Button
+											type="default"
+											shape="round"
+											size="middle"
+											onClick={handleExtendTrial}
+										>
+											{t('needMoreTime')}
+										</Button>
+									</Col>
+								</Row>
+							)}
+
+							<div className="workspace-locked__tabs">
+								<Tabs
+									items={tabItems}
+									defaultActiveKey="youAreInGoodCompany"
+									onTabClick={handleTabClick}
+								/>
+							</div>
+						</>
+					)}
+				</div>
+			</Modal>
+		</div>
 	);
 }

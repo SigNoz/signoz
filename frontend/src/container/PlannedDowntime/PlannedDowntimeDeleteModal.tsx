@@ -22,20 +22,20 @@ export function PlannedDowntimeDeleteModal(
 		onDeleteHandler,
 		downtimeSchedule,
 	} = props;
-	const hideDeleteViewModal = (): void => {
+	const hideDeleteScheduleModal = (): void => {
 		setIsDeleteModalOpen(false);
 	};
 	return (
 		<Modal
-			className="delete-view-modal"
-			title={<span className="title">Delete view</span>}
+			className="delete-schedule-modal"
+			title={<span className="title">Delete Schedule</span>}
 			open={isDeleteModalOpen}
 			closable={false}
-			onCancel={hideDeleteViewModal}
+			onCancel={hideDeleteScheduleModal}
 			footer={[
 				<Button
 					key="cancel"
-					onClick={hideDeleteViewModal}
+					onClick={hideDeleteScheduleModal}
 					className="cancel-btn"
 					icon={<X size={16} />}
 				>
@@ -48,12 +48,12 @@ export function PlannedDowntimeDeleteModal(
 					className="delete-btn"
 					disabled={isDeleteLoading}
 				>
-					Delete view
+					Delete Schedule
 				</Button>,
 			]}
 		>
 			<Typography.Text className="delete-text">
-				{`Are you sure you want to delete - ${downtimeSchedule} view? Deleting a view is irreversible and cannot be undone.`}
+				{`Are you sure you want to delete - ${downtimeSchedule} schedule? Deleting a schedule is irreversible and cannot be undone.`}
 			</Typography.Text>
 		</Modal>
 	);

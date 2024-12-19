@@ -1,7 +1,9 @@
 package api
 
 import (
+	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
@@ -29,6 +31,10 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 
 	// Get the dashboard UUID from the request
 	uuid := mux.Vars(r)["uuid"]
+	if strings.HasPrefix(uuid,"integration") {
+		RespondError(w, &model.ApiError{Typ: model.ErrorForbidden, Err: errors.New("dashboards created by integrations cannot be unlocked")}, "You are not authorized to lock/unlock this dashboard")
+		return 
+	}
 	dashboard, err := dashboards.GetDashboard(r.Context(), uuid)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, err.Error())

@@ -26,7 +26,7 @@ export const logsQueryRangeSuccessResponse = {
 								trace_id: 'span_id',
 							},
 							body:
-								'2024-02-15T21:20:22.035Z\tINFO\tfrontend\tDispatch successful\t{"service": "frontend", "trace_id": "span_id", "span_id": "span_id", "driver": "driver", "eta": "2m0s"}',
+								'2024-02-15T21:20:22.035Z INFO frontend Dispatch successful {"service": "frontend", "trace_id": "span_id", "span_id": "span_id", "driver": "driver", "eta": "2m0s"}',
 							id: 'id',
 							resources_string: {
 								'container.name': 'container_name',

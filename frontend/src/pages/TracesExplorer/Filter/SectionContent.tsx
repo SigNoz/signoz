@@ -145,6 +145,7 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 								key={`${type}-${item}`}
 								onChange={(e): void => onCheckHandler(e, item)}
 								checked={checkboxMatcher(item)}
+								data-testid={`${type}-${item}`}
 							>
 								<div className="checkbox-label">
 									<div className={labelClassname(item)} />

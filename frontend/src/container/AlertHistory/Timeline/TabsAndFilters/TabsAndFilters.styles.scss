@@ -1,0 +1,32 @@
+.timeline-tabs-and-filters {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	.reset-button,
+	.top-5-contributors {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+	.coming-soon {
+		display: inline-flex;
+		padding: 4px 8px;
+		border-radius: 20px;
+		border: 1px solid rgba(173, 127, 88, 0.2);
+		background: rgba(173, 127, 88, 0.1);
+		justify-content: center;
+		align-items: center;
+		gap: 5px;
+
+		&__text {
+			color: var(--text-sienna-400);
+			font-size: 10px;
+			font-weight: 500;
+			letter-spacing: -0.05px;
+			line-height: normal;
+		}
+		&__icon {
+			display: flex;
+		}
+	}
+}

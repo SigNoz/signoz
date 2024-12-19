@@ -3,8 +3,8 @@ import './styles.scss';
 import { ExpandAltOutlined } from '@ant-design/icons';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
-import dayjs from 'dayjs';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useTimezone } from 'providers/Timezone';
 import { ILog } from 'types/api/logs/log';
 
 function LogsList({ logs }: LogsListProps): JSX.Element {
@@ -13,16 +13,22 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
+		onGroupByAttribute,
 	} = useActiveLog();
 
 	const makeLogDetailsHandler = (log: ILog) => (): void => onSetActiveLog(log);
+
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	return (
 		<div className="logs-preview-list-container">
 			{logs.map((log) => (
 				<div key={log.id} className="logs-preview-list-item">
 					<div className="logs-preview-list-item-timestamp">
-						{dayjs(log.timestamp).format('MMM DD HH:mm:ss.SSS')}
+						{formatTimezoneAdjustedTimestamp(
+							log.timestamp,
+							'MMM DD HH:mm:ss.SSS (UTC Z)',
+						)}
 					</div>
 					<div className="logs-preview-list-item-body">{log.body}</div>
 					<div
@@ -42,6 +48,7 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}
 				onClickActionItem={onAddToQuery}
+				onGroupByAttribute={onGroupByAttribute}
 			/>
 		</div>
 	);

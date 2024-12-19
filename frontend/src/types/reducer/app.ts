@@ -15,9 +15,20 @@ export interface User {
 	profilePictureURL: UserPayload['profilePictureURL'];
 }
 
+export interface OrgPreference {
+	key: string;
+	name: string;
+	description: string;
+	valueType: string;
+	defaultValue: boolean;
+	allowedValues: any[];
+	isDiscreteValues: boolean;
+	allowedScopes: string[];
+	value: boolean;
+}
+
 export default interface AppReducer {
 	isLoggedIn: boolean;
-	isSideBarCollapsed: boolean;
 	currentVersion: string;
 	latestVersion: string;
 	isCurrentVersionError: boolean;
@@ -31,6 +42,8 @@ export default interface AppReducer {
 	userFlags: null | UserFlags;
 	ee: 'Y' | 'N';
 	setupCompleted: boolean;
+	orgPreferences: OrgPreference[] | null;
+	isFetchingOrgPreferences: boolean;
 	featureResponse: {
 		data: FeatureFlagPayload[] | null;
 		refetch: QueryObserverBaseResult['refetch'];

@@ -3,10 +3,6 @@
 	height: 100%;
 	position: relative;
 	z-index: 1;
-
-	&.docked {
-		width: 240px;
-	}
 }
 
 .sideNav {
@@ -188,6 +184,16 @@
 		display: none;
 	}
 
+	.nav-item-beta,
+	.nav-item-new {
+		display: none;
+	}
+
+	.sidenav-new-tag {
+		background-color: rgba(37, 225, 146, 0.1);
+		color: var(--text-forest-500);
+	}
+
 	&:hover {
 		flex: 0 0 240px;
 		max-width: 240px;
@@ -220,33 +226,9 @@
 		.nav-item-label {
 			display: block;
 		}
-	}
 
-	&.docked {
-		flex: 0 0 240px;
-		max-width: 240px;
-		min-width: 240px;
-		width: 240px;
-
-		.secondary-nav-items {
-			width: 240px;
-		}
-
-		.brand {
-			justify-content: space-between;
-		}
-
-		.get-started-nav-items {
-			.get-started-btn {
-				justify-content: flex-start;
-			}
-		}
-
-		.collapse-expand-handlers {
-			display: block;
-		}
-
-		.nav-item-label {
+		.nav-item-beta,
+		.nav-item-new {
 			display: block;
 		}
 	}

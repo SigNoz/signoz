@@ -46,6 +46,7 @@ const generateTooltipContent = (
 	isHistogramGraphs?: boolean,
 	isMergedSeries?: boolean,
 	stackBarChart?: boolean,
+	timezone?: string,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -69,9 +70,13 @@ const generateTooltipContent = (
 		series.forEach((item, index) => {
 			if (index === 0) {
 				if (isBillingUsageGraphs) {
-					tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY');
+					tooltipTitle = dayjs(data[0][idx] * 1000)
+						.tz(timezone)
+						.format('MMM DD YYYY');
 				} else {
-					tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY HH:mm:ss');
+					tooltipTitle = dayjs(data[0][idx] * 1000)
+						.tz(timezone)
+						.format('MMM DD YYYY h:mm:ss A');
 				}
 			} else if (item.show) {
 				const {
@@ -222,6 +227,8 @@ type ToolTipPluginProps = {
 	isMergedSeries?: boolean;
 	stackBarChart?: boolean;
 	isDarkMode: boolean;
+	customTooltipElement?: HTMLDivElement;
+	timezone?: string;
 };
 
 const tooltipPlugin = ({
@@ -232,7 +239,10 @@ const tooltipPlugin = ({
 	isMergedSeries,
 	stackBarChart,
 	isDarkMode,
-}: ToolTipPluginProps): any => {
+	customTooltipElement,
+	timezone,
+}: // eslint-disable-next-line sonarjs/cognitive-complexity
+ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
 	let bLeft: any;
@@ -297,7 +307,11 @@ const tooltipPlugin = ({
 							isHistogramGraphs,
 							isMergedSeries,
 							stackBarChart,
+							timezone,
 						);
+						if (customTooltipElement) {
+							content.appendChild(customTooltipElement);
+						}
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });
 					}

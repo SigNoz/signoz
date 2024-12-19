@@ -52,6 +52,7 @@ export const useQueryOperations: UseQueryOperations = ({
 		panelType,
 		initialDataSource,
 		currentQuery,
+		setLastUsedQuery,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
@@ -259,7 +260,13 @@ export const useQueryOperations: UseQueryOperations = ({
 		if (currentQuery.builder.queryData.length > 1) {
 			removeQueryBuilderEntityByIndex('queryData', index);
 		}
-	}, [removeQueryBuilderEntityByIndex, index, currentQuery]);
+		setLastUsedQuery(0);
+	}, [
+		currentQuery.builder.queryData.length,
+		setLastUsedQuery,
+		removeQueryBuilderEntityByIndex,
+		index,
+	]);
 
 	const handleChangeQueryData: HandleChangeQueryData = useCallback(
 		(key, value) => {

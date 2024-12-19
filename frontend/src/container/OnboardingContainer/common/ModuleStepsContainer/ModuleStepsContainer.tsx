@@ -11,14 +11,15 @@ import {
 } from '@ant-design/icons';
 import { Button, Space, Steps, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { onboardingHelpMessage } from 'components/LaunchChatSupport/util';
 import ROUTES from 'constants/routes';
 import { stepsMap } from 'container/OnboardingContainer/constants/stepsConfig';
 import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import history from 'lib/history';
 import { isEmpty, isNull } from 'lodash-es';
-import { HelpCircle, UserPlus } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { SetStateAction, useState } from 'react';
 
 import { useOnboardingContext } from '../../context/OnboardingContext';
@@ -79,7 +80,6 @@ export default function ModuleStepsContainer({
 	} = useOnboardingContext();
 
 	const [current, setCurrent] = useState(0);
-	const { trackEvent } = useAnalytics();
 	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
 	const lastStepIndex = selectedModuleSteps.length - 1;
 
@@ -143,7 +143,7 @@ export default function ModuleStepsContainer({
 	};
 
 	const redirectToModules = (): void => {
-		trackEvent('Onboarding V2 Complete', {
+		logEvent('Onboarding V2 Complete', {
 			module: selectedModule.id,
 			dataSource: selectedDataSource?.id,
 			framework: selectedFramework,
@@ -186,14 +186,14 @@ export default function ModuleStepsContainer({
 				// on next step click track events
 				switch (selectedModuleSteps[current].id) {
 					case stepsMap.dataSource:
-						trackEvent('Onboarding V2: Data Source Selected', {
+						logEvent('Onboarding V2: Data Source Selected', {
 							dataSource: selectedDataSource?.id,
 							framework: selectedFramework,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.environmentDetails:
-						trackEvent('Onboarding V2: Environment Selected', {
+						logEvent('Onboarding V2: Environment Selected', {
 							dataSource: selectedDataSource?.id,
 							framework: selectedFramework,
 							environment: selectedEnvironment,
@@ -201,7 +201,7 @@ export default function ModuleStepsContainer({
 						});
 						break;
 					case stepsMap.selectMethod:
-						trackEvent('Onboarding V2: Method Selected', {
+						logEvent('Onboarding V2: Method Selected', {
 							dataSource: selectedDataSource?.id,
 							framework: selectedFramework,
 							environment: selectedEnvironment,
@@ -211,7 +211,7 @@ export default function ModuleStepsContainer({
 						break;
 
 					case stepsMap.setupOtelCollector:
-						trackEvent('Onboarding V2: Setup Otel Collector', {
+						logEvent('Onboarding V2: Setup Otel Collector', {
 							dataSource: selectedDataSource?.id,
 							framework: selectedFramework,
 							environment: selectedEnvironment,
@@ -220,7 +220,7 @@ export default function ModuleStepsContainer({
 						});
 						break;
 					case stepsMap.instrumentApplication:
-						trackEvent('Onboarding V2: Instrument Application', {
+						logEvent('Onboarding V2: Instrument Application', {
 							dataSource: selectedDataSource?.id,
 							framework: selectedFramework,
 							environment: selectedEnvironment,
@@ -229,13 +229,13 @@ export default function ModuleStepsContainer({
 						});
 						break;
 					case stepsMap.cloneRepository:
-						trackEvent('Onboarding V2: Clone Repository', {
+						logEvent('Onboarding V2: Clone Repository', {
 							dataSource: selectedDataSource?.id,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.runApplication:
-						trackEvent('Onboarding V2: Run Application', {
+						logEvent('Onboarding V2: Run Application', {
 							dataSource: selectedDataSource?.id,
 							framework: selectedFramework,
 							environment: selectedEnvironment,
@@ -244,95 +244,95 @@ export default function ModuleStepsContainer({
 						});
 						break;
 					case stepsMap.addHttpDrain:
-						trackEvent('Onboarding V2: Add HTTP Drain', {
+						logEvent('Onboarding V2: Add HTTP Drain', {
 							dataSource: selectedDataSource?.id,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.startContainer:
-						trackEvent('Onboarding V2: Start Container', {
+						logEvent('Onboarding V2: Start Container', {
 							dataSource: selectedDataSource?.id,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.setupLogDrains:
-						trackEvent('Onboarding V2: Setup Log Drains', {
+						logEvent('Onboarding V2: Setup Log Drains', {
 							dataSource: selectedDataSource?.id,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.configureReceiver:
-						trackEvent('Onboarding V2: Configure Receiver', {
+						logEvent('Onboarding V2: Configure Receiver', {
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.configureAws:
-						trackEvent('Onboarding V2: Configure AWS', {
+						logEvent('Onboarding V2: Configure AWS', {
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.sendLogsCloudwatch:
-						trackEvent('Onboarding V2: Send Logs Cloudwatch', {
+						logEvent('Onboarding V2: Send Logs Cloudwatch', {
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.setupDaemonService:
-						trackEvent('Onboarding V2: Setup ECS Daemon Service', {
+						logEvent('Onboarding V2: Setup ECS Daemon Service', {
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.createOtelConfig:
-						trackEvent('Onboarding V2: Create ECS OTel Config', {
+						logEvent('Onboarding V2: Create ECS OTel Config', {
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.createDaemonService:
-						trackEvent('Onboarding V2: Create ECS Daemon Service', {
+						logEvent('Onboarding V2: Create ECS Daemon Service', {
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.ecsSendData:
-						trackEvent('Onboarding V2: ECS send traces data', {
+						logEvent('Onboarding V2: ECS send traces data', {
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.createSidecarCollectorContainer:
-						trackEvent('Onboarding V2: ECS create Sidecar Container', {
+						logEvent('Onboarding V2: ECS create Sidecar Container', {
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.deployTaskDefinition:
-						trackEvent('Onboarding V2: ECS deploy task definition', {
+						logEvent('Onboarding V2: ECS deploy task definition', {
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.ecsSendLogsData:
-						trackEvent('Onboarding V2: ECS Fargate send logs data', {
+						logEvent('Onboarding V2: ECS Fargate send logs data', {
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
 						});
 						break;
 					case stepsMap.monitorDashboard:
-						trackEvent('Onboarding V2: EKS monitor dashboard', {
+						logEvent('Onboarding V2: EKS monitor dashboard', {
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
@@ -381,31 +381,6 @@ export default function ModuleStepsContainer({
 
 	const handleLogoClick = (): void => {
 		history.push('/');
-	};
-
-	const handleFacingIssuesClick = (): void => {
-		logEvent('Onboarding V2: Facing Issues Sending Data to SigNoz', {
-			dataSource: selectedDataSource?.id,
-			framework: selectedFramework,
-			environment: selectedEnvironment,
-			module: activeStep?.module?.id,
-			step: activeStep?.step?.id,
-		});
-
-		const message = `Hi Team,
-
-I am facing issues sending data to SigNoz. Here are my application details
-
-Data Source: ${selectedDataSource?.name}
-Framework:
-Environment:
-Module: ${activeStep?.module?.id}
-
-Thanks
-`;
-		if (window.Intercom) {
-			window.Intercom('showNewMessage', message);
-		}
 	};
 
 	return (
@@ -495,19 +470,26 @@ Thanks
 					>
 						Back
 					</Button>
-
 					<Button onClick={handleNext} type="primary" icon={<ArrowRightOutlined />}>
 						{current < lastStepIndex ? 'Continue to next step' : 'Done'}
 					</Button>
-
-					<Button
-						className="periscope-btn"
-						onClick={handleFacingIssuesClick}
-						danger
-						icon={<HelpCircle size={14} />}
-					>
-						Facing issues sending data to SigNoz?
-					</Button>
+					<LaunchChatSupport
+						attributes={{
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+							step: activeStep?.step?.id,
+							screen: 'Onboarding',
+						}}
+						eventName="Onboarding V2: Facing Issues Sending Data to SigNoz"
+						message={onboardingHelpMessage(
+							selectedDataSource?.name || '',
+							activeStep?.module?.id,
+						)}
+						buttonText="Facing issues sending data to SigNoz?"
+						onHoverText="Click here to get help with sending data to SigNoz"
+					/>
 				</div>
 			</div>
 		</div>

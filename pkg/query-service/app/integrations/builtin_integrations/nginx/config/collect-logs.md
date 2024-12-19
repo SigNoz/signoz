@@ -110,6 +110,13 @@ service:
 
 ```
 
+### If using non-default nginx log format, adjust log parsing regex
+
+If you are using a [custom nginx log format](https://docs.nginx.com/nginx/admin-guide/monitoring/logging/#setting-up-the-access-log),
+please adjust the regex used for parsing logs in the receivers named
+`filelog/nginx-access-logs` and `filelog/nginx-error-logs` in  collector config.
+
+
 #### Set Environment Variables
 
 Set the following environment variables in your otel-collector environment:

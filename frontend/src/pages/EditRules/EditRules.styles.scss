@@ -1,0 +1,32 @@
+.edit-rules-container {
+	padding: 0 16px;
+	&--error {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		margin-top: 5rem;
+	}
+}
+
+.edit-rules-card {
+	width: 20rem;
+	padding: 1rem;
+
+	.content {
+		font-style: normal;
+		font-weight: 300;
+		font-size: 18px;
+		line-height: 20px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		margin: 0;
+	}
+}
+.btn-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-top: 2rem;
+}

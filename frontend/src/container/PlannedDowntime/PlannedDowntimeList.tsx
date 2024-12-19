@@ -22,6 +22,7 @@ import {
 	formatDateTime,
 	getAlertOptionsFromIds,
 	getDuration,
+	getEndTime,
 	recurrenceInfo,
 } from './PlannedDowntimeutils';
 
@@ -122,6 +123,7 @@ export function CollapseListContent({
 	updated_at,
 	updated_by_name,
 	alertOptions,
+	timezone,
 }: {
 	created_at?: string;
 	created_by_name?: string;
@@ -131,6 +133,7 @@ export function CollapseListContent({
 	updated_at?: string;
 	updated_by_name?: string;
 	alertOptions?: DefaultOptionType[];
+	timezone?: string;
 }): JSX.Element {
 	const renderItems = (title: string, value: ReactNode): JSX.Element => (
 		<div className="render-item-collapse-list">
@@ -180,6 +183,7 @@ export function CollapseListContent({
 					'-'
 				),
 			)}
+			{renderItems('Timezone', <Typography>{timezone || '-'}</Typography>)}
 			{renderItems('Repeats', <Typography>{recurrenceInfo(repeats)}</Typography>)}
 			{renderItems(
 				'Alerts silenced',
@@ -220,13 +224,15 @@ export function CustomCollapseList(
 		setModalOpen,
 		handleDeleteDowntime,
 		setEditMode,
+		kind,
 	} = props;
 
 	const scheduleTime = schedule?.startTime ? schedule.startTime : createdAt;
 	// Combine time and date
 	const formattedDateAndTime = `Start time ⎯ ${formatDateTime(
 		defaultTo(scheduleTime, ''),
-	)}`;
+	)} ${schedule?.timezone}`;
+	const endTime = getEndTime({ kind, schedule });
 
 	return (
 		<>
@@ -255,15 +261,19 @@ export function CustomCollapseList(
 					<CollapseListContent
 						created_at={defaultTo(createdAt, '')}
 						created_by_name={defaultTo(createdBy, '')}
-						timeframe={[schedule?.startTime, schedule?.endTime]}
+						timeframe={[
+							schedule?.startTime?.toString(),
+							typeof endTime === 'string' ? endTime : endTime?.toString(),
+						]}
 						repeats={schedule?.recurrence}
 						updated_at={defaultTo(updatedAt, '')}
 						updated_by_name={defaultTo(updatedBy, '')}
 						alertOptions={alertOptions}
+						timezone={defaultTo(schedule?.timezone, '')}
 					/>
 				</Panel>
 			</Collapse>
-			<div className="view-created-at">
+			<div className="schedule-created-at">
 				<CalendarClock size={14} />
 				<Typography.Text>{formattedDateAndTime}</Typography.Text>
 			</div>
@@ -314,6 +324,12 @@ export function PlannedDowntimeList({
 	const { notifications } = useNotifications();
 
 	const tableData = (downtimeSchedules.data?.data?.data || [])
+		.sort((a, b): number => {
+			if (a?.updatedAt && b?.updatedAt) {
+				return b.updatedAt.localeCompare(a.updatedAt);
+			}
+			return 0;
+		})
 		?.filter(
 			(data) =>
 				data?.name?.includes(searchValue.toLocaleString()) ||

@@ -9,11 +9,13 @@ export interface ILog {
 	severityNumber: number;
 	body: string;
 	resources_string: Record<string, never>;
+	scope_string: Record<string, never>;
 	attributesString: Record<string, never>;
 	attributes_string: Record<string, never>;
 	attributesInt: Record<string, never>;
 	attributesFloat: Record<string, never>;
 	severity_text: string;
+	severity_number: number;
 }
 
 type OmitAttributesResources = Pick<
@@ -21,6 +23,7 @@ type OmitAttributesResources = Pick<
 	Exclude<
 		keyof ILog,
 		| 'resources_string'
+		| 'scope_string'
 		| 'attributesString'
 		| 'attributes_string'
 		| 'attributesInt'
@@ -31,4 +34,5 @@ type OmitAttributesResources = Pick<
 export type ILogAggregateAttributesResources = OmitAttributesResources & {
 	attributes: Record<string, never>;
 	resources: Record<string, never>;
+	scope: Record<string, never>;
 };

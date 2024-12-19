@@ -4,7 +4,15 @@ import { red } from '@ant-design/colors';
 import { ExclamationCircleTwoTone } from '@ant-design/icons';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Modal, Space, Typography, Upload, UploadProps } from 'antd';
+import {
+	Button,
+	Flex,
+	Modal,
+	Space,
+	Typography,
+	Upload,
+	UploadProps,
+} from 'antd';
 import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/dashboard/create';
 import ROUTES from 'constants/routes';
@@ -13,7 +21,9 @@ import { MESSAGE } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import history from 'lib/history';
-import { MonitorDot, MoveRight, X } from 'lucide-react';
+import { ExternalLink, Github, MonitorDot, MoveRight, X } from 'lucide-react';
+// #TODO: Lucide will be removing brand icons like GitHub in the future. In that case, we can use Simple Icons. https://simpleicons.org/
+// See more: https://github.com/lucide-icons/lucide/issues/94
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
@@ -72,6 +82,11 @@ function ImportJSON({
 
 			const dashboardData = JSON.parse(editorValue) as DashboardData;
 
+			// Remove uuid from the dashboard data, in all cases - empty, duplicate or any valid not duplicate uuid
+			if (dashboardData.uuid !== undefined) {
+				delete dashboardData.uuid;
+			}
+
 			if (dashboardData?.layout) {
 				dashboardData.layout = getUpdatedLayout(dashboardData.layout);
 			} else {
@@ -113,11 +128,14 @@ function ImportJSON({
 				});
 			}
 			setDashboardCreating(false);
-		} catch {
+		} catch (error) {
 			setDashboardCreating(false);
 			setIsFeatureAlert(false);
 
 			setIsCreateDashboardError(true);
+			notifications.error({
+				message: error instanceof Error ? error.message : t('error_loading_json'),
+			});
 		}
 	};
 
@@ -174,27 +192,43 @@ function ImportJSON({
 					)}
 
 					<div className="action-btns-container">
-						<Upload
-							accept=".json"
-							showUploadList={false}
-							multiple={false}
-							onChange={onChangeHandler}
-							beforeUpload={(): boolean => false}
-							action="none"
-							data={jsonData}
-						>
-							<Button
-								type="default"
-								className="periscope-btn"
-								icon={<MonitorDot size={14} />}
-								onClick={(): void => {
-									logEvent('Dashboard List: Upload JSON file clicked', {});
-								}}
+						<Flex gap="small">
+							<Upload
+								accept=".json"
+								showUploadList={false}
+								multiple={false}
+								onChange={onChangeHandler}
+								beforeUpload={(): boolean => false}
+								action="none"
+								data={jsonData}
 							>
-								{' '}
-								{t('upload_json_file')}
-							</Button>
-						</Upload>
+								<Button
+									type="default"
+									className="periscope-btn"
+									icon={<MonitorDot size={14} />}
+									onClick={(): void => {
+										logEvent('Dashboard List: Upload JSON file clicked', {});
+									}}
+								>
+									{' '}
+									{t('upload_json_file')}
+								</Button>
+							</Upload>
+							<a
+								href="https://github.com/SigNoz/dashboards"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<Button
+									type="default"
+									className="periscope-btn"
+									icon={<Github size={14} />}
+								>
+									{t('view_template')}&nbsp;
+									<ExternalLink size={14} />
+								</Button>
+							</a>
+						</Flex>
 
 						<Button
 							// disabled={editorValue.length === 0}

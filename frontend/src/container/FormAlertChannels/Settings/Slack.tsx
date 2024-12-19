@@ -19,6 +19,7 @@ function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
 							api_url: event.target.value,
 						}));
 					}}
+					data-testid="webhook-url-textbox"
 				/>
 			</Form.Item>
 
@@ -34,11 +35,13 @@ function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
 							channel: event.target.value,
 						}))
 					}
+					data-testid="slack-channel-textbox"
 				/>
 			</Form.Item>
 
 			<Form.Item name="title" label={t('field_slack_title')}>
 				<TextArea
+					data-testid="title-textarea"
 					rows={4}
 					// value={`[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n{{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n{{\" \"}}(\n{{- with .CommonLabels.Remove .GroupLabels.Names }}\n    {{- range $index, $label := .SortedPairs -}}\n    {{ if $index }}, {{ end }}\n    {{- $label.Name }}=\"{{ $label.Value -}}\"\n    {{- end }}\n{{- end -}}\n)\n{{- end }}`}
 					onChange={(event): void =>
@@ -59,6 +62,7 @@ function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
 						}))
 					}
 					placeholder={t('placeholder_slack_description')}
+					data-testid="description-textarea"
 				/>
 			</Form.Item>
 		</>
