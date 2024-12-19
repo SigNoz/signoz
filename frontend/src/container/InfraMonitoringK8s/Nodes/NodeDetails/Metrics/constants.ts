@@ -30,7 +30,7 @@ export const nodeWidgetInfo = [
 	},
 	{
 		title: 'Pods by Memory (top 10)',
-		yAxisUnit: '',
+		yAxisUnit: 'bytes',
 	},
 	{
 		title: 'Network error count',
@@ -38,7 +38,7 @@ export const nodeWidgetInfo = [
 	},
 	{
 		title: 'Network IO rate',
-		yAxisUnit: 'MiB/s',
+		yAxisUnit: 'binBps',
 	},
 	{
 		title: 'Filesystem usage (bytes)',
