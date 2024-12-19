@@ -199,9 +199,9 @@ func (tb *FilterSuggestionsTestBed) mockAttribKeysQueryResponse(
 	attribsToReturn []v3.AttributeKey,
 ) {
 	cols := []mockhouse.ColumnType{}
-	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "tag_key"})
-	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "tag_type"})
-	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "tag_data_type"})
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "tagKey"})
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "tagType"})
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "tagDataType"})
 
 	values := [][]any{}
 	for _, a := range attribsToReturn {
@@ -213,7 +213,7 @@ func (tb *FilterSuggestionsTestBed) mockAttribKeysQueryResponse(
 	}
 
 	tb.mockClickhouse.ExpectQuery(
-		"select.*from.*signoz_logs.distributed_tag_attributes_v2.*",
+		"select.*from.*signoz_logs.distributed_tag_attributes.*",
 	).WithArgs(
 		constants.DefaultFilterSuggestionsAttributesLimit,
 	).WillReturnRows(
@@ -236,9 +236,10 @@ func (tb *FilterSuggestionsTestBed) mockAttribValuesQueryResponse(
 	stringValuesToReturn [][]string,
 ) {
 	resultCols := []mockhouse.ColumnType{
-		{Type: "String", Name: "tag_key"},
-		{Type: "String", Name: "string_value"},
-		{Type: "Nullable(Int64)", Name: "number_value"},
+		{Type: "String", Name: "tagKey"},
+		{Type: "String", Name: "stringTagValue"},
+		{Type: "Nullable(Int64)", Name: "int64TagValue"},
+		{Type: "Nullable(Float64)", Name: "float64TagValue"},
 	}
 
 	expectedAttribKeysInQuery := []any{}
@@ -247,13 +248,13 @@ func (tb *FilterSuggestionsTestBed) mockAttribValuesQueryResponse(
 		expectedAttribKeysInQuery = append(expectedAttribKeysInQuery, attrib.Key)
 		for _, stringTagValue := range stringValuesToReturn[idx] {
 			mockResultRows = append(mockResultRows, []any{
-				attrib.Key, stringTagValue, nil,
+				attrib.Key, stringTagValue, nil, nil,
 			})
 		}
 	}
 
 	tb.mockClickhouse.ExpectQuery(
-		"select.*tag_key.*string_value.*number_value.*distributed_tag_attributes_v2.*tag_key",
+		"select.*tagKey.*stringTagValue.*int64TagValue.*float64TagValue.*distributed_tag_attributes.*tagKey",
 	).WithArgs(expectedAttribKeysInQuery...).WillReturnRows(mockhouse.NewRows(resultCols, mockResultRows))
 }
 

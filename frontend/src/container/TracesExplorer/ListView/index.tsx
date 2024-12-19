@@ -154,7 +154,7 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				<ResizeTable
 					tableLayout="fixed"
 					pagination={false}
-					scroll={{ x: 'max-content' }}
+					scroll={{ x: true }}
 					loading={isFetching}
 					style={tableStyles}
 					dataSource={transformedQueryTableData}

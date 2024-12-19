@@ -290,7 +290,7 @@ const (
 	UINT8                 = "Uint8"
 )
 
-var StaticSelectedLogFields = []model.Field{
+var StaticSelectedLogFields = []model.LogField{
 	{
 		Name:     "timestamp",
 		DataType: UINT32,

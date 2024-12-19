@@ -190,7 +190,7 @@ func (q *querier) runBuilderQuery(
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
 				return
 			}
-			query = strings.Replace(placeholderQuery, "#LIMIT_PLACEHOLDER", limitQuery, 1)
+			query = fmt.Sprintf(placeholderQuery, limitQuery)
 		} else {
 			query, err = tracesQueryBuilder(
 				start,

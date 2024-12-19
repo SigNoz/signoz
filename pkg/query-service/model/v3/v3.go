@@ -770,19 +770,6 @@ type MetricTableHints struct {
 	SamplesTableName    string
 }
 
-type MetricValueFilter struct {
-	Value float64
-}
-
-func (m *MetricValueFilter) Clone() *MetricValueFilter {
-	if m == nil {
-		return nil
-	}
-	return &MetricValueFilter{
-		Value: m.Value,
-	}
-}
-
 type BuilderQuery struct {
 	QueryName            string            `json:"queryName"`
 	StepInterval         int64             `json:"stepInterval"`
@@ -808,8 +795,7 @@ type BuilderQuery struct {
 	ShiftBy              int64
 	IsAnomaly            bool
 	QueriesUsedInFormula []string
-	MetricTableHints     *MetricTableHints  `json:"-"`
-	MetricValueFilter    *MetricValueFilter `json:"-"`
+	MetricTableHints     *MetricTableHints `json:"-"`
 }
 
 func (b *BuilderQuery) SetShiftByFromFunc() {
@@ -873,7 +859,6 @@ func (b *BuilderQuery) Clone() *BuilderQuery {
 		ShiftBy:              b.ShiftBy,
 		IsAnomaly:            b.IsAnomaly,
 		QueriesUsedInFormula: b.QueriesUsedInFormula,
-		MetricValueFilter:    b.MetricValueFilter.Clone(),
 	}
 }
 

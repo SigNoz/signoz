@@ -27,7 +27,6 @@ var (
 		"k8s_daemonset_name",
 		"k8s_job_name",
 		"k8s_cronjob_name",
-		"k8s_cluster_name",
 	}
 
 	k8sPodUIDAttrKey = "k8s_pod_uid"
@@ -40,9 +39,8 @@ var (
 		"memory_request": {"E", "D"},
 		"memory_limit":   {"F", "D"},
 		"restarts":       {"G", "A"},
-		"pod_phase":      {"H", "I", "J", "K"},
 	}
-	podQueryNames = []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"}
+	podQueryNames = []string{"A", "B", "C", "D", "E", "F", "G"}
 
 	metricNamesForPods = map[string]string{
 		"cpu":            "k8s_pod_cpu_utilization",
@@ -52,7 +50,6 @@ var (
 		"memory_request": "k8s_pod_memory_request_utilization",
 		"memory_limit":   "k8s_pod_memory_limit_utilization",
 		"restarts":       "k8s_container_restarts",
-		"pod_phase":      "k8s_pod_phase",
 	}
 )
 
@@ -366,22 +363,6 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 
 			if restarts, ok := row.Data["G"].(float64); ok {
 				record.RestartCount = int(restarts)
-			}
-
-			if pending, ok := row.Data["H"].(float64); ok {
-				record.CountByPhase.Pending = int(pending)
-			}
-
-			if running, ok := row.Data["I"].(float64); ok {
-				record.CountByPhase.Running = int(running)
-			}
-
-			if succeeded, ok := row.Data["J"].(float64); ok {
-				record.CountByPhase.Succeeded = int(succeeded)
-			}
-
-			if failed, ok := row.Data["K"].(float64); ok {
-				record.CountByPhase.Failed = int(failed)
 			}
 
 			record.Meta = map[string]string{}

@@ -17,7 +17,7 @@ import (
 var (
 	metricToUseForNodes = "k8s_node_cpu_utilization"
 
-	nodeAttrsToEnrich = []string{"k8s_node_name", "k8s_node_uid", "k8s_cluster_name"}
+	nodeAttrsToEnrich = []string{"k8s_node_name", "k8s_node_uid"}
 
 	k8sNodeUIDAttrKey = "k8s_node_uid"
 
@@ -27,14 +27,13 @@ var (
 		"memory":             {"C"},
 		"memory_allocatable": {"D"},
 	}
-	nodeQueryNames = []string{"A", "B", "C", "D", "E", "F"}
+	nodeQueryNames = []string{"A", "B", "C", "D"}
 
 	metricNamesForNodes = map[string]string{
 		"cpu":                "k8s_node_cpu_utilization",
 		"cpu_allocatable":    "k8s_node_allocatable_cpu",
 		"memory":             "k8s_node_memory_usage",
 		"memory_allocatable": "k8s_node_allocatable_memory",
-		"node_condition":     "k8s_node_condition_ready",
 	}
 )
 
@@ -324,14 +323,6 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 
 			if memory, ok := row.Data["D"].(float64); ok {
 				record.NodeMemoryAllocatable = memory
-			}
-
-			if ready, ok := row.Data["E"].(float64); ok {
-				record.CountByCondition.Ready = int(ready)
-			}
-
-			if notReady, ok := row.Data["F"].(float64); ok {
-				record.CountByCondition.NotReady = int(notReady)
 			}
 
 			record.Meta = map[string]string{}

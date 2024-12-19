@@ -20,16 +20,11 @@ func PrepareMetricQueryCumulativeTable(start, end, step int64, mq *v3.BuilderQue
 	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
 	selectLabels := helpers.GroupByAttributeKeyTags(mq.GroupBy...)
 
-	valueFilter := " WHERE isNaN(per_series_value) = 0"
-	if mq.MetricValueFilter != nil {
-		valueFilter += fmt.Sprintf(" AND per_series_value = %f", mq.MetricValueFilter.Value)
-	}
-
 	queryTmpl :=
 		"SELECT %s," +
 			" %s as value" +
 			" FROM (%s)" +
-			valueFilter +
+			" WHERE isNaN(per_series_value) = 0" +
 			" GROUP BY %s" +
 			" ORDER BY %s"
 

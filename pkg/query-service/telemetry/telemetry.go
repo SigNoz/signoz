@@ -345,7 +345,6 @@ func createTelemetry() {
 						"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
 						"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
 						"dashboardsWithTSV2":              dashboardsInfo.QueriesWithTSV2,
-						"dashboardsWithTagAttrs":          dashboardsInfo.QueriesWithTagAttrs,
 						"dashboardWithLogsChQuery":        dashboardsInfo.DashboardsWithLogsChQuery,
 						"dashboardWithTraceChQuery":       dashboardsInfo.DashboardsWithTraceChQuery,
 						"dashboardNamesWithTraceChQuery":  dashboardsInfo.DashboardNamesWithTraceChQuery,

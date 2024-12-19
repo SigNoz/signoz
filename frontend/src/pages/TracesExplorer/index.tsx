@@ -5,7 +5,6 @@ import * as Sentry from '@sentry/react';
 import { Button, Card, Tabs, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import axios from 'axios';
-import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
@@ -245,11 +244,7 @@ function TracesExplorer(): JSX.Element {
 				<Card className="filter" hidden={!isOpen}>
 					<Filter setOpen={setOpen} />
 				</Card>
-				<Card
-					className={cx('trace-explorer', {
-						'filters-expanded': isOpen,
-					})}
-				>
+				<Card className="trace-explorer">
 					<div className={`trace-explorer-header ${isOpen ? 'single-child' : ''}`}>
 						{!isOpen && (
 							<Tooltip title="Expand filters" placement="right">

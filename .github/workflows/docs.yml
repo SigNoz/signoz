@@ -3,7 +3,7 @@ name: "Update PR labels and Block PR until related docs are shipped for the feat
 on:
   pull_request:
     branches:
-      - main
+      - develop
     types: [opened, edited, labeled, unlabeled]
 
 permissions:

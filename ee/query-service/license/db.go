@@ -18,13 +18,15 @@ import (
 
 // Repo is license repo. stores license keys in a secured DB
 type Repo struct {
-	db *sqlx.DB
+	db            *sqlx.DB
+	useLicensesV3 bool
 }
 
 // NewLicenseRepo initiates a new license repo
-func NewLicenseRepo(db *sqlx.DB) Repo {
+func NewLicenseRepo(db *sqlx.DB, useLicensesV3 bool) Repo {
 	return Repo{
-		db: db,
+		db:            db,
+		useLicensesV3: useLicensesV3,
 	}
 }
 
@@ -110,16 +112,26 @@ func (r *Repo) GetActiveLicenseV2(ctx context.Context) (*model.License, *basemod
 // GetActiveLicense fetches the latest active license from DB.
 // If the license is not present, expect a nil license and a nil error in the output.
 func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel.ApiError) {
-	activeLicenseV3, err := r.GetActiveLicenseV3(ctx)
-	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf("failed to get active licenses from db: %v", err))
+	if r.useLicensesV3 {
+		zap.L().Info("Using licenses v3 for GetActiveLicense")
+		activeLicenseV3, err := r.GetActiveLicenseV3(ctx)
+		if err != nil {
+			return nil, basemodel.InternalError(fmt.Errorf("failed to get active licenses from db: %v", err))
+		}
+
+		if activeLicenseV3 == nil {
+			return nil, nil
+		}
+		activeLicenseV2 := model.ConvertLicenseV3ToLicenseV2(activeLicenseV3)
+		return activeLicenseV2, nil
+
 	}
 
-	if activeLicenseV3 == nil {
-		return nil, nil
+	active, err := r.GetActiveLicenseV2(ctx)
+	if err != nil {
+		return nil, err
 	}
-	activeLicenseV2 := model.ConvertLicenseV3ToLicenseV2(activeLicenseV3)
-	return activeLicenseV2, nil
+	return active, nil
 }
 
 func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3, error) {

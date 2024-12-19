@@ -74,19 +74,6 @@ func getSelectLabels(groupBy []v3.AttributeKey) string {
 	return strings.Join(labels, ",")
 }
 
-// TODO(nitya): use the _exists columns as well in the future similar to logs
-func existsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (string, error) {
-	if key.DataType == v3.AttributeKeyDataTypeString {
-		if op == v3.FilterOperatorExists {
-			return fmt.Sprintf("%s %s ''", getColumnName(key), tracesOperatorMappingV3[v3.FilterOperatorNotEqual]), nil
-		} else {
-			return fmt.Sprintf("%s %s ''", getColumnName(key), tracesOperatorMappingV3[v3.FilterOperatorEqual]), nil
-		}
-	} else {
-		return "", fmt.Errorf("unsupported operation, exists and not exists can only be applied on custom attributes or string type columns")
-	}
-}
-
 func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 	var conditions []string
 
@@ -123,7 +110,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
 					if item.Key.IsColumn {
-						subQuery, err := existsSubQueryForFixedColumn(item.Key, item.Operator)
+						subQuery, err := tracesV3.ExistsSubQueryForFixedColumn(item.Key, item.Operator)
 						if err != nil {
 							return "", err
 						}
@@ -325,7 +312,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	}
 
 	if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", tracesV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "#LIMIT_PLACEHOLDER)"
+		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", tracesV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
 	}
 
 	switch mq.AggregateOperator {
@@ -363,7 +350,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
 			if mq.AggregateAttribute.IsColumn {
-				subQuery, err := existsSubQueryForFixedColumn(mq.AggregateAttribute, v3.FilterOperatorExists)
+				subQuery, err := tracesV3.ExistsSubQueryForFixedColumn(mq.AggregateAttribute, v3.FilterOperatorExists)
 				if err == nil {
 					filterSubQuery = fmt.Sprintf("%s AND %s", filterSubQuery, subQuery)
 				}
