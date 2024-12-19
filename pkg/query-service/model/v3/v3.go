@@ -305,6 +305,8 @@ type FilterAttributeValueRequest struct {
 	TagType                    TagType              `json:"tagType"`
 	SearchText                 string               `json:"searchText"`
 	Limit                      int                  `json:"limit"`
+	SelectedAttributeValues    []FilterItem         `json:"selectedAttributeValues"`
+	MetricNames                []string             `json:"metricNames"`
 }
 
 type AggregateAttributeResponse struct {
@@ -368,6 +370,8 @@ type FilterAttributeValueResponse struct {
 	StringAttributeValues []string      `json:"stringAttributeValues"`
 	NumberAttributeValues []interface{} `json:"numberAttributeValues"`
 	BoolAttributeValues   []bool        `json:"boolAttributeValues"`
+
+	RelatedValues *FilterAttributeValueResponse `json:"relatedValues"`
 }
 
 type QueryRangeParamsV3 struct {
