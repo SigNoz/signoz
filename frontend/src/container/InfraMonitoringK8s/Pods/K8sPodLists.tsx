@@ -68,6 +68,8 @@ function K8sPodsList({
 		null,
 	);
 
+	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
+
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
 	>([]);
@@ -284,6 +286,8 @@ function K8sPodsList({
 			}
 
 			setGroupBy(groupBy);
+
+			setExpandedRowKeys([]);
 		},
 		[groupByFiltersData],
 	);
@@ -299,6 +303,12 @@ function K8sPodsList({
 
 	const handleGroupByRowClick = (record: K8sPodsRowData): void => {
 		setSelectedRowData(record);
+
+		if (expandedRowKeys.includes(record.key)) {
+			setExpandedRowKeys(expandedRowKeys.filter((key) => key !== record.key));
+		} else {
+			setExpandedRowKeys([record.key]);
+		}
 	};
 
 	useEffect(() => {
@@ -351,6 +361,7 @@ function K8sPodsList({
 
 		updateLocalStorage('k8sPodsAddedColumns', addedColumnIDs);
 	}, [addedColumns]);
+
 	useEffect(() => {
 		if (groupByFiltersData?.payload) {
 			setGroupByOptions(
@@ -533,6 +544,7 @@ function K8sPodsList({
 					expandable={{
 						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
 						expandIcon: expandRowIconRenderer,
+						expandedRowKeys,
 					}}
 				/>
 			)}
