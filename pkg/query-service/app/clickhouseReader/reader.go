@@ -2948,7 +2948,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 }
 
 func (r *ClickHouseReader) GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
-	// response will contain top level fields from the otel log model
+	// response will contain top level fields from the otel trace model
 	response := model.GetFieldsResponse{
 		Selected:    []model.Field{},
 		Interesting: []model.Field{},
@@ -3091,12 +3091,11 @@ func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.Up
 
 	// add a default minmax index for numbers
 	if dataType == "number" {
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS `%s_minmax_idx` (`%s`) TYPE minmax  GRANULARITY %d",
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS `%s_minmax_idx` (`%s`) TYPE minmax  GRANULARITY 1",
 			r.TraceDB, r.traceLocalTableName,
 			r.cluster,
 			colname,
 			colname,
-			field.IndexGranularity,
 		)
 		err = r.db.Exec(ctx, query)
 		if err != nil {
