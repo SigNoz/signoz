@@ -50,6 +50,8 @@ function K8sNodesList({
 
 	const [currentPage, setCurrentPage] = useState(1);
 
+	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
+
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
 		order: 'asc' | 'desc';
@@ -194,6 +196,12 @@ function K8sNodesList({
 
 	const handleGroupByRowClick = (record: K8sNodesRowData): void => {
 		setSelectedRowData(record);
+
+		if (expandedRowKeys.includes(record.key)) {
+			setExpandedRowKeys(expandedRowKeys.filter((key) => key !== record.key));
+		} else {
+			setExpandedRowKeys([record.key]);
+		}
 	};
 
 	useEffect(() => {
@@ -396,6 +404,7 @@ function K8sNodesList({
 			}
 
 			setGroupBy(groupBy);
+			setExpandedRowKeys([]);
 		},
 		[groupByFiltersData],
 	);
@@ -469,6 +478,7 @@ function K8sNodesList({
 					expandable={{
 						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
 						expandIcon: expandRowIconRenderer,
+						expandedRowKeys,
 					}}
 				/>
 			)}
