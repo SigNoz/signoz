@@ -98,6 +98,8 @@ func getExistsNexistsFilter(op v3.FilterOperator, item v3.FilterItem) string {
 		if op == v3.FilterOperatorNotExists {
 			val = false
 		}
+		// trim suffix is added to add the _exists to the column name,
+		// eg: `resource_string_host` to `resource_string_host_exists`
 		return fmt.Sprintf("%s_exists` = %v", strings.TrimSuffix(getColumnName(item.Key), "`"), val)
 	}
 	// filter for non materialized attributes
