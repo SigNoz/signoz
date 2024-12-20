@@ -552,7 +552,7 @@ function APIKeys(): JSX.Element {
 			{/* Delete Key Modal */}
 			<Modal
 				className="delete-api-key-modal"
-				title={<span className="title">Delete Token</span>}
+				title={<span className="title">Delete Key</span>}
 				open={isDeleteModalOpen}
 				closable
 				afterClose={handleModalClose}
