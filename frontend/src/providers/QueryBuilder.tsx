@@ -95,16 +95,7 @@ export function QueryBuilderProvider({
 	const urlQuery = useUrlQuery();
 	const history = useHistory();
 	const location = useLocation();
-	/**
-	 // set location.pathname as the initial value for currentPathnameRef, absense of this causes `stagedQuery && location.pathname !== currentPathnameRef.current` to be truthy (since currentPathnameRef.current is null), and therefore causes duplicate triggering of initQueryBuilderData(compositeQueryParam); in the useEffect of line ~784
-		
-		if (!isValid) {
-			redirectWithQueryBuilderData(validData);
-		} else {
-			initQueryBuilderData(compositeQueryParam);
-		}
-		* 
-		*/
+
 	const currentPathnameRef = useRef<string | null>(location.pathname);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -243,7 +234,6 @@ export function QueryBuilderProvider({
 				timeUpdated ? merge(currentQuery, newQueryState) : newQueryState,
 			);
 			setQueryType(type);
-			// debugger;
 		},
 		[prepareQueryBuilderData, currentQuery],
 	);
@@ -803,7 +793,6 @@ export function QueryBuilderProvider({
 			initialQueriesMap.metrics,
 		);
 
-		// debugger;
 		if (!isValid) {
 			redirectWithQueryBuilderData(validData);
 		} else {
