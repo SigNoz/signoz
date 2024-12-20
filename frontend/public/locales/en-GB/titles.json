@@ -26,7 +26,7 @@
 	"MY_SETTINGS": "SigNoz | My Settings",
 	"ORG_SETTINGS": "SigNoz | Organization Settings",
 	"INGESTION_SETTINGS": "SigNoz | Ingestion Settings",
-	"API_KEYS": "SigNoz | Access Tokens",
+	"API_KEYS": "SigNoz | API Keys",
 	"SOMETHING_WENT_WRONG": "SigNoz | Something Went Wrong",
 	"UN_AUTHORIZED": "SigNoz | Unauthorized",
 	"NOT_FOUND": "SigNoz | Page Not Found",
