@@ -18,6 +18,7 @@ import routes, {
 	LIST_LICENSES,
 	oldNewRoutesMapping,
 	oldRoutes,
+	ROUTES_NOT_TO_BE_OVERRIDEN,
 	SUPPORT_ROUTE,
 } from './routes';
 
@@ -90,7 +91,12 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			)?.value;
 
 			const isFirstUser = checkFirstTimeUser();
-			if (isFirstUser && !isOnboardingComplete) {
+			if (
+				isFirstUser &&
+				!isOnboardingComplete &&
+				// if the current route is allowed to be overriden by org onboarding then only do the same
+				!ROUTES_NOT_TO_BE_OVERRIDEN.includes(pathname)
+			) {
 				history.push(ROUTES.ONBOARDING);
 			}
 		}
