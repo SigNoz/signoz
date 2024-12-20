@@ -427,7 +427,6 @@ export const LIST_LICENSES: AppRoutes = {
 
 export const oldRoutes = [
 	'/pipelines',
-	'/logs/old-logs-explorer',
 	'/logs-explorer',
 	'/logs-explorer/live',
 	'/logs-save-views',
@@ -437,7 +436,6 @@ export const oldRoutes = [
 
 export const oldNewRoutesMapping: Record<string, string> = {
 	'/pipelines': '/logs/pipelines',
-	'/logs/old-logs-explorer': '/logs/old-logs-explorer',
 	'/logs-explorer': '/logs/logs-explorer',
 	'/logs-explorer/live': '/logs/logs-explorer/live',
 	'/logs-save-views': '/logs/saved-views',
