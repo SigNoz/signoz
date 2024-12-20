@@ -279,7 +279,6 @@ function K8sNamespacesList({
 	const handleRowClick = (record: K8sNamespacesRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
-			console.log({ record });
 			setselectedNamespaceName(record.namespaceName);
 		} else {
 			handleGroupByRowClick(record);

@@ -376,15 +376,6 @@ function NamespaceDetails({
 		onClose();
 	};
 
-	console.log({
-		isModalTimeSelection,
-		eventsFilters,
-		handleTimeChange,
-		handleChangeLogFilters,
-		handleChangeTracesFilters,
-		handleChangeEventsFilters,
-	});
-
 	return (
 		<Drawer
 			width="70%"

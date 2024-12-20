@@ -5,6 +5,8 @@ import { K8sNamespacesData } from 'api/infraMonitoring/getK8sNamespacesList';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import GridPanelSwitch from 'container/GridPanelSwitch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
@@ -97,6 +99,12 @@ function NamespaceMetrics({
 				(query.error as Error)?.message || 'Something went wrong';
 			return <div>{errorMessage}</div>;
 		}
+
+		const { panelType } = (query.data?.params as any).compositeQuery;
+		const panelData = query.data?.payload?.data?.newResult.data.result ?? [];
+
+		const queryPayload = queryPayloads[idx];
+
 		return (
 			<div
 				className={cx('chart-container', {
@@ -104,7 +112,19 @@ function NamespaceMetrics({
 						!query.isLoading && !query?.data?.payload?.data?.result?.length,
 				})}
 			>
-				<Uplot options={options[idx]} data={chartData[idx]} />
+				{panelType === PANEL_TYPES.TABLE ? (
+					// <GridTableComponent data={panelData} query={queryPayload.query} />
+					<GridPanelSwitch
+						panelType={PANEL_TYPES.TABLE}
+						data={chartData[idx]}
+						options={options[idx]}
+						name=""
+						panelData={panelData}
+						query={queryPayload.query}
+					/>
+				) : (
+					<Uplot options={options[idx]} data={chartData[idx]} />
+				)}
 			</div>
 		);
 	};
