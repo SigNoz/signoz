@@ -1,7 +1,7 @@
-.node-metric-traces {
+.namespace-metric-traces {
 	margin-top: 1rem;
 
-	.node-metric-traces-header {
+	.namespace-metric-traces-header {
 		display: flex;
 		justify-content: space-between;
 		margin-bottom: 1rem;
@@ -30,7 +30,7 @@
 		}
 	}
 
-	.node-metric-traces-table {
+	.namespace-metric-traces-table {
 		.ant-table-content {
 			overflow: hidden !important;
 		}

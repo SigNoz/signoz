@@ -1,3 +1,3 @@
-import NodeTraces from './NodeTraces';
+import NamespaceTraces from './NamespaceTraces';
 
-export default NodeTraces;
+export default NamespaceTraces;

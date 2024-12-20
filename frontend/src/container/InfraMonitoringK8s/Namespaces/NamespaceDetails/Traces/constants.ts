@@ -89,7 +89,7 @@ export const selectedColumns: BaseAutocompleteData[] = [
 	},
 ];
 
-export const getNodeTracesQueryPayload = (
+export const getNamespaceTracesQueryPayload = (
 	start: number,
 	end: number,
 	offset = 0,

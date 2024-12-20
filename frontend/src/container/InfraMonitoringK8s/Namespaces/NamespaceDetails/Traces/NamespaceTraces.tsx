@@ -1,4 +1,4 @@
-import './NodeTraces.styles.scss';
+import './NamespaceTraces.styles.scss';
 
 import { ResizeTable } from 'components/ResizeTable';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -24,7 +24,7 @@ import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { getNodeTracesQueryPayload, selectedColumns } from './constants';
+import { getNamespaceTracesQueryPayload, selectedColumns } from './constants';
 import { getListColumns } from './utils';
 
 interface Props {
@@ -42,7 +42,7 @@ interface Props {
 	selectedInterval: Time;
 }
 
-function NodeTraces({
+function NamespaceTraces({
 	timeRange,
 	isModalTimeSelection,
 	handleTimeChange,
@@ -82,7 +82,7 @@ function NodeTraces({
 
 	const queryPayload = useMemo(
 		() =>
-			getNodeTracesQueryPayload(
+			getNamespaceTracesQueryPayload(
 				timeRange.startTime,
 				timeRange.endTime,
 				paginationQueryData?.offset || offset,
@@ -134,8 +134,8 @@ function NodeTraces({
 		data?.payload?.data?.newResult?.data?.result?.[0]?.list?.length || 0;
 
 	return (
-		<div className="node-metric-traces">
-			<div className="node-metric-traces-header">
+		<div className="namespace-metric-traces">
+			<div className="namespace-metric-traces-header">
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
@@ -171,7 +171,7 @@ function NodeTraces({
 			)}
 
 			{!isError && traces.length > 0 && (
-				<div className="node-traces-table">
+				<div className="namespace-traces-table">
 					<TraceExplorerControls
 						isLoading={isFetching}
 						totalCount={totalCount}
@@ -192,4 +192,4 @@ function NodeTraces({
 	);
 }
 
-export default NodeTraces;
+export default NamespaceTraces;
