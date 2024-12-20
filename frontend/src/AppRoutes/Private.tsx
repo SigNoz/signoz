@@ -18,6 +18,7 @@ import routes, {
 	LIST_LICENSES,
 	oldNewRoutesMapping,
 	oldRoutes,
+	SUPPORT_ROUTE,
 } from './routes';
 
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
@@ -37,7 +38,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const mapRoutes = useMemo(
 		() =>
 			new Map(
-				[...routes, LIST_LICENSES].map((e) => {
+				[...routes, LIST_LICENSES, SUPPORT_ROUTE].map((e) => {
 					const currentPath = matchPath(pathname, {
 						path: e.path,
 					});
@@ -160,6 +161,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				pathname: redirectUrl,
 			};
 			history.replace(newLocation);
+			return;
 		}
 		// if the current route
 		if (currentRoute) {
