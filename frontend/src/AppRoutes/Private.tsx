@@ -161,6 +161,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				pathname: redirectUrl,
 			};
 			history.replace(newLocation);
+			return;
 		}
 		// if the current route
 		if (currentRoute) {
