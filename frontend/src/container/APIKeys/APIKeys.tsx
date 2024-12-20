@@ -544,7 +544,7 @@ function APIKeys(): JSX.Element {
 						pageSize: 5,
 						hideOnSinglePage: true,
 						showTotal: (total: number, range: number[]): string =>
-							`${range[0]}-${range[1]} of ${total} API Keys`,
+							`${range[0]}-${range[1]} of ${total} keys`,
 					}}
 				/>
 			</div>
