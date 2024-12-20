@@ -144,7 +144,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		error: orgPreferencesFetchError,
 	} = useQuery({
 		queryFn: () => getAllOrgPreferences(),
-		queryKey: ['getOrgPreferences'],
+		queryKey: ['getOrgPreferences', 'app-context'],
 		enabled: !!isLoggedIn && !!user.email && user.role === USER_ROLES.ADMIN,
 	});
 

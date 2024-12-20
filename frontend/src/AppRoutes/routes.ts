@@ -443,6 +443,11 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/settings/access-tokens': '/settings/api-keys',
 };
 
+export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [
+	ROUTES.WORKSPACE_LOCKED,
+	ROUTES.WORKSPACE_SUSPENDED,
+];
+
 export interface AppRoutes {
 	component: RouteProps['component'];
 	path: RouteProps['path'];
