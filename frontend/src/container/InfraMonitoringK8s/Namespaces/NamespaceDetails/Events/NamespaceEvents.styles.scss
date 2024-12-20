@@ -1,4 +1,4 @@
-.node-events-container {
+.namespace-events-container {
 	margin-top: 1rem;
 
 	.filter-section {
@@ -19,7 +19,7 @@
 		}
 	}
 
-	.node-events-header {
+	.namespace-events-header {
 		display: flex;
 		justify-content: space-between;
 		gap: 8px;
@@ -29,7 +29,7 @@
 		border: 1px solid var(--bg-slate-500);
 	}
 
-	.node-events {
+	.namespace-events {
 		margin-top: 1rem;
 
 		.virtuoso-list {
@@ -87,7 +87,7 @@
 			}
 		}
 
-		.ant-table-thead > tr > th:has(.nodename-column-header) {
+		.ant-table-thead > tr > th:has(.namespacename-column-header) {
 			background: var(--bg-ink-400);
 		}
 
@@ -100,11 +100,11 @@
 			border-bottom: none;
 		}
 
-		.ant-table-cell:has(.nodename-column-value) {
+		.ant-table-cell:has(.namespacename-column-value) {
 			background: var(--bg-ink-400);
 		}
 
-		.nodename-column-value {
+		.namespacename-column-value {
 			color: var(--Vanilla-100, #fff);
 			font-family: 'Geist Mono';
 			font-style: normal;
@@ -190,7 +190,7 @@
 	}
 }
 
-.node-events-list-container {
+.namespace-events-list-container {
 	flex: 1;
 	height: calc(100vh - 272px) !important;
 	display: flex;
@@ -203,7 +203,7 @@
 	}
 }
 
-.node-events-list-card {
+.namespace-events-list-card {
 	width: 100%;
 	margin-top: 12px;
 

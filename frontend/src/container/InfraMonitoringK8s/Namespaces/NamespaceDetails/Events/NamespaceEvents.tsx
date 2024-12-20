@@ -1,4 +1,4 @@
-import './NodeEvents.styles.scss';
+import './NamespaceEvents.styles.scss';
 
 import { Table, TableColumnsType, Typography } from 'antd';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -18,7 +18,7 @@ import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { getNodesEventsQueryPayload } from './constants';
+import { getNamespacesEventsQueryPayload } from './constants';
 import NoEventsContainer from './NoEventsContainer';
 
 interface EventDataType {
@@ -40,7 +40,7 @@ interface EventDataType {
 	trace_id?: string;
 }
 
-interface INodeEventsProps {
+interface INamespaceEventsProps {
 	timeRange: {
 		startTime: number;
 		endTime: number;
@@ -62,7 +62,7 @@ export default function Events({
 	isModalTimeSelection,
 	handleTimeChange,
 	selectedInterval,
-}: INodeEventsProps): JSX.Element {
+}: INamespaceEventsProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const updatedCurrentQuery = useMemo(
 		() => ({
@@ -109,7 +109,7 @@ export default function Events({
 	// }, [filters]);
 
 	const queryPayload = useMemo(() => {
-		const basePayload = getNodesEventsQueryPayload(
+		const basePayload = getNamespacesEventsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
 			filters,
@@ -124,7 +124,12 @@ export default function Events({
 	}, [timeRange.startTime, timeRange.endTime, filters]);
 
 	const { data, isLoading, isError } = useQuery({
-		queryKey: ['nodeEvents', timeRange.startTime, timeRange.endTime, filters],
+		queryKey: [
+			'namespaceEvents',
+			timeRange.startTime,
+			timeRange.endTime,
+			filters,
+		],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
 	});
@@ -135,7 +140,7 @@ export default function Events({
 		{ title: 'Body', dataIndex: 'body', key: 'body' },
 	];
 
-	const formattedNodeEvents = useMemo(() => {
+	const formattedNamespaceEvents = useMemo(() => {
 		const responsePayload =
 			data?.payload.data.newResult.data.result[0].list || [];
 
@@ -194,8 +199,8 @@ export default function Events({
 		);
 
 	return (
-		<div className="node-events-container">
-			<div className="node-events-header">
+		<div className="namespace-events-container">
+			<div className="namespace-events-header">
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
@@ -232,15 +237,15 @@ export default function Events({
 				</div>
 			)}
 
-			{!isLoading && !isError && formattedNodeEvents.length === 0 && (
+			{!isLoading && !isError && formattedNamespaceEvents.length === 0 && (
 				<NoEventsContainer />
 			)}
 
 			{isError && !isLoading && <LogsError />}
 
-			{!isLoading && !isError && formattedNodeEvents.length > 0 && (
-				<div className="node-events-list-container">
-					<div className="node-events-list-card">
+			{!isLoading && !isError && formattedNamespaceEvents.length > 0 && (
+				<div className="namespace-events-list-container">
+					<div className="namespace-events-list-card">
 						<Table<EventDataType>
 							columns={columns}
 							expandable={{
@@ -248,7 +253,7 @@ export default function Events({
 								rowExpandable: (record): boolean => record.body !== 'Not Expandable',
 								expandIcon: handleExpandRowIcon,
 							}}
-							dataSource={formattedNodeEvents}
+							dataSource={formattedNamespaceEvents}
 							pagination={false}
 						/>
 					</div>

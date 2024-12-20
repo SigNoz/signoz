@@ -1,3 +1,3 @@
-import NodeEvents from './NodeEvents';
+import NamespaceEvents from './NamespaceEvents';
 
-export default NodeEvents;
+export default NamespaceEvents;

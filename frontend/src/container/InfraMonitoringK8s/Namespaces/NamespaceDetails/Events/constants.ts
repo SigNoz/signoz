@@ -6,7 +6,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuidv4 } from 'uuid';
 
-export const getNodesEventsQueryPayload = (
+export const getNamespacesEventsQueryPayload = (
 	start: number,
 	end: number,
 	filters: IBuilderQuery['filters'],
