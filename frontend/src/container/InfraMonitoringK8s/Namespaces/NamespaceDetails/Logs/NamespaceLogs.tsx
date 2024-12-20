@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import './NodeLogs.styles.scss';
+import './NamespaceLogs.styles.scss';
 
 import { Card } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
@@ -22,7 +22,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 } from 'uuid';
 
-import { getNodeLogsQueryPayload } from './constants';
+import { getNamespaceLogsQueryPayload } from './constants';
 import NoLogsContainer from './NoLogsContainer';
 
 interface Props {
@@ -46,7 +46,7 @@ function PodLogs({
 
 	useEffect(() => {
 		const newRestFilters = filters.items.filter(
-			(item) => item.key?.key !== 'id' && item.key?.key !== 'node.name',
+			(item) => item.key?.key !== 'id' && item.key?.key !== 'namespace.name',
 		);
 
 		const areFiltersSame = isEqual(restFilters, newRestFilters);
@@ -60,7 +60,7 @@ function PodLogs({
 	}, [filters]);
 
 	const queryPayload = useMemo(() => {
-		const basePayload = getNodeLogsQueryPayload(
+		const basePayload = getNamespaceLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
 			filters,
@@ -77,7 +77,7 @@ function PodLogs({
 	const [isPaginating, setIsPaginating] = useState(false);
 
 	const { data, isLoading, isFetching, isError } = useQuery({
-		queryKey: ['nodeLogs', timeRange.startTime, timeRange.endTime, filters],
+		queryKey: ['namespaceLogs', timeRange.startTime, timeRange.endTime, filters],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
 		keepPreviousData: isPaginating,
@@ -176,11 +176,11 @@ function PodLogs({
 
 	const renderContent = useMemo(
 		() => (
-			<Card bordered={false} className="node-logs-list-card">
+			<Card bordered={false} className="namespace-logs-list-card">
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
-						className="node-logs-virtuoso"
-						key="node-logs-virtuoso"
+						className="namespace-logs-virtuoso"
+						key="namespace-logs-virtuoso"
 						data={logs}
 						endReached={loadMoreLogs}
 						totalCount={logs.length}
@@ -197,12 +197,12 @@ function PodLogs({
 	);
 
 	return (
-		<div className="node-logs">
+		<div className="namespace-logs">
 			{isLoading && <LogsLoading />}
 			{!isLoading && !isError && logs.length === 0 && <NoLogsContainer />}
 			{isError && !isLoading && <LogsError />}
 			{!isLoading && !isError && logs.length > 0 && (
-				<div className="node-logs-list-container">{renderContent}</div>
+				<div className="namespace-logs-list-container">{renderContent}</div>
 			)}
 		</div>
 	);

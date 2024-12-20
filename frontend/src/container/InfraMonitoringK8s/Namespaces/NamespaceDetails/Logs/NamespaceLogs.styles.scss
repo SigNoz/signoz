@@ -1,4 +1,4 @@
-.node-logs-container {
+.namespace-logs-container {
 	margin-top: 1rem;
 
 	.filter-section {
@@ -19,7 +19,7 @@
 		}
 	}
 
-	.node-logs-header {
+	.namespace-logs-header {
 		display: flex;
 		justify-content: space-between;
 		gap: 8px;
@@ -29,7 +29,7 @@
 		border: 1px solid var(--bg-slate-500);
 	}
 
-	.node-logs {
+	.namespace-logs {
 		margin-top: 1rem;
 
 		.virtuoso-list {
@@ -64,7 +64,7 @@
 	}
 }
 
-.node-logs-list-container {
+.namespace-logs-list-container {
 	flex: 1;
 	height: calc(100vh - 272px) !important;
 	display: flex;
@@ -77,7 +77,7 @@
 	}
 }
 
-.node-logs-list-card {
+.namespace-logs-list-card {
 	width: 100%;
 	margin-top: 12px;
 

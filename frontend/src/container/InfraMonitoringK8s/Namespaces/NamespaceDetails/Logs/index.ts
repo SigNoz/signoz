@@ -1,3 +1,3 @@
-import NodeLogs from './NodeLogsDetailedView';
+import NamespaceLogs from './NamespaceLogsDetailedView';
 
-export default NodeLogs;
+export default NamespaceLogs;

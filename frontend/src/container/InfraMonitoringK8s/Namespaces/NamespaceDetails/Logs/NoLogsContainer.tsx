@@ -8,8 +8,8 @@ export default function NoLogsContainer(): React.ReactElement {
 	return (
 		<div className="no-logs-found">
 			<Text type="secondary">
-				<Ghost size={24} color={Color.BG_AMBER_500} /> No logs found for this node
-				in the selected time range.
+				<Ghost size={24} color={Color.BG_AMBER_500} /> No logs found for this
+				namespace in the selected time range.
 			</Text>
 		</div>
 	);

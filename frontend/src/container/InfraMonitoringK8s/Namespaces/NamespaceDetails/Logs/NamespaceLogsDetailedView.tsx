@@ -1,4 +1,4 @@
-import './NodeLogs.styles.scss';
+import './NamespaceLogs.styles.scss';
 
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -11,7 +11,7 @@ import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import NodeLogs from './NodeLogs';
+import NamespaceLogs from './NamespaceLogs';
 
 interface Props {
 	timeRange: {
@@ -28,7 +28,7 @@ interface Props {
 	selectedInterval: Time;
 }
 
-function NodeLogsDetailedView({
+function NamespaceLogsDetailedView({
 	timeRange,
 	isModalTimeSelection,
 	handleTimeChange,
@@ -60,8 +60,8 @@ function NodeLogsDetailedView({
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	return (
-		<div className="node-logs-container">
-			<div className="node-logs-header">
+		<div className="namespace-logs-container">
+			<div className="namespace-logs-header">
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
@@ -83,7 +83,7 @@ function NodeLogsDetailedView({
 					/>
 				</div>
 			</div>
-			<NodeLogs
+			<NamespaceLogs
 				timeRange={timeRange}
 				handleChangeLogFilters={handleChangeLogFilters}
 				filters={logFilters}
@@ -92,4 +92,4 @@ function NodeLogsDetailedView({
 	);
 }
 
-export default NodeLogsDetailedView;
+export default NamespaceLogsDetailedView;
