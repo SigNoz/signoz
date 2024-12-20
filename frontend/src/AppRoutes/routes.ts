@@ -432,7 +432,7 @@ export const oldRoutes = [
 	'/logs-explorer/live',
 	'/logs-save-views',
 	'/traces-save-views',
-	'/settings/api-keys',
+	'/settings/access-tokens',
 ];
 
 export const oldNewRoutesMapping: Record<string, string> = {
@@ -442,7 +442,7 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/logs-explorer/live': '/logs/logs-explorer/live',
 	'/logs-save-views': '/logs/saved-views',
 	'/traces-save-views': '/traces/saved-views',
-	'/settings/api-keys': '/settings/access-tokens',
+	'/settings/access-tokens': '/settings/api-keys',
 };
 
 export interface AppRoutes {
