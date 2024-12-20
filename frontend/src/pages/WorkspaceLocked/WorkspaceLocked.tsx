@@ -19,17 +19,14 @@ import {
 import updateCreditCardApi from 'api/billing/checkout';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { CircleArrowRight } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { License } from 'types/api/licenses/def';
-import AppReducer from 'types/reducer/app';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -42,17 +39,12 @@ import {
 } from './workspaceLocked.data';
 
 export default function WorkspaceBlocked(): JSX.Element {
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-	const isAdmin = role === 'ADMIN';
+	const { user, licenses, isFetchingLicenses } = useAppContext();
+	const isAdmin = user.role === 'ADMIN';
 	const [activeLicense, setActiveLicense] = useState<License | null>(null);
 	const { notifications } = useNotifications();
 
 	const { t } = useTranslation(['workspaceLocked']);
-	const {
-		isFetching: isFetchingLicenseData,
-		isLoading: isLoadingLicenseData,
-		data: licensesData,
-	} = useLicense();
 
 	useEffect((): void => {
 		logEvent('Workspace Blocked: Screen Viewed', {});
@@ -74,21 +66,19 @@ export default function WorkspaceBlocked(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (!isFetchingLicenseData) {
-			const shouldBlockWorkspace = licensesData?.payload?.workSpaceBlock;
+		if (!isFetchingLicenses) {
+			const shouldBlockWorkspace = licenses?.workSpaceBlock;
 
 			if (!shouldBlockWorkspace) {
 				history.push(ROUTES.APPLICATION);
 			}
 
 			const activeValidLicense =
-				licensesData?.payload?.licenses?.find(
-					(license) => license.isCurrent === true,
-				) || null;
+				licenses?.licenses?.find((license) => license.isCurrent === true) || null;
 
 			setActiveLicense(activeValidLicense);
 		}
-	}, [isFetchingLicenseData, licensesData]);
+	}, [isFetchingLicenses, licenses]);
 
 	const { mutate: updateCreditCard, isLoading } = useMutation(
 		updateCreditCardApi,
@@ -308,7 +298,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 				width="65%"
 			>
 				<div className="workspace-locked__container">
-					{isLoadingLicenseData || !licensesData ? (
+					{isFetchingLicenses || !licenses ? (
 						<Skeleton />
 					) : (
 						<>
@@ -323,9 +313,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 											<br />
 											{t('yourDataIsSafe')}{' '}
 											<span className="workspace-locked__details__highlight">
-												{getFormattedDate(
-													licensesData.payload?.gracePeriodEnd || Date.now(),
-												)}
+												{getFormattedDate(licenses?.gracePeriodEnd || Date.now())}
 											</span>{' '}
 											{t('actNow')}
 										</Typography.Paragraph>

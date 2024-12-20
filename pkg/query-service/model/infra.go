@@ -151,13 +151,20 @@ type NodeListResponse struct {
 	Total   int              `json:"total"`
 }
 
+type NodeCountByCondition struct {
+	Ready    int `json:"ready"`
+	NotReady int `json:"notReady"`
+	Unknown  int `json:"unknown"`
+}
+
 type NodeListRecord struct {
-	NodeUID               string            `json:"nodeUID,omitempty"`
-	NodeCPUUsage          float64           `json:"nodeCPUUsage"`
-	NodeCPUAllocatable    float64           `json:"nodeCPUAllocatable"`
-	NodeMemoryUsage       float64           `json:"nodeMemoryUsage"`
-	NodeMemoryAllocatable float64           `json:"nodeMemoryAllocatable"`
-	Meta                  map[string]string `json:"meta"`
+	NodeUID               string               `json:"nodeUID,omitempty"`
+	NodeCPUUsage          float64              `json:"nodeCPUUsage"`
+	NodeCPUAllocatable    float64              `json:"nodeCPUAllocatable"`
+	NodeMemoryUsage       float64              `json:"nodeMemoryUsage"`
+	NodeMemoryAllocatable float64              `json:"nodeMemoryAllocatable"`
+	CountByCondition      NodeCountByCondition `json:"countByCondition"`
+	Meta                  map[string]string    `json:"meta"`
 }
 
 type NamespaceListRequest struct {
@@ -180,6 +187,7 @@ type NamespaceListRecord struct {
 	NamespaceName string            `json:"namespaceName"`
 	CPUUsage      float64           `json:"cpuUsage"`
 	MemoryUsage   float64           `json:"memoryUsage"`
+	CountByPhase  PodCountByPhase   `json:"countByPhase"`
 	Meta          map[string]string `json:"meta"`
 }
 
@@ -328,4 +336,31 @@ type JobListRecord struct {
 	FailedPods            int               `json:"failedPods"`
 	SuccessfulPods        int               `json:"successfulPods"`
 	Meta                  map[string]string `json:"meta"`
+}
+
+type VolumeListRequest struct {
+	Start   int64             `json:"start"` // epoch time in ms
+	End     int64             `json:"end"`   // epoch time in ms
+	Filters *v3.FilterSet     `json:"filters"`
+	GroupBy []v3.AttributeKey `json:"groupBy"`
+	OrderBy *v3.OrderBy       `json:"orderBy"`
+	Offset  int               `json:"offset"`
+	Limit   int               `json:"limit"`
+}
+
+type VolumeListResponse struct {
+	Type    ResponseType       `json:"type"`
+	Records []VolumeListRecord `json:"records"`
+	Total   int                `json:"total"`
+}
+
+type VolumeListRecord struct {
+	PersistentVolumeClaimName string            `json:"persistentVolumeClaimName"`
+	VolumeAvailable           float64           `json:"volumeAvailable"`
+	VolumeCapacity            float64           `json:"volumeCapacity"`
+	VolumeInodes              float64           `json:"volumeInodes"`
+	VolumeInodesFree          float64           `json:"volumeInodesFree"`
+	VolumeInodesUsed          float64           `json:"volumeInodesUsed"`
+	VolumeUsage               float64           `json:"volumeUsage"`
+	Meta                      map[string]string `json:"meta"`
 }

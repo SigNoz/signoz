@@ -1,6 +1,6 @@
-import { Tabs, Typography } from 'antd';
+import { Tabs } from 'antd';
 import Spinner from 'components/Spinner';
-import useLicense from 'hooks/useLicense';
+import { useAppContext } from 'providers/App/App';
 import { useTranslation } from 'react-i18next';
 
 import ApplyLicenseForm from './ApplyLicenseForm';
@@ -8,24 +8,20 @@ import ListLicenses from './ListLicenses';
 
 function Licenses(): JSX.Element {
 	const { t, ready: translationsReady } = useTranslation(['licenses']);
-	const { data, isError, isLoading, refetch } = useLicense();
+	const { licenses, licensesRefetch } = useAppContext();
 
-	if (isError || data?.error) {
-		return <Typography>{data?.error}</Typography>;
-	}
-
-	if (isLoading || data?.payload === undefined || !translationsReady) {
+	if (!translationsReady) {
 		return <Spinner tip={t('loading_licenses')} height="90vh" />;
 	}
 
 	const allValidLicense =
-		data?.payload?.licenses?.filter((license) => license.isCurrent) || [];
+		licenses?.licenses?.filter((license) => license.isCurrent) || [];
 
 	const tabs = [
 		{
 			label: t('tab_current_license'),
 			key: 'licenses',
-			children: <ApplyLicenseForm licenseRefetch={refetch} />,
+			children: <ApplyLicenseForm licenseRefetch={licensesRefetch} />,
 		},
 		{
 			label: t('tab_license_history'),

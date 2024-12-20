@@ -17,7 +17,6 @@ import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/dashboard/create';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { MESSAGE } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import history from 'lib/history';
@@ -40,7 +39,6 @@ function ImportJSON({
 	const [isCreateDashboardError, setIsCreateDashboardError] = useState<boolean>(
 		false,
 	);
-	const [isFeatureAlert, setIsFeatureAlert] = useState<boolean>(false);
 
 	const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
 
@@ -108,15 +106,6 @@ function ImportJSON({
 					dashboardId: response.payload?.uuid,
 					dashboardName: response.payload?.data?.title,
 				});
-			} else if (response.error === 'feature usage exceeded') {
-				setIsFeatureAlert(true);
-				notifications.error({
-					message:
-						response.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
 			} else {
 				setIsCreateDashboardError(true);
 				notifications.error({
@@ -130,8 +119,6 @@ function ImportJSON({
 			setDashboardCreating(false);
 		} catch (error) {
 			setDashboardCreating(false);
-			setIsFeatureAlert(false);
-
 			setIsCreateDashboardError(true);
 			notifications.error({
 				message: error instanceof Error ? error.message : t('error_loading_json'),
@@ -149,7 +136,6 @@ function ImportJSON({
 	const onCancelHandler = (): void => {
 		setIsUploadJSONError(false);
 		setIsCreateDashboardError(false);
-		setIsFeatureAlert(false);
 		onModalHandler();
 	};
 
@@ -239,12 +225,6 @@ function ImportJSON({
 						>
 							{t('import_and_next')} &nbsp; <MoveRight size={14} />
 						</Button>
-
-						{isFeatureAlert && (
-							<Typography.Text type="danger">
-								{MESSAGE.CREATE_DASHBOARD}
-							</Typography.Text>
-						)}
 					</div>
 				</div>
 			}
