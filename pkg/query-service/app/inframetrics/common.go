@@ -89,6 +89,10 @@ func getParamsForTopJobs(req model.JobListRequest) (int64, string, string) {
 	return getParamsForTopItems(req.Start, req.End)
 }
 
+func getParamsForTopVolumes(req model.VolumeListRequest) (int64, string, string) {
+	return getParamsForTopItems(req.Start, req.End)
+}
+
 // TODO(srikanthccv): remove this
 // What is happening here?
 // The `PrepareTimeseriesFilterQuery` uses the local time series table for sub-query because each fingerprint

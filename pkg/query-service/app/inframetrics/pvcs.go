@@ -15,60 +15,52 @@ import (
 )
 
 var (
-	metricToUseForPods = "k8s_pod_cpu_utilization"
+	metricToUseForVolumes = "k8s_volume_available"
 
-	podAttrsToEnrich = []string{
+	volumeAttrsToEnrich = []string{
 		"k8s_pod_uid",
 		"k8s_pod_name",
 		"k8s_namespace_name",
 		"k8s_node_name",
-		"k8s_deployment_name",
 		"k8s_statefulset_name",
-		"k8s_daemonset_name",
-		"k8s_job_name",
-		"k8s_cronjob_name",
 		"k8s_cluster_name",
+		"k8s_persistentvolumeclaim_name",
 	}
 
-	k8sPodUIDAttrKey = "k8s_pod_uid"
+	k8sPersistentVolumeClaimNameAttrKey = "k8s_persistentvolumeclaim_name"
 
-	queryNamesForPods = map[string][]string{
-		"cpu":            {"A"},
-		"cpu_request":    {"B", "A"},
-		"cpu_limit":      {"C", "A"},
-		"memory":         {"D"},
-		"memory_request": {"E", "D"},
-		"memory_limit":   {"F", "D"},
-		"restarts":       {"G", "A"},
-		"pod_phase":      {"H", "I", "J", "K"},
+	queryNamesForVolumes = map[string][]string{
+		"available":   {"A"},
+		"capacity":    {"B", "A"},
+		"usage":       {"F1", "B", "A"},
+		"inodes":      {"C", "A"},
+		"inodes_free": {"D", "A"},
+		"inodes_used": {"E", "A"},
 	}
-	podQueryNames = []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"}
 
-	metricNamesForPods = map[string]string{
-		"cpu":            "k8s_pod_cpu_utilization",
-		"cpu_request":    "k8s_pod_cpu_request_utilization",
-		"cpu_limit":      "k8s_pod_cpu_limit_utilization",
-		"memory":         "k8s_pod_memory_usage",
-		"memory_request": "k8s_pod_memory_request_utilization",
-		"memory_limit":   "k8s_pod_memory_limit_utilization",
-		"restarts":       "k8s_container_restarts",
-		"pod_phase":      "k8s_pod_phase",
+	volumeQueryNames = []string{"A", "B", "C", "D", "E", "F1"}
+
+	metricNamesForVolumes = map[string]string{
+		"available":   "k8s_volume_available",
+		"capacity":    "k8s_volume_capacity",
+		"inodes":      "k8s_volume_inodes",
+		"inodes_free": "k8s_volume_inodes_free",
+		"inodes_used": "k8s_volume_inodes_used",
 	}
 )
 
-type PodsRepo struct {
+type PvcsRepo struct {
 	reader    interfaces.Reader
 	querierV2 interfaces.Querier
 }
 
-func NewPodsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *PodsRepo {
-	return &PodsRepo{reader: reader, querierV2: querierV2}
+func NewPvcsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *PvcsRepo {
+	return &PvcsRepo{reader: reader, querierV2: querierV2}
 }
 
-func (p *PodsRepo) GetPodAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
-	// TODO(srikanthccv): remove hardcoded metric name and support keys from any pod metric
+func (p *PvcsRepo) GetPvcAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = metricToUseForPods
+	req.AggregateAttribute = metricToUseForVolumes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -91,9 +83,9 @@ func (p *PodsRepo) GetPodAttributeKeys(ctx context.Context, req v3.FilterAttribu
 	return &v3.FilterAttributeKeyResponse{AttributeKeys: filteredKeys}, nil
 }
 
-func (p *PodsRepo) GetPodAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+func (p *PvcsRepo) GetPvcAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = metricToUseForPods
+	req.AggregateAttribute = metricToUseForVolumes
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -105,10 +97,10 @@ func (p *PodsRepo) GetPodAttributeValues(ctx context.Context, req v3.FilterAttri
 	return attributeValuesResponse, nil
 }
 
-func (p *PodsRepo) getMetadataAttributes(ctx context.Context, req model.PodListRequest) (map[string]map[string]string, error) {
-	podAttrs := map[string]map[string]string{}
+func (p *PvcsRepo) getMetadataAttributes(ctx context.Context, req model.VolumeListRequest) (map[string]map[string]string, error) {
+	volumeAttrs := map[string]map[string]string{}
 
-	for _, key := range podAttrsToEnrich {
+	for _, key := range volumeAttrsToEnrich {
 		hasKey := false
 		for _, groupByKey := range req.GroupBy {
 			if groupByKey.Key == key {
@@ -124,7 +116,7 @@ func (p *PodsRepo) getMetadataAttributes(ctx context.Context, req model.PodListR
 	mq := v3.BuilderQuery{
 		DataSource: v3.DataSourceMetrics,
 		AggregateAttribute: v3.AttributeKey{
-			Key:      metricToUseForPods,
+			Key:      metricToUseForVolumes,
 			DataType: v3.AttributeKeyDataTypeFloat64,
 		},
 		Temporality: v3.Unspecified,
@@ -153,24 +145,24 @@ func (p *PodsRepo) getMetadataAttributes(ctx context.Context, req model.PodListR
 			}
 		}
 
-		podName := stringData[k8sPodUIDAttrKey]
-		if _, ok := podAttrs[podName]; !ok {
-			podAttrs[podName] = map[string]string{}
+		volumeName := stringData[k8sPersistentVolumeClaimNameAttrKey]
+		if _, ok := volumeAttrs[volumeName]; !ok {
+			volumeAttrs[volumeName] = map[string]string{}
 		}
 
 		for _, key := range req.GroupBy {
-			podAttrs[podName][key.Key] = stringData[key.Key]
+			volumeAttrs[volumeName][key.Key] = stringData[key.Key]
 		}
 	}
 
-	return podAttrs, nil
+	return volumeAttrs, nil
 }
 
-func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
-	step, timeSeriesTableName, samplesTableName := getParamsForTopPods(req)
+func (p *PvcsRepo) getTopVolumeGroups(ctx context.Context, req model.VolumeListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+	step, timeSeriesTableName, samplesTableName := getParamsForTopVolumes(req)
 
-	queryNames := queryNamesForPods[req.OrderBy.ColumnName]
-	topPodGroupsQueryRangeParams := &v3.QueryRangeParamsV3{
+	queryNames := queryNamesForVolumes[req.OrderBy.ColumnName]
+	topVolumeGroupsQueryRangeParams := &v3.QueryRangeParamsV3{
 		Start: req.Start,
 		End:   req.End,
 		Step:  step,
@@ -194,14 +186,14 @@ func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest
 			}
 			query.Filters.Items = append(query.Filters.Items, req.Filters.Items...)
 		}
-		topPodGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
+		topVolumeGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, topPodGroupsQueryRangeParams)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, topVolumeGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
-	formattedResponse, err := postprocess.PostProcessResult(queryResponse, topPodGroupsQueryRangeParams)
+	formattedResponse, err := postprocess.PostProcessResult(queryResponse, topVolumeGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -222,33 +214,33 @@ func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest
 
 	limit := math.Min(float64(req.Offset+req.Limit), float64(len(formattedResponse[0].Series)))
 
-	paginatedTopPodGroupsSeries := formattedResponse[0].Series[req.Offset:int(limit)]
+	paginatedTopVolumeGroupsSeries := formattedResponse[0].Series[req.Offset:int(limit)]
 
-	topPodGroups := []map[string]string{}
-	for _, series := range paginatedTopPodGroupsSeries {
-		topPodGroups = append(topPodGroups, series.Labels)
+	topVolumeGroups := []map[string]string{}
+	for _, series := range paginatedTopVolumeGroupsSeries {
+		topVolumeGroups = append(topVolumeGroups, series.Labels)
 	}
-	allPodGroups := []map[string]string{}
+	allVolumeGroups := []map[string]string{}
 	for _, series := range formattedResponse[0].Series {
-		allPodGroups = append(allPodGroups, series.Labels)
+		allVolumeGroups = append(allVolumeGroups, series.Labels)
 	}
 
-	return topPodGroups, allPodGroups, nil
+	return topVolumeGroups, allVolumeGroups, nil
 }
 
-func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (model.PodListResponse, error) {
-	resp := model.PodListResponse{}
+func (p *PvcsRepo) GetPvcList(ctx context.Context, req model.VolumeListRequest) (model.VolumeListResponse, error) {
+	resp := model.VolumeListResponse{}
 
 	if req.Limit == 0 {
 		req.Limit = 10
 	}
 
 	if req.OrderBy == nil {
-		req.OrderBy = &v3.OrderBy{ColumnName: "cpu", Order: v3.DirectionDesc}
+		req.OrderBy = &v3.OrderBy{ColumnName: "usage", Order: v3.DirectionDesc}
 	}
 
 	if req.GroupBy == nil {
-		req.GroupBy = []v3.AttributeKey{{Key: k8sPodUIDAttrKey}}
+		req.GroupBy = []v3.AttributeKey{{Key: k8sPersistentVolumeClaimNameAttrKey}}
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
@@ -256,7 +248,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
 
-	query := PodsTableListQuery.Clone()
+	query := PvcsTableListQuery.Clone()
 
 	query.Start = req.Start
 	query.End = req.End
@@ -273,19 +265,19 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 		query.GroupBy = req.GroupBy
 	}
 
-	podAttrs, err := p.getMetadataAttributes(ctx, req)
+	volumeAttrs, err := p.getMetadataAttributes(ctx, req)
 	if err != nil {
 		return resp, err
 	}
 
-	topPodGroups, allPodGroups, err := p.getTopPodGroups(ctx, req, query)
+	topVolumeGroups, allVolumeGroups, err := p.getTopVolumeGroups(ctx, req, query)
 	if err != nil {
 		return resp, err
 	}
 
 	groupFilters := map[string][]string{}
-	for _, topPodGroup := range topPodGroups {
-		for k, v := range topPodGroup {
+	for _, topVolumeGroup := range topVolumeGroups {
+		for k, v := range topVolumeGroup {
 			groupFilters[k] = append(groupFilters[k], v)
 		}
 	}
@@ -322,75 +314,53 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 		return resp, err
 	}
 
-	records := []model.PodListRecord{}
+	records := []model.VolumeListRecord{}
 
 	for _, result := range formattedResponse {
 		for _, row := range result.Table.Rows {
 
-			record := model.PodListRecord{
-				PodCPU:           -1,
-				PodCPURequest:    -1,
-				PodCPULimit:      -1,
-				PodMemory:        -1,
-				PodMemoryRequest: -1,
-				PodMemoryLimit:   -1,
-				RestartCount:     -1,
+			record := model.VolumeListRecord{
+				VolumeUsage:      -1,
+				VolumeAvailable:  -1,
+				VolumeCapacity:   -1,
+				VolumeInodes:     -1,
+				VolumeInodesFree: -1,
+				VolumeInodesUsed: -1,
+				Meta:             map[string]string{},
 			}
 
-			if podUID, ok := row.Data[k8sPodUIDAttrKey].(string); ok {
-				record.PodUID = podUID
+			if volumeName, ok := row.Data[k8sPersistentVolumeClaimNameAttrKey].(string); ok {
+				record.PersistentVolumeClaimName = volumeName
 			}
 
-			if cpu, ok := row.Data["A"].(float64); ok {
-				record.PodCPU = cpu
+			if volumeAvailable, ok := row.Data["A"].(float64); ok {
+				record.VolumeAvailable = volumeAvailable
 			}
-			if cpuRequest, ok := row.Data["B"].(float64); ok {
-				record.PodCPURequest = cpuRequest
-			}
-
-			if cpuLimit, ok := row.Data["C"].(float64); ok {
-				record.PodCPULimit = cpuLimit
+			if volumeCapacity, ok := row.Data["B"].(float64); ok {
+				record.VolumeCapacity = volumeCapacity
 			}
 
-			if memory, ok := row.Data["D"].(float64); ok {
-				record.PodMemory = memory
+			if volumeInodes, ok := row.Data["C"].(float64); ok {
+				record.VolumeInodes = volumeInodes
 			}
 
-			if memoryRequest, ok := row.Data["E"].(float64); ok {
-				record.PodMemoryRequest = memoryRequest
+			if volumeInodesFree, ok := row.Data["D"].(float64); ok {
+				record.VolumeInodesFree = volumeInodesFree
 			}
 
-			if memoryLimit, ok := row.Data["F"].(float64); ok {
-				record.PodMemoryLimit = memoryLimit
+			if volumeInodesUsed, ok := row.Data["E"].(float64); ok {
+				record.VolumeInodesUsed = volumeInodesUsed
 			}
 
-			if restarts, ok := row.Data["G"].(float64); ok {
-				record.RestartCount = int(restarts)
-			}
-
-			if pending, ok := row.Data["H"].(float64); ok {
-				record.CountByPhase.Pending = int(pending)
-			}
-
-			if running, ok := row.Data["I"].(float64); ok {
-				record.CountByPhase.Running = int(running)
-			}
-
-			if succeeded, ok := row.Data["J"].(float64); ok {
-				record.CountByPhase.Succeeded = int(succeeded)
-			}
-
-			if failed, ok := row.Data["K"].(float64); ok {
-				record.CountByPhase.Failed = int(failed)
-			}
+			record.VolumeUsage = record.VolumeCapacity - record.VolumeAvailable
 
 			record.Meta = map[string]string{}
-			if _, ok := podAttrs[record.PodUID]; ok {
-				record.Meta = podAttrs[record.PodUID]
+			if _, ok := volumeAttrs[record.PersistentVolumeClaimName]; ok {
+				record.Meta = volumeAttrs[record.PersistentVolumeClaimName]
 			}
 
 			for k, v := range row.Data {
-				if slices.Contains(podQueryNames, k) {
+				if slices.Contains(volumeQueryNames, k) {
 					continue
 				}
 				if labelValue, ok := v.(string); ok {
@@ -401,7 +371,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 			records = append(records, record)
 		}
 	}
-	resp.Total = len(allPodGroups)
+	resp.Total = len(allVolumeGroups)
 	resp.Records = records
 
 	return resp, nil
