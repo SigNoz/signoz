@@ -2,6 +2,8 @@
 import '../MQDetails.style.scss';
 
 import { Table, Typography } from 'antd';
+import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
+import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
 import axios from 'axios';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -19,8 +21,6 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { MessagingQueueServicePayload } from '../MQTables/getConsumerLagDetails';
-import { getKafkaSpanEval } from '../MQTables/getKafkaSpanEval';
 import {
 	convertToMilliseconds,
 	DropRateAPIResponse,
