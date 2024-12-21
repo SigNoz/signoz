@@ -82,10 +82,6 @@ export const Query = memo(function Query({
 		entityVersion: version,
 	});
 
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
-	]);
-
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
 			handleChangeQueryData('stepInterval', value);
@@ -457,7 +453,7 @@ export const Query = memo(function Query({
 										</Col>
 									)}
 									<Col flex="1" className="qb-search-container">
-										{isLogsExplorerPage ? (
+										{query.dataSource === DataSource.LOGS ? (
 											<QueryBuilderSearchV2
 												query={query}
 												onChange={handleChangeTagFilters}
