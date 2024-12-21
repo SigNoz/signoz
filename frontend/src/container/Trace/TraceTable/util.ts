@@ -1,5 +1,5 @@
 export const getSpanOrderParam = (key: string): string => {
-	if (key === 'durationNano') {
+	if (key === 'durationNano' || key === 'duration_nano') {
 		return 'duration';
 	}
 	if (key === 'timestamp') {
