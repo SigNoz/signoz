@@ -119,7 +119,7 @@
 		"stream": "^0.0.2",
 		"style-loader": "1.3.0",
 		"styled-components": "^5.3.11",
-		"terser-webpack-plugin": "^5.2.5",
+		"terser-webpack-plugin": "^5.3.11",
 		"timestamp-nano": "^1.0.0",
 		"ts-node": "^10.2.1",
 		"tsconfig-paths-webpack-plugin": "^3.5.1",
