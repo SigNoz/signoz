@@ -269,7 +269,7 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 					{Key: v3.AttributeKey{Key: "http.route", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Operator: v3.FilterOperatorNotExists},
 				}},
 			},
-			want: "mapContains(attributes_string, 'host') AND mapContains(attributes_number, 'duration') AND NOT mapContains(attributes_bool, 'isDone') AND NOT mapContains(attributes_string, 'host1') AND `attribute_string_path` = '' AND http_url = '' AND `attribute_string_http$$route` = ''",
+			want: "mapContains(attributes_string, 'host') AND mapContains(attributes_number, 'duration') AND NOT mapContains(attributes_bool, 'isDone') AND NOT mapContains(attributes_string, 'host1') AND `attribute_string_path_exists` = false AND http_url = '' AND `attribute_string_http$$route_exists` = false",
 		},
 	}
 	for _, tt := range tests {
@@ -478,7 +478,7 @@ func Test_buildTracesQuery(t *testing.T) {
 				},
 			},
 			want: "SELECT  attributes_string['http.method'] as `http.method`, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['http.method'] = '100' AND mapContains(attributes_string, 'http.method') AND mapContains(attributes_string, 'name') " +
+				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['http.method'] = '100' AND mapContains(attributes_string, 'http.method') AND name != '' " +
 				"group by `http.method` order by `http.method` ASC",
 		},
 		{
