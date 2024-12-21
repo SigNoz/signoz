@@ -22,7 +22,9 @@ func unmarshal(conf *confmap.Conf) (*Config, error) {
 	for k := range raw {
 		e, ok := byName(k)
 		if !ok {
-			return nil, fmt.Errorf("cannot find config with name %q", k)
+			continue
+			// Uncomment when the new configuration has been rolled out
+			//return nil, fmt.Errorf("cannot find config with name %q", k)
 		}
 		i, ok := e.(signozconfmap.Config)
 		if !ok {
