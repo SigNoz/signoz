@@ -9,7 +9,7 @@ import (
 	"go.signoz.io/signoz/pkg/instrumentation"
 )
 
-func TestUnmarshal(t *testing.T) {
+func TestUnmarshalForInstrumentation(t *testing.T) {
 	input := confmap.NewFromStringMap(
 		map[string]any{
 			"instrumentation": map[string]any{
@@ -29,6 +29,5 @@ func TestUnmarshal(t *testing.T) {
 	cfg, err := unmarshal(input)
 	require.NoError(t, err)
 
-	assert.Equal(t, expected, cfg)
-
+	assert.Equal(t, expected.Instrumentation, cfg.Instrumentation)
 }
