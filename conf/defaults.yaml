@@ -1,9 +1,9 @@
 ##################### SigNoz Configuration Defaults #####################
-# Do not modify this file in signoz installs
+#
+#
+#
 
-#----------------------------------------------
-# Web
-#----------------------------------------------
+##################### Web #####################
 web:
   # The prefix to serve web on
   prefix: /
