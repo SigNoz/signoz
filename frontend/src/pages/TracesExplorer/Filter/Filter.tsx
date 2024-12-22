@@ -204,7 +204,7 @@ export function Filter(props: FilterProps): JSX.Element {
 				});
 			}
 
-			if (isEqual(currentQuery, preparedQuery)) {
+			if (isEqual(currentQuery, preparedQuery) && !props?.resetAll) {
 				return;
 			}
 			redirectWithQueryBuilderData(preparedQuery);
