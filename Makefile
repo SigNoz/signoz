@@ -98,7 +98,7 @@ build-query-service-static-arm64:
 
 # Steps to build static binary of query service for all platforms
 .PHONY: build-query-service-static-all
-build-query-service-static-all: build-query-service-static-amd64 build-query-service-static-arm64
+build-query-service-static-all: build-query-service-static-amd64 build-query-service-static-arm64 build-frontend-static
 
 # Steps to build and push docker image of query service
 .PHONY: build-query-service-amd64 build-push-query-service
@@ -128,7 +128,7 @@ build-ee-query-service-amd64:
 	make QUERY_SERVICE_DIRECTORY=${EE_QUERY_SERVICE_DIRECTORY} build-query-service-amd64
 
 # Step to build and push EE docker image of query in amd64 and arm64 (used in push pipeline)
-build-push-ee-query-service: build-frontend-static
+build-push-ee-query-service:
 	@echo "------------------"
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
