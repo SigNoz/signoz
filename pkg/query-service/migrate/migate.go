@@ -7,7 +7,6 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
 )
 
 type DataMigration struct {
@@ -52,17 +51,6 @@ func Migrate(dsn string) error {
 	}
 	if err := initSchema(conn); err != nil {
 		return err
-	}
-
-	if m, err := getMigrationVersion(conn, "0.62_ingestion_dashboard"); err == nil && m == nil {
-		if err := migrateIngestionDashboard(conn); err != nil {
-			zap.L().Error("failed to migrate 0.62_ingestion_dashboard", zap.Error(err))
-		} else {
-			_, err := conn.Exec("INSERT INTO data_migrations (version, succeeded) VALUES ('0.62_ingestion_dashboard', true)")
-			if err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil

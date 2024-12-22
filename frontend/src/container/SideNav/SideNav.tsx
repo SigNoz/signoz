@@ -19,6 +19,7 @@ import {
 	PackagePlus,
 	UserCircle,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -49,24 +50,15 @@ interface UserManagementMenuItems {
 	icon: JSX.Element;
 }
 
-function SideNav({
-	licenseData,
-	isFetching,
-}: {
-	licenseData: any;
-	isFetching: boolean;
-}): JSX.Element {
+function SideNav(): JSX.Element {
 	const [menuItems, setMenuItems] = useState(defaultMenuItems);
-
 	const { pathname, search } = useLocation();
-	const {
-		user,
-		role,
-		featureResponse,
-		currentVersion,
-		latestVersion,
-		isCurrentVersionError,
-	} = useSelector<AppState, AppReducer>((state) => state.app);
+	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
+		AppState,
+		AppReducer
+	>((state) => state.app);
+
+	const { user, featureFlags, licenses } = useAppContext();
 
 	const [licenseTag, setLicenseTag] = useState('');
 
@@ -86,78 +78,22 @@ function SideNav({
 
 	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
-	const [inviteMembers] = useComponentPermission(['invite_members'], role);
+	const [inviteMembers] = useComponentPermission(['invite_members'], user.role);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const isCloudUserVal = isCloudUser();
 
-	useEffect(() => {
-		if (inviteMembers) {
-			const updatedUserManagementMenuItems = [
-				inviteMemberMenuItem,
-				manageLicenseMenuItem,
-			];
-
-			setUserManagementMenuItems(updatedUserManagementMenuItems);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [inviteMembers]);
-
-	useEffect((): void => {
-		const isOnboardingEnabled =
-			featureResponse.data?.find(
-				(feature) => feature.name === FeatureKeys.ONBOARDING,
-			)?.active || false;
-
-		if (!isOnboardingEnabled || !isCloudUser()) {
-			let items = [...menuItems];
-
-			items = items.filter(
-				(item) => item.key !== ROUTES.GET_STARTED && item.key !== ROUTES.ONBOARDING,
-			);
-
-			setMenuItems(items);
-		}
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [featureResponse.data]);
-
-	// using a separate useEffect as the license fetching call takes few milliseconds
-	useEffect(() => {
-		if (!isFetching) {
-			let items = [...menuItems];
-
-			const isOnBasicPlan =
-				licenseData?.payload?.licenses?.some(
-					(license: License) =>
-						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
-				) || licenseData?.payload?.licenses === null;
-
-			if (
-				role !== USER_ROLES.ADMIN ||
-				isOnBasicPlan ||
-				!(isCloudUserVal || isEECloudUser())
-			) {
-				items = items.filter((item) => item.key !== ROUTES.BILLING);
-			}
-
-			setMenuItems(items);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [licenseData?.payload?.licenses, isFetching, role]);
-
 	const { t } = useTranslation('');
 
 	const licenseStatus: string =
-		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ||
-		'';
+		licenses?.licenses?.find((e: License) => e.isCurrent)?.status || '';
 
 	const isLicenseActive =
 		licenseStatus?.toLocaleLowerCase() ===
 		LICENSE_PLAN_STATUS.VALID.toLocaleLowerCase();
 
-	const isEnterprise = licenseData?.payload?.licenses?.some(
+	const isEnterprise = licenses?.licenses?.some(
 		(license: License) =>
 			license.isCurrent && license.planKey === LICENSE_PLAN_KEY.ENTERPRISE_PLAN,
 	);
@@ -200,13 +136,13 @@ function SideNav({
 		}
 	};
 
-	const onClickVersionHandler = (event: MouseEvent): void => {
+	const onClickVersionHandler = useCallback((event: MouseEvent): void => {
 		if (isCtrlMetaKey(event)) {
 			openInNewTab(ROUTES.VERSION);
 		} else {
 			history.push(ROUTES.VERSION);
 		}
-	};
+	}, []);
 
 	const onClickHandler = useCallback(
 		(key: string, event: MouseEvent | null) => {
@@ -232,34 +168,6 @@ function SideNav({
 		pathname,
 	]);
 
-	useEffect(() => {
-		if (isCloudUser() || isEECloudUser()) {
-			const updatedUserManagementMenuItems = [helpSupportMenuItem];
-
-			setUserManagementMenuItems(updatedUserManagementMenuItems);
-		} else if (currentVersion && latestVersion) {
-			const versionMenuItem = {
-				key: SecondaryMenuItemKey.Version,
-				label: !isCurrentVersionError ? currentVersion : t('n_a'),
-				icon: !isLatestVersion ? (
-					<AlertTriangle color={Color.BG_CHERRY_600} size={16} />
-				) : (
-					<CheckSquare color={Color.BG_FOREST_500} size={16} />
-				),
-				onClick: onClickVersionHandler,
-			};
-
-			const updatedUserManagementMenuItems = [
-				versionMenuItem,
-				slackSupportMenuItem,
-				manageLicenseMenuItem,
-			];
-
-			setUserManagementMenuItems(updatedUserManagementMenuItems);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currentVersion, latestVersion]);
-
 	const handleUserManagentMenuItemClick = (
 		key: string,
 		event: MouseEvent,
@@ -278,31 +186,18 @@ function SideNav({
 	};
 
 	useEffect(() => {
-		if (!isFetching) {
-			if (isCloudUserVal) {
-				setLicenseTag('Cloud');
-			} else if (isEnterprise) {
-				setLicenseTag('Enterprise');
-			} else {
-				setLicenseTag('Free');
-			}
+		if (isCloudUserVal) {
+			setLicenseTag('Cloud');
+		} else if (isEnterprise) {
+			setLicenseTag('Enterprise');
+		} else {
+			setLicenseTag('Free');
 		}
-	}, [isCloudUserVal, isEnterprise, isFetching]);
-
-	useEffect(() => {
-		if (!(isCloudUserVal || isEECloudUser())) {
-			let updatedMenuItems = [...menuItems];
-			updatedMenuItems = updatedMenuItems.filter(
-				(item) => item.key !== ROUTES.INTEGRATIONS,
-			);
-			setMenuItems(updatedMenuItems);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [isCloudUserVal, isEnterprise]);
 
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
-		role,
+		user.role,
 	);
 
 	const settingsRoute = isCurrentOrgSettings
@@ -362,6 +257,71 @@ function SideNav({
 			deregisterShortcut(GlobalShortcuts.NavigateToMessagingQueues);
 		};
 	}, [deregisterShortcut, onClickHandler, registerShortcut]);
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	useEffect(() => {
+		let updatedMenuItems = defaultMenuItems;
+		let updatedUserManagementItems: UserManagementMenuItems[] = [
+			manageLicenseMenuItem,
+		];
+		if (isCloudUserVal || isEECloudUser()) {
+			const isOnboardingEnabled =
+				featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
+					?.active || false;
+			if (!isOnboardingEnabled) {
+				updatedMenuItems = updatedMenuItems.filter(
+					(item) =>
+						item.key !== ROUTES.GET_STARTED && item.key !== ROUTES.ONBOARDING,
+				);
+			}
+
+			const isOnBasicPlan =
+				licenses?.licenses?.some(
+					(license: License) =>
+						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
+				) || licenses?.licenses === null;
+
+			if (user.role !== USER_ROLES.ADMIN || isOnBasicPlan) {
+				updatedMenuItems = updatedMenuItems.filter(
+					(item) => item.key !== ROUTES.BILLING,
+				);
+			}
+
+			updatedUserManagementItems = [helpSupportMenuItem];
+		} else {
+			updatedMenuItems = updatedMenuItems.filter(
+				(item) => item.key !== ROUTES.INTEGRATIONS && item.key !== ROUTES.BILLING,
+			);
+			const versionMenuItem = {
+				key: SecondaryMenuItemKey.Version,
+				label: !isCurrentVersionError ? currentVersion : t('n_a'),
+				icon: !isLatestVersion ? (
+					<AlertTriangle color={Color.BG_CHERRY_600} size={16} />
+				) : (
+					<CheckSquare color={Color.BG_FOREST_500} size={16} />
+				),
+				onClick: onClickVersionHandler,
+			};
+
+			updatedUserManagementItems = [
+				versionMenuItem,
+				slackSupportMenuItem,
+				manageLicenseMenuItem,
+			];
+		}
+		setMenuItems(updatedMenuItems);
+		setUserManagementMenuItems(updatedUserManagementItems);
+	}, [
+		currentVersion,
+		featureFlags,
+		isCloudUserVal,
+		isCurrentVersionError,
+		isLatestVersion,
+		licenses?.licenses,
+		onClickVersionHandler,
+		t,
+		user.role,
+	]);
 
 	return (
 		<div className={cx('sidenav-container')}>
@@ -424,7 +384,7 @@ function SideNav({
 							onClick={onClickShortcuts}
 						/>
 
-						{licenseData && !isLicenseActive && (
+						{licenses && !isLicenseActive && (
 							<NavItem
 								key="trySignozCloud"
 								item={trySignozCloudMenuItem}

@@ -4,14 +4,12 @@ import Spinner from 'components/Spinner';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import LoginContainer from 'container/Login';
 import useURLQuery from 'hooks/useUrlQuery';
+import { useAppContext } from 'providers/App/App';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 
 function Login(): JSX.Element {
-	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { isLoggedIn } = useAppContext();
 	const { t } = useTranslation();
 
 	const urlQueryParams = useURLQuery();

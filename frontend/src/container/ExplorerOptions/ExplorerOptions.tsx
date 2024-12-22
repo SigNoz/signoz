@@ -46,6 +46,7 @@ import {
 	Plus,
 	X,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import {
 	CSSProperties,
 	Dispatch,
@@ -56,15 +57,12 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
-import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
 import { PreservedViewsTypes } from './constants';
@@ -133,7 +131,7 @@ function ExplorerOptions({
 		setIsSaveModalOpen(false);
 	};
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const handleConditionalQueryModification = useCallback((): string => {
 		if (
@@ -472,7 +470,7 @@ function ExplorerOptions({
 		}
 	};
 
-	const isEditDeleteSupported = allowedRoles.includes(role as string);
+	const isEditDeleteSupported = allowedRoles.includes(user.role as string);
 
 	const [
 		isRecentlyUsedSavedViewSelected,

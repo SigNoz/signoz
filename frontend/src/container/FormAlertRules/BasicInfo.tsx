@@ -8,13 +8,11 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useFetch from 'hooks/useFetch';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef, Labels } from 'types/api/alerts/def';
-import AppReducer from 'types/reducer/app';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -45,10 +43,10 @@ function BasicInfo({
 	const { t } = useTranslation('alerts');
 
 	const channels = useFetch(getChannels);
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 	const [addNewChannelPermission] = useComponentPermission(
 		['add_new_channel'],
-		role,
+		user.role,
 	);
 
 	const [

@@ -20,13 +20,6 @@ jest.mock('hooks/useNotifications', () => ({
 	})),
 }));
 
-jest.mock('hooks/useFeatureFlag', () => ({
-	__esModule: true,
-	default: jest.fn().mockImplementation(() => ({
-		active: true,
-	})),
-}));
-
 describe('Should check if the edit alert channel is properly displayed ', () => {
 	beforeEach(() => {
 		render(<EditAlertChannels initialValue={editAlertChannelInitialValue} />);
