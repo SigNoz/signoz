@@ -1,18 +1,19 @@
-import { Color } from '@signozhq/design-tokens';
-import { Progress } from 'antd';
+import { Tag } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	K8sClustersData,
 	K8sClustersListPayload,
 } from 'api/infraMonitoring/getK8sClustersList';
+import { Group } from 'lucide-react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { IEntityColumn } from '../utils';
 
 export const defaultAddedColumns: IEntityColumn[] = [
 	{
-		label: 'Namespace Status',
-		value: 'NamespaceStatus',
-		id: 'NamespaceStatus',
+		label: 'Cluster Name',
+		value: 'clusterName',
+		id: 'cluster',
 		canRemove: false,
 	},
 	{
@@ -28,32 +29,43 @@ export const defaultAddedColumns: IEntityColumn[] = [
 		canRemove: false,
 	},
 	{
-		label: 'Memory Allocatable (bytes)',
-		value: 'memoryAllocatable',
-		id: 'memoryAllocatable',
+		label: 'Memory Utilization (cores)',
+		value: 'memoryUsage',
+		id: 'memoryUsage',
 		canRemove: false,
 	},
 	{
-		label: 'Pods count by phase',
-		value: 'podsCount',
-		id: 'podsCount',
+		label: 'Memory Allocatable (bytes)',
+		value: 'memoryAllocatable',
+		id: 'memoryAllocatable',
 		canRemove: false,
 	},
 ];
 
 export interface K8sClustersRowData {
 	key: string;
+	clusterUID: string;
 	clusterName: string;
-	availableReplicas: number;
-	desiredReplicas: number;
-	cpuRequestUtilization: React.ReactNode;
-	cpuLimitUtilization: React.ReactNode;
 	cpuUtilization: number;
-	memoryRequestUtilization: React.ReactNode;
-	memoryLimitUtilization: React.ReactNode;
 	memoryUtilization: number;
-	clusterRestarts: number;
+	cpuAllocatable: number;
+	memoryAllocatable: number;
+	groupedByMeta?: any;
 }
+
+const clusterGroupColumnConfig = {
+	title: (
+		<div className="column-header pod-group-header">
+			<Group size={14} /> CLUSTER GROUP
+		</div>
+	),
+	dataIndex: 'clusterGroup',
+	key: 'clusterGroup',
+	ellipsis: true,
+	width: 150,
+	align: 'left',
+	sorter: false,
+};
 
 export const getK8sClustersListQuery = (): K8sClustersListPayload => ({
 	filters: {
@@ -65,51 +77,11 @@ export const getK8sClustersListQuery = (): K8sClustersListPayload => ({
 
 const columnsConfig = [
 	{
-		title: <div className="column-header-left">Cluster</div>,
+		title: <div className="column-header-left">Cluster Name</div>,
 		dataIndex: 'clusterName',
 		key: 'clusterName',
 		ellipsis: true,
 		width: 150,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: <div className="column-header-left">Available Replicas</div>,
-		dataIndex: 'availableReplicas',
-		key: 'availableReplicas',
-		width: 100,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: <div className="column-header-left">Desired Replicas</div>,
-		dataIndex: 'desiredReplicas',
-		key: 'desiredReplicas',
-		width: 80,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: (
-			<div className="column-header-left">
-				CPU Request Utilization (% of limit)
-			</div>
-		),
-		dataIndex: 'cpuRequestUtilization',
-		key: 'cpuRequestUtilization',
-		width: 80,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: (
-			<div className="column-header-left">
-				CPU Limit Utilization (% of request)
-			</div>
-		),
-		dataIndex: 'cpuLimitUtilization',
-		key: 'cpuLimitUtilization',
-		width: 50,
 		sorter: true,
 		align: 'left',
 	},
@@ -122,117 +94,80 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: (
-			<div className="column-header-left">
-				Memory Request Utilization (% of limit)
-			</div>
-		),
-		dataIndex: 'memoryRequestUtilization',
-		key: 'memoryRequestUtilization',
-		width: 50,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: (
-			<div className="column-header-left">
-				Memory Limit Utilization (% of request)
-			</div>
-		),
-		dataIndex: 'memoryLimitUtilization',
-		key: 'memoryLimitUtilization',
+		title: <div className="column-header-left">CPU Allocatable (cores)</div>,
+		dataIndex: 'cpuAllocatable',
+		key: 'cpuAllocatable',
 		width: 80,
 		sorter: true,
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Cluster Restarts</div>,
-		dataIndex: 'clusterRestarts',
-		key: 'clusterRestarts',
-		width: 50,
+		title: <div className="column-header-left">Memory Utilization (bytes)</div>,
+		dataIndex: 'memoryUtilization',
+		key: 'memoryUtilization',
+		width: 80,
+		sorter: true,
+		align: 'left',
+	},
+	{
+		title: <div className="column-header-left">Memory Allocatable (bytes)</div>,
+		dataIndex: 'memoryAllocatable',
+		key: 'memoryAllocatable',
+		width: 80,
 		sorter: true,
 		align: 'left',
 	},
 ];
 
-export const getK8sClustersListColumns = (): ColumnType<K8sClustersRowData>[] =>
-	columnsConfig as ColumnType<K8sClustersRowData>[];
+export const getK8sClustersListColumns = (
+	groupBy: IBuilderQuery['groupBy'],
+): ColumnType<K8sClustersRowData>[] => {
+	if (groupBy.length > 0) {
+		const filteredColumns = [...columnsConfig].filter(
+			(column) => column.key !== 'clusterName',
+		);
+		filteredColumns.unshift(clusterGroupColumnConfig);
+		return filteredColumns as ColumnType<K8sClustersRowData>[];
+	}
 
-const getStrokeColorForProgressBar = (value: number): string => {
-	if (value >= 90) return Color.BG_SAKURA_500;
-	if (value >= 60) return Color.BG_AMBER_500;
-	return Color.BG_FOREST_500;
+	return columnsConfig as ColumnType<K8sClustersRowData>[];
+};
+
+const getGroupByEle = (
+	cluster: K8sClustersData,
+	groupBy: IBuilderQuery['groupBy'],
+): React.ReactNode => {
+	const groupByValues: string[] = [];
+
+	groupBy.forEach((group) => {
+		groupByValues.push(cluster.meta[group.key as keyof typeof cluster.meta]);
+	});
+
+	return (
+		<div className="pod-group">
+			{groupByValues.map((value) => (
+				<Tag key={value} color="#1D212D" className="pod-group-tag-item">
+					{value === '' ? '<no-value>' : value}
+				</Tag>
+			))}
+		</div>
+	);
 };
 
 export const formatDataForTable = (
 	data: K8sClustersData[],
+	groupBy: IBuilderQuery['groupBy'],
 ): K8sClustersRowData[] =>
 	data.map((cluster, index) => ({
 		key: `${cluster.meta.k8s_cluster_name}-${index}`,
+		clusterUID: cluster.clusterUID,
 		clusterName: cluster.meta.k8s_cluster_name,
-		availableReplicas: cluster.availablePods,
-		desiredReplicas: cluster.desiredPods,
-		clusterRestarts: cluster.restarts,
 		cpuUtilization: cluster.cpuUsage,
-		cpuRequestUtilization: (
-			<div className="progress-cluster">
-				<Progress
-					percent={Number((cluster.cpuRequest * 100).toFixed(1))}
-					strokeLinecap="butt"
-					size="small"
-					status="active"
-					strokeColor={((): string => {
-						const cpuPercent = Number((cluster.cpuRequest * 100).toFixed(1));
-						return getStrokeColorForProgressBar(cpuPercent);
-					})()}
-					className="progress-bar"
-				/>
-			</div>
-		),
-		cpuLimitUtilization: (
-			<div className="progress-cluster">
-				<Progress
-					percent={Number((cluster.cpuLimit * 100).toFixed(1))}
-					strokeLinecap="butt"
-					size="small"
-					status="active"
-					strokeColor={((): string => {
-						const cpuPercent = Number((cluster.cpuLimit * 100).toFixed(1));
-						return getStrokeColorForProgressBar(cpuPercent);
-					})()}
-					className="progress-bar"
-				/>
-			</div>
-		),
 		memoryUtilization: cluster.memoryUsage,
-		memoryRequestUtilization: (
-			<div className="progress-cluster">
-				<Progress
-					percent={Number((cluster.memoryRequest * 100).toFixed(1))}
-					strokeLinecap="butt"
-					size="small"
-					status="active"
-					strokeColor={((): string => {
-						const memoryPercent = Number((cluster.memoryRequest * 100).toFixed(1));
-						return getStrokeColorForProgressBar(memoryPercent);
-					})()}
-					className="progress-bar"
-				/>
-			</div>
-		),
-		memoryLimitUtilization: (
-			<div className="progress-cluster">
-				<Progress
-					percent={Number((cluster.memoryLimit * 100).toFixed(1))}
-					strokeLinecap="butt"
-					size="small"
-					status="active"
-					strokeColor={((): string => {
-						const memoryPercent = Number((cluster.memoryLimit * 100).toFixed(1));
-						return getStrokeColorForProgressBar(memoryPercent);
-					})()}
-					className="progress-bar"
-				/>
-			</div>
-		),
+		cpuAllocatable: cluster.cpuAllocatable,
+		memoryAllocatable: cluster.memoryAllocatable,
+		clusterGroup: getGroupByEle(cluster, groupBy),
+		meta: cluster.meta,
+		...cluster.meta,
+		groupedByMeta: cluster.meta,
 	}));

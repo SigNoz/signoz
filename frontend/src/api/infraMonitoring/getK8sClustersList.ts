@@ -17,19 +17,14 @@ export interface K8sClustersListPayload {
 }
 
 export interface K8sClustersData {
-	clusterName: string;
+	clusterUID: string;
 	cpuUsage: number;
+	cpuAllocatable: number;
 	memoryUsage: number;
-	desiredPods: number;
-	availablePods: number;
-	cpuRequest: number;
-	memoryRequest: number;
-	cpuLimit: number;
-	memoryLimit: number;
-	restarts: number;
+	memoryAllocatable: number;
 	meta: {
 		k8s_cluster_name: string;
-		k8s_namespace_name: string;
+		k8s_cluster_uid: string;
 	};
 }
 

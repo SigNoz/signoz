@@ -172,7 +172,7 @@ export const NodesQuickFiltersConfig: IQuickFiltersConfig[] = [
 export const NamespaceQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Namespace Name',
+		title: 'Namespace',
 		attributeKey: {
 			key: 'k8s_namespace_name',
 			dataType: DataTypes.String,
@@ -180,11 +180,11 @@ export const NamespaceQuickFiltersConfig: IQuickFiltersConfig[] = [
 			isColumn: false,
 			isJSON: false,
 		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
 		defaultOpen: true,
 	},
+];
+
+export const ClustersQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
 		title: 'Cluster Name',
@@ -198,21 +198,6 @@ export const NamespaceQuickFiltersConfig: IQuickFiltersConfig[] = [
 		aggregateOperator: 'noop',
 		aggregateAttribute: 'k8s_pod_cpu_utilization',
 		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-];
-
-export const ClustersQuickFiltersConfig: IQuickFiltersConfig[] = [
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Clusters',
-		attributeKey: {
-			key: 'k8s.cluster.name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
 		defaultOpen: true,
 	},
 ];
