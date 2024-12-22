@@ -103,7 +103,7 @@ build-query-service-static-all: build-query-service-static-amd64 build-query-ser
 # Steps to build and push docker image of query service
 .PHONY: build-query-service-amd64 build-push-query-service
 # Step to build docker image of query service in amd64 (used in build pipeline)
-build-query-service-amd64: build-query-service-static-amd64
+build-query-service-amd64: build-query-service-static-amd64 build-frontend-static
 	@echo "------------------"
 	@echo "--> Building query-service docker image for amd64"
 	@echo "------------------"
