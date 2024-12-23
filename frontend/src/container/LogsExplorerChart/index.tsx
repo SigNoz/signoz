@@ -2,14 +2,12 @@ import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { themeColors } from 'constants/theme';
-import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getChartData, { GetChartDataProps } from 'lib/getChartData';
 import GetMinMax from 'lib/getMinMax';
 import { colors } from 'lib/getRandomColor';
-import getTimeString from 'lib/getTimeString';
-import history from 'lib/history';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -28,6 +26,7 @@ function LogsExplorerChart({
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
+	const { safeNavigate } = useSafeNavigate();
 	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] = useCallback(
 		(element, index, allLabels) => ({
 			data: element,
@@ -62,40 +61,12 @@ function LogsExplorerChart({
 
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
+			urlQuery.delete(QueryParams.relativeTime);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 		},
-		[dispatch, location.pathname, urlQuery],
+		[dispatch, location.pathname, safeNavigate, urlQuery],
 	);
-
-	const handleBackNavigation = (): void => {
-		const searchParams = new URLSearchParams(window.location.search);
-		const startTime = searchParams.get(QueryParams.startTime);
-		const endTime = searchParams.get(QueryParams.endTime);
-		const relativeTime = searchParams.get(
-			QueryParams.relativeTime,
-		) as CustomTimeType;
-
-		if (relativeTime) {
-			dispatch(UpdateTimeInterval(relativeTime));
-		} else if (startTime && endTime && startTime !== endTime) {
-			dispatch(
-				UpdateTimeInterval('custom', [
-					parseInt(getTimeString(startTime), 10),
-					parseInt(getTimeString(endTime), 10),
-				]),
-			);
-		}
-	};
-
-	useEffect(() => {
-		window.addEventListener('popstate', handleBackNavigation);
-
-		return (): void => {
-			window.removeEventListener('popstate', handleBackNavigation);
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
 
 	const graphData = useMemo(
 		() =>
