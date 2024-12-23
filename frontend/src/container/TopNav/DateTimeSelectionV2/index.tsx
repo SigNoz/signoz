@@ -33,8 +33,9 @@ import { Check, Copy, Info, Send, Undo } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { connect, useSelector } from 'react-redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useNavigationType } from 'react-router-dom-v5-compat';
 import { useCopyToClipboard } from 'react-use';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -44,6 +45,7 @@ import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { normalizeTimeToMs } from 'utils/timeUtils';
 
 import AutoRefresh from '../AutoRefreshV2';
 import { DateTimeRangeType } from '../CustomDateTimeModal';
@@ -77,6 +79,8 @@ function DateTimeSelection({
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 	const { safeNavigate } = useSafeNavigate();
+	const navigationType = useNavigationType(); // Returns 'POP' for back/forward navigation
+	const dispatch = useDispatch();
 
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -512,6 +516,77 @@ function DateTimeSelection({
 		return time;
 	};
 
+	const handleAbsoluteTimeSync = useCallback(
+		(
+			startTime: string,
+			endTime: string,
+			currentMinTime: number,
+			currentMaxTime: number,
+		): void => {
+			const startTs = normalizeTimeToMs(startTime);
+			const endTs = normalizeTimeToMs(endTime);
+
+			const timeComparison = {
+				url: {
+					start: dayjs(startTs).startOf('minute'),
+					end: dayjs(endTs).startOf('minute'),
+				},
+				current: {
+					start: dayjs(normalizeTimeToMs(currentMinTime)).startOf('minute'),
+					end: dayjs(normalizeTimeToMs(currentMaxTime)).startOf('minute'),
+				},
+			};
+
+			const hasTimeChanged =
+				!timeComparison.current.start.isSame(timeComparison.url.start) ||
+				!timeComparison.current.end.isSame(timeComparison.url.end);
+
+			if (hasTimeChanged) {
+				dispatch(UpdateTimeInterval('custom', [startTs, endTs]));
+			}
+		},
+		[dispatch],
+	);
+
+	const handleRelativeTimeSync = useCallback(
+		(relativeTime: string): void => {
+			updateTimeInterval(relativeTime as Time);
+			setIsValidteRelativeTime(true);
+			setRefreshButtonHidden(false);
+		},
+		[updateTimeInterval],
+	);
+
+	// Sync time picker state with URL on browser navigation
+	useEffect(() => {
+		if (navigationType !== 'POP') return;
+
+		if (searchStartTime && searchEndTime) {
+			handleAbsoluteTimeSync(searchStartTime, searchEndTime, minTime, maxTime);
+			return;
+		}
+
+		if (
+			relativeTimeFromUrl &&
+			isValidTimeFormat(relativeTimeFromUrl) &&
+			relativeTimeFromUrl !== selectedTime
+		) {
+			handleRelativeTimeSync(relativeTimeFromUrl);
+		}
+	}, [
+		navigationType,
+		searchStartTime,
+		searchEndTime,
+		relativeTimeFromUrl,
+		selectedTime,
+		minTime,
+		maxTime,
+		dispatch,
+		updateTimeInterval,
+		handleAbsoluteTimeSync,
+		handleRelativeTimeSync,
+	]);
+
 	// this is triggred when we change the routes and based on that we are changing the default options
 	useEffect(() => {
 		const metricsTimeDuration = getLocalStorageKey(
@@ -534,9 +609,7 @@ function DateTimeSelection({
 			relativeTimeFromUrl &&
 			isValidTimeFormat(relativeTimeFromUrl)
 		) {
-			updateTimeInterval(relativeTimeFromUrl as Time);
-			setIsValidteRelativeTime(true);
-			setRefreshButtonHidden(false);
+			handleRelativeTimeSync(relativeTimeFromUrl);
 		}
 
 		// set the default relative time for alert history and overview pages if relative time is not specified
@@ -590,7 +663,7 @@ function DateTimeSelection({
 
 		history.replace(generatedUrl);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [location.pathname, updateTimeInterval, globalTimeLoading, safeNavigate]);
+	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const shareModalContent = (): JSX.Element => {
