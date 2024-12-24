@@ -17,6 +17,9 @@ function DashboardPage(): JSX.Element {
 		  (dashboardResponse?.error as AxiosError)?.response?.data?.errorType
 		: 'Something went wrong';
 
+	const dashboardTitle = dashboardResponse.data?.data.title;
+	document.title = dashboardTitle || document.title;
+
 	if (isError && !isFetching && errorMessage === ErrorType.NotFound) {
 		return <NotFound />;
 	}
