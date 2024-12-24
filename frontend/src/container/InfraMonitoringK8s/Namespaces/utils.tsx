@@ -7,6 +7,7 @@ import {
 import { Group } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+import { formatBytes, ValidateColumnValueWrapper } from '../commonUtils';
 import { IEntityColumn } from '../utils';
 
 export const defaultAddedColumns: IEntityColumn[] = [
@@ -24,14 +25,14 @@ export const defaultAddedColumns: IEntityColumn[] = [
 	},
 	{
 		label: 'CPU Utilization (cores)',
-		value: 'cpuUsage',
-		id: 'cpuUsage',
+		value: 'cpu',
+		id: 'cpu',
 		canRemove: false,
 	},
 	{
 		label: 'Memory Utilization (bytes)',
-		value: 'memoryUsage',
-		id: 'memoryUsage',
+		value: 'memory',
+		id: 'memory',
 		canRemove: false,
 	},
 ];
@@ -41,8 +42,8 @@ export interface K8sNamespacesRowData {
 	namespaceUID: string;
 	namespaceName: string;
 	clusterName: string;
-	cpuUsage: React.ReactNode;
-	memoryUsage: React.ReactNode;
+	cpu: React.ReactNode;
+	memory: React.ReactNode;
 	groupedByMeta?: any;
 }
 
@@ -89,16 +90,16 @@ const columnsConfig = [
 	},
 	{
 		title: <div className="column-header-left">CPU Utilization (cores)</div>,
-		dataIndex: 'cpuUsage',
-		key: 'cpuUsage',
+		dataIndex: 'cpu',
+		key: 'cpu',
 		width: 100,
 		sorter: true,
 		align: 'left',
 	},
 	{
 		title: <div className="column-header-left">Memory Utilization (bytes)</div>,
-		dataIndex: 'memoryUsage',
-		key: 'memoryUsage',
+		dataIndex: 'memory',
+		key: 'memory',
 		width: 80,
 		sorter: true,
 		align: 'left',
@@ -149,8 +150,16 @@ export const formatDataForTable = (
 		namespaceUID: namespace.meta.k8s_namespace_uid,
 		namespaceName: namespace.namespaceName,
 		clusterName: namespace.meta.k8s_cluster_name,
-		cpuUsage: namespace.cpuUsage,
-		memoryUsage: namespace.memoryUsage,
+		cpu: (
+			<ValidateColumnValueWrapper value={namespace.cpuUsage}>
+				{namespace.cpuUsage}
+			</ValidateColumnValueWrapper>
+		),
+		memory: (
+			<ValidateColumnValueWrapper value={namespace.memoryUsage}>
+				{formatBytes(namespace.memoryUsage)}
+			</ValidateColumnValueWrapper>
+		),
 		namespaceGroup: getGroupByEle(namespace, groupBy),
 		meta: namespace.meta,
 		...namespace.meta,

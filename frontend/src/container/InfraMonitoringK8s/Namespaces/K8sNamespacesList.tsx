@@ -25,6 +25,7 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { K8sCategory } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import { dummyColumnConfig } from '../utils';
@@ -146,6 +147,7 @@ function K8sNamespacesList({
 			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
 		},
 		true,
+		K8sCategory.NAMESPACES,
 	);
 
 	const queryFilters = useMemo(
@@ -320,6 +322,7 @@ function K8sNamespacesList({
 							spinning: isFetchingGroupedByRowData || isLoadingGroupedByRowData,
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
+						showHeader={false}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
