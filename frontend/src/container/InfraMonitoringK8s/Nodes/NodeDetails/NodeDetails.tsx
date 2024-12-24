@@ -85,12 +85,12 @@ function NodeDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: 'node.name',
+						key: QUERY_KEYS.K8S_NODE_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
 						isColumn: false,
 						isJSON: false,
-						id: 'node.name--string--resource--false',
+						id: 'k8s_node_name--string--resource--false',
 					},
 					op: '=',
 					value: node?.meta.k8s_node_name || '',
@@ -115,7 +115,7 @@ function NodeDetails({
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
-					value: 'node',
+					value: 'Node',
 				},
 				{
 					id: uuidv4(),
@@ -148,7 +148,7 @@ function NodeDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Pods list details page visited', {
+		logEvent('Infra Monitoring: Nodes list details page visited', {
 			node: node?.nodeUID,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -195,7 +195,7 @@ function NodeDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Node list details time updated', {
+			logEvent('Infra Monitoring: Nodes list details time updated', {
 				node: node?.nodeUID,
 				interval,
 			});
@@ -208,11 +208,12 @@ function NodeDetails({
 		(value: IBuilderQuery['filters']) => {
 			setLogFilters((prevFilters) => {
 				const hostNameFilter = prevFilters.items.find(
-					(item) => item.key?.key === 'host.name',
+					(item) => item.key?.key === QUERY_KEYS.K8S_NODE_NAME,
 				);
 				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
 				const newFilters = value.items.filter(
-					(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
+					(item) =>
+						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_NODE_NAME,
 				);
 
 				logEvent('Infra Monitoring: Nodes list details logs filters applied', {
@@ -237,7 +238,7 @@ function NodeDetails({
 		(value: IBuilderQuery['filters']) => {
 			setTracesFilters((prevFilters) => {
 				const hostNameFilter = prevFilters.items.find(
-					(item) => item.key?.key === 'host.name',
+					(item) => item.key?.key === QUERY_KEYS.K8S_NODE_NAME,
 				);
 
 				logEvent('Infra Monitoring: Nodes list details traces filters applied', {
@@ -248,7 +249,9 @@ function NodeDetails({
 					op: 'AND',
 					items: [
 						hostNameFilter,
-						...value.items.filter((item) => item.key?.key !== 'host.name'),
+						...value.items.filter(
+							(item) => item.key?.key !== QUERY_KEYS.K8S_NODE_NAME,
+						),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 			});
@@ -369,15 +372,6 @@ function NodeDetails({
 		setSelectedView(VIEW_TYPES.METRICS);
 		onClose();
 	};
-
-	console.log({
-		isModalTimeSelection,
-		eventsFilters,
-		handleTimeChange,
-		handleChangeLogFilters,
-		handleChangeTracesFilters,
-		handleChangeEventsFilters,
-	});
 
 	return (
 		<Drawer
