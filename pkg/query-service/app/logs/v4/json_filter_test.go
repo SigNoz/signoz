@@ -183,6 +183,19 @@ var testGetJSONFilterData = []struct {
 		},
 		Filter: "lower(body) like lower('%message%') AND JSON_EXISTS(body, '$.\"message\"')",
 	},
+	{
+		Name: "exists",
+		FilterItem: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.name",
+				DataType: "string",
+				IsJSON:   true,
+			},
+			Operator: "in",
+			Value:    []interface{}{"hello", "world"},
+		},
+		Filter: "lower(body) like lower('%name%') AND JSON_EXISTS(body, '$.\"name\"') AND JSON_VALUE(body, '$.\"name\"') IN ['hello','world']",
+	},
 }
 
 func TestGetJSONFilter(t *testing.T) {

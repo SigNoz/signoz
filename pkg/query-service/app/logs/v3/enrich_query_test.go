@@ -563,6 +563,50 @@ var testJSONFilterEnrichData = []struct {
 			Value:    10.0,
 		},
 	},
+	{
+		Name: "check IN",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.attr",
+				DataType: v3.AttributeKeyDataTypeUnspecified,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "IN",
+			Value:    []interface{}{"hello", "world"},
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.attr",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeUnspecified,
+				IsJSON:   true,
+			},
+			Operator: "IN",
+			Value:    []interface{}{"hello", "world"},
+		},
+	},
+	{
+		Name: "check NOT_IN",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.attr",
+				DataType: v3.AttributeKeyDataTypeUnspecified,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "NOT_IN",
+			Value:    []interface{}{10, 20},
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.attr",
+				DataType: v3.AttributeKeyDataTypeInt64,
+				Type:     v3.AttributeKeyTypeUnspecified,
+				IsJSON:   true,
+			},
+			Operator: "NOT_IN",
+			Value:    []interface{}{10, 20},
+		},
+	},
 }
 
 func TestJsonEnrich(t *testing.T) {
