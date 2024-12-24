@@ -269,6 +269,38 @@ type SearchSpanResponseItem struct {
 	SpanKind         string            `json:"spanKind"`
 }
 
+type Span struct {
+	TimeUnixNano     uint64            `json:"timestamp"`
+	DurationNano     int64             `json:"durationNano"`
+	SpanID           string            `json:"spanId"`
+	RootSpanID       string            `json:"rootSpanId"`
+	ParentSpanId     string            `json:"parentSpanId"`
+	TraceID          string            `json:"traceId"`
+	HasError         bool              `json:"hasError"`
+	Kind             int32             `json:"kind"`
+	ServiceName      string            `json:"serviceName"`
+	Name             string            `json:"name"`
+	References       []OtelSpanRef     `json:"references,omitempty"`
+	TagMap           map[string]string `json:"tagMap"`
+	Events           []string          `json:"event"`
+	RootName         string            `json:"rootName"`
+	StatusMessage    string            `json:"statusMessage"`
+	StatusCodeString string            `json:"statusCodeString"`
+	SpanKind         string            `json:"spanKind"`
+	Children         []*Span           `json:"children"`
+}
+
+type SearchTracesV3Response struct {
+	StartTimestampMillis  uint64  `json:"startTimestampMillis"`
+	EndTimestampMillis    uint64  `json:"endTimestampMillis"`
+	DurationNano          uint64  `json:"durationNano"`
+	RootServiceName       string  `json:"rootServiceName"`
+	RootServiceEntryPoint string  `json:"rootServiceEntryPoint"`
+	TotalSpansCount       uint64  `json:"totalSpansCount"`
+	TotalErrorSpansCount  uint64  `json:"TotalErrorSpansCount"`
+	Spans                 []*Span `json:"spans"`
+}
+
 type OtelSpanRef struct {
 	TraceId string `json:"traceId,omitempty"`
 	SpanId  string `json:"spanId,omitempty"`
