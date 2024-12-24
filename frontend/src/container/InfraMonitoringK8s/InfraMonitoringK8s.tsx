@@ -72,8 +72,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					<div className="k8s-quick-filters-category-label-container">
 						<Container size={14} className="k8s-quick-filters-category-label-icon" />
 						<Typography.Text>Pods</Typography.Text>
-
-						<Typography.Text> ({PodsQuickFiltersConfig.length}) </Typography.Text>
 					</div>
 				</div>
 			),
@@ -94,8 +92,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					<div className="k8s-quick-filters-category-label-container">
 						<Workflow size={14} className="k8s-quick-filters-category-label-icon" />
 						<Typography.Text>Nodes</Typography.Text>
-
-						<Typography.Text> ({NodesQuickFiltersConfig.length}) </Typography.Text>
 					</div>
 				</div>
 			),
@@ -119,11 +115,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							className="k8s-quick-filters-category-label-icon"
 						/>
 						<Typography.Text>Namespace</Typography.Text>
-
-						<Typography.Text>
-							{' '}
-							({NamespaceQuickFiltersConfig.length}){' '}
-						</Typography.Text>
 					</div>
 				</div>
 			),
@@ -144,8 +135,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					<div className="k8s-quick-filters-category-label-container">
 						<Boxes size={14} className="k8s-quick-filters-category-label-icon" />
 						<Typography.Text>Clusters</Typography.Text>
-
-						<Typography.Text> ({ClustersQuickFiltersConfig.length}) </Typography.Text>
 					</div>
 				</div>
 			),
@@ -169,11 +158,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							className="k8s-quick-filters-category-label-icon"
 						/>
 						<Typography.Text>Containers</Typography.Text>
-
-						<Typography.Text>
-							{' '}
-							({ContainersQuickFiltersConfig.length}){' '}
-						</Typography.Text>
 					</div>
 				</div>
 			),
@@ -194,8 +178,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					<div className="k8s-quick-filters-category-label-container">
 						<HardDrive size={14} className="k8s-quick-filters-category-label-icon" />
 						<Typography.Text>Volumes</Typography.Text>
-
-						<Typography.Text> ({VolumesQuickFiltersConfig.length}) </Typography.Text>
 					</div>
 				</div>
 			),
@@ -216,11 +198,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					<div className="k8s-quick-filters-category-label-container">
 						<Computer size={14} className="k8s-quick-filters-category-label-icon" />
 						<Typography.Text>Deployments</Typography.Text>
-
-						<Typography.Text>
-							{' '}
-							({DeploymentsQuickFiltersConfig.length}){' '}
-						</Typography.Text>
 					</div>
 				</div>
 			),
@@ -241,8 +218,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					<div className="k8s-quick-filters-category-label-container">
 						<Bolt size={14} className="k8s-quick-filters-category-label-icon" />
 						<Typography.Text>Jobs</Typography.Text>
-
-						<Typography.Text> ({JobsQuickFiltersConfig.length}) </Typography.Text>
 					</div>
 				</div>
 			),
@@ -263,11 +238,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					<div className="k8s-quick-filters-category-label-container">
 						<Group size={14} className="k8s-quick-filters-category-label-icon" />
 						<Typography.Text>DaemonSets</Typography.Text>
-
-						<Typography.Text>
-							{' '}
-							({DaemonSetsQuickFiltersConfig.length}){' '}
-						</Typography.Text>
 					</div>
 				</div>
 			),
@@ -291,11 +261,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							className="k8s-quick-filters-category-label-icon"
 						/>
 						<Typography.Text>StatefulSets</Typography.Text>
-
-						<Typography.Text>
-							{' '}
-							({StatefulsetsQuickFiltersConfig.length}){' '}
-						</Typography.Text>
 					</div>
 				</div>
 			),

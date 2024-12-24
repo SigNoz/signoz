@@ -5,6 +5,19 @@ import {
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
+export enum K8sCategory {
+	PODS = 'pods',
+	NODES = 'nodes',
+	NAMESPACES = 'namespaces',
+	CLUSTERS = 'clusters',
+	DEPLOYMENTS = 'deployments',
+	STATEFULSETS = 'statefulsets',
+	DAEMONSETS = 'daemonsets',
+	CONTAINERS = 'containers',
+	JOBS = 'jobs',
+	VOLUMES = 'volumes',
+}
+
 export const K8sCategories = {
 	PODS: 'pods',
 	NODES: 'nodes',
@@ -70,7 +83,7 @@ export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 		type: FiltersType.CHECKBOX,
 		title: 'Cluster',
 		attributeKey: {
-			key: 'k8s.cluster.name',
+			key: 'k8s_cluster_name',
 			dataType: DataTypes.String,
 			type: 'resource',
 			isColumn: false,
@@ -85,7 +98,7 @@ export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 		type: FiltersType.CHECKBOX,
 		title: 'Deployments',
 		attributeKey: {
-			key: 'k8s_cluster_name',
+			key: 'k8s_deployment_name',
 			dataType: DataTypes.String,
 			type: 'resource',
 			isColumn: false,
@@ -121,6 +134,7 @@ export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			isColumn: false,
 			isJSON: false,
 		},
+		dataSource: DataSource.METRICS,
 		defaultOpen: false,
 	},
 	{
@@ -136,18 +150,6 @@ export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 		aggregateOperator: 'noop',
 		aggregateAttribute: 'k8s_pod_cpu_utilization',
 		dataSource: DataSource.METRICS,
-		defaultOpen: false,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Volumes',
-		attributeKey: {
-			key: 'k8s_volume_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
 		defaultOpen: false,
 	},
 ];
@@ -286,3 +288,6 @@ export const JobsQuickFiltersConfig: IQuickFiltersConfig[] = [
 		defaultOpen: true,
 	},
 ];
+
+export const INVALID_MEMORY_CPU_VALUE_MESSAGE =
+	'Some pods do not have memory requests/limits.';
