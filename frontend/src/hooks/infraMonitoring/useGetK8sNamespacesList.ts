@@ -34,7 +34,7 @@ export const useGetK8sNamespacesList: UseGetK8sNamespacesList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_HOST_LIST, requestData];
+		return [REACT_QUERY_KEY.GET_NAMESPACE_LIST, requestData];
 	}, [options?.queryKey, requestData]);
 
 	return useQuery<
