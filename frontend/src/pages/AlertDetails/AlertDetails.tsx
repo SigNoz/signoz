@@ -80,6 +80,9 @@ function AlertDetails(): JSX.Element {
 		alertDetailsResponse,
 	} = useGetAlertRuleDetails();
 
+	const alertTitle = alertDetailsResponse?.payload?.data.alert;
+	document.title = alertTitle || document.title;
+
 	if (
 		isError ||
 		!isValidRuleId ||
