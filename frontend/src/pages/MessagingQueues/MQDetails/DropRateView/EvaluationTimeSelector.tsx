@@ -41,7 +41,9 @@ function EvaluationTimeSelector({
 	setInterval: Dispatch<SetStateAction<string>>;
 }): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>('');
-	const [selectedInterval, setSelectedInterval] = useState<string | null>('5ms');
+	const [selectedInterval, setSelectedInterval] = useState<string | null>(
+		'10ms',
+	);
 	const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -98,11 +100,13 @@ function EvaluationTimeSelector({
 				onDropdownVisibleChange={setDropdownOpen}
 				dropdownRender={renderDropdown}
 			>
-				<Option value="1ms">1ms</Option>
-				<Option value="2ms">2ms</Option>
-				<Option value="5ms">5ms</Option>
 				<Option value="10ms">10ms</Option>
-				<Option value="15ms">15ms</Option>
+				<Option value="20ms">20ms</Option>
+				<Option value="50ms">50ms</Option>
+				<Option value="100ms">100ms</Option>
+				<Option value="150ms">150ms</Option>
+				<Option value="200ms">200ms</Option>
+				<Option value="500ms">500ms</Option>
 			</Select>
 		</div>
 	);
