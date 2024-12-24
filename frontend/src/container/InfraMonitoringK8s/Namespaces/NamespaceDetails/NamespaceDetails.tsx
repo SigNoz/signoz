@@ -85,12 +85,12 @@ function NamespaceDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: 'namespace.name',
+						key: QUERY_KEYS.K8S_NAMESPACE_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
 						isColumn: false,
 						isJSON: false,
-						id: 'namespace.name--string--resource--false',
+						id: 'k8s_namespace_name--string--resource--false',
 					},
 					op: '=',
 					value: namespace?.namespaceName || '',
@@ -115,7 +115,7 @@ function NamespaceDetails({
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
-					value: 'namespace',
+					value: 'Namespace',
 				},
 				{
 					id: uuidv4(),
@@ -148,7 +148,7 @@ function NamespaceDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Pods list details page visited', {
+		logEvent('Infra Monitoring: Namespaces list details page visited', {
 			namespace: namespace?.namespaceName,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -195,7 +195,7 @@ function NamespaceDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Namespace list details time updated', {
+			logEvent('Infra Monitoring: Namespaces list details time updated', {
 				namespace: namespace?.namespaceName,
 				interval,
 			});
@@ -208,11 +208,12 @@ function NamespaceDetails({
 		(value: IBuilderQuery['filters']) => {
 			setLogFilters((prevFilters) => {
 				const hostNameFilter = prevFilters.items.find(
-					(item) => item.key?.key === 'host.name',
+					(item) => item.key?.key === QUERY_KEYS.K8S_NAMESPACE_NAME,
 				);
 				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
 				const newFilters = value.items.filter(
-					(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
+					(item) =>
+						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_NAMESPACE_NAME,
 				);
 
 				logEvent('Infra Monitoring: Namespaces list details logs filters applied', {
@@ -237,7 +238,7 @@ function NamespaceDetails({
 		(value: IBuilderQuery['filters']) => {
 			setTracesFilters((prevFilters) => {
 				const hostNameFilter = prevFilters.items.find(
-					(item) => item.key?.key === 'host.name',
+					(item) => item.key?.key === QUERY_KEYS.K8S_NAMESPACE_NAME,
 				);
 
 				logEvent(
@@ -251,7 +252,9 @@ function NamespaceDetails({
 					op: 'AND',
 					items: [
 						hostNameFilter,
-						...value.items.filter((item) => item.key?.key !== 'host.name'),
+						...value.items.filter(
+							(item) => item.key?.key !== QUERY_KEYS.K8S_NAMESPACE_NAME,
+						),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 			});
@@ -423,7 +426,7 @@ function NamespaceDetails({
 									</Tooltip>
 								</Typography.Text>
 								<Typography.Text className="namespace-details-metadata-value">
-									<Tooltip title="Cluster name">
+									<Tooltip title={namespace.meta.k8s_cluster_name}>
 										{namespace.meta.k8s_cluster_name}
 									</Tooltip>
 								</Typography.Text>
