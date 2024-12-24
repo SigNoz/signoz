@@ -10,13 +10,17 @@ import (
 	"syscall"
 	"time"
 
+	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.signoz.io/signoz/ee/query-service/app"
+	signozconfig "go.signoz.io/signoz/pkg/config"
+	"go.signoz.io/signoz/pkg/confmap/provider/signozenvprovider"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
+	signozweb "go.signoz.io/signoz/pkg/web"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -131,6 +135,23 @@ func main() {
 
 	version.PrintVersion()
 
+	config, err := signozconfig.New(context.Background(), signozconfig.ProviderSettings{
+		ResolverSettings: confmap.ResolverSettings{
+			URIs: []string{"signozenv:"},
+			ProviderFactories: []confmap.ProviderFactory{
+				signozenvprovider.NewFactory(),
+			},
+		},
+	})
+	if err != nil {
+		zap.L().Fatal("Failed to create config", zap.Error(err))
+	}
+
+	web, err := signozweb.New(zap.L(), config.Web)
+	if err != nil {
+		zap.L().Fatal("Failed to create web", zap.Error(err))
+	}
+
 	serverOptions := &app.ServerOptions{
 		HTTPHostPort:      baseconst.HTTPHostPort,
 		PromConfigPath:    promConfigPath,
@@ -165,7 +186,7 @@ func main() {
 		zap.L().Info("Migration successful")
 	}
 
-	server, err := app.NewServer(serverOptions)
+	server, err := app.NewServer(serverOptions, web)
 	if err != nil {
 		zap.L().Fatal("Failed to create server", zap.Error(err))
 	}
