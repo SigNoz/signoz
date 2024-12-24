@@ -29,6 +29,7 @@ import { K8sCategory } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import { dummyColumnConfig } from '../utils';
+import ClusterDetails from './ClusterDetails';
 import {
 	defaultAddedColumns,
 	formatDataForTable,
@@ -57,7 +58,9 @@ function K8sClustersList({
 		order: 'asc' | 'desc';
 	} | null>(null);
 
-	// const [selectedClusterUID, setselectedClusterUID] = useState<string | null>(null);
+	const [selectedClusterUID, setselectedClusterUID] = useState<string | null>(
+		null,
+	);
 
 	const pageSize = 10;
 
@@ -261,21 +264,25 @@ function K8sClustersList({
 		logEvent('Infra Monitoring: K8s list page visited', {});
 	}, []);
 
-	// const selectedClusterData = useMemo(() => {
-	// 	if (!selectedClusterUID) return null;
-	// 	return clustersData.find((cluster) => cluster.clusterUID === selectedClusterUID) || null;
-	// }, [selectedClusterUID, clustersData]);
+	const selectedClusterData = useMemo(() => {
+		if (!selectedClusterUID) return null;
+		return (
+			clustersData.find(
+				(cluster) => cluster.meta.k8s_cluster_name === selectedClusterUID,
+			) || null
+		);
+	}, [selectedClusterUID, clustersData]);
 
 	const handleRowClick = (record: K8sClustersRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
-			// setselectedClusterUID(record.clusterUID);
+			setselectedClusterUID(record.clusterUID);
 		} else {
 			handleGroupByRowClick(record);
 		}
 
 		logEvent('Infra Monitoring: K8s cluster list item clicked', {
-			clusterUID: record.clusterName,
+			clusterName: record.clusterName,
 		});
 	};
 
@@ -379,9 +386,9 @@ function K8sClustersList({
 		);
 	};
 
-	// const handleCloseClusterDetail = (): void => {
-	// 	setselectedClusterUID(null);
-	// };
+	const handleCloseClusterDetail = (): void => {
+		setselectedClusterUID(null);
+	};
 
 	const showsClustersTable =
 		!isError &&
@@ -427,6 +434,8 @@ function K8sClustersList({
 			);
 		}
 	}, [groupByFiltersData]);
+
+	console.log({ selectedClusterData });
 
 	return (
 		<div className="k8s-list">
@@ -490,7 +499,11 @@ function K8sClustersList({
 					}}
 				/>
 			)}
-			{/* TODO - Handle Cluster Details flow */}
+			<ClusterDetails
+				cluster={selectedClusterData}
+				isModalTimeSelection
+				onClose={handleCloseClusterDetail}
+			/>
 		</div>
 	);
 }

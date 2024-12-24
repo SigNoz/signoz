@@ -161,7 +161,7 @@ export const formatDataForTable = (
 ): K8sClustersRowData[] =>
 	data.map((cluster, index) => ({
 		key: `${cluster.meta.k8s_cluster_name}-${index}`,
-		clusterUID: cluster.clusterUID,
+		clusterUID: cluster.meta.k8s_cluster_name,
 		clusterName: (
 			<Tooltip title={cluster.meta.k8s_cluster_name}>
 				{cluster.meta.k8s_cluster_name}

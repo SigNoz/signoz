@@ -85,12 +85,12 @@ function ClusterDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: 'cluster.name',
+						key: QUERY_KEYS.K8S_CLUSTER_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
 						isColumn: false,
 						isJSON: false,
-						id: 'cluster.name--string--resource--false',
+						id: 'k8s_cluster_name--string--resource--false',
 					},
 					op: '=',
 					value: cluster?.meta.k8s_cluster_name || '',
@@ -115,7 +115,7 @@ function ClusterDetails({
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
-					value: 'cluster',
+					value: 'Cluster',
 				},
 				{
 					id: uuidv4(),
@@ -148,7 +148,7 @@ function ClusterDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Pods list details page visited', {
+		logEvent('Infra Monitoring: Clusters list details page visited', {
 			cluster: cluster?.clusterUID,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -195,7 +195,7 @@ function ClusterDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Cluster list details time updated', {
+			logEvent('Infra Monitoring: Clusters list details time updated', {
 				cluster: cluster?.clusterUID,
 				interval,
 			});
@@ -208,11 +208,12 @@ function ClusterDetails({
 		(value: IBuilderQuery['filters']) => {
 			setLogFilters((prevFilters) => {
 				const hostNameFilter = prevFilters.items.find(
-					(item) => item.key?.key === 'host.name',
+					(item) => item.key?.key === QUERY_KEYS.K8S_CLUSTER_NAME,
 				);
 				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
 				const newFilters = value.items.filter(
-					(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
+					(item) =>
+						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_CLUSTER_NAME,
 				);
 
 				logEvent('Infra Monitoring: Clusters list details logs filters applied', {
@@ -237,7 +238,7 @@ function ClusterDetails({
 		(value: IBuilderQuery['filters']) => {
 			setTracesFilters((prevFilters) => {
 				const hostNameFilter = prevFilters.items.find(
-					(item) => item.key?.key === 'host.name',
+					(item) => item.key?.key === QUERY_KEYS.K8S_CLUSTER_NAME,
 				);
 
 				logEvent('Infra Monitoring: Clusters list details traces filters applied', {
@@ -248,7 +249,9 @@ function ClusterDetails({
 					op: 'AND',
 					items: [
 						hostNameFilter,
-						...value.items.filter((item) => item.key?.key !== 'host.name'),
+						...value.items.filter(
+							(item) => item.key?.key !== QUERY_KEYS.K8S_CLUSTER_NAME,
+						),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 			});
@@ -370,15 +373,6 @@ function ClusterDetails({
 		onClose();
 	};
 
-	console.log({
-		isModalTimeSelection,
-		eventsFilters,
-		handleTimeChange,
-		handleChangeLogFilters,
-		handleChangeTracesFilters,
-		handleChangeEventsFilters,
-	});
-
 	return (
 		<Drawer
 			width="70%"
@@ -412,21 +406,12 @@ function ClusterDetails({
 								>
 									Cluster Name
 								</Typography.Text>
-								<Typography.Text
-									type="secondary"
-									className="cluster-details-metadata-label"
-								>
-									Cluster Name
-								</Typography.Text>
 							</div>
 							<div className="values-row">
 								<Typography.Text className="cluster-details-metadata-value">
 									<Tooltip title={cluster.meta.k8s_cluster_name}>
 										{cluster.meta.k8s_cluster_name}
 									</Tooltip>
-								</Typography.Text>
-								<Typography.Text className="cluster-details-metadata-value">
-									<Tooltip title="Cluster name">{cluster.meta.k8s_cluster_name}</Tooltip>
 								</Typography.Text>
 							</div>
 						</div>
