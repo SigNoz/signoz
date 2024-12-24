@@ -96,7 +96,7 @@ export const getListColumns = (
 					);
 				}
 
-				if (key === 'durationNano') {
+				if (key === 'durationNano' || key === 'duration_nano') {
 					return (
 						<BlockLink to={getTraceLink(item)} openInNewTab={false}>
 							<Typography data-testid={key}>{getMs(value)}ms</Typography>
