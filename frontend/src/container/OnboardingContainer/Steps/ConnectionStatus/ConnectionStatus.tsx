@@ -6,6 +6,7 @@ import {
 	LoadingOutlined,
 } from '@ant-design/icons';
 import logEvent from 'api/common/logEvent';
+import MessagingQueueHealthCheck from 'components/MessagingQueueHealthCheck/MessagingQueueHealthCheck';
 import { QueryParams } from 'constants/query';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
@@ -14,7 +15,6 @@ import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
-import MessagingQueueHealthCheck from 'pages/MessagingQueues/MessagingQueueHealthCheck/MessagingQueueHealthCheck';
 import { getAttributeDataFromOnboardingStatus } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';

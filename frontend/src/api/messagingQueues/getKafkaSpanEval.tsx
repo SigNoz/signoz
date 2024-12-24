@@ -1,7 +1,7 @@
 import axios from 'api';
+import { DropRateAPIResponse } from 'pages/MessagingQueues/MQDetails/DropRateView/dropRateViewUtils';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
-import { DropRateAPIResponse } from '../DropRateView/dropRateViewUtils';
 import { MessagingQueueServicePayload } from './getConsumerLagDetails';
 
 export const getKafkaSpanEval = async (
