@@ -28,6 +28,7 @@ import {
 	updateLocalStorage,
 } from 'utils/localStorageReadWrite';
 
+import { K8sCategory } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import {
@@ -100,6 +101,7 @@ function K8sPodsList({
 			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
 		},
 		true,
+		K8sCategory.PODS,
 	);
 
 	useEffect(() => {
@@ -419,6 +421,7 @@ function K8sPodsList({
 						pagination={false}
 						scroll={{ x: true }}
 						tableLayout="fixed"
+						showHeader={false}
 						loading={{
 							spinning: isFetchingGroupedByRowData || isLoadingGroupedByRowData,
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,

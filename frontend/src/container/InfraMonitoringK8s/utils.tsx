@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable sonarjs/cognitive-complexity */
 import './InfraMonitoringK8s.styles.scss';
 
-import { Color } from '@signozhq/design-tokens';
 import { Progress, Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
@@ -10,6 +10,15 @@ import {
 } from 'api/infraMonitoring/getK8sPodsList';
 import { Group } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+
+import {
+	formatBytes,
+	getProgressBarText,
+	getStrokeColorForLimitUtilization,
+	getStrokeColorForRequestUtilization,
+	ValidateColumnValueWrapper,
+} from './commonUtils';
+import { INVALID_MEMORY_CPU_VALUE_MESSAGE } from './constants';
 
 export interface IPodColumn {
 	label: string;
@@ -27,44 +36,44 @@ export const defaultAddedColumns: IPodColumn[] = [
 	},
 	{
 		label: 'CPU Request Utilization (% of limit)',
-		value: 'cpuRequestUtilization',
-		id: 'cpuRequestUtilization',
+		value: 'cpu_request',
+		id: 'cpu_request',
 		canRemove: false,
 	},
 	{
 		label: 'CPU Limit Utilization (% of request)',
-		value: 'cpuLimitUtilization',
-		id: 'cpuLimitUtilization',
+		value: 'cpu_limit',
+		id: 'cpu_limit',
 		canRemove: false,
 	},
 	{
 		label: 'CPU Utilization (cores)',
-		value: 'cpuUtilization',
-		id: 'cpuUtilization',
+		value: 'cpu',
+		id: 'cpu',
 		canRemove: false,
 	},
 	{
 		label: 'Memory Request Utilization (% of limit)',
-		value: 'memoryRequestUtilization',
-		id: 'memoryRequestUtilization',
+		value: 'memory_request',
+		id: 'memory_request',
 		canRemove: false,
 	},
 	{
 		label: 'Memory Limit Utilization (% of request)',
-		value: 'memoryLimitUtilization',
-		id: 'memoryLimitUtilization',
+		value: 'memory_limit',
+		id: 'memory_limit',
 		canRemove: false,
 	},
 	{
 		label: 'Memory Utilization (bytes)',
-		value: 'memoryUtilization',
-		id: 'memoryUtilization',
+		value: 'memory',
+		id: 'memory',
 		canRemove: false,
 	},
 	{
 		label: 'Container Restarts',
-		value: 'containerRestarts',
-		id: 'containerRestarts',
+		value: 'restarts',
+		id: 'restarts',
 		canRemove: false,
 	},
 ];
@@ -94,13 +103,13 @@ export interface K8sPodsRowData {
 	key: string;
 	podName: React.ReactNode;
 	podUID: string;
-	cpuRequestUtilization: React.ReactNode;
-	cpuLimitUtilization: React.ReactNode;
-	cpuUtilization: React.ReactNode;
-	memoryRequestUtilization: React.ReactNode;
-	memoryLimitUtilization: React.ReactNode;
-	memoryUtilization: React.ReactNode;
-	containerRestarts: number;
+	cpu_request: React.ReactNode;
+	cpu_limit: React.ReactNode;
+	cpu: React.ReactNode;
+	memory_request: React.ReactNode;
+	memory_limit: React.ReactNode;
+	memory: React.ReactNode;
+	restarts: number;
 	groupedByMeta?: any;
 }
 
@@ -152,25 +161,13 @@ const columnsConfig = [
 	{
 		title: (
 			<div className="column-header">
-				<Tooltip title="CPU Request Utilization (% of limit)">CPU Req Util</Tooltip>
-			</div>
-		),
-		dataIndex: 'cpuRequestUtilization',
-		key: 'cpuRequestUtilization',
-		width: 150,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: (
-			<div className="column-header">
-				<Tooltip title="CPU Limit Utilization (% of request)">
-					CPU Limit Util
+				<Tooltip title={INVALID_MEMORY_CPU_VALUE_MESSAGE}>
+					CPU Request Utilization (% of limit)
 				</Tooltip>
 			</div>
 		),
-		dataIndex: 'cpuLimitUtilization',
-		key: 'cpuLimitUtilization',
+		dataIndex: 'cpu_request',
+		key: 'cpu_request',
 		width: 150,
 		sorter: true,
 		align: 'left',
@@ -178,11 +175,27 @@ const columnsConfig = [
 	{
 		title: (
 			<div className="column-header">
-				<Tooltip title="CPU Utilization (cores)">CPU Util (cores)</Tooltip>
+				<Tooltip title={INVALID_MEMORY_CPU_VALUE_MESSAGE}>
+					CPU Limit Utilization (% of request)
+				</Tooltip>
 			</div>
 		),
-		dataIndex: 'cpuUtilization',
-		key: 'cpuUtilization',
+		dataIndex: 'cpu_limit',
+		key: 'cpu_limit',
+		width: 150,
+		sorter: true,
+		align: 'left',
+	},
+	{
+		title: (
+			<div className="column-header">
+				<Tooltip title={INVALID_MEMORY_CPU_VALUE_MESSAGE}>
+					CPU Utilization (cores)
+				</Tooltip>
+			</div>
+		),
+		dataIndex: 'cpu',
+		key: 'cpu',
 		width: 80,
 		sorter: true,
 		align: 'left',
@@ -190,13 +203,13 @@ const columnsConfig = [
 	{
 		title: (
 			<div className="column-header">
-				<Tooltip title="Memory Request Utilization (% of limit)">
-					Mem Req Util
+				<Tooltip title={INVALID_MEMORY_CPU_VALUE_MESSAGE}>
+					Memory Request Utilization (% of limit)
 				</Tooltip>
 			</div>
 		),
-		dataIndex: 'memoryRequestUtilization',
-		key: 'memoryRequestUtilization',
+		dataIndex: 'memory_request',
+		key: 'memory_request',
 		width: 150,
 		sorter: true,
 		align: 'left',
@@ -204,13 +217,13 @@ const columnsConfig = [
 	{
 		title: (
 			<div className="column-header">
-				<Tooltip title="Memory Limit Utilization (% of request)">
-					Mem Limit Util
+				<Tooltip title={INVALID_MEMORY_CPU_VALUE_MESSAGE}>
+					Memory Limit Utilization (% of request)
 				</Tooltip>
 			</div>
 		),
-		dataIndex: 'memoryLimitUtilization',
-		key: 'memoryLimitUtilization',
+		dataIndex: 'memory_limit',
+		key: 'memory_limit',
 		width: 150,
 		sorter: true,
 		align: 'left',
@@ -218,11 +231,13 @@ const columnsConfig = [
 	{
 		title: (
 			<div className="column-header">
-				<Tooltip title="Memory Utilization (bytes)">Mem Util (bytes)</Tooltip>
+				<Tooltip title={INVALID_MEMORY_CPU_VALUE_MESSAGE}>
+					Memory Utilization (bytes)
+				</Tooltip>
 			</div>
 		),
-		dataIndex: 'memoryUtilization',
-		key: 'memoryUtilization',
+		dataIndex: 'memory',
+		key: 'memory',
 		width: 100,
 		ellipsis: true,
 		sorter: true,
@@ -234,8 +249,8 @@ const columnsConfig = [
 				<Tooltip title="Container Restarts">Container Restarts</Tooltip>
 			</div>
 		),
-		dataIndex: 'containerRestarts',
-		key: 'containerRestarts',
+		dataIndex: 'restarts',
+		key: 'restarts',
 		width: 100,
 		ellipsis: true,
 		sorter: true,
@@ -335,81 +350,91 @@ export const formatDataForTable = (
 		key: `${pod.podUID}-${index}`,
 		podName: (
 			<div className="pod-name-container">
-				<div className="pod-name">{pod.meta.k8s_pod_name || ''}</div>
+				<Tooltip title={pod.meta.k8s_pod_name || ''}>
+					<div className="pod-name">{pod.meta.k8s_pod_name || ''}</div>
+				</Tooltip>
 			</div>
 		),
 		podUID: pod.podUID || '',
-		cpuRequestUtilization: (
-			<div className="progress-container">
-				<Progress
-					percent={Number((pod.podCPURequest * 100).toFixed(1))}
-					strokeLinecap="butt"
-					size="small"
-					status="active"
-					strokeColor={((): string => {
-						const cpuPercent = Number((pod.podCPURequest * 100).toFixed(1));
-						if (cpuPercent >= 90) return Color.BG_SAKURA_500;
-						if (cpuPercent >= 60) return Color.BG_AMBER_500;
-						return Color.BG_FOREST_500;
-					})()}
-					className="progress-bar"
-				/>
-			</div>
+		cpu_request: (
+			<ValidateColumnValueWrapper value={pod.podCPURequest}>
+				<div className="progress-container">
+					<Progress
+						percent={Number((pod.podCPURequest * 100).toFixed(1))}
+						strokeLinecap="butt"
+						size="small"
+						status="active"
+						strokeColor={getStrokeColorForRequestUtilization(pod.podCPURequest)}
+						className="progress-bar"
+						format={() =>
+							getProgressBarText(Number((pod.podCPURequest * 100).toFixed(1)))
+						}
+					/>
+				</div>
+			</ValidateColumnValueWrapper>
 		),
-		cpuLimitUtilization: (
-			<div className="progress-container">
-				<Progress
-					percent={Number((pod.podCPULimit * 100).toFixed(1))}
-					strokeLinecap="butt"
-					size="small"
-					status="active"
-					strokeColor={((): string => {
-						const cpuPercent = Number((pod.podCPULimit * 100).toFixed(1));
-						if (cpuPercent >= 90) return Color.BG_SAKURA_500;
-						if (cpuPercent >= 60) return Color.BG_AMBER_500;
-						return Color.BG_FOREST_500;
-					})()}
-					className="progress-bar"
-				/>
-			</div>
+		cpu_limit: (
+			<ValidateColumnValueWrapper value={pod.podCPULimit}>
+				<div className="progress-container">
+					<Progress
+						percent={Number((pod.podCPULimit * 100).toFixed(1))}
+						strokeLinecap="butt"
+						size="small"
+						status="active"
+						strokeColor={getStrokeColorForLimitUtilization(pod.podCPULimit)}
+						className="progress-bar"
+						format={() =>
+							getProgressBarText(Number((pod.podCPULimit * 100).toFixed(1)))
+						}
+					/>
+				</div>
+			</ValidateColumnValueWrapper>
 		),
-		cpuUtilization: pod.podCPU,
-		memoryRequestUtilization: (
-			<div className="progress-container">
-				<Progress
-					percent={Number((pod.podMemoryRequest * 100).toFixed(1))}
-					strokeLinecap="butt"
-					size="small"
-					status="active"
-					strokeColor={((): string => {
-						const memoryPercent = Number((pod.podMemoryRequest * 100).toFixed(1));
-						if (memoryPercent >= 90) return Color.BG_SAKURA_500;
-						if (memoryPercent >= 60) return Color.BG_AMBER_500;
-						return Color.BG_FOREST_500;
-					})()}
-					className="progress-bar"
-				/>
-			</div>
+		cpu: (
+			<ValidateColumnValueWrapper value={pod.podCPU}>
+				{pod.podCPU}
+			</ValidateColumnValueWrapper>
 		),
-		memoryLimitUtilization: (
-			<div className="progress-container">
-				<Progress
-					percent={Number((pod.podMemoryLimit * 100).toFixed(1))}
-					strokeLinecap="butt"
-					size="small"
-					status="active"
-					strokeColor={((): string => {
-						const memoryPercent = Number((pod.podMemoryLimit * 100).toFixed(1));
-						if (memoryPercent >= 90) return Color.BG_SAKURA_500;
-						if (memoryPercent >= 60) return Color.BG_AMBER_500;
-						return Color.BG_FOREST_500;
-					})()}
-					className="progress-bar"
-				/>
-			</div>
+		memory_request: (
+			<ValidateColumnValueWrapper value={pod.podMemoryRequest}>
+				<div className="progress-container">
+					<Progress
+						percent={Number((pod.podMemoryRequest * 100).toFixed(1))}
+						strokeLinecap="butt"
+						size="small"
+						status="active"
+						strokeColor={getStrokeColorForRequestUtilization(pod.podMemoryRequest)}
+						className="progress-bar"
+						format={() =>
+							getProgressBarText(Number((pod.podMemoryRequest * 100).toFixed(1)))
+						}
+					/>
+				</div>
+			</ValidateColumnValueWrapper>
 		),
-		memoryUtilization: pod.podMemory,
-		containerRestarts: pod.restartCount,
+		memory_limit: (
+			<ValidateColumnValueWrapper value={pod.podMemoryLimit}>
+				<div className="progress-container">
+					<Progress
+						percent={Number((pod.podMemoryLimit * 100).toFixed(1))}
+						strokeLinecap="butt"
+						size="small"
+						status="active"
+						strokeColor={getStrokeColorForLimitUtilization(pod.podMemoryLimit)}
+						className="progress-bar"
+						format={() =>
+							getProgressBarText(Number((pod.podMemoryLimit * 100).toFixed(1)))
+						}
+					/>
+				</div>
+			</ValidateColumnValueWrapper>
+		),
+		memory: (
+			<ValidateColumnValueWrapper value={pod.podMemory}>
+				{formatBytes(pod.podMemory)}
+			</ValidateColumnValueWrapper>
+		),
+		restarts: pod.restartCount,
 		namespace: pod.meta.k8s_namespace_name,
 		node: pod.meta.k8s_node_name,
 		cluster: pod.meta.k8s_job_name,

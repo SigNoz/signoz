@@ -8,9 +8,11 @@ import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import { IQuickFiltersConfig } from 'components/QuickFilters/QuickFilters';
 import { OPERATORS } from 'constants/queryBuilder';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { cloneDeep, isArray, isEmpty, isEqual, isFunction } from 'lodash-es';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -72,6 +74,10 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		[data?.payload],
 	);
 	const currentAttributeKeys = attributeValues.slice(0, visibleItemsCount);
+
+	const setSearchTextDebounced = useDebouncedFn((...args) => {
+		setSearchText(args[0] as string);
+	}, DEBOUNCE_DELAY);
 
 	// derive the state of each filter key here in the renderer itself and keep it in sync with current query
 	// also we need to keep a note of last focussed query.
@@ -450,7 +456,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					<section className="search">
 						<Input
 							placeholder="Filter values"
-							onChange={(e): void => setSearchText(e.target.value)}
+							onChange={(e): void => setSearchTextDebounced(e.target.value)}
 							disabled={isFilterDisabled}
 						/>
 					</section>
