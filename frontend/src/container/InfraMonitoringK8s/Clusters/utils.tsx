@@ -1,4 +1,4 @@
-import { Tag } from 'antd';
+import { Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	K8sClustersData,
@@ -7,6 +7,7 @@ import {
 import { Group } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+import { formatBytes, ValidateColumnValueWrapper } from '../commonUtils';
 import { IEntityColumn } from '../utils';
 
 export const defaultAddedColumns: IEntityColumn[] = [
@@ -45,11 +46,11 @@ export const defaultAddedColumns: IEntityColumn[] = [
 export interface K8sClustersRowData {
 	key: string;
 	clusterUID: string;
-	clusterName: string;
-	cpuUtilization: number;
-	memoryUtilization: number;
-	cpuAllocatable: number;
-	memoryAllocatable: number;
+	clusterName: React.ReactNode;
+	cpu: React.ReactNode;
+	memory: React.ReactNode;
+	cpuAllocatable: React.ReactNode;
+	memoryAllocatable: React.ReactNode;
 	groupedByMeta?: any;
 }
 
@@ -87,8 +88,8 @@ const columnsConfig = [
 	},
 	{
 		title: <div className="column-header-left">CPU Utilization (cores)</div>,
-		dataIndex: 'cpuUtilization',
-		key: 'cpuUtilization',
+		dataIndex: 'cpu',
+		key: 'cpu',
 		width: 80,
 		sorter: true,
 		align: 'left',
@@ -103,8 +104,8 @@ const columnsConfig = [
 	},
 	{
 		title: <div className="column-header-left">Memory Utilization (bytes)</div>,
-		dataIndex: 'memoryUtilization',
-		key: 'memoryUtilization',
+		dataIndex: 'memory',
+		key: 'memory',
 		width: 80,
 		sorter: true,
 		align: 'left',
@@ -161,11 +162,31 @@ export const formatDataForTable = (
 	data.map((cluster, index) => ({
 		key: `${cluster.meta.k8s_cluster_name}-${index}`,
 		clusterUID: cluster.clusterUID,
-		clusterName: cluster.meta.k8s_cluster_name,
-		cpuUtilization: cluster.cpuUsage,
-		memoryUtilization: cluster.memoryUsage,
-		cpuAllocatable: cluster.cpuAllocatable,
-		memoryAllocatable: cluster.memoryAllocatable,
+		clusterName: (
+			<Tooltip title={cluster.meta.k8s_cluster_name}>
+				{cluster.meta.k8s_cluster_name}
+			</Tooltip>
+		),
+		cpu: (
+			<ValidateColumnValueWrapper value={cluster.cpuUsage}>
+				{cluster.cpuUsage}
+			</ValidateColumnValueWrapper>
+		),
+		memory: (
+			<ValidateColumnValueWrapper value={cluster.memoryUsage}>
+				{formatBytes(cluster.memoryUsage)}
+			</ValidateColumnValueWrapper>
+		),
+		cpuAllocatable: (
+			<ValidateColumnValueWrapper value={cluster.cpuAllocatable}>
+				{cluster.cpuAllocatable}
+			</ValidateColumnValueWrapper>
+		),
+		memoryAllocatable: (
+			<ValidateColumnValueWrapper value={cluster.memoryAllocatable}>
+				{formatBytes(cluster.memoryAllocatable)}
+			</ValidateColumnValueWrapper>
+		),
 		clusterGroup: getGroupByEle(cluster, groupBy),
 		meta: cluster.meta,
 		...cluster.meta,
