@@ -43,7 +43,7 @@ export const TraceFilter = Loadable(
 );
 
 export const TraceDetail = Loadable(
-	() => import(/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetail'),
+	() => import(/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetailV2'),
 );
 
 export const UsageExplorerPage = Loadable(

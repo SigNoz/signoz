@@ -288,6 +288,10 @@ type Span struct {
 	StatusCodeString string            `json:"statusCodeString"`
 	SpanKind         string            `json:"spanKind"`
 	Children         []*Span           `json:"children"`
+
+	// the below two fields are for frontend to render the spans
+	HasChildren bool  `json:"hasChildren"`
+	Level       int64 `json:"level"`
 }
 
 type SearchTracesV3Response struct {

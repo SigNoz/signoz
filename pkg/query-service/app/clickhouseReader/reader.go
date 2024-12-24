@@ -1586,7 +1586,7 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 	// now traverse through the tree and create a preorder traversal for the tree
 	// then select the range of spans based on the interested span id
 	var preOrderTraversal []*model.Span
-	var traverse func(node *model.Span)
+	var traverse func(node *model.Span, level int64)
 	var rootToInterestedNodePath func(node *model.Span) bool
 	uncollapsedNodes := req.UncollapsedNodes
 
@@ -1609,7 +1609,7 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 		return isPresentInSubtreeForTheNode
 	}
 
-	traverse = func(node *model.Span) {
+	traverse = func(node *model.Span, level int64) {
 		nodeWithoutChildren := model.Span{
 			SpanID:           node.SpanID,
 			TraceID:          node.TraceID,
@@ -1626,19 +1626,21 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 			TagMap:           node.TagMap,
 			ParentSpanId:     node.ParentSpanId,
 			Children:         make([]*model.Span, 0),
+			HasChildren:      len(node.Children) > 0,
+			Level:            level,
 		}
 		preOrderTraversal = append(preOrderTraversal, &nodeWithoutChildren)
 		// traverse the child if the current node is uncollapsed
 		if contains(uncollapsedNodes, node.SpanID) {
 			for _, child := range node.Children {
-				traverse(child)
+				traverse(child, level+1)
 			}
 		}
 	}
 	for _, rootSpanID := range traceRoots {
 		if rootNode, exists := spanIdToSpanNodeMap[rootSpanID]; exists {
 			_ = rootToInterestedNodePath(rootNode)
-			traverse(rootNode)
+			traverse(rootNode, 0)
 		}
 	}
 
