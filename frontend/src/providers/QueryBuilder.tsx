@@ -97,7 +97,8 @@ export function QueryBuilderProvider({
 	const urlQuery = useUrlQuery();
 	const history = useHistory();
 	const location = useLocation();
-	const currentPathnameRef = useRef<string | null>(null);
+
+	const currentPathnameRef = useRef<string | null>(location.pathname);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -898,14 +899,14 @@ export function QueryBuilderProvider({
 	};
 
 	useEffect(() => {
-		if (stagedQuery && location.pathname !== currentPathnameRef.current) {
+		if (location.pathname !== currentPathnameRef.current) {
 			currentPathnameRef.current = location.pathname;
 
 			setStagedQuery(null);
 			// reset the last used query to 0 when navigating away from the page
 			setLastUsedQuery(0);
 		}
-	}, [location, stagedQuery, currentQuery]);
+	}, [location.pathname]);
 
 	const handleOnUnitsChange = useCallback(
 		(unit: string) => {

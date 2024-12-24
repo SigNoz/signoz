@@ -109,6 +109,13 @@ jest.mock('container/OptionsMenu/useOptionsMenu', () => ({
 	default: (): any => optionMenuReturn,
 }));
 
+jest.mock('react-redux', () => ({
+	...jest.requireActual('react-redux'),
+	useSelector: (): any => ({
+		loading: false,
+	}),
+}));
+
 describe('TracesExplorer - Filters', () => {
 	// Initial filter panel rendering
 	// Test the initial state like which filters section are opened, default state of duration slider, etc.
