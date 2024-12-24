@@ -53,7 +53,7 @@
 				display: flex;
 				align-items: center;
 				justify-content: space-between;
-				width: 100%;
+				width: calc(100% - 24px);
 				cursor: pointer;
 
 				&.filter-disabled {
