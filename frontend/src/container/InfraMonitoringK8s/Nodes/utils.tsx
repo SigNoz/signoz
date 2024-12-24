@@ -7,13 +7,14 @@ import {
 import { Group } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+import { formatBytes, ValidateColumnValueWrapper } from '../commonUtils';
 import { IEntityColumn } from '../utils';
 
 export const defaultAddedColumns: IEntityColumn[] = [
 	{
 		label: 'Node Name',
-		value: 'nodeStatus',
-		id: 'nodeStatus',
+		value: 'nodeName',
+		id: 'nodeName',
 		canRemove: false,
 	},
 	{
@@ -24,26 +25,26 @@ export const defaultAddedColumns: IEntityColumn[] = [
 	},
 	{
 		label: 'CPU Utilization (cores)',
-		value: 'cpuUtilization',
-		id: 'cpuUtilization',
+		value: 'cpu',
+		id: 'cpu',
 		canRemove: false,
 	},
 	{
 		label: 'CPU Allocatable (cores)',
-		value: 'cpuAllocatable',
-		id: 'cpuAllocatable',
+		value: 'cpu_allocatable',
+		id: 'cpu_allocatable',
 		canRemove: false,
 	},
 	{
 		label: 'Memory Utilization (bytes)',
-		value: 'memoryUtilization',
-		id: 'memoryUtilization',
+		value: 'memory',
+		id: 'memory',
 		canRemove: false,
 	},
 	{
 		label: 'Memory Allocatable (bytes)',
-		value: 'memoryAllocatable',
-		id: 'memoryAllocatable',
+		value: 'memory_allocatable',
+		id: 'memory_allocatable',
 		canRemove: false,
 	},
 ];
@@ -53,10 +54,10 @@ export interface K8sNodesRowData {
 	nodeUID: string;
 	nodeName: React.ReactNode;
 	clusterName: string;
-	cpuUtilization: React.ReactNode;
-	cpuAllocatable: React.ReactNode;
-	memoryUtilization: React.ReactNode;
-	memoryAllocatable: React.ReactNode;
+	cpu: React.ReactNode;
+	cpu_allocatable: React.ReactNode;
+	memory: React.ReactNode;
+	memory_allocatable: React.ReactNode;
 	groupedByMeta?: any;
 }
 
@@ -103,32 +104,32 @@ const columnsConfig = [
 	},
 	{
 		title: <div className="column-header-left">CPU Utilization (cores)</div>,
-		dataIndex: 'cpuUtilization',
-		key: 'cpuUtilization',
+		dataIndex: 'cpu',
+		key: 'cpu',
 		width: 80,
 		sorter: true,
 		align: 'left',
 	},
 	{
 		title: <div className="column-header-left">CPU Allocatable (cores)</div>,
-		dataIndex: 'cpuAllocatable',
-		key: 'cpuAllocatable',
+		dataIndex: 'cpu_allocatable',
+		key: 'cpu_allocatable',
 		width: 80,
 		sorter: true,
 		align: 'left',
 	},
 	{
 		title: <div className="column-header-left">Memory Utilization (bytes)</div>,
-		dataIndex: 'memoryUtilization',
-		key: 'memoryUtilization',
+		dataIndex: 'memory',
+		key: 'memory',
 		width: 80,
 		sorter: true,
 		align: 'left',
 	},
 	{
 		title: <div className="column-header-left">Memory Allocatable (bytes)</div>,
-		dataIndex: 'memoryAllocatable',
-		key: 'memoryAllocatable',
+		dataIndex: 'memory_allocatable',
+		key: 'memory_allocatable',
 		width: 80,
 		sorter: true,
 		align: 'left',
@@ -185,12 +186,26 @@ export const formatDataForTable = (
 			</div>
 		),
 		clusterName: node.meta.k8s_cluster_name,
-		cpuUtilization: node.nodeCPUUsage === -1 ? '-' : node.nodeCPUUsage,
-		memoryUtilization: node.nodeMemoryUsage === -1 ? '-' : node.nodeMemoryUsage,
-		cpuAllocatable:
-			node.nodeCPUAllocatable === -1 ? '-' : node.nodeCPUAllocatable,
-		memoryAllocatable:
-			node.nodeMemoryAllocatable === -1 ? '-' : node.nodeMemoryAllocatable,
+		cpu: (
+			<ValidateColumnValueWrapper value={node.nodeCPUUsage}>
+				{node.nodeCPUUsage}
+			</ValidateColumnValueWrapper>
+		),
+		memory: (
+			<ValidateColumnValueWrapper value={node.nodeMemoryUsage}>
+				{formatBytes(node.nodeMemoryUsage)}
+			</ValidateColumnValueWrapper>
+		),
+		cpu_allocatable: (
+			<ValidateColumnValueWrapper value={node.nodeCPUAllocatable}>
+				{node.nodeCPUAllocatable}
+			</ValidateColumnValueWrapper>
+		),
+		memory_allocatable: (
+			<ValidateColumnValueWrapper value={node.nodeMemoryAllocatable}>
+				{formatBytes(node.nodeMemoryAllocatable)}
+			</ValidateColumnValueWrapper>
+		),
 		nodeGroup: getGroupByEle(node, groupBy),
 		meta: node.meta,
 		...node.meta,
