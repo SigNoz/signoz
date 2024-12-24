@@ -19,6 +19,11 @@ export const getHostAttributeKeys = async (
 			data: IQueryAutocompleteResponse;
 		}> = await ApiBaseInstance.get(
 			`/${entity}/attribute_keys?dataSource=metrics&searchText=${searchText}`,
+			{
+				params: {
+					limit: 500,
+				},
+			},
 		);
 
 		const payload: BaseAutocompleteData[] =
