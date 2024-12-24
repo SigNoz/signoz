@@ -128,7 +128,7 @@
 		"uuid": "^8.3.2",
 		"web-vitals": "^0.2.4",
 		"webpack": "5.94.0",
-		"webpack-dev-server": "^4.15.2",
+		"webpack-dev-server": "^5.1.0",
 		"webpack-retry-chunk-load-plugin": "3.1.1",
 		"xstate": "^4.31.0"
 	},
