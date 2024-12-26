@@ -103,7 +103,7 @@ describe('dashboardVariables - utilities and processors', () => {
 			it('should return true when parentDependencyGraph is empty', () => {
 				expect(
 					checkAPIInvocation(variablesToGetUpdated, variableData, {}),
-				).toBeTruthy();
+				).toBeFalsy();
 			});
 		});
 

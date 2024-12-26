@@ -32,13 +32,27 @@ export const convertVariablesToDbFormat = (
 	}, {});
 
 const getDependentVariables = (queryValue: string): string[] => {
-	const variableRegexPattern = /\{\{\s*?\.([^\s}]+)\s*?\}\}/g;
+	// Combined pattern for all formats:
+	// {{.variable_name}} - original format
+	// $variable_name - dollar prefix format
+	// [[variable_name]] - square bracket format
+	// {{variable_name}} - without dot format
+	const variableRegexPattern = /(?:\{\{\s*\.?([^\s}]+)\s*\}\}|\$([^\s\W]+)|\[\[([^\]]+)\]\])/g;
 
 	const matches = queryValue.match(variableRegexPattern);
 
-	// Extract variable names from the matches array without {{ . }}
+	// Extract variable names from the matches array, handling all formats
 	return matches
-		? matches.map((match) => match.replace(variableRegexPattern, '$1'))
+		? matches.map((match) => {
+				if (match.startsWith('$')) {
+					return match.slice(1); // Remove $ prefix
+				}
+				if (match.startsWith('[[')) {
+					return match.slice(2, -2); // Remove [[ and ]]
+				}
+				// Handle both {{.var}} and {{var}} formats
+				return match.replace(/\{\{\s*\.?([^\s}]+)\s*\}\}/, '$1');
+		  })
 		: [];
 };
 export type VariableGraph = Record<string, string[]>;
