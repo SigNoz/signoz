@@ -1,7 +1,10 @@
+/* eslint-disable no-nested-ternary */
 import './Events.styles.scss';
 
-import { Table, TableColumnsType, Typography } from 'antd';
+import { Color } from '@signozhq/design-tokens';
+import { Button, Table, TableColumnsType } from 'antd';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import LoadingContainer from 'container/InfraMonitoringK8s/LoadingContainer';
 import LogsError from 'container/LogsError/LogsError';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
@@ -12,11 +15,14 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useMemo } from 'react';
+import { isArray } from 'lodash-es';
+import { ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { v4 } from 'uuid';
 
 import { getPodsEventsQueryPayload } from './constants';
 import NoEventsContainer from './NoEventsContainer';
@@ -38,6 +44,7 @@ interface EventDataType {
 	span_id?: string;
 	trace_flags?: number;
 	trace_id?: string;
+	severity?: string;
 }
 
 interface IPodEventsProps {
@@ -55,6 +62,8 @@ interface IPodEventsProps {
 	selectedInterval: Time;
 }
 
+const EventsPageSize = 10;
+
 export default function Events({
 	timeRange,
 	handleChangeLogFilters,
@@ -64,6 +73,15 @@ export default function Events({
 	selectedInterval,
 }: IPodEventsProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
+
+	const [formattedPodEvents, setFormattedPodEvents] = useState<EventDataType[]>(
+		[],
+	);
+
+	const [hasReachedEndOfEvents, setHasReachedEndOfEvents] = useState(false);
+
+	const [page, setPage] = useState(1);
+
 	const updatedCurrentQuery = useMemo(
 		() => ({
 			...currentQuery,
@@ -86,28 +104,6 @@ export default function Events({
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
-	// const [restFilters, setRestFilters] = useState<TagFilterItem[]>([]);
-
-	// const [resetLogsList, setResetLogsList] = useState<boolean>(false);
-
-	// useEffect(() => {
-	// 	const newRestFilters = filters?.items?.filter(
-	// 		(item) =>
-	// 			item.key?.key !== 'id' &&
-	// 			item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME &&
-	// 			item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND,
-	// 	);
-
-	// 	const areFiltersSame = isEqual(restFilters, newRestFilters);
-
-	// 	if (!areFiltersSame) {
-	// 		setResetLogsList(true);
-	// 	}
-
-	// 	setRestFilters(newRestFilters);
-	// 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	// }, [filters]);
-
 	const queryPayload = useMemo(() => {
 		const basePayload = getPodsEventsQueryPayload(
 			timeRange.startTime,
@@ -115,7 +111,7 @@ export default function Events({
 			filters,
 		);
 
-		basePayload.query.builder.queryData[0].pageSize = 100;
+		basePayload.query.builder.queryData[0].pageSize = 10;
 		basePayload.query.builder.queryData[0].orderBy = [
 			{ columnName: 'timestamp', order: ORDERBY_FILTERS.DESC },
 		];
@@ -123,37 +119,115 @@ export default function Events({
 		return basePayload;
 	}, [timeRange.startTime, timeRange.endTime, filters]);
 
-	const { data, isLoading, isError } = useQuery({
+	const { data: eventsData, isLoading, isFetching, isError } = useQuery({
 		queryKey: ['podEvents', timeRange.startTime, timeRange.endTime, filters],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
 	});
 
 	const columns: TableColumnsType<EventDataType> = [
-		{ title: 'Severity', dataIndex: 'severity', key: 'severity' },
-		{ title: 'Timestamp', dataIndex: 'timestamp', key: 'timestamp' },
+		{ title: 'Severity', dataIndex: 'severity', key: 'severity', width: 100 },
+		{
+			title: 'Timestamp',
+			dataIndex: 'timestamp',
+			width: 200,
+			ellipsis: true,
+			key: 'timestamp',
+		},
 		{ title: 'Body', dataIndex: 'body', key: 'body' },
 	];
 
-	const formattedPodEvents = useMemo(() => {
-		const responsePayload =
-			data?.payload.data.newResult.data.result[0].list || [];
+	useEffect(() => {
+		if (eventsData?.payload?.data?.newResult?.data?.result) {
+			const responsePayload =
+				eventsData?.payload.data.newResult.data.result[0].list || [];
 
-		const formattedData = responsePayload?.map((event) => ({
-			timestamp: event.timestamp,
-			severity: event.data.severity_text,
-			body: event.data.body,
-			id: event.data.id,
-			key: event.data.id,
-		}));
+			const formattedData = responsePayload?.map(
+				(event): EventDataType => ({
+					timestamp: event.timestamp,
+					severity: event.data.severity_text,
+					body: event.data.body,
+					id: event.data.id,
+					key: event.data.id,
+				}),
+			);
 
-		return formattedData || [];
-	}, [data]);
+			setFormattedPodEvents(formattedData);
 
-	const handleExpandRow = (record: EventDataType): JSX.Element => {
-		console.log('record', record);
+			if (
+				!responsePayload ||
+				(responsePayload &&
+					isArray(responsePayload) &&
+					responsePayload.length < EventsPageSize)
+			) {
+				setHasReachedEndOfEvents(true);
+			} else {
+				setHasReachedEndOfEvents(false);
+			}
+		}
+	}, [eventsData]);
 
-		return <p style={{ margin: 0 }}>{record.body}</p>;
+	const handleExpandRow = (record: EventDataType): JSX.Element => (
+		<p style={{ margin: 0 }}>{record.body}</p>
+	);
+
+	const handlePrev = (): void => {
+		if (!formattedPodEvents.length) return;
+
+		setPage(page - 1);
+
+		const firstEvent = formattedPodEvents[0];
+
+		const newItems = [
+			...filters.items.filter((item) => item.key?.key !== 'id'),
+			{
+				id: v4(),
+				key: {
+					key: 'id',
+					type: '',
+					dataType: DataTypes.String,
+					isColumn: true,
+				},
+				op: '>',
+				value: firstEvent.id,
+			},
+		];
+
+		const newFilters = {
+			op: 'AND',
+			items: newItems,
+		} as IBuilderQuery['filters'];
+
+		handleChangeLogFilters(newFilters);
+	};
+
+	const handleNext = (): void => {
+		if (!formattedPodEvents.length) return;
+
+		setPage(page + 1);
+		const lastEvent = formattedPodEvents[formattedPodEvents.length - 1];
+
+		const newItems = [
+			...filters.items.filter((item) => item.key?.key !== 'id'),
+			{
+				id: v4(),
+				key: {
+					key: 'id',
+					type: '',
+					dataType: DataTypes.String,
+					isColumn: true,
+				},
+				op: '<',
+				value: lastEvent.id,
+			},
+		];
+
+		const newFilters = {
+			op: 'AND',
+			items: newItems,
+		} as IBuilderQuery['filters'];
+
+		handleChangeLogFilters(newFilters);
 	};
 
 	const handleExpandRowIcon = ({
@@ -218,19 +292,7 @@ export default function Events({
 				</div>
 			</div>
 
-			{isLoading && (
-				<div className="loading-logs">
-					<div className="loading-logs-content">
-						<img
-							className="loading-gif"
-							src="/Icons/loading-plane.gif"
-							alt="wait-icon"
-						/>
-
-						<Typography>Loading Events. Please wait...</Typography>
-					</div>
-				</div>
-			)}
+			{isLoading && <LoadingContainer />}
 
 			{!isLoading && !isError && formattedPodEvents.length === 0 && (
 				<NoEventsContainer />
@@ -242,6 +304,7 @@ export default function Events({
 				<div className="pod-events-list-container">
 					<div className="pod-events-list-card">
 						<Table<EventDataType>
+							loading={isLoading && page > 1}
 							columns={columns}
 							expandable={{
 								expandedRowRender: handleExpandRow,
@@ -250,8 +313,37 @@ export default function Events({
 							}}
 							dataSource={formattedPodEvents}
 							pagination={false}
+							rowKey={(record): string => record.id}
 						/>
 					</div>
+				</div>
+			)}
+
+			{!isError && formattedPodEvents.length > 0 && (
+				<div className="pod-events-footer">
+					<Button
+						className="pod-events-footer-button periscope-btn ghost"
+						type="link"
+						onClick={handlePrev}
+						disabled={page === 1 || isFetching || isLoading}
+					>
+						{!isFetching && <ChevronLeft size={14} />}
+						Prev
+					</Button>
+
+					<Button
+						className="pod-events-footer-button periscope-btn ghost"
+						type="link"
+						onClick={handleNext}
+						disabled={hasReachedEndOfEvents || isFetching || isLoading}
+					>
+						Next
+						{!isFetching && <ChevronRight size={14} />}
+					</Button>
+
+					{(isFetching || isLoading) && (
+						<Loader2 className="animate-spin" size={16} color={Color.BG_ROBIN_500} />
+					)}
 				</div>
 			)}
 		</div>
