@@ -46,12 +46,11 @@ export type VariableGraph = Record<string, string[]>;
 export const buildDependencies = (
 	variables: IDashboardVariable[],
 ): VariableGraph => {
-	console.log('buildDependencies', variables);
 	const graph: VariableGraph = {};
 
 	// Initialize empty arrays for all variables first
 	variables.forEach((variable) => {
-		if (variable.name) {
+		if (variable.name && variable.type === 'QUERY') {
 			graph[variable.name] = [];
 		}
 	});
@@ -113,7 +112,7 @@ export const buildDependencyGraph = (
 	}
 
 	if (topologicalOrder.length !== Object.keys(dependencies).length) {
-		throw new Error('Cycle detected in the dependency graph!');
+		console.error('Cycle detected in the dependency graph!');
 	}
 
 	return { order: topologicalOrder, graph: adjList };
@@ -170,7 +169,7 @@ export const checkAPIInvocation = (
 	}
 
 	if (isEmpty(parentDependencyGraph)) {
-		return true;
+		return false;
 	}
 
 	// if no dependency then true
@@ -186,3 +185,9 @@ export const checkAPIInvocation = (
 		variablesToGetUpdated[0] === variableData.name
 	);
 };
+
+export interface IDependencyData {
+	order: string[];
+	graph: VariableGraph;
+	parentDependencyGraph: VariableGraph;
+}

@@ -1,14 +1,18 @@
 import { Row } from 'antd';
+import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
 	buildDependencies,
 	buildDependencyGraph,
 	buildParentDependencyGraph,
+	IDependencyData,
 	onUpdateVariableNode,
-	VariableGraph,
 } from './util';
 import VariableItem from './VariableItem';
 
@@ -27,11 +31,13 @@ function DashboardVariableSelection(): JSX.Element | null {
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 
-	const [dependencyData, setDependencyData] = useState<{
-		order: string[];
-		graph: VariableGraph;
-		parentDependencyGraph: VariableGraph;
-	} | null>(null);
+	const [dependencyData, setDependencyData] = useState<IDependencyData | null>(
+		null,
+	);
+
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	useEffect(() => {
 		if (variables) {
@@ -55,10 +61,8 @@ function DashboardVariableSelection(): JSX.Element | null {
 		}
 	}, [variables]);
 
-	const initializationRef = useRef(false);
-
 	useEffect(() => {
-		if (variablesTableData.length > 0 && !initializationRef.current) {
+		if (variablesTableData.length > 0) {
 			const depGrp = buildDependencies(variablesTableData);
 			const { order, graph } = buildDependencyGraph(depGrp);
 			const parentDependencyGraph = buildParentDependencyGraph(graph);
@@ -67,16 +71,27 @@ function DashboardVariableSelection(): JSX.Element | null {
 				graph,
 				parentDependencyGraph,
 			});
-			initializationRef.current = true;
 		}
-	}, [variablesTableData]);
+	}, [setVariablesToGetUpdated, variables, variablesTableData]);
+
+	// this handles the case where the dependency order changes i.e. variable list updated via creation or deletion etc. and we need to refetch the variables
+	// also trigger when the global time changes
+	useEffect(
+		() => {
+			if (!isEmpty(dependencyData?.order)) {
+				setVariablesToGetUpdated(dependencyData?.order || []);
+			}
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[JSON.stringify(dependencyData?.order), minTime, maxTime],
+	);
 
 	const onValueUpdate = (
 		name: string,
 		id: string,
 		value: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
-		isMountedCall?: boolean,
+		// isMountedCall?: boolean,
 		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): void => {
 		if (id) {
@@ -116,7 +131,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 				});
 			}
 
-			if (dependencyData && !isMountedCall) {
+			if (dependencyData) {
 				const updatedVariables: string[] = [];
 				onUpdateVariableNode(
 					name,
@@ -124,8 +139,10 @@ function DashboardVariableSelection(): JSX.Element | null {
 					dependencyData.order,
 					(node) => updatedVariables.push(node),
 				);
-				setVariablesToGetUpdated(updatedVariables.filter((v) => v !== name));
-			} else if (isMountedCall) {
+				setVariablesToGetUpdated((prev) => [
+					...new Set([...prev, ...updatedVariables.filter((v) => v !== name)]),
+				]);
+			} else {
 				setVariablesToGetUpdated((prev) => prev.filter((v) => v !== name));
 			}
 		}

@@ -24,7 +24,7 @@ import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParse
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { debounce, isArray, isString } from 'lodash-es';
 import map from 'lodash-es/map';
-import { ChangeEvent, memo, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -35,12 +35,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import { variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle } from './styles';
-import {
-	areArraysEqual,
-	checkAPIInvocation,
-	onUpdateVariableNode,
-	VariableGraph,
-} from './util';
+import { areArraysEqual, checkAPIInvocation, IDependencyData } from './util';
 
 const ALL_SELECT_VALUE = '__ALL__';
 
@@ -57,15 +52,10 @@ interface VariableItemProps {
 		id: string,
 		arg1: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
-		isMountedCall?: boolean,
 	) => void;
 	variablesToGetUpdated: string[];
 	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
-	dependencyData: {
-		order: string[];
-		graph: VariableGraph;
-		parentDependencyGraph: VariableGraph;
-	} | null;
+	dependencyData: IDependencyData | null;
 }
 
 const getSelectValue = (
@@ -98,25 +88,16 @@ function VariableItem({
 		(state) => state.globalTime,
 	);
 
-	// logic to detect if its a rerender or a new render/mount
-	const isMounted = useRef(false);
-
-	useEffect(() => {
-		isMounted.current = true;
-	}, []);
-
 	const validVariableUpdate = (): boolean => {
 		if (!variableData.name) {
 			return false;
 		}
-		if (!isMounted.current) {
-			// variableData.name is present as the top element or next in the queue - variablesToGetUpdated
-			return Boolean(
-				variablesToGetUpdated.length &&
-					variablesToGetUpdated[0] === variableData.name,
-			);
-		}
-		return variablesToGetUpdated.includes(variableData.name);
+
+		// variableData.name is present as the top element or next in the queue - variablesToGetUpdated
+		return Boolean(
+			variablesToGetUpdated.length &&
+				variablesToGetUpdated[0] === variableData.name,
+		);
 	};
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
@@ -177,16 +158,7 @@ function VariableItem({
 							}
 
 							if (variableData && variableData?.name && variableData?.id) {
-								onValueUpdate(
-									variableData.name,
-									variableData.id,
-									value,
-									allSelected,
-									isMounted.current,
-								);
-								setVariablesToGetUpdated((prev) =>
-									prev.filter((name) => name !== variableData.name),
-								);
+								onValueUpdate(variableData.name, variableData.id, value, allSelected);
 							}
 						}
 
@@ -216,6 +188,7 @@ function VariableItem({
 			variableData.name || '',
 			`${minTime}`,
 			`${maxTime}`,
+			JSON.stringify(dependencyData?.order),
 		],
 		{
 			enabled:
@@ -234,21 +207,9 @@ function VariableItem({
 			refetchOnWindowFocus: false,
 			onSuccess: (response) => {
 				getOptions(response.payload);
-				if (
-					dependencyData?.parentDependencyGraph[variableData.name || ''].length === 0
-				) {
-					const updatedVariables: string[] = [];
-					onUpdateVariableNode(
-						variableData.name || '',
-						dependencyData.graph,
-						dependencyData.order,
-						(node) => updatedVariables.push(node),
-					);
-					setVariablesToGetUpdated((prev) => [
-						...prev,
-						...updatedVariables.filter((v) => v !== variableData.name),
-					]);
-				}
+				setVariablesToGetUpdated((prev) =>
+					prev.filter((v) => v !== variableData.name),
+				);
 			},
 			onError: (error: {
 				details: {
