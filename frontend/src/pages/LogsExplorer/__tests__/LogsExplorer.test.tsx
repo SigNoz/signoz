@@ -155,6 +155,7 @@ describe('Logs Explorer Tests', () => {
 		const { queryAllByText } = render(
 			<QueryBuilderContext.Provider
 				value={{
+					isDefaultQuery: (): boolean => false,
 					currentQuery: {
 						...initialQueriesMap.metrics,
 						builder: {
