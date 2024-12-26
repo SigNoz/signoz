@@ -118,6 +118,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	readerReady := make(chan bool)
 
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
+	}
+
 	var reader interfaces.Reader
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
@@ -132,6 +141,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
+			c,
 		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
@@ -145,14 +155,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		if err != nil {
 			return nil, err
 		}
-	}
-	var c cache.Cache
-	if serverOptions.CacheConfigPath != "" {
-		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		c = cache.NewCache(cacheOpts)
 	}
 
 	<-readerReady

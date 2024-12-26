@@ -294,6 +294,14 @@ type Span struct {
 	Level       int64 `json:"level"`
 }
 
+type SearchTracesV3Cache struct {
+	StartTime           uint64           `json:"startTime"`
+	EndTime             uint64           `json:"endTime"`
+	DurationNano        uint64           `json:"durationNano"`
+	SpanIdToSpanNodeMap map[string]*Span `json:"spanIdToSpanNodeMap"`
+	TraceRoots          []string         `json:"traceRoots"`
+}
+
 type SearchTracesV3Response struct {
 	StartTimestampMillis  uint64  `json:"startTimestampMillis"`
 	EndTimestampMillis    uint64  `json:"endTimestampMillis"`
