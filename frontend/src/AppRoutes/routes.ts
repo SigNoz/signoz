@@ -427,23 +427,26 @@ export const LIST_LICENSES: AppRoutes = {
 
 export const oldRoutes = [
 	'/pipelines',
-	'/logs/old-logs-explorer',
 	'/logs-explorer',
 	'/logs-explorer/live',
 	'/logs-save-views',
 	'/traces-save-views',
-	'/settings/api-keys',
+	'/settings/access-tokens',
 ];
 
 export const oldNewRoutesMapping: Record<string, string> = {
 	'/pipelines': '/logs/pipelines',
-	'/logs/old-logs-explorer': '/logs/old-logs-explorer',
 	'/logs-explorer': '/logs/logs-explorer',
 	'/logs-explorer/live': '/logs/logs-explorer/live',
 	'/logs-save-views': '/logs/saved-views',
 	'/traces-save-views': '/traces/saved-views',
-	'/settings/api-keys': '/settings/access-tokens',
+	'/settings/access-tokens': '/settings/api-keys',
 };
+
+export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [
+	ROUTES.WORKSPACE_LOCKED,
+	ROUTES.WORKSPACE_SUSPENDED,
+];
 
 export interface AppRoutes {
 	component: RouteProps['component'];

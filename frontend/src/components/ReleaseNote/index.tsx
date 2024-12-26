@@ -1,6 +1,7 @@
 import ReleaseNoteProps from 'components/ReleaseNote/ReleaseNoteProps';
 import ReleaseNote0120 from 'components/ReleaseNote/Releases/ReleaseNote0120';
 import ROUTES from 'constants/routes';
+import { useAppContext } from 'providers/App/App';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { UserFlags } from 'types/api/user/setFlags';
@@ -44,12 +45,13 @@ const allComponentMap: ComponentMapType[] = [
 // ReleaseNote prints release specific warnings and notes that
 // user needs to be aware of before using the upgraded version.
 function ReleaseNote({ path }: ReleaseNoteProps): JSX.Element | null {
-	const { userFlags, currentVersion } = useSelector<AppState, AppReducer>(
+	const { user } = useAppContext();
+	const { currentVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 
 	const c = allComponentMap.find((item) =>
-		item.match(path, currentVersion, userFlags),
+		item.match(path, currentVersion, user.flags),
 	);
 
 	if (!c) {
