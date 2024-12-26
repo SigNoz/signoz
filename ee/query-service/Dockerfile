@@ -23,6 +23,9 @@ COPY pkg/query-service/templates /root/templates
 # Make query-service executable for non-root users
 RUN chmod 755 /root /root/query-service
 
+# Copy frontend
+COPY frontend/build/ /etc/signoz/web/
+
 # run the binary
 ENTRYPOINT ["./query-service"]
 
