@@ -56,6 +56,8 @@ type ServerOptions struct {
 	SkipTopLvlOpsPath string
 	HTTPHostPort      string
 	PrivateHostPort   string
+	DebugHostPort     string
+	OpAmpWsEndpoint   string
 	// alert specific params
 	DisableRules      bool
 	RuleRepoURL       string
@@ -656,9 +658,9 @@ func (s *Server) Start() error {
 	}()
 
 	go func() {
-		zap.L().Info("Starting pprof server", zap.String("addr", constants.DebugHttpPort))
+		zap.L().Info("Starting pprof server", zap.String("addr", s.serverOptions.DebugHostPort))
 
-		err = http.ListenAndServe(constants.DebugHttpPort, nil)
+		err = http.ListenAndServe(s.serverOptions.DebugHostPort, nil)
 		if err != nil {
 			zap.L().Error("Could not start pprof server", zap.Error(err))
 		}
@@ -685,8 +687,8 @@ func (s *Server) Start() error {
 	}()
 
 	go func() {
-		zap.L().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
-		err := s.opampServer.Start(constants.OpAmpWsEndpoint)
+		zap.L().Info("Starting OpAmp Websocket server", zap.String("addr", s.serverOptions.OpAmpWsEndpoint))
+		err := s.opampServer.Start(s.serverOptions.OpAmpWsEndpoint)
 		if err != nil {
 			zap.L().Info("opamp ws server failed to start", zap.Error(err))
 			s.unavailableChannel <- healthcheck.Unavailable
