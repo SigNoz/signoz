@@ -1465,23 +1465,26 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 	var traceRoots []string
 	var useCache bool = true
 
+	// get the trace tree from cache!
 	cachedTraceData, cacheStatus, err := r.Cache.Retrieve(fmt.Sprintf("trace-detail-%v", traceID), false)
 	if err != nil {
-		// do not block the API on cache error
-		zap.L().Debug("error in gettting cached trace data", zap.Error(err))
+		// if there is error in retrieving the cache, log the same and move with ch queries.
+		zap.L().Debug("error in retrieving cached trace data", zap.Error(err))
 		useCache = false
 	}
 
+	// if there is no error and there has been a perfect hit for cache then get the data
 	if err == nil && cacheStatus == status.RetrieveStatusHit {
 		var cachedTraceResponse = new(model.SearchTracesV3Cache)
 		err = json.Unmarshal(cachedTraceData, cachedTraceResponse)
 		if err != nil {
+			// log the error and move ahead with clickhouse queries
 			zap.L().Debug("error in unmarshalling the cached data", zap.Error(err))
 			useCache = false
 		}
 
 		if err == nil {
-			// cache hit is successful
+			// cache hit is successful, retrieve the required data
 			zap.L().Info("cache is successfully hit, applying cache for trace details", zap.String("traceID", traceID))
 			startTime = cachedTraceResponse.StartTime
 			endTime = cachedTraceResponse.EndTime
@@ -1616,11 +1619,12 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 		if err != nil {
 			zap.L().Debug("error in marshalling trace cached data, skipping the data to be cached", zap.Error(err))
 		} else {
-			r.Cache.Store(fmt.Sprintf("trace-detail-%v", traceID), tracheCacheByte, time.Minute*30)
+			r.Cache.Store(fmt.Sprintf("trace-detail-1-%v", traceID), tracheCacheByte, time.Minute*30)
 		}
 
 	}
 
+	// TODO not working with cache!
 	// determestic sort for the children based on timestamp and span name
 	for _, spanNode := range spanIdToSpanNodeMap {
 		sort.Slice(spanNode.Children, func(i, j int) bool {
@@ -1667,6 +1671,7 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 			SpanID:           node.SpanID,
 			TraceID:          node.TraceID,
 			ServiceName:      node.ServiceName,
+			TimeUnixNano:     node.TimeUnixNano,
 			Name:             node.Name,
 			Kind:             int32(node.Kind),
 			DurationNano:     int64(node.DurationNano),
