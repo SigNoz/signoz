@@ -50,6 +50,11 @@ func main() {
 	var maxOpenConns int
 	var dialTimeout time.Duration
 
+	var httpHostPort string
+	var privateHostPort string
+	var debugHostPort string
+	var opAmpWsEndpoint string
+
 	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
 	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", false, "use new schema for traces")
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
@@ -65,6 +70,11 @@ func main() {
 	flag.IntVar(&maxIdleConns, "max-idle-conns", 50, "(number of connections to maintain in the pool, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
 	flag.IntVar(&maxOpenConns, "max-open-conns", 100, "(max connections for use at any time, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
 	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
+	// Host ports
+	flag.StringVar(&httpHostPort, "http-host-port", constants.HTTPHostPort, "Address to listen on for HTTP requests")
+	flag.StringVar(&privateHostPort, "private-host-port", constants.PrivateHostPort, "Address to listen on for private HTTP requests")
+	flag.StringVar(&debugHostPort, "debug-host-port", constants.DebugHttpPort, "Address to listen on for debug HTTP requests")
+	flag.StringVar(&opAmpWsEndpoint, "opamp-ws-endpoint", constants.OpAmpWsEndpoint, "Address to listen on for OpAmp WS requests")
 	flag.Parse()
 
 	loggerMgr := initZapLog()
@@ -75,11 +85,13 @@ func main() {
 	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
-		HTTPHostPort:      constants.HTTPHostPort,
+		HTTPHostPort:      httpHostPort,
+		PrivateHostPort:   privateHostPort,
+		DebugHostPort:     debugHostPort,
+		OpAmpWsEndpoint:   opAmpWsEndpoint,
 		PromConfigPath:    promConfigPath,
 		SkipTopLvlOpsPath: skipTopLvlOpsPath,
 		PreferSpanMetrics: preferSpanMetrics,
-		PrivateHostPort:   constants.PrivateHostPort,
 		DisableRules:      disableRules,
 		RuleRepoURL:       ruleRepoURL,
 		MaxIdleConns:      maxIdleConns,
