@@ -47,6 +47,8 @@ import { PodDetailProps } from './PodDetail.interfaces';
 import PodLogsDetailedView from './PodLogs/PodLogsDetailedView';
 import PodTraces from './PodTraces/PodTraces';
 
+const TimeRangeOffset = 1000000;
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function PodDetails({
 	pod,
@@ -58,10 +60,10 @@ function PodDetails({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
+	const startMs = useMemo(() => Math.floor(Number(minTime) / TimeRangeOffset), [
 		minTime,
 	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [
+	const endMs = useMemo(() => Math.floor(Number(maxTime) / TimeRangeOffset), [
 		maxTime,
 	]);
 
@@ -168,8 +170,8 @@ function PodDetails({
 			const { maxTime, minTime } = GetMinMax(selectedTime);
 
 			setModalTimeRange({
-				startTime: Math.floor(minTime / 1000000000),
-				endTime: Math.floor(maxTime / 1000000000),
+				startTime: Math.floor(minTime / TimeRangeOffset),
+				endTime: Math.floor(maxTime / TimeRangeOffset),
 			});
 		}
 	}, [selectedTime, minTime, maxTime]);
@@ -191,8 +193,8 @@ function PodDetails({
 				const { maxTime, minTime } = GetMinMax(interval);
 
 				setModalTimeRange({
-					startTime: Math.floor(minTime / 1000000000),
-					endTime: Math.floor(maxTime / 1000000000),
+					startTime: Math.floor(minTime / TimeRangeOffset),
+					endTime: Math.floor(maxTime / TimeRangeOffset),
 				});
 			}
 
@@ -366,8 +368,8 @@ function PodDetails({
 			const { maxTime, minTime } = GetMinMax(selectedTime);
 
 			setModalTimeRange({
-				startTime: Math.floor(minTime / 1000000000),
-				endTime: Math.floor(maxTime / 1000000000),
+				startTime: Math.floor(minTime / TimeRangeOffset),
+				endTime: Math.floor(maxTime / TimeRangeOffset),
 			});
 		}
 		setSelectedView(VIEW_TYPES.METRICS);

@@ -552,11 +552,13 @@ function K8sPodsList({
 				/>
 			)}
 
-			<PodDetails
-				pod={selectedPodData}
-				isModalTimeSelection
-				onClose={handleClosePodDetail}
-			/>
+			{selectedPodData && (
+				<PodDetails
+					pod={selectedPodData}
+					isModalTimeSelection
+					onClose={handleClosePodDetail}
+				/>
+			)}
 		</div>
 	);
 }
