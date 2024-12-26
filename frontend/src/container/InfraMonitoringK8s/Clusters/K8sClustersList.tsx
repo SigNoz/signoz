@@ -435,8 +435,6 @@ function K8sClustersList({
 		}
 	}, [groupByFiltersData]);
 
-	console.log({ selectedClusterData });
-
 	return (
 		<div className="k8s-list">
 			<K8sHeader
