@@ -1,3 +1,7 @@
+export interface TraceDetailV2URLProps {
+	id: string;
+}
+
 export interface GetTraceV2PayloadProps {
 	traceId: string;
 	interestedSpanId: string;
