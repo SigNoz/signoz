@@ -57,6 +57,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Create .env file
+        run: |
+          echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > frontend/.env
+          echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> frontend/.env
+          echo 'SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> frontend/.env
+          echo 'SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> frontend/.env
+          echo 'SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> frontend/.env
+          echo 'SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> frontend/.env
+          echo 'TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> frontend/.env
+          echo 'TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> frontend/.env
+          echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> frontend/.env
       - name: Setup golang
         uses: actions/setup-go@v4
         with:

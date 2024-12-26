@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"go.opentelemetry.io/collector/confmap"
-	signozconfmap "go.signoz.io/signoz/pkg/confmap"
 )
 
 // unmarshal converts a confmap.Conf into a Config struct.
@@ -19,22 +18,14 @@ func unmarshal(conf *confmap.Conf) (*Config, error) {
 
 	parsed := make(map[string]any)
 
-	for k := range raw {
-		e, ok := byName(k)
-		if !ok {
-			return nil, fmt.Errorf("cannot find config with name %q", k)
-		}
-		i, ok := e.(signozconfmap.Config)
-		if !ok {
-			return nil, fmt.Errorf("config %q does not implement \"signozconfmap.Config\"", k)
-		}
-
+	// To help the defaults kick in, we need iterate over the default map instead of the raw values
+	for k, v := range defaults {
 		sub, err := conf.Sub(k)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read config for %q: %w", k, err)
 		}
 
-		d := i.NewWithDefaults()
+		d := v.NewWithDefaults()
 		if err := sub.Unmarshal(&d); err != nil {
 			return nil, fmt.Errorf("cannot merge config for %q: %w", k, err)
 		}
