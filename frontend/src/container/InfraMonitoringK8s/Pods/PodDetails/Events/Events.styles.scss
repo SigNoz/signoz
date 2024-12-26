@@ -192,7 +192,7 @@
 
 .pod-events-list-container {
 	flex: 1;
-	height: calc(100vh - 272px) !important;
+	height: calc(100vh - 300px) !important;
 	display: flex;
 	height: 100%;
 
@@ -268,6 +268,39 @@
 		display: flex;
 		align-items: center;
 		gap: 16px;
+	}
+}
+
+.pod-events-footer {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 16px 8px 16px;
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	width: 100%;
+
+	border-radius: 0px 0px 3px 3px;
+	border-top: 1px solid var(--bg-slate-500);
+	background: var(--bg-ink-300);
+	box-sizing: border-box;
+
+	.ant-btn {
+		color: var(--bg-vanilla-100);
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px; /* 142.857% */
+		letter-spacing: -0.07px;
+	}
+
+	.periscope-btn {
+		&.ghost {
+			border: none;
+			background: transparent;
+		}
 	}
 }
 
