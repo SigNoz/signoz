@@ -15,7 +15,7 @@ import {
 	useEffect,
 	useRef,
 } from 'react';
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import { ListRange, Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Span } from 'types/api/trace/getTraceV2';
 
 interface ISuccessProps {
@@ -38,15 +38,21 @@ function Success(props: ISuccessProps): JSX.Element {
 	} = props;
 	const ref = useRef<VirtuosoHandle>(null);
 
-	// handle the fetch of more spans when scrolling to bottom
-	const handleEndReached = (): void => {
-		setInterestedSpanId(spans[spans.length - 1].spanId);
-	};
-
-	const hamdleOnTopReached = (onTop: boolean): void => {
-		// if the scroller reached the top and the 0th span is not the root span the fetch the previous spans
-		if (onTop && spans[0].parentSpanId !== '') {
+	const handleRangeChanged = (range: ListRange): void => {
+		const { startIndex, endIndex } = range;
+		// if the start is reached and it's not the root span then fetch!
+		if (startIndex === 0 && spans[0].parentSpanId !== '') {
 			setInterestedSpanId(spans[0].spanId);
+		}
+
+		// if the end is reached
+		if (endIndex === spans.length - 1) {
+			// and the startIndex is also present in the same range then it esentially means the trace ends in a single screen
+			if (startIndex === 0) {
+				return;
+			}
+			// else fetch more spans
+			setInterestedSpanId(spans[spans.length - 1].spanId);
 		}
 	};
 
@@ -138,9 +144,8 @@ function Success(props: ISuccessProps): JSX.Element {
 				ref={ref}
 				style={{ height: '100%' }}
 				data={spans}
-				atTopStateChange={hamdleOnTopReached}
+				rangeChanged={handleRangeChanged}
 				itemContent={getItemContent}
-				endReached={handleEndReached}
 			/>
 			{traceWaterfallState ===
 				TraceWaterfallStates.FETCHING_WITH_OLD_DATA_PRESENT &&

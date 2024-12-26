@@ -1619,12 +1619,11 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 		if err != nil {
 			zap.L().Debug("error in marshalling trace cached data, skipping the data to be cached", zap.Error(err))
 		} else {
-			r.Cache.Store(fmt.Sprintf("trace-detail-1-%v", traceID), tracheCacheByte, time.Minute*30)
+			r.Cache.Store(fmt.Sprintf("trace-detail-%v", traceID), tracheCacheByte, time.Minute*30)
 		}
 
 	}
 
-	// TODO not working with cache!
 	// determestic sort for the children based on timestamp and span name
 	for _, spanNode := range spanIdToSpanNodeMap {
 		sort.Slice(spanNode.Children, func(i, j int) bool {
