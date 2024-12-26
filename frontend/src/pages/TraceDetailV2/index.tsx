@@ -7,6 +7,7 @@ function TraceDetailsV2(): JSX.Element {
 	return (
 		<div className="trace-layout">
 			<Typography.Text>Trace Details V2 Layout</Typography.Text>
+			<div className="flame-graph">FlameGraph comes here!</div>
 			<TraceWaterfall />
 		</div>
 	);

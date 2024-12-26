@@ -62,14 +62,9 @@ function TraceWaterfall(): JSX.Element {
 	}, [errorFetchingTraceData, isFetchingTraceData, traceData]);
 
 	// capture the spans from the response, since we do not need to do any manipulation on the same we will keep this as a simple constant [ memoized ]
-	const spans = useMemo(() => {
-		if (traceWaterfallState === TraceWaterfallStates.SUCCESS) {
-			// we do not need null checks here as the traceWaterfallState gurantees that but needed for typechecking
-			return traceData?.payload?.spans || [];
-		}
-
-		return [];
-	}, [traceData?.payload?.spans, traceWaterfallState]);
+	const spans = useMemo(() => traceData?.payload?.spans || [], [
+		traceData?.payload?.spans,
+	]);
 
 	// get the content based on the current state of the trace waterfall
 	const getContent = useMemo(() => {

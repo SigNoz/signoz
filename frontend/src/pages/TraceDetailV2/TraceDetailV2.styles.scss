@@ -1,4 +1,13 @@
 .trace-layout {
 	display: flex;
 	flex-direction: column;
+	gap: 25px;
+
+	.flame-graph {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 40vh;
+		border: 1px solid #d9d9d9;
+	}
 }

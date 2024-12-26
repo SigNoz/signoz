@@ -1,2 +1,39 @@
-.span-item {
+.success-cotent {
+	width: 100%;
+	height: 100%;
+
+	.span-item {
+		display: flex;
+		flex-direction: column;
+		width: fit-content;
+
+		&.vertical-connector {
+			border-left: 1px solid #d9d9d9;
+		}
+
+		.horizontal-connector {
+			border: 1px solid #d9d9d9;
+		}
+
+		.first-row {
+			display: flex;
+			align-items: center;
+
+			.collapse-uncollapse-button {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				height: 22px;
+				width: 30px;
+				padding: 0px;
+				margin-right: 10px;
+			}
+		}
+
+		.second-row {
+			display: flex;
+			padding-left: 5px;
+			border-left: 1px solid #d9d9d9;
+		}
+	}
 }

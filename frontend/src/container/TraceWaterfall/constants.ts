@@ -5,3 +5,5 @@ export enum TraceWaterfallStates {
 	ERROR = 'ERROR',
 	FETCHING_WITH_OLD_DATA_PRESENT = 'FETCHING_WTIH_OLD_DATA_PRESENT',
 }
+
+export const FIXED_LEFT_PADDING_BASE = 10;
