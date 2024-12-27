@@ -3,6 +3,10 @@
 import './MQTables.styles.scss';
 
 import { Skeleton, Table, Typography } from 'antd';
+import {
+	MessagingQueueServicePayload,
+	MessagingQueuesPayloadProps,
+} from 'api/messagingQueues/getConsumerLagDetails';
 import axios from 'axios';
 import { isNumber } from 'chart.js/helpers';
 import cx from 'classnames';
@@ -28,10 +32,6 @@ import { useMutation } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
-import {
-	MessagingQueueServicePayload,
-	MessagingQueuesPayloadProps,
-} from './getConsumerLagDetails';
 import { getTableDataForProducerLatencyOverview } from './MQTableUtils';
 
 const INITIAL_PAGE_SIZE = 10;
