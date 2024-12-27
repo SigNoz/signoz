@@ -43,7 +43,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
-	"go.signoz.io/signoz/pkg/query-service/cache/status"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
@@ -1458,6 +1457,8 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
+var temp_cache map[string]model.SearchTracesV3Cache = make(map[string]model.SearchTracesV3Cache)
+
 func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, req *model.SearchTracesV3Params) (*model.SearchTracesV3Response, *model.ApiError) {
 	trace := new(model.SearchTracesV3Response)
 	var startTime, endTime, durationNano uint64
@@ -1466,41 +1467,57 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 	var useCache bool = true
 
 	// get the trace tree from cache!
-	cachedTraceData, cacheStatus, err := r.Cache.Retrieve(fmt.Sprintf("trace-detail-%v", traceID), false)
-	if err != nil {
-		// if there is error in retrieving the cache, log the same and move with ch queries.
-		zap.L().Debug("error in retrieving cached trace data", zap.Error(err))
+	// cachedTraceData, cacheStatus, err := r.Cache.Retrieve(fmt.Sprintf("trace-detail-%v", traceID), false)
+	// if err != nil {
+	// 	// if there is error in retrieving the cache, log the same and move with ch queries.
+	// 	zap.L().Debug("error in retrieving cached trace data", zap.Error(err))
+	// 	useCache = false
+	// }
+
+	val, exist := temp_cache[fmt.Sprintf("trace-detail-%v", traceID)]
+	if !exist {
+		zap.L().Debug("error in retrieving cached trace data")
 		useCache = false
+	} else {
+		zap.L().Info("cache is successfully hit, applying cache for trace details", zap.String("traceID", traceID))
+		startTime = val.StartTime
+		endTime = val.EndTime
+		durationNano = val.DurationNano
+		spanIdToSpanNodeMap = val.SpanIdToSpanNodeMap
+		traceRoots = val.TraceRoots
 	}
 
 	// if there is no error and there has been a perfect hit for cache then get the data
-	if err == nil && cacheStatus == status.RetrieveStatusHit {
-		var cachedTraceResponse = new(model.SearchTracesV3Cache)
-		err = json.Unmarshal(cachedTraceData, cachedTraceResponse)
-		if err != nil {
-			// log the error and move ahead with clickhouse queries
-			zap.L().Debug("error in unmarshalling the cached data", zap.Error(err))
-			useCache = false
-		}
+	// if err == nil && cacheStatus == status.RetrieveStatusHit {
+	// 	startBeforeCacheUnmarshelling := time.Now()
+	// 	var cachedTraceResponse = new(model.SearchTracesV3Cache)
+	// 	err = json.Unmarshal(cachedTraceData, cachedTraceResponse)
+	// 	endAfterCacheUnmarshelling := time.Now()
+	// 	zap.L().Info("cache unmarshelling took", zap.Duration("time", endAfterCacheUnmarshelling.Sub(startBeforeCacheUnmarshelling)))
+	// 	if err != nil {
+	// 		// log the error and move ahead with clickhouse queries
+	// 		zap.L().Debug("error in unmarshalling the cached data", zap.Error(err))
+	// 		useCache = false
+	// 	}
 
-		if err == nil {
-			// cache hit is successful, retrieve the required data
-			zap.L().Info("cache is successfully hit, applying cache for trace details", zap.String("traceID", traceID))
-			startTime = cachedTraceResponse.StartTime
-			endTime = cachedTraceResponse.EndTime
-			durationNano = cachedTraceResponse.DurationNano
-			spanIdToSpanNodeMap = cachedTraceResponse.SpanIdToSpanNodeMap
-			traceRoots = cachedTraceResponse.TraceRoots
-		}
-	}
+	// 	if err == nil {
+	// 		// cache hit is successful, retrieve the required data
+	// 		zap.L().Info("cache is successfully hit, applying cache for trace details", zap.String("traceID", traceID))
+	// 		startTime = cachedTraceResponse.StartTime
+	// 		endTime = cachedTraceResponse.EndTime
+	// 		durationNano = cachedTraceResponse.DurationNano
+	// 		spanIdToSpanNodeMap = cachedTraceResponse.SpanIdToSpanNodeMap
+	// 		traceRoots = cachedTraceResponse.TraceRoots
+	// 	}
+	// }
 
-	if cacheStatus != status.RetrieveStatusHit || !useCache {
+	if !useCache {
 		zap.L().Info("cache miss for trace details", zap.String("traceID", traceID))
 
 		// fetch the start, end and number of spans from the summary table, start and end are required for the trace query
 		var traceSummary model.TraceSummary
 		summaryQuery := fmt.Sprintf("SELECT * from %s.%s WHERE trace_id=$1", r.TraceDB, r.traceSummaryTable)
-		err = r.db.QueryRow(ctx, summaryQuery, traceID).Scan(&traceSummary.TraceID, &traceSummary.Start, &traceSummary.End, &traceSummary.NumSpans)
+		err := r.db.QueryRow(ctx, summaryQuery, traceID).Scan(&traceSummary.TraceID, &traceSummary.Start, &traceSummary.End, &traceSummary.NumSpans)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				return trace, nil
@@ -1615,12 +1632,14 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 			SpanIdToSpanNodeMap: spanIdToSpanNodeMap,
 			TraceRoots:          traceRoots,
 		}
-		tracheCacheByte, err := json.Marshal(traceCache)
-		if err != nil {
-			zap.L().Debug("error in marshalling trace cached data, skipping the data to be cached", zap.Error(err))
-		} else {
-			r.Cache.Store(fmt.Sprintf("trace-detail-%v", traceID), tracheCacheByte, time.Minute*30)
-		}
+
+		temp_cache[fmt.Sprintf("trace-detail-%v", traceID)] = traceCache
+		// tracheCacheByte, err := json.Marshal(traceCache)
+		// if err != nil {
+		// 	zap.L().Debug("error in marshalling trace cached data, skipping the data to be cached", zap.Error(err))
+		// } else {
+		// 	r.Cache.Store(fmt.Sprintf("trace-detail-%v", traceID), tracheCacheByte, time.Minute*30)
+		// }
 
 	}
 
