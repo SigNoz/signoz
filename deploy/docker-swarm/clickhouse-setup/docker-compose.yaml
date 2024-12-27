@@ -130,7 +130,7 @@ services:
       restart_policy:
         condition: on-failure
   query-service:
-    image: signoz/query-service:0.65.0
+    image: signoz/query-service:0.65.1
     command: ["-config=/root/config/prometheus.yml", "--use-logs-new-schema=true", "--use-trace-new-schema=true"]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -158,7 +158,7 @@ services:
         condition: on-failure
     !!merge <<: *db-depend
   frontend:
-    image: signoz/frontend:0.65.0
+    image: signoz/frontend:0.65.1
     deploy:
       restart_policy:
         condition: on-failure
@@ -170,7 +170,7 @@ services:
     volumes:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
   otel-collector:
-    image: signoz/signoz-otel-collector:0.111.16
+    image: signoz/signoz-otel-collector:0.111.18
     command: ["--config=/etc/otel-collector-config.yaml", "--manager-config=/etc/manager-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
     user: root # required for reading docker container logs
     volumes:
@@ -202,7 +202,7 @@ services:
       - otel-collector-migrator
       - query-service
   otel-collector-migrator:
-    image: signoz/signoz-schema-migrator:0.111.16
+    image: signoz/signoz-schema-migrator:0.111.18
     deploy:
       restart_policy:
         condition: on-failure
