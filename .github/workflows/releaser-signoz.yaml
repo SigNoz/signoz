@@ -1,4 +1,4 @@
-name: releaser
+name: releaser-signoz
 
 on:
   # schedule every wednesday 9:30 AM UTC (3pm IST)
@@ -18,9 +18,10 @@ on:
           - 'major'
 
 jobs:
-  releaser:
-    uses: signoz/primus.workflows/.github/workflows/releaser-signoz.yaml@main
+  signoz:
+    uses: signoz/primus.workflows/.github/workflows/releaser.yaml@main
     secrets: inherit
     with:
       PRIMUS_REF: main
+      PROJECT_NAME: signoz
       RELEASE_TYPE: ${{ inputs.release_type || 'minor' }}
