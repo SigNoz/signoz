@@ -2,7 +2,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './InfraMonitoringK8s.styles.scss';
 
-import { Progress, Tag, Tooltip } from 'antd';
+import { Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	K8sPodsData,
@@ -12,10 +12,8 @@ import { Group } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
+	EntityProgressBar,
 	formatBytes,
-	getProgressBarText,
-	getStrokeColorForLimitUtilization,
-	getStrokeColorForRequestUtilization,
 	ValidateColumnValueWrapper,
 } from './commonUtils';
 import { K8sCategory } from './constants';
@@ -171,7 +169,7 @@ const columnsConfig = [
 		key: 'cpu_request',
 		width: 120,
 		sorter: true,
-		align: 'left',
+		align: 'center',
 	},
 	{
 		title: <div className="column-header">CPU Limit Usage (%)</div>,
@@ -179,7 +177,7 @@ const columnsConfig = [
 		key: 'cpu_limit',
 		width: 120,
 		sorter: true,
-		align: 'left',
+		align: 'center',
 	},
 	{
 		title: <div className="column-header">CPU Usage (cores)</div>,
@@ -187,7 +185,7 @@ const columnsConfig = [
 		key: 'cpu',
 		width: 80,
 		sorter: true,
-		align: 'left',
+		align: 'center',
 	},
 	{
 		title: <div className="column-header">Mem Req Usage (%)</div>,
@@ -195,7 +193,7 @@ const columnsConfig = [
 		key: 'memory_request',
 		width: 120,
 		sorter: true,
-		align: 'left',
+		align: 'center',
 	},
 	{
 		title: <div className="column-header">Mem Limit Usage (%)</div>,
@@ -203,7 +201,7 @@ const columnsConfig = [
 		key: 'memory_limit',
 		width: 120,
 		sorter: true,
-		align: 'left',
+		align: 'center',
 	},
 	{
 		title: <div className="column-header">Mem Usage</div>,
@@ -212,7 +210,7 @@ const columnsConfig = [
 		width: 80,
 		ellipsis: true,
 		sorter: true,
-		align: 'left',
+		align: 'center',
 	},
 	{
 		title: (
@@ -225,7 +223,7 @@ const columnsConfig = [
 		width: 40,
 		ellipsis: true,
 		sorter: true,
-		align: 'left',
+		align: 'center',
 	},
 ];
 
@@ -332,17 +330,7 @@ export const formatDataForTable = (
 				attribute="CPU Request"
 			>
 				<div className="progress-container">
-					<Progress
-						percent={Number((pod.podCPURequest * 100).toFixed(1))}
-						strokeLinecap="butt"
-						size="small"
-						status="normal"
-						strokeColor={getStrokeColorForRequestUtilization(pod.podCPURequest)}
-						className="progress-bar"
-						format={() =>
-							getProgressBarText(Number((pod.podCPURequest * 100).toFixed(1)))
-						}
-					/>
+					<EntityProgressBar value={pod.podCPURequest} />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -353,17 +341,7 @@ export const formatDataForTable = (
 				attribute="CPU Limit"
 			>
 				<div className="progress-container">
-					<Progress
-						percent={Number((pod.podCPULimit * 100).toFixed(1))}
-						strokeLinecap="butt"
-						size="small"
-						status="normal"
-						strokeColor={getStrokeColorForLimitUtilization(pod.podCPULimit)}
-						className="progress-bar"
-						format={() =>
-							getProgressBarText(Number((pod.podCPULimit * 100).toFixed(1)))
-						}
-					/>
+					<EntityProgressBar value={pod.podCPULimit} />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -379,17 +357,7 @@ export const formatDataForTable = (
 				attribute="Memory Request"
 			>
 				<div className="progress-container">
-					<Progress
-						percent={Number((pod.podMemoryRequest * 100).toFixed(1))}
-						strokeLinecap="butt"
-						size="small"
-						status="normal"
-						strokeColor={getStrokeColorForRequestUtilization(pod.podMemoryRequest)}
-						className="progress-bar"
-						format={() =>
-							getProgressBarText(Number((pod.podMemoryRequest * 100).toFixed(1)))
-						}
-					/>
+					<EntityProgressBar value={pod.podMemoryRequest} />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -400,17 +368,7 @@ export const formatDataForTable = (
 				attribute="Memory Limit"
 			>
 				<div className="progress-container">
-					<Progress
-						percent={Number((pod.podMemoryLimit * 100).toFixed(1))}
-						strokeLinecap="butt"
-						size="small"
-						status="normal"
-						strokeColor={getStrokeColorForLimitUtilization(pod.podMemoryLimit)}
-						className="progress-bar"
-						format={() =>
-							getProgressBarText(Number((pod.podMemoryLimit * 100).toFixed(1)))
-						}
-					/>
+					<EntityProgressBar value={pod.podMemoryLimit} />
 				</div>
 			</ValidateColumnValueWrapper>
 		),

@@ -2,7 +2,8 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { Color } from '@signozhq/design-tokens';
-import { Tooltip } from 'antd';
+import { Tooltip, Typography } from 'antd';
+import { Progress } from 'antd/lib';
 
 import { getInvalidValueTooltipText, K8sCategory } from './constants';
 
@@ -93,3 +94,22 @@ export function getStrokeColorForLimitUtilization(value: number): string {
 
 export const getProgressBarText = (percent: number): React.ReactNode =>
 	`${percent}%`;
+
+export function EntityProgressBar({ value }: { value: number }): JSX.Element {
+	const percentage = Number((value * 100).toFixed(1));
+
+	return (
+		<div className="entity-progress-bar">
+			<Progress
+				percent={percentage}
+				strokeLinecap="butt"
+				size="small"
+				status="normal"
+				strokeColor={getStrokeColorForLimitUtilization(value)}
+				className="progress-bar"
+				showInfo={false}
+			/>
+			<Typography.Text style={{ fontSize: '10px' }}>{percentage}%</Typography.Text>
+		</div>
+	);
+}

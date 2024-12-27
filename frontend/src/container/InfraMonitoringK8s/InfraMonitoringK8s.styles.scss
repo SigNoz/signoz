@@ -305,12 +305,20 @@
 	.progress-container {
 		display: flex;
 		align-items: center;
+		justify-content: center;
+	}
+
+	.entity-progress-bar {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
 	}
 
 	.progress-bar {
 		flex: 1;
 		margin-right: 8px;
 		margin-bottom: 0px;
+		min-width: 100px;
 	}
 
 	.clickable-row {
@@ -673,8 +681,8 @@
 }
 
 .ant-table-cell {
-	min-width: 202px !important;
-	max-width: 202px !important;
+	min-width: 170px !important;
+	max-width: 170px !important;
 }
 
 .ant-table-row-expand-icon-cell {
