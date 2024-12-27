@@ -561,10 +561,11 @@ function MultiIngestionSettings(): JSX.Element {
 					APIKey.created_at,
 					formatTimezoneAdjustedTimestamp,
 				);
-				const formattedDateAndTime =
-					APIKey &&
-					APIKey?.expires_at &&
-					getFormattedTime(APIKey?.expires_at, formatTimezoneAdjustedTimestamp);
+
+				const expiresOn =
+					!APIKey?.expires_at || APIKey?.expires_at === '0001-01-01T00:00:00Z'
+						? 'No Expiry'
+						: getFormattedTime(APIKey?.expires_at, formatTimezoneAdjustedTimestamp);
 
 				const updatedOn = getFormattedTime(
 					APIKey?.updated_at,
@@ -987,7 +988,7 @@ function MultiIngestionSettings(): JSX.Element {
 							<div className="ingestion-key-last-used-at">
 								<CalendarClock size={14} />
 								Expires on <Minus size={12} />
-								<Typography.Text>{formattedDateAndTime}</Typography.Text>
+								<Typography.Text>{expiresOn}</Typography.Text>
 							</div>
 						</div>
 					</div>
