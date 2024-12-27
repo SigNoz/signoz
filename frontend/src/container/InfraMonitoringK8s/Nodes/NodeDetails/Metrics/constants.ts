@@ -18,11 +18,11 @@ export const nodeWidgetInfo = [
 	},
 	{
 		title: 'CPU Usage (%)',
-		yAxisUnit: 'percent',
+		yAxisUnit: 'percentunit',
 	},
 	{
 		title: 'Memory Usage (%)',
-		yAxisUnit: 'percent',
+		yAxisUnit: 'percentunit',
 	},
 	{
 		title: 'Pods by CPU (top 10)',
@@ -46,7 +46,7 @@ export const nodeWidgetInfo = [
 	},
 	{
 		title: 'Filesystem usage (%)',
-		yAxisUnit: 'percent',
+		yAxisUnit: 'percentunit',
 	},
 ];
 

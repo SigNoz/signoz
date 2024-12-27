@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import '../InfraMonitoringK8s.styles.scss';
+import './K8sNodesList.styles.scss';
 
 import { LoadingOutlined } from '@ant-design/icons';
 import {
@@ -28,7 +29,6 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { K8sCategory } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
-import { dummyColumnConfig } from '../utils';
 import NodeDetails from './NodeDetails';
 import {
 	defaultAddedColumns,
@@ -275,10 +275,7 @@ function K8sNodesList({
 		});
 	};
 
-	const nestedColumns = useMemo(() => {
-		const nestedColumns = getK8sNodesListColumns([]);
-		return [dummyColumnConfig, ...nestedColumns];
-	}, []);
+	const nestedColumns = useMemo(() => getK8sNodesListColumns([]), []);
 
 	const isGroupedByAttribute = groupBy.length > 0;
 
@@ -458,7 +455,7 @@ function K8sNodesList({
 
 			{showsNodesTable && (
 				<Table
-					className="k8s-list-table"
+					className="k8s-list-table nodes-list-table"
 					dataSource={isFetching || isLoading ? [] : formattedNodesData}
 					columns={columns}
 					pagination={{

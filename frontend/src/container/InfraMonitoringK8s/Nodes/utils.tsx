@@ -24,25 +24,25 @@ export const defaultAddedColumns: IEntityColumn[] = [
 		canRemove: false,
 	},
 	{
-		label: 'CPU Utilization (cores)',
+		label: 'CPU Usage (cores)',
 		value: 'cpu',
 		id: 'cpu',
 		canRemove: false,
 	},
 	{
-		label: 'CPU Allocatable (cores)',
+		label: 'CPU Alloc (cores)',
 		value: 'cpu_allocatable',
 		id: 'cpu_allocatable',
 		canRemove: false,
 	},
 	{
-		label: 'Memory Utilization (bytes)',
+		label: 'Memory Usage (bytes)',
 		value: 'memory',
 		id: 'memory',
 		canRemove: false,
 	},
 	{
-		label: 'Memory Allocatable (bytes)',
+		label: 'Memory Alloc (bytes)',
 		value: 'memory_allocatable',
 		id: 'memory_allocatable',
 		canRemove: false,
@@ -89,8 +89,8 @@ const columnsConfig = [
 		dataIndex: 'nodeName',
 		key: 'nodeName',
 		ellipsis: true,
-		width: 120,
-		sorter: true,
+		width: 80,
+		sorter: false,
 		align: 'left',
 	},
 	{
@@ -98,12 +98,12 @@ const columnsConfig = [
 		dataIndex: 'clusterName',
 		key: 'clusterName',
 		ellipsis: true,
-		width: 120,
-		sorter: true,
+		width: 80,
+		sorter: false,
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">CPU Utilization (cores)</div>,
+		title: <div className="column-header-left">CPU Usage (cores)</div>,
 		dataIndex: 'cpu',
 		key: 'cpu',
 		width: 80,
@@ -111,7 +111,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">CPU Allocatable (cores)</div>,
+		title: <div className="column-header-left">CPU Alloc (cores)</div>,
 		dataIndex: 'cpu_allocatable',
 		key: 'cpu_allocatable',
 		width: 80,
@@ -119,7 +119,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Memory Utilization (bytes)</div>,
+		title: <div className="column-header-left">Memory Usage (bytes)</div>,
 		dataIndex: 'memory',
 		key: 'memory',
 		width: 80,
@@ -127,7 +127,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Memory Allocatable (bytes)</div>,
+		title: <div className="column-header-left">Memory Alloc (bytes)</div>,
 		dataIndex: 'memory_allocatable',
 		key: 'memory_allocatable',
 		width: 80,
@@ -179,11 +179,9 @@ export const formatDataForTable = (
 		key: `${node.nodeUID}-${index}`,
 		nodeUID: node.nodeUID || '',
 		nodeName: (
-			<div className="pod-name-container">
-				<Tooltip title={node.meta.k8s_node_name}>
-					<div className="pod-name">{node.meta.k8s_node_name || ''}</div>
-				</Tooltip>
-			</div>
+			<Tooltip title={node.meta.k8s_node_name}>
+				{node.meta.k8s_node_name || ''}
+			</Tooltip>
 		),
 		clusterName: node.meta.k8s_cluster_name,
 		cpu: (

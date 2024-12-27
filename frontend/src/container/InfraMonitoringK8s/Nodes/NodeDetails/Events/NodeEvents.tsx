@@ -77,6 +77,7 @@ export default function Events({
 						aggregateAttribute: {
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
+						filters: [] as any,
 					},
 				],
 			},
