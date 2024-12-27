@@ -1,0 +1,16 @@
+name: releaser
+
+on:
+  # schedule every wednesday 9:30 AM UTC (3pm IST)
+  schedule:
+    - cron: '30 9 * * 3'
+
+  # allow manual triggering of the workflow by a maintainer with no inputs
+  workflow_dispatch: {}
+
+jobs:
+  releaser:
+    uses: signoz/primus.workflows/.github/workflows/releaser-signoz.yaml@main
+    secrets: inherit
+    with:
+      PRIMUS_REF: main

@@ -32,6 +32,7 @@ import (
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/web"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
@@ -107,7 +108,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 }
 
 // NewServer creates and initializes Server
-func NewServer(serverOptions *ServerOptions) (*Server, error) {
+func NewServer(serverOptions *ServerOptions, web *web.Web) (*Server, error) {
 
 	modelDao, err := dao.InitDao("sqlite", baseconst.RELATIONAL_DATASOURCE_PATH)
 	if err != nil {
@@ -291,7 +292,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		usageManager:       usageManager,
 	}
 
-	httpServer, err := s.createPublicServer(apiHandler)
+	httpServer, err := s.createPublicServer(apiHandler, web)
 
 	if err != nil {
 		return nil, err
@@ -340,7 +341,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	}, nil
 }
 
-func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, error) {
+func (s *Server) createPublicServer(apiHandler *api.APIHandler, web *web.Web) (*http.Server, error) {
 
 	r := baseapp.NewRouter()
 
@@ -383,6 +384,11 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	handler := c.Handler(r)
 
 	handler = handlers.CompressHandler(handler)
+
+	err := web.AddToRouter(r)
+	if err != nil {
+		return nil, err
+	}
 
 	return &http.Server{
 		Handler: handler,
