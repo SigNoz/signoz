@@ -1,6 +1,10 @@
+/* eslint-disable react/require-default-props */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { Color } from '@signozhq/design-tokens';
+import { Tooltip } from 'antd';
+
+import { getInvalidValueTooltipText, K8sCategory } from './constants';
 
 /**
  * Converts size in bytes to a human-readable string with appropriate units
@@ -21,12 +25,25 @@ export function formatBytes(bytes: number, decimals = 2): string {
 export function ValidateColumnValueWrapper({
 	children,
 	value,
+	entity,
+	attribute,
 }: {
 	children: React.ReactNode;
 	value: number;
+	entity?: K8sCategory;
+	attribute?: string;
 }): JSX.Element {
 	if (value === -1) {
-		return <div>-</div>;
+		let element = <div>-</div>;
+		if (entity && attribute) {
+			element = (
+				<Tooltip title={getInvalidValueTooltipText(entity, attribute)}>
+					{element}
+				</Tooltip>
+			);
+		}
+
+		return element;
 	}
 
 	return <div>{children}</div>;

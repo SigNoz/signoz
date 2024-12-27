@@ -34,7 +34,6 @@ import LoadingContainer from '../LoadingContainer';
 import {
 	defaultAddedColumns,
 	defaultAvailableColumns,
-	dummyColumnConfig,
 	formatDataForTable,
 	getK8sPodsListColumns,
 	getK8sPodsListQuery,
@@ -384,11 +383,9 @@ function K8sPodsList({
 		[setAddedColumns, setAvailableColumns],
 	);
 
-	const nestedColumns = useMemo(() => {
-		const nestedColumns = getK8sPodsListColumns(addedColumns, []);
-
-		return [dummyColumnConfig, ...nestedColumns];
-	}, [addedColumns]);
+	const nestedColumns = useMemo(() => getK8sPodsListColumns(addedColumns, []), [
+		addedColumns,
+	]);
 
 	const isGroupedByAttribute = groupBy.length > 0;
 

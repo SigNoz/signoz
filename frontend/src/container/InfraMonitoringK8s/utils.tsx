@@ -18,14 +18,7 @@ import {
 	getStrokeColorForRequestUtilization,
 	ValidateColumnValueWrapper,
 } from './commonUtils';
-import { INVALID_MEMORY_CPU_VALUE_MESSAGE } from './constants';
-
-export interface IEntityColumn {
-	label: string;
-	value: string;
-	id: string;
-	canRemove: boolean;
-}
+import { K8sCategory } from './constants';
 
 export interface IEntityColumn {
 	label: string;
@@ -49,43 +42,43 @@ export const defaultAddedColumns: IPodColumn[] = [
 		canRemove: false,
 	},
 	{
-		label: 'CPU Request Utilization (% of limit)',
+		label: 'CPU Req Usage (%)',
 		value: 'cpu_request',
 		id: 'cpu_request',
 		canRemove: false,
 	},
 	{
-		label: 'CPU Limit Utilization (% of request)',
+		label: 'CPU Limit Usage (%)',
 		value: 'cpu_limit',
 		id: 'cpu_limit',
 		canRemove: false,
 	},
 	{
-		label: 'CPU Utilization (cores)',
+		label: 'CPU Usage (cores)',
 		value: 'cpu',
 		id: 'cpu',
 		canRemove: false,
 	},
 	{
-		label: 'Memory Request Utilization (% of limit)',
+		label: 'Mem Req Usage (%)',
 		value: 'memory_request',
 		id: 'memory_request',
 		canRemove: false,
 	},
 	{
-		label: 'Memory Limit Utilization (% of request)',
+		label: 'Mem Limit Usage (%)',
 		value: 'memory_limit',
 		id: 'memory_limit',
 		canRemove: false,
 	},
 	{
-		label: 'Memory Utilization (bytes)',
+		label: 'Mem Usage',
 		value: 'memory',
 		id: 'memory',
 		canRemove: false,
 	},
 	{
-		label: 'Container Restarts',
+		label: 'Restarts',
 		value: 'restarts',
 		id: 'restarts',
 		canRemove: false,
@@ -123,7 +116,7 @@ export interface K8sPodsRowData {
 	memory_request: React.ReactNode;
 	memory_limit: React.ReactNode;
 	memory: React.ReactNode;
-	restarts: number;
+	restarts: React.ReactNode;
 	groupedByMeta?: any;
 }
 
@@ -146,7 +139,7 @@ const podGroupColumnConfig = {
 	ellipsis: {
 		showTitle: false,
 	},
-	width: 120,
+	width: 150,
 	align: 'left',
 	sorter: false,
 };
@@ -155,7 +148,7 @@ export const dummyColumnConfig = {
 	title: <div className="column-header dummy-column">&nbsp;</div>,
 	dataIndex: 'dummy',
 	key: 'dummy',
-	width: 25,
+	width: 40,
 	sorter: false,
 	align: 'left',
 };
@@ -168,46 +161,28 @@ const columnsConfig = [
 		ellipsis: {
 			showTitle: false,
 		},
+		width: 150,
+		sorter: false,
+		align: 'left',
+	},
+	{
+		title: <div className="column-header">CPU Req Usage (%)</div>,
+		dataIndex: 'cpu_request',
+		key: 'cpu_request',
 		width: 120,
 		sorter: true,
 		align: 'left',
 	},
 	{
-		title: (
-			<div className="column-header">
-				<Tooltip title={INVALID_MEMORY_CPU_VALUE_MESSAGE}>
-					CPU Request Utilization (% of limit)
-				</Tooltip>
-			</div>
-		),
-		dataIndex: 'cpu_request',
-		key: 'cpu_request',
-		width: 150,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: (
-			<div className="column-header">
-				<Tooltip title={INVALID_MEMORY_CPU_VALUE_MESSAGE}>
-					CPU Limit Utilization (% of request)
-				</Tooltip>
-			</div>
-		),
+		title: <div className="column-header">CPU Limit Usage (%)</div>,
 		dataIndex: 'cpu_limit',
 		key: 'cpu_limit',
-		width: 150,
+		width: 120,
 		sorter: true,
 		align: 'left',
 	},
 	{
-		title: (
-			<div className="column-header">
-				<Tooltip title={INVALID_MEMORY_CPU_VALUE_MESSAGE}>
-					CPU Utilization (cores)
-				</Tooltip>
-			</div>
-		),
+		title: <div className="column-header">CPU Usage (cores)</div>,
 		dataIndex: 'cpu',
 		key: 'cpu',
 		width: 80,
@@ -215,44 +190,26 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: (
-			<div className="column-header">
-				<Tooltip title={INVALID_MEMORY_CPU_VALUE_MESSAGE}>
-					Memory Request Utilization (% of limit)
-				</Tooltip>
-			</div>
-		),
+		title: <div className="column-header">Mem Req Usage (%)</div>,
 		dataIndex: 'memory_request',
 		key: 'memory_request',
-		width: 150,
+		width: 120,
 		sorter: true,
 		align: 'left',
 	},
 	{
-		title: (
-			<div className="column-header">
-				<Tooltip title={INVALID_MEMORY_CPU_VALUE_MESSAGE}>
-					Memory Limit Utilization (% of request)
-				</Tooltip>
-			</div>
-		),
+		title: <div className="column-header">Mem Limit Usage (%)</div>,
 		dataIndex: 'memory_limit',
 		key: 'memory_limit',
-		width: 150,
+		width: 120,
 		sorter: true,
 		align: 'left',
 	},
 	{
-		title: (
-			<div className="column-header">
-				<Tooltip title={INVALID_MEMORY_CPU_VALUE_MESSAGE}>
-					Memory Utilization (bytes)
-				</Tooltip>
-			</div>
-		),
+		title: <div className="column-header">Mem Usage</div>,
 		dataIndex: 'memory',
 		key: 'memory',
-		width: 100,
+		width: 80,
 		ellipsis: true,
 		sorter: true,
 		align: 'left',
@@ -260,12 +217,12 @@ const columnsConfig = [
 	{
 		title: (
 			<div className="column-header">
-				<Tooltip title="Container Restarts">Container Restarts</Tooltip>
+				<Tooltip title="Container Restarts">Restarts</Tooltip>
 			</div>
 		),
 		dataIndex: 'restarts',
 		key: 'restarts',
-		width: 100,
+		width: 40,
 		ellipsis: true,
 		sorter: true,
 		align: 'left',
@@ -277,7 +234,7 @@ export const namespaceColumnConfig = {
 	dataIndex: 'namespace',
 	key: 'namespace',
 	width: 100,
-	sorter: true,
+	sorter: false,
 	ellipsis: true,
 	align: 'left',
 };
@@ -312,16 +269,6 @@ export const getK8sPodsListColumns = (
 	addedColumns: IPodColumn[],
 	groupBy: IBuilderQuery['groupBy'],
 ): ColumnType<K8sPodsRowData>[] => {
-	if (groupBy.length > 0) {
-		const filteredColumns = [...columnsConfig].filter(
-			(column) => column.key !== 'podName',
-		);
-
-		filteredColumns.unshift(podGroupColumnConfig);
-
-		return filteredColumns as ColumnType<K8sPodsRowData>[];
-	}
-
 	const updatedColumnsConfig = [...columnsConfig];
 
 	// eslint-disable-next-line no-restricted-syntax
@@ -330,6 +277,16 @@ export const getK8sPodsListColumns = (
 		if (config) {
 			updatedColumnsConfig.push(config);
 		}
+	}
+
+	if (groupBy.length > 0) {
+		const filteredColumns = [...updatedColumnsConfig].filter(
+			(column) => column.key !== 'podName',
+		);
+
+		filteredColumns.unshift(podGroupColumnConfig);
+
+		return filteredColumns as ColumnType<K8sPodsRowData>[];
 	}
 
 	return updatedColumnsConfig as ColumnType<K8sPodsRowData>[];
@@ -363,21 +320,23 @@ export const formatDataForTable = (
 	data.map((pod, index) => ({
 		key: `${pod.podUID}-${index}`,
 		podName: (
-			<div className="pod-name-container">
-				<Tooltip title={pod.meta.k8s_pod_name || ''}>
-					<div className="pod-name">{pod.meta.k8s_pod_name || ''}</div>
-				</Tooltip>
-			</div>
+			<Tooltip title={pod.meta.k8s_pod_name || ''}>
+				{pod.meta.k8s_pod_name || ''}
+			</Tooltip>
 		),
 		podUID: pod.podUID || '',
 		cpu_request: (
-			<ValidateColumnValueWrapper value={pod.podCPURequest}>
+			<ValidateColumnValueWrapper
+				value={pod.podCPURequest}
+				entity={K8sCategory.PODS}
+				attribute="CPU Request"
+			>
 				<div className="progress-container">
 					<Progress
 						percent={Number((pod.podCPURequest * 100).toFixed(1))}
 						strokeLinecap="butt"
 						size="small"
-						status="active"
+						status="normal"
 						strokeColor={getStrokeColorForRequestUtilization(pod.podCPURequest)}
 						className="progress-bar"
 						format={() =>
@@ -388,13 +347,17 @@ export const formatDataForTable = (
 			</ValidateColumnValueWrapper>
 		),
 		cpu_limit: (
-			<ValidateColumnValueWrapper value={pod.podCPULimit}>
+			<ValidateColumnValueWrapper
+				value={pod.podCPULimit}
+				entity={K8sCategory.PODS}
+				attribute="CPU Limit"
+			>
 				<div className="progress-container">
 					<Progress
 						percent={Number((pod.podCPULimit * 100).toFixed(1))}
 						strokeLinecap="butt"
 						size="small"
-						status="active"
+						status="normal"
 						strokeColor={getStrokeColorForLimitUtilization(pod.podCPULimit)}
 						className="progress-bar"
 						format={() =>
@@ -410,13 +373,17 @@ export const formatDataForTable = (
 			</ValidateColumnValueWrapper>
 		),
 		memory_request: (
-			<ValidateColumnValueWrapper value={pod.podMemoryRequest}>
+			<ValidateColumnValueWrapper
+				value={pod.podMemoryRequest}
+				entity={K8sCategory.PODS}
+				attribute="Memory Request"
+			>
 				<div className="progress-container">
 					<Progress
 						percent={Number((pod.podMemoryRequest * 100).toFixed(1))}
 						strokeLinecap="butt"
 						size="small"
-						status="active"
+						status="normal"
 						strokeColor={getStrokeColorForRequestUtilization(pod.podMemoryRequest)}
 						className="progress-bar"
 						format={() =>
@@ -427,13 +394,17 @@ export const formatDataForTable = (
 			</ValidateColumnValueWrapper>
 		),
 		memory_limit: (
-			<ValidateColumnValueWrapper value={pod.podMemoryLimit}>
+			<ValidateColumnValueWrapper
+				value={pod.podMemoryLimit}
+				entity={K8sCategory.PODS}
+				attribute="Memory Limit"
+			>
 				<div className="progress-container">
 					<Progress
 						percent={Number((pod.podMemoryLimit * 100).toFixed(1))}
 						strokeLinecap="butt"
 						size="small"
-						status="active"
+						status="normal"
 						strokeColor={getStrokeColorForLimitUtilization(pod.podMemoryLimit)}
 						className="progress-bar"
 						format={() =>
@@ -448,7 +419,11 @@ export const formatDataForTable = (
 				{formatBytes(pod.podMemory)}
 			</ValidateColumnValueWrapper>
 		),
-		restarts: pod.restartCount,
+		restarts: (
+			<ValidateColumnValueWrapper value={pod.restartCount}>
+				{pod.restartCount}
+			</ValidateColumnValueWrapper>
+		),
 		namespace: pod.meta.k8s_namespace_name,
 		node: pod.meta.k8s_node_name,
 		cluster: pod.meta.k8s_job_name,

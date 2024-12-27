@@ -461,7 +461,7 @@
 		.expanded-table-container {
 			border: 1px solid var(--bg-ink-400);
 			overflow-x: auto;
-			padding: 8px;
+			padding-left: 16px;
 
 			&::-webkit-scrollbar {
 				width: 0.1rem;
@@ -670,4 +670,14 @@
 			}
 		}
 	}
+}
+
+.ant-table-cell {
+	min-width: 202px !important;
+	max-width: 202px !important;
+}
+
+.ant-table-row-expand-icon-cell {
+	min-width: 30px !important;
+	max-width: 30px !important;
 }
