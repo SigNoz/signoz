@@ -23,4 +23,4 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
-      RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+      RELEASE_TYPE: ${{ inputs.release_type || 'minor' }}
