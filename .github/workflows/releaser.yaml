@@ -10,7 +10,7 @@ on:
 
 jobs:
   releaser:
-    uses: signoz/primus.workflows/.github/workflows/releaser-signoz.yaml@feat/releaser-signoz
+    uses: signoz/primus.workflows/.github/workflows/releaser-signoz.yaml@main
     secrets: inherit
     with:
-      PRIMUS_REF: feat/signoz-releaser
+      PRIMUS_REF: main
