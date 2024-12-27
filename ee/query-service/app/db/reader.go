@@ -17,6 +17,7 @@ type ClickhouseReader struct {
 	*basechr.ClickHouseReader
 }
 
+// dummy
 func NewDataConnector(
 	localDB *sqlx.DB,
 	promConfigPath string,
