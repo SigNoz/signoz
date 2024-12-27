@@ -6,7 +6,16 @@ on:
     - cron: '30 9 * * 3'
 
   # allow manual triggering of the workflow by a maintainer with no inputs
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Type of the release"
+        type: choice
+        required: true
+        options:
+          - 'patch'
+          - 'minor'
+          - 'major'
 
 jobs:
   releaser:
@@ -14,3 +23,4 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
+      RELEASE_TYPE: ${{ github.event.inputs.release_type }}
