@@ -67,13 +67,18 @@ function PodTraces({
 						aggregateAttribute: {
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
-						filters: [] as any,
+						filters: {
+							items: [],
+							op: 'AND',
+						},
 					},
 				],
 			},
 		}),
 		[currentQuery],
 	);
+
+	console.log({ updatedCurrentQuery });
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 

@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/no-duplicate-string */
 import './PodDetails.styles.scss';
 
@@ -239,13 +240,17 @@ function PodDetails({
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
 			setLogFilters((prevFilters) => {
-				const hostNameFilter = prevFilters.items.find(
-					(item) => item.key?.key === QUERY_KEYS.K8S_POD_NAME,
+				const primaryFilters = prevFilters.items.filter((item) =>
+					[
+						QUERY_KEYS.K8S_POD_NAME,
+						QUERY_KEYS.K8S_CLUSTER_NAME,
+						QUERY_KEYS.K8S_NAMESPACE_NAME,
+					].includes(item.key?.key ?? ''),
 				);
 				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
 				const newFilters = value.items.filter(
 					(item) =>
-						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_POD_NAME,
+						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_CLUSTER_NAME,
 				);
 
 				logEvent('Infra Monitoring: Pods list details logs filters applied', {
@@ -255,7 +260,7 @@ function PodDetails({
 				return {
 					op: 'AND',
 					items: [
-						hostNameFilter,
+						...primaryFilters,
 						...newFilters,
 						...(paginationFilter ? [paginationFilter] : []),
 					].filter((item): item is TagFilterItem => item !== undefined),
@@ -269,8 +274,12 @@ function PodDetails({
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
 			setTracesFilters((prevFilters) => {
-				const hostNameFilter = prevFilters.items.find(
-					(item) => item.key?.key === QUERY_KEYS.K8S_POD_NAME,
+				const primaryFilters = prevFilters.items.filter((item) =>
+					[
+						QUERY_KEYS.K8S_POD_NAME,
+						QUERY_KEYS.K8S_CLUSTER_NAME,
+						QUERY_KEYS.K8S_NAMESPACE_NAME,
+					].includes(item.key?.key ?? ''),
 				);
 
 				logEvent('Infra Monitoring: Pods list details traces filters applied', {
@@ -280,7 +289,7 @@ function PodDetails({
 				return {
 					op: 'AND',
 					items: [
-						hostNameFilter,
+						...primaryFilters,
 						...value.items.filter(
 							(item) => item.key?.key !== QUERY_KEYS.K8S_POD_NAME,
 						),

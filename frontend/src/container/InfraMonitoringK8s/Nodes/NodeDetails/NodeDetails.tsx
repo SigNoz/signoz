@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-identical-functions */
 import './NodeDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
@@ -220,8 +221,10 @@ function NodeDetails({
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
 			setLogFilters((prevFilters) => {
-				const hostNameFilter = prevFilters.items.find(
-					(item) => item.key?.key === QUERY_KEYS.K8S_NODE_NAME,
+				const primaryFilters = prevFilters.items.filter((item) =>
+					[QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
+						item.key?.key ?? '',
+					),
 				);
 				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
 				const newFilters = value.items.filter(
@@ -236,7 +239,7 @@ function NodeDetails({
 				return {
 					op: 'AND',
 					items: [
-						hostNameFilter,
+						...primaryFilters,
 						...newFilters,
 						...(paginationFilter ? [paginationFilter] : []),
 					].filter((item): item is TagFilterItem => item !== undefined),
@@ -250,8 +253,10 @@ function NodeDetails({
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
 			setTracesFilters((prevFilters) => {
-				const hostNameFilter = prevFilters.items.find(
-					(item) => item.key?.key === QUERY_KEYS.K8S_NODE_NAME,
+				const primaryFilters = prevFilters.items.filter((item) =>
+					[QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
+						item.key?.key ?? '',
+					),
 				);
 
 				logEvent('Infra Monitoring: Nodes list details traces filters applied', {
@@ -261,7 +266,7 @@ function NodeDetails({
 				return {
 					op: 'AND',
 					items: [
-						hostNameFilter,
+						...primaryFilters,
 						...value.items.filter(
 							(item) => item.key?.key !== QUERY_KEYS.K8S_NODE_NAME,
 						),

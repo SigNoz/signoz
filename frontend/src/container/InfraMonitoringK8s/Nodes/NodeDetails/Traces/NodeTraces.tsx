@@ -67,7 +67,10 @@ function NodeTraces({
 						aggregateAttribute: {
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
-						filters: [] as any,
+						filters: {
+							items: [],
+							op: 'AND',
+						},
 					},
 				],
 			},

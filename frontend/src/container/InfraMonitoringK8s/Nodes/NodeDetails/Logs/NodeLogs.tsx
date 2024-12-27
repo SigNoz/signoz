@@ -22,6 +22,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 } from 'uuid';
 
+import { QUERY_KEYS } from '../constants';
 import { getNodeLogsQueryPayload } from './constants';
 import NoLogsContainer from './NoLogsContainer';
 
@@ -46,7 +47,11 @@ function PodLogs({
 
 	useEffect(() => {
 		const newRestFilters = filters.items.filter(
-			(item) => item.key?.key !== 'id' && item.key?.key !== 'node.name',
+			(item) =>
+				item.key?.key !== 'id' &&
+				![QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
+					item.key?.key ?? '',
+				),
 		);
 
 		const areFiltersSame = isEqual(restFilters, newRestFilters);
