@@ -110,4 +110,16 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 		},
 		defaultOpen: false,
 	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'K8s Pod Name',
+		attributeKey: {
+			key: 'k8s.pod.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		defaultOpen: false,
+	},
 ];

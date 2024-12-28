@@ -3,7 +3,7 @@ import { Flex, Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
-import useLicense from 'hooks/useLicense';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
@@ -21,15 +21,15 @@ function ServiceTraceTable({
 	const [RPS, setRPS] = useState(0);
 	const { t: getText } = useTranslation(['services']);
 
-	const { data: licenseData, isFetching } = useLicense();
+	const { licenses, isFetchingLicenses } = useAppContext();
 	const isCloudUserVal = isCloudUser();
 	const tableColumns = useMemo(() => getColumns(search, false), [search]);
 
 	useEffect(() => {
 		if (
-			!isFetching &&
-			licenseData?.payload?.onTrial &&
-			!licenseData?.payload?.trialConvertedToSubscription &&
+			!isFetchingLicenses &&
+			licenses?.onTrial &&
+			!licenses?.trialConvertedToSubscription &&
 			isCloudUserVal
 		) {
 			if (services.length > 0) {
@@ -39,7 +39,13 @@ function ServiceTraceTable({
 				setRPS(0);
 			}
 		}
-	}, [services, licenseData, isFetching, isCloudUserVal]);
+	}, [
+		services,
+		isCloudUserVal,
+		isFetchingLicenses,
+		licenses?.onTrial,
+		licenses?.trialConvertedToSubscription,
+	]);
 
 	const paginationConfig = {
 		defaultPageSize: 10,

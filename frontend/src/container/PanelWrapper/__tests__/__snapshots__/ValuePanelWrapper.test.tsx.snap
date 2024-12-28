@@ -26,7 +26,6 @@ exports[`Value panel wrappper tests should render tooltip when there are conflic
 }
 
 <div>
-   
   <div
     class="c0"
   >
