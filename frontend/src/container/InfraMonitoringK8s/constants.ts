@@ -6,6 +6,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 export enum K8sCategory {
+	HOSTS = 'hosts',
 	PODS = 'pods',
 	NODES = 'nodes',
 	NAMESPACES = 'namespaces',
@@ -19,6 +20,7 @@ export enum K8sCategory {
 }
 
 export const K8sCategories = {
+	HOSTS: 'hosts',
 	PODS: 'pods',
 	NODES: 'nodes',
 	NAMESPACES: 'namespaces',
@@ -29,6 +31,20 @@ export const K8sCategories = {
 	CONTAINERS: 'containers',
 	JOBS: 'jobs',
 	VOLUMES: 'volumes',
+};
+
+export const K8sEntityToAggregateAttributeMapping = {
+	[K8sCategory.HOSTS]: 'system_cpu_load_average_15m',
+	[K8sCategory.PODS]: 'k8s_pod_cpu_utilization',
+	[K8sCategory.NODES]: 'k8s_node_cpu_utilization',
+	[K8sCategory.NAMESPACES]: 'k8s_pod_cpu_utilization',
+	[K8sCategory.CLUSTERS]: 'k8s_node_cpu_utilization',
+	[K8sCategory.DEPLOYMENTS]: 'k8s_pod_cpu_utilization',
+	[K8sCategory.STATEFULSETS]: 'k8s_pod_cpu_utilization',
+	[K8sCategory.DAEMONSETS]: 'k8s_pod_cpu_utilization',
+	[K8sCategory.CONTAINERS]: 'k8s_pod_cpu_utilization',
+	[K8sCategory.JOBS]: 'k8s_pod_cpu_utilization',
+	[K8sCategory.VOLUMES]: 'k8s_pod_cpu_utilization',
 };
 
 export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [

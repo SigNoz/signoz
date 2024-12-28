@@ -28,7 +28,10 @@ import {
 	updateLocalStorage,
 } from 'utils/localStorageReadWrite';
 
-import { K8sCategory } from '../constants';
+import {
+	K8sCategory,
+	K8sEntityToAggregateAttributeMapping,
+} from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import {
@@ -92,7 +95,7 @@ function K8sPodsList({
 	} = useGetAggregateKeys(
 		{
 			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: '',
+			aggregateAttribute: K8sEntityToAggregateAttributeMapping[K8sCategory.PODS],
 			aggregateOperator: 'noop',
 			searchText: '',
 			tagType: '',
@@ -100,8 +103,8 @@ function K8sPodsList({
 		{
 			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
 		},
-		true,
-		K8sCategory.PODS,
+		true, // isInfraMonitoring
+		K8sCategory.PODS, // infraMonitoringEntity
 	);
 
 	useEffect(() => {

@@ -14,6 +14,7 @@ export const getInfraAttributesValues = async ({
 	filterAttributeKeyDataType,
 	tagType,
 	searchText,
+	aggregateAttribute,
 }: IGetAttributeValuesPayload): Promise<
 	SuccessResponse<IAttributeValuesResponse> | ErrorResponse
 > => {
@@ -23,6 +24,7 @@ export const getInfraAttributesValues = async ({
 				dataSource,
 				attributeKey,
 				searchText,
+				aggregateAttribute,
 			})}&filterAttributeKeyDataType=${filterAttributeKeyDataType}&tagType=${tagType}`,
 		);
 

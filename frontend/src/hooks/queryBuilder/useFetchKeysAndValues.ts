@@ -1,6 +1,10 @@
-import { getInfraAttributesValues } from 'api/infraMonitoring/getInfraAttributeValues';
+/* eslint-disable sonarjs/cognitive-complexity */
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
+import {
+	K8sCategory,
+	K8sEntityToAggregateAttributeMapping,
+} from 'container/InfraMonitoringK8s/constants';
 import {
 	getRemovePrefixFromKey,
 	getTagToken,
@@ -45,6 +49,7 @@ export const useFetchKeysAndValues = (
 	searchKey: string,
 	shouldUseSuggestions?: boolean,
 	isInfraMonitoring?: boolean,
+	entity?: K8sCategory | null,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [exampleQueries, setExampleQueries] = useState<TagFilter[]>([]);
@@ -104,14 +109,18 @@ export const useFetchKeysAndValues = (
 			searchText: searchKey,
 			dataSource: query.dataSource,
 			aggregateOperator: query.aggregateOperator,
-			aggregateAttribute: query.aggregateAttribute.key,
+			aggregateAttribute:
+				isInfraMonitoring && entity
+					? K8sEntityToAggregateAttributeMapping[entity]
+					: query.aggregateAttribute.key,
 			tagType: query.aggregateAttribute.type ?? null,
 		},
 		{
 			queryKey: [searchParams],
 			enabled: isQueryEnabled && !shouldUseSuggestions,
 		},
-		isInfraMonitoring,
+		isInfraMonitoring, // isInfraMonitoring
+		entity, // infraMonitoringEntity
 	);
 
 	const {
@@ -157,9 +166,13 @@ export const useFetchKeysAndValues = (
 
 		try {
 			let payload;
-			if (isInfraMonitoring) {
-				const response = await getInfraAttributesValues({
-					dataSource: DataSource.METRICS,
+			if (isInfraMonitoring && entity) {
+				const response = await getAttributesValues({
+					aggregateOperator: 'noop',
+					dataSource: query.dataSource,
+					aggregateAttribute:
+						K8sEntityToAggregateAttributeMapping[entity] ||
+						query.aggregateAttribute.key,
 					attributeKey: filterAttributeKey?.key ?? tagKey,
 					filterAttributeKeyDataType:
 						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
@@ -167,8 +180,6 @@ export const useFetchKeysAndValues = (
 					searchText: isInNInOperator(tagOperator)
 						? tagValue[tagValue.length - 1]?.toString() ?? ''
 						: tagValue?.toString() ?? '',
-					aggregateOperator: query.aggregateOperator,
-					aggregateAttribute: query.aggregateAttribute.key,
 				});
 				payload = response.payload;
 			} else {

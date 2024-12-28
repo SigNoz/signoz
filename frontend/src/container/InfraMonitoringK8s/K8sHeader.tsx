@@ -9,6 +9,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+import { K8sCategory } from './constants';
 import K8sFiltersSidePanel from './K8sFiltersSidePanel/K8sFiltersSidePanel';
 import { IPodColumn } from './utils';
 
@@ -95,6 +96,7 @@ function K8sHeader({
 						onChange={handleChangeTagFilters}
 						isInfraMonitoring
 						disableNavigationShortcuts
+						entity={K8sCategory.PODS}
 					/>
 				</div>
 
