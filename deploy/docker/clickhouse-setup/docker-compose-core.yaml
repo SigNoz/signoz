@@ -1,8 +1,6 @@
 version: "2.4"
-
 include:
   - test-app-docker-compose.yaml
-
 services:
   zookeeper-1:
     image: bitnami/zookeeper:3.7.1
@@ -20,7 +18,6 @@ services:
       # - ZOO_SERVERS=0.0.0.0:2888:3888,zookeeper-2:2888:3888,zookeeper-3:2888:3888
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_AUTOPURGE_INTERVAL=1
-
   clickhouse:
     image: clickhouse/clickhouse-server:24.1.2-alpine
     container_name: signoz-clickhouse
@@ -43,18 +40,10 @@ services:
         max-file: "3"
     healthcheck:
       # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
-      test:
-        [
-          "CMD",
-          "wget",
-          "--spider",
-          "-q",
-          "0.0.0.0:8123/ping"
-        ]
+      test: ["CMD", "wget", "--spider", "-q", "0.0.0.0:8123/ping"]
       interval: 30s
       timeout: 5s
       retries: 3
-
   alertmanager:
     container_name: signoz-alertmanager
     image: signoz/alertmanager:0.23.7
@@ -67,33 +56,25 @@ services:
     command:
       - --queryService.url=http://query-service:8085
       - --storage.path=/data
-
   otel-collector-migrator:
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.16}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.18}
     container_name: otel-migrator
     command:
-      - "sync" 
+      - "sync"
       - "--dsn=tcp://clickhouse:9000"
-      - "--up=" 
+      - "--up="
     depends_on:
       clickhouse:
         condition: service_healthy
-      # clickhouse-2:
-      #   condition: service_healthy
-      # clickhouse-3:
-      #   condition: service_healthy
-
+        # clickhouse-2:
+        #   condition: service_healthy
+        # clickhouse-3:
+        #   condition: service_healthy
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
   otel-collector:
     container_name: signoz-otel-collector
-    image: signoz/signoz-otel-collector:0.111.16
-    command:
-      [
-        "--config=/etc/otel-collector-config.yaml",
-        "--manager-config=/etc/manager-config.yaml",
-        "--copy-path=/var/tmp/collector-config.yaml",
-        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
-      ]
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.111.18}
+    command: ["--config=/etc/otel-collector-config.yaml", "--manager-config=/etc/manager-config.yaml", "--copy-path=/var/tmp/collector-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
     # user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -122,7 +103,6 @@ services:
         condition: service_completed_successfully
       query-service:
         condition: service_healthy
-
   logspout:
     image: "gliderlabs/logspout:v3.2.14"
     container_name: signoz-logspout
