@@ -1,11 +1,11 @@
-name: releaser-signoz
+name: prereleaser
 
 on:
   # schedule every wednesday 9:30 AM UTC (3pm IST)
   schedule:
     - cron: '30 9 * * 3'
 
-  # allow manual triggering of the workflow by a maintainer with no inputs
+  # allow manual triggering of the workflow by a maintainer
   workflow_dispatch:
     inputs:
       release_type:
