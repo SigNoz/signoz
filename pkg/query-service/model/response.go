@@ -311,6 +311,8 @@ type SearchTracesV3Response struct {
 	TotalSpansCount       uint64  `json:"totalSpansCount"`
 	TotalErrorSpansCount  uint64  `json:"TotalErrorSpansCount"`
 	Spans                 []*Span `json:"spans"`
+	// this is needed for frontend and query service sync
+	UncollapsedNodes []string `json:"uncollapsedNodes"`
 }
 
 type OtelSpanRef struct {

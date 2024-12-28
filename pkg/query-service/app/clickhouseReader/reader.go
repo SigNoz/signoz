@@ -1676,7 +1676,9 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 			isPresentInThisSubtree := rootToInterestedNodePath(child)
 			// if the interested node is present in the given subtree then add the span node to uncollapsed node list
 			if isPresentInThisSubtree {
-				uncollapsedNodes = append(uncollapsedNodes, node.SpanID)
+				if !contains(uncollapsedNodes,node.SpanID){
+					uncollapsedNodes = append(uncollapsedNodes, node.SpanID)
+				}
 				isPresentInSubtreeForTheNode = true
 			}
 		}
@@ -1750,6 +1752,7 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 
 	// generate the response [ spans , metadata ]
 	trace.Spans = selectedSpans
+	trace.UncollapsedNodes = uncollapsedNodes
 	return trace, nil
 }
 

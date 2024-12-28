@@ -6,16 +6,9 @@ import {
 	FIXED_LEFT_PADDING_BASE,
 	TraceWaterfallStates,
 } from 'container/TraceWaterfall/constants';
-import { isEmpty } from 'lodash-es';
 import { ChevronDown, ChevronRight, Leaf } from 'lucide-react';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useRef,
-} from 'react';
-import { ListRange, Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
+import { ListRange, Virtuoso } from 'react-virtuoso';
 import { Span } from 'types/api/trace/getTraceV2';
 
 interface ISuccessProps {
@@ -23,7 +16,7 @@ interface ISuccessProps {
 	traceWaterfallState: TraceWaterfallStates;
 	interestedSpanId: string;
 	uncollapsedNodes: string[];
-	setInterestedSpanId: Dispatch<SetStateAction<string | null | undefined>>;
+	setInterestedSpanId: Dispatch<SetStateAction<string | null>>;
 	setUncollapsedNodes: Dispatch<SetStateAction<string[]>>;
 }
 
@@ -36,13 +29,23 @@ function Success(props: ISuccessProps): JSX.Element {
 		setInterestedSpanId,
 		setUncollapsedNodes,
 	} = props;
-	const ref = useRef<VirtuosoHandle>(null);
+
+	const initialTopMostItemIndex = useMemo(() => {
+		const index = spans.findIndex((node) => node.spanId === interestedSpanId);
+
+		if (index !== -1) {
+			return index;
+		}
+
+		return 0;
+	}, [interestedSpanId, spans]);
 
 	const handleRangeChanged = (range: ListRange): void => {
 		const { startIndex, endIndex } = range;
 		// if the start is reached and it's not the root span then fetch!
 		if (startIndex === 0 && spans[0].parentSpanId !== '') {
 			setInterestedSpanId(spans[0].spanId);
+			return;
 		}
 
 		// if the end is reached
@@ -55,20 +58,6 @@ function Success(props: ISuccessProps): JSX.Element {
 			setInterestedSpanId(spans[spans.length - 1].spanId);
 		}
 	};
-
-	// when scrolling to the bottom we fetch the spans before and after the current span. hence we need to maintain the scroll position to the interested span
-	useEffect(() => {
-		if (ref.current && interestedSpanId && !isEmpty(interestedSpanId)) {
-			const index = spans.findIndex((node) => node.spanId === interestedSpanId);
-			if (index !== -1) {
-				ref.current.scrollToIndex({
-					index,
-					behavior: 'auto',
-					align: 'start',
-				});
-			}
-		}
-	}, [interestedSpanId, spans]);
 
 	const getItemContent = useCallback(
 		(_: number, span: Span): JSX.Element => {
@@ -141,11 +130,11 @@ function Success(props: ISuccessProps): JSX.Element {
 					<Typography.Text>Fetching Spans....</Typography.Text>
 				)}
 			<Virtuoso
-				ref={ref}
 				style={{ height: '100%' }}
 				data={spans}
 				rangeChanged={handleRangeChanged}
 				itemContent={getItemContent}
+				initialTopMostItemIndex={initialTopMostItemIndex}
 			/>
 			{traceWaterfallState ===
 				TraceWaterfallStates.FETCHING_WITH_OLD_DATA_PRESENT &&
