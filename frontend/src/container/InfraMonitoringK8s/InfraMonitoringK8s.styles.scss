@@ -122,6 +122,7 @@
 		display: flex;
 		align-items: center;
 		gap: 16px;
+		font-size: 11px;
 
 		&.pod-group-header {
 			padding-left: 12px;
@@ -142,14 +143,39 @@
 	}
 
 	.k8s-list {
+		.column {
+			min-width: 180px;
+			max-width: 180px;
+
+			font-size: 12px !important;
+		}
+
+		.column-pod-name {
+			min-width: 200px;
+			max-width: 200px;
+		}
+
+		.column-pod-group {
+			min-width: 200px;
+			max-width: 200px;
+		}
+
+		.column-progress-bar {
+			min-width: 180px;
+			max-width: 180px;
+		}
+
+		.column-dummy {
+			min-width: 32px;
+			max-width: 32px;
+		}
+
 		.pod-group {
 			display: flex;
 			align-items: center;
 			gap: 4px;
 			flex-wrap: wrap;
 
-			min-width: 120px;
-			max-width: 120px;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			white-space: nowrap;
@@ -169,13 +195,7 @@
 		}
 
 		.pod-name {
-			display: flex;
-			align-items: center;
-			gap: 4px;
-			flex-wrap: wrap;
-
-			min-width: 120px;
-			max-width: 120px;
+			width: 100%;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			white-space: nowrap;
@@ -305,6 +325,7 @@
 	.progress-container {
 		display: flex;
 		align-items: center;
+		flex-direction: column;
 	}
 
 	.progress-bar {
@@ -495,12 +516,22 @@
 			.expanded-table-footer {
 				display: flex;
 				justify-content: flex-start;
+				gap: 8px;
 				padding: 8px;
-				padding-left: 56px;
+				padding-left: 42px;
 				margin-top: 8px;
 
 				.periscope-btn {
-					font-size: 11px;
+					font-size: 10px;
+
+					display: flex;
+					align-items: center;
+					gap: 4px;
+				}
+
+				.view-all-text {
+					font-size: 10px;
+					color: var(--bg-vanilla-400);
 				}
 			}
 		}
