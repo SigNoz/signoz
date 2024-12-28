@@ -1,4 +1,3 @@
-import { getHostAttributeKeys } from 'api/infra/getHostAttributeKeys';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
@@ -14,7 +13,7 @@ type UseGetAttributeKeys = (
 		SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
 	>,
 	isInfraMonitoring?: boolean,
-	infraMonitoringEntity?: K8sCategory,
+	infraMonitoringEntity?: K8sCategory | null,
 ) => UseQueryResult<
 	SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
 >;
@@ -31,17 +30,20 @@ export const useGetAggregateKeys: UseGetAttributeKeys = (
 				QueryBuilderKeys.GET_AGGREGATE_KEYS,
 				...options.queryKey,
 				isInfraMonitoring,
+				infraMonitoringEntity,
 			];
 		}
-		return [QueryBuilderKeys.GET_AGGREGATE_KEYS, requestData, isInfraMonitoring];
-	}, [options?.queryKey, requestData, isInfraMonitoring]);
+		return [
+			QueryBuilderKeys.GET_AGGREGATE_KEYS,
+			requestData,
+			isInfraMonitoring,
+			infraMonitoringEntity,
+		];
+	}, [options?.queryKey, requestData, isInfraMonitoring, infraMonitoringEntity]);
 
 	return useQuery<SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse>({
 		queryKey,
-		queryFn: () =>
-			isInfraMonitoring && infraMonitoringEntity
-				? getHostAttributeKeys(requestData.searchText, infraMonitoringEntity)
-				: getAggregateKeys(requestData),
+		queryFn: () => getAggregateKeys(requestData),
 		...options,
 	});
 };

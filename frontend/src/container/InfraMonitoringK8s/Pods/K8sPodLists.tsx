@@ -17,7 +17,7 @@ import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, CornerDownRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -28,7 +28,10 @@ import {
 	updateLocalStorage,
 } from 'utils/localStorageReadWrite';
 
-import { K8sCategory } from '../constants';
+import {
+	K8sCategory,
+	K8sEntityToAggregateAttributeMapping,
+} from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import {
@@ -91,7 +94,7 @@ function K8sPodsList({
 	} = useGetAggregateKeys(
 		{
 			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: '',
+			aggregateAttribute: K8sEntityToAggregateAttributeMapping[K8sCategory.PODS],
 			aggregateOperator: 'noop',
 			searchText: '',
 			tagType: '',
@@ -99,8 +102,8 @@ function K8sPodsList({
 		{
 			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
 		},
-		true,
-		K8sCategory.PODS,
+		true, // isInfraMonitoring
+		K8sCategory.PODS, // infraMonitoringEntity
 	);
 
 	useEffect(() => {
@@ -434,6 +437,7 @@ function K8sPodsList({
 									className="periscope-btn secondary"
 									onClick={handleExpandedRowViewAllClick}
 								>
+									<CornerDownRight size={14} />
 									View All
 								</Button>
 							</div>
@@ -549,11 +553,13 @@ function K8sPodsList({
 				/>
 			)}
 
-			<PodDetails
-				pod={selectedPodData}
-				isModalTimeSelection
-				onClose={handleClosePodDetail}
-			/>
+			{selectedPodData && (
+				<PodDetails
+					pod={selectedPodData}
+					isModalTimeSelection
+					onClose={handleClosePodDetail}
+				/>
+			)}
 		</div>
 	);
 }

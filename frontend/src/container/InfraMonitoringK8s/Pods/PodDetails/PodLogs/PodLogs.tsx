@@ -84,7 +84,7 @@ function PodLogs({
 	const [isPaginating, setIsPaginating] = useState(false);
 
 	const { data, isLoading, isFetching, isError } = useQuery({
-		queryKey: ['PodLogs', timeRange.startTime, timeRange.endTime, filters],
+		queryKey: ['podLogs', timeRange.startTime, timeRange.endTime, filters],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
 		keepPreviousData: isPaginating,
