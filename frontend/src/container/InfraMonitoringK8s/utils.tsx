@@ -27,6 +27,8 @@ export interface IPodColumn {
 	canRemove: boolean;
 }
 
+const columnProgressBarClassName = 'column-progress-bar';
+
 export const defaultAddedColumns: IPodColumn[] = [
 	{
 		label: 'Pod name',
@@ -129,21 +131,20 @@ const podGroupColumnConfig = {
 	),
 	dataIndex: 'podGroup',
 	key: 'podGroup',
-	ellipsis: {
-		showTitle: false,
-	},
-	width: 120,
-	align: 'left',
+	ellipsis: true,
+	width: 180,
 	sorter: false,
+	className: 'column column-pod-group',
 };
 
 export const dummyColumnConfig = {
 	title: <div className="column-header dummy-column">&nbsp;</div>,
 	dataIndex: 'dummy',
 	key: 'dummy',
-	width: 25,
+	width: 26,
 	sorter: false,
 	align: 'left',
+	className: 'column column-dummy',
 };
 
 const columnsConfig = [
@@ -151,12 +152,10 @@ const columnsConfig = [
 		title: <div className="column-header pod-name-header">Pod Name</div>,
 		dataIndex: 'podName',
 		key: 'podName',
-		ellipsis: {
-			showTitle: false,
-		},
-		width: 120,
+		width: 180,
+		ellipsis: true,
 		sorter: true,
-		align: 'left',
+		className: 'column column-pod-name',
 	},
 	{
 		title: (
@@ -168,9 +167,11 @@ const columnsConfig = [
 		),
 		dataIndex: 'cpu_request',
 		key: 'cpu_request',
-		width: 150,
+		width: 180,
+		ellipsis: true,
 		sorter: true,
 		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
 	},
 	{
 		title: (
@@ -185,6 +186,7 @@ const columnsConfig = [
 		width: 150,
 		sorter: true,
 		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
 	},
 	{
 		title: (
@@ -199,6 +201,7 @@ const columnsConfig = [
 		width: 80,
 		sorter: true,
 		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
 	},
 	{
 		title: (
@@ -213,6 +216,7 @@ const columnsConfig = [
 		width: 150,
 		sorter: true,
 		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
 	},
 	{
 		title: (
@@ -227,6 +231,7 @@ const columnsConfig = [
 		width: 150,
 		sorter: true,
 		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
 	},
 	{
 		title: (
@@ -242,6 +247,7 @@ const columnsConfig = [
 		ellipsis: true,
 		sorter: true,
 		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
 	},
 	{
 		title: (
@@ -255,6 +261,7 @@ const columnsConfig = [
 		ellipsis: true,
 		sorter: true,
 		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
 	},
 ];
 
@@ -266,6 +273,7 @@ export const namespaceColumnConfig = {
 	sorter: true,
 	ellipsis: true,
 	align: 'left',
+	className: 'column column-namespace',
 };
 
 export const nodeColumnConfig = {
@@ -276,6 +284,7 @@ export const nodeColumnConfig = {
 	sorter: true,
 	ellipsis: true,
 	align: 'left',
+	className: 'column column-node',
 };
 
 export const clusterColumnConfig = {
@@ -286,6 +295,7 @@ export const clusterColumnConfig = {
 	sorter: true,
 	ellipsis: true,
 	align: 'left',
+	className: 'column column-cluster',
 };
 
 export const columnConfigMap = {
