@@ -140,6 +140,15 @@ func NewServer(serverOptions *ServerOptions, web *web.Web) (*Server, error) {
 		return nil, err
 	}
 
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
+	}
+
 	// set license manager as feature flag provider in dao
 	modelDao.SetFlagProvider(lm)
 	readerReady := make(chan bool)
@@ -158,6 +167,7 @@ func NewServer(serverOptions *ServerOptions, web *web.Web) (*Server, error) {
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
+			c,
 		)
 		go qb.Start(readerReady)
 		reader = qb
@@ -171,14 +181,6 @@ func NewServer(serverOptions *ServerOptions, web *web.Web) (*Server, error) {
 		if err != nil {
 			return nil, err
 		}
-	}
-	var c cache.Cache
-	if serverOptions.CacheConfigPath != "" {
-		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		c = cache.NewCache(cacheOpts)
 	}
 
 	<-readerReady
