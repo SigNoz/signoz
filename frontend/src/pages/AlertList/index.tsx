@@ -5,8 +5,8 @@ import ROUTES from 'constants/routes';
 import AllAlertRules from 'container/ListAlertRules';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
 import TriggeredAlerts from 'container/TriggeredAlerts';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
 import AlertDetails from 'pages/AlertDetails';
 import { useLocation } from 'react-router-dom';
@@ -14,6 +14,7 @@ import { useLocation } from 'react-router-dom';
 function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
+	const { safeNavigate } = useSafeNavigate();
 
 	const tab = urlQuery.get('tab');
 	const isAlertHistory = location.pathname === ROUTES.ALERT_HISTORY;
@@ -67,7 +68,7 @@ function AllAlertList(): JSX.Element {
 				if (search) {
 					params += `&search=${search}`;
 				}
-				history.replace(`/alerts?${params}`);
+				safeNavigate(`/alerts?${params}`);
 			}}
 			className={`${
 				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''
