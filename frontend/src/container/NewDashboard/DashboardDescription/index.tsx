@@ -21,8 +21,8 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import {
 	Check,
@@ -89,6 +89,7 @@ export function sanitizeDashboardData(
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const { handle } = props;
 	const {
 		selectedDashboard,
@@ -311,7 +312,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		urlQuery.delete(QueryParams.relativeTime);
 
 		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlQuery.toString()}`;
-		history.replace(generatedUrl);
+		safeNavigate(generatedUrl);
 	}
 
 	return (

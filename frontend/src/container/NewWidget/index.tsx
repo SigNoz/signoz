@@ -20,10 +20,10 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useAxiosError from 'hooks/useAxiosError';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import history from 'lib/history';
 import { defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
@@ -67,6 +67,7 @@ import {
 } from './utils';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const {
 		selectedDashboard,
 		setSelectedDashboard,
@@ -469,7 +470,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				setSelectedRowWidgetId(null);
 				setSelectedDashboard(dashboard);
 				setToScrollWidgetId(selectedWidget?.id || '');
-				history.push({
+				safeNavigate({
 					pathname: generatePath(ROUTES.DASHBOARD, { dashboardId }),
 				});
 			},
@@ -492,6 +493,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		setSelectedDashboard,
 		setToScrollWidgetId,
 		setSelectedRowWidgetId,
+		safeNavigate,
 		dashboardId,
 	]);
 
@@ -500,12 +502,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			setDiscardModal(true);
 			return;
 		}
-		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-	}, [dashboardId, isQueryModified]);
+		safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+	}, [dashboardId, isQueryModified, safeNavigate]);
 
 	const discardChanges = useCallback(() => {
-		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-	}, [dashboardId]);
+		safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+	}, [dashboardId, safeNavigate]);
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
 		setIsLoadingPanelData(true);
