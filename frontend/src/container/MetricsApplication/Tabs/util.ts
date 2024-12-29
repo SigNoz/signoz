@@ -6,7 +6,6 @@ import { getQueryString } from 'container/SideNav/helper';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTracesFilterItems } from 'hooks/useResourceAttribute/utils';
-import history from 'lib/history';
 import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
 import { traceFilterKeys } from 'pages/TracesExplorer/Filter/filterUtils';
 import { Dispatch, SetStateAction, useMemo } from 'react';
@@ -36,6 +35,7 @@ interface OnViewTracePopupClickProps {
 	apmToTraceQuery: Query;
 	isViewLogsClicked?: boolean;
 	stepInterval?: number;
+	safeNavigate: (url: string) => void;
 }
 
 export function generateExplorerPath(
@@ -50,7 +50,7 @@ export function generateExplorerPath(
 		? ROUTES.LOGS_EXPLORER
 		: ROUTES.TRACES_EXPLORER;
 
-	return `${basePath}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
+	return `${basePath}?${urlParams.toString()}&selected={"serviceName":"${servicename}"}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
 		QueryParams.compositeQuery
 	}=${JSONCompositeQuery}&${queryString.join('&')}`;
 }
@@ -63,6 +63,7 @@ export function onViewTracePopupClick({
 	apmToTraceQuery,
 	isViewLogsClicked,
 	stepInterval,
+	safeNavigate,
 }: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
 		const endTime = timestamp;
@@ -88,7 +89,7 @@ export function onViewTracePopupClick({
 			queryString,
 		);
 
-		history.push(newPath);
+		safeNavigate(newPath);
 	};
 }
 
