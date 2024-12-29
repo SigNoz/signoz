@@ -112,7 +112,7 @@ export function onGraphClickHandler(
 				buttonElement.style.display = 'block';
 				buttonElement.style.left = `${mouseX}px`;
 				buttonElement.style.top = `${mouseY}px`;
-				setSelectedTimeStamp(xValue);
+				setSelectedTimeStamp(Math.floor(xValue * 1_000));
 			}
 		} else if (buttonElement && buttonElement.style.display === 'block') {
 			buttonElement.style.display = 'none';
