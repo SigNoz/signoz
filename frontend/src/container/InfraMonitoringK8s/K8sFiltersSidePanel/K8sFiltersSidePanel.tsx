@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './K8sFiltersSidePanel.styles.scss';
@@ -8,20 +9,20 @@ import { useEffect, useRef, useState } from 'react';
 
 import { IPodColumn } from '../utils';
 
-export default function K8sFiltersSidePanel({
+function K8sFiltersSidePanel({
 	defaultAddedColumns,
 	onClose,
-	addedColumns,
-	availableColumns,
-	onAddColumn,
-	onRemoveColumn,
+	addedColumns = [],
+	availableColumns = [],
+	onAddColumn = () => {},
+	onRemoveColumn = () => {},
 }: {
 	defaultAddedColumns: IPodColumn[];
 	onClose: () => void;
-	addedColumns: IPodColumn[];
-	availableColumns: IPodColumn[];
-	onAddColumn: (column: IPodColumn) => void;
-	onRemoveColumn: (column: IPodColumn) => void;
+	addedColumns?: IPodColumn[];
+	availableColumns?: IPodColumn[];
+	onAddColumn?: (column: IPodColumn) => void;
+	onRemoveColumn?: (column: IPodColumn) => void;
 }): JSX.Element {
 	const [searchValue, setSearchValue] = useState('');
 	const sidePanelRef = useRef<HTMLDivElement>(null);
@@ -117,3 +118,12 @@ export default function K8sFiltersSidePanel({
 		</div>
 	);
 }
+
+K8sFiltersSidePanel.defaultProps = {
+	addedColumns: [],
+	availableColumns: [],
+	onAddColumn: () => {},
+	onRemoveColumn: () => {},
+};
+
+export default K8sFiltersSidePanel;
