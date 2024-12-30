@@ -41,16 +41,17 @@ func GroupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 func OrderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string {
 	var orderBy []string
 	for _, tag := range tags {
-		tag.Key = utils.AddBackTickToFormatTag(tag.Key)
 		found := false
 		for _, item := range items {
 			if item.ColumnName == tag.Key {
 				found = true
+				item.ColumnName = utils.AddBackTickToFormatTag(item.ColumnName)
 				orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
 				break
 			}
 		}
 		if !found {
+			tag.Key = utils.AddBackTickToFormatTag(tag.Key)
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag.Key))
 		}
 	}
