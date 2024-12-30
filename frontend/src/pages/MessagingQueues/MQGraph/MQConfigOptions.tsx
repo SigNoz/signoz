@@ -3,6 +3,7 @@ import './MQConfigOptions.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select, Spin, Tooltip } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
+import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import { History, Location } from 'history';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -12,7 +13,6 @@ import { useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 
-import { SelectMaxTagPlaceholder } from '../MQCommon/MQCommon';
 import { useGetAllConfigOptions } from './useGetAllConfigOptions';
 
 type ConfigOptionType = 'group' | 'topic' | 'partition';
