@@ -501,6 +501,7 @@ function K8sPodsList({
 				handleGroupByChange={handleGroupByChange}
 				onAddColumn={handleAddColumn}
 				onRemoveColumn={handleRemoveColumn}
+				entity={K8sCategory.PODS}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 

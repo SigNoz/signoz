@@ -26,7 +26,10 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { K8sCategory } from '../constants';
+import {
+	K8sCategory,
+	K8sEntityToAggregateAttributeMapping,
+} from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import NodeDetails from './NodeDetails';
@@ -75,6 +78,7 @@ function K8sNodesList({
 
 	const createFiltersForSelectedRowData = (
 		selectedRowData: K8sNodesRowData,
+		groupBy: IBuilderQuery['groupBy'],
 	): IBuilderQuery['filters'] => {
 		const baseFilters: IBuilderQuery['filters'] = {
 			items: [],
@@ -85,13 +89,13 @@ function K8sNodesList({
 
 		const { groupedByMeta } = selectedRowData;
 
-		for (const key of Object.keys(groupedByMeta)) {
+		for (const key of groupBy) {
 			baseFilters.items.push({
 				key: {
-					key,
+					key: key.key,
 				},
 				op: '=',
-				value: groupedByMeta[key],
+				value: groupedByMeta[key.key],
 			});
 		}
 
@@ -103,7 +107,7 @@ function K8sNodesList({
 
 		const baseQuery = getK8sNodesListQuery();
 
-		const filters = createFiltersForSelectedRowData(selectedRowData);
+		const filters = createFiltersForSelectedRowData(selectedRowData, groupBy);
 
 		return {
 			...baseQuery,
@@ -114,7 +118,7 @@ function K8sNodesList({
 			end: Math.floor(maxTime / 1000000),
 			orderBy,
 		};
-	}, [minTime, maxTime, orderBy, selectedRowData]);
+	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
 	const {
 		data: groupedByRowData,
@@ -135,7 +139,7 @@ function K8sNodesList({
 	} = useGetAggregateKeys(
 		{
 			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: '',
+			aggregateAttribute: K8sEntityToAggregateAttributeMapping[K8sCategory.NODES],
 			aggregateOperator: 'noop',
 			searchText: '',
 			tagType: '',
@@ -282,7 +286,7 @@ function K8sNodesList({
 	const handleExpandedRowViewAllClick = (): void => {
 		if (!selectedRowData) return;
 
-		const filters = createFiltersForSelectedRowData(selectedRowData);
+		const filters = createFiltersForSelectedRowData(selectedRowData, groupBy);
 
 		handleFiltersChange(filters);
 
@@ -432,6 +436,7 @@ function K8sNodesList({
 				isLoadingGroupByFilters={isLoadingGroupByFilters}
 				handleGroupByChange={handleGroupByChange}
 				selectedGroupBy={groupBy}
+				entity={K8sCategory.NODES}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 

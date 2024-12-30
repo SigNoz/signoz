@@ -27,6 +27,7 @@ interface K8sHeaderProps {
 	onRemoveColumn?: (column: IPodColumn) => void;
 	handleFilterVisibilityChange: () => void;
 	isFiltersVisible: boolean;
+	entity: K8sCategory;
 }
 
 function K8sHeader({
@@ -42,6 +43,7 @@ function K8sHeader({
 	onRemoveColumn,
 	handleFilterVisibilityChange,
 	isFiltersVisible,
+	entity,
 }: K8sHeaderProps): JSX.Element {
 	const [isFiltersSidePanelOpen, setIsFiltersSidePanelOpen] = useState(false);
 
@@ -97,7 +99,7 @@ function K8sHeader({
 						onChange={handleChangeTagFilters}
 						isInfraMonitoring
 						disableNavigationShortcuts
-						entity={K8sCategory.PODS}
+						entity={entity}
 					/>
 				</div>
 

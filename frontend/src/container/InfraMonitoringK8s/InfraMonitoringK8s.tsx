@@ -22,7 +22,7 @@ import K8sPodLists from './Pods/K8sPodLists';
 import Volumes from './Volumes/Volumes';
 
 export default function InfraMonitoringK8s(): JSX.Element {
-	const [showFilters, setShowFilters] = useState(false);
+	const [showFilters, setShowFilters] = useState(true);
 
 	const [selectedCategory, setSelectedCategory] = useState(K8sCategories.PODS);
 
