@@ -23,6 +23,7 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { useCallback, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import K8sClustersList from './Clusters/K8sClustersList';
 import {
 	ClustersQuickFiltersConfig,
 	ContainersQuickFiltersConfig,
@@ -318,6 +319,13 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					>
 						{selectedCategory === K8sCategories.PODS && (
 							<K8sPodLists
+								isFiltersVisible={showFilters}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
+							/>
+						)}
+
+						{selectedCategory === K8sCategories.CLUSTERS && (
+							<K8sClustersList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 							/>
