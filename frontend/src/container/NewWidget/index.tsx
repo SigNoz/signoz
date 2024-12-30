@@ -329,7 +329,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		}
 		const updatedQuery = { ...(stagedQuery || initialQueriesMap.metrics) };
 		updatedQuery.builder.queryData[0].pageSize = 10;
-		redirectWithQueryBuilderData(updatedQuery);
+
+		// If stagedQuery exists, don't re-run the query (e.g. when clicking on Add to Dashboard from logs and traces explorer)
+		if (!stagedQuery) {
+			redirectWithQueryBuilderData(updatedQuery);
+		}
 		return {
 			query: updatedQuery,
 			graphType: PANEL_TYPES.LIST,
