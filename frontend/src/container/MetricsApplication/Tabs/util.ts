@@ -50,7 +50,7 @@ export function generateExplorerPath(
 		? ROUTES.LOGS_EXPLORER
 		: ROUTES.TRACES_EXPLORER;
 
-	return `${basePath}?${urlParams.toString()}&selected={"serviceName":"${servicename}"}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
+	return `${basePath}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
 		QueryParams.compositeQuery
 	}=${JSONCompositeQuery}&${queryString.join('&')}`;
 }

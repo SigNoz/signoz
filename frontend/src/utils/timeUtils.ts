@@ -136,7 +136,7 @@ export const epochToTimeString = (epochMs: number): string => {
 };
 
 /**
- * Converts any timestamp (milliseconds/nanoseconds) to milliseconds
+ * Converts nanoseconds to milliseconds
  * @param timestamp - The timestamp to convert
  * @returns The timestamp in milliseconds
  */

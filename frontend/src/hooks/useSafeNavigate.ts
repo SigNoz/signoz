@@ -105,27 +105,12 @@ export const useSafeNavigate = (): {
 				);
 			}
 
-			console.group('Safe Navigation Check');
-			console.log('Current URL:', currentUrl.toString());
-			console.log('Target URL:', targetUrl.toString());
-
 			const urlsAreSame = areUrlsEffectivelySame(currentUrl, targetUrl);
 			const isDefaultParamsNavigation = isDefaultNavigation(currentUrl, targetUrl);
 
 			if (urlsAreSame) {
-				console.log(
-					'🚫 URLs are effectively the same (ignoring compositeQuery id) - Navigation prevented',
-				);
-				console.groupEnd();
 				return;
 			}
-
-			console.log(
-				`✅ URLs are different - ${
-					isDefaultParamsNavigation ? 'Replacing' : 'Navigating'
-				}...`,
-			);
-			console.groupEnd();
 
 			const navigationOptions = {
 				...options,
