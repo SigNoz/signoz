@@ -20,6 +20,13 @@ import {
 } from './commonUtils';
 import { INVALID_MEMORY_CPU_VALUE_MESSAGE } from './constants';
 
+export interface IEntityColumn {
+	label: string;
+	value: string;
+	id: string;
+	canRemove: boolean;
+}
+
 export interface IPodColumn {
 	label: string;
 	value: string;
