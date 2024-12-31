@@ -1,4 +1,4 @@
-package generic_cache_entity
+package entity
 
 import (
 	"fmt"

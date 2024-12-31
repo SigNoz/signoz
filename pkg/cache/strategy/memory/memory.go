@@ -1,12 +1,12 @@
-package generic_cache_inmemory
+package memory
 
 import (
 	"reflect"
 	"time"
 
 	go_cache "github.com/patrickmn/go-cache"
-	generic_cache_entity "go.signoz.io/signoz/pkg/cache/entity"
-	"go.signoz.io/signoz/pkg/query-service/cache/status"
+	"go.signoz.io/signoz/pkg/cache/entity"
+	"go.signoz.io/signoz/pkg/cache/status"
 )
 
 type cache struct {
@@ -27,11 +27,11 @@ func (c *cache) Connect() error {
 }
 
 // Store stores the data in the cache
-func (c *cache) Store(cacheKey string, data generic_cache_entity.CacheableEntity, ttl time.Duration) error {
+func (c *cache) Store(cacheKey string, data entity.CacheableEntity, ttl time.Duration) error {
 	// check if the data being passed is a pointer and is not nil
 	rv := reflect.ValueOf(data)
 	if rv.Kind() != reflect.Pointer || rv.IsNil() {
-		return generic_cache_entity.WrapCacheableEntityErrors(reflect.TypeOf(data), "inmemory")
+		return entity.WrapCacheableEntityErrors(reflect.TypeOf(data), "inmemory")
 	}
 
 	c.cc.Set(cacheKey, data, ttl)
@@ -39,16 +39,16 @@ func (c *cache) Store(cacheKey string, data generic_cache_entity.CacheableEntity
 }
 
 // Retrieve retrieves the data from the cache
-func (c *cache) Retrieve(cacheKey string, dest generic_cache_entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error) {
+func (c *cache) Retrieve(cacheKey string, dest entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error) {
 	// check if the destination being passed is a pointer and is not nil
 	dstv := reflect.ValueOf(dest)
 	if dstv.Kind() != reflect.Pointer || dstv.IsNil() {
-		return status.RetrieveStatusError, generic_cache_entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
+		return status.RetrieveStatusError, entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
 	}
 
 	// check if the destination value is settable
 	if !dstv.Elem().CanSet() {
-		return status.RetrieveStatusError, generic_cache_entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
+		return status.RetrieveStatusError, entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
 	}
 
 	data, found := c.cc.Get(cacheKey)
@@ -59,7 +59,7 @@ func (c *cache) Retrieve(cacheKey string, dest generic_cache_entity.CacheableEnt
 	// check the type compatbility between the src and dest
 	srcv := reflect.ValueOf(data)
 	if !srcv.Type().AssignableTo(dstv.Type()) {
-		return status.RetrieveStatusError, generic_cache_entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
+		return status.RetrieveStatusError, entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
 	}
 
 	// set the value to from src to dest

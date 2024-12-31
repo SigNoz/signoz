@@ -1,4 +1,4 @@
-package generic_cache_redis
+package redis
 
 const (
 	defaultHost     = "localhost"

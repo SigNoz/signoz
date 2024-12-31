@@ -1,27 +1,27 @@
-package generic_cache
+package cache
 
 import (
 	"os"
 	"time"
 
-	generic_cache_entity "go.signoz.io/signoz/pkg/cache/entity"
-	generic_cache_inmemory "go.signoz.io/signoz/pkg/cache/strategy/inmemory"
-	generic_cache_redis "go.signoz.io/signoz/pkg/cache/strategy/redis"
-	"go.signoz.io/signoz/pkg/query-service/cache/status"
+	"go.signoz.io/signoz/pkg/cache/entity"
+	"go.signoz.io/signoz/pkg/cache/status"
+	"go.signoz.io/signoz/pkg/cache/strategy/memory"
+	"go.signoz.io/signoz/pkg/cache/strategy/redis"
 	"gopkg.in/yaml.v2"
 )
 
 type Options struct {
-	Name     string                          `yaml:"-"`
-	Provider string                          `yaml:"provider"`
-	Redis    *generic_cache_redis.Options    `yaml:"redis,omitempty"`
-	InMemory *generic_cache_inmemory.Options `yaml:"inmemory,omitempty"`
+	Name     string          `yaml:"-"`
+	Provider string          `yaml:"provider"`
+	Redis    *redis.Options  `yaml:"redis,omitempty"`
+	Memory   *memory.Options `yaml:"memory,omitempty"`
 }
 
 type Cache interface {
 	Connect() error
-	Store(cacheKey string, data generic_cache_entity.CacheableEntity, ttl time.Duration) error
-	Retrieve(cacheKey string, dest generic_cache_entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error)
+	Store(cacheKey string, data entity.CacheableEntity, ttl time.Duration) error
+	Retrieve(cacheKey string, dest entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error)
 	SetTTL(cacheKey string, ttl time.Duration)
 	Remove(cacheKey string)
 	BulkRemove(cacheKeys []string)
@@ -49,10 +49,10 @@ func LoadFromYAMLCacheConfigFile(configFile string) (*Options, error) {
 
 func NewCache(opts *Options) Cache {
 	switch opts.Provider {
-	case "inmemory":
-		return generic_cache_inmemory.New(opts.InMemory)
+	case "memory":
+		return memory.New(opts.Memory)
 	case "redis":
-		return generic_cache_redis.New(opts.Redis)
+		return redis.New(opts.Redis)
 	default:
 		return nil
 	}

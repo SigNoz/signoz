@@ -1,4 +1,4 @@
-package generic_cache_status
+package status
 
 // RetrieveStatus defines the possible status of a cache lookup
 type RetrieveStatus int

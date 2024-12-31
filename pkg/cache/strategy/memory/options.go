@@ -1,4 +1,4 @@
-package generic_cache_inmemory
+package memory
 
 import (
 	"time"
