@@ -1,7 +1,7 @@
 package generic_cache_inmemory
 
 import (
-	"encoding/json"
+	"reflect"
 	"time"
 
 	go_cache "github.com/patrickmn/go-cache"
@@ -27,23 +27,44 @@ func (c *cache) Connect() error {
 }
 
 // Store stores the data in the cache
-func (c *cache) Store(cacheKey string, data *generic_cache_entity.CacheableEntity, ttl time.Duration) error {
+func (c *cache) Store(cacheKey string, data generic_cache_entity.CacheableEntity, ttl time.Duration) error {
+	// check if the data being passed is a pointer and is not nil
+	rv := reflect.ValueOf(data)
+	if rv.Kind() != reflect.Pointer || rv.IsNil() {
+		return generic_cache_entity.WrapCacheableEntityErrors(reflect.TypeOf(data), "inmemory")
+	}
+
 	c.cc.Set(cacheKey, data, ttl)
 	return nil
 }
 
 // Retrieve retrieves the data from the cache
-func (c *cache) Retrieve(cacheKey string, dest *generic_cache_entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error) {
+func (c *cache) Retrieve(cacheKey string, dest generic_cache_entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error) {
+	// check if the destination being passed is a pointer and is not nil
+	rv := reflect.ValueOf(dest)
+	if rv.Kind() != reflect.Pointer || rv.IsNil() {
+		return status.RetrieveStatusError, generic_cache_entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
+	}
+
+	// check if the destination value is settable
+	destValue := reflect.ValueOf(dest)
+	if !destValue.CanSet() {
+		return status.RetrieveStatusError, generic_cache_entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
+	}
+
 	data, found := c.cc.Get(cacheKey)
 	if !found {
 		return status.RetrieveStatusKeyMiss, nil
 	}
 
-	err := json.Unmarshal(data.([]byte), dest)
-	if err != nil {
-		return status.RetrieveStatusError, nil
+	// check the type compatbility
+	dataValue := reflect.ValueOf(data)
+	if !dataValue.Type().AssignableTo(destValue.Type()) {
+		return status.RetrieveStatusError, generic_cache_entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
 	}
 
+	// set the value
+	destValue.Set(dataValue)
 	return status.RetrieveStatusHit, nil
 }
 

@@ -20,8 +20,8 @@ type Options struct {
 
 type Cache interface {
 	Connect() error
-	Store(cacheKey string, data *generic_cache_entity.CacheableEntity, ttl time.Duration) error
-	Retrieve(cacheKey string, dest *generic_cache_entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error)
+	Store(cacheKey string, data generic_cache_entity.CacheableEntity, ttl time.Duration) error
+	Retrieve(cacheKey string, dest generic_cache_entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error)
 	SetTTL(cacheKey string, ttl time.Duration)
 	Remove(cacheKey string)
 	BulkRemove(cacheKeys []string)

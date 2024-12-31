@@ -41,12 +41,12 @@ func (c *cache) Connect() error {
 }
 
 // Store stores the data in the cache
-func (c *cache) Store(cacheKey string, data *generic_cache_entity.CacheableEntity, ttl time.Duration) error {
+func (c *cache) Store(cacheKey string, data generic_cache_entity.CacheableEntity, ttl time.Duration) error {
 	return c.client.Set(context.Background(), cacheKey, data, ttl).Err()
 }
 
 // Retrieve retrieves the data from the cache
-func (c *cache) Retrieve(cacheKey string, dest *generic_cache_entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error) {
+func (c *cache) Retrieve(cacheKey string, dest generic_cache_entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error) {
 	_, err := c.client.Get(context.Background(), cacheKey).Bytes()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
