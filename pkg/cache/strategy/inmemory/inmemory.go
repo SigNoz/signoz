@@ -56,13 +56,13 @@ func (c *cache) Retrieve(cacheKey string, dest generic_cache_entity.CacheableEnt
 		return status.RetrieveStatusKeyMiss, nil
 	}
 
-	// check the type compatbility
+	// check the type compatbility between the src and dest
 	srcv := reflect.ValueOf(data)
 	if !srcv.Type().AssignableTo(dstv.Type()) {
 		return status.RetrieveStatusError, generic_cache_entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
 	}
 
-	// set the value
+	// set the value to from src to dest
 	dstv.Elem().Set(srcv.Elem())
 	return status.RetrieveStatusHit, nil
 }

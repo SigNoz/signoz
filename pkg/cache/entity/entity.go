@@ -1,15 +1,11 @@
 package generic_cache_entity
 
 import (
-	"encoding"
 	"fmt"
 	"reflect"
 )
 
-type CacheableEntity interface {
-	// to be able to support redis binary marshalling
-	encoding.BinaryMarshaler
-}
+type CacheableEntity interface{}
 
 func WrapCacheableEntityErrors(rt reflect.Type, caller string) error {
 	if rt == nil {
