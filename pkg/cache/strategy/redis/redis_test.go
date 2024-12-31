@@ -74,47 +74,65 @@ func TestRetrieve(t *testing.T) {
 	}
 }
 
-// func TestSetTTL(t *testing.T) {
-// 	db, mock := redismock.NewClientMock()
-// 	c := WithClient(db)
-// 	mock.ExpectSet("key", []byte("value"), 10*time.Second).RedisNil()
-// 	c.Store("key", []byte("value"), 10*time.Second)
+func TestSetTTL(t *testing.T) {
+	db, mock := redismock.NewClientMock()
+	cache := WithClient(db)
+	storeCacheableEntity := &CacheableEntity{
+		Key:    "some-random-key",
+		Value:  1,
+		Expiry: time.Microsecond,
+	}
 
-// 	mock.ExpectExpire("key", 4*time.Second).RedisNil()
-// 	c.SetTTL("key", 4*time.Second)
+	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
+	cache.Store("key", storeCacheableEntity, 10*time.Second)
 
-// 	if err := mock.ExpectationsWereMet(); err != nil {
-// 		t.Errorf("there were unfulfilled expectations: %s", err)
-// 	}
-// }
+	mock.ExpectExpire("key", 4*time.Second).RedisNil()
+	cache.SetTTL("key", 4*time.Second)
 
-// func TestRemove(t *testing.T) {
-// 	db, mock := redismock.NewClientMock()
-// 	c := WithClient(db)
-// 	mock.ExpectSet("key", []byte("value"), 10*time.Second).RedisNil()
-// 	c.Store("key", []byte("value"), 10*time.Second)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
 
-// 	mock.ExpectDel("key").RedisNil()
-// 	c.Remove("key")
+func TestRemove(t *testing.T) {
+	db, mock := redismock.NewClientMock()
+	c := WithClient(db)
+	storeCacheableEntity := &CacheableEntity{
+		Key:    "some-random-key",
+		Value:  1,
+		Expiry: time.Microsecond,
+	}
 
-// 	if err := mock.ExpectationsWereMet(); err != nil {
-// 		t.Errorf("there were unfulfilled expectations: %s", err)
-// 	}
-// }
+	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
+	c.Store("key", storeCacheableEntity, 10*time.Second)
 
-// func TestBulkRemove(t *testing.T) {
-// 	db, mock := redismock.NewClientMock()
-// 	c := WithClient(db)
-// 	mock.ExpectSet("key", []byte("value"), 10*time.Second).RedisNil()
-// 	c.Store("key", []byte("value"), 10*time.Second)
+	mock.ExpectDel("key").RedisNil()
+	c.Remove("key")
 
-// 	mock.ExpectSet("key2", []byte("value2"), 10*time.Second).RedisNil()
-// 	c.Store("key2", []byte("value2"), 10*time.Second)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
 
-// 	mock.ExpectDel("key", "key2").RedisNil()
-// 	c.BulkRemove([]string{"key", "key2"})
+func TestBulkRemove(t *testing.T) {
+	db, mock := redismock.NewClientMock()
+	c := WithClient(db)
+	storeCacheableEntity := &CacheableEntity{
+		Key:    "some-random-key",
+		Value:  1,
+		Expiry: time.Microsecond,
+	}
 
-// 	if err := mock.ExpectationsWereMet(); err != nil {
-// 		t.Errorf("there were unfulfilled expectations: %s", err)
-// 	}
-// }
+	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
+	c.Store("key", storeCacheableEntity, 10*time.Second)
+
+	mock.ExpectSet("key2", storeCacheableEntity, 10*time.Second).RedisNil()
+	c.Store("key2", storeCacheableEntity, 10*time.Second)
+
+	mock.ExpectDel("key", "key2").RedisNil()
+	c.BulkRemove([]string{"key", "key2"})
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
