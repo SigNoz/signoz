@@ -41,14 +41,13 @@ func (c *cache) Store(cacheKey string, data generic_cache_entity.CacheableEntity
 // Retrieve retrieves the data from the cache
 func (c *cache) Retrieve(cacheKey string, dest generic_cache_entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error) {
 	// check if the destination being passed is a pointer and is not nil
-	rv := reflect.ValueOf(dest)
-	if rv.Kind() != reflect.Pointer || rv.IsNil() {
+	dstv := reflect.ValueOf(dest)
+	if dstv.Kind() != reflect.Pointer || dstv.IsNil() {
 		return status.RetrieveStatusError, generic_cache_entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
 	}
 
 	// check if the destination value is settable
-	destValue := reflect.ValueOf(dest)
-	if !destValue.CanSet() {
+	if !dstv.Elem().CanSet() {
 		return status.RetrieveStatusError, generic_cache_entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
 	}
 
@@ -58,13 +57,13 @@ func (c *cache) Retrieve(cacheKey string, dest generic_cache_entity.CacheableEnt
 	}
 
 	// check the type compatbility
-	dataValue := reflect.ValueOf(data)
-	if !dataValue.Type().AssignableTo(destValue.Type()) {
+	srcv := reflect.ValueOf(data)
+	if !srcv.Type().AssignableTo(dstv.Type()) {
 		return status.RetrieveStatusError, generic_cache_entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
 	}
 
 	// set the value
-	destValue.Set(dataValue)
+	dstv.Elem().Set(srcv.Elem())
 	return status.RetrieveStatusHit, nil
 }
 
