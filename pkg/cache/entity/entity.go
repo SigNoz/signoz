@@ -1,11 +1,15 @@
 package entity
 
 import (
+	"encoding"
 	"fmt"
 	"reflect"
 )
 
-type CacheableEntity interface{}
+type CacheableEntity interface {
+	encoding.BinaryMarshaler
+	encoding.BinaryUnmarshaler
+}
 
 func WrapCacheableEntityErrors(rt reflect.Type, caller string) error {
 	if rt == nil {

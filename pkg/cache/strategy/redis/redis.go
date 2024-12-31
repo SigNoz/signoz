@@ -47,7 +47,7 @@ func (c *cache) Store(cacheKey string, data entity.CacheableEntity, ttl time.Dur
 
 // Retrieve retrieves the data from the cache
 func (c *cache) Retrieve(cacheKey string, dest entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error) {
-	_, err := c.client.Get(context.Background(), cacheKey).Bytes()
+	err := c.client.Get(context.Background(), cacheKey).Scan(dest)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return status.RetrieveStatusKeyMiss, nil

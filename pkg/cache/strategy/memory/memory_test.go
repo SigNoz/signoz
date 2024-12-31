@@ -1,11 +1,12 @@
 package memory
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"go.signoz.io/signoz/pkg/query-service/cache/status"
+	"go.signoz.io/signoz/pkg/cache/status"
 )
 
 // TestNew tests the New function
@@ -31,10 +32,26 @@ type CacheableEntity struct {
 	Expiry time.Duration
 }
 
+func (ce CacheableEntity) MarshalBinary() ([]byte, error) {
+	return json.Marshal(ce)
+}
+
+func (ce CacheableEntity) UnmarshalBinary(data []byte) error {
+	return nil
+}
+
 type DCacheableEntity struct {
 	Key    string
 	Value  int
 	Expiry time.Duration
+}
+
+func (dce DCacheableEntity) MarshalBinary() ([]byte, error) {
+	return json.Marshal(dce)
+}
+
+func (dce DCacheableEntity) UnmarshalBinary(data []byte) error {
+	return nil
 }
 
 // TestStore tests the Store function

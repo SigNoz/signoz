@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"fmt"
 	"reflect"
 	"time"
 
@@ -48,7 +49,7 @@ func (c *cache) Retrieve(cacheKey string, dest entity.CacheableEntity, allowExpi
 
 	// check if the destination value is settable
 	if !dstv.Elem().CanSet() {
-		return status.RetrieveStatusError, entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
+		return status.RetrieveStatusError, fmt.Errorf("destination value is not settable, %s", dstv.Elem())
 	}
 
 	data, found := c.cc.Get(cacheKey)
@@ -59,7 +60,7 @@ func (c *cache) Retrieve(cacheKey string, dest entity.CacheableEntity, allowExpi
 	// check the type compatbility between the src and dest
 	srcv := reflect.ValueOf(data)
 	if !srcv.Type().AssignableTo(dstv.Type()) {
-		return status.RetrieveStatusError, entity.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
+		return status.RetrieveStatusError, fmt.Errorf("src type is not assignable to dst type")
 	}
 
 	// set the value to from src to dest
