@@ -58,7 +58,11 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { ErrorResponse } from 'types/api';
-import { LimitProps } from 'types/api/ingestionKeys/limits/types';
+import {
+	AddLimitProps,
+	LimitProps,
+	UpdateLimitProps,
+} from 'types/api/ingestionKeys/limits/types';
 import {
 	IngestionKeyProps,
 	PaginationProps,
@@ -428,9 +432,14 @@ function MultiIngestionSettings(): JSX.Element {
 		APIKey: IngestionKeyProps,
 		signalName: string,
 	): void => {
-		const { dailyLimit, secondsLimit } = addEditLimitForm.getFieldsValue();
+		const {
+			dailyLimit,
+			secondsLimit,
+			dailyCount,
+			secondsCount,
+		} = addEditLimitForm.getFieldsValue();
 
-		const payload = {
+		const payload: AddLimitProps = {
 			keyID: APIKey.id,
 			signal: signalName,
 			config: {},
@@ -444,6 +453,16 @@ function MultiIngestionSettings(): JSX.Element {
 			};
 		}
 
+		if (signalName === 'metrics' && !isUndefined(dailyCount)) {
+			payload.config = {
+				...payload.config,
+				day: {
+					...payload.config.day,
+					count: dailyCount,
+				},
+			};
+		}
+
 		if (!isUndefined(secondsLimit)) {
 			payload.config = {
 				...payload.config,
@@ -453,7 +472,22 @@ function MultiIngestionSettings(): JSX.Element {
 			};
 		}
 
-		if (isUndefined(dailyLimit) && isUndefined(secondsLimit)) {
+		if (signalName === 'metrics' && !isUndefined(secondsCount)) {
+			payload.config = {
+				...payload.config,
+				second: {
+					...payload.config.second,
+					count: secondsCount,
+				},
+			};
+		}
+
+		if (
+			isUndefined(dailyLimit) &&
+			isUndefined(secondsLimit) &&
+			isUndefined(dailyCount) &&
+			isUndefined(secondsCount)
+		) {
 			// No need to save as no limit is provided, close the edit view and reset active signal and api key
 			setActiveSignal(null);
 			setActiveAPIKey(null);
@@ -472,8 +506,13 @@ function MultiIngestionSettings(): JSX.Element {
 		APIKey: IngestionKeyProps,
 		signal: LimitProps,
 	): void => {
-		const { dailyLimit, secondsLimit } = addEditLimitForm.getFieldsValue();
-		const payload = {
+		const {
+			dailyLimit,
+			secondsLimit,
+			dailyCount,
+			secondsCount,
+		} = addEditLimitForm.getFieldsValue();
+		const payload: UpdateLimitProps = {
 			limitID: signal.id,
 			signal: signal.signal,
 			config: {},
@@ -493,11 +532,31 @@ function MultiIngestionSettings(): JSX.Element {
 			};
 		}
 
+		if (signal.signal === 'metrics' && !isUndefined(dailyCount)) {
+			payload.config = {
+				...payload.config,
+				day: {
+					...payload.config.day,
+					count: dailyCount,
+				},
+			};
+		}
+
 		if (!isUndefined(secondsLimit)) {
 			payload.config = {
 				...payload.config,
 				second: {
 					size: gbToBytes(secondsLimit),
+				},
+			};
+		}
+
+		if (signal.signal === 'metrics' && !isUndefined(secondsCount)) {
+			payload.config = {
+				...payload.config,
+				second: {
+					...payload.config.second,
+					count: secondsCount,
 				},
 			};
 		}
@@ -797,6 +856,16 @@ function MultiIngestionSettings(): JSX.Element {
 																					</div>
 																				)}
 																			</div>
+																			{activeSignal.signal === 'metrics' &&
+																				activeSignal?.config?.day?.enabled && (
+																					<Form.Item
+																						name="dailyCount"
+																						key="dailyCount"
+																						label="Daily count limit"
+																					>
+																						<InputNumber placeholder="Enter max # of metrics/day" />
+																					</Form.Item>
+																				)}
 																		</div>
 
 																		<div className="second-limit">
@@ -851,6 +920,16 @@ function MultiIngestionSettings(): JSX.Element {
 																					</div>
 																				)}
 																			</div>
+																			{activeSignal.signal === 'metrics' &&
+																				activeSignal?.config?.second?.enabled && (
+																					<Form.Item
+																						name="secondsCount"
+																						key="secondsCount"
+																						label="Per-second count limit"
+																					>
+																						<InputNumber placeholder="Enter max # of metrics/s" />
+																					</Form.Item>
+																				)}
 																		</div>
 																	</div>
 
@@ -938,6 +1017,14 @@ function MultiIngestionSettings(): JSX.Element {
 																					<Infinity size={16} /> NO LIMIT
 																				</>
 																			)}
+																			{signal === 'metrics' &&
+																				!isNil(limits[signal]?.config?.day?.count) && (
+																					<div style={{ marginTop: 4 }}>
+																						Daily count used:{' '}
+																						{limits[signal]?.metric?.day?.count || 0} /{' '}
+																						{limits[signal]?.config?.day?.count}
+																					</div>
+																				)}
 																		</div>
 																	</div>
 
@@ -965,6 +1052,14 @@ function MultiIngestionSettings(): JSX.Element {
 																				</>
 																			)}
 																		</div>
+																		{signal === 'metrics' &&
+																			!isNil(limits[signal]?.config?.second?.count) && (
+																				<div style={{ marginTop: 4 }}>
+																					Per-second count used:{' '}
+																					{limits[signal]?.metric?.second?.count || 0} /{' '}
+																					{limits[signal]?.config?.second?.count}
+																				</div>
+																			)}
 																	</div>
 																</div>
 															)}
