@@ -268,17 +268,18 @@ func groupSelectAttributeKeyTags(tags ...v3.AttributeKey) string {
 // if the order is not specified, it defaults to ASC
 func orderBy(items []v3.OrderBy, tags []string) string {
 	var orderBy []string
-	tags = utils.AddBackTickToFormatTags(tags...)
 	for _, tag := range tags {
 		found := false
 		for _, item := range items {
 			if item.ColumnName == tag {
 				found = true
+				item.ColumnName = utils.AddBackTickToFormatTag(item.ColumnName)
 				orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
 				break
 			}
 		}
 		if !found {
+			tag = utils.AddBackTickToFormatTag(tag)
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
 		}
 	}
