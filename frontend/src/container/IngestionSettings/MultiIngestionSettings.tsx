@@ -73,6 +73,12 @@ const { Option } = Select;
 
 const BYTES = 1073741824;
 
+const COUNT_MULTIPLIER = {
+	thousand: 1000,
+	million: 1000000,
+	billion: 1000000000,
+};
+
 // Using any type here because antd's DatePicker expects its own internal Dayjs type
 // which conflicts with our project's Dayjs type that has additional plugins (tz, utc etc).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
@@ -104,6 +110,32 @@ export const API_KEY_EXPIRY_OPTIONS: ExpiryOption[] = [
 	{ value: '365', label: '1 year' },
 	{ value: '0', label: 'No Expiry' },
 ];
+
+const countToUnit = (count: number): { value: number; unit: string } => {
+	// Always convert to the largest appropriate unit
+	if (
+		count >= COUNT_MULTIPLIER.billion ||
+		count / COUNT_MULTIPLIER.million >= 1000
+	) {
+		return { value: count / COUNT_MULTIPLIER.billion, unit: 'billion' };
+	}
+	if (
+		count >= COUNT_MULTIPLIER.million ||
+		count / COUNT_MULTIPLIER.thousand >= 1000
+	) {
+		return { value: count / COUNT_MULTIPLIER.million, unit: 'million' };
+	}
+	if (count >= COUNT_MULTIPLIER.thousand) {
+		return { value: count / COUNT_MULTIPLIER.thousand, unit: 'thousand' };
+	}
+	// Default to million for small numbers
+	return { value: count / COUNT_MULTIPLIER.million, unit: 'million' };
+};
+
+const countFromUnit = (value: number, unit: string): number =>
+	value *
+	(COUNT_MULTIPLIER[unit as keyof typeof COUNT_MULTIPLIER] ||
+		COUNT_MULTIPLIER.million);
 
 function MultiIngestionSettings(): JSX.Element {
 	const { user } = useAppContext();
@@ -436,7 +468,9 @@ function MultiIngestionSettings(): JSX.Element {
 			dailyLimit,
 			secondsLimit,
 			dailyCount,
+			dailyCountUnit,
 			secondsCount,
+			secondsCountUnit,
 		} = addEditLimitForm.getFieldsValue();
 
 		const payload: AddLimitProps = {
@@ -458,7 +492,7 @@ function MultiIngestionSettings(): JSX.Element {
 				...payload.config,
 				day: {
 					...payload.config.day,
-					count: dailyCount,
+					count: countFromUnit(dailyCount, dailyCountUnit || 'million'),
 				},
 			};
 		}
@@ -477,7 +511,7 @@ function MultiIngestionSettings(): JSX.Element {
 				...payload.config,
 				second: {
 					...payload.config.second,
-					count: secondsCount,
+					count: countFromUnit(secondsCount, secondsCountUnit || 'million'),
 				},
 			};
 		}
@@ -510,7 +544,9 @@ function MultiIngestionSettings(): JSX.Element {
 			dailyLimit,
 			secondsLimit,
 			dailyCount,
+			dailyCountUnit,
 			secondsCount,
+			secondsCountUnit,
 		} = addEditLimitForm.getFieldsValue();
 		const payload: UpdateLimitProps = {
 			limitID: signal.id,
@@ -537,7 +573,7 @@ function MultiIngestionSettings(): JSX.Element {
 				...payload.config,
 				day: {
 					...payload.config.day,
-					count: dailyCount,
+					count: countFromUnit(dailyCount, dailyCountUnit || 'million'),
 				},
 			};
 		}
@@ -556,7 +592,7 @@ function MultiIngestionSettings(): JSX.Element {
 				...payload.config,
 				second: {
 					...payload.config.second,
-					count: secondsCount,
+					count: countFromUnit(secondsCount, secondsCountUnit || 'million'),
 				},
 			};
 		}
@@ -576,6 +612,12 @@ function MultiIngestionSettings(): JSX.Element {
 		APIKey: IngestionKeyProps,
 		signal: LimitProps,
 	): void => {
+		const dayCount = signal?.config?.day?.count;
+		const secondCount = signal?.config?.second?.count;
+
+		const dayCountConverted = countToUnit(dayCount || 0);
+		const secondCountConverted = countToUnit(secondCount || 0);
+
 		setActiveAPIKey(APIKey);
 		setActiveSignal({
 			...signal,
@@ -597,6 +639,10 @@ function MultiIngestionSettings(): JSX.Element {
 			secondsLimit: bytesToGb(signal?.config?.second?.size || 0),
 			enableDailyLimit: !isNil(signal?.config?.day?.size),
 			enableSecondLimit: !isNil(signal?.config?.second?.size),
+			dailyCount: dayCountConverted.value,
+			dailyCountUnit: dayCountConverted.unit,
+			secondsCount: secondCountConverted.value,
+			secondsCountUnit: secondCountConverted.unit,
 		});
 
 		setIsEditAddLimitOpen(true);
@@ -861,9 +907,24 @@ function MultiIngestionSettings(): JSX.Element {
 																					<Form.Item
 																						name="dailyCount"
 																						key="dailyCount"
-																						label="Daily count limit"
+																						label="Samples"
 																					>
-																						<InputNumber placeholder="Enter max # of metrics/day" />
+																						<InputNumber
+																							placeholder="Enter max # of samples/day"
+																							addonAfter={
+																								<Form.Item
+																									name="dailyCountUnit"
+																									noStyle
+																									initialValue="million"
+																								>
+																									<Select style={{ width: 90 }}>
+																										<Option value="thousand">Thousand</Option>
+																										<Option value="million">Million</Option>
+																										<Option value="billion">Billion</Option>
+																									</Select>
+																								</Form.Item>
+																							}
+																						/>
 																					</Form.Item>
 																				)}
 																		</div>
@@ -925,9 +986,24 @@ function MultiIngestionSettings(): JSX.Element {
 																					<Form.Item
 																						name="secondsCount"
 																						key="secondsCount"
-																						label="Per-second count limit"
+																						label="Samples"
 																					>
-																						<InputNumber placeholder="Enter max # of metrics/s" />
+																						<InputNumber
+																							placeholder="Enter max # of samples/s"
+																							addonAfter={
+																								<Form.Item
+																									name="secondsCountUnit"
+																									noStyle
+																									initialValue="million"
+																								>
+																									<Select style={{ width: 90 }}>
+																										<Option value="thousand">Thousand</Option>
+																										<Option value="million">Million</Option>
+																										<Option value="billion">Billion</Option>
+																									</Select>
+																								</Form.Item>
+																							}
+																						/>
 																					</Form.Item>
 																				)}
 																		</div>
@@ -1020,9 +1096,20 @@ function MultiIngestionSettings(): JSX.Element {
 																			{signal === 'metrics' &&
 																				!isNil(limits[signal]?.config?.day?.count) && (
 																					<div style={{ marginTop: 4 }}>
-																						Daily count used:{' '}
-																						{limits[signal]?.metric?.day?.count || 0} /{' '}
-																						{limits[signal]?.config?.day?.count}
+																						Samples:{' '}
+																						{countToUnit(
+																							limits[signal]?.metric?.day?.count || 0,
+																						).value.toFixed(2)}{' '}
+																						{
+																							countToUnit(limits[signal]?.metric?.day?.count || 0).unit
+																						}{' '}
+																						/{' '}
+																						{countToUnit(
+																							limits[signal]?.config?.day?.count || 0,
+																						).value.toFixed(2)}{' '}
+																						{
+																							countToUnit(limits[signal]?.config?.day?.count || 0).unit
+																						}
 																					</div>
 																				)}
 																		</div>
@@ -1052,14 +1139,29 @@ function MultiIngestionSettings(): JSX.Element {
 																				</>
 																			)}
 																		</div>
-																		{signal === 'metrics' &&
-																			!isNil(limits[signal]?.config?.second?.count) && (
-																				<div style={{ marginTop: 4 }}>
-																					Per-second count used:{' '}
-																					{limits[signal]?.metric?.second?.count || 0} /{' '}
-																					{limits[signal]?.config?.second?.count}
-																				</div>
-																			)}
+																		<div className="limit-value">
+																			{signal === 'metrics' &&
+																				!isNil(limits[signal]?.config?.second?.count) && (
+																					<div style={{ marginTop: 4 }}>
+																						Samples:{' '}
+																						{countToUnit(
+																							limits[signal]?.metric?.second?.count || 0,
+																						).value.toFixed(2)}{' '}
+																						{
+																							countToUnit(limits[signal]?.metric?.second?.count || 0)
+																								.unit
+																						}{' '}
+																						/{' '}
+																						{countToUnit(
+																							limits[signal]?.config?.second?.count || 0,
+																						).value.toFixed(2)}{' '}
+																						{
+																							countToUnit(limits[signal]?.config?.second?.count || 0)
+																								.unit
+																						}
+																					</div>
+																				)}
+																		</div>
 																	</div>
 																</div>
 															)}
