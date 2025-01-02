@@ -189,7 +189,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				if (fromPathname) {
 					history.push(fromPathname);
 					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
-				} else {
+				} else if (pathname !== ROUTES.SOMETHING_WENT_WRONG) {
 					history.push(ROUTES.APPLICATION);
 				}
 			} else {
