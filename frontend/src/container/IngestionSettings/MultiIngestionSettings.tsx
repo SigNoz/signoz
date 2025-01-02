@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
-
 import './IngestionSettings.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
@@ -462,6 +460,7 @@ function MultiIngestionSettings(): JSX.Element {
 		addEditLimitForm.resetFields();
 	};
 
+	/* eslint-disable sonarjs/cognitive-complexity */
 	const handleAddLimit = (
 		APIKey: IngestionKeyProps,
 		signalName: string,
@@ -551,6 +550,7 @@ function MultiIngestionSettings(): JSX.Element {
 		createLimitForIngestionKey(payload);
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleUpdateLimit = (
 		APIKey: IngestionKeyProps,
 		signal: LimitProps,
@@ -616,6 +616,7 @@ function MultiIngestionSettings(): JSX.Element {
 
 		updateLimitForIngestionKey(payload);
 	};
+	/* eslint-enable sonarjs/cognitive-complexity */
 
 	const bytesToGb = (size: number | undefined): number => {
 		if (!size) {
@@ -682,6 +683,7 @@ function MultiIngestionSettings(): JSX.Element {
 		{
 			title: 'Ingestion Key',
 			key: 'ingestion-key',
+			// eslint-disable-next-line sonarjs/cognitive-complexity
 			render: (APIKey: IngestionKeyProps): JSX.Element => {
 				const createdOn = getFormattedTime(
 					APIKey.created_at,
