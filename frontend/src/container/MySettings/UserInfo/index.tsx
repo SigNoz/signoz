@@ -1,7 +1,6 @@
 import '../MySettings.styles.scss';
 import './UserInfo.styles.scss';
-
-import { Button, Card, Flex, Input, Space, Typography } from 'antd';
+import { Button, Card, Flex, Input, Space, Select, Typography } from 'antd';
 import editUser from 'api/user/editUser';
 import { useNotifications } from 'hooks/useNotifications';
 import { PencilIcon } from 'lucide-react';
@@ -15,15 +14,18 @@ import { UPDATE_USER } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
 import { NameInput } from '../styles';
+import { ROLES, USER_ROLES } from 'types/roles';
+import { Logout } from 'api/utils';
 
 function UserInfo(): JSX.Element {
-	const { user, role, org, userFlags } = useSelector<AppState, AppReducer>(
+	const { user, org, role, userFlags } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 	const { t } = useTranslation();
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const [changedName, setChangedName] = useState<string>(user?.name || '');
+	const [changedRole, setChangedRole] = useState<ROLES>(role || 'ADMIN');
 	const [loading, setLoading] = useState<boolean>(false);
 
 	const { notifications } = useNotifications();
@@ -32,12 +34,17 @@ function UserInfo(): JSX.Element {
 		return <div />;
 	}
 
+	const updateRole = (value: ROLES): void => {
+		setChangedRole(value);
+	};
+
 	const onClickUpdateHandler = async (): Promise<void> => {
 		try {
 			setLoading(true);
 			const { statusCode } = await editUser({
 				name: changedName,
 				userId: user.userId,
+				role: changedRole,
 			});
 
 			if (statusCode === 200) {
@@ -51,12 +58,19 @@ function UserInfo(): JSX.Element {
 					payload: {
 						...user,
 						name: changedName,
-						ROLE: role || 'ADMIN',
+						ROLE: changedRole || 'ADMIN',
 						orgId: org[0].id,
 						orgName: org[0].name,
 						userFlags: userFlags || {},
 					},
 				});
+
+				if (changedRole !== role) {
+					notifications.info({
+						message: t('Please login again', { ns: 'common' }),
+					});
+					Logout();
+				}
 			} else {
 				notifications.error({
 					message: t('something_went_wrong', {
@@ -130,11 +144,15 @@ function UserInfo(): JSX.Element {
 						{' '}
 						Role{' '}
 					</Typography>
-					<Input
+					<Select
 						className="userInfo-value"
-						value={role || ''}
-						disabled
 						data-testid="role-textbox"
+						value={changedRole}
+						onChange={updateRole}
+						options={Object.entries(USER_ROLES).map(([role]) => ({
+							label: role,
+							value: role,
+						}))}
 					/>
 				</Space>
 			</Space>
