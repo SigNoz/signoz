@@ -12,6 +12,7 @@ export interface User {
 	userId: string;
 	email: UserPayload['email'];
 	name: UserPayload['name'];
+	role: UserPayload['role'];
 	profilePictureURL: UserPayload['profilePictureURL'];
 }
 

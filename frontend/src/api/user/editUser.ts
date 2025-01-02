@@ -10,6 +10,7 @@ const editUser = async (
 	try {
 		const response = await axios.put(`/user/${props.userId}`, {
 			Name: props.name,
+			Role: props.role,
 		});
 
 		return {
