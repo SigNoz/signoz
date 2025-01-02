@@ -85,6 +85,8 @@ const SIGNALS_CONFIG = [
 	{ name: 'metrics', usesSize: false, usesCount: true },
 ];
 
+// Using any type here because antd's DatePicker expects its own internal Dayjs type
+// which conflicts with our project's Dayjs type that has additional plugins (tz, utc etc).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 export const disabledDate = (current: any): boolean =>
 	// Disable all dates before today
@@ -720,7 +722,7 @@ function MultiIngestionSettings(): JSX.Element {
 									<div className="ingestion-key-value">
 										<Typography.Text>
 											{APIKey?.value.substring(0, 2)}********
-											{APIKey?.value.substring(APIKey.value.length - 2)}
+											{APIKey?.value.substring(APIKey.value.length - 2).trim()}
 										</Typography.Text>
 
 										<Copy
@@ -780,9 +782,9 @@ function MultiIngestionSettings(): JSX.Element {
 										<Col span={12}>
 											<div className="ingestion-key-tags-container">
 												<div className="ingestion-key-tags">
-													{APIKey.tags.map((tag) => (
-														// Fix for react/no-array-index-key
-														<Tag key={tag}>{tag}</Tag>
+													{APIKey.tags.map((tag, index) => (
+														// eslint-disable-next-line react/no-array-index-key
+														<Tag key={`${tag}-${index}`}> {tag} </Tag>
 													))}
 												</div>
 											</div>
