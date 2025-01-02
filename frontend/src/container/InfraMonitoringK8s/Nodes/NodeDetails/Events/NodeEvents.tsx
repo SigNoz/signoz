@@ -2,6 +2,7 @@ import './NodeEvents.styles.scss';
 
 import { Table, TableColumnsType, Typography } from 'antd';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { EventContents } from 'container/InfraMonitoringK8s/commonUtils';
 import LogsError from 'container/LogsError/LogsError';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
@@ -149,16 +150,15 @@ export default function Events({
 			body: event.data.body,
 			id: event.data.id,
 			key: event.data.id,
+			resources_string: event.data.resources_string,
 		}));
 
 		return formattedData || [];
 	}, [data]);
 
-	const handleExpandRow = (record: EventDataType): JSX.Element => {
-		console.log('record', record);
-
-		return <p style={{ margin: 0 }}>{record.body}</p>;
-	};
+	const handleExpandRow = (record: EventDataType): JSX.Element => (
+		<EventContents data={record.resources_string} />
+	);
 
 	const handleExpandRowIcon = ({
 		expanded,

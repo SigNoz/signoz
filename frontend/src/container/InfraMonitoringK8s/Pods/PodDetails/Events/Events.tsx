@@ -4,6 +4,7 @@ import './Events.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Table, TableColumnsType } from 'antd';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { EventContents } from 'container/InfraMonitoringK8s/commonUtils';
 import LoadingContainer from 'container/InfraMonitoringK8s/LoadingContainer';
 import LogsError from 'container/LogsError/LogsError';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
@@ -153,6 +154,7 @@ export default function Events({
 					body: event.data.body,
 					id: event.data.id,
 					key: event.data.id,
+					resources_string: event.data.resources_string,
 				}),
 			);
 
@@ -172,7 +174,7 @@ export default function Events({
 	}, [eventsData]);
 
 	const handleExpandRow = (record: EventDataType): JSX.Element => (
-		<p style={{ margin: 0 }}>{record.body}</p>
+		<EventContents data={record.resources_string} />
 	);
 
 	const handlePrev = (): void => {
