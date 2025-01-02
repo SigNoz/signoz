@@ -28,29 +28,26 @@ jobs:
           app-id: ${{ secrets.PRIMUS_APP_ID }}
           private-key: ${{ secrets.PRIMUS_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-      - name: verify-user
+      - name: primus-checkout
+        uses: actions/checkout@v4
+        with:
+          repository: signoz/primus
+          ref: main
+          path: .primus
+          token: ${{ steps.token.outputs.token }}
+      - name: info
         run: |
-          team_name="releasers"
-          repo_owner=${{ github.repository_owner }}
-          gh_actor=${{ github.actor }}
-
-          echo "event_name: ${event_name}"
-          echo "gh_actor: ${gh_actor}"
-
-          if [[ "${event_name}" == "schedule" ]]; then
-            echo "event is triggered by the scheduled cron"
+          $MAKE info
+      - name: verify-releaser-team-membership
+        run: |
+          if [[ "${{ github.event.name }}" == "schedule" ]]; then
+            echo "skipping, event is triggered from scheduled cron"
             exit 0
           fi
-
-          gh_response=$(curl -L --silent -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ steps.token.outputs.token }}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/orgs/${repo_owner}/teams/${team_name}/memberships/${gh_actor}") \
-              | jq -r 'select(.role != []).role // "not-member"'
-          if [[ "${gh_response}" != "member" ]]; then
-            echo "user ${gh_actor} is not part of the releasers team" >&2
-            exit 1
-          fi
+          $MAKE github-verify-team-membership \
+            GITHUB_ARGS="-t ${{ steps.token.outputs.token }} \
+              -n releaser \
+              -u ${{ github.actor }}"
   signoz:
     uses: signoz/primus.workflows/.github/workflows/releaser.yaml@main
     secrets: inherit
