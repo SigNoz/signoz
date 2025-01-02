@@ -300,7 +300,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 						StepInterval: 60,
 						OrderBy: []v3.OrderBy{
 							{
-								Key:      "service.name",
+								Key:      "os.type",
 								DataType: v3.AttributeKeyDataTypeString,
 								Type:     v3.AttributeKeyTypeTag,
 								IsColumn: false,
