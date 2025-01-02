@@ -91,28 +91,6 @@ export default function Events({
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
-	// const [restFilters, setRestFilters] = useState<TagFilterItem[]>([]);
-
-	// const [resetLogsList, setResetLogsList] = useState<boolean>(false);
-
-	// useEffect(() => {
-	// 	const newRestFilters = filters?.items?.filter(
-	// 		(item) =>
-	// 			item.key?.key !== 'id' &&
-	// 			item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME &&
-	// 			item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND,
-	// 	);
-
-	// 	const areFiltersSame = isEqual(restFilters, newRestFilters);
-
-	// 	if (!areFiltersSame) {
-	// 		setResetLogsList(true);
-	// 	}
-
-	// 	setRestFilters(newRestFilters);
-	// 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	// }, [filters]);
-
 	const queryPayload = useMemo(() => {
 		const basePayload = getNodesEventsQueryPayload(
 			timeRange.startTime,
