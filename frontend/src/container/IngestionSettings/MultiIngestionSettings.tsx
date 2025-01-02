@@ -550,7 +550,6 @@ function MultiIngestionSettings(): JSX.Element {
 		createLimitForIngestionKey(payload);
 	};
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleUpdateLimit = (
 		APIKey: IngestionKeyProps,
 		signal: LimitProps,
