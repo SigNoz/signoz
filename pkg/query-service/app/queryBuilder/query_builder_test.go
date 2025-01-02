@@ -1337,6 +1337,87 @@ func TestGenerateCacheKeysMetricsBuilder(t *testing.T) {
 			},
 		},
 		{
+			name: "version=v3;panelType=value;dataSource=metrics;queryType=builder with expression", //not caching panel type value for v3
+			query: &v3.QueryRangeParamsV3{
+				Version: "v3",
+				CompositeQuery: &v3.CompositeQuery{
+					QueryType: v3.QueryTypeBuilder,
+					PanelType: v3.PanelTypeValue,
+					FillGaps:  false,
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:         "A",
+							DataSource:        v3.DataSourceMetrics,
+							AggregateOperator: v3.AggregateOperatorNoOp,
+							AggregateAttribute: v3.AttributeKey{
+								Key:      "system_memory_usage",
+								DataType: v3.AttributeKeyDataTypeFloat64,
+								Type:     v3.AttributeKeyType("Gauge"),
+								IsColumn: true,
+							},
+							TimeAggregation:  v3.TimeAggregationUnspecified,
+							SpaceAggregation: v3.SpaceAggregationSum,
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{
+										Key: v3.AttributeKey{
+											Key:      "state",
+											DataType: v3.AttributeKeyDataTypeString,
+											Type:     v3.AttributeKeyTypeTag,
+											IsColumn: false,
+										},
+										Operator: v3.FilterOperatorEqual,
+										Value:    "cached",
+									},
+								},
+							},
+							Expression:   "A",
+							Disabled:     true,
+							StepInterval: 60,
+						},
+						"B": {
+							QueryName:         "B",
+							DataSource:        v3.DataSourceMetrics,
+							AggregateOperator: v3.AggregateOperatorNoOp,
+							AggregateAttribute: v3.AttributeKey{
+								Key:      "system_memory_usage",
+								DataType: v3.AttributeKeyDataTypeFloat64,
+								Type:     v3.AttributeKeyType("Gauge"),
+								IsColumn: true,
+							},
+							TimeAggregation:  v3.TimeAggregationUnspecified,
+							SpaceAggregation: v3.SpaceAggregationSum,
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{
+										Key: v3.AttributeKey{
+											Key:      "state",
+											DataType: v3.AttributeKeyDataTypeString,
+											Type:     v3.AttributeKeyTypeTag,
+											IsColumn: false,
+										},
+										Operator: v3.FilterOperatorEqual,
+										Value:    "cached",
+									},
+								},
+							},
+							Expression:   "B",
+							Disabled:     true,
+							StepInterval: 60,
+						},
+						"F1": {
+							QueryName:  "F1",
+							Expression: "A+B",
+							Disabled:   false,
+						},
+					},
+				},
+			},
+			expectedCacheKeys: map[string]string{},
+		},
+		{
 			name: "version=v4;panelType=table;dataSource=metrics;queryType=builder",
 			query: &v3.QueryRangeParamsV3{
 				Version: "v4",
