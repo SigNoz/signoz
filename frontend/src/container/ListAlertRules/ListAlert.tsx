@@ -23,14 +23,12 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { GettableAlert } from 'types/api/alerts/get';
-import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
 import { Button, ColumnButton, SearchContainer } from './styles';
@@ -42,12 +40,11 @@ const { Search } = Input;
 
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const { t } = useTranslation('common');
-	const { role, featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const { user } = useAppContext();
+	// TODO[vikrantgupta25]: check with sagar on cleanup
 	const [addNewAlert, action] = useComponentPermission(
 		['add_new_alert', 'action'],
-		role,
+		user.role,
 	);
 
 	const [editLoader, setEditLoader] = useState<boolean>(false);
@@ -105,38 +102,23 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		logEvent('Alert: New alert button clicked', {
 			number: allAlertRules?.length,
 		});
-		featureResponse
-			.refetch()
-			.then(() => {
-				history.push(ROUTES.ALERTS_NEW);
-			})
-			.catch(handleError);
+		history.push(ROUTES.ALERTS_NEW);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [featureResponse, handleError]);
+	}, []);
 
 	const onEditHandler = (record: GettableAlert) => (): void => {
-		setEditLoader(true);
-		featureResponse
-			.refetch()
-			.then(() => {
-				const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
-				params.set(
-					QueryParams.compositeQuery,
-					encodeURIComponent(JSON.stringify(compositeQuery)),
-				);
+		const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
+		params.set(
+			QueryParams.compositeQuery,
+			encodeURIComponent(JSON.stringify(compositeQuery)),
+		);
 
-				params.set(
-					QueryParams.panelTypes,
-					record.condition.compositeQuery.panelType,
-				);
+		params.set(QueryParams.panelTypes, record.condition.compositeQuery.panelType);
 
-				params.set(QueryParams.ruleId, record.id.toString());
+		params.set(QueryParams.ruleId, record.id.toString());
 
-				setEditLoader(false);
-				history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
-			})
-			.catch(handleError)
-			.finally(() => setEditLoader(false));
+		setEditLoader(false);
+		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 	};
 
 	const onCloneHandler = (

@@ -1,24 +1,18 @@
 import { Button, Form, Input, Space, Switch, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import editOrg from 'api/user/editOrg';
 import getInviteDetails from 'api/user/getInviteDetails';
 import loginApi from 'api/user/login';
 import signUpApi from 'api/user/signup';
 import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
-import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/user/getUser';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
-import { isCloudUser } from 'utils/app';
 
 import {
 	ButtonContainer,
@@ -60,8 +54,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
-
-	const isOnboardingEnabled = useFeatureFlag(FeatureKeys.ONBOARDING)?.active;
 
 	const getInviteDetailsResponse = useQuery({
 		queryFn: () =>
@@ -121,10 +113,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	const commonHandler = async (
 		values: FormValues,
-		callback: (
-			e: SuccessResponse<PayloadProps>,
-			values: FormValues,
-		) => Promise<void> | VoidFunction,
+		isPreferenceVisible: boolean,
 	): Promise<void> => {
 		try {
 			const { organizationName, password, firstName, email } = values;
@@ -134,6 +123,12 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				orgName: organizationName,
 				password,
 				token: params.get('token') || undefined,
+				...(isPreferenceVisible
+					? {
+							isAnonymous: values.isAnonymous,
+							hasOptedUpdates: values.hasOptedUpdates,
+					  }
+					: {}),
 			});
 
 			if (response.statusCode === 200) {
@@ -144,14 +139,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 				if (loginResponse.statusCode === 200) {
 					const { payload } = loginResponse;
-					const userResponse = await afterLogin(
-						payload.userId,
-						payload.accessJwt,
-						payload.refreshJwt,
-					);
-					if (userResponse) {
-						callback(userResponse, values);
-					}
+					await afterLogin(payload.userId, payload.accessJwt, payload.refreshJwt);
 				} else {
 					notifications.error({
 						message: loginResponse.error || t('unexpected_error'),
@@ -169,24 +157,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		}
 	};
 
-	const onAdminAfterLogin = async (
-		userResponse: SuccessResponse<PayloadProps>,
-		values: FormValues,
-	): Promise<void> => {
-		const editResponse = await editOrg({
-			isAnonymous: values.isAnonymous,
-			name: values.organizationName,
-			hasOptedUpdates: values.hasOptedUpdates,
-			orgId: userResponse.payload.orgId,
-		});
-		if (editResponse.statusCode === 200) {
-			history.push(ROUTES.APPLICATION);
-		} else {
-			notifications.error({
-				message: editResponse.error || t('unexpected_error'),
-			});
-		}
-	};
 	const handleSubmitSSO = async (): Promise<void> => {
 		if (!params.get('token')) {
 			notifications.error({
@@ -233,6 +203,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		setLoading(false);
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleSubmit = (): void => {
 		(async (): Promise<void> => {
 			try {
@@ -250,23 +221,14 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				}
 
 				if (isPreferenceVisible) {
-					await commonHandler(values, onAdminAfterLogin);
+					await commonHandler(values, true);
 				} else {
 					logEvent('Account Created Successfully', {
 						email: values.email,
 						name: values.firstName,
 					});
 
-					await commonHandler(
-						values,
-						async (): Promise<void> => {
-							if (isOnboardingEnabled && isCloudUser()) {
-								history.push(ROUTES.GET_STARTED);
-							} else {
-								history.push(ROUTES.APPLICATION);
-							}
-						},
-					);
+					await commonHandler(values, false);
 				}
 
 				setLoading(false);

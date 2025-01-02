@@ -21,7 +21,7 @@
 		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
 		"commitlint": "commitlint --edit $1",
 		"test": "jest --coverage",
-		"test:changedsince": "jest --changedSince=develop --coverage --silent"
+		"test:changedsince": "jest --changedSince=main --coverage --silent"
 	},
 	"engines": {
 		"node": ">=16.15.0"
@@ -242,6 +242,7 @@
 		"xml2js": "0.5.0",
 		"phin": "^3.7.1",
 		"body-parser": "1.20.3",
-		"http-proxy-middleware": "3.0.3"
+		"http-proxy-middleware": "3.0.3",
+		"cross-spawn": "7.0.5"
 	}
 }

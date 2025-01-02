@@ -28,14 +28,11 @@ import {
 } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import AppReducer from 'types/reducer/app';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
@@ -47,10 +44,6 @@ function QuerySection({
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const urlQuery = useUrlQuery();
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-
-	const { featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
 
 	const { selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -117,14 +110,12 @@ function QuerySection({
 	const handleQueryCategoryChange = useCallback(
 		(qCategory: string): void => {
 			const currentQueryType = qCategory;
-			featureResponse.refetch().then(() => {
-				handleStageQuery({
-					...currentQuery,
-					queryType: currentQueryType as EQueryType,
-				});
+			handleStageQuery({
+				...currentQuery,
+				queryType: currentQueryType as EQueryType,
 			});
 		},
-		[currentQuery, featureResponse, handleStageQuery],
+		[currentQuery, handleStageQuery],
 	);
 
 	const handleRunQuery = (): void => {

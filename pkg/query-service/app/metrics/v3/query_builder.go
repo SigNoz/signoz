@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -334,6 +335,10 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
 
 	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, *mq)
+
+	if valFilter := metrics.AddMetricValueFilter(mq); valFilter != nil {
+		mq.MetricValueFilter = valFilter
+	}
 
 	// if the aggregate operator is a histogram quantile, and user has not forgotten
 	// the le tag in the group by then add the le tag to the group by

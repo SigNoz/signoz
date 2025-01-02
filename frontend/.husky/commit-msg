@@ -13,8 +13,3 @@ if [ "$branch" = "main" ]; then
   echo "${color_red}${bold}You can't commit directly to the main branch${reset}"
   exit 1
 fi
-
-if [ "$branch" = "develop" ]; then
-  echo "${color_red}${bold}You can't commit directly to the develop branch${reset}"
-  exit 1
-fi
