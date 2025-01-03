@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -18,7 +19,7 @@ func TestNew(t *testing.T) {
 	c := New(opts)
 	assert.NotNil(t, c)
 	assert.NotNil(t, c.cc)
-	assert.NoError(t, c.Connect())
+	assert.NoError(t, c.Connect(context.Background()))
 }
 
 type CacheableEntity struct {
@@ -58,7 +59,7 @@ func TestStoreWithNilPointer(t *testing.T) {
 	}
 	c := New(opts)
 	var storeCacheableEntity *CacheableEntity
-	assert.Error(t, c.Store("key", storeCacheableEntity, 10*time.Second))
+	assert.Error(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
 }
 
 // this should fail because of no pointer error
@@ -69,7 +70,7 @@ func TestStoreWithStruct(t *testing.T) {
 	}
 	c := New(opts)
 	var storeCacheableEntity CacheableEntity
-	assert.Error(t, c.Store("key", storeCacheableEntity, 10*time.Second))
+	assert.Error(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
 }
 
 func TestStoreWithNonNilPointer(t *testing.T) {
@@ -83,7 +84,7 @@ func TestStoreWithNonNilPointer(t *testing.T) {
 		Value:  1,
 		Expiry: time.Microsecond,
 	}
-	assert.NoError(t, c.Store("key", storeCacheableEntity, 10*time.Second))
+	assert.NoError(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
 }
 
 // TestRetrieve tests the Retrieve function
@@ -98,11 +99,11 @@ func TestRetrieveWithNilPointer(t *testing.T) {
 		Value:  1,
 		Expiry: time.Microsecond,
 	}
-	assert.NoError(t, c.Store("key", storeCacheableEntity, 10*time.Second))
+	assert.NoError(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
 
 	var retrieveCacheableEntity *CacheableEntity
 
-	retrieveStatus, err := c.Retrieve("key", retrieveCacheableEntity, false)
+	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.Error(t, err)
 	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusError)
 }
@@ -118,11 +119,11 @@ func TestRetrieveWitNonPointer(t *testing.T) {
 		Value:  1,
 		Expiry: time.Microsecond,
 	}
-	assert.NoError(t, c.Store("key", storeCacheableEntity, 10*time.Second))
+	assert.NoError(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
 
 	var retrieveCacheableEntity CacheableEntity
 
-	retrieveStatus, err := c.Retrieve("key", retrieveCacheableEntity, false)
+	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.Error(t, err)
 	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusError)
 }
@@ -138,10 +139,10 @@ func TestRetrieveWithDifferentTypes(t *testing.T) {
 		Value:  1,
 		Expiry: time.Microsecond,
 	}
-	assert.NoError(t, c.Store("key", storeCacheableEntity, 10*time.Second))
+	assert.NoError(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
 
 	retrieveCacheableEntity := new(DCacheableEntity)
-	retrieveStatus, err := c.Retrieve("key", retrieveCacheableEntity, false)
+	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.Error(t, err)
 	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusError)
 }
@@ -157,10 +158,10 @@ func TestRetrieveWithSameTypes(t *testing.T) {
 		Value:  1,
 		Expiry: time.Microsecond,
 	}
-	assert.NoError(t, c.Store("key", storeCacheableEntity, 10*time.Second))
+	assert.NoError(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
 
 	retrieveCacheableEntity := new(CacheableEntity)
-	retrieveStatus, err := c.Retrieve("key", retrieveCacheableEntity, false)
+	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
 	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusHit)
 	assert.Equal(t, storeCacheableEntity, retrieveCacheableEntity)
@@ -175,17 +176,17 @@ func TestSetTTL(t *testing.T) {
 		Expiry: time.Microsecond,
 	}
 	retrieveCacheableEntity := new(CacheableEntity)
-	assert.NoError(t, c.Store("key", storeCacheableEntity, 2*time.Second))
+	assert.NoError(t, c.Store(context.Background(), "key", storeCacheableEntity, 2*time.Second))
 	time.Sleep(3 * time.Second)
-	retrieveStatus, err := c.Retrieve("key", retrieveCacheableEntity, false)
+	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
 	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusKeyMiss)
 	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
 
-	assert.NoError(t, c.Store("key", storeCacheableEntity, 2*time.Second))
-	c.SetTTL("key", 4*time.Second)
+	assert.NoError(t, c.Store(context.Background(), "key", storeCacheableEntity, 2*time.Second))
+	c.SetTTL(context.Background(), "key", 4*time.Second)
 	time.Sleep(3 * time.Second)
-	retrieveStatus, err = c.Retrieve("key", retrieveCacheableEntity, false)
+	retrieveStatus, err = c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
 	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusHit)
 	assert.Equal(t, retrieveCacheableEntity, storeCacheableEntity)
@@ -204,10 +205,10 @@ func TestRemove(t *testing.T) {
 		Expiry: time.Microsecond,
 	}
 	retrieveCacheableEntity := new(CacheableEntity)
-	assert.NoError(t, c.Store("key", storeCacheableEntity, 10*time.Second))
-	c.Remove("key")
+	assert.NoError(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
+	c.Remove(context.Background(), "key")
 
-	retrieveStatus, err := c.Retrieve("key", retrieveCacheableEntity, false)
+	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
 	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusKeyMiss)
 	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
@@ -226,16 +227,16 @@ func TestBulkRemove(t *testing.T) {
 		Expiry: time.Microsecond,
 	}
 	retrieveCacheableEntity := new(CacheableEntity)
-	assert.NoError(t, c.Store("key1", storeCacheableEntity, 10*time.Second))
-	assert.NoError(t, c.Store("key2", storeCacheableEntity, 10*time.Second))
-	c.BulkRemove([]string{"key1", "key2"})
+	assert.NoError(t, c.Store(context.Background(), "key1", storeCacheableEntity, 10*time.Second))
+	assert.NoError(t, c.Store(context.Background(), "key2", storeCacheableEntity, 10*time.Second))
+	c.BulkRemove(context.Background(), []string{"key1", "key2"})
 
-	retrieveStatus, err := c.Retrieve("key1", retrieveCacheableEntity, false)
+	retrieveStatus, err := c.Retrieve(context.Background(), "key1", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
 	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusKeyMiss)
 	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
 
-	retrieveStatus, err = c.Retrieve("key2", retrieveCacheableEntity, false)
+	retrieveStatus, err = c.Retrieve(context.Background(), "key2", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
 	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusKeyMiss)
 	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
@@ -254,10 +255,10 @@ func TestCache(t *testing.T) {
 		Expiry: time.Microsecond,
 	}
 	retrieveCacheableEntity := new(CacheableEntity)
-	assert.NoError(t, c.Store("key", storeCacheableEntity, 10*time.Second))
-	retrieveStatus, err := c.Retrieve("key", retrieveCacheableEntity, false)
+	assert.NoError(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
+	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
 	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusHit)
 	assert.Equal(t, storeCacheableEntity, retrieveCacheableEntity)
-	c.Remove("key")
+	c.Remove(context.Background(), "key")
 }

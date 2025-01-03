@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -34,7 +35,7 @@ func TestStore(t *testing.T) {
 	}
 
 	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
-	cache.Store("key", storeCacheableEntity, 10*time.Second)
+	cache.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -52,13 +53,13 @@ func TestRetrieve(t *testing.T) {
 	retrieveCacheableEntity := new(CacheableEntity)
 
 	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
-	cache.Store("key", storeCacheableEntity, 10*time.Second)
+	cache.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
 
 	data, err := storeCacheableEntity.MarshalBinary()
 	assert.NoError(t, err)
 
 	mock.ExpectGet("key").SetVal(string(data))
-	retrieveStatus, err := cache.Retrieve("key", retrieveCacheableEntity, false)
+	retrieveStatus, err := cache.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -84,10 +85,10 @@ func TestSetTTL(t *testing.T) {
 	}
 
 	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
-	cache.Store("key", storeCacheableEntity, 10*time.Second)
+	cache.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
 
 	mock.ExpectExpire("key", 4*time.Second).RedisNil()
-	cache.SetTTL("key", 4*time.Second)
+	cache.SetTTL(context.Background(), "key", 4*time.Second)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -104,10 +105,10 @@ func TestRemove(t *testing.T) {
 	}
 
 	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
-	c.Store("key", storeCacheableEntity, 10*time.Second)
+	c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
 
 	mock.ExpectDel("key").RedisNil()
-	c.Remove("key")
+	c.Remove(context.Background(), "key")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -124,13 +125,13 @@ func TestBulkRemove(t *testing.T) {
 	}
 
 	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
-	c.Store("key", storeCacheableEntity, 10*time.Second)
+	c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
 
 	mock.ExpectSet("key2", storeCacheableEntity, 10*time.Second).RedisNil()
-	c.Store("key2", storeCacheableEntity, 10*time.Second)
+	c.Store(context.Background(), "key2", storeCacheableEntity, 10*time.Second)
 
 	mock.ExpectDel("key", "key2").RedisNil()
-	c.BulkRemove([]string{"key", "key2"})
+	c.BulkRemove(context.Background(), []string{"key", "key2"})
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

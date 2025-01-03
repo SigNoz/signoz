@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"encoding"
 	"fmt"
 	"reflect"
@@ -60,11 +61,11 @@ func (s RetrieveStatus) String() string {
 
 // cache interface
 type Cache interface {
-	Connect() error
-	Store(cacheKey string, data CacheableEntity, ttl time.Duration) error
-	Retrieve(cacheKey string, dest CacheableEntity, allowExpired bool) (RetrieveStatus, error)
-	SetTTL(cacheKey string, ttl time.Duration)
-	Remove(cacheKey string)
-	BulkRemove(cacheKeys []string)
-	Close() error
+	Connect(ctx context.Context) error
+	Store(ctx context.Context, cacheKey string, data CacheableEntity, ttl time.Duration) error
+	Retrieve(ctx context.Context, cacheKey string, dest CacheableEntity, allowExpired bool) (RetrieveStatus, error)
+	SetTTL(ctx context.Context, cacheKey string, ttl time.Duration)
+	Remove(ctx context.Context, cacheKey string)
+	BulkRemove(ctx context.Context, cacheKeys []string)
+	Close(ctx context.Context) error
 }
