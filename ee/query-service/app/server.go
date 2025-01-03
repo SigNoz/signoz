@@ -379,6 +379,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web *web.Web) (*
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterIntegrationRoutes(r, am)
+	apiHandler.RegisterCloudIntegrationsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterInfraMetricsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)

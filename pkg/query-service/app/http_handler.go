@@ -3864,6 +3864,32 @@ func (aH *APIHandler) UninstallIntegration(
 	aH.Respond(w, map[string]interface{}{})
 }
 
+// cloud provider integrations
+func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/cloud-integrations").Subrouter()
+
+	subRouter.HandleFunc(
+		"/{cloudProvider}/accounts", am.ViewAccess(aH.CloudIntegrationsListConnectedAccounts),
+	).Methods(http.MethodGet)
+
+}
+
+func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+
+	resp, apiErr := aH.CloudIntegrationsController.ListConnectedAccounts(
+		r.Context(), cloudProvider,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, fmt.Sprintf("Failed to fetch connected %s accounts", cloudProvider))
+		return
+	}
+	aH.Respond(w, resp)
+}
+
 // logs
 func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
