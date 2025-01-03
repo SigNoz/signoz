@@ -10,7 +10,7 @@ import (
 )
 
 type SigNoz struct {
-	Cache *cache.Cache
+	Cache cache.Cache
 	Web   *web.Web
 }
 
@@ -31,7 +31,7 @@ func New(config *config.Config) (*SigNoz, error) {
 	}
 
 	return &SigNoz{
-		Cache: &cache,
+		Cache: cache,
 		Web:   web,
 	}, nil
 }
