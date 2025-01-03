@@ -32,6 +32,7 @@ import (
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/signoz"
 	"go.signoz.io/signoz/pkg/web"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
@@ -62,6 +63,7 @@ import (
 const AppDbEngine = "sqlite"
 
 type ServerOptions struct {
+	SigNoz            *signoz.SigNoz
 	PromConfigPath    string
 	SkipTopLvlOpsPath string
 	HTTPHostPort      string
@@ -109,7 +111,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 }
 
 // NewServer creates and initializes Server
-func NewServer(serverOptions *ServerOptions, web *web.Web) (*Server, error) {
+func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	modelDao, err := dao.InitDao("sqlite", baseconst.RELATIONAL_DATASOURCE_PATH)
 	if err != nil {
@@ -291,7 +293,7 @@ func NewServer(serverOptions *ServerOptions, web *web.Web) (*Server, error) {
 		usageManager:       usageManager,
 	}
 
-	httpServer, err := s.createPublicServer(apiHandler, web)
+	httpServer, err := s.createPublicServer(apiHandler, serverOptions.SigNoz.Web)
 
 	if err != nil {
 		return nil, err
