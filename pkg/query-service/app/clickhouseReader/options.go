@@ -51,6 +51,9 @@ const (
 	defaultTraceLocalTableName  string = "signoz_index_v3"
 	defaultTraceResourceTableV3 string = "distributed_traces_v3_resource"
 	defaultTraceSummaryTable    string = "distributed_trace_summary"
+
+	defaultMetadataDB    string = "signoz_metadata"
+	defaultMetadataTable string = "distributed_attributes_metadata"
 )
 
 // NamespaceConfig is Clickhouse's internal configuration data
@@ -94,6 +97,9 @@ type namespaceConfig struct {
 	TraceLocalTableNameV3 string
 	TraceResourceTableV3  string
 	TraceSummaryTable     string
+
+	MetadataDB    string
+	MetadataTable string
 }
 
 // Connecto defines how to connect to the database
@@ -192,6 +198,9 @@ func NewOptions(
 			TraceLocalTableNameV3: defaultTraceLocalTableName,
 			TraceResourceTableV3:  defaultTraceResourceTableV3,
 			TraceSummaryTable:     defaultTraceSummaryTable,
+
+			MetadataDB:    defaultMetadataDB,
+			MetadataTable: defaultMetadataTable,
 		},
 		others: make(map[string]*namespaceConfig, len(otherNamespaces)),
 	}
