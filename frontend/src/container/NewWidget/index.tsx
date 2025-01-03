@@ -16,10 +16,10 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useAxiosError from 'hooks/useAxiosError';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import history from 'lib/history';
 import { defaultTo, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
@@ -61,6 +61,7 @@ import {
 } from './utils';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const {
 		selectedDashboard,
 		setSelectedDashboard,
@@ -320,7 +321,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		}
 		const updatedQuery = { ...(stagedQuery || initialQueriesMap.metrics) };
 		updatedQuery.builder.queryData[0].pageSize = 10;
-		redirectWithQueryBuilderData(updatedQuery);
+
+		// If stagedQuery exists, don't re-run the query (e.g. when clicking on Add to Dashboard from logs and traces explorer)
+		if (!stagedQuery) {
+			redirectWithQueryBuilderData(updatedQuery);
+		}
 		return {
 			query: updatedQuery,
 			graphType: PANEL_TYPES.LIST,
@@ -444,7 +449,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			onSuccess: () => {
 				setSelectedDashboard(dashboard);
 				setToScrollWidgetId(selectedWidget?.id || '');
-				history.push({
+				safeNavigate({
 					pathname: generatePath(ROUTES.DASHBOARD, { dashboardId }),
 				});
 			},
@@ -454,16 +459,17 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedDashboard,
 		query,
 		isNewDashboard,
-		preWidgets,
+		afterWidgets,
 		selectedWidget,
 		selectedTime.enum,
 		graphType,
 		currentQuery,
-		afterWidgets,
+		preWidgets,
 		updateDashboardMutation,
 		handleError,
 		setSelectedDashboard,
 		setToScrollWidgetId,
+		safeNavigate,
 		dashboardId,
 	]);
 
@@ -472,12 +478,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			setDiscardModal(true);
 			return;
 		}
-		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-	}, [dashboardId, isQueryModified]);
+		safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+	}, [dashboardId, isQueryModified, safeNavigate]);
 
 	const discardChanges = useCallback(() => {
-		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-	}, [dashboardId]);
+		safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+	}, [dashboardId, safeNavigate]);
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
 		setIsLoadingPanelData(true);

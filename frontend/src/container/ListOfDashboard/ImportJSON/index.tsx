@@ -18,8 +18,8 @@ import createDashboard from 'api/dashboard/create';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
-import history from 'lib/history';
 import { ExternalLink, Github, MonitorDot, MoveRight, X } from 'lucide-react';
 // #TODO: Lucide will be removing brand icons like GitHub in the future. In that case, we can use Simple Icons. https://simpleicons.org/
 // See more: https://github.com/lucide-icons/lucide/issues/94
@@ -33,6 +33,7 @@ function ImportJSON({
 	uploadedGrafana,
 	onModalHandler,
 }: ImportJSONProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const [jsonData, setJsonData] = useState<Record<string, unknown>>();
 	const { t } = useTranslation(['dashboard', 'common']);
 	const [isUploadJSONError, setIsUploadJSONError] = useState<boolean>(false);
@@ -97,7 +98,7 @@ function ImportJSON({
 			});
 
 			if (response.statusCode === 200) {
-				history.push(
+				safeNavigate(
 					generatePath(ROUTES.DASHBOARD, {
 						dashboardId: response.payload.uuid,
 					}),

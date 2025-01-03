@@ -20,6 +20,7 @@ import { urlKey } from 'container/AllError/utils';
 import { RelativeTimeMap } from 'container/TopNav/DateTimeSelection/config';
 import useAxiosError from 'hooks/useAxiosError';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import GetMinMax from 'lib/getMinMax';
@@ -321,6 +322,8 @@ export const useTimelineTable = ({
 		extra: any,
 	) => void;
 } => {
+	const { safeNavigate } = useSafeNavigate();
+
 	const { pathname } = useLocation();
 
 	const { search } = useLocation();
@@ -343,7 +346,7 @@ export const useTimelineTable = ({
 				const updatedOrder = order === 'ascend' ? 'asc' : 'desc';
 				const params = new URLSearchParams(window.location.search);
 
-				history.replace(
+				safeNavigate(
 					`${pathname}?${createQueryParams({
 						...Object.fromEntries(params),
 						order: updatedOrder,
@@ -353,7 +356,7 @@ export const useTimelineTable = ({
 				);
 			}
 		},
-		[pathname],
+		[pathname, safeNavigate],
 	);
 
 	const offsetInt = parseInt(offset, 10);

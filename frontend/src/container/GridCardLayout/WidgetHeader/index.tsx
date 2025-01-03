@@ -18,8 +18,8 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
 import { CircleX, X } from 'lucide-react';
@@ -72,6 +72,7 @@ function WidgetHeader({
 	setSearchTerm,
 }: IWidgetHeaderProps): JSX.Element | null {
 	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
 		urlQuery.set(QueryParams.widgetId, widgetId);
@@ -81,8 +82,8 @@ function WidgetHeader({
 			encodeURIComponent(JSON.stringify(widget.query)),
 		);
 		const generatedUrl = `${window.location.pathname}/new?${urlQuery}`;
-		history.push(generatedUrl);
-	}, [urlQuery, widget.id, widget.panelTypes, widget.query]);
+		safeNavigate(generatedUrl);
+	}, [safeNavigate, urlQuery, widget.id, widget.panelTypes, widget.query]);
 
 	const onCreateAlertsHandler = useCreateAlerts(widget, 'dashboardView');
 

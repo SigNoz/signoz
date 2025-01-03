@@ -3,11 +3,11 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import history from 'lib/history';
 import {
 	Dispatch,
 	SetStateAction,
@@ -33,6 +33,7 @@ function WidgetGraph({
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
+	const { safeNavigate } = useSafeNavigate();
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -71,9 +72,9 @@ function WidgetGraph({
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 		},
-		[dispatch, location.pathname, urlQuery],
+		[dispatch, location.pathname, safeNavigate, urlQuery],
 	);
 
 	useEffect(() => {

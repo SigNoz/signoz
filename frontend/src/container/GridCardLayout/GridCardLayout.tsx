@@ -14,8 +14,8 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { defaultTo, isUndefined } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import {
@@ -53,6 +53,7 @@ interface GraphLayoutProps {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const { handle } = props;
+	const { safeNavigate } = useSafeNavigate();
 	const {
 		selectedDashboard,
 		layouts,
@@ -189,13 +190,13 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, pathname, urlQuery],
+		[dispatch, pathname, safeNavigate, urlQuery],
 	);
 
 	useEffect(() => {

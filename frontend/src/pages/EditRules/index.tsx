@@ -8,6 +8,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import EditRulesContainer from 'container/EditRules';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { useEffect } from 'react';
@@ -21,6 +22,7 @@ import {
 } from './constants';
 
 function EditRules(): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const params = useUrlQuery();
 	const ruleId = params.get(QueryParams.ruleId);
 	const { t } = useTranslation('common');
@@ -55,9 +57,9 @@ function EditRules(): JSX.Element {
 			notifications.error({
 				message: 'Rule Id is required',
 			});
-			history.replace(ROUTES.LIST_ALL_ALERT);
+			safeNavigate(ROUTES.LIST_ALL_ALERT);
 		}
-	}, [isValidRuleId, ruleId, notifications]);
+	}, [isValidRuleId, ruleId, notifications, safeNavigate]);
 
 	if (
 		(isError && !isValidRuleId) ||

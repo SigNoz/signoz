@@ -20,11 +20,11 @@ import {
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useChartMutable } from 'hooks/useChartMutable';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
-import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -49,6 +49,7 @@ function FullView({
 	isDependedDataLoaded = false,
 	onToggleModelHandler,
 }: FullViewProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
 		GlobalReducer
@@ -137,9 +138,9 @@ function FullView({
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 		},
-		[dispatch, location.pathname, urlQuery],
+		[dispatch, location.pathname, safeNavigate, urlQuery],
 	);
 
 	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<

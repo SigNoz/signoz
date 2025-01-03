@@ -8,6 +8,7 @@ import Download from 'container/Download/Download';
 import { filterDropdown } from 'container/ServiceApplication/Filter/FilterDropdown';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
@@ -31,7 +32,7 @@ function TopOperationsTable({
 }: TopOperationsTableProps): JSX.Element {
 	const searchInput = useRef<InputRef>(null);
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
-
+	const { safeNavigate } = useSafeNavigate();
 	const servicename = decodeURIComponent(encodedServiceName);
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -87,6 +88,7 @@ function TopOperationsTable({
 			maxTime,
 			selectedTraceTags,
 			apmToTraceQuery: preparedQuery,
+			safeNavigate,
 		});
 	};
 
@@ -126,7 +128,7 @@ function TopOperationsTable({
 			key: 'p50',
 			width: 50,
 			sorter: (a: TopOperationList, b: TopOperationList): number => a.p50 - b.p50,
-			render: (value: number): string => (value / 1000000).toFixed(2),
+			render: (value: number): string => (value / 1_000_000).toFixed(2),
 		},
 		{
 			title: 'P95  (in ms)',
@@ -134,7 +136,7 @@ function TopOperationsTable({
 			key: 'p95',
 			width: 50,
 			sorter: (a: TopOperationList, b: TopOperationList): number => a.p95 - b.p95,
-			render: (value: number): string => (value / 1000000).toFixed(2),
+			render: (value: number): string => (value / 1_000_000).toFixed(2),
 		},
 		{
 			title: 'P99  (in ms)',
@@ -142,7 +144,7 @@ function TopOperationsTable({
 			key: 'p99',
 			width: 50,
 			sorter: (a: TopOperationList, b: TopOperationList): number => a.p99 - b.p99,
-			render: (value: number): string => (value / 1000000).toFixed(2),
+			render: (value: number): string => (value / 1_000_000).toFixed(2),
 		},
 		{
 			title: 'Number of Calls',

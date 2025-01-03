@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { TableProps } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import { PaginationProps } from 'antd/lib';
 import { ColumnGroupType, ColumnType } from 'antd/lib/table';
 import { LaunchChatSupportProps } from 'components/LaunchChatSupport/LaunchChatSupport';
 
@@ -15,6 +16,7 @@ export interface DynamicColumnTableProps extends TableProps<any> {
 	onDragColumn?: (fromIndex: number, toIndex: number) => void;
 	facingIssueBtn?: LaunchChatSupportProps;
 	shouldSendAlertsLogEvent?: boolean;
+	pagination?: PaginationProps;
 }
 
 export type GetVisibleColumnsFunction = (

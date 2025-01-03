@@ -1,10 +1,10 @@
 import { useMachine } from '@xstate/react';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { encode } from 'js-base64';
-import history from 'lib/history';
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { whilelistedKeys } from './config';
@@ -32,12 +32,19 @@ function ResourceProvider({ children }: Props): JSX.Element {
 	const [queries, setQueries] = useState<IResourceAttribute[]>(
 		getResourceAttributeQueriesFromURL(),
 	);
+	const { safeNavigate } = useSafeNavigate();
 	const urlQuery = useUrlQuery();
 
 	const [optionsData, setOptionsData] = useState<OptionsData>({
 		mode: undefined,
 		options: [],
 	});
+
+	// Watch for URL query changes
+	useEffect(() => {
+		const queriesFromUrl = getResourceAttributeQueriesFromURL();
+		setQueries(queriesFromUrl);
+	}, [urlQuery]);
 
 	const handleLoading = (isLoading: boolean): void => {
 		setLoading(isLoading);
@@ -53,10 +60,10 @@ function ResourceProvider({ children }: Props): JSX.Element {
 				encode(JSON.stringify(queries)),
 			);
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
+			safeNavigate(generatedUrl);
 			setQueries(queries);
 		},
-		[pathname, urlQuery],
+		[pathname, safeNavigate, urlQuery],
 	);
 
 	const [state, send] = useMachine(ResourceAttributesFilterMachine, {

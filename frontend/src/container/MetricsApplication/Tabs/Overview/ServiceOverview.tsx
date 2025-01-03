@@ -12,6 +12,7 @@ import { latency } from 'container/MetricsApplication/MetricsPageQueries/Overvie
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { useAppContext } from 'providers/App/App';
 import { useMemo } from 'react';
@@ -85,6 +86,8 @@ function ServiceOverview({
 
 	const apmToLogQuery = useGetAPMToLogsQueries({ servicename });
 
+	const { safeNavigate } = useSafeNavigate();
+
 	return (
 		<>
 			<GraphControlsPanel
@@ -96,6 +99,7 @@ function ServiceOverview({
 					apmToTraceQuery: apmToLogQuery,
 					isViewLogsClicked: true,
 					stepInterval,
+					safeNavigate,
 				})}
 				onViewTracesClick={onViewTracePopupClick({
 					servicename,
@@ -103,6 +107,7 @@ function ServiceOverview({
 					timestamp: selectedTimeStamp,
 					apmToTraceQuery,
 					stepInterval,
+					safeNavigate,
 				})}
 			/>
 			<Card data-testid="service_latency">
