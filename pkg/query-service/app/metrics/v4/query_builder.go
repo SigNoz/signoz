@@ -89,6 +89,10 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 		mq.SpaceAggregation = percentileOperator
 	}
 
+	if panelType == v3.PanelTypeValue && len(mq.GroupBy) > 0 {
+		query = helpers.AddSeriesAggregation(mq.SeriesAggregation, query)
+	}
+
 	return query, nil
 }
 
