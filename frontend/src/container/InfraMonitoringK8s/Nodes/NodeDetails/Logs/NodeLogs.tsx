@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import './PodLogs.styles.scss';
+import './NodeLogs.styles.scss';
 
 import { Card } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
@@ -23,7 +23,7 @@ import {
 import { v4 } from 'uuid';
 
 import { QUERY_KEYS } from '../constants';
-import { getPodLogsQueryPayload } from './constants';
+import { getNodeLogsQueryPayload } from './constants';
 import NoLogsContainer from './NoLogsContainer';
 
 interface Props {
@@ -49,11 +49,9 @@ function PodLogs({
 		const newRestFilters = filters.items.filter(
 			(item) =>
 				item.key?.key !== 'id' &&
-				![
-					QUERY_KEYS.K8S_POD_NAME,
-					QUERY_KEYS.K8S_CLUSTER_NAME,
-					QUERY_KEYS.K8S_NAMESPACE_NAME,
-				].includes(item.key?.key || ''),
+				![QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
+					item.key?.key ?? '',
+				),
 		);
 
 		const areFiltersSame = isEqual(restFilters, newRestFilters);
@@ -67,7 +65,7 @@ function PodLogs({
 	}, [filters]);
 
 	const queryPayload = useMemo(() => {
-		const basePayload = getPodLogsQueryPayload(
+		const basePayload = getNodeLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
 			filters,
@@ -84,7 +82,7 @@ function PodLogs({
 	const [isPaginating, setIsPaginating] = useState(false);
 
 	const { data, isLoading, isFetching, isError } = useQuery({
-		queryKey: ['podLogs', timeRange.startTime, timeRange.endTime, filters],
+		queryKey: ['nodeLogs', timeRange.startTime, timeRange.endTime, filters],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
 		keepPreviousData: isPaginating,
@@ -183,11 +181,11 @@ function PodLogs({
 
 	const renderContent = useMemo(
 		() => (
-			<Card bordered={false} className="pod-logs-list-card">
+			<Card bordered={false} className="node-logs-list-card">
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
-						className="pod-logs-virtuoso"
-						key="pod-logs-virtuoso"
+						className="node-logs-virtuoso"
+						key="node-logs-virtuoso"
 						data={logs}
 						endReached={loadMoreLogs}
 						totalCount={logs.length}
@@ -204,12 +202,12 @@ function PodLogs({
 	);
 
 	return (
-		<div className="pod-logs">
+		<div className="node-logs">
 			{isLoading && <LogsLoading />}
 			{!isLoading && !isError && logs.length === 0 && <NoLogsContainer />}
 			{isError && !isLoading && <LogsError />}
 			{!isLoading && !isError && logs.length > 0 && (
-				<div className="pod-logs-list-container">{renderContent}</div>
+				<div className="node-logs-list-container">{renderContent}</div>
 			)}
 		</div>
 	);

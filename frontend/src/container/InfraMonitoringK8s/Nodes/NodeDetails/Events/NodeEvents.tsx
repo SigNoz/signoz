@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import './Events.styles.scss';
+import './NodeEvents.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Table, TableColumnsType } from 'antd';
@@ -25,7 +25,7 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
-import { getPodsEventsQueryPayload } from './constants';
+import { getNodesEventsQueryPayload } from './constants';
 import NoEventsContainer from './NoEventsContainer';
 
 interface EventDataType {
@@ -48,12 +48,12 @@ interface EventDataType {
 	severity?: string;
 }
 
-interface IPodEventsProps {
+interface INodeEventsProps {
 	timeRange: {
 		startTime: number;
 		endTime: number;
 	};
-	handleChangeLogFilters: (filters: IBuilderQuery['filters']) => void;
+	handleChangeEventFilters: (filters: IBuilderQuery['filters']) => void;
 	filters: IBuilderQuery['filters'];
 	isModalTimeSelection: boolean;
 	handleTimeChange: (
@@ -67,17 +67,17 @@ const EventsPageSize = 10;
 
 export default function Events({
 	timeRange,
-	handleChangeLogFilters,
+	handleChangeEventFilters,
 	filters,
 	isModalTimeSelection,
 	handleTimeChange,
 	selectedInterval,
-}: IPodEventsProps): JSX.Element {
+}: INodeEventsProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 
-	const [formattedPodEvents, setFormattedPodEvents] = useState<EventDataType[]>(
-		[],
-	);
+	const [formattedNodeEvents, setFormattedNodeEvents] = useState<
+		EventDataType[]
+	>([]);
 
 	const [hasReachedEndOfEvents, setHasReachedEndOfEvents] = useState(false);
 
@@ -110,7 +110,7 @@ export default function Events({
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	const queryPayload = useMemo(() => {
-		const basePayload = getPodsEventsQueryPayload(
+		const basePayload = getNodesEventsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
 			filters,
@@ -125,7 +125,7 @@ export default function Events({
 	}, [timeRange.startTime, timeRange.endTime, filters]);
 
 	const { data: eventsData, isLoading, isFetching, isError } = useQuery({
-		queryKey: ['podEvents', timeRange.startTime, timeRange.endTime, filters],
+		queryKey: ['nodeEvents', timeRange.startTime, timeRange.endTime, filters],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
 	});
@@ -158,7 +158,7 @@ export default function Events({
 				}),
 			);
 
-			setFormattedPodEvents(formattedData);
+			setFormattedNodeEvents(formattedData);
 
 			if (
 				!responsePayload ||
@@ -178,11 +178,11 @@ export default function Events({
 	);
 
 	const handlePrev = (): void => {
-		if (!formattedPodEvents.length) return;
+		if (!formattedNodeEvents.length) return;
 
 		setPage(page - 1);
 
-		const firstEvent = formattedPodEvents[0];
+		const firstEvent = formattedNodeEvents[0];
 
 		const newItems = [
 			...filters.items.filter((item) => item.key?.key !== 'id'),
@@ -204,14 +204,14 @@ export default function Events({
 			items: newItems,
 		} as IBuilderQuery['filters'];
 
-		handleChangeLogFilters(newFilters);
+		handleChangeEventFilters(newFilters);
 	};
 
 	const handleNext = (): void => {
-		if (!formattedPodEvents.length) return;
+		if (!formattedNodeEvents.length) return;
 
 		setPage(page + 1);
-		const lastEvent = formattedPodEvents[formattedPodEvents.length - 1];
+		const lastEvent = formattedNodeEvents[formattedNodeEvents.length - 1];
 
 		const newItems = [
 			...filters.items.filter((item) => item.key?.key !== 'id'),
@@ -233,7 +233,7 @@ export default function Events({
 			items: newItems,
 		} as IBuilderQuery['filters'];
 
-		handleChangeLogFilters(newFilters);
+		handleChangeEventFilters(newFilters);
 	};
 
 	const handleExpandRowIcon = ({
@@ -274,13 +274,13 @@ export default function Events({
 		);
 
 	return (
-		<div className="pod-events-container">
-			<div className="pod-events-header">
+		<div className="node-events-container">
+			<div className="node-events-header">
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
 							query={query}
-							onChange={handleChangeLogFilters}
+							onChange={handleChangeEventFilters}
 							disableNavigationShortcuts
 						/>
 					)}
@@ -300,15 +300,15 @@ export default function Events({
 
 			{isLoading && <LoadingContainer />}
 
-			{!isLoading && !isError && formattedPodEvents.length === 0 && (
+			{!isLoading && !isError && formattedNodeEvents.length === 0 && (
 				<NoEventsContainer />
 			)}
 
 			{isError && !isLoading && <LogsError />}
 
-			{!isLoading && !isError && formattedPodEvents.length > 0 && (
-				<div className="pod-events-list-container">
-					<div className="pod-events-list-card">
+			{!isLoading && !isError && formattedNodeEvents.length > 0 && (
+				<div className="node-events-list-container">
+					<div className="node-events-list-card">
 						<Table<EventDataType>
 							loading={isLoading && page > 1}
 							columns={columns}
@@ -317,7 +317,7 @@ export default function Events({
 								rowExpandable: (record): boolean => record.body !== 'Not Expandable',
 								expandIcon: handleExpandRowIcon,
 							}}
-							dataSource={formattedPodEvents}
+							dataSource={formattedNodeEvents}
 							pagination={false}
 							rowKey={(record): string => record.id}
 						/>
@@ -325,10 +325,10 @@ export default function Events({
 				</div>
 			)}
 
-			{!isError && formattedPodEvents.length > 0 && (
-				<div className="pod-events-footer">
+			{!isError && formattedNodeEvents.length > 0 && (
+				<div className="node-events-footer">
 					<Button
-						className="pod-events-footer-button periscope-btn ghost"
+						className="node-events-footer-button periscope-btn ghost"
 						type="link"
 						onClick={handlePrev}
 						disabled={page === 1 || isFetching || isLoading}
@@ -338,7 +338,7 @@ export default function Events({
 					</Button>
 
 					<Button
-						className="pod-events-footer-button periscope-btn ghost"
+						className="node-events-footer-button periscope-btn ghost"
 						type="link"
 						onClick={handleNext}
 						disabled={hasReachedEndOfEvents || isFetching || isLoading}

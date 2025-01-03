@@ -1,6 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
-/* eslint-disable sonarjs/no-duplicate-string */
-import './PodDetails.styles.scss';
+import './NodeDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
@@ -43,29 +42,26 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import { QUERY_KEYS, VIEW_TYPES, VIEWS } from './constants';
-import Events from './Events/Events';
-import Metrics from './Metrics/Metrics';
-import { PodDetailProps } from './PodDetail.interfaces';
-import PodLogsDetailedView from './PodLogs/PodLogsDetailedView';
-import PodTraces from './PodTraces/PodTraces';
+import NodeEvents from './Events';
+import NodeLogs from './Logs';
+import NodeMetrics from './Metrics';
+import { NodeDetailsProps } from './NodeDetails.interfaces';
+import NodeTraces from './Traces';
 
-const TimeRangeOffset = 1000000;
-
-// eslint-disable-next-line sonarjs/cognitive-complexity
-function PodDetails({
-	pod,
+function NodeDetails({
+	node,
 	onClose,
 	isModalTimeSelection,
-}: PodDetailProps): JSX.Element {
+}: NodeDetailsProps): JSX.Element {
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / TimeRangeOffset), [
+	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
 		minTime,
 	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / TimeRangeOffset), [
+	const endMs = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [
 		maxTime,
 	]);
 
@@ -90,15 +86,15 @@ function PodDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: QUERY_KEYS.K8S_POD_NAME,
+						key: QUERY_KEYS.K8S_NODE_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
 						isColumn: false,
 						isJSON: false,
-						id: 'k8s_pod_name--string--resource--false',
+						id: 'k8s_node_name--string--resource--false',
 					},
 					op: '=',
-					value: pod?.meta.k8s_pod_name || '',
+					value: node?.meta.k8s_node_name || '',
 				},
 				{
 					id: uuidv4(),
@@ -108,31 +104,14 @@ function PodDetails({
 						type: 'resource',
 						isColumn: false,
 						isJSON: false,
-						id: 'k8s_pod_name--string--resource--false',
+						id: 'k8s_node_name--string--resource--false',
 					},
 					op: '=',
-					value: pod?.meta.k8s_cluster_name || '',
-				},
-				{
-					id: uuidv4(),
-					key: {
-						key: QUERY_KEYS.K8S_NAMESPACE_NAME,
-						dataType: DataTypes.String,
-						type: 'resource',
-						isColumn: false,
-						isJSON: false,
-						id: 'k8s_pod_name--string--resource--false',
-					},
-					op: '=',
-					value: pod?.meta.k8s_namespace_name || '',
+					value: node?.meta.k8s_cluster_name || '',
 				},
 			],
 		}),
-		[
-			pod?.meta.k8s_cluster_name,
-			pod?.meta.k8s_namespace_name,
-			pod?.meta.k8s_pod_name,
-		],
+		[node?.meta.k8s_node_name, node?.meta.k8s_cluster_name],
 	);
 
 	const initialEventsFilters = useMemo(
@@ -150,7 +129,7 @@ function PodDetails({
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
-					value: 'Pod',
+					value: 'Node',
 				},
 				{
 					id: uuidv4(),
@@ -163,11 +142,11 @@ function PodDetails({
 						id: 'k8s.object.name--string--resource--false',
 					},
 					op: '=',
-					value: pod?.meta.k8s_pod_name || '',
+					value: node?.meta.k8s_node_name || '',
 				},
 			],
 		}),
-		[pod?.meta.k8s_pod_name],
+		[node?.meta.k8s_node_name],
 	);
 
 	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
@@ -183,8 +162,8 @@ function PodDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Pods list details page visited', {
-			pod: pod?.podUID,
+		logEvent('Infra Monitoring: Nodes list details page visited', {
+			node: node?.nodeUID,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -202,8 +181,8 @@ function PodDetails({
 			const { maxTime, minTime } = GetMinMax(selectedTime);
 
 			setModalTimeRange({
-				startTime: Math.floor(minTime / TimeRangeOffset),
-				endTime: Math.floor(maxTime / TimeRangeOffset),
+				startTime: Math.floor(minTime / 1000000000),
+				endTime: Math.floor(maxTime / 1000000000),
 			});
 		}
 	}, [selectedTime, minTime, maxTime]);
@@ -225,13 +204,13 @@ function PodDetails({
 				const { maxTime, minTime } = GetMinMax(interval);
 
 				setModalTimeRange({
-					startTime: Math.floor(minTime / TimeRangeOffset),
-					endTime: Math.floor(maxTime / TimeRangeOffset),
+					startTime: Math.floor(minTime / 1000000000),
+					endTime: Math.floor(maxTime / 1000000000),
 				});
 			}
 
-			logEvent('Infra Monitoring: Pods list details time updated', {
-				pod: pod?.podUID,
+			logEvent('Infra Monitoring: Nodes list details time updated', {
+				node: node?.nodeUID,
 				interval,
 			});
 		},
@@ -243,20 +222,18 @@ function PodDetails({
 		(value: IBuilderQuery['filters']) => {
 			setLogFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
-					[
-						QUERY_KEYS.K8S_POD_NAME,
-						QUERY_KEYS.K8S_CLUSTER_NAME,
-						QUERY_KEYS.K8S_NAMESPACE_NAME,
-					].includes(item.key?.key ?? ''),
+					[QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
+						item.key?.key ?? '',
+					),
 				);
 				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
 				const newFilters = value.items.filter(
 					(item) =>
-						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_CLUSTER_NAME,
+						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_NODE_NAME,
 				);
 
-				logEvent('Infra Monitoring: Pods list details logs filters applied', {
-					pod: pod?.podUID,
+				logEvent('Infra Monitoring: Nodes list details logs filters applied', {
+					node: node?.nodeUID,
 				});
 
 				return {
@@ -277,15 +254,13 @@ function PodDetails({
 		(value: IBuilderQuery['filters']) => {
 			setTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
-					[
-						QUERY_KEYS.K8S_POD_NAME,
-						QUERY_KEYS.K8S_CLUSTER_NAME,
-						QUERY_KEYS.K8S_NAMESPACE_NAME,
-					].includes(item.key?.key ?? ''),
+					[QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
+						item.key?.key ?? '',
+					),
 				);
 
-				logEvent('Infra Monitoring: Pods list details traces filters applied', {
-					pod: pod?.podUID,
+				logEvent('Infra Monitoring: Nodes list details traces filters applied', {
+					node: node?.nodeUID,
 				});
 
 				return {
@@ -293,7 +268,7 @@ function PodDetails({
 					items: [
 						...primaryFilters,
 						...value.items.filter(
-							(item) => item.key?.key !== QUERY_KEYS.K8S_POD_NAME,
+							(item) => item.key?.key !== QUERY_KEYS.K8S_NODE_NAME,
 						),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
@@ -306,22 +281,22 @@ function PodDetails({
 	const handleChangeEventsFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
 			setEventsFilters((prevFilters) => {
-				const podKindFilter = prevFilters.items.find(
+				const nodeKindFilter = prevFilters.items.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_KIND,
 				);
-				const podNameFilter = prevFilters.items.find(
+				const nodeNameFilter = prevFilters.items.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent('Infra Monitoring: Pods list details events filters applied', {
-					pod: pod?.podUID,
+				logEvent('Infra Monitoring: Nodes list details events filters applied', {
+					node: node?.nodeUID,
 				});
 
 				return {
 					op: 'AND',
 					items: [
-						podKindFilter,
-						podNameFilter,
+						nodeKindFilter,
+						nodeNameFilter,
 						...value.items.filter(
 							(item) =>
 								item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
@@ -344,8 +319,8 @@ function PodDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Pods list details explore clicked', {
-			pod: pod?.podUID,
+		logEvent('Infra Monitoring: Nodes list details explore clicked', {
+			node: node?.nodeUID,
 			view: selectedView,
 		});
 
@@ -408,8 +383,8 @@ function PodDetails({
 			const { maxTime, minTime } = GetMinMax(selectedTime);
 
 			setModalTimeRange({
-				startTime: Math.floor(minTime / TimeRangeOffset),
-				endTime: Math.floor(maxTime / TimeRangeOffset),
+				startTime: Math.floor(minTime / 1000000000),
+				endTime: Math.floor(maxTime / 1000000000),
 			});
 		}
 		setSelectedView(VIEW_TYPES.METRICS);
@@ -423,63 +398,47 @@ function PodDetails({
 				<>
 					<Divider type="vertical" />
 					<Typography.Text className="title">
-						{pod?.meta.k8s_pod_name}
+						{node?.meta.k8s_node_name}
 					</Typography.Text>
 				</>
 			}
 			placement="right"
 			onClose={handleClose}
-			open={!!pod}
+			open={!!node}
 			style={{
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
 			}}
-			className="pod-detail-drawer"
+			className="node-detail-drawer"
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
-			{pod && (
+			{node && (
 				<>
-					<div className="pod-detail-drawer__pod">
-						<div className="pod-details-grid">
+					<div className="node-detail-drawer__node">
+						<div className="node-details-grid">
 							<div className="labels-row">
 								<Typography.Text
 									type="secondary"
-									className="pod-details-metadata-label"
+									className="node-details-metadata-label"
 								>
-									NAMESPACE
+									Node Name
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
-									className="pod-details-metadata-label"
+									className="node-details-metadata-label"
 								>
 									Cluster Name
 								</Typography.Text>
-								<Typography.Text
-									type="secondary"
-									className="pod-details-metadata-label"
-								>
-									Node
-								</Typography.Text>
 							</div>
-
 							<div className="values-row">
-								<Typography.Text className="pod-details-metadata-value">
-									<Tooltip title={pod.meta.k8s_namespace_name}>
-										{pod.meta.k8s_namespace_name}
+								<Typography.Text className="node-details-metadata-value">
+									<Tooltip title={node.meta.k8s_node_name}>
+										{node.meta.k8s_node_name}
 									</Tooltip>
 								</Typography.Text>
-
-								<Typography.Text className="pod-details-metadata-value">
-									<Tooltip title={pod.meta.k8s_cluster_name}>
-										{pod.meta.k8s_cluster_name}
-									</Tooltip>
-								</Typography.Text>
-
-								<Typography.Text className="pod-details-metadata-value">
-									<Tooltip title={pod.meta.k8s_node_name}>
-										{pod.meta.k8s_node_name}
-									</Tooltip>
+								<Typography.Text className="node-details-metadata-value">
+									<Tooltip title="Cluster name">{node.meta.k8s_cluster_name}</Tooltip>
 								</Typography.Text>
 							</div>
 						</div>
@@ -547,18 +506,17 @@ function PodDetails({
 							/>
 						)}
 					</div>
-
 					{selectedView === VIEW_TYPES.METRICS && (
-						<Metrics
-							pod={pod}
-							selectedInterval={selectedInterval}
+						<NodeMetrics
 							timeRange={modalTimeRange}
-							handleTimeChange={handleTimeChange}
 							isModalTimeSelection={isModalTimeSelection}
+							handleTimeChange={handleTimeChange}
+							selectedInterval={selectedInterval}
+							node={node}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.LOGS && (
-						<PodLogsDetailedView
+						<NodeLogs
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
@@ -568,7 +526,7 @@ function PodDetails({
 						/>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (
-						<PodTraces
+						<NodeTraces
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
@@ -577,14 +535,13 @@ function PodDetails({
 							selectedInterval={selectedInterval}
 						/>
 					)}
-
 					{selectedView === VIEW_TYPES.EVENTS && (
-						<Events
+						<NodeEvents
 							timeRange={modalTimeRange}
+							handleChangeEventFilters={handleChangeEventsFilters}
+							filters={eventsFilters}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
-							handleChangeLogFilters={handleChangeEventsFilters}
-							filters={eventsFilters}
 							selectedInterval={selectedInterval}
 						/>
 					)}
@@ -594,4 +551,4 @@ function PodDetails({
 	);
 }
 
-export default PodDetails;
+export default NodeDetails;

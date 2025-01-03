@@ -50,7 +50,7 @@ export const K8sEntityToAggregateAttributeMapping = {
 export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Pods',
+		title: 'Pod',
 		attributeKey: {
 			key: 'k8s_pod_name',
 			dataType: DataTypes.String,
@@ -81,7 +81,7 @@ export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Nodes',
+		title: 'Node',
 		attributeKey: {
 			key: 'k8s_node_name',
 			dataType: DataTypes.String,
@@ -112,7 +112,7 @@ export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Deployments',
+		title: 'Deployment',
 		attributeKey: {
 			key: 'k8s_deployment_name',
 			dataType: DataTypes.String,
@@ -127,7 +127,7 @@ export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Statefulsets',
+		title: 'Statefulset',
 		attributeKey: {
 			key: 'k8s_statefulset_name',
 			dataType: DataTypes.String,
@@ -142,7 +142,7 @@ export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'DaemonSets',
+		title: 'DaemonSet',
 		attributeKey: {
 			key: 'k8s_daemonset_name',
 			dataType: DataTypes.String,
@@ -155,7 +155,7 @@ export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Jobs',
+		title: 'Job',
 		attributeKey: {
 			key: 'k8s_job_name',
 			dataType: DataTypes.String,
@@ -173,7 +173,7 @@ export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 export const NodesQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Nodes',
+		title: 'Node Name',
 		attributeKey: {
 			key: 'k8s_node_name',
 			dataType: DataTypes.String,
@@ -181,6 +181,24 @@ export const NodesQuickFiltersConfig: IQuickFiltersConfig[] = [
 			isColumn: false,
 			isJSON: false,
 		},
+		aggregateOperator: 'noop',
+		aggregateAttribute: 'k8s_pod_cpu_utilization',
+		dataSource: DataSource.METRICS,
+		defaultOpen: true,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Cluster Name',
+		attributeKey: {
+			key: 'k8s_cluster_name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		aggregateOperator: 'noop',
+		aggregateAttribute: 'k8s_pod_cpu_utilization',
+		dataSource: DataSource.METRICS,
 		defaultOpen: true,
 	},
 ];
@@ -203,7 +221,7 @@ export const NamespaceQuickFiltersConfig: IQuickFiltersConfig[] = [
 export const ClustersQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Clusters',
+		title: 'Cluster',
 		attributeKey: {
 			key: 'k8s.cluster.name',
 			dataType: DataTypes.String,
@@ -218,7 +236,7 @@ export const ClustersQuickFiltersConfig: IQuickFiltersConfig[] = [
 export const ContainersQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Containers',
+		title: 'Container',
 		attributeKey: {
 			key: 'k8s_container_name',
 			dataType: DataTypes.String,
@@ -233,7 +251,7 @@ export const ContainersQuickFiltersConfig: IQuickFiltersConfig[] = [
 export const VolumesQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Volumes',
+		title: 'Volume',
 		attributeKey: {
 			key: 'k8s_volume_name',
 			dataType: DataTypes.String,
@@ -248,7 +266,7 @@ export const VolumesQuickFiltersConfig: IQuickFiltersConfig[] = [
 export const DeploymentsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Deployments',
+		title: 'Deployment',
 		attributeKey: {
 			key: 'k8s_deployment_name',
 			dataType: DataTypes.String,
@@ -263,7 +281,7 @@ export const DeploymentsQuickFiltersConfig: IQuickFiltersConfig[] = [
 export const StatefulsetsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Statefulsets',
+		title: 'Statefulset',
 		attributeKey: {
 			key: 'k8s_statefulset_name',
 			dataType: DataTypes.String,
@@ -278,7 +296,7 @@ export const StatefulsetsQuickFiltersConfig: IQuickFiltersConfig[] = [
 export const DaemonSetsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'DaemonSets',
+		title: 'DaemonSet',
 		attributeKey: {
 			key: 'k8s_daemonset_name',
 			dataType: DataTypes.String,
@@ -293,7 +311,7 @@ export const DaemonSetsQuickFiltersConfig: IQuickFiltersConfig[] = [
 export const JobsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'Jobs',
+		title: 'Job',
 		attributeKey: {
 			key: 'k8s_job_name',
 			dataType: DataTypes.String,
@@ -305,5 +323,7 @@ export const JobsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 ];
 
-export const INVALID_MEMORY_CPU_VALUE_MESSAGE =
-	'Some pods do not have memory requests/limits.';
+export const getInvalidValueTooltipText = (
+	entity: K8sCategory,
+	attribute: string,
+): string => `Some ${entity} do not have ${attribute}s.`;
