@@ -230,6 +230,22 @@ func ClickHouseFormattedValue(v interface{}) string {
 	}
 }
 
+func AddBackTickToFormatTag(str string) string {
+	if strings.Contains(str, ".") {
+		return "`" + str + "`"
+	} else {
+		return str
+	}
+}
+
+func AddBackTickToFormatTags(inputs ...string) []string {
+	result := make([]string, len(inputs))
+	for i, str := range inputs {
+		result[i] = AddBackTickToFormatTag(str)
+	}
+	return result
+}
+
 func getPointerValue(v interface{}) interface{} {
 	switch x := v.(type) {
 	case *uint8:

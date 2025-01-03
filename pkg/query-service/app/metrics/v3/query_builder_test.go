@@ -380,3 +380,163 @@ func TestBuildQueryAdjustedTimes(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildQueryWithDotInMetricAndAttributes(t *testing.T) {
+	cases := []struct {
+		name     string
+		params   *v3.QueryRangeParamsV3
+		expected string
+	}{
+		{
+			name: "TestBuildQueryWithDotInMetricAndAttributes with dot in metric and attributes",
+			params: &v3.QueryRangeParamsV3{
+				Start: 1735036101000,
+				End:   1735637901000,
+				Step:  60,
+				Variables: map[string]interface{}{
+					"SIGNOZ_START_TIME": 1735034992000,
+					"SIGNOZ_END_TIME":   1735036792000,
+				},
+				FormatForWeb: false,
+				CompositeQuery: &v3.CompositeQuery{
+					QueryType: v3.QueryTypeBuilder,
+					PanelType: v3.PanelTypeValue,
+					FillGaps:  false,
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:         "A",
+							DataSource:        v3.DataSourceMetrics,
+							AggregateOperator: v3.AggregateOperatorAvg,
+							AggregateAttribute: v3.AttributeKey{
+								Key:      "system.memory.usage",
+								DataType: v3.AttributeKeyDataTypeFloat64,
+								Type:     v3.AttributeKeyType("Gauge"),
+								IsColumn: true,
+							},
+							TimeAggregation:  v3.TimeAggregationAvg,
+							SpaceAggregation: v3.SpaceAggregationSum,
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{
+										Key: v3.AttributeKey{
+											Key:      "os.type",
+											DataType: v3.AttributeKeyDataTypeString,
+											Type:     v3.AttributeKeyTypeTag,
+											IsColumn: false,
+										},
+										Operator: v3.FilterOperatorEqual,
+										Value:    "linux",
+									},
+								},
+							},
+							Expression:   "A",
+							Disabled:     false,
+							StepInterval: 60,
+							OrderBy: []v3.OrderBy{
+								{
+									ColumnName: "os.type",
+									Order:      v3.DirectionAsc,
+									DataType:   v3.AttributeKeyDataTypeString,
+									Type:       v3.AttributeKeyTypeTag,
+								},
+							},
+							GroupBy: []v3.AttributeKey{
+								{
+									Key:      "os.type",
+									DataType: v3.AttributeKeyDataTypeString,
+									Type:     v3.AttributeKeyTypeTag,
+									IsColumn: false,
+								},
+							},
+							Legend:   "",
+							ReduceTo: v3.ReduceToOperatorAvg,
+							Having:   []v3.Having{},
+						},
+					},
+				},
+			},
+			expected: "SELECT *, now() AS ts FROM (SELECT avgIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp  FROM (SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'system.memory.usage' AND temporality = '' AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000 AND JSONExtractString(labels, 'os.type') = 'linux') as filtered_time_series USING fingerprint WHERE metric_name = 'system.memory.usage' AND unix_milli >= 1735036080000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` asc, ts) )",
+		},
+		{
+			name: "TestBuildQueryWithDotInMetricAndAttributes with dot in metric and attributes with rate_avg aggregation",
+			params: &v3.QueryRangeParamsV3{
+				Start: 1735036101000,
+				End:   1735637901000,
+				Step:  60,
+				Variables: map[string]interface{}{
+					"SIGNOZ_START_TIME": 1735034992000,
+					"SIGNOZ_END_TIME":   1735036792000,
+				},
+				FormatForWeb: false,
+				CompositeQuery: &v3.CompositeQuery{
+					QueryType: v3.QueryTypeBuilder,
+					PanelType: v3.PanelTypeValue,
+					FillGaps:  false,
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:         "A",
+							DataSource:        v3.DataSourceMetrics,
+							AggregateOperator: v3.AggregateOperatorRateAvg,
+							AggregateAttribute: v3.AttributeKey{
+								Key:      "system.memory.usage",
+								DataType: v3.AttributeKeyDataTypeFloat64,
+								Type:     v3.AttributeKeyType("Gauge"),
+								IsColumn: true,
+							},
+							TimeAggregation:  v3.TimeAggregationAvg,
+							SpaceAggregation: v3.SpaceAggregationSum,
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{
+										Key: v3.AttributeKey{
+											Key:      "os.type",
+											DataType: v3.AttributeKeyDataTypeString,
+											Type:     v3.AttributeKeyTypeTag,
+											IsColumn: false,
+										},
+										Operator: v3.FilterOperatorEqual,
+										Value:    "linux",
+									},
+								},
+							},
+							Expression:   "A",
+							Disabled:     false,
+							StepInterval: 60,
+							OrderBy: []v3.OrderBy{
+								{
+									ColumnName: "os.type",
+									Order:      v3.DirectionAsc,
+									DataType:   v3.AttributeKeyDataTypeString,
+									Type:       v3.AttributeKeyTypeTag,
+								},
+							},
+							GroupBy: []v3.AttributeKey{
+								{
+									Key:      "os.type",
+									DataType: v3.AttributeKeyDataTypeString,
+									Type:     v3.AttributeKeyTypeTag,
+									IsColumn: false,
+								},
+							},
+							Legend:   "",
+							ReduceTo: v3.ReduceToOperatorAvg,
+							Having:   []v3.Having{},
+						},
+					},
+				},
+			},
+			expected: "SELECT *, now() AS ts FROM (SELECT avgIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp  FROM (SELECT `os.type`,  ts, If((value - lagInFrame(value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)))  as value FROM(SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'system.memory.usage' AND temporality = '' AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000 AND JSONExtractString(labels, 'os.type') = 'linux') as filtered_time_series USING fingerprint WHERE metric_name = 'system.memory.usage' AND unix_milli >= 1735036020000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` asc, ts) WINDOW rate_window as (PARTITION BY `os.type` ORDER BY `os.type`,  ts) ) )",
+		},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			q := testCase.params
+			query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"], Options{PreferRPM: false})
+			require.NoError(t, err)
+
+			require.Contains(t, query, testCase.expected)
+		})
+	}
+}

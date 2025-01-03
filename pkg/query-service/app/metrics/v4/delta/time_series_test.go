@@ -246,6 +246,61 @@ func TestPrepareTimeseriesQuery(t *testing.T) {
 			end:                   1701796780000,
 			expectedQueryContains: "SELECT service_name, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, quantilesDDMerge(0.01, 0.990000)(sketch)[1] as value FROM signoz_metrics.distributed_exp_hist INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'service_name') as service_name, fingerprint FROM signoz_metrics.time_series_v4 WHERE metric_name = 'signoz_latency' AND temporality = 'Delta' AND unix_milli >= 1701792000000 AND unix_milli < 1701796780000) as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency' AND unix_milli >= 1701794980000 AND unix_milli < 1701796780000 GROUP BY service_name, ts ORDER BY service_name ASC, ts ASC",
 		},
+		{
+			name: "test time aggregation = rate, space aggregation = max, temporality = delta, testing metrics and attribute name with dot",
+			builderQuery: &v3.BuilderQuery{
+				QueryName:         "A",
+				DataSource:        v3.DataSourceMetrics,
+				AggregateOperator: v3.AggregateOperatorRate,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "signoz.latency.sum",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+					Type:     v3.AttributeKeyType("Sum"),
+					IsColumn: true,
+				},
+				Temporality:      v3.Delta,
+				TimeAggregation:  v3.TimeAggregationRate,
+				SpaceAggregation: v3.SpaceAggregationMax,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "host_name",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+								IsColumn: false,
+							},
+							Operator: v3.FilterOperatorEqual,
+							Value:    "4f6ec470feea",
+						},
+					},
+				},
+				Expression:   "A",
+				Disabled:     false,
+				StepInterval: 60,
+				OrderBy: []v3.OrderBy{
+					{
+						ColumnName: "status.code",
+						Order:      v3.DirectionAsc,
+					},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "host.name",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+						IsColumn: false,
+					},
+				},
+				Legend:   "",
+				ReduceTo: v3.ReduceToOperatorAvg,
+				Having:   []v3.Having{},
+			},
+			start:                 1735036101000,
+			end:                   1735637901000,
+			expectedQueryContains: "SELECT `host.name`, ts, max(per_series_value) as value FROM (SELECT fingerprint, any(`host.name`) as `host.name`, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(sum)/60 as per_series_value FROM signoz_metrics.distributed_samples_v4_agg_5m INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'host.name') as `host.name`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'signoz.latency.sum' AND temporality = 'Delta' AND unix_milli >= 1734998400000 AND unix_milli < 1735637901000 AND JSONExtractString(labels, 'host_name') = '4f6ec470feea') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz.latency.sum' AND unix_milli >= 1735036101000 AND unix_milli < 1735637901000 GROUP BY fingerprint, ts ORDER BY fingerprint, ts) WHERE isNaN(per_series_value) = 0 GROUP BY `host.name`, ts ORDER BY `host.name` ASC, ts ASC",
+		},
 	}
 
 	for _, testCase := range testCases {

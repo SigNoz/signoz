@@ -217,6 +217,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string, erro
 // groupingSets returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
 func groupingSets(tags ...string) string {
+	tags = utils.AddBackTickToFormatTags(tags...)
 	withTs := append(tags, "ts")
 	return strings.Join(withTs, ", ")
 }
@@ -224,12 +225,14 @@ func groupingSets(tags ...string) string {
 // groupBy returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
 func groupBy(tags ...string) string {
+	tags = utils.AddBackTickToFormatTags(tags...)
 	tags = append(tags, "ts")
 	return strings.Join(tags, ",")
 }
 
 // groupSelect returns a string of comma separated tags for select clause
 func groupSelect(tags ...string) string {
+	tags = utils.AddBackTickToFormatTags(tags...)
 	groupTags := strings.Join(tags, ",")
 	if len(tags) != 0 {
 		groupTags += ", "
@@ -270,11 +273,13 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 		for _, item := range items {
 			if item.ColumnName == tag {
 				found = true
+				item.ColumnName = utils.AddBackTickToFormatTag(item.ColumnName)
 				orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
 				break
 			}
 		}
 		if !found {
+			tag = utils.AddBackTickToFormatTag(tag)
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
 		}
 	}

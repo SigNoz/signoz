@@ -212,6 +212,61 @@ func TestPrepareTimeseriesQuery(t *testing.T) {
 			end:                   1701796780000,
 			expectedQueryContains: "SELECT service_name, ts, sum(per_series_value) as value FROM (SELECT service_name, ts, If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window))) as per_series_value FROM (SELECT fingerprint, any(service_name) as service_name, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, max(value) as per_series_value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'service_name') as service_name, fingerprint FROM signoz_metrics.time_series_v4 WHERE metric_name = 'http_requests' AND temporality = 'Cumulative' AND unix_milli >= 1701792000000 AND unix_milli < 1701796780000 AND like(JSONExtractString(labels, 'service_name'), '%payment_service%')) as filtered_time_series USING fingerprint WHERE metric_name = 'http_requests' AND unix_milli >= 1701794980000 AND unix_milli < 1701796780000 GROUP BY fingerprint, ts ORDER BY fingerprint, ts) WINDOW rate_window as (PARTITION BY fingerprint ORDER BY fingerprint, ts)) WHERE isNaN(per_series_value) = 0 GROUP BY service_name, ts ORDER BY service_name ASC, ts ASC",
 		},
+		{
+			name: "test time aggregation = avg, space aggregation = avg, temporality = unspecified, testing metrics and attribute name with dot",
+			builderQuery: &v3.BuilderQuery{
+				QueryName:         "A",
+				DataSource:        v3.DataSourceMetrics,
+				AggregateOperator: v3.AggregateOperatorAvg,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "system.memory.usage",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+					Type:     v3.AttributeKeyType("Gauge"),
+					IsColumn: true,
+				},
+				Temporality:      v3.Unspecified,
+				TimeAggregation:  v3.TimeAggregationAvg,
+				SpaceAggregation: v3.SpaceAggregationAvg,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "host.name",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+								IsColumn: false,
+							},
+							Operator: v3.FilterOperatorEqual,
+							Value:    "signoz-host",
+						},
+					},
+				},
+				Expression:   "A",
+				Disabled:     false,
+				StepInterval: 60,
+				OrderBy: []v3.OrderBy{
+					{
+						ColumnName: "state",
+						Order:      v3.DirectionDesc,
+					},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "state",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+						IsColumn: false,
+					},
+				},
+				Legend:   "",
+				ReduceTo: v3.ReduceToOperatorAvg,
+				Having:   []v3.Having{},
+			},
+			start:                 1735295140000,
+			end:                   1735554340000,
+			expectedQueryContains: "SELECT state, ts, avg(per_series_value) as value FROM (SELECT fingerprint, any(state) as state, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(sum) / sum(count) as per_series_value FROM signoz_metrics.distributed_samples_v4_agg_5m INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'state') as state, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'system.memory.usage' AND temporality = 'Unspecified' AND unix_milli >= 1735257600000 AND unix_milli < 1735554340000 AND JSONExtractString(labels, 'host.name') = 'signoz-host') as filtered_time_series USING fingerprint WHERE metric_name = 'system.memory.usage' AND unix_milli >= 1735295140000 AND unix_milli < 1735554340000 GROUP BY fingerprint, ts ORDER BY fingerprint, ts) WHERE isNaN(per_series_value) = 0 GROUP BY state, ts ORDER BY state desc, ts ASC",
+		},
 	}
 
 	for _, testCase := range testCases {

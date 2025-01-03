@@ -9,7 +9,6 @@ import {
 	QUERY_BUILDER_SEARCH_VALUES,
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
-import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
@@ -40,7 +39,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -147,9 +145,8 @@ function QueryBuilderSearchV2(
 
 	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
 
-	const { pathname } = useLocation();
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
+	const isLogsDataSource = useMemo(() => query.dataSource === DataSource.LOGS, [
+		query.dataSource,
 	]);
 
 	const memoizedSearchParams = useMemo(
@@ -235,7 +232,7 @@ function QueryBuilderSearchV2(
 		},
 		{
 			queryKey: [searchParams],
-			enabled: isQueryEnabled && !isLogsExplorerPage,
+			enabled: isQueryEnabled && !isLogsDataSource,
 		},
 	);
 
@@ -250,7 +247,7 @@ function QueryBuilderSearchV2(
 		},
 		{
 			queryKey: [suggestionsParams],
-			enabled: isQueryEnabled && isLogsExplorerPage,
+			enabled: isQueryEnabled && isLogsDataSource,
 		},
 	);
 
@@ -651,7 +648,7 @@ function QueryBuilderSearchV2(
 	useEffect(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
 			const { tagKey } = getTagToken(searchValue);
-			if (isLogsExplorerPage) {
+			if (isLogsDataSource) {
 				// add the user typed option in the dropdown to select that and move ahead irrespective of the matches and all
 				setDropdownOptions([
 					...(!isEmpty(tagKey) &&
@@ -756,7 +753,7 @@ function QueryBuilderSearchV2(
 		currentFilterItem?.key?.dataType,
 		currentState,
 		data?.payload?.attributeKeys,
-		isLogsExplorerPage,
+		isLogsDataSource,
 		searchValue,
 		suggestionsData?.payload?.attributes,
 	]);
