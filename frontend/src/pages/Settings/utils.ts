@@ -6,6 +6,7 @@ import { isCloudUser, isEECloudUser } from 'utils/app';
 import {
 	alertChannels,
 	apiKeys,
+	customDomainSettings,
 	generalSettings,
 	ingestionSettings,
 	multiIngestionSettings,
@@ -41,6 +42,7 @@ export const getRoutes = (
 
 	if ((isCloudUser() || isEECloudUser()) && userRole === USER_ROLES.ADMIN) {
 		settings.push(...apiKeys(t));
+		settings.push(...customDomainSettings(t));
 	}
 
 	return settings;

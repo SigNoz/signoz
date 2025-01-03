@@ -10,6 +10,7 @@ import {
 	BillingPage,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
+	CustomDomainSettings,
 	DashboardPage,
 	DashboardWidget,
 	EditAlertChannelsAlerts,
@@ -287,6 +288,13 @@ const routes: AppRoutes[] = [
 		component: MySettings,
 		isPrivate: true,
 		key: 'MY_SETTINGS',
+	},
+	{
+		path: ROUTES.CUSTOM_DOMAIN_SETTINGS,
+		exact: true,
+		component: CustomDomainSettings,
+		isPrivate: true,
+		key: 'CUSTOM_DOMAIN_SETTINGS',
 	},
 	{
 		path: ROUTES.LOGS,
