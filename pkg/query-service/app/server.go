@@ -24,6 +24,7 @@ import (
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
+	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
@@ -181,6 +182,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, fmt.Errorf("couldn't create integrations controller: %w", err)
 	}
 
+	cloudIntegrationsController, err := cloudintegrations.NewController(localDB)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create cloud provider integrations controller: %w", err)
+	}
+
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
 		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
 	)
@@ -200,6 +206,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		RuleManager:                   rm,
 		FeatureFlags:                  fm,
 		IntegrationsController:        integrationsController,
+		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,

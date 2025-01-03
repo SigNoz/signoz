@@ -12,6 +12,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/cache"
@@ -34,6 +35,7 @@ type APIHandlerOptions struct {
 	FeatureFlags                  baseint.FeatureLookup
 	LicenseManager                *license.Manager
 	IntegrationsController        *integrations.Controller
+	CloudIntegrationsController   *cloudintegrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	Cache                         cache.Cache
 	Gateway                       *httputil.ReverseProxy
@@ -62,6 +64,7 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		RuleManager:                   opts.RulesManager,
 		FeatureFlags:                  opts.FeatureFlags,
 		IntegrationsController:        opts.IntegrationsController,
+		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		Cache:                         opts.Cache,
 		FluxInterval:                  opts.FluxInterval,
