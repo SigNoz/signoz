@@ -253,7 +253,7 @@ export function formatWithTimezone(
 ): string {
 	const parsedDate =
 		typeof dateValue === 'string' ? dateValue : dateValue?.format();
-	console.log('dateValue', parsedDate, 'timezone', timezone);
+
 	// Get the target timezone offset
 	const targetOffset = convertUtcOffsetToTimezoneOffset(
 		dayjs(dateValue).tz(timezone).utcOffset(),
