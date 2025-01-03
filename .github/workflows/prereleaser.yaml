@@ -19,36 +19,14 @@ on:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
-    steps:
-      - id: token
-        name: github-token-gen
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.PRIMUS_APP_ID }}
-          private-key: ${{ secrets.PRIMUS_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-      - name: primus-checkout
-        uses: actions/checkout@v4
-        with:
-          repository: signoz/primus
-          ref: main
-          path: .primus
-          token: ${{ steps.token.outputs.token }}
-      - name: info
-        run: |
-          $MAKE info
-      - name: verify-releaser-team-membership
-        run: |
-          if [[ "${{ github.event.name }}" == "schedule" ]]; then
-            echo "skipping, event is triggered from scheduled cron"
-            exit 0
-          fi
-          $MAKE github-verify-team-membership \
-            GITHUB_ARGS="-t ${{ steps.token.outputs.token }} \
-              -n releaser \
-              -u ${{ github.actor }}"
+    uses: signoz/primus.workflows/.github/workflows/github-verify.yaml@feat/github
+    secrets: inherit
+    with:
+      PRIMUS_REF: main
+      GITHUB_TEAM_NAME: releaser
+      GITHUB_MEMBER_NAME: ${{ github.actor }}
   signoz:
+    if: ${{ always() && (needs.verify.result == 'success' || github.event.name == 'schedule') }}
     uses: signoz/primus.workflows/.github/workflows/releaser.yaml@main
     secrets: inherit
     needs: [verify]
