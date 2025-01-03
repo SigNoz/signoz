@@ -712,6 +712,28 @@ func GetPercentileFromOperator(operator SpaceAggregation) float64 {
 	}
 }
 
+type SeriesAggregation string
+
+const (
+	SeriesAggregationUnspecified SeriesAggregation = ""
+	SeriesAggregationSum         SeriesAggregation = "sum"
+	SeriesAggregationAvg         SeriesAggregation = "avg"
+	SeriesAggregationMin         SeriesAggregation = "min"
+	SeriesAggregationMax         SeriesAggregation = "max"
+)
+
+func (s SeriesAggregation) Validate() error {
+	switch s {
+	case SeriesAggregationSum,
+		SeriesAggregationAvg,
+		SeriesAggregationMin,
+		SeriesAggregationMax:
+		return nil
+	default:
+		return fmt.Errorf("invalid series aggregation: %s", s)
+	}
+}
+
 type FunctionName string
 
 const (
@@ -804,6 +826,7 @@ type BuilderQuery struct {
 	SelectColumns        []AttributeKey    `json:"selectColumns,omitempty"`
 	TimeAggregation      TimeAggregation   `json:"timeAggregation,omitempty"`
 	SpaceAggregation     SpaceAggregation  `json:"spaceAggregation,omitempty"`
+	SeriesAggregation    SeriesAggregation `json:"seriesAggregation,omitempty"`
 	Functions            []Function        `json:"functions,omitempty"`
 	ShiftBy              int64
 	IsAnomaly            bool
@@ -957,6 +980,12 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 		// if len(b.GroupBy) > 0 && panelType == PanelTypeList {
 		// 	return fmt.Errorf("group by is not supported for list panel type")
 		// }
+
+		if panelType == PanelTypeValue {
+			if err := b.SeriesAggregation.Validate(); err != nil {
+				return fmt.Errorf("series aggregation is required for value type panel with group by: %w", err)
+			}
+		}
 
 		for _, groupBy := range b.GroupBy {
 			if err := groupBy.Validate(); err != nil {
