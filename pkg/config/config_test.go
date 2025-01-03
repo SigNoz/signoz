@@ -32,9 +32,8 @@ func TestNewWithSignozEnvProvider(t *testing.T) {
 
 	expected := &Config{
 		Web: web.Config{
-			Prefix:          "/web",
-			Directory:       "/build",
-			SkipWebFrontend: "false",
+			Prefix:    "/web",
+			Directory: "/build",
 		},
 		Cache: cache.Config{
 			Provider: "redis",

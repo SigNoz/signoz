@@ -108,6 +108,7 @@ func main() {
 	var dialTimeout time.Duration
 	var gatewayUrl string
 	var useLicensesV3 bool
+	var skipWebFrontend bool
 
 	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
 	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", false, "use new schema for traces")
@@ -125,6 +126,7 @@ func main() {
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 	flag.StringVar(&gatewayUrl, "gateway-url", "", "(url to the gateway)")
 	flag.BoolVar(&useLicensesV3, "use-licenses-v3", false, "use licenses_v3 schema for licenses")
+	flag.BoolVar(&skipWebFrontend, "skip-web-frontend", false, "skip web frontend")
 	flag.Parse()
 
 	loggerMgr := initZapLog(enableQueryServiceLogOTLPExport)
@@ -146,7 +148,7 @@ func main() {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
 
-	signoz, err := signoz.New(config)
+	signoz, err := signoz.New(config, skipWebFrontend)
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
 	}
@@ -169,6 +171,7 @@ func main() {
 		GatewayUrl:        gatewayUrl,
 		UseLogsNewSchema:  useLogsNewSchema,
 		UseTraceNewSchema: useTraceNewSchema,
+		SkipWebFrontend:   skipWebFrontend,
 	}
 
 	// Read the jwt secret key

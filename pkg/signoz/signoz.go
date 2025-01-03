@@ -14,7 +14,7 @@ type SigNoz struct {
 	Web   *web.Web
 }
 
-func New(config *config.Config) (*SigNoz, error) {
+func New(config *config.Config, skipWebFrontend bool) (*SigNoz, error) {
 	var cache cache.Cache
 
 	// init for the cache
@@ -26,7 +26,7 @@ func New(config *config.Config) (*SigNoz, error) {
 	}
 
 	web, err := web.New(zap.L(), config.Web)
-	if err != nil {
+	if err != nil && !skipWebFrontend {
 		return nil, err
 	}
 

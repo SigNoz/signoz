@@ -81,6 +81,7 @@ type ServerOptions struct {
 	GatewayUrl        string
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
+	SkipWebFrontend   bool
 }
 
 // Server runs HTTP api service
@@ -385,7 +386,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web *web.Web) (*
 
 	handler = handlers.CompressHandler(handler)
 
-	if web != nil {
+	if !s.serverOptions.SkipWebFrontend {
 		err := web.AddToRouter(r)
 		if err != nil {
 			return nil, err

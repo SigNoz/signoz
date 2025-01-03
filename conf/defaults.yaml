@@ -9,8 +9,6 @@ web:
   prefix: /
   # The directory containing the static build files.
   directory: /etc/signoz/web
-  # Skip serving frontend from query service
-  skip_web_frontend: "false"
 
 ##################### Cache #####################
 cache:

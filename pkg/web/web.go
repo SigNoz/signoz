@@ -28,10 +28,6 @@ func New(logger *zap.Logger, cfg Config) (*Web, error) {
 		return nil, fmt.Errorf("cannot build web, logger is required")
 	}
 
-	if cfg.SkipWebFrontend == "true" {
-		return nil, nil
-	}
-
 	fi, err := os.Stat(cfg.Directory)
 	if err != nil {
 		return nil, fmt.Errorf("cannot access web directory: %w", err)

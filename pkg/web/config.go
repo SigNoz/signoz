@@ -14,16 +14,12 @@ type Config struct {
 	// The directory containing the static build files. The root of this directory should
 	// have an index.html file.
 	Directory string `mapstructure:"directory"`
-	// to skip checking the presence of frontend build
-	SkipWebFrontend string `mapstructure:"skip_web_frontend"`
-	// TODO added this as string flag as boolean flags aren't working with current confmap yet
 }
 
 func (c *Config) NewWithDefaults() confmap.Config {
 	return &Config{
-		Prefix:          "/",
-		Directory:       "/etc/signoz/web",
-		SkipWebFrontend: "false",
+		Prefix:    "/",
+		Directory: "/etc/signoz/web",
 	}
 
 }
