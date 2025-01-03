@@ -21,7 +21,7 @@ export interface IBuilderFormula {
 }
 
 export interface TagFilterItem {
-	id: string;
+	id?: string;
 	key?: BaseAutocompleteData;
 	op: string;
 	value: string[] | string | number | boolean;
