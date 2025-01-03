@@ -49,6 +49,11 @@ describe('VariableItem', () => {
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
 					setVariablesToGetUpdated={(): void => {}}
+					dependencyData={{
+						order: [],
+						graph: {},
+						parentDependencyGraph: {},
+					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -65,6 +70,11 @@ describe('VariableItem', () => {
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
 					setVariablesToGetUpdated={(): void => {}}
+					dependencyData={{
+						order: [],
+						graph: {},
+						parentDependencyGraph: {},
+					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -80,6 +90,11 @@ describe('VariableItem', () => {
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
 					setVariablesToGetUpdated={(): void => {}}
+					dependencyData={{
+						order: [],
+						graph: {},
+						parentDependencyGraph: {},
+					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -109,6 +124,11 @@ describe('VariableItem', () => {
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
 					setVariablesToGetUpdated={(): void => {}}
+					dependencyData={{
+						order: [],
+						graph: {},
+						parentDependencyGraph: {},
+					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -133,6 +153,11 @@ describe('VariableItem', () => {
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
 					setVariablesToGetUpdated={(): void => {}}
+					dependencyData={{
+						order: [],
+						graph: {},
+						parentDependencyGraph: {},
+					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -149,6 +174,11 @@ describe('VariableItem', () => {
 					onValueUpdate={mockOnValueUpdate}
 					variablesToGetUpdated={[]}
 					setVariablesToGetUpdated={(): void => {}}
+					dependencyData={{
+						order: [],
+						graph: {},
+						parentDependencyGraph: {},
+					}}
 				/>
 			</MockQueryClientProvider>,
 		);
