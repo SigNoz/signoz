@@ -24,16 +24,16 @@ export const getRoutes = (
 	const isCloudAccount = isCloudUser();
 	const isEECloudAccount = isEECloudUser();
 
+	const isAdmin = userRole === USER_ROLES.ADMIN;
+	const isEditor = userRole === USER_ROLES.EDITOR;
+
 	settings.push(...generalSettings(t));
 
 	if (isCurrentOrgSettings) {
 		settings.push(...organizationSettings(t));
 	}
 
-	if (
-		isGatewayEnabled &&
-		(userRole === USER_ROLES.ADMIN || userRole === USER_ROLES.EDITOR)
-	) {
+	if (isGatewayEnabled && (isAdmin || isEditor)) {
 		settings.push(...multiIngestionSettings(t));
 	}
 
@@ -43,11 +43,11 @@ export const getRoutes = (
 
 	settings.push(...alertChannels(t));
 
-	if ((isCloudAccount || isEECloudAccount) && userRole === USER_ROLES.ADMIN) {
+	if ((isCloudAccount || isEECloudAccount) && isAdmin) {
 		settings.push(...apiKeys(t));
 	}
 
-	if (isCloudAccount && userRole === USER_ROLES.ADMIN) {
+	if (isCloudAccount && isAdmin) {
 		settings.push(...customDomainSettings(t));
 	}
 
