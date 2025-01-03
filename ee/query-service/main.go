@@ -20,7 +20,7 @@ import (
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
-	signozweb "go.signoz.io/signoz/pkg/web"
+	"go.signoz.io/signoz/pkg/signoz"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -147,12 +147,13 @@ func main() {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
 
-	web, err := signozweb.New(zap.L(), config.Web)
+	signoz, err := signoz.New(config)
 	if err != nil {
-		zap.L().Fatal("Failed to create web", zap.Error(err))
+		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
 	}
 
 	serverOptions := &app.ServerOptions{
+		SigNoz:            signoz,
 		HTTPHostPort:      baseconst.HTTPHostPort,
 		PromConfigPath:    promConfigPath,
 		SkipTopLvlOpsPath: skipTopLvlOpsPath,
@@ -186,7 +187,7 @@ func main() {
 		zap.L().Info("Migration successful")
 	}
 
-	server, err := app.NewServer(serverOptions, web)
+	server, err := app.NewServer(serverOptions)
 	if err != nil {
 		zap.L().Fatal("Failed to create server", zap.Error(err))
 	}

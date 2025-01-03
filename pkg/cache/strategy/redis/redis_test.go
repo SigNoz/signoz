@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-redis/redismock/v8"
 	"github.com/stretchr/testify/assert"
-	"go.signoz.io/signoz/pkg/cache/status"
+	_cache "go.signoz.io/signoz/pkg/cache"
 )
 
 type CacheableEntity struct {
@@ -63,8 +63,8 @@ func TestRetrieve(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	if retrieveStatus != status.RetrieveStatusHit {
-		t.Errorf("expected status %d, got %d", status.RetrieveStatusHit, retrieveStatus)
+	if retrieveStatus != _cache.RetrieveStatusHit {
+		t.Errorf("expected status %d, got %d", _cache.RetrieveStatusHit, retrieveStatus)
 	}
 
 	assert.Equal(t, storeCacheableEntity, retrieveCacheableEntity)

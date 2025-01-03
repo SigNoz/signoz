@@ -7,21 +7,16 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"go.signoz.io/signoz/pkg/cache/entity"
-	"go.signoz.io/signoz/pkg/cache/status"
+	_cache "go.signoz.io/signoz/pkg/cache"
 	"go.uber.org/zap"
 )
 
 type cache struct {
 	client *redis.Client
-	opts   *Options
+	opts   *_cache.Redis
 }
 
-func New(opts *Options) *cache {
-	if opts == nil {
-		opts = defaultOptions()
-	}
-
+func New(opts *_cache.Redis) *cache {
 	return &cache{opts: opts}
 }
 
@@ -41,20 +36,20 @@ func (c *cache) Connect() error {
 }
 
 // Store stores the data in the cache
-func (c *cache) Store(cacheKey string, data entity.CacheableEntity, ttl time.Duration) error {
+func (c *cache) Store(cacheKey string, data _cache.CacheableEntity, ttl time.Duration) error {
 	return c.client.Set(context.Background(), cacheKey, data, ttl).Err()
 }
 
 // Retrieve retrieves the data from the cache
-func (c *cache) Retrieve(cacheKey string, dest entity.CacheableEntity, allowExpired bool) (status.RetrieveStatus, error) {
+func (c *cache) Retrieve(cacheKey string, dest _cache.CacheableEntity, allowExpired bool) (_cache.RetrieveStatus, error) {
 	err := c.client.Get(context.Background(), cacheKey).Scan(dest)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return status.RetrieveStatusKeyMiss, nil
+			return _cache.RetrieveStatusKeyMiss, nil
 		}
-		return status.RetrieveStatusError, err
+		return _cache.RetrieveStatusError, err
 	}
-	return status.RetrieveStatusHit, nil
+	return _cache.RetrieveStatusHit, nil
 }
 
 // SetTTL sets the TTL for the cache entry
@@ -93,7 +88,7 @@ func (c *cache) GetClient() *redis.Client {
 }
 
 // GetOptions returns the options
-func (c *cache) GetOptions() *Options {
+func (c *cache) GetOptions() *_cache.Redis {
 	return c.opts
 }
 
