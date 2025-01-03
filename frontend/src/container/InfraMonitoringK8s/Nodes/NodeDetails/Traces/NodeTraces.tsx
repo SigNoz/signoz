@@ -1,4 +1,4 @@
-import './PodTraces.styles.scss';
+import './NodeTraces.styles.scss';
 
 import { ResizeTable } from 'components/ResizeTable';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -24,7 +24,7 @@ import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { getPodTracesQueryPayload, selectedColumns } from './constants';
+import { getNodeTracesQueryPayload, selectedColumns } from './constants';
 import { getListColumns } from './utils';
 
 interface Props {
@@ -42,7 +42,7 @@ interface Props {
 	selectedInterval: Time;
 }
 
-function PodTraces({
+function NodeTraces({
 	timeRange,
 	isModalTimeSelection,
 	handleTimeChange,
@@ -78,8 +78,6 @@ function PodTraces({
 		[currentQuery],
 	);
 
-	console.log({ updatedCurrentQuery });
-
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
@@ -88,7 +86,7 @@ function PodTraces({
 
 	const queryPayload = useMemo(
 		() =>
-			getPodTracesQueryPayload(
+			getNodeTracesQueryPayload(
 				timeRange.startTime,
 				timeRange.endTime,
 				paginationQueryData?.offset || offset,
@@ -105,7 +103,7 @@ function PodTraces({
 
 	const { data, isLoading, isFetching, isError } = useQuery({
 		queryKey: [
-			'podTraces',
+			'hostMetricTraces',
 			timeRange.startTime,
 			timeRange.endTime,
 			offset,
@@ -140,8 +138,8 @@ function PodTraces({
 		data?.payload?.data?.newResult?.data?.result?.[0]?.list?.length || 0;
 
 	return (
-		<div className="host-metric-traces">
-			<div className="host-metric-traces-header">
+		<div className="node-metric-traces">
+			<div className="node-metric-traces-header">
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
@@ -177,7 +175,7 @@ function PodTraces({
 			)}
 
 			{!isError && traces.length > 0 && (
-				<div className="pod-traces-table">
+				<div className="node-traces-table">
 					<TraceExplorerControls
 						isLoading={isFetching}
 						totalCount={totalCount}
@@ -198,4 +196,4 @@ function PodTraces({
 	);
 }
 
-export default PodTraces;
+export default NodeTraces;

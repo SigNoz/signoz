@@ -14,7 +14,7 @@ export const podWidgetInfo = [
 	},
 	{
 		title: 'CPU Request, Limit Utilization',
-		yAxisUnit: 'percent',
+		yAxisUnit: 'percentunit',
 	},
 	{
 		title: 'Memory Usage (bytes)',
@@ -22,7 +22,7 @@ export const podWidgetInfo = [
 	},
 	{
 		title: 'Memory Request, Limit Utilization',
-		yAxisUnit: 'percent',
+		yAxisUnit: 'percentunit',
 	},
 	{
 		title: 'Memory by State',
@@ -38,7 +38,7 @@ export const podWidgetInfo = [
 	},
 	{
 		title: 'CPU Request, Limit Utilization by Container',
-		yAxisUnit: 'percent',
+		yAxisUnit: 'percentunit',
 	},
 	{
 		title: 'Memory Usage by Container (bytes)',
@@ -46,7 +46,7 @@ export const podWidgetInfo = [
 	},
 	{
 		title: 'Memory Request, Limit Utilization by Container',
-		yAxisUnit: 'percent',
+		yAxisUnit: 'percentunit',
 	},
 	{
 		title: 'Network rate',
