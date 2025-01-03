@@ -21,6 +21,9 @@ export const getRoutes = (
 ): RouteTabProps['routes'] => {
 	const settings = [];
 
+	const isCloudAccount = isCloudUser();
+	const isEECloudAccount = isEECloudUser();
+
 	settings.push(...generalSettings(t));
 
 	if (isCurrentOrgSettings) {
@@ -34,14 +37,17 @@ export const getRoutes = (
 		settings.push(...multiIngestionSettings(t));
 	}
 
-	if (isCloudUser() && !isGatewayEnabled) {
+	if (isCloudAccount && !isGatewayEnabled) {
 		settings.push(...ingestionSettings(t));
 	}
 
 	settings.push(...alertChannels(t));
 
-	if ((isCloudUser() || isEECloudUser()) && userRole === USER_ROLES.ADMIN) {
+	if ((isCloudAccount || isEECloudAccount) && userRole === USER_ROLES.ADMIN) {
 		settings.push(...apiKeys(t));
+	}
+
+	if (isCloudAccount && userRole === USER_ROLES.ADMIN) {
 		settings.push(...customDomainSettings(t));
 	}
 
