@@ -35,10 +35,15 @@ func (c *Config) NewWithDefaults() confmap.Config {
 			TTL:             go_cache.NoExpiration,
 			CleanupInterval: 1 * time.Minute,
 		},
+		Redis: Redis{
+			Host:     "localhost",
+			Port:     6379,
+			Password: "",
+			DB:       0,
+		},
 	}
 }
 
-// validate the config based on provider and provided types
 func (c *Config) Validate() error {
 	return nil
 }
