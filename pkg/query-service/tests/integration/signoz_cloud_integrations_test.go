@@ -88,7 +88,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *CloudIntegratio
 	router := app.NewRouter()
 	am := app.NewAuthMiddleware(auth.GetUserFromRequest)
 	apiHandler.RegisterRoutes(router, am)
-	apiHandler.RegisterIntegrationRoutes(router, am)
+	apiHandler.RegisterCloudIntegrationsRoutes(router, am)
 
 	user, apiErr := createTestUser()
 	if apiErr != nil {
