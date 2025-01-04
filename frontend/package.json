@@ -21,7 +21,7 @@
 		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
 		"commitlint": "commitlint --edit $1",
 		"test": "jest --coverage",
-		"test:changedsince": "jest --changedSince=develop --coverage --silent"
+		"test:changedsince": "jest --changedSince=main --coverage --silent"
 	},
 	"engines": {
 		"node": ">=16.15.0"

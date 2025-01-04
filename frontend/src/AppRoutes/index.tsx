@@ -22,7 +22,7 @@ import { IUser } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
-import { Redirect, Route, Router, Switch } from 'react-router-dom';
+import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
 
@@ -240,12 +240,19 @@ function App(): JSX.Element {
 		// if the required calls fails then return a something went wrong error
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
-		if (userFetchError || licensesFetchError) {
-			return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
+		if (
+			(userFetchError || licensesFetchError) &&
+			pathname !== ROUTES.SOMETHING_WENT_WRONG
+		) {
+			history.replace(ROUTES.SOMETHING_WENT_WRONG);
 		}
 
 		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
-		if (!licenses || !user.email || !featureFlags) {
+		if (
+			(!licenses || !user.email || !featureFlags) &&
+			!userFetchError &&
+			!licensesFetchError
+		) {
 			return <Spinner tip="Loading..." />;
 		}
 	}

@@ -180,7 +180,7 @@ export const PasswordReset = Loadable(
 export const SomethingWentWrong = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "SomethingWentWrong" */ 'pages/SomethingWentWrong'
+			/* webpackChunkName: "ErrorBoundaryFallback" */ 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback'
 		),
 );
 
