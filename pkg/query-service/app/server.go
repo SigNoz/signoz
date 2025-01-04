@@ -141,7 +141,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
-			c,
+			nil,
 		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader

@@ -170,7 +170,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
-			c,
+			serverOptions.SigNoz.Cache,
 		)
 		go qb.Start(readerReady)
 		reader = qb

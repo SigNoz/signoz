@@ -302,6 +302,14 @@ type SearchTracesV3Cache struct {
 	TraceRoots          []string         `json:"traceRoots"`
 }
 
+// SearchTracesV3Cache needs to implement the below functions for binary marshalling in case we use redis
+func (cachedTracesV3 *SearchTracesV3Cache) MarshalBinary() (data []byte, err error) {
+	return json.Marshal(cachedTracesV3)
+}
+func (cachedTracesV3 *SearchTracesV3Cache) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, cachedTracesV3)
+}
+
 type SearchTracesV3Response struct {
 	StartTimestampMillis  uint64  `json:"startTimestampMillis"`
 	EndTimestampMillis    uint64  `json:"endTimestampMillis"`

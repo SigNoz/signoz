@@ -33,6 +33,8 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/cache"
+	cacheV2 "go.signoz.io/signoz/pkg/cache"
 
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
@@ -42,7 +44,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/resource"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
@@ -158,7 +159,7 @@ type ClickHouseReader struct {
 	traceResourceTableV3 string
 	traceSummaryTable    string
 
-	Cache cache.Cache
+	CacheV2 cacheV2.Cache
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -172,7 +173,7 @@ func NewReader(
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
-	cache cache.Cache,
+	cacheV2 cacheV2.Cache,
 ) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
@@ -183,7 +184,7 @@ func NewReader(
 		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
 	}
 
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, cache)
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, cacheV2)
 }
 
 func NewReaderFromClickhouseConnection(
@@ -195,7 +196,7 @@ func NewReaderFromClickhouseConnection(
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
-	cache cache.Cache,
+	cacheV2 cacheV2.Cache,
 ) *ClickHouseReader {
 	alertManager, err := am.New()
 	if err != nil {
@@ -282,7 +283,7 @@ func NewReaderFromClickhouseConnection(
 		traceResourceTableV3: options.primary.TraceResourceTableV3,
 		traceSummaryTable:    options.primary.TraceSummaryTable,
 
-		Cache: cache,
+		CacheV2: cacheV2,
 	}
 }
 
@@ -1457,8 +1458,6 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-var temp_cache map[string]model.SearchTracesV3Cache = make(map[string]model.SearchTracesV3Cache)
-
 func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, req *model.SearchTracesV3Params) (*model.SearchTracesV3Response, *model.ApiError) {
 	trace := new(model.SearchTracesV3Response)
 	var startTime, endTime, durationNano uint64
@@ -1467,49 +1466,28 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 	var useCache bool = true
 
 	// get the trace tree from cache!
-	// cachedTraceData, cacheStatus, err := r.Cache.Retrieve(fmt.Sprintf("trace-detail-%v", traceID), false)
-	// if err != nil {
-	// 	// if there is error in retrieving the cache, log the same and move with ch queries.
-	// 	zap.L().Debug("error in retrieving cached trace data", zap.Error(err))
-	// 	useCache = false
-	// }
-
-	val, exist := temp_cache[fmt.Sprintf("trace-detail-%v", traceID)]
-	if !exist {
-		zap.L().Debug("error in retrieving cached trace data")
+	cachedTraceData := new(model.SearchTracesV3Cache)
+	cacheStatus, err := r.CacheV2.Retrieve(ctx, fmt.Sprintf("trace-detail-%v", traceID), cachedTraceData, false)
+	if err != nil {
+		// if there is error in retrieving the cache, log the same and move with ch queries.
+		zap.L().Debug("error in retrieving cached trace data", zap.Error(err))
 		useCache = false
-	} else {
-		zap.L().Info("cache is successfully hit, applying cache for trace details", zap.String("traceID", traceID))
-		startTime = val.StartTime
-		endTime = val.EndTime
-		durationNano = val.DurationNano
-		spanIdToSpanNodeMap = val.SpanIdToSpanNodeMap
-		traceRoots = val.TraceRoots
+	}
+
+	if cacheStatus != cache.RetrieveStatusHit {
+		useCache = false
 	}
 
 	// if there is no error and there has been a perfect hit for cache then get the data
-	// if err == nil && cacheStatus == status.RetrieveStatusHit {
-	// 	startBeforeCacheUnmarshelling := time.Now()
-	// 	var cachedTraceResponse = new(model.SearchTracesV3Cache)
-	// 	err = json.Unmarshal(cachedTraceData, cachedTraceResponse)
-	// 	endAfterCacheUnmarshelling := time.Now()
-	// 	zap.L().Info("cache unmarshelling took", zap.Duration("time", endAfterCacheUnmarshelling.Sub(startBeforeCacheUnmarshelling)))
-	// 	if err != nil {
-	// 		// log the error and move ahead with clickhouse queries
-	// 		zap.L().Debug("error in unmarshalling the cached data", zap.Error(err))
-	// 		useCache = false
-	// 	}
-
-	// 	if err == nil {
-	// 		// cache hit is successful, retrieve the required data
-	// 		zap.L().Info("cache is successfully hit, applying cache for trace details", zap.String("traceID", traceID))
-	// 		startTime = cachedTraceResponse.StartTime
-	// 		endTime = cachedTraceResponse.EndTime
-	// 		durationNano = cachedTraceResponse.DurationNano
-	// 		spanIdToSpanNodeMap = cachedTraceResponse.SpanIdToSpanNodeMap
-	// 		traceRoots = cachedTraceResponse.TraceRoots
-	// 	}
-	// }
+	if err == nil && cacheStatus == cache.RetrieveStatusHit {
+		// cache hit is successful, retrieve the required data
+		zap.L().Info("cache is successfully hit, applying cache for trace details", zap.String("traceID", traceID))
+		startTime = cachedTraceData.StartTime
+		endTime = cachedTraceData.EndTime
+		durationNano = cachedTraceData.DurationNano
+		spanIdToSpanNodeMap = cachedTraceData.SpanIdToSpanNodeMap
+		traceRoots = cachedTraceData.TraceRoots
+	}
 
 	if !useCache {
 		zap.L().Info("cache miss for trace details", zap.String("traceID", traceID))
@@ -1633,14 +1611,10 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 			TraceRoots:          traceRoots,
 		}
 
-		temp_cache[fmt.Sprintf("trace-detail-%v", traceID)] = traceCache
-		// tracheCacheByte, err := json.Marshal(traceCache)
-		// if err != nil {
-		// 	zap.L().Debug("error in marshalling trace cached data, skipping the data to be cached", zap.Error(err))
-		// } else {
-		// 	r.Cache.Store(fmt.Sprintf("trace-detail-%v", traceID), tracheCacheByte, time.Minute*30)
-		// }
-
+		err = r.CacheV2.Store(ctx, fmt.Sprintf("trace-detail-%v", traceID), &traceCache, time.Minute*5)
+		if err != nil {
+			zap.L().Debug("failed to store cache", zap.String("traceID", traceID), zap.Error(err))
+		}
 	}
 
 	// determestic sort for the children based on timestamp and span name
@@ -1676,7 +1650,7 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 			isPresentInThisSubtree := rootToInterestedNodePath(child)
 			// if the interested node is present in the given subtree then add the span node to uncollapsed node list
 			if isPresentInThisSubtree {
-				if !contains(uncollapsedNodes,node.SpanID){
+				if !contains(uncollapsedNodes, node.SpanID) {
 					uncollapsedNodes = append(uncollapsedNodes, node.SpanID)
 				}
 				isPresentInSubtreeForTheNode = true
