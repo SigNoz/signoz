@@ -19,7 +19,7 @@ on:
 
 jobs:
   verify:
-    uses: signoz/primus.workflows/.github/workflows/github-verify.yaml@feat/github
+    uses: signoz/primus.workflows/.github/workflows/github-verify.yaml@main
     secrets: inherit
     with:
       PRIMUS_REF: main

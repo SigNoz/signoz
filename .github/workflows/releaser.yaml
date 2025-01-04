@@ -22,7 +22,7 @@ jobs:
           fi
           echo "release_type=${release_type}" >> "$GITHUB_OUTPUT"
   charts:
-    uses: signoz/primus.workflows/.github/workflows/github-trigger.yaml@feat/github
+    uses: signoz/primus.workflows/.github/workflows/github-trigger.yaml@main
     secrets: inherit
     needs: [detect]
     with:
