@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
@@ -30,6 +31,21 @@ func TestCloudIntegrationLifecycle(t *testing.T) {
 	)
 
 	// Should be able to generate connection url - initializing an account
+	connectionUrlResp := testbed.GenerateConnectionUrlFromQS("aws", cloudintegrations.GenerateConnectionUrlRequest{
+		AgentConfig: cloudintegrations.SigNozAgentConfig{
+			Region: "us-east-1",
+		},
+		UpsertAccountRequest: cloudintegrations.UpsertAccountRequest{
+			AccountConfig: cloudintegrations.CloudAccountConfig{
+				EnabledRegions: []string{"us-east-1", "us-east-2"},
+			},
+		},
+	})
+	spew.Dump(connectionUrlResp)
+	connectionUrl := connectionUrlResp.ConnectionUrl
+	require.NotEmpty(connectionUrl)
+	accountId := connectionUrlResp.AccountId
+	require.NotEmpty(accountId)
 
 	// Should be able to poll for account connection status
 
@@ -113,13 +129,35 @@ func (tb *CloudIntegrationsTestBed) GetAccountsListFromQS(
 		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
 	}
 
-	var accountsListResp cloudintegrations.AccountsListResponse
-	err = json.Unmarshal(dataJson, &accountsListResp)
+	var resp cloudintegrations.AccountsListResponse
+	err = json.Unmarshal(dataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into AccountsListResponse")
 	}
 
-	return &accountsListResp
+	return &resp
+}
+
+func (tb *CloudIntegrationsTestBed) GenerateConnectionUrlFromQS(
+	cloudProvider string, req cloudintegrations.GenerateConnectionUrlRequest,
+) *cloudintegrations.GenerateConnectionUrlResponse {
+	result := tb.RequestQS(
+		fmt.Sprintf("/api/v1/cloud-integrations/%s/accounts/generate-connection-url", cloudProvider),
+		req,
+	)
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+
+	var resp cloudintegrations.GenerateConnectionUrlResponse
+	err = json.Unmarshal(dataJson, &result)
+	if err != nil {
+		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into map[string]any")
+	}
+
+	return &resp
 }
 
 func (tb *CloudIntegrationsTestBed) RequestQS(

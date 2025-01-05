@@ -3869,6 +3869,10 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *Au
 	subRouter := router.PathPrefix("/api/v1/cloud-integrations").Subrouter()
 
 	subRouter.HandleFunc(
+		"/{cloudProvider}/accounts/generate-connection-url", am.EditAccess(aH.CloudIntegrationsGenerateConnectionUrl),
+	).Methods(http.MethodPost)
+
+	subRouter.HandleFunc(
 		"/{cloudProvider}/accounts", am.ViewAccess(aH.CloudIntegrationsListConnectedAccounts),
 	).Methods(http.MethodGet)
 
@@ -3884,10 +3888,33 @@ func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
 	)
 
 	if apiErr != nil {
-		RespondError(w, apiErr, fmt.Sprintf("Failed to fetch connected %s accounts", cloudProvider))
+		RespondError(w, apiErr, nil)
 		return
 	}
 	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) CloudIntegrationsGenerateConnectionUrl(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+
+	req := cloudintegrations.GenerateConnectionUrlRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	result, apiErr := aH.CloudIntegrationsController.GenerateConnectionUrl(
+		r.Context(), cloudProvider, req,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, result)
 }
 
 // logs
