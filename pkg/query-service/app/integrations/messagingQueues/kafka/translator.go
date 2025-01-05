@@ -21,6 +21,7 @@ func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) 
 	queueType := KafkaQueue
 
 	chq, err := BuildClickHouseQuery(messagingQueue, queueType, queryContext)
+
 	if err != nil {
 		return nil, err
 	}
