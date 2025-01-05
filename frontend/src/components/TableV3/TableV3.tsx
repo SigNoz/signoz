@@ -1,4 +1,4 @@
-import './PerformantColumnResizingTable.styles.scss';
+import './TableV3.styles.scss';
 
 import {
 	ColumnDef,
@@ -12,13 +12,13 @@ import React, { useMemo } from 'react';
 // here we are manually rendering the table body so that we can memoize the same for performant re-renders
 function TableBody<T>({ table }: { table: Table<T> }): JSX.Element {
 	return (
-		<div className="tbody">
+		<div className="div-tbody">
 			{table.getRowModel().rows.map((row) => (
-				<div key={row.id} className="tr">
+				<div key={row.id} className="div-tr">
 					{row.getVisibleCells().map((cell) => (
 						<div
 							key={cell.id}
-							className="td"
+							className="div-td"
 							// we are manually setting the column width here based on the calculated column vars
 							style={{
 								width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
@@ -43,15 +43,13 @@ interface ITableConfig {
 	defaultColumnMinSize: number;
 	defaultColumnMaxSize: number;
 }
-interface IPerformantColumnResizingTableProps<T> {
-	columns: ColumnDef<T>[];
+interface ITableV3Props<T> {
+	columns: ColumnDef<T, any>[];
 	data: T[];
 	config: ITableConfig;
 }
 
-export function PerformantColumnResizingTable<T>(
-	props: IPerformantColumnResizingTableProps<T>,
-): JSX.Element {
+export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 	const { data, columns, config } = props;
 
 	const table = useReactTable({
@@ -90,19 +88,19 @@ export function PerformantColumnResizingTable<T>(
 		<div className="p-2">
 			{/* Here in the <table> equivalent element (surrounds all table head and data cells), we will define our CSS variables for column sizes */}
 			<div
-				className="divTable"
+				className="div-table"
 				style={{
 					...columnSizeVars, // Define column sizes on the <table> element
 					width: table.getTotalSize(),
 				}}
 			>
-				<div className="thead">
+				<div className="div-thead">
 					{table.getHeaderGroups().map((headerGroup) => (
-						<div key={headerGroup.id} className="tr">
+						<div key={headerGroup.id} className="div-tr">
 							{headerGroup.headers.map((header) => (
 								<div
 									key={header.id}
-									className="th"
+									className="div-th"
 									style={{
 										width: `calc(var(--header-${header?.id}-size) * 1px)`,
 									}}

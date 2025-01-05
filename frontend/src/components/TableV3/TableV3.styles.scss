@@ -1,29 +1,21 @@
-table,
-.divTable {
+.div-table {
 	border: 1px solid lightgray;
 	width: fit-content;
 }
 
-.tr {
+.div-tr {
 	display: flex;
-}
-
-tr,
-.tr {
 	width: fit-content;
 	height: 30px;
 }
 
-th,
-.th,
-td,
-.td {
+.div-th,
+.div-td {
 	box-shadow: inset 0 0 0 1px lightgray;
 	padding: 0.25rem;
 }
 
-th,
-.th {
+.div-th {
 	padding: 2px 4px;
 	position: relative;
 	font-weight: bold;
@@ -31,8 +23,7 @@ th,
 	height: 30px;
 }
 
-td,
-.td {
+.div-td {
 	height: 30px;
 }
 
