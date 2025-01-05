@@ -318,6 +318,97 @@ GROUP BY
 	return query
 }
 
+func generateOverviewSQL(start, end int64) string {
+	// Convert from nanoseconds to float seconds in Go
+	// to avoid decimal overflow in ClickHouse
+	startSeconds := float64(start) / 1e9
+	endSeconds := float64(end) / 1e9
+
+	// For timeRange, if you want the difference in the DB:
+	timeRangeSecs := endSeconds - startSeconds // float64 difference in Go
+
+	// If you really need tsBucketStart, do the math in Go as well
+	tsBucketStart := startSeconds - 1800 // example
+	tsBucketEnd := endSeconds
+
+	query := fmt.Sprintf(`
+WITH
+    timeRange AS (
+        SELECT %f AS seconds
+    ),
+    processed_traces AS (
+        SELECT
+            resource_string_service$$name AS service_name,
+            name AS span_name,
+            CASE
+                WHEN attribute_string_messaging$$system = 'kafka' THEN 'kafka'
+                WHEN (has(attributes_string, 'celery.action') OR has(attributes_string, 'celery.task_name')) THEN 'celery'
+                ELSE 'other'
+            END AS messaging_system,
+            kind_string AS kind,
+            COALESCE(
+                NULLIF(attributes_string['messaging.destination.name'], ''),
+                NULLIF(attributes_string['messaging.destination'], '')
+            ) AS destination,
+            durationNano,
+            status_code
+        FROM signoz_traces.distributed_signoz_index_v3
+        WHERE
+            timestamp >= toDateTime64(%f, 9)
+            AND timestamp <= toDateTime64(%f, 9)
+            -- Only if your schema has ts_bucket_start (Float64 or DateTime64) 
+            AND ts_bucket_start >= toDateTime64(%f, 9)
+            AND ts_bucket_start <= toDateTime64(%f, 9)
+            AND (
+                attribute_string_messaging$$system = 'kafka'
+                OR has(attributes_string, 'celery.action')
+                OR has(attributes_string, 'celery.task_name')
+            )
+    ),
+    aggregated_metrics AS (
+        SELECT
+            service_name,
+            span_name,
+            messaging_system,
+            destination,
+            kind,
+            count(*) AS total_count,
+            sumIf(1, status_code = 2) AS error_count,
+            quantile(0.95)(durationNano) / 1000000 AS p95_latency -- Convert to ms
+        FROM
+            processed_traces
+        GROUP BY
+            service_name,
+            span_name,
+            messaging_system,
+            destination,
+            kind
+    )
+SELECT
+    service_name,
+    span_name,
+    messaging_system,
+    destination,
+    kind,
+    COALESCE(total_count / timeRange.seconds, 0) AS throughput,
+    COALESCE((error_count * 100.0) / total_count, 0) AS error_percentage,
+    p95_latency
+FROM
+    aggregated_metrics,
+    timeRange
+WHERE
+    messaging_system IN ('kafka', 'celery')
+ORDER BY
+    service_name,
+    span_name;`,
+		timeRangeSecs, // timeRange AS (SELECT %f AS seconds)
+		startSeconds, endSeconds,
+		tsBucketStart, tsBucketEnd,
+	)
+
+	return query
+}
+
 func generateProducerSQL(start, end int64, topic, partition, queueType string) string {
 	timeRange := (end - start) / 1000000000
 	tsBucketStart := (start / 1000000000) - 1800
