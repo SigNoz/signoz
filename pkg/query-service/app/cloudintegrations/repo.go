@@ -53,8 +53,29 @@ type cloudProviderAccountsSQLRepository struct {
 	db *sqlx.DB
 }
 
-func (repo *cloudProviderAccountsSQLRepository) listConnectedAccounts(context.Context) (
+func (r *cloudProviderAccountsSQLRepository) listConnectedAccounts(ctx context.Context) (
 	[]Account, *model.ApiError,
 ) {
-	return []Account{}, nil
+	accounts := []Account{}
+
+	err := r.db.SelectContext(
+		ctx, &accounts, `
+			select
+				id,
+				config_json,
+				cloud_account_id,
+				last_agent_report_json,
+				created_at,
+				removed_at
+			from  cloud_integrations_accounts
+			order by created_at
+		`,
+	)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query connected cloud accounts: %w", err,
+		))
+	}
+
+	return accounts, nil
 }
